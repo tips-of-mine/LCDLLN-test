@@ -9162,12 +9162,29 @@ namespace engine
 				// Phase 4 chat — Annonce le perso actif au master pour le sender display +
 				// la résolution de cible /whisper. Fire-and-forget : la réponse arrive via
 				// PumpPostAuthEvents et est juste loggée en debug (pas de blocage UI).
+				// ETAPE3.1 — clé de session UDP neuve à chaque EnterWorld : elle part au master
+				// (TLS) dans la requête, le master la relaie au shard (TLS) ; la session UDP de
+				// jeu est ensuite chiffrée avec (cf. UdpSecureChannel.h). Pas d'EnterWorld
+				// envoyé (pas de master) ou tirage aléatoire impossible : session en clair.
+				m_gameplayUdp.ClearSessionKey();
 				if (m_currentCharacterId != 0u && !enterCmd.characterName.empty())
 				{
-					(void)m_authUi.SendEnterWorldAsync(m_currentCharacterId, enterCmd.characterName);
+					engine::network::UdpSessionKey udpKey{};
+					const bool keyOk = engine::network::GenerateUdpSessionKey(udpKey);
+					if (!keyOk)
+						LOG_ERROR(Core, "[EnterWorld] tirage de la clé de session UDP impossible : session de jeu en clair");
+					const bool sent = m_authUi.SendEnterWorldAsync(m_currentCharacterId, enterCmd.characterName,
+						keyOk ? &udpKey : nullptr);
+					if (sent && keyOk)
+						m_gameplayUdp.SetSessionKey(m_currentCharacterId, udpKey);
 					// Phase 5 reconnect — mémorise l'identité pour pouvoir ré-envoyer
 					// CHARACTER_ENTER_WORLD à la reconnexion sans repasser par tout le flow.
-					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName);
+					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName,
+						(sent && keyOk) ? &udpKey : nullptr);
+					// Copie locale effacée (la clé vit dans GameplayUdpClient et AuthUi).
+					volatile uint8_t* wipe = udpKey.data();
+					for (size_t i = 0; i < udpKey.size(); ++i)
+						wipe[i] = 0u;
 				}
 
 				// Carte à découvrir : demandée APRÈS l'annonce du personnage (même

@@ -10,6 +10,7 @@
 
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -184,6 +185,34 @@ namespace
 	}
 }
 
+namespace
+{
+	/// ETAPE3.1 — clé de session UDP : écrite avec l'admission, conservée par une
+	/// admission sans clé, remplacée par une nouvelle clé, invisible après expiration.
+	void TestUdpSessionKey()
+	{
+		AdmittedCharacterRegistry reg;
+		reg.SetTtlMs(1000u);
+		std::array<uint8_t, 32> keyA{};
+		keyA[0] = 0xA1u;
+		std::array<uint8_t, 32> keyB{};
+		keyB[0] = 0xB2u;
+		reg.Admit(42u, 1001u, "Aria", "female", 0u, 1000u);
+		assert(!reg.AdmittedUdpSessionKey(42u, 1000u).has_value()); // admission sans clé
+		reg.Admit(42u, 1001u, "Aria", "female", 0u, 1000u, &keyA);
+		assert(reg.AdmittedUdpSessionKey(42u, 1000u) == keyA);
+		reg.Admit(42u, 1001u, "", "", 0u, 1500u); // ticket TCP sans clé : la clé reste
+		assert(reg.AdmittedUdpSessionKey(42u, 1500u) == keyA);
+		reg.SetUdpSessionKey(42u, keyB); // nouvel EnterWorld
+		assert(reg.AdmittedUdpSessionKey(42u, 1500u) == keyB);
+		assert(!reg.AdmittedUdpSessionKey(42u, 3000u).has_value()); // admission expirée
+		reg.SetUdpSessionKey(99u, keyA); // personnage non admis : no-op
+		assert(!reg.AdmittedUdpSessionKey(99u, 1500u).has_value());
+		assert(!reg.AdmittedUdpSessionKey(0u, 1500u).has_value());
+		std::puts("[OK] TestUdpSessionKey");
+	}
+}
+
 int main()
 {
 	TestAdmitThenIsAdmitted();
@@ -198,6 +227,7 @@ int main()
 	TestAdmitWithGuild();
 	TestReAdmitWithoutGuildPreservesGuild();
 	TestOwnerGeneration();
+	TestUdpSessionKey();
 	std::puts("All AdmittedCharacterRegistry tests passed");
 	return 0;
 }

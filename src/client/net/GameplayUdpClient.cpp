@@ -110,12 +110,33 @@ namespace engine::client
 			return false;
 		}
 
+		// ETAPE3.1 — nouvelle socket = nouveau sel = nouvelle clé de travail : les
+		// compteurs repartent de zéro sans jamais réutiliser un nonce. Échec du tirage :
+		// on refuse d'ouvrir la session plutôt que de retomber en clair.
+		if (m_hasSessionKey)
+		{
+			engine::network::UdpSessionSalt salt{};
+			if (!engine::network::FillRandomBytes(std::span<uint8_t>(salt.data(), salt.size()))
+				|| !m_secure.Init(m_sessionKey, salt, engine::network::UdpSecureRole::Client))
+			{
+				LOG_ERROR(Net, "[GameplayUdpClient] Init FAILED: session chiffrée impossible (générateur aléatoire / OpenSSL)");
+				closesocket(s);
+				return false;
+			}
+		}
+		else
+		{
+			m_secure = engine::network::UdpSecureSession{};
+		}
+		m_rejectedIncoming = 0;
+
 		m_socket = ToOpaque(s);
 		m_host = std::move(host);
 		m_port = port;
 		m_serverClientId = 0;
 		m_active = true;
-		LOG_INFO(Net, "[GameplayUdpClient] Init OK (host={}, port={})", m_host, m_port);
+		LOG_INFO(Net, "[GameplayUdpClient] Init OK (host={}, port={}, chiffré={})", m_host, m_port,
+			m_secure.IsReady() ? "oui" : "non");
 		return true;
 #else
 		(void)host;
@@ -147,9 +168,45 @@ namespace engine::client
 		m_serverClientId = 0;
 		m_host.clear();
 		m_port = 0;
+		// ETAPE3.1 — la session (clé de travail + compteurs) meurt avec la socket ; la clé
+		// de session reste pour le prochain Init du même EnterWorld.
+		m_secure = engine::network::UdpSecureSession{};
+	}
+
+	void GameplayUdpClient::SetSessionKey(uint64_t characterId, const engine::network::UdpSessionKey& key)
+	{
+		m_sessionKey = key;
+		m_sessionCharacterId = characterId;
+		m_hasSessionKey = characterId != 0u;
+	}
+
+	void GameplayUdpClient::ClearSessionKey()
+	{
+		// Effacement volontaire octet par octet (pas de memset optimisable).
+		volatile uint8_t* bytes = m_sessionKey.data();
+		for (size_t i = 0; i < m_sessionKey.size(); ++i)
+			bytes[i] = 0u;
+		m_hasSessionKey = false;
+		m_sessionCharacterId = 0;
 	}
 
 	bool GameplayUdpClient::SendBytes(std::span<const std::byte> packet)
+	{
+		// ETAPE3.1 — session chiffrée : chaque paquet de jeu part scellé.
+		if (m_secure.IsReady())
+		{
+			std::vector<std::byte> sealed;
+			if (!m_secure.Seal(packet, sealed))
+			{
+				LOG_ERROR(Net, "[GameplayUdpClient] Send FAILED: scellement impossible");
+				return false;
+			}
+			return SendRaw(sealed);
+		}
+		return SendRaw(packet);
+	}
+
+	bool GameplayUdpClient::SendRaw(std::span<const std::byte> packet)
 	{
 #if defined(_WIN32)
 		if (!m_active || m_socket == nullptr)
@@ -208,10 +265,28 @@ namespace engine::client
 		hm.requestedSnapshotHz = requestedSnapshotHz;
 		hm.clientNonce = clientNonce;
 		const std::vector<std::byte> packet = engine::server::EncodeHello(hm);
-		const bool ok = SendBytes(packet);
+		bool ok = false;
+		if (m_secure.IsReady())
+		{
+			// ETAPE3.1 — le Hello part dans une poignée de main chiffrée qui annonce le
+			// personnage en clair (le shard y retrouve la clé) et l'authentifie.
+			if (clientNonce != m_sessionCharacterId)
+			{
+				LOG_ERROR(Net, "[GameplayUdpClient] Hello refusé : nonce={} différent du personnage de la clé ({})",
+					clientNonce, m_sessionCharacterId);
+				return false;
+			}
+			std::vector<std::byte> sealed;
+			ok = m_secure.SealHandshake(clientNonce, packet, sealed) && SendRaw(sealed);
+		}
+		else
+		{
+			ok = SendRaw(packet);
+		}
 		if (ok)
 		{
-			LOG_INFO(Net, "[GameplayUdpClient] Hello sent (nonce={})", clientNonce);
+			LOG_INFO(Net, "[GameplayUdpClient] Hello sent (nonce={}, chiffré={})", clientNonce,
+				m_secure.IsReady() ? "oui" : "non");
 		}
 		else
 		{
@@ -769,6 +844,19 @@ namespace engine::client
 
 			std::vector<std::byte> one(static_cast<size_t>(r));
 			std::copy_n(buf.data(), static_cast<size_t>(r), one.begin());
+			// ETAPE3.1 — session chiffrée : seuls les datagrammes authentifiés passent
+			// (falsifiés, rejoués ou en clair : abandonnés).
+			if (m_secure.IsReady())
+			{
+				std::vector<std::byte> plain;
+				if (!m_secure.Open(one, plain))
+				{
+					if ((m_rejectedIncoming++ & 0xFFu) == 0u)
+						LOG_WARN(Net, "[GameplayUdpClient] Datagramme refusé (non authentifié), total={}", m_rejectedIncoming);
+					continue;
+				}
+				one = std::move(plain);
+			}
 			HandleMaybeWelcome(one);
 			out.push_back(std::move(one));
 		}

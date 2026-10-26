@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/shared/network/ServerProtocol.h"
+#include "src/shared/network/UdpSecureChannel.h"
 
 #include <array>
 #include <cstddef>
@@ -32,6 +33,19 @@ namespace engine::client
 		uint32_t ServerClientId() const { return m_serverClientId; }
 
 		bool IsActive() const { return m_active; }
+
+		/// ETAPE3.1 — active le chiffrement pour les prochaines sessions UDP : \p key est la
+		/// clé de session envoyée au master dans la requête EnterWorld de \p characterId.
+		/// Prend effet au prochain Init (chaque Init tire un nouveau sel, donc une
+		/// nouvelle clé de travail). Doit être appelé AVANT Init / SendHello.
+		void SetSessionKey(uint64_t characterId, const engine::network::UdpSessionKey& key);
+
+		/// ETAPE3.1 — désactive le chiffrement des prochaines sessions (aucun EnterWorld
+		/// envoyé au master, ex. mode hors ligne). Effacement sûr de la clé.
+		void ClearSessionKey();
+
+		/// ETAPE3.1 — vrai si la session UDP courante est chiffrée.
+		bool IsEncrypted() const { return m_secure.IsReady(); }
 
 		/// Send one Hello datagram (character / persistence nonce).
 		/// Phase 3.7.5 — clientNonce élargi à uint64 pour transporter un character_id complet.
@@ -147,7 +161,10 @@ namespace engine::client
 
 	private:
 		bool EnsureWinsock();
+		/// Envoie un paquet de jeu : scellé si la session est chiffrée (ETAPE3.1).
 		bool SendBytes(std::span<const std::byte> packet);
+		/// ETAPE3.1 — envoie le datagramme tel quel (déjà scellé ou session en clair).
+		bool SendRaw(std::span<const std::byte> datagram);
 		void HandleMaybeWelcome(std::span<const std::byte> packet);
 
 		void* m_socket = nullptr; // SOCKET
@@ -156,5 +173,12 @@ namespace engine::client
 		uint32_t m_serverClientId = 0;
 		std::string m_host;
 		uint16_t m_port = 0;
+
+		// ETAPE3.1 — chiffrement des datagrammes (cf. UdpSecureChannel.h).
+		bool m_hasSessionKey = false;                  ///< clé fournie par SetSessionKey.
+		uint64_t m_sessionCharacterId = 0;             ///< personnage lié à la clé.
+		engine::network::UdpSessionKey m_sessionKey{}; ///< clé de session de l'EnterWorld.
+		engine::network::UdpSecureSession m_secure;    ///< session de la socket courante.
+		uint64_t m_rejectedIncoming = 0;               ///< datagrammes reçus refusés.
 	};
 }

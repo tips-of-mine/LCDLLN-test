@@ -8,11 +8,13 @@
  *    fait l'aller-retour.
  */
 
+#include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/network/PacketView.h"
 
 #include <cstdint>
 #include <cstdlib>
+#include <array>
 #include <iostream>
 #include <vector>
 
@@ -152,6 +154,41 @@ static void TestAdmitCharacterOwnerGeneration()
 		"admit owner: master sans generation -> 0, guild_id intact");
 }
 
+// ETAPE3.1 — clé de session UDP en queue : round-trip, absence (master antérieur),
+// queue de mauvaise taille refusée. La requête EnterWorld client -> master porte la
+// même queue (même règles).
+static void TestAdmitCharacterUdpSessionKey()
+{
+	std::array<uint8_t, 32> key{};
+	for (size_t i = 0; i < key.size(); ++i)
+		key[i] = static_cast<uint8_t>(i * 7u + 1u);
+	auto pkt = engine::network::BuildAdmitCharacterPacket(42ull, 1337ull, "Aria", "female", 7ull, 12ull, &key);
+	engine::network::PacketView view;
+	Assert(engine::network::PacketView::Parse(pkt.data(), pkt.size(), view)
+		== engine::network::PacketParseResult::Ok, "admit key: paquet parsable");
+	auto parsed = engine::network::ParseAdmitCharacterPayload(view.Payload(), view.PayloadSize());
+	Assert(parsed.has_value() && parsed->has_udp_session_key && parsed->udp_session_key == key
+		&& parsed->owner_generation == 12ull, "admit key: round-trip");
+	std::vector<uint8_t> withoutKey(view.Payload(), view.Payload() + view.PayloadSize() - 32u);
+	auto legacy = engine::network::ParseAdmitCharacterPayload(withoutKey.data(), withoutKey.size());
+	Assert(legacy.has_value() && !legacy->has_udp_session_key && legacy->owner_generation == 12ull,
+		"admit key: master sans cle -> pas de cle, generation intacte");
+	std::vector<uint8_t> truncatedKey(view.Payload(), view.Payload() + view.PayloadSize() - 1u);
+	Assert(!engine::network::ParseAdmitCharacterPayload(truncatedKey.data(), truncatedKey.size()).has_value(),
+		"admit key: cle tronquee refusee");
+
+	auto req = engine::network::BuildCharacterEnterWorldRequestPayload(1337ull, "Aria", &key);
+	auto parsedReq = engine::network::ParseCharacterEnterWorldRequestPayload(req.data(), req.size());
+	Assert(parsedReq.has_value() && parsedReq->hasUdpSessionKey && parsedReq->udpSessionKey == key
+		&& parsedReq->characterName == "Aria", "enter world key: round-trip");
+	auto reqLegacy = engine::network::BuildCharacterEnterWorldRequestPayload(1337ull, "Aria");
+	auto parsedLegacy = engine::network::ParseCharacterEnterWorldRequestPayload(reqLegacy.data(), reqLegacy.size());
+	Assert(parsedLegacy.has_value() && !parsedLegacy->hasUdpSessionKey, "enter world key: client sans cle");
+	req.pop_back();
+	Assert(!engine::network::ParseCharacterEnterWorldRequestPayload(req.data(), req.size()).has_value(),
+		"enter world key: cle tronquee refusee");
+}
+
 int main()
 {
 	TestHeartbeatLegacyNoPlayers();
@@ -160,6 +197,7 @@ int main()
 	TestAdmitCharacterRoundTripWithGuild();
 	TestAdmitCharacterLegacyWithoutGuild();
 	TestAdmitCharacterOwnerGeneration();
+	TestAdmitCharacterUdpSessionKey();
 	std::cerr << (s_failCount == 0 ? "[OK] all shard_payloads tests passed\n" : "[FAIL] some tests failed\n");
 	return s_failCount == 0 ? 0 : 1;
 }

@@ -51,6 +51,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
+    # ETAPE3.1 : enveloppe chiffrée des datagrammes UDP de jeu.
+    ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannel.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
@@ -87,6 +89,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spell/ClassSkillLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
+    # ETAPE3.1 : sessions UDP chiffrées du shard.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTable.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
@@ -694,6 +698,15 @@ elseif(UNIX)
   lcdlln_add_simple_test(map_discovery_tracker_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTrackerTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp)
+  # ETAPE3.1 : enveloppe chiffrée UDP (UdpSecureChannel.cpp vient d'engine_core).
+  lcdlln_add_simple_test(udp_secure_channel_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannelTests.cpp)
+  target_link_libraries(udp_secure_channel_tests PRIVATE OpenSSL::SSL)
+  # ETAPE3.1 : sessions UDP chiffrées du shard (rejeu, doublon, sel, purge).
+  lcdlln_add_simple_test(udp_session_table_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTableTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTable.cpp)
+  target_link_libraries(udp_session_table_tests PRIVATE OpenSSL::SSL)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)
@@ -1379,6 +1392,8 @@ elseif(UNIX)
     # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/items/ConsumableEffectLibrary.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
+    # ETAPE3.1 : sessions UDP chiffrées du shard.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTable.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp

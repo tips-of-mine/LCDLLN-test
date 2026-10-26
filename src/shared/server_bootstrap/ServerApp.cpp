@@ -463,6 +463,25 @@ namespace engine::server
 		m_spawners.clear();
 		m_pendingDatagrams.clear();
 		m_pendingHellos.clear(); // TA.3 — buffer Hello en attente d'admission, vide au boot.
+		// ETAPE3.1 — chiffrement des datagrammes de jeu. Défaut : obligatoire dès qu'un
+		// registre d'admission est branché (shard Linux : la clé arrive avec l'admission),
+		// facultatif sinon (build Windows sans master).
+		m_udpSessions.Clear();
+		m_udpRejectedDatagrams = 0;
+		const std::string encryptionMode = m_config.GetString("gameplay_udp.encryption", "");
+		if (encryptionMode == "required")
+			m_udpEncryptionMode = UdpEncryptionMode::Required;
+		else if (encryptionMode == "optional")
+			m_udpEncryptionMode = UdpEncryptionMode::Optional;
+		else
+		{
+			if (!encryptionMode.empty())
+				LOG_WARN(Core, "[ServerApp] gameplay_udp.encryption='{}' inconnu (attendu : required | optional) : défaut appliqué",
+					encryptionMode);
+			m_udpEncryptionMode = (m_admittedRegistry != nullptr) ? UdpEncryptionMode::Required : UdpEncryptionMode::Optional;
+		}
+		LOG_INFO(Core, "[ServerApp] Chiffrement UDP : {}",
+			m_udpEncryptionMode == UdpEncryptionMode::Required ? "obligatoire" : "facultatif");
 		m_zoneGrids.clear();
 		m_nextServerEntityId = 0x200000000ull;
 		if (!m_zoneTransitionMap.Init())
@@ -914,12 +933,71 @@ namespace engine::server
 
 	void ServerApp::ProcessPacket(const Datagram& datagram)
 	{
+		// ETAPE3.1 — enveloppe chiffrée : poignée de main (Hello) ou données. Le paquet de
+		// jeu déchiffré repasse par DispatchGamePacket, exactement comme un paquet en clair.
+		const std::span<const std::byte> bytes(datagram.bytes.data(), datagram.size);
+		if (engine::network::IsSecureDatagram(bytes))
+		{
+			if (bytes.size() > 4u && static_cast<uint8_t>(bytes[4]) == engine::network::kUdpSecureTypeHandshake)
+			{
+				ProcessSecureHandshake(datagram.endpoint, bytes);
+				return;
+			}
+			Datagram plain{};
+			plain.endpoint = datagram.endpoint;
+			std::vector<std::byte> decrypted;
+			const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+			const bool opened = m_udpSessions.OpenData(PackEndpointKey(datagram.endpoint), bytes, nowMs, decrypted)
+				&& decrypted.size() <= plain.bytes.size();
+			if (opened)
+			{
+				std::copy(decrypted.begin(), decrypted.end(), plain.bytes.begin());
+				plain.size = decrypted.size();
+			}
+			if (!opened)
+			{
+				// Session inconnue, datagramme falsifié, rejoué ou trop ancien : abandon
+				// silencieux (journal 1 fois sur 256 pour ne pas noyer les logs sous un flood).
+				if ((m_udpRejectedDatagrams++ & 0xFFu) == 0u)
+				{
+					LOG_WARN(Net, "[ServerApp] UDP chiffré refusé (endpoint={}, total_refusés={})",
+						UdpTransport::EndpointToString(datagram.endpoint), m_udpRejectedDatagrams);
+				}
+				return;
+			}
+			DispatchGamePacket(plain);
+			return;
+		}
+
+		// Datagramme en clair : refusé en mode « required » et pour tout point de
+		// terminaison qui a déjà une session chiffrée (pas d'injection en clair dans une
+		// session authentifiée).
+		const bool endpointHasSession = m_udpSessions.HasSession(PackEndpointKey(datagram.endpoint));
+		if (m_udpEncryptionMode == UdpEncryptionMode::Required || endpointHasSession)
+		{
+			if ((m_udpRejectedDatagrams++ & 0xFFu) == 0u)
+			{
+				LOG_WARN(Net, "[ServerApp] UDP en clair refusé (endpoint={}, mode={}, session={}, total_refusés={})",
+					UdpTransport::EndpointToString(datagram.endpoint),
+					m_udpEncryptionMode == UdpEncryptionMode::Required ? "required" : "optional",
+					endpointHasSession ? "oui" : "non", m_udpRejectedDatagrams);
+			}
+			return;
+		}
+		DispatchGamePacket(datagram);
+	}
+
+	void ServerApp::DispatchGamePacket(const Datagram& datagram)
+	{
 		const std::span<const std::byte> packetBytes(datagram.bytes.data(), datagram.size);
 
 		HelloMessage hello{};
 		if (DecodeHello(packetBytes, hello))
 		{
-			HandleHello(datagram.endpoint, hello.clientNonce);
+			// ETAPE3.1 — un Hello qui arrive ici est en clair (le Hello chiffré passe par
+			// ProcessSecureHandshake, qui appelle HandleHello lui-même).
+			HandleHello(datagram.endpoint, hello.clientNonce, false);
 			return;
 		}
 
@@ -1849,7 +1927,7 @@ namespace engine::server
 #endif
 	}
 
-	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
+	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce, bool authenticatedBySession)
 	{
 		// R1-A — charge les tables de stats une seule fois (lazy). FromEmbedded renvoie
 		// directement un std::optional ; en cas d'échec on logue une fois et on garde nullopt
@@ -1882,6 +1960,23 @@ namespace engine::server
 			return;
 		}
 
+		// ETAPE3.1 — pas de repli vers le clair : si la clé de session UDP de ce personnage
+		// est connue, seul un Hello chiffré avec elle ouvre la session. Sinon un tiers
+		// qui connaît le character_id contournerait le chiffrement.
+		if (!authenticatedBySession && m_admittedRegistry != nullptr)
+		{
+			const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+			if (m_admittedRegistry->AdmittedUdpSessionKey(tentativeCharacterKey, nowMs).has_value())
+			{
+				LOG_WARN(Net,
+					"[ServerApp] Hello en clair refusé : le personnage a une clé de session UDP (character_key={}, endpoint={})",
+					tentativeCharacterKey,
+					UdpTransport::EndpointToString(endpoint));
+				return;
+			}
+		}
+
 		// TA.3 — Gate de session : si un registre d'admission est branché (shard Linux),
 		// on n'accepte le Hello que pour un character_id authentifié par un ticket validé
 		// (cf. ShardTicketHandshakeHandler). Empêche un client d'usurper le personnage
@@ -1900,10 +1995,14 @@ namespace engine::server
 				// l'admission sera vue.
 				// Dédup par character_key : un client qui spam Hello pour le même perso
 				// n'écrase que sa propre entrée (et le timestamp est rafraîchi).
+				// ETAPE3.1 — seules les entrées en clair sont dédupliquées ici : un Hello en
+				// clair ne doit jamais modifier une poignée de main chiffrée en attente
+				// (sinon un tiers redirigerait la session vers son propre point de
+				// terminaison). File bornée (kMaxPendingHellos).
 				bool found = false;
 				for (PendingHello& entry : m_pendingHellos)
 				{
-					if (entry.characterKey == tentativeCharacterKey)
+					if (entry.characterKey == tentativeCharacterKey && entry.sealedHello.empty())
 					{
 						entry.endpoint = endpoint;
 						entry.arrivedAtMs = nowMs;
@@ -1913,7 +2012,13 @@ namespace engine::server
 				}
 				if (!found)
 				{
-					m_pendingHellos.push_back(PendingHello{ endpoint, tentativeCharacterKey, nowMs });
+					if (m_pendingHellos.size() >= kMaxPendingHellos)
+					{
+						LOG_WARN(Net, "[ServerApp] Hello ignoré : file d'attente d'admission pleine ({} entrées)",
+							m_pendingHellos.size());
+						return;
+					}
+					m_pendingHellos.push_back(PendingHello{ endpoint, tentativeCharacterKey, nowMs, {} });
 				}
 				LOG_INFO(Net,
 					"[ServerApp] Hello mis en attente d'admission (character_key={}, endpoint={}, pending={})",
@@ -2638,16 +2743,157 @@ namespace engine::server
 				entry.characterKey,
 				UdpTransport::EndpointToString(entry.endpoint),
 				nowMs - entry.arrivedAtMs);
-			HandleHello(entry.endpoint, entry.characterKey);
+			// ETAPE3.1 — poignée de main chiffrée mise en attente : rouverte maintenant
+			// que l'admission (et donc la clé) est arrivée.
+			if (!entry.sealedHello.empty())
+			{
+				ProcessSecureHandshake(entry.endpoint, entry.sealedHello);
+				continue;
+			}
+			HandleHello(entry.endpoint, entry.characterKey, false);
 		}
+	}
+
+	bool ServerApp::SendDatagram(const Endpoint& endpoint, std::span<const std::byte> packet)
+	{
+		std::vector<std::byte> sealed;
+		switch (m_udpSessions.Seal(PackEndpointKey(endpoint), packet, sealed))
+		{
+		case UdpSessionTable::SealResult::Sealed:
+			return m_transport.Send(endpoint, sealed);
+		case UdpSessionTable::SealResult::Failed:
+			LOG_WARN(Net, "[ServerApp] UDP: scellement impossible (endpoint={})", UdpTransport::EndpointToString(endpoint));
+			return false;
+		case UdpSessionTable::SealResult::NoSession:
+			break;
+		}
+		// Pas de session chiffrée pour ce point de terminaison : rien ne part en clair en
+		// mode « required ».
+		if (m_udpEncryptionMode == UdpEncryptionMode::Required)
+			return false;
+		return m_transport.Send(endpoint, packet);
+	}
+
+	void ServerApp::ProcessSecureHandshake(const Endpoint& endpoint, std::span<const std::byte> datagram)
+	{
+		engine::network::UdpHandshakeHeader header{};
+		if (!engine::network::PeekUdpHandshake(datagram, header))
+		{
+			++m_udpRejectedDatagrams;
+			return;
+		}
+		if (m_admittedRegistry == nullptr)
+		{
+			// Shard sans registre d'admission (build Windows) : aucune clé connue.
+			++m_udpRejectedDatagrams;
+			LOG_WARN(Net, "[ServerApp] Hello chiffré ignoré : pas de registre d'admission (endpoint={})",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		if (!m_admittedRegistry->IsAdmitted(header.characterId, nowMs))
+		{
+			// Admission (et clé) pas encore reçues du master : même attente que le Hello
+			// en clair (TA.3), datagramme scellé conservé pour être rouvert plus tard.
+			// Rien n'est encore authentifié : une entrée par (personnage, sel), au plus
+			// kMaxSealedPendingPerCharacter par personnage (un faux Hello ne peut donc
+			// pas évincer le vrai), et kMaxPendingHellos au total (pas de saturation
+			// mémoire par un flot de faux Hello).
+			size_t sameCharacter = 0;
+			auto oldestSameCharacter = m_pendingHellos.end();
+			for (auto it = m_pendingHellos.begin(); it != m_pendingHellos.end(); ++it)
+			{
+				if (it->characterKey != header.characterId || it->sealedHello.empty())
+					continue;
+				engine::network::UdpHandshakeHeader pendingHeader{};
+				if (engine::network::PeekUdpHandshake(it->sealedHello, pendingHeader) && pendingHeader.salt == header.salt)
+				{
+					return; // même Hello déjà en attente
+				}
+				++sameCharacter;
+				if (oldestSameCharacter == m_pendingHellos.end() || it->arrivedAtMs < oldestSameCharacter->arrivedAtMs)
+					oldestSameCharacter = it;
+			}
+			if (sameCharacter >= kMaxSealedPendingPerCharacter && oldestSameCharacter != m_pendingHellos.end())
+				m_pendingHellos.erase(oldestSameCharacter);
+			if (m_pendingHellos.size() >= kMaxPendingHellos)
+			{
+				++m_udpRejectedDatagrams;
+				LOG_WARN(Net, "[ServerApp] Hello chiffré ignoré : file d'attente d'admission pleine ({} entrées)",
+					m_pendingHellos.size());
+				return;
+			}
+			PendingHello pending{ endpoint, header.characterId, nowMs, {} };
+			pending.sealedHello.assign(datagram.begin(), datagram.end());
+			m_pendingHellos.push_back(std::move(pending));
+			LOG_INFO(Net, "[ServerApp] Hello chiffré mis en attente d'admission (character_key={}, endpoint={})",
+				header.characterId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		const auto key = m_admittedRegistry->AdmittedUdpSessionKey(header.characterId, nowMs);
+		if (!key)
+		{
+			++m_udpRejectedDatagrams;
+			LOG_WARN(Net, "[ServerApp] Hello chiffré refusé : aucune clé de session pour ce personnage "
+				"(client ou master antérieur ?) (character_key={}, endpoint={})",
+				header.characterId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		// Ouverture + anti-rejeu (sel déjà utilisé avec cette clé) : UdpSessionTable.
+		std::vector<std::byte> plain;
+		const auto result = m_udpSessions.OpenHandshake(PackEndpointKey(endpoint), *key, datagram, nowMs, plain);
+		if (result == UdpSessionTable::HandshakeResult::Duplicate)
+			return; // même Hello reçu deux fois : la session est déjà en place
+		if (result != UdpSessionTable::HandshakeResult::Opened)
+		{
+			++m_udpRejectedDatagrams;
+			LOG_WARN(Net, "[ServerApp] Hello chiffré refusé ({}) (character_key={}, endpoint={})",
+				result == UdpSessionTable::HandshakeResult::Replayed ? "rejeu" : "authentification",
+				header.characterId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		HelloMessage hello{};
+		if (!DecodeHello(plain, hello) || hello.clientNonce != header.characterId)
+		{
+			// Authentique mais incohérent (bug client) : on retire la session installée.
+			m_udpSessions.Drop(PackEndpointKey(endpoint));
+			++m_udpRejectedDatagrams;
+			LOG_WARN(Net, "[ServerApp] Hello chiffré invalide (character_key={}, endpoint={})",
+				header.characterId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		LOG_INFO(Net, "[ServerApp] Session UDP chiffrée ouverte (character_key={}, endpoint={})",
+			header.characterId, UdpTransport::EndpointToString(endpoint));
+		HandleHello(endpoint, hello.clientNonce, true);
+	}
+
+	void ServerApp::DropUdpSession(const Endpoint& endpoint)
+	{
+		m_udpSessions.Drop(PackEndpointKey(endpoint));
+	}
+
+	void ServerApp::PruneUdpSessions(uint64_t nowMs)
+	{
+		// Sels : inutiles au-delà de la durée de vie d'une admission (un Hello avec une clé
+		// plus ancienne n'est de toute façon plus admis). 10 minutes couvrent le TTL par
+		// défaut du registre (5 minutes) avec marge.
+		constexpr uint64_t kSaltRetentionMs = 10u * 60u * 1000u;
+		m_udpSessions.Prune(nowMs, kUdpClientIdleTimeoutMs, kSaltRetentionMs, [this](uint64_t endpointKey) {
+			return m_clientIndexByPackedEndpoint.find(endpointKey) != m_clientIndexByPackedEndpoint.end();
+		});
 	}
 
 	void ServerApp::EvictIdleUdpClients()
 	{
-		if (m_clients.empty())
-			return;
 		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::steady_clock::now().time_since_epoch()).count());
+		if (m_clients.empty())
+		{
+			PruneUdpSessions(nowMs); // ETAPE3.1 — même sans client connecté
+			return;
+		}
 		// Recolte les candidats puis appelle DisconnectConnectedClient hors-boucle (qui
 		// modifie m_clients + reconstruit les index hash TG.2 ; iterer en mutation casserait).
 		std::vector<uint32_t> toDisconnect;
@@ -2670,6 +2916,8 @@ namespace engine::server
 		{
 			DisconnectConnectedClient(clientId, "udp_idle_timeout");
 		}
+		// ETAPE3.1 — sessions chiffrées orphelines et sels expirés.
+		PruneUdpSessions(nowMs);
 	}
 
 	void ServerApp::TickOnce()
@@ -4783,7 +5031,7 @@ namespace engine::server
 		message.positionZ = client.positionMetersZ;
 		message.yawRadians = client.yawRadians;
 		message.reason = reason;
-		if (!m_transport.Send(client.endpoint, EncodeForcePosition(message)))
+		if (!SendDatagram(client.endpoint, EncodeForcePosition(message)))
 		{
 			LOG_WARN(Net, "[ServerApp] ForcePosition send failed (client_id={}, reason={})",
 				client.clientId, reason);
@@ -4998,7 +5246,7 @@ namespace engine::server
 			}
 		}
 		const std::vector<std::byte> packet = EncodeEquipmentUpdate(message, entries);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] EquipmentUpdate send failed (client_id={})", receiver.clientId);
 			return false;
@@ -5562,7 +5810,7 @@ namespace engine::server
 		LootNotifyMessage lootNotify{};
 		lootNotify.clientId = looter->clientId;
 		lootNotify.items = droppedItems;
-		if (!m_transport.Send(looter->endpoint, EncodeLootNotify(lootNotify)))
+		if (!SendDatagram(looter->endpoint, EncodeLootNotify(lootNotify)))
 		{
 			LOG_WARN(Net, "[ServerApp] LootNotify send failed (client_id={})", looter->clientId);
 		}
@@ -5965,7 +6213,7 @@ namespace engine::server
 		message.clientId = client.clientId;
 		message.currentResource = client.currentResource;
 		message.maxResource = client.maxResource;
-		if (!m_transport.Send(client.endpoint, EncodeResourceUpdate(message)))
+		if (!SendDatagram(client.endpoint, EncodeResourceUpdate(message)))
 		{
 			LOG_WARN(Net, "[ServerApp] ResourceUpdate send failed (client_id={})", client.clientId);
 			return;
@@ -6220,7 +6468,7 @@ namespace engine::server
 		castBar.status = kCastBarStatusStart;
 		castBar.durationMs = spell->castTimeMs;
 		castBar.spellId = spell->spellId;
-		(void)m_transport.Send(client->endpoint, EncodeCastBarUpdate(castBar));
+		(void)SendDatagram(client->endpoint, EncodeCastBarUpdate(castBar));
 		LOG_INFO(Net, "[ServerApp] Cast started (client_id={}, spell={}, duration_ms={})",
 			client->clientId, spell->spellId, spell->castTimeMs);
 	}
@@ -6231,7 +6479,7 @@ namespace engine::server
 		msg.clientId = client.clientId;
 		msg.slots = client.actionBarLayout;
 		const std::vector<std::byte> packet = EncodeActionBarLayoutUpdate(msg);
-		if (!m_transport.Send(client.endpoint, packet))
+		if (!SendDatagram(client.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendActionBarLayout failed (client_id={})", client.clientId);
 			return false;
@@ -6410,7 +6658,7 @@ namespace engine::server
 		// serveur mais ne sont ni envoyés ni activables.
 		msg.slots = client.beltLayout;
 		msg.slots.resize(BeltCapacity(client));
-		return m_transport.Send(client.endpoint, EncodeBeltLayoutUpdate(msg));
+		return SendDatagram(client.endpoint, EncodeBeltLayoutUpdate(msg));
 	}
 
 	uint8_t ServerApp::BeltCapacity(const ConnectedClient& client) const
@@ -6536,7 +6784,7 @@ namespace engine::server
 		msg.classId = client.classId;
 		msg.knownSkillIds = client.knownSkillIds;
 		const std::vector<std::byte> packet = EncodeClassProgressionUpdate(msg);
-		if (!m_transport.Send(client.endpoint, packet))
+		if (!SendDatagram(client.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendClassProgression failed (client_id={})", client.clientId);
 			return false;
@@ -6628,7 +6876,7 @@ namespace engine::server
 				cancel.clientId = client.clientId;
 				cancel.status = kCastBarStatusCancel;
 				cancel.spellId = client.activeCastSpellId;
-				(void)m_transport.Send(client.endpoint, EncodeCastBarUpdate(cancel));
+				(void)SendDatagram(client.endpoint, EncodeCastBarUpdate(cancel));
 				LOG_INFO(Net, "[ServerApp] Cast cancelled (client_id={}, spell={}, reason={})",
 					client.clientId, client.activeCastSpellId, casterDead ? "dead" : "moved");
 				client.activeCastSpellId.clear();
@@ -6657,7 +6905,7 @@ namespace engine::server
 			complete.clientId = client.clientId;
 			complete.status = kCastBarStatusComplete;
 			complete.spellId = finishedSpellId;
-			(void)m_transport.Send(client.endpoint, EncodeCastBarUpdate(complete));
+			(void)SendDatagram(client.endpoint, EncodeCastBarUpdate(complete));
 			ResolveSpellCast(client, *spell, target);
 		}
 	}
@@ -7216,7 +7464,7 @@ namespace engine::server
 			{
 				continue;
 			}
-			(void)m_transport.Send(receiver.endpoint, packet);
+			(void)SendDatagram(receiver.endpoint, packet);
 		}
 
 		const uint64_t nowMs = NowMonotonicMs();
@@ -7254,7 +7502,7 @@ namespace engine::server
 			{
 				continue;
 			}
-			(void)m_transport.Send(receiver.endpoint, packet);
+			(void)SendDatagram(receiver.endpoint, packet);
 		}
 	}
 
@@ -7752,7 +8000,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeQuestGiverList(msg);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] QuestGiverList send failed (client_id={}, npc={})",
 				receiver.clientId,
@@ -7989,7 +8237,7 @@ namespace engine::server
 		InventoryDeltaMessage message{};
 		message.clientId = receiver.clientId;
 		const std::vector<std::byte> packet = EncodeInventoryDelta(message, receiver.inventory);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] InventoryDelta send failed (client_id={}, changed={}, total={})",
 				receiver.clientId,
@@ -8014,7 +8262,7 @@ namespace engine::server
 		message.badges = receiver.badges;
 		message.premiumCurrency = receiver.premiumCurrency;
 		const std::vector<std::byte> packet = EncodeWalletUpdate(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] WalletUpdate send failed (client_id={})", receiver.clientId);
 			return false;
@@ -8128,7 +8376,7 @@ namespace engine::server
 		message.rewardItems.assign(rewardItems.begin(), rewardItems.end());
 
 		const std::vector<std::byte> packet = EncodeEventState(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] EventState send failed (client_id={}, event_id={})",
 				receiver.clientId,
@@ -8214,7 +8462,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeQuestDelta(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] QuestDelta send failed (client_id={}, quest_id={})",
 				receiver.clientId,
@@ -8546,7 +8794,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeSpawn(entity);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] Spawn send failed (receiver_client_id={}, entity_id={})",
 				receiver.clientId,
@@ -8566,7 +8814,7 @@ namespace engine::server
 		DespawnEntity entity{};
 		entity.entityId = entityId;
 		const std::vector<std::byte> packet = EncodeDespawn(entity);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] Despawn send failed (receiver_client_id={}, entity_id={})",
 				receiver.clientId,
@@ -8583,7 +8831,7 @@ namespace engine::server
 	bool ServerApp::SendZoneChange(const ConnectedClient& receiver, const ZoneChangeMessage& message)
 	{
 		const std::vector<std::byte> packet = EncodeZoneChange(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] ZoneChange send failed (client_id={}, zone_id={})",
 				receiver.clientId,
@@ -8604,7 +8852,7 @@ namespace engine::server
 	bool ServerApp::SendCombatEvent(const ConnectedClient& receiver, const CombatEventMessage& message)
 	{
 		const std::vector<std::byte> packet = EncodeCombatEvent(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net,
 				"[ServerApp] CombatEvent send failed (client_id={}, attacker_entity_id={}, target_entity_id={})",
@@ -8626,7 +8874,7 @@ namespace engine::server
 	bool ServerApp::SendChatRelay(const ConnectedClient& receiver, const ChatRelayMessage& message)
 	{
 		const std::vector<std::byte> packet = EncodeChatRelay(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net,
 				"[ServerApp] ChatRelay send FAILED (receiver_client_id={}, sender_entity_id={})",
@@ -8646,7 +8894,7 @@ namespace engine::server
 	bool ServerApp::SendEmoteRelay(const ConnectedClient& receiver, const EmoteRelayMessage& message)
 	{
 		const std::vector<std::byte> packet = EncodeEmoteRelay(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net,
 				"[ServerApp] EmoteRelay send FAILED (receiver_client_id={}, actor_entity_id={})",
@@ -8670,7 +8918,7 @@ namespace engine::server
 		welcome.tickHz = m_tickHz;
 		welcome.snapshotHz = m_snapshotHz;
 		const std::vector<std::byte> packet = EncodeWelcome(welcome);
-		if (!m_transport.Send(client.endpoint, packet))
+		if (!SendDatagram(client.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] Welcome send failed (client_id={}, endpoint={})",
 				client.clientId,
@@ -8721,7 +8969,7 @@ namespace engine::server
 		msg.profileId = client.profileId;
 
 		const std::vector<std::byte> packet = EncodePlayerStats(msg);
-		if (!m_transport.Send(client.endpoint, packet))
+		if (!SendDatagram(client.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendPlayerStats failed (client_id={})", client.clientId);
 			return false;
@@ -8747,7 +8995,7 @@ namespace engine::server
 			levelU8, m_statsTables->xpBase, m_statsTables->xpFactor, levelMaxU8);
 
 		const std::vector<std::byte> packet = EncodePlayerXpUpdate(msg);
-		if (!m_transport.Send(client.endpoint, packet))
+		if (!SendDatagram(client.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendPlayerXpUpdate failed (client_id={})", client.clientId);
 			return false;
@@ -8808,7 +9056,7 @@ namespace engine::server
 			snapshot.chunkIndex = chunkIdx;
 			snapshot.chunkCount = chunkCount;
 			const std::vector<std::byte> packet = EncodeSnapshot(snapshot, chunkEntities);
-			if (!m_transport.Send(client.endpoint, packet))
+			if (!SendDatagram(client.endpoint, packet))
 			{
 				LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={}, chunk={}/{})",
 					client.clientId, m_currentTick, chunkIdx + 1u, chunkCount);
@@ -9376,6 +9624,9 @@ namespace engine::server
 		m_antiCheat.Reset(clientIt->persistenceCharacterKey);
 
 		OnClientLogout(*clientIt);
+		// ETAPE3.1 — la session chiffrée meurt avec le client (après OnClientLogout, qui
+		// peut encore lui envoyer des paquets). Un nouveau Hello rouvrira une session.
+		DropUdpSession(clientIt->endpoint);
 		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
 		m_clients.erase(clientIt);
 		// TG.2 — l'erase décale les indices après le slot supprimé ; reconstruire les 3 maps.
@@ -9817,7 +10068,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeFriendListSync(msg);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendFriendListSync send failed (client_id={})", receiver.clientId);
 			return;
@@ -9846,7 +10097,7 @@ namespace engine::server
 			if (peer.clientId == subject.clientId)
 				continue;
 
-			if (!m_transport.Send(peer.endpoint, packet))
+			if (!SendDatagram(peer.endpoint, packet))
 			{
 				LOG_WARN(Net, "[ServerApp] BroadcastFriendStatusUpdate send failed (peer_client_id={})", peer.clientId);
 			}
@@ -9960,7 +10211,7 @@ namespace engine::server
 		PartyInviteNotifyMessage notify{};
 		notify.inviterName = senderLabel;
 		const std::vector<std::byte> notifyPacket = EncodePartyInviteNotify(notify);
-		if (!m_transport.Send(target->endpoint, notifyPacket))
+		if (!SendDatagram(target->endpoint, notifyPacket))
 		{
 			LOG_WARN(Net, "[ServerApp] PartyInviteNotify send failed (target_client_id={})", target->clientId);
 		}
@@ -10151,7 +10402,7 @@ namespace engine::server
 			const ConnectedClient* member = FindClientByEntityId(m.entityId);
 			if (member == nullptr)
 				continue;
-			if (!m_transport.Send(member->endpoint, packet))
+			if (!SendDatagram(member->endpoint, packet))
 			{
 				LOG_WARN(Net, "[ServerApp] BroadcastPartyUpdate send failed (client_id={})", m.clientId);
 			}
@@ -10180,7 +10431,7 @@ namespace engine::server
 			msg.members.push_back(std::move(entry));
 		}
 		const std::vector<std::byte> packet = EncodePartyUpdate(msg);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendPartyUpdate send failed (client_id={})", receiver.clientId);
 			return false;
@@ -10402,7 +10653,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeShopOpen(message);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendShopOpen FAILED: transport send (client_id={})", receiver.clientId);
 			return false;
@@ -10634,7 +10885,7 @@ namespace engine::server
 			msg.rows.push_back(w);
 		}
 		const std::vector<std::byte> packet = EncodeAuctionBrowseResult(msg);
-		if (!m_transport.Send(receiver.endpoint, packet))
+		if (!SendDatagram(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] AuctionBrowseResult send FAILED (client_id={})", receiver.clientId);
 			return false;
@@ -11898,7 +12149,7 @@ namespace engine::server
 		/// Notify target via TradeRequestNotify packet.
 		const TradeRequestNotifyMessage notify{ "P" + std::to_string(sender.clientId) };
 		const auto packet = EncodeTradeRequestNotify(notify);
-		m_transport.Send(target->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		SendDatagram(target->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 
 		SendChatSystemNotice(sender, "Trade request sent to " + std::string(targetName) + ".");
 		LOG_INFO(Net, "[TradeSystem] /trade request sent (sender={}, target={})",
@@ -12124,13 +12375,13 @@ namespace engine::server
 		{
 			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdA, m_currentTick);
 			const auto packet = EncodeTradeWindowUpdate(msg);
-			m_transport.Send(clientA->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(clientA->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		}
 		if (clientB != nullptr)
 		{
 			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdB, m_currentTick);
 			const auto packet = EncodeTradeWindowUpdate(msg);
-			m_transport.Send(clientB->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(clientB->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		}
 	}
 
@@ -12145,7 +12396,7 @@ namespace engine::server
 			}
 			const TradeCompleteMessage msg{ clientId };
 			const auto packet = EncodeTradeComplete(msg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			SendChatSystemNotice(*client, "Trade completed successfully.");
 		};
 		sendComplete(clientIdA);
@@ -12165,7 +12416,7 @@ namespace engine::server
 			{
 				return;
 			}
-			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			SendChatSystemNotice(*client, "Trade cancelled: " + std::string(reason));
 		};
 		sendCancelled(clientIdA);
@@ -12256,7 +12507,7 @@ namespace engine::server
 		{
 			const HarvestStartMessage startMsg{ message.nodeEntityId, durationTicks };
 			const auto packet = EncodeHarvestStart(startMsg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[GatheringSystem] HarvestRequest OK: client={} node={} ticks={}",
 			         client->clientId, message.nodeEntityId, durationTicks);
 			break;
@@ -12339,7 +12590,7 @@ namespace engine::server
 			/// Send HarvestComplete then InventoryDelta.
 			const HarvestCompleteMessage completeMsg{ outCompletedNodeIds[i] };
 			const auto completePkt = EncodeHarvestComplete(completeMsg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
 
 			if (!loot.empty())
 			{
@@ -12373,7 +12624,7 @@ namespace engine::server
 	{
 		const HarvestCancelledMessage msg{ nodeEntityId, reason };
 		const auto packet = EncodeHarvestCancelled(msg);
-		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		SendDatagram(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[GatheringSystem] HarvestCancelled sent: client={} node={} reason={}",
 		          receiver.clientId, nodeEntityId, static_cast<uint8_t>(reason));
 		return true;
@@ -12472,7 +12723,7 @@ namespace engine::server
 		}
 
 		const auto packet = EncodeCraftRecipeListResult(result);
-		m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[CraftingSystem] RecipeListResult sent: client={} profession='{}' recipes={}",
 		          client->clientId, message.professionKey, result.recipes.size());
 	}
@@ -12505,7 +12756,7 @@ namespace engine::server
 		{
 			const CraftStartMessage startMsg{ message.recipeId, durationTicks };
 			const auto packet = EncodeCraftStart(startMsg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[CraftingSystem] CraftStart: client={} recipe='{}' ticks={}",
 			         client->clientId, message.recipeId, durationTicks);
 			break;
@@ -12546,7 +12797,7 @@ namespace engine::server
 		{
 			const CraftCancelledMessage msg{ cancelled };
 			const auto packet = EncodeCraftCancelled(msg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[CraftingSystem] CraftCancelled: client={} recipe='{}'",
 			         client->clientId, cancelled);
 		}
@@ -12586,7 +12837,7 @@ namespace engine::server
 			completeMsg.newSkillLevel = newSkillLevel[i];
 			completeMsg.qualityTier   = static_cast<uint8_t>(qualityTiers[i]);
 			const auto completePkt = EncodeCraftComplete(completeMsg);
-			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+			SendDatagram(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
 
 			/// Send InventoryDelta so the client refreshes its bag.
 			(void)SendInventoryDelta(
@@ -12621,7 +12872,7 @@ namespace engine::server
 			msg.professions.push_back(std::move(wire));
 		}
 		const auto packet = EncodeProfessionUpdate(msg);
-		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		SendDatagram(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[CraftingSystem] ProfessionUpdate sent: client={} professions={}",
 		          receiver.clientId, msg.professions.size());
 		return true;

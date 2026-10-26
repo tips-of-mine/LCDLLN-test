@@ -21,10 +21,13 @@ namespace engine::server
 	};
 
 	/// Received datagram storage used during the server tick.
+	/// ETAPE3.1 — capacité portée de 512 à 1472 octets (charge utile UDP maximale sur
+	/// un lien Ethernet de 1500 octets) : l'enveloppe chiffrée ajoute 29 à 45 octets et
+	/// un datagramme tronqué par recvfrom serait refusé à l'authentification.
 	struct Datagram
 	{
 		Endpoint endpoint{};
-		std::array<std::byte, 512> bytes{};
+		std::array<std::byte, 1472> bytes{};
 		size_t size = 0;
 	};
 

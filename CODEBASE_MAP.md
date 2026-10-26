@@ -226,6 +226,13 @@ RenderModel
 > **Règle (ETAPE2.8)** : avec une base, l'hôtel des ventes vit dans
 > `auction_listings` (migration 0081) ; chaque opération passe par
 > `ServerApp::ExecuteAuctionTx` (annonce + joueurs + courrier, une transaction).
+>
+> **Règle (ETAPE3.1)** : tout datagramme de jeu part par `ServerApp::SendDatagram`
+> (jamais `m_transport.Send` directement) : il est scellé en ChaCha20-Poly1305 avec la
+> session de l'adresse. La clé de session voyage client → master → shard en TLS
+> (queue de l'EnterWorld 47 et de l'admission 199), jamais en clair ni dans les logs.
+> Shard Linux : chiffrement obligatoire (`gameplay_udp.encryption`). Détail :
+> `docs/architecture/etape3_reseau.md`.
 
 ### Comptes et validation
 | Fichier | Rôle |

@@ -3,7 +3,8 @@
 namespace engine::server
 {
 	void AdmittedCharacterRegistry::Admit(uint64_t characterId, uint64_t accountId,
-		std::string_view characterName, std::string_view gender, uint64_t guildId, uint64_t nowMs)
+		std::string_view characterName, std::string_view gender, uint64_t guildId, uint64_t nowMs,
+		const std::array<uint8_t, 32>* udpSessionKey)
 	{
 		if (characterId == 0u)
 		{
@@ -29,6 +30,13 @@ namespace engine::server
 		if (guildId != 0u)
 		{
 			entry.guildId = guildId;
+		}
+		// ETAPE3.1 — même règle : une admission sans clé (ticket TCP, master legacy)
+		// garde la clé poussée par l'EnterWorld.
+		if (udpSessionKey != nullptr)
+		{
+			entry.udpSessionKey = *udpSessionKey;
+			entry.hasUdpSessionKey = true;
 		}
 	}
 
@@ -59,6 +67,37 @@ namespace engine::server
 			return 0u;
 		}
 		return it->second.ownerGeneration;
+	}
+
+	void AdmittedCharacterRegistry::SetUdpSessionKey(uint64_t characterId, const std::array<uint8_t, 32>& key)
+	{
+		if (characterId == 0u)
+		{
+			return;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it != m_admitted.end())
+		{
+			it->second.udpSessionKey = key;
+			it->second.hasUdpSessionKey = true;
+		}
+	}
+
+	std::optional<std::array<uint8_t, 32>> AdmittedCharacterRegistry::AdmittedUdpSessionKey(uint64_t characterId,
+		uint64_t nowMs) const
+	{
+		if (characterId == 0u)
+		{
+			return std::nullopt;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs || !it->second.hasUdpSessionKey)
+		{
+			return std::nullopt;
+		}
+		return it->second.udpSessionKey;
 	}
 
 	void AdmittedCharacterRegistry::Revoke(uint64_t characterId)

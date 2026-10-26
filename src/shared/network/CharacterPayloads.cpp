@@ -476,16 +476,30 @@ namespace engine::network
 			return std::nullopt;
 		if (!r.ReadString(out.characterName))
 			return std::nullopt;
+		// ETAPE3.1 — clé de session UDP optionnelle en queue (32 octets exactement).
+		// Une queue d'une autre taille est refusée : mieux vaut un EnterWorld en échec
+		// qu'une clé tronquée qui donnerait une session impossible à ouvrir.
+		if (r.Remaining() > 0u)
+		{
+			if (r.Remaining() != out.udpSessionKey.size()
+				|| !r.ReadBytes(out.udpSessionKey.data(), out.udpSessionKey.size()))
+				return std::nullopt;
+			out.hasUdpSessionKey = true;
+		}
 		return out;
 	}
 
-	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName)
+	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName,
+		const std::array<uint8_t, 32>* udpSessionKey)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteU64(characterId))
 			return {};
 		if (!w.WriteString(characterName))
+			return {};
+		// ETAPE3.1 — clé de session UDP en queue (cf. Parse).
+		if (udpSessionKey != nullptr && !w.WriteBytes(udpSessionKey->data(), udpSessionKey->size()))
 			return {};
 		buf.resize(w.Offset());
 		return buf;

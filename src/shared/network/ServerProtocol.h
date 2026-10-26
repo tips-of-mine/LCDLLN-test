@@ -63,7 +63,13 @@ namespace engine::server
 	/// UnequipRequest (97), EquipmentUpdate (98). Nouveaux opcodes client→serveur
 	/// (equip/unequip) : un vieux serveur les ignorerait → bump pour rejeter les
 	/// paires client/serveur incompatibles. Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 15;
+	/// ETAPE3.1 (chantier 4.3) — bump 15 → 16 : les datagrammes de jeu voyagent dans une
+	/// enveloppe ChaCha20-Poly1305 (cf. UdpSecureChannel.h) dont la clé de session part
+	/// du client dans la requête EnterWorld et arrive au shard dans le push d'admission.
+	/// Les paquets eux-mêmes ne changent pas ; le bump rend explicite qu'un client v15
+	/// (en clair) ne parle plus à un shard v16 (chiffrement obligatoire).
+	/// Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 16;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

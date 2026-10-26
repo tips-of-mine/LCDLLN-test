@@ -238,11 +238,13 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 					parsed->account_id, parsed->character_id);
 				return;
 			}
-			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={}, name='{}', gender='{}', guild_id={}, owner_generation={})",
+			// ETAPE3.1 — la clé de session UDP n'est JAMAIS journalisée (seule sa présence).
+			LOG_INFO(Core, "[ShardToMasterClient] AdmitCharacter received (account_id={}, character_id={}, name='{}', gender='{}', guild_id={}, owner_generation={}, udp_key={})",
 				parsed->account_id, parsed->character_id, parsed->character_name, parsed->gender, parsed->guild_id,
-				parsed->owner_generation);
+				parsed->owner_generation, parsed->has_udp_session_key ? "yes" : "no");
 			m_admit_callback(parsed->account_id, parsed->character_id, parsed->character_name, parsed->gender,
-				parsed->guild_id, parsed->owner_generation);
+				parsed->guild_id, parsed->owner_generation,
+				parsed->has_udp_session_key ? &parsed->udp_session_key : nullptr);
 		}
 	}
 

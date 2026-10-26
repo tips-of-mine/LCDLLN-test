@@ -16,6 +16,7 @@
 // Config + CharacterPayloads que ce header inclut deja).
 #include "src/client/character_creation/CharacterCreationUi.h"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <functional>
@@ -518,13 +519,22 @@ namespace engine::client
 		/// connId → (character_id, character_name) pour le sender display dans CHAT_RELAY +
 		/// la résolution de cible /whisper. Fire-and-forget (la réponse 1=ok / 0=error est
 		/// loggée en debug par PumpPostAuthEvents si l'engine l'a câblée).
-		bool SendEnterWorldAsync(uint64_t characterId, std::string_view characterName);
+		/// ETAPE3.1 — \p udpSessionKey : clé de session UDP tirée par l'engine pour cet
+		/// EnterWorld (32 octets), ajoutée en queue de la requête (canal TLS). Le master la
+		/// relaie au shard ; client et shard chiffrent ensuite les datagrammes de jeu avec.
+		/// nullptr = requête sans clé (session UDP non chiffrable).
+		bool SendEnterWorldAsync(uint64_t characterId, std::string_view characterName,
+			const std::array<uint8_t, 32>* udpSessionKey = nullptr);
 
 		/// Phase 5 reconnect — L'engine appelle cette méthode juste après avoir consommé
 		/// EnterWorldCommand (dans Engine.cpp), pour mémoriser le personnage actif. Cette
 		/// info est nécessaire pour ré-envoyer un CHARACTER_ENTER_WORLD_REQUEST à la
 		/// reconnexion master sans repasser par tout le flow Login/CharacterSelect.
-		void RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName);
+		/// ETAPE3.1 — \p udpSessionKey : clé de session UDP de cet EnterWorld, renvoyée
+		/// telle quelle à la reconnexion (la session UDP en cours continue avec la même
+		/// clé). nullptr = aucune clé (session en clair).
+		void RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName,
+			const std::array<uint8_t, 32>* udpSessionKey = nullptr);
 
 		/// Phase 5 reconnect — Tente une reconnexion master si requise et le délai dépassé.
 		/// À appeler chaque frame post-auth depuis l'engine. No-op si pas en mode reconnect.
@@ -1227,6 +1237,9 @@ namespace engine::client
 		/// pour pouvoir ré-envoyer ENTER_WORLD à la reconnexion.
 		uint64_t    m_postEnterWorldCharacterId = 0;
 		std::string m_postEnterWorldCharacterName;
+		/// ETAPE3.1 — clé de session UDP de l'EnterWorld en cours (renvoyée à la reconnexion).
+		bool m_postEnterWorldHasUdpKey = false;
+		std::array<uint8_t, 32> m_postEnterWorldUdpKey{};
 		/// True dès qu'on détecte une déconnexion master post-EnterWorld et qu'on n'a
 		/// pas encore donné suite (succès / abandon).
 		bool m_reconnectInProgress = false;

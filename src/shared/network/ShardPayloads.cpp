@@ -175,12 +175,21 @@ namespace engine::network
 			if (!r.ReadU64(out.owner_generation))
 				return std::nullopt;
 		}
+		// ETAPE3.1 — clé de session UDP optionnelle EN QUEUE (après owner_generation),
+		// 32 octets exactement : une queue d'une autre taille est refusée.
+		if (r.Remaining() > 0u)
+		{
+			if (r.Remaining() != out.udp_session_key.size()
+				|| !r.ReadBytes(out.udp_session_key.data(), out.udp_session_key.size()))
+				return std::nullopt;
+			out.has_udp_session_key = true;
+		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
 		std::string_view character_name, std::string_view gender, uint64_t guild_id,
-		uint64_t owner_generation)
+		uint64_t owner_generation, const std::array<uint8_t, 32>* udp_session_key)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
@@ -195,6 +204,9 @@ namespace engine::network
 			return {};
 		// ETAPE1.2 — génération du verrou de propriété, champ additif en queue.
 		if (!w.WriteU64(owner_generation))
+			return {};
+		// ETAPE3.1 — clé de session UDP du client, champ additif en queue.
+		if (udp_session_key != nullptr && !w.WriteBytes(udp_session_key->data(), udp_session_key->size()))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		// Push master→shard, pas de request_id ni session.

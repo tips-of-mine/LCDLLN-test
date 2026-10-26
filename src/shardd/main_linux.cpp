@@ -228,18 +228,22 @@ int main(int argc, char** argv)
 	// ce câblage, le Hello UDP du client (clientNonce=character_id) serait rejeté car le
 	// ticket TCP avait été émis avant le choix de perso (character_id=0 → non admis).
 	toMaster.SetAdmitCharacterCallback([&admittedRegistry](uint64_t account_id, uint64_t character_id,
-		std::string_view character_name, std::string_view gender, uint64_t guild_id, uint64_t owner_generation) {
+		std::string_view character_name, std::string_view gender, uint64_t guild_id, uint64_t owner_generation,
+		const std::array<uint8_t, 32>* udp_session_key) {
 		const std::uint64_t nowMs = static_cast<std::uint64_t>(
 			std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::steady_clock::now().time_since_epoch()).count());
 		// Roadmap-7 — la guilde du compte transite dans le push d'admission
 		// (0 = sans guilde) ; consommée au Hello pour ConnectedClient.guildId.
-		admittedRegistry.Admit(character_id, account_id, character_name, gender, guild_id, nowMs);
+		// ETAPE3.1 — la clé de session UDP du client est écrite avec l'admission (même
+		// verrou) : le Hello chiffré de ce personnage s'ouvre avec elle.
+		admittedRegistry.Admit(character_id, account_id, character_name, gender, guild_id, nowMs, udp_session_key);
 		// ETAPE1.2 — verrou de propriété : la génération sera présentée à chaque
 		// sauvegarde (ServerApp::SaveCharacterToDb). 0 = master legacy.
 		admittedRegistry.SetOwnerGeneration(character_id, owner_generation);
-		LOG_INFO(Net, "[ShardMain] Admit pushed by master (account_id={}, character_id={}, name='{}', gender='{}', guild_id={}, owner_generation={}, nowMs={})",
-			account_id, character_id, character_name, gender, guild_id, owner_generation, nowMs);
+		LOG_INFO(Net, "[ShardMain] Admit pushed by master (account_id={}, character_id={}, name='{}', gender='{}', guild_id={}, owner_generation={}, udp_key={}, nowMs={})",
+			account_id, character_id, character_name, gender, guild_id, owner_generation,
+			udp_session_key != nullptr ? "yes" : "no", nowMs);
 	});
 	toMaster.Start();
 	// TA.3 : boucle gameplay UDP (ServerApp) sur un thread dedie, gated par admittedRegistry.

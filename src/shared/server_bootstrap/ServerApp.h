@@ -29,6 +29,7 @@
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/UdpSecureChannel.h"
 #include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/shardd/anticheat/AntiCheatGameplay.h"
@@ -36,6 +37,7 @@
 #include "src/shardd/world/SpatialPartition.h"
 #include "src/shardd/world/TickScheduler.h"
 #include "src/shardd/world/UdpTransport.h"
+#include "src/shardd/world/UdpSessionTable.h"
 #include "src/shardd/world/ZoneTransitions.h"
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shared/world/StartLocations.h"
@@ -476,7 +478,51 @@ namespace engine::server
 		void NetworkPumpLoop();
 
 		/// Handle one protocol packet coming from a client endpoint.
+		/// ETAPE3.1 — point d'entrée unique : ouvre l'enveloppe chiffrée (poignée de main
+		/// ou données) puis passe le paquet de jeu en clair à DispatchGamePacket. Un
+		/// datagramme en clair n'est accepté que d'un point de terminaison sans session
+		/// chiffrée et seulement en mode de chiffrement « optional ».
 		void ProcessPacket(const Datagram& datagram);
+
+		/// ETAPE3.1 — traite un paquet du protocole de jeu en clair (déjà déchiffré et
+		/// authentifié, ou reçu en clair en mode « optional ») : décode et appelle le
+		/// handler correspondant. \p datagram.endpoint identifie l'émetteur.
+		void DispatchGamePacket(const Datagram& datagram);
+
+		/// ETAPE3.1 — modes de chiffrement des datagrammes de jeu
+		/// (config `gameplay_udp.encryption`).
+		enum class UdpEncryptionMode : uint8_t
+		{
+			/// Clair accepté des points de terminaison sans session chiffrée (build
+			/// Windows sans master, outils de test). Un personnage dont la clé est connue
+			/// ne peut jamais se connecter en clair (pas de repli vers le clair).
+			Optional,
+			/// Seuls les datagrammes chiffrés sont acceptés (défaut du shard Linux).
+			Required,
+		};
+
+		/// ETAPE3.1 — envoie un paquet de jeu à \p endpoint : scellé avec la session
+		/// chiffrée du point de terminaison s'il en a une, en clair sinon (mode
+		/// « optional » uniquement ; en mode « required » le paquet est abandonné).
+		/// Thread-safe (UdpSessionTable).
+		/// \return false si le scellement ou l'envoi a échoué.
+		bool SendDatagram(const Endpoint& endpoint, std::span<const std::byte> packet);
+
+		/// ETAPE3.1 — traite une poignée de main chiffrée (Hello) : retrouve la clé de
+		/// session du personnage annoncé (AdmittedCharacterRegistry), refuse un sel déjà
+		/// utilisé avec cette clé (rejeu), ouvre le Hello, installe la session pour
+		/// \p endpoint puis appelle HandleHello. Admission pas encore arrivée : le
+		/// datagramme scellé est mis en attente (DrainPendingHellos le retraite).
+		void ProcessSecureHandshake(const Endpoint& endpoint, std::span<const std::byte> datagram);
+
+		/// ETAPE3.1 — supprime la session chiffrée de \p endpoint (déconnexion). No-op
+		/// si aucune session.
+		void DropUdpSession(const Endpoint& endpoint);
+
+		/// ETAPE3.1 — oublie les sessions sans client depuis plus de
+		/// kUdpClientIdleTimeoutMs et les sels plus vieux que la durée d'admission.
+		/// Appelé avec EvictIdleUdpClients (1 Hz).
+		void PruneUdpSessions(uint64_t nowMs);
 
 		/// TA.4 : lit la position de spawn (table characters, écrite par le master) pour
 		/// \a characterId via m_characterDbPool. Renvoie true + remplit x/y/z/yawDeg si trouvé.
@@ -600,7 +646,11 @@ namespace engine::server
 
 		/// Accept a new client or refresh an existing handshake.
 		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
-		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce);
+		/// ETAPE3.1 — \p authenticatedBySession : vrai si le Hello est arrivé dans une
+		/// poignée de main chiffrée et authentifiée. Un Hello en clair (false) est refusé
+		/// pour un personnage dont le registre connaît une clé de session : pas de repli
+		/// vers le clair.
+		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce, bool authenticatedBySession);
 
 		/// TA.3 — Retraite les Hellos en attente d'admission. Appelé au début de chaque
 		/// TickOnce : pour chaque entrée du buffer, si le registry indique maintenant
@@ -1616,6 +1666,16 @@ namespace engine::server
 		/// SetAdmittedCharacterRegistry.
 		AdmittedCharacterRegistry* m_admittedRegistry = nullptr;
 
+		/// ETAPE3.1 — mode de chiffrement résolu dans Init (config
+		/// `gameplay_udp.encryption`, défaut : required si un registre d'admission est
+		/// branché, optional sinon).
+		UdpEncryptionMode m_udpEncryptionMode = UdpEncryptionMode::Optional;
+		/// ETAPE3.1 — sessions chiffrées par point de terminaison (clé = PackEndpointKey)
+		/// et sels déjà utilisés. Thread-safe (mutex interne).
+		UdpSessionTable m_udpSessions;
+		/// ETAPE3.1 — datagrammes refusés (clair interdit, authentification ratée, rejeu).
+		uint64_t m_udpRejectedDatagrams = 0;
+
 		/// TA.3 — race condition Hello/Admit : le Hello UDP du client peut arriver au shard
 		/// AVANT que le push d'admission TCP du master n'ait été traité (master émet le push
 		/// puis répond au client ; UDP client→shard est souvent plus court que TCP master→shard
@@ -1629,11 +1689,20 @@ namespace engine::server
 			Endpoint endpoint{};
 			uint64_t characterKey = 0;
 			uint64_t arrivedAtMs = 0;
+			/// ETAPE3.1 — poignée de main chiffrée reçue avant l'admission (et donc avant
+			/// la clé) : gardée telle quelle et rouverte quand la clé arrive. Vide pour
+			/// un Hello en clair.
+			std::vector<std::byte> sealedHello;
 		};
 		std::vector<PendingHello> m_pendingHellos;
 		/// TTL ms d'un Hello en attente. Au-delà, on abandonne (l'admission n'est pas arrivée).
 		/// 5 s suffisent largement vs la latence master→shard (typiquement < 100 ms).
 		static constexpr uint64_t kPendingHelloTtlMs = 5000u;
+		/// ETAPE3.1 — borne totale de la file des Hello en attente (un datagramme scellé
+		/// fait au plus 1472 octets : ~1,5 Mo au pire).
+		static constexpr size_t kMaxPendingHellos = 1024u;
+		/// ETAPE3.1 — poignées de main chiffrées en attente par personnage (sels distincts).
+		static constexpr size_t kMaxSealedPendingPerCharacter = 4u;
 
 		/// TA.3 — délai d'inactivité au-delà duquel un client UDP est considéré déconnecté.
 		/// Choisi a 30 s : largement plus que la cadence Input (50 ms a 20 Hz) tout en restant

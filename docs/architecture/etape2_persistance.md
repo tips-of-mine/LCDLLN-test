@@ -11,8 +11,8 @@ et retire le travail SQL du tick de jeu.
 | 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | livré |
 | 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | livré |
 | 2.5 | Carte découverte écrite par le shard | livré |
-| 2.6 (chantier 3.6) | Instantanés restaurables | cette PR |
-| 2.7 | Lectures du Hello hors du tick | PR suivante |
+| 2.6 (chantier 3.6) | Instantanés restaurables | livré |
+| 2.7 | Lectures du Hello hors du tick | cette PR |
 | 2.8 | Enchères en base, dans des transactions | PR suivante |
 
 ## 2.1 — La base, seule source de vérité
@@ -156,8 +156,7 @@ Sans base (développement, shard Windows), pas de file : le fichier `.ini` est
 
 ### Limites
 
-- Les lectures du Hello (`LoadCharacterFromDb`, `LoadSpawnFromDb`) restent dans le
-  tick : il faut l'état pour faire apparaître le personnage.
+- Les lectures du Hello : voir 2.7.
 - Le dépôt de courrier (`DepositMailboxDelivery`, rare) reste immédiat.
 - Sur un crash du processus, ce qui est encore dans la file est perdu (au plus
   quelques secondes d'activité). Les échanges et transferts (2.4) sont écrits
@@ -332,3 +331,33 @@ Pour un personnage en jeu : le déconnecter (`/kick`), la restauration s'appliqu
 
 Migration 0080 + master + shard. Client inchangé (les commandes passent par le
 chat existant).
+
+## 2.7 — Lectures du Hello hors du tick
+
+Avant : à chaque connexion, le tick lisait lui-même l'état du personnage en base
+(`LoadCharacterFromDb`, `LoadSpawnFromDb`, une dizaine de requêtes) et attendait
+la fin des sauvegardes en file du personnage (`Flush`, jusqu'à 2 s). Une base lente
+ou une vague de connexions ralentissait tout le shard.
+
+Maintenant, le Hello est coupé en deux :
+
+1. **Dans le tick** (`HandleHello`) : contrôles habituels (bannissement, admission
+   par le master, rafraîchissement d'un joueur déjà connecté), puis la lecture est
+   déposée sur le thread du personnage dans la file de sauvegarde (2.2). Elle part
+   donc **après** ses sauvegardes en attente : la relecture juste après écriture est
+   garantie sans rien attendre. Un Hello répété pendant la lecture met seulement à
+   jour l'adresse du client.
+2. **Sur le thread** (`LoadCharacterForHello`) : lecture de l'état et de la ligne
+   `characters`, résultat posé dans une liste protégée.
+3. **Dans le tick, au tick suivant** (`DrainCompletedCharacterLoads` →
+   `FinishHello`) : création du joueur comme avant. Hello abandonné si le
+   personnage a été banni ou s'est connecté entre-temps ; refusé si la lecture a
+   échoué (2.1).
+
+Sans file (pas de base, shard Windows, moins de 2 connexions) ou si la file est
+pleine, la lecture reste immédiate dans le tick, comme avant.
+
+### Déploiement
+
+Shard uniquement. Pas de migration, pas de changement réseau. Le client voit son
+Welcome un tick plus tard (50 ms à 20 Hz).

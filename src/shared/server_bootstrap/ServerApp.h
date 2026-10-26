@@ -555,6 +555,43 @@ namespace engine::server
 			Error,      ///< Base configurée mais illisible : ne rien charger (Hello refusé).
 		};
 
+		/// ETAPE2.7 — tout ce que le Hello lit en base pour un personnage.
+		struct LoadedCharacterData
+		{
+			CharacterDbLoadResult dbLoad = CharacterDbLoadResult::NotFound;
+			PersistedCharacterState dbState{};
+			bool spawnLoaded = false; ///< ligne characters lue (position, nom, niveau…)
+			float spawnX = 0.0f;
+			float spawnY = 0.0f;
+			float spawnZ = 0.0f;
+			float spawnYawDeg = 0.0f;
+			std::string name;
+			std::string gender;
+			uint32_t level = 1u;
+			std::string factionId;
+			std::string classId;
+			std::string raceId;
+		};
+
+		/// ETAPE2.7 — Hello en attente de sa lecture en base (thread de la file).
+		struct PendingCharacterLoad
+		{
+			Endpoint endpoint{};
+			uint64_t helloNonce = 0;
+		};
+
+		/// ETAPE2.7 — lit l'état et la ligne `characters` d'un personnage. Thread-safe
+		/// (pool seulement) : exécutée sur le thread du personnage dans la file de
+		/// sauvegarde, donc après ses écritures en attente.
+		LoadedCharacterData LoadCharacterForHello(uint64_t characterKey);
+
+		/// ETAPE2.7 — reprend, dans le tick, les Hello dont la lecture est terminée.
+		void DrainCompletedCharacterLoads();
+
+		/// ETAPE2.7 — seconde moitié du Hello : crée le joueur à partir de \p loaded
+		/// (refus si la lecture a échoué). Tick uniquement.
+		void FinishHello(const Endpoint& endpoint, uint64_t helloNonce, LoadedCharacterData& loaded);
+
 		/// ETAPE2.1 — recharge l'état du personnage depuis la base dans \p state :
 		/// progression (si présente), bourse + sac + équipement (si la bourse existe),
 		/// et ajoute le courrier en attente (mailboxGold / mailboxItems /
@@ -1523,6 +1560,11 @@ namespace engine::server
 		/// ETAPE2.2 — sauvegardes hors du tick (créée à Init quand un pool DB est
 		/// présent ; nullptr sinon). Arrêtée (et vidée) dans Shutdown, avant le pool.
 		std::unique_ptr<CharacterSaveQueue> m_characterSaveQueue;
+		/// ETAPE2.7 — Hello dont la lecture en base est en cours (tick uniquement).
+		std::unordered_map<uint64_t, PendingCharacterLoad> m_pendingCharacterLoads;
+		/// ETAPE2.7 — lectures terminées par les threads de la file, reprises par le tick.
+		std::mutex m_completedCharacterLoadsMutex;
+		std::vector<std::pair<uint64_t, std::shared_ptr<LoadedCharacterData>>> m_completedCharacterLoads;
 		/// ETAPE2.4 — compteur des opérations à deux personnages (identifiant unique).
 		uint64_t m_characterOperationCounter = 0;
 		/// ETAPE1.2 — identifiant de ce shard (config `shard.id`, défaut 1, même clé que le

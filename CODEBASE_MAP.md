@@ -218,6 +218,10 @@ RenderModel
 > **Règle (ETAPE2.6)** : instantané complet à chaque déconnexion
 > (`character_snapshots`, 20 gardés) ; `/snapshots` et `/restore` (MJ, master)
 > posent une demande appliquée par le shard à la connexion suivante (migration 0080).
+>
+> **Règle (ETAPE2.7)** : le Hello ne lit plus la base dans le tick : la lecture
+> part sur le thread du personnage (`LoadCharacterForHello`), le tick termine le
+> Hello (`FinishHello`) quand elle est finie.
 
 ### Comptes et validation
 | Fichier | Rôle |

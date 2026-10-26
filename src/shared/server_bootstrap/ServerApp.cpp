@@ -761,6 +761,12 @@ namespace engine::server
 				stats.queued, stats.coalesced, stats.rejected, m_characterSaveQueue->GetStats().executed);
 			m_characterSaveQueue.reset();
 		}
+		// ETAPE2.7 — Hello en cours de lecture abandonnés (le client se reconnectera).
+		m_pendingCharacterLoads.clear();
+		{
+			std::lock_guard<std::mutex> lock(m_completedCharacterLoadsMutex);
+			m_completedCharacterLoads.clear();
+		}
 		m_clients.clear();
 		// TG.2 — Shutdown : vider aussi les 3 index O(1) sur m_clients.
 		m_clientIndexByPackedEndpoint.clear();
@@ -1927,31 +1933,138 @@ namespace engine::server
 			return;
 		}
 
+		// ETAPE2.7 — lecture de l'état hors du tick. Avec la file de sauvegarde, la
+		// lecture part sur le thread du personnage, APRÈS ses sauvegardes en attente
+		// (relecture juste après écriture garantie sans attendre) ; le tick reprend le
+		// Hello quand la lecture est terminée (DrainCompletedCharacterLoads). Sans
+		// file (pas de base, shard Windows) ou personnage sans identifiant : lecture
+		// immédiate, comme avant.
+		if (m_characterSaveQueue != nullptr && m_characterSaveQueue->IsRunning() && helloNonce != 0u)
+		{
+			const uint64_t characterKey = helloNonce;
+			const auto pendingIt = m_pendingCharacterLoads.find(characterKey);
+			if (pendingIt != m_pendingCharacterLoads.end())
+			{
+				pendingIt->second.endpoint = endpoint; // Hello répété pendant la lecture
+				pendingIt->second.helloNonce = helloNonce;
+				return;
+			}
+			m_pendingCharacterLoads[characterKey] = PendingCharacterLoad{ endpoint, helloNonce };
+			const auto job = [this, characterKey]() {
+				auto data = std::make_shared<LoadedCharacterData>(LoadCharacterForHello(characterKey));
+				std::lock_guard<std::mutex> lock(m_completedCharacterLoadsMutex);
+				m_completedCharacterLoads.emplace_back(characterKey, std::move(data));
+			};
+			if (m_characterSaveQueue->EnqueueOrdered(characterKey, job) != CharacterSaveQueue::EnqueueResult::Rejected)
+			{
+				LOG_INFO(Net, "[ServerApp] Hello: character load queued (character_key={}, endpoint={})",
+					characterKey, UdpTransport::EndpointToString(endpoint));
+				return;
+			}
+			// File pleine : lecture immédiate, après les écritures en cours du personnage.
+			m_pendingCharacterLoads.erase(characterKey);
+			if (!m_characterSaveQueue->Flush(characterKey, std::chrono::milliseconds(2000)))
+			{
+				LOG_WARN(Net, "[ServerApp] Hello refused: pending save still running (character_key={}, queue_pending={})",
+					characterKey, m_characterSaveQueue->PendingCount());
+				return;
+			}
+		}
+		const uint64_t helloCharacterKey = helloNonce != 0u ? helloNonce : static_cast<uint64_t>(m_nextClientId);
+		LoadedCharacterData loaded = LoadCharacterForHello(helloCharacterKey);
+		FinishHello(endpoint, helloNonce, loaded);
+	}
+
+	ServerApp::LoadedCharacterData ServerApp::LoadCharacterForHello(uint64_t characterKey)
+	{
+		// ETAPE2.7 — n'utilise que le pool (thread-safe) : appelable depuis un thread
+		// de la file de sauvegarde.
+		LoadedCharacterData data{};
+		data.dbLoad = LoadCharacterFromDb(characterKey, data.dbState);
+		if (data.dbLoad != CharacterDbLoadResult::Error)
+		{
+			data.spawnLoaded = LoadSpawnFromDb(characterKey, data.spawnX, data.spawnY, data.spawnZ, data.spawnYawDeg,
+				data.name, data.gender, data.level, data.factionId, data.classId, data.raceId);
+		}
+		return data;
+	}
+
+	void ServerApp::DrainCompletedCharacterLoads()
+	{
+		std::vector<std::pair<uint64_t, std::shared_ptr<LoadedCharacterData>>> completed;
+		{
+			std::lock_guard<std::mutex> lock(m_completedCharacterLoadsMutex);
+			completed.swap(m_completedCharacterLoads);
+		}
+		for (auto& [characterKey, data] : completed)
+		{
+			const auto pendingIt = m_pendingCharacterLoads.find(characterKey);
+			if (pendingIt == m_pendingCharacterLoads.end())
+			{
+				continue; // annulée entre-temps
+			}
+			const PendingCharacterLoad pending = pendingIt->second;
+			// L'état a pu changer pendant la lecture : bannissement, admission retirée
+			// ou déplacée par le master (les sauvegardes seraient toutes refusées), ou
+			// joueur déjà accepté sur cet endpoint.
+			bool admitted = true;
+			if (m_admittedRegistry != nullptr)
+			{
+				const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+				admitted = m_admittedRegistry->IsAdmitted(characterKey, nowMs);
+			}
+			if (!admitted
+				|| m_bannedCharacterKeys.find(characterKey) != m_bannedCharacterKeys.end()
+				|| FindClient(pending.endpoint) != nullptr)
+			{
+				m_pendingCharacterLoads.erase(pendingIt);
+				LOG_WARN(Net, "[ServerApp] Hello dropped after load (character_key={}, endpoint={}, admitted={})",
+					characterKey, UdpTransport::EndpointToString(pending.endpoint), admitted);
+				continue;
+			}
+			// Même personnage encore connecté depuis une autre adresse (reconnexion
+			// après changement de port) : l'ancienne session est fermée (sauvegarde de
+			// départ), puis l'état est relu APRÈS cette sauvegarde.
+			if (ConnectedClient* previous = FindConnectedClientByCharacterKey(characterKey))
+			{
+				LOG_INFO(Net, "[ServerApp] Hello: closing previous session before reload (character_key={}, old_client_id={})",
+					characterKey, previous->clientId);
+				DisconnectConnectedClient(previous->clientId, "reconnect");
+				const auto job = [this, characterKey]() {
+					auto reloaded = std::make_shared<LoadedCharacterData>(LoadCharacterForHello(characterKey));
+					std::lock_guard<std::mutex> lock(m_completedCharacterLoadsMutex);
+					m_completedCharacterLoads.emplace_back(characterKey, std::move(reloaded));
+				};
+				if (m_characterSaveQueue != nullptr
+					&& m_characterSaveQueue->EnqueueOrdered(characterKey, job) != CharacterSaveQueue::EnqueueResult::Rejected)
+				{
+					continue; // l'entrée en attente reste : la relecture la reprendra
+				}
+				m_pendingCharacterLoads.erase(pendingIt);
+				continue; // file indisponible : le client renverra un Hello
+			}
+			m_pendingCharacterLoads.erase(pendingIt);
+			FinishHello(pending.endpoint, pending.helloNonce, *data);
+		}
+	}
+
+	void ServerApp::FinishHello(const Endpoint& endpoint, uint64_t helloNonce, LoadedCharacterData& loaded)
+	{
+		const uint64_t helloCharacterKey = helloNonce != 0u ? helloNonce : static_cast<uint64_t>(m_nextClientId);
 		// ETAPE2.1 — l'état en base est lu AVANT de créer le joueur. Base configurée
 		// mais illisible (connexion perdue, migration 0078 absente) → Hello refusé,
 		// le client réessaiera : repartir du .ini (plus écrit depuis ETAPE2.1) ou des
 		// valeurs par défaut ferait écraser la vraie progression par la sauvegarde
-		// suivante. Même clé que client.persistenceCharacterKey ci-dessous.
-		const uint64_t helloCharacterKey = helloNonce != 0u ? helloNonce : static_cast<uint64_t>(m_nextClientId);
-		// ETAPE2.2 — relecture juste après écriture : une reconnexion rapide doit voir
-		// la sauvegarde de déconnexion, peut-être encore dans la file. On attend
-		// qu'elle soit écrite (2 s au plus) ; au-delà, Hello refusé (le client
-		// réessaie) plutôt que de charger un état plus ancien.
-		if (m_characterSaveQueue != nullptr
-			&& !m_characterSaveQueue->Flush(helloCharacterKey, std::chrono::milliseconds(2000)))
-		{
-			LOG_WARN(Net, "[ServerApp] Hello refused: pending save still running (character_key={}, queue_pending={})",
-				helloCharacterKey, m_characterSaveQueue->PendingCount());
-			return;
-		}
-		PersistedCharacterState dbState{};
-		const CharacterDbLoadResult dbLoad = LoadCharacterFromDb(helloCharacterKey, dbState);
-		if (dbLoad == CharacterDbLoadResult::Error)
+		// suivante.
+		if (loaded.dbLoad == CharacterDbLoadResult::Error)
 		{
 			LOG_ERROR(Net, "[ServerApp] Hello refused: character state unreadable in DB (character_key={}, endpoint={})",
 				helloCharacterKey, UdpTransport::EndpointToString(endpoint));
 			return;
 		}
+		const CharacterDbLoadResult dbLoad = loaded.dbLoad;
+		PersistedCharacterState& dbState = loaded.dbState;
 
 		ConnectedClient client{};
 		client.endpoint = endpoint;
@@ -2088,14 +2201,16 @@ namespace engine::server
 		// DB non configurée) ou personnage absent, LoadSpawnFromDb renvoie false et on
 		// conserve la position fichier. Avant UpdateClientInterest (qui place l'AoI).
 		{
-			float dbX = 0.0f, dbY = 0.0f, dbZ = 0.0f, dbYawDeg = 0.0f;
-			std::string dbName;
-			std::string dbGender;
-			uint32_t dbLevel = 1u;
-			std::string dbFactionId;
-			std::string dbClassId;
-			std::string dbRaceId;
-			if (LoadSpawnFromDb(acceptedClient.persistenceCharacterKey, dbX, dbY, dbZ, dbYawDeg, dbName, dbGender, dbLevel, dbFactionId, dbClassId, dbRaceId))
+			// ETAPE2.7 — lu avec le reste de l'état (thread de la file ou dans le tick
+			// sans file), cf. LoadCharacterForHello.
+			const float dbX = loaded.spawnX, dbY = loaded.spawnY, dbZ = loaded.spawnZ, dbYawDeg = loaded.spawnYawDeg;
+			std::string dbName = std::move(loaded.name);
+			std::string dbGender = std::move(loaded.gender);
+			const uint32_t dbLevel = loaded.level;
+			std::string dbFactionId = std::move(loaded.factionId);
+			std::string dbClassId = std::move(loaded.classId);
+			std::string dbRaceId = std::move(loaded.raceId);
+			if (loaded.spawnLoaded)
 			{
 				// ETAPE2.6 — personnage restauré : la position est celle de l'instantané.
 				if (acceptedClient.restoreSnapshotId == 0u)
@@ -2555,6 +2670,8 @@ namespace engine::server
 		// TA.3 — retraite avant Simulate : un Hello admis ce tick devient un client connecté
 		// dont la position sera diffusée par MaybeSendSnapshots du même tick.
 		DrainPendingHellos();
+		// ETAPE2.7 — termine les Hello dont la lecture en base (hors du tick) est finie.
+		DrainCompletedCharacterLoads();
 		// TA.3 — eviction des clients UDP zombies (1 Hz pour limiter le cout, suffisant
 		// pour la propriete attendue : zombie disparait en max ~kUdpClientIdleTimeoutMs + 1 s).
 		if (m_currentTick - m_lastEvictIdleClientsTick >= m_tickHz)

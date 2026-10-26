@@ -10,6 +10,7 @@
 #include "src/shardd/world/AdmittedCharacterRegistry.h"
 #include "src/shared/db/CharacterOwnership.h" // ETAPE1.2 — un seul propriétaire par personnage
 #include "src/masterd/chat/ChatSanitizer.h" // ETAPE5.1 — nettoyage du chat de proximité
+#include "src/shardd/gameplay/character/AutosaveSchedule.h" // ETAPE2.3 — sauvegardes étalées
 #include "src/shared/network/ServerProtocol.h"
 
 // R1-A — JSON embarqués (générés au build) pour le moteur de stats des personnages.
@@ -2793,20 +2794,37 @@ namespace engine::server
 
 	void ServerApp::MaybeAutosaveCharacters()
 	{
-		if (m_clients.empty() || m_characterAutosaveIntervalTicks == 0 || m_currentTick < m_nextCharacterAutosaveTick)
+		// ETAPE2.3 — sauvegardes étalées : à chaque tick, seuls les personnages dont
+		// c'est le tour (id % période == tick % période) sont sauvés. Chaque personnage
+		// est toujours sauvé une fois par période, sans pic toutes les 30 s.
+		if (m_clients.empty() || m_characterAutosaveIntervalTicks == 0)
 		{
 			return;
 		}
 
+		size_t saved = 0;
 		for (const ConnectedClient& client : m_clients)
 		{
-			SaveConnectedClient(client, "autosave");
+			if (IsCharacterAutosaveDue(client.persistenceCharacterKey, m_currentTick, m_characterAutosaveIntervalTicks))
+			{
+				SaveConnectedClient(client, "autosave");
+				++saved;
+			}
 		}
 
-		m_nextCharacterAutosaveTick = m_currentTick + m_characterAutosaveIntervalTicks;
-		LOG_INFO(Net, "[ServerApp] Character autosave complete (clients={}, next_tick={})",
-			m_clients.size(),
-			m_nextCharacterAutosaveTick);
+		// Bilan une fois par période (pas à chaque tick).
+		if (m_currentTick >= m_nextCharacterAutosaveTick)
+		{
+			m_nextCharacterAutosaveTick = m_currentTick + m_characterAutosaveIntervalTicks;
+			LOG_INFO(Net, "[ServerApp] Character autosave (staggered) : clients={}, period_ticks={}, save_queue_pending={}",
+				m_clients.size(),
+				m_characterAutosaveIntervalTicks,
+				m_characterSaveQueue != nullptr ? m_characterSaveQueue->PendingCount() : 0u);
+		}
+		if (saved > 0u)
+		{
+			LOG_DEBUG(Net, "[ServerApp] Character autosave tick={} saved={}", m_currentTick, saved);
+		}
 	}
 
 	void ServerApp::SaveConnectedClient(const ConnectedClient& client, std::string_view reason)

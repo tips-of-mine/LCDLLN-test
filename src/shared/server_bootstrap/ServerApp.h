@@ -565,7 +565,8 @@ namespace engine::server
 		/// Resolve the autosave cadence required by the persistence ticket.
 		uint32_t ResolveCharacterAutosaveIntervalTicks() const;
 
-		/// Persist every connected character when the autosave timer elapses.
+		/// ETAPE2.3 — sauve, à chaque tick, les personnages dont c'est le tour (IsCharacterAutosaveDue) :
+		/// une fois par période chacun, charge répartie sur la période.
 		void MaybeAutosaveCharacters();
 
 		/// Persist one connected character to the current runtime store.

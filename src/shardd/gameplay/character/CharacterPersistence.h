@@ -47,11 +47,12 @@ namespace engine::server
 		uint32_t mailboxGold = 0;
 		/// M35.4 — items attached to mailbox (e.g. won auctions while offline).
 		std::vector<ItemStack> mailboxItems;
-		/// ETAPE2.1 — plus grand `character_mailbox.id` lu au chargement (0 = aucun).
-		/// La sauvegarde suivante supprime ces lignes dans la même transaction que
-		/// l'écriture du sac et de la bourse : le courrier n'est jamais compté deux
-		/// fois ni perdu. Jamais écrit dans le fichier .ini.
-		uint64_t mailboxClaimUpToId = 0;
+		/// ETAPE2.1 — identifiants `character_mailbox.id` lus au chargement. La
+		/// sauvegarde suivante supprime exactement ces lignes dans la même transaction
+		/// que l'écriture du sac et de la bourse : le courrier n'est jamais compté deux
+		/// fois ni perdu (une ligne non encore validée au chargement n'est pas touchée).
+		/// Jamais écrit dans le fichier .ini.
+		std::vector<uint64_t> mailboxClaimedIds;
 		/// M36.2 — known professions and skill levels (persisted per character).
 		std::vector<ProfessionEntry> professions;
 		/// Grimoire — 10 slots de barre d'action (slot i → spellId, "" = vide).

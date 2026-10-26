@@ -50,13 +50,23 @@ Avec une base, **aucun fichier `.ini` n'est écrit**. Si la base est injoignable
 la sauvegarde échoue (log `ERROR`) et la suivante réessaie : écrire un fichier à la
 place créerait une deuxième vérité qui ne serait jamais relue.
 
+**Base configurée mais injoignable** :
+- au démarrage (`db.host` renseigné, aucune connexion) : le shard **refuse de
+  démarrer**. Sinon il servirait des `.ini` périmés, et ce qui serait joué pendant
+  la panne serait perdu au retour de la base ;
+- à la connexion d'un joueur (lecture en erreur, table absente) : le Hello est
+  **refusé** (`LoadCharacterFromDb` → `Error`), le client réessaie. Le shard ne
+  repart jamais d'un `.ini` ou de valeurs par défaut que la sauvegarde suivante
+  recopierait en base par-dessus la vraie progression.
+
 Sans base (développement sans MySQL, shard Windows), le fichier `.ini` reste le
 seul stockage, comme avant.
 
 ### Chargement (Hello)
 
-1. La base d'abord. Si `character_progress` a une ligne, la base contient tout :
-   le fichier est ignoré.
+1. La base d'abord, avant même de créer le joueur. Erreur de lecture → Hello
+   refusé (voir plus haut). Si `character_progress` a une ligne, la base contient
+   tout : le fichier est ignoré.
 2. Sinon (personnage créé avant cette version), le fichier `.ini` est lu une
    fois. Si la base avait déjà bourse, sac et équipement (version Roadmap-10),
    ces trois domaines restent ceux de la base.
@@ -68,10 +78,12 @@ seul stockage, comme avant.
 `DepositMailboxDelivery` (remboursement d'enchère, objet gagné, vente expirée)
 ajoute une ligne `character_mailbox` sans lire l'état du destinataire, qui peut être
 en jeu sur un autre shard. À la connexion, le shard propriétaire lit les lignes,
-les ajoute à la bourse et au sac, et retient le plus grand `id` lu
-(`mailboxClaimUpToId`). Chaque sauvegarde supprime `id <=` cette valeur dans la
-même transaction que la bourse et le sac : le courrier n'est ni perdu ni compté
-deux fois, et celui arrivé après la connexion reste pour la suivante.
+les ajoute à la bourse et au sac, et retient les `id` lus (`mailboxClaimedIds`).
+Chaque sauvegarde supprime exactement ces lignes dans la même transaction que la
+bourse et le sac : le courrier n'est ni perdu ni compté deux fois, et celui
+arrivé après la connexion (ou pas encore validé à ce moment) reste pour la
+suivante. La sauvegarde qui suit la fusion part une fois la génération du verrou
+1.2 et la position de la base connues.
 
 ### Master
 
@@ -89,4 +101,6 @@ La position est écrite par le shard propriétaire.
 
 ### Déploiement
 
-Migration 0078 + shard + master. Client inchangé.
+Migration 0078 + shard + master. Client inchangé. **Ordre** : master d'abord (il
+applique la migration au démarrage), puis le shard — un shard démarré sans la
+migration refuse les connexions (table `character_progress` absente).

@@ -231,10 +231,10 @@ namespace engine::server
 		/// l'entrée en jeu (AdmittedCharacterRegistry::AdmittedOwnerGeneration, résolue au
 		/// Hello). Présentée à chaque sauvegarde : 0 = master legacy (pas de verrou).
 		uint64_t ownerGeneration = 0;
-		/// ETAPE2.1 — plus grand `character_mailbox.id` fusionné à la connexion
-		/// (0 = aucun). Chaque sauvegarde supprime les lignes `id <=` cette valeur
-		/// (idempotent) : le courrier fusionné ne revient jamais.
-		uint64_t mailboxClaimUpToId = 0;
+		/// ETAPE2.1 — `character_mailbox.id` fusionnés à la connexion. Chaque
+		/// sauvegarde supprime exactement ces lignes (idempotent) : le courrier
+		/// fusionné ne revient jamais.
+		std::vector<uint64_t> mailboxClaimedIds;
 		/// Niveau du personnage (table characters.level, chargé au Hello via LoadSpawnFromDb).
 		/// Reporté au master dans le heartbeat enrichi (présence web-portal).
 		uint32_t level = 1;
@@ -514,12 +514,13 @@ namespace engine::server
 			NotFound,   ///< Rien en base (ou pas de pool) : fichier .ini ou valeurs par défaut.
 			WalletOnly, ///< Sauvé avant ETAPE2.1 : bourse, sac, équipement en base, le reste dans le .ini.
 			Full,       ///< Ligne character_progress présente : la base contient tout, le .ini est ignoré.
+			Error,      ///< Base configurée mais illisible : ne rien charger (Hello refusé).
 		};
 
 		/// ETAPE2.1 — recharge l'état du personnage depuis la base dans \p state :
 		/// progression (si présente), bourse + sac + équipement (si la bourse existe),
 		/// et ajoute le courrier en attente (mailboxGold / mailboxItems /
-		/// mailboxClaimUpToId). Les champs absents de la base ne sont pas touchés.
+		/// mailboxClaimedIds). Les champs absents de la base ne sont pas touchés.
 		CharacterDbLoadResult LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state);
 
 		/// Accept a new client or refresh an existing handshake.

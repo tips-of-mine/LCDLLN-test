@@ -214,7 +214,14 @@ transfert de monnaie) :
    - `COMMIT`, ou `ROLLBACK` au moindre échec (y compris si l'un des deux
      personnages n'appartient plus à ce shard).
 
-L'opération est donc écrite entièrement ou pas du tout, et jamais deux fois.
+La transaction est rejouée jusqu'à 3 fois avec le **même** identifiant : si un
+essai a en fait été validé (réponse du `COMMIT` perdue), le suivant reçoit
+« déjà appliquée » et ne réécrit rien. L'opération est donc écrite entièrement ou
+pas du tout, et jamais deux fois.
+
+Si les sauvegardes en file des deux joueurs ne finissent pas en 2 s (base très
+lente), pas de transaction : chacun reçoit une sauvegarde en file, dans l'ordre
+(log `ERROR`), pour ne jamais écrire un état ancien après l'opération.
 `character_operations` sert aussi de journal (qui a échangé avec qui, quand).
 
 Migration `0079_character_operations.sql` (copiée dans `deploy/docker/sql/migrations/`).

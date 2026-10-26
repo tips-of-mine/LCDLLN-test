@@ -38,6 +38,8 @@
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
 #include "src/masterd/characters/CharacterOwnershipStore.h"
+#include "src/masterd/characters/CharacterSnapshotStore.h"
+#include <cstdlib>
 #include "src/masterd/anniversary/AnniversaryService.h"
 #include "src/masterd/anniversary/BirthdayEmailJob.h"
 #include "src/masterd/jobs/MasterJobScheduler.h" // Roadmap-4 (2026-07-19)
@@ -933,7 +935,83 @@ int main(int argc, char** argv)
 					"Uptime master : %lldj %lldh %lldmin %llds", d, h, m, s);
 				replyToAccount(accountId, buf);
 			});
-		LOG_INFO(Net, "[ServerMain] Console : /help /commands /aide /time /uptime enregistrées");
+
+		// ETAPE2.6 — /snapshots <personnage> : les 10 derniers instantanés (MJ).
+		chatRelayHandler.CommandRouter().Register("/snapshots", engine::server::AccountRole::GameMaster,
+			[replyToAccount, &dbPool](uint64_t accountId, std::string_view args)
+			{
+				const std::string name(args.substr(0, args.find(' ')));
+				if (name.empty())
+				{
+					replyToAccount(accountId, "Usage : /snapshots <personnage>");
+					return;
+				}
+				const auto characterId = engine::server::FindActiveCharacterIdByName(dbPool, name);
+				if (!characterId)
+				{
+					replyToAccount(accountId, "Personnage introuvable : " + name);
+					return;
+				}
+				std::vector<engine::server::CharacterSnapshotInfo> snapshots;
+				if (!engine::server::ListCharacterSnapshots(dbPool, *characterId, 10u, snapshots))
+				{
+					replyToAccount(accountId, "Base indisponible.");
+					return;
+				}
+				if (snapshots.empty())
+				{
+					replyToAccount(accountId, "Aucun instantané pour " + name + ".");
+					return;
+				}
+				replyToAccount(accountId, "Instantanés de " + name + " (du plus récent) :");
+				for (const auto& snap : snapshots)
+				{
+					replyToAccount(accountId, "  #" + std::to_string(snap.id) + "  " + snap.createdAtUtc
+						+ " UTC  " + snap.reason + "  (shard " + std::to_string(snap.shardId) + ")");
+				}
+				LOG_INFO(Net, "[ServerMain] /snapshots (gm_account_id={}, character_id={}, count={})",
+					accountId, *characterId, snapshots.size());
+			});
+
+		// ETAPE2.6 — /restore <personnage> <id> : demande de restauration (MJ). Le
+		// shard propriétaire l'applique à la prochaine connexion du personnage.
+		chatRelayHandler.CommandRouter().Register("/restore", engine::server::AccountRole::GameMaster,
+			[replyToAccount, &dbPool](uint64_t accountId, std::string_view args)
+			{
+				const size_t space = args.find(' ');
+				const std::string name(args.substr(0, space));
+				const std::string idText = space == std::string_view::npos ? std::string() : std::string(args.substr(space + 1));
+				char* end = nullptr;
+				const unsigned long long snapshotId = idText.empty() ? 0ull : std::strtoull(idText.c_str(), &end, 10);
+				if (name.empty() || snapshotId == 0ull || (end != nullptr && *end != '\0'))
+				{
+					replyToAccount(accountId, "Usage : /restore <personnage> <id d'instantané> (voir /snapshots)");
+					return;
+				}
+				const auto characterId = engine::server::FindActiveCharacterIdByName(dbPool, name);
+				if (!characterId)
+				{
+					replyToAccount(accountId, "Personnage introuvable : " + name);
+					return;
+				}
+				switch (engine::server::RequestCharacterRestore(dbPool, *characterId, snapshotId, accountId))
+				{
+				case engine::server::CharacterRestoreRequestResult::Requested:
+					replyToAccount(accountId, "Restauration de " + name + " vers l'instantané #" + idText
+						+ " demandée : appliquée à sa prochaine connexion (le déconnecter s'il est en jeu).");
+					break;
+				case engine::server::CharacterRestoreRequestResult::SnapshotNotFound:
+					replyToAccount(accountId, "Instantané #" + idText + " introuvable pour " + name + ".");
+					break;
+				case engine::server::CharacterRestoreRequestResult::CharacterNotFound:
+					replyToAccount(accountId, "Personnage introuvable : " + name);
+					break;
+				case engine::server::CharacterRestoreRequestResult::Failed:
+					replyToAccount(accountId, "Base indisponible.");
+					break;
+				}
+			});
+		LOG_INFO(Net, "[ServerMain] Console : /help /commands /aide /time /uptime /snapshots /restore enregistrées");
 	}
 
 	engine::server::AdminCommandHandler adminCommandHandler;

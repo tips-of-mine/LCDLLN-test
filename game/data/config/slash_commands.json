@@ -503,6 +503,30 @@
       "status": "server_routed",
       "implementation_file": "src/masterd/main_linux.cpp",
       "notes": "Console 2026-07-18 : info d'exploitation, reservee moderateur et plus (ajustable ici — le router relit ce fichier au boot via SlashCommandRegistry ? NON : le minRole effectif du router est fixe en code a Moderator ; garder les deux alignes)."
+    },
+    {
+      "command": "/snapshots",
+      "aliases": [],
+      "description": "Liste les 10 derniers instantanés d'un personnage (copies datées prises à chaque déconnexion).",
+      "category": "moderation",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_routed",
+      "implementation_file": "src/masterd/main_linux.cpp",
+      "notes": "ETAPE2.6 : lecture de character_snapshots (écrits par le shard). minRole fixé en code à GameMaster ; garder aligné."
+    },
+    {
+      "command": "/restore",
+      "aliases": [],
+      "description": "Restaure un personnage depuis un instantané (/restore <personnage> <id>) : appliqué par le shard à sa prochaine connexion.",
+      "category": "moderation",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_routed",
+      "implementation_file": "src/masterd/main_linux.cpp",
+      "notes": "ETAPE2.6 : pose une demande dans character_restore_requests ; le master n'écrit pas l'état du personnage. Le niveau ne redescend pas (characters.level = GREATEST)."
     }
   ]
 }

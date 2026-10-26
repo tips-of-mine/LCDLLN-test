@@ -95,6 +95,32 @@ namespace engine::server
 		/// Persist current listings after in-place mutation via \ref FindListing (bids, etc.).
 		bool PersistListings();
 
+		/// ETAPE2.8 — avec une base, les annonces vivent dans `auction_listings` :
+		/// le service ne lit ni n'écrit plus le fichier (à appeler AVANT \ref Init).
+		void SetFilePersistence(bool enabled) { m_filePersistence = enabled; }
+		bool FilePersistence() const { return m_filePersistence; }
+
+		/// ETAPE2.8 — annonces échues à \p currentTick (copies ; rien n'est retiré).
+		std::vector<AuctionListingRecord> ExpiredListings(uint32_t currentTick) const;
+
+		/// ETAPE2.8 — règlement d'une annonce close (mêmes règles que CollectExpired :
+		/// sans enchère, l'objet revient au vendeur ; sinon il va au meilleur
+		/// enchérisseur et le vendeur touche le prix moins la commission).
+		static AuctionSettlement SettlementFor(const AuctionListingRecord& row);
+
+		/// ETAPE2.8 — remplace toutes les annonces en mémoire (chargement depuis la base).
+		void ReplaceListings(std::vector<AuctionListingRecord> rows);
+
+		/// ETAPE2.8 — ajoute une annonce dont l'identifiant vient de la base.
+		void InsertListingWithId(const AuctionListingRecord& row);
+
+		/// ETAPE2.8 — annonces du fichier (import unique vers la base). Vide si absent.
+		std::vector<AuctionListingRecord> ReadListingsFile() const;
+
+		/// ETAPE2.8 — renomme le fichier d'annonces en `.imported` après import en
+		/// base (pour ne jamais le réimporter). \return false si le renommage échoue.
+		bool RetireListingsFile() const;
+
 	private:
 		bool LoadFromContent();
 		bool SaveToContent() const;
@@ -105,5 +131,6 @@ namespace engine::server
 		std::vector<AuctionListingRecord> m_listings{};
 		uint32_t m_nextListingId = 1;
 		bool m_initialized = false;
+		bool m_filePersistence = true; ///< ETAPE2.8 — false avec une base
 	};
 }

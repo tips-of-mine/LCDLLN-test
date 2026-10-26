@@ -12,8 +12,8 @@ et retire le travail SQL du tick de jeu.
 | 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | livré |
 | 2.5 | Carte découverte écrite par le shard | livré |
 | 2.6 (chantier 3.6) | Instantanés restaurables | livré |
-| 2.7 | Lectures du Hello hors du tick | cette PR |
-| 2.8 | Enchères en base, dans des transactions | PR suivante |
+| 2.7 | Lectures du Hello hors du tick | livré |
+| 2.8 | Enchères en base, dans des transactions | cette PR |
 
 ## 2.1 — La base, seule source de vérité
 
@@ -364,3 +364,57 @@ pleine, la lecture reste immédiate dans le tick, comme avant.
 
 Shard uniquement. Pas de migration, pas de changement réseau. Le client voit son
 Welcome un tick plus tard (50 ms à 20 Hz).
+
+## 2.8 — Hôtel des ventes en base
+
+Avant : les annonces de chaque shard étaient dans un fichier
+(`auction/listings.ini`), l'échéance était un numéro de tick (faux après un
+redémarrage) et chaque opération faisait plusieurs écritures séparées (joueur,
+fichier d'annonces, courrier). Un arrêt entre deux écritures pouvait dupliquer
+ou perdre de l'or ou un objet.
+
+Migration `0081_auction_listings.sql` (copiée dans `deploy/docker/sql/migrations/`) :
+une ligne par annonce, échéance en UTC.
+
+### Une transaction par opération
+
+`ServerApp::ExecuteAuctionTx` écrit, dans **une** transaction (3 essais) :
+
+1. l'annonce d'abord — insertion (mise en vente), mise à jour (enchère) ou
+   suppression (achat immédiat, fin d'enchère). Pour une mise à jour ou une
+   suppression, une annonce absente veut dire « déjà réglée » : rien n'est
+   appliqué une deuxième fois ;
+2. l'état complet des joueurs en ligne concernés (contrôle de propriété 1.2) ;
+3. une ligne `character_mailbox` (2.1) pour chaque joueur absent à créditer.
+
+| Opération | Ce qui part ensemble |
+|---|---|
+| Mise en vente | objet retiré du sac + annonce créée |
+| Enchère | enchérisseur débité + précédent enchérisseur remboursé + annonce mise à jour |
+| Achat immédiat | acheteur débité + objet à l'acheteur + or au vendeur (moins 5 %) + remboursement du précédent enchérisseur + annonce supprimée |
+| Fin d'enchère | objet au gagnant (ou retour au vendeur sans enchère) + or au vendeur + annonce supprimée |
+
+Un joueur en ligne sur ce shard est crédité en mémoire et écrit dans la
+transaction (bourse pleine = l'or part au courrier) ; sinon, une ligne de courrier
+est ajoutée. Si la transaction échoue, la bourse et le sac des joueurs touchés
+sont remis en l'état en mémoire (`AuctionTxBuilder::Revert`) et le joueur reçoit
+« Auction house unavailable ». Une fin d'enchère qui échoue est retentée une
+minute plus tard.
+
+### Démarrage
+
+Avec une base, le shard lit ses annonces dans `auction_listings` (échéance
+recalculée en ticks). Les annonces de l'ancien fichier sont importées **une fois**
+(échéance 24 h), puis le fichier est renommé `listings.ini.imported`. Sans base,
+le fichier reste le stockage, comme avant.
+
+### Limites
+
+- Les annonces sont propres à chaque shard (comme avant).
+- Un vendeur supprimé entre-temps : son courrier ne peut pas être créé (clé
+  étrangère), la fin d'enchère est retentée chaque minute (journalisée).
+- Le journal `auction/history.log` reste un fichier.
+
+### Déploiement
+
+Migration 0081 + shard. Master et client inchangés.

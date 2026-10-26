@@ -222,6 +222,10 @@ RenderModel
 > **Règle (ETAPE2.7)** : le Hello ne lit plus la base dans le tick : la lecture
 > part sur le thread du personnage (`LoadCharacterForHello`), le tick termine le
 > Hello (`FinishHello`) quand elle est finie.
+>
+> **Règle (ETAPE2.8)** : avec une base, l'hôtel des ventes vit dans
+> `auction_listings` (migration 0081) ; chaque opération passe par
+> `ServerApp::ExecuteAuctionTx` (annonce + joueurs + courrier, une transaction).
 
 ### Comptes et validation
 | Fichier | Rôle |

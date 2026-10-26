@@ -201,36 +201,45 @@ namespace engine::server
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		// TD.8 — 25 octets : 24 (TC.1) + 1 (animationState). ETAPE3.2 — + 4 (ackSnapshotSeq).
-		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 29)
+		// ETAPE3.3 — 43 octets : clientId, inputSequence, clientTimeMs, lastJumpMs,
+		// lastDodgeMs (5 × 4), moveEpoch (2), x, y, z, yaw (4 × 4), animationState (1),
+		// ackSnapshotSeq (4).
+		if (!DecodeHeader(packet, MessageKind::Input, payload) || payload.size() != 43)
 		{
 			return false;
 		}
 
 		outMessage.clientId = ReadU32(payload, 0);
 		outMessage.inputSequence = ReadU32(payload, 4);
-		outMessage.positionMetersX = std::bit_cast<float>(ReadU32(payload, 8));
-		outMessage.positionMetersY = std::bit_cast<float>(ReadU32(payload, 12));
-		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 16));
-		outMessage.yawRadians = std::bit_cast<float>(ReadU32(payload, 20));
-		outMessage.animationState = ReadU8(payload, 24);
-		outMessage.ackSnapshotSeq = ReadU32(payload, 25);
+		outMessage.clientTimeMs = ReadU32(payload, 8);
+		outMessage.lastJumpMs = ReadU32(payload, 12);
+		outMessage.lastDodgeMs = ReadU32(payload, 16);
+		outMessage.moveEpoch = ReadU16(payload, 20);
+		outMessage.positionMetersX = ReadF32(payload, 22);
+		outMessage.positionMetersY = ReadF32(payload, 26);
+		outMessage.positionMetersZ = ReadF32(payload, 30);
+		outMessage.yawRadians = ReadF32(payload, 34);
+		outMessage.animationState = ReadU8(payload, 38);
+		outMessage.ackSnapshotSeq = ReadU32(payload, 39);
 		return true;
 	}
 
 	std::vector<std::byte> EncodeInput(const InputMessage& message)
 	{
-		// TC.1/TD.8 — payload 25 octets : clientId, inputSequence, posX, posY, posZ, yaw,
-		// animationState (1 octet).
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 29);
+		// ETAPE3.3 — payload 43 octets (cf. DecodeInput).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Input, 43);
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.inputSequence);
-		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersX));
-		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersY));
-		WriteU32(packet, std::bit_cast<uint32_t>(message.positionMetersZ));
-		WriteU32(packet, std::bit_cast<uint32_t>(message.yawRadians));
+		WriteU32(packet, message.clientTimeMs);
+		WriteU32(packet, message.lastJumpMs);
+		WriteU32(packet, message.lastDodgeMs);
+		WriteU16(packet, message.moveEpoch);
+		WriteF32(packet, message.positionMetersX);
+		WriteF32(packet, message.positionMetersY);
+		WriteF32(packet, message.positionMetersZ);
+		WriteF32(packet, message.yawRadians);
 		WriteU8(packet, message.animationState);
-		WriteU32(packet, message.ackSnapshotSeq); // ETAPE3.2
+		WriteU32(packet, message.ackSnapshotSeq);
 		return packet;
 	}
 
@@ -965,20 +974,22 @@ namespace engine::server
 	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message)
 	{
 		// Correction SP1 — payload fixe : clientId (4) + x/y/z/yaw (4×4) + reason (1) = 21 o.
-		std::vector<std::byte> packet = BeginPacket(MessageKind::ForcePosition, 21);
+		// ETAPE3.3 — + moveEpoch (2) = 23 o.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ForcePosition, 23);
 		WriteU32(packet, message.clientId);
 		WriteF32(packet, message.positionX);
 		WriteF32(packet, message.positionY);
 		WriteF32(packet, message.positionZ);
 		WriteF32(packet, message.yawRadians);
 		WriteU8(packet, message.reason);
+		WriteU16(packet, message.moveEpoch);
 		return packet;
 	}
 
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::ForcePosition, payload) || payload.size() != 21)
+		if (!DecodeHeader(packet, MessageKind::ForcePosition, payload) || payload.size() != 23)
 		{
 			return false;
 		}
@@ -989,7 +1000,40 @@ namespace engine::server
 		outMessage.positionZ = ReadF32(payload, 12);
 		outMessage.yawRadians = ReadF32(payload, 16);
 		outMessage.reason = ReadU8(payload, 20);
+		outMessage.moveEpoch = ReadU16(payload, 21);
 		return outMessage.reason <= kForcePositionReasonTeleport;
+	}
+
+	std::vector<std::byte> EncodeMoveCorrection(const MoveCorrectionMessage& message)
+	{
+		// ETAPE3.3 — payload fixe : clientId (4) + moveEpoch (2) + inputSequence (4)
+		// + x/y/z/yaw (4×4) = 26 o.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::MoveCorrection, 26);
+		WriteU32(packet, message.clientId);
+		WriteU16(packet, message.moveEpoch);
+		WriteU32(packet, message.inputSequence);
+		WriteF32(packet, message.positionX);
+		WriteF32(packet, message.positionY);
+		WriteF32(packet, message.positionZ);
+		WriteF32(packet, message.yawRadians);
+		return packet;
+	}
+
+	bool DecodeMoveCorrection(std::span<const std::byte> packet, MoveCorrectionMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::MoveCorrection, payload) || payload.size() != 26)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.moveEpoch = ReadU16(payload, 4);
+		outMessage.inputSequence = ReadU32(payload, 6);
+		outMessage.positionX = ReadF32(payload, 10);
+		outMessage.positionY = ReadF32(payload, 14);
+		outMessage.positionZ = ReadF32(payload, 18);
+		outMessage.yawRadians = ReadF32(payload, 22);
+		return true;
 	}
 
 	std::vector<std::byte> EncodeAuraUpdate(const AuraUpdateMessage& message)

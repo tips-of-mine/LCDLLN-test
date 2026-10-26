@@ -327,7 +327,7 @@ namespace engine::client
 	}
 
 	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw,
-		uint8_t animationState, uint32_t ackSnapshotSeq)
+		uint8_t animationState, uint32_t ackSnapshotSeq, const MoveCommandFields& move)
 	{
 		engine::server::InputMessage im{};
 		im.clientId = clientId;
@@ -338,6 +338,10 @@ namespace engine::client
 		im.yawRadians = yaw;
 		im.animationState = animationState; // TD.8 : état d'animation local propagé au shard.
 		im.ackSnapshotSeq = ackSnapshotSeq; // ETAPE3.2 : acquittement du dernier snapshot reconstruit.
+		im.clientTimeMs = move.clientTimeMs; // ETAPE3.3 : commande de mouvement.
+		im.lastJumpMs = move.lastJumpMs;
+		im.lastDodgeMs = move.lastDodgeMs;
+		im.moveEpoch = move.moveEpoch;
 		// Pas de log par paquet (cadence ~20 Hz) — éviterait de noyer la console.
 		return SendBytes(engine::server::EncodeInput(im));
 	}

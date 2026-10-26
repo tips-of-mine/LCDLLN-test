@@ -282,6 +282,21 @@ namespace engine::client
 		float yawRadians = 0.0f;
 		/// kForcePositionReason* (0 respawn, 1 anti-triche, 2 téléport).
 		uint8_t reason = 0;
+		/// ETAPE3.3 — époque de mouvement à recopier dans les commandes suivantes.
+		uint16_t moveEpoch = 0;
+	};
+
+	/// ETAPE3.3 — position officielle du shard pour une commande de mouvement
+	/// (MoveCorrection) en attente d'application par Engine (recalage + rejeu).
+	struct UIMoveCorrection
+	{
+		bool pending = false;
+		uint16_t moveEpoch = 0;
+		uint32_t inputSequence = 0;
+		float x = 0.0f; ///< position GLOBALE (convertie par Engine).
+		float y = 0.0f;
+		float z = 0.0f;
+		float yawRadians = 0.0f;
 	};
 
 	/// Groupes SP1 — invitation de groupe en attente (PartyInviteNotify, M32.2).
@@ -476,6 +491,8 @@ namespace engine::client
 		std::vector<UIRemoteEntity> remoteEntities;
 		/// Correction SP1 — position imposée par le serveur (consommée par Engine).
 		UIForcedPosition forcedPosition{};
+		/// ETAPE3.3 — dernière position officielle reçue (MoveCorrection), à appliquer.
+		UIMoveCorrection moveCorrection{};
 		/// Validation v12 — fenêtre de butin automatique (LootNotify cumulés).
 		UILootWindowState lootWindow{};
 		/// Groupes SP1 — invitation en attente (popup Accepter/Refuser).
@@ -607,6 +624,9 @@ namespace engine::client
 		/// Engine au CharacterController). Main thread uniquement.
 		void ClearForcedPosition();
 
+		/// ETAPE3.3 — Engine a appliqué (ou écarté) la correction en attente.
+		void ClearMoveCorrection();
+
 		/// Validation v12 — ferme et vide la fenêtre de butin (bouton Fermer).
 		/// Notifie UIModelChangeInventory. Main thread uniquement.
 		void CloseLootWindow();
@@ -670,6 +690,8 @@ namespace engine::client
 
 		/// Correction SP1 — position imposée par le serveur (ForcePosition).
 		bool ApplyForcePosition(std::span<const std::byte> packet);
+		/// ETAPE3.3 — position officielle après une commande de mouvement (MoveCorrection).
+		bool ApplyMoveCorrection(std::span<const std::byte> packet);
 
 		/// Validation v12 — butin auto-crédité (LootNotify) : abonde la fenêtre.
 		bool ApplyLootNotify(std::span<const std::byte> packet);

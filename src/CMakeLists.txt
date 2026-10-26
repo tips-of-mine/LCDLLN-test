@@ -55,6 +55,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannel.cpp
     # ETAPE3.2 : snapshots en delta sur base acquittée.
     ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDelta.cpp
+    # ETAPE3.3 : règles de mouvement partagées.
+    ${CMAKE_SOURCE_DIR}/src/shared/movement/MovementRules.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
@@ -704,6 +706,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(udp_secure_channel_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannelTests.cpp)
   target_link_libraries(udp_secure_channel_tests PRIVATE OpenSSL::SSL)
+  # ETAPE3.3 : règles de mouvement partagées (MovementRules.cpp vient d'engine_core) et
+  # accord client / shard sur le vrai CharacterController + recalage (MoveReconciler).
+  lcdlln_add_simple_test(movement_rules_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/movement/MovementRulesTests.cpp)
+  lcdlln_add_simple_test(move_reconciler_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/tests/MoveReconcilerTests.cpp)
   # ETAPE3.2 : snapshots en delta sur base acquittée (SnapshotDelta.cpp vient d'engine_core).
   lcdlln_add_simple_test(snapshot_delta_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/SnapshotDeltaTests.cpp)

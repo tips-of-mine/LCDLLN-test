@@ -31,6 +31,7 @@
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/network/UdpSecureChannel.h"
 #include "src/shared/network/SnapshotDelta.h"
+#include "src/shared/movement/MovementRules.h"
 #include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/shardd/anticheat/AntiCheatGameplay.h"
@@ -171,6 +172,22 @@ namespace engine::server
 		/// Correction SP1 — throttle d'envoi des ForcePosition anti-triche
 		/// (au plus 1 / 500 ms ; les respawns/téléports ne sont pas throttlés).
 		uint64_t lastForcePositionSentMs = 0;
+		/// ETAPE3.3 — raison du dernier ForcePosition (renvoyée telle quelle si le client
+		/// reste dans l'ancienne époque de mouvement).
+		uint8_t lastForcePositionReason = 0;
+		/// ETAPE3.3 — état de mouvement officiel (règles partagées MovementRules.h) :
+		/// position tranchée, budget de temps, saut et esquive en cours.
+		engine::movement::MovementState movement;
+		/// ETAPE3.3 — époque de mouvement : incrémentée à chaque ForcePosition ; les
+		/// commandes d'une autre époque (parties avant le téléport) sont ignorées.
+		uint16_t moveEpoch = 0;
+		/// ETAPE3.3 — dernier MoveCorrection envoyé (horloge monotone, ms), pour en
+		/// envoyer au plus un toutes les kMoveCorrectionIntervalMs.
+		uint64_t lastMoveCorrectionSentMs = 0;
+		/// ETAPE3.3 — vitesse horizontale maximale autoritaire (m/s) : la plus grande des
+		/// allures dérivées (classe, équipement, auras). 13 m/s tant que les stats ne
+		/// sont pas calculées (valeur par défaut du client).
+		float maxMoveSpeed = 13.0f;
 		/// Combat SP3 — auras actives (buffs, HoT, debuffs subis).
 		std::vector<ActiveAura> auras;
 		/// Roadmap-3 (2026-07-19) — Ceinture : 4 slots d'objets ACTIFS
@@ -674,7 +691,26 @@ namespace engine::server
 		void EvictIdleUdpClients();
 
 		/// Record the last input sequence for a connected client.
-		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians, uint8_t animationState);
+		/// ETAPE3.3 — applique une commande de mouvement : contrôle d'identité, mur du
+		/// monde généré, règles de mouvement partagées (ApplyMoveCommand) ; position
+		/// officielle = position du client si elle est atteignable, sinon point le plus
+		/// proche + MoveCorrection. Commandes d'une autre époque : ignorées.
+		void HandleInput(const Endpoint& endpoint, const InputMessage& input);
+
+		/// ETAPE3.3 — envoie la position officielle de \p client pour la commande
+		/// \p inputSequence (au plus une toutes les kMoveCorrectionIntervalMs).
+		void SendMoveCorrection(ConnectedClient& client, uint32_t inputSequence);
+
+		/// ETAPE3.3 — repose l'état de mouvement officiel sur la position courante du
+		/// client et ouvre une nouvelle époque (avant un ForcePosition).
+		void ResetClientMovement(ConnectedClient& client);
+
+		/// ETAPE3.3 — recalcule ConnectedClient::maxMoveSpeed depuis les stats dérivées
+		/// (classe, équipement, auras). Sans stats : valeur par défaut.
+		void RefreshMaxMoveSpeed(ConnectedClient& client);
+
+		/// ETAPE3.3 — intervalle minimal entre deux MoveCorrection pour un client (ms).
+		static constexpr uint64_t kMoveCorrectionIntervalMs = 100u;
 		/// Départ propre du client (message Goodbye) : éviction immédiate de l'entité au lieu
 		/// d'attendre le timeout d'inactivité. Évite l'avatar « fantôme » (cf. CODEBASE_MAP §60).
 		void HandleGoodbye(const Endpoint& endpoint, uint32_t clientId);
@@ -829,6 +865,11 @@ namespace engine::server
 		/// (cf. MessageKind::ForcePosition). Le mouvement client-autoritaire
 		/// reprend ensuite depuis cette position.
 		void SendForcePosition(ConnectedClient& client, uint8_t reason);
+
+		/// ETAPE3.3 — envoie (ou renvoie) la position officielle courante dans l'époque de
+		/// mouvement COURANTE, sans la réinitialiser (renvoi d'un ForcePosition perdu,
+		/// refus hors du monde généré). Met à jour lastForcePositionSentMs si l'envoi part.
+		void EmitForcePosition(ConnectedClient& client, uint8_t reason);
 
 		/// Validation v12 — butin AUTOMATIQUE : à la mort d'un mob, crédite
 		/// directement l'inventaire du looter (résolu en amont par le mode de

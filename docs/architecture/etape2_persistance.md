@@ -378,14 +378,24 @@ une ligne par annonce, échéance en UTC.
 
 ### Une transaction par opération
 
-`ServerApp::ExecuteAuctionTx` écrit, dans **une** transaction (3 essais) :
+`ServerApp::ExecuteAuctionTx` écrit, dans **une** transaction identifiée par un
+identifiant d'opération unique (table `auction_operations`) :
 
-1. l'annonce d'abord — insertion (mise en vente), mise à jour (enchère) ou
+0. si l'identifiant est déjà présent, l'opération a été validée par un essai
+   précédent dont la réponse s'est perdue : rien n'est refait ;
+1. l'annonce — insertion (mise en vente), mise à jour (enchère) ou
    suppression (achat immédiat, fin d'enchère). Pour une mise à jour ou une
    suppression, une annonce absente veut dire « déjà réglée » : rien n'est
    appliqué une deuxième fois ;
 2. l'état complet des joueurs en ligne concernés (contrôle de propriété 1.2) ;
-3. une ligne `character_mailbox` (2.1) pour chaque joueur absent à créditer.
+3. une ligne `character_mailbox` (2.1) pour chaque joueur absent à créditer ;
+4. la ligne `auction_operations` de l'opération.
+
+Jusqu'à 3 essais, toujours avec le même identifiant. Si un joueur crédité n'est
+plus possédé par ce shard (il a changé de shard), son gain part au courrier et
+l'opération repart. Si une réponse de `COMMIT` s'est perdue et qu'aucun essai n'a
+pu vérifier l'issue, l'état en mémoire est gardé tel quel (journalisé en
+`ERROR`) : on ne rend jamais deux fois ce qui a été payé.
 
 | Opération | Ce qui part ensemble |
 |---|---|
@@ -404,8 +414,11 @@ minute plus tard.
 ### Démarrage
 
 Avec une base, le shard lit ses annonces dans `auction_listings` (échéance
-recalculée en ticks). Les annonces de l'ancien fichier sont importées **une fois**
-(échéance 24 h), puis le fichier est renommé `listings.ini.imported`. Sans base,
+recalculée en ticks). Les annonces de l'ancien fichier sont importées **une fois** :
+toutes dans une seule transaction avec un marqueur `import-file-s<shard>` dans
+`auction_operations` (échéance 24 h), puis le fichier est renommé
+`listings.ini.imported`. Si le renommage échoue, le marqueur empêche tout nouvel
+import. Sans base,
 le fichier reste le stockage, comme avant.
 
 ### Limites

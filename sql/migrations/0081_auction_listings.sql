@@ -35,4 +35,19 @@ CREATE TABLE IF NOT EXISTS auction_listings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='ETAPE2.8 — annonces de l''hôtel des ventes (objet et enchère en séquestre)';
 
+-- auction_operations : une ligne par opération validée (identifiant unique
+-- <type>-s<shard>-<ms UTC>-<compteur>). Insérée dans la transaction de
+-- l'opération : si la réponse du COMMIT est perdue et que l'opération est
+-- rejouée, sa présence dit « déjà appliquée » et rien n'est refait (pas de
+-- double remboursement, pas d'annonce en double). Sert aussi de marqueur
+-- d'import unique de l'ancien fichier (« import-file-s<shard> »).
+CREATE TABLE IF NOT EXISTS auction_operations (
+    operation_id VARCHAR(80)  NOT NULL,
+    listing_id   INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'annonce concernée (créée pour une mise en vente)',
+    kind         VARCHAR(16)  NOT NULL COMMENT 'list, bid, settle, import',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (operation_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='ETAPE2.8 — opérations de l''hôtel des ventes déjà appliquées';
+
 SET FOREIGN_KEY_CHECKS = 1;

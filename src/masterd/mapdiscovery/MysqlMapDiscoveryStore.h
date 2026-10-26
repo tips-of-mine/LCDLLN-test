@@ -3,6 +3,8 @@
 // (table character_map_discovery, migration 0076). Une ligne par cellule
 // visitée : masque brut de 800 octets (cf. src/shared/world/MapDiscovery.h).
 // Fusion OU : une case découverte ne redevient jamais cachée.
+// ETAPE2.5 — lecture seule côté master : la carte est écrite par le shard
+// propriétaire (ServerApp::WriteCharacterStateInTx).
 
 #include "src/shared/world/MapDiscovery.h"
 
@@ -35,10 +37,6 @@ namespace engine::server
 		/// \return false en erreur DB.
 		bool ListPage(uint64_t characterId, uint32_t startIndex, uint32_t maxCount,
 			std::vector<StoredCell>& outCells, uint32_t& outTotal);
-
-		/// Fusionne (OU) les masques \p cells dans ceux du personnage (création si
-		/// absente). \return nombre de cellules effectivement modifiées, -1 en erreur DB.
-		int Merge(uint64_t characterId, const std::vector<StoredCell>& cells);
 
 	private:
 		engine::server::db::ConnectionPool* m_pool = nullptr;

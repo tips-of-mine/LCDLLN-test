@@ -210,6 +210,10 @@ RenderModel
 > **Règle (ETAPE2.4)** : une opération qui modifie deux personnages (échange,
 > transfert) passe par `ServerApp::SaveCharacterPair` : une transaction, un
 > identifiant unique dans `character_operations` (migration 0079).
+>
+> **Règle (ETAPE2.5)** : la carte découverte est calculée et écrite par le shard
+> (position autoritaire, `MapDiscoveryTracker`) ; le master ne fait que la lire
+> (opcodes 208/209), l'opcode 210 du client est ignoré.
 
 ### Comptes et validation
 | Fichier | Rôle |

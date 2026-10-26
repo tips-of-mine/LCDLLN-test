@@ -1439,6 +1439,39 @@ namespace engine::server
 				&& claim->Bind(1, state.mailboxClaimedIds[i])
 				&& claim->Execute();
 		}
+		// 0 quinquies. ETAPE2.5 — carte découverte : fusion OU des cases révélées
+		// pendant la session avec le masque en base (une case découverte ne redevient
+		// jamais cachée). Écriture seulement si le masque grandit.
+		for (size_t i = 0; ok && i < state.mapDiscoveryCells.size(); ++i)
+		{
+			const uint32_t cellZoneId = state.mapDiscoveryCells[i].first;
+			engine::world::discovery::CellBitmap merged;
+			auto* sel = cache->Acquire(mysql,
+				"SELECT bits FROM character_map_discovery WHERE character_id = ? AND cell_zone_id = ? FOR UPDATE");
+			ok = sel != nullptr && sel->Bind(0, state.characterKey) && sel->Bind(1, cellZoneId) && sel->Execute();
+			if (!ok)
+			{
+				break;
+			}
+			bool existed = false;
+			if (sel->FetchRow())
+			{
+				const std::string bits = sel->GetString(0);
+				existed = merged.Assign(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bits.data()), bits.size()));
+				while (sel->FetchRow()) {}
+			}
+			const bool grew = merged.Merge(state.mapDiscoveryCells[i].second);
+			if ((existed && !grew) || merged.Empty())
+			{
+				continue;
+			}
+			const auto& bytes = merged.Bytes();
+			auto* up = cache->Acquire(mysql,
+				"INSERT INTO character_map_discovery (character_id, cell_zone_id, bits) VALUES (?, ?, ?) "
+				"ON DUPLICATE KEY UPDATE bits = VALUES(bits)");
+			ok = up != nullptr && up->Bind(0, state.characterKey) && up->Bind(1, cellZoneId)
+				&& up->BindBlob(2, bytes.data(), bytes.size()) && up->Execute();
+		}
 		// 1. Wallet : upsert des 4 devises (ids alignés sur PlayerWalletService :
 		// 1=gold, 2=honor, 3=badges, 4=premium). Les 4 lignes sont TOUJOURS écrites
 		// (même à 0) : elles servent de sentinelle d'existence à LoadCharacterFromDb.
@@ -2456,6 +2489,7 @@ namespace engine::server
 			m_lastEvictIdleClientsTick = m_currentTick;
 		}
 		Simulate();
+		UpdateMapDiscovery();
 		MaybeAutosaveCharacters();
 		RefreshReplication();
 		MaybeSendSnapshots();
@@ -2805,6 +2839,24 @@ namespace engine::server
 		return true;
 	}
 
+	void ServerApp::UpdateMapDiscovery()
+	{
+		// Positions globales seulement dans le monde en cellules (en zone historique,
+		// la position est locale à la zone et ne correspond à aucune case de la carte).
+		if (!m_cellWorld)
+		{
+			return;
+		}
+		for (ConnectedClient& client : m_clients)
+		{
+			if (!std::isfinite(client.positionMetersX) || !std::isfinite(client.positionMetersZ))
+			{
+				continue;
+			}
+			(void)client.mapDiscovery.RevealAround(client.positionMetersX, client.positionMetersZ);
+		}
+	}
+
 	void ServerApp::MaybeAutosaveCharacters()
 	{
 		// ETAPE2.3 — sauvegardes étalées : à chaque tick, seuls les personnages dont
@@ -2874,6 +2926,8 @@ namespace engine::server
 		state.cakeExpiresAtMsUtcByItemId = client.cakeExpiresAtMsUtcByItemId;
 		/// SP-B — persist known class skills.
 		state.knownSkillIds = client.knownSkillIds;
+		/// ETAPE2.5 — carte découverte pendant la session (fusion OU en base).
+		state.mapDiscoveryCells = client.mapDiscovery.SessionCells();
 		return state;
 	}
 

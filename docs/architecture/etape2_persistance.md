@@ -9,7 +9,11 @@ et retire le travail SQL du tick de jeu.
 | 2.1 (chantier 3.1) | Base = seule source de vérité (fin des `.ini`, fin de l'écriture de position par le master) | livré |
 | 2.2 (chantier 3.2) | SQL hors du tick (file de sauvegarde par personnage) | livré |
 | 2.3 (chantier 3.3) | Sauvegardes automatiques étalées | livré |
-| 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | cette PR |
+| 2.4 (chantier 3.4) | Échanges et transferts : les deux personnages dans une transaction | livré |
+| 2.5 | Carte découverte écrite par le shard | cette PR |
+| 2.6 (chantier 3.6) | Instantanés restaurables | PR suivante |
+| 2.7 | Lectures du Hello hors du tick | PR suivante |
+| 2.8 | Enchères en base, dans des transactions | PR suivante |
 
 ## 2.1 — La base, seule source de vérité
 
@@ -93,8 +97,7 @@ La position est écrite par le shard propriétaire.
 
 ### Limites
 
-- La carte découverte (`character_map_discovery`) reste écrite par le master à la
-  demande du client.
+- La carte découverte : voir 2.5.
 - Les anciens fichiers `.ini` restent sur le disque (jamais supprimés
   automatiquement) ; ils peuvent être archivés une fois tous les personnages migrés.
 - Instantanés restaurables (chantier 3.6) : pas encore.
@@ -248,3 +251,31 @@ l'instantané d'un joueur pour les deux chemins.
 ### Déploiement
 
 Migration 0079 + shard. Pas de changement réseau, client inchangé.
+
+## 2.5 — Carte découverte écrite par le shard
+
+Avant : le client calculait les cases découvertes (cases de 125 m dans un rayon
+de 300 m) et les envoyait au master (opcode 210), qui les fusionnait en base. Deux
+écrivains pour un personnage, et une donnée fournie par le client.
+
+Maintenant :
+
+- le shard révèle lui-même les cases autour de la **position autoritaire** du
+  joueur (`MapDiscoveryTracker`, `src/shardd/world/`, mêmes règles que le client :
+  `src/shared/world/MapDiscovery.h`), dans le monde en cellules uniquement ;
+- les cases révélées pendant la session partent dans la transaction de sauvegarde
+  du personnage : fusion OU avec `character_map_discovery` (`SELECT … FOR UPDATE`,
+  écriture seulement si le masque grandit). Une case découverte ne redevient
+  jamais cachée ;
+- le master ne fait plus que **lire** la carte pour le client (opcodes 208/209,
+  inchangés). Les mises à jour 210 envoyées par le client sont ignorées.
+
+Le client n'est pas modifié : il révèle toujours la carte localement pour
+l'affichage immédiat et continue d'envoyer 210 (sans effet). Une prochaine version
+du client pourra cesser cet envoi.
+
+Test : `map_discovery_tracker_tests`.
+
+### Déploiement
+
+Shard + master. Pas de migration, pas de changement réseau, client inchangé.

@@ -96,6 +96,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
     # Monde « Royaumes » — cellules de 10 km, régions actives, points de départ.
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
+    # ETAPE2.5 : carte à découvrir calculée par le shard (server_app WIN32 ne linke pas engine_core).
+    ${CMAKE_SOURCE_DIR}/src/shared/world/MapDiscovery.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
@@ -685,6 +688,10 @@ elseif(UNIX)
   # ETAPE2.4 : identifiant d'opération à deux personnages (header-only).
   lcdlln_add_simple_test(character_operation_id_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterOperationIdTests.cpp)
+  # ETAPE2.5 : carte à découvrir calculée par le shard.
+  lcdlln_add_simple_test(map_discovery_tracker_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTrackerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp)
   # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
   lcdlln_add_simple_test(lfg_queue_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/lfg/LfgQueueTests.cpp)
@@ -1379,6 +1386,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
     # Monde « Royaumes » — cellules de 10 km, régions actives, points de départ.
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
+    # ETAPE2.5 : carte à découvrir calculée par le shard (MapDiscovery.cpp vient d'engine_core).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp

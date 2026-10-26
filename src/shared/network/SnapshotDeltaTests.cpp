@@ -249,6 +249,41 @@ int main()
 		Check(npc && std::fabs(npc->state.positionX - 9.0f) < 0.001f, "PNJ rattrapé au snapshot suivant");
 	}
 
+	// 7b. Mi-fréquence avec un acquittement en retard de 2 et 3 snapshots : le PNJ
+	//     n'affiche jamais un état plus ancien que le snapshot précédent (ni recul, ni
+	//     clignotement vers sa position de départ).
+	for (uint32_t lag = 2; lag <= 3; ++lag)
+	{
+		SnapshotSender tx;
+		SnapshotReceiver rx;
+		std::vector<WireEntity> world = World({ MakeEntity(1, 0, 0), MakeEntity(2, 0, 0) });
+		world[1].halfRate = true;
+		ChunkHeader tmpl{};
+		std::vector<SnapshotEntity> out;
+		ChunkHeader h{};
+		float lastShown = -1.0f;
+		bool monotonic = true;
+		bool fresh = true;
+		for (int step = 1; step <= 40; ++step)
+		{
+			world[1].positionCmX = step * 100; // 1 m par snapshot
+			(void)Deliver(rx, tx.BuildPackets(tmpl, world), out, h);
+			const uint32_t seq = tx.LastSentSeq();
+			if (seq > lag)
+				tx.OnAck(seq - lag);
+			const SnapshotEntity* npc = Find(out, 2);
+			if (npc == nullptr)
+				continue;
+			if (npc->state.positionX < lastShown - 0.001f)
+				monotonic = false;
+			if (npc->state.positionX < static_cast<float>(step - 1) - 0.001f)
+				fresh = false;
+			lastShown = npc->state.positionX;
+		}
+		Check(monotonic, "mi-fréquence, acquittement en retard : jamais de recul");
+		Check(fresh, "mi-fréquence, acquittement en retard : au plus un snapshot de retard");
+	}
+
 	// 8. Paquets mal formés refusés.
 	{
 		SnapshotSender tx;

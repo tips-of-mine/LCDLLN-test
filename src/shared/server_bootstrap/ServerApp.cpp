@@ -438,8 +438,14 @@ namespace engine::server
 		{
 			// ETAPE3.2 (chantier 4.5) — défaut 100 entités par client (0 = pas de plafond).
 			const int64_t cfgViewCap = m_config.GetInt("server.replication.view_cap_entities", 100);
-			constexpr int64_t kMaxReasonableViewCap = 4096;
-			const int64_t clampedViewCap = std::clamp<int64_t>(cfgViewCap, 0, kMaxReasonableViewCap);
+			// ETAPE3.2 — borne = plafond du codec des snapshots (kMaxEntitiesPerSnapshot) :
+			// au-delà, le codec couperait sans tenir compte des priorités (groupe, cible).
+			// 0 (pas de plafond) devient donc ce maximum.
+			constexpr int64_t kMaxReasonableViewCap =
+				static_cast<int64_t>(engine::network::snapshot::kMaxEntitiesPerSnapshot);
+			const int64_t clampedViewCap = (cfgViewCap <= 0)
+				? kMaxReasonableViewCap
+				: std::clamp<int64_t>(cfgViewCap, 1, kMaxReasonableViewCap);
 			m_viewCapEntities = static_cast<uint32_t>(clampedViewCap);
 			if (m_viewCapEntities != 0u)
 			{
@@ -4780,9 +4786,6 @@ namespace engine::server
 			return;
 		}
 
-		// ETAPE3.2 (chantier 4.5) — cible gardée dans les snapshots malgré le plafond.
-		client->lastTargetEntityId = targetEntityId;
-
 		MobEntity* target = FindMobByEntityId(targetEntityId);
 		if (target == nullptr)
 		{
@@ -4791,6 +4794,8 @@ namespace engine::server
 				targetEntityId);
 			return;
 		}
+		// ETAPE3.2 (chantier 4.5) — cible (validée) gardée dans les snapshots malgré le plafond.
+		client->lastTargetEntityId = targetEntityId;
 
 		if (!engine::world::cells::SameMap(target->zoneId, client->zoneId))
 		{

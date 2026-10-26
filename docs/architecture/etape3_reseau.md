@@ -188,12 +188,14 @@ du shard et celle du client ne dérivent jamais. Une entité qui bouge de 50 cm 
 ### Plafond et fréquence (4.5)
 
 - **Plafond d'entités par client** : `server.replication.view_cap_entities`, désormais
-  **100** par défaut (0 = pas de plafond). Au-delà, les plus proches sont gardées : le
-  rayon de vue se réduit de lui-même dans la foule.
-- **Toujours inclus** malgré le plafond : les membres du groupe, la dernière cible visée
-  (attaque ou sort), la cible du sort en cours.
+  **100** par défaut, 512 au plus (plafond du codec ; 0 = ce maximum). Au-delà, les plus
+  proches sont gardées : le rayon de vue se réduit de lui-même dans la foule.
+- **Jamais coupés par le plafond** (parmi les entités des cellules d'intérêt) : les
+  membres du groupe, la dernière cible attaquée ou visée par un sort, la cible du sort en
+  cours. Un membre du groupe hors des cellules d'intérêt n'est pas ajouté.
 - **PNJ d'ambiance** (`MobEntity::ambient`) : mis à jour un snapshot sur deux (5 Hz). Les
-  snapshots impairs reprennent leur état de la base, donc rien n'est envoyé pour eux.
+  snapshots impairs reprennent leur état du snapshot précédent (jamais d'un plus ancien,
+  même si l'acquittement est en retard).
 
 ### Format d'un morceau (kind 4, petit-boutiste)
 

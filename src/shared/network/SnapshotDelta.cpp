@@ -527,18 +527,22 @@ namespace engine::network::snapshot
 		const Frame* baseline = FindFrame(m_lastAcked);
 
 		// Chantier 4.5 — les entités de faible priorité ne changent qu'un snapshot sur
-		// deux : les snapshots impairs reprennent leur état de la base (donc rien à
-		// envoyer pour elles).
-		if (baseline != nullptr && (seq % 2u) == 1u)
+		// deux : les snapshots impairs reprennent leur état du snapshot PRÉCÉDENT
+		// (seq - 1, pair donc à jour), pas celui de la base acquittée — avec une base
+		// plus ancienne, l'entité reculerait. Coût nul quand la base est seq - 1.
+		if ((seq % 2u) == 1u)
 		{
-			for (WireEntity& e : current)
+			if (const Frame* previous = FindFrame(seq - 1u))
 			{
-				if (!e.halfRate)
-					continue;
-				if (const WireEntity* base = FindInFrame(*baseline, e.entityId))
+				for (WireEntity& e : current)
 				{
-					e = *base;
-					e.halfRate = true;
+					if (!e.halfRate)
+						continue;
+					if (const WireEntity* held = FindInFrame(*previous, e.entityId))
+					{
+						e = *held;
+						e.halfRate = true;
+					}
 				}
 			}
 		}
@@ -707,6 +711,14 @@ namespace engine::network::snapshot
 				WireEntity& e = *target;
 				if ((u.mask & kFieldPosition) != 0u)
 				{
+					// Delta hors de ±2^32 : impossible entre deux int32, refusé avant
+					// l'addition (pas de débordement signé).
+					constexpr int64_t kMaxDelta = int64_t{ 1 } << 32;
+					for (int axis = 0; axis < 3; ++axis)
+					{
+						if (u.position[axis] > kMaxDelta || u.position[axis] < -kMaxDelta)
+							return false;
+					}
 					const int64_t x = static_cast<int64_t>(inBase->positionCmX) + u.position[0];
 					const int64_t y = static_cast<int64_t>(inBase->positionCmY) + u.position[1];
 					const int64_t z = static_cast<int64_t>(inBase->positionCmZ) + u.position[2];

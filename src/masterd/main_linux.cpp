@@ -1608,30 +1608,37 @@ int main(int argc, char** argv)
 	// purge des courriers…) sont désormais cadencés par jobScheduler.Tick()
 	// dans la boucle ci-dessous.
 
-	// ETAPE5.2 (chantier 1.5) — après un calage de cette boucle (tour ≥ 3 s : swap, pause
-	// de la VM, disque gelé), les heartbeats reçus pendant le calage n'ont pas encore été
-	// pris en compte : les contrôles d'expiration (shards, sessions) sont suspendus 30 s
-	// pour ne pas déclarer morts des shards ou des clients vivants.
+	// ETAPE5.2 (chantier 1.5) — après un GEL DU PROCESSUS (pause de la VM, SIGSTOP, swap),
+	// les heartbeats des shards et des clients attendent dans les sockets : les contrôles
+	// d'expiration (shards, sessions) sont suspendus 30 s (au plus 120 s sur une série de
+	// gels) pour ne pas déclarer morts des pairs vivants. Les heartbeats sont horodatés par
+	// les threads réseau : seul le gel de TOUT le processus compte, d'où la mesure de la
+	// seule attente (Resync avant sleep_for) et non du travail de la boucle.
 	engine::core::StallGuardConfig stallCfg{};
 	stallCfg.enabled = config.GetBool("master.stall_guard.enabled", true);
 	stallCfg.stallSeconds = config.GetDouble("master.stall_guard.stall_sec", 3.0);
 	stallCfg.graceSeconds = config.GetDouble("master.stall_guard.grace_sec", 30.0);
+	stallCfg.maxSuspendSeconds = config.GetDouble("master.stall_guard.max_suspend_sec", 120.0);
 	engine::core::StallGuard stallGuard(stallCfg);
-	LOG_INFO(Server, "[ServerMain] ETAPE5.2 stall guard enabled={} stall_sec={:.1f} grace_sec={:.1f}",
-		stallGuard.Config().enabled, stallGuard.Config().stallSeconds, stallGuard.Config().graceSeconds);
+	LOG_INFO(Server, "[ServerMain] ETAPE5.2 stall guard enabled={} stall_sec={:.1f} grace_sec={:.1f} max_suspend_sec={:.0f}",
+		stallGuard.Config().enabled, stallGuard.Config().stallSeconds, stallGuard.Config().graceSeconds,
+		stallGuard.Config().maxSuspendSeconds);
 	bool stallSkipLogged = false;
+	bool stallCapLogged = false;
 
 	while (server.IsRunning() && g_quit == 0)
 	{
+		stallGuard.Resync(std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		auto now = std::chrono::steady_clock::now();
 		const double nowSec = std::chrono::duration<double>(now.time_since_epoch()).count();
 		if (stallGuard.OnLoop(nowSec))
 		{
-			LOG_WARN(Server, "[ServerMain] ETAPE5.2 calage de la boucle principale ({:.1f} s, total={}) : expirations suspendues {:.0f} s",
+			LOG_WARN(Server, "[ServerMain] ETAPE5.2 gel du processus ({:.1f} s, total={}) : expirations suspendues {:.0f} s",
 				stallGuard.LastStallSeconds(), stallGuard.StallCount(), stallGuard.Config().graceSeconds);
 			stallSkipLogged = false;
+			stallCapLogged = false;
 		}
 		// Roadmap-4 (2026-07-19) — jobs périodiques (intervalles internes).
 		jobScheduler.Tick();
@@ -1666,6 +1673,12 @@ int main(int argc, char** argv)
 				LOG_INFO(Server, "[ServerMain] ETAPE5.2 expirations (heartbeats shards, sessions) reportées apres calage");
 				stallSkipLogged = true;
 			}
+		}
+		if (now - lastWatchdog >= kWatchdogInterval && stallGuard.SuspensionCapped(nowSec) && !stallCapLogged)
+		{
+			LOG_WARN(Server, "[ServerMain] ETAPE5.2 gels répétés : suspension plafonnée a {:.0f} s, expirations reprises",
+				stallGuard.Config().maxSuspendSeconds);
+			stallCapLogged = true;
 		}
 		if (now - lastWatchdog >= kWatchdogInterval)
 		{

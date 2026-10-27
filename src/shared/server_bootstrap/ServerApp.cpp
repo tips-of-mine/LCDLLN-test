@@ -3300,6 +3300,7 @@ namespace engine::server
 			stall.enabled = m_config.GetBool("server.stall_guard.enabled", true);
 			stall.stallSeconds = m_config.GetDouble("server.stall_guard.stall_sec", 3.0);
 			stall.graceSeconds = m_config.GetDouble("server.stall_guard.grace_sec", 30.0);
+			stall.maxSuspendSeconds = m_config.GetDouble("server.stall_guard.max_suspend_sec", 120.0);
 			m_stallGuard.Configure(stall);
 			LOG_INFO(Net, "[ServerApp] Garde de calage : {} (calage ≥ {:.1f} s, éviction UDP suspendue {:.0f} s)",
 				m_stallGuard.Config().enabled ? "active" : "désactivée", m_stallGuard.Config().stallSeconds,

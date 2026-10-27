@@ -25,9 +25,14 @@ namespace engine::core
 		bool enabled = true;
 		double stallSeconds = 3.0;  ///< écart entre deux tours considéré comme un calage
 		double graceSeconds = 30.0; ///< suspension des contrôles de délai après un calage
+		/// Durée maximale d'une suspension continue, comptée depuis le PREMIER calage d'une
+		/// série : des calages répétés (machine qui swappe sans cesse) ne doivent pas empêcher
+		/// indéfiniment de déclarer morts les shards ou clients réellement disparus.
+		double maxSuspendSeconds = 120.0;
 	};
 
-	/// Borne les réglages : calage dans [0,2 ; 600] s, suspension dans [0 ; 3600] s.
+	/// Borne les réglages : calage dans [0,2 ; 600] s, suspension dans [0 ; 3600] s,
+	/// suspension maximale dans [suspension ; 7200] s.
 	StallGuardConfig SanitizeStallGuard(StallGuardConfig config);
 
 	class StallGuard final
@@ -44,9 +49,17 @@ namespace engine::core
 		///         Le premier appel ne fait que poser la référence.
 		bool OnLoop(double nowSeconds);
 
+		/// Repose la référence à \p nowSeconds sans rien détecter : à appeler juste avant une
+		/// attente volontaire, pour que \ref OnLoop ne mesure que l'attente et un éventuel gel
+		/// du processus (et pas le travail normal de la boucle).
+		void Resync(double nowSeconds);
+
 		/// Vrai si les contrôles de délai peuvent s'exécuter à \p nowSeconds (pas de
-		/// calage récent, ou garde désactivée).
+		/// calage récent, garde désactivée, ou suspension maximale atteinte).
 		bool ChecksAllowed(double nowSeconds) const;
+
+		/// Vrai si la suspension en cours a été écourtée par maxSuspendSeconds (journal).
+		bool SuspensionCapped(double nowSeconds) const;
 
 		/// Nombre de calages détectés depuis le démarrage (télémétrie).
 		uint64_t StallCount() const { return m_stallCount; }
@@ -58,6 +71,7 @@ namespace engine::core
 		bool m_hasPrevious = false;
 		double m_previous = 0.0;
 		double m_suspendedUntil = -1.0e18;
+		double m_chainStart = -1.0e18; ///< premier calage de la série en cours
 		uint64_t m_stallCount = 0;
 		double m_lastStallSeconds = 0.0;
 	};

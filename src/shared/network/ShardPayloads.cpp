@@ -112,19 +112,48 @@ namespace engine::network
 					return std::nullopt;
 				out.players.push_back(p);
 			}
+			// ETAPE5.4 — queue de contre-pression (version 1 ; une version inconnue est ignorée).
+			if (r.Remaining() >= 4u)
+			{
+				uint8_t head[2] = { 0u, 0u };
+				uint16_t loadPercent = 0;
+				if (r.ReadBytes(head, 2u) && r.ReadU16(loadPercent) && head[0] == 1u)
+				{
+					out.hasBackPressure = true;
+					out.saturated = (head[1] & 1u) != 0u;
+					out.tickLoadPercent = loadPercent;
+				}
+			}
 		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp,
-		const std::vector<ShardPlayerPresence>& players)
+		const std::vector<ShardPlayerPresence>& players, const ShardBackPressure* backPressure)
 	{
-		// 16 octets fixes + (si joueurs) u16 count + 24 octets/joueur.
-		const size_t total = players.empty() ? 16u : (16u + 2u + players.size() * 24u);
+		// 16 octets fixes + (si joueurs OU contre-pression) u16 count + 24 octets/joueur
+		// + (ETAPE5.4, si contre-pression) u8 version, u8 drapeaux, u16 charge.
+		const bool withArray = !players.empty() || backPressure != nullptr;
+		const size_t total = (withArray ? (16u + 2u + players.size() * 24u) : 16u) + (backPressure ? 4u : 0u);
 		std::vector<uint8_t> buf(total, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteU32(shard_id) || !w.WriteU32(current_load) || !w.WriteU64(timestamp))
 			return {};
+		if (backPressure != nullptr)
+		{
+			if (!w.WriteU16(static_cast<uint16_t>(players.size())))
+				return {};
+			for (const auto& p : players)
+			{
+				if (!w.WriteU64(p.accountId) || !w.WriteU64(p.characterId)
+					|| !w.WriteU32(p.level) || !w.WriteU32(p.zoneId))
+					return {};
+			}
+			const uint8_t tail[2] = { 1u, static_cast<uint8_t>(backPressure->saturated ? 1u : 0u) };
+			if (!w.WriteBytes(tail, 2u) || !w.WriteU16(backPressure->tickLoadPercent))
+				return {};
+			return buf;
+		}
 		if (!players.empty())
 		{
 			if (!w.WriteU16(static_cast<uint16_t>(players.size())))

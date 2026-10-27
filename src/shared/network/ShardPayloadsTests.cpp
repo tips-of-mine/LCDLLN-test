@@ -223,8 +223,40 @@ static void TestMasterToShardShutdown()
 	Assert(!ParseMasterToShardShutdownPayload(nullptr, 0u), "shutdown: payload nul refusé");
 }
 
+// ETAPE5.4 — queue de contre-pression du heartbeat : aller-retour, compatibilité.
+static void TestHeartbeatBackPressure()
+{
+	using namespace engine::network;
+	ShardBackPressure bp;
+	bp.saturated = true;
+	bp.tickLoadPercent = 93;
+	auto noPlayers = BuildShardHeartbeatPayload(4u, 10u, 99ull, {}, &bp);
+	auto a = ParseShardHeartbeatPayload(noPlayers.data(), noPlayers.size());
+	Assert(a && a->shard_id == 4u && a->players.empty() && a->hasBackPressure && a->saturated && a->tickLoadPercent == 93u,
+		"contre-pression sans joueur : aller-retour");
+	std::vector<ShardPlayerPresence> players(2);
+	players[0].accountId = 1; players[0].characterId = 11;
+	players[1].accountId = 2; players[1].characterId = 22;
+	bp.saturated = false;
+	auto withPlayers = BuildShardHeartbeatPayload(4u, 10u, 99ull, players, &bp);
+	auto b = ParseShardHeartbeatPayload(withPlayers.data(), withPlayers.size());
+	Assert(b && b->players.size() == 2u && b->players[1].characterId == 22u && b->hasBackPressure && !b->saturated,
+		"contre-pression avec joueurs : aller-retour");
+	// Master antérieur : il lit le tableau puis s'arrête (les 4 octets de queue sont ignorés) ;
+	// ici on vérifie qu'un heartbeat SANS queue reste sans contre-pression.
+	auto legacy = BuildShardHeartbeatPayload(4u, 10u, 99ull, players);
+	auto c = ParseShardHeartbeatPayload(legacy.data(), legacy.size());
+	Assert(c && c->players.size() == 2u && !c->hasBackPressure, "heartbeat v9 : pas de contre-pression");
+	Assert(withPlayers.size() == legacy.size() + 4u, "queue de 4 octets");
+	// Version inconnue : ignorée.
+	withPlayers[withPlayers.size() - 4u] = 7u;
+	auto d = ParseShardHeartbeatPayload(withPlayers.data(), withPlayers.size());
+	Assert(d && !d->hasBackPressure, "version inconnue ignorée");
+}
+
 int main()
 {
+	TestHeartbeatBackPressure();
 	TestMasterToShardShutdown();
 	TestShardLostNotification();
 	TestHeartbeatLegacyNoPlayers();

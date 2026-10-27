@@ -165,7 +165,13 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 		std::vector<ShardPlayerPresence> players;
 		if (m_presence_provider)
 			players = m_presence_provider();
-		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp, players);
+		// ETAPE5.4 — contre-pression (saturation, charge du tick) si un fournisseur est câblé.
+		ShardBackPressure backPressure;
+		const bool withBackPressure = static_cast<bool>(m_backpressure_provider);
+		if (withBackPressure)
+			backPressure = m_backpressure_provider();
+		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp, players,
+			withBackPressure ? &backPressure : nullptr);
 		if (payload.empty())
 			return;
 		payload = WrapShardAuth(m_shared_secret, payload); // audit F3

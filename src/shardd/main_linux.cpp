@@ -31,6 +31,7 @@
 #include "src/shardd/internals/globals/GraveyardManager.h"
 #include "src/shardd/internals/globals/LocaleStrings.h"
 
+#include <atomic>
 #include <csignal>
 #include <chrono>
 #include <algorithm>
@@ -165,10 +166,19 @@ int main(int argc, char** argv)
 	engine::server::HealthEndpoint healthEndpoint;
 	uint16_t healthPort = static_cast<uint16_t>(config.GetInt("server.health.port", 3844));
 	std::string healthBind = config.GetString("server.health.bind", "127.0.0.1");
-	auto metricsProvider = [&server]() {
+	// ETAPE5.4 — les métriques de jeu viennent de gameplayApp, créée plus bas : le
+	// fournisseur HTTP lit ce pointeur (nul avant la création et après l'arrêt).
+	std::atomic<const engine::server::ServerApp*> metricsApp{ nullptr };
+	auto metricsProvider = [&server, &metricsApp]() {
 		engine::server::NetServerStats netStats;
 		server.GetNetworkStats(netStats);
-		return engine::server::BuildPrometheusText(netStats, 0, 0, 0, 0, nullptr);
+		std::string text = engine::server::BuildPrometheusText(netStats, 0, 0, 0, 0, nullptr);
+		if (const engine::server::ServerApp* app = metricsApp.load(std::memory_order_acquire))
+		{
+			if (app->MetricsBoard().HasSnapshot())
+				text += engine::server::FormatShardMetricsPrometheus(app->MetricsBoard().Snapshot());
+		}
+		return text;
 	};
 	if (healthEndpoint.Init(healthPort, healthBind, []() { return true; }, metricsProvider, nullptr, nullptr))
 		LOG_INFO(Net, "[ShardMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
@@ -264,6 +274,19 @@ int main(int argc, char** argv)
 	// ~1 Hz par TickOnce (thread gameplay) et lu ici de façon thread-safe. La lambda
 	// capture gameplayApp par référence : elle vit jusqu'à la fin de main(), comme toMaster.
 	toMaster.SetPlayerPresenceProvider([&gameplayApp]() { return gameplayApp.GetPlayerPresenceSnapshot(); });
+	// ETAPE5.4 — contre-pression : un shard saturé (délestage, file de sauvegarde pleine)
+	// l'annonce au master, qui cesse de lui envoyer de nouveaux joueurs.
+	toMaster.SetBackPressureProvider([&gameplayApp]() {
+		engine::network::ShardBackPressure bp;
+		if (gameplayApp.MetricsBoard().HasSnapshot())
+		{
+			const auto m = gameplayApp.MetricsBoard().Snapshot();
+			bp.saturated = engine::server::IsSaturated(m);
+			bp.tickLoadPercent = engine::server::TickLoadPercent(m);
+		}
+		return bp;
+	});
+	metricsApp.store(&gameplayApp, std::memory_order_release);
 	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
@@ -553,6 +576,7 @@ int main(int argc, char** argv)
 	// sauverait après la fermeture de la base et ces écritures seraient perdues.
 	gameplayApp.Shutdown();
 	characterDbPool.Shutdown(); LOG_INFO(Net, "[ShardMain] Shutdown");
+	metricsApp.store(nullptr, std::memory_order_release); // ETAPE5.4
 	healthEndpoint.Shutdown();
 	engine::core::Log::Shutdown();
 	return 0;

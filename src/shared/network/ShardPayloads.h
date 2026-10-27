@@ -77,13 +77,29 @@ namespace engine::network
 		uint32_t current_load = 0;
 		uint64_t timestamp = 0;
 		std::vector<ShardPlayerPresence> players;
+		/// ETAPE5.4 — contre-pression (queue optionnelle après le tableau de joueurs ;
+		/// absente d'un shard antérieur : hasBackPressure = false).
+		bool hasBackPressure = false;
+		bool saturated = false;          ///< le shard refuse de nouveaux joueurs (délestage, file pleine)
+		uint16_t tickLoadPercent = 0;    ///< charge lissée du tick, % du budget (0..1000)
 	};
 	std::optional<ShardHeartbeatPayload> ParseShardHeartbeatPayload(const uint8_t* payload, size_t payloadSize);
 
+	/// ETAPE5.4 — contre-pression remontée par le shard dans son heartbeat.
+	/// Encodage : après le tableau de joueurs (toujours présent, éventuellement vide),
+	/// u8 version (1), u8 drapeaux (bit 0 = saturé), u16 charge du tick en %. Un master
+	/// antérieur ignore ces octets de queue (rétro-compatible dans les deux sens).
+	struct ShardBackPressure
+	{
+		bool saturated = false;
+		uint16_t tickLoadPercent = 0;
+	};
+
 	/// Builds SHARD_HEARTBEAT payload (Shard→Master). timestamp: e.g. seconds since epoch or monotonic.
 	/// \param players liste optionnelle des joueurs en jeu (présence enrichie v9). Vide = heartbeat legacy.
+	/// \param backPressure ETAPE5.4 : contre-pression à joindre (nullptr = heartbeat v9 inchangé).
 	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp = 0,
-		const std::vector<ShardPlayerPresence>& players = {});
+		const std::vector<ShardPlayerPresence>& players = {}, const ShardBackPressure* backPressure = nullptr);
 
 	/// Parsed MASTER_TO_SHARD_ADMIT_CHARACTER payload : (account_id, character_id, character_name, gender).
 	/// Émis par le master (CharacterEnterWorldHandler) à destination du shard via la

@@ -42,7 +42,7 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 		return id;
 	}
 
-	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load)
+	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load, bool saturated)
 	{
 		auto now = std::chrono::steady_clock::now();
 		bool log_degraded = false;
@@ -76,11 +76,21 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 					was_offline ? ", retour apres declaration de mort" : "");
 			}
 
+			// ETAPE5.4 — contre-pression : un shard saturé (délestage, file de sauvegarde
+			// pleine) est traité comme plein.
+			const bool was_saturated = it->second.saturated;
+			it->second.saturated = saturated;
+			if (saturated != was_saturated)
+				LOG_WARN(Core, "[ShardRegistry] ETAPE5.4 shard {} {} (contre-pression)", shard_id,
+					saturated ? "sature : plus de nouveaux joueurs" : "n'est plus sature");
+
 			// Transition Online → Degraded or Degraded → Online according to load ratio (STAB.10)
 			if (it->second.state == ShardState::Online || it->second.state == ShardState::Degraded)
 			{
 				uint32_t cap = (it->second.max_capacity > 0u) ? it->second.max_capacity : 1u;
 				double ratio = static_cast<double>(it->second.current_load) / static_cast<double>(cap);
+				if (saturated)
+					ratio = (std::max)(ratio, m_degraded_load_threshold);
 				if (ratio >= m_degraded_load_threshold && it->second.state == ShardState::Online)
 				{
 					it->second.state = ShardState::Degraded;
@@ -192,6 +202,7 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 		info.current_load = e.current_load;
 		info.last_heartbeat = e.last_heartbeat;
 		info.state = e.state;
+		info.saturated = e.saturated;
 		info.display_name = e.display_name;
 		info.game_mode = e.game_mode;
 		info.ruleset = e.ruleset;
@@ -215,6 +226,7 @@ LOG_DEBUG(Server, "[SREG_REG] EvictStaleHeartbeats timeout={}s marked={}", timeo
 			info.current_load = e.current_load;
 			info.last_heartbeat = e.last_heartbeat;
 			info.state = e.state;
+			info.saturated = e.saturated;
 			info.display_name = e.display_name;
 			info.game_mode = e.game_mode;
 			info.ruleset = e.ruleset;

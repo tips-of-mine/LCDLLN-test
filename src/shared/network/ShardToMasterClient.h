@@ -68,6 +68,12 @@ namespace engine::network
 		using PlayerPresenceProvider = std::function<std::vector<ShardPlayerPresence>()>;
 		void SetPlayerPresenceProvider(PlayerPresenceProvider provider) { m_presence_provider = std::move(provider); }
 
+		/// ETAPE5.4 — fournisseur optionnel de contre-pression (saturation, charge du tick)
+		/// joint à chaque heartbeat. Appelé depuis Pump() ; doit être thread-safe vis-à-vis
+		/// du thread de simulation (lecture d'une photo publiée).
+		using BackPressureProvider = std::function<ShardBackPressure()>;
+		void SetBackPressureProvider(BackPressureProvider provider) { m_backpressure_provider = std::move(provider); }
+
 		/// TA.3 — Callback invoqué quand le master pousse un `kOpcodeMasterToShardAdmitCharacter`
 		/// (suite à un EnterWorld réussi côté master). Le destinataire typique alimente
 		/// `AdmittedCharacterRegistry::Admit(character_id, account_id, characterName, gender, now)`
@@ -146,5 +152,6 @@ namespace engine::network
 		ShutdownCallback m_shutdown_callback; ///< ETAPE5.3
 		/// Présence enrichie (v9) — fournisseur optionnel de la liste des joueurs. Voir SetPlayerPresenceProvider.
 		PlayerPresenceProvider m_presence_provider;
+		BackPressureProvider m_backpressure_provider; ///< ETAPE5.4
 	};
 }

@@ -736,6 +736,9 @@ namespace engine::server
 			TickOnce();
 			const auto tickEnd = std::chrono::steady_clock::now();
 			const double tickSeconds = std::chrono::duration<double>(tickEnd - tickStart).count();
+			// ETAPE5.4 — alimente les métriques (dernier tick, pire tick de la seconde).
+			m_lastTickSeconds = tickSeconds;
+			m_tickMaxSinceMetrics = (std::max)(m_tickMaxSinceMetrics, tickSeconds);
 			const double nowSeconds = std::chrono::duration<double>(tickEnd.time_since_epoch()).count();
 			const SheddingTransition shed = m_loadShedder.OnTick(tickSeconds,
 				1.0 / static_cast<double>(std::max<int64_t>(m_tickHz, 1)), nowSeconds);
@@ -3199,7 +3202,40 @@ namespace engine::server
 				m_loadShedder.Active() ? "oui" : "non",
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
+			PublishGameplayMetrics(asleepMobs);
 		}
+	}
+
+	void ServerApp::PublishGameplayMetrics(size_t asleepMobs)
+	{
+		ShardGameplayMetrics m;
+		m.tick = m_currentTick;
+		m.tickHz = static_cast<uint32_t>((std::max<int64_t>)(m_tickHz, 0));
+		m.tickLastSeconds = m_lastTickSeconds;
+		m.tickMaxSeconds = m_tickMaxSinceMetrics;
+		m_tickMaxSinceMetrics = 0.0;
+		m.tickLoad = m_loadShedder.SmoothedLoad();
+		m.clients = static_cast<uint32_t>(m_clients.size());
+		m.mobs = static_cast<uint32_t>(m_mobs.size());
+		m.mobsAsleep = static_cast<uint32_t>(asleepMobs);
+		m.lootBags = static_cast<uint32_t>(m_lootBags.size());
+		m.regionsWarm = static_cast<uint32_t>(m_regionLifecycle.WarmCount());
+		m.regionsTracked = static_cast<uint32_t>(m_regionLifecycle.TrackedCount());
+		m.pendingHellos = static_cast<uint32_t>(m_pendingHellos.size());
+		m.pendingCharacterLoads = static_cast<uint32_t>(m_pendingCharacterLoads.size());
+		if (m_characterSaveQueue != nullptr)
+		{
+			const auto stats = m_characterSaveQueue->GetStats();
+			m.saveQueuePending = static_cast<uint32_t>(m_characterSaveQueue->PendingCount());
+			m.saveQueueOverloaded = m_characterSaveQueue->IsOverloaded();
+			m.saveQueueExecuted = stats.executed;
+			m.saveQueueRejected = stats.rejected;
+			m.saveQueueCoalesced = stats.coalesced;
+		}
+		m.sheddingActive = m_loadShedder.Active();
+		m.sheddingEnterCount = m_loadShedder.EnterCount();
+		m.stallCount = m_stallGuard.StallCount();
+		m_metricsBoard.Publish(m);
 	}
 
 	std::vector<engine::network::ShardPlayerPresence> ServerApp::GetPlayerPresenceSnapshot() const

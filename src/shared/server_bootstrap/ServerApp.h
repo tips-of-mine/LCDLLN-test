@@ -844,9 +844,14 @@ namespace engine::server
 		/// (scheduleRetired). Appelée par UpdateAmbientMob (thread de tick).
 		void UpdateAgendaMob(MobEntity& mob, const ambient::AgendaDefinition& agenda);
 
-		/// ETAPE4.4 — vrai si le PNJ de l'emplacement \p slotIndex dort chez lui à
-		/// l'heure de jeu courante (pas d'apparition).
-		bool IsAgendaSlotIndoors(const SpawnerRuntimeState& spawner, uint32_t slotIndex) const;
+		/// ETAPE4.4 — vitesse de marche des mobs d'un spawner (archétype, sinon défaut) :
+		/// la même pour l'apparition et pour l'agenda.
+		float ResolveSpawnerMobSpeed(const SpawnerRuntimeState& spawner) const;
+
+		/// ETAPE4.4 — état d'agenda du PNJ de l'emplacement \p slotIndex à l'instant de
+		/// jeu \p gameSeconds (indoors = dort chez lui : pas d'apparition).
+		ambient::AgendaState EvaluateSpawnerAgenda(const SpawnerRuntimeState& spawner, uint32_t slotIndex,
+			double gameSeconds) const;
 
 		/// ETAPE4.4 — secondes de jeu courantes (horloge monde) et rythme de l'horloge
 		/// (secondes de jeu par seconde réelle, 24 pour un jour de jeu en une heure).
@@ -1754,6 +1759,8 @@ namespace engine::server
 		std::unordered_set<uint32_t> m_evaluatedRegions;
 		/// ETAPE4.3 — délai de grâce (ticks) avant le retrait des mobs d'un spawner inactif.
 		uint32_t m_spawnerDespawnGraceTicks = 0;
+		/// ETAPE4.4 — vitesse par défaut des mobs (server.mob_move_speed_meters_per_second).
+		float m_defaultMobMoveSpeed = 3.0f;
 		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
 		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
 		mob_activity::MobActivityConfig m_mobActivity{};

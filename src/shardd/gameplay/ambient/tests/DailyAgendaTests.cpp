@@ -184,6 +184,17 @@ int main()
 		Check(Dist(StrollPoint(def, seed, w, t), w.target) < 1e-6f, "hors flânerie : point d'arrêt");
 	}
 
+	// 9. Trajet plus long que le créneau : arrivé avant la fin, le créneau suivant part du bon lieu.
+	{
+		AgendaDefinition far = def;
+		far.places[static_cast<size_t>(AgendaPlace::Tavern)] = { Pt(3000.0f, 0.0f) }; // 3 km : > 1 h de jeu de marche
+		// Juste avant la fin du créneau du repas (≥ 95 % de sa durée), il est arrivé.
+		const AgendaState next = EvaluateAgenda(far, seed, day + 13.0 * kHour + 25.0 * 60.0, kWalk, kRate, fallback);
+		Check(next.place == AgendaPlace::Work, "13 h 25 : créneau de l'après-midi");
+		const AgendaState prevEnd = EvaluateAgenda(far, seed, next.slotStartGameSeconds - 1.0, kWalk, kRate, fallback);
+		Check(prevEnd.place == AgendaPlace::Tavern && !prevEnd.travelling, "fin du repas : arrivé à l'auberge malgré la distance");
+	}
+
 	if (s_failCount == 0)
 		std::puts("[OK] daily_agenda_tests");
 	return s_failCount == 0 ? 0 : 1;

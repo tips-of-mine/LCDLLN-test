@@ -261,8 +261,15 @@ Côté shard (`ServerApp`) :
 - éveillé, il va au point de son créneau (`UpdateAgendaMob`), s'arrête pour un joueur
   tout proche comme avant, rentre le soir puis est retiré. Il réapparaît au matin, en
   sortant de chez lui ;
-- l'agenda remplace la routine quand les deux sont présents ; il ne s'applique qu'aux
-  archétypes d'ambiance (`behavior.kind = ambient`).
+- l'agenda remplace la routine **et son horaire** (jour, nuit) quand les deux sont
+  présents ; il ne s'applique qu'aux archétypes d'ambiance (`behavior.kind = ambient`) :
+  sur une créature, il est ignoré et signalé au démarrage ;
+- l'heure du coucher vaut aussi pour un PNJ endormi (4.1) : rentrer le rend « occupé »,
+  il se réveille et rentre. Il est retiré à moins de 4 m de sa porte (plusieurs PNJ la
+  partagent souvent), ou de toute façon une fois l'heure d'arrivée passée ;
+- un trajet tient toujours dans son créneau (95 % au plus) : le créneau suivant part du
+  bon lieu, même pour un lieu lointain. Vitesse de marche = celle de l'archétype, la même
+  qu'à l'apparition.
 
 Avec 4.1 à 4.3, un quartier sans joueur ne coûte rien. Pourtant, au retour d'un joueur,
 le forgeron est à sa forge à 10 h et à l'auberge à midi : le monde a continué de vivre.
@@ -320,7 +327,8 @@ s'y prêtera avec des métiers dédiés.
 `daily_agenda_tests` : routines intégrées cohérentes, nuit chez soi et invisible, au
 travail le matin et en route au début du créneau, déterminisme et variantes, décalage
 borné (1 000 journées), auberge variée et atelier fixe, retour du soir visible puis
-invisible, lieux sans point et agenda désactivé, flânerie bornée et déterministe.
+invisible, lieux sans point et agenda désactivé, flânerie bornée et déterministe, trajet
+plus long que son créneau.
 `world_gen_tests` : agendas générés (métier connu, domicile présent).
 
 ### Déploiement

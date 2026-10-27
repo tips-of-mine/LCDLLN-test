@@ -82,7 +82,8 @@ namespace engine::server::mob_activity
 		const uint32_t since = state.lastPlayerNearTick != 0u ? state.lastPlayerNearTick : spawnTick;
 		const uint32_t delayTicks = static_cast<uint32_t>(
 			std::lround(config.sleepDelaySeconds * static_cast<float>((std::max)(tickHz, 1u))));
-		if (nowTick >= since && nowTick - since >= delayTicks)
+		// Différence non signée : reste juste au retour à zéro du compteur de ticks.
+		if (nowTick - since >= delayTicks)
 		{
 			state.asleep = true;
 			return SleepTransition::FellAsleep;

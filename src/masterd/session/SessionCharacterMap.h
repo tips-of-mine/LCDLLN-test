@@ -29,6 +29,15 @@ namespace engine::server
 			std::string characterName;        ///< Original UTF-8, displayed as-is.
 			std::string normalizedName;       ///< Lowercased ASCII for whisper target match.
 			AccountRole role = AccountRole::Player; ///< Rôle du compte (pour la ventilation /status par rôle).
+			uint32_t    shardId = 0;          ///< ETAPE5.1 : shard qui héberge le personnage (characters.server_id), 0 = inconnu.
+		};
+
+		/// ETAPE5.1 — Liaison retirée par \ref TakeByShard (connexion à prévenir).
+		struct ShardBinding
+		{
+			uint32_t connId = 0;
+			uint64_t accountId = 0;
+			uint64_t characterId = 0;
 		};
 
 		/// Ventilation du nombre de joueurs en jeu par rôle de compte. La somme des
@@ -46,8 +55,16 @@ namespace engine::server
 		/// Removes any previous binding for the same connId and any name → conn binding
 		/// that pointed at the old name (consistency under updates).
 		/// \param accountId compte propriétaire (présence "en jeu" exposée au web-portal).
+		/// \param shardId ETAPE5.1 : shard qui héberge le personnage (0 = inconnu, jamais
+		///        concerné par \ref TakeByShard).
 		void Set(uint32_t connId, uint64_t accountId, uint64_t characterId, std::string characterName,
-			std::string normalizedName, AccountRole role);
+			std::string normalizedName, AccountRole role, uint32_t shardId = 0);
+
+		/// ETAPE5.1 — Retire toutes les liaisons dont le personnage est hébergé par
+		/// \p shardId (shard déclaré mort) et les renvoie : ces personnages ne sont plus
+		/// « en jeu » (présence, chat, /status) et l'appelant prévient chaque connexion.
+		/// \p shardId == 0 ne retire rien.
+		std::vector<ShardBinding> TakeByShard(uint32_t shardId);
 
 		/// Drop the binding for \a connId (call on connection close).
 		void Remove(uint32_t connId);

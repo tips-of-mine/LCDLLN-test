@@ -189,8 +189,23 @@ static void TestAdmitCharacterUdpSessionKey()
 		"enter world key: cle tronquee refusee");
 }
 
+// ETAPE5.1 — notification de perte de shard : aller-retour, opcode, payload tronqué.
+static void TestShardLostNotification()
+{
+	using namespace engine::network;
+	auto pkt = BuildShardLostNotificationPacket(9u, ShardLostReason::HeartbeatTimeout, 77ull);
+	PacketView view;
+	Assert(!pkt.empty() && PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok, "shard_lost: paquet parsable");
+	Assert(view.Opcode() == kOpcodeShardLostNotification && view.RequestId() == 0u, "shard_lost: opcode 211, push (request_id 0)");
+	auto parsed = ParseShardLostNotificationPayload(view.Payload(), view.PayloadSize());
+	Assert(parsed && parsed->shardId == 9u && parsed->reason == ShardLostReason::HeartbeatTimeout, "shard_lost: round-trip");
+	Assert(!ParseShardLostNotificationPayload(view.Payload(), 4u), "shard_lost: payload tronqué refusé");
+	Assert(!ParseShardLostNotificationPayload(nullptr, 5u), "shard_lost: payload nul refusé");
+}
+
 int main()
 {
+	TestShardLostNotification();
 	TestHeartbeatLegacyNoPlayers();
 	TestHeartbeatWithPlayers();
 	TestHeartbeatTruncatedRejected();

@@ -287,6 +287,13 @@ RenderModel
 > nouveau réglage dégradable suit le même schéma (valeur nominale + application dans
 > `ServerApp::ApplyLoadShedding`), et ne touche jamais au combat.
 
+> **Règle (ETAPE5.1)** : tout état du master qui rattache un joueur à un shard doit être
+> nettoyé dans le rappel `ShardRegistry::SetShardDownCallback` (`masterd/main_linux.cpp`).
+> `SessionCharacterMap::Set` reçoit le shard hôte (`characters.server_id`) ; la mort du
+> shard retire ces liaisons (`TakeByShard`) et pousse `kOpcodeShardLostNotification`
+> (211) aux clients. Étape 5 : `docs/architecture/etape5_exploitation.md` ; suivi de
+> l'étape 6 : `docs/architecture/reste_a_faire.md`.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

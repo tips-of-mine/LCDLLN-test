@@ -46,6 +46,7 @@
 #include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/ShardPayloads.h"
 #include "src/client/render/AuthImGuiRenderer.h"
 #include "src/client/dialogue/DialogueConfigLoader.h"
 #include "src/client/render/DialogueImGuiRenderer.h"
@@ -2732,6 +2733,24 @@ namespace engine
 			// fire-and-forget cote envoi). On parse + dispatche ici.
 			switch (opcode)
 			{
+			// ETAPE5.1 — le master a déclaré mort le shard qui hébergeait notre personnage
+			// (heartbeat expiré). Le verrou du personnage est libéré : on revient à l'écran
+			// de connexion, d'où le joueur peut rejouer aussitôt. Traitement différé à la
+			// frame suivante (on est ici à l'intérieur du poll de l'auth UI, qui ne doit
+			// pas être réinitialisé pendant son propre parcours d'événements).
+			case kOpcodeShardLostNotification:
+			{
+				auto parsed = ParseShardLostNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] SHARD_LOST parse failed (size={})", payloadSize);
+					return;
+				}
+				LOG_WARN(Net, "[Engine] SHARD_LOST : shard {} perdu (raison={}) -> retour a l'ecran de connexion",
+					parsed->shardId, static_cast<unsigned>(parsed->reason));
+				m_shardLostPending = true;
+				return;
+			}
 			case kOpcodeMailListInboxResponse:
 			{
 				auto parsed = ParseMailListInboxResponsePayload(payload, payloadSize);
@@ -8881,6 +8900,18 @@ namespace engine
 				out.gameplayHudDebugText += " unit_gold=";
 				out.gameplayHudDebugText += std::to_string(m_pendingSellUnitGold);
 				out.gameplayHudDebugText += "  -> Y confirm / N cancel\n";
+			}
+		}
+
+		// ETAPE5.1 — perte du shard (kOpcodeShardLostNotification) : retour à l'écran de
+		// connexion avec un message, avant le calcul de la porte d'authentification.
+		if (m_shardLostPending)
+		{
+			m_shardLostPending = false;
+			if (m_gameplayNetInitialized || m_currentCharacterId != 0)
+			{
+				RequestLogoutToLoginScreen();
+				m_authUi.SetInfoBanner(m_authUi.UiTranslate("auth.info.shard_lost"));
 			}
 		}
 

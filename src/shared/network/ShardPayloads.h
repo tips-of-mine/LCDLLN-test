@@ -138,4 +138,26 @@ namespace engine::network
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
 		std::string_view character_name, std::string_view gender, uint64_t guild_id = 0,
 		uint64_t owner_generation = 0, const std::array<uint8_t, 32>* udp_session_key = nullptr);
+
+	/// ETAPE5.1 — raison d'une notification de perte de shard (kOpcodeShardLostNotification).
+	enum class ShardLostReason : uint8_t
+	{
+		HeartbeatTimeout = 1, ///< le shard ne donne plus signe de vie (heartbeat expiré)
+		Shutdown = 2,         ///< arrêt ordonné du shard (réservé, ETAPE5.3)
+	};
+
+	/// ETAPE5.1 — payload de kOpcodeShardLostNotification (Master → Client, push).
+	struct ShardLostNotificationPayload
+	{
+		uint32_t shardId = 0;
+		ShardLostReason reason = ShardLostReason::HeartbeatTimeout;
+	};
+
+	/// Construit le paquet complet (en-tête + payload, request_id = 0).
+	/// \param sessionId en-tête de session du destinataire (0 accepté).
+	std::vector<uint8_t> BuildShardLostNotificationPacket(uint32_t shardId, ShardLostReason reason, uint64_t sessionId = 0);
+
+	/// Décode le payload ; nullopt si tronqué. Une raison inconnue est conservée telle quelle
+	/// (rétro-compatibilité : le client traite toute raison comme une perte).
+	std::optional<ShardLostNotificationPayload> ParseShardLostNotificationPayload(const uint8_t* payload, size_t payloadSize);
 }

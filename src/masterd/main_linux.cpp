@@ -17,6 +17,7 @@
 #include "src/masterd/handlers/shard/ShardTicketHandler.h"
 #include "src/masterd/handlers/shard/ServerListHandler.h"
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/ShardPayloads.h"
 #include "src/masterd/handlers/auth/AuthRegisterHandler.h"
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/account/InMemoryAccountStore.h"
@@ -1551,13 +1552,27 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Server, "[MAIN_SRV] SetPacketHandler OK");
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
-	shardRegistry.SetShardDownCallback([&playerPresenceCache, &dbPool](uint32_t shard_id) {
+	shardRegistry.SetShardDownCallback([&playerPresenceCache, &dbPool, &sessionCharMap, &server](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
 		// Présence enrichie : un shard tombé ne rapporte plus ses joueurs -> purge.
 		playerPresenceCache.Clear(shard_id);
 		// ETAPE1.2 — libère les verrous de propriété de ce shard : s'il revient, ses
 		// sauvegardes sont refusées (il n'est plus propriétaire de ses anciens personnages).
-		engine::server::ReleaseShardOwnership(dbPool, shard_id);
+		const auto released = engine::server::ReleaseShardOwnership(dbPool, shard_id);
+		// ETAPE5.1 — ses personnages ne sont plus « en jeu » (présence, chat, /status) et
+		// chaque client concerné est prévenu : il revient à l'écran de connexion, d'où
+		// il peut rejouer aussitôt (verrou libéré) sur un shard vivant.
+		const auto bindings = sessionCharMap.TakeByShard(shard_id);
+		const auto packet = engine::network::BuildShardLostNotificationPacket(shard_id,
+			engine::network::ShardLostReason::HeartbeatTimeout);
+		size_t notified = 0;
+		for (const auto& b : bindings)
+		{
+			if (!packet.empty() && server.Send(b.connId, packet))
+				++notified;
+		}
+		LOG_WARN(Net, "[ServerMain] ETAPE5.1 shard {} mort : verrous_liberes={} personnages_hors_ligne={} clients_prevenus={}",
+			shard_id, released ? static_cast<long long>(*released) : -1LL, bindings.size(), notified);
 	});
 	double degradedLoadThreshold = config.GetDouble("shard.degraded_load_threshold", 0.90);
 	shardRegistry.SetDegradedLoadThreshold(degradedLoadThreshold);

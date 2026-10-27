@@ -44,6 +44,7 @@
 #include "src/shardd/world/ZoneTransitions.h"
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shardd/world/MobActivity.h"
+#include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
 
@@ -1708,6 +1709,12 @@ namespace engine::server
 		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
 		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
 		mob_activity::MobActivityConfig m_mobActivity{};
+		/// ETAPE4.2 (chantier 2.6) — périodes (ticks) des travaux étalés par identifiant :
+		/// évaluation de chaque spawner (server.spawners.evaluate_hz, 2 Hz), découverte de
+		/// la carte par joueur (server.map_discovery_hz, 4 Hz), échéances des enchères (1 Hz).
+		uint32_t m_spawnerEvalPeriodTicks = 1u;
+		uint32_t m_mapDiscoveryPeriodTicks = 1u;
+		uint32_t m_auctionExpiryPeriodTicks = 1u;
 		/// Monde « Royaumes » — tick du prochain recalcul des régions actives (1 Hz).
 		uint32_t m_nextRegionRefreshTick = 0;
 		std::vector<EntityId> m_relevantEntityScratch;

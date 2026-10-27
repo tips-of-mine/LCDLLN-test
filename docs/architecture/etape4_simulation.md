@@ -7,8 +7,8 @@ et le monde doit pourtant continuer de vivre.
 
 | Ticket | Sujet | Statut |
 |---|---|---|
-| 4.1 (chantiers 2.2, 2.3) | Sommeil des mobs loin des joueurs, classes de fréquence de l'IA | cette PR |
-| 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | à venir |
+| 4.1 (chantiers 2.2, 2.3) | Sommeil des mobs loin des joueurs, classes de fréquence de l'IA | livré |
+| 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | cette PR |
 | 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | à venir |
 | 4.4 (chantier 2.7) | Agenda déterministe des PNJ | à venir |
 | 4.5 (chantier 2.5) | Délestage avec hystérésis | à venir |
@@ -89,3 +89,57 @@ mob occupé jamais endormi et réveillé sur-le-champ, sommeil désactivé, vér
 
 Shard seul. Pas de migration. Nouvelles clés optionnelles : `server.mob_ai.calm_hz`,
 `server.mob_ai.ambient_hz`, `server.mob_ai.wake_radius_m`, `server.mob_ai.sleep_delay_s`.
+
+## 4.2 — Travaux périodiques étalés par identifiant (chantier 2.6)
+
+### Avant
+
+À chaque tick (20 par seconde), le shard évaluait **tous** les spawners : activation par
+les joueurs (parcours de tous les joueurs), retraits, apparitions. Il recalculait aussi la
+carte découverte de chaque joueur et parcourait toutes les annonces de l'hôtel des ventes.
+
+### Principe
+
+`src/shardd/world/TickSlicing.h` (en-tête seul, testé seul) : l'objet d'identifiant `id`
+est traité au tick `t` si `(t + id) % période == 0`. Chaque objet est traité **exactement
+une fois par période**, et la charge se répartit sur les ticks de la période au lieu d'un
+pic.
+
+| Travail | Identifiant | Fréquence (défaut) | Clé |
+|---|---|---|---|
+| Évaluation d'un spawner (activation, retraits, apparitions) | indice du spawner | 2 Hz | `server.spawners.evaluate_hz` |
+| Carte découverte d'un joueur | `client_id` | 4 Hz | `server.map_discovery_hz` |
+| Échéances des enchères | fixe | 1 Hz | — |
+| Voisinage d'un mob (sommeil, 4.1) | identifiant d'entité | 1 Hz | — |
+| Sauvegarde automatique (2.3) | clé du personnage | 1 / 30 s | `server.character_autosave_seconds` |
+
+Conséquences, voulues et bornées :
+
+- Une apparition, un retrait ou une réapparition de mob arrive **au plus 0,5 s** plus tard
+  (une période de spawner).
+- La carte se découvre par pas de 3 m au plus (13 m/s × 0,25 s), bien moins qu'une case.
+- Une enchère se règle au plus 1 s après son échéance ; entre-temps, une annonce échue
+  refuse toute offre et tout achat immédiat (« That auction has ended. »).
+- Une réapparition de mob arrive au plus ≈ 1 s après `respawnSeconds` (retrait du mob
+  mort puis apparition, chacun à son tour de spawner).
+
+Un fréquence ≥ celle du tick (ou ≤ 0) revient à traiter chaque objet à chaque tick.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shardd/world/TickSlicing.h` | `PeriodTicks`, `IsSliceTurn` |
+| `src/shared/server_bootstrap/ServerApp` | `UpdateSpawners`, `UpdateMapDiscovery`, `ProcessAuctionHouseTick` ; périodes lues dans `InitSpawners` |
+| `src/shardd/world/MobActivity.cpp` | La vérification de voisinage (4.1) passe par le même étalement |
+
+### Tests
+
+`tick_slicing_tests` : périodes (1, 2, 4, 0,1 Hz, bornes, tick à 0 Hz), chaque objet une
+fois par période quel que soit le tick de départ, 1 000 objets sur 10 ticks = 100 par
+tick.
+
+### Déploiement
+
+Shard seul. Pas de migration. Nouvelles clés optionnelles : `server.spawners.evaluate_hz`,
+`server.map_discovery_hz`.

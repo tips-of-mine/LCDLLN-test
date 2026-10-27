@@ -1,6 +1,7 @@
 // ETAPE4.1 — sommeil et fréquence de traitement des mobs. Voir MobActivity.h.
 
 #include "src/shardd/world/MobActivity.h"
+#include "src/shardd/world/TickSlicing.h"
 
 #include <algorithm>
 #include <cmath>
@@ -100,7 +101,7 @@ namespace engine::server::mob_activity
 
 	bool IsWakeCheckTick(uint64_t entityId, uint32_t nowTick, uint32_t tickHz)
 	{
-		const uint32_t hz = (std::max)(tickHz, 1u);
-		return ((static_cast<uint64_t>(nowTick) + entityId) % hz) == 0u;
+		// ETAPE4.2 — même étalement que les autres travaux périodiques du shard.
+		return tick_slicing::IsSliceTurn(entityId, nowTick, (std::max)(tickHz, 1u));
 	}
 }

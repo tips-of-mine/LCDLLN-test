@@ -3239,6 +3239,15 @@ namespace engine::server
 				m_mobActivity.combatHz, m_mobActivity.calmHz, m_mobActivity.ambientHz,
 				m_mobActivity.wakeRadiusMeters, m_mobActivity.sleepDelaySeconds);
 		}
+		// ETAPE4.2 (chantier 2.6) — travaux périodiques étalés par identifiant.
+		{
+			const uint32_t tickHz = static_cast<uint32_t>(m_tickHz);
+			m_spawnerEvalPeriodTicks = tick_slicing::PeriodTicks(tickHz, m_config.GetDouble("server.spawners.evaluate_hz", 2.0));
+			m_mapDiscoveryPeriodTicks = tick_slicing::PeriodTicks(tickHz, m_config.GetDouble("server.map_discovery_hz", 4.0));
+			m_auctionExpiryPeriodTicks = tick_slicing::PeriodTicks(tickHz, 1.0);
+			LOG_INFO(Net, "[ServerApp] Travaux étalés : spawners toutes les {} ticks, carte toutes les {} ticks, enchères toutes les {} ticks",
+				m_spawnerEvalPeriodTicks, m_mapDiscoveryPeriodTicks, m_auctionExpiryPeriodTicks);
+		}
 		// Monde vivant — horloge monde du shard (mêmes clés et défauts que le
 		// master, cf. masterd/main_linux.cpp) : horaires jour/nuit des PNJ.
 		m_worldClockParams.epochRefUnixMs = static_cast<uint64_t>(
@@ -3604,6 +3613,12 @@ namespace engine::server
 		}
 		for (ConnectedClient& client : m_clients)
 		{
+			// ETAPE4.2 — chaque joueur à son tour (4 Hz par défaut) : le joueur avance
+			// d'au plus 3 m entre deux passages, bien moins qu'une case de la carte.
+			if (!tick_slicing::IsSliceTurn(client.clientId, m_currentTick, m_mapDiscoveryPeriodTicks))
+			{
+				continue;
+			}
 			// Zone non cellulaire (instance, zone historique) : position locale, pas de carte.
 			if (!engine::world::cells::IsCellZoneId(client.zoneId)
 				|| !std::isfinite(client.positionMetersX) || !std::isfinite(client.positionMetersZ))
@@ -4445,8 +4460,18 @@ namespace engine::server
 
 		// Monde vivant — heure de jeu (horaires des PNJ d'ambiance), une fois par passe.
 		const float worldHour = CurrentWorldHour();
-		for (SpawnerRuntimeState& spawner : m_spawners)
+		for (size_t spawnerIndex = 0; spawnerIndex < m_spawners.size(); ++spawnerIndex)
 		{
+			// ETAPE4.2 (chantier 2.6) — chaque spawner est évalué une fois par période
+			// (server.spawners.evaluate_hz), à son tour : la charge (activation par les
+			// joueurs, apparitions, retraits) se répartit sur la période au lieu de tout
+			// faire à chaque tick. Une apparition ou un retrait arrive au plus une
+			// période plus tard.
+			if (!tick_slicing::IsSliceTurn(spawnerIndex, m_currentTick, m_spawnerEvalPeriodTicks))
+			{
+				continue;
+			}
+			SpawnerRuntimeState& spawner = m_spawners[spawnerIndex];
 			// Monde « Royaumes » — région inactive (aucun joueur dans la cellule ni à moins
 			// de la marge de son bord) et aucun mob vivant : coût nul, on passe.
 			if (spawner.inCellWorld && !m_regionActivity.IsActive(spawner.regionCell))
@@ -11257,6 +11282,13 @@ namespace engine::server
 			SendChatSystemNotice(*client, "That listing is gone.");
 			return;
 		}
+		// ETAPE4.2 — les échéances sont réglées une fois par seconde : une annonce
+		// échue mais pas encore réglée n'accepte plus d'offre.
+		if (row->expiresAtTick != 0u && m_currentTick >= row->expiresAtTick)
+		{
+			SendChatSystemNotice(*client, "That auction has ended.");
+			return;
+		}
 		if (row->sellerCharacterKey == client->persistenceCharacterKey)
 		{
 			SendChatSystemNotice(*client, "You cannot bid on your own auction.");
@@ -11343,6 +11375,12 @@ namespace engine::server
 		{
 			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: invalid listing_id={}", message.listingId);
 			SendChatSystemNotice(*client, "Buyout not available.");
+			return;
+		}
+		// ETAPE4.2 — annonce échue en attente de règlement (au plus 1 s) : plus d'achat.
+		if (row->expiresAtTick != 0u && m_currentTick >= row->expiresAtTick)
+		{
+			SendChatSystemNotice(*client, "That auction has ended.");
 			return;
 		}
 		if (row->sellerCharacterKey == client->persistenceCharacterKey)
@@ -12123,6 +12161,13 @@ namespace engine::server
 
 	void ServerApp::ProcessAuctionHouseTick()
 	{
+		// ETAPE4.2 — échéances des enchères une fois par seconde (parcours de toutes les
+		// annonces), décalé des autres travaux à 1 Hz.
+		constexpr uint64_t kAuctionSliceId = 7u;
+		if (!tick_slicing::IsSliceTurn(kAuctionSliceId, m_currentTick, m_auctionExpiryPeriodTicks))
+		{
+			return;
+		}
 		if (AuctionInDb())
 		{
 			ProcessAuctionHouseTickDb(); // ETAPE2.8

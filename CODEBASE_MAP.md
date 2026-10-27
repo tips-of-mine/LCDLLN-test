@@ -301,6 +301,11 @@ RenderModel
 > (`src/shared/core/StallGuard.h`) : `OnLoop` à chaque tour, et pas de contrôle tant que
 > `ChecksAllowed` est faux (suspension après un calage de la boucle).
 
+> **Règle (ETAPE5.3)** : un arrêt du cluster passe par `ClusterShutdown`
+> (`src/masterd/ops`) : jamais d'arrêt de shard sans sauvegarde de ses joueurs et vidage de
+> sa file SQL (sortie de la boucle comme sur SIGTERM). Toute nouvelle porte d'entrée en
+> jeu côté master doit consulter `ClusterShutdown::AdmissionsBlocked()`.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

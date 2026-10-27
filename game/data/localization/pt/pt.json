@@ -296,6 +296,7 @@
   "auth.error.enter_country": "Selecione o seu pais.",
   "auth.info.terms_required": "E necessario aceitar os termos.",
   "auth.info.shard_lost": "O servidor de mundo foi perdido. Seu personagem foi liberado: conecte-se novamente para jogar.",
+  "auth.info.server_shutdown": "O servidor foi desligado para manutencao. Seu personagem foi salvo.",
   "auth.info.email_verified": "Email verificado. Ja pode iniciar sessao.",
   "auth.info.forgot_password": "Se o email existir, foi enviada uma mensagem de reposicao.",
   "auth.info.terms_done": "Todos os termos aceites. Escolha o nome da sua personagem.",

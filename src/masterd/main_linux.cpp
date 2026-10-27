@@ -19,6 +19,7 @@
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/core/StallGuard.h"
+#include "src/masterd/ops/ClusterShutdown.h"
 #include "src/masterd/handlers/auth/AuthRegisterHandler.h"
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/account/InMemoryAccountStore.h"
@@ -94,6 +95,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -103,9 +105,18 @@ namespace
 	volatile sig_atomic_t g_quit = 0;
 	bool g_net_stats = false;
 
+	/// ETAPE5.3 — nombre de SIGINT/SIGTERM reçus et mode « arrêt ordonné sur signal »
+	/// (master.shutdown.sigterm_delay_sec > 0) : le premier signal lance le compte à
+	/// rebours (boucle principale), le second arrête immédiatement.
+	volatile sig_atomic_t g_signalCount = 0;
+	volatile sig_atomic_t g_orderedOnSignal = 0;
+
 	void OnSignal(int)
 	{
-		g_quit = 1;
+		if (g_signalCount < 100)
+			g_signalCount = g_signalCount + 1;
+		if (g_orderedOnSignal == 0 || g_signalCount >= 2)
+			g_quit = 1;
 	}
 
 	constexpr std::string_view kServerVersion = "0.1.0";
@@ -392,6 +403,14 @@ int main(int argc, char** argv)
 	// Phase 4 chat — mapping connId → (character_id, character_name) pour sender display + whisper target.
 	engine::server::SessionCharacterMap sessionCharMap;
 
+	// ETAPE5.3 (chantier 5.4) — arrêt ordonné du cluster (/shutdown, ou SIGTERM si
+	// master.shutdown.sigterm_delay_sec > 0). Tant qu'il est en cours, tickets de shard et
+	// entrées en jeu sont refusés ; la boucle principale exécute annonces, arrêt des shards
+	// et sortie (ClusterShutdown::Tick).
+	engine::server::ClusterShutdown clusterShutdown(config.GetDouble("master.shutdown.drain_sec", 15.0));
+	const int64_t sigtermShutdownDelaySec = std::clamp<int64_t>(config.GetInt("master.shutdown.sigterm_delay_sec", 0), 0, 3600);
+	g_orderedOnSignal = sigtermShutdownDelaySec > 0 ? 1 : 0;
+
 	// Fix duplicate-login : quand SessionManager::Close fire (notamment via la policy
 	// KickExisting), on cascade la fermeture : trouver le connId du client kicke,
 	// fermer sa TCP master + nettoyer ConnectionSessionMap + SessionCharacterMap.
@@ -531,6 +550,8 @@ int main(int argc, char** argv)
 	engine::server::AnniversaryService anniversaryService;
 	anniversaryService.SetDependencies(&dbPool, &exploitStore, mailStoreActive);
 	characterEnterWorldHandler.SetAnniversaryService(&anniversaryService);
+	// ETAPE5.3 — pas de nouvelle entrée en jeu pendant un arrêt ordonné.
+	characterEnterWorldHandler.SetAdmissionBlockedProvider([&clusterShutdown]() { return clusterShutdown.AdmissionsBlocked(); });
 
 	// SP2 — handler de lecture « liste de mes exploits » (opcode 206) pour
 	// l'onglet Exploits de la fenêtre F1 (et tout futur écran d'exploits).
@@ -1036,6 +1057,8 @@ int main(int argc, char** argv)
 	// WorldClock : branche l'horloge monde pour /settime, /pausetime, /settimescale
 	// (mutateurs authoritative master + broadcast 205 a tous les clients).
 	adminCommandHandler.SetWorldClockHandler(&worldClockHandler);
+	// ETAPE5.3 — /shutdown <secondes> [motif] | /shutdown cancel.
+	adminCommandHandler.SetClusterShutdown(&clusterShutdown);
 	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log + Wave 2 moderation + Wave 16 packetlog + worldclock wiring)");
 
 	// Wire PasswordResetHandler dependencies.
@@ -1059,6 +1082,7 @@ int main(int argc, char** argv)
 	shardTicketHandler.SetTermsRepository(&termsRepository);
 	shardTicketHandler.SetSessionCharacterMap(&sessionCharMap); shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
+	shardTicketHandler.SetAdmissionBlockedProvider([&clusterShutdown]() { return clusterShutdown.AdmissionsBlocked(); });
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
@@ -1625,6 +1649,7 @@ int main(int argc, char** argv)
 		stallGuard.Config().maxSuspendSeconds);
 	bool stallSkipLogged = false;
 	bool stallCapLogged = false;
+	bool signalShutdownStarted = false; ///< ETAPE5.3 — compte à rebours déjà lancé par signal
 
 	while (server.IsRunning() && g_quit == 0)
 	{
@@ -1639,6 +1664,67 @@ int main(int argc, char** argv)
 				stallGuard.LastStallSeconds(), stallGuard.StallCount(), stallGuard.Config().graceSeconds);
 			stallSkipLogged = false;
 			stallCapLogged = false;
+		}
+
+		// ETAPE5.3 — arrêt ordonné : premier signal (mode ordonné) → compte à rebours.
+		if (g_orderedOnSignal != 0 && g_signalCount == 1 && clusterShutdown.Phase() == engine::server::ClusterShutdownPhase::Idle
+			&& !signalShutdownStarted)
+		{
+			signalShutdownStarted = true;
+			(void)clusterShutdown.Start(nowSec, static_cast<uint32_t>(sigtermShutdownDelaySec), "arrêt du service");
+			LOG_WARN(Server, "[ServerMain] ETAPE5.3 signal d'arrêt reçu : arrêt ordonné dans {} s (second signal = arrêt immédiat)",
+				sigtermShutdownDelaySec);
+		}
+		for (const auto& action : clusterShutdown.Tick(nowSec))
+		{
+			using Kind = engine::server::ClusterShutdownAction::Kind;
+			if (action.kind == Kind::Announce)
+			{
+				const std::string text = engine::server::FormatShutdownAnnouncement(action.remainingSeconds, clusterShutdown.Reason());
+				const uint64_t ts = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+				const uint8_t channel = static_cast<uint8_t>(engine::net::ChatChannel::Server);
+				size_t delivered = 0;
+				for (const auto& [connId, sessId] : connSessionMap.Snapshot())
+				{
+					auto pkt = engine::network::BuildChatRelayPacket(ts, channel, "[Serveur]", text, sessId);
+					if (!pkt.empty() && server.Send(connId, pkt))
+						++delivered;
+				}
+				LOG_WARN(Server, "[ServerMain] ETAPE5.3 annonce '{}' (destinataires={})", text, delivered);
+			}
+			else if (action.kind == Kind::StopShards)
+			{
+				// Chaque shard sauvegarde ses joueurs, vide sa file SQL et s'arrête ; ses
+				// clients en jeu reviennent à l'écran de connexion avec le motif « arrêt ».
+				const auto stopPkt = engine::network::BuildMasterToShardShutdownPacket(clusterShutdown.Reason());
+				size_t shardsOrdered = 0;
+				size_t clientsNotified = 0;
+				for (const auto& shard : shardRegistry.ListShards())
+				{
+					if (shard.state == engine::server::ShardState::Offline)
+						continue;
+					if (auto shardConn = shardRegistry.GetShardConnection(shard.shard_id))
+					{
+						if (!stopPkt.empty() && server.Send(*shardConn, stopPkt))
+							++shardsOrdered;
+					}
+					const auto lostPkt = engine::network::BuildShardLostNotificationPacket(shard.shard_id,
+						engine::network::ShardLostReason::Shutdown);
+					for (const auto& b : sessionCharMap.TakeByShard(shard.shard_id))
+					{
+						if (!lostPkt.empty() && server.Send(b.connId, lostPkt))
+							++clientsNotified;
+					}
+				}
+				LOG_WARN(Server, "[ServerMain] ETAPE5.3 arrêt des shards : shards_ordonnes={} clients_renvoyes={} (sortie du master dans {:.0f} s)",
+					shardsOrdered, clientsNotified, config.GetDouble("master.shutdown.drain_sec", 15.0));
+			}
+			else if (action.kind == Kind::Exit)
+			{
+				LOG_WARN(Server, "[ServerMain] ETAPE5.3 vidage terminé : arrêt du master");
+				g_quit = 1;
+			}
 		}
 		// Roadmap-4 (2026-07-19) — jobs périodiques (intervalles internes).
 		jobScheduler.Tick();

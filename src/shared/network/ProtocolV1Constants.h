@@ -865,4 +865,13 @@ namespace engine::network
 	// ignore l'opcode) ; déploiement lock-step master + client.
 	// =====================================================================
 	constexpr uint16_t kOpcodeShardLostNotification = 211u; ///< Master to Client (push, request_id=0) : (uint32 shardId, uint8 reason).
+
+	// =====================================================================
+	// ETAPE5.3 (chantier 5.4 du rapport City of Heroes) — arrêt ordonné du cluster.
+	// À la fin du compte à rebours (/shutdown), le master ordonne à chaque shard de
+	// sauvegarder tous ses joueurs, de vider sa file SQL et de s'arrêter proprement
+	// (code de sortie 0). Les clients en jeu reçoivent kOpcodeShardLostNotification
+	// (reason = Shutdown). Rétro-additif ; déploiement lock-step master + shard.
+	// =====================================================================
+	constexpr uint16_t kOpcodeMasterToShardShutdown = 212u; ///< Master to Shard (push, request_id=0) : (string reason).
 }

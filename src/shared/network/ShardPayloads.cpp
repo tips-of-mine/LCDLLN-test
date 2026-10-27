@@ -1,4 +1,6 @@
 #include "src/shared/network/ShardPayloads.h"
+
+#include <algorithm>
 #include "src/shared/network/ByteReader.h"
 #include "src/shared/network/ByteWriter.h"
 #include "src/shared/network/PacketBuilder.h"
@@ -241,5 +243,29 @@ namespace engine::network
 			return std::nullopt;
 		out.reason = static_cast<ShardLostReason>(reason);
 		return out;
+	}
+
+	// ETAPE5.3 — ordre d'arrêt ordonné (Master → Shard, push).
+	std::vector<uint8_t> BuildMasterToShardShutdownPacket(std::string_view reason)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteString(reason.substr(0, (std::min)(reason.size(), static_cast<size_t>(200)))))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeMasterToShardShutdown, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<std::string> ParseMasterToShardShutdownPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 2u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		std::string reason;
+		if (!r.ReadString(reason))
+			return std::nullopt;
+		return reason;
 	}
 }

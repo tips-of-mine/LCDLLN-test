@@ -373,6 +373,18 @@
       "notes": "Wave 2 RBAC migration : broadcast un ChatRelay channel=Server, sender=[Announce] login a toutes les sessions actives via ConnectionSessionMap.Snapshot. Pas de filtre IgnoreList."
     },
     {
+      "command": "/shutdown <seconds|cancel> [reason]",
+      "aliases": [],
+      "description": "Ordered cluster shutdown: announce, block new logins, ask every shard to save and stop, then stop the master. /shutdown cancel aborts the countdown.",
+      "category": "admin",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "ETAPE5.3 (chantier 5.4 du rapport City of Heroes) : ClusterShutdown (src/masterd/ops). Annonces ChatRelay channel=Server aux paliers, tickets et EnterWorld refuses pendant le compte a rebours, kOpcodeMasterToShardShutdown (212) aux shards a zero, kOpcodeShardLostNotification (reason=Shutdown) aux clients, sortie du master apres master.shutdown.drain_sec."
+    },
+    {
       "command": "/promote <account_id> <role>",
       "aliases": [],
       "description": "Promote/demote a target account to a given role.",

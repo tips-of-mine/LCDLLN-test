@@ -53,6 +53,7 @@ namespace engine::server
 	class AccountStore;
 	class SlashCommandRegistry;
 	class WorldClockHandler;
+	class ClusterShutdown;
 }
 
 namespace engine::server::db
@@ -117,6 +118,9 @@ namespace engine::server
 		/// pour les commandes admin /settime, /pausetime, /settimescale.
 		/// Si nullptr, ces commandes repondront ServerError.
 		void SetWorldClockHandler(engine::server::WorldClockHandler* h) { m_worldClock = h; }
+		/// ETAPE5.3 — arrêt ordonné du cluster piloté par "/shutdown". nullptr = commande
+		/// répondue ServerError (non câblée).
+		void SetClusterShutdown(engine::server::ClusterShutdown* s) { m_clusterShutdown = s; }
 
 		/// Dispatch packet : traite uniquement opcode 195
 		/// (kOpcodeAdminCommandRequest). Pour tout autre opcode, no-op.
@@ -192,6 +196,15 @@ namespace engine::server
 		                      const std::vector<std::string>& args,
 		                      engine::network::admin::AdminCommandResponse& resp);
 
+		/// ETAPE5.3 — Dispatch "/shutdown <secondes> [motif]" (lance ou reprogramme un arrêt
+		/// ordonné du cluster) et "/shutdown cancel" (annule le compte à rebours). Les
+		/// annonces, l'arrêt des shards et la sortie du master sont exécutés par la boucle
+		/// principale (ClusterShutdown::Tick).
+		/// \param actorAccountId compte qui exécute la commande (audit).
+		void DispatchShutdown(uint64_t actorAccountId,
+		                      const std::vector<std::string>& args,
+		                      engine::network::admin::AdminCommandResponse& resp);
+
 		/// Dispatch des trois sous-commandes "/packetlog status",
 		/// "/packetlog dump <connId> [n]" et "/packetlog dump_all [n]".
 		/// Wave 16 : si m_packetLog == nullptr, retourne Ok avec un message
@@ -241,5 +254,6 @@ namespace engine::server
 		engine::server::db::ConnectionPool*        m_dbPool      = nullptr;
 		engine::server::netdebug::PacketLog*       m_packetLog   = nullptr;
 		engine::server::WorldClockHandler*         m_worldClock  = nullptr;
+		engine::server::ClusterShutdown*           m_clusterShutdown = nullptr; ///< ETAPE5.3
 	};
 }

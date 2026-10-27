@@ -246,6 +246,16 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 				parsed->guild_id, parsed->owner_generation,
 				parsed->has_udp_session_key ? &parsed->udp_session_key : nullptr);
 		}
+		else if (opcode == kOpcodeMasterToShardShutdown)
+		{
+			// ETAPE5.3 — arrêt ordonné du cluster décidé par le master.
+			auto reason = ParseMasterToShardShutdownPayload(view.Payload(), view.PayloadSize());
+			LOG_WARN(Core, "[ShardToMasterClient] ETAPE5.3 ordre d'arrêt du master (motif='{}')", reason ? *reason : std::string("?"));
+			if (m_shutdown_callback)
+				m_shutdown_callback(reason ? std::string_view(*reason) : std::string_view{});
+			else
+				LOG_WARN(Core, "[ShardToMasterClient] ordre d'arrêt ignoré : aucun rappel enregistré");
+		}
 	}
 
 	void ShardToMasterClient::ScheduleReconnect()

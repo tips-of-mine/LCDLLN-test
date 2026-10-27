@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <cstdint>
 #include <string>
 
@@ -39,6 +40,10 @@ namespace engine::server
 		/// Ticket validity in seconds (e.g. 30–60). Default 60.
 		void SetValiditySec(int sec) { m_validity_sec = (sec > 0) ? sec : 60; }
 
+		/// ETAPE5.3 — facultatif : tant que \p blocked renvoie vrai (arrêt ordonné du cluster
+		/// en cours), aucun ticket n'est délivré (erreur SERVER_LIST_UNAVAILABLE).
+		void SetAdmissionBlockedProvider(std::function<bool()> blocked) { m_admissionBlocked = std::move(blocked); }
+
 		/// Handles REQUEST_SHARD_TICKET only. Ignores other opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
@@ -53,5 +58,6 @@ namespace engine::server
 		SessionCharacterMap*  m_charMap = nullptr;
 		std::string m_secret;
 		int m_validity_sec = 60;
+		std::function<bool()> m_admissionBlocked; ///< ETAPE5.3
 	};
 }

@@ -2029,6 +2029,8 @@ namespace engine
 		bool m_quitRequested = false;
 		/// ETAPE5.1 — vrai quand le master a signalé la perte du shard (traité à la frame suivante).
 		bool m_shardLostPending = false;
+		/// ETAPE5.3 — la perte vient d'un arrêt ordonné du cluster (message « maintenance »).
+		bool m_shardLostByShutdown = false;
 		/// \c true si la ligne de commande contient \c --world-editor (injecté par lcdlln_world_editor.exe uniquement).
 		bool m_worldEditorExe = false;
 		bool m_editorEnabled = false;

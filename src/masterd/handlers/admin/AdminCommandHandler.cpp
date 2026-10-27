@@ -12,6 +12,7 @@
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/masterd/gmtickets/GmTicketSystem.h"
 #include "src/masterd/handlers/worldclock/WorldClockHandler.h"
+#include "src/masterd/ops/ClusterShutdown.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shardd/world/LunarCalendar.h"
@@ -483,6 +484,11 @@ namespace engine::server
 			DispatchAnnounce(accountId, req.args, resp);
 			handled = true;
 		}
+		else if (req.command == "/shutdown")
+		{
+			DispatchShutdown(accountId, req.args, resp);
+			handled = true;
+		}
 		else if (req.command == "/packetlog status")
 		{
 			DispatchPacketLog("status", req.args, resp);
@@ -854,6 +860,88 @@ namespace engine::server
 		if (!reason.empty())
 			resp.result.push_back(std::string("reason=") + reason);
 		resp.message = "Joueur banni : " + target->login;
+	}
+
+	/// ETAPE5.3 — /shutdown : lance, reprogramme ou annule l'arrêt ordonné du cluster.
+	/// Les arguments arrivent soit découpés (« 300 », « mise », « à jour »), soit en une
+	/// seule chaîne (« 300 mise à jour », envoi du client) : on recompose puis on découpe.
+	void AdminCommandHandler::DispatchShutdown(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		std::string line;
+		for (size_t i = 0; i < args.size(); ++i)
+		{
+			if (i > 0u) line.push_back(' ');
+			line += args[i];
+		}
+		const size_t first = line.find_first_not_of(" \t");
+		line = first == std::string::npos ? std::string{} : line.substr(first);
+		const size_t sp = line.find_first_of(" \t");
+		const std::string head = line.substr(0, sp);
+		std::string reason = sp == std::string::npos ? std::string{} : line.substr(sp + 1u);
+		const size_t rs = reason.find_first_not_of(" \t");
+		reason = rs == std::string::npos ? std::string{} : reason.substr(rs);
+		if (reason.size() > 200u)
+			reason.resize(200u);
+
+		if (m_clusterShutdown == nullptr)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/shutdown : arrêt ordonné non câblé";
+			return;
+		}
+		const double nowSec = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+		if (head == "cancel")
+		{
+			if (!m_clusterShutdown->Cancel())
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Aucun compte à rebours à annuler (ou arrêt déjà en cours)";
+				return;
+			}
+			LOG_WARN(Audit, "[AdminCommand] ETAPE5.3 arrêt annulé par actor={}", static_cast<unsigned long long>(actorAccountId));
+			// Les joueurs sont prévenus de l'annulation (même canal que les annonces).
+			if (m_connMap && m_server)
+			{
+				const uint64_t ts = NowUnixMsUtc();
+				const uint8_t channel = static_cast<uint8_t>(engine::net::ChatChannel::Server);
+				for (const auto& [connId, sessId] : m_connMap->Snapshot())
+				{
+					auto pkt = engine::network::BuildChatRelayPacket(ts, channel, "[Serveur]", "Arrêt du serveur annulé.", sessId);
+					if (!pkt.empty())
+						m_server->Send(connId, pkt);
+				}
+			}
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "Arrêt annulé";
+			return;
+		}
+		uint32_t delay = 0;
+		bool ok = !head.empty() && head.size() <= 6u;
+		for (char c : head)
+		{
+			if (c < '0' || c > '9') { ok = false; break; }
+			delay = delay * 10u + static_cast<uint32_t>(c - '0');
+		}
+		if (!ok)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /shutdown <secondes> [motif] | /shutdown cancel";
+			return;
+		}
+		if (!m_clusterShutdown->Start(nowSec, delay, reason))
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Arrêt déjà en cours (vidage des shards)";
+			return;
+		}
+		LOG_WARN(Audit, "[AdminCommand] ETAPE5.3 arrêt ordonné programmé par actor={} delai={}s motif='{}'",
+			static_cast<unsigned long long>(actorAccountId), m_clusterShutdown->RemainingSeconds(nowSec), reason);
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back("delay=" + std::to_string(m_clusterShutdown->RemainingSeconds(nowSec)));
+		resp.message = FormatShutdownAnnouncement(m_clusterShutdown->RemainingSeconds(nowSec), reason);
 	}
 
 	/// Announce : broadcast un ChatRelay channel=Server a toutes les

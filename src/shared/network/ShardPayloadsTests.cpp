@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <array>
 #include <iostream>
+#include <string>
 #include <vector>
 
 using engine::network::ShardPlayerPresence;
@@ -203,8 +204,28 @@ static void TestShardLostNotification()
 	Assert(!ParseShardLostNotificationPayload(nullptr, 5u), "shard_lost: payload nul refusé");
 }
 
+// ETAPE5.3 — ordre d'arrêt ordonné master → shard : aller-retour, motif tronqué.
+static void TestMasterToShardShutdown()
+{
+	using namespace engine::network;
+	auto pkt = BuildMasterToShardShutdownPacket("maintenance");
+	PacketView view;
+	Assert(!pkt.empty() && PacketView::Parse(pkt.data(), pkt.size(), view) == PacketParseResult::Ok, "shutdown: paquet parsable");
+	Assert(view.Opcode() == kOpcodeMasterToShardShutdown && view.RequestId() == 0u, "shutdown: opcode 212, push");
+	auto reason = ParseMasterToShardShutdownPayload(view.Payload(), view.PayloadSize());
+	Assert(reason && *reason == "maintenance", "shutdown: motif round-trip");
+	const std::string longReason(500, 'x');
+	auto pkt2 = BuildMasterToShardShutdownPacket(longReason);
+	PacketView v2;
+	Assert(PacketView::Parse(pkt2.data(), pkt2.size(), v2) == PacketParseResult::Ok, "shutdown: long motif parsable");
+	auto r2 = ParseMasterToShardShutdownPayload(v2.Payload(), v2.PayloadSize());
+	Assert(r2 && r2->size() == 200u, "shutdown: motif tronqué à 200 octets");
+	Assert(!ParseMasterToShardShutdownPayload(nullptr, 0u), "shutdown: payload nul refusé");
+}
+
 int main()
 {
+	TestMasterToShardShutdown();
 	TestShardLostNotification();
 	TestHeartbeatLegacyNoPlayers();
 	TestHeartbeatWithPlayers();

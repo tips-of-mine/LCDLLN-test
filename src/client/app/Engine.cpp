@@ -3652,7 +3652,8 @@ namespace engine
 					      || parsed.command == "/kick"
 					      || parsed.command == "/mute"
 					      || parsed.command == "/ban"
-					      || parsed.command == "/announce")
+					      || parsed.command == "/announce"
+					      || parsed.command == "/shutdown")
 					{
 						// Wave 2 : reponses moderation. Affiche le resultat
 						// dans le chat (canal Server) pour feedback joueur.
@@ -3691,6 +3692,10 @@ namespace engine
 						else if (parsed.command == "/announce")
 						{
 							body = "[Announce] " + parsed.message;
+						}
+						else if (parsed.command == "/shutdown")
+						{
+							body = "[Shutdown] " + parsed.message; // ETAPE5.3
 						}
 
 						if (!body.empty() && m_chatUi.IsInitialized())

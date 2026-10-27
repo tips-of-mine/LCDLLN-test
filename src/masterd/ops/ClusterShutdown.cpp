@@ -36,7 +36,8 @@ namespace engine::server
 		const uint32_t delay = (std::min)(delaySeconds, kMaxDelaySeconds);
 		m_phase = ClusterShutdownPhase::Countdown;
 		m_deadline = nowSeconds + static_cast<double>(delay);
-		m_reason = std::move(reason);
+		m_delay = delay;
+		m_reason = TruncateUtf8(std::move(reason), kMaxReasonBytes);
 		m_announceStart = true;
 		// Les paliers supérieurs ou égaux au délai sont « déjà passés » : seule l'annonce
 		// de départ les couvre (pas de « dans 10 min » juste après « dans 7 min »).
@@ -67,7 +68,9 @@ namespace engine::server
 			const double remaining = m_deadline - nowSeconds;
 			if (remaining > 0.0)
 			{
-				const uint32_t left = CeilSeconds(remaining);
+				// Borné au délai demandé : un Start appelé (autre thread) entre la lecture de
+				// l'horloge et ce Tick ne doit pas annoncer « 5 min 1 s » puis « 5 min ».
+				const uint32_t left = (std::min)(CeilSeconds(remaining), m_delay);
 				if (m_announceStart)
 				{
 					m_announceStart = false;
@@ -142,6 +145,18 @@ namespace engine::server
 		if (m_phase != ClusterShutdownPhase::Countdown)
 			return 0u;
 		return CeilSeconds(m_deadline - nowSeconds);
+	}
+
+	std::string TruncateUtf8(std::string text, size_t maxBytes)
+	{
+		if (text.size() <= maxBytes)
+			return text;
+		size_t cut = maxBytes;
+		// Recule jusqu'au début d'un caractère (les octets de continuation sont 10xxxxxx).
+		while (cut > 0u && (static_cast<unsigned char>(text[cut]) & 0xC0u) == 0x80u)
+			--cut;
+		text.resize(cut);
+		return text;
 	}
 
 	std::string FormatShutdownAnnouncement(uint32_t remainingSeconds, const std::string& reason)

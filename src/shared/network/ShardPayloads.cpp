@@ -250,7 +250,11 @@ namespace engine::network
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
-		if (!w.WriteString(reason.substr(0, (std::min)(reason.size(), static_cast<size_t>(200)))))
+		// Motif borné à 200 octets, coupé sur une frontière de caractère UTF-8.
+		size_t cut = (std::min)(reason.size(), static_cast<size_t>(200));
+		while (cut > 0u && cut < reason.size() && (static_cast<unsigned char>(reason[cut]) & 0xC0u) == 0x80u)
+			--cut;
+		if (!w.WriteString(reason.substr(0, cut)))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		if (!builder.Finalize(kOpcodeMasterToShardShutdown, 0, 0, 0, payloadBytes))

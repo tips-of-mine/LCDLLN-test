@@ -87,7 +87,7 @@ int main()
 		Check(!s.Cancel(), "seconde annulation refusée");
 		Check(Run(s, now, 100.0).empty(), "plus aucune action après annulation");
 		(void)s.Start(now, 120u, "b");
-		(void)Run(s, now, 110.0); // reste 110 s
+		(void)Run(s, now, 110.0); // reste 20 s
 		Check(s.Start(now, 30u, "c") && s.Reason() == "c", "reprogrammation pendant le compte à rebours");
 		const auto a = Announces(Run(s, now, now + 20.0));
 		Check(!a.empty() && a[0] == 30u, "reprogrammation : nouvelle annonce de départ");
@@ -109,6 +109,23 @@ int main()
 			"saut d'horloge : une seule annonce, durée réelle");
 		Check(j.Start(1.0, ClusterShutdown::kMaxDelaySeconds + 100u, "") && j.RemainingSeconds(1.0) == ClusterShutdown::kMaxDelaySeconds,
 			"délai borné à 24 h");
+	}
+
+	// 4 bis. Start entre la lecture de l'horloge et Tick : pas de « 5 min 1 s ».
+	{
+		ClusterShutdown s;
+		(void)s.Start(10.5, 300u, "");
+		auto t = s.Tick(10.0); // horloge lue avant le Start
+		Check(t.size() == 1u && t[0].remainingSeconds == 300u, "annonce bornée au délai demandé");
+		Check(s.Tick(10.6).empty(), "pas de seconde annonce « 5 min »");
+	}
+
+	// 4 ter. Motif tronqué sans couper un caractère.
+	{
+		std::string r(199, 'a');
+		r += "\xC3\xA9"; // « é » à cheval sur la limite de 200 octets
+		Check(TruncateUtf8(r, 200u).size() == 199u, "coupure avant un caractère multi-octet");
+		Check(TruncateUtf8("court", 200u) == "court", "motif court inchangé");
 	}
 
 	// 5. Texte d'annonce.

@@ -16,6 +16,7 @@
 // (cluster_shutdown_tests). Thread-safe : la commande MJ arrive sur un thread de
 // traitement, Tick tourne dans la boucle principale du master.
 
+#include <cstddef>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -49,6 +50,8 @@ namespace engine::server
 	public:
 		/// Délai maximal accepté pour un compte à rebours (24 h).
 		static constexpr uint32_t kMaxDelaySeconds = 24u * 3600u;
+		/// Longueur maximale du motif (octets UTF-8, coupé sur une frontière de caractère).
+		static constexpr size_t kMaxReasonBytes = 200u;
 
 		/// \param drainSeconds durée du vidage avant l'arrêt du master (bornée à [1 ; 600] s).
 		explicit ClusterShutdown(double drainSeconds = 15.0);
@@ -77,11 +80,15 @@ namespace engine::server
 		double m_drainSeconds = 15.0;
 		ClusterShutdownPhase m_phase = ClusterShutdownPhase::Idle;
 		double m_deadline = 0.0;       ///< fin du compte à rebours
+		uint32_t m_delay = 0;          ///< délai demandé au dernier Start (borne des annonces)
 		double m_exitAt = 0.0;         ///< fin du vidage
 		std::string m_reason;
 		bool m_announceStart = false;  ///< annonce de départ (ou de reprogrammation) à émettre
 		uint32_t m_lastAnnouncedStep = 0; ///< dernier palier annoncé (0 = aucun)
 	};
+
+	/// Tronque \p text à \p maxBytes octets sans couper un caractère UTF-8.
+	std::string TruncateUtf8(std::string text, size_t maxBytes);
 
 	/// Texte d'annonce en français pour \p remainingSeconds (« Arrêt du serveur dans 5 min :
 	/// motif »). Exposé pour les tests et pour la réponse de la commande MJ.

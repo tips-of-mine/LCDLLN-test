@@ -81,6 +81,14 @@ int main()
 		Check(UpdateSleep(st, false, false, spawn + 160u, spawn, kTickHz, cfg) == SleepTransition::FellAsleep, "3 s après le départ : endormi");
 	}
 
+	// 4b. Retour à zéro du compteur de ticks : le délai reste juste.
+	{
+		SleepState st{};
+		const uint32_t spawn = 0xFFFFFFF0u;
+		Check(UpdateSleep(st, false, false, spawn + 70u, spawn, kTickHz, cfg) == SleepTransition::FellAsleep,
+			"compteur repassé par zéro : endormi après 3,5 s");
+	}
+
 	// 5. Un mob occupé ne dort jamais et se réveille sur-le-champ.
 	{
 		SleepState st{};

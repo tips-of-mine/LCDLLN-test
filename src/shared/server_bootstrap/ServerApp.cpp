@@ -3225,9 +3225,16 @@ namespace engine::server
 			activity.combatHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai_hz", 10), 1, 1000));
 			activity.calmHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai.calm_hz", 5), 1, 1000));
 			activity.ambientHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai.ambient_hz", 5), 1, 1000));
-			activity.wakeRadiusMeters = static_cast<float>(m_config.GetDouble("server.mob_ai.wake_radius_m", 250.0));
+			activity.wakeRadiusMeters = static_cast<float>(m_config.GetDouble("server.mob_ai.wake_radius_m", 600.0));
 			activity.sleepDelaySeconds = static_cast<float>(m_config.GetDouble("server.mob_ai.sleep_delay_s", 3.0));
 			m_mobActivity = mob_activity::Sanitize(activity, static_cast<uint32_t>(m_tickHz));
+			// Jamais en deçà de la portée de l'intérêt (cellule du joueur ± 3 cellules de
+			// 100 m, soit au plus 4 cellules en diagonale, ≈ 566 m) : un mob encore visible
+			// d'un joueur reste éveillé (pas de « statue » sous ses yeux). 0 = sommeil
+			// désactivé.
+			const float interestReachMeters = static_cast<float>((kBaseInterestRadiusCells + 1) * kCellSizeMeters) * 1.4143f;
+			if (m_mobActivity.wakeRadiusMeters > 0.0f && m_mobActivity.wakeRadiusMeters < interestReachMeters)
+				m_mobActivity.wakeRadiusMeters = interestReachMeters;
 			LOG_INFO(Net, "[ServerApp] IA des mobs : combat {} Hz, repos {} Hz, ambiance {} Hz, sommeil au-delà de {:.0f} m après {:.1f} s",
 				m_mobActivity.combatHz, m_mobActivity.calmHz, m_mobActivity.ambientHz,
 				m_mobActivity.wakeRadiusMeters, m_mobActivity.sleepDelaySeconds);
@@ -3956,8 +3963,11 @@ namespace engine::server
 			// ETAPE4.1 (chantier 2.2) — sommeil. Occupé (dégâts, menace, provocation
 			// reçus entre deux vérifications) : réveil immédiat. Sinon, voisinage vérifié
 			// une fois par seconde, étalé par identifiant d'entité.
+			// Un PNJ d'ambiance qui rentre chez lui (fin de son horaire) compte aussi :
+			// endormi en route, il ne serait jamais retiré ni replacé à sa porte.
 			const bool busy = mob_activity::IsBusy(mob.aggroTargetEntityId != 0, !mob.threatTable.empty(),
-				mob.aiState == MobAiState::Aggro || mob.aiState == MobAiState::Return);
+				mob.aiState == MobAiState::Aggro || mob.aiState == MobAiState::Return
+					|| (mob.ambient && mob.routine.goingHome && !mob.scheduleRetired));
 			if (mob_activity::WakeIfBusy(mob.sleep, busy))
 			{
 				mob.lastAiTick = m_currentTick; // pas de rattrapage du temps dormi
@@ -6336,7 +6346,7 @@ namespace engine::server
 			{
 				mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
 			}
-			return UpdateMobSpatialState(mob);
+			return UpdateMobSpatialState(mob); // arrivé (si la grille accepte la position)
 		}
 
 		const float stepScale = maxStep / distance;
@@ -6345,7 +6355,12 @@ namespace engine::server
 		mob.positionMetersX += dx * stepScale;
 		mob.positionMetersZ += dz * stepScale;
 		mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
-		return UpdateMobSpatialState(mob);
+		// ETAPE4.1 — pas intermédiaire : PAS arrivé. Avant, le résultat de la grille
+		// (presque toujours vrai) était renvoyé tel quel : une errance s'arrêtait après
+		// un seul pas, un retour au point d'attache repassait au repos (et pouvait
+		// s'endormir) loin de chez lui.
+		(void)UpdateMobSpatialState(mob);
+		return false;
 	}
 
 	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)

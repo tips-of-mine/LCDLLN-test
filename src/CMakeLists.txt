@@ -571,7 +571,7 @@ elseif(UNIX)
 
   # ETAPE4.1 : sommeil et classes de fréquence des mobs (module pur).
   lcdlln_add_simple_test(mob_activity_tests
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivityTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/MobActivityTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp)
 
   # Monde « Royaumes » : activation des régions (cellules) par la présence des joueurs.

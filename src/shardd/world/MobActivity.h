@@ -40,7 +40,7 @@ namespace engine::server::mob_activity
 		uint32_t combatHz = 10u;          ///< server.mob_ai_hz (fréquence historique)
 		uint32_t calmHz = 5u;             ///< server.mob_ai.calm_hz
 		uint32_t ambientHz = 5u;          ///< server.mob_ai.ambient_hz
-		float wakeRadiusMeters = 250.0f;  ///< server.mob_ai.wake_radius_m (0 = jamais de sommeil)
+		float wakeRadiusMeters = 600.0f;  ///< server.mob_ai.wake_radius_m (0 = jamais de sommeil ; le shard le relève à la portée de l'intérêt)
 		float sleepDelaySeconds = 3.0f;   ///< server.mob_ai.sleep_delay_s
 		float maxCatchUpSeconds = 1.0f;   ///< pas de déplacement maximal après une longue attente
 	};

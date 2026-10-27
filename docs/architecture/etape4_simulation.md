@@ -41,20 +41,30 @@ applique.
   précédente (1 s au plus) : un mob traité 2 fois moins souvent fait des pas 2 fois plus
   longs, sa vitesse au sol ne change pas. Les fréquences de repos et d'ambiance ne
   dépassent jamais celle du combat.
-- **Sommeil** : un mob sans joueur à moins de `server.mob_ai.wake_radius_m` (250 m)
+- **Sommeil** : un mob sans joueur à moins de `server.mob_ai.wake_radius_m` (600 m)
   depuis `server.mob_ai.sleep_delay_s` (3 s), et qui n'est pas occupé, s'endort. Il
   n'exécute plus ni IA ni déplacement, et sa vitesse est remise à zéro pour les clients.
   - Le voisinage est vérifié **une fois par seconde**, étalé par identifiant d'entité (1/20
     des mobs à chaque tick à 20 Hz).
-  - Un mob **occupé** (dégâts, menace, provocation, retour en cours) ne s'endort jamais et
-    se réveille sur-le-champ : un sort tiré de très loin lui donne de la menace.
+  - Un mob **occupé** (dégâts, menace, provocation, retour en cours, PNJ qui rentre chez
+    lui à la fin de son horaire) ne s'endort jamais et se réveille sur-le-champ : un sort
+    tiré de très loin lui donne de la menace.
   - Au réveil, aucun rattrapage du temps dormi : il reprend là où il s'était arrêté.
   - `wake_radius_m = 0` désactive le sommeil.
 
-Le rayon de 250 m reste en deçà de la portée des snapshots (± 350 m) : un mob endormi
-encore visible est immobile, ce qui passe pour une pause à cette distance. Les mobs
-n'ont pas d'aggro de proximité : un mob n'attaque qu'après avoir reçu de la menace, et
-la menace le réveille sur-le-champ.
+Le rayon n'est **jamais en deçà de la portée de l'intérêt** (cellule du joueur ± 3
+cellules de 100 m, soit ≈ 566 m en diagonale) : le shard relève une valeur plus petite.
+Un mob encore répliqué vers un joueur reste donc éveillé, pas de « statue » sous ses yeux.
+Comme un spawner ne garde ses mobs que dans cette même portée, le sommeil vise surtout
+les mobs qui se sont éloignés (errance, routine) et ceux des spawners en attente de
+retrait (mob en combat récent). Les mobs n'ont pas d'aggro de proximité : un mob n'attaque
+qu'après avoir reçu de la menace, et la menace le réveille sur-le-champ.
+
+**Correction au passage** : `MoveMobTowards` renvoyait « arrivé » après chaque pas (le
+résultat de la grille, presque toujours vrai). Une errance s'arrêtait après un seul pas
+puis marquait sa pause de 2 à 6 s, et un retour au point d'attache repassait au repos loin
+de chez lui. Elle ne renvoie plus « arrivé » qu'à l'arrivée : les mobs marchent vraiment
+jusqu'à leur cible.
 
 ### Exploitation
 

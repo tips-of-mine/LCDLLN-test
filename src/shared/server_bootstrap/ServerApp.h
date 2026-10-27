@@ -996,6 +996,7 @@ namespace engine::server
 		void RefreshMobAggroTarget(MobEntity& mob);
 
 		/// Move one mob toward a target point and update its replicated transform.
+		/// ETAPE4.1 — pas = mob.aiStepSeconds ; \return vrai seulement à l'arrivée.
 		bool MoveMobTowards(MobEntity& mob, float targetPositionX, float targetPositionZ);
 
 		/// Synchronize one mob position with the zone spatial partition.

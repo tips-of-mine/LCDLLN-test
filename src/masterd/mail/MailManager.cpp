@@ -112,7 +112,14 @@ namespace engine::server::mail
 		return MailOpResult::OK;
 	}
 
-	MailOpResult MailManager::Delete(uint64_t mailId, uint64_t receiverAccountId)
+	std::optional<Mail> MailManager::Peek(uint64_t mailId) const
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		if (!m_store) return std::nullopt;
+		return m_store->Find(mailId);
+	}
+
+		MailOpResult MailManager::Delete(uint64_t mailId, uint64_t receiverAccountId)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		if (!m_store) return MailOpResult::MailNotFound;

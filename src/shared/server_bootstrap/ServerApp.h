@@ -1818,9 +1818,22 @@ namespace engine::server
 		};
 		std::mutex m_liveMailboxMutex;
 		std::vector<std::pair<uint64_t, std::vector<LiveMailboxRow>>> m_liveMailboxResults;
+		/// ETAPE5.6 — prélèvement dont le COMMIT est incertain (réponse perdue, relecture
+		/// impossible) : l'or reste retiré en mémoire et AUCUNE réponse n'est envoyée tant que
+		/// la base n'a pas tranché (relecture à chaque tick sur une connexion neuve).
+		struct UncertainMailDebit
+		{
+			engine::network::MailDebitPayload debit;
+			uint32_t attempts = 0;
+		};
+		std::vector<UncertainMailDebit> m_uncertainMailDebits;
+		/// Relit l'état des prélèvements incertains ; rend l'or si le COMMIT n'a pas eu lieu.
+		void ResolveUncertainMailDebits();
 		/// Traite les ordres du master (thread de tick).
 		void ProcessMasterInbox();
 		/// Prélève l'or d'un courrier dans la transaction qui passe le transfert à locked.
+		/// \return le MailDebitResult à répondre, ou 0xFF si le COMMIT est incertain (pas de
+		///         réponse : voir m_uncertainMailDebits).
 		uint8_t ProcessMailDebit(const engine::network::MailDebitPayload& debit);
 		/// Lit le courrier d'un personnage connecté (hors du tick) puis le crédite.
 		void RequestLiveMailboxClaim(uint64_t characterKey);

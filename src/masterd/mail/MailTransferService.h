@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <utility>
 #include <string>
 #include <vector>
 
@@ -72,7 +73,14 @@ namespace engine::server
 		/// (identifiant <op>-deliver), dans une transaction.
 		MailDeliverResult Deliver(uint64_t mailId, uint64_t receiverAccountId, uint64_t receiverCharacterId);
 
-		/// Transferts `pending` dont le délai est dépassé à \p nowMs (au plus \p limit).
+		/// Courrier SYSTÈME (expéditeur 0 : cadeau d'anniversaire…) : rien à prélever. Dépose
+		/// l'or et les objets (\p items : (itemId, quantité)) pour \p receiverCharacterId et
+		/// marque le transfert « delivered » (garde durable), dans une transaction.
+		/// \return Delivered, AlreadyDelivered (rejeu) ou Failed.
+		MailDeliverResult DepositSystemMail(uint64_t mailId, uint64_t receiverAccountId, uint64_t receiverCharacterId,
+			uint64_t gold, const std::vector<std::pair<uint32_t, uint32_t>>& items);
+
+				/// Transferts `pending` dont le délai est dépassé à \p nowMs (au plus \p limit).
 		std::vector<MailTransferRow> ListExpiredPending(uint64_t nowMs, size_t limit = 64) const;
 
 		/// Rend l'or en dépôt des courriers expirés (ou disparus) : locked → refunded +

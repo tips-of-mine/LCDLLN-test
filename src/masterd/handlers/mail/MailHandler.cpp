@@ -373,61 +373,90 @@ namespace engine::server
 			return;
 		}
 
-		// ETAPE5.6 — or joint en deux phases : livraison au personnage en jeu (dépôt
-		// character_mailbox, crédité tout de suite par son shard). Un prélèvement pas encore
-		// confirmé fait patienter ; un transfert annulé (ou un ancien courrier sans
-		// transfert : or jamais prélevé) ne crédite rien.
+		// ETAPE5.6 — crédit RÉEL avant de vider les pièces jointes :
+		//   - courrier de joueur avec transfert : livraison de l'or prélevé (deux phases) ;
+		//   - courrier système (expéditeur 0, ex. cadeau d'anniversaire) : dépôt direct de
+		//     l'or et des objets ;
+		//   - ancien courrier de joueur sans transfert : or jamais prélevé, rien à créditer.
+		// Le personnage crédité est celui de la connexion (il faut être en jeu) ; son shard
+		// le crédite aussitôt (ordre 215). Les contrôles du courrier (existence,
+		// destinataire, contre-remboursement) passent AVANT tout crédit.
 		uint64_t deliveredGold = 0;
-		std::optional<SessionCharacterMap::CharacterInfo> receiverChar;
-		if (m_transfers != nullptr && m_transfers->IsAvailable())
+		const bool transfersOn = m_transfers != nullptr && m_transfers->IsAvailable();
+		if (transfersOn)
 		{
-			if (auto row = m_transfers->FindByMail(parsed->mailId); row && row->receiverAccountId == accountId)
+			const auto mail = m_mgr->Peek(parsed->mailId);
+			if (!mail || mail->receiverAccountId != accountId
+				|| (mail->copperCod > 0u && parsed->paidCopperCod < mail->copperCod))
 			{
-				if (m_charMap != nullptr)
-					receiverChar = m_charMap->GetByConnId(connId);
-				const bool inWorld = receiverChar && receiverChar->accountId == accountId && receiverChar->characterId != 0u;
-				const bool needsCharacter = row->state == engine::mail::MailTransferState::Locked;
-				if (needsCharacter && !inWorld)
-				{
-					auto pkt = BuildMailTakeAttachmentsResponsePacket(static_cast<uint8_t>(MailTakeErrorCode::NotInWorld),
-						parsed->mailId, 0ull, requestId, sessionIdHeader);
-					if (!pkt.empty())
-						m_server->Send(connId, pkt);
-					return;
-				}
-				const MailDeliverResult delivered = inWorld
-					? m_transfers->Deliver(parsed->mailId, accountId, receiverChar->characterId)
-					: (row->state == engine::mail::MailTransferState::Pending ? MailDeliverResult::Pending
-						: (row->state == engine::mail::MailTransferState::Delivered ? MailDeliverResult::AlreadyDelivered
-							: MailDeliverResult::Cancelled));
-				if (delivered == MailDeliverResult::Pending || delivered == MailDeliverResult::Failed)
-				{
-					auto pkt = BuildMailTakeAttachmentsResponsePacket(static_cast<uint8_t>(MailTakeErrorCode::TransferPending),
-						parsed->mailId, 0ull, requestId, sessionIdHeader);
-					if (!pkt.empty())
-						m_server->Send(connId, pkt);
-					return;
-				}
-				if (delivered == MailDeliverResult::Delivered)
-				{
-					deliveredGold = row->gold;
-					// Le shard du destinataire crédite le dépôt sans attendre la reconnexion.
-					if (m_registry != nullptr && receiverChar)
-					{
-						if (auto shardConn = m_registry->GetShardConnection(receiverChar->shardId))
-						{
-							const auto poke = engine::network::BuildMailboxPokePacket(receiverChar->characterId);
-							if (!poke.empty())
-								(void)m_server->Send(*shardConn, poke);
-						}
-					}
-				}
+				const MailTakeErrorCode code = !mail ? MailTakeErrorCode::NotFound
+					: (mail->receiverAccountId != accountId ? MailTakeErrorCode::WrongReceiver : MailTakeErrorCode::CodNotPaid);
+				auto pkt = BuildMailTakeAttachmentsResponsePacket(static_cast<uint8_t>(code), parsed->mailId, 0ull,
+					requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+				return;
 			}
-			else if (!row)
+			std::optional<SessionCharacterMap::CharacterInfo> receiverChar;
+			if (m_charMap != nullptr)
+				receiverChar = m_charMap->GetByConnId(connId);
+			const bool inWorld = receiverChar && receiverChar->accountId == accountId && receiverChar->characterId != 0u;
+			const auto row = m_transfers->FindByMail(parsed->mailId);
+			const bool systemMail = mail->senderAccountId == 0u && (mail->copperGold > 0u || !mail->items.empty());
+			const bool hasCredit = (row && (row->state == engine::mail::MailTransferState::Locked
+					|| row->state == engine::mail::MailTransferState::Pending))
+				|| (!row && systemMail);
+			auto reply = [&](MailTakeErrorCode code) {
+				auto pkt = BuildMailTakeAttachmentsResponsePacket(static_cast<uint8_t>(code), parsed->mailId, 0ull,
+					requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+			};
+			if (hasCredit && !inWorld)
 			{
-				// Ancien courrier (avant ETAPE5.6) : son or n'a jamais été prélevé, il n'est
-				// pas crédité (le retrait le fait simplement disparaître).
+				reply(row && row->state == engine::mail::MailTransferState::Pending
+					? MailTakeErrorCode::TransferPending : MailTakeErrorCode::NotInWorld);
+				return;
+			}
+			MailDeliverResult delivered = MailDeliverResult::NoTransfer;
+			if (row)
+			{
+				delivered = inWorld ? m_transfers->Deliver(parsed->mailId, accountId, receiverChar->characterId)
+					: (row->state == engine::mail::MailTransferState::Delivered ? MailDeliverResult::AlreadyDelivered
+						: MailDeliverResult::Cancelled);
+				if (delivered == MailDeliverResult::Delivered)
+					deliveredGold = row->gold;
+			}
+			else if (systemMail)
+			{
+				std::vector<std::pair<uint32_t, uint32_t>> items;
+				for (const auto& it : mail->items)
+					items.emplace_back(it.itemTemplateId, it.count);
+				delivered = m_transfers->DepositSystemMail(parsed->mailId, accountId, receiverChar->characterId,
+					mail->copperGold, items);
+				if (delivered == MailDeliverResult::Delivered)
+					deliveredGold = mail->copperGold;
+			}
+			else if (mail->copperGold > 0u)
+			{
 				LOG_INFO(Net, "[MailHandler] ETAPE5.6 courrier {} sans transfert : or fictif non crédité", parsed->mailId);
+			}
+			if (delivered == MailDeliverResult::Pending || delivered == MailDeliverResult::Failed)
+			{
+				reply(MailTakeErrorCode::TransferPending); // rien n'a changé : réessayer
+				return;
+			}
+			// Crédit déposé (maintenant ou lors d'un essai précédent dont la réponse s'est
+			// perdue) : le shard du destinataire le crédite sans attendre la reconnexion.
+			if ((delivered == MailDeliverResult::Delivered || delivered == MailDeliverResult::AlreadyDelivered)
+				&& m_registry != nullptr && inWorld)
+			{
+				if (auto shardConn = m_registry->GetShardConnection(receiverChar->shardId))
+				{
+					const auto poke = engine::network::BuildMailboxPokePacket(receiverChar->characterId);
+					if (!poke.empty())
+						(void)m_server->Send(*shardConn, poke);
+				}
 			}
 		}
 
@@ -477,7 +506,7 @@ namespace engine::server
 		}
 
 		// ETAPE5.6 — montant RÉELLEMENT crédité (0 sans transfert livré).
-		goldTaken = (m_transfers != nullptr && m_transfers->IsAvailable()) ? deliveredGold : goldTaken;
+		goldTaken = transfersOn ? deliveredGold : goldTaken;
 		LOG_INFO(Net, "[MailHandler] Take account={} mailId={} goldTaken={} code={}",
 			accountId, parsed->mailId, goldTaken, static_cast<int>(code));
 
@@ -520,6 +549,23 @@ namespace engine::server
 	{
 		if (m_transfers == nullptr || m_registry == nullptr)
 			return;
+		// Avant toute lecture en base : la connexion doit être celle d'un shard enregistré
+		// (un client qui enverrait 214 ne provoque aucune requête).
+		bool fromShard = false;
+		for (const auto& shard : m_registry->ListShards())
+		{
+			const auto c = m_registry->GetShardConnection(shard.shard_id);
+			if (c && *c == connId)
+			{
+				fromShard = true;
+				break;
+			}
+		}
+		if (!fromShard)
+		{
+			LOG_WARN(Net, "[MailHandler] ETAPE5.6 réponse de prélèvement hors connexion de shard ignorée (connId={})", connId);
+			return;
+		}
 		const auto parsed = engine::network::ParseMailDebitResultPayload(payload, payloadSize);
 		if (!parsed)
 		{

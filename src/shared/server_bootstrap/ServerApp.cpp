@@ -3279,11 +3279,17 @@ namespace engine::server
 
 	void ServerApp::ProcessMasterInbox()
 	{
+		ResolveUncertainMailDebits();
+		// Au plus 4 prélèvements par tick : chacun est une transaction synchrone (rare, mais
+		// une rafale ne doit pas faire caler le tick). Le reste attend le tick suivant.
+		constexpr size_t kMaxMailDebitsPerTick = 4u;
 		std::vector<engine::network::MailDebitPayload> debits;
 		std::vector<uint64_t> pokes;
 		{
 			std::lock_guard lock(m_masterInboxMutex);
-			debits.swap(m_pendingMailDebits);
+			const size_t n = (std::min)(m_pendingMailDebits.size(), kMaxMailDebitsPerTick);
+			debits.assign(m_pendingMailDebits.begin(), m_pendingMailDebits.begin() + static_cast<std::ptrdiff_t>(n));
+			m_pendingMailDebits.erase(m_pendingMailDebits.begin(), m_pendingMailDebits.begin() + static_cast<std::ptrdiff_t>(n));
 			pokes.swap(m_pendingMailboxPokes);
 		}
 		for (const auto& debit : debits)
@@ -3291,6 +3297,11 @@ namespace engine::server
 			engine::network::MailDebitResultPayload reply;
 			reply.operationId = debit.operationId;
 			reply.result = ProcessMailDebit(debit);
+			if (reply.result == 0xFFu)
+			{
+				m_uncertainMailDebits.push_back(UncertainMailDebit{ debit, 0u });
+				continue; // réponse différée
+			}
 			LOG_INFO(Net, "[ServerApp] ETAPE5.6 prélèvement courrier (operation={}, character_key={}, gold={}, result={})",
 				debit.operationId, debit.characterId, debit.gold, static_cast<unsigned>(reply.result));
 			auto pkt = engine::network::BuildMailDebitResultPacket(reply);
@@ -3368,25 +3379,13 @@ namespace engine::server
 		m_savedBlocks.Invalidate(debit.characterId); // ETAPE5.5 — écrit hors SaveCharacterToDb
 		if (mysql_query(mysql, "COMMIT") != 0)
 		{
-			// Réponse du COMMIT perdue : relecture. Validé → prélèvement acquis ; sinon on
-			// rend l'or en mémoire (le master annulera au délai). Indéterminable → on garde
-			// le prélèvement (jamais d'or dupliqué ; au pire l'expéditeur le perd).
+			// Réponse du COMMIT perdue : la base seule sait si l'or est parti. L'or reste
+			// retiré en mémoire et aucune réponse n'est envoyée ; ResolveUncertainMailDebits
+			// relit l'état sur une connexion neuve aux ticks suivants : locked ⇒ Debited,
+			// sinon l'or est rendu (jamais dupliqué, jamais perdu).
 			mysql_query(mysql, "ROLLBACK");
-			auto* check = cache->Acquire(mysql, "SELECT state FROM mail_transfers WHERE operation_id = ?");
-			if (check != nullptr && check->Bind(0, std::string_view(debit.operationId)) && check->Execute() && check->FetchRow())
-			{
-				const std::string after = check->GetString(0);
-				while (check->FetchRow()) {}
-				if (after != "locked" && after != "delivered" && after != "refunded")
-				{
-					client->gold = goldBefore;
-					return static_cast<uint8_t>(MailDebitResult::Failed);
-				}
-			}
-			else
-			{
-				LOG_ERROR(Net, "[ServerApp] ETAPE5.6 COMMIT incertain (operation={}) : prélèvement conservé en mémoire", debit.operationId);
-			}
+			LOG_ERROR(Net, "[ServerApp] ETAPE5.6 COMMIT incertain (operation={}) : vérification différée", debit.operationId);
+			return 0xFFu;
 		}
 		(void)SendWalletUpdate(*client);
 		return static_cast<uint8_t>(MailDebitResult::Debited);
@@ -3396,7 +3395,69 @@ namespace engine::server
 #endif
 	}
 
-	void ServerApp::RequestLiveMailboxClaim(uint64_t characterKey)
+	void ServerApp::ResolveUncertainMailDebits()
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_uncertainMailDebits.empty() || m_characterDbPool == nullptr)
+			return;
+		std::vector<UncertainMailDebit> still;
+		for (UncertainMailDebit& u : m_uncertainMailDebits)
+		{
+			++u.attempts;
+			std::string state;
+			bool known = false;
+			{
+				auto guard = m_characterDbPool->Acquire(); // connexion neuve à chaque essai
+				MYSQL* mysql = guard.get();
+				auto* cache = guard.cache();
+				auto* check = (mysql != nullptr && cache != nullptr)
+					? cache->Acquire(mysql, "SELECT state FROM mail_transfers WHERE operation_id = ?") : nullptr;
+				if (check != nullptr && check->Bind(0, std::string_view(u.debit.operationId)) && check->Execute())
+				{
+					known = true;
+					if (check->FetchRow())
+						state = check->GetString(0);
+					while (check->FetchRow()) {}
+				}
+			}
+			if (!known)
+			{
+				still.push_back(u); // base injoignable : on réessaie au tick suivant
+				continue;
+			}
+			engine::network::MailDebitResultPayload reply;
+			reply.operationId = u.debit.operationId;
+			if (state == "locked" || state == "delivered" || state == "refunded")
+			{
+				reply.result = static_cast<uint8_t>(engine::mail::MailDebitResult::Debited);
+			}
+			else
+			{
+				// Le COMMIT n'a pas eu lieu : l'or revient à l'expéditeur (s'il est encore ici ;
+				// sinon sa dernière sauvegarde validée contient déjà l'or d'avant).
+				if (ConnectedClient* client = FindConnectedClientByCharacterKey(u.debit.characterId))
+				{
+					const uint64_t total = static_cast<uint64_t>(client->gold) + u.debit.gold;
+					client->gold = static_cast<uint32_t>((std::min)(total, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+					(void)SendWalletUpdate(*client);
+					SaveConnectedClient(*client, "mail_debit_reverted");
+				}
+				reply.result = static_cast<uint8_t>(engine::mail::MailDebitResult::Failed);
+			}
+			LOG_WARN(Net, "[ServerApp] ETAPE5.6 COMMIT incertain tranché (operation={}, state='{}', result={}, essais={})",
+				u.debit.operationId, state, static_cast<unsigned>(reply.result), u.attempts);
+			auto pkt = engine::network::BuildMailDebitResultPacket(reply);
+			if (!pkt.empty())
+			{
+				std::lock_guard lock(m_masterInboxMutex);
+				m_masterOutbox.push_back(std::move(pkt));
+			}
+		}
+		m_uncertainMailDebits.swap(still);
+#endif
+	}
+
+		void ServerApp::RequestLiveMailboxClaim(uint64_t characterKey)
 	{
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || FindConnectedClientByCharacterKey(characterKey) == nullptr)
@@ -3453,11 +3514,14 @@ namespace engine::server
 				if (std::find(client->mailboxClaimedIds.begin(), client->mailboxClaimedIds.end(), row.id)
 					!= client->mailboxClaimedIds.end())
 					continue;
+				// Bourse pleine : la ligne n'est pas réclamée (elle reste pour plus tard) plutôt
+				// que de détruire l'excédent.
+				if (row.gold > 0u && static_cast<uint64_t>(client->gold) + row.gold > std::numeric_limits<uint32_t>::max())
+					continue;
 				client->mailboxClaimedIds.push_back(row.id);
 				if (row.gold > 0u)
 				{
-					const uint64_t total = static_cast<uint64_t>(client->gold) + row.gold;
-					client->gold = static_cast<uint32_t>((std::min)(total, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+					client->gold += row.gold;
 					goldAdded += row.gold;
 				}
 				if (row.itemId != 0u && row.quantity != 0u)

@@ -193,7 +193,7 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 		return m_client->Send(packet);
 	}
 
-		void ShardToMasterClient::OnConnected()
+	void ShardToMasterClient::OnConnected()
 	{
 		LOG_INFO(Net, "[STMC] OnConnected -> Registering");
 		m_state = State::Registering;

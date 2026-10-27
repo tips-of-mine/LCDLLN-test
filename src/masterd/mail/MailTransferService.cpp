@@ -118,6 +118,8 @@ namespace engine::server
 		if (!mysql || !cache)
 			return MailDeliverResult::Failed;
 		db::ScopedTransaction tx(mysql);
+		if (!tx.IsStarted())
+			return MailDeliverResult::Failed;
 		auto* sel = cache->Acquire(mysql, std::string(kSelectColumns) + "WHERE mail_id = ? FOR UPDATE");
 		if (sel == nullptr || !sel->Bind(0, mailId) || !sel->Execute())
 			return MailDeliverResult::Failed;
@@ -140,16 +142,16 @@ namespace engine::server
 		if (up == nullptr || !up->Bind(0, receiverCharacterId) || !up->Bind(1, std::string_view(row.operationId))
 			|| !up->Execute() || up->AffectedRows() != 1u)
 			return MailDeliverResult::Failed;
-		// Dépôt idempotent : un rejeu de la même livraison n'insère rien de plus.
+		// Dépôt (une seule fois : le passage locked → delivered ci-dessus en est la garde ;
+		// l'identifiant unique protège en plus contre un double dépôt).
 		const std::string depositId = engine::mail::MakeMailboxDepositOperationId(row.operationId, "deliver");
 		auto* ins = cache->Acquire(mysql,
-			"INSERT IGNORE INTO character_mailbox (character_id, gold, item_id, quantity, source, operation_id) "
+			"INSERT INTO character_mailbox (character_id, gold, item_id, quantity, source, operation_id) "
 			"VALUES (?, ?, 0, 0, 'mail', ?)");
 		if (ins == nullptr || !ins->Bind(0, receiverCharacterId) || !ins->Bind(1, row.gold)
-			|| !ins->Bind(2, std::string_view(depositId)) || !ins->Execute())
-			return MailDeliverResult::Failed;
-		tx.Commit();
-		if (!tx.IsCommitted())
+			|| !ins->Bind(2, std::string_view(depositId)) || !ins->Execute() || ins->AffectedRows() != 1u)
+			return MailDeliverResult::Failed; // ScopedTransaction annule
+		if (!tx.Commit())
 			return MailDeliverResult::Failed;
 		LOG_INFO(Net, "[MailTransfer] or livré (operation={}, receiver_character={}, gold={})",
 			row.operationId, receiverCharacterId, row.gold);
@@ -210,19 +212,20 @@ namespace engine::server
 				continue;
 			}
 			db::ScopedTransaction tx(mysql);
+			if (!tx.IsStarted())
+				continue;
 			auto* up = cache->Acquire(mysql,
 				"UPDATE mail_transfers SET state = 'refunded' WHERE operation_id = ? AND state = 'locked'");
 			if (up == nullptr || !up->Bind(0, std::string_view(row.operationId)) || !up->Execute() || up->AffectedRows() != 1u)
 				continue; // déjà livré ou rendu entre-temps
 			const std::string depositId = engine::mail::MakeMailboxDepositOperationId(row.operationId, "refund");
 			auto* ins = cache->Acquire(mysql,
-				"INSERT IGNORE INTO character_mailbox (character_id, gold, item_id, quantity, source, operation_id) "
+				"INSERT INTO character_mailbox (character_id, gold, item_id, quantity, source, operation_id) "
 				"VALUES (?, ?, 0, 0, 'mail_refund', ?)");
 			if (ins == nullptr || !ins->Bind(0, row.senderCharacterId) || !ins->Bind(1, row.gold)
-				|| !ins->Bind(2, std::string_view(depositId)) || !ins->Execute())
+				|| !ins->Bind(2, std::string_view(depositId)) || !ins->Execute() || ins->AffectedRows() != 1u)
 				continue; // ScopedTransaction annule
-			tx.Commit();
-			if (tx.IsCommitted())
+			if (tx.Commit())
 			{
 				++refunded;
 				LOG_INFO(Net, "[MailTransfer] or rendu à l'expéditeur (operation={}, character={}, gold={})",
@@ -230,5 +233,62 @@ namespace engine::server
 			}
 		}
 		return refunded;
+	}
+
+	MailDeliverResult MailTransferService::DepositSystemMail(uint64_t mailId, uint64_t receiverAccountId,
+		uint64_t receiverCharacterId, uint64_t gold, const std::vector<std::pair<uint32_t, uint32_t>>& items)
+	{
+		if (!IsAvailable() || receiverCharacterId == 0u || mailId == 0u)
+			return MailDeliverResult::Failed;
+		if (gold > 0xFFFFFFFFull)
+			gold = 0xFFFFFFFFull;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (!mysql || !cache)
+			return MailDeliverResult::Failed;
+		db::ScopedTransaction tx(mysql);
+		if (!tx.IsStarted())
+			return MailDeliverResult::Failed;
+		const std::string op = engine::mail::MakeMailTransferOperationId(mailId);
+		// Garde durable : la ligne de transfert « delivered » (clé primaire). Les dépôts de
+		// character_mailbox disparaissent une fois crédités ; elle reste.
+		auto* sel = cache->Acquire(mysql, "SELECT state FROM mail_transfers WHERE operation_id = ? FOR UPDATE");
+		if (sel == nullptr || !sel->Bind(0, std::string_view(op)) || !sel->Execute())
+			return MailDeliverResult::Failed;
+		if (sel->FetchRow())
+		{
+			while (sel->FetchRow()) {}
+			return MailDeliverResult::AlreadyDelivered;
+		}
+		auto* mark = cache->Acquire(mysql,
+			"INSERT INTO mail_transfers (operation_id, mail_id, sender_account_id, sender_character_id, sender_shard_id, "
+			"receiver_account_id, gold, state, deadline_ms, receiver_character_id) VALUES (?, ?, 0, 0, 0, ?, ?, 'delivered', 0, ?)");
+		if (mark == nullptr || !mark->Bind(0, std::string_view(op)) || !mark->Bind(1, mailId) || !mark->Bind(2, receiverAccountId)
+			|| !mark->Bind(3, gold) || !mark->Bind(4, receiverCharacterId) || !mark->Execute() || mark->AffectedRows() != 1u)
+			return MailDeliverResult::Failed;
+		auto deposit = [&](uint64_t g, uint32_t itemId, uint32_t quantity, const std::string& depositId) {
+			auto* ins = cache->Acquire(mysql,
+				"INSERT INTO character_mailbox (character_id, gold, item_id, quantity, source, operation_id) "
+				"VALUES (?, ?, ?, ?, 'mail_system', ?)");
+			return ins != nullptr && ins->Bind(0, receiverCharacterId) && ins->Bind(1, g) && ins->Bind(2, itemId)
+				&& ins->Bind(3, quantity) && ins->Bind(4, std::string_view(depositId)) && ins->Execute()
+				&& ins->AffectedRows() == 1u;
+		};
+		if (gold > 0u && !deposit(gold, 0u, 0u, engine::mail::MakeMailboxDepositOperationId(op, "gold")))
+			return MailDeliverResult::Failed;
+		for (size_t i = 0; i < items.size(); ++i)
+		{
+			if (items[i].first == 0u || items[i].second == 0u)
+				continue;
+			if (!deposit(0u, items[i].first, items[i].second,
+				engine::mail::MakeMailboxDepositOperationId(op, "item" + std::to_string(i))))
+				return MailDeliverResult::Failed;
+		}
+		if (!tx.Commit())
+			return MailDeliverResult::Failed;
+		LOG_INFO(Net, "[MailTransfer] courrier système crédité (mail_id={}, character={}, gold={}, objets={})",
+			mailId, receiverCharacterId, gold, items.size());
+		return MailDeliverResult::Delivered;
 	}
 }

@@ -44,11 +44,17 @@ namespace engine::server::db
 		ScopedTransaction(const ScopedTransaction&) = delete;
 		ScopedTransaction& operator=(const ScopedTransaction&) = delete;
 
-		void Commit();
+		/// Valide la transaction. \return vrai si le COMMIT a réussi (ETAPE5.6 : avant, un
+		/// COMMIT en échec était compté comme réussi).
+		bool Commit();
 		bool IsCommitted() const { return m_committed; }
+		/// ETAPE5.6 — vrai si START TRANSACTION a réussi (sinon les requêtes passeraient
+		/// en autocommit : l'appelant ne doit rien écrire).
+		bool IsStarted() const { return m_started; }
 
 	private:
 		MYSQL* m_mysql = nullptr;
 		bool m_committed = false;
+		bool m_started = false;
 	};
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/shared/network/ReliableChannel.h"
 #include "src/shared/network/ServerProtocol.h"
 #include "src/shared/network/UdpSecureChannel.h"
 
@@ -182,12 +183,23 @@ namespace engine::client
 		bool SendAuctionBuyoutRequest(const engine::server::AuctionBuyoutRequestMessage& message);
 
 		/// Non-blocking recv loop; each full datagram becomes one element. Welcome updates \ref ServerClientId.
+		/// ETAPE3.4 — les enveloppes du canal fiable sont ouvertes ici : les messages
+		/// livrés (dans l'ordre, sans doublon) sont rendus comme des paquets reçus, les
+		/// accusés consommés ; puis renvois dus et accusés groupés partent. À appeler à
+		/// chaque image (c'est aussi l'horloge du canal fiable).
 		std::vector<std::vector<std::byte>> PollIncoming();
+
+		/// ETAPE3.4 — vrai si le canal fiable a abandonné (shard muet 15 s) : la session
+		/// est perdue, le shard la coupe de son côté.
+		bool ReliableChannelFailed() const { return m_reliable.Failed(); }
 
 	private:
 		bool EnsureWinsock();
-		/// Envoie un paquet de jeu : scellé si la session est chiffrée (ETAPE3.1).
+		/// Envoie un paquet de jeu : par le canal fiable si son type l'exige (ETAPE3.4),
+		/// scellé si la session est chiffrée (ETAPE3.1).
 		bool SendBytes(std::span<const std::byte> packet);
+		/// ETAPE3.4 — envoi direct (scellé si session), hors canal fiable.
+		bool SendUnreliable(std::span<const std::byte> packet);
 		/// ETAPE3.1 — envoie le datagramme tel quel (déjà scellé ou session en clair).
 		bool SendRaw(std::span<const std::byte> datagram);
 		void HandleMaybeWelcome(std::span<const std::byte> packet);
@@ -208,5 +220,10 @@ namespace engine::client
 		std::vector<std::byte> m_lastHelloDatagram;    ///< dernier Hello envoyé (tel quel).
 		uint32_t m_helloAttempts = 0;                  ///< envois du Hello courant.
 		uint64_t m_lastHelloSentMs = 0;                ///< 0 = horodatage pris au premier MaybeResendHello.
+
+		// ETAPE3.4 — canal fiable de la session (cf. ReliableChannel.h). Remis à zéro à
+		// chaque socket et à chaque nouveau client_id (Welcome d'une nouvelle session).
+		engine::network::reliable::ReliableChannel m_reliable;
+		bool m_reliableFailureLogged = false;
 	};
 }

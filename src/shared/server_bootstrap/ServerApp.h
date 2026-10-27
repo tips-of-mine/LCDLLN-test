@@ -31,6 +31,7 @@
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/network/UdpSecureChannel.h"
 #include "src/shared/network/SnapshotDelta.h"
+#include "src/shared/network/ReliableChannel.h"
 #include "src/shared/movement/MovementRules.h"
 #include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/security/SecurityAuditLog.h"
@@ -295,6 +296,10 @@ namespace engine::server
 		/// ETAPE3.2 — snapshots envoyés à ce client (base acquittée, numérotation) :
 		/// chaque snapshot part en delta par rapport au dernier acquitté.
 		engine::network::snapshot::SnapshotSender snapshotSender;
+		/// ETAPE3.4 (chantier 4.4) — canal fiable de la session (messages qui ne doivent
+		/// pas se perdre : inventaire, butin, échange, chat, demandes du joueur…). Neuf
+		/// à chaque nouveau client (un Hello répété garde le canal en cours).
+		engine::network::reliable::ReliableChannel reliable;
 		/// ETAPE3.2 (chantier 4.5) — dernière cible visée (attaque ou sort) : toujours
 		/// gardée dans les snapshots, même au-delà du plafond d'entités.
 		EntityId lastTargetEntityId = 0;
@@ -530,7 +535,22 @@ namespace engine::server
 		/// « optional » uniquement ; en mode « required » le paquet est abandonné).
 		/// Thread-safe (UdpSessionTable).
 		/// \return false si le scellement ou l'envoi a échoué.
+		/// ETAPE3.4 — un paquet d'un type fiable (IsReliableKind) destiné à un client
+		/// connecté passe par son canal fiable (numéroté, renvoyé jusqu'à l'accusé) ;
+		/// \return true dès qu'il est confié au canal. Thread tick uniquement.
 		bool SendDatagram(const Endpoint& endpoint, std::span<const std::byte> packet);
+
+		/// ETAPE3.1 / ETAPE3.4 — envoi direct (scellé si session), hors canal fiable :
+		/// enveloppes Reliable / ReliableAck et paquets non fiables.
+		bool SendDatagramRaw(const Endpoint& endpoint, std::span<const std::byte> packet);
+
+		/// ETAPE3.4 — paquet Reliable ou ReliableAck reçu de \p datagram : accusés pris
+		/// en compte, messages livrés dans l'ordre puis traités comme des paquets reçus.
+		void HandleReliableEnvelope(const Datagram& datagram, engine::server::MessageKind kind);
+
+		/// ETAPE3.4 — à chaque tick : renvois dus et accusés groupés de chaque client ;
+		/// un canal en échec (message sans accusé depuis 15 s, file pleine) coupe le client.
+		void PumpReliableChannels();
 
 		/// ETAPE3.1 — traite une poignée de main chiffrée (Hello) : retrouve la clé de
 		/// session du personnage annoncé (AdmittedCharacterRegistry), refuse un sel déjà

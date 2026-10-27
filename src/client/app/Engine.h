@@ -1586,6 +1586,8 @@ namespace engine
 		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
 		/// ETAPE3.3 — images de simulation locale par commande (recalage + rejeu).
 		engine::gameplay::MoveReconciler m_moveHistory;
+		/// ETAPE3.4 — échec du canal fiable déjà signalé au joueur (une fois par session).
+		bool m_reliableFailureNotified = false;
 		/// ETAPE3.3 — horloge de simulation du mouvement (ms), envoyée dans chaque commande.
 		double m_moveClientTimeMs = 0.0;
 		/// ETAPE3.3 — instants (horloge de simulation) du dernier saut / de la dernière esquive.

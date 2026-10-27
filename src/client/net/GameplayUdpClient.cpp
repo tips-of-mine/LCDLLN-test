@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 
 #if defined(_WIN32)
 #	define WIN32_LEAN_AND_MEAN
@@ -15,6 +16,13 @@ namespace engine::client
 {
 	namespace
 	{
+		/// ETAPE3.4 — horloge monotone (ms) du canal fiable.
+		uint64_t NowSteadyMs()
+		{
+			return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count());
+		}
+
 #if defined(_WIN32)
 		SOCKET Native(void* s) { return static_cast<SOCKET>(reinterpret_cast<uintptr_t>(s)); }
 
@@ -174,6 +182,9 @@ namespace engine::client
 		m_lastHelloDatagram.clear();
 		m_helloAttempts = 0;
 		m_lastHelloSentMs = 0;
+		// ETAPE3.4 — le canal fiable meurt avec la session.
+		m_reliable.Reset();
+		m_reliableFailureLogged = false;
 	}
 
 	void GameplayUdpClient::SetSessionKey(uint64_t characterId, const engine::network::UdpSessionKey& key)
@@ -194,6 +205,27 @@ namespace engine::client
 	}
 
 	bool GameplayUdpClient::SendBytes(std::span<const std::byte> packet)
+	{
+		// ETAPE3.4 (chantier 4.4) — demandes qui ne doivent pas se perdre (butin,
+		// échange, chat, quêtes, équipement…) : canal fiable (renvoi jusqu'à l'accusé).
+		engine::server::MessageKind kind{};
+		if (engine::server::PeekMessageKind(packet, kind) && engine::network::reliable::IsReliableKind(kind))
+		{
+			std::vector<std::byte> envelope;
+			if (packet.size() > engine::network::reliable::ReliableChannel::kMaxClientToShardMessageSize
+				|| !m_reliable.Queue(packet, NowSteadyMs(), envelope))
+			{
+				LOG_ERROR(Net, "[GameplayUdpClient] Send FAILED: canal fiable en échec ou message trop gros (kind={}, size={})",
+					static_cast<uint32_t>(kind), packet.size());
+				return false;
+			}
+			(void)SendUnreliable(envelope); // perdu : renvoyé par le canal
+			return true;
+		}
+		return SendUnreliable(packet);
+	}
+
+	bool GameplayUdpClient::SendUnreliable(std::span<const std::byte> packet)
 	{
 		// ETAPE3.1 — session chiffrée : chaque paquet de jeu part scellé.
 		if (m_secure.IsReady())
@@ -252,6 +284,16 @@ namespace engine::client
 		{
 			LOG_WARN(Net, "[GameplayUdpClient] Welcome decode FAILED");
 			return;
+		}
+		if (m_serverClientId != 0u && welcome.clientId != m_serverClientId)
+		{
+			// ETAPE3.4 — nouvelle session côté shard (autre client_id sur la même socket) :
+			// son canal fiable repart de zéro, le nôtre aussi. Le PREMIER Welcome ne remet
+			// rien à zéro (le canal est neuf depuis Init ; des messages fiables du shard
+			// ont pu arriver avant un Welcome perdu puis renvoyé). Un Welcome répété (même
+			// client) garde le canal.
+			m_reliable.Reset();
+			m_reliableFailureLogged = false;
 		}
 		m_serverClientId = welcome.clientId;
 		LOG_INFO(Net,
@@ -895,7 +937,43 @@ namespace engine::client
 				one = std::move(plain);
 			}
 			HandleMaybeWelcome(one);
+			// ETAPE3.4 — enveloppes du canal fiable.
+			engine::server::MessageKind kind{};
+			if (engine::server::PeekMessageKind(one, kind))
+			{
+				if (kind == engine::server::MessageKind::ReliableAck)
+				{
+					(void)m_reliable.OnAck(one, NowSteadyMs());
+					continue;
+				}
+				if (kind == engine::server::MessageKind::Reliable)
+				{
+					std::vector<std::vector<std::byte>> delivered;
+					if (m_reliable.OnReliable(one, NowSteadyMs(), delivered))
+					{
+						for (std::vector<std::byte>& inner : delivered)
+						{
+							engine::server::MessageKind innerKind{};
+							if (engine::server::PeekMessageKind(inner, innerKind)
+								&& engine::network::reliable::IsReliableKind(innerKind))
+								out.push_back(std::move(inner));
+						}
+					}
+					continue;
+				}
+			}
 			out.push_back(std::move(one));
+		}
+		// ETAPE3.4 — renvois dus et accusés groupés (horloge du canal = images du jeu).
+		std::vector<std::vector<std::byte>> reliableOut;
+		m_reliable.Update(NowSteadyMs(), reliableOut);
+		for (const std::vector<std::byte>& datagram : reliableOut)
+			(void)SendUnreliable(datagram);
+		if (m_reliable.Failed() && !m_reliableFailureLogged)
+		{
+			m_reliableFailureLogged = true;
+			LOG_ERROR(Net, "[GameplayUdpClient] Canal fiable en échec : aucun accusé du shard depuis {} ms",
+				engine::network::reliable::ReliableChannel::kGiveUpMs);
 		}
 #endif
 		return out;

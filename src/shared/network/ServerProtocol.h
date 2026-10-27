@@ -80,7 +80,7 @@ namespace engine::server
 	/// l'époque (21 → 23 octets), nouveau kind MoveCorrection (101, shard → client :
 	/// position officielle pour un numéro de commande). Cf. MovementRules.h.
 	/// Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 18;
+	inline constexpr uint16_t kProtocolVersion = 19;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -333,7 +333,13 @@ namespace engine::server
 		BeltLayoutUpdate = 100, ///< Shard → Client : layout autoritaire (enter-world / ACK).
 		/// ETAPE3.3 — shard → client : position officielle du joueur pour un numéro de
 		/// commande de mouvement (le client s'y recale et rejoue les commandes suivantes).
-		MoveCorrection = 101
+		MoveCorrection = 101,
+		/// ETAPE3.4 — enveloppe du canal fiable (les deux sens) : seq u32 + paquet du
+		/// protocole emballé (en-tête compris). Cf. ReliableChannel.h.
+		Reliable = 102,
+		/// ETAPE3.4 — accusé du canal fiable (les deux sens) : base u32 (tout reçu
+		/// jusqu'à base) + masque u64 (bit i = base + 1 + i reçu en avance).
+		ReliableAck = 103
 	};
 
 	/// Initial client handshake sent before any other message.

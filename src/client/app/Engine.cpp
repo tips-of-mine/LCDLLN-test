@@ -17004,11 +17004,12 @@ namespace engine
 			? static_cast<uint64_t>(1u)
 			: static_cast<uint64_t>(charKeyCfg);
 		// ETAPE3.3 — nouvelle session : époque 0 (celle du shard à l'admission), plus
-		// d'images à rejouer, aucune correction antérieure acceptée.
+		// de positions envoyées connues, aucune correction antérieure acceptée.
 		m_moveEpoch = 0;
 		m_moveHistory.Clear();
 		m_moveLastCorrectedSeq = m_gameplayInputSeq;
 		m_uiModelBinding.ClearMoveCorrection();
+		m_reliableFailureNotified = false; // ETAPE3.4 : nouvelle session, nouveau canal
 		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
 
 		m_gameplayNetInitialized = true;
@@ -17231,6 +17232,21 @@ namespace engine
 				}
 			}
 			(void)m_uiModelBinding.ApplyPacket(packet);
+		}
+
+		// ETAPE3.4 — canal fiable en échec (aucun accusé du shard depuis 30 s) : les
+		// actions importantes (butin, échange, chat…) ne passent plus. Le joueur est
+		// prévenu une fois par session ; le shard coupe la session de son côté.
+		if (m_gameplayUdp.ReliableChannelFailed() && !m_reliableFailureNotified)
+		{
+			m_reliableFailureNotified = true;
+			engine::net::ChatMessage line{};
+			line.timestampUnixMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+			line.channel = engine::net::ChatChannel::Server;
+			line.sender = "Système";
+			line.text = "Liaison avec le serveur de jeu perdue : tes actions ne sont plus transmises. Reconnecte-toi.";
+			m_chatUi.PushNetworkLine(line);
 		}
 	}
 

@@ -248,6 +248,15 @@ RenderModel
 > époque de mouvement) ; un simple renvoi de la position courante passe par
 > `EmitForcePosition` (même époque).
 
+> **Règle (ETAPE3.4)** : un message qui ne doit pas se perdre (inventaire, échange,
+> chat, demandes du joueur…) a son type dans `reliable::IsReliableKind`
+> (`src/shared/network/ReliableChannel.cpp`) : `SendDatagram` / `SendBytes` le font
+> alors passer par le canal fiable (ordre, renvoi, accusé). Un nouveau type d'état
+> envoyé seulement au changement doit y être ajouté ; un flux fréquent (remplacé par le
+> suivant) ne doit pas y être, ni un message auto-réparé par ailleurs (ForcePosition,
+> MoveCorrection). Pas de fragmentation applicative : 2000 octets au plus shard → client,
+> 1431 client → shard ; un message trop gros est refusé, jamais envoyé hors canal.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

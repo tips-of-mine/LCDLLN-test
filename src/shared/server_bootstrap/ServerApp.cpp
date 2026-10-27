@@ -3157,9 +3157,15 @@ namespace engine::server
 		PumpReliableChannels();
 		if ((m_currentTick % m_tickHz) == 0)
 		{
-			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, rx_packets={}, tx_packets={})",
+			// ETAPE4.1 — mobs vivants / endormis (le sommeil doit dominer loin des joueurs).
+			size_t asleepMobs = 0;
+			for (const MobEntity& mob : m_mobs)
+				asleepMobs += mob.sleep.asleep ? 1u : 0u;
+			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, mobs={}, mobs_endormis={}, rx_packets={}, tx_packets={})",
 				m_currentTick,
 				m_clients.size(),
+				m_mobs.size(),
+				asleepMobs,
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
 		}
@@ -3213,6 +3219,26 @@ namespace engine::server
 	{
 		m_mobs.clear();
 		m_spawners.clear();
+		// ETAPE4.1 (chantiers 2.2, 2.3) — sommeil et classes de fréquence des mobs.
+		{
+			mob_activity::MobActivityConfig activity{};
+			activity.combatHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai_hz", 10), 1, 1000));
+			activity.calmHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai.calm_hz", 5), 1, 1000));
+			activity.ambientHz = static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.mob_ai.ambient_hz", 5), 1, 1000));
+			activity.wakeRadiusMeters = static_cast<float>(m_config.GetDouble("server.mob_ai.wake_radius_m", 600.0));
+			activity.sleepDelaySeconds = static_cast<float>(m_config.GetDouble("server.mob_ai.sleep_delay_s", 3.0));
+			m_mobActivity = mob_activity::Sanitize(activity, static_cast<uint32_t>(m_tickHz));
+			// Jamais en deçà de la portée de l'intérêt (cellule du joueur ± 3 cellules de
+			// 100 m, soit au plus 4 cellules en diagonale, ≈ 566 m) : un mob encore visible
+			// d'un joueur reste éveillé (pas de « statue » sous ses yeux). 0 = sommeil
+			// désactivé.
+			const float interestReachMeters = static_cast<float>((kBaseInterestRadiusCells + 1) * kCellSizeMeters) * 1.4143f;
+			if (m_mobActivity.wakeRadiusMeters > 0.0f && m_mobActivity.wakeRadiusMeters < interestReachMeters)
+				m_mobActivity.wakeRadiusMeters = interestReachMeters;
+			LOG_INFO(Net, "[ServerApp] IA des mobs : combat {} Hz, repos {} Hz, ambiance {} Hz, sommeil au-delà de {:.0f} m après {:.1f} s",
+				m_mobActivity.combatHz, m_mobActivity.calmHz, m_mobActivity.ambientHz,
+				m_mobActivity.wakeRadiusMeters, m_mobActivity.sleepDelaySeconds);
+		}
 		// Monde vivant — horloge monde du shard (mêmes clés et défauts que le
 		// master, cf. masterd/main_linux.cpp) : horaires jour/nuit des PNJ.
 		m_worldClockParams.epochRefUnixMs = static_cast<uint64_t>(
@@ -3926,9 +3952,45 @@ namespace engine::server
 			return;
 		}
 
+		const uint32_t tickHz = static_cast<uint32_t>(m_tickHz);
 		for (MobEntity& mob : m_mobs)
 		{
 			if ((mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			// ETAPE4.1 (chantier 2.2) — sommeil. Occupé (dégâts, menace, provocation
+			// reçus entre deux vérifications) : réveil immédiat. Sinon, voisinage vérifié
+			// une fois par seconde, étalé par identifiant d'entité.
+			// Un PNJ d'ambiance qui rentre chez lui (fin de son horaire) compte aussi :
+			// endormi en route, il ne serait jamais retiré ni replacé à sa porte.
+			const bool busy = mob_activity::IsBusy(mob.aggroTargetEntityId != 0, !mob.threatTable.empty(),
+				mob.aiState == MobAiState::Aggro || mob.aiState == MobAiState::Return
+					|| (mob.ambient && mob.routine.goingHome && !mob.scheduleRetired));
+			if (mob_activity::WakeIfBusy(mob.sleep, busy))
+			{
+				mob.lastAiTick = m_currentTick; // pas de rattrapage du temps dormi
+			}
+			else if (mob_activity::IsWakeCheckTick(mob.entityId, m_currentTick, tickHz))
+			{
+				const mob_activity::SleepTransition transition = mob_activity::UpdateSleep(mob.sleep,
+					IsPlayerNearMob(mob, m_mobActivity.wakeRadiusMeters), busy, m_currentTick, mob.spawnTick,
+					tickHz, m_mobActivity);
+				if (transition == mob_activity::SleepTransition::FellAsleep)
+				{
+					// Immobile pour les clients (sinon ils prolongeraient sa dernière vitesse).
+					mob.velocityMetersPerSecondX = 0.0f;
+					mob.velocityMetersPerSecondY = 0.0f;
+					mob.velocityMetersPerSecondZ = 0.0f;
+				}
+				else if (transition == mob_activity::SleepTransition::WokeUp)
+				{
+					mob.lastAiTick = m_currentTick;
+					mob.nextAiTick = m_currentTick;
+				}
+			}
+			if (mob.sleep.asleep)
 			{
 				continue;
 			}
@@ -3938,7 +4000,13 @@ namespace engine::server
 				continue;
 			}
 
-			mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+			// ETAPE4.1 (chantier 2.3) — fréquence selon la classe (combat, repos,
+			// ambiance) ; le pas couvre le temps réellement écoulé.
+			const uint32_t interval = mob_activity::IntervalTicks(
+				mob_activity::Classify(mob.ambient, busy), m_mobActivity, tickHz);
+			mob.aiStepSeconds = mob_activity::CatchUpSeconds(mob.lastAiTick, m_currentTick, interval, tickHz, m_mobActivity);
+			mob.lastAiTick = m_currentTick;
+			mob.nextAiTick = m_currentTick + interval;
 			UpdateMobAi(mob);
 		}
 	}
@@ -4190,6 +4258,22 @@ namespace engine::server
 		return false;
 	}
 
+	bool ServerApp::IsPlayerNearMob(const MobEntity& mob, float radiusMeters) const
+	{
+		if (radiusMeters <= 0.0f)
+			return true;
+		const float radiusSquared = radiusMeters * radiusMeters;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || !engine::world::cells::SameMap(client.zoneId, mob.zoneId))
+				continue;
+			if (DistanceSquaredXZ(client.positionMetersX, client.positionMetersZ, mob.positionMetersX, mob.positionMetersZ)
+				<= radiusSquared)
+				return true;
+		}
+		return false;
+	}
+
 	bool ServerApp::SpawnerHasCombat(const SpawnerRuntimeState& spawner) const
 	{
 		for (const SpawnerSlotState& slot : spawner.slots)
@@ -4251,6 +4335,7 @@ namespace engine::server
 		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
 		mob.aiState = MobAiState::Idle;
 		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.spawnTick = m_currentTick; // ETAPE4.1 : départ du délai de sommeil
 		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
 		mob.owningSpawnerIndex = static_cast<uint32_t>(&spawner - m_spawners.data());
 		mob.owningSpawnerSlot = slotIndex;
@@ -4576,6 +4661,7 @@ namespace engine::server
 		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
 		mob.aiState = MobAiState::Idle;
 		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.spawnTick = m_currentTick; // ETAPE4.1 : départ du délai de sommeil
 		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
 		mob.isDynamicEventMob = true;
 		mob.owningEventIndex = static_cast<uint32_t>(&eventState - m_dynamicEvents.data());
@@ -6237,8 +6323,10 @@ namespace engine::server
 			return true;
 		}
 
-		const uint32_t intervalTicks = ResolveMobAiIntervalTicks();
-		const float simulationDt = static_cast<float>(intervalTicks) / static_cast<float>(m_tickHz);
+		// ETAPE4.1 — durée couverte par la décision d'IA en cours (fréquence de la
+		// classe du mob, rattrapage du temps écoulé) : la vitesse au sol ne dépend pas
+		// de la fréquence de traitement.
+		const float simulationDt = std::max(mob.aiStepSeconds, 1.0f / static_cast<float>(std::max<int64_t>(m_tickHz, 1)));
 		// Combat SP3 — ralentissements actifs (SlowMobPercent cumulés, plancher
 		// 10 % de la vitesse de base ; la valeur de base n'est jamais écrasée).
 		const float slowFactor = std::clamp(
@@ -6258,7 +6346,7 @@ namespace engine::server
 			{
 				mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
 			}
-			return UpdateMobSpatialState(mob);
+			return UpdateMobSpatialState(mob); // arrivé (si la grille accepte la position)
 		}
 
 		const float stepScale = maxStep / distance;
@@ -6267,7 +6355,12 @@ namespace engine::server
 		mob.positionMetersX += dx * stepScale;
 		mob.positionMetersZ += dz * stepScale;
 		mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
-		return UpdateMobSpatialState(mob);
+		// ETAPE4.1 — pas intermédiaire : PAS arrivé. Avant, le résultat de la grille
+		// (presque toujours vrai) était renvoyé tel quel : une errance s'arrêtait après
+		// un seul pas, un retour au point d'attache repassait au repos (et pouvait
+		// s'endormir) loin de chez lui.
+		(void)UpdateMobSpatialState(mob);
+		return false;
 	}
 
 	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)

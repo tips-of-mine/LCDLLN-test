@@ -2,8 +2,6 @@
 
 #include "src/shardd/world/RegionLifecycle.h"
 
-#include <algorithm>
-
 namespace engine::server
 {
 	namespace cells = engine::world::cells;
@@ -116,6 +114,14 @@ namespace engine::server
 			out.push_back(region);
 		}
 		return out;
+	}
+
+	void RegionLifecycle::Clear()
+	{
+		m_tracker.Clear();
+		m_known.clear();
+		m_active.clear();
+		m_idle.clear();
 	}
 
 	size_t RegionLifecycle::WarmCount() const

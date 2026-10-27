@@ -169,7 +169,7 @@ joueur qui oscille en bordure faisait clignoter les mobs.
   | Active | un joueur dans la région ou à moins de 1 000 m de son bord | évalués |
   | Loaded | plus active depuis moins de `world.region_idle_s` (60 s) | évalués (retraits, retour rapide) |
   | Idle (froide) | plus active depuis 60 s | **plus parcourus du tout** |
-  | Removal | plus active depuis `world.region_unload_s` (300 s) | région oubliée, réapparitions remises à neuf |
+  | Removal | plus active depuis `world.region_unload_s` (300 s) | région oubliée du suivi |
 
   Une région jamais visitée est froide d'office. Une région froide qui a encore un mob
   vivant (combat qui se prolonge) reste parcourue jusqu'à son retrait : aucun mob n'est
@@ -183,8 +183,12 @@ joueur qui oscille en bordure faisait clignoter les mobs.
   réapparaître de mob pendant ce délai. Un joueur qui oscille en bordure ne fait plus
   clignoter les mobs. Les mobs n'apparaissent toujours qu'avec un joueur à portée du
   spawner (± 3 cellules de 100 m).
-- **Déchargement** : à 300 s, les délais de réapparition en cours de la région sont remis
-  à zéro. À la prochaine visite, la région est repeuplée comme si personne n'y était venu.
+- **Déchargement** : à 300 s, la région sort du suivi (ses mobs sont déjà retirés). Les
+  délais de réapparition en cours **continuent** : les remettre à zéro offrirait un
+  raccourci pour « farmer » un mob rare (s'éloigner quelques minutes puis revenir).
+- **Marge des régions** : `world.region_activation_margin_m` ne descend jamais sous la
+  portée de l'intérêt (400 m) : un spawner visible d'un joueur est toujours dans une région
+  chaude.
 
 Journal du shard : `Region froide : N003_W009 (plus parcourue)`, `Region dechargee : …`.
 

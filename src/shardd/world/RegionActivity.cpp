@@ -41,6 +41,10 @@ namespace engine::server
 			{
 				if (dn == 0 && de == 0) continue;
 				const cells::CellCoord neighbour{ home.n + dn, home.e + de };
+				// ETAPE4.3 — bord de la carte : une voisine hors [−500, 500[ ne serait pas
+				// représentable dans la clé (ActiveCells la décoderait de travers).
+				if (neighbour.n < -500 || neighbour.n >= 500 || neighbour.e < -500 || neighbour.e >= 500)
+					continue;
 				if (cells::DistanceToCell(neighbour, x, z) <= m_marginMeters)
 				{
 					m_players.try_emplace(Key(neighbour), 0u);

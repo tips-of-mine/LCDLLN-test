@@ -57,7 +57,7 @@ int main()
 			++helps;
 			Check(t.compare(p + 7, 13, "lcdlln_shard_") == 0, "préfixe lcdlln_shard_");
 		}
-		Check(helps == 22u, "22 métriques");
+		Check(helps == 23u, "23 métriques");
 	}
 
 	// 2. Saturation : délestage ou file de sauvegarde débordée.
@@ -89,8 +89,13 @@ int main()
 		Check(!b.HasSnapshot() && b.Snapshot().tick == 0u, "vide avant publication");
 		ShardGameplayMetrics m;
 		m.tick = 7;
-		b.Publish(m);
+		b.Publish(m, 100.0);
 		Check(b.HasSnapshot() && b.Snapshot().tick == 7u, "photo publiée");
+		Check(b.AgeSeconds(101.5) == 1.5 && b.AgeSeconds(99.0) == 0.0, "âge de la photo");
+		Check(!IsSaturatedOrStale(m, 1.0) && IsSaturatedOrStale(m, 3.5), "photo périmée (> 3 s) : saturé");
+		Check(IsSaturatedOrStale(m, std::nan("")), "âge invalide : saturé");
+		Check(Has(FormatShardMetricsPrometheus(m, 5.0), "lcdlln_shard_saturated 1\n")
+			&& Has(FormatShardMetricsPrometheus(m, 5.0), "lcdlln_shard_metrics_age_seconds 5\n"), "âge exposé");
 	}
 
 	if (s_failCount == 0)

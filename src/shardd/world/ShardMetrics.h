@@ -13,6 +13,7 @@
 //
 // Formatage pur : testé seul (shard_metrics_tests).
 
+#include <algorithm>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -36,7 +37,7 @@ namespace engine::server
 		uint32_t pendingHellos = 0;     ///< Hello en attente d'admission
 		uint32_t pendingCharacterLoads = 0; ///< lectures de personnage en cours (hors tick)
 		uint32_t saveQueuePending = 0;
-		bool saveQueueOverloaded = false;
+		bool saveQueueOverloaded = false; ///< file ≥ 75 % de sa capacité (CharacterSaveQueue::IsOverloaded)
 		uint64_t saveQueueExecuted = 0;
 		uint64_t saveQueueRejected = 0;
 		uint64_t saveQueueCoalesced = 0;
@@ -54,20 +55,37 @@ namespace engine::server
 	/// Charge lissée du tick en pourcentage du budget, bornée à [0 ; 1000] (heartbeat).
 	uint16_t TickLoadPercent(const ShardGameplayMetrics& m);
 
+	/// Au-delà de cet âge (s), la photo est périmée : le thread de tick ne publie plus
+	/// (bloqué ou très lent) et le shard doit être considéré saturé.
+	constexpr double kShardMetricsStaleSeconds = 3.0;
+
 	/// Texte Prometheus (format d'exposition 0.0.4) des métriques `lcdlln_shard_*`.
 	/// Ajouté à la sortie de BuildPrometheusText sur le /metrics du shard.
-	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m);
+	/// \param ageSeconds âge de la photo (lcdlln_shard_metrics_age_seconds).
+	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m, double ageSeconds = 0.0);
+
+	/// Contre-pression à annoncer à partir d'une photo d'âge \p ageSeconds : saturé si la
+	/// photo est périmée (tick bloqué) ou si IsSaturated.
+	bool IsSaturatedOrStale(const ShardGameplayMetrics& m, double ageSeconds);
 
 	/// Tableau d'affichage partagé entre le thread de tick (Publish) et les lecteurs
 	/// (HTTP /metrics, heartbeat). Thread-safe.
 	class ShardMetricsBoard final
 	{
 	public:
-		void Publish(const ShardGameplayMetrics& m)
+		/// \param nowSeconds horloge monotone du thread de tick (âge de la photo).
+		void Publish(const ShardGameplayMetrics& m, double nowSeconds)
 		{
 			std::lock_guard lock(m_mutex);
 			m_current = m;
 			m_published = true;
+			m_publishedAt = nowSeconds;
+		}
+		/// Âge de la dernière photo à \p nowSeconds (0 si aucune).
+		double AgeSeconds(double nowSeconds) const
+		{
+			std::lock_guard lock(m_mutex);
+			return m_published ? (std::max)(0.0, nowSeconds - m_publishedAt) : 0.0;
 		}
 		/// Dernière photo (valeurs nulles avant la première publication).
 		ShardGameplayMetrics Snapshot() const
@@ -85,5 +103,6 @@ namespace engine::server
 		mutable std::mutex m_mutex;
 		ShardGameplayMetrics m_current{};
 		bool m_published = false;
+		double m_publishedAt = 0.0;
 	};
 }

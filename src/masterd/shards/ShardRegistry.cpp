@@ -42,7 +42,7 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 		return id;
 	}
 
-	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load, bool saturated)
+	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load, std::optional<bool> saturatedOpt)
 	{
 		auto now = std::chrono::steady_clock::now();
 		bool log_degraded = false;
@@ -79,6 +79,7 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 			// ETAPE5.4 — contre-pression : un shard saturé (délestage, file de sauvegarde
 			// pleine) est traité comme plein.
 			const bool was_saturated = it->second.saturated;
+			const bool saturated = saturatedOpt.value_or(was_saturated);
 			it->second.saturated = saturated;
 			if (saturated != was_saturated)
 				LOG_WARN(Core, "[ShardRegistry] ETAPE5.4 shard {} {} (contre-pression)", shard_id,

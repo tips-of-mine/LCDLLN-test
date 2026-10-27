@@ -64,7 +64,8 @@ namespace engine::server
 		/// \param saturated ETAPE5.4 : contre-pression annoncée par le shard (délestage, file de
 		///        sauvegarde pleine). Un shard saturé passe Degraded (plus de nouveaux joueurs)
 		///        tant qu'il l'annonce, quel que soit son taux de remplissage.
-		bool UpdateHeartbeat(uint32_t shard_id, uint32_t current_load = 0, bool saturated = false);
+		///        nullopt (réenregistrement) : la valeur précédente est conservée.
+		bool UpdateHeartbeat(uint32_t shard_id, uint32_t current_load = 0, std::optional<bool> saturated = std::nullopt);
 
 		/// Marks the shard as Offline.
 		/// Returns true if shard existed.

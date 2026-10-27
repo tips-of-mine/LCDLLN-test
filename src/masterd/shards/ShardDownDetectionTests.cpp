@@ -209,6 +209,8 @@ static void TestSaturatedShardIsDegraded()
 	reg.UpdateHeartbeat(shardId, 5, true);
 	Assert(reg.GetShard(shardId)->state == ShardState::Degraded && reg.GetShard(shardId)->saturated, "saturé : Degraded");
 	Assert(!reg.SelectShard().has_value(), "saturé : non sélectionnable");
+	reg.UpdateHeartbeat(shardId, 5); // réenregistrement : saturation conservée
+	Assert(reg.GetShard(shardId)->state == ShardState::Degraded && reg.GetShard(shardId)->saturated, "réenregistrement : reste saturé");
 	reg.UpdateHeartbeat(shardId, 5, false);
 	Assert(reg.GetShard(shardId)->state == ShardState::Online && !reg.GetShard(shardId)->saturated, "plus saturé : Online");
 

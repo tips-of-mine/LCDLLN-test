@@ -87,8 +87,9 @@ namespace engine::network
 
 	/// ETAPE5.4 — contre-pression remontée par le shard dans son heartbeat.
 	/// Encodage : après le tableau de joueurs (toujours présent, éventuellement vide),
-	/// u8 version (1), u8 drapeaux (bit 0 = saturé), u16 charge du tick en %. Un master
-	/// antérieur ignore ces octets de queue (rétro-compatible dans les deux sens).
+	/// u8 version (1), u8 longueur des champs (3), u8 drapeaux (bit 0 = saturé), u16
+	/// charge du tick en %. Un master antérieur ignore ces octets de queue ; une version
+	/// future peut allonger les champs (la longueur permet de les sauter).
 	struct ShardBackPressure
 	{
 		bool saturated = false;

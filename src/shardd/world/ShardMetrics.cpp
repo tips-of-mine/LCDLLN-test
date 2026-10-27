@@ -46,7 +46,12 @@ namespace engine::server
 		return static_cast<uint16_t>(std::lround((std::min)(m.tickLoad * 100.0, 1000.0)));
 	}
 
-	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m)
+	bool IsSaturatedOrStale(const ShardGameplayMetrics& m, double ageSeconds)
+	{
+		return IsSaturated(m) || !(ageSeconds <= kShardMetricsStaleSeconds);
+	}
+
+	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m, double ageSeconds)
 	{
 		std::string out;
 		out.reserve(2600);
@@ -64,14 +69,15 @@ namespace engine::server
 		Gauge(out, "lcdlln_shard_pending_hellos", "Hello en attente d'admission.", m.pendingHellos);
 		Gauge(out, "lcdlln_shard_pending_character_loads", "Lectures de personnage en cours.", m.pendingCharacterLoads);
 		Gauge(out, "lcdlln_shard_save_queue_pending", "Sauvegardes en attente.", m.saveQueuePending);
-		Gauge(out, "lcdlln_shard_save_queue_overloaded", "File de sauvegarde debordee (0/1).", m.saveQueueOverloaded ? 1.0 : 0.0);
+		Gauge(out, "lcdlln_shard_save_queue_overloaded", "File de sauvegarde a 75 % ou plus (0/1).", m.saveQueueOverloaded ? 1.0 : 0.0);
 		Counter(out, "lcdlln_shard_save_queue_executed_total", "Sauvegardes executees.", m.saveQueueExecuted);
 		Counter(out, "lcdlln_shard_save_queue_rejected_total", "Sauvegardes refusees (file pleine).", m.saveQueueRejected);
 		Counter(out, "lcdlln_shard_save_queue_coalesced_total", "Sauvegardes fusionnees.", m.saveQueueCoalesced);
 		Gauge(out, "lcdlln_shard_shedding_active", "Delestage actif (0/1).", m.sheddingActive ? 1.0 : 0.0);
 		Counter(out, "lcdlln_shard_shedding_enter_total", "Entrees en delestage.", m.sheddingEnterCount);
 		Counter(out, "lcdlln_shard_stall_total", "Calages du tick (ecart >= seuil).", m.stallCount);
-		Gauge(out, "lcdlln_shard_saturated", "Contre-pression : nouveaux joueurs refuses (0/1).", IsSaturated(m) ? 1.0 : 0.0);
+		Gauge(out, "lcdlln_shard_saturated", "Contre-pression : nouveaux joueurs refuses (0/1).", IsSaturatedOrStale(m, ageSeconds) ? 1.0 : 0.0);
+		Gauge(out, "lcdlln_shard_metrics_age_seconds", "Age de la photo des metriques (tick bloque si > 3 s).", ageSeconds);
 		return out;
 	}
 }

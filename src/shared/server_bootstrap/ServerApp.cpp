@@ -3235,7 +3235,7 @@ namespace engine::server
 		m.sheddingActive = m_loadShedder.Active();
 		m.sheddingEnterCount = m_loadShedder.EnterCount();
 		m.stallCount = m_stallGuard.StallCount();
-		m_metricsBoard.Publish(m);
+		m_metricsBoard.Publish(m, std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
 	}
 
 	std::vector<engine::network::ShardPlayerPresence> ServerApp::GetPlayerPresenceSnapshot() const

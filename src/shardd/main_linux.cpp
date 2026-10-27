@@ -176,7 +176,11 @@ int main(int argc, char** argv)
 		if (const engine::server::ServerApp* app = metricsApp.load(std::memory_order_acquire))
 		{
 			if (app->MetricsBoard().HasSnapshot())
-				text += engine::server::FormatShardMetricsPrometheus(app->MetricsBoard().Snapshot());
+			{
+				const double nowSec = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+				text += engine::server::FormatShardMetricsPrometheus(app->MetricsBoard().Snapshot(),
+					app->MetricsBoard().AgeSeconds(nowSec));
+			}
 		}
 		return text;
 	};
@@ -278,10 +282,13 @@ int main(int argc, char** argv)
 	// l'annonce au master, qui cesse de lui envoyer de nouveaux joueurs.
 	toMaster.SetBackPressureProvider([&gameplayApp]() {
 		engine::network::ShardBackPressure bp;
+		// Photo périmée (thread de tick bloqué ou très lent) : saturé, le master cesse de
+		// nous envoyer des joueurs même si la dernière photo disait le contraire.
 		if (gameplayApp.MetricsBoard().HasSnapshot())
 		{
+			const double nowSec = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 			const auto m = gameplayApp.MetricsBoard().Snapshot();
-			bp.saturated = engine::server::IsSaturated(m);
+			bp.saturated = engine::server::IsSaturatedOrStale(m, gameplayApp.MetricsBoard().AgeSeconds(nowSec));
 			bp.tickLoadPercent = engine::server::TickLoadPercent(m);
 		}
 		return bp;

@@ -158,7 +158,8 @@ namespace engine::server
 			return;
 		}
 		// ETAPE5.4 — contre-pression du shard (heartbeat récent) : saturé ⇒ Degraded.
-		m_registry->UpdateHeartbeat(parsed->shard_id, parsed->current_load, parsed->hasBackPressure && parsed->saturated);
+		m_registry->UpdateHeartbeat(parsed->shard_id, parsed->current_load,
+			std::optional<bool>(parsed->hasBackPressure && parsed->saturated));
 
 		// Présence enrichie (v9) : répercute l'ensemble des joueurs rapportés par ce
 		// shard dans le cache (remplace les entrées du shard). Tolérant : un heartbeat

@@ -177,7 +177,13 @@ namespace engine::server::ambient
 		const double distance = std::sqrt(dx * dx + dz * dz);
 		const double speed = (std::max)(static_cast<double>(walkSpeedMetersPerSecond), 0.1);
 		const double rate = (std::max)(gameSecondsPerRealSecond, 1e-3);
-		const double travelGameSeconds = distance / speed * rate;
+		// Le trajet tient toujours dans son créneau (95 % au plus) : le PNJ est arrivé quand
+		// le créneau suivant commence, qui part donc bien de ce lieu.
+		const double nextStart = current + 1u < slots->size()
+			? startOfDay + SlotStart(*slots, current + 1u, day, seed, jitter)
+			: startOfDay + kDaySeconds;
+		const double slotDuration = (std::max)(nextStart - state.slotStartGameSeconds, 1.0);
+		const double travelGameSeconds = (std::min)(distance / speed * rate, 0.95 * slotDuration);
 		const double elapsed = gameSeconds - state.slotStartGameSeconds;
 		if (distance > 0.5 && elapsed >= 0.0 && elapsed < travelGameSeconds)
 		{

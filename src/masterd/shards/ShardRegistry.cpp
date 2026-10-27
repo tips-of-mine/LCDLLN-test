@@ -62,12 +62,18 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 			}
 			it->second.last_heartbeat = now;
 			it->second.current_load = current_load;
-			bool became_online = (it->second.state == ShardState::Registering);
+			// ETAPE5.1 — un shard déclaré mort (Offline) qui redonne signe de vie (heartbeat ou
+			// réenregistrement) redevient Online : ses verrous ont été libérés et ses joueurs
+			// prévenus à sa mort, il peut de nouveau accueillir des joueurs. Sans ça, il restait
+			// exclu de SelectShard / de la liste des serveurs jusqu'au redémarrage du master.
+			const bool was_offline = (it->second.state == ShardState::Offline);
+			bool became_online = (it->second.state == ShardState::Registering) || was_offline;
 			if (became_online)
 				it->second.state = ShardState::Online;
 			if (became_online)
 			{
-				LOG_INFO(Core, "[ShardRegistry] Shard {} now online (load={})", shard_id, current_load);
+				LOG_INFO(Core, "[ShardRegistry] Shard {} now online (load={}{})", shard_id, current_load,
+					was_offline ? ", retour apres declaration de mort" : "");
 			}
 
 			// Transition Online → Degraded or Degraded → Online according to load ratio (STAB.10)

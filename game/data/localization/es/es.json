@@ -295,6 +295,7 @@
   "auth.tooltip.country": "Tu pais de residencia (codigo ISO de 2 letras). Usado para tu TAG-ID unico.",
   "auth.error.enter_country": "Selecciona tu pais.",
   "auth.info.terms_required": "Se requiere aceptacion de los terminos.",
+  "auth.info.shard_lost": "Se perdio el servidor de mundo. Tu personaje ha sido liberado: vuelve a conectarte para jugar.",
   "auth.info.email_verified": "Email verificado. Ya puedes iniciar sesion.",
   "auth.info.forgot_password": "Si el email existe, se ha enviado un mensaje de restablecimiento.",
   "auth.info.terms_done": "Todos los terminos aceptados. Elige el nombre de tu personaje.",

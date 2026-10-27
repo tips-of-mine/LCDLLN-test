@@ -19,7 +19,7 @@ namespace engine::server
 	}
 
 	void SessionCharacterMap::Set(uint32_t connId, uint64_t accountId, uint64_t characterId, std::string characterName,
-		std::string normalizedName, AccountRole role)
+		std::string normalizedName, AccountRole role, uint32_t shardId)
 	{
 		std::lock_guard lock(m_mutex);
 
@@ -53,6 +53,7 @@ namespace engine::server
 		info.characterName = std::move(characterName);
 		info.normalizedName = normalizedName;
 		info.role = role;
+		info.shardId = shardId;
 		m_byConn[connId] = std::move(info);
 		m_byNormalizedName[normalizedName] = connId;
 	}
@@ -60,6 +61,7 @@ namespace engine::server
 	void SessionCharacterMap::Remove(uint32_t connId)
 	{
 		std::lock_guard lock(m_mutex);
+		m_ticketShardByConn.erase(connId);
 		auto it = m_byConn.find(connId);
 		if (it == m_byConn.end())
 			return;
@@ -67,6 +69,46 @@ namespace engine::server
 		if (byName != m_byNormalizedName.end() && byName->second == connId)
 			m_byNormalizedName.erase(byName);
 		m_byConn.erase(it);
+	}
+
+	std::vector<SessionCharacterMap::ShardBinding> SessionCharacterMap::TakeByShard(uint32_t shardId)
+	{
+		std::vector<ShardBinding> out;
+		if (shardId == 0)
+			return out;
+		std::lock_guard lock(m_mutex);
+		for (auto it = m_byConn.begin(); it != m_byConn.end();)
+		{
+			if (it->second.shardId != shardId)
+			{
+				++it;
+				continue;
+			}
+			out.push_back(ShardBinding{ it->first, it->second.accountId, it->second.characterId });
+			auto byName = m_byNormalizedName.find(it->second.normalizedName);
+			if (byName != m_byNormalizedName.end() && byName->second == it->first)
+				m_byNormalizedName.erase(byName);
+			it = m_byConn.erase(it);
+		}
+		return out;
+	}
+
+	void SessionCharacterMap::NoteTicketShard(uint32_t connId, uint32_t shardId)
+	{
+		std::lock_guard lock(m_mutex);
+		m_ticketShardByConn[connId] = shardId;
+		auto it = m_byConn.find(connId);
+		if (it != m_byConn.end())
+			it->second.shardId = shardId;
+	}
+
+	std::optional<uint32_t> SessionCharacterMap::TicketShard(uint32_t connId) const
+	{
+		std::lock_guard lock(m_mutex);
+		auto it = m_ticketShardByConn.find(connId);
+		if (it == m_ticketShardByConn.end())
+			return std::nullopt;
+		return it->second;
 	}
 
 	std::optional<SessionCharacterMap::CharacterInfo> SessionCharacterMap::GetByConnId(uint32_t connId) const

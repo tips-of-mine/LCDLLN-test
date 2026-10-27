@@ -178,7 +178,12 @@ namespace engine::server
 
 		// Tout est validé : on enregistre le mapping pour le chat.
 		const std::string normalized = SessionCharacterMap::Normalize(parsed->characterName);
-		m_charMap->Set(connId, *accountId, parsed->characterId, parsed->characterName, normalized, accountRole);
+		// ETAPE5.1 : le shard réellement rejoint (celui du ticket délivré à cette connexion,
+		// à défaut characters.server_id) est mémorisé pour que la mort de ce shard renvoie
+		// le joueur à l'écran de connexion (TakeByShard). Un ticket délivré après
+		// l'EnterWorld corrige ce shard (NoteTicketShard).
+		const uint32_t hostShardId = m_charMap->TicketShard(connId).value_or(dbServerId);
+		m_charMap->Set(connId, *accountId, parsed->characterId, parsed->characterName, normalized, accountRole, hostShardId);
 		LOG_INFO(Net, "[CharacterEnterWorldHandler] registered (account_id={}, character_id={}, name='{}')",
 			*accountId, parsed->characterId, parsed->characterName);
 

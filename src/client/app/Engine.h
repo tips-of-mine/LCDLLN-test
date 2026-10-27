@@ -2027,6 +2027,8 @@ namespace engine
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };
 
 		bool m_quitRequested = false;
+		/// ETAPE5.1 — vrai quand le master a signalé la perte du shard (traité à la frame suivante).
+		bool m_shardLostPending = false;
 		/// \c true si la ligne de commande contient \c --world-editor (injecté par lcdlln_world_editor.exe uniquement).
 		bool m_worldEditorExe = false;
 		bool m_editorEnabled = false;

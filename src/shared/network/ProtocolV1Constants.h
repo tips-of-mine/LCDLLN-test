@@ -855,4 +855,14 @@ namespace engine::network
 	constexpr uint16_t kOpcodeMapDiscoveryRequest  = 208u; ///< Client to Master : page de cellules decouvertes (uint16 startIndex).
 	constexpr uint16_t kOpcodeMapDiscoveryResponse = 209u; ///< Master to Client : masques de la page + index suivant (0 = fin).
 	constexpr uint16_t kOpcodeMapDiscoveryUpdate   = 210u; ///< Client to Master : masques a fusionner (OU), sans reponse.
+
+	// =====================================================================
+	// ETAPE5.1 (chantier 1.3 du rapport City of Heroes) — mort d'un shard.
+	// Quand le master déclare un shard mort (heartbeat expiré), il libère les
+	// verrous de propriété de ses personnages, les retire de la présence « en jeu »
+	// et prévient chaque client concerné, qui revient à l'écran de connexion
+	// (ses personnages sont de nouveau jouables). Rétro-additif (un client ancien
+	// ignore l'opcode) ; déploiement lock-step master + client.
+	// =====================================================================
+	constexpr uint16_t kOpcodeShardLostNotification = 211u; ///< Master to Client (push, request_id=0) : (uint32 shardId, uint8 reason).
 }

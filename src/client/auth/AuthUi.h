@@ -444,6 +444,11 @@ namespace engine::client
 		/// arrêter la connexion gameplay UDP et clearer les presenters in-game.
 		void RequestReturnToLogin();
 
+		/// ETAPE5.1 — Affiche \p text dans le bandeau d'information de l'écran courant
+		/// (ex. « le serveur de monde a été perdu » après RequestReturnToLogin). Le bandeau
+		/// est remplacé par le prochain message d'information du flux d'authentification.
+		void SetInfoBanner(std::string text) { m_infoBanner = std::move(text); }
+
 		/// Vrai dès que le master a accepté l'AUTH (m_masterSessionId != 0). Permet
 		/// au chat HUD d'apparaître plus tôt que IsFlowComplete (qui n'est vrai
 		/// qu'après EnterWorld) : on autorise le chat global+amis dès l'auth, et

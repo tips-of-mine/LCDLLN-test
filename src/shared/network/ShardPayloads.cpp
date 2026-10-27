@@ -215,4 +215,31 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// ETAPE5.1 — notification de perte de shard (Master → Client, push).
+	std::vector<uint8_t> BuildShardLostNotificationPacket(uint32_t shardId, ShardLostReason reason, uint64_t sessionId)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		const uint8_t reasonByte = static_cast<uint8_t>(reason);
+		if (!w.WriteU32(shardId) || !w.WriteBytes(&reasonByte, 1))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeShardLostNotification, 0, 0, sessionId, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<ShardLostNotificationPayload> ParseShardLostNotificationPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 5u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		ShardLostNotificationPayload out;
+		uint8_t reason = 0;
+		if (!r.ReadU32(out.shardId) || !r.ReadBytes(&reason, 1))
+			return std::nullopt;
+		out.reason = static_cast<ShardLostReason>(reason);
+		return out;
+	}
 }

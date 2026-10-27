@@ -171,8 +171,47 @@ static void TestListInWorldAccountIds()
 	Assert(Contains(idsAfter, 201ull), "ListInWorldAccountIds keeps account 201 (still on conn 1/3)");
 }
 
+// ETAPE5.1 — mort d'un shard : seules les liaisons de ce shard sont retirées et renvoyées.
+static void TestTakeByShard()
+{
+	SessionCharacterMap map;
+	map.Set(1, 101, 1001, "Alyx", "alyx", AccountRole::Player, 7);
+	map.Set(2, 102, 1002, "Bran", "bran", AccountRole::Player, 8);
+	map.Set(3, 103, 1003, "Cara", "cara", AccountRole::Player, 7);
+	map.Set(4, 104, 1004, "Dorn", "dorn", AccountRole::Player); // shard inconnu (0)
+	Assert(map.TakeByShard(0).empty(), "TakeByShard(0) ne retire rien");
+	auto taken = map.TakeByShard(7);
+	Assert(taken.size() == 2, "TakeByShard(7) renvoie les deux personnages du shard 7");
+	bool has1 = false, has3 = false;
+	for (const auto& b : taken)
+	{
+		if (b.connId == 1 && b.accountId == 101 && b.characterId == 1001) has1 = true;
+		if (b.connId == 3 && b.accountId == 103 && b.characterId == 1003) has3 = true;
+	}
+	Assert(has1 && has3, "TakeByShard renvoie connId, compte et personnage");
+	Assert(!map.GetByConnId(1) && !map.GetByConnId(3), "liaisons du shard 7 retirées");
+	Assert(!map.FindConnByNormalizedName("alyx") && !map.FindConnByNormalizedName("cara"), "noms du shard 7 retirés");
+	Assert(map.GetByConnId(2) && map.GetByConnId(4) && map.Count() == 2, "autres shards intacts");
+	Assert(map.GetByConnId(2)->shardId == 8, "shardId mémorisé");
+	Assert(map.TakeByShard(7).empty(), "second appel : plus rien");
+
+	// Shard du ticket : prioritaire, corrige une liaison existante, effacé par Remove.
+	SessionCharacterMap t;
+	Assert(!t.TicketShard(5), "aucun ticket : nullopt");
+	t.NoteTicketShard(5, 3);
+	Assert(t.TicketShard(5) && *t.TicketShard(5) == 3u, "ticket mémorisé");
+	t.Set(5, 105, 1005, "Eli", "eli", AccountRole::Player, *t.TicketShard(5));
+	t.NoteTicketShard(5, 4); // nouveau ticket après l'EnterWorld
+	Assert(t.GetByConnId(5)->shardId == 4u, "un nouveau ticket corrige le shard de la liaison");
+	Assert(t.TakeByShard(3).empty() && t.TakeByShard(4).size() == 1u, "TakeByShard suit le shard du ticket");
+	t.NoteTicketShard(6, 2);
+	t.Remove(6);
+	Assert(!t.TicketShard(6), "Remove efface le shard du ticket");
+}
+
 int main()
 {
+	TestTakeByShard();
 	TestNormalize();
 	TestSetAndLookup();
 	TestRemoveCleansBothMaps();

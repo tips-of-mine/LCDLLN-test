@@ -125,6 +125,9 @@ namespace engine::server
 		{
 			if (auto info = m_charMap->GetByConnId(connId))
 				character_id = info->characterId;
+			// ETAPE5.1 — shard réellement rejoint par cette connexion (mort du shard ⇒
+			// le client est prévenu, cf. SessionCharacterMap::TakeByShard).
+			m_charMap->NoteTicketShard(connId, req->target_shard_id);
 		}
 		std::array<uint8_t, engine::network::kShardTicketHmacSize> hmac{};
 		if (!ComputeTicketHmac(ticket_id.data(), ticket_id.size(), *accountOpt, req->target_shard_id, expires_at, character_id,

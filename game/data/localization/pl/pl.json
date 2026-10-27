@@ -295,6 +295,7 @@
   "auth.tooltip.country": "Twoj kraj zamieszkania (kod ISO 2-literowy). Uzywany do Twojego unikalnego TAG-ID.",
   "auth.error.enter_country": "Wybierz swoj kraj.",
   "auth.info.terms_required": "Wymagana akceptacja regulaminu.",
+  "auth.info.shard_lost": "Utracono serwer swiata. Twoja postac zostala zwolniona: zaloguj sie ponownie, aby grac.",
   "auth.info.email_verified": "E-mail zweryfikowany. Mozesz sie teraz zalogowac.",
   "auth.info.forgot_password": "Jesli e-mail istnieje, wyslano wiadomosc resetujaca.",
   "auth.info.terms_done": "Wszystkie warunki zaakceptowane. Wybierz nazwe postaci.",

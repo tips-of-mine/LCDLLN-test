@@ -114,6 +114,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
+    # ETAPE4.5 : délestage avec hystérésis.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
@@ -573,6 +575,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # ETAPE4.5 : délestage avec hystérésis (module pur).
+  lcdlln_add_simple_test(load_shedding_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/LoadSheddingTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp)
   # ETAPE4.3 : cycle de vie des régions (GridStateTracker branché sur les régions actives).
   lcdlln_add_simple_test(region_lifecycle_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/RegionLifecycleTests.cpp
@@ -1453,6 +1459,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
+    # ETAPE4.5 : délestage avec hystérésis.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp

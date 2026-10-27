@@ -282,6 +282,11 @@ RenderModel
 > hasard pendant la simulation pour ces PNJ. Un nouveau métier s'ajoute dans
 > `FindProfession`, avec un premier créneau à 0 h identique au dernier.
 
+> **Règle (ETAPE4.5)** : le délestage modifie `m_viewCapEntities` et `m_mobActivity` ;
+> leurs valeurs de référence sont `m_viewCapNominal` et `m_mobActivityNominal`. Tout
+> nouveau réglage dégradable suit le même schéma (valeur nominale + application dans
+> `ServerApp::ApplyLoadShedding`), et ne touche jamais au combat.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

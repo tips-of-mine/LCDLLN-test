@@ -184,4 +184,28 @@ namespace engine::network
 
 	/// Décode le motif de kOpcodeMasterToShardShutdown ; nullopt si le payload est invalide.
 	std::optional<std::string> ParseMasterToShardShutdownPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// ETAPE5.6 — demande de prélèvement d'or pour un courrier (kOpcodeMasterToShardMailDebit).
+	struct MailDebitPayload
+	{
+		std::string operationId; ///< mail-<mailId> (idempotent)
+		uint64_t characterId = 0;
+		uint64_t gold = 0;
+	};
+	std::vector<uint8_t> BuildMailDebitPacket(const MailDebitPayload& p);
+	std::optional<MailDebitPayload> ParseMailDebitPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// ETAPE5.6 — réponse du shard (kOpcodeShardToMasterMailDebitResult) ; \p result =
+	/// engine::mail::MailDebitResult.
+	struct MailDebitResultPayload
+	{
+		std::string operationId;
+		uint8_t result = 0;
+	};
+	std::vector<uint8_t> BuildMailDebitResultPacket(const MailDebitResultPayload& p);
+	std::optional<MailDebitResultPayload> ParseMailDebitResultPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// ETAPE5.6 — « courrier à créditer » pour \p characterId (kOpcodeMasterToShardMailboxPoke).
+	std::vector<uint8_t> BuildMailboxPokePacket(uint64_t characterId);
+	std::optional<uint64_t> ParseMailboxPokePayload(const uint8_t* payload, size_t payloadSize);
 }

@@ -57,7 +57,7 @@ int main()
 			++helps;
 			Check(t.compare(p + 7, 13, "lcdlln_shard_") == 0, "préfixe lcdlln_shard_");
 		}
-		Check(helps == 23u, "23 métriques");
+		Check(helps == 26u, "26 métriques");
 	}
 
 	// 2. Saturation : délestage ou file de sauvegarde débordée.

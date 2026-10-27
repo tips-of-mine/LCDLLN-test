@@ -69,6 +69,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
     # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueue.cpp
+    # ETAPE5.5 : sauvegardes différentielles (empreintes par bloc).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveDiff.cpp
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp
@@ -742,6 +744,11 @@ elseif(UNIX)
   # ETAPE2.1 : charge utile « progression » en base + texte .ini (aller-retour).
   lcdlln_add_simple_test(character_progress_payload_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterProgressPayloadTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
+  # ETAPE5.5 : sauvegardes différentielles (empreintes par bloc, module pur).
+  lcdlln_add_simple_test(character_save_diff_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveDiffTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveDiff.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
   # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
   lcdlln_add_simple_test(character_save_queue_tests
@@ -1497,6 +1504,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
     # ETAPE2.2 : file de sauvegarde des personnages hors du tick.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveQueue.cpp
+    # ETAPE5.5 : sauvegardes différentielles (empreintes par bloc).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveDiff.cpp
     # Character system PR1 — moteur de stats (serveur-only, anti-triche).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsTables.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterStatsEngine.cpp

@@ -44,6 +44,9 @@ namespace engine::server
 		bool sheddingActive = false;
 		uint64_t sheddingEnterCount = 0;
 		uint64_t stallCount = 0;        ///< calages du tick (ETAPE5.2)
+		uint64_t saveBlocksWritten = 0; ///< ETAPE5.5 : blocs réécrits en base
+		uint64_t saveBlocksSkipped = 0; ///< ETAPE5.5 : blocs inchangés non réécrits
+		uint64_t savesWithoutWrite = 0; ///< ETAPE5.5 : sauvegardes sans aucune écriture
 	};
 
 	/// Vrai si le shard doit refuser de nouveaux joueurs (contre-pression vers le master).

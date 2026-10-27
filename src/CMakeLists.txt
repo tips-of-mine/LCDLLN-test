@@ -571,7 +571,7 @@ elseif(UNIX)
 
   # ETAPE4.2 : étalement des travaux périodiques (en-tête seul).
   lcdlln_add_simple_test(tick_slicing_tests
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/TickSlicingTests.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/TickSlicingTests.cpp)
   # ETAPE4.1 : sommeil et classes de fréquence des mobs (module pur).
   lcdlln_add_simple_test(mob_activity_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/MobActivityTests.cpp

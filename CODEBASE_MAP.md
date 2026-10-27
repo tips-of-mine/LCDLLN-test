@@ -264,6 +264,12 @@ RenderModel
 > nouvel état « occupé » (combat, fuite, retour) doit être compté dans
 > `mob_activity::IsBusy`, sinon le mob pourrait s'endormir au milieu de l'action.
 
+> **Règle (ETAPE4.2)** : un travail périodique sur N objets (spawners, joueurs,
+> annonces…) ne se fait pas pour tous au même tick : il passe par
+> `tick_slicing::IsSliceTurn(id, tick, période)` (`src/shardd/world/TickSlicing.h`).
+> Chaque objet est traité une fois par période ; la période se calcule avec
+> `tick_slicing::PeriodTicks(tickHz, fréquence)`.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

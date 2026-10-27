@@ -116,6 +116,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
+    # ETAPE5.2 : garde contre les jugements après un calage de la boucle.
+    ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
@@ -150,6 +152,8 @@ elseif(UNIX)
   endif()
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/masterd/main_linux.cpp
+    # ETAPE5.2 : contrôles de heartbeat suspendus après un calage de la boucle principale.
+    ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/migrations/MigrationRunner.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
@@ -575,6 +579,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # ETAPE5.2 : garde contre les jugements après un calage (module pur).
+  lcdlln_add_simple_test(stall_guard_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/core/tests/StallGuardTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp)
   # ETAPE4.5 : délestage avec hystérésis (module pur).
   lcdlln_add_simple_test(load_shedding_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/LoadSheddingTests.cpp
@@ -1461,6 +1469,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
+    # ETAPE5.2 : garde contre les jugements après un calage de la boucle.
+    ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp

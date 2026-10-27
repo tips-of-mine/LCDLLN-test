@@ -18,6 +18,7 @@
 #include "src/masterd/handlers/shard/ServerListHandler.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardPayloads.h"
+#include "src/shared/core/StallGuard.h"
 #include "src/masterd/handlers/auth/AuthRegisterHandler.h"
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/account/InMemoryAccountStore.h"
@@ -1607,11 +1608,31 @@ int main(int argc, char** argv)
 	// purge des courriers…) sont désormais cadencés par jobScheduler.Tick()
 	// dans la boucle ci-dessous.
 
+	// ETAPE5.2 (chantier 1.5) — après un calage de cette boucle (tour ≥ 3 s : swap, pause
+	// de la VM, disque gelé), les heartbeats reçus pendant le calage n'ont pas encore été
+	// pris en compte : les contrôles d'expiration (shards, sessions) sont suspendus 30 s
+	// pour ne pas déclarer morts des shards ou des clients vivants.
+	engine::core::StallGuardConfig stallCfg{};
+	stallCfg.enabled = config.GetBool("master.stall_guard.enabled", true);
+	stallCfg.stallSeconds = config.GetDouble("master.stall_guard.stall_sec", 3.0);
+	stallCfg.graceSeconds = config.GetDouble("master.stall_guard.grace_sec", 30.0);
+	engine::core::StallGuard stallGuard(stallCfg);
+	LOG_INFO(Server, "[ServerMain] ETAPE5.2 stall guard enabled={} stall_sec={:.1f} grace_sec={:.1f}",
+		stallGuard.Config().enabled, stallGuard.Config().stallSeconds, stallGuard.Config().graceSeconds);
+	bool stallSkipLogged = false;
+
 	while (server.IsRunning() && g_quit == 0)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		auto now = std::chrono::steady_clock::now();
+		const double nowSec = std::chrono::duration<double>(now.time_since_epoch()).count();
+		if (stallGuard.OnLoop(nowSec))
+		{
+			LOG_WARN(Server, "[ServerMain] ETAPE5.2 calage de la boucle principale ({:.1f} s, total={}) : expirations suspendues {:.0f} s",
+				stallGuard.LastStallSeconds(), stallGuard.StallCount(), stallGuard.Config().graceSeconds);
+			stallSkipLogged = false;
+		}
 		// Roadmap-4 (2026-07-19) — jobs périodiques (intervalles internes).
 		jobScheduler.Tick();
 		if (now - lastSummaryLog >= kSummaryInterval)
@@ -1636,6 +1657,16 @@ int main(int argc, char** argv)
 				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0, shardHint);
 		}
 
+		if (now - lastWatchdog >= kWatchdogInterval && !stallGuard.ChecksAllowed(nowSec))
+		{
+			// ETAPE5.2 — contrôle reporté : on le retente au prochain intervalle.
+			lastWatchdog = now;
+			if (!stallSkipLogged)
+			{
+				LOG_INFO(Server, "[ServerMain] ETAPE5.2 expirations (heartbeats shards, sessions) reportées apres calage");
+				stallSkipLogged = true;
+			}
+		}
 		if (now - lastWatchdog >= kWatchdogInterval)
 		{
 			lastWatchdog = now;

@@ -46,6 +46,7 @@
 #include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/LoadShedding.h"
+#include "src/shared/core/StallGuard.h"
 #include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
@@ -1774,6 +1775,9 @@ namespace engine::server
 		mob_activity::MobActivityConfig m_mobActivityNominal{};
 		/// ETAPE4.5 (chantier 2.5) — délestage avec hystérésis, piloté par la durée du tick.
 		LoadShedder m_loadShedder;
+		/// ETAPE5.2 (chantier 1.5) — calage du tick (écart ≥ 3 s entre deux ticks) :
+		/// l'éviction des clients UDP inactifs est suspendue 30 s (server.stall_guard.*).
+		engine::core::StallGuard m_stallGuard;
 		/// ETAPE4.5 — plafond d'entités par client hors délestage, et facteur appliqué
 		/// pendant (server.load_shedding.view_cap_factor, 0,5).
 		uint32_t m_viewCapNominal = 0;

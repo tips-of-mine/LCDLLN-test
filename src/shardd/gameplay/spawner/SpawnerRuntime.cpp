@@ -451,6 +451,47 @@ namespace engine::server
 			out.pauseChance = std::clamp(out.pauseChance, 0.0f, 1.0f);
 			return true;
 		}
+
+		/// ETAPE4.4 — décode `agenda` : { profession, jitterMinutes?, strollRadiusMeters?,
+		/// places: { home|work|tavern|market|square|temple : [[x,z]…] } }.
+		/// \return false si le métier est inconnu, un lieu inconnu, un point mal formé,
+		/// ou si aucun domicile n'est donné (le PNJ doit pouvoir rentrer dormir).
+		bool ParseAgenda(const JsonValue& v, ambient::AgendaDefinition& out)
+		{
+			if (v.type != JsonType::Object) return false;
+			const JsonValue* profession = FindObjectMember(v, "profession");
+			if (profession == nullptr || profession->type != JsonType::String
+				|| ambient::FindProfession(profession->stringValue) == nullptr)
+				return false;
+			out.profession = profession->stringValue;
+			if (const JsonValue* j = FindObjectMember(v, "jitterMinutes"); j != nullptr && !TryGetFloat(*j, out.jitterMinutes))
+				return false;
+			if (const JsonValue* r = FindObjectMember(v, "strollRadiusMeters"); r != nullptr && !TryGetFloat(*r, out.strollRadiusMeters))
+				return false;
+			out.jitterMinutes = std::clamp(out.jitterMinutes, 0.0f, 180.0f);
+			out.strollRadiusMeters = std::clamp(out.strollRadiusMeters, 0.0f, 30.0f);
+			const JsonValue* places = FindObjectMember(v, "places");
+			if (places == nullptr || places->type != JsonType::Object)
+				return false;
+			for (const auto& [name, list] : places->objectValue)
+			{
+				ambient::AgendaPlace place{};
+				if (!ambient::ParseAgendaPlace(name, place) || list.type != JsonType::Array)
+					return false;
+				for (const JsonValue& pt : list.arrayValue)
+				{
+					ambient::RoutinePoint p;
+					if (pt.type != JsonType::Array || pt.arrayValue.size() != 2
+						|| !TryGetFloat(pt.arrayValue[0], p.x) || !TryGetFloat(pt.arrayValue[1], p.z))
+						return false;
+					out.places[static_cast<size_t>(place)].push_back(p);
+				}
+			}
+			if (out.places[static_cast<size_t>(ambient::AgendaPlace::Home)].empty())
+				return false;
+			out.enabled = true;
+			return true;
+		}
 	}
 
 	SpawnerRuntime::SpawnerRuntime(const engine::core::Config& config)
@@ -671,6 +712,17 @@ namespace engine::server
 					if (!ParseRoutine(*routineValue, definition.routine))
 					{
 						LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: spawner '{}' routine invalide (kind/path/schedule)",
+							definition.spawnerId);
+						m_definitions.clear();
+						return false;
+					}
+				}
+				// ETAPE4.4 — agenda de métier (optionnel), même politique stricte.
+				if (const JsonValue* agendaValue = FindObjectMember(spawnerValue, "agenda"); agendaValue != nullptr)
+				{
+					if (!ParseAgenda(*agendaValue, definition.agenda))
+					{
+						LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: spawner '{}' agenda invalide (profession/places/home)",
 							definition.spawnerId);
 						m_definitions.clear();
 						return false;

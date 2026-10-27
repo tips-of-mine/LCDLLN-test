@@ -87,6 +87,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
     # Monde vivant (chantier « Royaumes ») — routines des PNJ d'ambiance (pur).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp
+    # ETAPE4.4 : agenda déterministe des PNJ (routines de métier).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/DailyAgenda.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).
@@ -610,6 +612,12 @@ elseif(UNIX)
   # Monde vivant (chantier « Royaumes ») : routines des PNJ d'ambiance (pur).
   lcdlln_add_simple_test(ambient_routine_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/tests/AmbientRoutineTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp)
+
+  # ETAPE4.4 : agenda déterministe des PNJ (pur).
+  lcdlln_add_simple_test(daily_agenda_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/tests/DailyAgendaTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/DailyAgenda.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp)
 
   # Combat SP1 : catalogue d'archétypes de créatures (parse + validation JSON).
@@ -1475,6 +1483,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
     # Monde vivant (chantier « Royaumes ») — routines des PNJ d'ambiance (pur).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/AmbientRoutine.cpp
+    # ETAPE4.4 : agenda déterministe des PNJ (routines de métier).
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ambient/DailyAgenda.cpp
     # Combat SP1 — catalogue d'archétypes de créatures (stats data-driven).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/creature/CreatureArchetypeLibrary.cpp
     # Combat SP3 — kits de sorts par profil (data-driven).

@@ -276,6 +276,12 @@ RenderModel
 > `InitSpawners` doit être rangé dans `m_spawnersByRegion` (ou `m_spawnersOutsideCells`),
 > sinon il ne sera jamais évalué.
 
+> **Règle (ETAPE4.4)** : où se trouve un PNJ à agenda se calcule, ne se simule pas :
+> `ambient::EvaluateAgenda` (`src/shardd/gameplay/ambient/DailyAgenda`) à partir de la
+> graine (`AgendaSeed(spawnerId, emplacement)`) et de l'heure de jeu. Pas de tirage au
+> hasard pendant la simulation pour ces PNJ. Un nouveau métier s'ajoute dans
+> `FindProfession`, avec un premier créneau à 0 h identique au dernier.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

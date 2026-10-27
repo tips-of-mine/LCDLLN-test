@@ -3325,6 +3325,18 @@ namespace engine::server
 				return false;
 			}
 
+			// ETAPE4.4 — un agenda ne vaut que pour un PNJ d'ambiance : sur une créature
+			// (IA de combat), il est ignoré et signalé.
+			if (runtimeState.definition.agenda.enabled)
+			{
+				const CreatureArchetype* arch = m_archetypeLibrary.Find(runtimeState.definition.archetypeId);
+				if (arch == nullptr || !arch->ambient)
+				{
+					LOG_WARN(Net, "[ServerApp] Spawner '{}' : agenda ignoré (archétype {} non « ambient »)",
+						runtimeState.definition.spawnerId, runtimeState.definition.archetypeId);
+					runtimeState.definition.agenda.enabled = false;
+				}
+			}
 			m_spawners.push_back(std::move(runtimeState));
 			LOG_INFO(Net, "[ServerApp] Spawner ready (id={}, zone_id={}, count={}, respawn_sec={})",
 				definition.spawnerId,
@@ -3349,6 +3361,7 @@ namespace engine::server
 			regionTimers.idleTimeout = std::chrono::seconds{ std::clamp<int64_t>(m_config.GetInt("world.region_idle_s", 60), 0, 86400) };
 			regionTimers.unloadTimeout = std::chrono::seconds{ std::clamp<int64_t>(m_config.GetInt("world.region_unload_s", 300), 0, 86400) };
 			m_regionLifecycle.Configure(regionTimers);
+			m_defaultMobMoveSpeed = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
 			m_spawnerDespawnGraceTicks = static_cast<uint32_t>(std::clamp<double>(
 				m_config.GetDouble("server.spawners.despawn_grace_s", 20.0), 0.0, 600.0) * static_cast<double>(m_tickHz));
 		}
@@ -4226,6 +4239,79 @@ namespace engine::server
 		return engine::world::TimeOfDayHours(engine::world::GameSeconds(nowMs, m_worldClockParams));
 	}
 
+	float ServerApp::ResolveSpawnerMobSpeed(const SpawnerRuntimeState& spawner) const
+	{
+		// Même résolution qu'à l'apparition (SpawnMobFromSpawner) : vitesse de l'archétype
+		// si elle est donnée, sinon la vitesse par défaut des mobs (config, lue à l'init).
+		if (const CreatureArchetype* arch = m_archetypeLibrary.Find(spawner.definition.archetypeId);
+			arch != nullptr && arch->moveSpeedMetersPerSecond > 0.0f)
+			return arch->moveSpeedMetersPerSecond;
+		return m_defaultMobMoveSpeed;
+	}
+
+	ambient::AgendaState ServerApp::EvaluateSpawnerAgenda(const SpawnerRuntimeState& spawner, uint32_t slotIndex,
+		double gameSeconds) const
+	{
+		const ambient::AgendaDefinition& agenda = spawner.definition.agenda;
+		ambient::RoutinePoint home{ spawner.definition.positionMetersX, spawner.definition.positionMetersZ };
+		if (!agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].empty())
+			home = agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].front();
+		return ambient::EvaluateAgenda(agenda, ambient::AgendaSeed(spawner.definition.spawnerId, slotIndex),
+			gameSeconds, ResolveSpawnerMobSpeed(spawner), GameSecondsPerRealSecond(), home);
+	}
+
+	double ServerApp::CurrentGameSeconds() const
+	{
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		return engine::world::GameSeconds(nowMs, m_worldClockParams);
+	}
+
+	double ServerApp::GameSecondsPerRealSecond() const
+	{
+		// Même repli que l'horloge monde (WorldClock.h) : ≤ 0 → 60 min réelles par jour.
+		const double configured = static_cast<double>(m_worldClockParams.timeScaleRealMinPerDay);
+		const double realMinutesPerDay = configured > 0.0 ? configured : 60.0;
+		return 86400.0 / (realMinutesPerDay * 60.0);
+	}
+
+	const ambient::AgendaDefinition* ServerApp::FindMobAgenda(const MobEntity& mob) const
+	{
+		if (mob.isDynamicEventMob || mob.owningSpawnerIndex >= m_spawners.size()) return nullptr;
+		const ambient::AgendaDefinition& agenda = m_spawners[mob.owningSpawnerIndex].definition.agenda;
+		return agenda.enabled ? &agenda : nullptr;
+	}
+
+	void ServerApp::UpdateAgendaMob(MobEntity& mob, const ambient::AgendaDefinition& agenda)
+	{
+		// ETAPE4.4 (chantier 2.7) — l'agenda dit où le PNJ doit être à cette heure ; le
+		// shard ne fait que l'y conduire. Aucun tirage au hasard : tout vient de la graine.
+		constexpr float kArriveRadiusMeters = 1.4f;
+		constexpr float kHomeRadiusMeters = 4.0f;
+		const double gameSeconds = CurrentGameSeconds();
+		ambient::RoutinePoint fallback;
+		fallback.x = mob.homePositionMetersX;
+		fallback.z = mob.homePositionMetersZ;
+		const ambient::AgendaState state = ambient::EvaluateAgenda(agenda, mob.agendaSeed, gameSeconds,
+			mob.moveSpeedMetersPerSecond, GameSecondsPerRealSecond(), fallback);
+		// La nuit, il rentre : compté « occupé » (4.1) jusqu'au retrait, jamais endormi en route.
+		mob.routine.goingHome = state.activity == ambient::AgendaActivity::Sleep;
+		const ambient::RoutinePoint target = ambient::StrollPoint(agenda, mob.agendaSeed, state, gameSeconds);
+		(void)MoveMobTowards(mob, target.x, target.z);
+		// Chez lui : rayon élargi (plusieurs PNJ partagent souvent une porte, la séparation
+		// entre mobs les écarte d'1,2 m), et retrait de toute façon une fois l'heure
+		// d'arrivée passée (state.indoors) : un PNJ bloqué en chemin ne veille jamais.
+		const float radius = mob.routine.goingHome ? kHomeRadiusMeters : kArriveRadiusMeters;
+		const bool arrived = DistanceSquaredXZ(mob.positionMetersX, mob.positionMetersZ, target.x, target.z) < radius * radius;
+		if (arrived || (mob.routine.goingHome && state.indoors))
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			if (mob.routine.goingHome)
+				mob.scheduleRetired = true; // chez lui : retiré, réapparaîtra au matin
+		}
+	}
+
 	const ambient::RoutineDefinition* ServerApp::FindMobRoutine(const MobEntity& mob) const
 	{
 		if (mob.isDynamicEventMob || mob.owningSpawnerIndex >= m_spawners.size()) return nullptr;
@@ -4259,6 +4345,18 @@ namespace engine::server
 			mob.yawRadians = std::atan2(nearest->positionMetersX - mob.positionMetersX, nearest->positionMetersZ - mob.positionMetersZ);
 			// Reprend sa route un peu après le départ du joueur.
 			mob.routine.pauseUntilTick = std::max(mob.routine.pauseUntilTick, m_currentTick + static_cast<uint32_t>(m_tickHz));
+			return;
+		}
+		// ETAPE4.4 — PNJ à agenda de métier : il suit sa journée (prioritaire sur la routine).
+		if (const ambient::AgendaDefinition* agenda = FindMobAgenda(mob))
+		{
+			if (m_currentTick < mob.routine.pauseUntilTick)
+			{
+				mob.velocityMetersPerSecondX = 0.0f;
+				mob.velocityMetersPerSecondZ = 0.0f;
+				return; // vient de parler à un joueur : reprend un peu après
+			}
+			UpdateAgendaMob(mob, *agenda);
 			return;
 		}
 		if (def == nullptr)
@@ -4330,9 +4428,9 @@ namespace engine::server
 			{
 				return true;
 			}
-			// Monde vivant — un PNJ en routine (voyageur, patrouille) peut s'être
-			// éloigné de son spawner : il reste actif tant qu'un joueur le voit.
-			if (spawner.definition.routine.kind != ambient::RoutineKind::None)
+			// Monde vivant — un PNJ en routine (voyageur, patrouille) ou à agenda (4.4) peut
+			// s'être éloigné de son spawner : il reste actif tant qu'un joueur le voit.
+			if (spawner.definition.routine.kind != ambient::RoutineKind::None || spawner.definition.agenda.enabled)
 			{
 				for (const SpawnerSlotState& slot : spawner.slots)
 				{
@@ -4454,6 +4552,22 @@ namespace engine::server
 			// Petite désynchronisation : les PNJ d'un même quartier ne repartent pas en même temps.
 			mob.routine.pauseUntilTick = m_currentTick + static_cast<uint32_t>(NextCombatRoll01() * 3.0f * static_cast<float>(m_tickHz));
 		}
+		// ETAPE4.4 (chantiers 2.7, 2.4) — PNJ à agenda : il apparaît LÀ OÙ SA JOURNÉE LE
+		// PLACE à cet instant (au travail, à l'auberge, en chemin), pas à sa porte.
+		if (mob.ambient && spawner.definition.agenda.enabled)
+		{
+			mob.agendaSeed = ambient::AgendaSeed(spawner.definition.spawnerId, slotIndex);
+			const ambient::RoutinePoint home = spawner.definition.agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].empty()
+				? ambient::RoutinePoint{ spawner.definition.positionMetersX, spawner.definition.positionMetersZ }
+				: spawner.definition.agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].front();
+			const ambient::AgendaState state = ambient::EvaluateAgenda(spawner.definition.agenda, mob.agendaSeed,
+				CurrentGameSeconds(), mob.moveSpeedMetersPerSecond, GameSecondsPerRealSecond(), home);
+			mob.positionMetersX = state.position.x;
+			mob.positionMetersZ = state.position.z;
+			mob.homePositionMetersX = home.x;
+			mob.homePositionMetersZ = home.z;
+			mob.routine.pauseUntilTick = 0;
+		}
 
 		CellCoord mappedCell{};
 		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
@@ -4540,6 +4654,7 @@ namespace engine::server
 
 		// Monde vivant — heure de jeu (horaires des PNJ d'ambiance), une fois par passe.
 		const float worldHour = CurrentWorldHour();
+		const double gameSeconds = CurrentGameSeconds(); // ETAPE4.4 : agendas
 		// ETAPE4.3 (chantier 2.1) — seuls les spawners des régions chaudes (et de celles
 		// qui ont encore un mob) sont parcourus : une région froide ne coûte rien.
 		for (const size_t spawnerIndex : m_evaluatedSpawners)
@@ -4577,7 +4692,9 @@ namespace engine::server
 					spawner.isActive ? "true" : "false");
 			}
 			const ambient::RoutineDefinition& routine = spawner.definition.routine;
-			const bool scheduled = routine.kind != ambient::RoutineKind::None && routine.schedule != ambient::RoutineSchedule::Always;
+			// ETAPE4.4 — un agenda remplace l'horaire grossier de la routine (jour, nuit).
+			const bool hasAgenda = spawner.definition.agenda.enabled;
+			const bool scheduled = !hasAgenda && routine.kind != ambient::RoutineKind::None && routine.schedule != ambient::RoutineSchedule::Always;
 			const bool scheduleOpen = !scheduled || ambient::IsScheduleOpen(routine.schedule, worldHour);
 
 			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
@@ -4610,6 +4727,11 @@ namespace engine::server
 				}
 				if (scheduled)
 					mob->routine.goingHome = !scheduleOpen;
+				// ETAPE4.4 — l'heure du coucher vaut aussi pour un PNJ endormi (4.1) : rentrer
+				// le rend « occupé », donc il se réveille et rentre chez lui.
+				if (hasAgenda && mob->ambient)
+					mob->routine.goingHome = EvaluateSpawnerAgenda(spawner, slotIndex, gameSeconds).activity
+						== ambient::AgendaActivity::Sleep;
 
 				if (!spawner.isActive)
 				{
@@ -4650,6 +4772,11 @@ namespace engine::server
 				if (!scheduleOpen)
 				{
 					continue; // hors horaire : le PNJ reste chez lui
+				}
+				// ETAPE4.4 — PNJ à agenda qui dort chez lui à cette heure : pas d'entité.
+				if (hasAgenda && EvaluateSpawnerAgenda(spawner, slotIndex, gameSeconds).indoors)
+				{
+					continue;
 				}
 
 				(void)SpawnMobFromSpawner(spawner, slotIndex);

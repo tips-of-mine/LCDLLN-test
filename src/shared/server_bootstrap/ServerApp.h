@@ -389,6 +389,9 @@ namespace engine::server
 		float aiStepSeconds = 0.1f;
 		/// ETAPE4.1 — tick d'apparition (départ du délai de sommeil si aucun joueur vu).
 		uint32_t spawnTick = 0;
+		/// ETAPE4.4 — graine de l'agenda (identifiant du spawner + emplacement) : même
+		/// PNJ, même journée, quel que soit le moment où il apparaît.
+		uint64_t agendaSeed = 0;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -832,6 +835,28 @@ namespace engine::server
 		float CurrentWorldHour() const;
 		/// Définition de routine du spawner propriétaire du mob (nullptr si aucun).
 		const ambient::RoutineDefinition* FindMobRoutine(const MobEntity& mob) const;
+
+		/// ETAPE4.4 — agenda de métier du PNJ (spawner à `agenda`), nullptr sinon.
+		const ambient::AgendaDefinition* FindMobAgenda(const MobEntity& mob) const;
+
+		/// ETAPE4.4 — un pas de vie d'un PNJ à agenda : va au point de son créneau
+		/// (flânerie comprise) ; la nuit, rentre chez lui puis est retiré
+		/// (scheduleRetired). Appelée par UpdateAmbientMob (thread de tick).
+		void UpdateAgendaMob(MobEntity& mob, const ambient::AgendaDefinition& agenda);
+
+		/// ETAPE4.4 — vitesse de marche des mobs d'un spawner (archétype, sinon défaut) :
+		/// la même pour l'apparition et pour l'agenda.
+		float ResolveSpawnerMobSpeed(const SpawnerRuntimeState& spawner) const;
+
+		/// ETAPE4.4 — état d'agenda du PNJ de l'emplacement \p slotIndex à l'instant de
+		/// jeu \p gameSeconds (indoors = dort chez lui : pas d'apparition).
+		ambient::AgendaState EvaluateSpawnerAgenda(const SpawnerRuntimeState& spawner, uint32_t slotIndex,
+			double gameSeconds) const;
+
+		/// ETAPE4.4 — secondes de jeu courantes (horloge monde) et rythme de l'horloge
+		/// (secondes de jeu par seconde réelle, 24 pour un jour de jeu en une heure).
+		double CurrentGameSeconds() const;
+		double GameSecondsPerRealSecond() const;
 
 		/// Return true when at least one player is close enough to activate the spawner.
 		bool IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const;
@@ -1734,6 +1759,8 @@ namespace engine::server
 		std::unordered_set<uint32_t> m_evaluatedRegions;
 		/// ETAPE4.3 — délai de grâce (ticks) avant le retrait des mobs d'un spawner inactif.
 		uint32_t m_spawnerDespawnGraceTicks = 0;
+		/// ETAPE4.4 — vitesse par défaut des mobs (server.mob_move_speed_meters_per_second).
+		float m_defaultMobMoveSpeed = 3.0f;
 		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
 		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
 		mob_activity::MobActivityConfig m_mobActivity{};

@@ -396,6 +396,24 @@ namespace tools::world_gen
 				continue;
 			}
 
+			// ETAPE4.4 (chantier 2.7) — lieux de la journée des PNJ : auberge, place, étals.
+			// Tirages sur un générateur À PART (cr reste inchangé : même ville, mêmes
+			// tournées qu'avant). Le shard suit l'agenda ; un shard plus ancien, qui ignore
+			// `agenda`, garde la routine.
+			Rng ar(Hash(seed, HashString(c.id.c_str()), 4404));
+			std::vector<Vec2> squarePts;
+			for (int r : L->plazaRing) squarePts.push_back(L->nodes[static_cast<size_t>(r)].p);
+			if (squarePts.empty()) squarePts.push_back(c.center);
+			const bool hasInn = std::hypot(L->innDoor.x - c.center.x, L->innDoor.z - c.center.z) > 1.0;
+			const std::vector<Vec2> tavernPts{ hasInn ? L->innDoor : squarePts.front() };
+			const std::vector<Vec2> marketPts = L->stallFronts.empty() ? squarePts : L->stallFronts;
+			auto commonPlaces = [&](SpawnerDef& s, Vec2 home) {
+				s.agendaPlaces["home"] = { home };
+				s.agendaPlaces["tavern"] = tavernPts;
+				s.agendaPlaces["square"] = squarePts;
+				s.agendaPlaces["market"] = marketPts;
+			};
+
 			const int villagers = VillagersFor(c);
 			for (int k = 0; k < villagers; ++k)
 			{
@@ -412,6 +430,16 @@ namespace tools::world_gen
 				s.routineKind = "tour"; s.path = tour;
 				s.pauseMinSec = 3.0; s.pauseMaxSec = 14.0; s.pauseChance = 0.4;
 				s.schedule = (k % 5 == 4) ? "always" : "day";
+				// ETAPE4.4 — villageois de jour : une journée de métier (fermier, artisan,
+				// flâneur) ; les noctambules (« always ») gardent leur tournée.
+				if (s.schedule == "day")
+				{
+					static const char* kTrades[] = { "fermier", "artisan", "flaneur" };
+					s.agendaProfession = kTrades[k % 3];
+					commonPlaces(s, door);
+					// Lieu de travail : un nœud de la ville (champ, atelier, chantier).
+					s.agendaPlaces["work"] = { L->nodes[static_cast<size_t>(ar.Below(static_cast<uint32_t>(L->nodes.size())))].p };
+				}
 				addSpawner(s);
 				++w.report.ambientNpcs;
 			}
@@ -468,6 +496,10 @@ namespace tools::world_gen
 				s.pauseMinSec = 5.0; s.pauseMaxSec = 16.0; s.schedule = "day";
 				s.hasFacePoint = true;
 				s.facePoint = c.center; // tourné vers la place (les clients)
+				// ETAPE4.4 — journée de marchand : son étal, l'auberge à midi, la place le soir.
+				s.agendaProfession = "marchand";
+				commonPlaces(s, doors[ar.Below(static_cast<uint32_t>(doors.size()))]);
+				s.agendaPlaces["market"] = { L->stallFronts[k] };
 				addSpawner(s);
 				++w.report.ambientNpcs;
 			}
@@ -480,6 +512,9 @@ namespace tools::world_gen
 				s.count = 1; s.respawnSec = 30; s.leashM = 200.0;
 				s.routineKind = "post"; s.wanderRadiusM = 2.0;
 				s.pauseMinSec = 4.0; s.pauseMaxSec = 12.0; s.schedule = "always";
+				// ETAPE4.4 — l'aubergiste dort à l'auberge et y travaille.
+				s.agendaProfession = "aubergiste";
+				commonPlaces(s, L->innDoor);
 				addSpawner(s);
 				++w.report.ambientNpcs;
 			}

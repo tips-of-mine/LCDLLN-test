@@ -21,6 +21,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -173,6 +174,9 @@ namespace tools::world_gen
 		bool pingPong = false;
 		bool hasFacePoint = false;          ///< poste : point regardé à l'arrêt
 		Vec2 facePoint;
+		// --- ETAPE4.4 : agenda de métier (prioritaire sur la routine côté shard) ---
+		std::string agendaProfession;       ///< fermier|artisan|marchand|aubergiste|pretre|flaneur ; vide = pas d'agenda
+		std::map<std::string, std::vector<Vec2>> agendaPlaces; ///< home|work|tavern|market|square|temple → points
 	};
 
 	/// Point de respawn (cimetière / auberge).

@@ -9,8 +9,8 @@ et le monde doit pourtant continuer de vivre.
 |---|---|---|
 | 4.1 (chantiers 2.2, 2.3) | Sommeil des mobs loin des joueurs, classes de fréquence de l'IA | livré |
 | 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | livré |
-| 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | cette PR |
-| 4.4 (chantier 2.7) | Agenda déterministe des PNJ | à venir |
+| 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | livré |
+| 4.4 (chantier 2.7) | Agenda déterministe des PNJ | cette PR |
 | 4.5 (chantier 2.5) | Délestage avec hystérésis | à venir |
 
 Aucun ticket de l'étape 4 ne change le protocole : **seul le shard est à redéployer**,
@@ -211,3 +211,127 @@ corrigés. `region_activity_tests` : liste des régions actives, coordonnées n�
 
 Shard seul. Pas de migration. Nouvelles clés optionnelles : `world.region_idle_s`,
 `world.region_unload_s`, `server.spawners.despawn_grace_s`.
+
+## 4.4 — Agenda déterministe des PNJ (chantier 2.7)
+
+### Avant
+
+Les PNJ d'ambiance suivaient une routine (tournée, ronde, poste, errance) avec un
+horaire grossier (jour, nuit, toujours) et des pauses tirées au hasard pendant la
+simulation. Rien ne disait où se trouvait un PNJ à une heure donnée sans le simuler.
+Avec 4.1 à 4.3, un PNJ loin des joueurs n'existe plus : il fallait pouvoir le recréer
+« au bon endroit ».
+
+### Principe
+
+`src/shardd/gameplay/ambient/DailyAgenda` (module pur, testé seul) :
+
+- **Routines de métier** : une suite de créneaux (heure de début, lieu, activité).
+
+  | Métier | Journée type |
+  |---|---|
+  | `fermier` | dort → 5 h 30 travail → 12 h auberge → 13 h travail → 19 h devant chez lui → 21 h dort |
+  | `artisan` | dort → 6 h 30 atelier → 12 h auberge → 13 h atelier → 18 h 30 auberge → 21 h dort |
+  | `marchand` | dort → 7 h étal → 12 h 30 auberge → 13 h 30 étal → 19 h flânerie sur la place → 21 h dort |
+  | `aubergiste` | dort → 8 h auberge → 15 h place → 16 h auberge → 23 h 30 dort |
+  | `pretre` | dort → 6 h temple → 12 h chez lui → 13 h temple → 18 h place → 20 h temple → 22 h dort |
+  | `flaneur` | dort → 8 h place → 10 h marché → 12 h auberge → 14 h place → 17 h marché → 19 h auberge → 22 h dort |
+
+- **Variante par graine** : graine = identifiant du spawner + emplacement. Pour chaque
+  jour de jeu :
+  - horaires décalés jusqu'à `jitterMinutes` (20 min), sans jamais inverser deux
+    créneaux ;
+  - auberge, place, marché et temple choisis parmi les points du lieu (domicile et
+    travail restent fixes) ;
+  - petit point d'arrêt propre à chaque PNJ (≤ 1,5 m) : deux PNJ ne se tiennent pas au
+    même point.
+- **Position à toute heure, sans simulation** : `EvaluateAgenda(agenda, graine,
+  secondes de jeu)` donne le créneau, le lieu, l'activité et la position. La position est
+  en route si le PNJ n'a pas fini son trajet depuis le lieu précédent (vitesse de marche et
+  rythme de l'horloge monde). La nuit, une fois arrivé chez lui, il est **à l'intérieur** :
+  aucune entité.
+- **Flânerie** (`StrollPoint`) : point qui change toutes les 2 min de jeu dans
+  `strollRadiusMeters` (4 m) autour du lieu, lui aussi déterministe.
+
+Côté shard (`ServerApp`) :
+
+- un PNJ à agenda **apparaît là où sa journée le place à l'instant** (au travail, à
+  l'auberge, en chemin), et non plus à sa porte ;
+- il n'apparaît pas tant qu'il dort chez lui (`IsAgendaSlotIndoors`) ;
+- éveillé, il va au point de son créneau (`UpdateAgendaMob`), s'arrête pour un joueur
+  tout proche comme avant, rentre le soir puis est retiré. Il réapparaît au matin, en
+  sortant de chez lui ;
+- l'agenda remplace la routine **et son horaire** (jour, nuit) quand les deux sont
+  présents ; il ne s'applique qu'aux archétypes d'ambiance (`behavior.kind = ambient`) :
+  sur une créature, il est ignoré et signalé au démarrage ;
+- l'heure du coucher vaut aussi pour un PNJ endormi (4.1) : rentrer le rend « occupé »,
+  il se réveille et rentre. Il est retiré à moins de 4 m de sa porte (plusieurs PNJ la
+  partagent souvent), ou de toute façon une fois l'heure d'arrivée passée ;
+- un trajet tient toujours dans son créneau (95 % au plus) : le créneau suivant part du
+  bon lieu, même pour un lieu lointain. Vitesse de marche = celle de l'archétype, la même
+  qu'à l'apparition.
+
+Avec 4.1 à 4.3, un quartier sans joueur ne coûte rien. Pourtant, au retour d'un joueur,
+le forgeron est à sa forge à 10 h et à l'auberge à midi : le monde a continué de vivre.
+
+### Données
+
+`spawners.json`, à côté de `routine` (un shard plus ancien ignore `agenda` et garde la
+routine) :
+
+```json
+"agenda": {
+  "profession": "artisan",
+  "jitterMinutes": 20, "strollRadiusMeters": 4,
+  "places": {
+    "home":   [[-90019.8, -30019.1]],
+    "work":   [[-90002.1, -29989.4]],
+    "tavern": [[-90010.6, -30002.1], [-89995.0, -30020.0]],
+    "square": [[-89989.4, -29997.9]],
+    "market": [[-89994.0, -29991.0]]
+  }
+}
+```
+
+Politique stricte, comme pour `routine` : métier inconnu, lieu inconnu, point mal formé ou
+domicile absent font échouer le chargement des spawners. Un lieu sans point utilise le
+domicile.
+
+`tools/world_gen` en produit désormais pour :
+
+- les villageois de jour (fermier, artisan ou flâneur ; les noctambules gardent leur
+  tournée) ;
+- les marchands (leur étal) ;
+- l'aubergiste (il dort à l'auberge).
+
+Ses tirages se font sur un générateur à part : villes, tournées et faune restent
+identiques. **Relancer `tools/world_gen`** pour profiter des agendas ; sans
+régénération, les PNJ gardent leurs routines.
+
+### Limite connue
+
+Les mobs des camps (garde, chasse, repos) n'ont pas encore d'agenda : le même module
+s'y prêtera avec des métiers dédiés.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shardd/gameplay/ambient/DailyAgenda.h/.cpp` | Métiers, variante par graine, `EvaluateAgenda`, `StrollPoint` |
+| `src/shardd/gameplay/spawner/SpawnerRuntime` | `agenda` du JSON (`ParseAgenda`) |
+| `src/shared/server_bootstrap/ServerApp` | Apparition à la place de l'agenda, `IsAgendaSlotIndoors`, `UpdateAgendaMob`, horloge de jeu |
+| `tools/world_gen/lib/Population.cpp`, `Output.cpp` | Agendas des villageois, marchands et aubergistes |
+
+### Tests
+
+`daily_agenda_tests` : routines intégrées cohérentes, nuit chez soi et invisible, au
+travail le matin et en route au début du créneau, déterminisme et variantes, décalage
+borné (1 000 journées), auberge variée et atelier fixe, retour du soir visible puis
+invisible, lieux sans point et agenda désactivé, flânerie bornée et déterministe, trajet
+plus long que son créneau.
+`world_gen_tests` : agendas générés (métier connu, domicile présent).
+
+### Déploiement
+
+Shard seul (puis régénération du monde par `tools/world_gen` pour les agendas). Pas de
+migration, pas de nouvelle clé de configuration.

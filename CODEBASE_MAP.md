@@ -257,6 +257,13 @@ RenderModel
 > MoveCorrection). Pas de fragmentation applicative : 2000 octets au plus shard → client,
 > 1431 client → shard ; un message trop gros est refusé, jamais envoyé hors canal.
 
+> **Règle (ETAPE4.1)** : la fréquence d'IA d'un mob dépend de sa classe
+> (`src/shardd/world/MobActivity` : combat, repos, ambiance) et un mob loin des joueurs
+> dort. Tout déplacement de mob passe par `MoveMobTowards`, dont le pas vaut
+> `mob.aiStepSeconds` (temps couvert par la décision), jamais l'intervalle global. Un
+> nouvel état « occupé » (combat, fuite, retour) doit être compté dans
+> `mob_activity::IsBusy`, sinon le mob pourrait s'endormir au milieu de l'action.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

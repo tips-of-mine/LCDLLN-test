@@ -110,6 +110,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/world/MapDiscovery.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    # ETAPE4.1 : sommeil et classes de fréquence des mobs.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
@@ -566,6 +568,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(world_cells_tests
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
+  # ETAPE4.1 : sommeil et classes de fréquence des mobs (module pur).
+  lcdlln_add_simple_test(mob_activity_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivityTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp)
 
   # Monde « Royaumes » : activation des régions (cellules) par la présence des joueurs.
   lcdlln_add_simple_test(region_activity_tests
@@ -1424,6 +1431,8 @@ elseif(UNIX)
     # ETAPE2.5 : carte à découvrir calculée par le shard (MapDiscovery.cpp vient d'engine_core).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    # ETAPE4.1 : sommeil et classes de fréquence des mobs.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp

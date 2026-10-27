@@ -43,6 +43,7 @@
 #include "src/shardd/world/UdpSessionTable.h"
 #include "src/shardd/world/ZoneTransitions.h"
 #include "src/shardd/world/RegionActivity.h"
+#include "src/shardd/world/MobActivity.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
 
@@ -376,6 +377,16 @@ namespace engine::server
 		ambient::RoutineState routine;
 		/// Hors horaire et arrivé chez lui : à retirer sans délai de respawn.
 		bool scheduleRetired = false;
+		/// ETAPE4.1 (chantier 2.2) — sommeil : endormi = ni IA ni déplacement (aucun
+		/// joueur à moins de server.mob_ai.wake_radius_m depuis sleep_delay_s).
+		mob_activity::SleepState sleep;
+		/// ETAPE4.1 (chantier 2.3) — tick de la dernière décision d'IA (0 = jamais) :
+		/// le pas de déplacement couvre le temps écoulé depuis (rattrapage).
+		uint32_t lastAiTick = 0;
+		/// ETAPE4.1 — durée (s) couverte par la décision d'IA en cours (MoveMobTowards).
+		float aiStepSeconds = 0.1f;
+		/// ETAPE4.1 — tick d'apparition (départ du délai de sommeil si aucun joueur vu).
+		uint32_t spawnTick = 0;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -818,6 +829,11 @@ namespace engine::server
 
 		/// Return true when at least one player is close enough to activate the spawner.
 		bool IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const;
+
+		/// ETAPE4.1 — vrai si un joueur connecté (état répliqué, même carte) se trouve
+		/// à moins de \p radiusMeters (distance horizontale) du mob. Rayon ≤ 0 : vrai
+		/// (sommeil désactivé). Coût O(joueurs) : appelé une fois par seconde par mob.
+		bool IsPlayerNearMob(const MobEntity& mob, float radiusMeters) const;
 
 		/// Return true when one living spawned mob is still in combat.
 		bool SpawnerHasCombat(const SpawnerRuntimeState& spawner) const;
@@ -1688,6 +1704,9 @@ namespace engine::server
 		engine::world::StartLocationTable m_worldStarts;
 		/// Monde « Royaumes » — régions (cellules) actives, recalculées chaque seconde.
 		RegionActivity m_regionActivity;
+		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
+		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
+		mob_activity::MobActivityConfig m_mobActivity{};
 		/// Monde « Royaumes » — tick du prochain recalcul des régions actives (1 Hz).
 		uint32_t m_nextRegionRefreshTick = 0;
 		std::vector<EntityId> m_relevantEntityScratch;

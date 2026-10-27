@@ -1724,18 +1724,22 @@ namespace engine::server
 		// le différentiel est désactivé).
 		const std::string progressPayload = SerializeCharacterProgressPayload(state);
 		const SaveBlockHashes hashes = ComputeSaveBlockHashes(state, yawRadians, progressPayload);
-		uint32_t blocks = kSaveBlocksAll;
+		SavePlan plan;
 		if (m_differentialSaves && state.restoreSnapshotId == 0u && state.characterKey != 0u)
-			blocks = m_savedBlocks.PlanBlocks(state.characterKey, hashes);
+			plan = m_savedBlocks.Plan(state.characterKey, hashes);
+		else
+			m_savedBlocks.Invalidate(state.characterKey); // écriture complète hors référence
+		const uint32_t blocks = plan.blocks;
 #if defined(SHARD_POSITION_DB)
 		// Rien à écrire (aucun bloc modifié, ni courrier réclamé, ni carte, ni restauration) :
-		// pas de transaction du tout. Le contrôle de propriété n'a pas lieu d'être.
+		// pas de transaction du tout, donc pas de contrôle de propriété non plus (rien n'est
+		// écrit : un shard qui ne serait plus propriétaire n'abîme rien).
 		if (blocks == 0u && state.mailboxClaimedIds.empty() && state.mapDiscoveryCells.empty()
 			&& m_characterDbPool != nullptr && state.characterKey != 0u)
 		{
 			m_saveBlocksSkipped.fetch_add(CountSaveBlocks(kSaveBlocksAll), std::memory_order_relaxed);
 			m_savesWithoutWrite.fetch_add(1u, std::memory_order_relaxed);
-			m_savedBlocks.OnCommitted(state.characterKey, hashes, 0u);
+			m_savedBlocks.OnCommitted(state.characterKey, hashes, 0u, plan.version);
 			return CharacterDbSaveResult::Saved;
 		}
 #endif
@@ -1746,7 +1750,7 @@ namespace engine::server
 			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, blocks, connected);
 			if (result == CharacterDbSaveResult::Saved)
 			{
-				m_savedBlocks.OnCommitted(state.characterKey, hashes, blocks);
+				m_savedBlocks.OnCommitted(state.characterKey, hashes, blocks, plan.version);
 				m_saveBlocksWritten.fetch_add(CountSaveBlocks(blocks), std::memory_order_relaxed);
 				m_saveBlocksSkipped.fetch_add(CountSaveBlocks(kSaveBlocksAll) - CountSaveBlocks(blocks), std::memory_order_relaxed);
 				return result;
@@ -3960,10 +3964,15 @@ namespace engine::server
 			const uint64_t generation = client.ownerGeneration;
 			const uint32_t clientId = client.clientId;
 			std::string reasonCopy(reason);
-			const auto result = m_characterSaveQueue->EnqueueSave(client.persistenceCharacterKey,
-				[this, snapshot, yaw, generation, clientId, reasonCopy]() {
-					PersistCharacterState(*snapshot, yaw, generation, clientId, reasonCopy);
-				});
+			auto job = [this, snapshot, yaw, generation, clientId, reasonCopy]() {
+				PersistCharacterState(*snapshot, yaw, generation, clientId, reasonCopy);
+			};
+			// ETAPE5.5 — un état restauré (ETAPE2.6) ne doit jamais être fusionné avec une
+			// sauvegarde plus récente qui ne porte plus restoreSnapshotId : il écrit le niveau
+			// restauré et marque la demande appliquée. Dépôt ordonné, jamais fusionné.
+			const auto result = snapshot->restoreSnapshotId != 0u
+				? m_characterSaveQueue->EnqueueOrdered(client.persistenceCharacterKey, std::move(job))
+				: m_characterSaveQueue->EnqueueSave(client.persistenceCharacterKey, std::move(job));
 			if (result != CharacterSaveQueue::EnqueueResult::Rejected)
 			{
 				return;
@@ -3972,7 +3981,11 @@ namespace engine::server
 				m_characterSaveQueue->PendingCount(), client.clientId, reason);
 			// Un thread peut être en train d'écrire un instantané PLUS ANCIEN du même
 			// personnage : on le laisse finir, sinon il passerait après celui-ci.
-			(void)m_characterSaveQueue->Flush(client.persistenceCharacterKey);
+			// ETAPE5.5 — s'il n'a pas fini en 2 s, les deux écritures se chevauchent : la
+			// référence différentielle est invalidée (écriture complète, et le jeton de
+			// version empêche l'écriture ancienne de réinstaller sa référence).
+			if (!m_characterSaveQueue->Flush(client.persistenceCharacterKey))
+				m_savedBlocks.Invalidate(client.persistenceCharacterKey);
 			PersistCharacterState(*snapshot, yaw, generation, clientId, reason);
 			return;
 		}
@@ -10307,8 +10320,9 @@ namespace engine::server
 		}
 		else
 		{
-			// ETAPE5.5 — personnage parti : ses empreintes ne servent plus (mémoire bornée).
-			m_savedBlocks.Invalidate(clientIt->persistenceCharacterKey);
+			// ETAPE5.5 — personnage parti (sauvegarde finale écrite, plus rien en cours) :
+			// ses empreintes ne servent plus (mémoire bornée).
+			m_savedBlocks.Forget(clientIt->persistenceCharacterKey);
 		}
 		if (clientIt->hasCell)
 		{

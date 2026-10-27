@@ -86,30 +86,65 @@ int main()
 		SavedBlockCache cache(4u);
 		const PersistedCharacterState base = Sample();
 		const SaveBlockHashes h0 = ComputeSaveBlockHashes(base, 0.f, "p");
-		Check(cache.PlanBlocks(42u, h0) == kSaveBlocksAll, "inconnu : tout");
-		cache.OnCommitted(42u, h0, kSaveBlocksAll);
-		Check(cache.PlanBlocks(42u, h0) == 0u, "rien n'a changé : aucun bloc");
+		SavePlan p = cache.Plan(42u, h0);
+		Check(p.blocks == kSaveBlocksAll, "inconnu : tout");
+		cache.OnCommitted(42u, h0, kSaveBlocksAll, p.version);
+		p = cache.Plan(42u, h0);
+		Check(p.blocks == 0u, "rien n'a changé : aucun bloc");
 		PersistedCharacterState s = base;
 		s.gold = 99;
 		const SaveBlockHashes h1 = ComputeSaveBlockHashes(s, 0.f, "p");
-		Check(cache.PlanBlocks(42u, h1) == kSaveBlockWallet, "bourse seule");
-		cache.OnCommitted(42u, h1, kSaveBlockWallet);   // 1re partielle
-		cache.OnCommitted(42u, h1, 0u);                 // 2e partielle (rien)
-		Check(cache.PlanBlocks(42u, h1) == 0u, "3e sauvegarde : encore différentielle");
-		cache.OnCommitted(42u, h1, 0u);                 // 3e partielle
-		Check(cache.PlanBlocks(42u, h1) == kSaveBlocksAll, "4e sauvegarde : complète (fullEvery = 4)");
-		cache.OnCommitted(42u, h1, kSaveBlocksAll);
-		Check(cache.PlanBlocks(42u, h1) == 0u, "après la complète : de nouveau différentiel");
+		p = cache.Plan(42u, h1);
+		Check(p.blocks == kSaveBlockWallet, "bourse seule");
+		cache.OnCommitted(42u, h1, p.blocks, p.version);   // 1re partielle
+		p = cache.Plan(42u, h1);
+		cache.OnCommitted(42u, h1, p.blocks, p.version);   // 2e partielle (rien)
+		p = cache.Plan(42u, h1);
+		Check(p.blocks == 0u, "3e sauvegarde : encore différentielle");
+		cache.OnCommitted(42u, h1, p.blocks, p.version);   // 3e partielle
+		p = cache.Plan(42u, h1);
+		Check(p.blocks == kSaveBlocksAll, "4e sauvegarde : complète (fullEvery = 4)");
+		cache.OnCommitted(42u, h1, p.blocks, p.version);
+		Check(cache.Plan(42u, h1).blocks == 0u, "après la complète : de nouveau différentiel");
 		cache.Invalidate(42u);
-		Check(cache.PlanBlocks(42u, h1) == kSaveBlocksAll && cache.Size() == 0u, "invalidé : tout");
+		Check(cache.Plan(42u, h1).blocks == kSaveBlocksAll, "invalidé : tout");
+		cache.Forget(42u);
+		Check(cache.Size() == 0u, "oublié");
+	}
+
+	// 2 bis. Deux sauvegardes concurrentes planifiées sur la même référence : la seconde
+	// à valider en mémoire invalide (on ne sait plus laquelle est la dernière en base).
+	{
+		SavedBlockCache cache(20u);
+		PersistedCharacterState a = Sample();
+		const SaveBlockHashes h0 = ComputeSaveBlockHashes(a, 0.f, "p");
+		SavePlan p0 = cache.Plan(1u, h0);
+		cache.OnCommitted(1u, h0, kSaveBlocksAll, p0.version);
+		a.gold = 1;
+		const SaveBlockHashes hA = ComputeSaveBlockHashes(a, 0.f, "p");
+		a.gold = 2;
+		const SaveBlockHashes hB = ComputeSaveBlockHashes(a, 0.f, "p");
+		const SavePlan pA = cache.Plan(1u, hA);
+		const SavePlan pB = cache.Plan(1u, hB);
+		cache.OnCommitted(1u, hB, pB.blocks, pB.version); // B validé en mémoire d'abord
+		cache.OnCommitted(1u, hA, pA.blocks, pA.version); // A ensuite : jeton périmé
+		Check(cache.Plan(1u, hA).blocks == kSaveBlocksAll && cache.Plan(1u, hB).blocks == kSaveBlocksAll,
+			"écritures concurrentes : référence invalidée, prochaine sauvegarde complète");
+		// Invalidation pendant une sauvegarde planifiée : son COMMIT ne réinstalle rien.
+		const SavePlan pC = cache.Plan(1u, hA);
+		cache.OnCommitted(1u, hA, pC.blocks, pC.version); // complète : référence = hA
+		const SavePlan pD = cache.Plan(1u, hB);
+		cache.Invalidate(1u);
+		cache.OnCommitted(1u, hB, pD.blocks, pD.version);
+		Check(cache.Plan(1u, hB).blocks == kSaveBlocksAll, "invalidation pendant la sauvegarde : reste invalidé");
 	}
 
 	// 3. fullEvery = 1 désactive le différentiel ; bornes.
 	{
 		SavedBlockCache always(1u);
 		const SaveBlockHashes h = ComputeSaveBlockHashes(Sample(), 0.f, "p");
-		always.OnCommitted(1u, h, kSaveBlocksAll);
-		Check(always.PlanBlocks(1u, h) == kSaveBlocksAll, "fullEvery = 1 : toujours complet");
+		always.OnCommitted(1u, h, kSaveBlocksAll, always.Plan(1u, h).version);
+		Check(always.Plan(1u, h).blocks == kSaveBlocksAll, "fullEvery = 1 : toujours complet");
 		SavedBlockCache bounded(0u);
 		Check(bounded.FullEvery() == 1u, "fullEvery borné à 1");
 		bounded.SetFullEvery(100000u);

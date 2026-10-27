@@ -15,6 +15,7 @@ Mettre ce tableau à jour à chaque PR qui avance l'un de ces sujets (statut, PR
 | 6.4 | Commande sur un joueur hors ligne | à faire | Courrier avec pièce jointe, sanction MJ. S'appuie sur 5.6. |
 | 6.5 | Archivage des personnages inactifs depuis longtemps | à faire | |
 | 6.6 | Historique des positions pour juger les tirs | à faire | `LagCompensation` existe mais n'est pas branché. |
+| 6.7 | Sauvegardes : ne plus renvoyer courrier réclamé et carte à chaque fois | à faire | Suite de 5.5 : vider `mailboxClaimedIds` et n'envoyer que les cases de carte nouvelles après un COMMIT confirmé au tick. |
 
 ## 6.1 — Transfert de personnage en deux temps (chantier 1.4)
 

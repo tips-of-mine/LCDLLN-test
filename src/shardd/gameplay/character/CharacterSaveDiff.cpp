@@ -122,27 +122,57 @@ namespace engine::server
 		return m_fullEvery;
 	}
 
-	uint32_t SavedBlockCache::PlanBlocks(uint64_t characterKey, const SaveBlockHashes& current) const
+	SavePlan SavedBlockCache::Plan(uint64_t characterKey, const SaveBlockHashes& current) const
 	{
 		std::lock_guard lock(m_mutex);
+		SavePlan plan;
 		const auto it = m_entries.find(characterKey);
 		if (it == m_entries.end())
-			return kSaveBlocksAll;
+			return plan; // version 0, tout
+		plan.version = it->second.version;
+		if (!it->second.valid)
+			return plan;
 		// Tour d'écriture complète : la (fullEvery)-ième sauvegarde depuis la dernière complète.
 		if (it->second.savesSinceFull + 1u >= m_fullEvery)
-			return kSaveBlocksAll;
-		return DiffSaveBlocks(it->second.hashes, current);
+			return plan;
+		plan.blocks = DiffSaveBlocks(it->second.hashes, current);
+		return plan;
 	}
 
-	void SavedBlockCache::OnCommitted(uint64_t characterKey, const SaveBlockHashes& current, uint32_t written)
+	void SavedBlockCache::OnCommitted(uint64_t characterKey, const SaveBlockHashes& current, uint32_t written, uint64_t version)
 	{
 		std::lock_guard lock(m_mutex);
 		Entry& e = m_entries[characterKey];
+		if (e.version != version)
+		{
+			// Une autre écriture (ou une invalidation) est passée entre le Plan et ce COMMIT.
+			e.valid = false;
+			++e.version;
+			return;
+		}
+		const bool full = (written & kSaveBlocksAll) == kSaveBlocksAll;
+		if (!e.valid && !full)
+		{
+			// Référence inconnue et écriture partielle : impossible en marche normale
+			// (Plan renvoie tout) ; par prudence on ne crée pas de référence.
+			++e.version;
+			return;
+		}
 		e.hashes = current;
-		e.savesSinceFull = (written & kSaveBlocksAll) == kSaveBlocksAll ? 0u : e.savesSinceFull + 1u;
+		e.valid = true;
+		e.savesSinceFull = full ? 0u : e.savesSinceFull + 1u;
+		++e.version;
 	}
 
 	void SavedBlockCache::Invalidate(uint64_t characterKey)
+	{
+		std::lock_guard lock(m_mutex);
+		Entry& e = m_entries[characterKey];
+		e.valid = false;
+		++e.version;
+	}
+
+	void SavedBlockCache::Forget(uint64_t characterKey)
 	{
 		std::lock_guard lock(m_mutex);
 		m_entries.erase(characterKey);

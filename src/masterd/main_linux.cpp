@@ -1673,13 +1673,27 @@ int main(int argc, char** argv)
 		}
 
 		// ETAPE5.3 — arrêt ordonné : premier signal (mode ordonné) → compte à rebours.
-		if (g_orderedOnSignal != 0 && g_signalCount == 1 && clusterShutdown.Phase() == engine::server::ClusterShutdownPhase::Idle
-			&& !signalShutdownStarted)
+		// Le signal est traité une seule fois, quelle que soit la phase : pendant un compte à
+		// rebours MJ plus long que sigterm_delay_sec, il le RACCOURCIT (sinon systemd/Docker
+		// tuerait le master avant l'ordre d'arrêt aux shards) ; pendant le vidage, rien à faire.
+		if (g_orderedOnSignal != 0 && g_signalCount == 1 && !signalShutdownStarted)
 		{
 			signalShutdownStarted = true;
-			(void)clusterShutdown.Start(nowSec, static_cast<uint32_t>(sigtermShutdownDelaySec), "arrêt du service");
-			LOG_WARN(Server, "[ServerMain] ETAPE5.3 signal d'arrêt reçu : arrêt ordonné dans {} s (second signal = arrêt immédiat)",
-				sigtermShutdownDelaySec);
+			const auto phase = clusterShutdown.Phase();
+			const uint32_t sigDelay = static_cast<uint32_t>(sigtermShutdownDelaySec);
+			if (phase == engine::server::ClusterShutdownPhase::Idle
+				|| (phase == engine::server::ClusterShutdownPhase::Countdown && clusterShutdown.RemainingSeconds(nowSec) > sigDelay))
+			{
+				const std::string reason = phase == engine::server::ClusterShutdownPhase::Idle
+					? std::string("arrêt du service") : clusterShutdown.Reason();
+				(void)clusterShutdown.Start(nowSec, sigDelay, reason);
+				LOG_WARN(Server, "[ServerMain] ETAPE5.3 signal d'arrêt reçu : arrêt ordonné dans {} s (second signal = arrêt immédiat)",
+					sigtermShutdownDelaySec);
+			}
+			else
+			{
+				LOG_WARN(Server, "[ServerMain] ETAPE5.3 signal d'arrêt reçu : arrêt ordonné déjà en cours (second signal = arrêt immédiat)");
+			}
 		}
 		for (const auto& action : clusterShutdown.Tick(nowSec))
 		{

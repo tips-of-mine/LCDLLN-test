@@ -883,8 +883,7 @@ namespace engine::server
 		std::string reason = sp == std::string::npos ? std::string{} : line.substr(sp + 1u);
 		const size_t rs = reason.find_first_not_of(" \t");
 		reason = rs == std::string::npos ? std::string{} : reason.substr(rs);
-		if (reason.size() > 200u)
-			reason.resize(200u);
+		reason = TruncateUtf8(std::move(reason), ClusterShutdown::kMaxReasonBytes);
 
 		if (m_clusterShutdown == nullptr)
 		{

@@ -2,6 +2,7 @@
 
 #include "src/shared/core/Config.h"
 #include "src/shardd/gameplay/ambient/AmbientRoutine.h"
+#include "src/shardd/gameplay/ambient/DailyAgenda.h"
 
 #include <cstdint>
 #include <string>
@@ -25,6 +26,9 @@ namespace engine::server
 		/// Monde vivant — routine d'ambiance optionnelle (`routine` du JSON) ;
 		/// kind None = IA de créature historique (errance + riposte).
 		ambient::RoutineDefinition routine;
+		/// ETAPE4.4 — agenda de métier optionnel (`agenda` du JSON) : s'il est présent,
+		/// il remplace la routine pour décider où se trouve le PNJ à chaque heure.
+		ambient::AgendaDefinition agenda;
 	};
 
 	/// Server-side spawner runtime: loads zone JSON definitions resolved from `paths.content`.

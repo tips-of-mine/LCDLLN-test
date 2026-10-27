@@ -270,12 +270,26 @@ namespace
 			std::set<std::string> ids;
 			bool routinesOk = sp != nullptr, inside = sp != nullptr;
 			size_t withRoutine = 0;
+			size_t withAgenda = 0;
+			bool agendasOk = true;
 			if (sp)
 				for (const auto& s : sp->arrayValue)
 				{
 					ids.insert(tools::zone_builder::FindObjectMember(s, "id")->stringValue);
 					const auto& pos = tools::zone_builder::FindObjectMember(s, "position")->arrayValue;
 					if (pos[0].numberValue < x0 || pos[0].numberValue >= x0 + 10000.0 || pos[2].numberValue < z0 || pos[2].numberValue >= z0 + 10000.0) inside = false;
+					// ETAPE4.4 — agenda : métier connu du shard et domicile présent.
+					if (const auto* ag = tools::zone_builder::FindObjectMember(s, "agenda"))
+					{
+						++withAgenda;
+						const auto* prof = tools::zone_builder::FindObjectMember(*ag, "profession");
+						const auto* places = tools::zone_builder::FindObjectMember(*ag, "places");
+						const auto* home = places ? tools::zone_builder::FindObjectMember(*places, "home") : nullptr;
+						const std::string p = prof ? prof->stringValue : std::string();
+						if (!home || home->arrayValue.empty()
+							|| (p != "fermier" && p != "artisan" && p != "marchand" && p != "aubergiste" && p != "pretre" && p != "flaneur"))
+							agendasOk = false;
+					}
 					const auto* rt = tools::zone_builder::FindObjectMember(s, "routine");
 					if (!rt) continue;
 					++withRoutine;
@@ -287,6 +301,7 @@ namespace
 			Check(inside, "spawners : positions globales dans la cellule");
 			Check(routinesOk, "spawners : routines tour/patrol avec chemin >= 2 points");
 			Check(withRoutine > 20, "spawners : PNJ d'ambiance presents");
+			Check(withAgenda > 5 && agendasOk, "spawners : agendas de metier (metier connu, domicile)");
 		}
 
 		// Raccord : la cellule voisine à l'ouest partage la colonne x = -95000.

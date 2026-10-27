@@ -4226,6 +4226,63 @@ namespace engine::server
 		return engine::world::TimeOfDayHours(engine::world::GameSeconds(nowMs, m_worldClockParams));
 	}
 
+	bool ServerApp::IsAgendaSlotIndoors(const SpawnerRuntimeState& spawner, uint32_t slotIndex) const
+	{
+		const ambient::AgendaDefinition& agenda = spawner.definition.agenda;
+		ambient::RoutinePoint home{ spawner.definition.positionMetersX, spawner.definition.positionMetersZ };
+		if (!agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].empty())
+			home = agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].front();
+		const float speed = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		return ambient::EvaluateAgenda(agenda, ambient::AgendaSeed(spawner.definition.spawnerId, slotIndex),
+			CurrentGameSeconds(), speed, GameSecondsPerRealSecond(), home).indoors;
+	}
+
+	double ServerApp::CurrentGameSeconds() const
+	{
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		return engine::world::GameSeconds(nowMs, m_worldClockParams);
+	}
+
+	double ServerApp::GameSecondsPerRealSecond() const
+	{
+		const double realMinutesPerDay = std::max(1e-3, static_cast<double>(m_worldClockParams.timeScaleRealMinPerDay));
+		return 86400.0 / (realMinutesPerDay * 60.0);
+	}
+
+	const ambient::AgendaDefinition* ServerApp::FindMobAgenda(const MobEntity& mob) const
+	{
+		if (mob.isDynamicEventMob || mob.owningSpawnerIndex >= m_spawners.size()) return nullptr;
+		const ambient::AgendaDefinition& agenda = m_spawners[mob.owningSpawnerIndex].definition.agenda;
+		return agenda.enabled ? &agenda : nullptr;
+	}
+
+	void ServerApp::UpdateAgendaMob(MobEntity& mob, const ambient::AgendaDefinition& agenda)
+	{
+		// ETAPE4.4 (chantier 2.7) — l'agenda dit où le PNJ doit être à cette heure ; le
+		// shard ne fait que l'y conduire. Aucun tirage au hasard : tout vient de la graine.
+		constexpr float kArriveRadiusMeters = 1.4f;
+		constexpr float kHomeRadiusMeters = 1.5f;
+		const double gameSeconds = CurrentGameSeconds();
+		ambient::RoutinePoint fallback;
+		fallback.x = mob.homePositionMetersX;
+		fallback.z = mob.homePositionMetersZ;
+		const ambient::AgendaState state = ambient::EvaluateAgenda(agenda, mob.agendaSeed, gameSeconds,
+			mob.moveSpeedMetersPerSecond, GameSecondsPerRealSecond(), fallback);
+		// La nuit, il rentre : compté « occupé » (4.1) jusqu'au retrait, jamais endormi en route.
+		mob.routine.goingHome = state.activity == ambient::AgendaActivity::Sleep;
+		const ambient::RoutinePoint target = ambient::StrollPoint(agenda, mob.agendaSeed, state, gameSeconds);
+		(void)MoveMobTowards(mob, target.x, target.z);
+		const float radius = mob.routine.goingHome ? kHomeRadiusMeters : kArriveRadiusMeters;
+		if (DistanceSquaredXZ(mob.positionMetersX, mob.positionMetersZ, target.x, target.z) < radius * radius)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			if (mob.routine.goingHome)
+				mob.scheduleRetired = true; // chez lui : retiré, réapparaîtra au matin
+		}
+	}
+
 	const ambient::RoutineDefinition* ServerApp::FindMobRoutine(const MobEntity& mob) const
 	{
 		if (mob.isDynamicEventMob || mob.owningSpawnerIndex >= m_spawners.size()) return nullptr;
@@ -4259,6 +4316,18 @@ namespace engine::server
 			mob.yawRadians = std::atan2(nearest->positionMetersX - mob.positionMetersX, nearest->positionMetersZ - mob.positionMetersZ);
 			// Reprend sa route un peu après le départ du joueur.
 			mob.routine.pauseUntilTick = std::max(mob.routine.pauseUntilTick, m_currentTick + static_cast<uint32_t>(m_tickHz));
+			return;
+		}
+		// ETAPE4.4 — PNJ à agenda de métier : il suit sa journée (prioritaire sur la routine).
+		if (const ambient::AgendaDefinition* agenda = FindMobAgenda(mob))
+		{
+			if (m_currentTick < mob.routine.pauseUntilTick)
+			{
+				mob.velocityMetersPerSecondX = 0.0f;
+				mob.velocityMetersPerSecondZ = 0.0f;
+				return; // vient de parler à un joueur : reprend un peu après
+			}
+			UpdateAgendaMob(mob, *agenda);
 			return;
 		}
 		if (def == nullptr)
@@ -4330,9 +4399,9 @@ namespace engine::server
 			{
 				return true;
 			}
-			// Monde vivant — un PNJ en routine (voyageur, patrouille) peut s'être
-			// éloigné de son spawner : il reste actif tant qu'un joueur le voit.
-			if (spawner.definition.routine.kind != ambient::RoutineKind::None)
+			// Monde vivant — un PNJ en routine (voyageur, patrouille) ou à agenda (4.4) peut
+			// s'être éloigné de son spawner : il reste actif tant qu'un joueur le voit.
+			if (spawner.definition.routine.kind != ambient::RoutineKind::None || spawner.definition.agenda.enabled)
 			{
 				for (const SpawnerSlotState& slot : spawner.slots)
 				{
@@ -4453,6 +4522,22 @@ namespace engine::server
 			mob.homePositionMetersZ = home.z;
 			// Petite désynchronisation : les PNJ d'un même quartier ne repartent pas en même temps.
 			mob.routine.pauseUntilTick = m_currentTick + static_cast<uint32_t>(NextCombatRoll01() * 3.0f * static_cast<float>(m_tickHz));
+		}
+		// ETAPE4.4 (chantiers 2.7, 2.4) — PNJ à agenda : il apparaît LÀ OÙ SA JOURNÉE LE
+		// PLACE à cet instant (au travail, à l'auberge, en chemin), pas à sa porte.
+		if (mob.ambient && spawner.definition.agenda.enabled)
+		{
+			mob.agendaSeed = ambient::AgendaSeed(spawner.definition.spawnerId, slotIndex);
+			const ambient::RoutinePoint home = spawner.definition.agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].empty()
+				? ambient::RoutinePoint{ spawner.definition.positionMetersX, spawner.definition.positionMetersZ }
+				: spawner.definition.agenda.places[static_cast<size_t>(ambient::AgendaPlace::Home)].front();
+			const ambient::AgendaState state = ambient::EvaluateAgenda(spawner.definition.agenda, mob.agendaSeed,
+				CurrentGameSeconds(), mob.moveSpeedMetersPerSecond, GameSecondsPerRealSecond(), home);
+			mob.positionMetersX = state.position.x;
+			mob.positionMetersZ = state.position.z;
+			mob.homePositionMetersX = home.x;
+			mob.homePositionMetersZ = home.z;
+			mob.routine.pauseUntilTick = 0;
 		}
 
 		CellCoord mappedCell{};
@@ -4650,6 +4735,11 @@ namespace engine::server
 				if (!scheduleOpen)
 				{
 					continue; // hors horaire : le PNJ reste chez lui
+				}
+				// ETAPE4.4 — PNJ à agenda qui dort chez lui à cette heure : pas d'entité.
+				if (spawner.definition.agenda.enabled && IsAgendaSlotIndoors(spawner, slotIndex))
+				{
+					continue;
 				}
 
 				(void)SpawnMobFromSpawner(spawner, slotIndex);

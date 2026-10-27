@@ -777,6 +777,22 @@ namespace tools::world_gen
 					}
 					j += " }";
 				}
+				// ETAPE4.4 — agenda de métier (cf. src/shardd/gameplay/ambient/DailyAgenda.h).
+				if (!d.agendaProfession.empty() && d.agendaPlaces.count("home") != 0u)
+				{
+					j += ",\n      \"agenda\": { \"profession\": " + Q(d.agendaProfession) + ", \"places\": {";
+					bool firstPlace = true;
+					for (const auto& [place, pts] : d.agendaPlaces)
+					{
+						if (pts.empty()) continue;
+						j += std::string(firstPlace ? " " : ", ") + Q(place) + ": [";
+						firstPlace = false;
+						for (size_t q = 0; q < pts.size(); ++q)
+							j += (q ? ", [" : "[") + Num(pts[q].x) + ", " + Num(pts[q].z) + "]";
+						j += "]";
+					}
+					j += " } }";
+				}
 				j += " }" + std::string(k + 1 < w.spawners.size() ? ",\n" : "\n");
 			}
 			j += "  ]\n}\n";

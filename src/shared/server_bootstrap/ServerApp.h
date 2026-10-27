@@ -389,6 +389,9 @@ namespace engine::server
 		float aiStepSeconds = 0.1f;
 		/// ETAPE4.1 — tick d'apparition (départ du délai de sommeil si aucun joueur vu).
 		uint32_t spawnTick = 0;
+		/// ETAPE4.4 — graine de l'agenda (identifiant du spawner + emplacement) : même
+		/// PNJ, même journée, quel que soit le moment où il apparaît.
+		uint64_t agendaSeed = 0;
 	};
 
 	/// One spawn slot tracked by the authoritative spawner runtime.
@@ -832,6 +835,23 @@ namespace engine::server
 		float CurrentWorldHour() const;
 		/// Définition de routine du spawner propriétaire du mob (nullptr si aucun).
 		const ambient::RoutineDefinition* FindMobRoutine(const MobEntity& mob) const;
+
+		/// ETAPE4.4 — agenda de métier du PNJ (spawner à `agenda`), nullptr sinon.
+		const ambient::AgendaDefinition* FindMobAgenda(const MobEntity& mob) const;
+
+		/// ETAPE4.4 — un pas de vie d'un PNJ à agenda : va au point de son créneau
+		/// (flânerie comprise) ; la nuit, rentre chez lui puis est retiré
+		/// (scheduleRetired). Appelée par UpdateAmbientMob (thread de tick).
+		void UpdateAgendaMob(MobEntity& mob, const ambient::AgendaDefinition& agenda);
+
+		/// ETAPE4.4 — vrai si le PNJ de l'emplacement \p slotIndex dort chez lui à
+		/// l'heure de jeu courante (pas d'apparition).
+		bool IsAgendaSlotIndoors(const SpawnerRuntimeState& spawner, uint32_t slotIndex) const;
+
+		/// ETAPE4.4 — secondes de jeu courantes (horloge monde) et rythme de l'horloge
+		/// (secondes de jeu par seconde réelle, 24 pour un jour de jeu en une heure).
+		double CurrentGameSeconds() const;
+		double GameSecondsPerRealSecond() const;
 
 		/// Return true when at least one player is close enough to activate the spawner.
 		bool IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const;

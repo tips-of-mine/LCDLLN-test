@@ -3,6 +3,7 @@
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ServerMeta.h"
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -112,6 +113,13 @@ namespace engine::network
 		/// génération en base est toujours la sienne (« un seul propriétaire »).
 		/// 0 = master antérieur à l'extension (champ optionnel en queue, cf. Parse).
 		uint64_t owner_generation = 0;
+		/// ETAPE3.1 — clé de session UDP tirée par le client à l'EnterWorld et relayée
+		/// par le master (canal TLS). Le shard en dérive la clé de chiffrement des
+		/// datagrammes de jeu de ce personnage (cf. UdpSecureChannel.h). Champ
+		/// optionnel en queue, après owner_generation : absent = master ou client
+		/// antérieur, session non chiffrable.
+		bool has_udp_session_key = false;
+		std::array<uint8_t, 32> udp_session_key{};
 	};
 
 	/// Parses MASTER_TO_SHARD_ADMIT_CHARACTER payload. Returns nullopt if truncated.
@@ -125,7 +133,9 @@ namespace engine::network
 	///        queue de payload : un shard ancien l'ignore, un master ancien ne l'émet pas.
 	/// \param owner_generation ETAPE1.2 — génération du verrou de propriété attribuée
 	///        à cette admission (0 = pas de verrou). Champ ADDITIF après guild_id.
+	/// \param udp_session_key ETAPE3.1 — clé de session UDP du client (32 octets), champ
+	///        ADDITIF après owner_generation ; nullptr = pas de clé (rien n'est écrit).
 	std::vector<uint8_t> BuildAdmitCharacterPacket(uint64_t account_id, uint64_t character_id,
 		std::string_view character_name, std::string_view gender, uint64_t guild_id = 0,
-		uint64_t owner_generation = 0);
+		uint64_t owner_generation = 0, const std::array<uint8_t, 32>* udp_session_key = nullptr);
 }

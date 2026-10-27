@@ -8,6 +8,7 @@
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/PacketView.h"
 #include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/UdpSecureChannel.h"
 #include "src/shared/network/RequestResponseDispatcher.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -457,14 +458,16 @@ namespace engine::client
 		return true;
 	}
 
-	bool AuthUiPresenter::SendEnterWorldAsync(uint64_t characterId, std::string_view characterName)
+	bool AuthUiPresenter::SendEnterWorldAsync(uint64_t characterId, std::string_view characterName,
+		const std::array<uint8_t, 32>* udpSessionKey)
 	{
 		if (!m_masterClient || m_masterSessionId == 0u || characterId == 0u || characterName.empty())
 		{
 			return false;
 		}
+		// ETAPE3.1 — la clé de session UDP voyage en queue de la requête (TLS).
 		const std::vector<uint8_t> payload =
-			engine::network::BuildCharacterEnterWorldRequestPayload(characterId, characterName);
+			engine::network::BuildCharacterEnterWorldRequestPayload(characterId, characterName, udpSessionKey);
 		if (payload.empty())
 		{
 			LOG_WARN(Net, "[AuthUiPresenter] SendEnterWorldAsync: Build payload failed");
@@ -486,8 +489,8 @@ namespace engine::client
 			LOG_WARN(Net, "[AuthUiPresenter] SendEnterWorldAsync: Send failed");
 			return false;
 		}
-		LOG_INFO(Net, "[AuthUiPresenter] SendEnterWorldAsync queued (character_id={}, name_len={})",
-			characterId, characterName.size());
+		LOG_INFO(Net, "[AuthUiPresenter] SendEnterWorldAsync queued (character_id={}, name_len={}, udp_key={})",
+			characterId, characterName.size(), udpSessionKey != nullptr ? "yes" : "no");
 		return true;
 	}
 
@@ -565,10 +568,37 @@ namespace engine::client
 		}
 	}
 
-	void AuthUiPresenter::RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName)
+	void AuthUiPresenter::RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName,
+		const std::array<uint8_t, 32>* udpSessionKey)
 	{
 		m_postEnterWorldCharacterId = characterId;
 		m_postEnterWorldCharacterName = std::move(characterName);
+		// ETAPE3.1 — même clé à la reconnexion : la session UDP en cours la garde.
+		m_postEnterWorldHasUdpKey = udpSessionKey != nullptr;
+		m_postEnterWorldUdpKey = udpSessionKey != nullptr ? *udpSessionKey : std::array<uint8_t, 32>{};
+	}
+
+	void AuthUiPresenter::ClearPostEnterWorldUdpKey()
+	{
+		volatile uint8_t* a = m_postEnterWorldUdpKey.data();
+		volatile uint8_t* b = m_reconnectUdpKey.data();
+		for (size_t i = 0; i < m_postEnterWorldUdpKey.size(); ++i)
+		{
+			a[i] = 0u;
+			b[i] = 0u;
+		}
+		m_postEnterWorldHasUdpKey = false;
+		m_reconnectHasUdpKey = false;
+		m_hasRefreshedUdpKey = false;
+	}
+
+	bool AuthUiPresenter::ConsumeRefreshedUdpKey(std::array<uint8_t, 32>& outKey)
+	{
+		if (!m_hasRefreshedUdpKey)
+			return false;
+		m_hasRefreshedUdpKey = false;
+		outKey = m_postEnterWorldUdpKey;
+		return true;
 	}
 
 	void AuthUiPresenter::TickReconnect(const engine::core::Config& cfg)
@@ -584,6 +614,13 @@ namespace engine::client
 			if (m_reconnectAsyncSuccess)
 			{
 				LOG_INFO(Net, "[AuthUiPresenter] Reconnect success (attempt={})", m_reconnectAttempt);
+				// ETAPE3.1 — la clé neuve est désormais celle que le shard connaît.
+				if (m_reconnectHasUdpKey && m_reconnectEnterWorldSent.load())
+				{
+					m_postEnterWorldUdpKey = m_reconnectUdpKey;
+					m_postEnterWorldHasUdpKey = true;
+					m_hasRefreshedUdpKey = true;
+				}
 				m_reconnectInProgress = false;
 				m_reconnectStatusText = Tr("auth.info.reconnect_success");
 				if (m_reconnectStatusText.empty())
@@ -628,6 +665,13 @@ namespace engine::client
 		const std::string login = m_login;
 		const uint64_t  charId = m_postEnterWorldCharacterId;
 		const std::string charName = m_postEnterWorldCharacterName;
+		// ETAPE3.1 — clé de session UDP NEUVE pour l'EnterWorld renvoyé : le shard n'admet
+		// jamais deux fois la même clé (un Hello capturé à la connexion ne peut donc pas
+		// être rejoué avec elle). Session en clair à l'origine : on reste sans clé.
+		m_reconnectHasUdpKey = m_postEnterWorldHasUdpKey && engine::network::GenerateUdpSessionKey(m_reconnectUdpKey);
+		m_reconnectEnterWorldSent.store(false);
+		const bool hasUdpKey = m_reconnectHasUdpKey;
+		const std::array<uint8_t, 32> udpKey = m_reconnectUdpKey;
 
 		if (hash.empty() || login.empty() || charId == 0u || charName.empty())
 		{
@@ -648,7 +692,7 @@ namespace engine::client
 		ReconnectApplyTls(*m_masterClient, serverFingerprint, allowInsecure);
 		engine::network::NetClient* const masterClient = m_masterClient.get();
 
-		m_worker = std::thread([this, masterClient, host, port, timeoutMs, login, hash, charId, charName]() {
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, login, hash, charId, charName, hasUdpKey, udpKey]() {
 			masterClient->Connect(host, port);
 			if (!ReconnectWaitConnected(masterClient, timeoutMs + 2000u))
 			{
@@ -697,7 +741,8 @@ namespace engine::client
 
 			// Re-ENTER_WORLD : fire-and-forget. Si le master rejette (perso supprimé
 			// entre temps ?), le sender retombera sur le login, c'est non-fatal.
-			(void)SendEnterWorldAsync(charId, charName);
+			// ETAPE3.1 — clé de session UDP neuve (cf. plus haut).
+			m_reconnectEnterWorldSent.store(SendEnterWorldAsync(charId, charName, hasUdpKey ? &udpKey : nullptr));
 
 			m_reconnectAsyncSuccess = true;
 			m_reconnectAsyncDone.store(true);

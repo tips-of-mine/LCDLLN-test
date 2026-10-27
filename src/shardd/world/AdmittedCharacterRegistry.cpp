@@ -3,7 +3,8 @@
 namespace engine::server
 {
 	void AdmittedCharacterRegistry::Admit(uint64_t characterId, uint64_t accountId,
-		std::string_view characterName, std::string_view gender, uint64_t guildId, uint64_t nowMs)
+		std::string_view characterName, std::string_view gender, uint64_t guildId, uint64_t nowMs,
+		const std::array<uint8_t, 32>* udpSessionKey)
 	{
 		if (characterId == 0u)
 		{
@@ -29,6 +30,15 @@ namespace engine::server
 		if (guildId != 0u)
 		{
 			entry.guildId = guildId;
+		}
+		// ETAPE3.1 — même règle : une admission sans clé (ticket TCP, master legacy)
+		// garde la clé poussée par l'EnterWorld.
+		if (udpSessionKey != nullptr)
+		{
+			if (!entry.hasUdpSessionKey || entry.udpSessionKey != *udpSessionKey)
+				entry.usedUdpSalts.clear(); // nouvelle clé : nouveaux sels
+			entry.udpSessionKey = *udpSessionKey;
+			entry.hasUdpSessionKey = true;
 		}
 	}
 
@@ -59,6 +69,67 @@ namespace engine::server
 			return 0u;
 		}
 		return it->second.ownerGeneration;
+	}
+
+	void AdmittedCharacterRegistry::SetUdpSessionKey(uint64_t characterId, const std::array<uint8_t, 32>& key)
+	{
+		if (characterId == 0u)
+		{
+			return;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it != m_admitted.end())
+		{
+			if (!it->second.hasUdpSessionKey || it->second.udpSessionKey != key)
+				it->second.usedUdpSalts.clear(); // nouvelle clé : nouveaux sels
+			it->second.udpSessionKey = key;
+			it->second.hasUdpSessionKey = true;
+		}
+	}
+
+	AdmittedCharacterRegistry::SaltUse AdmittedCharacterRegistry::ConsumeUdpSalt(uint64_t characterId,
+		const std::array<uint8_t, 32>& key, const std::array<uint8_t, 16>& salt, uint64_t nowMs)
+	{
+		if (characterId == 0u)
+		{
+			return SaltUse::NoKey;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs
+			|| !it->second.hasUdpSessionKey || it->second.udpSessionKey != key)
+		{
+			return SaltUse::NoKey;
+		}
+		auto& salts = it->second.usedUdpSalts;
+		for (const auto& used : salts)
+		{
+			if (used == salt)
+				return SaltUse::Used;
+		}
+		if (salts.size() >= kMaxUdpSaltsPerKey)
+		{
+			return SaltUse::Exhausted;
+		}
+		salts.push_back(salt);
+		return SaltUse::Fresh;
+	}
+
+	std::optional<std::array<uint8_t, 32>> AdmittedCharacterRegistry::AdmittedUdpSessionKey(uint64_t characterId,
+		uint64_t nowMs) const
+	{
+		if (characterId == 0u)
+		{
+			return std::nullopt;
+		}
+		std::lock_guard<std::mutex> lock(m_mutex);
+		const auto it = m_admitted.find(characterId);
+		if (it == m_admitted.end() || (nowMs - it->second.admittedAtMs) > m_ttlMs || !it->second.hasUdpSessionKey)
+		{
+			return std::nullopt;
+		}
+		return it->second.udpSessionKey;
 	}
 
 	void AdmittedCharacterRegistry::Revoke(uint64_t characterId)

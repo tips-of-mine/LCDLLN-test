@@ -851,6 +851,8 @@ add_library(engine_core
 )
 # Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
 target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)
+# ETAPE3.1 : enveloppe chiffrée des datagrammes UDP de jeu (client + shard, OpenSSL).
+target_sources(engine_core PRIVATE src/shared/network/UdpSecureChannel.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb

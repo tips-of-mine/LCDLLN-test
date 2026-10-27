@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -169,10 +170,18 @@ namespace engine::network
 	/// Wire format : uint64 character_id + string character_name (length-prefixed UTF-8).
 	/// Le master valide ownership (account_id + character_id en DB) et enregistre le mapping
 	/// connId → (character_id, character_name) pour le chat (sender display + whisper target).
+	///
+	/// ETAPE3.1 — champ ADDITIF en queue : clé de session UDP (32 octets) tirée par le
+	/// client à chaque EnterWorld. Le master ne la garde pas : il la transmet au shard
+	/// dans le push d'admission (canal TLS) ; client et shard en dérivent la clé de
+	/// chiffrement des datagrammes de jeu (cf. UdpSecureChannel.h). Absente (client
+	/// antérieur) : le shard ne peut pas chiffrer la session.
 	struct CharacterEnterWorldRequestPayload
 	{
 		uint64_t    characterId = 0;
 		std::string characterName;
+		bool hasUdpSessionKey = false;          ///< ETAPE3.1 : vrai si la queue porte la clé.
+		std::array<uint8_t, 32> udpSessionKey{}; ///< ETAPE3.1 : clé de session UDP.
 	};
 
 	struct CharacterEnterWorldResponsePayload
@@ -181,7 +190,10 @@ namespace engine::network
 	};
 
 	std::optional<CharacterEnterWorldRequestPayload> ParseCharacterEnterWorldRequestPayload(const uint8_t* payload, size_t payloadSize);
-	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName);
+	/// \param udpSessionKey ETAPE3.1 — clé de session UDP (32 octets) ajoutée en queue ;
+	///        nullptr = requête historique sans clé.
+	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName,
+		const std::array<uint8_t, 32>* udpSessionKey = nullptr);
 
 	std::optional<CharacterEnterWorldResponsePayload> ParseCharacterEnterWorldResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterEnterWorldResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);

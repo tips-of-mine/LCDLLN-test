@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <array>
 #include <functional>
 #include <memory>
 #include <string>
@@ -80,10 +81,15 @@ namespace engine::network
 		/// ETAPE1.2 — `owner_generation` : génération du verrou de propriété attribuée par
 		/// le master (0 = master legacy, pas de verrou). Le shard la mémorise dans
 		/// `AdmittedCharacterRegistry` puis la présente à chaque sauvegarde du personnage.
+		/// ETAPE3.1 — `udp_session_key` : clé de session UDP du client (32 octets) relayée
+		/// par le master, nullptr si absente (client ou master antérieur). Le shard la
+		/// mémorise dans `AdmittedCharacterRegistry` pour ouvrir la poignée de main
+		/// chiffrée du client (cf. UdpSecureChannel.h). Pointeur valide seulement
+		/// pendant l'appel : le destinataire copie la clé.
 		/// `nullptr` (défaut) = drop silencieux.
 		using AdmitCharacterCallback = std::function<void(uint64_t account_id, uint64_t character_id,
 			std::string_view character_name, std::string_view gender, uint64_t guild_id,
-			uint64_t owner_generation)>;
+			uint64_t owner_generation, const std::array<uint8_t, 32>* udp_session_key)>;
 		void SetAdmitCharacterCallback(AdmitCharacterCallback cb) { m_admit_callback = std::move(cb); }
 
 		enum class State

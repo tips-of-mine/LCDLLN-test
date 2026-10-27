@@ -213,12 +213,17 @@ namespace engine::server
 				// 0 = sans guilde) pour que le shard connaisse l'appartenance des
 				// joueurs connectés (partage du buff gâteau à la guilde).
 				// ETAPE1.2 — et la génération du verrou de propriété (0 = sans verrou).
+				// ETAPE3.1 — et la clé de session UDP tirée par le client (canal TLS des
+				// deux côtés, jamais journalisée, jamais stockée par le master) : le shard
+				// en dérive la clé de chiffrement des datagrammes de jeu.
 				auto admitPkt = engine::network::BuildAdmitCharacterPacket(*accountId, parsed->characterId,
-					parsed->characterName, dbGender, guildId, ownerGeneration);
+					parsed->characterName, dbGender, guildId, ownerGeneration,
+					parsed->hasUdpSessionKey ? &parsed->udpSessionKey : nullptr);
 				if (!admitPkt.empty() && m_server->Send(*shardConnId, admitPkt))
 				{
-					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={}, guild_id={}, owner_generation={})",
-						dbServerId, *shardConnId, *accountId, parsed->characterId, guildId, ownerGeneration);
+					LOG_INFO(Net, "[CharacterEnterWorldHandler] admit push sent (shard_id={}, shardConnId={}, account_id={}, character_id={}, guild_id={}, owner_generation={}, udp_key={})",
+						dbServerId, *shardConnId, *accountId, parsed->characterId, guildId, ownerGeneration,
+						parsed->hasUdpSessionKey ? "yes" : "no");
 				}
 				else
 				{

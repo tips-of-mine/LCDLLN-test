@@ -4,6 +4,8 @@
 
 #include "src/shared/network/PacketLog.h"
 
+#include "src/shared/network/ProtocolV1Constants.h"
+
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -102,7 +104,12 @@ namespace engine::server::netdebug
 		entry.payloadSize     = payloadSize;
 
 		// Copie tronquee du payload (zero-fill restant via array{} init).
-		const size_t toCopy = (payload != nullptr)
+		// ETAPE3.1 — les paquets qui portent la clé de session UDP du client
+		// (requête EnterWorld, push d'admission master -> shard) ne gardent AUCUN
+		// aperçu : la clé ne doit jamais finir dans un dump de diagnostic.
+		const bool carriesSecret = opcode == engine::network::kOpcodeCharacterEnterWorldRequest
+			|| opcode == engine::network::kOpcodeMasterToShardAdmitCharacter;
+		const size_t toCopy = (payload != nullptr && !carriesSecret)
 			? std::min(payloadSize, kPreviewBytes)
 			: 0;
 		if (toCopy > 0)

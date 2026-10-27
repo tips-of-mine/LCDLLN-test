@@ -186,6 +186,25 @@ namespace
 		std::puts("[OK] TestFormatEntriesNonEmpty");
 	}
 
+	/// ETAPE3.1 : les paquets qui portent la clé de session UDP (EnterWorld 47,
+	/// admission 199) ne gardent aucun aperçu ; la taille reste journalisée.
+	void TestSecretPayloadNotPreviewed()
+	{
+		PacketLog pl(4);
+		std::vector<uint8_t> payload(80, 0x5Au);
+		pl.Append(PacketDirection::RX, 1, /*opcode=*/47, 0, 0, payload.data(), payload.size(), 1000);
+		pl.Append(PacketDirection::TX, 1, /*opcode=*/199, 0, 0, payload.data(), payload.size(), 1001);
+		auto v = pl.Drain();
+		assert(v.size() == 2);
+		for (const auto& e : v)
+		{
+			assert(e.payloadSize == 80);
+			for (uint8_t b : e.payloadPreview)
+				assert(b == 0u);
+		}
+		std::puts("[OK] TestSecretPayloadNotPreviewed");
+	}
+
 	/// Test bonus : capacity == 0 -> log inerte, Append no-op, Drain vide.
 	void TestZeroCapacity()
 	{
@@ -208,6 +227,7 @@ int main()
 	TestPayloadPreview();
 	TestFormatEntriesNonEmpty();
 	TestZeroCapacity();
+	TestSecretPayloadNotPreviewed();
 	std::puts("[ALL OK] PacketLogTests");
 	return EXIT_SUCCESS;
 }

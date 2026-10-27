@@ -447,6 +447,7 @@ namespace engine::server
 				? kMaxReasonableViewCap
 				: std::clamp<int64_t>(cfgViewCap, 1, kMaxReasonableViewCap);
 			m_viewCapEntities = static_cast<uint32_t>(clampedViewCap);
+			m_viewCapNominal = m_viewCapEntities; // ETAPE4.5 : valeur hors délestage
 			if (m_viewCapEntities != 0u)
 			{
 				LOG_INFO(Core, "[ServerApp] View cap actif (TG.4) : top-{} entites/client par snapshot", m_viewCapEntities);
@@ -720,8 +721,20 @@ namespace engine::server
 				return 1;
 			}
 
+			// ETAPE4.5 (chantier 2.5) — durée réelle du tick (réception + simulation +
+			// envois) : déclencheur du délestage.
+			const auto tickStart = std::chrono::steady_clock::now();
 			ProcessIncomingPackets();
 			TickOnce();
+			const auto tickEnd = std::chrono::steady_clock::now();
+			const double tickSeconds = std::chrono::duration<double>(tickEnd - tickStart).count();
+			const double nowSeconds = std::chrono::duration<double>(tickEnd.time_since_epoch()).count();
+			const SheddingTransition shed = m_loadShedder.OnTick(tickSeconds,
+				1.0 / static_cast<double>(std::max<int64_t>(m_tickHz, 1)), nowSeconds);
+			if (shed == SheddingTransition::Entered)
+				ApplyLoadShedding(true);
+			else if (shed == SheddingTransition::Exited)
+				ApplyLoadShedding(false);
 		}
 
 		// TG.3 — arret propre du thread reseau apant la sortie de Run.
@@ -3167,11 +3180,13 @@ namespace engine::server
 			size_t asleepMobs = 0;
 			for (const MobEntity& mob : m_mobs)
 				asleepMobs += mob.sleep.asleep ? 1u : 0u;
-			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, mobs={}, mobs_endormis={}, rx_packets={}, tx_packets={})",
+			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, mobs={}, mobs_endormis={}, charge_tick={:.0f}%, delestage={}, rx_packets={}, tx_packets={})",
 				m_currentTick,
 				m_clients.size(),
 				m_mobs.size(),
 				asleepMobs,
+				m_loadShedder.SmoothedLoad() * 100.0,
+				m_loadShedder.Active() ? "oui" : "non",
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
 		}
@@ -3248,9 +3263,26 @@ namespace engine::server
 			const float interestReachMeters = static_cast<float>((kBaseInterestRadiusCells + 1) * kCellSizeMeters) * 1.4143f;
 			if (m_mobActivity.wakeRadiusMeters > 0.0f && m_mobActivity.wakeRadiusMeters < interestReachMeters)
 				m_mobActivity.wakeRadiusMeters = interestReachMeters;
+			m_mobActivityNominal = m_mobActivity; // ETAPE4.5 : valeur hors délestage
 			LOG_INFO(Net, "[ServerApp] IA des mobs : combat {} Hz, repos {} Hz, ambiance {} Hz, sommeil au-delà de {:.0f} m après {:.1f} s",
 				m_mobActivity.combatHz, m_mobActivity.calmHz, m_mobActivity.ambientHz,
 				m_mobActivity.wakeRadiusMeters, m_mobActivity.sleepDelaySeconds);
+		}
+		// ETAPE4.5 (chantier 2.5) — délestage avec hystérésis (durée du tick).
+		{
+			LoadSheddingConfig shedding{};
+			shedding.enabled = m_config.GetBool("server.load_shedding.enabled", true);
+			shedding.enterLoad = m_config.GetDouble("server.load_shedding.enter_load", 0.85);
+			shedding.exitLoad = m_config.GetDouble("server.load_shedding.exit_load", 0.60);
+			shedding.enterHoldSeconds = m_config.GetDouble("server.load_shedding.enter_hold_s", 2.0);
+			shedding.exitHoldSeconds = m_config.GetDouble("server.load_shedding.exit_hold_s", 10.0);
+			shedding.minDwellSeconds = m_config.GetDouble("server.load_shedding.min_dwell_s", 15.0);
+			m_loadShedder.Configure(shedding);
+			m_sheddingViewCapFactor = std::clamp(m_config.GetDouble("server.load_shedding.view_cap_factor", 0.5), 0.1, 1.0);
+			const LoadSheddingConfig& applied = m_loadShedder.Config();
+			LOG_INFO(Net, "[ServerApp] Délestage : {} (entrée ≥ {:.0f} % du tick pendant {:.0f} s, sortie ≤ {:.0f} % pendant {:.0f} s, {:.0f} s entre bascules)",
+				applied.enabled ? "actif" : "désactivé", applied.enterLoad * 100.0, applied.enterHoldSeconds,
+				applied.exitLoad * 100.0, applied.exitHoldSeconds, applied.minDwellSeconds);
 		}
 		// ETAPE4.2 (chantier 2.6) — travaux périodiques étalés par identifiant.
 		{
@@ -4772,6 +4804,15 @@ namespace engine::server
 				if (!scheduleOpen)
 				{
 					continue; // hors horaire : le PNJ reste chez lui
+				}
+				// ETAPE4.5 — délestage : plus de nouveau PNJ d'ambiance (les présents restent).
+				if (m_loadShedder.Active())
+				{
+					if (const CreatureArchetype* arch = m_archetypeLibrary.Find(spawner.definition.archetypeId);
+						arch != nullptr && arch->ambient)
+					{
+						continue;
+					}
 				}
 				// ETAPE4.4 — PNJ à agenda qui dort chez lui à cette heure : pas d'entité.
 				if (hasAgenda && EvaluateSpawnerAgenda(spawner, slotIndex, gameSeconds).indoors)
@@ -9745,6 +9786,31 @@ namespace engine::server
 			activeZone, m_worldStarts.GeneratedCells().size(), cellList, m_worldStarts.Count(),
 			m_regionActivity.MarginMeters());
 		return true;
+	}
+
+	void ServerApp::ApplyLoadShedding(bool active)
+	{
+		if (active)
+		{
+			// Plafond d'entités réduit : seules les plus proches restent (le rayon de vue se
+			// réduit de lui-même). Jamais sous 20, jamais au-dessus du plafond nominal (un
+			// petit plafond configuré n'est pas relevé).
+			const uint32_t reduced = std::max<uint32_t>(20u,
+				static_cast<uint32_t>(static_cast<double>(m_viewCapNominal) * m_sheddingViewCapFactor));
+			m_viewCapEntities = std::min(m_viewCapNominal, reduced);
+			// IA de repos et d'ambiance deux fois moins souvent (le combat ne change pas).
+			m_mobActivity = m_mobActivityNominal;
+			m_mobActivity.calmHz = std::max(1u, m_mobActivityNominal.calmHz / 2u);
+			m_mobActivity.ambientHz = std::max(1u, m_mobActivityNominal.ambientHz / 2u);
+		}
+		else
+		{
+			m_viewCapEntities = m_viewCapNominal;
+			m_mobActivity = m_mobActivityNominal;
+		}
+		LOG_WARN(Net, "[ServerApp] Délestage {} (charge lissée {:.0f} % du tick, plafond {} entités/client, IA repos {} Hz / ambiance {} Hz, nouveaux PNJ d'ambiance {})",
+			active ? "ACTIVÉ" : "levé", m_loadShedder.SmoothedLoad() * 100.0, m_viewCapEntities,
+			m_mobActivity.calmHz, m_mobActivity.ambientHz, active ? "suspendus" : "repris");
 	}
 
 	void ServerApp::RefreshRegionActivity()

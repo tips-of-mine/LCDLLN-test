@@ -45,6 +45,7 @@
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/MobActivity.h"
+#include "src/shardd/world/LoadShedding.h"
 #include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
@@ -1451,6 +1452,11 @@ namespace engine::server
 		/// (une fois par seconde, avant UpdateSpawners). No-op hors monde en cellules.
 		void RefreshRegionActivity();
 
+		/// ETAPE4.5 — applique ou lève le délestage : plafond d'entités par client réduit,
+		/// IA de repos et d'ambiance ralenties de moitié, plus de nouveau PNJ d'ambiance.
+		/// \p active = état du délestage. Thread de tick.
+		void ApplyLoadShedding(bool active);
+
 		/// ETAPE4.3 — recalcule m_evaluatedSpawners : spawners hors cellules, ceux des
 		/// régions chaudes (RegionLifecycle::IsWarm), et ceux des régions déjà parcourues
 		/// qui ont encore un mob vivant (jamais de mob abandonné dans une région froide).
@@ -1764,6 +1770,14 @@ namespace engine::server
 		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
 		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
 		mob_activity::MobActivityConfig m_mobActivity{};
+		/// ETAPE4.5 — réglages d'IA hors délestage (m_mobActivity est ralenti pendant).
+		mob_activity::MobActivityConfig m_mobActivityNominal{};
+		/// ETAPE4.5 (chantier 2.5) — délestage avec hystérésis, piloté par la durée du tick.
+		LoadShedder m_loadShedder;
+		/// ETAPE4.5 — plafond d'entités par client hors délestage, et facteur appliqué
+		/// pendant (server.load_shedding.view_cap_factor, 0,5).
+		uint32_t m_viewCapNominal = 0;
+		double m_sheddingViewCapFactor = 0.5;
 		/// ETAPE4.2 (chantier 2.6) — périodes (ticks) des travaux étalés par identifiant :
 		/// évaluation de chaque spawner (server.spawners.evaluate_hz, 2 Hz), découverte de
 		/// la carte par joueur (server.map_discovery_hz, 4 Hz), échéances des enchères (1 Hz).

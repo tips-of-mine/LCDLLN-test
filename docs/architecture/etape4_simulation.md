@@ -10,8 +10,8 @@ et le monde doit pourtant continuer de vivre.
 | 4.1 (chantiers 2.2, 2.3) | Sommeil des mobs loin des joueurs, classes de fréquence de l'IA | livré |
 | 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | livré |
 | 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | livré |
-| 4.4 (chantier 2.7) | Agenda déterministe des PNJ | cette PR |
-| 4.5 (chantier 2.5) | Délestage avec hystérésis | à venir |
+| 4.4 (chantier 2.7) | Agenda déterministe des PNJ | livré |
+| 4.5 (chantier 2.5) | Délestage avec hystérésis | cette PR |
 
 Aucun ticket de l'étape 4 ne change le protocole : **seul le shard est à redéployer**,
 le client et le master ne changent pas.
@@ -335,3 +335,68 @@ plus long que son créneau.
 
 Shard seul (puis régénération du monde par `tools/world_gen` pour les agendas). Pas de
 migration, pas de nouvelle clé de configuration.
+
+## 4.5 — Délestage avec hystérésis (chantier 2.5)
+
+### Avant
+
+Un shard surchargé (foule, événement, base lente) prenait du retard tick après tick,
+sans rien réduire : tout le monde subissait la lenteur.
+
+### Principe
+
+`src/shardd/world/LoadShedding` (module pur, horloge passée en argument) mesure la
+**durée réelle de chaque tick** (réception, simulation, envois) rapportée au budget
+(`1 / tickHz`, 50 ms à 20 Hz), lissée (poids 0,1 par tick ; un tick exceptionnel, comme
+le premier après le démarrage, compte au plus pour 4 budgets). Le déclencheur est donc la
+charge réelle, pas un nombre de joueurs. Délestage désactivé : la charge reste mesurée et
+affichée.
+
+| Bascule | Condition (défaut) | Clé |
+|---|---|---|
+| Entrée | charge lissée ≥ 85 % pendant 2 s | `server.load_shedding.enter_load`, `enter_hold_s` |
+| Sortie | charge lissée ≤ 60 % pendant 10 s | `server.load_shedding.exit_load`, `exit_hold_s` |
+| Délai minimal | 15 s entre deux bascules | `server.load_shedding.min_dwell_s` |
+
+Deux seuils distincts, des durées de maintien et un délai minimal : un tick lent isolé est
+absorbé par le lissage, et une charge entre 60 et 85 % ne fait jamais osciller l'état.
+
+Pendant le délestage (`ServerApp::ApplyLoadShedding`) :
+
+- **plafond d'entités par client** × `server.load_shedding.view_cap_factor` (0,5 : 100 →
+  50, jamais sous 20 ni au-dessus du plafond configuré). Les plus proches restent, groupe et cible toujours compris (3.2) :
+  le rayon de vue se réduit de lui-même ;
+- **IA de repos et d'ambiance deux fois moins souvent** (5 → 2 Hz). Le combat ne change
+  pas ;
+- **plus de nouveau PNJ d'ambiance** : ceux qui sont là restent, les créatures et les mobs
+  de quête apparaissent toujours. À la sortie, les PNJ en attente réapparaissent au fil de
+  l'évaluation étalée des spawners (4.2), pas d'un coup. Un joueur qui arrive dans une
+  ville pendant le délestage la trouve moins peuplée : c'est le prix de la dégradation.
+
+Tout revient à la normale à la sortie. Désactivable : `server.load_shedding.enabled =
+false`.
+
+### Exploitation
+
+- Bascules journalisées en avertissement : `Délestage ACTIVÉ (charge lissée 92 % du tick,
+  plafond 50 entités/client…)`, puis `Délestage levé`.
+- La ligne `Tick stats` donne `charge_tick=` et `delestage=oui|non` chaque seconde.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shardd/world/LoadShedding.h/.cpp` | Charge lissée, seuils, maintien, délai minimal |
+| `src/shared/server_bootstrap/ServerApp` | Mesure du tick dans `Run`, `ApplyLoadShedding`, apparitions d'ambiance suspendues dans `UpdateSpawners`, réglages lus dans `InitSpawners` |
+
+### Tests
+
+`load_shedding_tests` : charge normale sans bascule, entrée après le maintien, pic isolé
+absorbé, hystérésis (75 % entre les seuils : aucun changement dans un sens comme dans
+l'autre), sortie après 10 s, délai minimal entre bascules (sortie exactement à 15 s),
+désactivation (charge toujours mesurée), entrées invalides, réglages absurdes corrigés,
+long premier tick absorbé.
+
+### Déploiement
+
+Shard seul. Pas de migration. Nouvelles clés optionnelles `server.load_shedding.*`.

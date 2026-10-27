@@ -75,4 +75,19 @@ namespace engine::server
 		}
 		return count;
 	}
+
+	std::vector<cells::CellCoord> RegionActivity::ActiveCells() const
+	{
+		std::vector<cells::CellCoord> out;
+		out.reserve(m_players.size());
+		for (const auto& [key, count] : m_players)
+		{
+			(void)count;
+			cells::CellCoord cell{};
+			cell.n = static_cast<int>(key / 1000u) - 500;
+			cell.e = static_cast<int>(key % 1000u) - 500;
+			out.push_back(cell);
+		}
+		return out;
+	}
 }

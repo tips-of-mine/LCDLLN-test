@@ -3320,8 +3320,75 @@ namespace engine::server
 				definition.respawnSeconds);
 		}
 
-		LOG_INFO(Net, "[ServerApp] Spawner init OK (spawners={})", m_spawners.size());
+		// ETAPE4.3 (chantier 2.1) — index des spawners par région : seules les régions
+		// chaudes sont parcourues par UpdateSpawners.
+		m_spawnersByRegion.clear();
+		m_spawnersOutsideCells.clear();
+		for (size_t index = 0; index < m_spawners.size(); ++index)
+		{
+			if (m_spawners[index].inCellWorld)
+				m_spawnersByRegion[RegionKey(m_spawners[index].regionCell)].push_back(index);
+			else
+				m_spawnersOutsideCells.push_back(index);
+		}
+		{
+			GridStateConfig regionTimers{};
+			regionTimers.idleTimeout = std::chrono::seconds{ std::clamp<int64_t>(m_config.GetInt("world.region_idle_s", 60), 0, 86400) };
+			regionTimers.unloadTimeout = std::chrono::seconds{ std::clamp<int64_t>(m_config.GetInt("world.region_unload_s", 300), 0, 86400) };
+			m_regionLifecycle.Configure(regionTimers);
+			m_spawnerDespawnGraceTicks = static_cast<uint32_t>(std::clamp<double>(
+				m_config.GetDouble("server.spawners.despawn_grace_s", 20.0), 0.0, 600.0) * static_cast<double>(m_tickHz));
+		}
+		m_evaluatedRegions.clear();
+		RebuildEvaluatedSpawners();
+		LOG_INFO(Net, "[ServerApp] Spawner init OK (spawners={}, regions={}, hors_cellules={}, retrait après {} ticks sans joueur, région froide après {} s, déchargée après {} s)",
+			m_spawners.size(), m_spawnersByRegion.size(), m_spawnersOutsideCells.size(), m_spawnerDespawnGraceTicks,
+			m_regionLifecycle.Config().idleTimeout.count(), m_regionLifecycle.Config().unloadTimeout.count());
 		return true;
+	}
+
+	uint32_t ServerApp::RegionKey(engine::world::cells::CellCoord region)
+	{
+		return (static_cast<uint32_t>(static_cast<uint16_t>(static_cast<int16_t>(region.n))) << 16)
+			| static_cast<uint32_t>(static_cast<uint16_t>(static_cast<int16_t>(region.e)));
+	}
+
+	void ServerApp::RebuildEvaluatedSpawners()
+	{
+		m_evaluatedSpawners.assign(m_spawnersOutsideCells.begin(), m_spawnersOutsideCells.end());
+		std::unordered_set<uint32_t> regions;
+		auto addRegion = [&](uint32_t key, const std::vector<size_t>& indices)
+		{
+			if (!regions.insert(key).second)
+				return;
+			m_evaluatedSpawners.insert(m_evaluatedSpawners.end(), indices.begin(), indices.end());
+		};
+		for (const auto& [key, indices] : m_spawnersByRegion)
+		{
+			engine::world::cells::CellCoord region{};
+			region.n = static_cast<int16_t>(static_cast<uint16_t>(key >> 16));
+			region.e = static_cast<int16_t>(static_cast<uint16_t>(key & 0xFFFFu));
+			// Hors monde en cellules (pas de régions actives) : tout est évalué, comme avant.
+			if (!m_cellWorld || m_regionLifecycle.IsWarm(region))
+			{
+				addRegion(key, indices);
+				continue;
+			}
+			// Région froide déjà parcourue : gardée tant qu'un de ses mobs vit encore
+			// (combat en cours, retrait différé) ; les autres ne coûtent rien.
+			if (m_evaluatedRegions.count(key) == 0u)
+				continue;
+			const bool hasLiveMob = std::any_of(indices.begin(), indices.end(), [this](size_t index)
+			{
+				const SpawnerRuntimeState& spawner = m_spawners[index];
+				return std::any_of(spawner.slots.begin(), spawner.slots.end(),
+					[](const SpawnerSlotState& slot) { return slot.mobEntityId != 0; });
+			});
+			if (hasLiveMob)
+				addRegion(key, indices);
+		}
+		std::sort(m_evaluatedSpawners.begin(), m_evaluatedSpawners.end());
+		m_evaluatedRegions = std::move(regions);
 	}
 
 	bool ServerApp::InitLootTables()
@@ -4460,7 +4527,9 @@ namespace engine::server
 
 		// Monde vivant — heure de jeu (horaires des PNJ d'ambiance), une fois par passe.
 		const float worldHour = CurrentWorldHour();
-		for (size_t spawnerIndex = 0; spawnerIndex < m_spawners.size(); ++spawnerIndex)
+		// ETAPE4.3 (chantier 2.1) — seuls les spawners des régions chaudes (et de celles
+		// qui ont encore un mob) sont parcourus : une région froide ne coûte rien.
+		for (const size_t spawnerIndex : m_evaluatedSpawners)
 		{
 			// ETAPE4.2 (chantier 2.6) — chaque spawner est évalué une fois par période
 			// (server.spawners.evaluate_hz), à son tour : la charge (activation par les
@@ -4488,6 +4557,8 @@ namespace engine::server
 			if (spawner.isActive != shouldBeActive)
 			{
 				spawner.isActive = shouldBeActive;
+				if (!shouldBeActive)
+					spawner.inactiveSinceTick = m_currentTick; // ETAPE4.3 : début du délai de grâce
 				LOG_DEBUG(Net, "[ServerApp] Spawner activation updated (spawner_id={}, active={})",
 					spawner.definition.spawnerId,
 					spawner.isActive ? "true" : "false");
@@ -4529,6 +4600,12 @@ namespace engine::server
 
 				if (!spawner.isActive)
 				{
+					// ETAPE4.3 (chantier 2.4) — délai de grâce : un joueur qui oscille en
+					// bordure de portée ne fait pas disparaître et réapparaître les mobs.
+					if (m_currentTick - spawner.inactiveSinceTick < m_spawnerDespawnGraceTicks)
+					{
+						continue;
+					}
 					if (mob->aggroTargetEntityId != 0 || !mob->threatTable.empty() || mob->aiState == MobAiState::Aggro)
 					{
 						LOG_DEBUG(Net, "[ServerApp] Spawner despawn delayed: mob still in combat (spawner_id={}, entity_id={})",
@@ -9547,6 +9624,38 @@ namespace engine::server
 			LOG_INFO(Net, "[ServerApp] Regions actives : {} (occupees={}, joueurs={})",
 				m_regionActivity.ActiveCount(), m_regionActivity.OccupiedCount(), m_clients.size());
 		}
+
+		// ETAPE4.3 (chantier 2.1) — cycle de vie des régions : froide après
+		// world.region_idle_s sans joueur (ses spawners ne sont plus parcourus),
+		// déchargée après world.region_unload_s (délais de réapparition remis à neuf).
+		const std::vector<engine::world::cells::CellCoord> cold =
+			m_regionLifecycle.Update(m_regionActivity.ActiveCells(), std::chrono::steady_clock::now());
+		for (const engine::world::cells::CellCoord& region : cold)
+		{
+			LOG_INFO(Net, "[ServerApp] Region froide : {} (plus parcourue)", engine::world::cells::LoreCellId(region));
+		}
+		for (const engine::world::cells::CellCoord& region : m_regionLifecycle.DrainUnloaded())
+		{
+			const auto it = m_spawnersByRegion.find(RegionKey(region));
+			if (it == m_spawnersByRegion.end())
+				continue;
+			size_t reset = 0;
+			for (const size_t index : it->second)
+			{
+				SpawnerRuntimeState& spawner = m_spawners[index];
+				for (SpawnerSlotState& slot : spawner.slots)
+				{
+					if (slot.mobEntityId == 0 && slot.nextRespawnTick != 0)
+					{
+						slot.nextRespawnTick = 0; // repeuplée à la prochaine visite
+						++reset;
+					}
+				}
+			}
+			LOG_INFO(Net, "[ServerApp] Region dechargee : {} ({} reapparitions remises a neuf)",
+				engine::world::cells::LoreCellId(region), reset);
+		}
+		RebuildEvaluatedSpawners();
 	}
 
 	void ServerApp::UpdateClientRegion(ConnectedClient& client)

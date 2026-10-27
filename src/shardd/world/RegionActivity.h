@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::server
 {
@@ -56,6 +57,9 @@ namespace engine::server
 		/// Nombre de cellules actives / occupées (télémétrie, logs).
 		size_t ActiveCount() const { return m_players.size(); }
 		size_t OccupiedCount() const;
+		/// ETAPE4.3 — liste des cellules actives (ordre non spécifié) : entrée de
+		/// RegionLifecycle::Update.
+		std::vector<engine::world::cells::CellCoord> ActiveCells() const;
 
 	private:
 		/// Clé compacte d'une cellule (n, e ∈ [−500, 500[ : toujours vrai pour un joueur,

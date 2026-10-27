@@ -496,6 +496,16 @@ namespace engine::server
 		/// thread-safe : /metrics du shard, contre-pression du heartbeat).
 		const ShardMetricsBoard& MetricsBoard() const { return m_metricsBoard; }
 
+		/// ETAPE5.6 — demande de prélèvement d'or pour un courrier (opcode 213), reçue par le
+		/// thread principal du shard. Thread-safe : traitée au prochain tick ; la réponse (214)
+		/// est déposée dans la boîte d'envoi (TakeMasterOutbox).
+		void EnqueueMailDebit(const engine::network::MailDebitPayload& debit);
+		/// ETAPE5.6 — courrier déposé pour \p characterId (opcode 215) : crédité au prochain
+		/// tick si le personnage est connecté ici (sinon à sa connexion). Thread-safe.
+		void EnqueueMailboxPoke(uint64_t characterId);
+		/// ETAPE5.6 — paquets à envoyer au master (réponses 214). Thread-safe ; vide la boîte.
+		std::vector<std::vector<uint8_t>> TakeMasterOutbox();
+
 		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
 		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
 		/// (build Windows ou DB non configurée). Possédé par l'appelant.
@@ -1793,6 +1803,30 @@ namespace engine::server
 		engine::core::StallGuard m_stallGuard;
 		/// ETAPE5.4 — métriques de jeu (photo à 1 Hz) et mesures du tick qui l'alimentent.
 		ShardMetricsBoard m_metricsBoard;
+		/// ETAPE5.6 — ordres du master (thread principal) et réponses (vers le master).
+		std::mutex m_masterInboxMutex;
+		std::vector<engine::network::MailDebitPayload> m_pendingMailDebits;
+		std::vector<uint64_t> m_pendingMailboxPokes;
+		std::vector<std::vector<uint8_t>> m_masterOutbox;
+		/// ETAPE5.6 — courrier lu hors du tick pour un crédit en jeu (thread de la file).
+		struct LiveMailboxRow
+		{
+			uint64_t id = 0;
+			uint32_t gold = 0;
+			uint32_t itemId = 0;
+			uint32_t quantity = 0;
+		};
+		std::mutex m_liveMailboxMutex;
+		std::vector<std::pair<uint64_t, std::vector<LiveMailboxRow>>> m_liveMailboxResults;
+		/// Traite les ordres du master (thread de tick).
+		void ProcessMasterInbox();
+		/// Prélève l'or d'un courrier dans la transaction qui passe le transfert à locked.
+		uint8_t ProcessMailDebit(const engine::network::MailDebitPayload& debit);
+		/// Lit le courrier d'un personnage connecté (hors du tick) puis le crédite.
+		void RequestLiveMailboxClaim(uint64_t characterKey);
+		/// Crédite le courrier lu (thread de tick) ; les lignes sont supprimées par la
+		/// sauvegarde suivante (mailboxClaimedIds), comme à la connexion.
+		void ApplyLiveMailboxResults();
 		/// ETAPE5.5 (chantier 3.5) — empreintes des blocs validés en base, par personnage
 		/// (server.save.differential, server.save.full_every). Thread-safe.
 		SavedBlockCache m_savedBlocks;

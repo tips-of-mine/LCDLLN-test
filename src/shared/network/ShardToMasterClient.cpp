@@ -186,7 +186,14 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 		m_client->Send(builder.Data());
 	}
 
-	void ShardToMasterClient::OnConnected()
+	bool ShardToMasterClient::SendPacketToMaster(const std::vector<uint8_t>& packet)
+	{
+		if (m_client == nullptr || m_state != State::Registered || packet.empty())
+			return false;
+		return m_client->Send(packet);
+	}
+
+		void ShardToMasterClient::OnConnected()
 	{
 		LOG_INFO(Net, "[STMC] OnConnected -> Registering");
 		m_state = State::Registering;
@@ -261,6 +268,25 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 				m_shutdown_callback(reason ? std::string_view(*reason) : std::string_view{});
 			else
 				LOG_WARN(Core, "[ShardToMasterClient] ordre d'arrêt ignoré : aucun rappel enregistré");
+		}
+		else if (opcode == kOpcodeMasterToShardMailDebit)
+		{
+			// ETAPE5.6 — prélèvement d'or pour un courrier (phase 1).
+			auto debit = ParseMailDebitPayload(view.Payload(), view.PayloadSize());
+			if (!debit)
+			{
+				LOG_WARN(Core, "[ShardToMasterClient] MailDebit illisible (size={})", view.PayloadSize());
+				return;
+			}
+			if (m_mail_debit_callback)
+				m_mail_debit_callback(*debit);
+		}
+		else if (opcode == kOpcodeMasterToShardMailboxPoke)
+		{
+			// ETAPE5.6 — courrier déposé pour un personnage : à créditer sans attendre.
+			auto characterId = ParseMailboxPokePayload(view.Payload(), view.PayloadSize());
+			if (characterId && m_mailbox_poke_callback)
+				m_mailbox_poke_callback(*characterId);
 		}
 	}
 

@@ -105,6 +105,17 @@ namespace engine::network
 		using ShutdownCallback = std::function<void(std::string_view reason)>;
 		void SetShutdownCallback(ShutdownCallback cb) { m_shutdown_callback = std::move(cb); }
 
+		/// ETAPE5.6 — demande de prélèvement d'or pour un courrier (kOpcodeMasterToShardMailDebit)
+		/// et « courrier à créditer » (kOpcodeMasterToShardMailboxPoke). Appelés depuis Pump().
+		using MailDebitCallback = std::function<void(const MailDebitPayload& debit)>;
+		void SetMailDebitCallback(MailDebitCallback cb) { m_mail_debit_callback = std::move(cb); }
+		using MailboxPokeCallback = std::function<void(uint64_t characterId)>;
+		void SetMailboxPokeCallback(MailboxPokeCallback cb) { m_mailbox_poke_callback = std::move(cb); }
+
+		/// ETAPE5.6 — envoie un paquet déjà construit au master (ex. réponse 214). À appeler
+		/// depuis le thread de Pump(). \return false si non enregistré ou envoi impossible.
+		bool SendPacketToMaster(const std::vector<uint8_t>& packet);
+
 		enum class State
 		{
 			Disconnected,
@@ -150,6 +161,8 @@ namespace engine::network
 		/// TA.3 — callback admission (master push). Voir SetAdmitCharacterCallback.
 		AdmitCharacterCallback m_admit_callback;
 		ShutdownCallback m_shutdown_callback; ///< ETAPE5.3
+		MailDebitCallback m_mail_debit_callback;     ///< ETAPE5.6
+		MailboxPokeCallback m_mailbox_poke_callback; ///< ETAPE5.6
 		/// Présence enrichie (v9) — fournisseur optionnel de la liste des joueurs. Voir SetPlayerPresenceProvider.
 		PlayerPresenceProvider m_presence_provider;
 		BackPressureProvider m_backpressure_provider; ///< ETAPE5.4

@@ -12,7 +12,7 @@ Mettre ce tableau à jour à chaque PR qui avance l'un de ces sujets (statut, PR
 | 6.1 (chantier 1.4) | Transfert de personnage en deux temps, avec retour arrière | à faire | Voir ci-dessous. |
 | 6.2 (chantier 5.3) | File d'attente de connexion et protection contre la surcharge | à faire | |
 | 6.3 | Agent par hôte et placement des processus | à faire | « deux tirages au hasard, on garde le moins chargé ». |
-| 6.4 | Commande sur un joueur hors ligne | à faire | Courrier avec pièce jointe, sanction MJ. S'appuie sur 5.6. |
+| 6.4 | Commande sur un joueur hors ligne | à faire | Objets joints au courrier (5.6 ne transfère que l'or), sanction MJ. |
 | 6.5 | Archivage des personnages inactifs depuis longtemps | à faire | |
 | 6.6 | Historique des positions pour juger les tirs | à faire | `LagCompensation` existe mais n'est pas branché. |
 | 6.7 | Sauvegardes : ne plus renvoyer courrier réclamé et carte à chaque fois | à faire | Suite de 5.5 : vider `mailboxClaimedIds` et n'envoyer que les cases de carte nouvelles après un COMMIT confirmé au tick. |
@@ -52,8 +52,11 @@ autre shard, rééquilibrage) sans jamais avoir deux propriétaires ni zéro.
 
 **But** : agir sur un personnage qui n'est connecté nulle part.
 
-- Envoi d'un courrier avec pièce jointe à un hors-ligne (s'appuie sur le courrier en
-  deux phases de 5.6) ; sanction MJ (gel, réduction, bannissement de personnage).
+- Envoi d'un courrier avec pièce jointe à un hors-ligne : l'or passe déjà en deux phases
+  (5.6, `mail_transfers`) ; reste les **objets** (champ à ajouter à l'envoi du client,
+  verrou de l'objet chez l'expéditeur au prélèvement, dépôt `character_mailbox` au
+  retrait) et l'envoi d'or sans être en jeu. Sanction MJ (gel, réduction, bannissement
+  de personnage).
 - La commande est écrite en base (opération idempotente) et appliquée au prochain
   chargement par le shard propriétaire, comme `character_mailbox`.
 

@@ -1,4 +1,5 @@
 #include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shared/mail/MailTransfer.h"
 
 #include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shardd/gameplay/items/ConsumableEffectLibrary.h" // Roadmap-3 (2026-07-19)
@@ -3216,6 +3217,8 @@ namespace engine::server
 		DrainPendingHellos();
 		// ETAPE2.7 — termine les Hello dont la lecture en base (hors du tick) est finie.
 		DrainCompletedCharacterLoads();
+		// ETAPE5.6 — ordres du master (prélèvement d'or, courrier à créditer).
+		ProcessMasterInbox();
 		// TA.3 — eviction des clients UDP zombies (1 Hz pour limiter le cout, suffisant
 		// pour la propriete attendue : zombie disparait en max ~kUdpClientIdleTimeoutMs + 1 s).
 		// ETAPE5.2 — reportée tant que dure la suspension qui suit un calage du tick.
@@ -3248,6 +3251,231 @@ namespace engine::server
 				m_transport.ReceivedPacketCount(),
 				m_transport.SentPacketCount());
 			PublishGameplayMetrics(asleepMobs);
+		}
+	}
+
+	// ETAPE5.6 (chantier 5.2) — or joint à un courrier, côté shard.
+	void ServerApp::EnqueueMailDebit(const engine::network::MailDebitPayload& debit)
+	{
+		std::lock_guard lock(m_masterInboxMutex);
+		if (m_pendingMailDebits.size() < 1024u)
+			m_pendingMailDebits.push_back(debit);
+	}
+
+	void ServerApp::EnqueueMailboxPoke(uint64_t characterId)
+	{
+		std::lock_guard lock(m_masterInboxMutex);
+		if (m_pendingMailboxPokes.size() < 4096u)
+			m_pendingMailboxPokes.push_back(characterId);
+	}
+
+	std::vector<std::vector<uint8_t>> ServerApp::TakeMasterOutbox()
+	{
+		std::lock_guard lock(m_masterInboxMutex);
+		std::vector<std::vector<uint8_t>> out;
+		out.swap(m_masterOutbox);
+		return out;
+	}
+
+	void ServerApp::ProcessMasterInbox()
+	{
+		std::vector<engine::network::MailDebitPayload> debits;
+		std::vector<uint64_t> pokes;
+		{
+			std::lock_guard lock(m_masterInboxMutex);
+			debits.swap(m_pendingMailDebits);
+			pokes.swap(m_pendingMailboxPokes);
+		}
+		for (const auto& debit : debits)
+		{
+			engine::network::MailDebitResultPayload reply;
+			reply.operationId = debit.operationId;
+			reply.result = ProcessMailDebit(debit);
+			LOG_INFO(Net, "[ServerApp] ETAPE5.6 prélèvement courrier (operation={}, character_key={}, gold={}, result={})",
+				debit.operationId, debit.characterId, debit.gold, static_cast<unsigned>(reply.result));
+			auto pkt = engine::network::BuildMailDebitResultPacket(reply);
+			if (!pkt.empty())
+			{
+				std::lock_guard lock(m_masterInboxMutex);
+				m_masterOutbox.push_back(std::move(pkt));
+			}
+		}
+		for (uint64_t characterKey : pokes)
+			RequestLiveMailboxClaim(characterKey);
+		ApplyLiveMailboxResults();
+	}
+
+	uint8_t ServerApp::ProcessMailDebit(const engine::network::MailDebitPayload& debit)
+	{
+		using engine::mail::MailDebitResult;
+		ConnectedClient* client = FindConnectedClientByCharacterKey(debit.characterId);
+		if (client == nullptr)
+			return static_cast<uint8_t>(MailDebitResult::NotHere);
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr)
+			return static_cast<uint8_t>(MailDebitResult::Unsupported);
+		if (debit.gold == 0u || debit.gold > std::numeric_limits<uint32_t>::max())
+			return static_cast<uint8_t>(MailDebitResult::Failed);
+		// Les sauvegardes en file de ce personnage sont plus anciennes : elles passent avant.
+		if (m_characterSaveQueue != nullptr && !m_characterSaveQueue->Flush(debit.characterId))
+			return static_cast<uint8_t>(MailDebitResult::Failed);
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+			return static_cast<uint8_t>(MailDebitResult::Failed);
+		(void)mysql_query(mysql, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+		if (mysql_query(mysql, "START TRANSACTION") != 0)
+			return static_cast<uint8_t>(MailDebitResult::Failed);
+		auto rollback = [mysql](MailDebitResult r) {
+			mysql_query(mysql, "ROLLBACK");
+			return static_cast<uint8_t>(r);
+		};
+		// Verrou commun master / shard : la ligne du transfert, lue FOR UPDATE.
+		auto* sel = cache->Acquire(mysql,
+			"SELECT state, sender_character_id, gold FROM mail_transfers WHERE operation_id = ? FOR UPDATE");
+		if (sel == nullptr || !sel->Bind(0, std::string_view(debit.operationId)) || !sel->Execute())
+			return rollback(MailDebitResult::Failed);
+		if (!sel->FetchRow())
+			return rollback(MailDebitResult::Cancelled);
+		const std::string state = sel->GetString(0);
+		const uint64_t sender = sel->GetUInt64(1);
+		const uint64_t gold = sel->GetUInt64(2);
+		while (sel->FetchRow()) {}
+		if (sender != debit.characterId || gold != debit.gold)
+			return rollback(MailDebitResult::Failed);
+		if (state == "locked")
+			return rollback(MailDebitResult::Debited); // déjà prélevé : réponse idempotente
+		if (state != "pending")
+			return rollback(MailDebitResult::Cancelled); // annulé par le master avant nous
+		if (client->gold < gold)
+			return rollback(MailDebitResult::Insufficient);
+		const uint32_t goldBefore = client->gold;
+		client->gold = goldBefore - static_cast<uint32_t>(gold);
+		auto* lock = cache->Acquire(mysql,
+			"UPDATE mail_transfers SET state = 'locked' WHERE operation_id = ? AND state = 'pending'");
+		const PersistedCharacterState persisted = BuildPersistedCharacterState(*client);
+		const bool written = lock != nullptr && lock->Bind(0, std::string_view(debit.operationId)) && lock->Execute()
+			&& lock->AffectedRows() == 1u;
+		const CharacterDbSaveResult saved = written
+			? WriteCharacterStateInTx(mysql, cache, persisted, client->yawRadians, client->ownerGeneration)
+			: CharacterDbSaveResult::Failed;
+		if (saved != CharacterDbSaveResult::Saved)
+		{
+			client->gold = goldBefore;
+			return rollback(saved == CharacterDbSaveResult::RefusedNotOwner ? MailDebitResult::NotHere : MailDebitResult::Failed);
+		}
+		m_savedBlocks.Invalidate(debit.characterId); // ETAPE5.5 — écrit hors SaveCharacterToDb
+		if (mysql_query(mysql, "COMMIT") != 0)
+		{
+			// Réponse du COMMIT perdue : relecture. Validé → prélèvement acquis ; sinon on
+			// rend l'or en mémoire (le master annulera au délai). Indéterminable → on garde
+			// le prélèvement (jamais d'or dupliqué ; au pire l'expéditeur le perd).
+			mysql_query(mysql, "ROLLBACK");
+			auto* check = cache->Acquire(mysql, "SELECT state FROM mail_transfers WHERE operation_id = ?");
+			if (check != nullptr && check->Bind(0, std::string_view(debit.operationId)) && check->Execute() && check->FetchRow())
+			{
+				const std::string after = check->GetString(0);
+				while (check->FetchRow()) {}
+				if (after != "locked" && after != "delivered" && after != "refunded")
+				{
+					client->gold = goldBefore;
+					return static_cast<uint8_t>(MailDebitResult::Failed);
+				}
+			}
+			else
+			{
+				LOG_ERROR(Net, "[ServerApp] ETAPE5.6 COMMIT incertain (operation={}) : prélèvement conservé en mémoire", debit.operationId);
+			}
+		}
+		(void)SendWalletUpdate(*client);
+		return static_cast<uint8_t>(MailDebitResult::Debited);
+#else
+		(void)client;
+		return static_cast<uint8_t>(MailDebitResult::Unsupported);
+#endif
+	}
+
+	void ServerApp::RequestLiveMailboxClaim(uint64_t characterKey)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || FindConnectedClientByCharacterKey(characterKey) == nullptr)
+			return; // hors ligne ici : crédité à la prochaine connexion
+		auto job = [this, characterKey]() {
+			std::vector<LiveMailboxRow> rows;
+			auto guard = m_characterDbPool->Acquire();
+			MYSQL* mysql = guard.get();
+			auto* cache = guard.cache();
+			if (mysql == nullptr || cache == nullptr)
+				return;
+			auto* st = cache->Acquire(mysql,
+				"SELECT id, gold, item_id, quantity FROM character_mailbox WHERE character_id = ? ORDER BY id LIMIT 256");
+			if (st == nullptr || !st->Bind(0, characterKey) || !st->Execute())
+				return;
+			while (st->FetchRow())
+			{
+				LiveMailboxRow r;
+				r.id = st->GetUInt64(0);
+				r.gold = static_cast<uint32_t>(st->GetUInt64(1));
+				r.itemId = static_cast<uint32_t>(st->GetUInt64(2));
+				r.quantity = static_cast<uint32_t>(st->GetUInt64(3));
+				rows.push_back(r);
+			}
+			std::lock_guard lock(m_liveMailboxMutex);
+			m_liveMailboxResults.emplace_back(characterKey, std::move(rows));
+		};
+		// Lecture hors du tick, dans l'ordre des écritures de ce personnage (ETAPE2.7).
+		if (m_characterSaveQueue == nullptr
+			|| m_characterSaveQueue->EnqueueOrdered(characterKey, job) == CharacterSaveQueue::EnqueueResult::Rejected)
+			job();
+#else
+		(void)characterKey;
+#endif
+	}
+
+	void ServerApp::ApplyLiveMailboxResults()
+	{
+		std::vector<std::pair<uint64_t, std::vector<LiveMailboxRow>>> results;
+		{
+			std::lock_guard lock(m_liveMailboxMutex);
+			results.swap(m_liveMailboxResults);
+		}
+		for (auto& [characterKey, rows] : results)
+		{
+			ConnectedClient* client = FindConnectedClientByCharacterKey(characterKey);
+			if (client == nullptr)
+				continue; // parti entre-temps : crédité à la prochaine connexion
+			uint64_t goldAdded = 0;
+			std::vector<ItemStack> itemsAdded;
+			for (const LiveMailboxRow& row : rows)
+			{
+				// Déjà réclamée (à la connexion ou par un crédit précédent) : ignorée.
+				if (std::find(client->mailboxClaimedIds.begin(), client->mailboxClaimedIds.end(), row.id)
+					!= client->mailboxClaimedIds.end())
+					continue;
+				client->mailboxClaimedIds.push_back(row.id);
+				if (row.gold > 0u)
+				{
+					const uint64_t total = static_cast<uint64_t>(client->gold) + row.gold;
+					client->gold = static_cast<uint32_t>((std::min)(total, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+					goldAdded += row.gold;
+				}
+				if (row.itemId != 0u && row.quantity != 0u)
+				{
+					AddItemToInventory(*client, ItemStack{ row.itemId, row.quantity });
+					itemsAdded.push_back(ItemStack{ row.itemId, row.quantity });
+				}
+			}
+			if (goldAdded == 0u && itemsAdded.empty())
+				continue;
+			LOG_INFO(Net, "[ServerApp] ETAPE5.6 courrier crédité en jeu (character_key={}, gold={}, objets={})",
+				characterKey, goldAdded, itemsAdded.size());
+			if (goldAdded > 0u)
+				(void)SendWalletUpdate(*client);
+			if (!itemsAdded.empty())
+				(void)SendInventoryDelta(*client, itemsAdded);
+			// La sauvegarde écrit la bourse et le sac ET supprime ces lignes, ensemble.
+			SaveConnectedClient(*client, "mailbox_live");
 		}
 	}
 

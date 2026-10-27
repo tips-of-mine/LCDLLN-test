@@ -294,6 +294,14 @@ int main(int argc, char** argv)
 		return bp;
 	});
 	metricsApp.store(&gameplayApp, std::memory_order_release);
+	// ETAPE5.6 — or joint à un courrier : prélèvement (213) et crédit (215) traités au
+	// tick par gameplayApp ; ses réponses (214) repartent par la boucle principale.
+	toMaster.SetMailDebitCallback([&gameplayApp](const engine::network::MailDebitPayload& debit) {
+		gameplayApp.EnqueueMailDebit(debit);
+	});
+	toMaster.SetMailboxPokeCallback([&gameplayApp](uint64_t characterId) {
+		gameplayApp.EnqueueMailboxPoke(characterId);
+	});
 	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
@@ -484,6 +492,12 @@ int main(int argc, char** argv)
 		// a 0 car SetCurrentLoad n'etait jamais appele.
 		toMaster.SetCurrentLoad(server.GetConnectionCount());
 		toMaster.Pump();
+		// ETAPE5.6 — réponses du tick vers le master (prélèvements d'or des courriers).
+		for (const auto& packet : gameplayApp.TakeMasterOutbox())
+		{
+			if (!toMaster.SendPacketToMaster(packet))
+				LOG_WARN(Net, "[ShardMain] ETAPE5.6 réponse au master non envoyée (le master annulera au délai)");
+		}
 
 		// Wave 6 — Tick EventAI (1Hz). Convertit steady_clock en wall-clock
 		// (system_clock) car les triggers Timer comparent ctx.nowMs avec un

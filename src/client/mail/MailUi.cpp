@@ -28,6 +28,8 @@ namespace engine::client
 			case MailSendErrorCode::InsufficientGold:   return "Or insuffisant.";
 			case MailSendErrorCode::AttachmentsTooMany: return "Trop de pieces jointes.";
 			case MailSendErrorCode::Unauthorized:       return "Session expiree, reconnexion requise.";
+			case MailSendErrorCode::NotInWorld:         return "Envoyer de l'or demande d'etre en jeu.";
+			case MailSendErrorCode::TransferUnavailable: return "Envoi d'or indisponible, reessayez plus tard.";
 			}
 			return "Erreur inconnue.";
 		}
@@ -58,6 +60,8 @@ namespace engine::client
 			case MailTakeErrorCode::AlreadyTaken:  return "Or deja retire.";
 			case MailTakeErrorCode::CodNotPaid:    return "Frais COD non regles : payez d'abord les frais.";
 			case MailTakeErrorCode::Unauthorized:  return "Session expiree, reconnexion requise.";
+			case MailTakeErrorCode::NotInWorld:    return "Retirer de l'or demande d'etre en jeu.";
+			case MailTakeErrorCode::TransferPending: return "Or en cours de transfert, reessayez dans quelques secondes.";
 			}
 			return "Erreur inconnue.";
 		}

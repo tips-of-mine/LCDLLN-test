@@ -843,6 +843,12 @@ namespace engine::server
 		m_characterPersistence.Shutdown();
 		m_dynamicEvents.clear();
 		m_spawners.clear();
+		// ETAPE4.3 — index et listes qui pointent dans m_spawners.
+		m_spawnersByRegion.clear();
+		m_spawnersOutsideCells.clear();
+		m_evaluatedSpawners.clear();
+		m_evaluatedRegions.clear();
+		m_regionLifecycle.Clear();
 		m_moderationAuditLog.Shutdown();
 		m_moderationAuditLogReady = false;
 		m_friendSystem.Shutdown();
@@ -3219,6 +3225,13 @@ namespace engine::server
 	{
 		m_mobs.clear();
 		m_spawners.clear();
+		// ETAPE4.3 — aucune liste ne doit garder d'indice d'un chargement précédent
+		// (même sur un retour en erreur plus bas).
+		m_spawnersByRegion.clear();
+		m_spawnersOutsideCells.clear();
+		m_evaluatedSpawners.clear();
+		m_evaluatedRegions.clear();
+		m_regionLifecycle.Clear();
 		// ETAPE4.1 (chantiers 2.2, 2.3) — sommeil et classes de fréquence des mobs.
 		{
 			mob_activity::MobActivityConfig activity{};
@@ -9556,8 +9569,12 @@ namespace engine::server
 		const std::string activeZone = m_config.GetString("world.active_zone", "");
 		m_cellWorld = cells::IsCellWorld(activeZone);
 		m_regionActivity.Begin();
-		m_regionActivity.SetMarginMeters(m_config.GetDouble("world.region_activation_margin_m",
-			RegionActivity::kDefaultMarginMeters));
+		// ETAPE4.3 — la marge ne descend jamais sous la portée de l'intérêt (± 3 cellules de
+		// 100 m, arrondie à 400 m) : un spawner visible d'un joueur est toujours dans une
+		// région chaude, donc évalué.
+		const double interestReachMeters = static_cast<double>((kBaseInterestRadiusCells + 1) * kCellSizeMeters);
+		m_regionActivity.SetMarginMeters((std::max)(interestReachMeters, m_config.GetDouble("world.region_activation_margin_m",
+			RegionActivity::kDefaultMarginMeters)));
 		if (!m_cellWorld)
 		{
 			LOG_INFO(Net, "[ServerApp] Monde historique (active_zone='{}') : regions de 10 km inactives", activeZone);
@@ -9634,26 +9651,12 @@ namespace engine::server
 		{
 			LOG_INFO(Net, "[ServerApp] Region froide : {} (plus parcourue)", engine::world::cells::LoreCellId(region));
 		}
+		// Déchargement : la région sort du suivi. Ses mobs sont déjà retirés ; les délais
+		// de réapparition en cours continuent de courir (les remettre à zéro offrirait un
+		// raccourci pour « farmer » un mob rare : s'éloigner 6 min puis revenir).
 		for (const engine::world::cells::CellCoord& region : m_regionLifecycle.DrainUnloaded())
 		{
-			const auto it = m_spawnersByRegion.find(RegionKey(region));
-			if (it == m_spawnersByRegion.end())
-				continue;
-			size_t reset = 0;
-			for (const size_t index : it->second)
-			{
-				SpawnerRuntimeState& spawner = m_spawners[index];
-				for (SpawnerSlotState& slot : spawner.slots)
-				{
-					if (slot.mobEntityId == 0 && slot.nextRespawnTick != 0)
-					{
-						slot.nextRespawnTick = 0; // repeuplée à la prochaine visite
-						++reset;
-					}
-				}
-			}
-			LOG_INFO(Net, "[ServerApp] Region dechargee : {} ({} reapparitions remises a neuf)",
-				engine::world::cells::LoreCellId(region), reset);
+			LOG_INFO(Net, "[ServerApp] Region dechargee : {}", engine::world::cells::LoreCellId(region));
 		}
 		RebuildEvaluatedSpawners();
 	}

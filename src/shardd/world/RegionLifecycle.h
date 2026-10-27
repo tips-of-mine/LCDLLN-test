@@ -11,8 +11,9 @@
 //   - Idle    : plus active depuis idleTimeout : FROIDE, ses spawners ne sont plus du
 //               tout parcourus (coût nul) ;
 //   - Removal : plus active depuis unloadTimeout (300 s) : la région est déchargée
-//               (DrainUnloaded) et oubliée ; le shard remet à neuf ses spawners
-//               (délais de réapparition), comme si personne n'y était jamais venu.
+//               (DrainUnloaded) et oubliée du suivi. Ses mobs sont déjà retirés ; les
+//               délais de réapparition en cours continuent (aucun raccourci pour
+//               « farmer » un mob rare en s'éloignant).
 // Une région jamais visitée n'est pas suivie : elle est froide d'office.
 //
 // Module PUR (pas de réseau ni de ServerApp) : testé seul (region_lifecycle_tests).
@@ -58,6 +59,9 @@ namespace engine::server
 		/// Régions arrivées au déchargement (Removal) depuis le dernier appel ; elles
 		/// sont oubliées (une visite ultérieure repart de zéro).
 		std::vector<engine::world::cells::CellCoord> DrainUnloaded();
+
+		/// Oublie tout (réinitialisation du shard).
+		void Clear();
 
 		/// Régions suivies (télémétrie) et nombre de régions chaudes (Active + Loaded).
 		size_t TrackedCount() const { return m_known.size(); }

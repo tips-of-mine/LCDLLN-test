@@ -270,6 +270,12 @@ RenderModel
 > Chaque objet est traité une fois par période ; la période se calcule avec
 > `tick_slicing::PeriodTicks(tickHz, fréquence)`.
 
+> **Règle (ETAPE4.3)** : `UpdateSpawners` ne parcourt que `m_evaluatedSpawners` (spawners
+> hors cellules + régions chaudes de `RegionLifecycle` + régions froides qui ont encore un
+> mob), recalculée à 1 Hz par `RebuildEvaluatedSpawners`. Un spawner ajouté après
+> `InitSpawners` doit être rangé dans `m_spawnersByRegion` (ou `m_spawnersOutsideCells`),
+> sinon il ne sera jamais évalué.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

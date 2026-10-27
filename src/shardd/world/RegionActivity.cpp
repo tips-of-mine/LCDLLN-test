@@ -41,6 +41,10 @@ namespace engine::server
 			{
 				if (dn == 0 && de == 0) continue;
 				const cells::CellCoord neighbour{ home.n + dn, home.e + de };
+				// ETAPE4.3 — bord de la carte : une voisine hors [−500, 500[ ne serait pas
+				// représentable dans la clé (ActiveCells la décoderait de travers).
+				if (neighbour.n < -500 || neighbour.n >= 500 || neighbour.e < -500 || neighbour.e >= 500)
+					continue;
 				if (cells::DistanceToCell(neighbour, x, z) <= m_marginMeters)
 				{
 					m_players.try_emplace(Key(neighbour), 0u);
@@ -74,5 +78,20 @@ namespace engine::server
 			if (players > 0u) ++count;
 		}
 		return count;
+	}
+
+	std::vector<cells::CellCoord> RegionActivity::ActiveCells() const
+	{
+		std::vector<cells::CellCoord> out;
+		out.reserve(m_players.size());
+		for (const auto& [key, count] : m_players)
+		{
+			(void)count;
+			cells::CellCoord cell{};
+			cell.n = static_cast<int>(key / 1000u) - 500;
+			cell.e = static_cast<int>(key % 1000u) - 500;
+			out.push_back(cell);
+		}
+		return out;
 	}
 }

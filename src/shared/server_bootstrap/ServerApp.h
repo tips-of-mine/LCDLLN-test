@@ -43,6 +43,7 @@
 #include "src/shardd/world/UdpSessionTable.h"
 #include "src/shardd/world/ZoneTransitions.h"
 #include "src/shardd/world/RegionActivity.h"
+#include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
@@ -407,6 +408,10 @@ namespace engine::server
 		bool inCellWorld = false;
 		engine::world::cells::CellCoord regionCell{};
 		bool isActive = false;
+		/// ETAPE4.3 (chantier 2.4) — tick où le spawner est devenu inactif (plus aucun
+		/// joueur à portée) : ses mobs restent server.spawners.despawn_grace_s avant
+		/// d'être retirés (pas d'apparitions / disparitions en rafale en bordure).
+		uint32_t inactiveSinceTick = 0;
 		std::vector<SpawnerSlotState> slots;
 	};
 
@@ -1421,6 +1426,14 @@ namespace engine::server
 		/// (une fois par seconde, avant UpdateSpawners). No-op hors monde en cellules.
 		void RefreshRegionActivity();
 
+		/// ETAPE4.3 — recalcule m_evaluatedSpawners : spawners hors cellules, ceux des
+		/// régions chaudes (RegionLifecycle::IsWarm), et ceux des régions déjà parcourues
+		/// qui ont encore un mob vivant (jamais de mob abandonné dans une région froide).
+		void RebuildEvaluatedSpawners();
+
+		/// ETAPE4.3 — clé compacte d'une région (cellule de 10 km) pour m_spawnersByRegion.
+		static uint32_t RegionKey(engine::world::cells::CellCoord region);
+
 		/// Monde « Royaumes » — met à jour la région (zoneId = cellule) du joueur d'après
 		/// sa position : présence, événement de quête « zone:<id> ». Aucun message réseau
 		/// (le monde est continu). No-op hors monde en cellules.
@@ -1706,6 +1719,21 @@ namespace engine::server
 		engine::world::StartLocationTable m_worldStarts;
 		/// Monde « Royaumes » — régions (cellules) actives, recalculées chaque seconde.
 		RegionActivity m_regionActivity;
+		/// ETAPE4.3 (chantier 2.1) — cycle de vie des régions (Active / Loaded / Idle /
+		/// Removal, délais world.region_idle_s et world.region_unload_s), mis à jour par
+		/// RefreshRegionActivity (1 Hz).
+		RegionLifecycle m_regionLifecycle;
+		/// ETAPE4.3 — spawners du monde en cellules, par région (clé RegionKey), et
+		/// spawners hors cellules (zones historiques, toujours évalués).
+		std::unordered_map<uint32_t, std::vector<size_t>> m_spawnersByRegion;
+		std::vector<size_t> m_spawnersOutsideCells;
+		/// ETAPE4.3 — spawners parcourus par UpdateSpawners : hors cellules + régions
+		/// chaudes + régions froides qui ont encore des mobs. Recalculé à 1 Hz.
+		std::vector<size_t> m_evaluatedSpawners;
+		/// ETAPE4.3 — régions dont les spawners sont dans m_evaluatedSpawners.
+		std::unordered_set<uint32_t> m_evaluatedRegions;
+		/// ETAPE4.3 — délai de grâce (ticks) avant le retrait des mobs d'un spawner inactif.
+		uint32_t m_spawnerDespawnGraceTicks = 0;
 		/// ETAPE4.1 — réglages du sommeil et des classes de fréquence des mobs
 		/// (server.mob_ai_hz, server.mob_ai.*), lus par InitSpawners.
 		mob_activity::MobActivityConfig m_mobActivity{};

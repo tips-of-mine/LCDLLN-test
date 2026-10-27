@@ -306,6 +306,12 @@ RenderModel
 > sa file SQL (sortie de la boucle comme sur SIGTERM). Toute nouvelle porte d'entrée en
 > jeu côté master doit consulter `ClusterShutdown::AdmissionsBlocked()`.
 
+> **Règle (ETAPE5.4)** : une nouvelle métrique de jeu du shard s'ajoute à
+> `ShardGameplayMetrics` (remplie dans `ServerApp::PublishGameplayMetrics`, thread de tick)
+> et à `FormatShardMetricsPrometheus` (`src/shardd/world/ShardMetrics`) — jamais de lecture
+> directe de l'état de `ServerApp` depuis le thread HTTP. Une nouvelle cause de saturation
+> s'ajoute à `IsSaturated`.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

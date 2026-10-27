@@ -90,14 +90,18 @@ int main()
 		cfg.exitHoldSeconds = 0.0;
 		LoadShedder s(cfg);
 		double now = 1000.0;
-		(void)Run(s, now, 3.0, 1.5);
-		Check(s.Active(), "entrée");
-		const double entered = now;
-		(void)Run(s, now, 4.0, 0.1);
-		Check(s.Active(), "sortie bloquée par le délai minimal");
-		(void)Run(s, now, 15.0, 0.1);
-		Check(!s.Active(), "sortie une fois le délai écoulé");
-		Check(now - entered >= 15.0, "au moins 15 s entre les bascules");
+		double entered = -1.0;
+		double exited = -1.0;
+		for (int i = 0; i < 25 * 20; ++i) // 25 s
+		{
+			now += kBudget;
+			const double load = i < 60 ? 1.5 : 0.1; // 3 s de surcharge puis presque rien
+			const SheddingTransition t = s.OnTick(load * kBudget, kBudget, now);
+			if (t == SheddingTransition::Entered) entered = now;
+			if (t == SheddingTransition::Exited) exited = now;
+		}
+		Check(entered > 0.0 && exited > 0.0, "entrée puis sortie");
+		Check(exited - entered >= 15.0 && exited - entered < 15.2, "sortie exactement au délai minimal (15 s)");
 	}
 
 	// 6. Désactivé, entrées invalides, réglages absurdes.
@@ -107,6 +111,7 @@ int main()
 		LoadShedder s(off);
 		double now = 0.0;
 		Check(Run(s, now, 30.0, 5.0) == 0 && !s.Active(), "désactivé : jamais de délestage");
+		Check(s.SmoothedLoad() > 3.9, "désactivé : la charge reste mesurée (bornée à 4 budgets)");
 		LoadShedder v;
 		Check(v.OnTick(std::nan(""), kBudget, 1.0) == SheddingTransition::None
 			&& v.OnTick(0.01, 0.0, 1.0) == SheddingTransition::None, "entrées invalides ignorées");
@@ -116,6 +121,15 @@ int main()
 		bad.smoothing = -3.0;
 		const LoadSheddingConfig fixed = SanitizeLoadShedding(bad);
 		Check(fixed.exitLoad < fixed.enterLoad && fixed.smoothing > 0.0, "sortie ramenée sous l'entrée, lissage borné");
+	}
+
+	// 7. Premier tick très long (démarrage) : pas de délestage à tort.
+	{
+		LoadShedder s;
+		double now = 1000.0;
+		now += 2.0;
+		(void)s.OnTick(2.0, kBudget, now); // 2 s = 40 budgets, compté pour 4
+		Check(Run(s, now, 20.0, 0.3) == 0 && !s.Active(), "long premier tick absorbé");
 	}
 
 	if (s_failCount == 0)

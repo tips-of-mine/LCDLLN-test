@@ -9793,10 +9793,11 @@ namespace engine::server
 		if (active)
 		{
 			// Plafond d'entités réduit : seules les plus proches restent (le rayon de vue se
-			// réduit de lui-même). Sans plafond configuré : plafond du codec réduit.
-			const uint32_t base = m_viewCapNominal != 0u ? m_viewCapNominal
-				: static_cast<uint32_t>(engine::network::snapshot::kMaxEntitiesPerSnapshot);
-			m_viewCapEntities = std::max<uint32_t>(20u, static_cast<uint32_t>(static_cast<double>(base) * m_sheddingViewCapFactor));
+			// réduit de lui-même). Jamais sous 20, jamais au-dessus du plafond nominal (un
+			// petit plafond configuré n'est pas relevé).
+			const uint32_t reduced = std::max<uint32_t>(20u,
+				static_cast<uint32_t>(static_cast<double>(m_viewCapNominal) * m_sheddingViewCapFactor));
+			m_viewCapEntities = std::min(m_viewCapNominal, reduced);
 			// IA de repos et d'ambiance deux fois moins souvent (le combat ne change pas).
 			m_mobActivity = m_mobActivityNominal;
 			m_mobActivity.calmHz = std::max(1u, m_mobActivityNominal.calmHz / 2u);

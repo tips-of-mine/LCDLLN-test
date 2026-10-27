@@ -48,6 +48,8 @@ namespace engine::server
 
 		/// Un tick vient de se terminer : il a duré \p tickSeconds pour un budget de
 		/// \p budgetSeconds (1/tickHz), à l'instant \p nowSeconds (horloge monotone).
+		/// Un échantillon compte au plus pour 4 budgets. Désactivé : la charge est mesurée
+		/// mais aucune bascule n'a lieu.
 		/// \return la bascule éventuelle (une au plus par appel).
 		SheddingTransition OnTick(double tickSeconds, double budgetSeconds, double nowSeconds);
 

@@ -9,6 +9,9 @@ namespace engine::server
 {
 	namespace
 	{
+		/// Échantillon maximal pris en compte (en budgets de tick).
+		constexpr double kMaxSampleLoad = 4.0;
+
 		double Finite(double value, double fallback)
 		{
 			return std::isfinite(value) ? value : fallback;
@@ -47,11 +50,16 @@ namespace engine::server
 
 	SheddingTransition LoadShedder::OnTick(double tickSeconds, double budgetSeconds, double nowSeconds)
 	{
-		if (!m_config.enabled || !(budgetSeconds > 0.0) || !std::isfinite(tickSeconds) || !std::isfinite(nowSeconds))
+		if (!(budgetSeconds > 0.0) || !std::isfinite(tickSeconds) || !std::isfinite(nowSeconds))
 			return SheddingTransition::None;
-		const double load = (std::max)(tickSeconds, 0.0) / budgetSeconds;
+		// Un tick exceptionnel (premier tick après le démarrage, chargement) compte au plus
+		// pour 4 budgets : il ne fige pas la moyenne au-dessus du seuil pendant des secondes.
+		const double load = (std::min)((std::max)(tickSeconds, 0.0) / budgetSeconds, kMaxSampleLoad);
 		m_smoothed = m_hasSample ? m_smoothed + (load - m_smoothed) * m_config.smoothing : load;
 		m_hasSample = true;
+		// Désactivé : la charge reste mesurée (télémétrie, réglage des seuils), sans bascule.
+		if (!m_config.enabled)
+			return SheddingTransition::None;
 
 		// Suivi des périodes au-dessus / en dessous des seuils.
 		if (m_smoothed >= m_config.enterLoad)

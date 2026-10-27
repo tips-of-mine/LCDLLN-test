@@ -347,8 +347,10 @@ sans rien réduire : tout le monde subissait la lenteur.
 
 `src/shardd/world/LoadShedding` (module pur, horloge passée en argument) mesure la
 **durée réelle de chaque tick** (réception, simulation, envois) rapportée au budget
-(`1 / tickHz`, 50 ms à 20 Hz), lissée (poids 0,1 par tick). Le déclencheur est donc la
-charge réelle, pas un nombre de joueurs.
+(`1 / tickHz`, 50 ms à 20 Hz), lissée (poids 0,1 par tick ; un tick exceptionnel, comme
+le premier après le démarrage, compte au plus pour 4 budgets). Le déclencheur est donc la
+charge réelle, pas un nombre de joueurs. Délestage désactivé : la charge reste mesurée et
+affichée.
 
 | Bascule | Condition (défaut) | Clé |
 |---|---|---|
@@ -362,12 +364,14 @@ absorbé par le lissage, et une charge entre 60 et 85 % ne fait jamais osciller 
 Pendant le délestage (`ServerApp::ApplyLoadShedding`) :
 
 - **plafond d'entités par client** × `server.load_shedding.view_cap_factor` (0,5 : 100 →
-  50, jamais sous 20). Les plus proches restent, groupe et cible toujours compris (3.2) :
+  50, jamais sous 20 ni au-dessus du plafond configuré). Les plus proches restent, groupe et cible toujours compris (3.2) :
   le rayon de vue se réduit de lui-même ;
 - **IA de repos et d'ambiance deux fois moins souvent** (5 → 2 Hz). Le combat ne change
   pas ;
 - **plus de nouveau PNJ d'ambiance** : ceux qui sont là restent, les créatures et les mobs
-  de quête apparaissent toujours.
+  de quête apparaissent toujours. À la sortie, les PNJ en attente réapparaissent au fil de
+  l'évaluation étalée des spawners (4.2), pas d'un coup. Un joueur qui arrive dans une
+  ville pendant le délestage la trouve moins peuplée : c'est le prix de la dégradation.
 
 Tout revient à la normale à la sortie. Désactivable : `server.load_shedding.enabled =
 false`.
@@ -389,8 +393,9 @@ false`.
 
 `load_shedding_tests` : charge normale sans bascule, entrée après le maintien, pic isolé
 absorbé, hystérésis (75 % entre les seuils : aucun changement dans un sens comme dans
-l'autre), sortie après 10 s, délai minimal entre bascules, désactivation, entrées
-invalides, réglages absurdes corrigés.
+l'autre), sortie après 10 s, délai minimal entre bascules (sortie exactement à 15 s),
+désactivation (charge toujours mesurée), entrées invalides, réglages absurdes corrigés,
+long premier tick absorbé.
 
 ### Déploiement
 

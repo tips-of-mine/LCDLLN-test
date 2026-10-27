@@ -66,6 +66,15 @@ namespace engine::server
 		/// \p shardId == 0 ne retire rien.
 		std::vector<ShardBinding> TakeByShard(uint32_t shardId);
 
+		/// ETAPE5.1 — Mémorise le shard pour lequel \p connId vient d'obtenir un ticket
+		/// (ShardTicketHandler, `target_shard_id` validé contre le registre). C'est le shard
+		/// réellement rejoint ; si un personnage est déjà lié à cette connexion, son shard
+		/// est mis à jour. Effacé par \ref Remove.
+		void NoteTicketShard(uint32_t connId, uint32_t shardId);
+
+		/// ETAPE5.1 — Shard du dernier ticket délivré à \p connId (nullopt si aucun).
+		std::optional<uint32_t> TicketShard(uint32_t connId) const;
+
 		/// Drop the binding for \a connId (call on connection close).
 		void Remove(uint32_t connId);
 
@@ -104,5 +113,6 @@ namespace engine::server
 		mutable std::mutex m_mutex;
 		std::unordered_map<uint32_t, CharacterInfo>   m_byConn;
 		std::unordered_map<std::string, uint32_t>     m_byNormalizedName;
+		std::unordered_map<uint32_t, uint32_t>        m_ticketShardByConn; ///< ETAPE5.1 : connId → shard du dernier ticket
 	};
 }

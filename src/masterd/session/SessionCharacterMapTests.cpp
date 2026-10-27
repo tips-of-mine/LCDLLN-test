@@ -194,6 +194,19 @@ static void TestTakeByShard()
 	Assert(map.GetByConnId(2) && map.GetByConnId(4) && map.Count() == 2, "autres shards intacts");
 	Assert(map.GetByConnId(2)->shardId == 8, "shardId mémorisé");
 	Assert(map.TakeByShard(7).empty(), "second appel : plus rien");
+
+	// Shard du ticket : prioritaire, corrige une liaison existante, effacé par Remove.
+	SessionCharacterMap t;
+	Assert(!t.TicketShard(5), "aucun ticket : nullopt");
+	t.NoteTicketShard(5, 3);
+	Assert(t.TicketShard(5) && *t.TicketShard(5) == 3u, "ticket mémorisé");
+	t.Set(5, 105, 1005, "Eli", "eli", AccountRole::Player, *t.TicketShard(5));
+	t.NoteTicketShard(5, 4); // nouveau ticket après l'EnterWorld
+	Assert(t.GetByConnId(5)->shardId == 4u, "un nouveau ticket corrige le shard de la liaison");
+	Assert(t.TakeByShard(3).empty() && t.TakeByShard(4).size() == 1u, "TakeByShard suit le shard du ticket");
+	t.NoteTicketShard(6, 2);
+	t.Remove(6);
+	Assert(!t.TicketShard(6), "Remove efface le shard du ticket");
 }
 
 int main()

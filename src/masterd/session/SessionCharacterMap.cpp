@@ -61,6 +61,7 @@ namespace engine::server
 	void SessionCharacterMap::Remove(uint32_t connId)
 	{
 		std::lock_guard lock(m_mutex);
+		m_ticketShardByConn.erase(connId);
 		auto it = m_byConn.find(connId);
 		if (it == m_byConn.end())
 			return;
@@ -90,6 +91,24 @@ namespace engine::server
 			it = m_byConn.erase(it);
 		}
 		return out;
+	}
+
+	void SessionCharacterMap::NoteTicketShard(uint32_t connId, uint32_t shardId)
+	{
+		std::lock_guard lock(m_mutex);
+		m_ticketShardByConn[connId] = shardId;
+		auto it = m_byConn.find(connId);
+		if (it != m_byConn.end())
+			it->second.shardId = shardId;
+	}
+
+	std::optional<uint32_t> SessionCharacterMap::TicketShard(uint32_t connId) const
+	{
+		std::lock_guard lock(m_mutex);
+		auto it = m_ticketShardByConn.find(connId);
+		if (it == m_ticketShardByConn.end())
+			return std::nullopt;
+		return it->second;
 	}
 
 	std::optional<SessionCharacterMap::CharacterInfo> SessionCharacterMap::GetByConnId(uint32_t connId) const

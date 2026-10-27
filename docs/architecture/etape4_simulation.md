@@ -8,8 +8,8 @@ et le monde doit pourtant continuer de vivre.
 | Ticket | Sujet | Statut |
 |---|---|---|
 | 4.1 (chantiers 2.2, 2.3) | Sommeil des mobs loin des joueurs, classes de fréquence de l'IA | livré |
-| 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | cette PR |
-| 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | à venir |
+| 4.2 (chantier 2.6) | Travaux périodiques étalés par identifiant | livré |
+| 4.3 (chantiers 2.1, 2.4) | Cellules réellement froides | cette PR |
 | 4.4 (chantier 2.7) | Agenda déterministe des PNJ | à venir |
 | 4.5 (chantier 2.5) | Délestage avec hystérésis | à venir |
 
@@ -143,3 +143,67 @@ tick.
 
 Shard seul. Pas de migration. Nouvelles clés optionnelles : `server.spawners.evaluate_hz`,
 `server.map_discovery_hz`.
+
+## 4.3 — Cellules réellement froides (chantiers 2.1, 2.4)
+
+### Avant
+
+Une région (cellule de 10 km) inactive n'était qu'une étiquette : `UpdateSpawners`
+parcourait **tous** les spawners du monde, et pour chacun d'une région inactive vérifiait
+qu'il n'avait plus de mob vivant. `GridStateTracker` (états Loaded / Active / Idle /
+Removal) existait mais n'était utilisé que par ses tests. Un mob disparaissait dès que
+son spawner n'avait plus de joueur à portée, et réapparaissait au retour du joueur : un
+joueur qui oscille en bordure faisait clignoter les mobs.
+
+### Principe
+
+- **Index par région** : à l'initialisation, chaque spawner du monde en cellules est
+  rangé dans sa région (`m_spawnersByRegion`) ; ceux des zones historiques restent dans
+  une liste à part, toujours évaluée.
+- **Cycle de vie des régions** (`src/shardd/world/RegionLifecycle`, module pur, qui
+  s'appuie sur `GridStateTracker`) mis à jour une fois par seconde avec les régions
+  actives de `RegionActivity` :
+
+  | État | Quand | Spawners |
+  |---|---|---|
+  | Active | un joueur dans la région ou à moins de 1 000 m de son bord | évalués |
+  | Loaded | plus active depuis moins de `world.region_idle_s` (60 s) | évalués (retraits, retour rapide) |
+  | Idle (froide) | plus active depuis 60 s | **plus parcourus du tout** |
+  | Removal | plus active depuis `world.region_unload_s` (300 s) | région oubliée, réapparitions remises à neuf |
+
+  Une région jamais visitée est froide d'office. Une région froide qui a encore un mob
+  vivant (combat qui se prolonge) reste parcourue jusqu'à son retrait : aucun mob n'est
+  abandonné.
+- **Liste des spawners évalués** (`m_evaluatedSpawners`) recalculée chaque seconde :
+  hors cellules + régions chaudes + régions froides avec un mob vivant. `UpdateSpawners`
+  ne parcourt plus qu'elle, toujours étalée (4.2). Le coût suit les zones jouées, pas la
+  taille du monde.
+- **Délai de grâce** (chantier 2.4) : un spawner qui n'a plus de joueur à portée garde ses
+  mobs `server.spawners.despawn_grace_s` (20 s) avant de les retirer. Il ne fait pas
+  réapparaître de mob pendant ce délai. Un joueur qui oscille en bordure ne fait plus
+  clignoter les mobs. Les mobs n'apparaissent toujours qu'avec un joueur à portée du
+  spawner (± 3 cellules de 100 m).
+- **Déchargement** : à 300 s, les délais de réapparition en cours de la région sont remis
+  à zéro. À la prochaine visite, la région est repeuplée comme si personne n'y était venu.
+
+Journal du shard : `Region froide : N003_W009 (plus parcourue)`, `Region dechargee : …`.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shardd/world/RegionLifecycle.h/.cpp` | États des régions, régions devenues froides, déchargement |
+| `src/shardd/world/RegionActivity` | `ActiveCells()` : liste des régions actives |
+| `src/shared/server_bootstrap/ServerApp` | Index par région (`InitSpawners`), `RebuildEvaluatedSpawners`, `RefreshRegionActivity` (cycle de vie, déchargement), `UpdateSpawners` (liste évaluée, délai de grâce) |
+
+### Tests
+
+`region_lifecycle_tests` : région jamais visitée froide, chaude 59 s après le départ et
+froide à 60 s (signalée une seule fois), retour d'un joueur (délai qui repart de zéro),
+déchargement à 300 s puis oubli, plusieurs régions et doublons, délais incohérents
+corrigés. `region_activity_tests` : liste des régions actives, coordonnées négatives.
+
+### Déploiement
+
+Shard seul. Pas de migration. Nouvelles clés optionnelles : `world.region_idle_s`,
+`world.region_unload_s`, `server.spawners.despawn_grace_s`.

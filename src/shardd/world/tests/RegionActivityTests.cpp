@@ -25,6 +25,8 @@ int main()
 	a.AddPlayer(0.0, 0.0);
 	Check(a.IsActive({ 0, 0 }) && a.IsOccupied({ 0, 0 }), "cellule du joueur active et occupee");
 	Check(a.ActiveCount() == 1 && a.OccupiedCount() == 1, "une seule cellule au centre");
+	// ETAPE4.3 — liste des cellules actives (entrée du cycle de vie des régions).
+	Check(a.ActiveCells().size() == 1u && a.ActiveCells()[0] == CellCoord{ 0, 0 }, "liste des cellules actives");
 	Check(!a.IsActive({ 0, 1 }) && !a.IsActive({ 1, 0 }), "voisines inactives au centre");
 
 	// Joueur à 300 m du bord est : la voisine est (pas le nord) devient active, non occupée.
@@ -47,6 +49,7 @@ int main()
 	a.AddPlayer(-90100.0, -29900.0);
 	Check(a.IsActive({ 3, -9 }) && a.OccupiedCount() == 1 && a.ActiveCount() == 1, "deux joueurs, une cellule");
 	Check(a.IsActiveAt(-91000.0, -31000.0) && !a.IsActiveAt(0.0, 0.0), "IsActiveAt");
+	Check(a.ActiveCells().size() == 1u && a.ActiveCells()[0] == CellCoord{ 3, -9 }, "liste : coordonnées négatives restituées");
 
 	// Marge nulle : jamais de voisine ; marge bornée à la demi-cellule.
 	RegionActivity strict(0.0);

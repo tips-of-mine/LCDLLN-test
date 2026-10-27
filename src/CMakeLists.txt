@@ -112,6 +112,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
+    # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Clock.cpp
@@ -569,6 +571,13 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # ETAPE4.3 : cycle de vie des régions (GridStateTracker branché sur les régions actives).
+  lcdlln_add_simple_test(region_lifecycle_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/RegionLifecycleTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
   # ETAPE4.2 : étalement des travaux périodiques (en-tête seul).
   lcdlln_add_simple_test(tick_slicing_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/TickSlicingTests.cpp)
@@ -1436,6 +1445,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
+    # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp

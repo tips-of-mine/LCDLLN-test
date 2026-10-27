@@ -36,7 +36,7 @@ autre shard, rééquilibrage) sans jamais avoir deux propriétaires ni zéro.
 - File d'attente côté master avec position et estimation d'attente envoyées au client.
 - Débit d'admission borné par shard (jetons par seconde), en plus de la capacité.
 - Point d'appui existant : `ShardRegistry::SelectShard` exclut les shards `Degraded` ;
-  ETAPE5.4 fait remonter la charge réelle du shard (délestage) dans le heartbeat.
+  ETAPE5.4 (prévue) doit faire remonter la charge réelle du shard au master.
 
 ## 6.3 — Agent par hôte et placement des processus
 

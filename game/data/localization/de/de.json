@@ -295,7 +295,7 @@
   "auth.tooltip.country": "Ihr Wohnsitzland (ISO-2-Buchstabencode). Wird fuer Ihre eindeutige TAG-ID verwendet.",
   "auth.error.enter_country": "Waehlen Sie Ihr Land aus.",
   "auth.info.terms_required": "Zustimmung zu den Nutzungsbedingungen erforderlich.",
-  "auth.info.shard_lost": "Die Verbindung zum Weltserver ging verloren. Dein Charakter ist freigegeben: melde dich erneut an.",
+  "auth.info.shard_lost": "Die Verbindung zum Weltserver ging verloren. Ihr Charakter ist freigegeben: melden Sie sich erneut an.",
   "auth.info.email_verified": "E-Mail verifiziert. Sie koennen sich jetzt anmelden.",
   "auth.info.forgot_password": "Falls die E-Mail existiert, wurde eine Zuruecksetzungsnachricht gesendet.",
   "auth.info.terms_done": "Alle Nutzungsbedingungen akzeptiert. Waehlen Sie Ihren Charakternamen.",

@@ -164,8 +164,37 @@ static void TestSelectShardExcludesDegraded()
 	engine::core::Log::Shutdown();
 }
 
+/// ETAPE5.1 : un shard déclaré mort qui redonne signe de vie redevient Online (et sélectionnable).
+static void TestOfflineShardReturnsOnlineOnHeartbeat()
+{
+	engine::core::LogSettings logSettings;
+	logSettings.level = engine::core::LogLevel::Info;
+	logSettings.console = false;
+	engine::core::Log::Init(logSettings);
+
+	ShardRegistry reg;
+	auto t0 = std::chrono::steady_clock::now();
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
+	Assert(idOpt.has_value(), "RegisterShard returns id");
+	const uint32_t shardId = *idOpt;
+	int downCount = 0;
+	reg.SetShardDownCallback([&](uint32_t) { ++downCount; });
+	reg.EvictStaleHeartbeats(2, t0 + std::chrono::seconds(5));
+	Assert(reg.GetShard(shardId)->state == ShardState::Offline, "shard mort");
+	Assert(!reg.SelectShard().has_value(), "shard mort non sélectionnable");
+	Assert(reg.UpdateHeartbeat(shardId, 10), "heartbeat d'un shard mort accepté");
+	Assert(reg.GetShard(shardId)->state == ShardState::Online, "shard revenu : Online");
+	Assert(reg.SelectShard().has_value(), "shard revenu : sélectionnable");
+	// Il peut mourir de nouveau (le rappel est rejoué).
+	reg.EvictStaleHeartbeats(2, std::chrono::steady_clock::now() + std::chrono::seconds(5));
+	Assert(downCount == 2, "seconde mort : rappel rejoué");
+
+	engine::core::Log::Shutdown();
+}
+
 int main()
 {
+	TestOfflineShardReturnsOnlineOnHeartbeat();
 	TestEvictStaleHeartbeatsMarksOfflineAndInvokesCallback();
 	TestOnlineToDegradedWhenLoadAboveThreshold();
 	TestDegradedToOnlineWhenLoadBelowThreshold();

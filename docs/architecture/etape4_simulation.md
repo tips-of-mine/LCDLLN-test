@@ -118,7 +118,10 @@ Conséquences, voulues et bornées :
 - Une apparition, un retrait ou une réapparition de mob arrive **au plus 0,5 s** plus tard
   (une période de spawner).
 - La carte se découvre par pas de 3 m au plus (13 m/s × 0,25 s), bien moins qu'une case.
-- Une enchère se règle au plus 1 s après son échéance.
+- Une enchère se règle au plus 1 s après son échéance ; entre-temps, une annonce échue
+  refuse toute offre et tout achat immédiat (« That auction has ended. »).
+- Une réapparition de mob arrive au plus ≈ 1 s après `respawnSeconds` (retrait du mob
+  mort puis apparition, chacun à son tour de spawner).
 
 Un fréquence ≥ celle du tick (ou ≤ 0) revient à traiter chaque objet à chaque tick.
 

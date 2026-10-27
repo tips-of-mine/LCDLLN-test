@@ -11391,6 +11391,13 @@ namespace engine::server
 			SendChatSystemNotice(*client, "That listing is gone.");
 			return;
 		}
+		// ETAPE4.2 — les échéances sont réglées une fois par seconde : une annonce
+		// échue mais pas encore réglée n'accepte plus d'offre.
+		if (row->expiresAtTick != 0u && m_currentTick >= row->expiresAtTick)
+		{
+			SendChatSystemNotice(*client, "That auction has ended.");
+			return;
+		}
 		if (row->sellerCharacterKey == client->persistenceCharacterKey)
 		{
 			SendChatSystemNotice(*client, "You cannot bid on your own auction.");
@@ -11477,6 +11484,12 @@ namespace engine::server
 		{
 			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: invalid listing_id={}", message.listingId);
 			SendChatSystemNotice(*client, "Buyout not available.");
+			return;
+		}
+		// ETAPE4.2 — annonce échue en attente de règlement (au plus 1 s) : plus d'achat.
+		if (row->expiresAtTick != 0u && m_currentTick >= row->expiresAtTick)
+		{
+			SendChatSystemNotice(*client, "That auction has ended.");
 			return;
 		}
 		if (row->sellerCharacterKey == client->persistenceCharacterKey)

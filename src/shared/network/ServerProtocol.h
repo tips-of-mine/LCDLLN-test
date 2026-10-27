@@ -69,7 +69,12 @@ namespace engine::server
 	/// Les paquets eux-mêmes ne changent pas ; le bump rend explicite qu'un client v15
 	/// (en clair) ne parle plus à un shard v16 (chiffrement obligatoire).
 	/// Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 16;
+	/// ETAPE3.2 (chantiers 4.2 / 4.5 / 4.6) — bump 16 → 17 : le Snapshot (kind 4) devient
+	/// un delta sur la base acquittée par le client, quantifié (cf. SnapshotDelta.h) ;
+	/// l'Input gagne `ackSnapshotSeq` (payload 25 → 29 octets). Spawn (5) / Despawn (6)
+	/// ne sont plus émis (le delta porte apparitions et retraits).
+	/// Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 17;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -346,6 +351,10 @@ namespace engine::server
 		/// Le shard le stocke et le réémet dans le SnapshotEntity pour que les autres
 		/// joueurs voient les emotes/roulades/etc. Payload Input 24 → 25 octets (v7→v8).
 		uint8_t animationState = 0;
+		/// ETAPE3.2 — numéro du dernier snapshot reconstruit en entier par le client
+		/// (0 = aucun). Le shard écrit le snapshot suivant en delta par rapport à lui.
+		/// Payload Input 25 → 29 octets (v16→v17).
+		uint32_t ackSnapshotSeq = 0;
 	};
 
 	/// Handshake acknowledgement emitted after a client is accepted.
@@ -387,23 +396,8 @@ namespace engine::server
 		std::string profileId;
 	};
 
-	/// Snapshot envelope carrying timing, connection stats and entity state count.
-	/// TG.1 — `chunkIndex` / `chunkCount` permettent au serveur de découper un snapshot AoI
-	/// trop gros pour un seul datagramme (~1200 o MTU). Valeurs par défaut 0/1 = snapshot
-	/// mono-paquet (cas dominant). `chunkCount > 1` : le client doit accumuler les
-	/// `chunkCount` chunks (même `serverTick`) avant de commiter le snapshot global ;
-	/// `entityCount` ne référence alors que les entités de CE chunk.
-	struct SnapshotMessage
-	{
-		uint32_t clientId = 0;
-		uint32_t serverTick = 0;
-		uint16_t connectedClients = 0;
-		uint16_t entityCount = 0;
-		uint32_t receivedPackets = 0;
-		uint32_t sentPackets = 0;
-		uint16_t chunkIndex = 0;
-		uint16_t chunkCount = 1;
-	};
+	// ETAPE3.2 — l'en-tête et le codec du Snapshot (kind 4) vivent dans
+	// SnapshotDelta.h (engine::network::snapshot) : delta sur base acquittée.
 
 	/// Server-authoritative zone assignment sent when a transition volume is validated.
 	struct ZoneChangeMessage
@@ -771,6 +765,17 @@ namespace engine::server
 	/// Read only the packet kind after validating the shared protocol header.
 	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind);
 
+	/// ETAPE3.2 — commence un paquet du protocole (en-tête magic + version + kind) pour
+	/// les codecs écrits hors de ServerProtocol.cpp (cf. SnapshotDelta). La charge utile
+	/// est ensuite ajoutée à la fin du vecteur retourné.
+	/// \param payloadSizeHint taille prévue de la charge utile (réservation seulement).
+	std::vector<std::byte> BeginProtocolMessage(MessageKind kind, size_t payloadSizeHint);
+
+	/// ETAPE3.2 — valide l'en-tête d'un paquet (magic, version, kind attendu) et rend sa
+	/// charge utile. Pendant de BeginProtocolMessage.
+	bool DecodeProtocolPayload(std::span<const std::byte> packet, MessageKind expectedKind,
+		std::span<const std::byte>& outPayload);
+
 	/// Encode a welcome packet with the protocol header.
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message);
 
@@ -783,11 +788,7 @@ namespace engine::server
 	/// Decode un PLAYER_STATS et valide le header partagé du protocole (R1-B).
 	bool DecodePlayerStats(std::span<const std::byte> packet, PlayerStatsMessage& outMessage);
 
-	/// Encode a snapshot packet with the protocol header.
-	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities);
-
-	/// Decode a snapshot packet and reuse the provided entity buffer for the payload entities.
-	bool DecodeSnapshot(std::span<const std::byte> packet, SnapshotMessage& outMessage, std::vector<SnapshotEntity>& outEntities);
+	// ETAPE3.2 — Snapshot : cf. engine::network::snapshot (SnapshotDelta.h).
 
 	/// Encode a spawn packet with the protocol header.
 	std::vector<std::byte> EncodeSpawn(const SpawnEntity& entity);

@@ -355,6 +355,8 @@ namespace engine::client
 		m_initialized = false;
 		m_observers.clear();
 		m_snapshotScratch.clear();
+		m_snapshotReceiver.Reset(); // ETAPE3.2 — nouvelle session : plus aucune base
+		m_snapshotHeader = {};
 		m_inventoryScratch.clear();
 		m_model = {};
 		LOG_INFO(Net, "[UIModelBinding] Destroyed");
@@ -705,10 +707,20 @@ namespace engine::client
 
 	bool UIModelBinding::ApplySnapshot(std::span<const std::byte> packet)
 	{
-		if (!engine::server::DecodeSnapshot(packet, m_snapshotMessage, m_snapshotScratch))
+		// ETAPE3.2 — snapshot en delta : SnapshotReceiver rassemble les morceaux, applique
+		// le delta à la base (snapshot déjà reconstruit) et rend l'ensemble complet des
+		// entités. Tant qu'un snapshot est incomplet, rien ne change dans le modèle ; un
+		// snapshot dont la base est inconnue est ignoré (le suivant sera écrit sur une base
+		// que nous avons, puisque nous l'acquittons).
+		switch (m_snapshotReceiver.Apply(packet, m_snapshotScratch, m_snapshotHeader))
 		{
-			LOG_WARN(Net, "[UIModelBinding] Snapshot FAILED: decode error");
-			return false;
+		case engine::network::snapshot::SnapshotReceiver::Result::Pending:
+			return true;
+		case engine::network::snapshot::SnapshotReceiver::Result::Dropped:
+			LOG_DEBUG(Net, "[UIModelBinding] Snapshot ignoré (ancien, incomplet remplacé ou base inconnue)");
+			return true;
+		case engine::network::snapshot::SnapshotReceiver::Result::Committed:
+			break;
 		}
 		// Monde en cellules : positions GLOBALES du shard → repère de rendu du client.
 		if (m_worldOriginX != 0.0 || m_worldOriginZ != 0.0)
@@ -720,56 +732,17 @@ namespace engine::client
 			}
 		}
 
-		// TG.1 — chunking : si le serveur a scinde le snapshot en plusieurs chunks
-		// (chunkCount > 1), on accumule jusqu'a avoir tous les chunks du meme serverTick
-		// puis on commite l'image globale. Un changement de serverTick abandonne
-		// l'accumulation precedente (best-effort UDP, pas de retry).
-		if (m_snapshotMessage.chunkCount > 1u)
-		{
-			if (!m_chunkAccumulator.active || m_chunkAccumulator.serverTick != m_snapshotMessage.serverTick)
-			{
-				// Nouveau serverTick (premier chunk recu pour ce tick) ou
-				// abandon d'un precedent accumulator incomplet.
-				m_chunkAccumulator.serverTick = m_snapshotMessage.serverTick;
-				m_chunkAccumulator.expectedChunkCount = m_snapshotMessage.chunkCount;
-				m_chunkAccumulator.chunksReceived = 0u;
-				m_chunkAccumulator.entities.clear();
-				m_chunkAccumulator.header = m_snapshotMessage; // garde le header du 1er chunk
-				m_chunkAccumulator.active = true;
-			}
-			m_chunkAccumulator.entities.insert(
-				m_chunkAccumulator.entities.end(),
-				m_snapshotScratch.begin(), m_snapshotScratch.end());
-			++m_chunkAccumulator.chunksReceived;
-			if (m_chunkAccumulator.chunksReceived < m_chunkAccumulator.expectedChunkCount)
-			{
-				// Pas encore tous les chunks : on attend les suivants sans commiter.
-				return true;
-			}
-			// Tous les chunks recus : commit avec l'union des entites. On reutilise
-			// m_snapshotMessage / m_snapshotScratch pour la suite du chemin de commit
-			// existant ; entityCount du header committe = total des chunks.
-			m_snapshotMessage = m_chunkAccumulator.header;
-			m_snapshotMessage.entityCount = static_cast<uint16_t>(
-				std::min<size_t>(m_chunkAccumulator.entities.size(), 0xFFFFu));
-			m_snapshotMessage.chunkIndex = 0u;
-			m_snapshotMessage.chunkCount = 1u;
-			m_snapshotScratch = std::move(m_chunkAccumulator.entities);
-			m_chunkAccumulator.active = false;
-			m_chunkAccumulator.entities.clear();
-		}
-
 		PumpWorldPresenterAge();
 		m_chatWorld.SyncEntityPositions(m_snapshotScratch);
 
 		UIPlayerStats& stats = m_model.playerStats;
-		stats.clientId = m_snapshotMessage.clientId;
-		stats.playerEntityId = static_cast<engine::server::EntityId>(m_snapshotMessage.clientId);
-		stats.serverTick = m_snapshotMessage.serverTick;
-		stats.connectedClients = m_snapshotMessage.connectedClients;
-		stats.entityCount = m_snapshotMessage.entityCount;
-		stats.receivedPackets = m_snapshotMessage.receivedPackets;
-		stats.sentPackets = m_snapshotMessage.sentPackets;
+		stats.clientId = m_snapshotHeader.clientId;
+		stats.playerEntityId = static_cast<engine::server::EntityId>(m_snapshotHeader.clientId);
+		stats.serverTick = m_snapshotHeader.serverTick;
+		stats.connectedClients = m_snapshotHeader.connectedClients;
+		stats.entityCount = static_cast<uint16_t>((std::min)(m_snapshotScratch.size(), static_cast<size_t>(0xFFFFu)));
+		stats.receivedPackets = m_snapshotHeader.receivedPackets;
+		stats.sentPackets = m_snapshotHeader.sentPackets;
 		stats.hasSnapshot = false;
 
 		// TD.1 — on n'extrait plus seulement le joueur local : on capture aussi les avatars

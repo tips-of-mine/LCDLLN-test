@@ -4,6 +4,7 @@
 #include "src/shared/math/Frustum.h"
 #include "src/shared/math/Math.h"
 #include "src/shared/network/ServerProtocol.h"
+#include "src/shared/network/SnapshotDelta.h"
 
 #include <array>
 #include <cstddef>
@@ -538,6 +539,11 @@ namespace engine::client
 		/// Clear the model state while preserving reusable allocations.
 		bool Reset();
 
+		/// ETAPE3.2 — numéro du dernier snapshot reconstruit en entier (0 = aucun), à
+		/// renvoyer au shard dans chaque Input (acquittement) : le shard écrit le snapshot
+		/// suivant en delta par rapport à lui.
+		uint32_t LatestSnapshotSeq() const { return m_snapshotReceiver.LatestCommittedSeq(); }
+
 		/// Register one observer callback and return its stable handle.
 		size_t AddObserver(UIModelObserver observer);
 
@@ -758,21 +764,11 @@ namespace engine::client
 		float ToRenderX(float globalX) const { return static_cast<float>(static_cast<double>(globalX) - m_worldOriginX); }
 		float ToRenderZ(float globalZ) const { return static_cast<float>(static_cast<double>(globalZ) - m_worldOriginZ); }
 		std::vector<engine::server::ItemStack> m_inventoryScratch;
-		engine::server::SnapshotMessage m_snapshotMessage{};
-		/// TG.1 — accumulateur pour les snapshots scindes en plusieurs chunks (chunkCount > 1).
-		/// On collecte les entites des chunks reçus pour un meme serverTick puis on commite
-		/// l'image globale dès que tous les chunks attendus sont arrives. Un changement de
-		/// serverTick abandonne l'accumulation precedente (best-effort, pas de retry UDP).
-		struct ChunkedSnapshotAccumulator
-		{
-			uint32_t serverTick = 0;
-			uint16_t expectedChunkCount = 0;
-			uint16_t chunksReceived = 0;
-			std::vector<engine::server::SnapshotEntity> entities;
-			engine::server::SnapshotMessage header{};
-			bool active = false;
-		};
-		ChunkedSnapshotAccumulator m_chunkAccumulator{};
+		/// ETAPE3.2 — rassemble les morceaux de snapshot, applique le delta à la base et
+		/// garde les derniers snapshots reconstruits (remplace l'accumulateur TG.1).
+		engine::network::snapshot::SnapshotReceiver m_snapshotReceiver;
+		/// ETAPE3.2 — en-tête du dernier snapshot reconstruit.
+		engine::network::snapshot::ChunkHeader m_snapshotHeader{};
 		engine::server::CombatEventMessage m_combatEventMessage{};
 		/// Combat SP3 — scratch des messages sorts/auras (réutilisés par paquet).
 		engine::server::ResourceUpdateMessage m_resourceUpdateMessage{};

@@ -67,7 +67,10 @@ namespace engine::client
 		/// Appelé à la cadence `client.gameplay_udp.request_tick_hz` depuis la boucle de jeu.
 		/// TD.8 — `animationState` (valeur d'AvatarAnimState) propage l'animation courante
 		/// pour que les autres joueurs voient emotes/roulades/run/sprint/saut/etc.
-		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw, uint8_t animationState);
+		/// ETAPE3.2 — \p ackSnapshotSeq : dernier snapshot reconstruit en entier
+		/// (UIModelBinding::LatestSnapshotSeq) ; le shard écrit le suivant en delta sur lui.
+		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw,
+			uint8_t animationState, uint32_t ackSnapshotSeq);
 
 		/// Envoie un GOODBYE (départ propre) pour que le shard évince immédiatement l'entité
 		/// au lieu d'attendre le timeout d'inactivité (sinon l'avatar reste un « fantôme »

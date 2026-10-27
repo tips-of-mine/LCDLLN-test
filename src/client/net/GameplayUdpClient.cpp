@@ -326,7 +326,8 @@ namespace engine::client
 			LOG_WARN(Net, "[GameplayUdpClient] Aucun Welcome après {} Hello : le shard ne répond pas", kHelloMaxAttempts);
 	}
 
-	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw, uint8_t animationState)
+	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw,
+		uint8_t animationState, uint32_t ackSnapshotSeq)
 	{
 		engine::server::InputMessage im{};
 		im.clientId = clientId;
@@ -336,6 +337,7 @@ namespace engine::client
 		im.positionMetersZ = posZ;
 		im.yawRadians = yaw;
 		im.animationState = animationState; // TD.8 : état d'animation local propagé au shard.
+		im.ackSnapshotSeq = ackSnapshotSeq; // ETAPE3.2 : acquittement du dernier snapshot reconstruit.
 		// Pas de log par paquet (cadence ~20 Hz) — éviterait de noyer la console.
 		return SendBytes(engine::server::EncodeInput(im));
 	}

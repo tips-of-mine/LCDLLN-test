@@ -17,17 +17,13 @@
 
 using engine::server::DecodeHello;
 using engine::server::DecodeInput;
-using engine::server::DecodeSnapshot;
 using engine::server::DecodeGoodbye;
 using engine::server::EncodeGoodbye;
 using engine::server::GoodbyeMessage;
 using engine::server::EncodeHello;
 using engine::server::EncodeInput;
-using engine::server::EncodeSnapshot;
 using engine::server::HelloMessage;
 using engine::server::InputMessage;
-using engine::server::SnapshotEntity;
-using engine::server::SnapshotMessage;
 
 namespace
 {
@@ -43,6 +39,7 @@ namespace
 		in.positionMetersZ = -8.75f;
 		in.yawRadians = 1.5708f;
 		in.animationState = 9u; // TD.8 : Emote (valeur d'AvatarAnimState)
+		in.ackSnapshotSeq = 0xA1B2C3D4u; // ETAPE3.2 : acquittement du dernier snapshot reconstruit
 
 		const std::vector<std::byte> packet = EncodeInput(in);
 		assert(!packet.empty());
@@ -56,6 +53,7 @@ namespace
 		assert(out.positionMetersZ == in.positionMetersZ);
 		assert(out.yawRadians == in.yawRadians);
 		assert(out.animationState == in.animationState); // TD.8
+		assert(out.ackSnapshotSeq == in.ackSnapshotSeq); // ETAPE3.2
 		std::puts("[OK] TestInputRoundTrip");
 	}
 
@@ -92,178 +90,8 @@ namespace
 		std::puts("[OK] TestHelloRoundTrip");
 	}
 
-	/// TD.4 — round-trip Snapshot avec `playerClientId` exposé pour les joueurs et
-	/// laissé à 0 pour les mobs/lootbags. Format wire bump v3→v4 (52 octets / entité).
-	void TestSnapshotRoundTripWithPlayerClientId()
-	{
-		SnapshotMessage inMsg{};
-		inMsg.clientId = 42u;
-		inMsg.serverTick = 1234u;
-		inMsg.connectedClients = 2u;
-		inMsg.entityCount = 3u;
-		inMsg.receivedPackets = 99u;
-		inMsg.sentPackets = 77u;
-
-		std::vector<SnapshotEntity> in;
-		// 2 joueurs avec playerClientId ≠ 0, characterName et gender non vides ;
-		// 1 mob avec playerClientId = 0, characterName et gender vides.
-		SnapshotEntity ePlayerA{};
-		ePlayerA.entityId = 0x200000001ull;
-		ePlayerA.state.positionX = 10.5f;
-		ePlayerA.state.positionY = 1.25f;
-		ePlayerA.state.positionZ = -3.75f;
-		ePlayerA.state.yawRadians = 0.42f;
-		ePlayerA.playerClientId = 7u;
-		ePlayerA.characterName = "homme"; // TD.5
-		ePlayerA.gender = "male";          // TD.6
-		ePlayerA.animationState = engine::server::AvatarAnimState::Emote; // TD.8
-		in.push_back(ePlayerA);
-
-		SnapshotEntity ePlayerB{};
-		ePlayerB.entityId = 0x200000002ull;
-		ePlayerB.state.positionX = 100.0f;
-		ePlayerB.state.positionZ = 50.0f;
-		ePlayerB.playerClientId = 12u;
-		ePlayerB.characterName = "femme"; // TD.5
-		ePlayerB.gender = "female";        // TD.6
-		ePlayerB.animationState = engine::server::AvatarAnimState::Roll; // TD.8
-		in.push_back(ePlayerB);
-
-		SnapshotEntity eMob{};
-		eMob.entityId = 0x300000005ull;
-		eMob.state.currentHealth = 80u;
-		eMob.state.maxHealth = 100u;
-		eMob.playerClientId = 0u; // mob => pas de nameplate
-		// characterName et gender restent vides pour les mobs / lootbags (TD.5/TD.6).
-		eMob.archetypeId = 100u; // Combat SP1 (wire v9) : archétype résolu côté client
-		in.push_back(eMob);
-
-		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
-		assert(!packet.empty());
-
-		SnapshotMessage outMsg{};
-		std::vector<SnapshotEntity> out;
-		assert(DecodeSnapshot(packet, outMsg, out));
-		assert(outMsg.clientId == inMsg.clientId);
-		assert(outMsg.serverTick == inMsg.serverTick);
-		assert(outMsg.entityCount == inMsg.entityCount);
-		assert(out.size() == 3u);
-
-		assert(out[0].entityId == ePlayerA.entityId);
-		assert(out[0].state.positionX == ePlayerA.state.positionX);
-		assert(out[0].state.positionY == ePlayerA.state.positionY);
-		assert(out[0].state.positionZ == ePlayerA.state.positionZ);
-		assert(out[0].state.yawRadians == ePlayerA.state.yawRadians);
-		assert(out[0].playerClientId == 7u);
-		assert(out[0].characterName == "homme"); // TD.5
-		assert(out[0].gender == "male");          // TD.6
-		assert(out[0].animationState == engine::server::AvatarAnimState::Emote); // TD.8
-		assert(out[0].archetypeId == 0u); // Combat SP1 : joueur => pas d'archétype
-
-		assert(out[1].entityId == ePlayerB.entityId);
-		assert(out[1].state.positionX == ePlayerB.state.positionX);
-		assert(out[1].playerClientId == 12u);
-		assert(out[1].characterName == "femme"); // TD.5
-		assert(out[1].gender == "female");        // TD.6
-		assert(out[1].animationState == engine::server::AvatarAnimState::Roll); // TD.8
-
-		assert(out[2].entityId == eMob.entityId);
-		assert(out[2].state.currentHealth == 80u);
-		assert(out[2].state.maxHealth == 100u);
-		assert(out[2].playerClientId == 0u);
-		assert(out[2].characterName.empty()); // TD.5 : mob => pas de nom
-		assert(out[2].gender.empty());        // TD.6 : mob => pas de genre
-		assert(out[2].animationState == engine::server::AvatarAnimState::Idle); // TD.8 : défaut
-		assert(out[2].archetypeId == 100u); // Combat SP1 (wire v9) : archétype du mob
-		std::puts("[OK] TestSnapshotRoundTripWithPlayerClientId");
-	}
-
-	/// TD.6 — un Snapshot dont la taille de payload est inferieure au minimum attendu
-	/// (61 octets/entité = 8 entityId + 40 EntityState + 4 playerClientId + 2 nameLen=0
-	/// + 2 genderLen=0 + 1 animationState + 4 archetypeId, au-delà de l'entête 24 octets)
-	/// doit être rejeté. Defense en profondeur contre un pair qui parlerait une version
-	/// antérieure du wire. Le bump kProtocolVersion à v9 filtre déjà la plupart des cas
-	/// dans DecodeHeader, ce test couvre une corruption après header valide.
-	void TestSnapshotRejectsTruncatedPayload()
-	{
-		SnapshotMessage inMsg{};
-		inMsg.entityCount = 1u;
-		std::vector<SnapshotEntity> in;
-		SnapshotEntity e{};
-		e.entityId = 0x200000001ull;
-		e.playerClientId = 5u;
-		// characterName vide → 2 octets de nameLen seulement.
-		in.push_back(e);
-
-		std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
-		// Ampute 4 octets : simule un pair qui n'aurait pas écrit nameLen+name (4 < 2 mais on
-		// retire 4 pour passer aussi sous le playerClientId terminé, soit un pair pré-v6).
-		assert(packet.size() >= 4u);
-		packet.resize(packet.size() - 4u);
-
-		SnapshotMessage outMsg{};
-		std::vector<SnapshotEntity> out;
-		assert(!DecodeSnapshot(packet, outMsg, out));
-		std::puts("[OK] TestSnapshotRejectsTruncatedPayload");
-	}
-
-	/// TG.1 — round-trip Snapshot avec chunkIndex / chunkCount > 1 : le wire transporte
-	/// bien les 2 champs et le client peut donc raisonner sur le chunking.
-	void TestSnapshotRoundTripWithChunking()
-	{
-		SnapshotMessage inMsg{};
-		inMsg.clientId = 5u;
-		inMsg.serverTick = 999u;
-		inMsg.connectedClients = 30u;
-		inMsg.entityCount = 2u; // ce chunk porte 2 entités sur un total potentiel de N
-		inMsg.chunkIndex = 1u;  // 2e chunk (0-indexed)
-		inMsg.chunkCount = 3u;  // sur 3 chunks au total
-
-		std::vector<SnapshotEntity> in;
-		SnapshotEntity a{};
-		a.entityId = 100u;
-		a.playerClientId = 1u;
-		in.push_back(a);
-		SnapshotEntity b{};
-		b.entityId = 200u;
-		b.playerClientId = 2u;
-		in.push_back(b);
-
-		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, in);
-		assert(!packet.empty());
-
-		SnapshotMessage outMsg{};
-		std::vector<SnapshotEntity> out;
-		assert(DecodeSnapshot(packet, outMsg, out));
-		assert(outMsg.chunkIndex == 1u);
-		assert(outMsg.chunkCount == 3u);
-		assert(outMsg.entityCount == 2u);
-		assert(out.size() == 2u);
-		assert(out[0].playerClientId == 1u);
-		assert(out[1].playerClientId == 2u);
-		std::puts("[OK] TestSnapshotRoundTripWithChunking");
-	}
-
-	/// TG.1 — defauts SnapshotMessage : chunkCount=1 (mono-paquet) doit round-tripper
-	/// proprement (compat « pas de chunking » = cas dominant a 2 joueurs).
-	void TestSnapshotMonoChunkDefaultsRoundTrip()
-	{
-		SnapshotMessage inMsg{};
-		inMsg.clientId = 1u;
-		inMsg.entityCount = 0u;
-		// chunkIndex defaut = 0, chunkCount defaut = 1 (cf. struct init in ServerProtocol.h).
-
-		const std::vector<std::byte> packet = EncodeSnapshot(inMsg, {});
-		assert(!packet.empty());
-
-		SnapshotMessage outMsg{};
-		std::vector<SnapshotEntity> out;
-		assert(DecodeSnapshot(packet, outMsg, out));
-		assert(outMsg.chunkIndex == 0u);
-		assert(outMsg.chunkCount == 1u);
-		assert(out.empty());
-		std::puts("[OK] TestSnapshotMonoChunkDefaultsRoundTrip");
-	}
+	// ETAPE3.2 — le format des snapshots (delta sur base acquittée, quantifié) est
+	// couvert par snapshot_delta_tests (SnapshotDelta.h).
 }
 
 	/// Départ propre : un Goodbye encodé puis décodé restitue le clientId, et un paquet
@@ -873,10 +701,6 @@ int main()
 	TestInputRejectsTruncated();
 	TestGoodbyeRoundTrip();
 	TestHelloRoundTrip();
-	TestSnapshotRoundTripWithPlayerClientId();
-	TestSnapshotRejectsTruncatedPayload();
-	TestSnapshotRoundTripWithChunking();
-	TestSnapshotMonoChunkDefaultsRoundTrip();
 	TestCombatEventRoundTripWithFlags();
 	TestAttackRequestRoundTrip();
 	TestRespawnRequestRoundTrip();

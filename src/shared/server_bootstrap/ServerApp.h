@@ -30,6 +30,7 @@
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/network/UdpSecureChannel.h"
+#include "src/shared/network/SnapshotDelta.h"
 #include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/security/SecurityAuditLog.h"
 #include "src/shardd/anticheat/AntiCheatGameplay.h"
@@ -274,6 +275,12 @@ namespace engine::server
 		std::vector<CellCoord> interestCells;
 		std::vector<EntityId> interestEntityIds;
 		std::vector<EntityId> replicatedEntityIds;
+		/// ETAPE3.2 — snapshots envoyés à ce client (base acquittée, numérotation) :
+		/// chaque snapshot part en delta par rapport au dernier acquitté.
+		engine::network::snapshot::SnapshotSender snapshotSender;
+		/// ETAPE3.2 (chantier 4.5) — dernière cible visée (attaque ou sort) : toujours
+		/// gardée dans les snapshots, même au-delà du plafond d'entités.
+		EntityId lastTargetEntityId = 0;
 		std::vector<ItemStack> inventory;
 		/// Chantier 2 SP-A — équipement porté. Indexé par la valeur de
 		/// engine::items::EquipmentSlot (1..kEquipSlotCount) ; index 0 (None) inutilisé.
@@ -1250,9 +1257,6 @@ namespace engine::server
 		/// Convert one replicated loot bag to the minimal replicated entity state.
 		EntityState BuildEntityState(const LootBagEntity& lootBag) const;
 
-		/// Fill a spawn payload for a replicated player or mob entity.
-		bool TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const;
-
 		/// Fill a snapshot payload for a replicated player or mob entity.
 		bool TryBuildSnapshotEntity(EntityId entityId, SnapshotEntity& outEntity) const;
 
@@ -1262,11 +1266,8 @@ namespace engine::server
 		/// Broadcast one authoritative combat event to interested clients.
 		void BroadcastCombatEvent(const CombatEventMessage& message);
 
-		/// Send a spawn packet for one relevant entity.
-		bool SendSpawn(const ConnectedClient& receiver, EntityId subjectEntityId);
-
-		/// Send a despawn packet for one relevant entity.
-		bool SendDespawn(const ConnectedClient& receiver, EntityId entityId);
+		// ETAPE3.2 — SendSpawn / SendDespawn retirés : le snapshot en delta porte les
+		// apparitions et les retraits.
 
 		/// Send a combat event packet to one interested client.
 		bool SendCombatEvent(const ConnectedClient& receiver, const CombatEventMessage& message);
@@ -1293,7 +1294,8 @@ namespace engine::server
 		bool SendPlayerXpUpdate(const ConnectedClient& client);
 
 		/// Send one empty snapshot packet to the given connected client.
-		bool SendSnapshot(const ConnectedClient& client);
+		/// ETAPE3.2 — construit et envoie le prochain snapshot (delta sur la base acquittée).
+		bool SendSnapshot(ConnectedClient& client);
 
 		/// Find a connected client by endpoint.
 		ConnectedClient* FindClient(const Endpoint& endpoint);

@@ -116,6 +116,7 @@
 #include "src/client/render/skinned/AnimationCrossfade.h"
 // Sous-projet B.1 (Task 9) : physics + collision pour l'avatar joueur.
 #include "src/client/gameplay/CharacterController.h"
+#include "src/client/gameplay/MoveReconciler.h"
 #include "src/client/gameplay/TerrainCollider.h"
 #include "src/client/gameplay/CompositeWorldCollider.h"
 #include "src/client/gameplay/CellWorldCollider.h"
@@ -1583,6 +1584,17 @@ namespace engine
 		std::unique_ptr<engine::world::terrain::ChunkHeightField>     m_chunkField;
 		float                                                     m_avatarYaw = 3.14159265f;
 		uint32_t m_gameplayInputSeq = 0;         ///< TC.2 : séquence monotone des Input UDP.
+		/// ETAPE3.3 — images de simulation locale par commande (recalage + rejeu).
+		engine::gameplay::MoveReconciler m_moveHistory;
+		/// ETAPE3.3 — horloge de simulation du mouvement (ms), envoyée dans chaque commande.
+		double m_moveClientTimeMs = 0.0;
+		/// ETAPE3.3 — instants (horloge de simulation) du dernier saut / de la dernière esquive.
+		uint32_t m_moveLastJumpMs = 0;
+		uint32_t m_moveLastDodgeMs = 0;
+		/// ETAPE3.3 — époque de mouvement (dernier ForcePosition reçu).
+		uint16_t m_moveEpoch = 0;
+		/// ETAPE3.3 — dernière commande dont la position officielle a été appliquée.
+		uint32_t m_moveLastCorrectedSeq = 0;
 		float    m_gameplayInputAccumSec = 0.0f; ///< TC.2 : accumulateur de cadence d'envoi.
 		/// TD.3 : position lissée d'un avatar distant (interpolation exponentielle vers la
 		/// cible snapshot, mise à jour par frame dans UpdateGameplayNet).

@@ -74,7 +74,13 @@ namespace engine::server
 	/// l'Input gagne `ackSnapshotSeq` (payload 25 → 29 octets). Spawn (5) / Despawn (6)
 	/// ne sont plus émis (le delta porte apparitions et retraits).
 	/// Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 17;
+	/// ETAPE3.3 (chantier 4.1) — bump 17 → 18 : l'Input devient une commande de mouvement
+	/// (horloge de simulation du client, instants du dernier saut et de la dernière
+	/// esquive, époque de mouvement ; payload 29 → 43 octets), ForcePosition gagne
+	/// l'époque (21 → 23 octets), nouveau kind MoveCorrection (101, shard → client :
+	/// position officielle pour un numéro de commande). Cf. MovementRules.h.
+	/// Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 18;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -324,7 +330,10 @@ namespace engine::server
 		// jetons "item:<id>" : gâteaux, potions, nourriture). Kinds ADDITIFS
 		// (pas de bump kProtocolVersion) sur le modèle 88/89.
 		SetBeltLayout = 99,     ///< Client → Shard : pose le layout ceinture.
-		BeltLayoutUpdate = 100  ///< Shard → Client : layout autoritaire (enter-world / ACK).
+		BeltLayoutUpdate = 100, ///< Shard → Client : layout autoritaire (enter-world / ACK).
+		/// ETAPE3.3 — shard → client : position officielle du joueur pour un numéro de
+		/// commande de mouvement (le client s'y recale et rejoue les commandes suivantes).
+		MoveCorrection = 101
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -338,23 +347,51 @@ namespace engine::server
 		uint64_t clientNonce = 0;
 	};
 
-	/// Minimal input envelope accepted by the server authoritative loop.
+	/// Commande de mouvement du client (20 Hz) — ETAPE3.3 (chantier 4.1).
+	/// Le client simule son personnage et rend compte : position obtenue, horloge de
+	/// simulation, instants du dernier saut et de la dernière esquive. Le shard tranche
+	/// avec les règles partagées (MovementRules.h) et peut renvoyer une position
+	/// officielle (MoveCorrection). Des instants (pas des durées ni des drapeaux) : une
+	/// commande perdue ne fausse pas la suivante.
 	struct InputMessage
 	{
 		uint32_t clientId = 0;
-		uint32_t inputSequence = 0;
+		uint32_t inputSequence = 0;   ///< numéro de commande (croissant).
+		/// ETAPE3.3 — horloge de simulation du client (ms) à la fin de la période.
+		uint32_t clientTimeMs = 0;
+		/// ETAPE3.3 — instant (horloge client) du dernier saut, 0 = aucun.
+		uint32_t lastJumpMs = 0;
+		/// ETAPE3.3 — instant (horloge client) de la dernière esquive, 0 = aucune.
+		uint32_t lastDodgeMs = 0;
+		/// ETAPE3.3 — époque de mouvement (dernier ForcePosition reçu) : une commande
+		/// d'une époque antérieure (partie avant un téléport) est ignorée.
+		uint16_t moveEpoch = 0;
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f; ///< TC.1 : altitude (terrain accidenté).
 		float positionMetersZ = 0.0f;
 		float yawRadians = 0.0f;      ///< TC.1 : orientation envoyée par le client.
 		/// TD.8 : état d'animation courant de l'avatar local (valeur d'AvatarAnimState).
 		/// Le shard le stocke et le réémet dans le SnapshotEntity pour que les autres
-		/// joueurs voient les emotes/roulades/etc. Payload Input 24 → 25 octets (v7→v8).
+		/// joueurs voient les emotes/roulades/etc.
 		uint8_t animationState = 0;
 		/// ETAPE3.2 — numéro du dernier snapshot reconstruit en entier par le client
 		/// (0 = aucun). Le shard écrit le snapshot suivant en delta par rapport à lui.
-		/// Payload Input 25 → 29 octets (v16→v17).
 		uint32_t ackSnapshotSeq = 0;
+	};
+
+	/// ETAPE3.3 — shard → client : position officielle du joueur après la commande
+	/// \p inputSequence (commande hors des règles de mouvement). Le client s'y recale
+	/// puis rejoue les commandes postérieures. Non fiable : si elle se perd, la commande
+	/// suivante, toujours hors règles, en provoque une autre. Payload fixe 26 octets.
+	struct MoveCorrectionMessage
+	{
+		uint32_t clientId = 0;
+		uint16_t moveEpoch = 0;
+		uint32_t inputSequence = 0;
+		float positionX = 0.0f;
+		float positionY = 0.0f;
+		float positionZ = 0.0f;
+		float yawRadians = 0.0f;
 	};
 
 	/// Handshake acknowledgement emitted after a client is accepted.
@@ -593,6 +630,9 @@ namespace engine::server
 		float positionZ = 0.0f;
 		float yawRadians = 0.0f;
 		uint8_t reason = kForcePositionReasonTeleport;
+		/// ETAPE3.3 — nouvelle époque de mouvement : le client la recopie dans ses
+		/// commandes ; le shard ignore celles d'avant le téléport. Payload 21 → 23 octets.
+		uint16_t moveEpoch = 0;
 	};
 
 	/// Client request asking the authoritative server to pick up one loot bag entity.
@@ -831,6 +871,10 @@ namespace engine::server
 	/// Correction SP1 — encode/decode de la position imposée (rétro-additif).
 	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message);
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
+
+	/// ETAPE3.3 — position officielle après une commande de mouvement (shard → client).
+	std::vector<std::byte> EncodeMoveCorrection(const MoveCorrectionMessage& message);
+	bool DecodeMoveCorrection(std::span<const std::byte> packet, MoveCorrectionMessage& outMessage);
 
 	/// Validation v12 — butin auto-crédité à la mort (rétro-additif).
 	/// Payload : clientId (4) + count (1) puis par objet itemId (4) + quantity (4).

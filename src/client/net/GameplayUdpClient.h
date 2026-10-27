@@ -67,10 +67,20 @@ namespace engine::client
 		/// Appelé à la cadence `client.gameplay_udp.request_tick_hz` depuis la boucle de jeu.
 		/// TD.8 — `animationState` (valeur d'AvatarAnimState) propage l'animation courante
 		/// pour que les autres joueurs voient emotes/roulades/run/sprint/saut/etc.
+		/// ETAPE3.3 — champs de la commande de mouvement (cf. MovementRules.h).
+		struct MoveCommandFields
+		{
+			uint32_t clientTimeMs = 0; ///< horloge de simulation du mouvement (ms).
+			uint32_t lastJumpMs = 0;   ///< instant du dernier saut (0 = aucun).
+			uint32_t lastDodgeMs = 0;  ///< instant de la dernière esquive (0 = aucune).
+			uint16_t moveEpoch = 0;    ///< époque du dernier ForcePosition reçu.
+		};
+
 		/// ETAPE3.2 — \p ackSnapshotSeq : dernier snapshot reconstruit en entier
 		/// (UIModelBinding::LatestSnapshotSeq) ; le shard écrit le suivant en delta sur lui.
+		/// ETAPE3.3 — \p move : horloge et événements de la commande de mouvement.
 		bool SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw,
-			uint8_t animationState, uint32_t ackSnapshotSeq);
+			uint8_t animationState, uint32_t ackSnapshotSeq, const MoveCommandFields& move);
 
 		/// Envoie un GOODBYE (départ propre) pour que le shard évince immédiatement l'entité
 		/// au lieu d'attendre le timeout d'inactivité (sinon l'avatar reste un « fantôme »

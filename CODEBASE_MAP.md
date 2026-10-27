@@ -239,6 +239,14 @@ RenderModel
 > quantifiées ; jamais de renvoi fiable. Plus de Spawn / Despawn. Plafond
 > `server.replication.view_cap_entities` (100) avec groupe et cible toujours inclus ;
 > PNJ d'ambiance à mi-fréquence.
+>
+> **Règle (ETAPE3.3)** : le shard tranche le mouvement des joueurs avec les règles
+> partagées `src/shared/movement/MovementRules` (budget de temps, vitesse autoritaire,
+> esquive, saut ; marges fixes au prorata du temps) ; hors règles à l'horizontale il
+> renvoie `MoveCorrection` et le client se décale de l'écart (`MoveReconciler`, état et
+> hauteur conservés). Tout téléport serveur passe par `SendForcePosition` (nouvelle
+> époque de mouvement) ; un simple renvoi de la position courante passe par
+> `EmitForcePosition` (même époque).
 
 ### Comptes et validation
 | Fichier | Rôle |

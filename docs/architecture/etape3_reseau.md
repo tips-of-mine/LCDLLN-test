@@ -8,8 +8,8 @@ mouvement.
 | Ticket | Sujet | Statut |
 |---|---|---|
 | 3.1 (chantier 4.3) | Chiffrement et authentification des datagrammes UDP | livré |
-| 3.2 (chantier 4.2, + 4.5 / 4.6) | Snapshots en delta sur base acquittée, quantification, plafond d'entités | cette PR |
-| 3.3 (chantier 4.1) | Mouvement autoritaire serveur, prédiction et recalage client | à venir |
+| 3.2 (chantier 4.2, + 4.5 / 4.6) | Snapshots en delta sur base acquittée, quantification, plafond d'entités | livré |
+| 3.3 (chantier 4.1) | Mouvement tranché par le shard, prédiction et recalage client | cette PR |
 | 3.4 (chantier 4.4) | Canal fiable minimal pour les messages importants | à venir |
 
 ## 3.1 — Chiffrer et authentifier l'UDP
@@ -229,3 +229,112 @@ perte, acquittements retardés) où chaque snapshot reconstruit doit être exact
 Lock-step **master + shard + client** (`kProtocolVersion` 17). Pas de migration. Nouvelle
 valeur par défaut `server.replication.view_cap_entities = 100` (à mettre à 0 dans la
 config du shard pour garder l'ancien comportement sans plafond).
+
+## 3.3 — Mouvement tranché par le shard (chantier 4.1)
+
+### Avant
+
+Le client envoyait sa position à 20 Hz et le shard la recopiait. Seul un contrôle grossier
+(`AntiCheatGameplay` : 13 m/s × 1,5 en distance 3D, temps tiré du numéro de paquet)
+refusait les téléports et la vitesse trafiquée, et la vitesse limite ne suivait ni la
+classe, ni l'équipement. Un client qui accélérait son horloge n'était pas vu.
+
+### Principe
+
+Le client **prédit toujours** (son `CharacterController` simule à chaque image, avec le
+terrain, les collisions et l'eau) ; le shard **tranche** :
+
+- Chaque Input devient une **commande de mouvement** numérotée : position obtenue,
+  horloge de simulation du client, instant du dernier saut et de la dernière esquive,
+  époque de mouvement. Des **instants**, pas des durées ni des drapeaux : une commande
+  perdue ne fausse pas la suivante.
+- Le shard applique les **règles de mouvement partagées** (`src/shared/movement/MovementRules`,
+  sans dépendance à engine_core) :
+  - **budget de temps** : l'horloge du client n'avance jamais plus vite que celle du
+    shard (2 % de dérive et 300 ms d'avance tolérées ; le temps non simulé ne se garde
+    pas plus d'1 s) — accélérer l'horloge ne fait rien gagner ;
+  - **distance horizontale** : vitesse maximale **autoritaire** du personnage (allure
+    la plus rapide calculée par le shard : classe, équipement, auras) × durée, +10 %,
+    + 5 cm par commande, plus l'esquive (11 m/s pendant 0,45 s, une par seconde au plus) ;
+  - **hauteur** : pente de 45°, 0,1 m de marge, nage (2 m/s), 0,65 m par saut (un saut
+    toutes les 0,4 s au plus) ; chute bornée ;
+  - **marges fixes au prorata du temps** : les 5 cm, les 0,1 m de marche et la marge de
+    chute ne sont accordés en entier qu'à une commande couvrant au moins 50 ms. Une
+    rafale de commandes à horloge figée (ou +1 ms) ne gagne donc rien.
+- **Hors règles à l'horizontale** : le shard ramène la position au point atteignable le
+  plus proche dans la direction demandée et renvoie la **position officielle avec le
+  numéro de commande** (`MoveCorrection`, kind 101, au plus 10 par seconde). Le client
+  garde la position envoyée pour chaque commande (`MoveReconciler`) ; il **décale** son
+  personnage de l'écart « officielle − envoyée » (`CharacterController::Translate`) :
+  vitesse, saut, chute, nage et hauteur locale sont conservés et le mouvement fait
+  depuis reste acquis (équivaut à rejouer ses entrées depuis la position officielle).
+  Les positions des commandes déjà parties sont décalées d'autant : la correction de
+  suite d'une commande encore en route ne recale que le reste de l'écart.
+- **Hors règles à la verticale** : la hauteur officielle (celle que voient les autres
+  joueurs) suit le client à la vitesse permise, sans le recaler. Le shard ne connaît pas
+  le terrain : lui imposer une hauteur pourrait le mettre sous le sol, qui remonterait
+  aussitôt (boucle de corrections). Un client qui vole ne trompe que son propre écran.
+- **Époque de mouvement** : chaque `ForcePosition` qui déplace le joueur (réapparition,
+  relocalisation à la connexion, changement de zone) ouvre une nouvelle époque ; les
+  commandes parties avant le téléport sont ignorées. Si le client reste dans l'ancienne
+  époque (ForcePosition perdu), la même position est **renvoyée** (au plus toutes les
+  500 ms) sans nouvelle époque. Une position refusée hors du monde généré renvoie la
+  position officielle **sans** nouvelle époque ni budget de temps remis à neuf (sinon
+  chaque refus offrirait la marge du départ).
+- **Esquive** : le client applique la même recharge d'1 s que le shard.
+
+```
+Client                                              Shard
+ images 1..3 → commande n°41 (pos, horloge) ───────▶ règles : OK, position officielle = pos
+ images 4..6 → commande n°42 (vitesse trafiquée) ──▶ règles : trop loin → point atteignable
+            ◀─────────────────── MoveCorrection(n°42, position officielle)
+ décale le personnage de (officielle − envoyée n°42),
+ décale d'autant les positions envoyées n°43, 44…
+```
+
+### Vérifié contre le vrai contrôleur
+
+`move_reconciler_tests` pilote le `CharacterController` réel comme dans le jeu (60
+images/s, commandes à 20 Hz) : 10 s de sprint avec sauts et esquives réguliers ne
+déclenchent **aucune** correction, ni des esquives demandées en rafale ; un contrôleur
+trafiqué à 20 m/s est corrigé ; le recalage décale le personnage sans perdre sa vitesse
+ni sa hauteur, et la correction de suite d'une commande en route ne recale plus rien.
+
+### Limite connue
+
+Le shard ne possède pas encore la géométrie du monde (cartes de hauteur, décor) : il ne
+rejoue pas les collisions. Un client modifié peut donc traverser un mur ou un rocher à
+vitesse normale. Fermer ce point demandera de charger les cartes de hauteur des
+cellules côté shard (`CellHeightFields`) et les volumes de décor, puis de rejouer les
+commandes avec le même contrôleur que le client.
+
+### Format de la commande (Input, kind 3, 43 octets)
+
+`clientId u32 · inputSequence u32 · clientTimeMs u32 · lastJumpMs u32 · lastDodgeMs u32 ·
+moveEpoch u16 · x, y, z, yaw f32 · animationState u8 · ackSnapshotSeq u32`.
+`ForcePosition` gagne `moveEpoch` (23 octets). `MoveCorrection` (kind 101, 26 octets) :
+`clientId u32 · moveEpoch u16 · inputSequence u32 · x, y, z, yaw f32`.
+`kProtocolVersion` passe de 17 à 18.
+
+### Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/movement/MovementRules.h/.cpp` | Règles partagées : budget de temps, distance, hauteur, saut, esquive |
+| `src/client/gameplay/MoveReconciler.h/.cpp` | Positions envoyées par commande, écart d'une correction |
+| `src/shared/server_bootstrap/ServerApp` | `HandleInput` (règles, position officielle, vitesse, renvoi du ForcePosition), `SendMoveCorrection`, `SendForcePosition` / `EmitForcePosition`, `ResetClientMovement`, `RefreshMaxMoveSpeed` |
+| `src/client/app/Engine.cpp` | Horloge de simulation, historique, instants de saut / esquive, application des corrections |
+| `src/client/ui_common/UIModel`, `src/client/net/GameplayUdpClient` | Réception de MoveCorrection, champs de la commande |
+
+### Tests
+
+`movement_rules_tests` (course honnête jamais corrigée, vitesse trafiquée, horloge
+accélérée, temps mis de côté, commande perdue, paquets en retard, esquive et sa
+recharge, pente, saut et sa recharge, vol soutenu, chute, NaN, téléport, rafale à
+horloge figée), `move_reconciler_tests` (accord avec le vrai contrôleur, esquives en
+rafale, recalage par décalage, correction de suite, historique borné), `server_protocol_tests` (commande, ForcePosition, MoveCorrection).
+
+### Déploiement
+
+Lock-step **master + shard + client** (`kProtocolVersion` 18). Pas de migration, pas de
+nouvelle clé de configuration.

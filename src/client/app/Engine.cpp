@@ -75,6 +75,7 @@
 #include "src/client/render/CharacterWindowImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
+#include "src/shared/movement/MovementRules.h" // ETAPE3.3 : recharge d'esquive commune avec le shard
 #include "src/client/ui_common/CurrencyFormat.h"
 #include "src/client/render/skinned/PlaceholderPart.h"
 #include "src/client/render/LnTheme.h"
@@ -9827,6 +9828,13 @@ namespace engine
 					m_characterController.Update(static_cast<float>(dt), moveInput, m_cellCollider);
 				else
 					m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
+				// ETAPE3.3 — horloge de simulation du mouvement (annoncée au shard avec
+				// chaque commande, comparée à son horloge : budget de temps).
+				{
+					m_moveClientTimeMs += dt * 1000.0;
+					if (moveInput.jumpPressed)
+						m_moveLastJumpMs = (std::max)(1u, static_cast<uint32_t>(m_moveClientTimeMs));
+				}
 				if (m_cellWorld)
 				{
 					// Mur invisible : on ne sort pas des cellules générées (le shard
@@ -10166,7 +10174,12 @@ namespace engine
 
 						// Esquive/roulade (double-appui Crouch) : Roll one-shot, prioritaire sur crouch.
 						// Bloquée pendant le verrou de geste (ouverture de coffre).
-						if (dodgePressed && m_avatarLocoState != AvatarLocomotionState::Roll
+						// ETAPE3.3 — même recharge que le shard (MovementLimits::dodgeCooldownMs) :
+						// une esquive refusée par le shard serait recalée.
+						const bool dodgeReady = m_moveLastDodgeMs == 0u
+							|| m_moveClientTimeMs - static_cast<double>(m_moveLastDodgeMs)
+								>= static_cast<double>(engine::movement::MovementLimits{}.dodgeCooldownMs);
+						if (dodgePressed && dodgeReady && m_avatarLocoState != AvatarLocomotionState::Roll
 							&& nowSec >= m_avatarMoveLockUntilSec)
 						{
 							newState = AvatarLocomotionState::Roll;
@@ -10176,6 +10189,8 @@ namespace engine
 							if (dodgeDir.x * dodgeDir.x + dodgeDir.z * dodgeDir.z < 1e-6f)
 								dodgeDir = m_orbitalCameraController.GetForwardXZ();
 							m_characterController.ApplyDodgeImpulse(dodgeDir);
+							// ETAPE3.3 — esquive annoncée au shard (instant dans la commande suivante).
+							m_moveLastDodgeMs = (std::max)(1u, static_cast<uint32_t>(m_moveClientTimeMs));
 						}
 
 						// Emote (slash) : uniquement a l'arret (immobile, sans saut ni roll en cours).
@@ -16988,6 +17003,12 @@ namespace engine
 		const uint64_t charKey = (charKeyCfg <= 0)
 			? static_cast<uint64_t>(1u)
 			: static_cast<uint64_t>(charKeyCfg);
+		// ETAPE3.3 — nouvelle session : époque 0 (celle du shard à l'admission), plus
+		// d'images à rejouer, aucune correction antérieure acceptée.
+		m_moveEpoch = 0;
+		m_moveHistory.Clear();
+		m_moveLastCorrectedSeq = m_gameplayInputSeq;
+		m_uiModelBinding.ClearMoveCorrection();
 		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
 
 		m_gameplayNetInitialized = true;
@@ -17276,7 +17297,51 @@ namespace engine
 				{
 					m_uiModelBinding.MarkLocalPlayerResurrected();
 				}
+				// ETAPE3.3 — nouvelle époque de mouvement : les images d'avant le téléport
+				// ne seront plus jamais rejouées, les corrections plus anciennes ignorées.
+				m_moveEpoch = forced.moveEpoch;
+				m_moveHistory.Clear();
+				m_moveLastCorrectedSeq = m_gameplayInputSeq;
 				m_uiModelBinding.ClearForcedPosition();
+			}
+		}
+
+		// ETAPE3.3 (chantier 4.1) — position officielle du shard pour une commande de
+		// mouvement : le personnage est décalé de l'écart entre la position officielle et
+		// la position envoyée pour cette commande (MoveReconciler) ; sa vitesse, son saut
+		// et sa hauteur locale sont conservés, le mouvement fait depuis reste acquis.
+		// Correction d'une autre époque ou plus ancienne que la dernière appliquée :
+		// ignorée.
+		{
+			const engine::client::UIMoveCorrection correction = m_uiModelBinding.GetModel().moveCorrection;
+			if (correction.pending)
+			{
+				m_uiModelBinding.ClearMoveCorrection();
+				if (correction.moveEpoch == m_moveEpoch && correction.inputSequence > m_moveLastCorrectedSeq)
+				{
+					m_moveLastCorrectedSeq = correction.inputSequence;
+					engine::gameplay::MoveReconciler::Offset offset{};
+					if (m_moveHistory.ApplyCorrection(correction.inputSequence, correction.x, correction.z, offset))
+					{
+						m_characterController.Translate(static_cast<float>(offset.dx), static_cast<float>(offset.dz));
+						m_orbitalCameraController.SetTargetPosition(m_characterController.GetPosition());
+						LOG_INFO(Core, "[Engine] Position officielle appliquée (commande {}, écart=({:.2f},{:.2f}) m)",
+							correction.inputSequence, offset.dx, offset.dz);
+					}
+					else
+					{
+						// Commande plus connue (historique dépassé) : recalage direct sur la
+						// position officielle, hauteur locale gardée (jamais sous le sol).
+						const float renderX = m_cellWorld ? m_renderFrame.ToRenderX(correction.x) : correction.x;
+						const float renderZ = m_cellWorld ? m_renderFrame.ToRenderZ(correction.z) : correction.z;
+						const engine::math::Vec3 current = m_characterController.GetPosition();
+						const float groundY = SampleGroundHeight(renderX, renderZ) + 0.9f;
+						(void)m_characterController.Init(engine::math::Vec3{ renderX, (std::max)(current.y, groundY), renderZ });
+						m_orbitalCameraController.SetTargetPosition(m_characterController.GetPosition());
+						LOG_INFO(Core, "[Engine] Position officielle appliquée (commande {} hors historique)",
+							correction.inputSequence);
+					}
+				}
 			}
 		}
 		if (m_attackSendCooldownSec > 0.0f)
@@ -17306,9 +17371,18 @@ namespace engine
 				// TD.8 — propage l'état d'animation local pour que les autres joueurs voient
 				// emotes/roulades/run/sprint/etc. (pas seulement Idle/Walk dérivé de la vélocité).
 				// ETAPE3.2 — chaque Input acquitte le dernier snapshot reconstruit.
+				// ETAPE3.3 — commande de mouvement : horloge de simulation, instants du
+				// dernier saut / de la dernière esquive, époque (dernier ForcePosition).
+				engine::client::GameplayUdpClient::MoveCommandFields move{};
+				move.clientTimeMs = static_cast<uint32_t>(m_moveClientTimeMs);
+				move.lastJumpMs = m_moveLastJumpMs;
+				move.lastDodgeMs = m_moveLastDodgeMs;
+				move.moveEpoch = m_moveEpoch;
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
 					wireX, avatarPos.y, wireZ, m_avatarYaw,
-					ToWireAnimState(m_avatarLocoState), m_uiModelBinding.LatestSnapshotSeq());
+					ToWireAnimState(m_avatarLocoState), m_uiModelBinding.LatestSnapshotSeq(), move);
+				// ETAPE3.3 — position envoyée, pour mesurer l'écart d'une correction.
+				m_moveHistory.RecordCommand(m_gameplayInputSeq, wireX, wireZ);
 			}
 		}
 

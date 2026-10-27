@@ -651,6 +651,9 @@ namespace engine::client
 		// Correction SP1 — position imposée par le serveur (respawn/anti-triche).
 		case engine::server::MessageKind::ForcePosition:
 			return ApplyForcePosition(packet);
+		// ETAPE3.3 — position officielle pour une commande de mouvement.
+		case engine::server::MessageKind::MoveCorrection:
+			return ApplyMoveCorrection(packet);
 		// Validation v12 — butin auto-crédité à la mort d'un mob.
 		case engine::server::MessageKind::LootNotify:
 			return ApplyLootNotify(packet);
@@ -1101,11 +1104,47 @@ namespace engine::client
 		m_model.forcedPosition.z = m_forcePositionMessage.positionZ;
 		m_model.forcedPosition.yawRadians = m_forcePositionMessage.yawRadians;
 		m_model.forcedPosition.reason = m_forcePositionMessage.reason;
+		m_model.forcedPosition.moveEpoch = m_forcePositionMessage.moveEpoch; // ETAPE3.3
 		LOG_INFO(Net, "[UIModelBinding] ForcePosition received (pos=({:.1f},{:.1f},{:.1f}), reason={})",
 			m_model.forcedPosition.x, m_model.forcedPosition.y, m_model.forcedPosition.z,
 			m_model.forcedPosition.reason);
 		NotifyObservers(UIModelChangeWorld);
 		return true;
+	}
+
+	bool UIModelBinding::ApplyMoveCorrection(std::span<const std::byte> packet)
+	{
+		engine::server::MoveCorrectionMessage message{};
+		if (!engine::server::DecodeMoveCorrection(packet, message))
+		{
+			LOG_WARN(Net, "[UIModelBinding] MoveCorrection FAILED: decode error");
+			return false;
+		}
+		// Seule la plus récente compte (Engine l'applique à la frame suivante).
+		if (m_model.moveCorrection.pending && m_model.moveCorrection.moveEpoch == message.moveEpoch
+			&& message.inputSequence <= m_model.moveCorrection.inputSequence)
+		{
+			return true;
+		}
+		m_model.moveCorrection.pending = true;
+		m_model.moveCorrection.moveEpoch = message.moveEpoch;
+		m_model.moveCorrection.inputSequence = message.inputSequence;
+		m_model.moveCorrection.x = message.positionX;
+		m_model.moveCorrection.y = message.positionY;
+		m_model.moveCorrection.z = message.positionZ;
+		m_model.moveCorrection.yawRadians = message.yawRadians;
+		LOG_DEBUG(Net, "[UIModelBinding] MoveCorrection received (seq={}, pos=({:.1f},{:.1f},{:.1f}))",
+			message.inputSequence, message.positionX, message.positionY, message.positionZ);
+		return true;
+	}
+
+	void UIModelBinding::ClearMoveCorrection()
+	{
+		if (!ValidateMainThread("ClearMoveCorrection"))
+		{
+			return;
+		}
+		m_model.moveCorrection = UIMoveCorrection{};
 	}
 
 	void UIModelBinding::ClearForcedPosition()

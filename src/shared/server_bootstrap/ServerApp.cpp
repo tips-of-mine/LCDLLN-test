@@ -1018,7 +1018,7 @@ namespace engine::server
 			{
 				acking->snapshotSender.OnAck(input.ackSnapshotSeq);
 			}
-			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersY, input.positionMetersZ, input.yawRadians, input.animationState);
+			HandleInput(datagram.endpoint, input);
 			return;
 		}
 
@@ -2558,6 +2558,12 @@ namespace engine::server
 			acceptedClient.restoreSnapshotId = 0;
 		}
 
+		// ETAPE3.3 — position officielle de départ des règles de mouvement, et vitesse
+		// maximale autoritaire (stats dérivées). Époque 0 : celle du client au départ.
+		engine::movement::ResetMovement(acceptedClient.movement, acceptedClient.positionMetersX,
+			acceptedClient.positionMetersY, acceptedClient.positionMetersZ);
+		RefreshMaxMoveSpeed(acceptedClient);
+
 		UpdateClientInterest(acceptedClient);
 		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
 			acceptedClient.clientId,
@@ -2596,7 +2602,7 @@ namespace engine::server
 		OnClientLogin(acceptedClient);
 	}
 
-	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersY, float positionMetersZ, float yawRadians, uint8_t animationState)
+	void ServerApp::HandleInput(const Endpoint& endpoint, const InputMessage& input)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr)
@@ -2606,89 +2612,92 @@ namespace engine::server
 			return;
 		}
 
-		if (client->clientId != clientId)
+		if (client->clientId != input.clientId)
 		{
 			LOG_WARN(Net, "[ServerApp] Input ignored: client_id mismatch (expected={}, got={}, endpoint={})",
 				client->clientId,
-				clientId,
+				input.clientId,
 				UdpTransport::EndpointToString(endpoint));
 			return;
 		}
 
-		// Monde « Royaumes » — mur invisible côté serveur : une position dans une cellule
-		// non générée (ou NaN) est refusée AVANT l'anti-triche (dont la trace reste sur la
-		// dernière position valide) ; le client est recalé (ForcePosition, ≤ 1 / 500 ms).
-		if (!IsInsideGeneratedWorld(positionMetersX, positionMetersZ))
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		// TA.3 — ce client est vivant (même si la commande est ensuite ignorée).
+		client->lastUdpActivityAtMs = nowMs;
+
+		// ETAPE3.3 — commande partie avant le dernier téléport : ignorée (le client ne
+		// connaissait pas encore sa nouvelle position). Si le client reste dans l'ancienne
+		// époque (ForcePosition perdu ou non envoyé), la position imposée est renvoyée,
+		// au plus une fois toutes les 500 ms, SANS nouvelle époque.
+		if (input.moveEpoch != client->moveEpoch)
 		{
-			LOG_DEBUG(Net, "[ServerApp] Input rejete : hors du monde genere (client_id={}, pos=({:.1f},{:.1f}))",
-				client->clientId, positionMetersX, positionMetersZ);
-			const uint64_t forceNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now().time_since_epoch()).count());
-			// Le client est vivant (il pousse contre le mur) : pas d'éviction pour inactivité.
-			client->lastUdpActivityAtMs = forceNowMs;
-			if ((forceNowMs - client->lastForcePositionSentMs) >= 500u)
+			if ((nowMs - client->lastForcePositionSentMs) >= 500u)
 			{
-				SendForcePosition(*client, kForcePositionReasonTeleport);
+				EmitForcePosition(*client, client->lastForcePositionReason);
 			}
 			return;
 		}
 
-		// TA.3c — anti-triche : rejette une position implausible (speed/teleport hack)
-		// AVANT de l'appliquer ; on conserve alors la dernière position valide. TC.1 : l'Input
-		// porte désormais Y → on l'utilise pour la distance 3D.
-		//
-		// On utilise inputSequence (et non steady_clock serveur) comme source de temps. Raison :
-		// quand plusieurs paquets UDP arrivent dans la même tick serveur (burst de réception
-		// — courant en UDP même en flux nominal, notamment sous mode TG.3 thread receive split),
-		// ils sont processés en séquence avec des steady_clock_now() quasi identiques.
-		// dt(steady_clock) ≈ 0 ms → vitesse calculée énorme → faux positif SpeedHack alors que
-		// le client a bien envoyé ses inputs à cadence normale. inputSequence est en revanche
-		// stable : 1 unité = 1 tick client = 1000/m_tickHz ms (m_tickHz partagé avec le client
-		// via le Welcome packet ; client et serveur tiquent au même rythme).
+		// Monde « Royaumes » — mur invisible côté serveur : une position dans une cellule
+		// non générée (ou NaN) est refusée ; le client est recalé (ForcePosition,
+		// ≤ 1 / 500 ms) sur la dernière position officielle.
+		if (!IsInsideGeneratedWorld(input.positionMetersX, input.positionMetersZ))
 		{
-			const uint16_t tickHzSafe = (m_tickHz != 0u) ? m_tickHz : static_cast<uint16_t>(20);  // fallback defensif si Init n'a pas tourne
-			const uint64_t clientTickPeriodMs = 1000u / static_cast<uint64_t>(tickHzSafe);
-			const uint64_t antiCheatNowMs = static_cast<uint64_t>(inputSequence) * clientTickPeriodMs;
-			const anticheat::CheatVerdict verdict = m_antiCheat.CheckMovement(
-				client->persistenceCharacterKey, positionMetersX, positionMetersY, positionMetersZ, antiCheatNowMs);
-			if (verdict != anticheat::CheatVerdict::OK)
+			LOG_DEBUG(Net, "[ServerApp] Input rejete : hors du monde genere (client_id={}, pos=({:.1f},{:.1f}))",
+				client->clientId, input.positionMetersX, input.positionMetersZ);
+			// ETAPE3.3 — la position officielle ne change pas : pas de nouvelle époque ni
+			// de budget de temps remis à neuf (sinon chaque refus offrirait la marge du
+			// départ, cf. docs/architecture/etape3_reseau.md §3.3).
+			if ((nowMs - client->lastForcePositionSentMs) >= 500u)
 			{
-				++m_antiCheatViolations;
-				LOG_WARN(AntiCheat,
-					"[ServerApp] Input rejete par anti-triche (verdict={}, client_id={}, character_key={}, pos=({:.2f},{:.2f}), seq={})",
-					static_cast<int>(verdict), client->clientId, client->persistenceCharacterKey, positionMetersX, positionMetersZ, inputSequence);
-				// Correction SP1 — informe le client de sa vraie position (dernière
-				// valide côté serveur) au lieu de le laisser désynchronisé en
-				// silence. Throttlé à 1 / 500 ms (un hack soutenu spammerait).
-				const uint64_t forceNowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-					std::chrono::steady_clock::now().time_since_epoch()).count());
-				if ((forceNowMs - client->lastForcePositionSentMs) >= 500u)
-				{
-					SendForcePosition(*client, kForcePositionReasonAntiCheat);
-				}
-				return;
+				EmitForcePosition(*client, kForcePositionReasonTeleport);
 			}
+			return;
 		}
 
-		const float previousPositionX = client->positionMetersX;
-		const float previousPositionZ = client->positionMetersZ;
-		client->lastInputSequence = inputSequence;
-		// TA.3 — rafraichit le timestamp UDP : ce client est vivant. EvictIdleClients
-		// le laissera tranquille tant qu'il continue d'envoyer des Input.
-		client->lastUdpActivityAtMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::steady_clock::now().time_since_epoch()).count());
-		client->positionMetersX = positionMetersX;
-		client->positionMetersY = positionMetersY; // TC.1 : altitude fournie par le client
-		client->positionMetersZ = positionMetersZ;
-		client->yawRadians = yawRadians;            // TC.1 : orientation fournie par le client (plus dérivée de la vélocité)
-		client->animationState = animationState;    // TD.8 : état d'animation reporté par le client (emote/roll/run/…)
-		if (client->hasReplicatedState)
+		// ETAPE3.3 (chantier 4.1) — le shard tranche avec les règles de mouvement
+		// partagées : budget de temps (horloge client jamais plus rapide que la sienne),
+		// distance horizontale (vitesse autoritaire du personnage, esquive), hauteur
+		// (pente, saut). Remplace le contrôle 13 m/s de l'anti-triche (AntiCheatGameplay)
+		// pour les joueurs.
+		engine::movement::MoveCommand command{};
+		command.sequence = input.inputSequence;
+		command.clientTimeMs = input.clientTimeMs;
+		command.lastJumpMs = input.lastJumpMs;
+		command.lastDodgeMs = input.lastDodgeMs;
+		command.x = input.positionMetersX;
+		command.y = input.positionMetersY;
+		command.z = input.positionMetersZ;
+		const engine::movement::MoveResult result =
+			engine::movement::ApplyMoveCommand(client->movement, command, client->maxMoveSpeed, nowMs);
+		if (result.verdict == engine::movement::MoveVerdict::Stale)
 		{
-			const float tickDt = 1.0f / static_cast<float>(m_tickHz);
-			client->velocityMetersPerSecondX = (client->positionMetersX - previousPositionX) / tickDt;
-			client->velocityMetersPerSecondZ = (client->positionMetersZ - previousPositionZ) / tickDt;
+			return; // en retard, en double ou rejouée
 		}
+
+		client->lastInputSequence = input.inputSequence;
+		client->positionMetersX = client->movement.x;
+		client->positionMetersY = client->movement.y;
+		client->positionMetersZ = client->movement.z;
+		if (std::isfinite(input.yawRadians))
+			client->yawRadians = input.yawRadians; // TC.1 : orientation fournie par le client
+		client->animationState = input.animationState; // TD.8 : état d'animation reporté par le client
+		client->velocityMetersPerSecondX = result.velocityX;
+		client->velocityMetersPerSecondY = result.velocityY;
+		client->velocityMetersPerSecondZ = result.velocityZ;
 		client->hasReplicatedState = true;
+
+		if (result.verdict == engine::movement::MoveVerdict::Corrected)
+		{
+			++m_antiCheatViolations;
+			LOG_DEBUG(AntiCheat,
+				"[ServerApp] Mouvement hors règles, position ramenée (client_id={}, seq={}, demandée=({:.2f},{:.2f}), officielle=({:.2f},{:.2f}), max={:.2f} m)",
+				client->clientId, input.inputSequence, input.positionMetersX, input.positionMetersZ,
+				client->positionMetersX, client->positionMetersZ, result.maxDistanceMeters);
+			SendMoveCorrection(*client, input.inputSequence);
+		}
+
 		MaybeApplyZoneTransition(*client);
 		LOG_DEBUG(Net, "[ServerApp] Input accepted (client_id={}, seq={}, pos=({:.2f}, {:.2f}))",
 			client->clientId,
@@ -2696,6 +2705,50 @@ namespace engine::server
 			client->positionMetersX,
 			client->positionMetersZ);
 		UpdateClientInterest(*client);
+	}
+
+	void ServerApp::SendMoveCorrection(ConnectedClient& client, uint32_t inputSequence)
+	{
+		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		if (nowMs - client.lastMoveCorrectionSentMs < kMoveCorrectionIntervalMs)
+			return; // la position officielle est déjà en route ; la prochaine suivra
+		MoveCorrectionMessage message{};
+		message.clientId = client.clientId;
+		message.moveEpoch = client.moveEpoch;
+		message.inputSequence = inputSequence;
+		message.positionX = client.positionMetersX;
+		message.positionY = client.positionMetersY;
+		message.positionZ = client.positionMetersZ;
+		message.yawRadians = client.yawRadians;
+		if (SendDatagram(client.endpoint, EncodeMoveCorrection(message)))
+			client.lastMoveCorrectionSentMs = nowMs;
+	}
+
+	void ServerApp::ResetClientMovement(ConnectedClient& client)
+	{
+		engine::movement::ResetMovement(client.movement, client.positionMetersX, client.positionMetersY,
+			client.positionMetersZ);
+		++client.moveEpoch;
+	}
+
+	void ServerApp::RefreshMaxMoveSpeed(ConnectedClient& client)
+	{
+		client.maxMoveSpeed = 13.0f; // défaut du client tant que les stats manquent
+		if (!m_statsTables || client.factionId.empty() || client.classId.empty())
+			return;
+		const engine::server::gameplay::Sex sex =
+			(client.gender == "female") ? engine::server::gameplay::Sex::Female
+			                            : engine::server::gameplay::Sex::Male;
+		auto d = engine::server::gameplay::ComputeStats(
+			*m_statsTables, client.factionId, client.classId, sex, client.level);
+		if (!d)
+			return;
+		ApplyEquipmentBonus(client, *d);
+		ApplyAuraStatModifiers(client.auras, *d);
+		const float fastest = (std::max)({ d->speedWalk, d->speedRun, d->speedSprint });
+		if (std::isfinite(fastest) && fastest > 0.1f)
+			client.maxMoveSpeed = fastest;
 	}
 
 	void ServerApp::HandleGoodbye(const Endpoint& endpoint, uint32_t clientId)
@@ -4749,6 +4802,9 @@ namespace engine::server
 			client.positionMetersZ);
 		SaveConnectedClient(client, "zone_transition");
 		(void)SendZoneChange(client, zoneChange);
+		// ETAPE3.3 — la position officielle repart du point d'arrivée dans une nouvelle
+		// époque : les commandes encore en route depuis l'ancienne zone sont ignorées.
+		SendForcePosition(client, kForcePositionReasonTeleport);
 		SendDynamicEventBootstrap(client);
 		ApplyQuestEvent(client, QuestStepType::Enter, std::string("zone:") + std::to_string(client.zoneId), 1, "zone_enter");
 	}
@@ -5082,8 +5138,18 @@ namespace engine::server
 
 	void ServerApp::SendForcePosition(ConnectedClient& client, uint8_t reason)
 	{
+		// ETAPE3.3 — position imposée : l'état de mouvement officiel repart d'ici, dans
+		// une nouvelle époque (les commandes d'avant le téléport seront ignorées).
+		ResetClientMovement(client);
+		client.lastForcePositionReason = reason;
+		EmitForcePosition(client, reason);
+	}
+
+	void ServerApp::EmitForcePosition(ConnectedClient& client, uint8_t reason)
+	{
 		ForcePositionMessage message{};
 		message.clientId = client.clientId;
+		message.moveEpoch = client.moveEpoch;
 		message.positionX = client.positionMetersX;
 		message.positionY = client.positionMetersY;
 		message.positionZ = client.positionMetersZ;
@@ -5269,6 +5335,12 @@ namespace engine::server
 		ApplyAuraStatModifiers(client.auras, *d);
 
 		ApplyDerivedCombatStats(client, *d);
+		// ETAPE3.3 — vitesse maximale autoritaire du mouvement (allure la plus rapide).
+		{
+			const float fastest = (std::max)({ d->speedWalk, d->speedRun, d->speedSprint });
+			if (std::isfinite(fastest) && fastest > 0.1f)
+				client.maxMoveSpeed = fastest;
+		}
 		client.maxResource = d->resource;
 		if (client.currentResource > client.maxResource)
 		{

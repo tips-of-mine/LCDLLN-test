@@ -40,6 +40,10 @@ namespace
 		in.yawRadians = 1.5708f;
 		in.animationState = 9u; // TD.8 : Emote (valeur d'AvatarAnimState)
 		in.ackSnapshotSeq = 0xA1B2C3D4u; // ETAPE3.2 : acquittement du dernier snapshot reconstruit
+		in.clientTimeMs = 987654u;       // ETAPE3.3 : commande de mouvement
+		in.lastJumpMs = 987000u;
+		in.lastDodgeMs = 986000u;
+		in.moveEpoch = 42u;
 
 		const std::vector<std::byte> packet = EncodeInput(in);
 		assert(!packet.empty());
@@ -54,6 +58,8 @@ namespace
 		assert(out.yawRadians == in.yawRadians);
 		assert(out.animationState == in.animationState); // TD.8
 		assert(out.ackSnapshotSeq == in.ackSnapshotSeq); // ETAPE3.2
+		assert(out.clientTimeMs == in.clientTimeMs && out.lastJumpMs == in.lastJumpMs
+			&& out.lastDodgeMs == in.lastDodgeMs && out.moveEpoch == in.moveEpoch); // ETAPE3.3
 		std::puts("[OK] TestInputRoundTrip");
 	}
 
@@ -501,11 +507,13 @@ namespace
 		in.positionZ = 96.0f;
 		in.yawRadians = 1.57f;
 		in.reason = engine::server::kForcePositionReasonRespawn;
+		in.moveEpoch = 0xBEEFu; // ETAPE3.3
 
 		const std::vector<std::byte> packet = engine::server::EncodeForcePosition(in);
 		engine::server::ForcePositionMessage out{};
 		assert(engine::server::DecodeForcePosition(packet, out));
 		assert(out.clientId == 7u);
+		assert(out.moveEpoch == 0xBEEFu);
 		assert(out.positionX == 96.0f && out.positionY == 1.5f && out.positionZ == 96.0f);
 		assert(out.yawRadians == 1.57f);
 		assert(out.reason == engine::server::kForcePositionReasonRespawn);
@@ -520,6 +528,29 @@ namespace
 		badReason[8 + 20] = static_cast<std::byte>(9);
 		assert(!engine::server::DecodeForcePosition(badReason, out));
 		std::puts("[OK] TestForcePositionRoundTrip");
+	}
+
+	/// ETAPE3.3 — round-trip MoveCorrection + rejet tronqué.
+	void TestMoveCorrectionRoundTrip()
+	{
+		engine::server::MoveCorrectionMessage in{};
+		in.clientId = 9u;
+		in.moveEpoch = 3u;
+		in.inputSequence = 123456u;
+		in.positionX = -12.25f;
+		in.positionY = 40.5f;
+		in.positionZ = 7.75f;
+		in.yawRadians = -1.0f;
+		const std::vector<std::byte> packet = engine::server::EncodeMoveCorrection(in);
+		engine::server::MoveCorrectionMessage out{};
+		assert(engine::server::DecodeMoveCorrection(packet, out));
+		assert(out.clientId == 9u && out.moveEpoch == 3u && out.inputSequence == 123456u);
+		assert(out.positionX == -12.25f && out.positionY == 40.5f && out.positionZ == 7.75f);
+		assert(out.yawRadians == -1.0f);
+		std::vector<std::byte> truncated = packet;
+		truncated.pop_back();
+		assert(!engine::server::DecodeMoveCorrection(truncated, out));
+		std::puts("[OK] TestMoveCorrectionRoundTrip");
 	}
 
 	/// Validation v12 — round-trip LootNotify (butin auto) + rejet tronqué.
@@ -716,6 +747,7 @@ int main()
 	TestThreatUpdateRoundTrip();
 	TestPlayerStatsRoundTripWithProfile();
 	TestForcePositionRoundTrip();
+	TestMoveCorrectionRoundTrip();
 	TestLootNotifyRoundTrip();
 	TestQuestAcceptRequestRoundTrip();
 	TestQuestTurnInRequestRoundTrip();

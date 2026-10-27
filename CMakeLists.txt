@@ -855,6 +855,8 @@ target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)
 target_sources(engine_core PRIVATE src/shared/network/UdpSecureChannel.cpp)
 # ETAPE3.2 : snapshots en delta sur base acquittée (client + shard).
 target_sources(engine_core PRIVATE src/shared/network/SnapshotDelta.cpp)
+# ETAPE3.3 : règles de mouvement partagées (shard) + recalage du client.
+target_sources(engine_core PRIVATE src/shared/movement/MovementRules.cpp src/client/gameplay/MoveReconciler.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb

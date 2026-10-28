@@ -1804,6 +1804,11 @@ namespace engine::server
 		engine::core::StallGuard m_stallGuard;
 		/// ETAPE5.4 — métriques de jeu (photo à 1 Hz) et mesures du tick qui l'alimentent.
 		ShardMetricsBoard m_metricsBoard;
+		/// FIX.6 — cadence du journal « Tick stats » (s, 0 = seulement sur changement ;
+		/// -1 = pas encore lue dans la config) et dernier état journalisé.
+		int64_t m_tickStatsLogIntervalSec = -1;
+		size_t m_lastTickStatsClients = 0;
+		bool m_lastTickStatsShedding = false;
 		/// ETAPE5.6 — ordres du master (thread principal) et réponses (vers le master).
 		std::mutex m_masterInboxMutex;
 		std::vector<engine::network::MailDebitPayload> m_pendingMailDebits;

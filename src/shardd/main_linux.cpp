@@ -116,8 +116,10 @@ int main(int argc, char** argv)
 		const double derivedKBps = netConfig.packetRatePerSec
 			* static_cast<double>(engine::network::kProtocolV1MaxPacketSize) / 1024.0;
 		capKBps = std::max(derivedKBps, 1.0);
-		LOG_WARN(Net,
-			"[ShardMain] max_bandwidth_per_player missing -> using derived default {} KB/s",
+		// FIX.6 — INFO : le repli dérivé (packet_rate × taille max) est un défaut voulu ;
+		// la clé est désormais renseignée dans les configs Docker.
+		LOG_INFO(Net,
+			"[ShardMain] server.bandwidth.max_bandwidth_per_player absent -> defaut derive {} KB/s",
 			capKBps);
 	}
 	netConfig.maxBandwidthPerPlayerBytesPerSec = capKBps * 1024.0;

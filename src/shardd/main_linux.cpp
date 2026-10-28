@@ -212,6 +212,14 @@ int main(int argc, char** argv)
 	const std::string regEndpoint = config.GetString("shard.register.endpoint", config.GetString("shard.register_endpoint", "127.0.0.1:3843"));
 	// TB.1 : endpoint UDP gameplay annoncé au master (relayé au client via SERVER_LIST). Vide = non annoncé.
 	const std::string regUdpEndpoint = config.GetString("shard.register.udp_endpoint", "");
+	// FIX.3 : avertir dès le démarrage d'une annonce inutilisable par les clients.
+	// Incident du 28/10/2026 : UDP non annoncé => le client se rabat sur le port TCP,
+	// n'obtient jamais de Welcome (HUD incomplet, position jamais sauvegardée).
+	if (regUdpEndpoint.empty())
+		LOG_WARN(Net, "[ShardMain] shard.register.udp_endpoint vide : aucun client ne pourra entrer en jeu "
+			"(Docker : renseigner SHARD_PUBLIC_HOST ou SHARD_REGISTER_UDP_ENDPOINT dans .env)");
+	if (regEndpoint.rfind("127.", 0) == 0 || regEndpoint.rfind("localhost", 0) == 0)
+		LOG_WARN(Net, "[ShardMain] shard.register.endpoint='{}' est une adresse locale : inutilisable par un client distant", regEndpoint);
 	const uint32_t regCap = static_cast<uint32_t>(config.GetInt("shard.register.max_capacity", config.GetInt("shard.register_max_capacity", 500)));
 	const std::string buildVer = config.GetString("shard.register.build_version", config.GetString("shard.build_version", "dev"));
 	// Présentation publique du serveur dans la liste client (M-server-meta).

@@ -38,8 +38,53 @@ LOG_DEBUG(Server, "[SREG_REG] RegisterShard name='{}' endpoint='{}' cap={}", nam
 		e.ruleset = ruleset;
 		m_shards[id] = std::move(e);
 		m_name_to_id[m_shards[id].name] = id;
-		LOG_INFO(Core, "[ShardRegistry] RegisterShard OK (id={}, name='{}', endpoint='{}')", id, m_shards[id].name, m_shards[id].endpoint);
+		LOG_INFO(Core, "[ShardRegistry] RegisterShard OK (id={}, name='{}', endpoint='{}', udp_endpoint='{}')", id, m_shards[id].name,
+			m_shards[id].endpoint, m_shards[id].udp_endpoint.empty() ? "(non annonce)" : m_shards[id].udp_endpoint);
+		if (m_shards[id].udp_endpoint.empty())
+			LOG_WARN(Core, "[ShardRegistry] Shard '{}' sans endpoint UDP : les clients ne pourront pas entrer en jeu (renseigner SHARD_PUBLIC_HOST ou SHARD_REGISTER_UDP_ENDPOINT cote shard)",
+				m_shards[id].name);
 		return id;
+	}
+
+	bool ShardRegistry::UpdateShardAnnouncement(uint32_t shard_id, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity,
+		std::string region, std::string display_name,
+		engine::network::ShardGameMode game_mode, engine::network::ShardRuleset ruleset)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		auto it = m_shards.find(shard_id);
+		if (it == m_shards.end())
+		{
+			LOG_WARN(Core, "[ShardRegistry] UpdateShardAnnouncement: shard_id {} not found", shard_id);
+			return false;
+		}
+		Entry& e = it->second;
+		// On journalise uniquement ce qui change, pour qu'un réenregistrement banal
+		// (coupure réseau, même configuration) reste silencieux.
+		if (e.endpoint != endpoint)
+		{
+			LOG_INFO(Core, "[ShardRegistry] Shard {} : endpoint TCP '{}' -> '{}'", shard_id, e.endpoint, endpoint);
+			e.endpoint = std::move(endpoint);
+		}
+		if (e.udp_endpoint != udp_endpoint)
+		{
+			LOG_INFO(Core, "[ShardRegistry] Shard {} : endpoint UDP '{}' -> '{}'", shard_id,
+				e.udp_endpoint.empty() ? "(non annonce)" : e.udp_endpoint,
+				udp_endpoint.empty() ? "(non annonce)" : udp_endpoint);
+			e.udp_endpoint = std::move(udp_endpoint);
+		}
+		if (e.max_capacity != max_capacity)
+		{
+			LOG_INFO(Core, "[ShardRegistry] Shard {} : capacite {} -> {}", shard_id, e.max_capacity, max_capacity);
+			e.max_capacity = max_capacity;
+		}
+		e.region = std::move(region);
+		// Même repli que RegisterShard : nom public vide => nom technique.
+		e.display_name = display_name.empty() ? e.name : std::move(display_name);
+		e.game_mode = game_mode;
+		e.ruleset = ruleset;
+		if (e.udp_endpoint.empty())
+			LOG_WARN(Core, "[ShardRegistry] Shard '{}' sans endpoint UDP : les clients ne pourront pas entrer en jeu", e.name);
+		return true;
 	}
 
 	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load, std::optional<bool> saturatedOpt)

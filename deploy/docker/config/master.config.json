@@ -2,6 +2,7 @@
   "server": {
     "tcp": { "port": 3840 },
     "health": { "port": 3842, "bind": "0.0.0.0" },
+    "bandwidth": { "max_bandwidth_per_player": 3200 },
     "self_register": false
   },
   "shard": {

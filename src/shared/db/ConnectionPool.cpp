@@ -106,8 +106,9 @@ namespace engine::server::db
 				LOG_ERROR(Core, "[ConnectionPool] mysql_init failed for slot {}", i);
 				continue;
 			}
-			bool reconnect = false;
-			mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
+			// FIX.6 — MYSQL_OPT_RECONNECT retiré : la valeur passée (false) est déjà le défaut de
+			// libmysqlclient, et l'option est dépréciée (« WARNING: MYSQL_OPT_RECONNECT is
+			// deprecated » à chaque connexion dans les logs). Reconnexion gérée par le pool (ping).
 			if (!ConnectOne(mysql))
 			{
 				LOG_ERROR(Core, "[ConnectionPool] Connect failed for slot {}: {}", i, mysql_error(mysql));
@@ -194,8 +195,9 @@ namespace engine::server::db
 							e.mysql = mysql_init(nullptr);
 							if (e.mysql)
 							{
-								bool reconnect = false;
-								mysql_options(e.mysql, MYSQL_OPT_RECONNECT, &reconnect);
+								// FIX.6 — MYSQL_OPT_RECONNECT retiré : la valeur passée (false) est déjà le défaut de
+								// libmysqlclient, et l'option est dépréciée (« WARNING: MYSQL_OPT_RECONNECT is
+								// deprecated » à chaque connexion dans les logs). Reconnexion gérée par le pool (ping).
 								if (!ConnectOne(e.mysql))
 								{
 									LOG_WARN(Core, "[ConnectionPool] Reconnect failed: {}", mysql_error(e.mysql));

@@ -197,7 +197,8 @@ namespace engine::server
 			}
 		}
 		m_entityCells.erase(it);
-		LOG_INFO(Net, "[CellGrid] Entity removed (entity_id={})", entityId);
+		// FIX.6 — DEBUG : une ligne à chaque mob retiré (endormissement, mort, départ).
+		LOG_DEBUG(Net, "[CellGrid] Entity removed (entity_id={})", entityId);
 		return true;
 	}
 

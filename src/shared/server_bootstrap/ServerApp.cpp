@@ -3257,15 +3257,31 @@ namespace engine::server
 			size_t asleepMobs = 0;
 			for (const MobEntity& mob : m_mobs)
 				asleepMobs += mob.sleep.asleep ? 1u : 0u;
-			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, mobs={}, mobs_endormis={}, charge_tick={:.0f}%, delestage={}, rx_packets={}, tx_packets={})",
-				m_currentTick,
-				m_clients.size(),
-				m_mobs.size(),
-				asleepMobs,
-				m_loadShedder.SmoothedLoad() * 100.0,
-				m_loadShedder.Active() ? "oui" : "non",
-				m_transport.ReceivedPacketCount(),
-				m_transport.SentPacketCount());
+			// FIX.6 — journal toutes les server.tick_stats_log_interval_sec (60 s par défaut)
+			// au lieu de chaque seconde (368 lignes en 6 min), et aussi dès que le nombre de
+			// clients ou l'état de délestage change. Les métriques (/metrics) restent à 1 Hz.
+			if (m_tickStatsLogIntervalSec < 0)
+				m_tickStatsLogIntervalSec = static_cast<int64_t>(std::clamp<int64_t>(
+					m_config.GetInt("server.tick_stats_log_interval_sec", 60), 0, 86400));
+			const uint64_t secondsSinceStart = m_currentTick / (std::max)(static_cast<uint64_t>(m_tickHz), uint64_t{1});
+			const bool periodic = m_tickStatsLogIntervalSec > 0
+				&& (secondsSinceStart % static_cast<uint64_t>(m_tickStatsLogIntervalSec)) == 0;
+			const bool changed = m_clients.size() != m_lastTickStatsClients
+				|| m_loadShedder.Active() != m_lastTickStatsShedding;
+			m_lastTickStatsClients = m_clients.size();
+			m_lastTickStatsShedding = m_loadShedder.Active();
+			if (periodic || changed)
+			{
+				LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, mobs={}, mobs_endormis={}, charge_tick={:.0f}%, delestage={}, rx_packets={}, tx_packets={})",
+					m_currentTick,
+					m_clients.size(),
+					m_mobs.size(),
+					asleepMobs,
+					m_loadShedder.SmoothedLoad() * 100.0,
+					m_loadShedder.Active() ? "oui" : "non",
+					m_transport.ReceivedPacketCount(),
+					m_transport.SentPacketCount());
+			}
 			PublishGameplayMetrics(asleepMobs);
 		}
 	}
@@ -3793,11 +3809,26 @@ namespace engine::server
 				}
 			}
 			m_spawners.push_back(std::move(runtimeState));
-			LOG_INFO(Net, "[ServerApp] Spawner ready (id={}, zone_id={}, count={}, respawn_sec={})",
+			// FIX.6 — DEBUG : une ligne par spawner = 56 716 lignes au démarrage du monde
+			// « royaumes » (7,8 Mo de log). Résumé unique en INFO après la boucle.
+			LOG_DEBUG(Net, "[ServerApp] Spawner ready (id={}, zone_id={}, count={}, respawn_sec={})",
 				definition.spawnerId,
 				definition.zoneId,
 				definition.count,
 				definition.respawnSeconds);
+		}
+
+		{
+			// FIX.6 — résumé du chargement (le détail par spawner est en DEBUG).
+			size_t totalSlots = 0;
+			size_t withAgenda = 0;
+			for (const SpawnerRuntimeState& spawner : m_spawners)
+			{
+				totalSlots += spawner.slots.size();
+				withAgenda += spawner.definition.agenda.enabled ? 1u : 0u;
+			}
+			LOG_INFO(Net, "[ServerApp] Spawners prets : {} spawner(s), {} emplacement(s) de mob, {} avec agenda (detail : log.level=debug)",
+				m_spawners.size(), totalSlots, withAgenda);
 		}
 
 		// ETAPE4.3 (chantier 2.1) — index des spawners par région : seules les régions
@@ -7148,7 +7179,8 @@ namespace engine::server
 			return;
 		}
 
-		LOG_INFO(Net, "[ServerApp] Mob state changed (mob_entity_id={}, {} -> {})",
+		// FIX.6 — DEBUG : ~1 000 lignes en 6 min pour 53 mobs (Idle <-> Patrol).
+		LOG_DEBUG(Net, "[ServerApp] Mob state changed (mob_entity_id={}, {} -> {})",
 			mob.entityId,
 			GetMobAiStateName(mob.aiState),
 			GetMobAiStateName(newState));

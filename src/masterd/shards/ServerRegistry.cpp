@@ -46,8 +46,9 @@ namespace engine::server
             return false;
         }
 
-        bool reconnect = false;
-        mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
+        // FIX.6 — MYSQL_OPT_RECONNECT retiré : la valeur passée (false) est déjà le défaut de
+        // libmysqlclient, et l'option est dépréciée (« WARNING: MYSQL_OPT_RECONNECT is
+        // deprecated » à chaque connexion dans les logs). Reconnexion gérée par le pool (ping).
 
         if (!mysql_real_connect(mysql, host.c_str(), user.c_str(),
                 password.empty() ? nullptr : password.c_str(),

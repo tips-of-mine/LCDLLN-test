@@ -503,8 +503,9 @@ namespace engine::server
 		/// ETAPE5.6 — courrier déposé pour \p characterId (opcode 215) : crédité au prochain
 		/// tick si le personnage est connecté ici (sinon à sa connexion). Thread-safe.
 		void EnqueueMailboxPoke(uint64_t characterId);
-		/// ETAPE5.6 — paquets à envoyer au master (réponses 214). Thread-safe ; vide la boîte.
-		std::vector<std::vector<uint8_t>> TakeMasterOutbox();
+		/// ETAPE5.6 — réponses à envoyer au master (opcode 214, paquet construit par
+		/// l'appelant). Thread-safe ; vide la boîte.
+		std::vector<engine::network::MailDebitResultPayload> TakeMasterOutbox();
 
 		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
 		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
@@ -1807,7 +1808,7 @@ namespace engine::server
 		std::mutex m_masterInboxMutex;
 		std::vector<engine::network::MailDebitPayload> m_pendingMailDebits;
 		std::vector<uint64_t> m_pendingMailboxPokes;
-		std::vector<std::vector<uint8_t>> m_masterOutbox;
+		std::vector<engine::network::MailDebitResultPayload> m_masterOutbox;
 		/// ETAPE5.6 — courrier lu hors du tick pour un crédit en jeu (thread de la file).
 		struct LiveMailboxRow
 		{

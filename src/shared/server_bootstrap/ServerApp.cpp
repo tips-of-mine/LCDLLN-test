@@ -3269,10 +3269,10 @@ namespace engine::server
 			m_pendingMailboxPokes.push_back(characterId);
 	}
 
-	std::vector<std::vector<uint8_t>> ServerApp::TakeMasterOutbox()
+	std::vector<engine::network::MailDebitResultPayload> ServerApp::TakeMasterOutbox()
 	{
 		std::lock_guard lock(m_masterInboxMutex);
-		std::vector<std::vector<uint8_t>> out;
+		std::vector<engine::network::MailDebitResultPayload> out;
 		out.swap(m_masterOutbox);
 		return out;
 	}
@@ -3304,11 +3304,11 @@ namespace engine::server
 			}
 			LOG_INFO(Net, "[ServerApp] ETAPE5.6 prélèvement courrier (operation={}, character_key={}, gold={}, result={})",
 				debit.operationId, debit.characterId, debit.gold, static_cast<unsigned>(reply.result));
-			auto pkt = engine::network::BuildMailDebitResultPacket(reply);
-			if (!pkt.empty())
 			{
+				// Le paquet est construit par le thread principal du shard (ShardPayloads n'est
+				// pas compilé dans le server_app WIN32).
 				std::lock_guard lock(m_masterInboxMutex);
-				m_masterOutbox.push_back(std::move(pkt));
+				m_masterOutbox.push_back(std::move(reply));
 			}
 		}
 		for (uint64_t characterKey : pokes)
@@ -3446,11 +3446,11 @@ namespace engine::server
 			}
 			LOG_WARN(Net, "[ServerApp] ETAPE5.6 COMMIT incertain tranché (operation={}, state='{}', result={}, essais={})",
 				u.debit.operationId, state, static_cast<unsigned>(reply.result), u.attempts);
-			auto pkt = engine::network::BuildMailDebitResultPacket(reply);
-			if (!pkt.empty())
 			{
+				// Le paquet est construit par le thread principal du shard (ShardPayloads n'est
+				// pas compilé dans le server_app WIN32).
 				std::lock_guard lock(m_masterInboxMutex);
-				m_masterOutbox.push_back(std::move(pkt));
+				m_masterOutbox.push_back(std::move(reply));
 			}
 		}
 		m_uncertainMailDebits.swap(still);

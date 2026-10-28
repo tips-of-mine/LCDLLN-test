@@ -11,6 +11,7 @@
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ShardToMasterClient.h"
+#include "src/shared/network/ShardPayloads.h"
 #include "src/shared/security/SharedSecretPolicy.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -493,9 +494,10 @@ int main(int argc, char** argv)
 		toMaster.SetCurrentLoad(server.GetConnectionCount());
 		toMaster.Pump();
 		// ETAPE5.6 — réponses du tick vers le master (prélèvements d'or des courriers).
-		for (const auto& packet : gameplayApp.TakeMasterOutbox())
+		for (const auto& reply : gameplayApp.TakeMasterOutbox())
 		{
-			if (!toMaster.SendPacketToMaster(packet))
+			const auto packet = engine::network::BuildMailDebitResultPacket(reply);
+			if (packet.empty() || !toMaster.SendPacketToMaster(packet))
 				LOG_WARN(Net, "[ShardMain] ETAPE5.6 réponse au master non envoyée (le master annulera au délai)");
 		}
 

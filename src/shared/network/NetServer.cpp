@@ -187,7 +187,10 @@ namespace engine::server
 
 		void IoThreadRun();
 		void WorkerThreadRun();
-		void CloseConnection(int fd, DisconnectReason reason);
+		/// \param expectedConnId ETAPE5.4 : si non nul, ne ferme que si \p fd porte toujours
+		///        cette connexion (le descripteur a pu être fermé puis réattribué entre la
+		///        résolution connId → fd et cet appel). 0 = comportement historique.
+		void CloseConnection(int fd, DisconnectReason reason, uint32_t expectedConnId = 0u);
 		void MaybeModifyEpollOut(int fd, bool wantOut);
 		/// Set epoll events for client fd (EPOLLIN/EPOLLOUT). Call with connMutex held.
 		void SetEpollEvents(int fd, uint32_t events);
@@ -221,11 +224,8 @@ namespace engine::server
 }
 
 	/// Call without holding connMutex (locks internally). Frees SSL if present (SSL_shutdown + SSL_free), then closes fd.
-	void NetServer::Impl::CloseConnection(int fd, DisconnectReason reason)
+	void NetServer::Impl::CloseConnection(int fd, DisconnectReason reason, uint32_t expectedConnId)
 	{
-		uint32_t idx = static_cast<uint32_t>(reason);
-		if (idx < kDisconnectReasonCount)
-			disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		SSL* sslToFree = nullptr;
 		uint32_t ipHostOrder = 0u;
 		uint16_t remotePortHost = 0u;
@@ -236,6 +236,10 @@ namespace engine::server
 		{
 			std::lock_guard lock(connMutex);
 			auto it = connections.find(fd);
+			// ETAPE5.4 — fermeture par connId : le descripteur doit encore porter cette
+			// connexion, sinon (déjà fermé, ou réattribué à une autre) on ne touche à rien.
+			if (expectedConnId != 0u && (it == connections.end() || it->second.connId != expectedConnId))
+				return;
 			if (it != connections.end())
 			{
 				hadConn = true;
@@ -251,6 +255,12 @@ namespace engine::server
 				connections.erase(it);
 				connectionCount.store(static_cast<uint32_t>(connections.size()));
 			}
+		}
+
+		{
+			const uint32_t idx = static_cast<uint32_t>(reason);
+			if (idx < kDisconnectReasonCount)
+				disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		}
 
 		// Wave 15 — Dump des paquets recents pour cette conn si PacketLog opt-in
@@ -1253,7 +1263,7 @@ namespace engine::server
 				return;
 			fd = it->second;
 		}
-		m_impl->CloseConnection(fd, reason);
+		m_impl->CloseConnection(fd, reason, connId); // ETAPE5.4 : revérifié sous verrou
 	}
 
 	void NetServer::SetPacketHandler(NetServerPacketHandler handler)

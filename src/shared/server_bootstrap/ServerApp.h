@@ -47,6 +47,7 @@
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/LoadShedding.h"
 #include "src/shared/core/StallGuard.h"
+#include "src/shardd/world/ShardMetrics.h"
 #include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
@@ -489,6 +490,10 @@ namespace engine::server
 		/// copie sous mutex. accountId est résolu via l'AdmittedCharacterRegistry ; une
 		/// entrée dont l'accountId n'a pu être résolu (0) est omise.
 		std::vector<engine::network::ShardPlayerPresence> GetPlayerPresenceSnapshot() const;
+
+		/// ETAPE5.4 — métriques de jeu publiées à 1 Hz par le thread de tick (lecture
+		/// thread-safe : /metrics du shard, contre-pression du heartbeat).
+		const ShardMetricsBoard& MetricsBoard() const { return m_metricsBoard; }
 
 		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
 		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
@@ -1778,6 +1783,12 @@ namespace engine::server
 		/// ETAPE5.2 (chantier 1.5) — calage du tick (écart ≥ 3 s entre deux ticks) :
 		/// l'éviction des clients UDP inactifs est suspendue 30 s (server.stall_guard.*).
 		engine::core::StallGuard m_stallGuard;
+		/// ETAPE5.4 — métriques de jeu (photo à 1 Hz) et mesures du tick qui l'alimentent.
+		ShardMetricsBoard m_metricsBoard;
+		double m_lastTickSeconds = 0.0;
+		double m_tickMaxSinceMetrics = 0.0;
+		/// Construit et publie la photo des métriques (thread de tick, 1 Hz).
+		void PublishGameplayMetrics(size_t asleepMobs);
 		/// ETAPE4.5 — plafond d'entités par client hors délestage, et facteur appliqué
 		/// pendant (server.load_shedding.view_cap_factor, 0,5).
 		uint32_t m_viewCapNominal = 0;

@@ -112,19 +112,56 @@ namespace engine::network
 					return std::nullopt;
 				out.players.push_back(p);
 			}
+			// ETAPE5.4 — queue de contre-pression : u8 version, u8 longueur, puis les champs.
+			// Une version future plus longue reste lisible (on lit les 3 premiers octets des
+			// champs, le reste est ignoré). Compatibilité : ce parseur NE DOIT JAMAIS rejeter
+			// des octets restants (un shard plus récent peut en ajouter).
+			if (r.Remaining() >= 2u)
+			{
+				uint8_t head[2] = { 0u, 0u };
+				if (r.ReadBytes(head, 2u) && head[0] >= 1u && head[1] >= 3u && r.Remaining() >= head[1])
+				{
+					uint8_t flags = 0;
+					uint16_t loadPercent = 0;
+					if (r.ReadBytes(&flags, 1u) && r.ReadU16(loadPercent))
+					{
+						out.hasBackPressure = true;
+						out.saturated = (flags & 1u) != 0u;
+						out.tickLoadPercent = loadPercent;
+					}
+				}
+			}
 		}
 		return out;
 	}
 
 	std::vector<uint8_t> BuildShardHeartbeatPayload(uint32_t shard_id, uint32_t current_load, uint64_t timestamp,
-		const std::vector<ShardPlayerPresence>& players)
+		const std::vector<ShardPlayerPresence>& players, const ShardBackPressure* backPressure)
 	{
-		// 16 octets fixes + (si joueurs) u16 count + 24 octets/joueur.
-		const size_t total = players.empty() ? 16u : (16u + 2u + players.size() * 24u);
+		// 16 octets fixes + (si joueurs OU contre-pression) u16 count + 24 octets/joueur
+		// + (ETAPE5.4, si contre-pression) u8 version, u8 drapeaux, u16 charge.
+		const bool withArray = !players.empty() || backPressure != nullptr;
+		const size_t total = (withArray ? (16u + 2u + players.size() * 24u) : 16u) + (backPressure ? 5u : 0u);
 		std::vector<uint8_t> buf(total, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteU32(shard_id) || !w.WriteU32(current_load) || !w.WriteU64(timestamp))
 			return {};
+		if (backPressure != nullptr)
+		{
+			if (!w.WriteU16(static_cast<uint16_t>(players.size())))
+				return {};
+			for (const auto& p : players)
+			{
+				if (!w.WriteU64(p.accountId) || !w.WriteU64(p.characterId)
+					|| !w.WriteU32(p.level) || !w.WriteU32(p.zoneId))
+					return {};
+			}
+			// u8 version, u8 longueur des champs qui suivent (3 en v1), u8 drapeaux, u16 charge.
+			const uint8_t tail[3] = { 1u, 3u, static_cast<uint8_t>(backPressure->saturated ? 1u : 0u) };
+			if (!w.WriteBytes(tail, 3u) || !w.WriteU16(backPressure->tickLoadPercent))
+				return {};
+			return buf;
+		}
 		if (!players.empty())
 		{
 			if (!w.WriteU16(static_cast<uint16_t>(players.size())))

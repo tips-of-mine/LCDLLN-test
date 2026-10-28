@@ -1577,7 +1577,7 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Server, "[MAIN_SRV] SetPacketHandler OK");
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
-	shardRegistry.SetShardDownCallback([&playerPresenceCache, &dbPool, &sessionCharMap, &server](uint32_t shard_id) {
+	shardRegistry.SetShardDownCallback([&playerPresenceCache, &dbPool, &sessionCharMap, &server, &shardRegistry](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
 		// Présence enrichie : un shard tombé ne rapporte plus ses joueurs -> purge.
 		playerPresenceCache.Clear(shard_id);
@@ -1596,6 +1596,12 @@ int main(int argc, char** argv)
 			if (!packet.empty() && server.Send(b.connId, packet))
 				++notified;
 		}
+		// ETAPE5.4 — coupe le lien TCP d'un shard muet : s'il vit encore (lien à moitié
+		// mort, tampon bloqué), il se reconnecte et se réenregistre proprement
+		// (ShardToMasterClient, reconnexion avec attente croissante) au lieu de rester sur
+		// une connexion qui n'achemine plus rien.
+		if (auto shardConn = shardRegistry.GetShardConnection(shard_id))
+			server.CloseConnection(*shardConn, engine::server::DisconnectReason::HeartbeatTimeout);
 		LOG_WARN(Net, "[ServerMain] ETAPE5.1 shard {} mort : verrous_liberes={} personnages_hors_ligne={} clients_prevenus={}",
 			shard_id, released ? static_cast<long long>(*released) : -1LL, bindings.size(), notified);
 	});

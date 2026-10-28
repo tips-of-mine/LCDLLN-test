@@ -192,8 +192,34 @@ static void TestOfflineShardReturnsOnlineOnHeartbeat()
 	engine::core::Log::Shutdown();
 }
 
+/// ETAPE5.4 : contre-pression — un shard saturé passe Degraded (non sélectionnable), puis revient.
+static void TestSaturatedShardIsDegraded()
+{
+	engine::core::LogSettings logSettings;
+	logSettings.level = engine::core::LogLevel::Info;
+	logSettings.console = false;
+	engine::core::Log::Init(logSettings);
+
+	ShardRegistry reg;
+	auto idOpt = reg.RegisterShard("s1", "ep1", "", 100, "eu");
+	Assert(idOpt.has_value(), "RegisterShard returns id");
+	const uint32_t shardId = *idOpt;
+	reg.UpdateHeartbeat(shardId, 5, false);
+	Assert(reg.GetShard(shardId)->state == ShardState::Online, "peu chargé : Online");
+	reg.UpdateHeartbeat(shardId, 5, true);
+	Assert(reg.GetShard(shardId)->state == ShardState::Degraded && reg.GetShard(shardId)->saturated, "saturé : Degraded");
+	Assert(!reg.SelectShard().has_value(), "saturé : non sélectionnable");
+	reg.UpdateHeartbeat(shardId, 5); // réenregistrement : saturation conservée
+	Assert(reg.GetShard(shardId)->state == ShardState::Degraded && reg.GetShard(shardId)->saturated, "réenregistrement : reste saturé");
+	reg.UpdateHeartbeat(shardId, 5, false);
+	Assert(reg.GetShard(shardId)->state == ShardState::Online && !reg.GetShard(shardId)->saturated, "plus saturé : Online");
+
+	engine::core::Log::Shutdown();
+}
+
 int main()
 {
+	TestSaturatedShardIsDegraded();
 	TestOfflineShardReturnsOnlineOnHeartbeat();
 	TestEvictStaleHeartbeatsMarksOfflineAndInvokesCallback();
 	TestOnlineToDegradedWhenLoadAboveThreshold();

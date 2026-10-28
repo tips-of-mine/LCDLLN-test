@@ -118,6 +118,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
     # ETAPE5.2 : garde contre les jugements après un calage de la boucle.
     ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
+    # ETAPE5.4 : métriques de jeu du shard et contre-pression.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardMetrics.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp
@@ -581,6 +583,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # ETAPE5.4 : métriques de jeu du shard (formatage Prometheus, saturation).
+  lcdlln_add_simple_test(shard_metrics_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/ShardMetricsTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardMetrics.cpp)
   # ETAPE5.3 : arrêt ordonné du cluster (compte à rebours, vidage, sortie).
   lcdlln_add_simple_test(cluster_shutdown_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdownTests.cpp
@@ -1477,6 +1483,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LoadShedding.cpp
     # ETAPE5.2 : garde contre les jugements après un calage de la boucle.
     ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
+    # ETAPE5.4 : métriques de jeu du shard et contre-pression.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardMetrics.cpp
     # ETAPE4.3 : cycle de vie des régions (chaude, froide, déchargée).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionLifecycle.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/StartLocations.cpp

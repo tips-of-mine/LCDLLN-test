@@ -34,6 +34,7 @@ namespace engine::server
 		uint32_t current_load = 0;
 		std::chrono::steady_clock::time_point last_heartbeat{};
 		ShardState state = ShardState::Registering;
+		bool saturated = false;    ///< ETAPE5.4 : contre-pression annoncée au dernier heartbeat.
 		std::string display_name;  ///< Nom public affiché (repli sur name si vide à l'enregistrement).
 		engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
 		engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;
@@ -60,7 +61,11 @@ namespace engine::server
 
 		/// Updates last_heartbeat (and optionally current_load). If state was Registering, transitions to Online.
 		/// Returns true if shard exists and was updated.
-		bool UpdateHeartbeat(uint32_t shard_id, uint32_t current_load = 0);
+		/// \param saturated ETAPE5.4 : contre-pression annoncée par le shard (délestage, file de
+		///        sauvegarde pleine). Un shard saturé passe Degraded (plus de nouveaux joueurs)
+		///        tant qu'il l'annonce, quel que soit son taux de remplissage.
+		///        nullopt (réenregistrement) : la valeur précédente est conservée.
+		bool UpdateHeartbeat(uint32_t shard_id, uint32_t current_load = 0, std::optional<bool> saturated = std::nullopt);
 
 		/// Marks the shard as Offline.
 		/// Returns true if shard existed.
@@ -110,6 +115,7 @@ namespace engine::server
 			uint32_t current_load = 0;
 			std::chrono::steady_clock::time_point last_heartbeat{};
 			ShardState state = ShardState::Registering;
+			bool saturated = false;
 			std::string display_name;
 			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE;
 			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative;

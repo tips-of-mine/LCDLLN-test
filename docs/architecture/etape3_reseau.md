@@ -97,6 +97,13 @@ géré en TA.3). Deux mécanismes se complètent :
   par personnage, 8 par adresse IP, 1024 au total. Pleine, elle refuse les nouvelles
   entrées ; la répétition du client prend le relais. Un Hello en clair ne modifie jamais
   une poignée de main chiffrée en attente.
+- **Reconnexion rapide (FIX.2)** : un Hello qui échoue à s'ouvrir alors que le
+  personnage est déjà admis (clé de l'EnterWorld précédent encore en place) est lui
+  aussi mis en attente, avec la clé qui l'a refusé (`PendingHello::rejectedWithKey`).
+  `DrainPendingHellos` ne le rejoue que lorsque la clé admise **change** (nouvelle
+  admission du master), puis il expire comme les autres (5 s). Avant, il était jeté et
+  l'entrée en jeu attendait la répétition suivante du client (~2 s observées le
+  28/10/2026). Mêmes bornes de file que ci-dessus (`ServerApp::QueueSealedHello`).
 
 ### Configuration
 

@@ -2886,7 +2886,16 @@ namespace engine::server
 					nowMs - entry.arrivedAtMs);
 				continue; // drop expired
 			}
-			if (m_admittedRegistry->IsAdmitted(entry.characterKey, nowMs))
+			// FIX.2 — un Hello déjà refusé avec la clé admise n'est rejoué qu'une fois
+			// cette clé remplacée (nouvelle admission du master) : sinon il échouerait
+			// encore, à chaque tick, jusqu'à expirer.
+			bool keyChanged = true;
+			if (entry.rejectedWithKey.has_value())
+			{
+				const auto currentKey = m_admittedRegistry->AdmittedUdpSessionKey(entry.characterKey, nowMs);
+				keyChanged = currentKey.has_value() && *currentKey != *entry.rejectedWithKey;
+			}
+			if (m_admittedRegistry->IsAdmitted(entry.characterKey, nowMs) && keyChanged)
 			{
 				toReplay.push_back(entry);
 			}
@@ -3059,34 +3068,9 @@ namespace engine::server
 			// entrée en attente n'est jamais évincée au profit d'une nouvelle. La file
 			// n'est qu'un raccourci : le client répète son Hello tant qu'il n'a pas de
 			// Welcome, et un Hello reçu après l'admission n'a pas besoin d'attendre.
-			size_t sameCharacter = 0;
-			size_t sameAddress = 0;
-			for (const PendingHello& entry : m_pendingHellos)
-			{
-				if (entry.endpoint.address == endpoint.address)
-					++sameAddress;
-				if (entry.characterKey != header.characterId || entry.sealedHello.empty())
-					continue;
-				engine::network::UdpHandshakeHeader pendingHeader{};
-				if (engine::network::PeekUdpHandshake(entry.sealedHello, pendingHeader) && pendingHeader.salt == header.salt)
-				{
-					return; // même Hello déjà en attente
-				}
-				++sameCharacter;
-			}
-			if (sameCharacter >= kMaxSealedPendingPerCharacter || sameAddress >= kMaxPendingHellosPerAddress
-				|| m_pendingHellos.size() >= kMaxPendingHellos)
-			{
-				++m_udpRejectedDatagrams;
-				LOG_WARN(Net, "[ServerApp] Hello chiffré non mis en attente : file pleine (total={}, personnage={}, adresse={})",
-					m_pendingHellos.size(), sameCharacter, sameAddress);
-				return;
-			}
-			PendingHello pending{ endpoint, header.characterId, nowMs, {} };
-			pending.sealedHello.assign(datagram.begin(), datagram.end());
-			m_pendingHellos.push_back(std::move(pending));
-			LOG_INFO(Net, "[ServerApp] Hello chiffré mis en attente d'admission (character_key={}, endpoint={})",
-				header.characterId, UdpTransport::EndpointToString(endpoint));
+			if (QueueSealedHello(endpoint, header, datagram, nowMs, std::nullopt) == SealedHelloQueueResult::Queued)
+				LOG_INFO(Net, "[ServerApp] Hello chiffré mis en attente d'admission (character_key={}, endpoint={})",
+					header.characterId, UdpTransport::EndpointToString(endpoint));
 			return;
 		}
 		const auto key = m_admittedRegistry->AdmittedUdpSessionKey(header.characterId, nowMs);
@@ -3125,15 +3109,31 @@ namespace engine::server
 		}
 		if (result != UdpSessionTable::HandshakeResult::Opened)
 		{
-			++m_udpRejectedDatagrams;
 			const char* reason = "authentification";
 			if (result == UdpSessionTable::HandshakeResult::Replayed)
 				reason = "rejeu ou sels épuisés";
 			else if (result == UdpSessionTable::HandshakeResult::EndpointBusy)
 				reason = "adresse liée à un autre personnage";
-			// Authentification ratée alors que le personnage est admis : souvent un
-			// nouvel EnterWorld dont la clé n'est pas encore arrivée ; le client répète
-			// son Hello, la tentative suivante passera.
+			// FIX.2 — authentification ratée alors que le personnage est admis : presque
+			// toujours une reconnexion rapide (nouvel EnterWorld) dont la clé n'est pas
+			// encore arrivée du master — le Hello est scellé avec la NOUVELLE clé, le shard
+			// ne connaît que l'ancienne. Avant, on le jetait et le client attendait son
+			// prochain renvoi (~2 s, incident du 28/10/2026). On le garde : il est rejoué
+			// dès que la clé admise change (DrainPendingHellos), sinon il expire.
+			if (result == UdpSessionTable::HandshakeResult::AuthFailed)
+			{
+				const SealedHelloQueueResult queued = QueueSealedHello(endpoint, header, datagram, nowMs, sessionKey);
+				if (queued == SealedHelloQueueResult::Queued)
+					LOG_INFO(Net, "[ServerApp] Hello chiffré mis en attente de la nouvelle clé (reconnexion ?) "
+						"(character_key={}, endpoint={})", characterId, UdpTransport::EndpointToString(endpoint));
+				if (queued != SealedHelloQueueResult::Full)
+					return;
+				// File pleine : QueueSealedHello a déjà compté le rejet.
+			}
+			else
+			{
+				++m_udpRejectedDatagrams;
+			}
 			LOG_WARN(Net, "[ServerApp] Hello chiffré refusé ({}) (character_key={}, endpoint={})",
 				reason, characterId, UdpTransport::EndpointToString(endpoint));
 			return;
@@ -3151,6 +3151,43 @@ namespace engine::server
 		LOG_INFO(Net, "[ServerApp] Session UDP chiffrée ouverte (character_key={}, endpoint={})",
 			header.characterId, UdpTransport::EndpointToString(endpoint));
 		HandleHello(endpoint, hello.clientNonce, true);
+	}
+
+	ServerApp::SealedHelloQueueResult ServerApp::QueueSealedHello(const Endpoint& endpoint, const engine::network::UdpHandshakeHeader& header,
+		std::span<const std::byte> datagram, uint64_t nowMs,
+		const std::optional<engine::network::UdpSessionKey>& rejectedWithKey)
+	{
+		// Rien n'est encore authentifié, donc la file est bornée : une entrée par
+		// (personnage, sel), au plus kMaxSealedPendingPerCharacter par personnage et
+		// kMaxPendingHellosPerAddress par adresse IP, kMaxPendingHellos au total. Une
+		// entrée en attente n'est jamais évincée au profit d'une nouvelle. La file
+		// n'est qu'un raccourci : le client répète son Hello tant qu'il n'a pas de
+		// Welcome.
+		size_t sameCharacter = 0;
+		size_t sameAddress = 0;
+		for (const PendingHello& entry : m_pendingHellos)
+		{
+			if (entry.endpoint.address == endpoint.address)
+				++sameAddress;
+			if (entry.characterKey != header.characterId || entry.sealedHello.empty())
+				continue;
+			engine::network::UdpHandshakeHeader pendingHeader{};
+			if (engine::network::PeekUdpHandshake(entry.sealedHello, pendingHeader) && pendingHeader.salt == header.salt)
+				return SealedHelloQueueResult::AlreadyQueued; // même Hello déjà en attente
+			++sameCharacter;
+		}
+		if (sameCharacter >= kMaxSealedPendingPerCharacter || sameAddress >= kMaxPendingHellosPerAddress
+			|| m_pendingHellos.size() >= kMaxPendingHellos)
+		{
+			++m_udpRejectedDatagrams;
+			LOG_WARN(Net, "[ServerApp] Hello chiffré non mis en attente : file pleine (total={}, personnage={}, adresse={})",
+				m_pendingHellos.size(), sameCharacter, sameAddress);
+			return SealedHelloQueueResult::Full;
+		}
+		PendingHello pending{ endpoint, header.characterId, nowMs, {}, rejectedWithKey };
+		pending.sealedHello.assign(datagram.begin(), datagram.end());
+		m_pendingHellos.push_back(std::move(pending));
+		return SealedHelloQueueResult::Queued;
 	}
 
 	void ServerApp::DropUdpSession(const Endpoint& endpoint)

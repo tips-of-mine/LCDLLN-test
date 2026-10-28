@@ -598,6 +598,19 @@ namespace engine::server
 		/// datagramme scellé est mis en attente (DrainPendingHellos le retraite).
 		void ProcessSecureHandshake(const Endpoint& endpoint, std::span<const std::byte> datagram);
 
+		/// FIX.2 — met en attente un Hello scellé (\p datagram) dans m_pendingHellos, avec
+		/// les bornes de la file (par personnage, par adresse IP, total). Un même Hello
+		/// (même sel) déjà en attente n'est pas dupliqué.
+		/// \param rejectedWithKey clé admise avec laquelle le Hello vient d'échouer
+		///        (reconnexion rapide, nouvelle clé pas encore reçue) ; nullopt si le
+		///        personnage n'est pas encore admis.
+		/// \return Queued (ajouté), AlreadyQueued (même sel déjà en attente) ou Full.
+		/// Appelée sur le thread de tick (comme ProcessSecureHandshake).
+		enum class SealedHelloQueueResult : uint8_t { Queued, AlreadyQueued, Full };
+		SealedHelloQueueResult QueueSealedHello(const Endpoint& endpoint, const engine::network::UdpHandshakeHeader& header,
+			std::span<const std::byte> datagram, uint64_t nowMs,
+			const std::optional<engine::network::UdpSessionKey>& rejectedWithKey);
+
 		/// ETAPE3.1 — supprime la session chiffrée de \p endpoint (déconnexion). No-op
 		/// si aucune session.
 		void DropUdpSession(const Endpoint& endpoint);
@@ -1930,6 +1943,11 @@ namespace engine::server
 			/// la clé) : gardée telle quelle et rouverte quand la clé arrive. Vide pour
 			/// un Hello en clair.
 			std::vector<std::byte> sealedHello;
+			/// FIX.2 — clé avec laquelle ce Hello scellé a DÉJÀ échoué à s'ouvrir (personnage
+			/// admis, mais Hello scellé avec la clé d'un EnterWorld plus récent dont l'admission
+			/// n'est pas encore arrivée du master). DrainPendingHellos ne le rejoue que quand
+			/// la clé admise change. Vide : Hello reçu avant toute admission.
+			std::optional<engine::network::UdpSessionKey> rejectedWithKey;
 		};
 		std::vector<PendingHello> m_pendingHellos;
 		/// TTL ms d'un Hello en attente. Au-delà, on abandonne (l'admission n'est pas arrivée).

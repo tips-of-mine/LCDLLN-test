@@ -20,6 +20,7 @@
 #include "src/shared/network/ShardPayloads.h"
 #include "src/shared/core/StallGuard.h"
 #include "src/masterd/ops/ClusterShutdown.h"
+#include "src/masterd/mail/MailTransferService.h"
 #include "src/masterd/handlers/auth/AuthRegisterHandler.h"
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/account/InMemoryAccountStore.h"
@@ -525,6 +526,8 @@ int main(int argc, char** argv)
 	// sur InMemoryMailStore — la mailbox reste fonctionnelle pour la
 	// session courante mais ne survit pas a un reboot.
 	engine::server::mail::MysqlMailStore mailStoreDb(&dbPool);
+	// ETAPE5.6 — transferts d'or des courriers (deux phases master / shard).
+	engine::server::MailTransferService mailTransfers(&dbPool);
 	engine::server::mail::InMemoryMailStore mailStoreMem;
 	engine::server::mail::IMailStore* mailStoreActive = nullptr;
 	if (mailStoreDb.IsAvailable())
@@ -589,17 +592,24 @@ int main(int argc, char** argv)
 		[&birthdayEmailJob] { birthdayEmailJob.Tick(); });
 	// Purge des courriers expirés et supprimés (pièces jointes comprises —
 	// l'expiration vaut disparition). No-op propre en mode no-DB.
+	// ETAPE5.6 — l'or en dépôt des courriers expirés est d'abord rendu à l'expéditeur
+	// (character_mailbox, idempotent), puis les courriers sont purgés.
 	jobScheduler.Register("mail_purge", std::chrono::hours(1),
-		[&mailStoreDb]
+		[&mailStoreDb, &mailTransfers]
 		{
 			const uint64_t nowMs = static_cast<uint64_t>(
 				std::chrono::duration_cast<std::chrono::milliseconds>(
 					std::chrono::system_clock::now().time_since_epoch()).count());
+			const size_t refunded = mailTransfers.RefundExpiredMails(nowMs);
+			if (refunded > 0)
+				LOG_INFO(Net, "[ServerMain] ETAPE5.6 or rendu pour {} courrier(s) expiré(s)", refunded);
 			(void)mailStoreDb.PurgeExpired(nowMs);
 		});
 	jobScheduler.LogRegistered();
 	mailHandler.SetSessionManager(&sessionManager);
 	mailHandler.SetConnectionSessionMap(&connSessionMap);
+	// ETAPE5.6 — or joint à un courrier en deux phases (mail_transfers, migration 0082).
+	mailHandler.SetGoldTransfer(&mailTransfers, &sessionCharMap, &shardRegistry);
 	LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
 
 	// Système A (master status-machine Quest, opcodes 59-67) retiré — Cleanup
@@ -1122,6 +1132,8 @@ int main(int argc, char** argv)
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
 			shardRegisterHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeShardToMasterMailDebitResult)
+			mailHandler.HandleShardDebitResult(connId, payload, payloadSize); // ETAPE5.6
 		else if (opcode == kOpcodeRequestShardTicket)
 			shardTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeServerListRequest)
@@ -1632,6 +1644,7 @@ int main(int argc, char** argv)
 	// phase broadcastee (m_lastBroadcastPhase) et n'emet un push que si
 	// different.
 	auto lastLunarTickTime = std::chrono::steady_clock::now();
+	auto lastMailTransferSweep = std::chrono::steady_clock::now(); // ETAPE5.6
 	constexpr auto kLunarTickInterval = std::chrono::seconds(300);
 
 	// Roadmap-4 (2026-07-19) — les jobs périodiques (e-mail d'anniversaire,
@@ -1814,6 +1827,14 @@ int main(int argc, char** argv)
 				LogNetworkStats(stats);
 				lastStatsDump = now;
 			}
+		}
+
+		// ETAPE5.6 — prélèvements d'or non confirmés dans le délai : annulés (5 s).
+		if (now - lastMailTransferSweep >= std::chrono::seconds(5))
+		{
+			lastMailTransferSweep = now;
+			mailHandler.SweepExpiredTransfers(static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count()));
 		}
 
 		// Phase 5 Lunar — Tick periodique (5 min) detection changement de phase.

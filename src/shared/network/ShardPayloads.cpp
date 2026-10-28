@@ -309,4 +309,82 @@ namespace engine::network
 			return std::nullopt;
 		return reason;
 	}
+
+	// ETAPE5.6 — or joint à un courrier (deux phases master / shard).
+	std::vector<uint8_t> BuildMailDebitPacket(const MailDebitPayload& p)
+	{
+		if (p.operationId.empty() || p.operationId.size() > 96u)
+			return {};
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteString(p.operationId) || !w.WriteU64(p.characterId) || !w.WriteU64(p.gold))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeMasterToShardMailDebit, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<MailDebitPayload> ParseMailDebitPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 2u + 16u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		MailDebitPayload out;
+		if (!r.ReadString(out.operationId) || !r.ReadU64(out.characterId) || !r.ReadU64(out.gold))
+			return std::nullopt;
+		if (out.operationId.empty() || out.operationId.size() > 96u)
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildMailDebitResultPacket(const MailDebitResultPayload& p)
+	{
+		if (p.operationId.empty() || p.operationId.size() > 96u)
+			return {};
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteString(p.operationId) || !w.WriteBytes(&p.result, 1u))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeShardToMasterMailDebitResult, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<MailDebitResultPayload> ParseMailDebitResultPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 3u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		MailDebitResultPayload out;
+		if (!r.ReadString(out.operationId) || !r.ReadBytes(&out.result, 1u))
+			return std::nullopt;
+		if (out.operationId.empty() || out.operationId.size() > 96u)
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildMailboxPokePacket(uint64_t characterId)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteU64(characterId))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeMasterToShardMailboxPoke, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<uint64_t> ParseMailboxPokePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 8u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		uint64_t characterId = 0;
+		if (!r.ReadU64(characterId) || characterId == 0u)
+			return std::nullopt;
+		return characterId;
+	}
 }

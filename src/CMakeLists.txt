@@ -250,6 +250,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatChannelRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MailManager.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MysqlMailStore.cpp
+    # ETAPE5.6 : or joint à un courrier en deux phases (mail_transfers).
+    ${CMAKE_SOURCE_DIR}/src/masterd/mail/MailTransferService.cpp
     # Anniversaires (spec 2026-07-18) : exploits fidelite/naissance + courrier cadeau.
     ${CMAKE_SOURCE_DIR}/src/masterd/exploits/MysqlExploitStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/anniversary/AnniversaryService.cpp
@@ -745,6 +747,9 @@ elseif(UNIX)
   lcdlln_add_simple_test(character_progress_payload_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterProgressPayloadTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp)
+  # ETAPE5.6 : vocabulaire des transferts d'or par courrier (en-tête seul).
+  lcdlln_add_simple_test(mail_transfer_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/mail/tests/MailTransferTests.cpp)
   # ETAPE5.5 : sauvegardes différentielles (empreintes par bloc, module pur).
   lcdlln_add_simple_test(character_save_diff_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterSaveDiffTests.cpp

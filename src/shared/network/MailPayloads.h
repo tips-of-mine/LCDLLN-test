@@ -40,6 +40,8 @@ namespace engine::network
 		InsufficientGold    = 4, ///< wallet sender insuffisant pour copperGold + frais.
 		AttachmentsTooMany  = 5,
 		Unauthorized        = 6, ///< pas de session valide.
+		NotInWorld          = 7, ///< ETAPE5.6 : envoyer de l'or demande d'être en jeu (le shard prélève).
+		TransferUnavailable = 8, ///< ETAPE5.6 : transfert d'or indisponible (base, shard injoignable).
 	};
 
 	/// Wire format :
@@ -142,6 +144,8 @@ namespace engine::network
 		AlreadyTaken  = 3, ///< Gold déjà retiré.
 		CodNotPaid    = 4, ///< paidCopperCod < copperCod du mail.
 		Unauthorized  = 6,
+		NotInWorld      = 7, ///< ETAPE5.6 : retirer de l'or demande d'être en jeu (personnage crédité).
+		TransferPending = 8, ///< ETAPE5.6 : prélèvement chez l'expéditeur pas encore confirmé, réessayer.
 	};
 
 	/// Wire format :

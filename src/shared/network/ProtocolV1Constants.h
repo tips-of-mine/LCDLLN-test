@@ -874,4 +874,17 @@ namespace engine::network
 	// (reason = Shutdown). Rétro-additif ; déploiement lock-step master + shard.
 	// =====================================================================
 	constexpr uint16_t kOpcodeMasterToShardShutdown = 212u; ///< Master to Shard (push, request_id=0) : (string reason).
+
+	// =====================================================================
+	// ETAPE5.6 (chantier 5.2 du rapport City of Heroes) — or joint à un courrier, en
+	// deux phases. Le master demande au shard propriétaire de l'expéditeur de prélever
+	// l'or (213) ; le shard le prélève dans la transaction qui passe `mail_transfers` de
+	// pending à locked et répond (214, connexion du shard authentifiée par le registre).
+	// Au retrait, le master dépose l'or dans character_mailbox et prévient le shard du
+	// destinataire (215), qui le crédite sans attendre la prochaine connexion.
+	// Rétro-additif ; déploiement lock-step master + shard.
+	// =====================================================================
+	constexpr uint16_t kOpcodeMasterToShardMailDebit    = 213u; ///< Master to Shard (push) : (string operationId, u64 characterId, u64 gold).
+	constexpr uint16_t kOpcodeShardToMasterMailDebitResult = 214u; ///< Shard to Master : (string operationId, u8 MailDebitResult).
+	constexpr uint16_t kOpcodeMasterToShardMailboxPoke  = 215u; ///< Master to Shard (push) : (u64 characterId) — courrier à créditer.
 }

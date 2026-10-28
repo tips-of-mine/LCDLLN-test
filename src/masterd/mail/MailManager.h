@@ -114,6 +114,10 @@ namespace engine::server::mail
 		/// final apres Take.
 		MailOpResult Delete(uint64_t mailId, uint64_t receiverAccountId);
 
+		/// ETAPE5.6 — lecture seule d'un courrier (expéditeur, or, objets, COD), sans rien
+		/// modifier : permet de créditer AVANT de vider les pièces jointes.
+		std::optional<Mail> Peek(uint64_t mailId) const;
+
 		/// Retourne tous les mails de l'inbox du receveur, tries par
 		/// `sentTsMs` decroissant (plus recent en premier).
 		std::vector<Mail> Inbox(uint64_t receiverAccountId) const;

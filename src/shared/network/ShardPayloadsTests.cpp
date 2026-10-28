@@ -281,8 +281,43 @@ static void TestHeartbeatBackPressure()
 	}
 }
 
+// ETAPE5.6 — or joint à un courrier : prélèvement, réponse, crédit.
+static void TestMailTransferPayloads()
+{
+	using namespace engine::network;
+	MailDebitPayload d;
+	d.operationId = "mail-42";
+	d.characterId = 7u;
+	d.gold = 1500u;
+	auto pkt = BuildMailDebitPacket(d);
+	PacketView v;
+	Assert(!pkt.empty() && PacketView::Parse(pkt.data(), pkt.size(), v) == PacketParseResult::Ok
+		&& v.Opcode() == kOpcodeMasterToShardMailDebit, "debit: paquet 213");
+	auto pd = ParseMailDebitPayload(v.Payload(), v.PayloadSize());
+	Assert(pd && pd->operationId == "mail-42" && pd->characterId == 7u && pd->gold == 1500u, "debit: aller-retour");
+	MailDebitPayload bad;
+	Assert(BuildMailDebitPacket(bad).empty(), "debit: identifiant vide refusé");
+	MailDebitResultPayload r;
+	r.operationId = "mail-42";
+	r.result = 2u;
+	auto rp = BuildMailDebitResultPacket(r);
+	PacketView rv;
+	Assert(PacketView::Parse(rp.data(), rp.size(), rv) == PacketParseResult::Ok && rv.Opcode() == kOpcodeShardToMasterMailDebitResult,
+		"result: paquet 214");
+	auto pr = ParseMailDebitResultPayload(rv.Payload(), rv.PayloadSize());
+	Assert(pr && pr->operationId == "mail-42" && pr->result == 2u, "result: aller-retour");
+	Assert(!ParseMailDebitResultPayload(rv.Payload(), 2u), "result: tronqué refusé");
+	auto kp = BuildMailboxPokePacket(99u);
+	PacketView kv;
+	Assert(PacketView::Parse(kp.data(), kp.size(), kv) == PacketParseResult::Ok && kv.Opcode() == kOpcodeMasterToShardMailboxPoke
+		&& ParseMailboxPokePayload(kv.Payload(), kv.PayloadSize()) == std::optional<uint64_t>(99u), "poke: aller-retour");
+	const uint8_t zero[8] = {};
+	Assert(!ParseMailboxPokePayload(zero, 8u), "poke: personnage 0 refusé");
+}
+
 int main()
 {
+	TestMailTransferPayloads();
 	TestHeartbeatBackPressure();
 	TestMasterToShardShutdown();
 	TestShardLostNotification();

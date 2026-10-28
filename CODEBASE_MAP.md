@@ -318,6 +318,12 @@ RenderModel
 > par une sauvegarde différentielle. Un nouveau chemin qui écrit un personnage en base
 > hors de `SaveCharacterToDb` doit appeler `m_savedBlocks.Invalidate(characterKey)`.
 
+> **Règle (ETAPE5.6)** : un bien qui change de propriétaire entre master et shard passe
+> par une ligne de verrou en base (modèle `mail_transfers`, `src/shared/mail/MailTransfer.h`)
+> et des compare-and-set (`UPDATE … WHERE state = <attendu>`) ; le shard modifie la bourse
+> ou le sac DANS la transaction du passage. Les dépôts dans `character_mailbox` portent un
+> `operation_id` unique. Le master ne touche jamais directement une bourse.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

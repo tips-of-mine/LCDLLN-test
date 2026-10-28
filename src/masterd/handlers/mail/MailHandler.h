@@ -23,6 +23,10 @@ namespace engine::server
 	class NetServer;
 	class SessionManager;
 	class ConnectionSessionMap;
+	class SessionCharacterMap;
+	class ShardRegistry;
+	class MailTransferService;
+	struct MailTransferRow;
 }
 
 namespace engine::server::mail
@@ -44,6 +48,27 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId → sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// ETAPE5.6 — or joint à un courrier en deux phases. Sans ces trois dépendances,
+		/// un envoi d'or est refusé (TransferUnavailable) et un retrait ne crédite rien.
+		/// \param transfers transferts en base (mail_transfers, migration 0082).
+		/// \param charMap personnage en jeu de chaque connexion (expéditeur, destinataire).
+		/// \param registry connexion TCP de chaque shard (ordres 213 / 215, contrôle de 214).
+		void SetGoldTransfer(MailTransferService* transfers, SessionCharacterMap* charMap, ShardRegistry* registry)
+		{
+			m_transfers = transfers;
+			m_charMap = charMap;
+			m_registry = registry;
+		}
+
+		/// ETAPE5.6 — réponse d'un shard à une demande de prélèvement (opcode 214). Ignorée si
+		/// \p connId n'est pas la connexion du shard chargé de ce transfert. Un refus annule
+		/// le transfert (compare-and-set pending → cancelled) et retire l'or du courrier.
+		void HandleShardDebitResult(uint32_t connId, const uint8_t* payload, size_t payloadSize);
+
+		/// ETAPE5.6 — annule les prélèvements non confirmés dans le délai (30 s). À appeler
+		/// périodiquement depuis la boucle principale. \param nowMs epoch ms UTC.
+		void SweepExpiredTransfers(uint64_t nowMs);
 
 		/// Point d'entrée appelé par NetServer pour les opcodes Mail. Dispatch
 		/// vers HandleSend/HandleListInbox/etc. selon l'opcode. Si l'opcode
@@ -84,9 +109,16 @@ namespace engine::server
 		void HandleDelete(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
 			uint64_t accountId, const uint8_t* payload, size_t payloadSize);
 
+		/// ETAPE5.6 — transfert annulé : l'or du courrier disparaît (jamais prélevé) et
+		/// l'expéditeur est prévenu s'il est connecté.
+		void OnTransferCancelled(const MailTransferRow& row, const char* why);
+
 		engine::server::mail::MailManager* m_mgr        = nullptr;
 		NetServer*                          m_server     = nullptr;
 		SessionManager*                     m_sessionMgr = nullptr;
 		ConnectionSessionMap*               m_connMap    = nullptr;
+		MailTransferService*                m_transfers  = nullptr; ///< ETAPE5.6
+		SessionCharacterMap*                m_charMap    = nullptr; ///< ETAPE5.6
+		ShardRegistry*                      m_registry   = nullptr; ///< ETAPE5.6
 	};
 }

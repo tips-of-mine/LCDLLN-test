@@ -126,7 +126,7 @@ namespace engine::server::db
 	ScopedTransaction::ScopedTransaction(MYSQL* mysql) : m_mysql(mysql)
 	{
 		if (m_mysql)
-			DbBeginTransaction(m_mysql);
+			m_started = DbBeginTransaction(m_mysql);
 	}
 
 	ScopedTransaction::~ScopedTransaction()
@@ -135,12 +135,14 @@ namespace engine::server::db
 			DbRollback(m_mysql);
 	}
 
-	void ScopedTransaction::Commit()
+	bool ScopedTransaction::Commit()
 	{
 		if (m_mysql && !m_committed)
 		{
-			DbCommit(m_mysql);
-			m_committed = true;
+			// ETAPE5.6 — validée seulement si le COMMIT a réussi ; sinon le destructeur
+			// annule (ROLLBACK sans effet si la connexion a déjà tout annulé).
+			m_committed = DbCommit(m_mysql);
 		}
+		return m_committed;
 	}
 }

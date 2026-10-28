@@ -40,6 +40,11 @@ namespace engine::server::db
 		/// Exécute le statement. Retourne true si OK. Pour SELECT, voir FetchRow.
 		bool Execute();
 
+		/// FIX.5 — dernier message d'erreur MySQL de ce statement (mysql_stmt_error),
+		/// vide si aucun. À journaliser quand Bind/Execute/FetchRow échoue : sans lui, un
+		/// échec en production (« Auction listings load FAILED ») restait sans cause.
+		std::string LastError() const;
+
 		/// Pour SELECT : récupère la prochaine ligne. Retourne false si plus de lignes
 		/// (ou erreur). Les valeurs sont accessibles via GetInt/GetString après chaque
 		/// FetchRow réussi.

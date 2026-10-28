@@ -21,6 +21,11 @@ namespace engine::server
 		m_sessionInWorldHook = std::move(hook);
 	}
 
+	void SessionManager::SetSessionConnectionOpenHook(std::function<bool(uint64_t)> hook)
+	{
+		m_sessionConnectionOpenHook = std::move(hook);
+	}
+
 	void SessionManager::SetClock(engine::core::IClock* clock)
 	{
 		m_clock = clock;
@@ -99,7 +104,11 @@ namespace engine::server
 					LOG_INFO(Net, "[SessionManager] CreateSession refused: account_id={} already has active session", account_id);
 					return kInvalidSessionId;
 				}
-				Close(existing_id, SessionCloseReason::KickedByDuplicateLogin);
+				// FIX.5 — même remplacement, raison exacte : si la connexion de l'ancienne
+				// session est déjà fermée, personne n'est déconnecté (re-auth du flux client).
+				const bool oldConnectionOpen = !m_sessionConnectionOpenHook || m_sessionConnectionOpenHook(existing_id);
+				Close(existing_id, oldConnectionOpen ? SessionCloseReason::KickedByDuplicateLogin
+					: SessionCloseReason::ReplacedByReauth);
 			}
 		}
 
@@ -262,6 +271,7 @@ namespace engine::server
 		case SessionCloseReason::MaxAgeExceeded: return "MaxAgeExceeded";
 		case SessionCloseReason::Admin: return "Admin";
 		case SessionCloseReason::Other: return "Other";
+		case SessionCloseReason::ReplacedByReauth: return "ReplacedByReauth";
 		default: return "Unknown";
 		}
 	}

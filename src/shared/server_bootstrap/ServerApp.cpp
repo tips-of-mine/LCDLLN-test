@@ -12207,9 +12207,15 @@ namespace engine::server
 			"FROM auction_listings WHERE shard_id = ? ORDER BY listing_id") : nullptr;
 		if (sel == nullptr || !sel->Bind(0, m_shardId) || !sel->Execute())
 		{
-			LOG_ERROR(Net, "[ServerApp] Auction listings load FAILED (migration 0081 appliquée ?) : hôtel des ventes vide");
+			// FIX.5 — cause MySQL exacte (avant : seulement « migration 0081 appliquée ? »,
+			// impossible à diagnostiquer depuis les logs du 28/10/2026).
+			const std::string cause = (sel != nullptr) ? sel->LastError()
+				: (mysql != nullptr ? std::string(mysql_error(mysql)) : std::string("aucune connexion"));
+			LOG_ERROR(Net, "[ServerApp] Auction listings load FAILED (shard_id={}, cause='{}') : hôtel des ventes vide "
+				"(table auction_listings absente ? migration 0081 appliquée par le master ?)", m_shardId, cause);
 			return;
 		}
+		LOG_INFO(Net, "[ServerApp] Auction listings : lecture en base OK (shard_id={})", m_shardId);
 		std::vector<AuctionListingRecord> rows;
 		while (sel->FetchRow())
 		{

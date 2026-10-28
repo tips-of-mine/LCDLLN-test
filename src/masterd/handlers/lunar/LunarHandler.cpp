@@ -44,6 +44,27 @@ namespace engine::server
 		return LunarCalendar::Compute(realNowMs, m_cycleStartMs, m_cycleDurationMs);
 	}
 
+	uint64_t LunarHandler::NextChangeRealTsMsFromWorldClock(uint64_t realNowMs) const
+	{
+		if (!m_worldClock)
+			return 0ull;
+		const engine::world::WorldClockParams p = m_worldClock->GetParams();
+		if (p.paused)
+			return 0ull;
+		const double gameSec = engine::world::GameSeconds(realNowMs, p);
+		const uint64_t gameMs = static_cast<uint64_t>(gameSec * 1000.0);
+		const uint64_t periodMs = static_cast<uint64_t>(p.lunarPeriodGameSec * 1000.0);
+		if (periodMs == 0)
+			return 0ull;
+		const uint64_t nextGameMs = LunarCalendar::NextChangeTsMs(gameMs, 0ull, periodMs);
+		const uint64_t remainingGameMs = (nextGameMs > gameMs) ? (nextGameMs - gameMs) : 0ull;
+		// Même garde que GameSeconds : rythme invalide => 60 min réelles par jour de jeu.
+		const double scaleMinPerDay = (p.timeScaleRealMinPerDay > 0.0f)
+			? static_cast<double>(p.timeScaleRealMinPerDay) : 60.0;
+		const double realPerGame = (scaleMinPerDay * 60.0) / 86400.0; // s réelles par s de jeu
+		return realNowMs + static_cast<uint64_t>(static_cast<double>(remainingGameMs) * realPerGame);
+	}
+
 	uint8_t LunarHandler::CurrentPhase() const
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
@@ -169,14 +190,14 @@ namespace engine::server
 			{
 				newPhase = info.phase;
 				newIllumination = info.illumination;
-				// nextChangeTsMs (informationnel) : si l'horloge monde est branchee,
-				// la phase derive du temps de jeu et il n'y a pas de mapping direct
-				// vers un timestamp Unix de prochain changement (la cadence depend du
-				// timeScale, qui peut changer). On laisse 0 dans ce cas (le client
-				// rafraichit via le push 194 a chaque changement de phase). Sinon,
-				// calcul temps reel d'origine.
+				// nextChangeTsMs (informationnel) : FIX.5 — avec l'horloge monde, on
+				// convertit la fin de la phase courante (temps de jeu) en horodatage réel
+				// au rythme ACTUEL de l'horloge (avant : toujours 0). Une modification
+				// ultérieure du rythme (/timescale) le rend approximatif : le client
+				// reste rafraîchi par le push 194 à chaque vrai changement de phase.
+				// Horloge en pause : 0 (aucun changement prévu).
 				nextChangeTs = m_worldClock
-					? 0ull
+					? NextChangeRealTsMsFromWorldClock(realNowMs)
 					: LunarCalendar::NextChangeTsMs(realNowMs, m_cycleStartMs, m_cycleDurationMs);
 				m_lastBroadcastPhase = info.phase;
 				needBroadcast = true;

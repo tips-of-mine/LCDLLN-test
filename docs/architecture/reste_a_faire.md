@@ -16,6 +16,7 @@ Mettre ce tableau à jour à chaque PR qui avance l'un de ces sujets (statut, PR
 | 6.5 | Archivage des personnages inactifs depuis longtemps | à faire | |
 | 6.6 | Historique des positions pour juger les tirs | à faire | `LagCompensation` existe mais n'est pas branché. |
 | 6.7 | Sauvegardes : ne plus renvoyer courrier réclamé et carte à chaque fois | à faire | Suite de 5.5 : vider `mailboxClaimedIds` et n'envoyer que les cases de carte nouvelles après un COMMIT confirmé au tick. |
+| 6.8 | Une seule authentification par connexion du client | à faire | Aujourd'hui 3 AUTH (écran, liste des serveurs, entrée en jeu) ; FIX.5 a seulement renommé le remplacement (`ReplacedByReauth`). Réutiliser la session dans `MasterShardClientFlow`. |
 
 ## 6.1 — Transfert de personnage en deux temps (chantier 1.4)
 

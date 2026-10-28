@@ -724,6 +724,14 @@ namespace engine::server
 			// ETAPE4.5 (chantier 2.5) — durée réelle du tick (réception + simulation +
 			// envois) : déclencheur du délestage.
 			const auto tickStart = std::chrono::steady_clock::now();
+			// ETAPE5.2 (chantier 1.5) — un écart anormal depuis le tick précédent (tick très
+			// lent, pause de la machine) suspend l'éviction des clients UDP inactifs : leurs
+			// paquets attendaient dans la socket, ce ne sont pas des zombies.
+			if (m_stallGuard.OnLoop(std::chrono::duration<double>(tickStart.time_since_epoch()).count()))
+			{
+				LOG_WARN(Core, "[ServerApp] ETAPE5.2 calage du tick ({:.1f} s, total={}) : éviction UDP suspendue {:.0f} s",
+					m_stallGuard.LastStallSeconds(), m_stallGuard.StallCount(), m_stallGuard.Config().graceSeconds);
+			}
 			ProcessIncomingPackets();
 			TickOnce();
 			const auto tickEnd = std::chrono::steady_clock::now();
@@ -3162,7 +3170,9 @@ namespace engine::server
 		DrainCompletedCharacterLoads();
 		// TA.3 — eviction des clients UDP zombies (1 Hz pour limiter le cout, suffisant
 		// pour la propriete attendue : zombie disparait en max ~kUdpClientIdleTimeoutMs + 1 s).
-		if (m_currentTick - m_lastEvictIdleClientsTick >= m_tickHz)
+		// ETAPE5.2 — reportée tant que dure la suspension qui suit un calage du tick.
+		if (m_currentTick - m_lastEvictIdleClientsTick >= m_tickHz
+			&& m_stallGuard.ChecksAllowed(std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count()))
 		{
 			EvictIdleUdpClients();
 			m_lastEvictIdleClientsTick = m_currentTick;
@@ -3283,6 +3293,18 @@ namespace engine::server
 			LOG_INFO(Net, "[ServerApp] Délestage : {} (entrée ≥ {:.0f} % du tick pendant {:.0f} s, sortie ≤ {:.0f} % pendant {:.0f} s, {:.0f} s entre bascules)",
 				applied.enabled ? "actif" : "désactivé", applied.enterLoad * 100.0, applied.enterHoldSeconds,
 				applied.exitLoad * 100.0, applied.exitHoldSeconds, applied.minDwellSeconds);
+		}
+		// ETAPE5.2 (chantier 1.5) — garde contre les évictions juste après un calage du tick.
+		{
+			engine::core::StallGuardConfig stall{};
+			stall.enabled = m_config.GetBool("server.stall_guard.enabled", true);
+			stall.stallSeconds = m_config.GetDouble("server.stall_guard.stall_sec", 3.0);
+			stall.graceSeconds = m_config.GetDouble("server.stall_guard.grace_sec", 30.0);
+			stall.maxSuspendSeconds = m_config.GetDouble("server.stall_guard.max_suspend_sec", 120.0);
+			m_stallGuard.Configure(stall);
+			LOG_INFO(Net, "[ServerApp] Garde de calage : {} (calage ≥ {:.1f} s, éviction UDP suspendue {:.0f} s)",
+				m_stallGuard.Config().enabled ? "active" : "désactivée", m_stallGuard.Config().stallSeconds,
+				m_stallGuard.Config().graceSeconds);
 		}
 		// ETAPE4.2 (chantier 2.6) — travaux périodiques étalés par identifiant.
 		{

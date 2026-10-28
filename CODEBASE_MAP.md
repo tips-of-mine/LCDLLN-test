@@ -296,6 +296,11 @@ RenderModel
 > (211) aux clients. Étape 5 : `docs/architecture/etape5_exploitation.md` ; suivi de
 > l'étape 6 : `docs/architecture/reste_a_faire.md`.
 
+> **Règle (ETAPE5.2)** : un contrôle qui déclare quelqu'un mort ou inactif par délai
+> (heartbeat, session, client UDP) doit être gardé par un `engine::core::StallGuard`
+> (`src/shared/core/StallGuard.h`) : `OnLoop` à chaque tour, et pas de contrôle tant que
+> `ChecksAllowed` est faux (suspension après un calage de la boucle).
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

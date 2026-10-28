@@ -217,8 +217,40 @@ static void TestSaturatedShardIsDegraded()
 	engine::core::Log::Shutdown();
 }
 
+/// FIX.3 : un réenregistrement (même nom) doit remplacer les endpoints annoncés.
+/// Cas réel du 28/10/2026 : shard relancé avec un endpoint UDP alors que le master
+/// gardait l'entrée initiale sans UDP => clients envoyés sur le port TCP.
+static void TestReregisterUpdatesEndpoints()
+{
+	engine::core::LogSettings logSettings;
+	logSettings.level = engine::core::LogLevel::Info;
+	logSettings.console = false;
+	engine::core::Log::Init(logSettings);
+
+	ShardRegistry reg;
+	auto idOpt = reg.RegisterShard("s1", "127.0.0.1:3843", "", 100, "eu");
+	Assert(idOpt.has_value(), "FIX.3 RegisterShard returns id");
+	// Le même nom est refusé par RegisterShard (le handler bascule alors en réenregistrement).
+	Assert(!reg.RegisterShard("s1", "x", "y", 1).has_value(), "FIX.3 duplicate name rejected");
+	Assert(reg.UpdateShardAnnouncement(*idOpt, "10.0.4.133:3843", "10.0.4.133:27015", 200, "fr-west", "",
+		engine::network::ShardGameMode::PvP, engine::network::ShardRuleset::Hardcore), "FIX.3 update returns true");
+	auto info = reg.GetShard(*idOpt);
+	Assert(info.has_value(), "FIX.3 GetShard");
+	Assert(info->endpoint == "10.0.4.133:3843", "FIX.3 endpoint TCP mis a jour");
+	Assert(info->udp_endpoint == "10.0.4.133:27015", "FIX.3 endpoint UDP mis a jour");
+	Assert(info->max_capacity == 200, "FIX.3 capacite mise a jour");
+	Assert(info->region == "fr-west", "FIX.3 region mise a jour");
+	Assert(info->display_name == "s1", "FIX.3 nom public vide => repli sur le nom technique");
+	Assert(info->game_mode == engine::network::ShardGameMode::PvP, "FIX.3 game_mode mis a jour");
+	Assert(!reg.UpdateShardAnnouncement(999, "", "", 0, "", "", engine::network::ShardGameMode::PvE,
+		engine::network::ShardRuleset::Cooperative), "FIX.3 shard inconnu => false");
+
+	engine::core::Log::Shutdown();
+}
+
 int main()
 {
+	TestReregisterUpdatesEndpoints();
 	TestSaturatedShardIsDegraded();
 	TestOfflineShardReturnsOnlineOnHeartbeat();
 	TestEvictStaleHeartbeatsMarksOfflineAndInvokesCallback();

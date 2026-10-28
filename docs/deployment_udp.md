@@ -44,11 +44,23 @@ Dans `shard.config.json` :
 }
 ```
 
-Ou via variable d'environnement Docker (préférable, alignée avec
-`SHARD_REGISTER_ENDPOINT`) :
+Ou via Docker (préférable) : **une seule variable** dans `.env` suffit depuis FIX.3,
+les deux endpoints (TCP `SHARD_PORT`, UDP `SHARD_UDP_PORT`) en sont dérivés :
+```env
+SHARD_PUBLIC_HOST=10.0.4.133
+```
+Surcharge explicite possible (NAT, IP publique différente), prioritaire :
 ```env
 SHARD_REGISTER_UDP_ENDPOINT=10.0.4.133:27015
 ```
+Au démarrage, le conteneur affiche `[entrypoint] annonce shard : tcp=… udp=…` et le
+shard journalise un WARN si l'UDP est vide ou si l'endpoint TCP est une adresse locale.
+
+**Changement d'endpoint à chaud** : depuis FIX.3, un shard relancé avec un nouvel
+endpoint met à jour l'entrée du master (`[ShardRegistry] Shard N : endpoint UDP … -> …`).
+Avant, l'entrée gardait la valeur du premier enregistrement et il fallait redémarrer
+le master (incident du 28/10/2026 : client envoyé sur le port TCP 3843, aucun Welcome,
+HUD incomplet, position jamais sauvegardée).
 
 **Format** : `ip-publique-joignable:port`. Doit pointer vers la même socket
 que celle exposée par le mapping Docker du service `shard`.
@@ -157,8 +169,9 @@ seul à l'écran alors que le client B est connecté :
 
 1. Vérifier dans les logs serveur que **les 2 ont passé HandleHello**
    (`[ServerApp] Hello accepted ...`).
-2. Vérifier que `SHARD_REGISTER_UDP_ENDPOINT` est bien renseigné côté shard
-   (sinon client ne sait pas où envoyer).
+2. Vérifier que `SHARD_PUBLIC_HOST` (ou `SHARD_REGISTER_UDP_ENDPOINT`) est bien
+   renseigné côté shard (sinon client ne sait pas où envoyer). Côté client, la ligne
+   `[MasterShardClientFlow] Flow complete (… endpoint=…)` doit montrer le port UDP.
 3. Vérifier le firewall : `nc -uvz` doit réussir depuis la machine cliente.
 
 ## 7. Wire-breaking : redéploiement lock-step

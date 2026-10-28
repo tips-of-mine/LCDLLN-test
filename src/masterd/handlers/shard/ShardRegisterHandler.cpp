@@ -76,6 +76,11 @@ namespace engine::server
 		std::string name = parsed->name;
 		std::string endpoint = parsed->endpoint;
 		uint32_t current_load = parsed->current_load;
+		// FIX.3 : copie de l'annonce complète, réappliquée en cas de réenregistrement
+		// (RegisterShard consomme les strings par déplacement).
+		const std::string udpEndpoint = parsed->udp_endpoint;
+		const std::string region = parsed->region;
+		const std::string displayName = parsed->display_name;
 
 		// --- Étape 2 : enregistrement dans le registre ----------------------------
 		// RegisterShard retourne nullopt si le nom est déjà présent (cas de reconnexion).
@@ -94,6 +99,12 @@ namespace engine::server
 			{
 				if (s.name == name)
 				{
+					// FIX.3 : on reprend ce que le shard annonce MAINTENANT (endpoints,
+					// capacité, présentation). Avant, l'entrée gardait les valeurs du premier
+					// enregistrement : un endpoint UDP ajouté après coup n'était jamais
+					// relayé aux clients sans redémarrer le master.
+					m_registry->UpdateShardAnnouncement(s.shard_id, endpoint, udpEndpoint, parsed->max_capacity,
+						region, displayName, parsed->game_mode, parsed->ruleset);
 					m_registry->UpdateHeartbeat(s.shard_id, current_load);
 					// TA.3 : memorise la nouvelle connId du shard (re-register implique souvent
 					// une nouvelle connexion TCP) pour les push master->shard (AdmitCharacter).

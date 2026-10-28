@@ -59,6 +59,18 @@ namespace engine::server
 			engine::network::ShardGameMode game_mode = engine::network::ShardGameMode::PvE,
 			engine::network::ShardRuleset ruleset = engine::network::ShardRuleset::Cooperative);
 
+		/// FIX.3 — Met à jour ce qu'un shard déjà connu annonce lors d'un réenregistrement
+		/// (même nom) : endpoints TCP/UDP, capacité, région, présentation publique.
+		/// Sans cet appel, l'entrée gardait les valeurs du tout premier enregistrement :
+		/// un shard relancé avec un nouvel endpoint UDP restait annoncé avec l'ancien (vide)
+		/// dans SERVER_LIST tant que le master n'était pas redémarré (incident 28/10/2026).
+		/// \param display_name nom public ; vide = repli sur le nom technique.
+		/// \return true si le shard existe ; false sinon (aucun effet).
+		/// Thread-safe (verrou interne). Journalise chaque champ qui change (INFO).
+		bool UpdateShardAnnouncement(uint32_t shard_id, std::string endpoint, std::string udp_endpoint, uint32_t max_capacity,
+			std::string region, std::string display_name,
+			engine::network::ShardGameMode game_mode, engine::network::ShardRuleset ruleset);
+
 		/// Updates last_heartbeat (and optionally current_load). If state was Registering, transitions to Online.
 		/// Returns true if shard exists and was updated.
 		/// \param saturated ETAPE5.4 : contre-pression annoncée par le shard (délestage, file de

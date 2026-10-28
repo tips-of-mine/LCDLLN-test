@@ -152,10 +152,19 @@ services:
     environment:
       # TD.10 — fuseau horaire aligné sur le master (cf. service master ci-dessus).
       TZ: ${TZ:-Europe/Paris}
-      SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}
+      # FIX.3 : SHARD_PUBLIC_HOST = IP/nom de l'hôte Docker joignable par les clients.
+      # Une seule variable suffit : les deux endpoints annoncés au master en sont
+      # dérivés (port TCP = SHARD_PORT, port UDP = SHARD_UDP_PORT, ports publiés sur l'hôte).
+      # SHARD_REGISTER_ENDPOINT / SHARD_REGISTER_UDP_ENDPOINT restent prioritaires
+      # s'ils sont renseignés (cas NAT / IP publique différente).
+      SHARD_PUBLIC_HOST: ${SHARD_PUBLIC_HOST:-}
+      SHARD_PUBLIC_TCP_PORT: ${SHARD_PORT:-3843}
+      SHARD_PUBLIC_UDP_PORT: ${SHARD_UDP_PORT:-27015}
+      SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-}
       # TB.1/TE.3 : endpoint UDP gameplay annonce aux clients via le master
-      # (SERVER_LIST). Vide => non annonce (clients ne pourront pas se connecter
-      # en gameplay UDP). Format : <ip-publique-joignable-par-le-client>:<port-UDP>.
+      # (SERVER_LIST). Vide ET SHARD_PUBLIC_HOST vide => non annonce (clients ne
+      # pourront pas entrer en jeu : HUD incomplet, position non sauvegardée).
+      # Format : <ip-publique-joignable-par-le-client>:<port-UDP>.
       SHARD_REGISTER_UDP_ENDPOINT: ${SHARD_REGISTER_UDP_ENDPOINT:-}
       SHARD_NAME: ${SHARD_NAME:-main-shard}
       SHARD_MAX_CAPACITY: ${SHARD_MAX_CAPACITY:-500}
@@ -167,10 +176,16 @@ services:
     command:
       - sh
       - -c
+      # FIX.3 : endpoints dérivés de SHARD_PUBLIC_HOST quand non fournis explicitement
+      # (repli TCP historique : 127.0.0.1, UDP : non annoncé).
       - >-
+        REG_TCP="$${SHARD_REGISTER_ENDPOINT:-$${SHARD_PUBLIC_HOST:-127.0.0.1}:$$SHARD_PUBLIC_TCP_PORT}";
+        REG_UDP="$$SHARD_REGISTER_UDP_ENDPOINT";
+        if [ -z "$$REG_UDP" ] && [ -n "$$SHARD_PUBLIC_HOST" ]; then REG_UDP="$$SHARD_PUBLIC_HOST:$$SHARD_PUBLIC_UDP_PORT"; fi;
+        echo "[entrypoint] annonce shard : tcp=$$REG_TCP udp=$${REG_UDP:-(non annonce)}";
         exec /app/lcdlln_shard -log -console
-        --shard.register.endpoint=$$SHARD_REGISTER_ENDPOINT
-        --shard.register.udp_endpoint="$$SHARD_REGISTER_UDP_ENDPOINT"
+        --shard.register.endpoint="$$REG_TCP"
+        --shard.register.udp_endpoint="$$REG_UDP"
         --shard.register.name="$$SHARD_NAME"
         --shard.register.max_capacity=$$SHARD_MAX_CAPACITY
         --shard.register.build_version="$$SHARD_BUILD_VERSION"

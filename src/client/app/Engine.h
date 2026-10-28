@@ -1903,6 +1903,9 @@ namespace engine
 		bool                                         m_shutdownPositionSaved = false;
 		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
 		bool m_gameplayNetInitialized = false;
+		/// FIX.1 — instant (EngineNowSec) depuis lequel la session UDP attend son Welcome ;
+		/// -1 = Welcome reçu (ou pas encore en attente). Pilote le bandeau d'état du HUD.
+		float m_gameplayWelcomeWaitSinceSec = -1.0f;
 		engine::client::UIModelBinding m_uiModelBinding{};
 		engine::client::ShopUiPresenter m_shopUi{};
 		engine::client::AuctionUiPresenter m_auctionUi{};

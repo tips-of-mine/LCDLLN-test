@@ -351,21 +351,39 @@ namespace engine::client
 
 	void GameplayUdpClient::MaybeResendHello(uint64_t nowMs)
 	{
-		if (!m_active || m_serverClientId != 0u || m_lastHelloDatagram.empty() || m_helloAttempts >= kHelloMaxAttempts)
+		// FIX.1 — renvois rapides (1 s) puis lents (5 s) au lieu d'abandonner après 15 essais.
+		if (!m_active || m_serverClientId != 0u || m_lastHelloDatagram.empty()
+			|| m_helloAttempts >= kHelloMaxAttempts + kHelloSlowMaxAttempts)
 			return;
 		if (m_lastHelloSentMs == 0u)
 		{
 			m_lastHelloSentMs = nowMs; // premier appel après SendHello : point de départ
 			return;
 		}
-		if (nowMs - m_lastHelloSentMs < kHelloResendIntervalMs)
+		const bool slowPhase = m_helloAttempts >= kHelloMaxAttempts;
+		if (nowMs - m_lastHelloSentMs < (slowPhase ? kHelloSlowResendIntervalMs : kHelloResendIntervalMs))
 			return;
 		m_lastHelloSentMs = nowMs;
 		++m_helloAttempts;
 		const bool ok = SendRaw(m_lastHelloDatagram);
-		LOG_INFO(Net, "[GameplayUdpClient] Hello renvoyé (essai {}/{}, ok={})", m_helloAttempts, kHelloMaxAttempts, ok ? 1 : 0);
-		if (m_helloAttempts >= kHelloMaxAttempts)
-			LOG_WARN(Net, "[GameplayUdpClient] Aucun Welcome après {} Hello : le shard ne répond pas", kHelloMaxAttempts);
+		if (!slowPhase)
+		{
+			LOG_INFO(Net, "[GameplayUdpClient] Hello renvoyé (essai {}/{}, ok={})", m_helloAttempts, kHelloMaxAttempts, ok ? 1 : 0);
+			if (m_helloAttempts >= kHelloMaxAttempts)
+				LOG_WARN(Net, "[GameplayUdpClient] Aucun Welcome après {} Hello : le shard ne répond pas "
+					"(renvoi toutes les {} s pendant ~{} min ; vérifier l'endpoint UDP annoncé et le pare-feu)",
+					kHelloMaxAttempts, kHelloSlowResendIntervalMs / 1000u,
+					(kHelloSlowMaxAttempts * kHelloSlowResendIntervalMs) / 60000u);
+		}
+		else if ((m_helloAttempts - kHelloMaxAttempts) % 12u == 0u)
+		{
+			// Une ligne par minute pendant la phase lente.
+			LOG_WARN(Net, "[GameplayUdpClient] Toujours aucun Welcome (essai lent {}/{}, ok={})",
+				m_helloAttempts - kHelloMaxAttempts, kHelloSlowMaxAttempts, ok ? 1 : 0);
+		}
+		if (m_helloAttempts >= kHelloMaxAttempts + kHelloSlowMaxAttempts)
+			LOG_ERROR(Net, "[GameplayUdpClient] Abandon du Hello après {} essais : relancer l'entrée en jeu",
+				m_helloAttempts);
 	}
 
 	bool GameplayUdpClient::SendInput(uint32_t clientId, uint32_t inputSequence, float posX, float posY, float posZ, float yaw,

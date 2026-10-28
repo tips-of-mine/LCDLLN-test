@@ -2585,6 +2585,24 @@ namespace engine
 				LOG_INFO(Core, "[Engine] /ban sent to master");
 				return true;
 			}
+			// ETAPE5.3 — /shutdown <secondes> [motif] | /shutdown cancel (administrator) :
+			// arrêt ordonné du cluster, décidé et exécuté par le master (RBAC + audit).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/shutdown" || text.starts_with("/shutdown ")))
+			{
+				std::string_view rest = text.size() > 9u ? std::string_view(text).substr(10) : std::string_view{};
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/shutdown";
+				if (!rest.empty())
+					req.args.push_back(std::string(rest));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /shutdown sent to master");
+				return true;
+			}
 			// Wave 2 RBAC migration : /announce <message> (game_master).
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& text.starts_with("/announce "))
@@ -2749,6 +2767,8 @@ namespace engine
 				LOG_WARN(Net, "[Engine] SHARD_LOST : shard {} perdu (raison={}) -> retour a l'ecran de connexion",
 					parsed->shardId, static_cast<unsigned>(parsed->reason));
 				m_shardLostPending = true;
+				// ETAPE5.3 — arrêt ordonné du cluster : message dédié (maintenance).
+				m_shardLostByShutdown = (parsed->reason == ShardLostReason::Shutdown);
 				return;
 			}
 			case kOpcodeMailListInboxResponse:
@@ -3632,7 +3652,8 @@ namespace engine
 					      || parsed.command == "/kick"
 					      || parsed.command == "/mute"
 					      || parsed.command == "/ban"
-					      || parsed.command == "/announce")
+					      || parsed.command == "/announce"
+					      || parsed.command == "/shutdown")
 					{
 						// Wave 2 : reponses moderation. Affiche le resultat
 						// dans le chat (canal Server) pour feedback joueur.
@@ -3671,6 +3692,10 @@ namespace engine
 						else if (parsed.command == "/announce")
 						{
 							body = "[Announce] " + parsed.message;
+						}
+						else if (parsed.command == "/shutdown")
+						{
+							body = "[Shutdown] " + parsed.message; // ETAPE5.3
 						}
 
 						if (!body.empty() && m_chatUi.IsInitialized())
@@ -8911,7 +8936,8 @@ namespace engine
 			if (m_gameplayNetInitialized || m_currentCharacterId != 0)
 			{
 				RequestLogoutToLoginScreen();
-				m_authUi.SetInfoBanner(m_authUi.UiTranslate("auth.info.shard_lost"));
+				m_authUi.SetInfoBanner(m_authUi.UiTranslate(
+					m_shardLostByShutdown ? "auth.info.server_shutdown" : "auth.info.shard_lost"));
 			}
 		}
 

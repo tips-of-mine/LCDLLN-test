@@ -160,4 +160,11 @@ namespace engine::network
 	/// Décode le payload ; nullopt si tronqué. Une raison inconnue est conservée telle quelle
 	/// (rétro-compatibilité : le client traite toute raison comme une perte).
 	std::optional<ShardLostNotificationPayload> ParseShardLostNotificationPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// ETAPE5.3 — ordre d'arrêt ordonné envoyé par le master au shard (kOpcodeMasterToShardShutdown).
+	/// \param reason motif lisible (journalisé par le shard), tronqué à 200 octets.
+	std::vector<uint8_t> BuildMasterToShardShutdownPacket(std::string_view reason);
+
+	/// Décode le motif de kOpcodeMasterToShardShutdown ; nullopt si le payload est invalide.
+	std::optional<std::string> ParseMasterToShardShutdownPayload(const uint8_t* payload, size_t payloadSize);
 }

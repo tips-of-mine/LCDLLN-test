@@ -227,6 +227,15 @@ int main(int argc, char** argv)
 	// kOpcodeMasterToShardAdmitCharacter (suite à un EnterWorld réussi côté master). Sans
 	// ce câblage, le Hello UDP du client (clientNonce=character_id) serait rejeté car le
 	// ticket TCP avait été émis avant le choix de perso (character_id=0 → non admis).
+	// ETAPE5.3 (chantier 5.4) — arrêt ordonné du cluster : le master ordonne l'arrêt à la
+	// fin de son compte à rebours. On sort de la boucle principale comme sur SIGTERM :
+	// gameplayApp.Shutdown() sauvegarde tous les joueurs (« shutdown ») et vide la file de
+	// sauvegarde SQL avant la fermeture du pool, puis le processus sort avec le code 0
+	// (systemd : Restart=on-failure ne relance pas ; Docker : conteneur « exited (0) »).
+	toMaster.SetShutdownCallback([](std::string_view reason) {
+		LOG_WARN(Net, "[ShardMain] ETAPE5.3 arrêt ordonné demandé par le master (motif='{}') : sauvegarde puis sortie", reason);
+		g_quit = 1;
+	});
 	toMaster.SetAdmitCharacterCallback([&admittedRegistry](uint64_t account_id, uint64_t character_id,
 		std::string_view character_name, std::string_view gender, uint64_t guild_id, uint64_t owner_generation,
 		const std::array<uint8_t, 32>* udp_session_key) {

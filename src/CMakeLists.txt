@@ -154,6 +154,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/main_linux.cpp
     # ETAPE5.2 : contrôles de heartbeat suspendus après un calage de la boucle principale.
     ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp
+    # ETAPE5.3 : arrêt ordonné du cluster (/shutdown, SIGTERM).
+    ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdown.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/migrations/MigrationRunner.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/ConnectionPool.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/db/DbHelpers.cpp
@@ -579,6 +581,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # ETAPE5.3 : arrêt ordonné du cluster (compte à rebours, vidage, sortie).
+  lcdlln_add_simple_test(cluster_shutdown_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdownTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdown.cpp)
   # ETAPE5.2 : garde contre les jugements après un calage (module pur).
   lcdlln_add_simple_test(stall_guard_tests
     ${CMAKE_SOURCE_DIR}/src/shared/core/tests/StallGuardTests.cpp

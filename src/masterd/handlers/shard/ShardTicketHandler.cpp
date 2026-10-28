@@ -96,6 +96,15 @@ namespace engine::server
 				m_server->Send(connId, pkt);
 			return;
 		}
+		// ETAPE5.3 — arrêt ordonné en cours : plus de nouvelle entrée sur un shard.
+		if (m_admissionBlocked && m_admissionBlocked())
+		{
+			LOG_INFO(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET refusé : arrêt du serveur en cours (connId={})", connId);
+			auto pkt = BuildErrorPacket(NetErrorCode::SERVER_LIST_UNAVAILABLE, "server shutting down", requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
 		auto shardOpt = m_registry->GetShard(req->target_shard_id);
 		if (!shardOpt || shardOpt->state != ShardState::Online)
 		{

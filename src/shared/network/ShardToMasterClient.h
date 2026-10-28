@@ -92,6 +92,13 @@ namespace engine::network
 			uint64_t owner_generation, const std::array<uint8_t, 32>* udp_session_key)>;
 		void SetAdmitCharacterCallback(AdmitCharacterCallback cb) { m_admit_callback = std::move(cb); }
 
+		/// ETAPE5.3 — ordre d'arrêt ordonné du cluster (kOpcodeMasterToShardShutdown).
+		/// Appelé depuis Pump() (thread de la boucle du shard) avec le motif. Le shard doit
+		/// sauvegarder ses joueurs, vider sa file SQL et s'arrêter (code de sortie 0).
+		/// `nullptr` (défaut) = ordre ignoré (journalisé).
+		using ShutdownCallback = std::function<void(std::string_view reason)>;
+		void SetShutdownCallback(ShutdownCallback cb) { m_shutdown_callback = std::move(cb); }
+
 		enum class State
 		{
 			Disconnected,
@@ -136,6 +143,7 @@ namespace engine::network
 		int m_heartbeat_interval_sec = 10;
 		/// TA.3 — callback admission (master push). Voir SetAdmitCharacterCallback.
 		AdmitCharacterCallback m_admit_callback;
+		ShutdownCallback m_shutdown_callback; ///< ETAPE5.3
 		/// Présence enrichie (v9) — fournisseur optionnel de la liste des joueurs. Voir SetPlayerPresenceProvider.
 		PlayerPresenceProvider m_presence_provider;
 	};

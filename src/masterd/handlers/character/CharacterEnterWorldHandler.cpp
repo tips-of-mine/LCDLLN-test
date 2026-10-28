@@ -75,6 +75,16 @@ namespace engine::server
 			return;
 		}
 
+		// ETAPE5.3 — arrêt ordonné du cluster en cours : plus de nouvelle entrée en jeu.
+		if (m_admissionBlocked && m_admissionBlocked())
+		{
+			LOG_INFO(Net, "[CharacterEnterWorldHandler] refusé : arrêt du serveur en cours (account_id={})", *accountId);
+			auto pkt = BuildCharacterEnterWorldResponsePacket(0u, requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
 		auto* stmtCache = guard.cache();

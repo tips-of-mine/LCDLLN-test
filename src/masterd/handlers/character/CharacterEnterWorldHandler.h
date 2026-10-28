@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <cstddef>
 #include <cstdint>
 
@@ -51,6 +52,10 @@ namespace engine::server
 		/// déblocages sont notifiés au client par un ChatRelay « système ».
 		void SetAnniversaryService(AnniversaryService* service);
 
+		/// ETAPE5.3 — facultatif : tant que \p blocked renvoie vrai (arrêt ordonné du cluster
+		/// en cours), toute entrée en jeu est refusée (réponse « refusé »).
+		void SetAdmissionBlockedProvider(std::function<bool()> blocked) { m_admissionBlocked = std::move(blocked); }
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -62,5 +67,6 @@ namespace engine::server
 		engine::server::db::ConnectionPool* m_pool     = nullptr;
 		ShardRegistry*                      m_shardRegistry = nullptr; ///< TA.3 — lookup connId pour push d'admission.
 		AnniversaryService*                 m_anniversary = nullptr;   ///< Anniversaires — facultatif (nullptr = off).
+		std::function<bool()>               m_admissionBlocked;        ///< ETAPE5.3 — arrêt ordonné en cours.
 	};
 }

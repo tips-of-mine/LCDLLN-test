@@ -99,6 +99,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <mutex>
 #include <vector>
 
 namespace
@@ -421,20 +422,50 @@ int main(int argc, char** argv)
 	// Sans ce hook, le client garde sa connexion master + shard alive et peut jouer
 	// le meme personnage en parallele du nouveau client (cf. bug observe avec deux
 	// IP differentes sur account_id=1).
+	// FIX.5 — connexions TCP déjà fermées qui portent encore une session (la session survit
+	// à la fermeture : fenêtre de reconnexion). Sert à nommer correctement le remplacement
+	// d'une session par une nouvelle auth du même compte (ReplacedByReauth, pas un kick).
+	// Alimenté par le ConnectionClosedHandler plus bas ; une entrée disparaît quand la
+	// session de cette connexion est fermée (cascade ci-dessous).
+	std::mutex closedSessionConnsMutex;
+	std::unordered_set<uint32_t> closedSessionConns;
+	sessionManager.SetSessionConnectionOpenHook(
+		[&connSessionMap, &closedSessionConns, &closedSessionConnsMutex](uint64_t existingSessionId) -> bool
+		{
+			auto connId = connSessionMap.FindConnIdForSession(existingSessionId);
+			if (!connId)
+				return false;
+			std::lock_guard<std::mutex> lock(closedSessionConnsMutex);
+			return closedSessionConns.count(*connId) == 0;
+		});
+
 	sessionManager.SetOnSessionClosed(
-		[&server, &connSessionMap, &sessionCharMap](uint64_t sessionId, uint64_t accountId,
+		[&server, &connSessionMap, &sessionCharMap, &closedSessionConns, &closedSessionConnsMutex](uint64_t sessionId, uint64_t accountId,
 			engine::server::SessionCloseReason reason)
 		{
 			(void)accountId;
-			(void)reason;
 			auto oldConn = connSessionMap.FindConnIdForSession(sessionId);
 			if (!oldConn)
 				return;
-			LOG_INFO(Net,
-				"[SessionManager] cascading close : connId={} sessionId={} reason={}",
-				*oldConn, sessionId, engine::server::SessionCloseReasonToString(reason));
-			server.CloseConnection(*oldConn,
-				engine::server::DisconnectReason::KickedByDuplicateLogin);
+			bool alreadyClosed = false;
+			{
+				std::lock_guard<std::mutex> lock(closedSessionConnsMutex);
+				alreadyClosed = closedSessionConns.erase(*oldConn) != 0;
+			}
+			if (reason == engine::server::SessionCloseReason::ReplacedByReauth || alreadyClosed)
+			{
+				// FIX.5 — connexion déjà fermée : simple nettoyage, rien à couper.
+				LOG_DEBUG(Net, "[SessionManager] session remplacee (connId={} deja fermee, sessionId={}, reason={})",
+					*oldConn, sessionId, engine::server::SessionCloseReasonToString(reason));
+			}
+			else
+			{
+				LOG_INFO(Net,
+					"[SessionManager] cascading close : connId={} sessionId={} reason={}",
+					*oldConn, sessionId, engine::server::SessionCloseReasonToString(reason));
+				server.CloseConnection(*oldConn,
+					engine::server::DisconnectReason::KickedByDuplicateLogin);
+			}
 			connSessionMap.Remove(*oldConn);
 			sessionCharMap.Remove(*oldConn);
 		});
@@ -448,9 +479,16 @@ int main(int argc, char** argv)
 	// .Remove est idempotent : un retrait ulterieur par le watchdog ou le hook
 	// SetOnSessionClosed est sans effet.
 	server.SetConnectionClosedHandler(
-		[&sessionCharMap](uint32_t connId, engine::server::DisconnectReason /*reason*/)
+		[&sessionCharMap, &connSessionMap, &closedSessionConns, &closedSessionConnsMutex](uint32_t connId,
+			engine::server::DisconnectReason /*reason*/)
 		{
 			sessionCharMap.Remove(connId);
+			// FIX.5 — mémorise la fermeture si la connexion porte encore une session.
+			if (connSessionMap.GetSessionId(connId).has_value())
+			{
+				std::lock_guard<std::mutex> lock(closedSessionConnsMutex);
+				closedSessionConns.insert(connId);
+			}
 		});
 
 	// Protection in-world contre le double-login : si un compte est deja en jeu
@@ -753,18 +791,12 @@ int main(int argc, char** argv)
 			static_cast<unsigned long long>(cycleDurMs));
 	}
 
-	LOG_INFO(Net, "[ServerMain] LunarHandler configured (Phase 5 Lunar, cycle 14j, 16 phases)");
+	// FIX.5 — la durée ci-dessus ne sert que si l'horloge monde n'est PAS branchée
+	// (repli temps réel). Une fois branchée (plus bas), la période vient de
+	// game.worldclock.lunar_period_game_days (16 jours de jeu par défaut) : l'ancien
+	// message « cycle 14j » laissait croire à une incohérence avec la réponse client.
+	LOG_INFO(Net, "[ServerMain] LunarHandler configured (Phase 5 Lunar, 16 phases ; periode = horloge monde une fois branchee)");
 
-	// Premier Tick au boot : etablit la phase courante (m_lastBroadcastPhase
-	// passe de 0xFF a la valeur reelle, broadcast initial aux clients
-	// connectes — V1 il n'y en a pas encore puisque le serveur vient de
-	// demarrer, mais c'est defensif et coherent).
-	{
-		const uint64_t bootNowMs = static_cast<uint64_t>(
-			std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::system_clock::now().time_since_epoch()).count());
-		lunarHandler.Tick(bootNowMs);
-	}
 
 	// Phase 3 step 1 WorldClock — WorldClockHandler : etat horloge monde
 	// authoritative master (epoch, time scale, offset, pause). Etat MUTABLE
@@ -802,6 +834,21 @@ int main(int argc, char** argv)
 	// juste au-dessus). Si non branche, le LunarHandler retombe sur le temps reel.
 	lunarHandler.SetWorldClock(&worldClockHandler);
 	LOG_INFO(Net, "[ServerMain] LunarHandler branched to WorldClockHandler (lunar phase derives from game time)");
+
+	// Premier Tick au boot : etablit la phase courante (m_lastBroadcastPhase
+	// passe de 0xFF a la valeur reelle, broadcast initial aux clients
+	// connectes — V1 il n'y en a pas encore puisque le serveur vient de
+	// demarrer, mais c'est defensif et coherent).
+	// FIX.5 — fait APRES le branchement de l'horloge monde : avant, la phase de boot
+	// était calculée en temps réel (ex. phase 7, pleine lune) puis, au tick suivant,
+	// en temps de jeu (phase 1) => faux « changement de phase » diffusé ~5 min après
+	// le démarrage (logs du 28/10/2026).
+	{
+		const uint64_t bootNowMs = static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+		lunarHandler.Tick(bootNowMs);
+	}
 
 	// Piggyback horloge monde dans la reponse liste perso (opcode 40) : le
 	// CharacterListHandler (instancie/configure plus haut) embarque l'etat
@@ -1816,6 +1863,11 @@ int main(int argc, char** argv)
 				// Phase 4 chat — purge le binding character actif pour ne pas leak
 				// dans le whisper directory.
 				sessionCharMap.Remove(connId);
+				{
+					// FIX.5 — la connexion ne porte plus de session : oubli de sa fermeture.
+					std::lock_guard<std::mutex> lock(closedSessionConnsMutex);
+					closedSessionConns.erase(connId);
+				}
 				LOG_INFO(Net, "[ServerMain] Session expired (connId={}, session_id={}), connection closed", connId, sessionId);
 			}
 		}

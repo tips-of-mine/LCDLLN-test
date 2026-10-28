@@ -93,6 +93,12 @@ namespace engine::server
 		/// deja). \param realNowMs Timestamp Unix courant en ms (entree du calcul).
 		engine::server::world::LunarPhaseInfo ComputePhaseNow(uint64_t realNowMs) const;
 
+		/// FIX.5 — horodatage Unix (ms) estimé du prochain changement de phase quand la
+		/// phase dérive de l'horloge monde : fin de la phase en temps de jeu convertie au
+		/// rythme courant (timeScaleRealMinPerDay). 0 si horloge absente ou en pause.
+		/// Appelée sous m_mutex (depuis Tick).
+		uint64_t NextChangeRealTsMsFromWorldClock(uint64_t realNowMs) const;
+
 		/// Traite LUNAR_STATE_REQUEST : valide session, calcule phase courante,
 		/// envoie une reponse 193 avec la phase + cycle params.
 		void HandleStateRequest(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader);

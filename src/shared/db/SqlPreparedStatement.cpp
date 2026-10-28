@@ -338,6 +338,14 @@ namespace engine::server::db
 		return static_cast<uint64_t>(n);
 	}
 
+	std::string SqlPreparedStatement::LastError() const
+	{
+		if (!m_stmt)
+			return "statement non prepare";
+		const char* e = mysql_stmt_error(m_stmt);
+		return (e != nullptr) ? std::string(e) : std::string();
+	}
+
 	bool SqlPreparedStatement::Reset()
 	{
 		if (!m_stmt)

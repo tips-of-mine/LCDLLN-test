@@ -43,7 +43,10 @@ namespace engine::server
 
 		if (!LoadFromContent())
 		{
-			LOG_WARN(Net, "[AuctionHouse] Load produced empty store (path={})", m_relativeListingsPath);
+			// FIX.5 — INFO : avec une base (ETAPE2.8), ce fichier n'est plus qu'une source
+			// d'import ponctuelle ; son absence est l'état normal, pas une anomalie.
+			LOG_INFO(Net, "[AuctionHouse] Fichier d'annonces absent ou vide (path={}) : normal si l'hotel des ventes est en base",
+				m_relativeListingsPath);
 			m_listings.clear();
 			m_nextListingId = 1;
 		}

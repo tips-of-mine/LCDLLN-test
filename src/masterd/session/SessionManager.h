@@ -32,7 +32,12 @@ namespace engine::server
 		HeartbeatTimeout,
 		MaxAgeExceeded,
 		Admin,
-		Other
+		Other,
+		/// FIX.5 — remplacée par une nouvelle authentification du même compte alors que la
+		/// connexion TCP de l'ancienne session était DÉJÀ fermée (flux de connexion du
+		/// client : auth, puis re-auth pour la liste des serveurs, puis pour l'entrée en
+		/// jeu). Personne n'est déconnecté : ce n'est pas un « kick ».
+		ReplacedByReauth
 	};
 
 	/// Policy when duplicate login is attempted: refuse new or kick existing session (policy v1).
@@ -131,6 +136,14 @@ namespace engine::server
 		/// client : auth initiale puis re-auth dans MasterShardClientFlow).
 		void SetSessionInWorldHook(std::function<bool(uint64_t existingSessionId)> hook);
 
+		/// FIX.5 — hook optionnel : renvoie true si la connexion TCP de \a existingSessionId
+		/// est encore ouverte. Consulté (sous le verrou interne, comme SetSessionInWorldHook)
+		/// quand une nouvelle authentification remplace une session : connexion déjà
+		/// fermée => raison ReplacedByReauth (journalisée sans parler de kick), sinon
+		/// KickedByDuplicateLogin. Non câblé : KickedByDuplicateLogin (comportement historique).
+		/// Ne change PAS la décision (remplacer ou refuser), seulement la raison.
+		void SetSessionConnectionOpenHook(std::function<bool(uint64_t existingSessionId)> hook);
+
 		/// Injecte une horloge alternative (typiquement \ref engine::core::FakeClock
 		/// pour les tests déterministes). Si non appelée, l'instance utilise
 		/// \ref engine::core::SteadyClock::Instance() — le comportement runtime
@@ -146,6 +159,7 @@ namespace engine::server
 		std::unordered_map<uint64_t, uint64_t> m_by_account_id;
 		std::function<void(uint64_t, uint64_t, SessionCloseReason)> m_onSessionClosed;
 		std::function<bool(uint64_t)> m_sessionInWorldHook;
+		std::function<bool(uint64_t)> m_sessionConnectionOpenHook; ///< FIX.5
 		engine::core::IClock* m_clock = nullptr;
 
 		engine::core::IClock& clock() const;

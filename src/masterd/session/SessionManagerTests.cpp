@@ -145,6 +145,35 @@ static void TestLoadConfig()
 	Assert(cfg.duplicate_login_policy == DuplicateLoginPolicy::RefuseNew, "LoadConfig duplicate_login_policy refuse");
 }
 
+/// FIX.5 : remplacement d'une session dont la connexion est déjà fermée = ReplacedByReauth,
+/// connexion encore ouverte = KickedByDuplicateLogin ; la nouvelle session est créée dans
+/// les deux cas.
+static void TestReplacedByReauthReason()
+{
+	SessionManager mgr;
+	SessionManagerConfig cfg;
+	cfg.duplicate_login_policy = DuplicateLoginPolicy::KickExisting;
+	mgr.SetConfig(cfg);
+	bool connectionOpen = false;
+	SessionCloseReason lastReason = SessionCloseReason::Other;
+	mgr.SetSessionConnectionOpenHook([&](uint64_t) { return connectionOpen; });
+	mgr.SetOnSessionClosed([&](uint64_t, uint64_t, SessionCloseReason r) { lastReason = r; });
+
+	uint64_t sid1 = mgr.CreateSession(7);
+	mgr.SetState(sid1, SessionState::Active);
+	uint64_t sid2 = mgr.CreateSession(7);
+	Assert(sid2 != 0, "FIX.5 nouvelle session creee (ancienne connexion fermee)");
+	Assert(lastReason == SessionCloseReason::ReplacedByReauth, "FIX.5 raison ReplacedByReauth");
+	Assert(!mgr.Validate(sid1), "FIX.5 ancienne session fermee");
+
+	mgr.SetState(sid2, SessionState::Active);
+	connectionOpen = true;
+	uint64_t sid3 = mgr.CreateSession(7);
+	Assert(sid3 != 0, "FIX.5 nouvelle session creee (ancienne connexion ouverte)");
+	Assert(lastReason == SessionCloseReason::KickedByDuplicateLogin, "FIX.5 raison KickedByDuplicateLogin");
+	Assert(SessionCloseReasonToString(SessionCloseReason::ReplacedByReauth) == "ReplacedByReauth", "FIX.5 libelle");
+}
+
 int main()
 {
 	engine::core::LogSettings logSettings;
@@ -154,6 +183,7 @@ int main()
 	TestCreateValidateTouchClose();
 	TestDuplicateLoginRefuseNew();
 	TestDuplicateLoginKickExisting();
+	TestReplacedByReauthReason();
 	TestExpiry24h();
 	TestResumeInWindow();
 	TestLoadConfig();

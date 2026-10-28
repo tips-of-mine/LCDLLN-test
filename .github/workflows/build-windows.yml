@@ -72,8 +72,17 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
+          # FIX.7 — sans ça, pwsh ne regarde que le code de sortie de la DERNIÈRE
+          # commande : un cmake --build en échec au milieu passait inaperçu (vu sur #1061).
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
           cmake --build --preset vs2022-x64-release --target engine_app
           cmake --build --preset vs2022-x64-release --target lcdlln_world_gen
+          # FIX.7 — textures de repli du terrain (game/data/terrain/placeholders/*.png,
+          # générées au build, ignorées par git) : sans elles, le client empaqueté
+          # affichait le sol en magenta (« Couldn't load PBR layer … fallback magenta »).
+          cmake --build --preset vs2022-x64-release --target gen_terrain_placeholders
+          if (-not (Test-Path "${{ github.workspace }}\game\data\terrain\placeholders\snow.png")) { throw "[FAIL] placeholders terrain non generes" }
 
       - name: Vérifie présence de l'exécutable jeu
         shell: pwsh
@@ -171,9 +180,15 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
+          # FIX.7 — sans ça, pwsh ne regarde que le code de sortie de la DERNIÈRE
+          # commande : un cmake --build en échec au milieu passait inaperçu (vu sur #1061).
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
           cmake --build --preset vs2022-x64-release --target world_editor_app
           cmake --build --preset vs2022-x64-release --target zone_builder
           cmake --build --preset vs2022-x64-release --target lcdlln_world_gen
+          # FIX.7 — mêmes textures de repli du terrain que le client.
+          cmake --build --preset vs2022-x64-release --target gen_terrain_placeholders
 
       - name: Vérifie présence des exécutables (éditeur + carte)
         shell: pwsh
@@ -272,6 +287,10 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
+          # FIX.7 — sans ça, pwsh ne regarde que le code de sortie de la DERNIÈRE
+          # commande : un cmake --build en échec au milieu passait inaperçu (vu sur #1061).
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
           cmake --build --preset vs2022-x64-release --target server_app
           cmake --build --preset vs2022-x64-release --target migration_checksum
           cmake --build --preset vs2022-x64-release --target hlod_builder

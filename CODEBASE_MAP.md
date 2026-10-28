@@ -312,6 +312,12 @@ RenderModel
 > directe de l'état de `ServerApp` depuis le thread HTTP. Une nouvelle cause de saturation
 > s'ajoute à `IsSaturated`.
 
+> **Règle (ETAPE5.5)** : une nouvelle donnée persistée d'un personnage doit entrer dans
+> l'empreinte de son bloc (`ComputeSaveBlockHashes`, `src/shardd/gameplay/character/
+> CharacterSaveDiff`) — sinon un changement de cette seule donnée ne serait jamais écrit
+> par une sauvegarde différentielle. Un nouveau chemin qui écrit un personnage en base
+> hors de `SaveCharacterToDb` doit appeler `m_savedBlocks.Invalidate(characterKey)`.
+
 ### Comptes et validation
 | Fichier | Rôle |
 |---|---|

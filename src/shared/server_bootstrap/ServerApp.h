@@ -48,6 +48,7 @@
 #include "src/shardd/world/LoadShedding.h"
 #include "src/shared/core/StallGuard.h"
 #include "src/shardd/world/ShardMetrics.h"
+#include "src/shardd/gameplay/character/CharacterSaveDiff.h"
 #include "src/shardd/world/TickSlicing.h"
 #include "src/shared/world/StartLocations.h"
 #include "src/shared/world/WorldCells.h"
@@ -633,19 +634,26 @@ namespace engine::server
 		/// le master ne les écrit plus pour un personnage en jeu.
 		/// \param yawRadians orientation du personnage (radians), stockée en degrés.
 		/// \param ownerGeneration génération reçue du master à l'admission (0 = aucune).
+		/// ETAPE5.5 — différentielle : seuls les blocs modifiés depuis le dernier COMMIT
+		/// sont réécrits (m_savedBlocks) ; une sauvegarde sans bloc modifié ni courrier,
+		/// carte ou restauration à appliquer n'ouvre même pas de transaction.
 		CharacterDbSaveResult SaveCharacterToDb(const PersistedCharacterState& state, float yawRadians,
 			uint64_t ownerGeneration);
 
 		/// ETAPE2.2 — une tentative de SaveCharacterToDb (qui rejoue jusqu'à 3 fois en cas
 		/// d'interblocage). \param outConnected vrai si une connexion a été obtenue.
+		/// \param blocks ETAPE5.5 : blocs à écrire (masque de SaveBlock).
 		CharacterDbSaveResult SaveCharacterToDbOnce(const PersistedCharacterState& state, float yawRadians,
-			uint64_t ownerGeneration, bool& outConnected);
+			uint64_t ownerGeneration, uint32_t blocks, bool& outConnected);
 
 		/// ETAPE2.4 — écrit l'état d'UN personnage dans une transaction déjà ouverte par
 		/// l'appelant (contrôle de propriété compris). Ne valide ni n'annule : l'appelant
 		/// fait COMMIT si Saved, ROLLBACK sinon. Corps sous SHARD_POSITION_DB.
+		/// \param blocks ETAPE5.5 : blocs à écrire (SaveBlock) ; le contrôle de propriété, le
+		///        courrier réclamé, la restauration et la carte sont toujours traités.
 		CharacterDbSaveResult WriteCharacterStateInTx(MYSQL* mysql, db::SqlPreparedStatementCache* cache,
-			const PersistedCharacterState& state, float yawRadians, uint64_t ownerGeneration) const;
+			const PersistedCharacterState& state, float yawRadians, uint64_t ownerGeneration,
+			uint32_t blocks = kSaveBlocksAll) const;
 
 		/// ETAPE2.4 — opération à deux personnages (échange, transfert) : enregistre
 		/// \p operationId dans `character_operations` puis écrit les deux états, le tout
@@ -1785,6 +1793,13 @@ namespace engine::server
 		engine::core::StallGuard m_stallGuard;
 		/// ETAPE5.4 — métriques de jeu (photo à 1 Hz) et mesures du tick qui l'alimentent.
 		ShardMetricsBoard m_metricsBoard;
+		/// ETAPE5.5 (chantier 3.5) — empreintes des blocs validés en base, par personnage
+		/// (server.save.differential, server.save.full_every). Thread-safe.
+		SavedBlockCache m_savedBlocks;
+		bool m_differentialSaves = true;
+		std::atomic<uint64_t> m_saveBlocksWritten{ 0 };
+		std::atomic<uint64_t> m_saveBlocksSkipped{ 0 };
+		std::atomic<uint64_t> m_savesWithoutWrite{ 0 }; ///< sauvegardes sans aucune écriture
 		double m_lastTickSeconds = 0.0;
 		double m_tickMaxSinceMetrics = 0.0;
 		/// Construit et publie la photo des métriques (thread de tick, 1 Hz).

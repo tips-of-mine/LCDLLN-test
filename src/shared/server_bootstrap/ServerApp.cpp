@@ -1504,8 +1504,11 @@ namespace engine::server
 #if defined(SHARD_POSITION_DB)
 	ServerApp::CharacterDbSaveResult ServerApp::WriteCharacterStateInTx(MYSQL* mysql,
 		db::SqlPreparedStatementCache* cache, const PersistedCharacterState& state,
-		float yawRadians, uint64_t ownerGeneration) const
+		float yawRadians, uint64_t ownerGeneration, uint32_t blocks) const
 	{
+		// ETAPE5.5 — un état restauré s'écrit toujours en entier (niveau qui redescend).
+		if (state.restoreSnapshotId != 0u)
+			blocks = kSaveBlocksAll;
 		// ETAPE2.4 — corps commun aux sauvegardes simples et aux transactions à deux
 		// personnages : l'appelant ouvre la transaction, appelle cette fonction pour
 		// chaque personnage, puis valide (Saved) ou annule (tout autre résultat).
@@ -1538,6 +1541,7 @@ namespace engine::server
 		// 0 bis. ETAPE1.2 — position de réapparition + niveau : écrits par le shard
 		// propriétaire (le master ne les écrit plus pour un personnage en jeu). Colonnes
 		// lues au Hello par LoadSpawnFromDb.
+		if ((blocks & kSaveBlockPosition) != 0u) // ETAPE5.5
 		{
 			// ETAPE2.6 — sauvegarde d'un état restauré : le niveau de l'instantané est
 			// écrit tel quel (il peut redescendre) ; sinon il ne fait que monter.
@@ -1560,7 +1564,7 @@ namespace engine::server
 		// 0 ter. ETAPE2.1 — progression (zone, XP, PV, quêtes, barres, métiers…) :
 		// une ligne character_progress par personnage. Sa présence indique au
 		// chargement que le personnage est entièrement en base (plus de .ini).
-		if (ok)
+		if (ok && (blocks & kSaveBlockProgress) != 0u) // ETAPE5.5
 		{
 			const std::string payload = SerializeCharacterProgressPayload(state);
 			auto* prog = cache->Acquire(mysql,
@@ -1643,9 +1647,11 @@ namespace engine::server
 		const std::pair<uint32_t, uint32_t> currencies[] = {
 			{ 1u, state.gold }, { 2u, state.honor },
 			{ 3u, state.badges }, { 4u, state.premiumCurrency } };
+		// ETAPE5.5 — bourse inchangée depuis le dernier COMMIT : ses 4 lignes existent
+		// déjà (la première sauvegarde d'une session est toujours complète).
 		for (const auto& currency : currencies)
 		{
-			if (!ok)
+			if (!ok || (blocks & kSaveBlockWallet) == 0u)
 			{
 				break;
 			}
@@ -1663,7 +1669,7 @@ namespace engine::server
 		}
 		// 2. Inventaire : remplacement intégral (DELETE + INSERT par pile). Les sacs
 		// sont petits (dizaines de piles) — le coût reste marginal par save.
-		if (ok)
+		if (ok && (blocks & kSaveBlockInventory) != 0u) // ETAPE5.5
 		{
 			auto* del = cache->Acquire(mysql,
 				"DELETE FROM character_inventory WHERE character_id = ?");
@@ -1682,7 +1688,7 @@ namespace engine::server
 		}
 		// 3. Équipement porté : remplacement intégral, une ligne par slot occupé
 		// (slot_id = valeur EquipmentSlot 1..kEquipSlotCount).
-		if (ok)
+		if (ok && (blocks & kSaveBlockEquipment) != 0u) // ETAPE5.5
 		{
 			auto* del = cache->Acquire(mysql,
 				"DELETE FROM character_equipment WHERE character_id = ?");
@@ -1713,13 +1719,47 @@ namespace engine::server
 		// interblocage InnoDB (1213) ou un délai de verrou (1205) fait échouer la
 		// transaction sans rien écrire. On la rejoue (3 essais) tant que la connexion
 		// a été obtenue ; base injoignable = échec immédiat (pas d'attente répétée).
+		// ETAPE5.5 (chantier 3.5) — blocs à écrire : ceux dont l'empreinte a changé depuis
+		// le dernier COMMIT (tous si inconnue, si c'est le tour d'une écriture complète ou si
+		// le différentiel est désactivé).
+		const std::string progressPayload = SerializeCharacterProgressPayload(state);
+		const SaveBlockHashes hashes = ComputeSaveBlockHashes(state, yawRadians, progressPayload);
+		SavePlan plan;
+		if (m_differentialSaves && state.restoreSnapshotId == 0u && state.characterKey != 0u)
+			plan = m_savedBlocks.Plan(state.characterKey, hashes);
+		else
+			m_savedBlocks.Invalidate(state.characterKey); // écriture complète hors référence
+		const uint32_t blocks = plan.blocks;
+#if defined(SHARD_POSITION_DB)
+		// Rien à écrire (aucun bloc modifié, ni courrier réclamé, ni carte, ni restauration) :
+		// pas de transaction du tout, donc pas de contrôle de propriété non plus (rien n'est
+		// écrit : un shard qui ne serait plus propriétaire n'abîme rien).
+		if (blocks == 0u && state.mailboxClaimedIds.empty() && state.mapDiscoveryCells.empty()
+			&& m_characterDbPool != nullptr && state.characterKey != 0u)
+		{
+			m_saveBlocksSkipped.fetch_add(CountSaveBlocks(kSaveBlocksAll), std::memory_order_relaxed);
+			m_savesWithoutWrite.fetch_add(1u, std::memory_order_relaxed);
+			m_savedBlocks.OnCommitted(state.characterKey, hashes, 0u, plan.version);
+			return CharacterDbSaveResult::Saved;
+		}
+#endif
 		CharacterDbSaveResult result = CharacterDbSaveResult::Failed;
 		for (int attempt = 1; attempt <= 3; ++attempt)
 		{
 			bool connected = false;
-			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, connected);
+			result = SaveCharacterToDbOnce(state, yawRadians, ownerGeneration, blocks, connected);
+			if (result == CharacterDbSaveResult::Saved)
+			{
+				m_savedBlocks.OnCommitted(state.characterKey, hashes, blocks, plan.version);
+				m_saveBlocksWritten.fetch_add(CountSaveBlocks(blocks), std::memory_order_relaxed);
+				m_saveBlocksSkipped.fetch_add(CountSaveBlocks(kSaveBlocksAll) - CountSaveBlocks(blocks), std::memory_order_relaxed);
+				return result;
+			}
 			if (result != CharacterDbSaveResult::Failed || !connected)
 			{
+				// Refus, absence de base, ou échec sans connexion : l'empreinte validée n'est
+				// plus sûre, la prochaine sauvegarde sera complète.
+				m_savedBlocks.Invalidate(state.characterKey);
 				return result;
 			}
 			if (attempt < 3)
@@ -1729,11 +1769,12 @@ namespace engine::server
 				std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
 			}
 		}
+		m_savedBlocks.Invalidate(state.characterKey); // ETAPE5.5 — COMMIT peut-être incertain
 		return result;
 	}
 
 	ServerApp::CharacterDbSaveResult ServerApp::SaveCharacterToDbOnce(const PersistedCharacterState& state,
-		float yawRadians, uint64_t ownerGeneration, bool& outConnected)
+		float yawRadians, uint64_t ownerGeneration, uint32_t blocks, bool& outConnected)
 	{
 		outConnected = false;
 #if defined(SHARD_POSITION_DB)
@@ -1765,7 +1806,7 @@ namespace engine::server
 				state.characterKey);
 			return CharacterDbSaveResult::Failed;
 		}
-		const CharacterDbSaveResult result = WriteCharacterStateInTx(mysql, cache, state, yawRadians, ownerGeneration);
+		const CharacterDbSaveResult result = WriteCharacterStateInTx(mysql, cache, state, yawRadians, ownerGeneration, blocks);
 		if (result == CharacterDbSaveResult::Saved)
 		{
 			if (mysql_query(mysql, "COMMIT") != 0)
@@ -1787,12 +1828,16 @@ namespace engine::server
 		(void)state;
 		(void)yawRadians;
 		(void)ownerGeneration;
+		(void)blocks;
 		return CharacterDbSaveResult::SkippedNoDb;
 #endif
 	}
 
 	ServerApp::CharacterDbLoadResult ServerApp::LoadCharacterFromDb(uint64_t characterKey, PersistedCharacterState& state)
 	{
+		// ETAPE5.5 — personnage (re)chargé : la base a pu changer depuis (autre shard,
+		// restauration, courrier) ; la première sauvegarde de la session sera complète.
+		m_savedBlocks.Invalidate(characterKey);
 #if defined(SHARD_POSITION_DB)
 		if (m_characterDbPool == nullptr || characterKey == 0u)
 		{
@@ -3235,6 +3280,9 @@ namespace engine::server
 		m.sheddingActive = m_loadShedder.Active();
 		m.sheddingEnterCount = m_loadShedder.EnterCount();
 		m.stallCount = m_stallGuard.StallCount();
+		m.saveBlocksWritten = m_saveBlocksWritten.load(std::memory_order_relaxed);
+		m.saveBlocksSkipped = m_saveBlocksSkipped.load(std::memory_order_relaxed);
+		m.savesWithoutWrite = m_savesWithoutWrite.load(std::memory_order_relaxed);
 		m_metricsBoard.Publish(m, std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
 	}
 
@@ -3329,6 +3377,13 @@ namespace engine::server
 			LOG_INFO(Net, "[ServerApp] Délestage : {} (entrée ≥ {:.0f} % du tick pendant {:.0f} s, sortie ≤ {:.0f} % pendant {:.0f} s, {:.0f} s entre bascules)",
 				applied.enabled ? "actif" : "désactivé", applied.enterLoad * 100.0, applied.enterHoldSeconds,
 				applied.exitLoad * 100.0, applied.exitHoldSeconds, applied.minDwellSeconds);
+		}
+		// ETAPE5.5 (chantier 3.5) — sauvegardes différentielles.
+		{
+			m_differentialSaves = m_config.GetBool("server.save.differential", true);
+			m_savedBlocks.SetFullEvery(static_cast<uint32_t>(std::clamp<int64_t>(m_config.GetInt("server.save.full_every", 20), 1, 1000)));
+			LOG_INFO(Net, "[ServerApp] Sauvegardes différentielles : {} (écriture complète toutes les {} sauvegardes)",
+				m_differentialSaves ? "actives" : "désactivées", m_savedBlocks.FullEvery());
 		}
 		// ETAPE5.2 (chantier 1.5) — garde contre les évictions juste après un calage du tick.
 		{
@@ -3909,10 +3964,15 @@ namespace engine::server
 			const uint64_t generation = client.ownerGeneration;
 			const uint32_t clientId = client.clientId;
 			std::string reasonCopy(reason);
-			const auto result = m_characterSaveQueue->EnqueueSave(client.persistenceCharacterKey,
-				[this, snapshot, yaw, generation, clientId, reasonCopy]() {
-					PersistCharacterState(*snapshot, yaw, generation, clientId, reasonCopy);
-				});
+			auto job = [this, snapshot, yaw, generation, clientId, reasonCopy]() {
+				PersistCharacterState(*snapshot, yaw, generation, clientId, reasonCopy);
+			};
+			// ETAPE5.5 — un état restauré (ETAPE2.6) ne doit jamais être fusionné avec une
+			// sauvegarde plus récente qui ne porte plus restoreSnapshotId : il écrit le niveau
+			// restauré et marque la demande appliquée. Dépôt ordonné, jamais fusionné.
+			const auto result = snapshot->restoreSnapshotId != 0u
+				? m_characterSaveQueue->EnqueueOrdered(client.persistenceCharacterKey, std::move(job))
+				: m_characterSaveQueue->EnqueueSave(client.persistenceCharacterKey, std::move(job));
 			if (result != CharacterSaveQueue::EnqueueResult::Rejected)
 			{
 				return;
@@ -3921,7 +3981,11 @@ namespace engine::server
 				m_characterSaveQueue->PendingCount(), client.clientId, reason);
 			// Un thread peut être en train d'écrire un instantané PLUS ANCIEN du même
 			// personnage : on le laisse finir, sinon il passerait après celui-ci.
-			(void)m_characterSaveQueue->Flush(client.persistenceCharacterKey);
+			// ETAPE5.5 — s'il n'a pas fini en 2 s, les deux écritures se chevauchent : la
+			// référence différentielle est invalidée (écriture complète, et le jeton de
+			// version empêche l'écriture ancienne de réinstaller sa référence).
+			if (!m_characterSaveQueue->Flush(client.persistenceCharacterKey))
+				m_savedBlocks.Invalidate(client.persistenceCharacterKey);
 			PersistCharacterState(*snapshot, yaw, generation, clientId, reason);
 			return;
 		}
@@ -3933,6 +3997,10 @@ namespace engine::server
 		const PersistedCharacterState& second, float secondYawRadians, uint64_t secondOwnerGeneration,
 		std::string_view kind, std::string_view operationId)
 	{
+		// ETAPE5.5 — écriture complète par un autre chemin : les empreintes de ces deux
+		// personnages ne sont plus la référence (prochaine sauvegarde simple complète).
+		m_savedBlocks.Invalidate(first.characterKey);
+		m_savedBlocks.Invalidate(second.characterKey);
 		// Rejouée jusqu'à 3 fois avec le MÊME identifiant : si un essai a en fait été
 		// validé (réponse du COMMIT perdue), le suivant reçoit AlreadyApplied et ne
 		// réapplique rien.
@@ -10250,6 +10318,12 @@ namespace engine::server
 			LOG_WARN(Net, "[ServerApp] Disconnect save still pending after 2 s (client_id={}, character_key={})",
 				clientIt->clientId, clientIt->persistenceCharacterKey);
 		}
+		else
+		{
+			// ETAPE5.5 — personnage parti (sauvegarde finale écrite, plus rien en cours) :
+			// ses empreintes ne servent plus (mémoire bornée).
+			m_savedBlocks.Forget(clientIt->persistenceCharacterKey);
+		}
 		if (clientIt->hasCell)
 		{
 			const auto zoneIt = m_zoneGrids.find(engine::world::cells::MapIdOfZone(clientIt->zoneId));
@@ -11960,6 +12034,7 @@ namespace engine::server
 				}
 				states.push_back(BuildPersistedCharacterState(*client));
 				extras.emplace_back(client->yawRadians, client->ownerGeneration);
+				m_savedBlocks.Invalidate(client->persistenceCharacterKey); // ETAPE5.5 — écrit par l'opération
 			}
 			if (!flushed)
 			{

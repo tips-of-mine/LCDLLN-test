@@ -54,7 +54,7 @@ namespace engine::server
 	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m, double ageSeconds)
 	{
 		std::string out;
-		out.reserve(2600);
+		out.reserve(3400);
 		Counter(out, "lcdlln_shard_tick_total", "Ticks de simulation executes.", m.tick);
 		Gauge(out, "lcdlln_shard_tick_hz", "Frequence nominale du tick.", m.tickHz);
 		Gauge(out, "lcdlln_shard_tick_last_seconds", "Duree du dernier tick.", m.tickLastSeconds);
@@ -76,6 +76,9 @@ namespace engine::server
 		Gauge(out, "lcdlln_shard_shedding_active", "Delestage actif (0/1).", m.sheddingActive ? 1.0 : 0.0);
 		Counter(out, "lcdlln_shard_shedding_enter_total", "Entrees en delestage.", m.sheddingEnterCount);
 		Counter(out, "lcdlln_shard_stall_total", "Calages du tick (ecart >= seuil).", m.stallCount);
+		Counter(out, "lcdlln_shard_save_blocks_written_total", "Blocs de personnage reecrits en base.", m.saveBlocksWritten);
+		Counter(out, "lcdlln_shard_save_blocks_skipped_total", "Blocs inchanges non reecrits (sauvegarde differentielle).", m.saveBlocksSkipped);
+		Counter(out, "lcdlln_shard_saves_without_write_total", "Sauvegardes sans aucune ecriture en base.", m.savesWithoutWrite);
 		Gauge(out, "lcdlln_shard_saturated", "Contre-pression : nouveaux joueurs refuses (0/1).", IsSaturatedOrStale(m, ageSeconds) ? 1.0 : 0.0);
 		Gauge(out, "lcdlln_shard_metrics_age_seconds", "Age de la photo des metriques (tick bloque si > 3 s).", ageSeconds);
 		return out;

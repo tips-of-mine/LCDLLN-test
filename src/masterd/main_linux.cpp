@@ -303,7 +303,10 @@ int main(int argc, char** argv)
 	LOG_INFO(Net, "[ServerMain] RateLimitAndBan configured");
 
 	engine::server::SecurityAuditLog auditLog;
-	std::string auditPath = config.GetString("security.audit_log_path", "security_audit.log");
+	// FIX.4 — défaut sous logs/ : en Docker c'est le volume ./data/logs/master, le journal
+	// de sécurité survit donc à la recréation du conteneur (avant : /app/security_audit.log,
+	// perdu à chaque `docker compose up`). spdlog crée le dossier s'il manque.
+	std::string auditPath = config.GetString("security.audit_log_path", "logs/security_audit.log");
 	size_t rotationMb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
 	int retentionDays = static_cast<int>(config.GetInt("log.retention_days", 7));
 	if (auditLog.Init(auditPath, rotationMb, retentionDays))

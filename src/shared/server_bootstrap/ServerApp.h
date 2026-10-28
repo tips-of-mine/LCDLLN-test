@@ -60,6 +60,7 @@
 #include <map>
 #include <cstddef>
 #include <mutex>
+#include <functional>
 #include <optional>
 #include <random>
 #include <string>
@@ -267,6 +268,9 @@ namespace engine::server
 		/// sauvegarde supprime exactement ces lignes (idempotent) : le courrier
 		/// fusionné ne revient jamais.
 		std::vector<uint64_t> mailboxClaimedIds;
+		/// FIX.4 — amis acceptés (character_id), lus en base à la connexion et à chaque
+		/// changement : sert à prévenir seulement eux des changements de présence.
+		std::vector<uint64_t> friendCharacterKeys;
 		/// ETAPE2.5 — carte à découvrir : cases révélées pendant la session autour de
 		/// la position autoritaire (monde en cellules). Écrites à chaque sauvegarde.
 		MapDiscoveryTracker mapDiscovery;
@@ -1592,14 +1596,39 @@ namespace engine::server
 		/// Returns the entityId that should own the bag (0 = public/FFA).
 		EntityId ResolvePartyLooterEntityId(const ConnectedClient& killerClient);
 
-		/// Send FriendListSync packet to \p receiver containing all friends with presence status.
-		void SendFriendListSync(const ConnectedClient& receiver);
+		/// Send FriendListSync packet to \p receiver containing \p records (amis acceptés +
+		/// demandes reçues) décorés de la présence courante (thread de tick).
+		/// FIX.4 : la liste est fournie par l'appelant (lue en base hors du tick).
+		void SendFriendListSync(const ConnectedClient& receiver, const std::vector<FriendRecord>& records);
 
 		/// Broadcast a FriendStatusUpdate to all online friends of \p subject.
 		void BroadcastFriendStatusUpdate(const ConnectedClient& subject, PresenceStatus status);
 
 		/// Handle /friend sub-command dispatched from HandleChatSlashCommand.
 		bool HandleFriendCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// FIX.4 — exécute une action d'ami (\p sub : Add/Accept/Decline/Remove, \p targetName :
+		/// nom du personnage visé) pour \p sender, qu'elle vienne de /friend ou d'un paquet
+		/// dédié. Avec une base : opération SQL déposée dans la file de sauvegarde (hors tick),
+		/// réponse et rafraîchissement des listes appliqués par ApplyFriendDbResults.
+		/// Sans base : comportement historique (échec immédiat « no-DB mode »).
+		/// \param notify envoie un message système au joueur (toujours vrai pour /friend).
+		/// Thread de tick uniquement.
+		void HandleFriendAction(ConnectedClient& sender, FriendSubCommand sub, const std::string& targetName, bool notify);
+
+		/// FIX.4 — dépose la relecture de la liste d'amis de \p characterKey (connecté) ;
+		/// \p announceOnline : prévenir ensuite ses amis connectés qu'il arrive (connexion).
+		/// Sans base : envoie directement la liste vide (comportement historique).
+		void RequestFriendListSync(uint64_t characterKey, bool announceOnline);
+
+		/// FIX.4 — applique sur le thread de tick les résultats des opérations d'amis faites
+		/// en base (listes, messages, présence). Appelé à chaque tick (ProcessMasterInbox).
+		void ApplyFriendDbResults();
+
+		/// FIX.4 — prévient les amis CONNECTÉS de \p subject (liste lue à sa connexion,
+		/// ConnectedClient::friendCharacterKeys) de son changement de présence, sous son nom
+		/// de personnage. Remplace, avec une base, l'ancien envoi à tous les joueurs.
+		void NotifyFriendsOfPresence(const ConnectedClient& subject, PresenceStatus status);
 
 		// ------------------------------------------------------------------
 		// M35.3 — Direct player-to-player trade helpers
@@ -1817,6 +1846,26 @@ namespace engine::server
 			uint32_t itemId = 0;
 			uint32_t quantity = 0;
 		};
+		/// FIX.4 — résultat d'une opération d'amis faite en base (thread de la file),
+		/// consommé par ApplyFriendDbResults sur le thread de tick.
+		struct FriendDbResult
+		{
+			uint64_t characterKey = 0;            ///< joueur à l'origine de l'opération
+			bool listLoaded = false;              ///< records/acceptedIds valides
+			bool announceOnline = false;          ///< connexion : prévenir ses amis connectés
+			std::vector<FriendRecord> records;    ///< amis acceptés + demandes reçues
+			std::vector<uint64_t> acceptedIds;    ///< amis acceptés (présence)
+			std::string notice;                   ///< message système à envoyer (vide = aucun)
+			uint64_t otherKey = 0;                ///< autre personnage concerné (0 = aucun)
+			std::string otherNotice;              ///< message système pour otherKey (s'il est connecté)
+			std::vector<uint64_t> refreshKeys;    ///< personnages dont la liste est à relire
+		};
+		std::mutex m_friendDbMutex;
+		std::vector<FriendDbResult> m_friendDbResults;
+		/// FIX.4 — dépose \p work (exécuté avec une connexion du pool) dans la file de
+		/// sauvegarde, à l'ordre des écritures de \p characterKey ; repli synchrone si la
+		/// file refuse. Le résultat rempli est publié dans m_friendDbResults.
+		void EnqueueFriendDbJob(uint64_t characterKey, std::function<void(MYSQL*, FriendDbResult&)> work);
 		std::mutex m_liveMailboxMutex;
 		std::vector<std::pair<uint64_t, std::vector<LiveMailboxRow>>> m_liveMailboxResults;
 		/// ETAPE5.6 — prélèvement dont le COMMIT est incertain (réponse perdue, relecture

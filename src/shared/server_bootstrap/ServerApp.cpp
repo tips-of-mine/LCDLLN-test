@@ -46,6 +46,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <limits>
 #include <sstream>
 #include <functional>
@@ -644,7 +645,9 @@ namespace engine::server
 		LoadChatBanFile();
 
 		// M32.1 — FriendSystem runs in no-DB mode on WIN32 (presence tracking only).
-		m_friendSystem.Init(nullptr);
+		// FIX.4 — shard Linux avec base (pool) : amis persistés dans la table `friends`,
+		// opérations SQL déposées dans la file de sauvegarde (jamais sur le tick).
+		m_friendSystem.Init(m_characterDbPool != nullptr);
 		// Présence unifiée : FriendSystem consulte l'autorité unique (par character_id)
 		// au lieu de tenir sa propre map de présence.
 		m_friendSystem.SetPresenceService(&m_shardPresence);
@@ -1311,60 +1314,36 @@ namespace engine::server
 		FriendRequestMessage friendReq{};
 		if (DecodeFriendRequest(packetBytes, friendReq))
 		{
-			ConnectedClient* sender = FindClient(datagram.endpoint);
-			if (sender)
-			{
-				const std::string playerLabel = "P" + std::to_string(sender->clientId);
-				const uint64_t targetId = m_friendSystem.SendFriendRequest(
-					static_cast<uint64_t>(sender->persistenceCharacterKey),
-					playerLabel,
-					friendReq.targetName,
-					nullptr);
-				if (targetId != 0)
-					LOG_DEBUG(Net, "[ServerApp] FriendRequest routed (client_id={}, target_id={})", sender->clientId, targetId);
-			}
+			// FIX.4 — même chemin que /friend (base hors tick, listes rafraîchies).
+			if (ConnectedClient* sender = FindClient(datagram.endpoint))
+				HandleFriendAction(*sender, FriendSubCommand::Add, friendReq.targetName, false);
 			return;
 		}
 
 		FriendAcceptMessage friendAccept{};
 		if (DecodeFriendAccept(packetBytes, friendAccept))
 		{
-			ConnectedClient* sender = FindClient(datagram.endpoint);
-			if (sender)
-			{
-				m_friendSystem.AcceptFriendRequest(
-					static_cast<uint64_t>(sender->persistenceCharacterKey),
-					friendAccept.requesterName,
-					nullptr);
-			}
+			// FIX.4 — même chemin que /friend (base hors tick, listes rafraîchies).
+			if (ConnectedClient* sender = FindClient(datagram.endpoint))
+				HandleFriendAction(*sender, FriendSubCommand::Accept, friendAccept.requesterName, false);
 			return;
 		}
 
 		FriendDeclineMessage friendDecline{};
 		if (DecodeFriendDecline(packetBytes, friendDecline))
 		{
-			ConnectedClient* sender = FindClient(datagram.endpoint);
-			if (sender)
-			{
-				m_friendSystem.DeclineFriendRequest(
-					static_cast<uint64_t>(sender->persistenceCharacterKey),
-					friendDecline.requesterName,
-					nullptr);
-			}
+			// FIX.4 — même chemin que /friend (base hors tick, listes rafraîchies).
+			if (ConnectedClient* sender = FindClient(datagram.endpoint))
+				HandleFriendAction(*sender, FriendSubCommand::Decline, friendDecline.requesterName, false);
 			return;
 		}
 
 		FriendRemoveMessage friendRemove{};
 		if (DecodeFriendRemove(packetBytes, friendRemove))
 		{
-			ConnectedClient* sender = FindClient(datagram.endpoint);
-			if (sender)
-			{
-				m_friendSystem.RemoveFriend(
-					static_cast<uint64_t>(sender->persistenceCharacterKey),
-					friendRemove.friendName,
-					nullptr);
-			}
+			// FIX.4 — même chemin que /friend (base hors tick, listes rafraîchies).
+			if (ConnectedClient* sender = FindClient(datagram.endpoint))
+				HandleFriendAction(*sender, FriendSubCommand::Remove, friendRemove.friendName, false);
 			return;
 		}
 
@@ -3314,6 +3293,8 @@ namespace engine::server
 		for (uint64_t characterKey : pokes)
 			RequestLiveMailboxClaim(characterKey);
 		ApplyLiveMailboxResults();
+		// FIX.4 — résultats des opérations d'amis faites en base (hors tick).
+		ApplyFriendDbResults();
 	}
 
 	uint8_t ServerApp::ProcessMailDebit(const engine::network::MailDebitPayload& debit)
@@ -10414,8 +10395,25 @@ namespace engine::server
 
 	void ServerApp::InitModerationAuditSubsystem()
 	{
-		const std::string relativeLog = m_config.GetString("server.moderation_audit_log", "logs/moderation_audit.log");
-		const auto absolutePath = engine::platform::FileSystem::ResolveContentPath(m_config, relativeLog);
+		// FIX.4 — un journal est une écriture : il ne doit PAS être résolu sous la racine de
+		// contenu (game/data), montée en lecture seule en Docker (« Read-only file system »
+		// au démarrage du shard, journal de modération désactivé). Un chemin relatif est
+		// désormais pris depuis le répertoire de travail, comme les autres journaux
+		// (`logs/` = /app/logs, volume ./data/logs/shard). Le dossier est créé si besoin.
+		const std::string configuredLog = m_config.GetString("server.moderation_audit_log", "logs/moderation_audit.log");
+		std::filesystem::path absolutePath(configuredLog);
+		if (absolutePath.is_relative())
+		{
+			std::error_code ec;
+			const std::filesystem::path cwd = std::filesystem::current_path(ec);
+			if (!ec)
+				absolutePath = cwd / absolutePath;
+		}
+		{
+			std::error_code ec;
+			if (absolutePath.has_parent_path())
+				std::filesystem::create_directories(absolutePath.parent_path(), ec);
+		}
 		const size_t rotationMb = static_cast<size_t>((std::max)(static_cast<int64_t>(1), m_config.GetInt("server.moderation_audit_rotation_mb", 10)));
 		const int retentionDays = static_cast<int>(m_config.GetInt("server.moderation_audit_retention_days", 7));
 		if (!m_moderationAuditLog.Init(absolutePath.string(), rotationMb, retentionDays))
@@ -11021,8 +11019,17 @@ namespace engine::server
 		if (!m_friendSystem.IsInitialized())
 			return;
 
-		SendFriendListSync(client);
-		BroadcastFriendStatusUpdate(client, PresenceStatus::Online);
+		// FIX.4 — avec une base : liste lue hors du tick, puis seuls les amis connectés
+		// sont prévenus (ApplyFriendDbResults). Sans base : comportement historique.
+		if (m_friendSystem.IsDbAvailable())
+		{
+			RequestFriendListSync(static_cast<uint64_t>(client.persistenceCharacterKey), true);
+		}
+		else
+		{
+			SendFriendListSync(client, {});
+			BroadcastFriendStatusUpdate(client, PresenceStatus::Online);
+		}
 
 		LOG_INFO(Net, "[ServerApp] OnClientLogin: presence set online (client_id={}, account_id={})",
 			client.clientId, client.accountId);
@@ -11046,7 +11053,12 @@ namespace engine::server
 		}
 
 		if (m_friendSystem.IsInitialized())
-			BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
+		{
+			if (m_friendSystem.IsDbAvailable())
+				NotifyFriendsOfPresence(client, PresenceStatus::Offline); // FIX.4
+			else
+				BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
+		}
 
 		// Présence unifiée : retire le joueur (même clé de repli qu'au login).
 		const uint64_t presenceKey = client.accountId != 0 ? client.accountId
@@ -11057,12 +11069,10 @@ namespace engine::server
 			client.clientId, client.accountId);
 	}
 
-	void ServerApp::SendFriendListSync(const ConnectedClient& receiver)
+	void ServerApp::SendFriendListSync(const ConnectedClient& receiver, const std::vector<FriendRecord>& records)
 	{
-		// In no-DB mode, GetFriendList returns an empty list; we still send the packet
-		// so the client is aware the sync occurred.
-		const auto records = m_friendSystem.GetFriendList(
-			static_cast<uint64_t>(receiver.persistenceCharacterKey), nullptr);
+		// In no-DB mode the list is empty; we still send the packet so the client is aware
+		// the sync occurred.
 
 		FriendListSyncMessage msg{};
 		msg.friends.reserve(records.size());
@@ -11125,52 +11135,191 @@ namespace engine::server
 			return true;
 		}
 
-		const uint64_t playerId = static_cast<uint64_t>(sender.persistenceCharacterKey);
-		const std::string playerLabel = "P" + std::to_string(sender.clientId);
-
-		switch (sub)
-		{
-		case FriendSubCommand::Add:
-		{
-			const uint64_t targetId = m_friendSystem.SendFriendRequest(playerId, playerLabel, targetName, nullptr);
-			if (targetId == 0)
-				SendChatSystemNotice(sender, "Friend request failed (no-DB mode or target not found).");
-			else
-				SendChatSystemNotice(sender, "Friend request sent to '" + targetName + "'.");
-			break;
-		}
-		case FriendSubCommand::Accept:
-		{
-			const uint64_t requesterId = m_friendSystem.AcceptFriendRequest(playerId, targetName, nullptr);
-			if (requesterId == 0)
-				SendChatSystemNotice(sender, "Accept failed (no-DB mode or request not found).");
-			else
-				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' accepted.");
-			break;
-		}
-		case FriendSubCommand::Decline:
-		{
-			const uint64_t requesterId = m_friendSystem.DeclineFriendRequest(playerId, targetName, nullptr);
-			if (requesterId == 0)
-				SendChatSystemNotice(sender, "Decline failed (no-DB mode or request not found).");
-			else
-				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' declined.");
-			break;
-		}
-		case FriendSubCommand::Remove:
-		{
-			const bool ok = m_friendSystem.RemoveFriend(playerId, targetName, nullptr);
-			if (!ok)
-				SendChatSystemNotice(sender, "Remove failed (no-DB mode or friend not found).");
-			else
-				SendChatSystemNotice(sender, "'" + targetName + "' removed from friends.");
-			break;
-		}
-		default:
-			break;
-		}
-
+		HandleFriendAction(sender, sub, targetName, true);
 		return true;
+	}
+
+	void ServerApp::HandleFriendAction(ConnectedClient& sender, FriendSubCommand sub, const std::string& targetName, bool notify)
+	{
+		const uint64_t playerId = static_cast<uint64_t>(sender.persistenceCharacterKey);
+		const std::string playerLabel = sender.characterName.empty()
+			? "P" + std::to_string(sender.clientId) : sender.characterName;
+
+		if (!m_friendSystem.IsDbAvailable())
+		{
+			// Sans base (build Windows, shard sans pool) : comportement historique, les
+			// opérations échouent immédiatement en « no-DB mode ».
+			std::string notice;
+			switch (sub)
+			{
+			case FriendSubCommand::Add:
+				notice = m_friendSystem.SendFriendRequest(playerId, playerLabel, targetName, nullptr) != 0
+					? "Friend request sent to '" + targetName + "'." : "Friend request failed (no-DB mode or target not found).";
+				break;
+			case FriendSubCommand::Accept:
+				notice = m_friendSystem.AcceptFriendRequest(playerId, targetName, nullptr) != 0
+					? "Friend request from '" + targetName + "' accepted." : "Accept failed (no-DB mode or request not found).";
+				break;
+			case FriendSubCommand::Decline:
+				notice = m_friendSystem.DeclineFriendRequest(playerId, targetName, nullptr) != 0
+					? "Friend request from '" + targetName + "' declined." : "Decline failed (no-DB mode or request not found).";
+				break;
+			case FriendSubCommand::Remove:
+				notice = m_friendSystem.RemoveFriend(playerId, targetName, nullptr)
+					? "'" + targetName + "' removed from friends." : "Remove failed (no-DB mode or friend not found).";
+				break;
+			default:
+				return;
+			}
+			if (notify)
+				SendChatSystemNotice(sender, notice);
+			return;
+		}
+
+		// Avec une base : tout le SQL part hors du tick, à l'ordre des écritures du joueur.
+		EnqueueFriendDbJob(playerId, [this, playerId, playerLabel, sub, targetName, notify](MYSQL* mysql, FriendDbResult& r) {
+			uint64_t other = 0;
+			bool ok = false;
+			switch (sub)
+			{
+			case FriendSubCommand::Add:
+				other = m_friendSystem.SendFriendRequest(playerId, playerLabel, targetName, mysql);
+				ok = other != 0;
+				r.notice = ok ? "Friend request sent to '" + targetName + "'."
+					: "Friend request failed (unknown name, already requested, limit reached or too many requests).";
+				if (ok)
+					r.otherNotice = "'" + playerLabel + "' wants to be your friend (/friend accept " + playerLabel + ").";
+				break;
+			case FriendSubCommand::Accept:
+				other = m_friendSystem.AcceptFriendRequest(playerId, targetName, mysql);
+				ok = other != 0;
+				r.notice = ok ? "Friend request from '" + targetName + "' accepted." : "Accept failed (request not found).";
+				if (ok)
+					r.otherNotice = "'" + playerLabel + "' accepted your friend request.";
+				break;
+			case FriendSubCommand::Decline:
+				other = m_friendSystem.DeclineFriendRequest(playerId, targetName, mysql);
+				ok = other != 0;
+				r.notice = ok ? "Friend request from '" + targetName + "' declined." : "Decline failed (request not found).";
+				break;
+			case FriendSubCommand::Remove:
+				other = m_friendSystem.ResolveCharacterId(targetName, mysql);
+				ok = other != 0 && m_friendSystem.RemoveFriend(playerId, targetName, mysql);
+				r.notice = ok ? "'" + targetName + "' removed from friends." : "Remove failed (friend not found).";
+				break;
+			default:
+				break;
+			}
+			if (!notify)
+				r.notice.clear();
+			// Les deux listes concernées sont relues (si les joueurs sont connectés).
+			r.refreshKeys.push_back(playerId);
+			if (ok && other != 0)
+			{
+				r.otherKey = other;
+				r.refreshKeys.push_back(other);
+			}
+		});
+	}
+
+	void ServerApp::EnqueueFriendDbJob(uint64_t characterKey, std::function<void(MYSQL*, FriendDbResult&)> work)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr)
+			return;
+		auto job = [this, characterKey, work = std::move(work)]() {
+			FriendDbResult result;
+			result.characterKey = characterKey;
+			{
+				auto guard = m_characterDbPool->Acquire();
+				MYSQL* mysql = guard.get();
+				if (mysql == nullptr)
+				{
+					LOG_WARN(Net, "[ServerApp] Amis : aucune connexion en base disponible (character_key={})", characterKey);
+					result.notice = "Friends are temporarily unavailable.";
+				}
+				else
+				{
+					work(mysql, result);
+				}
+			}
+			std::lock_guard lock(m_friendDbMutex);
+			m_friendDbResults.push_back(std::move(result));
+		};
+		if (m_characterSaveQueue == nullptr
+			|| m_characterSaveQueue->EnqueueOrdered(characterKey, job) == CharacterSaveQueue::EnqueueResult::Rejected)
+			job(); // file pleine ou arrêtée : exécution sur place (rare)
+#else
+		(void)characterKey;
+		(void)work;
+#endif
+	}
+
+	void ServerApp::RequestFriendListSync(uint64_t characterKey, bool announceOnline)
+	{
+		if (!m_friendSystem.IsDbAvailable())
+		{
+			if (ConnectedClient* client = FindConnectedClientByCharacterKey(characterKey))
+				SendFriendListSync(*client, {});
+			return;
+		}
+		EnqueueFriendDbJob(characterKey, [this, characterKey, announceOnline](MYSQL* mysql, FriendDbResult& r) {
+			r.records = m_friendSystem.GetFriendList(characterKey, mysql);
+			r.acceptedIds = m_friendSystem.GetAcceptedFriendIds(characterKey, mysql);
+			r.listLoaded = true;
+			r.announceOnline = announceOnline;
+		});
+	}
+
+	void ServerApp::ApplyFriendDbResults()
+	{
+		std::vector<FriendDbResult> results;
+		{
+			std::lock_guard lock(m_friendDbMutex);
+			if (m_friendDbResults.empty())
+				return;
+			results.swap(m_friendDbResults);
+		}
+		for (FriendDbResult& r : results)
+		{
+			ConnectedClient* client = FindConnectedClientByCharacterKey(r.characterKey);
+			if (client != nullptr && !r.notice.empty())
+				SendChatSystemNotice(*client, r.notice);
+			if (r.otherKey != 0 && !r.otherNotice.empty())
+			{
+				if (ConnectedClient* other = FindConnectedClientByCharacterKey(r.otherKey))
+					SendChatSystemNotice(*other, r.otherNotice);
+			}
+			if (r.listLoaded && client != nullptr)
+			{
+				client->friendCharacterKeys = r.acceptedIds;
+				SendFriendListSync(*client, r.records);
+				if (r.announceOnline)
+					NotifyFriendsOfPresence(*client, PresenceStatus::Online);
+			}
+			for (uint64_t key : r.refreshKeys)
+			{
+				// Joueur parti entre-temps : sa liste sera relue à sa prochaine connexion.
+				if (FindConnectedClientByCharacterKey(key) != nullptr)
+					RequestFriendListSync(key, false);
+			}
+		}
+	}
+
+	void ServerApp::NotifyFriendsOfPresence(const ConnectedClient& subject, PresenceStatus status)
+	{
+		FriendStatusUpdateMessage msg{};
+		msg.friendName = subject.characterName.empty() ? "P" + std::to_string(subject.clientId) : subject.characterName;
+		msg.presenceStatus = status;
+		const std::vector<std::byte> packet = EncodeFriendStatusUpdate(msg);
+		for (uint64_t friendKey : subject.friendCharacterKeys)
+		{
+			ConnectedClient* peer = FindConnectedClientByCharacterKey(friendKey);
+			if (peer == nullptr || peer->clientId == subject.clientId)
+				continue;
+			if (!SendDatagram(peer->endpoint, packet))
+				LOG_WARN(Net, "[ServerApp] NotifyFriendsOfPresence send failed (peer_client_id={})", peer->clientId);
+		}
 	}
 
 	// =========================================================================

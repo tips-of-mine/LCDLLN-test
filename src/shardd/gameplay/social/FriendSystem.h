@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -41,9 +42,22 @@ namespace engine::server
 		FriendSystem(const FriendSystem&)            = delete;
 		FriendSystem& operator=(const FriendSystem&) = delete;
 
-		/// Initialize the system; \p mysql may be nullptr when DB is not configured (no-DB mode).
-		/// Emits LOG_INFO on success or LOG_WARN when no DB is available.
-		bool Init(MYSQL* mysql);
+		/// Initialise le système. \p dbAvailable : une base est joignable (le shard a un pool
+		/// de connexions) ; chaque opération reçoit alors sa connexion en paramètre.
+		/// Faux (ou build sans MySQL) : « no-DB mode », présence seule.
+		/// Journalise INFO (base) ou WARN (no-DB).
+		bool Init(bool dbAvailable);
+
+		/// FIX.4 — vrai si Init a été appelé avec une base et que le code SQL est compilé.
+		bool IsDbAvailable() const { return m_dbAvailable; }
+
+		/// FIX.4 — id du personnage nommé \p name (table characters), 0 si inconnu.
+		/// Bloquant (requête SQL) : à appeler hors du thread de tick.
+		uint64_t ResolveCharacterId(std::string_view name, MYSQL* mysql) const;
+
+		/// FIX.4 — ids de tous les amis acceptés de \p playerId, sans filtre de présence
+		/// (la présence se lit sur le thread de tick). Bloquant : hors du tick.
+		std::vector<uint64_t> GetAcceptedFriendIds(uint64_t playerId, MYSQL* mysql) const;
 
 		/// Shut down the system and release in-memory state.
 		/// Emits LOG_INFO on completion.
@@ -121,6 +135,11 @@ namespace engine::server
 		using Clock = std::chrono::steady_clock;
 
 		bool m_initialized = false;
+		/// FIX.4 — base disponible (cf. Init).
+		bool m_dbAvailable = false;
+		/// FIX.4 — protège m_requestRateLimit : les opérations en base tournent sur les
+		/// threads de la file de sauvegarde, plusieurs à la fois.
+		std::mutex m_rateLimitMutex;
 
 		/// Autorité de présence (Niveau 1), non possédée. Nul = présence indisponible
 		/// (GetPresence renvoie Offline, GetOnlineFriendIds renvoie vide).

@@ -7,7 +7,16 @@
 #include "src/shardd/world/ShardPresenceService.h"
 #include "src/shared/core/Log.h"
 
-#if ENGINE_HAS_MYSQL
+// FIX.4 — le shard Linux est compilé avec SHARD_POSITION_DB (pas ENGINE_HAS_MYSQL, cf.
+// src/CMakeLists.txt) : sans ce repli, tout le code SQL des amis était retiré de la
+// compilation et le shard tournait en « no-DB mode » alors qu'il a une base.
+#if (defined(ENGINE_HAS_MYSQL) && ENGINE_HAS_MYSQL) || defined(SHARD_POSITION_DB)
+#  define LCDLLN_FRIENDS_HAS_DB 1
+#else
+#  define LCDLLN_FRIENDS_HAS_DB 0
+#endif
+
+#if LCDLLN_FRIENDS_HAS_DB
 #  include "src/shared/db/DbHelpers.h"
 #  include <mysql.h>
 #endif
@@ -25,7 +34,7 @@ namespace engine::server
 
 	namespace
 	{
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		/// Build a NULL-terminated SQL string with \p input escaped via the MySQL API.
 		/// Returns false when the connection handle is null or the string is too long.
 		bool EscapeString(MYSQL* mysql, std::string_view input, std::string& outEscaped)
@@ -61,7 +70,7 @@ namespace engine::server
 	// Init / Shutdown
 	// -------------------------------------------------------------------------
 
-	bool FriendSystem::Init(MYSQL* mysql)
+	bool FriendSystem::Init(bool dbAvailable)
 	{
 		if (m_initialized)
 		{
@@ -69,13 +78,16 @@ namespace engine::server
 			return true;
 		}
 
-		if (!mysql)
+		// FIX.4 — la base n'est plus tenue ici : chaque opération reçoit sa connexion
+		// (empruntée au pool par l'appelant, hors du tick). On ne fait qu'annoncer le mode.
+		m_dbAvailable = dbAvailable && LCDLLN_FRIENDS_HAS_DB;
+		if (!m_dbAvailable)
 		{
 			LOG_WARN(Core, "[FriendSystem] Init OK (no DB configured — no-DB mode)");
 		}
 		else
 		{
-			LOG_INFO(Core, "[FriendSystem] Init OK (DB connected)");
+			LOG_INFO(Core, "[FriendSystem] Init OK (DB: table friends, operations hors tick)");
 		}
 
 		m_initialized = true;
@@ -85,8 +97,12 @@ namespace engine::server
 	void FriendSystem::Shutdown()
 	{
 		m_presenceService = nullptr;
-		m_requestRateLimit.clear();
+		{
+			std::lock_guard<std::mutex> lock(m_rateLimitMutex);
+			m_requestRateLimit.clear();
+		}
 		m_initialized = false;
+		m_dbAvailable = false;
 		LOG_INFO(Core, "[FriendSystem] Destroyed");
 	}
 
@@ -96,6 +112,8 @@ namespace engine::server
 
 	bool FriendSystem::IsRateLimited(uint64_t playerId)
 	{
+		// FIX.4 — appelé depuis les threads de la file de sauvegarde (opérations en base).
+		std::lock_guard<std::mutex> lock(m_rateLimitMutex);
 		auto now = Clock::now();
 		auto& timestamps = m_requestRateLimit[playerId];
 
@@ -118,7 +136,7 @@ namespace engine::server
 
 	uint64_t FriendSystem::LookupPlayerIdByName(std::string_view name, MYSQL* mysql) const
 	{
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		if (!mysql || name.empty())
 			return 0;
 
@@ -148,7 +166,7 @@ namespace engine::server
 
 	size_t FriendSystem::CountAcceptedFriends(uint64_t playerId, MYSQL* mysql) const
 	{
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		if (!mysql)
 			return 0;
 
@@ -196,7 +214,7 @@ namespace engine::server
 			return 0;
 		}
 
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		uint64_t targetId = LookupPlayerIdByName(targetName, mysql);
 		if (targetId == 0)
 		{
@@ -228,9 +246,10 @@ namespace engine::server
 		MYSQL_RES* res = db::DbQuery(mysql, checkSql);
 		if (res)
 		{
-			MYSQL_ROW row = mysql_fetch_row(res);
+			// FIX.4 : on lit la présence d'une ligne AVANT de libérer le résultat.
+			const bool exists = (mysql_fetch_row(res) != nullptr);
 			db::DbFreeResult(res);
-			if (row)
+			if (exists)
 			{
 				LOG_WARN(Core, "[FriendSystem] SendFriendRequest: relationship already exists between {} and {}",
 					requesterId, targetId);
@@ -276,7 +295,7 @@ namespace engine::server
 			return 0;
 		}
 
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -345,7 +364,7 @@ namespace engine::server
 			return 0;
 		}
 
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -389,7 +408,7 @@ namespace engine::server
 			return false;
 		}
 
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		uint64_t friendId = LookupPlayerIdByName(friendName, mysql);
 		if (friendId == 0)
 		{
@@ -448,14 +467,21 @@ namespace engine::server
 			return result;
 		}
 
-#if ENGINE_HAS_MYSQL
-		// Join friends with characters to get display names, include pending inbound requests.
-		char sql[512];
+#if LCDLLN_FRIENDS_HAS_DB
+		// Amis acceptés (ligne player_id = moi) + demandes REÇUES en attente (ligne
+		// friend_id = moi, status 0 : l'autre personnage est player_id).
+		// FIX.4 : l'ancienne requête renvoyait les demandes ENVOYÉES (player_id = moi,
+		// status 0) et le client les affichait comme reçues.
+		char sql[768];
 		std::snprintf(sql, sizeof(sql),
-			"SELECT f.friend_id, c.name, f.status "
-			"FROM friends f "
+			"SELECT f.friend_id, c.name, f.status FROM friends f "
 			"JOIN characters c ON c.id = f.friend_id "
-			"WHERE f.player_id = %llu AND f.status IN (0, 1)",
+			"WHERE f.player_id = %llu AND f.status = 1 "
+			"UNION ALL "
+			"SELECT f.player_id, c.name, f.status FROM friends f "
+			"JOIN characters c ON c.id = f.player_id "
+			"WHERE f.friend_id = %llu AND f.status = 0",
+			static_cast<unsigned long long>(playerId),
 			static_cast<unsigned long long>(playerId));
 
 		MYSQL_RES* res = db::DbQuery(mysql, sql);
@@ -486,6 +512,37 @@ namespace engine::server
 		return result;
 	}
 
+	uint64_t FriendSystem::ResolveCharacterId(std::string_view name, MYSQL* mysql) const
+	{
+		return LookupPlayerIdByName(name, mysql);
+	}
+
+	std::vector<uint64_t> FriendSystem::GetAcceptedFriendIds(uint64_t playerId, MYSQL* mysql) const
+	{
+		std::vector<uint64_t> result;
+		if (!mysql)
+			return result;
+#if LCDLLN_FRIENDS_HAS_DB
+		char sql[256];
+		std::snprintf(sql, sizeof(sql),
+			"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",
+			static_cast<unsigned long long>(playerId));
+		MYSQL_RES* res = db::DbQuery(mysql, sql);
+		if (!res)
+			return result;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(res)))
+		{
+			if (row[0])
+				result.push_back(static_cast<uint64_t>(std::strtoull(row[0], nullptr, 10)));
+		}
+		db::DbFreeResult(res);
+#else
+		(void)playerId;
+#endif
+		return result;
+	}
+
 	std::vector<uint64_t> FriendSystem::GetOnlineFriendIds(uint64_t playerId, MYSQL* mysql) const
 	{
 		std::vector<uint64_t> result;
@@ -493,7 +550,7 @@ namespace engine::server
 		if (!mysql)
 			return result;
 
-#if ENGINE_HAS_MYSQL
+#if LCDLLN_FRIENDS_HAS_DB
 		char sql[256];
 		std::snprintf(sql, sizeof(sql),
 			"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",

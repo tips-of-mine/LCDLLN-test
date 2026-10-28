@@ -12462,7 +12462,10 @@ namespace engine
 						return {};
 					};
 					const std::vector<engine::client::SpellDisplay> effectiveKit = BuildEffectiveKit();
-					if (!effectiveKit.empty())
+					// FIX.1 — la barre est TOUJOURS dessinée : sans kit (classe et
+					// compétences pas encore reçues du shard, ex. pas de Welcome UDP),
+					// ses 10 cases apparaissent vides avec leurs touches au lieu de
+					// disparaître. Les envois restent conditionnés à ServerClientId() != 0.
 					{
 						const float nowSec = EngineNowSec();
 						const float slotSize = 58.0f;
@@ -13394,6 +13397,37 @@ namespace engine
 						ImGui::End();
 					}
 
+					// --- FIX.1 : bandeau d'état de la session de jeu. Sans Welcome du
+					// shard (UDP bloqué, endpoint mal annoncé, shard arrêté), le HUD
+					// ne reçoit ni stats ni sorts : le joueur doit savoir pourquoi.
+					// Affiché après 2 s d'attente pour ne pas clignoter à l'entrée.
+					{
+						const float bannerNowSec = EngineNowSec();
+						if (m_gameplayUdp.ServerClientId() != 0u)
+						{
+							m_gameplayWelcomeWaitSinceSec = -1.0f;
+						}
+						else
+						{
+							if (m_gameplayWelcomeWaitSinceSec < 0.0f)
+								m_gameplayWelcomeWaitSinceSec = bannerNowSec;
+							if (bannerNowSec - m_gameplayWelcomeWaitSinceSec >= 2.0f)
+							{
+								const bool gaveUp = m_gameplayUdp.HelloFastAttemptsExhausted();
+								const char* bannerText = gaveUp
+									? "Serveur de jeu injoignable - nouvelle tentative toutes les 5 s (verifiez votre connexion)"
+									: "Connexion au serveur de jeu en cours...";
+								const ImVec2 bannerTs = ImGui::CalcTextSize(bannerText);
+								const float bannerX = (dw - bannerTs.x) * 0.5f;
+								const float bannerY = 48.0f;
+								fg->AddRectFilled(ImVec2(bannerX - 14.0f, bannerY - 8.0f),
+									ImVec2(bannerX + bannerTs.x + 14.0f, bannerY + bannerTs.y + 8.0f),
+									gaveUp ? IM_COL32(110, 30, 26, 220) : IM_COL32(40, 46, 60, 210), 6.0f);
+								fg->AddText(ImVec2(bannerX, bannerY), IM_COL32(255, 240, 220, 255), bannerText);
+							}
+						}
+					}
+
 					// --- Validation v12 : jauges du joueur (PV + ressource), bas-centre.
 					// PV rafraîchis en temps réel par les CombatEvent (chaque coup reçu)
 					// et l'événement de résurrection. Avant le premier coup reçu,
@@ -13477,6 +13511,24 @@ namespace engine
 								fg->AddText(ImVec2(gaugeX + (gaugeW - xpTs.x) * 0.5f, xpY + xpH + 1.0f),
 									IM_COL32(200, 190, 160, 220), xpBuf);
 							}
+						}
+						else
+						{
+							// FIX.1 — stats pas encore reçues du shard : jauge grisée au même
+							// emplacement plutôt que rien (le HUD garde sa forme, le bandeau
+							// ci-dessus explique l'attente).
+							const float gaugeW = 320.0f;
+							const float gaugeH = 18.0f;
+							const float gaugeX = (dw - gaugeW) * 0.5f;
+							const float gaugeY = dh - 152.0f;
+							fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
+								ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
+							fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+								ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(55, 58, 64, 230), 3.0f);
+							const char* waitText = "PV : en attente du serveur";
+							const ImVec2 waitTs = ImGui::CalcTextSize(waitText);
+							fg->AddText(ImVec2(gaugeX + (gaugeW - waitTs.x) * 0.5f, gaugeY + 1.0f),
+								IM_COL32(200, 200, 205, 230), waitText);
 						}
 					}
 

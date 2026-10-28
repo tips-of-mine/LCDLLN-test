@@ -50,7 +50,8 @@ namespace engine::client
 
 		/// ETAPE3.1 — renvoie le DERNIER Hello (mêmes octets, même sel : le shard reconnaît
 		/// un doublon) toutes les kHelloResendIntervalMs tant qu'aucun Welcome n'est reçu,
-		/// au plus kHelloMaxAttempts envois au total. Le Hello part souvent avant que le
+		/// kHelloMaxAttempts fois, puis (FIX.1) toutes les kHelloSlowResendIntervalMs au plus
+		/// kHelloSlowMaxAttempts fois. Le Hello part souvent avant que le
 		/// master ait poussé l'admission et la clé au shard. À appeler à chaque frame.
 		/// \param nowMs horloge monotone en millisecondes.
 		void MaybeResendHello(uint64_t nowMs);
@@ -59,6 +60,19 @@ namespace engine::client
 		static constexpr uint64_t kHelloResendIntervalMs = 1000u;
 		/// ETAPE3.1 — nombre maximal d'envois du même Hello.
 		static constexpr uint32_t kHelloMaxAttempts = 15u;
+		/// FIX.1 — après les kHelloMaxAttempts renvois rapides, on continue toutes les
+		/// kHelloSlowResendIntervalMs, au plus kHelloSlowMaxAttempts fois (~5 min, durée de
+		/// vie de la clé de session UDP côté shard) : un shard redémarré ou un pare-feu
+		/// corrigé en cours de partie est rejoint sans relancer le client.
+		static constexpr uint64_t kHelloSlowResendIntervalMs = 5000u;
+		static constexpr uint32_t kHelloSlowMaxAttempts = 60u;
+
+		/// FIX.1 — vrai quand les renvois rapides du Hello sont épuisés sans Welcome
+		/// (le client est passé aux renvois lents). Sert au bandeau d'état du HUD.
+		bool HelloFastAttemptsExhausted() const
+		{
+			return m_active && m_serverClientId == 0u && m_helloAttempts >= kHelloMaxAttempts;
+		}
 
 		/// Send one Hello datagram (character / persistence nonce).
 		/// Phase 3.7.5 — clientNonce élargi à uint64 pour transporter un character_id complet.

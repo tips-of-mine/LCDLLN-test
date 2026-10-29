@@ -527,6 +527,12 @@ namespace engine::client
 			{
 				appearance.gender = (genderValue->stringValue == "female") ? "female" : "male";
 			}
+			// FIX.10 — catégorie d'affichage (facultative) : "animal" ou absente.
+			if (const JsonValue* categoryValue = FindObjectMember(entry, "category");
+				categoryValue != nullptr && categoryValue->type == JsonType::String)
+			{
+				appearance.animal = categoryValue->stringValue == "animal";
+			}
 			if (const JsonValue* behavior = FindObjectMember(entry, "behavior");
 				behavior != nullptr && behavior->type == JsonType::Object)
 			{

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/client/gameplay/NameplateVisibility.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Profiler.h"
 #include "src/shared/core/Time.h"
@@ -1906,6 +1907,17 @@ namespace engine
 		/// FIX.1 — instant (EngineNowSec) depuis lequel la session UDP attend son Welcome ;
 		/// -1 = Welcome reçu (ou pas encore en attente). Pilote le bandeau d'état du HUD.
 		float m_gameplayWelcomeWaitSinceSec = -1.0f;
+
+		/// FIX.10 — paramètres courants d'affichage des plaques : champ de vision
+		/// (client.nameplate.vision_distance_m, défaut 40 m) et « sens des animaux »
+		/// selon la classe du personnage (client.nameplate.animal_sense_classes,
+		/// défaut "hunter"). Main thread (lit m_cfg et le UIModel).
+		engine::client::NameplateVisibilityParams CurrentNameplateParams() const;
+
+		/// FIX.10 — catégorie d'affichage d'une entité distante (joueur, PNJ
+		/// d'ambiance, animal, mob hostile, autre = butin / nœud de récolte).
+		engine::client::NameplateCategory ClassifyRemoteForNameplate(
+			const engine::client::UIRemoteEntity& remote) const;
 		engine::client::UIModelBinding m_uiModelBinding{};
 		engine::client::ShopUiPresenter m_shopUi{};
 		engine::client::AuctionUiPresenter m_auctionUi{};

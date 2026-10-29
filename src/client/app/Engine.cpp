@@ -1174,6 +1174,43 @@ namespace engine
 		}
 
 	}
+
+	engine::client::NameplateVisibilityParams Engine::CurrentNameplateParams() const
+	{
+		engine::client::NameplateVisibilityParams params;
+		params.visionDistanceM = static_cast<float>(
+			std::clamp(m_cfg.GetDouble("client.nameplate.vision_distance_m", 40.0), 5.0, 500.0));
+		float halfRatio = 0.5f;
+		if (m_perceptionModel.IsLoaded())
+		{
+			// Perception du classeur : niveau courant (XP > stats), classe, race, sexe.
+			const engine::client::UIModel& model = m_uiModelBinding.GetModel();
+			const uint32_t level = model.playerStats.hasXp ? model.playerStats.level : 1u;
+			params.visionDistanceM = m_perceptionModel.RadiusM(level, model.classId, m_localRaceId, m_avatarGender);
+			halfRatio = m_perceptionModel.HalfCircleRatio();
+		}
+		params.levelRevealDistanceM = params.visionDistanceM * halfRatio;
+		params.animalSense = engine::client::ClassHasAnimalSense(m_uiModelBinding.GetModel().classId,
+			m_cfg.GetString("client.nameplate.animal_sense_classes", "hunter"));
+		return params;
+	}
+
+	engine::client::NameplateCategory Engine::ClassifyRemoteForNameplate(
+		const engine::client::UIRemoteEntity& remote) const
+	{
+		if (remote.playerClientId != 0u)
+			return engine::client::NameplateCategory::Player;
+		// Butin (archetype 0) et nœuds de récolte : hors du périmètre FIX.10.
+		if (remote.archetypeId == 0u || remote.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+			return engine::client::NameplateCategory::Other;
+		const engine::client::CreatureAppearance* appearance = m_creatureCatalog.Find(remote.archetypeId);
+		if (appearance != nullptr && appearance->ambient)
+			return engine::client::NameplateCategory::AmbientNpc;
+		if (appearance != nullptr && appearance->animal)
+			return engine::client::NameplateCategory::Animal;
+		return engine::client::NameplateCategory::HostileMob;
+	}
+
 	void Engine::LoadZoneProbeAssets()
 	{
 		const std::string zoneMetaPath = m_cfg.GetString("world.zone_meta_path", "zone.meta");
@@ -5309,6 +5346,8 @@ namespace engine
 													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
 													// catalogue absent/corrompu = mobs rendus en fallback humains).
 													m_creatureCatalog.Init(m_cfg);
+													// FIX.10 — Perception du personnage (rayon des plaques).
+													m_perceptionModel.Init(m_cfg);
 													// Validation v12 (wire v13) — marqueurs cimetière/auberge.
 													LoadRespawnMarkers();
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
@@ -11587,8 +11626,14 @@ namespace engine
 					const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
 					// Label du nom seul ; le "[E]" texte est remplace par un badge touche
 					// (chantier C) + la surbrillance 3D du prop signale l'interactivite.
-					const ImVec2 ts = ImGui::CalcTextSize(e.label.c_str());
-					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, e.label.c_str());
+					// FIX.10 — le nom n'apparaît qu'à portée d'interaction (retour joueur
+					// 29/10/2026 : « Coffre », « Caisse en bois »… saturaient l'écran). Le
+					// marqueur de quête plus bas garde sa propre portée.
+					if (inRange)
+					{
+						const ImVec2 ts = ImGui::CalcTextSize(e.label.c_str());
+						fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, e.label.c_str());
+					}
 					// Repere d'interaction : badge "touche E" sous le label quand a portee.
 					if (inRange)
 					{
@@ -11692,9 +11737,36 @@ namespace engine
 				// snapshot brut si l'etat lisse n'existe pas encore (graceful) ;
 				// le `+ 1.2` est calibre sur la hauteur d'avatar (`py - 0.9` = pieds,
 				// donc tete ~ `py + 0.9`, plaque au-dessus = `py + 1.2`).
+				// FIX.10 — désélection automatique : une cible sortie du champ de vision
+				// (distance XZ > client.nameplate.vision_distance_m) est abandonnée, quel
+				// que soit son type. Fait à chaque frame, même quand les plaques sont
+				// masquées par un panneau.
+				const engine::client::NameplateVisibilityParams plateParams = CurrentNameplateParams();
+				{
+					const engine::client::UIModel& selModel = m_uiModelBinding.GetModel();
+					if (selModel.targetStats.hasTarget)
+					{
+						const engine::math::Vec3 selPlayerPos = m_characterController.GetPosition();
+						for (const engine::client::UIRemoteEntity& re : selModel.remoteEntities)
+						{
+							if (re.entityId != selModel.targetStats.entityId)
+								continue;
+							const float sdx = re.positionX - selPlayerPos.x;
+							const float sdz = re.positionZ - selPlayerPos.z;
+							if (engine::client::ShouldAutoDeselect(std::sqrt(sdx * sdx + sdz * sdz), plateParams))
+							{
+								LOG_DEBUG(Core, "[Nameplate] cible {} hors du champ de vision : deselection", re.entityId);
+								m_uiModelBinding.ClearLocalTarget();
+							}
+							break;
+						}
+					}
+				}
 				if (!worldOverlaysHidden)
 				{
 					const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
+					const engine::math::Vec3 platePlayerPos = m_characterController.GetPosition();
+					const engine::client::UIModel& plateSelModel = m_uiModelBinding.GetModel();
 						// Anti-chevauchement des plaques : boites deja posees cette frame
 						// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
 						// recouvre une est remontee d'une hauteur de plaque (empilement).
@@ -11728,6 +11800,18 @@ namespace engine
 						if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u
 							&& re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
 							continue;
+						// FIX.10 — plaques des créatures : animaux et mobs hostiles seulement
+						// s'ils sont sélectionnés (ou animaux pour un chasseur), PNJ dans le
+						// champ de vision ; joueurs, butin et nœuds inchangés.
+						{
+							const float pdx = re.positionX - platePlayerPos.x;
+							const float pdz = re.positionZ - platePlayerPos.z;
+							const bool plateSelected = plateSelModel.targetStats.hasTarget
+								&& plateSelModel.targetStats.entityId == re.entityId;
+							if (!engine::client::ShouldShowNameplate(ClassifyRemoteForNameplate(re), plateSelected,
+									std::sqrt(pdx * pdx + pdz * pdz), plateParams))
+								continue;
+						}
 						float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
 						const auto sit = m_remoteSmoothed.find(re.entityId);
 						if (sit != m_remoteSmoothed.end() && sit->second.valid)
@@ -11824,7 +11908,13 @@ namespace engine
 							// Validation v12 — les PV chiffrés quittent le label : ils sont
 							// désormais portés par la barre de vie dessinée sous la plaque.
 							label = mobName;
-							levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
+							// FIX.10 — niveau révélé seulement au cœur du cercle de perception.
+							{
+								const float ldx = re.positionX - platePlayerPos.x;
+								const float ldz = re.positionZ - platePlayerPos.z;
+								if (engine::client::ShouldShowLevel(std::sqrt(ldx * ldx + ldz * ldz), plateParams))
+									levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
+							}
 							drawMobHealthBar = (re.maxHealth > 0u);
 						}
 						// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).
@@ -11958,11 +12048,21 @@ namespace engine
 					{
 						engine::server::EntityId bestId = 0;
 						float bestPickDistSq = kPickRadiusPx * kPickRadiusPx;
+						// FIX.10 — un mob hors du champ de vision n'est pas sélectionnable
+						// (il serait désélectionné à la frame suivante).
+						const float pickVision = CurrentNameplateParams().visionDistanceM;
+						const engine::math::Vec3 pickPlayerPos = m_characterController.GetPosition();
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
 							if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
 								|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 								continue;
+							{
+								const float pvx = re.positionX - pickPlayerPos.x;
+								const float pvz = re.positionZ - pickPlayerPos.z;
+								if (pvx * pvx + pvz * pvz > pickVision * pickVision)
+									continue;
+							}
 							float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
 							const auto sit = m_remoteSmoothed.find(re.entityId);
 							if (sit != m_remoteSmoothed.end() && sit->second.valid)
@@ -12158,6 +12258,11 @@ namespace engine
 								continue;
 							const float dxc = re.positionX - playerPos.x;
 							const float dzc = re.positionZ - playerPos.z;
+							// FIX.10 — pas de cible hors du champ de vision (elle serait
+							// désélectionnée à la frame suivante).
+							const float tabVision = CurrentNameplateParams().visionDistanceM;
+							if (dxc * dxc + dzc * dzc > tabVision * tabVision)
+								continue;
 							candidates.emplace_back(dxc * dxc + dzc * dzc, re.entityId);
 						}
 						// Diag (sur appui Tab uniquement, non spammy) : si l'utilisateur

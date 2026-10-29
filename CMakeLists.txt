@@ -766,6 +766,10 @@ add_library(engine_core
   src/client/gameplay/ClassSkillCatalog.cpp
   # Grimoire — résolveur de layout des 10 slots de barre d'action (fonction pure).
   src/client/gameplay/ActionBarLayout.cpp
+  # FIX.10 — règles d'affichage des plaques de nom (fonctions pures).
+  src/client/gameplay/NameplateVisibility.cpp
+  # FIX.10 — Perception (rayon de vue) d'après le classeur de game design.
+  src/client/gameplay/PerceptionModel.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp

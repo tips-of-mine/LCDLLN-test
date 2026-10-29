@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/client/gameplay/NameplateVisibility.h"
+#include "src/client/gameplay/PerceptionModel.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Profiler.h"
 #include "src/shared/core/Time.h"
@@ -1906,6 +1908,23 @@ namespace engine
 		/// FIX.1 — instant (EngineNowSec) depuis lequel la session UDP attend son Welcome ;
 		/// -1 = Welcome reçu (ou pas encore en attente). Pilote le bandeau d'état du HUD.
 		float m_gameplayWelcomeWaitSinceSec = -1.0f;
+
+		/// FIX.10 — Perception du personnage (gameplay/perception.json, classeur de
+		/// game design). Chargée au démarrage avec le catalogue de créatures.
+		engine::client::PerceptionModel m_perceptionModel;
+
+		/// FIX.10 — paramètres courants d'affichage des plaques : champ de vision =
+		/// Perception du personnage (niveau, classe, race, sexe) ou, si le modèle n'est
+		/// pas chargé, client.nameplate.vision_distance_m (40 m) ; cœur du cercle
+		/// (niveau révélé) ; « sens des animaux » selon la classe
+		/// (client.nameplate.animal_sense_classes, défaut "hunter").
+		/// Main thread (lit m_cfg, le UIModel et la race / le genre du perso).
+		engine::client::NameplateVisibilityParams CurrentNameplateParams() const;
+
+		/// FIX.10 — catégorie d'affichage d'une entité distante (joueur, PNJ
+		/// d'ambiance, animal, mob hostile, autre = butin / nœud de récolte).
+		engine::client::NameplateCategory ClassifyRemoteForNameplate(
+			const engine::client::UIRemoteEntity& remote) const;
 		engine::client::UIModelBinding m_uiModelBinding{};
 		engine::client::ShopUiPresenter m_shopUi{};
 		engine::client::AuctionUiPresenter m_auctionUi{};

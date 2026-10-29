@@ -27,6 +27,10 @@ namespace engine::client
 		/// PNJ d'ambiance (behavior.kind = ambient) : plaque neutre (sans PV ni
 		/// niveau), non ciblable en combat, parlable si dialogue/talkTarget.
 		bool ambient = false;
+		/// FIX.10 — créature de catégorie « animal » (archetypes.json : "category":
+		/// "animal") : plaque masquée sauf sélection, visible sans sélection pour les
+		/// classes qui sentent les animaux (chasseur). Faux pour les autres mobs.
+		bool animal = false;
 		/// Sous-titre affiché sous le nom (ex. « Garde de la cité »).
 		std::string role;
 		/// Arbre de dialogue `game/data/dialogues/<id>.json` ouvert avec E.

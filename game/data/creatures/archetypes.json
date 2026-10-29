@@ -3,6 +3,7 @@
     {
       "id": 100,
       "name": "Sanglier des collines",
+      "category": "animal",
       "level": 2,
       "stats": {
         "hp": 60,
@@ -19,6 +20,7 @@
     {
       "id": 101,
       "name": "Loup gris",
+      "category": "animal",
       "level": 1,
       "stats": {
         "hp": 40,
@@ -35,6 +37,7 @@
     {
       "id": 102,
       "name": "Lapin des pres",
+      "category": "animal",
       "level": 1,
       "stats": {
         "hp": 12,
@@ -67,6 +70,7 @@
     {
       "id": 104,
       "name": "Sanglier alpha",
+      "category": "animal",
       "level": 5,
       "stats": {
         "hp": 140,
@@ -84,6 +88,7 @@
       "_comment": "Contenu Feyhin lot 1 (2026-07-20) — 105-107. Rapide et fragile : l'araignee mord vite mais tombe vite.",
       "id": 105,
       "name": "Araignee des sous-bois",
+      "category": "animal",
       "level": 3,
       "stats": {
         "hp": 70,
@@ -118,6 +123,7 @@
       "_comment": "Gibier paisible de l'est (quete stag_offering) : ne fait presque pas mal, s'enfuit peu (leash court au spawner).",
       "id": 107,
       "name": "Cerf des clairieres",
+      "category": "animal",
       "level": 2,
       "stats": {
         "hp": 50,
@@ -134,6 +140,7 @@
     {
       "id": 120,
       "name": "Loup corrompu",
+      "category": "animal",
       "level": 2,
       "stats": {
         "hp": 55,
@@ -166,6 +173,7 @@
     {
       "id": 130,
       "name": "Raptor de la jungle",
+      "category": "animal",
       "level": 2,
       "stats": {
         "hp": 60,
@@ -198,6 +206,7 @@
     {
       "id": 140,
       "name": "Rat des galeries",
+      "category": "animal",
       "level": 2,
       "stats": {
         "hp": 45,
@@ -246,6 +255,7 @@
     {
       "id": 151,
       "name": "Chien des Cendres",
+      "category": "animal",
       "level": 3,
       "stats": {
         "hp": 105,
@@ -262,6 +272,7 @@
     {
       "id": 160,
       "name": "Ours brun",
+      "category": "animal",
       "level": 6,
       "stats": {
         "hp": 260,
@@ -342,6 +353,7 @@
     {
       "id": 165,
       "name": "Scorpion geant",
+      "category": "animal",
       "level": 8,
       "stats": {
         "hp": 340,

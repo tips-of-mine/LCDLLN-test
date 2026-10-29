@@ -1,0 +1,48 @@
+{
+  "_comment": "FIX.10 - Perception (rayon de vue, m) du personnage, reprise du classeur LCDLLN_Faction_Races_Classes.xlsx (onglets Paramètres / Tableau). Rayon = (base_level1_m + per_level_m x (niveau - 1)) x profile_mult[profil de la classe] x race_mult[race] x sex_mult[profil][sexe], arrondi au dixième. Le noyau du cercle (half_circle_ratio x rayon) révèle le niveau des créatures. Classes du jeu rattachées à un profil du classeur par class_profile ; race ou classe inconnue = multiplicateur 1.",
+  "base_level1_m": 10.0,
+  "per_level_m": 0.5,
+  "max_level": 100,
+  "half_circle_ratio": 0.5,
+  "class_profile": {
+    "warrior": "melee",
+    "hunter": "pisteur",
+    "rogue": "voleur",
+    "priest": "healer",
+    "paladin": "sacre",
+    "mage": "lanceur",
+    "necromancer": "lanceur",
+    "shaman": "lanceur"
+  },
+  "profile_mult": {
+    "tank": 0.8,
+    "melee": 0.9,
+    "sacre": 0.95,
+    "distance": 1.3,
+    "pisteur": 1.25,
+    "voleur": 1.0,
+    "healer": 1.0,
+    "lanceur": 1.15
+  },
+  "_comment_race": "Orkh du classeur = orcs. morts_vivants et divins n'existent pas dans le classeur : 1.0 en attendant la session lore.",
+  "race_mult": {
+    "humains": 1.0,
+    "nains": 0.9,
+    "orcs": 0.9,
+    "elfes": 1.25,
+    "demons": 1.05,
+    "morts_vivants": 1.0,
+    "divins": 1.0
+  },
+  "_comment_sex": "Colonne « M Perc » des multiplicateurs de sexe par profil : toutes à 1.0 dans le classeur (gardées pour pouvoir les ajuster).",
+  "sex_mult": {
+    "tank": { "male": 1.0, "female": 1.0 },
+    "melee": { "male": 1.0, "female": 1.0 },
+    "sacre": { "male": 1.0, "female": 1.0 },
+    "distance": { "male": 1.0, "female": 1.0 },
+    "pisteur": { "male": 1.0, "female": 1.0 },
+    "voleur": { "male": 1.0, "female": 1.0 },
+    "healer": { "male": 1.0, "female": 1.0 },
+    "lanceur": { "male": 1.0, "female": 1.0 }
+  }
+}

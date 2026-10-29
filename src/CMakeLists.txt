@@ -675,6 +675,16 @@ elseif(UNIX)
   lcdlln_add_simple_test(action_bar_layout_tests
     ${CMAKE_SOURCE_DIR}/src/client/gameplay/ActionBarLayoutTests.cpp)
 
+  # FIX.10 — règles d'affichage des plaques de nom (client, pur).
+  # NameplateVisibility.cpp est déjà dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(nameplate_visibility_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/NameplateVisibilityTests.cpp)
+
+  # FIX.10 — Perception du personnage (valeurs du classeur). PerceptionModel.cpp est
+  # déjà dans engine_core.
+  lcdlln_add_simple_test(perception_model_tests
+    ${CMAKE_SOURCE_DIR}/src/client/gameplay/PerceptionModelTests.cpp)
+
   # SP-A : catalogue client tolérant des compétences par-classe.
   # Note : ClassSkillCatalog.cpp est déjà dans engine_core (CMakeLists racine)
   # → ne pas le re-lister ici (double définition de symboles au link).

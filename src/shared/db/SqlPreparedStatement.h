@@ -130,6 +130,13 @@ namespace engine::server::db
 		/// Nombre d'entrées actuellement dans le cache.
 		size_t Size() const { return m_lru.size(); }
 
+		/// FIX.8 — message MySQL du dernier Acquire() qui a renvoyé nullptr (préparation
+		/// refusée : table absente, syntaxe, connexion perdue…, ou Reset() en échec sur
+		/// un statement en cache). Vide après un Acquire() réussi. Avant, ce message
+		/// était perdu avec le MYSQL_STMT fermé : l'appelant ne voyait qu'une erreur vide
+		/// (« Auction listings load FAILED (cause='') », 29/10/2026).
+		const std::string& LastAcquireError() const { return m_lastAcquireError; }
+
 	private:
 		struct Entry
 		{
@@ -138,6 +145,7 @@ namespace engine::server::db
 		};
 
 		size_t m_maxEntries;
+		std::string m_lastAcquireError; ///< FIX.8 — cf. LastAcquireError().
 		std::list<Entry> m_lru;  // front = most recent, back = least recent
 		std::unordered_map<std::string, std::list<Entry>::iterator> m_index;
 	};

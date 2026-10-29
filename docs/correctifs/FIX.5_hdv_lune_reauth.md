@@ -49,6 +49,14 @@ Une session dont la connexion est encore ouverte reste `KickedByDuplicateLogin`.
 Reste à faire (6.8) : réutiliser la session du premier écran dans `MasterShardClientFlow`
 pour n'avoir qu'une authentification (changement client + protocole de reprise).
 
+### Suite (FIX.8, 29/10/2026)
+
+Après déploiement, la cause sortait **vide** : `Auction listings load FAILED (shard_id=1, cause='')`.
+Reproduit sur MariaDB : quand la **préparation** du statement échoue (ex. table absente,
+errno 1146), le message n'est porté que par le `MYSQL_STMT`, fermé aussitôt, et
+`mysql_error(mysql)` reste vide. `SqlPreparedStatementCache::LastAcquireError()` conserve
+désormais ce message, et le log de l'HDV indique l'étape en échec
+(`etape=connexion|preparation|parametre|execution`) avec la cause.
 ### Cause trouvée (FIX.9, 29/10/2026)
 
 `SHOW TABLES` en production : `auction_listings`, `auction_listings_v2`, `auction_operations`.

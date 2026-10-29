@@ -57,3 +57,17 @@ errno 1146), le message n'est porté que par le `MYSQL_STMT`, fermé aussitôt, 
 `mysql_error(mysql)` reste vide. `SqlPreparedStatementCache::LastAcquireError()` conserve
 désormais ce message, et le log de l'HDV indique l'étape en échec
 (`etape=connexion|preparation|parametre|execution`) avec la cause.
+### Cause trouvée (FIX.9, 29/10/2026)
+
+`SHOW TABLES` en production : `auction_listings`, `auction_listings_v2`, `auction_operations`.
+La table `auction_listings` est celle de l'ancienne migration **0013** (colonnes `id`, `buyout`,
+`closed`, sans `shard_id`) : la 0081 (`CREATE TABLE IF NOT EXISTS`) n'a rien fait sur cette
+base, et la préparation du `SELECT listing_id … WHERE shard_id = ?` échouait.
+
+Migration **0083_auction_listings_schema_fix.sql** : si `auction_listings` n'a pas `shard_id`,
+elle est renommée `auction_listings_legacy_0013` (conservée), la table au schéma 0081 est
+créée, et les annonces encore ouvertes (`closed = 0`) y sont recopiées pour le shard 1.
+Sans effet sur une base déjà au bon schéma. Testée sur les deux cas (base 0013 + 0081, base
+0081 seule) et rejouée deux fois sans effet.
+
+`auction_listings_v2` (migration 0050) n'est lue par aucun code actuel ; elle est laissée en place.

@@ -12423,14 +12423,35 @@ namespace engine::server
 			"SELECT listing_id, seller_character_id, item_id, quantity, start_bid, buyout_price, current_bid, "
 			"high_bidder_character_id, GREATEST(0, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), expires_at)) "
 			"FROM auction_listings WHERE shard_id = ? ORDER BY listing_id") : nullptr;
-		if (sel == nullptr || !sel->Bind(0, m_shardId) || !sel->Execute())
+		// FIX.8 — étape en échec + cause MySQL. Le 29/10/2026 la cause sortait vide : la
+		// préparation avait échoué et son message disparaissait avec le statement fermé
+		// (mysql_error(mysql) ne le porte pas). Le cache le conserve désormais.
+		const char* failedStep = nullptr;
+		std::string cause;
+		if (mysql == nullptr || cache == nullptr)
 		{
-			// FIX.5 — cause MySQL exacte (avant : seulement « migration 0081 appliquée ? »,
-			// impossible à diagnostiquer depuis les logs du 28/10/2026).
-			const std::string cause = (sel != nullptr) ? sel->LastError()
-				: (mysql != nullptr ? std::string(mysql_error(mysql)) : std::string("aucune connexion"));
-			LOG_ERROR(Net, "[ServerApp] Auction listings load FAILED (shard_id={}, cause='{}') : hôtel des ventes vide "
-				"(table auction_listings absente ? migration 0081 appliquée par le master ?)", m_shardId, cause);
+			failedStep = "connexion";
+			cause = "aucune connexion disponible dans le pool";
+		}
+		else if (sel == nullptr)
+		{
+			failedStep = "preparation";
+			cause = cache->LastAcquireError();
+		}
+		else if (!sel->Bind(0, m_shardId))
+		{
+			failedStep = "parametre";
+			cause = "Bind(shard_id) refuse (nombre de parametres inattendu)";
+		}
+		else if (!sel->Execute())
+		{
+			failedStep = "execution";
+			cause = sel->LastError();
+		}
+		if (failedStep != nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction listings load FAILED (shard_id={}, etape={}, cause='{}') : hôtel des ventes vide "
+				"(table auction_listings absente ? migration 0081 appliquée par le master ?)", m_shardId, failedStep, cause);
 			return;
 		}
 		LOG_INFO(Net, "[ServerApp] Auction listings : lecture en base OK (shard_id={})", m_shardId);

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <string>
 
 // Phase 1a code review #4 : MYSQL_BIND::is_null veut un bool* sur libmysqlclient
 // récent. On stocke en std::vector<char> pour stabilité ABI ; ce static_assert
@@ -22,13 +23,22 @@ namespace engine::server::db
 		// MYSQL_DATA_TRUNCATED et sont re-fetchées dans l'overflow.
 		constexpr size_t kResultInlineBytes = 256;
 
-		MYSQL_STMT* PrepareStatement(MYSQL* mysql, std::string_view sql)
+		/// Prépare \p sql. En échec, \p outError reçoit le message MySQL (lu AVANT de
+		/// fermer le statement, qui le porte seul : mysql_error(mysql) reste vide).
+		MYSQL_STMT* PrepareStatement(MYSQL* mysql, std::string_view sql, std::string& outError)
 		{
 			MYSQL_STMT* stmt = mysql_stmt_init(mysql);
 			if (!stmt)
+			{
+				const char* e = mysql_error(mysql);
+				outError = (e != nullptr && *e != '\0') ? std::string(e) : std::string("mysql_stmt_init a echoue");
 				return nullptr;
+			}
 			if (mysql_stmt_prepare(stmt, sql.data(), static_cast<unsigned long>(sql.size())) != 0)
 			{
+				const char* e = mysql_stmt_error(stmt);
+				outError = "preparation refusee (errno " + std::to_string(mysql_stmt_errno(stmt)) + ") : "
+					+ ((e != nullptr) ? std::string(e) : std::string());
 				mysql_stmt_close(stmt);
 				return nullptr;
 			}
@@ -383,14 +393,19 @@ namespace engine::server::db
 			// Si Reset() échoue (connexion morte / stmt corrompu), on retourne
 			// nullptr — le call site sait que l'acquisition a échoué.
 			if (!it->second->stmt->Reset())
+			{
+				m_lastAcquireError = "Reset du statement en cache : " + it->second->stmt->LastError();
 				return nullptr;
+			}
+			m_lastAcquireError.clear();
 			return it->second->stmt.get();
 		}
 
 		// Miss : préparer un nouveau statement.
-		MYSQL_STMT* stmt = PrepareStatement(mysql, sql);
+		MYSQL_STMT* stmt = PrepareStatement(mysql, sql, m_lastAcquireError);
 		if (!stmt)
 			return nullptr;
+		m_lastAcquireError.clear();
 		const size_t paramCount = mysql_stmt_param_count(stmt);
 		MYSQL_RES* meta = mysql_stmt_result_metadata(stmt);
 		const size_t resultColumnCount = meta ? mysql_num_fields(meta) : 0;

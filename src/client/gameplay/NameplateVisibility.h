@@ -26,11 +26,15 @@ namespace engine::client
 	{
 		/// Champ de vision (m, distance horizontale XZ) : au-delà, aucune plaque de
 		/// créature n'est affichée et la sélection est annulée automatiquement.
-		/// Clé client.nameplate.vision_distance_m, défaut 40.
+		/// = Perception du personnage (gameplay/perception.json, selon niveau, classe,
+		/// race et sexe) ; repli client.nameplate.vision_distance_m (40 m).
 		float visionDistanceM = 40.0f;
 		/// Vrai si la classe du joueur « sent » les animaux (chasseur…) : les plaques
 		/// d'animaux sont alors visibles sans sélection, dans le champ de vision.
 		bool animalSense = false;
+		/// Cœur du cercle (m) : le niveau des créatures n'est révélé qu'en deçà
+		/// (classeur, onglet Code couleur : ½ rayon de perception).
+		float levelRevealDistanceM = 20.0f;
 	};
 
 	/// Décide si la plaque d'une entité distante est dessinée cette frame.
@@ -45,6 +49,9 @@ namespace engine::client
 	/// sortie du champ de vision (\p distanceM > visionDistanceM). Ne concerne pas les
 	/// joueurs restés dans la zone d'intérêt : la même règle s'applique à toute cible.
 	bool ShouldAutoDeselect(float distanceM, const NameplateVisibilityParams& params);
+
+	/// Vrai si le niveau d'une créature à \p distanceM est révélé (cœur du cercle).
+	bool ShouldShowLevel(float distanceM, const NameplateVisibilityParams& params);
 
 	/// Vrai si \p classId figure dans \p classListCsv (liste « hunter,ranger », sans
 	/// espaces significatifs, comparaison exacte). Liste vide => faux.

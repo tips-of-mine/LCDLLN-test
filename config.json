@@ -258,7 +258,7 @@
             }
         },
         "nameplate": {
-            "_comment": "FIX.10 - plaques de nom des creatures. vision_distance_m = champ de vision (m, distance horizontale) : au-dela, aucune plaque de creature et la cible est deselectionnee automatiquement. Animaux et mobs hostiles : plaque seulement si selectionnes ; PNJ d'ambiance : nom dans le champ de vision. animal_sense_classes = classes (ids de races/classes.json, separees par des virgules) qui voient les animaux proches sans les selectionner.",
+            "_comment": "FIX.10 - plaques de nom des creatures. Le champ de vision est la Perception du personnage (game/data/gameplay/perception.json, classeur de game design : niveau, classe, race, sexe) ; vision_distance_m = repli si ce fichier manque. Champ de vision (m, distance horizontale) : au-dela, aucune plaque de creature et la cible est deselectionnee automatiquement. Animaux et mobs hostiles : plaque seulement si selectionnes ; PNJ d'ambiance : nom dans le champ de vision. animal_sense_classes = classes (ids de races/classes.json, separees par des virgules) qui voient les animaux proches sans les selectionner.",
             "vision_distance_m": 40.0,
             "animal_sense_classes": "hunter"
         },

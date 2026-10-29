@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/client/gameplay/NameplateVisibility.h"
+#include "src/client/gameplay/PerceptionModel.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Profiler.h"
 #include "src/shared/core/Time.h"
@@ -1908,10 +1909,16 @@ namespace engine
 		/// -1 = Welcome reçu (ou pas encore en attente). Pilote le bandeau d'état du HUD.
 		float m_gameplayWelcomeWaitSinceSec = -1.0f;
 
-		/// FIX.10 — paramètres courants d'affichage des plaques : champ de vision
-		/// (client.nameplate.vision_distance_m, défaut 40 m) et « sens des animaux »
-		/// selon la classe du personnage (client.nameplate.animal_sense_classes,
-		/// défaut "hunter"). Main thread (lit m_cfg et le UIModel).
+		/// FIX.10 — Perception du personnage (gameplay/perception.json, classeur de
+		/// game design). Chargée au démarrage avec le catalogue de créatures.
+		engine::client::PerceptionModel m_perceptionModel;
+
+		/// FIX.10 — paramètres courants d'affichage des plaques : champ de vision =
+		/// Perception du personnage (niveau, classe, race, sexe) ou, si le modèle n'est
+		/// pas chargé, client.nameplate.vision_distance_m (40 m) ; cœur du cercle
+		/// (niveau révélé) ; « sens des animaux » selon la classe
+		/// (client.nameplate.animal_sense_classes, défaut "hunter").
+		/// Main thread (lit m_cfg, le UIModel et la race / le genre du perso).
 		engine::client::NameplateVisibilityParams CurrentNameplateParams() const;
 
 		/// FIX.10 — catégorie d'affichage d'une entité distante (joueur, PNJ

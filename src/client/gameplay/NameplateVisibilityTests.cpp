@@ -53,6 +53,11 @@ int main()
 	Check(!ShouldAutoDeselect(40.0f, p), "cible a 40 m : gardee");
 	Check(ShouldAutoDeselect(40.1f, p), "cible au-dela : deselectionnee");
 
+	// Niveau révélé seulement au cœur du cercle.
+	p.levelRevealDistanceM = 20.0f;
+	Check(ShouldShowLevel(20.0f, p), "niveau a 20 m (coeur) : visible");
+	Check(!ShouldShowLevel(25.0f, p), "niveau a 25 m : masque");
+
 	// Liste de classes « sens des animaux ».
 	Check(ClassHasAnimalSense("hunter", "hunter"), "hunter dans 'hunter'");
 	Check(ClassHasAnimalSense("ranger", "hunter, ranger"), "ranger dans 'hunter, ranger'");

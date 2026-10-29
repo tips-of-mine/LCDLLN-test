@@ -31,6 +31,11 @@ namespace engine::client
 		return distanceM > params.visionDistanceM;
 	}
 
+	bool ShouldShowLevel(float distanceM, const NameplateVisibilityParams& params)
+	{
+		return distanceM <= params.levelRevealDistanceM;
+	}
+
 	bool ClassHasAnimalSense(std::string_view classId, std::string_view classListCsv)
 	{
 		if (classId.empty())

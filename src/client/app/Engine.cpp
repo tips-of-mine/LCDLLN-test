@@ -1180,6 +1180,16 @@ namespace engine
 		engine::client::NameplateVisibilityParams params;
 		params.visionDistanceM = static_cast<float>(
 			std::clamp(m_cfg.GetDouble("client.nameplate.vision_distance_m", 40.0), 5.0, 500.0));
+		float halfRatio = 0.5f;
+		if (m_perceptionModel.IsLoaded())
+		{
+			// Perception du classeur : niveau courant (XP > stats), classe, race, sexe.
+			const engine::client::UIModel& model = m_uiModelBinding.GetModel();
+			const uint32_t level = model.playerStats.hasXp ? model.playerStats.level : 1u;
+			params.visionDistanceM = m_perceptionModel.RadiusM(level, model.classId, m_localRaceId, m_avatarGender);
+			halfRatio = m_perceptionModel.HalfCircleRatio();
+		}
+		params.levelRevealDistanceM = params.visionDistanceM * halfRatio;
 		params.animalSense = engine::client::ClassHasAnimalSense(m_uiModelBinding.GetModel().classId,
 			m_cfg.GetString("client.nameplate.animal_sense_classes", "hunter"));
 		return params;
@@ -5336,6 +5346,8 @@ namespace engine
 													// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
 													// catalogue absent/corrompu = mobs rendus en fallback humains).
 													m_creatureCatalog.Init(m_cfg);
+													// FIX.10 — Perception du personnage (rayon des plaques).
+													m_perceptionModel.Init(m_cfg);
 													// Validation v12 (wire v13) — marqueurs cimetière/auberge.
 													LoadRespawnMarkers();
 													// Combat SP3 — catalogue d'affichage des kits de sorts (non
@@ -11896,7 +11908,13 @@ namespace engine
 							// Validation v12 — les PV chiffrés quittent le label : ils sont
 							// désormais portés par la barre de vie dessinée sous la plaque.
 							label = mobName;
-							levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
+							// FIX.10 — niveau révélé seulement au cœur du cercle de perception.
+							{
+								const float ldx = re.positionX - platePlayerPos.x;
+								const float ldz = re.positionZ - platePlayerPos.z;
+								if (engine::client::ShouldShowLevel(std::sqrt(ldx * ldx + ldz * ldz), plateParams))
+									levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
+							}
 							drawMobHealthBar = (re.maxHealth > 0u);
 						}
 						// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).

@@ -7,7 +7,32 @@ partout.
 
 ## Règles (client)
 
-Champ de vision : `client.nameplate.vision_distance_m` (40 m, distance horizontale).
+Champ de vision = **Perception du personnage** (distance horizontale), reprise du classeur
+de game design `LCDLLN_Faction_Races_Classes.xlsx` (onglets « Paramètres » et « Tableau ») et
+transcrite dans `game/data/gameplay/perception.json` :
+
+```
+Perception (m) = (10 + 0,5 × (niveau − 1)) × M profil(classe) × M race × M sexe   (arrondi 0,1)
+```
+
+| Profil (classe du jeu) | M | Race | M |
+|---|---|---|---|
+| melee (warrior) | 0,9 | humains | 1 |
+| sacre (paladin) | 0,95 | nains | 0,9 |
+| pisteur (hunter) | 1,25 | orcs (Orkh) | 0,9 |
+| voleur (rogue) | 1 | elfes | 1,25 |
+| healer (priest) | 1 | demons | 1,05 |
+| lanceur (mage, necromancer, shaman) | 1,15 | morts_vivants, divins | 1 (absents du classeur) |
+
+Les multiplicateurs de sexe de la perception valent tous 1 dans le classeur (gardés dans le
+fichier pour pouvoir les ajuster). Exemples : guerrier humain niv. 1 = 9 m, niv. 50 = 31,1 m,
+niv. 100 = 53,6 m ; mage elfe niv. 1 = 14,4 m, niv. 100 = 85,5 m. Valeurs vérifiées contre
+le classeur par `perception_model_tests`.
+
+**Cœur du cercle** (`half_circle_ratio` = ½ rayon, onglet « Code couleur ») : le **niveau**
+d'une créature n'est affiché qu'à cette distance.
+
+Repli si `perception.json` manque : `client.nameplate.vision_distance_m` (40 m).
 
 | Entité | Plaque affichée |
 |---|---|
@@ -30,8 +55,10 @@ galeries, chien des Cendres, ours brun, scorpion géant. Les règles propres au 
 ## Code
 
 - `src/client/gameplay/NameplateVisibility.{h,cpp}` : règles pures
-  (`ShouldShowNameplate`, `ShouldAutoDeselect`, `ClassHasAnimalSense`), testées par
-  `nameplate_visibility_tests`.
+  (`ShouldShowNameplate`, `ShouldAutoDeselect`, `ShouldShowLevel`, `ClassHasAnimalSense`),
+  testées par `nameplate_visibility_tests`.
+- `src/client/gameplay/PerceptionModel.{h,cpp}` + `game/data/gameplay/perception.json` :
+  rayon de perception, testé par `perception_model_tests` (valeurs du classeur).
 - `CreatureCatalog` : champ `animal` lu depuis `"category"` (facultatif ; le serveur
   l'ignore).
 - `Engine.cpp` : filtre des plaques, désélection automatique, limites du clic et du Tab,

@@ -768,6 +768,8 @@ add_library(engine_core
   src/client/gameplay/ActionBarLayout.cpp
   # FIX.10 — règles d'affichage des plaques de nom (fonctions pures).
   src/client/gameplay/NameplateVisibility.cpp
+  # FIX.10 — Perception (rayon de vue) d'après le classeur de game design.
+  src/client/gameplay/PerceptionModel.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
   src/client/world/WorldModel.cpp

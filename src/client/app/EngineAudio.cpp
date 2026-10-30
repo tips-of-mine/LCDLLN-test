@@ -11,6 +11,7 @@
 #include "src/client/audio/CombatAudioCues.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
+#include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/world/WorldCells.h"
 
 #include <chrono>
@@ -283,8 +284,9 @@ namespace engine
 				e.playerWasTarget, e.wasCrit, e.wasMiss });
 		for (const engine::client::UIRemoteEntity& re : m.remoteEntities)
 		{
-			if (re.maxHealth == 0)
-				continue; // sacs de butin, nœuds de récolte : pas de PV
+			// Sacs de butin (sans PV) et nœuds de récolte : ni morts ni impacts.
+			if (re.maxHealth == 0 || re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+				continue;
 			snap.entityHealth[re.entityId] = re.currentHealth;
 			snap.entityIsCreature[re.entityId] = re.archetypeId != 0;
 		}

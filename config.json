@@ -257,6 +257,11 @@
                 "radius_m": 60.0
             }
         },
+        "world_map": {
+            "_comment": "FIX.11 - carte du monde (touche M). default_view_m = cote visible (m) a chaque ouverture, recentree sur le personnage ; min_view_m = cote visible au zoom maximal (molette).",
+            "default_view_m": 2000.0,
+            "min_view_m": 250.0
+        },
         "nameplate": {
             "_comment": "FIX.10 - plaques de nom des creatures. Le champ de vision est la Perception du personnage (game/data/gameplay/perception.json, classeur de game design : niveau, classe, race, sexe) ; vision_distance_m = repli si ce fichier manque. Champ de vision (m, distance horizontale) : au-dela, aucune plaque de creature et la cible est deselectionnee automatiquement. Animaux et mobs hostiles : plaque seulement si selectionnes ; PNJ d'ambiance : nom dans le champ de vision. animal_sense_classes = classes (ids de races/classes.json, separees par des virgules) qui voient les animaux proches sans les selectionner.",
             "vision_distance_m": 40.0,

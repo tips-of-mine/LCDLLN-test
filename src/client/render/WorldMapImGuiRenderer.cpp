@@ -1,5 +1,6 @@
 // Monde jouable (chantier « Royaumes ») — carte du monde + bannière de lieu.
 #include "src/client/render/WorldMapImGuiRenderer.h"
+#include "src/client/world/places/WorldMapZoom.h"
 
 #include "src/client/world/discovery/MapDiscoveryClient.h"
 #include "src/client/world/places/WorldPlaces.h"
@@ -133,6 +134,19 @@ namespace engine::render
 
 		float pu = 0.5f, pv = 0.5f;
 		const bool playerOnMap = places.WorldToMapUv(in.playerX, in.playerZ, pu, pv);
+		// FIX.11 — zoom exprimé en mètres visibles : ouverture sur ≈ defaultViewM
+		// autour du joueur (sinon toute la carte : un déplacement ne se voyait pas),
+		// zoom maximal ≈ minViewM visibles.
+		const float maxZoom = engine::client::WorldMapMaxZoom(places.SizeM(), in.minViewM);
+		if (view.initPending)
+		{
+			view.zoom = engine::client::WorldMapZoomForView(places.SizeM(), in.defaultViewM, maxZoom);
+			view.followPlayer = true;
+			view.initPending = false;
+		}
+		view.zoom = std::clamp(view.zoom, 1.0f, maxZoom);
+		// Taille des marqueurs / libellés : réglée pour z <= 8, figée au-delà.
+		const float markerZoom = engine::client::WorldMapMarkerZoom(view.zoom);
 		if (view.followPlayer && playerOnMap) { view.centerU = pu; view.centerV = pv; }
 
 		const ImVec2 avail = ImGui::GetContentRegionAvail();
@@ -157,7 +171,7 @@ namespace engine::render
 		{
 			const float mu = view.centerU - half + (io.MousePos.x - p0.x) / side * 2.0f * half;
 			const float mv = view.centerV - half + (io.MousePos.y - p0.y) / side * 2.0f * half;
-			const float newZoom = std::clamp(view.zoom * (io.MouseWheel > 0.0f ? 1.25f : 0.8f), 1.0f, 8.0f);
+			const float newZoom = std::clamp(view.zoom * (io.MouseWheel > 0.0f ? 1.25f : 0.8f), 1.0f, maxZoom);
 			// Le point sous le curseur reste fixe à l'écran.
 			const float k = view.zoom / newZoom;
 			view.centerU = mu + (view.centerU - mu) * k;
@@ -222,7 +236,7 @@ namespace engine::render
 			float u = 0, v = 0;
 			places.WorldToMapUv(p.x, p.z, u, v);
 			const ImVec2 s = toScreen(u, v);
-			const float r = 4.0f + view.zoom * 0.4f;
+			const float r = 4.0f + markerZoom * 0.4f;
 			dl->AddQuadFilled(ImVec2(s.x, s.y - r), ImVec2(s.x + r, s.y), ImVec2(s.x, s.y + r), ImVec2(s.x - r, s.y), IM_COL32(176, 120, 226, 235));
 			dl->AddQuad(ImVec2(s.x, s.y - r), ImVec2(s.x + r, s.y), ImVec2(s.x, s.y + r), ImVec2(s.x - r, s.y), IM_COL32(20, 10, 30, 255));
 			if (view.zoom >= 2.0f)
@@ -241,7 +255,7 @@ namespace engine::render
 			float u = 0, v = 0;
 			places.WorldToMapUv(c.x, c.z, u, v);
 			const ImVec2 s = toScreen(u, v);
-			const float r = KindRadius(c.kind) * (0.8f + 0.25f * view.zoom);
+			const float r = KindRadius(c.kind) * (0.8f + 0.25f * markerZoom);
 			const bool ruin = c.state == "ruine";
 			const bool isStart = !c.startFor.empty();
 			const bool myStart = !myRace.empty() && std::find(c.startFor.begin(), c.startFor.end(), myRace) != c.startFor.end();
@@ -323,6 +337,15 @@ namespace engine::render
 		if (ImGui::SmallButton("Centrer")) { view.followPlayer = true; }
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Vue d'ensemble")) { view.zoom = 1.0f; view.followPlayer = false; view.centerU = view.centerV = 0.5f; }
+		ImGui::SameLine();
+		// FIX.11 — échelle courante (côté visible).
+		{
+			const float visibleM = engine::client::WorldMapVisibleMeters(places.SizeM(), view.zoom);
+			if (visibleM >= 1000.0f)
+				ImGui::TextDisabled("~%.1f km visibles", visibleM / 1000.0f);
+			else
+				ImGui::TextDisabled("~%.0f m visibles", visibleM);
+		}
 		ImGui::SameLine();
 		ImGui::TextDisabled("Molette : zoom - Glisser : deplacer - M : fermer");
 		ImGui::End();

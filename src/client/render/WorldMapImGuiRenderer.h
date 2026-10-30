@@ -22,10 +22,13 @@ namespace engine::render
 	/// État de vue de la carte (persistant entre frames, propriété d'Engine).
 	struct WorldMapViewState
 	{
-		float zoom = 1.0f;       ///< 1 = carte entière, max 8
+		float zoom = 1.0f;       ///< 1 = carte entière ; max = taille du monde / minViewM (FIX.11)
 		float centerU = 0.5f;    ///< centre de vue (coordonnées normalisées carte)
 		float centerV = 0.5f;
 		bool followPlayer = true;///< recentre sur le joueur à chaque frame (désactivé au glisser)
+		/// FIX.11 — vrai à chaque ouverture (Engine remet l'état à zéro) : la frame
+		/// suivante fixe le zoom initial (≈ defaultViewM visibles) et recentre.
+		bool initPending = true;
 	};
 
 	/// Entrées de la fenêtre Carte (une frame).
@@ -43,6 +46,12 @@ namespace engine::render
 		/// est couvert d'un voile, villes et lieux y sont masqués). nullptr = carte
 		/// entière visible (zones historiques).
 		const engine::client::MapDiscoveryClient* discovery = nullptr;
+		/// FIX.11 — côté visible (m) à l'ouverture de la carte
+		/// (client.world_map.default_view_m, défaut 2000).
+		float defaultViewM = 2000.0f;
+		/// FIX.11 — côté visible (m) au zoom maximal (client.world_map.min_view_m,
+		/// défaut 250).
+		float minViewM = 250.0f;
 	};
 
 	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le

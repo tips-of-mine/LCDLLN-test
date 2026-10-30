@@ -577,6 +577,9 @@ namespace engine
 		in.viewportH = dh;
 		// Monde en cellules : carte à découvrir (le reste est voilé).
 		in.discovery = m_cellWorld ? &m_mapDiscovery : nullptr;
+		// FIX.11 — zoom en mètres visibles (ouverture / zoom maximal).
+		in.defaultViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.default_view_m", 2000.0)));
+		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
 	}
 }

@@ -12343,6 +12343,10 @@ namespace engine
 					if (keysAllowed && !uiModel.auction.isOpen && m_input.WasPressed(engine::platform::Key::M))
 					{
 						m_worldMapVisible = !m_worldMapVisible;
+						// FIX.11 — chaque ouverture repart de la vue par défaut :
+						// recentrée sur le personnage, ≈ 2 km visibles.
+						if (m_worldMapVisible)
+							m_worldMapView = engine::render::WorldMapViewState{};
 					}
 					DrawWorldPlacesHud(menuOpen ? nullptr : ImGui::GetForegroundDrawList(), dw, dh, ImGui::GetIO().DeltaTime);
 

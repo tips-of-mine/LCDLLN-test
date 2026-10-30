@@ -95,6 +95,9 @@ namespace engine::client
 		/// Ville de départ de la race \p race (identifiant exact), ou nullptr.
 		const PlaceCity* StartCityFor(std::string_view race) const;
 
+		/// FIX.11 — côté du monde couvert par la carte (m, `terrain.size_m`).
+		float SizeM() const { return m_sizeM; }
+
 	private:
 		bool m_loaded = false;
 		std::string m_displayName;

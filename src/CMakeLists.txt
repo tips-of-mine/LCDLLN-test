@@ -648,6 +648,9 @@ elseif(UNIX)
   # (Ambience dans engine_core).
   lcdlln_add_simple_test(ambience_tests
     ${CMAKE_SOURCE_DIR}/src/client/audio/tests/AmbienceTests.cpp)
+  # SND.5 — sons de combat et de sorts (CombatAudioCues dans engine_core).
+  lcdlln_add_simple_test(combat_audio_cues_tests
+    ${CMAKE_SOURCE_DIR}/src/client/audio/tests/CombatAudioCuesTests.cpp)
   # SND.2 — carte des sols d'une cellule (sons de pas).
   lcdlln_add_simple_test(cell_surface_map_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellSurfaceMapTests.cpp)

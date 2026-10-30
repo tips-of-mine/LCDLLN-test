@@ -597,6 +597,205 @@
       "volume": 0.9,
       "pitchJitter": 0.08,
       "volumeJitter": 0.2
+    },
+    {
+      "id": "combat_hit_blade",
+      "path": "audio/sfx/combat/combat_hit_blade_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_hit_blade_2.wav",
+        "audio/sfx/combat/combat_hit_blade_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_hit_blunt",
+      "path": "audio/sfx/combat/combat_hit_blunt_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_hit_blunt_2.wav",
+        "audio/sfx/combat/combat_hit_blunt_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_hit_arrow",
+      "path": "audio/sfx/combat/combat_hit_arrow_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_hit_arrow_2.wav",
+        "audio/sfx/combat/combat_hit_arrow_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_hit_magic",
+      "path": "audio/sfx/combat/combat_hit_magic_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_hit_magic_2.wav",
+        "audio/sfx/combat/combat_hit_magic_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_hit_claw",
+      "path": "audio/sfx/combat/combat_hit_claw_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_hit_claw_2.wav",
+        "audio/sfx/combat/combat_hit_claw_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_crit",
+      "path": "audio/sfx/combat/combat_crit.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_whoosh",
+      "path": "audio/sfx/combat/combat_whoosh_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_whoosh_2.wav",
+        "audio/sfx/combat/combat_whoosh_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.6,
+      "pitchJitter": 0.08,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_player_hurt",
+      "path": "audio/sfx/combat/combat_player_hurt_1.wav",
+      "variants": [
+        "audio/sfx/combat/combat_player_hurt_2.wav",
+        "audio/sfx/combat/combat_player_hurt_3.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "combat_death",
+      "path": "audio/sfx/combat/combat_death.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 50.0,
+      "loop": false,
+      "volume": 0.85,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "player_death",
+      "path": "audio/sfx/combat/player_death.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.9
+    },
+    {
+      "id": "spell_cast",
+      "path": "audio/sfx/combat/spell_cast.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.7,
+      "pitchJitter": 0.02
+    },
+    {
+      "id": "spell_release",
+      "path": "audio/sfx/combat/spell_release.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.04,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "spell_fizzle",
+      "path": "audio/sfx/combat/spell_fizzle.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.7,
+      "pitchJitter": 0.05,
+      "volumeJitter": 0.1
+    },
+    {
+      "id": "aura_buff",
+      "path": "audio/sfx/combat/aura_buff.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.6,
+      "pitchJitter": 0.02,
+      "volumeJitter": 0.05
+    },
+    {
+      "id": "aura_debuff",
+      "path": "audio/sfx/combat/aura_debuff.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": false,
+      "volume": 0.6,
+      "pitchJitter": 0.02,
+      "volumeJitter": 0.05
+    },
+    {
+      "id": "combat_heartbeat",
+      "path": "audio/sfx/combat/combat_heartbeat.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 40.0,
+      "loop": true,
+      "volume": 0.7
     }
   ],
   "zones": [

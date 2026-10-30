@@ -57,6 +57,9 @@ class Part:
     notes: list = field(default_factory=list)   # (début, durée, hauteur, vélocité)
     expr: list = field(default_factory=list)    # (temps, valeur CC11 0..127)
     volume: int = 100                           # CC7
+    bank: int = 0                               # CC0 (banque SF2 : 8 = variantes, 128 = batteries)
+    drums: bool = False                         # True : canal 10 (kits de percussions)
+    humanize_ms: float = 8.0                    # jeu humain : décalage aléatoire max (ms)
 
     def add(self, start: float, dur: float, pitch, vel: int = 80) -> None:
         """Ajoute une note (hauteur MIDI ou nom « D4 ») ; durée en noires."""
@@ -76,31 +79,48 @@ class Part:
             t += step
 
 
-def write_midi(part: Part, bpm: float, path: Path, humanize_seed: int | None = 1) -> None:
-    """Écrit le pupitre dans un fichier MIDI (piste unique, canal 0).
+def _tempo_map(bpm) -> list[tuple[float, float]]:
+    """Normalise un tempo fixe ou une liste [(temps en noires, bpm), …]."""
+    if isinstance(bpm, (int, float)):
+        return [(0.0, float(bpm))]
+    tm = sorted((float(b), float(v)) for b, v in bpm)
+    if not tm or tm[0][0] > 0.0:
+        tm.insert(0, (0.0, tm[0][1] if tm else 120.0))
+    return tm
 
-    Humanisation légère (±8 ms, ±5 de vélocité) pour éviter la raideur
-    mécanique, sauf si `humanize_seed` est None.
+
+def write_midi(part: Part, bpm, path: Path, humanize_seed: int | None = 1) -> None:
+    """Écrit le pupitre dans un fichier MIDI (piste unique).
+
+    `bpm` : tempo fixe ou carte de tempo [(temps en noires, bpm), …].
+    Humanisation légère (±`humanize_ms`, ±5 de vélocité) pour éviter la
+    raideur mécanique, sauf si `humanize_seed` est None.
     """
     r = rng(humanize_seed) if humanize_seed is not None else None
+    ch = 9 if part.drums else 0
+    tm = _tempo_map(bpm)
     mid = mido.MidiFile(ticks_per_beat=TPB)
     tr = mido.MidiTrack()
     mid.tracks.append(tr)
     events = []  # (tick, ordre, message)
-    events.append((0, 0, mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm))))
-    events.append((0, 1, mido.Message("program_change", program=part.program, channel=0)))
+    for beat, b in tm:
+        events.append((int(beat * TPB), 0, mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(b))))
+    if not part.drums:  # canal 10 : FluidSynth choisit lui-même la banque des kits
+        events.append((0, 1, mido.Message("control_change", control=0, value=min(127, part.bank), channel=ch)))
+    events.append((0, 1, mido.Message("program_change", program=part.program, channel=ch)))
     for cc, val in ((7, part.volume), (91, 0), (93, 0), (10, 64), (11, 127 if not part.expr else part.expr[0][1])):
-        events.append((0, 2, mido.Message("control_change", control=cc, value=val, channel=0)))
-    ticks_per_ms = TPB * bpm / 60000.0
+        events.append((0, 2, mido.Message("control_change", control=cc, value=val, channel=ch)))
+    ticks_per_ms = TPB * tm[0][1] / 60000.0
     for (beat, val) in part.expr:
-        events.append((int(beat * TPB), 3, mido.Message("control_change", control=11, value=max(0, min(127, val)), channel=0)))
+        events.append((int(beat * TPB), 3, mido.Message("control_change", control=11, value=max(0, min(127, val)), channel=ch)))
+    hz = part.humanize_ms
     for (start, dur, pitch, vel) in part.notes:
-        jt = int(r.uniform(-8, 8) * ticks_per_ms) if r is not None else 0
+        jt = int(r.uniform(-hz, hz) * ticks_per_ms) if r is not None else 0
         jv = int(r.integers(-5, 6)) if r is not None else 0
         on = max(0, int(start * TPB) + jt)
         off = max(on + 1, int((start + dur) * TPB) + jt)
-        events.append((on, 5, mido.Message("note_on", note=pitch, velocity=max(1, min(127, vel + jv)), channel=0)))
-        events.append((off, 4, mido.Message("note_off", note=pitch, velocity=0, channel=0)))
+        events.append((on, 5, mido.Message("note_on", note=pitch, velocity=max(1, min(127, vel + jv)), channel=ch)))
+        events.append((off, 4, mido.Message("note_off", note=pitch, velocity=0, channel=ch)))
     events.sort(key=lambda e: (e[0], e[1]))
     last = 0
     for tick, _, msg in events:
@@ -110,7 +130,7 @@ def write_midi(part: Part, bpm: float, path: Path, humanize_seed: int | None = 1
     mid.save(path)
 
 
-def render(part: Part, bpm: float, total_seconds: float, sf2: str | None = None, gain: float = 0.5) -> np.ndarray:
+def render(part: Part, bpm, total_seconds: float, sf2: str | None = None, gain: float = 0.5) -> np.ndarray:
     """Rend le pupitre en audio stéréo (n, 2) float32 à SR, longueur fixée.
 
     Effet de bord : fichiers temporaires (MIDI, WAV) supprimés à la fin.

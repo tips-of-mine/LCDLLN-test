@@ -22,6 +22,7 @@ pip install numpy scipy mido soundfile pyloudnorm
 | `sfx_footsteps.py` | SND.2 — sons de pas par surface (`docs/audio/SND.2_moteur_sons_pas.md`) |
 | `sfx_ui.py` | SND.3 — sons d'interface et d'évènements (`docs/audio/SND.3_sons_interface.md`) |
 | `sfx_combat.py` | SND.5 — combat et sorts (`docs/audio/SND.5_sons_combat.md`) |
+| `sfx_interactions.py` | SND.6 — récolte et artisanat (`docs/audio/SND.6_sons_recolte_artisanat.md`) |
 | `sfx_ambience.py` | SND.4 — boucles d'ambiance et tonnerre (`docs/audio/SND.4_ambiances.md`) |
 | `tests/` | tests unitaires (workflow `audio-gen`) |
 
@@ -41,4 +42,5 @@ python3 tools/audio_gen/sfx_footsteps.py   # game/data/audio/sfx/footsteps/
 python3 tools/audio_gen/sfx_ui.py          # game/data/audio/sfx/ui/
 python3 tools/audio_gen/sfx_ambience.py    # game/data/audio/ambience/ (≈ 35 s)
 python3 tools/audio_gen/sfx_combat.py      # game/data/audio/sfx/combat/
+python3 tools/audio_gen/sfx_interactions.py  # game/data/audio/sfx/interactions/
 ```

@@ -1,6 +1,6 @@
-// SND.2 / SND.3 / SND.4 / SND.5 — Audio en jeu côté Engine : oreille (caméra),
+// SND.2 à SND.6 — Audio en jeu côté Engine : oreille (caméra),
 // pas du personnage, sons d'interface (clics, fenêtres, évènements de jeu),
-// ambiances (lieux, heure, météo), combat et sorts.
+// ambiances (lieux, heure, météo), combat et sorts, récolte et artisanat.
 //
 // Fonctions membres d'Engine regroupées ici pour ne pas alourdir Engine.cpp.
 // Thread : main thread.
@@ -10,6 +10,7 @@
 #include "src/client/audio/Ambience.h"
 #include "src/client/audio/CombatAudioCues.h"
 #include "src/client/audio/Footsteps.h"
+#include "src/client/audio/InteractionAudio.h"
 #include "src/client/audio/UiAudioCues.h"
 #include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/world/WorldCells.h"
@@ -357,5 +358,43 @@ namespace engine
 			m_heartbeatVoice = 0;
 		}
 		m_combatAudioPrev = std::move(cur);
+	}
+	engine::audio::InteractionAudioSnapshot Engine::BuildInteractionAudioSnapshot() const
+	{
+		engine::audio::InteractionAudioSnapshot snap;
+		const engine::client::UIModel& m = m_uiModelBinding.GetModel();
+		snap.valid = m.playerStats.playerEntityId != 0;
+		snap.harvesting = m.harvest.inProgress;
+		snap.harvestFill = m.harvest.fillFraction;
+		// Type de nœud : archétype répliqué = kGatheringNodeArchetypeBase + typeId.
+		for (const engine::client::UIRemoteEntity& re : m.remoteEntities)
+			if (re.entityId == m.harvest.nodeEntityId && re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+			{
+				snap.harvestNodeType = re.archetypeId - engine::server::kGatheringNodeArchetypeBase;
+				break;
+			}
+		snap.crafting = m.crafting.isCrafting;
+		snap.craftProfession = m.crafting.activeProfessionKey;
+		snap.craftFill = m.crafting.craftFillFraction;
+		snap.lastQuality = m.crafting.lastQualityTier;
+		return snap;
+	}
+
+	void Engine::UpdateInteractionAudio(bool inGame)
+	{
+		engine::audio::InteractionAudioSnapshot cur =
+			inGame ? BuildInteractionAudioSnapshot() : engine::audio::InteractionAudioSnapshot{};
+		const engine::audio::InteractionAudioPlan plan = engine::audio::PlanInteractionAudio(m_interactionAudioPrev, cur);
+		// Boucle : on ne la relance que si le geste change (fondus courts).
+		if (plan.loop != m_interactionLoopId)
+		{
+			if (m_interactionLoopVoice != 0)
+				m_audioEngine.StopSound(m_interactionLoopVoice, 250);
+			m_interactionLoopVoice = plan.loop.empty() ? 0 : m_audioEngine.PlayLoop(plan.loop, 1.0f, 150);
+			m_interactionLoopId = std::string(plan.loop);
+		}
+		for (std::string_view id : plan.oneShots)
+			m_audioEngine.Play2D(id);
+		m_interactionAudioPrev = std::move(cur);
 	}
 }

@@ -9199,6 +9199,7 @@ namespace engine
 						m_uiAudioPrev = engine::audio::UiAudioSnapshot{};
 						m_uiAudioWarmupFrames = 240;
 						m_combatAudioPrev = engine::audio::CombatAudioSnapshot{}; // SND.5
+						m_interactionAudioPrev = engine::audio::InteractionAudioSnapshot{}; // SND.6
 						engine::render::skinned::SkinnedMesh* mesh = GetRaceMesh(raceId);
 						if (mesh) {
 							m_currentSkinnedMesh = mesh;
@@ -10928,6 +10929,7 @@ namespace engine
 		UpdateAudioListener(out.camera); // SND.2 — orientation de l'oreille
 		UpdateAmbienceAudio(static_cast<float>(dt), m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.4
 		UpdateCombatAudio(m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.5
+		UpdateInteractionAudio(m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.6
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
 		// Réticule de ciblage : suit la cible (position/yaw lissés) et pilote le

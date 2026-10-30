@@ -651,6 +651,9 @@ elseif(UNIX)
   # SND.5 — sons de combat et de sorts (CombatAudioCues dans engine_core).
   lcdlln_add_simple_test(combat_audio_cues_tests
     ${CMAKE_SOURCE_DIR}/src/client/audio/tests/CombatAudioCuesTests.cpp)
+  # SND.6 — sons de récolte et d'artisanat (InteractionAudio dans engine_core).
+  lcdlln_add_simple_test(interaction_audio_tests
+    ${CMAKE_SOURCE_DIR}/src/client/audio/tests/InteractionAudioTests.cpp)
   # SND.2 — carte des sols d'une cellule (sons de pas).
   lcdlln_add_simple_test(cell_surface_map_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellSurfaceMapTests.cpp)

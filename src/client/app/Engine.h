@@ -9,6 +9,7 @@
 #include "src/client/audio/AudioEngine.h"
 #include "src/client/audio/Ambience.h"
 #include "src/client/audio/CombatAudioCues.h"
+#include "src/client/audio/InteractionAudio.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
 #include "src/client/auth/AuthUi.h"
@@ -1749,6 +1750,15 @@ namespace engine
 		void UpdateCombatAudio(bool inGame);
 		engine::audio::CombatAudioSnapshot m_combatAudioPrev; ///< SND.5 — photo précédente
 		uint32_t m_heartbeatVoice = 0;                        ///< SND.5 — boucle du cœur (0 = muette)
+		/// SND.6 — photo de la récolte / de l'artisanat du joueur (type de nœud,
+		/// métier, progression, qualité du dernier objet).
+		engine::audio::InteractionAudioSnapshot BuildInteractionAudioSnapshot() const;
+		/// SND.6 — boucle de geste pendant la récolte / l'artisanat, son de fin.
+		/// \param inGame false : la boucle s'arrête. Main thread.
+		void UpdateInteractionAudio(bool inGame);
+		engine::audio::InteractionAudioSnapshot m_interactionAudioPrev; ///< SND.6 — photo précédente
+		uint32_t m_interactionLoopVoice = 0;   ///< SND.6 — voix de la boucle (0 = aucune)
+		std::string m_interactionLoopId;       ///< SND.6 — son de la boucle en cours
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;

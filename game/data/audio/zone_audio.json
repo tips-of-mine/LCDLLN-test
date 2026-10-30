@@ -796,6 +796,108 @@
       "maxDistance": 40.0,
       "loop": true,
       "volume": 0.7
+    },
+    {
+      "id": "harvest_mining",
+      "path": "audio/sfx/interactions/harvest_mining.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "harvest_wood",
+      "path": "audio/sfx/interactions/harvest_wood.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "harvest_herb",
+      "path": "audio/sfx/interactions/harvest_herb.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "harvest_skinning",
+      "path": "audio/sfx/interactions/harvest_skinning.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "craft_forge",
+      "path": "audio/sfx/interactions/craft_forge.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "craft_alchemy",
+      "path": "audio/sfx/interactions/craft_alchemy.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "craft_leather",
+      "path": "audio/sfx/interactions/craft_leather.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "craft_generic",
+      "path": "audio/sfx/interactions/craft_generic.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": true,
+      "volume": 0.7
+    },
+    {
+      "id": "harvest_complete",
+      "path": "audio/sfx/interactions/harvest_complete.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": false,
+      "volume": 0.7,
+      "pitchJitter": 0.03
+    },
+    {
+      "id": "craft_complete",
+      "path": "audio/sfx/interactions/craft_complete.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": false,
+      "volume": 0.75,
+      "pitchJitter": 0.03
+    },
+    {
+      "id": "craft_complete_rare",
+      "path": "audio/sfx/interactions/craft_complete_rare.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 30.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.03
     }
   ],
   "zones": [

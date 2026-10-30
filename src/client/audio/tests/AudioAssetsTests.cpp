@@ -4,7 +4,8 @@
 // (audio.menu_music_path) et dans game/data/audio/zone_audio.json (auth_music)
 // existe, est décodable par miniaudio (Ogg Vorbis via stb_vorbis, compilé dans
 // engine_core — MaMenuMusic.cpp) et respecte le cahier des charges : 48 kHz,
-// stéréo, entre 5 et 10 minutes.
+// stéréo, entre 5 et 10 minutes. SND.2 : tous les fichiers déclarés dans
+// zone_audio.json (sons et variantes) existent et se décodent.
 
 #include "src/shared/core/Config.h"
 
@@ -13,6 +14,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -74,6 +76,37 @@ int main()
 			ma_decoder_uninit(&dec);
 		}
 	}
+
+	// SND.2 — chaque fichier déclaré dans zone_audio.json (principal + variantes)
+	// existe et se décode.
+	size_t files = 0;
+	for (int i = 0; i < 1024; ++i)
+	{
+		const std::string base = "sounds[" + std::to_string(i) + "].";
+		if (!zoneAudio.Has(base + "id"))
+			break;
+		const std::string id = zoneAudio.GetString(base + "id", "");
+		std::vector<std::string> paths{ zoneAudio.GetString(base + "path", "") };
+		for (int k = 0; k < 64 && zoneAudio.Has(base + "variants[" + std::to_string(k) + "]"); ++k)
+			paths.push_back(zoneAudio.GetString(base + "variants[" + std::to_string(k) + "]", ""));
+		for (const std::string& rel : paths)
+		{
+			const std::filesystem::path f = std::filesystem::path("game/data") / rel;
+			++files;
+			if (!std::filesystem::exists(f))
+			{
+				Check(false, "fichier absent : " + rel + " (son " + id + ")");
+				continue;
+			}
+			ma_decoder_config dc = ma_decoder_config_init(ma_format_f32, 0, 0);
+			ma_decoder dec;
+			const bool ok = ma_decoder_init_file(f.string().c_str(), &dc, &dec) == MA_SUCCESS;
+			Check(ok, "decodable : " + rel);
+			if (ok)
+				ma_decoder_uninit(&dec);
+		}
+	}
+	Check(files > 40, "catalogue des sons charge (" + std::to_string(files) + " fichiers)");
 
 	if (s_failCount == 0)
 		std::cout << "[OK] audio_assets_tests" << std::endl;

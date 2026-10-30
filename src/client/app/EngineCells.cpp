@@ -518,6 +518,7 @@ namespace engine
 		}
 
 		// Décor instancié + bâtiments, en coordonnées LOCALES à la cellule.
+		tile.surface = assets.surface; // SND.2 — sols pour les sons de pas
 		tile.scatter = std::make_unique<engine::world::scatter::ScatterField>();
 		tile.collider = std::make_unique<engine::gameplay::CompositeWorldCollider>(nullptr);
 		const cells::CellPoint center = cells::CellCenter(cell);

@@ -113,6 +113,9 @@
         "sfx_volume": 1.0,
         "ui_volume": 1.0,
         "zone_audio_path": "audio/zone_audio.json",
+        "_comment_sfx": "SND.2 — sfx_device_enabled : jouer réellement les sons (miniaudio) ; max_voices : sons simultanés (8–256).",
+        "sfx_device_enabled": true,
+        "max_voices": 64,
         "menu_music_path": "audio/music/menu_lune_noire.ogg"
     },
     "time": {

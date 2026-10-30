@@ -7,6 +7,7 @@
 #include "src/shared/core/Time.h"
 #include "src/shared/core/memory/FrameArena.h"
 #include "src/client/audio/AudioEngine.h"
+#include "src/client/audio/Footsteps.h"
 #include "src/client/auth/AuthUi.h"
 #include "src/client/chat/ChatUi.h"
 #include "src/client/mail/MailUi.h"
@@ -1369,6 +1370,8 @@ namespace engine
 			std::unique_ptr<engine::world::cells::CellAssets> pending;
 			size_t scatterNext = 0;
 			size_t buildingNext = 0;
+			/// SND.2 — sols de la cellule (sons de pas) ; nul si pas de splat.
+			std::shared_ptr<const engine::world::cells::CellSurfaceMap> surface;
 		};
 		/// Tuile retirée : détruite quelques frames plus tard (ressources GPU encore en vol).
 		struct RetiredCellTile
@@ -1696,6 +1699,14 @@ namespace engine
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
 		engine::audio::AudioEngine m_audioEngine;
+		/// SND.2 — cadence des pas du personnage local (EngineAudio.cpp).
+		engine::audio::FootstepCadence m_footstepCadence;
+		/// SND.2 — oriente l'oreille audio sur la caméra (direction du regard).
+		void UpdateAudioListener(const engine::render::Camera& camera);
+		/// SND.2 — joue les pas, réceptions et brasses du personnage local selon
+		/// sa vitesse et le sol sous ses pieds. \param dt durée de la frame (s).
+		/// Appelée après la mise à jour du contrôleur de personnage (main thread).
+		void UpdateFootstepAudio(float dt);
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;

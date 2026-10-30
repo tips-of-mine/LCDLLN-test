@@ -1,0 +1,42 @@
+# Générateur audio (tools/audio_gen) : tests unitaires de la synthèse, du
+# mixage et de la partition, avec un rendu FluidSynth court. Le rendu complet
+# des pistes (≈ 8 Go de RAM) se fait hors CI ; les fichiers produits sont
+# vérifiés par audio_assets_tests (build Linux).
+name: Audio — générateur
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'tools/audio_gen/**'
+      - '.github/workflows/audio-gen.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'tools/audio_gen/**'
+      - '.github/workflows/audio-gen.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audio-gen:
+    name: Tests du générateur audio
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dépendances (FluidSynth, banque FluidR3_GM, ffmpeg, numpy…)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q fluidsynth fluid-soundfont-gm ffmpeg
+          pip install numpy scipy mido soundfile pyloudnorm
+
+      - name: Tests unitaires
+        working-directory: tools/audio_gen
+        run: python -m unittest discover -s tests -v

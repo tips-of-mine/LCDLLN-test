@@ -4117,11 +4117,17 @@ namespace engine
 											m_audioEngine.SetBusVolume("Music", static_cast<float>(m_cfg.GetDouble("audio.music_volume", 1.0)));
 											m_audioEngine.SetBusVolume("SFX", static_cast<float>(m_cfg.GetDouble("audio.sfx_volume", 1.0)));
 											m_audioEngine.SetBusVolume("UI", static_cast<float>(m_cfg.GetDouble("audio.ui_volume", 1.0)));
+											// SND.1 — musique de l'écran de connexion (Ogg Vorbis, boucle exacte).
+											constexpr const char* kDefaultMenuMusic = "audio/music/menu_lune_noire.ogg";
 											std::string menuMusicRel = m_cfg.GetString("audio.menu_music_path", "");
-											if (menuMusicRel.empty())
+											if (menuMusicRel.empty()
+												|| !engine::platform::FileSystem::Exists(engine::platform::FileSystem::ResolveContentPath(m_cfg, menuMusicRel)))
 											{
-												// Même piste que zone_audio.json (auth_music) si la clé n’est pas renseignée.
-												menuMusicRel = "audio/Horns_of_the_Fallen_Bastion.mp3";
+												// Clé absente, ou config.json local qui pointe encore vers une piste
+												// retirée (ancien MP3) : la piste livrée par défaut prend le relais.
+												if (!menuMusicRel.empty() && menuMusicRel != kDefaultMenuMusic)
+													LOG_WARN(Core, "[Boot] audio.menu_music_path '{}' introuvable : repli sur {}", menuMusicRel, kDefaultMenuMusic);
+												menuMusicRel = kDefaultMenuMusic;
 											}
 											bool menuStarted = false;
 											if (!m_worldEditorExe && !menuMusicRel.empty())
@@ -9069,7 +9075,7 @@ namespace engine
 				// competences (verrouillage paliers + affichage « Niveau joueur »).
 				m_activeCharacterLevel = (enterCmd.level > 0u) ? enterCmd.level : 1u;
 
-				// Coupe la musique des ecrans d'auth/menu (Horns_of_the_Fallen_Bastion.mp3)
+				// Coupe la musique des ecrans d'auth/menu (audio/music/menu_lune_noire.ogg, SND.1)
 				// au moment d'entrer dans le monde : le joueur entend desormais l'ambiance
 				// du shard (zone audio) et eventuellement de futures musiques in-game.
 				m_audioEngine.StopMenuMusic();

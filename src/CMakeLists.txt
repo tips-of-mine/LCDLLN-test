@@ -637,6 +637,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # SND.1 — fichiers audio livrés : musique de connexion présente, décodable
+  # (Ogg Vorbis via stb_vorbis dans engine_core), 48 kHz stéréo, 5 à 10 min.
+  lcdlln_add_simple_test(audio_assets_tests
+    ${CMAKE_SOURCE_DIR}/src/client/audio/tests/AudioAssetsTests.cpp)
+
   # Monde jouable (chantier « Royaumes ») : lieux du monde (carte M, bannière).
   lcdlln_add_simple_test(world_places_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)

@@ -36,7 +36,7 @@
     },
     {
       "id": "auth_music",
-      "path": "audio/Horns_of_the_Fallen_Bastion.mp3",
+      "path": "audio/music/menu_lune_noire.ogg",
       "bus": "Music",
       "minDistance": 0.0,
       "maxDistance": 9999.0,

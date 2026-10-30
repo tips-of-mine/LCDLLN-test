@@ -5,11 +5,20 @@
 #include <algorithm>
 #include <cstring>
 
-#define MINIAUDIO_IMPLEMENTATION
+// SND.1 — décodeur Ogg Vorbis (stb_vorbis, domaine public, external/stb) :
+// miniaudio ne lit l'Ogg Vorbis que si stb_vorbis est déclaré AVANT son
+// implémentation, puis compilé après (procédure documentée par miniaudio).
+// Musiques et ambiances longues sont livrées en .ogg (boucle exacte à
+// l'échantillon, contrairement au MP3 et à son délai d'encodeur).
 #if defined(_MSC_VER)
-#pragma warning(push, 0) // en-tete tiers : silence les warnings
+#pragma warning(push, 0) // en-tetes tiers : silence les warnings
 #endif
+#define STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.c"
+#define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
+#undef STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.c"
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif

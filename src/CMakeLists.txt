@@ -587,6 +587,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # FIX.12 — routes / bâtiments de la carte du monde (format map_features.bin, en-tête pur).
+  lcdlln_add_simple_test(map_features_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/MapFeaturesTests.cpp)
+
   # ETAPE5.4 : métriques de jeu du shard (formatage Prometheus, saturation).
   lcdlln_add_simple_test(shard_metrics_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/ShardMetricsTests.cpp

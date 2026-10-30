@@ -17,6 +17,7 @@
 #include <zone_builder/JsonDocument.h>
 
 #include "src/shared/world/WorldCells.h"
+#include "src/shared/world/MapFeatures.h"
 
 #include <array>
 #include <cmath>
@@ -112,6 +113,10 @@ namespace tools::world_gen
 		double y = 0.0;               ///< offset vertical (0 = posé au sol)
 		double yawDeg = 0.0;
 		double footprintRadius = 5.0; ///< rayon d'encombrement (occupation)
+		/// FIX.12 — emprise rectangulaire (m, repère local du bâtiment) pour la
+		/// carte du monde ; 0 = inconnue (la carte dérive alors un carré du rayon).
+		double halfW = 0.0;
+		double halfD = 0.0;
 		std::string cityId;
 		Vec2   doorPoint;             ///< point de rue devant la porte (monde)
 		bool   isInn = false;
@@ -363,6 +368,11 @@ namespace tools::world_gen
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
+	/// FIX.12 — tracés de la carte du monde (world/<w>/map_features.bin) : routes
+	/// inter-villes (g.roads), chemins locaux des cellules (Road::path), rues des
+	/// agglomérations (arêtes du graphe SettlementLayout) et emprises des
+	/// bâtiments. Polylignes allégées (pas ≥ 10 m). Pur (aucune écriture). Output.cpp
+	engine::world::mapfeatures::MapFeatures BuildMapFeatures(const GlobalWorld& g, const std::vector<World*>& cells);
 	/// Modèles de maisons paramétriques (bibliothèque buildings/templates). Output.cpp
 	bool WriteHouseTemplates(const std::string& outputRoot, GenReport& report, std::string& err);
 

@@ -323,6 +323,55 @@ namespace
 		}
 		fs::remove_all(tmp, ec);
 	}
+
+	/// FIX.12 — tracés de la carte : routes globales, chemins locaux, rues
+	/// (une arête par paire de noeuds) et bâtiments (emprise ou repli du rayon).
+	void TestMapFeatures()
+	{
+		using namespace tools::world_gen;
+		namespace mf = engine::world::mapfeatures;
+		GlobalWorld g;
+		Road major;
+		major.major = true;
+		major.widthM = 6.0;
+		for (int i = 0; i <= 100; ++i) major.points.push_back({ static_cast<double>(i), 0.0 });
+		g.roads.push_back(major);
+		World w;
+		Road clipped; // découpe d'une route globale : ne doit pas être réexportée
+		clipped.points = { { 0.0, 0.0 }, { 50.0, 0.0 } };
+		w.roads.push_back(clipped);
+		Road path;
+		path.path = true;
+		path.points = { { 0.0, 10.0 }, { 30.0, 10.0 } };
+		w.roads.push_back(path);
+		SettlementLayout L;
+		L.nodes = { { { 0.0, 0.0 }, { 1, 2 } }, { { 20.0, 0.0 }, { 0 } }, { { 0.0, 20.0 }, { 0 } } };
+		w.layouts.push_back(L);
+		BuildingPlacementDef house;
+		house.position = { 5.0, 6.0 };
+		house.yawDeg = 90.0;
+		house.halfW = 2.0;
+		house.halfD = 3.0;
+		w.buildings.push_back(house);
+		BuildingPlacementDef legacy; // historique : pas d'emprise, rayon 7
+		legacy.footprintRadius = 7.0;
+		w.buildings.push_back(legacy);
+		const std::vector<World*> cells{ &w };
+		const mf::MapFeatures f = BuildMapFeatures(g, cells);
+		Check(f.roads.size() == 4u, "carte : 1 route + 1 chemin + 2 rues (decoupe ignoree, aretes uniques)");
+		if (f.roads.size() == 4u)
+		{
+			Check(f.roads[0].kind == mf::MapRoadKind::Major && f.roads[0].PointCount() == 11u, "carte : route majeure allegee (pas 10 m)");
+			Check(f.roads[1].kind == mf::MapRoadKind::Path, "carte : chemin local");
+			Check(f.roads[2].kind == mf::MapRoadKind::Street && f.roads[3].kind == mf::MapRoadKind::Street, "carte : rues");
+		}
+		Check(f.buildings.size() == 2u, "carte : 2 batiments");
+		if (f.buildings.size() == 2u)
+		{
+			Check(std::fabs(f.buildings[0].yawRad - 1.5707963f) < 1e-4f && f.buildings[0].halfD == 3.0f, "carte : emprise et cap du batiment");
+			Check(std::fabs(f.buildings[1].halfW - 4.95f) < 0.01f, "carte : repli carre inscrit dans le rayon");
+		}
+	}
 }
 
 int main()
@@ -332,6 +381,7 @@ int main()
 	TestMaster();
 	TestStartCorridors();
 	TestGenerationAndInvariants();
+	TestMapFeatures();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

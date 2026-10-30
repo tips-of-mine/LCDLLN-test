@@ -5,11 +5,13 @@
 #include "src/client/world/discovery/MapDiscoveryClient.h"
 #include "src/client/world/places/WorldPlaces.h"
 #include "src/shared/world/MapDiscovery.h"
+#include "src/shared/world/MapFeatures.h"
 #include "src/shared/world/WorldCells.h"
 
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <vector>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -51,6 +53,69 @@ namespace engine::render
 			dl->AddText(p, col, text);
 		}
 
+		/// FIX.12 — Dessine routes, rues et bâtiments (map_features.bin) visibles
+		/// dans la vue. \param worldToScreen projette un point GLOBAL (x, z) à
+		/// l'écran ; \param wx0,wz0,wx1,wz1 emprise monde de la vue (m) ;
+		/// \param pxPerM échelle courante (px par mètre). Rues masquées au-delà de
+		/// 6 km visibles, bâtiments au-delà de 8 km (illisibles, coût inutile).
+		/// Doit précéder le voile : ce qui n'est pas découvert reste caché.
+		template <typename WorldToScreen>
+		void DrawMapFeatures(ImDrawList* dl, const engine::world::mapfeatures::MapFeatures& f,
+			float wx0, float wz0, float wx1, float wz1, float pxPerM, WorldToScreen&& worldToScreen)
+		{
+			namespace mf = engine::world::mapfeatures;
+			const float visibleM = wx1 - wx0;
+			const bool showStreets = visibleM <= 6000.0f;
+			const bool showBuildings = visibleM <= 8000.0f;
+			std::vector<ImVec2> pts;
+			// Ordre : chemins et rues d'abord, grandes routes par-dessus.
+			static constexpr mf::MapRoadKind kOrder[4] = { mf::MapRoadKind::Street, mf::MapRoadKind::Path, mf::MapRoadKind::Road, mf::MapRoadKind::Major };
+			for (mf::MapRoadKind kind : kOrder)
+			{
+				if (kind == mf::MapRoadKind::Street && !showStreets)
+					continue;
+				ImU32 col = IM_COL32(176, 140, 92, 255);
+				float minPx = 1.5f;
+				switch (kind)
+				{
+				case mf::MapRoadKind::Major: col = IM_COL32(214, 176, 112, 255); minPx = 2.5f; break;
+				case mf::MapRoadKind::Road: col = IM_COL32(190, 152, 100, 255); minPx = 2.0f; break;
+				case mf::MapRoadKind::Path: col = IM_COL32(156, 128, 92, 255); minPx = 1.2f; break;
+				case mf::MapRoadKind::Street: col = IM_COL32(208, 194, 164, 255); minPx = 1.2f; break;
+				}
+				for (const mf::MapRoad& r : f.roads)
+				{
+					if (r.kind != kind || r.PointCount() < 2u)
+						continue;
+					if (r.maxX < wx0 || r.minX > wx1 || r.maxZ < wz0 || r.minZ > wz1)
+						continue;
+					pts.clear();
+					for (size_t i = 0; i < r.PointCount(); ++i)
+						pts.push_back(worldToScreen(r.xz[2 * i], r.xz[2 * i + 1]));
+					const float thick = std::clamp(r.widthM * pxPerM, minPx, 14.0f);
+					dl->AddPolyline(pts.data(), static_cast<int>(pts.size()), col, ImDrawFlags_None, thick);
+				}
+			}
+			if (!showBuildings)
+				return;
+			const ImU32 fill = IM_COL32(120, 96, 78, 255);
+			const ImU32 edge = IM_COL32(40, 30, 24, 255);
+			float c[8];
+			for (const mf::MapBuilding& b : f.buildings)
+			{
+				const float r = std::max(b.halfW, b.halfD) * 1.42f;
+				if (b.x + r < wx0 || b.x - r > wx1 || b.z + r < wz0 || b.z - r > wz1)
+					continue;
+				mf::BuildingCorners(b, c);
+				const ImVec2 a = worldToScreen(c[0], c[1]), bb = worldToScreen(c[2], c[3]);
+				const ImVec2 cc = worldToScreen(c[4], c[5]), d = worldToScreen(c[6], c[7]);
+				dl->AddQuadFilled(a, bb, cc, d, fill);
+				// Contour seulement quand le bâtiment fait quelques pixels.
+				if (r * pxPerM >= 4.0f)
+					dl->AddQuad(a, bb, cc, d, edge, 1.0f);
+			}
+		}
+
 		/// Voile des zones non découvertes. \param worldToScreen projette un point
 		/// GLOBAL (x, z) à l'écran. Les cellules jamais visitées sont voilées en
 		/// entier (séries fusionnées par rangée) ; dans une cellule visitée, les
@@ -61,8 +126,10 @@ namespace engine::render
 		{
 			namespace cells = engine::world::cells;
 			namespace dsc = engine::world::discovery;
-			// Opaque : rien de la carte ne doit transparaître hors des zones explorées.
-			const ImU32 fog = IM_COL32(26, 22, 18, 255);
+			// FIX.12 — noir opaque : rien de la carte ne doit transparaître hors des
+			// zones explorées (un brun très sombre ressortait gris après la
+			// conversion sRGB de l'affichage).
+			const ImU32 fog = IM_COL32(0, 0, 0, 255);
 			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
 			places.MapUvToWorld(u0, v0, wx0, wz0);
 			places.MapUvToWorld(u1, v1, wx1, wz1);
@@ -201,12 +268,22 @@ namespace engine::render
 			ShadowText(dl, ImVec2(p0.x + 10.0f, p0.y + 10.0f), IM_COL32(220, 220, 220, 255), "Carte indisponible (world_map.png)");
 		}
 
-		// Carte à découvrir : voile sur ce qui n'a pas été exploré.
 		auto worldToScreen = [&](float x, float z) {
 			float u = 0, v = 0;
 			places.WorldToMapUv(x, z, u, v);
 			return toScreen(u, v);
 		};
+		// FIX.12 — routes, rues et bâtiments (avant le voile : l'inexploré les cache).
+		if (in.features != nullptr && !in.features->Empty())
+		{
+			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
+			places.MapUvToWorld(u0, v0, wx0, wz0);
+			places.MapUvToWorld(u0 + 2.0f * half, v0 + 2.0f * half, wx1, wz1);
+			const float pxPerM = side / std::max(1.0f, wx1 - wx0);
+			DrawMapFeatures(dl, *in.features, wx0, wz0, wx1, wz1, pxPerM, worldToScreen);
+		}
+
+		// Carte à découvrir : voile sur ce qui n'a pas été exploré.
 		if (in.discovery != nullptr)
 			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u0 + 2.0f * half, v0 + 2.0f * half, worldToScreen);
 		auto discovered = [&](float x, float z) { return in.discovery == nullptr || in.discovery->IsDiscovered(x, z); };

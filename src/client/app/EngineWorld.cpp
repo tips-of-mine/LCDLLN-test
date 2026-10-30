@@ -547,7 +547,21 @@ namespace engine
 			LOG_INFO(Core, "[WorldPlaces] '{}' : {} villes, {} lieux, {} regions (carte : touche M)",
 				world, m_worldPlaces.Cities().size(), m_worldPlaces.Pois().size(), m_worldPlaces.Regions().size());
 		else
+		{
 			LOG_INFO(Core, "[WorldPlaces] pas de lieux pour '{}' ({}) : carte du monde indisponible", world, err);
+			return;
+		}
+		// FIX.12 — tracés vectoriels de la carte (absents d'un monde généré avant FIX.12 :
+		// la carte reste utilisable, sans routes ni bâtiments détaillés).
+		const std::string featuresRel = "world/" + world + "/map_features.bin";
+		const std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, featuresRel);
+		if (bytes.empty())
+			LOG_WARN(Core, "[WorldPlaces] {} absent : routes et batiments non affiches sur la carte (regenerer le monde)", featuresRel);
+		else if (!engine::world::mapfeatures::Deserialize(bytes, m_worldMapFeatures, err))
+			LOG_WARN(Core, "[WorldPlaces] {} illisible ({}) : routes et batiments non affiches", featuresRel, err);
+		else
+			LOG_INFO(Core, "[WorldPlaces] carte : {} traces de routes/rues, {} batiments",
+				m_worldMapFeatures.roads.size(), m_worldMapFeatures.buildings.size());
 	}
 
 	void Engine::DrawWorldPlacesHud(ImDrawList* fg, float dw, float dh, float dtSec)
@@ -580,6 +594,7 @@ namespace engine
 		// FIX.11 — zoom en mètres visibles (ouverture / zoom maximal).
 		in.defaultViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.default_view_m", 2000.0)));
 		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));
+		in.features = &m_worldMapFeatures;
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
 	}
 }

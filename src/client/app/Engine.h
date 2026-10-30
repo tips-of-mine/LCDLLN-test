@@ -46,6 +46,7 @@
 #include "src/client/render/SkillIconCache.h"
 #include "src/client/render/WorldMapImGuiRenderer.h"
 #include "src/client/world/places/WorldPlaces.h"
+#include "src/shared/world/MapFeatures.h"
 #include "src/client/skills/ClassSkillTreeUi.h"
 // Combat SP4 — FX visuels d'auras (halo aux pieds des entités).
 #include "src/client/combat/AuraFXSystem.h"
@@ -1314,6 +1315,9 @@ namespace engine
 		/// Monde jouable — lieux du monde (places.json), chargés paresseusement au
 		/// premier HUD en jeu (\ref EnsureWorldPlaces).
 		engine::client::WorldPlaces m_worldPlaces;
+		/// FIX.12 — routes, rues et bâtiments de la carte du monde
+		/// (world/<monde>/map_features.bin), chargés avec m_worldPlaces.
+		engine::world::mapfeatures::MapFeatures m_worldMapFeatures;
 		bool m_worldPlacesAttempted = false;
 		/// Bannière « Vous entrez à … » (réarmée à chaque EnterWorld).
 		engine::client::PlaceBannerTracker m_placeBanner;

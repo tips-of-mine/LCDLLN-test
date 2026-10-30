@@ -137,7 +137,9 @@ Seuls `world/royaumes/world_master.json` (source) et
 
 `places.json` (villes du lore, lieux procéduraux, régions, cellules générées —
 coordonnées globales), `world_map.png` (carte du continent 2048², relief ombré,
-rivières, routes, cellules générées encadrées), `start_locations.json`
+rivières, routes, cellules générées encadrées), `map_features.bin` (FIX.12 :
+routes, chemins, rues et emprises des bâtiments en vectoriel pour la carte zoomée,
+format `src/shared/world/MapFeatures.h`), `start_locations.json`
 (départs par race + `generated_cells`, lus par le master et le shard),
 `quest_poi.json`.
 

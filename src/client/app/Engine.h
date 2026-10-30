@@ -8,6 +8,7 @@
 #include "src/shared/core/memory/FrameArena.h"
 #include "src/client/audio/AudioEngine.h"
 #include "src/client/audio/Footsteps.h"
+#include "src/client/audio/UiAudioCues.h"
 #include "src/client/auth/AuthUi.h"
 #include "src/client/chat/ChatUi.h"
 #include "src/client/mail/MailUi.h"
@@ -1707,6 +1708,20 @@ namespace engine
 		/// sa vitesse et le sol sous ses pieds. \param dt durée de la frame (s).
 		/// Appelée après la mise à jour du contrôleur de personnage (main thread).
 		void UpdateFootstepAudio(float dt);
+		/// SND.3 — photo de l'état observé par les sons d'interface (niveau, quêtes,
+		/// discussion, bourse, inventaire, fenêtres ouvertes, carte, bannière de lieu).
+		engine::audio::UiAudioSnapshot BuildUiAudioSnapshot() const;
+		/// SND.3 — joue les sons d'interface : clic ImGui (élément activé à l'appui)
+		/// et évènements de jeu (comparaison avec la photo précédente).
+		/// \param inGame false sur les écrans de connexion (seuls les clics sonnent).
+		/// Doit être appelée pendant la frame ImGui, avant ImGui::Render() (main thread).
+		void UpdateUiAudio(bool inGame);
+		engine::audio::UiAudioSnapshot m_uiAudioPrev;  ///< SND.3 — photo de la frame précédente
+		bool m_uiAudioWasActive = false;               ///< SND.3 — un élément ImGui était actif
+		/// SND.3 — frames de chauffe après l'entrée en jeu (aucun son d'évènement).
+		uint32_t m_uiAudioWarmupFrames = 240;
+		/// SND.3 — nom du personnage local (pour ne pas sonner sur ses propres messages).
+		std::string m_localCharacterNameForAudio;
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;

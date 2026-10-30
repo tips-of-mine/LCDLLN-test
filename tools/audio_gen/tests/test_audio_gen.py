@@ -15,6 +15,7 @@ from lcdlln_audio import dsp, percussion as perc, textures  # noqa: E402
 from lcdlln_audio.orchestra import GM, Part, note, render, write_midi  # noqa: E402
 import menu_theme  # noqa: E402
 import sfx_footsteps  # noqa: E402
+import sfx_ui  # noqa: E402
 
 
 class DspTests(unittest.TestCase):
@@ -69,6 +70,18 @@ class FootstepTests(unittest.TestCase):
             self.assertLess(len(x) / dsp.SR, 1.0, surface)       # un pas reste court
             self.assertLess(abs(float(x[0])), 0.01, surface)      # pas de clic au début
             self.assertLess(abs(float(x[-1])), 0.01, surface)     # ni à la fin
+
+
+class UiSoundTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("fluidsynth") and Path("/usr/share/sounds/sf2/FluidR3_GM.sf2").exists(),
+                         "FluidSynth / FluidR3_GM absents")
+    def test_every_ui_sound(self):
+        for sid in sfx_ui.SOUNDS:
+            x = sfx_ui.make(sid)
+            self.assertTrue(np.all(np.isfinite(x)), sid)
+            self.assertLess(len(x) / dsp.SR, 6.0, sid)            # un son d'interface reste court
+            self.assertLess(float(np.max(np.abs(x))), 0.6, sid)  # marge : jamais saturé
+            self.assertLess(abs(float(x[0])), 0.01, sid)
 
 
 class ScoreTests(unittest.TestCase):

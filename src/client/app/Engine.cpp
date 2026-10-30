@@ -9193,6 +9193,11 @@ namespace engine
 						// évidence) ; la bannière se réarme (accueil dans la ville d'arrivée).
 						m_localRaceId = raceId;
 						m_placeBanner = engine::client::PlaceBannerTracker{};
+						// SND.2/SND.3 — nouvelle entrée en jeu : pas et sons d'interface repartent de zéro.
+						m_localCharacterNameForAudio = enterCmd.characterName;
+						m_footstepCadence.Reset();
+						m_uiAudioPrev = engine::audio::UiAudioSnapshot{};
+						m_uiAudioWarmupFrames = 240;
 						engine::render::skinned::SkinnedMesh* mesh = GetRaceMesh(raceId);
 						if (mesh) {
 							m_currentSkinnedMesh = mesh;
@@ -11552,6 +11557,7 @@ namespace engine
 			// CharacterSelect/CharacterCreate) suite a retour utilisateur "on laisse
 			// tomber pour le moment, l'affichage du CHAT juste apres l'authentification".
 			// Le chat reapparaitra une fois la branche !authGateActive prise (in-game).
+			UpdateUiAudio(/*inGame*/ false); // SND.3 — clics des écrans de connexion
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
@@ -14223,6 +14229,7 @@ namespace engine
 					ReloadKeybindsFromDisk(); // prise d'effet live des rebinds
 				}
 			}
+			UpdateUiAudio(/*inGame*/ true); // SND.3 — clics et évènements de jeu
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui

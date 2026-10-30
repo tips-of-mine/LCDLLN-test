@@ -1,4 +1,5 @@
-// SND.2 — Audio en jeu côté Engine : oreille (caméra) et pas du personnage.
+// SND.2 / SND.3 — Audio en jeu côté Engine : oreille (caméra), pas du
+// personnage, sons d'interface (clics, fenêtres, évènements de jeu).
 //
 // Fonctions membres d'Engine regroupées ici pour ne pas alourdir Engine.cpp.
 // Thread : main thread.
@@ -6,9 +7,14 @@
 #include "src/client/app/Engine.h"
 
 #include "src/client/audio/Footsteps.h"
+#include "src/client/audio/UiAudioCues.h"
 #include "src/shared/world/WorldCells.h"
 
 #include <cmath>
+
+#if defined(_WIN32)
+#	include "imgui.h"
+#endif
 
 namespace engine
 {
@@ -65,5 +71,72 @@ namespace engine
 			volume = 1.0f;
 		const std::string_view id = engine::audio::FootstepSoundId(ctx);
 		m_audioEngine.Play3D(foot, id, volume);
+	}
+
+	engine::audio::UiAudioSnapshot Engine::BuildUiAudioSnapshot() const
+	{
+		engine::audio::UiAudioSnapshot snap;
+		const engine::client::UIModel& m = m_uiModelBinding.GetModel();
+		snap.valid = true;
+		snap.level = m.playerStats.hasXp ? m.playerStats.level : 0;
+		for (const engine::client::UIQuestEntry& q : m.quests)
+		{
+			uint32_t progress = 0;
+			for (const engine::client::UIQuestStep& st : q.steps)
+				progress += st.currentCount;
+			snap.quests[q.questId] = { q.status, progress };
+		}
+		if (!m.chatLines.empty())
+		{
+			const engine::client::UIChatLineEntry& last = m.chatLines.back();
+			snap.chatSerial = last.timestampUnixMs ^ (static_cast<uint64_t>(m.chatLines.size()) << 48);
+			snap.lastChatChannel = last.channelWire;
+			snap.lastChatFromSelf = !m_localCharacterNameForAudio.empty() && last.sender == m_localCharacterNameForAudio;
+		}
+		snap.gold = m.wallet.gold;
+		for (const auto& it : m.inventory)
+			snap.inventoryUnits += it.quantity;
+		for (const auto& e : m.equipment)
+			snap.equipmentHash = snap.equipmentHash * 1000003u + (static_cast<uint64_t>(e.slot) << 32 | e.itemId);
+		snap.lootVisible = m.lootWindow.visible;
+		snap.partyInvite = m.partyInvite.pending;
+		// Fenêtres : un bit par panneau (la carte a ses propres sons).
+		const bool panels[] = { m_mailVisible, m_reputationVisible, m_characterSheetVisible, m_lfgVisible,
+			m_skillBookVisible, m_grimoireVisible, m_classSkillTreeVisible, m_arenaVisible, m_battleGroundVisible,
+			m_outdoorPvpVisible, m_weatherVisible, m_gameEventVisible, m_guildVisible, m_auctionHouseVisible,
+			m_lootRollVisible, m_craftingVisible, m_advancedCombatVisible, m_inGamePauseMenuVisible,
+			m_inGameOptionsPanelVisible, m_gmTicketsVisible };
+		for (size_t i = 0; i < sizeof(panels) / sizeof(panels[0]); ++i)
+			if (panels[i])
+				snap.openPanels |= 1u << i;
+		snap.mapOpen = m_worldMapVisible;
+		snap.placeBanner = m_placeBanner.Visible();
+		return snap;
+	}
+
+	void Engine::UpdateUiAudio(bool inGame)
+	{
+		if (!m_audioEngine.IsDeviceReady())
+			return;
+#if defined(_WIN32)
+		// Clic : un élément ImGui devient actif à la frame d'un appui (bouton,
+		// case, onglet, curseur…). Appelée avant ImGui::Render().
+		if (ImGui::GetCurrentContext() != nullptr)
+		{
+			const bool active = ImGui::IsAnyItemActive();
+			if (engine::audio::IsUiClick(m_uiAudioWasActive, active, ImGui::IsMouseClicked(ImGuiMouseButton_Left)))
+				m_audioEngine.Play2D(engine::audio::ui_sounds::kClick);
+			m_uiAudioWasActive = active;
+		}
+#endif
+		engine::audio::UiAudioSnapshot cur = inGame ? BuildUiAudioSnapshot() : engine::audio::UiAudioSnapshot{};
+		// Après l'entrée en jeu, l'état (quêtes, inventaire, bourse…) arrive en
+		// plusieurs paquets : on n'annonce rien pendant ce délai de chauffe.
+		if (m_uiAudioWarmupFrames > 0)
+			--m_uiAudioWarmupFrames;
+		else
+			for (std::string_view id : engine::audio::DiffUiAudio(m_uiAudioPrev, cur))
+				m_audioEngine.Play2D(id);
+		m_uiAudioPrev = std::move(cur);
 	}
 }

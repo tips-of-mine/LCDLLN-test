@@ -600,6 +600,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdownTests.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/ops/ClusterShutdown.cpp)
   # ETAPE5.2 : garde contre les jugements après un calage (module pur).
+  # FIX.13 — résumé texte du profileur pour le journal client (en-tête pur).
+  lcdlln_add_simple_test(profiler_summary_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/core/tests/ProfilerSummaryTests.cpp)
   lcdlln_add_simple_test(stall_guard_tests
     ${CMAKE_SOURCE_DIR}/src/shared/core/tests/StallGuardTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/StallGuard.cpp)

@@ -184,9 +184,10 @@ namespace engine
 				// Arbres (instances « occultantes ») dans un rayon de ~30 m, repère de la cellule.
 				const cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
 				const engine::math::Vec3 local(pos.x - static_cast<float>(c.x), pos.y, pos.z - static_cast<float>(c.z));
-				static thread_local std::vector<uint32_t> near;
-				tile.scatter->GatherNearSegment(local, local, 30.0f, near);
-				in.treeDensity = std::min(1.0f, static_cast<float>(near.size()) / 30.0f);
+				// NB : pas de variable « near » / « far » (macros de windef.h sous Windows).
+				static thread_local std::vector<uint32_t> nearTrees;
+				tile.scatter->GatherNearSegment(local, local, 30.0f, nearTrees);
+				in.treeDensity = (std::min)(1.0f, static_cast<float>(nearTrees.size()) / 30.0f);
 			}
 			break;
 		}

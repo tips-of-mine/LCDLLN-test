@@ -1,22 +1,24 @@
-"""SND.1 (v2) — « Aux portes de la Lune Noire » : musique de l'écran de connexion.
+"""SND.1 (v3) — « Aux portes de la Lune Noire » : musique de l'écran de connexion.
 
-Version 2 après écoute (30/10/2026) : la v1 sonnait trop « batterie » et trop
-électronique, l'ouverture était trop longue et les tambours trop lointains.
-Cette version :
+Version 3 après deux écoutes (30/10/2026) : « des tambours bien forts, bien en
+termes de percussion, avec des cors, et une montée en puissance » ; le son doit
+être plus grave et ne plus comporter d'instrument difficile à identifier.
 
-  - n'utilise plus de percussions de synthèse : grands tambours taiko, grosse
-    caisse de concert, timbales et cymbales sont des sons ENREGISTRÉS (banque
-    FluidR3_GM) ; seul le gong (tam-tam) reste synthétisé ;
-  - place les tambours tout près, puissants, dès la première mesure ;
-  - ouvre en ≈ 30 s (9 mesures) avant que l'ensemble soit en place ;
-  - alterne une marche lourde (70 noires/min) et une marche de conquête
-    (90 noires/min).
+  - Deux familles seulement : TAMBOURS (taikos dont un ō-daiko très grave,
+    grosse caisse de concert, timbales, cymbales et gong aux sommets) et
+    CUIVRES (cors pour le thème et les accords, trombones et tuba pour le grave).
+    Plus de cordes, de chœur, de bois ni de trompettes.
+  - Grave renforcé : taikos accordés plus bas, ō-daiko sur les temps forts,
+    plancher de trombones/tuba, accentuation des basses du bus de tambours.
+  - Montée en puissance : chaque section ajoute des tambourinaires et des cors ;
+    le cœur des ténèbres retombe, puis la conquête et le retour vont plus haut.
+  - Sons enregistrés (banque FluidR3_GM) ; seul le gong est synthétisé.
 
-  O   0:00–0:31  Ouverture               tambours de puissance + bourdon, l'orchestre se rassemble
-  B   0:31–2:07  Le monde se dévoile     marche lourde, thème aux cors, contre-chant du hautbois
-  C   2:07–4:15  L'appel de la conquête  marche à 90, ostinato des cordes, thème en tutti
-  D   4:15–6:05  Au cœur des ténèbres    battement de cœur des taikos (proche), flûte ; reconstruction
-  C2  6:05–7:52  La conquête             marche à 90, thème aux cuivres, tutti
+  O   0:00–0:31  Ouverture               ō-daiko seul, puis les taikos, puis les cuivres graves
+  B   0:31–2:07  Le monde se dévoile     marche lourde (70), thème au cor solo puis aux cors
+  C   2:07–4:15  L'appel de la conquête  marche de conquête (90), thème des cors en octaves
+  D   4:15–6:05  Au cœur des ténèbres    battement de cœur, cor lointain ; reconstruction
+  C2  6:05–7:52  La conquête             (90) plus dense, thème cors + trombones
   E   7:52–8:53  Le retour inéluctable   marche lourde maestoso, cadence, gong, retour à l'ouverture
 
 Ré mineur. Les tambours ne s'arrêtent jamais. La fin reprend le climat de
@@ -177,252 +179,242 @@ def B(name: str, k: int = 0) -> int:
     return START[name] + k
 
 
-# ----------------------------------------------------------------- orchestre
+# ----------------------------------------------------------------- cuivres
 
-def compose_orchestra(h: list[str]) -> dict[str, Part]:
-    """Cordes, cuivres, bois, chœur."""
+def compose_brass(h: list[str]) -> dict[str, Part]:
+    """Cors (thème, accords) et cuivres graves (trombones, tuba)."""
     P = {
-        "contrabass": Part("contrabass", GM["contrabass"], volume=108),
-        "cello": Part("cello", GM["cello"], volume=104),
-        "ostinato": Part("ostinato", GM["strings"], volume=96),
-        "pad": Part("pad", GM["strings_slow"], volume=96),
-        "violins": Part("violins", GM["strings"], volume=104),
-        "horns": Part("horns", GM["horn"], volume=104),
-        "horn_solo": Part("horn_solo", GM["horn"], volume=110),
-        "trombones": Part("trombones", GM["trombone"], volume=106),
-        "tuba": Part("tuba", GM["tuba"], volume=104),
-        "trumpets": Part("trumpets", GM["trumpet"], volume=96),
-        "choir": Part("choir", GM["choir"], volume=84),
-        "flute": Part("flute", GM["flute"], volume=98),
-        "oboe": Part("oboe", GM["oboe"], volume=96),
-        "tremolo": Part("tremolo", GM["tremolo"], volume=94),
+        "horn_solo": Part("horn_solo", GM["horn"], volume=112),
+        "horns": Part("horns", GM["horn"], volume=108),
+        "horns_low": Part("horns_low", GM["horn"], volume=106),
+        "trombones": Part("trombones", GM["trombone"], volume=110),
+        "tuba": Part("tuba", GM["tuba"], volume=112),
     }
-    full = set(range(B("B"), B("D"))) | set(range(B("D", 16), B("E", 12)))  # sections « pleines »
+    hs, hn, hl, tb, tu = (P[k] for k in ("horn_solo", "horns", "horns_low", "trombones", "tuba"))
 
-    # Basses : fondamentales tenues partout, pédale de ré au début de l'ouverture.
-    cb, ce = P["contrabass"], P["cello"]
-    for b in range(TOTAL_BARS):
-        r = note("D2") if b < 4 else bass_root(h[b])
-        cb.add(b * 4, 4.05, r - 12 if r >= note("D2") else r, 84)
-        ce.add(b * 4, 4.05, r + 12 if h[b] != "Dm/Eb" else note("D3"), 76)
-    cb.ramp(0, 9 * 4, 55, 112)
-    ce.ramp(0, 9 * 4, 45, 108)
-    cb.ramp(B("D") * 4, B("D", 2) * 4, 112, 70)
-    ce.ramp(B("D") * 4, B("D", 2) * 4, 108, 60)
-    cb.ramp(B("D", 16) * 4, B("C2") * 4, 70, 115)
-    ce.ramp(B("D", 16) * 4, B("C2") * 4, 60, 115)
-    cb.ramp(B("E", 12) * 4, TOTAL_BARS * 4, 112, 60)
-    ce.ramp(B("E", 12) * 4, TOTAL_BARS * 4, 108, 50)
+    def chords(bars, vel, top=note("F4")):
+        """Accords des cors (4 voix) mesure par mesure."""
+        for b in bars:
+            for p in voicing(h[b], note("A2"), top)[-4:]:
+                hn.add(b * 4, 4.0, p, vel)
 
-    # Nappe de cordes (accords tenus).
-    pad = P["pad"]
-    for b in range(TOTAL_BARS):
-        lo, hi = (note("F3"), note("A4")) if section_of(b) in ("O", "D") else (note("D3"), note("D5"))
-        for p in voicing(h[b], lo, hi):
-            pad.add(b * 4, 4.1, p, 74)
-    pad.ramp(0, 9 * 4, 30, 100)
-    pad.ramp(B("D") * 4, B("D", 2) * 4, 100, 55)
-    pad.ramp(B("D", 16) * 4, B("C2") * 4, 55, 105)
-    pad.ramp(B("E", 12) * 4, TOTAL_BARS * 4, 110, 45)
+    def low_floor(bars, vel, hammer=False):
+        """Plancher grave : trombones (octave 2) et tuba (octave 1) sur la fondamentale."""
+        for b in bars:
+            r = bass_root(h[b])
+            beats = (0, 2) if hammer else (0,)
+            for beat in beats:
+                d = 1.8 if hammer else 3.9
+                tb.add(b * 4 + beat, d, r + 12, vel)
+                tu.add(b * 4 + beat, d, r, vel)
 
-    # Ostinato des cordes graves (croches) : moteur des marches de conquête.
-    ost = P["ostinato"]
-    for b in list(range(B("C"), B("D"))) + list(range(B("D", 24), B("E"))):
-        r = bass_root(h[b]) + 12
-        for k, p in enumerate([r, r, r + 7, r, r + 12, r, r + 7, r]):
-            ost.add(b * 4 + k * 0.5, 0.42, p, 76 + (16 if k in (0, 3, 6) else 0))
-    ost.ramp(B("C") * 4, B("C", 2) * 4, 80, 110)
-    ost.ramp(B("D", 24) * 4, B("C2") * 4, 60, 110)
+    # O — ouverture : plancher grave qui enfle, puis les cors se rassemblent.
+    low_floor(range(2, 9), 92)
+    tb.ramp(2 * 4, 9 * 4, 30, 112)
+    tu.ramp(2 * 4, 9 * 4, 40, 118)
+    chords(range(6, 9), 84)
+    hn.ramp(6 * 4, 9 * 4, 40, 105)
 
-    # Violons : thème à l'octave (B 2e fois, C, C tutti, C2 tutti, E maestoso).
-    vn = P["violins"]
-    for bar, vel in ((B("B", 8), 82), (B("C", 12), 90), (B("C", 36), 96), (B("C2", 16), 96), (B("E"), 100)):
-        put_melody(vn, bar, THEME, 12, vel)
-    put_melody(vn, B("C", 20), SECOND, 0, 76)
-    put_melody(vn, B("C", 24), SECOND[:3] + [SECOND_END], 0, 78)
-    vn.add(B("E", 8) * 4, 4, "D5", 100)
-    vn.add(B("E", 9) * 4, 4, "D5", 104)
-    vn.add(B("E", 10) * 4, 4, "C#5", 108)
-    vn.add(B("E", 11) * 4, 6, "D5", 110)
-    vn.ramp(B("E", 11) * 4, B("E", 13) * 4, 120, 40)
+    # B — marche lourde : thème au cor solo, puis tous les cors (avec cors graves à l'octave).
+    low_floor(range(B("B"), B("C")), 96)
+    put_melody(hs, B("B"), THEME, 0, 92)
+    put_melody(hn, B("B", 8), THEME, 0, 100)
+    put_melody(hl, B("B", 8), THEME, -12, 92)
+    chords(range(B("B"), B("B", 8)), 72)
+    put_melody(hs, B("B", 16), SECOND, -12, 96)
+    put_melody(hs, B("B", 20), SECOND[:3] + [SECOND_END], -12, 98)
+    chords(range(B("B", 16), B("C")), 84)
+    hn.ramp(B("B", 24) * 4, B("C") * 4, 95, 124)
 
-    # Cors : accords des sections pleines + thème.
-    hn = P["horns"]
-    for b in sorted(full):
-        for p in voicing(h[b], note("A2"), note("D4"))[-3:]:
-            hn.add(b * 4, 4.0, p, 80)
-    hn.ramp(B("B") * 4, B("B", 2) * 4, 70, 104)
-    put_melody(hn, B("C2"), THEME, 0, 104)       # C2 : thème aux cors
-    put_melody(hn, B("E"), THEME, 0, 110)        # E : maestoso
-    hn.chord(B("E", 8) * 4, 4, [note("Bb2"), note("F3"), note("D4")], 106)
-    hn.chord(B("E", 9) * 4, 4, [note("G2"), note("D3"), note("Bb3")], 108)
-    hn.chord(B("E", 10) * 4, 4, [note("A2"), note("E3"), note("C#4")], 112)
-    hn.chord(B("E", 11) * 4, 8, [note("D3"), note("A3"), note("F4")], 114)
-    hn.ramp(B("E", 11) * 4, B("E", 13) * 4, 124, 30)
+    # C — marche de conquête : plancher martelé, thème des cors en octaves.
+    low_floor(range(B("C"), B("D")), 102, hammer=True)
+    chords(range(B("C"), B("C", 4)), 96)
+    for bar, v in ((B("C", 4), 100), (B("C", 12), 108), (B("C", 36), 116)):
+        put_melody(hs, bar, THEME, 0, v)
+        put_melody(hl, bar, THEME, -12, v - 4)
+        chords(range(bar, bar + 8), v - 22)
+    put_melody(hs, B("C", 20), SECOND, -12, 104)
+    put_melody(hs, B("C", 24), SECOND[:3] + [SECOND_END], -12, 106)
+    chords(range(B("C", 20), B("C", 36)), 92)
+    chords(range(B("C", 44), B("D")), 110)
 
-    # Cor solo : thème dans B, appel dans C.
-    hs = P["horn_solo"]
-    put_melody(hs, B("B"), THEME, 0, 84)
-    put_melody(hs, B("C", 4), THEME, 0, 96)
-    hs.ramp(B("B") * 4, B("B", 4) * 4, 85, 110)
+    # D — cœur des ténèbres : cor lointain et grave, reconstruction des cuivres.
+    for b in range(B("D"), B("D", 16)):
+        tu.add(b * 4, 4.0, note("D1"), 70)
+    put_melody(hs, B("D", 2), FLUTE_MOTIF, -12, 74, legato=1.0)
+    put_melody(hs, B("D", 8), FLUTE_MOTIF, -12, 80, legato=1.0)
+    low_floor(range(B("D", 16), B("C2")), 90)
+    chords(range(B("D", 16), B("C2")), 80)
+    hn.ramp(B("D", 16) * 4, B("C2") * 4, 30, 122)
+    tb.ramp(B("D", 16) * 4, B("C2") * 4, 30, 122)
 
-    # Trombones + tuba : fondamentales martelées dans les marches (puissance).
-    tb, tu = P["trombones"], P["tuba"]
-    for b in sorted(full):
-        r = bass_root(h[b]) + 12
-        if bpm_of_bar(b) == CONQUEST:
-            for beat in (0, 2):
-                tb.add(b * 4 + beat, 1.6, r, 96)
-                tu.add(b * 4 + beat, 1.6, r - 12, 92)
-        else:
-            tb.add(b * 4, 3.8, r, 92)
-            tu.add(b * 4, 3.8, r - 12, 88)
-    for b in range(4, 9):  # l'ouverture se rassemble
-        tb.add(b * 4, 3.8, bass_root(h[b]) + 12, 80)
-    tb.ramp(16, 36, 40, 110)
+    # C2 — la conquête : plus haut encore, thème cors + trombones (octave grave).
+    low_floor(range(B("C2"), B("E")), 108, hammer=True)
+    for bar, v in ((B("C2"), 112), (B("C2", 16), 120)):
+        put_melody(hs, bar, THEME, 0, v)
+        put_melody(hn, bar, THEME, 0, v - 6)
+        put_melody(hl, bar, THEME, -12, v - 6)
+        put_melody(tb, bar, THEME, -24, v - 10)
+    chords(range(B("C2", 8), B("C2", 16)), 100)
+    put_melody(hs, B("C2", 8), SECOND, -12, 110)
+    put_melody(hs, B("C2", 12), SECOND[:3] + [SECOND_END], -12, 112)
+    chords(range(B("C2", 24), B("E")), 108)
 
-    # Trompettes : appels de conquête (quinte et octave) aux charnières.
-    tp = P["trumpets"]
-    for bar in (B("C"), B("C", 36), B("C2"), B("C2", 16), B("E")):
-        for beat, p, d in ((0, "D4", 0.5), (0.5, "D4", 0.5), (1, "A4", 1.0), (2, "D5", 2.0)):
-            tp.add(bar * 4 + beat, d, p, 100)
-
-    # Chœur (discret, sans paroles) dans les grands moments.
-    ch = P["choir"]
-    for b in list(range(B("B", 16), B("C"))) + list(range(B("C2", 16), B("C2", 32))) + list(range(B("E"), B("E", 12))):
-        for p in voicing(h[b], note("D3"), note("A4"))[-3:]:
-            ch.add(b * 4, 4.1, p, 70)
-
-    # Bois : contre-chant du hautbois (B), flûte (C, D).
-    fl, ob = P["flute"], P["oboe"]
-    put_melody(ob, B("B", 16), SECOND, 0, 80)
-    put_melody(ob, B("B", 20), SECOND[:3] + [SECOND_END], 0, 82)
-    put_melody(fl, B("C", 20), SECOND, 12, 80)
-    put_melody(fl, B("C", 24), SECOND[:3] + [SECOND_END], 12, 82)
-    put_melody(fl, B("D", 2), FLUTE_MOTIF, 0, 72, legato=1.0)
-    put_melody(fl, B("D", 8), FLUTE_MOTIF, 12, 68, legato=1.0)
-    put_melody(ob, B("D", 12), FLUTE_MOTIF[:2], -12, 64, legato=1.0)
-
-    # Trémolo : tension de la reconstruction (fin de D) et avant le retour.
-    tr = P["tremolo"]
-    for b in list(range(B("D", 16), B("C2"))) + list(range(B("C2", 36), B("E"))):
-        for p in voicing(h[b], note("A3"), note("A5"))[-4:]:
-            tr.add(b * 4, 4.05, p, 74)
-    tr.ramp(B("D", 16) * 4, B("C2") * 4, 25, 120)
+    # E — retour inéluctable : maestoso, cadence, puis tout retombe vers l'ouverture.
+    low_floor(range(B("E"), B("E", 12)), 112)
+    put_melody(hs, B("E"), THEME, 0, 124)
+    put_melody(hn, B("E"), THEME, 0, 118)
+    put_melody(hl, B("E"), THEME, -12, 116)
+    for k, ch in enumerate(([note("Bb2"), note("F3"), note("Bb3"), note("D4")],
+                            [note("G2"), note("D3"), note("G3"), note("Bb3")],
+                            [note("A2"), note("E3"), note("A3"), note("C#4")])):
+        hn.chord(B("E", 8 + k) * 4, 4, ch, 118)
+    hn.chord(B("E", 11) * 4, 8, [note("D3"), note("A3"), note("D4"), note("F4")], 124)
+    tu.add(B("E", 11) * 4, 8, "D1", 124)
+    tb.add(B("E", 11) * 4, 8, "D2", 120)
+    hn.ramp(B("E", 11) * 4, B("E", 14) * 4, 127, 20)
+    tb.ramp(B("E", 11) * 4, B("E", 14) * 4, 127, 20)
+    tu.ramp(B("E", 11) * 4, B("E", 14) * 4, 127, 30)
     return P
 
 
 # ----------------------------------------------------------------- tambours
 
-KIT_CRASH = (49, 57)  # cymbales (kit orchestre)
-KIT_CHINA = 52
+KIT_CRASH = (49, 57)  # cymbales frappées (kit orchestre)
 
 
 def compose_drums(h: list[str]) -> dict[str, Part]:
-    """Tambours de puissance enregistrés : 3 pupitres de taikos (gauche,
-    centre, droite, en léger décalage = un ensemble de tambourinaires),
-    grosse caisse de concert, timbales, cymbales.
+    """Tambours de puissance enregistrés, accordés grave.
+
+    - ō-daiko (taiko joué très bas) : le « DOOM » des temps forts ;
+    - 3 pupitres de taikos (gauche, centre, droite, légèrement décalés = un
+      ensemble de tambourinaires) ;
+    - grosse caisse de concert, timbales sur la fondamentale ;
+    - cymbales frappées uniquement aux sommets (entrées de thème).
+    L'intensité (vélocités, nombre de joueurs, roulements) suit la montée en
+    puissance : O < B < C ; D retombe ; D (fin) < C2 < E.
     """
     D = {
+        "odaiko": Part("odaiko", GM["taiko"], volume=127, humanize_ms=3.0),
         "taiko_c": Part("taiko_c", GM["taiko"], volume=120, humanize_ms=6.0),
-        "taiko_l": Part("taiko_l", GM["taiko"], volume=112, humanize_ms=12.0),
-        "taiko_r": Part("taiko_r", GM["taiko"], volume=112, humanize_ms=12.0),
-        "bass_drum": Part("bass_drum", 116, bank=8, volume=118, humanize_ms=4.0),  # Concert Bass Drum
-        "timpani": Part("timpani", GM["timpani"], volume=116, humanize_ms=5.0),
-        "cymbals": Part("cymbals", 48, drums=True, volume=100, humanize_ms=3.0),  # Orchestra Kit
+        "taiko_l": Part("taiko_l", GM["taiko"], volume=114, humanize_ms=12.0),
+        "taiko_r": Part("taiko_r", GM["taiko"], volume=114, humanize_ms=12.0),
+        "bass_drum": Part("bass_drum", 116, bank=8, volume=120, humanize_ms=4.0),  # Concert Bass Drum
+        "timpani": Part("timpani", GM["timpani"], volume=118, humanize_ms=5.0),
+        "cymbals": Part("cymbals", 48, drums=True, volume=96, humanize_ms=3.0),  # Orchestra Kit
     }
-    tc, tl, trr, bd, ti, cy = (D[k] for k in ("taiko_c", "taiko_l", "taiko_r", "bass_drum", "timpani", "cymbals"))
-    LOW, MID, HIGH = note("C2"), note("F2"), note("A2")  # hauteurs des taikos (grave = puissant)
-    section_firsts = {START[x] for x, _, _ in SECTIONS if x != "O"}
+    od, tc, tl, trr, bd, ti, cy = (D[k] for k in ("odaiko", "taiko_c", "taiko_l", "taiko_r",
+                                                 "bass_drum", "timpani", "cymbals"))
+    ODAIKO, LOW, MID, HIGH = note("D1"), note("A1"), note("D2"), note("G2")
+    # Gain d'intensité par section (montée en puissance), en vélocité ajoutée.
+    LIFT = {"O": -10, "B": -4, "C": 0, "D": -6, "C2": 4, "E": 6}
+
+    def v(x: int, s: str) -> int:
+        return max(1, min(127, x + LIFT[s]))
 
     for b in range(TOTAL_BARS):
         s = section_of(b)
         t0 = b * 4.0
         root_timp = bass_root(h[b]) + 12 if h[b] != "Dm/Eb" else note("D3")
         if s == "O":
-            # Ouverture : puissance immédiate, l'ensemble grossit mesure après mesure.
-            v = 92 + b * 3
-            tc.add(t0, 1, LOW, v)
-            tc.add(t0 + 2, 1, LOW, v - 4)
+            # Ouverture : ō-daiko seul, puis l'ensemble se rassemble mesure après mesure.
+            g = 96 + b * 3
+            od.add(t0, 2, ODAIKO, g)
+            od.add(t0 + 2, 2, ODAIKO, g - 6)
             if b >= 2:
-                bd.add(t0, 2, "D2", v)
-            if b >= 4:
-                tl.add(t0 + 3, 0.5, MID, v - 10)
-                trr.add(t0 + 3.5, 0.5, MID, v - 8)
+                tc.add(t0, 1, LOW, g)
+                tc.add(t0 + 2, 1, LOW, g - 6)
+            if b >= 3:
+                bd.add(t0, 2, "D2", g)
+            if b >= 5:
+                tl.add(t0 + 3, 0.5, MID, g - 8)
+                trr.add(t0 + 3.5, 0.5, MID, g - 6)
             if b >= 6:
-                ti.add(t0, 1, root_timp, v)
-            if b == 8:  # roulement vers B
+                ti.add(t0, 1, root_timp, g)
+            if b == 8:  # roulement de timbales vers B
                 for k in range(16):
-                    ti.add(t0 + k * 0.25, 0.25, note("A2"), 70 + k * 3)
+                    ti.add(t0 + k * 0.25, 0.25, note("A2"), 74 + k * 3)
         elif s == "D" and b < B("D", 24):
-            # Cœur des ténèbres : battement de cœur des taikos, proche mais retenu.
-            tc.add(t0, 0.5, LOW, 88)
-            tc.add(t0 + 0.42, 0.5, LOW, 70)
+            # Cœur des ténèbres : battement de cœur (ō-daiko + taiko), retenu mais présent.
+            od.add(t0, 1, ODAIKO, 100)
+            tc.add(t0 + 0.42, 0.5, LOW, 84)
             if (b - B("D")) % 4 == 3:
-                ti.add(t0 + 2, 1, note("D2"), 60)
-            if b >= B("D", 16):  # reconstruction
+                ti.add(t0 + 2, 1, note("D2"), 70)
+            if b >= B("D", 16):  # reconstruction : les tambourinaires reviennent un à un
                 k = b - B("D", 16)
-                tl.add(t0 + 2, 0.5, MID, 70 + k * 4)
-                trr.add(t0 + 3, 0.5, MID, 70 + k * 4)
+                tc.add(t0 + 2, 1, LOW, 80 + k * 4)
+                tl.add(t0 + 3, 0.5, MID, 76 + k * 4)
+                trr.add(t0 + 3.5, 0.5, MID, 76 + k * 4)
+                if k >= 4:
+                    bd.add(t0, 2, "D2", 90 + k * 3)
         elif bpm_of_bar(b) == HEAVY:
-            # Marche lourde : « DOOM — DOOM », reprise en levée, ensemble de trois.
-            for player, lag in ((tc, 0.0), (tl, 0.02), (trr, -0.015)):
-                player.add(t0 + max(0.0, lag), 1, LOW, 120 if player is tc else 108)
-                player.add(t0 + 2 + lag, 1, LOW, 116 if player is tc else 104)
-            tl.add(t0 + 3.5, 0.5, MID, 96)
-            trr.add(t0 + 3.75, 0.25, MID, 92)
-            bd.add(t0, 2, "D2", 116)
-            bd.add(t0 + 2, 2, "D2", 108)
-            ti.add(t0, 1, root_timp, 104)
-            ti.add(t0 + 2, 1, root_timp, 96)
+            # Marche lourde : « DOOM — DOOM », ensemble de trois, levée sur le 4e temps.
+            od.add(t0, 2, ODAIKO, v(124, s))
+            od.add(t0 + 2, 2, ODAIKO, v(116, s))
+            for player, lag in ((tc, 0.0), (tl, 0.02), (trr, 0.012)):
+                player.add(t0 + lag, 1, LOW, v(122 if player is tc else 110, s))
+                player.add(t0 + 2 + lag, 1, LOW, v(116 if player is tc else 104, s))
+            tl.add(t0 + 3.5, 0.5, MID, v(100, s))
+            trr.add(t0 + 3.75, 0.25, MID, v(96, s))
+            bd.add(t0, 2, "D2", v(120, s))
+            bd.add(t0 + 2, 2, "D2", v(110, s))
+            ti.add(t0, 1, root_timp, v(108, s))
+            ti.add(t0 + 2, 1, root_timp, v(98, s))
             if (b - START[s]) % 4 == 3:  # appel en fin de groupe de 4 mesures
                 for k, beat in enumerate((2.5, 3.0, 3.25, 3.5, 3.75)):
-                    (tl if k % 2 else trr).add(t0 + beat, 0.25, HIGH, 90 + k * 6)
+                    (tl if k % 2 else trr).add(t0 + beat, 0.25, HIGH, v(92 + k * 6, s))
         else:
             # Marche de conquête : les quatre temps, accents sur 1 et 3, croches en levée.
-            for beat, v in ((0, 122), (1, 100), (2, 118), (3, 102)):
-                tc.add(t0 + beat, 1, LOW, v)
-            for beat, v in ((0.5, 84), (1.5, 88), (2.5, 84), (3.5, 96)):
-                (tl if beat in (0.5, 2.5) else trr).add(t0 + beat, 0.5, MID, v)
-            tl.add(t0, 1, LOW, 108)
-            trr.add(t0 + 2, 1, LOW, 106)
-            bd.add(t0, 1, "D2", 118)
-            bd.add(t0 + 2, 1, "D2", 112)
-            ti.add(t0, 1, root_timp, 108)
-            ti.add(t0 + 2, 1, root_timp, 100)
-            if (b - START[s]) % 8 == 7:  # roulement de taikos aigus en fin de phrase
+            od.add(t0, 2, ODAIKO, v(124, s))
+            od.add(t0 + 2, 2, ODAIKO, v(118, s))
+            for beat, x in ((0, 122), (1, 102), (2, 118), (3, 104)):
+                tc.add(t0 + beat, 1, LOW, v(x, s))
+            for beat, x in ((0.5, 88), (1.5, 92), (2.5, 88), (3.5, 100)):
+                (tl if beat in (0.5, 2.5) else trr).add(t0 + beat, 0.5, MID, v(x, s))
+            tl.add(t0, 1, LOW, v(110, s))
+            trr.add(t0 + 2, 1, LOW, v(108, s))
+            bd.add(t0, 1, "D2", v(120, s))
+            bd.add(t0 + 2, 1, "D2", v(114, s))
+            ti.add(t0, 1, root_timp, v(110, s))
+            ti.add(t0 + 2, 1, root_timp, v(102, s))
+            # Roulements de taikos en fin de phrase (plus fréquents dans C2).
+            if (b - START[s]) % (4 if s == "C2" else 8) == 3 + (0 if s == "C2" else 4):
                 for k in range(8):
-                    (tl if k % 2 else trr).add(t0 + 2 + k * 0.25, 0.25, HIGH, 88 + k * 4)
+                    (tl if k % 2 else trr).add(t0 + 2 + k * 0.25, 0.25, HIGH, v(90 + k * 4, s))
 
-        # Cymbales : début de chaque phrase de 8 mesures (sections pleines) et de chaque section.
-        if s != "O" and (b - START[s]) % 8 == 0 and not (s == "D" and b < B("D", 24)):
-            cy.add(t0, 4, KIT_CRASH[(b // 8) % 2], 112)
-        if b in section_firsts:
-            cy.add(t0, 4, KIT_CHINA, 100)
+    # Cymbales : seulement aux sommets (entrées du thème, sections).
+    for bar in (B("B"), B("B", 8), B("C"), B("C", 12), B("C", 36), B("C2"), B("C2", 16), B("E")):
+        cy.add(bar * 4.0, 4, KIT_CRASH[bar % 2], 110)
+        cy.add(bar * 4.0, 4, KIT_CRASH[(bar + 1) % 2], 96)
+    cy.add(B("E", 11) * 4.0, 4, KIT_CRASH[0], 120)
 
-    # Cadence finale : timbales.
+    # Cadence finale : timbales, ō-daiko.
     for k, p in enumerate(("Bb2", "G2", "A2")):
-        ti.add(B("E", 8 + k) * 4, 1, p, 120)
-        ti.add(B("E", 8 + k) * 4 + 2, 1, p, 110)
+        ti.add(B("E", 8 + k) * 4, 1, p, 124)
+        ti.add(B("E", 8 + k) * 4 + 2, 1, p, 114)
     ti.add(B("E", 11) * 4, 2, "D2", 127)
+    od.add(B("E", 11) * 4, 4, ODAIKO, 127)
     # Roulements de timbales avant chaque retour de marche.
     for bar in (B("C") - 1, B("C2") - 1, B("E") - 1):
         for k in range(16):
-            ti.add(bar * 4 + k * 0.25, 0.25, note("A2"), 70 + k * 3)
+            ti.add(bar * 4 + k * 0.25, 0.25, note("A2"), 74 + k * 3)
     return D
 
 
 # ----------------------------------------------------------------- mixage
 
 MIX = {  # pupitre : (gain dB, panoramique)
-    "contrabass": (0.0, 0.0), "cello": (-1.0, -0.15), "ostinato": (-2.0, 0.2), "pad": (-3.0, 0.0),
-    "violins": (6.0, -0.3), "horns": (-3.0, 0.25), "horn_solo": (4.0, -0.1), "trombones": (-1.0, 0.3),
-    "tuba": (-3.0, 0.15), "trumpets": (-2.0, 0.35), "choir": (-6.0, 0.0), "flute": (2.0, -0.35),
-    "oboe": (6.0, 0.35), "tremolo": (-4.0, -0.2),
-    "taiko_c": (3.0, 0.0), "taiko_l": (0.0, -0.55), "taiko_r": (0.0, 0.55), "bass_drum": (1.0, 0.0),
-    "timpani": (-1.0, 0.1), "cymbals": (-6.0, 0.0),
+    "horn_solo": (2.0, -0.1), "horns": (-2.0, 0.25), "horns_low": (-1.0, -0.2),
+    "trombones": (0.0, 0.3), "tuba": (1.0, 0.0),
+    "odaiko": (3.0, 0.0), "taiko_c": (2.0, 0.0), "taiko_l": (0.0, -0.55), "taiko_r": (0.0, 0.55),
+    "bass_drum": (2.0, 0.0), "timpani": (-1.0, 0.1), "cymbals": (-8.0, 0.0),
 }
-DRUM_PARTS = {"taiko_c", "taiko_l", "taiko_r", "bass_drum", "timpani", "cymbals"}
+DRUM_PARTS = {"odaiko", "taiko_c", "taiko_l", "taiko_r", "bass_drum", "timpani", "cymbals"}
+
+
+def low_shelf(x: np.ndarray, fc: float, gain_db: float) -> np.ndarray:
+    """Renforce le grave sous `fc` Hz de `gain_db` dB (ajout de la bande filtrée)."""
+    return x + dsp.lowpass(x, fc, 2) * (dsp.from_db(gain_db) - 1.0)
 
 
 def stereo_width(x: np.ndarray, p: float) -> np.ndarray:
@@ -431,12 +423,12 @@ def stereo_width(x: np.ndarray, p: float) -> np.ndarray:
     return (dsp.pan(m, p) + 0.25 * (x - m[:, None])).astype(np.float32)
 
 
-def build(verbose: bool = True, orch_db: float = 8.0, drums_db: float = 5.0) -> np.ndarray:
+def build(verbose: bool = True, orch_db: float = 8.0, drums_db: float = 4.0) -> np.ndarray:
     """Compose, rend et mixe la piste. Renvoie la boucle stéréo (LOOP_SECONDS)."""
     total = LOOP_SECONDS + TAIL_SECONDS
     n = dsp.samples(total)
     h = build_harmony()
-    parts = {**compose_orchestra(h), **compose_drums(h)}
+    parts = {**compose_brass(h), **compose_drums(h)}
     tm = tempo_map()
     r = dsp.rng(7)
     hall = dsp.make_ir(2.6, r, predelay=0.02, damping_hz=7500.0)
@@ -472,9 +464,10 @@ def build(verbose: bool = True, orch_db: float = 8.0, drums_db: float = 5.0) -> 
     for bar, seed in ((B("D", 4), 43), (B("D", 12), 44)):
         dsp.place(tex, textures.thunder(seed), time_of_beat(bar * 4.0), dsp.from_db(-12.0), 0.0)
 
-    # Équilibre orchestre / tambours (gains de bus), tambours proches (peu de réverbération).
+    # Équilibre cuivres / tambours (gains de bus), tambours proches (peu de réverbération).
     mix = dsp.reverb(orch, hall, wet=0.30, dry=0.9)[:n] * dsp.from_db(orch_db)
     del orch
+    drums = low_shelf(drums, 110.0, 5.0)  # tambours plus graves (corps de l'ō-daiko)
     mix += dsp.reverb(drums, hall, wet=0.16, dry=1.0)[:n] * dsp.from_db(drums_db)
     del drums
     mix += dsp.reverb(tex, hall, wet=0.3, dry=0.8)[:n]

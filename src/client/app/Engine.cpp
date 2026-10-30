@@ -7765,14 +7765,20 @@ namespace engine
 
 		auto lastFpsLog  = std::chrono::steady_clock::now();
 		auto lastPresent = lastFpsLog;
+		auto lastPerfLog = lastFpsLog;
 
 		while (!m_quitRequested && !m_window.ShouldClose())
 		{
 			BeginFrame();
-			Update();
+			{
+				PROFILE_SCOPE("Update");
+				Update();
+			}
 			SwapRenderState();
-			//			
-			Render();
+			{
+				PROFILE_SCOPE("Render");
+				Render();
+			}
 
 			EndFrame();
 
@@ -7781,6 +7787,17 @@ namespace engine
 			{
 				LOG_INFO(Core, "fps={:.1f} dt_ms={:.3f} frame={}", m_time.FPS(), m_time.DeltaSeconds() * 1000.0, m_time.FrameIndex());
 				lastFpsLog = now;
+			}
+			// FIX.13 — diagnostic de performance : où part le temps d'une frame
+			// (CPU par phase, GPU par passe) + volume de la scène, toutes les
+			// debug.perf_log_interval_s secondes (0 = désactivé).
+			{
+				const double perfInterval = m_cfg.GetDouble("debug.perf_log_interval_s", 5.0);
+				if (perfInterval > 0.0 && now - lastPerfLog >= std::chrono::duration<double>(perfInterval))
+				{
+					LogPerfSummary();
+					lastPerfLog = now;
+				}
 			}
 
 			if (!m_vsync)
@@ -9920,10 +9937,13 @@ namespace engine
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				// Monde « Royaumes » : + collisionneurs des cellules résidentes (décalés).
 				const engine::math::Vec3 ccPrevPos = m_characterController.GetPosition();
-				if (m_cellWorld)
-					m_characterController.Update(static_cast<float>(dt), moveInput, m_cellCollider);
-				else
-					m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
+				{
+					PROFILE_SCOPE("CharacterController");
+					if (m_cellWorld)
+						m_characterController.Update(static_cast<float>(dt), moveInput, m_cellCollider);
+					else
+						m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
+				}
 				// ETAPE3.3 — horloge de simulation du mouvement (annoncée au shard avec
 				// chaque commande, comparée à son horloge : budget de temps).
 				{
@@ -9941,7 +9961,10 @@ namespace engine
 							m_renderFrame.ToGlobalX(moved.x), m_renderFrame.ToGlobalZ(moved.z)))
 						m_characterController.BlockHorizontalAt(ccPrevPos.x, ccPrevPos.z);
 					// Streaming des cellules autour du joueur (rebase éventuel inclus).
-					UpdateCellStreaming(/*synchronous*/ false);
+					{
+						PROFILE_SCOPE("CellStreaming");
+						UpdateCellStreaming(/*synchronous*/ false);
+					}
 					// Carte à découvrir : cases révélées autour du joueur.
 					UpdateMapDiscovery();
 				}

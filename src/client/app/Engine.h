@@ -998,6 +998,20 @@ namespace engine
 		std::array<void*, kScatterFrameSlots> m_scatterInstMapped{};
 		std::array<uint32_t, kScatterFrameSlots> m_scatterInstCapacity{}; ///< capacité (instances) par slot
 		std::vector<uint32_t> m_scatterVisible;  ///< scratch : instances visibles de la frame
+		/// FIX.13 — volume du décor de la dernière frame (journal [Perf]).
+		struct PerfScatterStats
+		{
+			size_t total = 0;    ///< instances résidentes (tous champs)
+			size_t visible = 0;  ///< instances retenues (distance + frustum)
+			size_t parts = 0;    ///< instances × parties de mesh envoyées
+			size_t batches = 0;  ///< lots instanciés (draw calls)
+			uint32_t layers = 0; ///< champs de décor (zone + cellules)
+		};
+		PerfScatterStats m_perfScatter;
+		/// FIX.13 — Journalise le dernier relevé du profileur (CPU par phase, GPU
+		/// par passe) et le volume de la scène (décor, collisions, résolution).
+		/// Appelée par Run toutes les debug.perf_log_interval_s secondes.
+		void LogPerfSummary();
 		bool m_scatterOverflowLogged = false;
 
 		/// Aperçu éditeur — nombre de props « monde » (scenery + bâtiments posés)

@@ -20,6 +20,7 @@
 #include "src/client/world/instances/ScatterInstances.h"
 #include "src/client/world/scatter/PropMaterialRules.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/core/ProfilerSummary.h"
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
@@ -395,6 +396,7 @@ namespace engine
 		std::vector<engine::render::OccluderSphere>& out) const
 	{
 		// (pas de « near » : macro vide sous Windows via windef.h)
+		PROFILE_SCOPE("ScatterOccluders");
 		static thread_local std::vector<uint32_t> nearIdx;
 		static thread_local std::vector<ScatterLayer> layers;
 		GatherScatterLayers(layers);
@@ -417,8 +419,10 @@ namespace engine
 		const engine::RenderState& rs)
 	{
 		if (!m_pipeline) return;
+		PROFILE_SCOPE("ScatterRecord");
 		static thread_local std::vector<ScatterLayer> layers;
 		GatherScatterLayers(layers);
+		m_perfScatter = {};
 		if (layers.empty()) return;
 		auto& geom = m_pipeline->GetGeometryPass();
 		if (!geom.HasLoadPass()) return;
@@ -474,6 +478,10 @@ namespace engine
 				}
 			}
 		}
+		m_perfScatter.layers = static_cast<uint32_t>(layers.size());
+		m_perfScatter.total = itemTotal;
+		m_perfScatter.visible = visibleTotal;
+		m_perfScatter.parts = refs.size();
 		if (refs.empty()) return;
 		std::sort(refs.begin(), refs.end(), [](const DrawRef& a, const DrawRef& b) {
 			if (a.mesh != b.mesh) return a.mesh < b.mesh;
@@ -515,6 +523,7 @@ namespace engine
 			batches.push_back(b);
 			i = j;
 		}
+		m_perfScatter.batches = batches.size();
 		geom.RecordInstanced(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 			m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
 			rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
@@ -596,5 +605,30 @@ namespace engine
 		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));
 		in.features = &m_worldMapFeatures;
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
+	}
+}
+
+// ============================================================================
+// FIX.13 — Diagnostic de performance (journal client).
+// ============================================================================
+namespace engine
+{
+	void Engine::LogPerfSummary()
+	{
+		// Dernière frame résolue par le profileur (CPU par scope, GPU par passe).
+		if (m_profiler.IsInitialized())
+			LOG_INFO(Core, "[Perf] {}", engine::core::FormatProfilerSummary(m_profiler.GetLatestSnapshot(), 6));
+		// Volume de la scène : ce que la frame a dû trier, envoyer et tester.
+		size_t cyl = m_worldCollider.CylinderCount(), boxes = m_worldCollider.BoxCount();
+		for (const CellRenderTile& tile : m_cellTiles)
+			if (tile.collider)
+			{
+				cyl += tile.collider->CylinderCount();
+				boxes += tile.collider->BoxCount();
+			}
+		const VkExtent2D ext = m_vkSwapchain.GetExtent();
+		LOG_INFO(Core, "[Perf] scene : decor visibles={} parties={} lots={} (sur {} dans {} champ(s)) ; cellules={} ; props={} ; collisions={} cyl / {} boites ; ecran={}x{}",
+			m_perfScatter.visible, m_perfScatter.parts, m_perfScatter.batches, m_perfScatter.total, m_perfScatter.layers,
+			m_cellTiles.size(), m_props.size(), cyl, boxes, ext.width, ext.height);
 	}
 }

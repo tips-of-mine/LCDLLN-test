@@ -255,6 +255,8 @@ add_library(engine_core
   src/shared/core/Time.cpp
   src/client/audio/AudioEngine.cpp
   src/client/audio/MaMenuMusic.cpp
+  src/client/audio/SoundDevice.cpp
+  src/client/audio/Footsteps.cpp
   src/client/combat/CombatHud.cpp
   src/client/localization/LocalizationService.cpp
   src/shared/account/AccountValidation.cpp
@@ -621,6 +623,7 @@ add_library(engine_core
   src/world_editor/panels/CollisionEditorPanel.cpp
   src/client/app/Engine.cpp
   src/client/app/EngineWorld.cpp
+  src/client/app/EngineAudio.cpp
   src/client/app/EngineCells.cpp
   src/client/world/scatter/ScatterField.cpp
   src/client/world/places/WorldPlaces.cpp
@@ -631,6 +634,7 @@ add_library(engine_core
   src/client/world/cells/CellWorldFrame.cpp
   src/client/world/cells/CellHeightFields.cpp
   src/client/world/cells/CellAssetLoader.cpp
+  src/client/world/cells/CellSurfaceMap.cpp
   src/client/render/WorldMapImGuiRenderer.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp

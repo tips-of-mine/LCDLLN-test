@@ -91,6 +91,13 @@ namespace engine::world::cells
 		const std::string splat = out.config.GetString("render.terrain.splatmap", "");
 		if (!splat.empty())
 			out.terrain.splatFile = engine::platform::FileSystem::ReadAllBytesContent(out.config, splat);
+		// SND.2 — sols pour les sons de pas (couche dominante par texel).
+		if (!out.terrain.splatFile.empty())
+		{
+			auto surface = std::make_shared<CellSurfaceMap>();
+			if (surface->BuildFromSlap(out.terrain.splatFile))
+				out.surface = std::move(surface);
+		}
 		const std::string grass = out.config.GetString("render.terrain.grass_mask", "");
 		if (!grass.empty()
 			&& !engine::render::terrain::TerrainGrassDetail::LoadFromFile(content + "/" + grass, out.terrain.grassMask))

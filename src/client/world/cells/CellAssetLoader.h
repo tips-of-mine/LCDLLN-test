@@ -14,6 +14,7 @@
 
 #include "src/client/render/terrain/TerrainRenderer.h"
 #include "src/client/world/cells/CellHeightFields.h"
+#include "src/client/world/cells/CellSurfaceMap.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
 #include "src/client/world/instances/Buildings.h"
 #include "src/client/world/instances/ScatterInstances.h"
@@ -23,6 +24,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -64,6 +66,9 @@ namespace engine::world::cells
 		bool renderOk = false;
 		/// Terrain : copie de la heightmap, normal map calculée, splat, herbe.
 		engine::render::terrain::TerrainPreloadedData terrain;
+		/// SND.2 — couche dominante du splat par texel (sons de pas), construite
+		/// sur le thread de travail ; nulle si la cellule n'a pas de splat.
+		std::shared_ptr<CellSurfaceMap> surface;
 		/// Décor instancié décodé (absent = cellule sans décor).
 		bool hasScatter = false;
 		engine::world::instances::ScatterFile scatter;

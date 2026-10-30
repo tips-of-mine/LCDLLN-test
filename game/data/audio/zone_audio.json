@@ -15,25 +15,13 @@
     {
       "id": "Weather",
       "volume": 1.0
+    },
+    {
+      "id": "Ambience",
+      "volume": 1.0
     }
   ],
   "sounds": [
-    {
-      "id": "zone_0_ambience",
-      "path": "audio/zone_0_ambience.wav",
-      "bus": "Music",
-      "minDistance": 8.0,
-      "maxDistance": 96.0,
-      "loop": true
-    },
-    {
-      "id": "zone_0_sfx_test",
-      "path": "audio/zone_0_sfx_test.wav",
-      "bus": "SFX",
-      "minDistance": 2.0,
-      "maxDistance": 32.0,
-      "loop": false
-    },
     {
       "id": "auth_music",
       "path": "audio/music/menu_lune_noire.ogg",
@@ -41,18 +29,241 @@
       "minDistance": 0.0,
       "maxDistance": 9999.0,
       "loop": true
+    },
+    {
+      "id": "step_grass",
+      "path": "audio/sfx/footsteps/grass_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/grass_2.wav",
+        "audio/sfx/footsteps/grass_3.wav",
+        "audio/sfx/footsteps/grass_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_dirt",
+      "path": "audio/sfx/footsteps/dirt_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/dirt_2.wav",
+        "audio/sfx/footsteps/dirt_3.wav",
+        "audio/sfx/footsteps/dirt_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_default",
+      "path": "audio/sfx/footsteps/dirt_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/dirt_2.wav",
+        "audio/sfx/footsteps/dirt_3.wav",
+        "audio/sfx/footsteps/dirt_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_gravel",
+      "path": "audio/sfx/footsteps/gravel_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/gravel_2.wav",
+        "audio/sfx/footsteps/gravel_3.wav",
+        "audio/sfx/footsteps/gravel_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_rock",
+      "path": "audio/sfx/footsteps/rock_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/rock_2.wav",
+        "audio/sfx/footsteps/rock_3.wav",
+        "audio/sfx/footsteps/rock_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_sand",
+      "path": "audio/sfx/footsteps/sand_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/sand_2.wav",
+        "audio/sfx/footsteps/sand_3.wav",
+        "audio/sfx/footsteps/sand_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_snow",
+      "path": "audio/sfx/footsteps/snow_crunch_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/snow_crunch_2.wav",
+        "audio/sfx/footsteps/snow_crunch_3.wav",
+        "audio/sfx/footsteps/snow_crunch_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.7,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_snow_crunch",
+      "path": "audio/sfx/footsteps/snow_crunch_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/snow_crunch_2.wav",
+        "audio/sfx/footsteps/snow_crunch_3.wav",
+        "audio/sfx/footsteps/snow_crunch_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_mud_squelch",
+      "path": "audio/sfx/footsteps/mud_squelch_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/mud_squelch_2.wav",
+        "audio/sfx/footsteps/mud_squelch_3.wav",
+        "audio/sfx/footsteps/mud_squelch_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_wood",
+      "path": "audio/sfx/footsteps/wood_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/wood_2.wav",
+        "audio/sfx/footsteps/wood_3.wav",
+        "audio/sfx/footsteps/wood_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_water",
+      "path": "audio/sfx/footsteps/water_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/water_2.wav",
+        "audio/sfx/footsteps/water_3.wav",
+        "audio/sfx/footsteps/water_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.9,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "swim_stroke",
+      "path": "audio/sfx/footsteps/swim_stroke_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/swim_stroke_2.wav",
+        "audio/sfx/footsteps/swim_stroke_3.wav",
+        "audio/sfx/footsteps/swim_stroke_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 22.0,
+      "loop": false,
+      "volume": 0.9,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_wheat_rustle",
+      "path": "audio/sfx/footsteps/wheat_rustle_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/wheat_rustle_2.wav",
+        "audio/sfx/footsteps/wheat_rustle_3.wav",
+        "audio/sfx/footsteps/wheat_rustle_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
+    },
+    {
+      "id": "step_corn_rustle",
+      "path": "audio/sfx/footsteps/corn_rustle_1.wav",
+      "variants": [
+        "audio/sfx/footsteps/corn_rustle_2.wav",
+        "audio/sfx/footsteps/corn_rustle_3.wav",
+        "audio/sfx/footsteps/corn_rustle_4.wav"
+      ],
+      "bus": "SFX",
+      "minDistance": 1.0,
+      "maxDistance": 18.0,
+      "loop": false,
+      "volume": 0.8,
+      "pitchJitter": 0.06,
+      "volumeJitter": 0.12
     }
   ],
   "zones": [
     {
-      "zoneId": 0,
-      "ambienceSoundId": "zone_0_ambience",
-      "position": [0.0, 0.0, 0.0]
-    },
-    {
       "zoneId": 9999,
       "ambienceSoundId": "auth_music",
-      "position": [0.0, 0.0, 0.0]
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ]
     }
   ]
 }

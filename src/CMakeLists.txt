@@ -637,6 +637,14 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # SND.2 — lecture réelle des sons (miniaudio sans périphérique), variantes,
+  # cadence et surface des pas. SoundDevice/Footsteps/AudioEngine sont dans engine_core.
+  lcdlln_add_simple_test(sound_tests
+    ${CMAKE_SOURCE_DIR}/src/client/audio/tests/SoundTests.cpp)
+  # SND.2 — carte des sols d'une cellule (sons de pas).
+  lcdlln_add_simple_test(cell_surface_map_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellSurfaceMapTests.cpp)
+
   # SND.1 — fichiers audio livrés : musique de connexion présente, décodable
   # (Ogg Vorbis via stb_vorbis dans engine_core), 48 kHz stéréo, 5 à 10 min.
   lcdlln_add_simple_test(audio_assets_tests

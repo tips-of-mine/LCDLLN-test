@@ -9950,6 +9950,7 @@ namespace engine
 					else
 						m_characterController.Update(static_cast<float>(dt), moveInput, m_worldCollider);
 				}
+				UpdateFootstepAudio(static_cast<float>(dt)); // SND.2 — pas du personnage
 				// ETAPE3.3 — horloge de simulation du mouvement (annoncée au shard avec
 				// chaque commande, comparée à son horloge : budget de temps).
 				{
@@ -10918,6 +10919,7 @@ namespace engine
 				(out.camera.position.z - readState.camera.position.z) * invDt);
 		}
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
+		UpdateAudioListener(out.camera); // SND.2 — orientation de l'oreille
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
 		// Réticule de ciblage : suit la cible (position/yaw lissés) et pilote le

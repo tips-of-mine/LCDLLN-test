@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from lcdlln_audio import dsp, percussion as perc, textures  # noqa: E402
 from lcdlln_audio.orchestra import GM, Part, note, render, write_midi  # noqa: E402
 import menu_theme  # noqa: E402
+import sfx_footsteps  # noqa: E402
 
 
 class DspTests(unittest.TestCase):
@@ -57,6 +58,17 @@ class SynthTests(unittest.TestCase):
         w = textures.wind(2.0, 1)
         self.assertEqual(w.shape, (dsp.samples(2.0), 2))
         self.assertTrue(np.all(np.isfinite(textures.thunder(2, 3.0))))
+
+
+class FootstepTests(unittest.TestCase):
+    def test_every_surface(self):
+        for k, surface in enumerate(sfx_footsteps.SURFACES):
+            x = sfx_footsteps.make(surface, dsp.rng(k + 1))
+            self.assertTrue(np.all(np.isfinite(x)), surface)
+            self.assertAlmostEqual(float(np.max(np.abs(x))), 1.0, delta=0.01, msg=surface)
+            self.assertLess(len(x) / dsp.SR, 1.0, surface)       # un pas reste court
+            self.assertLess(abs(float(x[0])), 0.01, surface)      # pas de clic au début
+            self.assertLess(abs(float(x[-1])), 0.01, surface)     # ni à la fin
 
 
 class ScoreTests(unittest.TestCase):

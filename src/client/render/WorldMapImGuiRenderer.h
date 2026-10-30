@@ -4,7 +4,8 @@
 // (touche M) et de la bannière d'entrée de lieu.
 //
 // Données : engine::client::WorldPlaces (places.json) + texture de la carte
-// (world/<monde>/world_map.png, chargée par SkillIconCache côté Engine).
+// (world/<monde>/world_map.png, chargée par SkillIconCache côté Engine) +
+// tracés vectoriels des routes et bâtiments (world/<monde>/map_features.bin, FIX.12).
 // Aucune logique de jeu ici : uniquement du dessin + l'état de vue (zoom/pan).
 //
 // Thread / timing : main thread, entre ImGui::NewFrame() et ImGui::Render().
@@ -15,6 +16,7 @@
 #include <cstdint>
 
 namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; }
+namespace engine::world::mapfeatures { struct MapFeatures; }
 struct ImDrawList;
 
 namespace engine::render
@@ -52,6 +54,9 @@ namespace engine::render
 		/// FIX.11 — côté visible (m) au zoom maximal (client.world_map.min_view_m,
 		/// défaut 250).
 		float minViewM = 250.0f;
+		/// FIX.12 — routes, rues et bâtiments en vectoriel (map_features.bin),
+		/// dessinés sous le voile des zones non découvertes. nullptr = absents.
+		const engine::world::mapfeatures::MapFeatures* features = nullptr;
 	};
 
 	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le

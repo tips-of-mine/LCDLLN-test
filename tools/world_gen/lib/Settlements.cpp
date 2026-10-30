@@ -209,6 +209,8 @@ namespace tools::world_gen
 			b.position = center;
 			b.yawDeg = yaw;
 			b.footprintRadius = footR;
+			b.halfW = t.halfW;
+			b.halfD = t.halfD;
 			b.cityId = c.id;
 			b.doorPoint = center + facing * (t.halfD + 2.2);
 			w.buildings.push_back(std::move(b));

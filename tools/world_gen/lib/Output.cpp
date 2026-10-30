@@ -17,6 +17,7 @@
 //   buildings/templates/maison.json    maisons paramétriques (bibliothèque, versionnée)
 //   world/<w>/places.json              villes, lieux, régions, cellules générées (UI client)
 //   world/<w>/world_map.png            carte du continent (fenêtre Carte)
+//   world/<w>/map_features.bin         routes, rues, bâtiments en vectoriel (FIX.12)
 //   world/<w>/start_locations.json     points de départ par race (master)
 //   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
 
@@ -827,6 +828,64 @@ namespace tools::world_gen
 		return true;
 	}
 
+	engine::world::mapfeatures::MapFeatures BuildMapFeatures(const GlobalWorld& g, const std::vector<World*>& cells)
+	{
+		namespace mf = engine::world::mapfeatures;
+		// Pas minimal entre deux points gardés : à 250 m visibles (zoom maximal)
+		// un segment de 10 m fait ~35 px, la courbure reste fluide.
+		constexpr float kStepM = 10.0f;
+		mf::MapFeatures f;
+		auto addRoad = [&](const std::vector<Vec2>& pts, mf::MapRoadKind kind, double widthM)
+		{
+			if (pts.size() < 2u)
+				return;
+			std::vector<float> xz;
+			xz.reserve(pts.size() * 2u);
+			for (const Vec2& p : pts)
+			{
+				xz.push_back(static_cast<float>(p.x));
+				xz.push_back(static_cast<float>(p.z));
+			}
+			mf::MapRoad r;
+			r.kind = kind;
+			r.widthM = static_cast<float>(widthM);
+			r.xz = mf::DecimatePolyline(xz, kStepM);
+			mf::ComputeBounds(r);
+			f.roads.push_back(std::move(r));
+		};
+		// Réseau inter-villes (polylignes globales complètes).
+		for (const Road& rd : g.roads)
+			addRoad(rd.points, rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road), rd.widthM);
+		for (const World* w : cells)
+		{
+			// Chemins locaux de la cellule (les tronçons de routes globales y sont
+			// des découpes de g.roads, déjà exportées ci-dessus).
+			for (const Road& rd : w->roads)
+				if (rd.path)
+					addRoad(rd.points, mf::MapRoadKind::Path, rd.widthM);
+			// Rues : chaque arête du graphe (exportée une seule fois, a < b).
+			for (const SettlementLayout& L : w->layouts)
+				for (size_t a = 0; a < L.nodes.size(); ++a)
+					for (int b : L.nodes[a].links)
+						if (b > static_cast<int>(a) && static_cast<size_t>(b) < L.nodes.size())
+							addRoad({ L.nodes[a].p, L.nodes[static_cast<size_t>(b)].p }, mf::MapRoadKind::Street, 3.0);
+			for (const BuildingPlacementDef& b : w->buildings)
+			{
+				mf::MapBuilding m;
+				m.x = static_cast<float>(b.position.x);
+				m.z = static_cast<float>(b.position.z);
+				m.yawRad = static_cast<float>(b.yawDeg * 3.14159265358979323846 / 180.0);
+				// Emprise inconnue (bâtiments historiques importés) : carré inscrit
+				// dans le rayon d'encombrement.
+				const double fallback = b.footprintRadius * 0.7071;
+				m.halfW = static_cast<float>(b.halfW > 0.0 ? b.halfW : fallback);
+				m.halfD = static_cast<float>(b.halfD > 0.0 ? b.halfD : fallback);
+				f.buildings.push_back(m);
+			}
+		}
+		return f;
+	}
+
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err)
 	{
 		const std::string wid = g.master.worldId;
@@ -893,6 +952,12 @@ namespace tools::world_gen
 			const int N = 2048;
 			const std::vector<uint8_t> rgb = RenderContinentMap(g, N, originX, originZ, sizeM, cells);
 			if (!WriteBytes(g.outputRoot, g.report, dir + "world_map.png", EncodePngRgb(rgb, N, N), err)) return false;
+		}
+
+		// ---- FIX.12 — routes, rues et bâtiments en vectoriel (fenêtre Carte zoomée).
+		{
+			const engine::world::mapfeatures::MapFeatures features = BuildMapFeatures(g, cells);
+			if (!WriteBytes(g.outputRoot, g.report, dir + "map_features.bin", engine::world::mapfeatures::Serialize(features), err)) return false;
 		}
 
 		// ---- Points de départ par race (lus par le master à la création).

@@ -6,40 +6,53 @@ générée par `tools/audio_gen/menu_theme.py`.
 
 | | |
 |---|---|
-| Fichier | `game/data/audio/music/menu_lune_noire.ogg` (Ogg Vorbis q6, ≈ 10,8 Mo) |
-| Durée | 8 min 50 s (159 mesures à 72 noires/min), boucle exacte à l'échantillon |
-| Format | 48 kHz, stéréo, −15,5 LUFS intégrés, crête ≤ −1 dBFS |
-| Tonalité | ré mineur (couleurs phrygiennes : mi bémol sur pédale de ré) |
+| Fichier | `game/data/audio/music/menu_lune_noire.ogg` (Ogg Vorbis q6, ≈ 7 Mo) |
+| Durée | 8 min 34 s (204 mesures), boucle exacte à l'échantillon |
+| Format | 48 kHz, stéréo, −15 LUFS intégrés, crête ≤ −1 dBFS |
+| Tonalité | ré mineur |
 
-## Forme
+## Version retenue (v5) et écoutes
 
-| Section | Temps | Contenu |
-|---|---|---|
-| A — L'approche | 0:00–1:30 | Taikos lointains (« DOOM — DOOM »), vent, bourdon de contrebasses, note grave unique des trombones, chœur sans paroles qui naît, tambours sur cadre et hochets lointains, tonnerre. |
-| B — Le monde se dévoile | 1:30–3:30 | Toutes les percussions (taikos, tambours de bataille, hochets, enclume, tambours sur cadre), nappe de cordes, cors ; thème principal au cor puis aux violons ; contre-chant du hautbois. |
-| C — L'appel de l'aventure | 3:30–5:30 | Percussions seules, puis rythmes imbriqués (taikos médiums, tambours de bataille en doubles croches gauche/droite, djembés, petites percussions, bloc de bois, chaînes, enclume) ; ostinato des cordes graves ; thème au cor solo, thème secondaire flûte/violons, tutti. |
-| D — Au cœur des ténèbres | 5:30–7:30 | Battement de cœur des taikos, vent, cors lointains, frappes en écho, flûte puis hautbois sur un motif fragile ; reconstruction (trémolos, retour des tambours, roulement de timbales). |
-| E — Le retour inéluctable | 7:30–8:50 | Reprise du thème en force (cors + violons + chœur), cadence (si♭–sol–la–ré, gong, impact), puis retour à la pulsation lointaine du début. |
+Cinq versions écoutées le 30/10/2026 ; la v5 est retenue.
 
-La pulsation des grands taikos ne s'interrompt jamais. Les 8 dernières mesures
-reprennent les 8 premières (pédale de ré, tambours lointains) et les queues de
-réverbération qui dépassent la fin sont replacées au début : lue en boucle par
-miniaudio, la piste est continue.
+| Version | Retour |
+|---|---|
+| v1 | trop « batterie » et trop électronique (percussions de synthèse), ouverture trop longue, tambours lointains |
+| v2 | tambours enregistrés, mieux ; pas assez grave, un instrument non identifiable (cordes rapides) |
+| v3 | tambours graves + cuivres, mieux ; accélération trop tardive ; remplacer le cor par l'hélicon ; le rythme ne fait pas « armée en marche » |
+| v4 | hélicons + marche militaire ; saturation à 0:28 (trop de cuivres), il faut un second tambour plus soutenu |
+| **v5** | **tambours au premier plan, hélicon en simple basse de marche, tambour soutenu en continu — retenue** |
+
+## Forme (v5)
+
+| Section | Contenu |
+|---|---|
+| Ouverture (≈ 0:00–0:27) | ō-daiko seul, puis les pas de l'armée et la cadence entrent ; l'accélération commence à la 4e mesure (70 → 96 noires/min, atteint vers 0:50) |
+| La troupe se met en marche | marche : un pas par temps, cadence de troupe en boucle de 2 mesures, tambour soutenu en croches |
+| L'appel de la conquête | marche complète, roulements de fin de phrase, cymbales aux entrées |
+| Au cœur des ténèbres | la marche continue assourdie, pédale grave de l'hélicon, vent |
+| La conquête | sommet (98 → 100), roulements à chaque phrase, doubles croches du tambour soutenu |
+| Le retour inéluctable | cadence finale (timbales, ō-daiko, cymbale, gong), ralentissement vers 70 et retour à l'ouverture |
+
+Instruments : ō-daiko (taiko joué très grave), taikos (pas, cadence gauche/droite,
+tambour soutenu aigu), grosse caisse de concert, timbales, cymbales frappées
+(sommets seulement), gong ; hélicon (tuba General MIDI, sonorité la plus proche)
+en basse de marche « oum-pa ». Les tambours ne s'arrêtent jamais.
 
 ## Fabrication
 
-- Percussions, vent, tonnerre : synthèse (`tools/audio_gen/lcdlln_audio/percussion.py`,
-  `textures.py`).
-- Orchestre (cordes, cors, cuivres graves, chœur « ooh », flûte, hautbois, timbales) :
-  partition écrite en Python, rendue par FluidSynth avec la banque FluidR3_GM (MIT).
-- Mixage, réverbération (salle 3,2 s ; caverne 6,5 s pour les plans lointains),
-  sonie et limiteur : numpy/scipy (`dsp.py`).
-- Régénérer : `python3 tools/audio_gen/menu_theme.py` (≈ 1 min 30, 8 Go de RAM),
+- Tambours et hélicon : partition écrite en Python (carte de tempo avec
+  accélération et ralentissement), rendue par FluidSynth avec la banque FluidR3_GM
+  (MIT) — sons enregistrés.
+- Gong et vent : synthèse (`tools/audio_gen/lcdlln_audio/percussion.py`, `textures.py`).
+- Mixage (grave renforcé et attaque des peaux sur le bus de tambours, réverbération
+  de salle 2,4 s), sonie et limiteur : numpy/scipy (`dsp.py`).
+- Régénérer : `python3 tools/audio_gen/menu_theme.py` (≈ 1 min, 8 Go de RAM),
   voir `tools/audio_gen/README.md`.
 
-Limite assumée : c'est une **maquette orchestrale de qualité « General MIDI »** ;
-la partition peut être reprise telle quelle avec une banque orchestrale plus riche
-(variable `LCDLLN_SF2`) ou par un compositeur.
+Limite assumée : sons de qualité « General MIDI » ; la partition peut être rendue
+avec une banque de percussions plus riche (variable `LCDLLN_SF2`) ou reprise par un
+compositeur.
 
 ## Moteur
 

@@ -158,93 +158,29 @@ def fifth(chord: str) -> int:
     return bass_root(chord) - 5
 
 
-# ----------------------------------------------------------------- thèmes
-
-THEME = [  # thème principal (8 mesures sur P1×2), joué une octave plus bas par les hélicons
-    [("D4", 2), ("A4", 1.5), ("G4", 0.5)],
-    [("F4", 1), ("E4", 1), ("D4", 2)],
-    [("G4", 2), ("Bb4", 1), ("A4", 1)],
-    [("A4", 3), ("E4", 1)],
-    [("A4", 3), ("D5", 1)],
-    [("D5", 1), ("C5", 1), ("Bb4", 1), ("A4", 1)],
-    [("Bb4", 2), ("G4", 1), ("A4", 1)],
-    [("A4", 4)],
-]
-SECOND = [  # thème secondaire (4 mesures sur P3)
-    [("D5", 3), ("C5", 1)],
-    [("A4", 2), ("C5", 2)],
-    [("Bb4", 1), ("A4", 1), ("G4", 1), ("F4", 1)],
-    [("E4", 4)],
-]
-DARK_MOTIF = [  # sur DREAD (ré mineur / mi bémol sur pédale de ré)
-    [("A4", 3), ("Bb4", 1)],
-    [("Bb4", 2), ("G4", 2)],
-    [("F4", 1.5), ("E4", 0.5), ("D4", 1), ("F4", 1)],
-    [("Eb4", 2), ("D4", 2)],
-]
-
-
-def put_melody(part: Part, bar: int, phrase, transpose: int = 0, vel: int = 80, legato: float = 1.0) -> None:
-    """Écrit une phrase (liste de mesures) à partir de la mesure `bar`."""
-    for i, measure in enumerate(phrase):
-        t = (bar + i) * 4.0
-        for (p, d) in measure:
-            part.add(t, d * legato, note(p) + transpose, vel)
-            t += d
-
-
 # ----------------------------------------------------------------- hélicons
 
 def compose_helicons(h: list[str]) -> dict[str, Part]:
-    """Hélicons (tuba GM) : thème, harmonie tenue, basse de marche « oum-pa »."""
-    P = {
-        "helicon_lead": Part("helicon_lead", GM["tuba"], volume=118),
-        "helicon_harm": Part("helicon_harm", GM["tuba"], volume=108),
-        "helicon_bass": Part("helicon_bass", GM["tuba"], volume=116),
-    }
-    lead, harm, bass = P["helicon_lead"], P["helicon_harm"], P["helicon_bass"]
-    # Intensité par section (vélocité ajoutée) : montée en puissance.
-    LIFT = {"O": -14, "B": -6, "C": 0, "D": -16, "C2": 6, "E": 8}
+    """Hélicon (tuba GM) en simple ACCOMPAGNATEUR : basse de marche « oum-pa »
+    (fondamentale sur 1, quinte grave sur 3). Pas de thème ni d'harmonie : les
+    tambours sont le premier plan (retour d'écoute v4 : trop de cuivre, saturation).
+    """
+    bass = Part("helicon_bass", GM["tuba"], volume=104)
+    LIFT = {"O": -14, "B": -8, "C": -4, "D": -16, "C2": 0, "E": 0}
 
     def v(x: int, b: int) -> int:
         return max(1, min(127, x + LIFT[section_of(b)]))
 
-    # Basse de marche : fondamentale sur 1, quinte grave sur 3 (sauf ouverture lente
-    # et cœur des ténèbres : fondamentale tenue).
     for b in range(TOTAL_BARS):
         s = section_of(b)
         r = bass_root(h[b])
-        if s == "O" and b < 4:
-            bass.add(b * 4, 4.0, note("D1"), v(96 + b * 4, b))
-        elif s == "D" and b < B("D", 16):
-            bass.add(b * 4, 4.0, note("D1"), v(100, b))
+        if (s == "O" and b < 4) or (s == "D" and b < B("D", 16)):
+            bass.add(b * 4, 4.0, note("D1"), v(96, b))  # pédale tenue (ouverture lente, ténèbres)
         else:
-            bass.add(b * 4, 1.6, r, v(110, b))
-            bass.add(b * 4 + 2, 1.6, fifth(h[b]) if h[b] != "Dm/Eb" else r, v(100, b))
-
-    # Harmonie tenue (deux hélicons : tierce et quinte), dans le grave.
-    for b in range(4, TOTAL_BARS):
-        if section_of(b) == "D" and b < B("D", 16):
-            continue
-        for p in voicing(h[b], note("F2"), note("D3"))[-2:]:
-            harm.add(b * 4, 3.9, p, v(92, b))
-
-    # Thème (une octave sous l'écriture originale : registre de l'hélicon).
-    for bar, vel in ((B("B"), 100), (B("B", 8), 108), (B("C"), 108), (B("C", 8), 114), (B("C", 32), 118),
-                     (B("C2"), 116), (B("C2", 16), 120), (B("C2", 32), 124), (B("C2", 48), 126), (B("E"), 124)):
-        put_melody(lead, bar, THEME, -12, vel)
-    # Thème secondaire sur chaque P3 (B : une fois ; C, C2 : deux fois).
-    for bar in (B("B", 16), B("C", 16), B("C", 20), B("C2", 8), B("C2", 12), B("C2", 40), B("C2", 44)):
-        assert h[bar:bar + 4] == P3, (bar, h[bar:bar + 4])
-        put_melody(lead, bar, SECOND, -12, 110)
-    put_melody(lead, B("D", 2), DARK_MOTIF, -12, 92)
-    put_melody(lead, B("D", 8), DARK_MOTIF, -12, 96)
-    # Cadence finale.
-    for k, p in enumerate(("D4", "D4", "C#4")):
-        lead.add(B("E", 8 + k) * 4, 4, note(p) - 12, 124)
-    lead.add(B("E", 11) * 4, 6, note("D3"), 127)
-    harm.chord(B("E", 11) * 4, 6, [note("F2"), note("A2")], 120)
-    return P
+            bass.add(b * 4, 1.4, r, v(104, b))
+            bass.add(b * 4 + 2, 1.4, fifth(h[b]) if h[b] != "Dm/Eb" else r, v(94, b))
+    bass.add(B("E", 11) * 4, 6, note("D1"), 112)  # cadence finale
+    return {"helicon_bass": bass}
 
 
 # ----------------------------------------------------------------- tambours
@@ -275,9 +211,12 @@ def compose_drums(h: list[str]) -> dict[str, Part]:
         "bass_drum": Part("bass_drum", 116, bank=8, volume=120, humanize_ms=3.0),  # Concert Bass Drum
         "timpani": Part("timpani", GM["timpani"], volume=118, humanize_ms=4.0),
         "cymbals": Part("cymbals", 48, drums=True, volume=96, humanize_ms=3.0),  # Orchestra Kit
+        # Tambour aigu et tendu (rôle du shime-daiko) : le rythme soutenu, en continu.
+        "drive": Part("drive", GM["taiko"], volume=116, humanize_ms=5.0),
     }
-    od, st, cl, cr, bd, ti, cy = (D[k] for k in ("odaiko", "steps", "cadence_l", "cadence_r",
-                                                 "bass_drum", "timpani", "cymbals"))
+    od, st, cl, cr, bd, ti, cy, dr = (D[k] for k in ("odaiko", "steps", "cadence_l", "cadence_r",
+                                                     "bass_drum", "timpani", "cymbals", "drive"))
+    DRIVE_HI, DRIVE_LO = note("D3"), note("A2")
     ODAIKO, STEP, MID, HIGH = note("D1"), note("A1"), note("D2"), note("G2")
     LIFT = {"O": -8, "B": -4, "C": 0, "D": -18, "C2": 4, "E": 6}
 
@@ -323,6 +262,28 @@ def compose_drums(h: list[str]) -> dict[str, Part]:
             for k in range(8):
                 (cl if k % 2 else cr).add(t0 + 2 + k * 0.25, 0.25, HIGH, v(92 + k * 4, s))
 
+    # Tambour soutenu : croches continues, accents 3-3-2 (élan de la marche), doubles
+    # croches en levée dans les sections pleines ; présent dès la fin de l'ouverture.
+    ACCENTS = (0, 3, 6)
+    for b in range(TOTAL_BARS):
+        s = section_of(b)
+        opening = s == "O" or b >= B("E", 16)
+        k_open = b if s == "O" else b - B("E", 16)
+        if opening and k_open < 4:
+            continue
+        t0 = b * 4.0
+        base = {"O": 70, "B": 84, "C": 92, "D": 66, "C2": 98, "E": 98}[s]
+        if opening:
+            base = 66 + (k_open - 4) * 6
+        for k in range(8):
+            accent = k in ACCENTS
+            dr.add(t0 + k * 0.5, 0.25, DRIVE_LO if accent else DRIVE_HI, min(127, base + (22 if accent else 0)))
+        if s in ("C", "C2", "E") and not opening:
+            # Doubles croches en levée sur le 4e temps (une mesure sur deux, chaque mesure au sommet).
+            if s == "C2" or b % 2 == 1:
+                for k in range(4):
+                    dr.add(t0 + 3.0 + k * 0.25, 0.2, DRIVE_HI, min(127, base + k * 6))
+
     # Cymbales : entrées du thème et sections.
     for bar in (B("B"), B("C"), B("C", 32), B("C2"), B("C2", 16), B("C2", 32), B("C2", 48), B("E")):
         cy.add(bar * 4.0, 4, KIT_CRASH[bar % 2], 110)
@@ -345,11 +306,11 @@ def compose_drums(h: list[str]) -> dict[str, Part]:
 # ----------------------------------------------------------------- mixage
 
 MIX = {  # pupitre : (gain dB, panoramique)
-    "helicon_lead": (3.0, -0.1), "helicon_harm": (-2.0, 0.3), "helicon_bass": (1.0, 0.0),
+    "helicon_bass": (-4.0, 0.0), "drive": (-2.0, 0.25),
     "odaiko": (3.0, 0.0), "steps": (1.0, 0.0), "cadence_l": (-1.0, -0.55), "cadence_r": (-1.0, 0.55),
     "bass_drum": (2.0, 0.0), "timpani": (-1.0, 0.1), "cymbals": (-8.0, 0.0),
 }
-DRUM_PARTS = {"odaiko", "steps", "cadence_l", "cadence_r", "bass_drum", "timpani", "cymbals"}
+DRUM_PARTS = {"odaiko", "steps", "cadence_l", "cadence_r", "bass_drum", "timpani", "cymbals", "drive"}
 
 
 def low_shelf(x: np.ndarray, fc: float, gain_db: float) -> np.ndarray:
@@ -363,7 +324,7 @@ def stereo_width(x: np.ndarray, p: float) -> np.ndarray:
     return (dsp.pan(m, p) + 0.25 * (x - m[:, None])).astype(np.float32)
 
 
-def build(verbose: bool = True, brass_db: float = 8.0, drums_db: float = 6.0) -> np.ndarray:
+def build(verbose: bool = True, brass_db: float = 8.0, drums_db: float = 6.0, stats: dict | None = None) -> np.ndarray:
     """Compose, rend et mixe la piste. Renvoie la boucle stéréo (LOOP_SECONDS)."""
     total = LOOP_SECONDS + TAIL_SECONDS
     n = dsp.samples(total)
@@ -413,7 +374,10 @@ def build(verbose: bool = True, brass_db: float = 8.0, drums_db: float = 6.0) ->
     del tex
     mix = dsp.highpass(mix, 25.0, 2)
     loop = dsp.wrap_loop(mix, dsp.samples(LOOP_SECONDS))
-    loop = dsp.normalize_lufs(loop, -14.5)
+    loop = dsp.normalize_lufs(loop, -15.0)
+    if stats is not None:  # part du temps où le limiteur réduit de plus de 2 dB (saturation perçue)
+        pk = np.max(np.abs(loop), axis=1)
+        stats["over_2db"] = float(np.mean(pk > dsp.from_db(-1.0 + 2.0)))
     return dsp.limiter(loop, -1.0)
 
 

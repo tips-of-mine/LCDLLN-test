@@ -68,12 +68,18 @@ class ScoreTests(unittest.TestCase):
     def test_menu_theme_form(self):
         h = menu_theme.build_harmony()
         self.assertEqual(len(h), menu_theme.TOTAL_BARS)
-        self.assertEqual(sum(c for _, _, c in menu_theme.SECTIONS), menu_theme.TOTAL_BARS)
+        self.assertEqual(sum(c for _, c in menu_theme.SECTIONS), menu_theme.TOTAL_BARS)
         self.assertTrue(300 <= menu_theme.LOOP_SECONDS <= 600)
         # Boucle : la fin reproduit l'ouverture (pédale de ré).
         self.assertEqual(h[-8:], h[:8])
-        parts = menu_theme.compose(h)
-        self.assertGreater(len(parts["horn_solo"].notes), 20)
+        drums = menu_theme.compose_drums(h)
+        helicons = menu_theme.compose_helicons(h)
+        self.assertGreater(len(drums["odaiko"].notes), menu_theme.TOTAL_BARS)
+        self.assertGreater(len(drums["drive"].notes), menu_theme.TOTAL_BARS * 4)
+        self.assertIn("helicon_bass", helicons)
+        # Tempo : départ et arrivée identiques (boucle), accélération vers le pas de marche.
+        self.assertEqual(menu_theme.bpm_at_beat(0.0), menu_theme.bpm_at_beat(menu_theme.TOTAL_BARS * 4.0))
+        self.assertGreater(menu_theme.bpm_at_beat(20 * 4.0), menu_theme.bpm_at_beat(0.0) + 20)
 
     def test_midi_written(self):
         p = Part("t", GM["horn"])

@@ -258,6 +258,12 @@ namespace
 				good = x >= x0 && x < x0 + 10000.0 && z >= z0 && z < z0 + 10000.0 && y > 41.0;
 			}
 			Check(good, "depart humain : dans sa cellule et au sec");
+			// SND.4 — grille des biomes pour les ambiances sonores.
+			const auto* audio = ok ? tools::zone_builder::FindObjectMember(root, "audio") : nullptr;
+			const auto* grid = audio ? tools::zone_builder::FindObjectMember(*audio, "biome_grid") : nullptr;
+			Check(grid && grid->type == tools::zone_builder::JsonType::String
+				&& grid->stringValue.size() == static_cast<size_t>(tools::world_gen::kBiomeGridSize * tools::world_gen::kBiomeGridSize),
+				"zone.json : grille des biomes (ambiances sonores)");
 		}
 		// Spawners : zoneId de la cellule, ids uniques, positions dans la cellule, routines valides.
 		{

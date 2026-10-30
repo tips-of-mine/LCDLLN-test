@@ -18,7 +18,7 @@
     },
     {
       "id": "Ambience",
-      "volume": 1.0
+      "volume": 0.8
     }
   ],
   "sounds": [
@@ -451,6 +451,152 @@
       "volume": 0.9,
       "pitchJitter": 0.0,
       "volumeJitter": 0.0
+    },
+    {
+      "id": "amb_forest_day",
+      "path": "audio/ambience/amb_forest_day.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.9
+    },
+    {
+      "id": "amb_forest_night",
+      "path": "audio/ambience/amb_forest_night.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.9
+    },
+    {
+      "id": "amb_plains_day",
+      "path": "audio/ambience/amb_plains_day.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.8
+    },
+    {
+      "id": "amb_plains_night",
+      "path": "audio/ambience/amb_plains_night.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.8
+    },
+    {
+      "id": "amb_swamp",
+      "path": "audio/ambience/amb_swamp.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.85
+    },
+    {
+      "id": "amb_mountain",
+      "path": "audio/ambience/amb_mountain.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.85
+    },
+    {
+      "id": "amb_snow",
+      "path": "audio/ambience/amb_snow.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.85
+    },
+    {
+      "id": "amb_desert",
+      "path": "audio/ambience/amb_desert.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.8
+    },
+    {
+      "id": "amb_coast",
+      "path": "audio/ambience/amb_coast.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.9
+    },
+    {
+      "id": "amb_river",
+      "path": "audio/ambience/amb_river.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.85
+    },
+    {
+      "id": "amb_town",
+      "path": "audio/ambience/amb_town.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.8
+    },
+    {
+      "id": "amb_rain_light",
+      "path": "audio/ambience/amb_rain_light.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.9
+    },
+    {
+      "id": "amb_rain_heavy",
+      "path": "audio/ambience/amb_rain_heavy.ogg",
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true,
+      "stream": true,
+      "volume": 0.95
+    },
+    {
+      "id": "amb_thunder",
+      "path": "audio/ambience/amb_thunder_1.ogg",
+      "variants": [
+        "audio/ambience/amb_thunder_2.ogg",
+        "audio/ambience/amb_thunder_3.ogg"
+      ],
+      "bus": "Ambience",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": false,
+      "stream": true,
+      "volume": 0.9,
+      "pitchJitter": 0.08,
+      "volumeJitter": 0.2
     }
   ],
   "zones": [

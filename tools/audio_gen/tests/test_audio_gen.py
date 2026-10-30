@@ -16,6 +16,7 @@ from lcdlln_audio.orchestra import GM, Part, note, render, write_midi  # noqa: E
 import menu_theme  # noqa: E402
 import sfx_footsteps  # noqa: E402
 import sfx_ui  # noqa: E402
+import sfx_ambience  # noqa: E402
 
 
 class DspTests(unittest.TestCase):
@@ -82,6 +83,25 @@ class UiSoundTests(unittest.TestCase):
             self.assertLess(len(x) / dsp.SR, 6.0, sid)            # un son d'interface reste court
             self.assertLess(float(np.max(np.abs(x))), 0.6, sid)  # marge : jamais saturé
             self.assertLess(abs(float(x[0])), 0.01, sid)
+
+
+class AmbienceTests(unittest.TestCase):
+    """SND.4 — boucles d'ambiance : longueur exacte, pas de saturation, niveau discret."""
+
+    def test_loops_and_thunder(self):
+        for sid in ("amb_river", "amb_forest_night", "amb_thunder_1"):
+            x = sfx_ambience.make(sid)
+            self.assertTrue(np.all(np.isfinite(x)), sid)
+            self.assertLess(float(np.max(np.abs(x))), 0.9, sid)
+            if sid.startswith("amb_thunder"):
+                self.assertLess(len(x) / dsp.SR, 15.0, sid)
+            else:
+                self.assertEqual(len(x), dsp.samples(sfx_ambience.LOOP), sid)
+                # Une ambiance reste sous le jeu : pas plus fort que −18 LUFS.
+                self.assertLess(dsp.loudness_lufs(x.astype(np.float64)), -18.0, sid)
+
+    def test_catalog_lists_every_layer(self):
+        self.assertEqual(len(sfx_ambience.SOUNDS), 16)
 
 
 class ScoreTests(unittest.TestCase):

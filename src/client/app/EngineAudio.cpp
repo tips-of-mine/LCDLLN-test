@@ -1,16 +1,19 @@
-// SND.2 / SND.3 — Audio en jeu côté Engine : oreille (caméra), pas du
-// personnage, sons d'interface (clics, fenêtres, évènements de jeu).
+// SND.2 / SND.3 / SND.4 — Audio en jeu côté Engine : oreille (caméra), pas du
+// personnage, sons d'interface (clics, fenêtres, évènements de jeu), ambiances
+// (lieux, heure, météo).
 //
 // Fonctions membres d'Engine regroupées ici pour ne pas alourdir Engine.cpp.
 // Thread : main thread.
 
 #include "src/client/app/Engine.h"
 
+#include "src/client/audio/Ambience.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
 #include "src/shared/world/WorldCells.h"
 
 #include <cmath>
+#include <random>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -138,5 +141,129 @@ namespace engine
 			for (std::string_view id : engine::audio::DiffUiAudio(m_uiAudioPrev, cur))
 				m_audioEngine.Play2D(id);
 		m_uiAudioPrev = std::move(cur);
+	}
+
+	engine::audio::AmbienceInputs Engine::BuildAmbienceInputs() const
+	{
+		namespace cells = engine::world::cells;
+		engine::audio::AmbienceInputs in;
+		const engine::math::Vec3 pos = m_characterController.GetPosition();
+		in.altitude = pos.y;
+
+		// Heure du jour et météo.
+		in.daylight = engine::audio::DaylightAt(m_dayNight.GetState().timeOfDay);
+		const auto weather = m_weatherSystem.GetCurrentState();
+		const float intensity = m_weatherSystem.GetIntensity();
+		if (weather == engine::render::WeatherState::Rain)
+			in.rain = intensity;
+		else if (weather == engine::render::WeatherState::Storm)
+		{
+			in.rain = intensity;
+			in.storm = true;
+		}
+
+		if (!m_cellWorld || !m_cellHeights)
+			return in; // zone historique : pas de biome connu (plaine par défaut)
+
+		const double gx = m_renderFrame.ToGlobalX(pos.x);
+		const double gz = m_renderFrame.ToGlobalZ(pos.z);
+		const cells::CellCoord cell = cells::CellFromPosition(gx, gz);
+		const cells::CellPoint mn = cells::CellMinCorner(cell);
+		for (const CellRenderTile& tile : m_cellTiles)
+		{
+			if (tile.cell.n != cell.n || tile.cell.e != cell.e)
+				continue;
+			in.biome = engine::audio::BiomeAt(tile.biomeGrid, tile.biomeGridSize, gx, gz, mn.x, mn.z, cells::kCellSizeMeters);
+			if (tile.surface)
+				in.snowGround = tile.surface->LayerAt(gx, gz, mn.x, mn.z, cells::kCellSizeMeters) == 3;
+			if (tile.scatter)
+			{
+				// Arbres (instances « occultantes ») dans un rayon de ~30 m, repère de la cellule.
+				const cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
+				const engine::math::Vec3 local(pos.x - static_cast<float>(c.x), pos.y, pos.z - static_cast<float>(c.z));
+				static thread_local std::vector<uint32_t> near;
+				tile.scatter->GatherNearSegment(local, local, 30.0f, near);
+				in.treeDensity = std::min(1.0f, static_cast<float>(near.size()) / 30.0f);
+			}
+			break;
+		}
+
+		// Eau proche : sondes en couronne à 30 m (mer = surface au niveau de la mer).
+		constexpr float kSeaLevelM = 40.0f; // world_master.json : scale.sea_level_m
+		for (int k = 0; k < 8; ++k)
+		{
+			const float a = static_cast<float>(k) * 0.7853982f;
+			const float px = pos.x + 30.0f * std::cos(a), pz = pos.z + 30.0f * std::sin(a);
+			if (!m_cellHeights->IsLoadedAt(px, pz))
+				continue;
+			engine::gameplay::IWorldCollider::WaterQuery wq;
+			const engine::math::Vec3 probe(px, m_cellHeights->HeightAt(px, pz) + 0.2f, pz);
+			if (m_cellCollider.QueryWater(probe, wq) && wq.inWater)
+			{
+				if (wq.surfaceY < kSeaLevelM + 1.5f)
+					in.seaNearby = true;
+				else
+					in.waterNearby = true;
+			}
+		}
+
+		// Ville : dans le rayon d'une agglomération de places.json.
+		if (m_worldPlaces.IsLoaded())
+			in.inTown = m_worldPlaces.CityAt(static_cast<float>(gx), static_cast<float>(gz), 10.0f) != nullptr;
+		return in;
+	}
+
+	void Engine::UpdateAmbienceAudio(float dt, bool inGame)
+	{
+		if (!m_audioEngine.IsDeviceReady())
+			return;
+		using engine::audio::AmbienceLayer;
+		std::array<float, engine::audio::kAmbienceLayerCount> targets{};
+		if (inGame)
+		{
+			// Recalcul deux fois par seconde : les fondus font le reste.
+			m_ambienceTimer -= dt;
+			if (m_ambienceTimer > 0.0f)
+				return;
+			m_ambienceTimer = 0.5f;
+			targets = engine::audio::AmbienceTargets(BuildAmbienceInputs());
+		}
+		for (size_t i = 0; i < engine::audio::kAmbienceLayerCount; ++i)
+		{
+			const float target = targets[i];
+			uint32_t& voice = m_ambienceVoices[i];
+			const std::string_view id = engine::audio::AmbienceSoundId(static_cast<AmbienceLayer>(i));
+			if (target > 0.01f)
+			{
+				if (voice == 0)
+				{
+					voice = m_audioEngine.PlayLoop(id, target, 3000);
+					m_ambienceLevels[i] = target;
+				}
+				else if (std::abs(target - m_ambienceLevels[i]) > 0.02f)
+				{
+					m_audioEngine.SetSoundVolume(voice, target, 2500);
+					m_ambienceLevels[i] = target;
+				}
+			}
+			else if (voice != 0)
+			{
+				m_audioEngine.StopSound(voice, inGame ? 3000u : 800u);
+				voice = 0;
+				m_ambienceLevels[i] = 0.0f;
+			}
+		}
+
+		// Orage : un coup de tonnerre lointain toutes les 12 à 40 s.
+		if (inGame && targets[static_cast<size_t>(AmbienceLayer::RainHeavy)] > 0.01f)
+		{
+			m_thunderTimer -= 0.5f;
+			if (m_thunderTimer <= 0.0f)
+			{
+				static std::mt19937 rng{ 0x7468756Eu };
+				m_thunderTimer = std::uniform_real_distribution<float>(12.0f, 40.0f)(rng);
+				m_audioEngine.Play2D("amb_thunder");
+			}
+		}
 	}
 }

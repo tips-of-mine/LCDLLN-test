@@ -258,6 +258,7 @@ add_library(engine_core
   src/client/audio/SoundDevice.cpp
   src/client/audio/Footsteps.cpp
   src/client/audio/UiAudioCues.cpp
+  src/client/audio/Ambience.cpp
   src/client/combat/CombatHud.cpp
   src/client/localization/LocalizationService.cpp
   src/shared/account/AccountValidation.cpp

@@ -39,6 +39,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <unordered_set>
 
 namespace tools::world_gen
 {
@@ -905,6 +906,75 @@ namespace tools::world_gen
 				m.halfD = static_cast<float>(b.halfD > 0.0 ? b.halfD : fallback);
 				f.buildings.push_back(m);
 			}
+		}
+		// FIX.15 — rivières (polylignes globales, largeur médiane) et lacs (contours).
+		for (const River& rv : g.rivers)
+		{
+			if (rv.points.size() < 2u)
+				continue;
+			std::vector<float> xz;
+			xz.reserve(rv.points.size() * 2u);
+			for (const Vec2& p : rv.points)
+			{
+				xz.push_back(static_cast<float>(p.x));
+				xz.push_back(static_cast<float>(p.z));
+			}
+			std::vector<double> widths = rv.widthM;
+			double width = 6.0;
+			if (!widths.empty())
+			{
+				std::nth_element(widths.begin(), widths.begin() + static_cast<std::ptrdiff_t>(widths.size() / 2u), widths.end());
+				width = widths[widths.size() / 2u];
+			}
+			mf::MapWater w;
+			w.kind = mf::MapWaterKind::River;
+			w.widthM = static_cast<float>(width);
+			w.xz = mf::DecimatePolyline(xz, kStepM);
+			mf::ComputeBounds(w);
+			f.waters.push_back(std::move(w));
+		}
+		// Lacs du lore (g.lakes, recopiés dans chaque cellule qu'ils recoupent) et
+		// étangs procéduraux des cellules (w->lakes) : chaque lac une seule fois
+		// (noms uniques).
+		std::vector<const Lake*> allLakes;
+		std::unordered_set<std::string> seenLakes;
+		// Clé : nom + centre au mètre près (un lac sans nom reste distinct).
+		auto lakeKey = [](const Lake& lk)
+		{
+			return lk.name + "@" + std::to_string(std::llround(lk.center.x)) + "," + std::to_string(std::llround(lk.center.z));
+		};
+		for (const Lake& lk : g.lakes)
+			if (seenLakes.insert(lakeKey(lk)).second)
+				allLakes.push_back(&lk);
+		for (const World* cw : cells)
+			for (const Lake& lk : cw->lakes)
+				if (seenLakes.insert(lakeKey(lk)).second)
+					allLakes.push_back(&lk);
+		for (const Lake* lkp : allLakes)
+		{
+			const Lake& lk = *lkp;
+			mf::MapWater w;
+			w.kind = mf::MapWaterKind::Lake;
+			if (lk.polygon.size() >= 3u)
+			{
+				for (const Vec2& p : lk.polygon)
+				{
+					w.xz.push_back(static_cast<float>(p.x));
+					w.xz.push_back(static_cast<float>(p.z));
+				}
+			}
+			else
+			{
+				// Lac sans contour : cercle de 24 côtés.
+				for (int k = 0; k < 24; ++k)
+				{
+					const double a = k * (2.0 * 3.14159265358979323846 / 24.0);
+					w.xz.push_back(static_cast<float>(lk.center.x + lk.radiusM * std::cos(a)));
+					w.xz.push_back(static_cast<float>(lk.center.z + lk.radiusM * std::sin(a)));
+				}
+			}
+			mf::ComputeBounds(w);
+			f.waters.push_back(std::move(w));
 		}
 		return f;
 	}

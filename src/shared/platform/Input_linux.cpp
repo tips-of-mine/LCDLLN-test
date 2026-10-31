@@ -20,6 +20,17 @@ namespace engine::platform
 		// No native messages on stub backend.
 	}
 
+	void Input::SyncWithOs()
+	{
+		// FIX.14 — pas de clavier natif sur le backend de remplacement.
+	}
+
+	void Input::ReleaseAll(const char*)
+	{
+		std::fill(m_down.begin(), m_down.end(), false);
+		std::fill(m_mouseDown.begin(), m_mouseDown.end(), false);
+	}
+
 	bool Input::IsDown(Key) const
 	{
 		return false;

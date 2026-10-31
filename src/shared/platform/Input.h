@@ -101,7 +101,22 @@ namespace engine::platform
 		void BeginFrame();
 
 		/// Process a Win32 message (used by Window hook) to update key/mouse states.
+		/// FIX.14 — WM_KILLFOCUS / WM_ACTIVATEAPP(FALSE) relâchent toutes les touches
+		/// et boutons tenus (leur WM_KEYUP arrivera à une autre fenêtre).
 		void HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);
+
+		/// FIX.14 — Resynchronise les touches tenues avec l'état réel du clavier
+		/// (GetAsyncKeyState) : une touche marquée enfoncée mais physiquement
+		/// relâchée (WM_KEYUP perdu : changement de fenêtre, écran voisin,
+		/// notification système…) est relâchée et journalisée. Sans cela, le
+		/// personnage avançait seul jusqu'au prochain appui sur la même touche.
+		/// À appeler une fois par image, APRÈS le traitement des messages.
+		/// Sans effet si la fenêtre n'a pas le focus (géré par HandleMessage).
+		void SyncWithOs();
+
+		/// FIX.14 — Relâche toutes les touches et boutons tenus (WasReleased vrai
+		/// à l'image courante). \param reason texte du journal (ex. « perte de focus »).
+		void ReleaseAll(const char* reason);
 
 		/// Returns true while the key is held.
 		bool IsDown(Key k) const;

@@ -8024,6 +8024,8 @@ namespace engine
 		LOG_DEBUG(Render, "[DIAG] BeginFrame enter frame={}", m_currentFrame);
 		m_input.BeginFrame();
 		m_window.PollEvents();
+		// FIX.14 — touches dont le WM_KEYUP s'est perdu (personnage qui avançait seul).
+		m_input.SyncWithOs();
 
 		if (m_authUi.IsInitialized() && !m_authUi.IsFlowComplete())
 		{

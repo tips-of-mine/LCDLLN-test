@@ -48,6 +48,16 @@ namespace engine::platform
 			m_down[vk] = false;
 			break;
 		}
+		case WM_KILLFOCUS:
+			// FIX.14 — la fenêtre perd le clavier : les WM_KEYUP des touches tenues
+			// iront à la nouvelle fenêtre. Sans ce relâchement, une touche de
+			// déplacement restait « enfoncée » et le personnage avançait seul.
+			ReleaseAll("perte de focus");
+			break;
+		case WM_ACTIVATEAPP:
+			if (wparam == 0u)
+				ReleaseAll("application desactivee");
+			break;
 		case WM_MOUSEMOVE:
 		{
 			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
@@ -192,6 +202,48 @@ namespace engine::platform
 		}
 		default:
 			break;
+		}
+	}
+
+	void Input::ReleaseAll(const char* reason)
+	{
+		uint32_t keys = 0;
+		for (size_t vk = 0; vk < m_down.size(); ++vk)
+			if (m_down[vk])
+			{
+				m_down[vk] = false;
+				m_released[vk] = true;
+				++keys;
+			}
+		uint32_t buttons = 0;
+		for (size_t b = 0; b < m_mouseDown.size(); ++b)
+			if (m_mouseDown[b])
+			{
+				m_mouseDown[b] = false;
+				m_mouseReleased[b] = true;
+				++buttons;
+			}
+		if (keys + buttons > 0)
+			LOG_INFO(Platform, "[Input] {} : {} touche(s) et {} bouton(s) relache(s)", reason, keys, buttons);
+	}
+
+	void Input::SyncWithOs()
+	{
+		// Fenêtre sans le focus : WM_KILLFOCUS a déjà tout relâché, et
+		// GetAsyncKeyState refléterait les frappes destinées à une autre fenêtre.
+		if (GetForegroundWindow() == nullptr || GetFocus() == nullptr)
+			return;
+		for (size_t vk = 1; vk < m_down.size(); ++vk)
+		{
+			if (!m_down[vk])
+				continue;
+			// Bit de poids fort = touche physiquement enfoncée maintenant.
+			if ((GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0)
+				continue;
+			m_down[vk] = false;
+			m_released[vk] = true;
+			LOG_INFO(Platform, "[Input] touche VK=0x{:02X} relachee hors fenetre (WM_KEYUP perdu) -- resynchronisee",
+				static_cast<unsigned>(vk));
 		}
 	}
 

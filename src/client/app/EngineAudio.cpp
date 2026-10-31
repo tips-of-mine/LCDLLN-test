@@ -1,6 +1,6 @@
-// SND.2 / SND.3 / SND.4 — Audio en jeu côté Engine : oreille (caméra), pas du
-// personnage, sons d'interface (clics, fenêtres, évènements de jeu), ambiances
-// (lieux, heure, météo).
+// SND.2 / SND.3 / SND.4 / SND.5 — Audio en jeu côté Engine : oreille (caméra),
+// pas du personnage, sons d'interface (clics, fenêtres, évènements de jeu),
+// ambiances (lieux, heure, météo), combat et sorts.
 //
 // Fonctions membres d'Engine regroupées ici pour ne pas alourdir Engine.cpp.
 // Thread : main thread.
@@ -8,10 +8,13 @@
 #include "src/client/app/Engine.h"
 
 #include "src/client/audio/Ambience.h"
+#include "src/client/audio/CombatAudioCues.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
+#include "src/shared/network/ReplicationTypes.h"
 #include "src/shared/world/WorldCells.h"
 
+#include <chrono>
 #include <cmath>
 #include <random>
 
@@ -266,5 +269,94 @@ namespace engine
 				m_audioEngine.Play2D("amb_thunder");
 			}
 		}
+	}
+	engine::audio::CombatAudioSnapshot Engine::BuildCombatAudioSnapshot() const
+	{
+		engine::audio::CombatAudioSnapshot snap;
+		const engine::client::UIModel& m = m_uiModelBinding.GetModel();
+		snap.valid = m.playerStats.playerEntityId != 0;
+		snap.playerId = m.playerStats.playerEntityId;
+		snap.playerProfile = m.playerStats.profileId;
+		snap.playerHealth = m.playerStats.currentHealth;
+		snap.playerMaxHealth = m.playerStats.maxHealth;
+		snap.hits.reserve(m.combatLog.size());
+		for (const engine::client::UICombatLogEntry& e : m.combatLog)
+			snap.hits.push_back({ e.sequence, e.attackerEntityId, e.targetEntityId, e.playerWasAttacker,
+				e.playerWasTarget, e.wasCrit, e.wasMiss });
+		for (const engine::client::UIRemoteEntity& re : m.remoteEntities)
+		{
+			// Sacs de butin (sans PV) et nœuds de récolte : ni morts ni impacts.
+			if (re.maxHealth == 0 || re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+				continue;
+			snap.entityHealth[re.entityId] = re.currentHealth;
+			snap.entityIsCreature[re.entityId] = re.archetypeId != 0;
+		}
+		snap.castActive = m.castBar.active;
+		snap.castStartNs = m.castBar.startedAtNs;
+		snap.castDurationMs = m.castBar.durationMs;
+		const auto auras = m.entityAuras.find(snap.playerId);
+		if (auras != m.entityAuras.end())
+			for (const engine::client::UIAuraEntry& a : auras->second)
+				snap.playerAuras[a.spellId] = a.effectType;
+		return snap;
+	}
+
+	void Engine::UpdateCombatAudio(bool inGame)
+	{
+		namespace s = engine::audio::combat_sounds;
+		if (!inGame)
+		{
+			if (m_heartbeatVoice != 0)
+			{
+				m_audioEngine.StopSound(m_heartbeatVoice, 500);
+				m_heartbeatVoice = 0;
+			}
+			m_combatAudioPrev = engine::audio::CombatAudioSnapshot{};
+			return;
+		}
+		engine::audio::CombatAudioSnapshot cur = BuildCombatAudioSnapshot();
+		const uint64_t nowNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+		const engine::client::UIModel& m = m_uiModelBinding.GetModel();
+		for (const engine::audio::CombatAudioCue& cue : engine::audio::DiffCombatAudio(m_combatAudioPrev, cur, nowNs))
+		{
+			if (cue.entityId == 0 || cue.entityId == cur.playerId)
+			{
+				m_audioEngine.Play2D(cue.soundId, cue.volume);
+				continue;
+			}
+			// Position de l'entité : lissée (TD.3) si connue, sinon brute du snapshot.
+			bool found = false;
+			engine::math::Vec3 pos{};
+			const auto sit = m_remoteSmoothed.find(cue.entityId);
+			if (sit != m_remoteSmoothed.end() && sit->second.valid)
+			{
+				pos = engine::math::Vec3(sit->second.x, sit->second.y + 1.0f, sit->second.z);
+				found = true;
+			}
+			else
+				for (const engine::client::UIRemoteEntity& re : m.remoteEntities)
+					if (re.entityId == cue.entityId)
+					{
+						pos = engine::math::Vec3(re.positionX, re.positionY + 1.0f, re.positionZ);
+						found = true;
+						break;
+					}
+			if (found)
+				m_audioEngine.Play3D(pos, cue.soundId, cue.volume);
+			else
+				m_audioEngine.Play2D(cue.soundId, cue.volume * 0.7f); // hors AoI : atténué
+		}
+
+		// Battement de cœur sous 25 % des PV (boucle, fondus courts).
+		const bool beat = engine::audio::LowHealthHeartbeat(cur.playerHealth, cur.playerMaxHealth);
+		if (beat && m_heartbeatVoice == 0)
+			m_heartbeatVoice = m_audioEngine.PlayLoop(s::kHeartbeat, 1.0f, 400);
+		else if (!beat && m_heartbeatVoice != 0)
+		{
+			m_audioEngine.StopSound(m_heartbeatVoice, 800);
+			m_heartbeatVoice = 0;
+		}
+		m_combatAudioPrev = std::move(cur);
 	}
 }

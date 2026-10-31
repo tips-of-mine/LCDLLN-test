@@ -17,6 +17,7 @@ import menu_theme  # noqa: E402
 import sfx_footsteps  # noqa: E402
 import sfx_ui  # noqa: E402
 import sfx_ambience  # noqa: E402
+import sfx_combat  # noqa: E402
 
 
 class DspTests(unittest.TestCase):
@@ -102,6 +103,22 @@ class AmbienceTests(unittest.TestCase):
 
     def test_catalog_lists_every_layer(self):
         self.assertEqual(len(sfx_ambience.SOUNDS), 16)
+
+
+class CombatSoundTests(unittest.TestCase):
+    """SND.5 — sons de combat : mono (spatialisés), courts, sans saturation."""
+
+    def test_every_combat_sound(self):
+        for sid in sfx_combat.SOUNDS:
+            x = sfx_combat.make(sid)
+            self.assertEqual(x.ndim, 1, sid)
+            self.assertTrue(np.all(np.isfinite(x)), sid)
+            self.assertLess(len(x) / dsp.SR, 6.0, sid)
+            self.assertLess(float(np.max(np.abs(x))), 0.9, sid)
+            self.assertLess(abs(float(x[0])), 0.01, sid)
+
+    def test_heartbeat_is_exact_loop(self):
+        self.assertEqual(len(sfx_combat.make("combat_heartbeat")), dsp.samples(1.0))
 
 
 class ScoreTests(unittest.TestCase):

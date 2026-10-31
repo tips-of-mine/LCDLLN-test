@@ -8,6 +8,7 @@
 #include "src/shared/core/memory/FrameArena.h"
 #include "src/client/audio/AudioEngine.h"
 #include "src/client/audio/Ambience.h"
+#include "src/client/audio/CombatAudioCues.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
 #include "src/client/auth/AuthUi.h"
@@ -1738,6 +1739,16 @@ namespace engine
 		std::array<float, engine::audio::kAmbienceLayerCount> m_ambienceLevels{};    ///< dernier volume demandé
 		float m_ambienceTimer = 0.0f;   ///< SND.4 — prochain recalcul (s)
 		float m_thunderTimer = 15.0f;   ///< SND.4 — prochain coup de tonnerre (s)
+		/// SND.5 — photo de l'état de combat observé par les sons (journal de combat,
+		/// PV des entités, incantation, auras du joueur).
+		engine::audio::CombatAudioSnapshot BuildCombatAudioSnapshot() const;
+		/// SND.5 — joue les sons de combat et de sorts (impacts à la position des
+		/// cibles, ratés, coups encaissés, morts, incantations, auras) et gère le
+		/// battement de cœur en santé basse. \param inGame false : tout se tait.
+		/// Main thread, après la mise à jour du modèle UI de la frame.
+		void UpdateCombatAudio(bool inGame);
+		engine::audio::CombatAudioSnapshot m_combatAudioPrev; ///< SND.5 — photo précédente
+		uint32_t m_heartbeatVoice = 0;                        ///< SND.5 — boucle du cœur (0 = muette)
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;

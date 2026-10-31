@@ -362,6 +362,23 @@ namespace
 		BuildingPlacementDef legacy; // historique : pas d'emprise, rayon 7
 		legacy.footprintRadius = 7.0;
 		w.buildings.push_back(legacy);
+		// FIX.15 — une rivière, un lac du lore recopié dans la cellule (une seule
+		// fois sur la carte) et un étang de cellule sans contour (cercle).
+		River river;
+		for (int i = 0; i <= 50; ++i) river.points.push_back({ static_cast<double>(i), 40.0 });
+		river.widthM = { 4.0, 8.0, 12.0 };
+		g.rivers.push_back(river);
+		Lake lore;
+		lore.name = "lac_du_lore";
+		lore.center = { 100.0, 100.0 };
+		lore.polygon = { { 90.0, 90.0 }, { 110.0, 90.0 }, { 110.0, 110.0 }, { 90.0, 110.0 } };
+		g.lakes.push_back(lore);
+		w.lakes.push_back(lore);
+		Lake pond;
+		pond.name = "etang";
+		pond.center = { 200.0, 0.0 };
+		pond.radiusM = 15.0;
+		w.lakes.push_back(pond);
 		const std::vector<World*> cells{ &w };
 		const mf::MapFeatures f = BuildMapFeatures(g, cells);
 		Check(f.roads.size() == 4u, "carte : 1 route + 1 chemin + 2 rues (decoupe ignoree, aretes uniques)");
@@ -376,6 +393,13 @@ namespace
 		{
 			Check(std::fabs(f.buildings[0].yawRad - 1.5707963f) < 1e-4f && f.buildings[0].halfD == 3.0f, "carte : emprise et cap du batiment");
 			Check(std::fabs(f.buildings[1].halfW - 4.95f) < 0.01f, "carte : repli carre inscrit dans le rayon");
+		}
+		Check(f.waters.size() == 3u, "carte : 1 riviere + 2 lacs (lac du lore exporte une fois)");
+		if (f.waters.size() == 3u)
+		{
+			Check(f.waters[0].kind == mf::MapWaterKind::River && f.waters[0].widthM == 8.0f, "carte : riviere, largeur mediane");
+			Check(f.waters[1].kind == mf::MapWaterKind::Lake && f.waters[1].PointCount() == 4u, "carte : contour du lac du lore");
+			Check(f.waters[2].kind == mf::MapWaterKind::Lake && f.waters[2].PointCount() == 24u, "carte : etang sans contour = cercle");
 		}
 	}
 }

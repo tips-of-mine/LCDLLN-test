@@ -11,6 +11,11 @@
 //   u32 magic "LMFT" | u32 version (1)
 //   u32 roadCount, puis par route : u8 kind | f32 widthM | u32 pointCount | pointCount × (f32 x, f32 z)
 //   u32 buildingCount, puis par bâtiment : f32 x | f32 z | f32 yawRad | f32 halfW | f32 halfD
+//   (v2, FIX.15) u32 waterCount, puis par plan d'eau : u8 kind (0 rivière, 1 lac)
+//                | f32 widthM | u32 pointCount | pointCount × (f32 x, f32 z)
+//   Rivière = polyligne de largeur widthM ; lac = contour fermé (polygone étoilé
+//   autour de son barycentre, dessiné en éventail). Un fichier v1 se lit encore
+//   (aucun plan d'eau).
 //
 // Header-only, sans dépendance moteur : partagé par tools/world_gen (écriture),
 // le client (lecture) et les tests (map_features_tests).
@@ -54,16 +59,37 @@ namespace engine::world::mapfeatures
 		float halfD = 3.0f;           ///< demi-profondeur locale Z (m)
 	};
 
+	/// FIX.15 — Nature d'un plan d'eau.
+	enum class MapWaterKind : uint8_t
+	{
+		River = 0, ///< polyligne de largeur widthM
+		Lake = 1,  ///< contour fermé
+	};
+
+	/// FIX.15 — Rivière ou lac (coordonnées GLOBALES) + boîte englobante.
+	struct MapWater
+	{
+		MapWaterKind kind = MapWaterKind::River;
+		float widthM = 6.0f;          ///< largeur d'une rivière (m) ; ignorée pour un lac
+		std::vector<float> xz;        ///< points (x0, z0, x1, z1, …) en m
+		float minX = 0.0f, minZ = 0.0f, maxX = 0.0f, maxZ = 0.0f;
+
+		size_t PointCount() const { return xz.size() / 2u; }
+	};
+
 	struct MapFeatures
 	{
 		std::vector<MapRoad> roads;
 		std::vector<MapBuilding> buildings;
+		std::vector<MapWater> waters;  ///< FIX.15 — rivières et lacs (v2)
 
-		bool Empty() const { return roads.empty() && buildings.empty(); }
+		bool Empty() const { return roads.empty() && buildings.empty() && waters.empty(); }
 	};
 
 	inline constexpr uint32_t kMagic = 0x54464D4Cu; // "LMFT"
-	inline constexpr uint32_t kVersion = 1u;
+	/// Version écrite. v1 (FIX.12) : routes + bâtiments ; v2 (FIX.15) : + plans d'eau.
+	inline constexpr uint32_t kVersion = 2u;
+	inline constexpr uint32_t kMaxWaters = 1u << 20;
 	/// Garde-fous de lecture (fichier corrompu → refus plutôt qu'allocation géante).
 	inline constexpr uint32_t kMaxRoads = 1u << 20;
 	inline constexpr uint32_t kMaxPointsPerRoad = 1u << 22;
@@ -86,6 +112,46 @@ namespace engine::world::mapfeatures
 			road.minZ = std::min(road.minZ, road.xz[i + 1]);
 			road.maxZ = std::max(road.maxZ, road.xz[i + 1]);
 		}
+	}
+
+	/// FIX.15 — Boîte englobante d'un plan d'eau (élargie de la demi-largeur
+	/// d'une rivière, pour ne pas la couper au bord de la vue).
+	inline void ComputeBounds(MapWater& w)
+	{
+		if (w.xz.size() < 2u)
+		{
+			w.minX = w.minZ = w.maxX = w.maxZ = 0.0f;
+			return;
+		}
+		w.minX = w.maxX = w.xz[0];
+		w.minZ = w.maxZ = w.xz[1];
+		for (size_t i = 0; i + 1 < w.xz.size(); i += 2)
+		{
+			w.minX = std::min(w.minX, w.xz[i]);
+			w.maxX = std::max(w.maxX, w.xz[i]);
+			w.minZ = std::min(w.minZ, w.xz[i + 1]);
+			w.maxZ = std::max(w.maxZ, w.xz[i + 1]);
+		}
+		const float pad = w.kind == MapWaterKind::River ? w.widthM * 0.5f : 0.0f;
+		w.minX -= pad; w.minZ -= pad; w.maxX += pad; w.maxZ += pad;
+	}
+
+	/// FIX.15 — Barycentre (moyenne des sommets) d'un contour de lac.
+	/// \param cx,cz reçoivent le centre ; (0, 0) si aucun point.
+	inline void LakeCenter(const MapWater& w, float& cx, float& cz)
+	{
+		cx = cz = 0.0f;
+		const size_t n = w.PointCount();
+		if (n == 0u)
+			return;
+		double sx = 0.0, sz = 0.0;
+		for (size_t i = 0; i < n; ++i)
+		{
+			sx += w.xz[2 * i];
+			sz += w.xz[2 * i + 1];
+		}
+		cx = static_cast<float>(sx / static_cast<double>(n));
+		cz = static_cast<float>(sz / static_cast<double>(n));
 	}
 
 	/// Allège une polyligne : garde le premier point, puis chaque point distant
@@ -184,7 +250,7 @@ namespace engine::world::mapfeatures
 		};
 	}
 
-	/// Sérialise \p f au format v1 (voir en-tête du fichier).
+	/// Sérialise \p f au format courant (kVersion, voir en-tête du fichier).
 	inline std::vector<uint8_t> Serialize(const MapFeatures& f)
 	{
 		std::vector<uint8_t> b;
@@ -208,10 +274,19 @@ namespace engine::world::mapfeatures
 			detail::PutF32(b, m.halfW);
 			detail::PutF32(b, m.halfD);
 		}
+		detail::PutU32(b, static_cast<uint32_t>(f.waters.size()));
+		for (const MapWater& w : f.waters)
+		{
+			b.push_back(static_cast<uint8_t>(w.kind));
+			detail::PutF32(b, w.widthM);
+			detail::PutU32(b, static_cast<uint32_t>(w.PointCount()));
+			for (size_t i = 0; i < w.PointCount() * 2u; ++i)
+				detail::PutF32(b, w.xz[i]);
+		}
 		return b;
 	}
 
-	/// Lit un fichier v1. Les boîtes englobantes des routes sont recalculées.
+	/// Lit un fichier v1 ou v2. Les boîtes englobantes sont recalculées.
 	/// Les points non finis sont rejetés (fichier refusé).
 	/// \return false (et \p out vidé, \p err renseigné) si magic/version/tailles invalides.
 	inline bool Deserialize(std::span<const uint8_t> bytes, MapFeatures& out, std::string& err)
@@ -220,7 +295,7 @@ namespace engine::world::mapfeatures
 		detail::Reader r{ bytes };
 		if (r.U32() != kMagic) { err = "map_features: magic invalide"; return false; }
 		const uint32_t version = r.U32();
-		if (!r.ok || version != kVersion) { err = "map_features: version " + std::to_string(version) + " non supportee"; return false; }
+		if (!r.ok || version < 1u || version > kVersion) { err = "map_features: version " + std::to_string(version) + " non supportee"; return false; }
 		const uint32_t roadCount = r.U32();
 		if (!r.ok || roadCount > kMaxRoads) { err = "map_features: nombre de routes invalide"; out = {}; return false; }
 		out.roads.reserve(roadCount);
@@ -268,6 +343,34 @@ namespace engine::world::mapfeatures
 				out = {};
 				return false;
 			}
+		}
+		if (version < 2u)
+			return true;
+		const uint32_t waterCount = r.U32();
+		if (!r.ok || waterCount > kMaxWaters) { err = "map_features: nombre de plans d'eau invalide"; out = {}; return false; }
+		out.waters.reserve(waterCount);
+		for (uint32_t i = 0; i < waterCount; ++i)
+		{
+			MapWater w;
+			w.kind = r.U8() == 1u ? MapWaterKind::Lake : MapWaterKind::River;
+			w.widthM = r.F32();
+			const uint32_t n = r.U32();
+			if (!r.ok || n > kMaxPointsPerRoad || !r.Has(static_cast<size_t>(n) * 8u))
+			{
+				err = "map_features: plan d'eau " + std::to_string(i) + " tronque";
+				out = {};
+				return false;
+			}
+			w.xz.resize(static_cast<size_t>(n) * 2u);
+			for (float& v : w.xz)
+			{
+				v = r.F32();
+				if (!std::isfinite(v)) { err = "map_features: coordonnee non finie"; out = {}; return false; }
+			}
+			if (!std::isfinite(w.widthM) || w.widthM <= 0.0f)
+				w.widthM = 6.0f;
+			ComputeBounds(w);
+			out.waters.push_back(std::move(w));
 		}
 		return true;
 	}

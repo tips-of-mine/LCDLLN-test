@@ -569,8 +569,8 @@ namespace engine
 		else if (!engine::world::mapfeatures::Deserialize(bytes, m_worldMapFeatures, err))
 			LOG_WARN(Core, "[WorldPlaces] {} illisible ({}) : routes et batiments non affiches", featuresRel, err);
 		else
-			LOG_INFO(Core, "[WorldPlaces] carte : {} traces de routes/rues, {} batiments",
-				m_worldMapFeatures.roads.size(), m_worldMapFeatures.buildings.size());
+			LOG_INFO(Core, "[WorldPlaces] carte : {} traces de routes/rues, {} batiments, {} plans d'eau",
+				m_worldMapFeatures.roads.size(), m_worldMapFeatures.buildings.size(), m_worldMapFeatures.waters.size());
 	}
 
 	void Engine::DrawWorldPlacesHud(ImDrawList* fg, float dw, float dh, float dtSec)

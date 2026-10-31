@@ -53,7 +53,7 @@ namespace engine::render
 			dl->AddText(p, col, text);
 		}
 
-		/// FIX.12 — Dessine routes, rues et bâtiments (map_features.bin) visibles
+		/// FIX.12 / FIX.15 — Dessine plans d'eau, routes, rues et bâtiments (map_features.bin) visibles
 		/// dans la vue. \param worldToScreen projette un point GLOBAL (x, z) à
 		/// l'écran ; \param wx0,wz0,wx1,wz1 emprise monde de la vue (m) ;
 		/// \param pxPerM échelle courante (px par mètre). Rues masquées au-delà de
@@ -68,6 +68,35 @@ namespace engine::render
 			const bool showStreets = visibleM <= 6000.0f;
 			const bool showBuildings = visibleM <= 8000.0f;
 			std::vector<ImVec2> pts;
+			// FIX.15 — plans d'eau d'abord (routes et ponts par-dessus) : lacs en
+			// éventail depuis leur centre (contours étoilés), rivières en
+			// polylignes, d'au moins 1,5 px pour rester visibles en vue large.
+			const ImU32 waterCol = IM_COL32(64, 112, 168, 255);
+			for (const mf::MapWater& w : f.waters)
+			{
+				if (w.PointCount() < 2u)
+					continue;
+				if (w.maxX < wx0 || w.minX > wx1 || w.maxZ < wz0 || w.minZ > wz1)
+					continue;
+				pts.clear();
+				for (size_t i = 0; i < w.PointCount(); ++i)
+					pts.push_back(worldToScreen(w.xz[2 * i], w.xz[2 * i + 1]));
+				if (w.kind == mf::MapWaterKind::Lake && pts.size() >= 3u)
+				{
+					float cx = 0.0f, cz = 0.0f;
+					mf::LakeCenter(w, cx, cz);
+					const ImVec2 c = worldToScreen(cx, cz);
+					for (size_t i = 0; i < pts.size(); ++i)
+						dl->AddTriangleFilled(c, pts[i], pts[(i + 1) % pts.size()], waterCol);
+					// Contour : un petit lac reste visible même réduit à quelques pixels.
+					dl->AddPolyline(pts.data(), static_cast<int>(pts.size()), waterCol, ImDrawFlags_Closed, 1.5f);
+				}
+				else
+				{
+					const float thick = std::clamp(w.widthM * pxPerM, 1.5f, 16.0f);
+					dl->AddPolyline(pts.data(), static_cast<int>(pts.size()), waterCol, ImDrawFlags_None, thick);
+				}
+			}
 			// Ordre : chemins et rues d'abord, grandes routes par-dessus.
 			static constexpr mf::MapRoadKind kOrder[4] = { mf::MapRoadKind::Street, mf::MapRoadKind::Path, mf::MapRoadKind::Road, mf::MapRoadKind::Major };
 			for (mf::MapRoadKind kind : kOrder)
@@ -273,7 +302,7 @@ namespace engine::render
 			places.WorldToMapUv(x, z, u, v);
 			return toScreen(u, v);
 		};
-		// FIX.12 — routes, rues et bâtiments (avant le voile : l'inexploré les cache).
+		// FIX.12 / FIX.15 — eau, routes, rues et bâtiments (avant le voile : l'inexploré les cache).
 		if (in.features != nullptr && !in.features->Empty())
 		{
 			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;

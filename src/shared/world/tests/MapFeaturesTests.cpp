@@ -100,6 +100,40 @@ int main()
 		Check(Near(c[0], -2.0f) && Near(c[1], 3.0f), "coins a 90 degres");
 	}
 
+	// 5. FIX.15 — plans d'eau (v2) : aller-retour, boîtes, centre de lac ; un
+	//    fichier v1 (sans plans d'eau) se lit toujours.
+	{
+		mf::MapFeatures f;
+		mf::MapWater river;
+		river.kind = mf::MapWaterKind::River;
+		river.widthM = 10.0f;
+		river.xz = { 0.0f, 0.0f, 100.0f, 0.0f };
+		f.waters.push_back(river);
+		mf::MapWater lake;
+		lake.kind = mf::MapWaterKind::Lake;
+		lake.xz = { 10.0f, 10.0f, 30.0f, 10.0f, 30.0f, 30.0f, 10.0f, 30.0f };
+		f.waters.push_back(lake);
+		Check(!f.Empty(), "plans d'eau seuls : non vide");
+		const std::vector<uint8_t> bytes = mf::Serialize(f);
+		mf::MapFeatures g;
+		std::string err;
+		Check(mf::Deserialize(bytes, g, err) && g.waters.size() == 2u, "aller-retour des plans d'eau");
+		if (g.waters.size() == 2u)
+		{
+			Check(g.waters[0].kind == mf::MapWaterKind::River && Near(g.waters[0].widthM, 10.0f), "riviere relue");
+			Check(Near(g.waters[0].minZ, -5.0f) && Near(g.waters[0].maxZ, 5.0f), "boite de riviere elargie de la demi-largeur");
+			Check(g.waters[1].kind == mf::MapWaterKind::Lake && g.waters[1].PointCount() == 4u, "lac relu");
+			float cx = 0.0f, cz = 0.0f;
+			mf::LakeCenter(g.waters[1], cx, cz);
+			Check(Near(cx, 20.0f) && Near(cz, 20.0f), "centre du lac");
+		}
+		// Fichier v1 : même début, version 1, sans le bloc des plans d'eau.
+		const std::vector<uint8_t> v2Empty = mf::Serialize(mf::MapFeatures{});
+		std::vector<uint8_t> v1(v2Empty.begin(), v2Empty.end() - 4);
+		v1[4] = 1u;
+		Check(mf::Deserialize(v1, g, err) && g.waters.empty(), "fichier v1 toujours lisible");
+	}
+
 	if (s_failCount == 0)
 		std::cout << "[OK] map_features_tests" << std::endl;
 	return s_failCount == 0 ? 0 : 1;

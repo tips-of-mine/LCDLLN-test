@@ -18,6 +18,7 @@ import sfx_footsteps  # noqa: E402
 import sfx_ui  # noqa: E402
 import sfx_ambience  # noqa: E402
 import sfx_combat  # noqa: E402
+import sfx_interactions  # noqa: E402
 
 
 class DspTests(unittest.TestCase):
@@ -119,6 +120,21 @@ class CombatSoundTests(unittest.TestCase):
 
     def test_heartbeat_is_exact_loop(self):
         self.assertEqual(len(sfx_combat.make("combat_heartbeat")), dsp.samples(1.0))
+
+
+class InteractionSoundTests(unittest.TestCase):
+    """SND.6 — récolte et artisanat : boucles de longueur exacte, sons de fin courts."""
+
+    def test_every_interaction_sound(self):
+        for sid in sfx_interactions.SOUNDS:
+            x = sfx_interactions.make(sid)
+            self.assertEqual(x.ndim, 1, sid)
+            self.assertTrue(np.all(np.isfinite(x)), sid)
+            self.assertLess(float(np.max(np.abs(x))), 0.9, sid)
+            if sid in sfx_interactions.LOOPS:
+                self.assertEqual(len(x), dsp.samples(sfx_interactions.LOOPS[sid]), sid)
+            else:
+                self.assertLess(len(x) / dsp.SR, 3.0, sid)
 
 
 class ScoreTests(unittest.TestCase):

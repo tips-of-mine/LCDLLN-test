@@ -10925,6 +10925,7 @@ namespace engine
 		}
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
 		UpdateAudioListener(out.camera); // SND.2 — orientation de l'oreille
+		UpdateAmbienceAudio(static_cast<float>(dt), m_authUi.IsInWorldShard() && !m_editorEnabled); // SND.4
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
 		// Réticule de ciblage : suit la cible (position/yaw lissés) et pilote le

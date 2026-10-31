@@ -7,6 +7,7 @@
 #include "src/shared/core/Time.h"
 #include "src/shared/core/memory/FrameArena.h"
 #include "src/client/audio/AudioEngine.h"
+#include "src/client/audio/Ambience.h"
 #include "src/client/audio/Footsteps.h"
 #include "src/client/audio/UiAudioCues.h"
 #include "src/client/auth/AuthUi.h"
@@ -1373,6 +1374,9 @@ namespace engine
 			size_t buildingNext = 0;
 			/// SND.2 — sols de la cellule (sons de pas) ; nul si pas de splat.
 			std::shared_ptr<const engine::world::cells::CellSurfaceMap> surface;
+			/// SND.4 — biomes du lore (zone.json audio.biome_grid) pour les ambiances.
+			std::string biomeGrid;
+			int biomeGridSize = 0;
 		};
 		/// Tuile retirée : détruite quelques frames plus tard (ressources GPU encore en vol).
 		struct RetiredCellTile
@@ -1722,6 +1726,18 @@ namespace engine
 		uint32_t m_uiAudioWarmupFrames = 240;
 		/// SND.3 — nom du personnage local (pour ne pas sonner sur ses propres messages).
 		std::string m_localCharacterNameForAudio;
+		/// SND.4 — ce que le joueur entend autour de lui : biome du lore, arbres,
+		/// eau proche, ville, altitude, neige, heure, météo.
+		engine::audio::AmbienceInputs BuildAmbienceInputs() const;
+		/// SND.4 — démarre / fond / arrête les boucles d'ambiance (recalcul toutes
+		/// les 0,5 s, fondus de 2,5 à 3 s) et le tonnerre d'orage.
+		/// \param dt durée de la frame (s) ; \param inGame false : tout s'éteint.
+		/// Main thread.
+		void UpdateAmbienceAudio(float dt, bool inGame);
+		std::array<uint32_t, engine::audio::kAmbienceLayerCount> m_ambienceVoices{}; ///< voix par couche (0 = muette)
+		std::array<float, engine::audio::kAmbienceLayerCount> m_ambienceLevels{};    ///< dernier volume demandé
+		float m_ambienceTimer = 0.0f;   ///< SND.4 — prochain recalcul (s)
+		float m_thunderTimer = 15.0f;   ///< SND.4 — prochain coup de tonnerre (s)
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;

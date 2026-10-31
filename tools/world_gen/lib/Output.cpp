@@ -473,6 +473,22 @@ namespace tools::world_gen
 		return WriteFile(outputRoot, report, "buildings/templates/maison.json", j, err);
 	}
 
+	std::string BuildBiomeGrid(const World& w, int size)
+	{
+		std::string g(static_cast<size_t>(size) * size, '.');
+		const double step = w.terrainSizeM / size;
+		for (int j = 0; j < size; ++j)
+			for (int i = 0; i < size; ++i)
+			{
+				const double x = w.terrainOriginX + (i + 0.5) * step;
+				const double z = w.terrainOriginZ + (j + 0.5) * step;
+				const int bi = w.biome.IndexX(x), bj = w.biome.IndexZ(z);
+				if (w.biome.InBounds(bi, bj))
+					g[static_cast<size_t>(j) * size + i] = w.biome.At(bi, bj);
+			}
+		return g;
+	}
+
 	bool WriteCellOutputs(World& w, std::string& err)
 	{
 		const std::string wid = w.master.worldId;
@@ -702,6 +718,13 @@ namespace tools::world_gen
 			cellInfo.objectValue["n"] = JNum(w.cell.n);
 			cellInfo.objectValue["e"] = JNum(w.cell.e);
 			cellInfo.objectValue["zone_id"] = JNum(static_cast<double>(w.zoneId));
+			// SND.4 — biomes du lore par blocs de 250 m (ambiances sonores côté client).
+			{
+				JsonValue& au = Child(root, "audio");
+				au.objectValue["_comment"] = JStr("SND.4 — biome_grid : codes de biome du lore (legende de grid.legend du master), biome_grid_size x biome_grid_size blocs, ligne 0 = Z minimal, colonne 0 = X minimal.");
+				au.objectValue["biome_grid_size"] = JNum(static_cast<double>(kBiomeGridSize));
+				au.objectValue["biome_grid"] = JStr(BuildBiomeGrid(w, kBiomeGridSize));
+			}
 			Child(world, "test_water").objectValue["enabled"] = JBool(false);
 			Child(world, "scenery").objectValue["count"] = JNum(0);
 			// Spawn par défaut : départ de la race dont la ville est dans la cellule.

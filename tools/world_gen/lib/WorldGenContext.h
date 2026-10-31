@@ -364,6 +364,12 @@ namespace tools::world_gen
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp
 	bool ImportLegacyContent(World& w, std::string& err);
+	/// SND.4 — côté de la grille de biomes exportée dans zone.json (40 → blocs de 250 m).
+	inline constexpr int kBiomeGridSize = 40;
+	/// SND.4 — codes de biome du lore (grid.legend) échantillonnés au centre de
+	/// chaque bloc de la cellule ; ligne 0 = Z minimal. À appeler avant la
+	/// libération de w.biome. Output.cpp
+	std::string BuildBiomeGrid(const World& w, int size);
 	/// Écriture des sorties d'une cellule. Output.cpp
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp

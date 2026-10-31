@@ -19,6 +19,9 @@ pip install numpy scipy mido soundfile pyloudnorm
 | `lcdlln_audio/textures.py` | vent, tonnerre lointain, souffle grave |
 | `lcdlln_audio/orchestra.py` | partitions (pupitres), écriture MIDI, rendu FluidSynth |
 | `menu_theme.py` | SND.1 — musique de l'écran de connexion (`docs/audio/SND.1_musique_menu.md`) |
+| `sfx_footsteps.py` | SND.2 — sons de pas par surface (`docs/audio/SND.2_moteur_sons_pas.md`) |
+| `sfx_ui.py` | SND.3 — sons d'interface et d'évènements (`docs/audio/SND.3_sons_interface.md`) |
+| `sfx_ambience.py` | SND.4 — boucles d'ambiance et tonnerre (`docs/audio/SND.4_ambiances.md`) |
 | `tests/` | tests unitaires (workflow `audio-gen`) |
 
 ## Régénérer la musique du menu
@@ -29,3 +32,11 @@ python3 tools/audio_gen/menu_theme.py --out game/data/audio/music/menu_lune_noir
 
 Tout est déterministe (graines fixes) : deux exécutions produisent le même son.
 Banque de sons : `LCDLLN_SF2=/chemin/banque.sf2` pour en utiliser une autre.
+
+## Régénérer les sons
+
+```bash
+python3 tools/audio_gen/sfx_footsteps.py   # game/data/audio/sfx/footsteps/
+python3 tools/audio_gen/sfx_ui.py          # game/data/audio/sfx/ui/
+python3 tools/audio_gen/sfx_ambience.py    # game/data/audio/ambience/ (≈ 35 s)
+```

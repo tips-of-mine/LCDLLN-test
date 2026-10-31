@@ -644,6 +644,10 @@ elseif(UNIX)
   # SND.3 — sons d'interface déclenchés par changement d'état (UiAudioCues dans engine_core).
   lcdlln_add_simple_test(ui_audio_cues_tests
     ${CMAKE_SOURCE_DIR}/src/client/audio/tests/UiAudioCuesTests.cpp)
+  # SND.4 — ambiances sonores : biomes, lumière du jour, volumes par couche
+  # (Ambience dans engine_core).
+  lcdlln_add_simple_test(ambience_tests
+    ${CMAKE_SOURCE_DIR}/src/client/audio/tests/AmbienceTests.cpp)
   # SND.2 — carte des sols d'une cellule (sons de pas).
   lcdlln_add_simple_test(cell_surface_map_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellSurfaceMapTests.cpp)

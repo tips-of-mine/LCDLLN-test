@@ -57,8 +57,11 @@ namespace engine::network
 	};
 
 	/// Nombre maximal de cellules par paquet garanti de tenir dans un paquet
-	/// (pire cas : masques bruts de 800 octets).
-	inline constexpr size_t kMapDiscoveryCellsPerPacket = 16u;
+	/// (pire cas : masques bruts de 3 200 octets → 4 × 3 207 + en-têtes < 16 Kio,
+	/// kProtocolV1MaxPacketSize). FIX.16 : 16 → 4 avec les cases de 62,5 m.
+	inline constexpr size_t kMapDiscoveryCellsPerPacket = 4u;
+	static_assert(kMapDiscoveryCellsPerPacket * (4u + 1u + 2u + engine::world::discovery::kBitmapBytes) + 64u <= 16384u,
+		"une page de masques bruts doit tenir dans un paquet");
 
 	std::vector<uint8_t> BuildMapDiscoveryRequestPayload(uint16_t startIndex);
 	std::optional<MapDiscoveryRequestPayload> ParseMapDiscoveryRequestPayload(const uint8_t* payload, size_t payloadSize);

@@ -56,8 +56,34 @@ namespace engine::world::discovery
 		return std::all_of(m_bits.begin(), m_bits.end(), [](uint8_t b) { return b == 0u; });
 	}
 
+	namespace
+	{
+		/// FIX.16 — ancien masque 80 × 80 (cases de 125 m) → masque courant :
+		/// chaque ancienne case découverte marque ses 2 × 2 nouvelles cases.
+		void UpsampleLegacy(std::span<const uint8_t> legacy, CellBitmap& out)
+		{
+			out = CellBitmap{};
+			constexpr int kRatio = kTilesPerSide / kLegacyTilesPerSide;
+			static_assert(kRatio * kLegacyTilesPerSide == kTilesPerSide, "rapport entier attendu");
+			for (int i = 0; i < kLegacyTilesPerCell; ++i)
+			{
+				if (((legacy[static_cast<size_t>(i >> 3)] >> (i & 7)) & 1u) == 0u)
+					continue;
+				const int lx = i % kLegacyTilesPerSide, lz = i / kLegacyTilesPerSide;
+				for (int dz = 0; dz < kRatio; ++dz)
+					for (int dx = 0; dx < kRatio; ++dx)
+						out.Set(lx * kRatio + dx, lz * kRatio + dz);
+			}
+		}
+	}
+
 	bool CellBitmap::Assign(std::span<const uint8_t> bytes)
 	{
+		if (bytes.size() == kLegacyBitmapBytes)
+		{
+			UpsampleLegacy(bytes, *this);
+			return true;
+		}
 		if (bytes.size() != kBitmapBytes)
 			return false;
 		std::copy(bytes.begin(), bytes.end(), m_bits.begin());
@@ -109,23 +135,27 @@ namespace engine::world::discovery
 			return out.Assign(data);
 		if (encoding != BitmapEncoding::Rle || (data.size() % 2u) != 0u)
 			return false;
+		// Total des séries : kTilesPerCell (masque courant) ou kLegacyTilesPerCell
+		// (ancien client, cases de 125 m) — décodé puis agrandi par Assign.
+		int total = 0;
+		for (size_t k = 0; k + 1 < data.size(); k += 2)
+			total += static_cast<int>(data[k]) | (static_cast<int>(data[k + 1]) << 8);
+		if (total != kTilesPerCell && total != kLegacyTilesPerCell)
+			return false;
 		std::array<uint8_t, kBitmapBytes> bits{};
 		int pos = 0;
 		bool current = false;
 		for (size_t k = 0; k + 1 < data.size(); k += 2)
 		{
 			const int len = static_cast<int>(data[k]) | (static_cast<int>(data[k + 1]) << 8);
-			if (len > kTilesPerCell - pos)
-				return false;
 			if (current)
 				for (int i = pos; i < pos + len; ++i)
 					bits[static_cast<size_t>(i >> 3)] = static_cast<uint8_t>(bits[static_cast<size_t>(i >> 3)] | (1u << (i & 7)));
 			pos += len;
 			current = !current;
 		}
-		if (pos != kTilesPerCell)
-			return false;
-		return out.Assign(bits);
+		const size_t bytes = total == kTilesPerCell ? kBitmapBytes : kLegacyBitmapBytes;
+		return out.Assign(std::span<const uint8_t>(bits.data(), bytes));
 	}
 
 	TileRef TileAt(double x, double z)
@@ -165,5 +195,23 @@ namespace engine::world::discovery
 					continue;
 				fn(TileAt(cx, cz));
 			}
+	}
+
+	bool IsPointRevealedSmooth(double x, double z, const std::function<bool(long long, long long)>& tileDiscovered)
+	{
+		if (!tileDiscovered)
+			return false;
+		const long long ci = static_cast<long long>(std::floor(x / kTileM));
+		const long long cj = static_cast<long long>(std::floor(z / kTileM));
+		const double r2 = kDisplayRevealRadiusM * kDisplayRevealRadiusM;
+		for (long long j = cj - 1; j <= cj + 1; ++j)
+			for (long long i = ci - 1; i <= ci + 1; ++i)
+			{
+				const double dx = (static_cast<double>(i) + 0.5) * kTileM - x;
+				const double dz = (static_cast<double>(j) + 0.5) * kTileM - z;
+				if (dx * dx + dz * dz <= r2 && tileDiscovered(i, j))
+					return true;
+			}
+		return false;
 	}
 }

@@ -93,19 +93,19 @@ namespace engine::world::discovery
 	/// Centre GLOBAL de la case (tx, tz) de \p cell.
 	engine::world::cells::CellPoint TileCenter(engine::world::cells::CellCoord cell, int tx, int tz);
 
-	/// FIX.16 — Rayon d'affichage d'une case découverte (m) : à l'écran, chaque
-	/// case découverte dégage un DISQUE de ce rayon autour de son centre (au lieu
-	/// d'un carré). L'union de ces disques suit le cercle de révélation
-	/// (kRevealRadiusM) au lieu de former des marches d'escalier.
-	/// 0,75 case > demi-diagonale (0,707 case) : deux cases voisines découvertes
-	/// ne laissent aucun trou entre elles.
-	inline constexpr double kDisplayRevealRadiusM = kTileM * 0.75;
+	/// FIX.17 — Lissage d'affichage du voile (carte du monde). Le contour de la
+	/// zone découverte est la courbe de niveau 0,5 d'une moyenne gaussienne
+	/// (écart type kDisplaySmoothSigmaM, voisinage 5 × 5 cases) de l'état
+	/// découvert/caché des cases : un bord lisse et rond au lieu de marches
+	/// d'escalier de 62,5 m. FIX.16 (disque fixe par case) ne faisait qu'arrondir
+	/// les coins de chaque marche.
+	inline constexpr double kDisplaySmoothSigmaM = kTileM;
+	inline constexpr int kDisplaySmoothRadiusTiles = 2;
 
-	/// FIX.16 — Vrai si le point GLOBAL (x, z) est dans le disque d'affichage
-	/// (kDisplayRevealRadiusM) d'au moins une case découverte parmi les 3 × 3
-	/// cases autour de lui. \param tileDiscovered(i, j) indique si la case
-	/// d'indices GLOBAUX (i = floor(x / kTileM), j = floor(z / kTileM)) est
-	/// découverte. Pur (sert au voile de la carte du monde, testé).
+	/// FIX.16 / FIX.17 — Vrai si le point GLOBAL (x, z) est affiché « découvert » :
+	/// moyenne gaussienne pondérée des cases découvertes du voisinage 5 × 5 ≥ 0,5.
+	/// \param tileDiscovered(i, j) indique si la case d'indices GLOBAUX
+	/// (i = floor(x / kTileM), j = floor(z / kTileM)) est découverte. Pur, testé.
 	bool IsPointRevealedSmooth(double x, double z, const std::function<bool(long long, long long)>& tileDiscovered);
 
 	/// Appelle \p fn pour chaque case dont le centre est à moins de \p radiusM du

@@ -203,15 +203,18 @@ namespace engine::world::discovery
 			return false;
 		const long long ci = static_cast<long long>(std::floor(x / kTileM));
 		const long long cj = static_cast<long long>(std::floor(z / kTileM));
-		const double r2 = kDisplayRevealRadiusM * kDisplayRevealRadiusM;
-		for (long long j = cj - 1; j <= cj + 1; ++j)
-			for (long long i = ci - 1; i <= ci + 1; ++i)
+		const double inv2s2 = 1.0 / (2.0 * kDisplaySmoothSigmaM * kDisplaySmoothSigmaM);
+		double found = 0.0, total = 0.0;
+		for (long long j = cj - kDisplaySmoothRadiusTiles; j <= cj + kDisplaySmoothRadiusTiles; ++j)
+			for (long long i = ci - kDisplaySmoothRadiusTiles; i <= ci + kDisplaySmoothRadiusTiles; ++i)
 			{
 				const double dx = (static_cast<double>(i) + 0.5) * kTileM - x;
 				const double dz = (static_cast<double>(j) + 0.5) * kTileM - z;
-				if (dx * dx + dz * dz <= r2 && tileDiscovered(i, j))
-					return true;
+				const double w = std::exp(-(dx * dx + dz * dz) * inv2s2);
+				total += w;
+				if (tileDiscovered(i, j))
+					found += w;
 			}
-		return false;
+		return total > 0.0 && found >= 0.5 * total;
 	}
 }

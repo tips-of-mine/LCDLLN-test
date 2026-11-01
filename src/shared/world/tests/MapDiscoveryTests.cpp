@@ -169,37 +169,37 @@ int main()
 		Check(!up.Assign(std::vector<uint8_t>(1234, 0)), "taille inconnue refusee");
 	}
 
-	// FIX.16 — affichage arrondi : une case découverte dégage un disque de
-	// 0,75 case autour de son centre ; un passage du joueur donne une zone ronde.
+	// FIX.16 / FIX.17 — affichage lissé : la zone d'un passage du joueur est
+	// un disque au bord lisse (courbe de niveau d'une moyenne gaussienne).
 	{
 		std::set<std::pair<long long, long long>> found;
 		auto isFound = [&](long long i, long long j) { return found.count({ i, j }) != 0; };
-		found.insert({ 0, 0 }); // case [0, 125[ x [0, 125[
-		Check(disc::IsPointRevealedSmooth(62.5, 62.5, isFound), "lisse : centre de la case revele");
-		Check(disc::IsPointRevealedSmooth(1.0, 1.0, isFound), "lisse : coin de la case revele (88 m < 94 m)");
-		Check(!disc::IsPointRevealedSmooth(62.5 + 100.0, 62.5, isFound), "lisse : 100 m du centre cache");
 		Check(!disc::IsPointRevealedSmooth(0.0, 0.0, {}), "lisse : sans fonction, rien");
-		// Révélation réelle autour de (0, 0) : la zone affichée est ronde.
-		found.clear();
-		disc::ForEachTileInDisc(0.0, 0.0, disc::kRevealRadiusM, [&](const disc::TileRef& t) {
-			const cells::CellPoint mn = cells::CellMinCorner(t.cell);
-			found.insert({ static_cast<long long>(std::floor(mn.x / disc::kTileM)) + t.tx,
-				static_cast<long long>(std::floor(mn.z / disc::kTileM)) + t.tz });
-		});
-		// Rayon du bord dans 16 directions : écart faible = cercle (un carré
-		// donnerait ~40 % d'écart entre axe et diagonale).
-		double rMin = 1e9, rMax = 0.0;
-		for (int k = 0; k < 16; ++k)
+		Check(!disc::IsPointRevealedSmooth(0.0, 0.0, isFound), "lisse : rien de decouvert, rien d'affiche");
+		const double offsets[3][2] = { { 0.0, 0.0 }, { 31.0, 31.0 }, { 10.0, 50.0 } };
+		for (const auto& o : offsets)
 		{
-			const double a = k * 3.14159265358979 / 8.0;
-			double r = 0.0;
-			while (r < 1000.0 && disc::IsPointRevealedSmooth(std::cos(a) * r, std::sin(a) * r, isFound))
-				r += 2.0;
-			rMin = std::min(rMin, r);
-			rMax = std::max(rMax, r);
+			found.clear();
+			disc::ForEachTileInDisc(o[0], o[1], disc::kRevealRadiusM, [&](const disc::TileRef& t) {
+				const cells::CellPoint mn = cells::CellMinCorner(t.cell);
+				found.insert({ static_cast<long long>(std::floor(mn.x / disc::kTileM)) + t.tx,
+					static_cast<long long>(std::floor(mn.z / disc::kTileM)) + t.tz });
+			});
+			Check(disc::IsPointRevealedSmooth(o[0], o[1], isFound), "lisse : position du joueur affichee");
+			// Rayon du bord dans 48 directions autour du joueur.
+			double rMin = 1e9, rMax = 0.0;
+			for (int k = 0; k < 48; ++k)
+			{
+				const double a = k * 3.14159265358979 / 24.0;
+				double r = 0.0;
+				while (r < 1000.0 && disc::IsPointRevealedSmooth(o[0] + std::cos(a) * r, o[1] + std::sin(a) * r, isFound))
+					r += 1.0;
+				rMin = std::min(rMin, r);
+				rMax = std::max(rMax, r);
+			}
+			Check(rMin > 260.0 && rMax < 340.0, "lisse : bord a ~300 m du joueur");
+			Check(rMax / rMin < 1.16, "lisse : zone affichee circulaire");
 		}
-		Check(rMin > 280.0, "lisse : la zone couvre le rayon de revelation");
-		Check(rMax / rMin < 1.2, "lisse : zone affichee quasi circulaire");
 	}
 
 	if (g_fail == 0) std::printf("map_discovery_tests: OK\n");

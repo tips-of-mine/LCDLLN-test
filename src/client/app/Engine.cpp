@@ -6639,6 +6639,11 @@ namespace engine
 													base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
 													base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
 
+													// EAU.3 — l'eau reflète le vrai ciel (capturé + préfiltré,
+													// suit l'heure et la météo) au lieu du cubemap uni de repli.
+													if (m_pipeline && m_pipeline->GetSpecularPrefilterPass().IsValid())
+														m_waterPass.SetSkyboxCube(m_pipeline->GetSpecularPrefilterPass().GetImageView(),
+															m_pipeline->GetSpecularPrefilterPass().GetSampler());
 													const uint32_t frameIdx = m_currentFrame % 2;
 													m_waterPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 														m_fgSceneColorHDRId, m_fgDepthId, m_fgSceneColorHDRPostWaterId,

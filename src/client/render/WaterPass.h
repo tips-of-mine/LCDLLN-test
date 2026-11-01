@@ -69,6 +69,21 @@ namespace engine::render
 		///                         sont écrasés par Record selon scene.lakes/rivers[paramsIndex].
 		/// \param scene            WaterScene pour récupérer les params per-instance.
 		/// \param frameIndex       0..maxFrames-1.
+		/// EAU.3 — Remplace le cubemap de ciel lu par l'eau (binding 3) : le ciel
+		/// capturé et préfiltré du jeu (reflets réels, lumière ambiante selon
+		/// l'heure). \param view vue CUBE en VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		/// au moment du Record ; VK_NULL_HANDLE = garder le cubemap actuel.
+		/// Pris en compte au prochain Record (descripteurs réécrits à chaque image).
+		/// Main thread (thread de rendu).
+		void SetSkyboxCube(VkImageView view, VkSampler sampler)
+		{
+			if (view != VK_NULL_HANDLE && sampler != VK_NULL_HANDLE)
+			{
+				m_skyboxCubeView = view;
+				m_skyboxSampler  = sampler;
+			}
+		}
+
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
 			VkExtent2D extent,
 			ResourceId idSceneColorIn,

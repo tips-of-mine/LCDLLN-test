@@ -114,6 +114,35 @@ vec3 rippleNormal(vec2 p, vec2 flow, float t, float strength)
     return normalize(vec3((h0 - hx) * strength, 1.0, (h0 - hz) * strength));
 }
 
+// ── EAU.2 — houle de la mer ──────────────────────────────────────────────────
+// Somme de 4 trains de vagues directionnels (longueurs 21, 13, 8 et 5 m) autour
+// de la direction du vent \p dir. Renvoie la pente (dérivées x, z) de la
+// surface et, dans \p crest, un indicateur 0..1 de crête (sommet de vague) qui
+// sert à placer l'écume. Pas de déplacement de géométrie (la nappe de la mer
+// n'a que 4 sommets) : la houle se lit par la lumière, les reflets et l'écume.
+vec2 swellSlope(vec2 p, vec2 dir, float t, out float crest)
+{
+    const float kLen[4]   = float[4](21.0, 13.0, 8.0, 5.0);
+    const float kAmp[4]   = float[4](0.55, 0.30, 0.18, 0.10);
+    const float kAngle[4] = float[4](0.0, 0.45, -0.60, 1.10);
+    vec2 slope = vec2(0.0);
+    float h = 0.0;
+    for (int i = 0; i < 4; ++i)
+    {
+        float a = kAngle[i];
+        vec2 d = normalize(vec2(dir.x * cos(a) - dir.y * sin(a), dir.x * sin(a) + dir.y * cos(a)));
+        float k = 6.2831853 / kLen[i];
+        float c = sqrt(9.81 / k);                 // vitesse de phase (eau profonde)
+        float ph = k * dot(d, p) - k * c * t;
+        // Profil légèrement pointu (crêtes plus étroites que les creux).
+        float s = sin(ph);
+        h += kAmp[i] * (s * 0.5 + 0.5);
+        slope += d * (kAmp[i] * k * cos(ph));
+    }
+    crest = clamp(h / 1.13, 0.0, 1.0);
+    return slope;
+}
+
 void main()
 {
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
@@ -130,10 +159,21 @@ void main()
     if (edge <= 0.001)
         discard;   // entierement occulte (joueur/terrain devant) : rien a dessiner
 
-    // Courant : direction per-vertex (rivière) ou push constant (lac / mer).
-    vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;
-    vec2 flow = flowEff * pc.flowSpeed * pc.timeSeconds;
+    // ── EAU.2 — trois sortes d'eau ───────────────────────────────────────────
+    // Rivière : direction de courant par sommet (vFlowDir).
+    // Mer     : flowSpeed < 0 (convention WaterPass : |flowSpeed| = force de la
+    //           houle, flowDirection = direction du vent).
+    // Lac     : le reste — eau calme, rides légères.
+    bool isRiver = length(vFlowDir) > 0.001;
+    bool isSea   = !isRiver && pc.flowSpeed < -0.001;
     float t = pc.timeSeconds;
+    vec2 flowEff = isRiver ? normalize(vFlowDir) : pc.flowDirection;
+    // Rivière : le motif est entraîné ~2,5 fois plus vite que la vitesse
+    // nominale pour que le courant se lise bien à l'écran.
+    vec2 flow = isRiver ? flowEff * pc.flowSpeed * 2.5 * t : vec2(0.0);
+
+    // Au loin, les détails plus petits qu'un pixel scintilleraient : atténués.
+    float distFade = 1.0 / (1.0 + surfaceDist * 0.025);
 
     // ── Normales : texture (si un jour fournie) + rides procédurales ─────────
     vec2 uv1 = vUv * 8.0  + flow;
@@ -141,13 +181,32 @@ void main()
     vec3 n1 = unpackNormal(texture(u_normalMap, uv1).xyz);
     vec3 n2 = unpackNormal(texture(u_normalMap, uv2).xyz);
     vec3 nTex = normalize(n1 + n2);
-    // Rides plus marquées là où l'eau court (rivière), plus douces sinon.
-    // Atténuées avec la distance : au loin les rides deviennent plus petites
-    // qu'un pixel et scintilleraient (crénelage) au lieu de se fondre.
-    float distFade = 1.0 / (1.0 + surfaceDist * 0.025);
-    float rippleStrength = (0.9 + 1.6 * clamp(pc.flowSpeed, 0.0, 1.0)) * distFade;
-    vec3 nRip = rippleNormal(vWorldPos.xz, flow, t, rippleStrength);
-    vec3 surfaceN = normalize(vec3(nRip.x + nTex.x * 0.5, 1.0, nRip.z + nTex.z * 0.5));
+
+    vec2 ripP = vWorldPos.xz;
+    float rippleStrength = 0.45;                  // lac : presque lisse
+    if (isRiver)
+    {
+        // Rides étirées dans le sens du courant (filets d'eau).
+        vec2 side = vec2(-flowEff.y, flowEff.x);
+        ripP = vec2(dot(vWorldPos.xz, side) * 1.8, dot(vWorldPos.xz, flowEff) * 0.6);
+        flow = vec2(0.0, pc.flowSpeed * 2.5 * t * 0.6);  // même entraînement, repère du courant
+        rippleStrength = 1.6;
+    }
+    else if (isSea)
+        rippleStrength = 0.8;
+    vec3 nRip = rippleNormal(ripP, flow, t, rippleStrength * distFade);
+    vec2 slope = vec2(nRip.x, nRip.z) + nTex.xz * 0.5;
+
+    float crest = 0.0;
+    if (isSea)
+    {
+        // Houle : direction du vent, force = |flowSpeed|.
+        vec2 windDir = length(pc.flowDirection) > 0.001 ? normalize(pc.flowDirection) : vec2(1.0, 0.0);
+        float swellAmp = clamp(-pc.flowSpeed, 0.0, 3.0);
+        vec2 sw = swellSlope(vWorldPos.xz, windDir, t, crest);
+        slope -= sw * swellAmp * mix(0.35, 1.0, distFade);
+    }
+    vec3 surfaceN = normalize(vec3(slope.x, 1.0, slope.y));
 
     vec3 viewDir = normalize(pc.cameraPos - vWorldPos);
     float NdotV  = max(0.0, dot(surfaceN, viewDir));
@@ -185,17 +244,29 @@ void main()
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
     color += vec3(0.05, 0.08, 0.10) * fres;               // lisere clair rasant
 
-    // ── EAU.1 — écume des rivages ────────────────────────────────────────────
-    // Bande blanche là où l'eau est mince (rive), découpée par du bruit et
-    // parcourue de lignes qui « lèchent » la rive (ressac), plus des taches
-    // d'écume entraînées par le courant. Disparaît au-delà d'~1,2 m d'épaisseur.
-    float shore   = 1.0 - smoothstep(0.0, 1.2, waterThickness);
-    float lap     = 0.5 + 0.5 * sin(waterThickness * 9.0 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
-    float breakup = valueNoise((vWorldPos.xz - flow) * 1.7 + vec2(t * 0.05, -t * 0.04));
-    // Au loin, les lignes de ressac (fines) sont remplacées par leur moyenne.
+    // ── Écume (EAU.1, affinée EAU.2) ─────────────────────────────────────────
+    // Rives : bande blanche là où l'eau est mince, découpée par du bruit et
+    // parcourue de lignes de ressac. EAU.2 : bande resserrée (0,7 m au lieu de
+    // 1,2 m) — autour d'un objet plongé dans l'eau (jambes, troncs) l'épaisseur
+    // vue est faible aussi, et l'ancienne bande les peignait en blanc.
+    float shore   = 1.0 - smoothstep(0.0, 0.7, waterThickness);
+    float lap     = 0.5 + 0.5 * sin(waterThickness * 12.0 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
     lap = mix(0.5, lap, distFade);
-    float foam    = shore * smoothstep(0.35, 0.85, lap * 0.6 + breakup * 0.7);
-    foam = max(foam, smoothstep(0.92, 1.0, shore) * 0.85); // liseré continu au ras du bord
+    float breakup = valueNoise((vWorldPos.xz - flowEff * (isRiver ? pc.flowSpeed * 2.5 * t : 0.0)) * 1.7 + vec2(t * 0.05, -t * 0.04));
+    float foam    = shore * smoothstep(0.45, 0.9, lap * 0.6 + breakup * 0.7);
+    foam = max(foam, smoothstep(0.85, 1.0, shore) * 0.7); // liseré au ras du bord (~10 cm)
+    if (isSea)
+    {
+        // Moutons : écume sur les crêtes de la houle, en taches irrégulières.
+        float caps = smoothstep(0.78, 0.95, crest) * smoothstep(0.55, 0.85, valueNoise(vWorldPos.xz * 0.25 + t * 0.1));
+        foam = max(foam, caps * 0.75 * clamp(-pc.flowSpeed, 0.0, 1.5) * distFade);
+    }
+    else if (isRiver)
+    {
+        // Rivière : traînées d'écume légères qui filent avec le courant.
+        float streak = smoothstep(0.72, 0.92, valueNoise((ripP - vec2(0.0, pc.flowSpeed * 2.5 * t * 0.6)) * vec2(0.5, 0.12)));
+        foam = max(foam, streak * 0.35 * distFade);
+    }
     vec3 foamCol  = vec3(0.85, 0.90, 0.92);
     color = mix(color, foamCol, clamp(foam, 0.0, 1.0) * 0.85);
 

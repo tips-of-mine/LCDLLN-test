@@ -27,7 +27,7 @@ namespace engine::render
 		float bottomColor[3];      // offset  80, size 12
 		float turbidity;           // offset  92, size  4
 		float flowDirection[2];    // offset  96, size  8
-		float flowSpeed;           // offset 104, size  4
+		float flowSpeed;           // offset 104, size  4 — EAU.2 : < 0 = mer (|valeur| = force de la houle)
 		float refractionAmount;    // offset 108, size  4
 		float fresnelPower;        // offset 112, size  4
 		float reflectionStrength;  // offset 116, size  4

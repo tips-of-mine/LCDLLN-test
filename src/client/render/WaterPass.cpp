@@ -600,6 +600,9 @@ namespace engine::render
 		constexpr float kRiverDefaultBottomColor[3] = { 0.05f, 0.15f, 0.20f };
 		constexpr float kRiverDefaultTurbidity      = 0.4f;
 		constexpr float kRiverDefaultFlowSpeed      = 0.5f;
+		// EAU.2 — mer : direction du vent dominant (XZ) et force de la houle (0..3).
+		constexpr float kSeaWindDirection[2]        = { 0.8f, 0.6f };
+		constexpr float kSeaSwellStrength           = 1.0f;
 
 		for (const auto& drawInfo : drawInfos)
 		{
@@ -616,6 +619,15 @@ namespace engine::render
 				pc.flowDirection[0]   = 0.0f;
 				pc.flowDirection[1]   = 0.0f;
 				pc.flowSpeed          = 0.0f;   // Lac : pas de flow directionnel
+				if (lake.isOcean)
+				{
+					// EAU.2 — mer : houle et moutons dans water.frag. Convention :
+					// flowSpeed NÉGATIF = mer, |flowSpeed| = force de la houle ;
+					// flowDirection = direction du vent (XZ, normalisée par le shader).
+					pc.flowDirection[0] = kSeaWindDirection[0];
+					pc.flowDirection[1] = kSeaWindDirection[1];
+					pc.flowSpeed        = -kSeaSwellStrength;
+				}
 				pc.refractionAmount   = 0.02f;
 				pc.fresnelPower       = 5.0f;
 				pc.reflectionStrength = 0.5f;

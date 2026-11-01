@@ -231,18 +231,36 @@ void main()
     vec3 deepTint    = vec3(0.010, 0.060, 0.140);         // bleu profond
     float depthMix   = 1.0 - exp(-waterThickness * 0.18); // 0 bord .. 1 large
     vec3 scatterCol  = mix(shallowTint, deepTint, depthMix);
+    // ── EAU.3 — éclairage ambiant du ciel ────────────────────────────────────
+    // u_skybox = ciel capturé et préfiltré (SpecularPrefilterPass), mis à jour
+    // avec l'heure : sa mip la plus floue vers le zénith donne la lumière
+    // ambiante. Sans elle, la couleur d'eau était constante et l'eau
+    // « brillait » turquoise en pleine nuit. Le ciel du jeu vaut ~0,3–0,6 de
+    // luminance le jour : 0,35 sert de référence (lumière 1).
+    float skyMaxLod   = float(textureQueryLevels(u_skybox) - 1);
+    vec3  ambientSky  = textureLod(u_skybox, vec3(0.0, 1.0, 0.0), skyMaxLod).rgb;
+    float ambientLum  = dot(ambientSky, vec3(0.2126, 0.7152, 0.0722));
+    float skyLight    = clamp(ambientLum / 0.35, 0.06, 1.3);
+    scatterCol *= skyLight;
     // Part de diffusion : quasi nulle au bord (eau claire), forte au large.
     float scatterAmt = clamp(1.0 - exp(-waterThickness * 0.55), 0.0, 1.0);
     vec3 color = mix(transmitted, scatterCol, scatterAmt);
 
     // ── Reflets (ciel / SSR), Fresnel ────────────────────────────────────────
+    // EAU.3 : le ciel réel (nuages, soleil, lune, étoiles) se reflète. Un peu
+    // flou (mip 0,6) pour que les rides le brouillent naturellement ; le
+    // disque solaire du ciel (HDR > 1) donne les éclats de soleil sur l'eau.
+    // Les objets proches (arbres, rives) viennent du SSR (scène à l'écran).
     vec3 reflectDir  = reflect(-viewDir, surfaceN);
-    vec3 skyFallback = texture(u_skybox, reflectDir).rgb;
-    vec3 refl = ssrTrace(vWorldPos, reflectDir, skyFallback);
+    reflectDir.y = abs(reflectDir.y);                     // jamais « sous » l'horizon
+    vec3 skyRefl = textureLod(u_skybox, reflectDir, min(0.6, skyMaxLod)).rgb;
+    vec3 refl = ssrTrace(vWorldPos, reflectDir, skyRefl);
     float f = pow(1.0 - NdotV, pc.fresnelPower);
-    color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));
+    // Fresnel de l'eau (F0 ≈ 0,02) : même vue d'aplomb, un léger reflet du ciel.
+    float reflAmt = clamp(0.02 + f * pc.reflectionStrength * 1.6, 0.0, 0.9);
+    color = mix(color, refl, reflAmt);
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
-    color += vec3(0.05, 0.08, 0.10) * fres;               // lisere clair rasant
+    color += vec3(0.05, 0.08, 0.10) * fres * skyLight;    // lisere clair rasant
 
     // ── Écume (EAU.1, affinée EAU.2) ─────────────────────────────────────────
     // Rives : bande blanche là où l'eau est mince, découpée par du bruit et
@@ -267,7 +285,7 @@ void main()
         float streak = smoothstep(0.72, 0.92, valueNoise((ripP - vec2(0.0, pc.flowSpeed * 2.5 * t * 0.6)) * vec2(0.5, 0.12)));
         foam = max(foam, streak * 0.35 * distFade);
     }
-    vec3 foamCol  = vec3(0.85, 0.90, 0.92);
+    vec3 foamCol  = vec3(0.85, 0.90, 0.92) * max(skyLight, 0.08);  // EAU.3 : écume sombre la nuit
     color = mix(color, foamCol, clamp(foam, 0.0, 1.0) * 0.85);
 
     // alpha : bord adouci (fondu vers le fond déjà présent dans PostWater).

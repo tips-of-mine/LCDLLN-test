@@ -68,93 +68,137 @@ vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
     return fallback;
 }
 
+// ── EAU.1 — bruit procédural (houle fine, écume) ─────────────────────────────
+// Les textures d'eau (normalMap) sont encore des 1x1 muettes : la surface
+// recevait des normales plates et l'eau semblait figée. On calcule donc des
+// rides en espace MONDE (motif stable quand la caméra bouge), animées dans le
+// temps et entraînées par le courant des rivières.
+float hash12(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float valueNoise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash12(i);
+    float b = hash12(i + vec2(1.0, 0.0));
+    float c = hash12(i + vec2(0.0, 1.0));
+    float d = hash12(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// Hauteur des rides (sans unité) au point monde p (m) : deux trains de rides
+// croisés + bruit, entraînés par `flow` (m, déjà multiplié par le temps).
+float rippleHeight(vec2 p, vec2 flow, float t)
+{
+    vec2 q = p - flow;
+    float h = 0.0;
+    h += 0.50 * valueNoise(q * 0.35 + vec2(t * 0.11, t * 0.07));
+    h += 0.30 * valueNoise(q * 0.90 - vec2(t * 0.17, -t * 0.13));
+    h += 0.20 * valueNoise(q * 2.10 + vec2(-t * 0.29, t * 0.23));
+    return h;
+}
+
+// Normale des rides par différences finies. \param strength pente (0 = plat).
+vec3 rippleNormal(vec2 p, vec2 flow, float t, float strength)
+{
+    const float e = 0.15;
+    float h0 = rippleHeight(p, flow, t);
+    float hx = rippleHeight(p + vec2(e, 0.0), flow, t);
+    float hz = rippleHeight(p + vec2(0.0, e), flow, t);
+    return normalize(vec3((h0 - hx) * strength, 1.0, (h0 - hz) * strength));
+}
+
 void main()
 {
     vec2 screenUv = gl_FragCoord.xy / pc.screenSize;
 
     // ── Occlusion de profondeur (en espace LINEAIRE / metres) ────────────────
-    // La passe water dessine dans PostWater SANS depth-attachment. On teste donc
-    // MANUELLEMENT la profondeur du fragment d'eau contre la scene opaque
-    // (u_sceneDepth). IMPORTANT : on compare en DISTANCES LINEAIRES (metres) et
-    // non en depth brut [0,1]. Un bias en depth brut etait soit trop petit
-    // (scintillement a distance) soit trop grand (l'eau "bavait" sur la rive et
-    // formait des plaques blanches au loin). En metres, un bias uniforme de
-    // 15 cm regle les deux : la rive (~1 m au-dessus de l'eau) est nettement
-    // rejetee (pas de debordement), et le bruit de precision (qq cm) ne fait
-    // plus clignoter. Si une surface opaque est devant l'eau de plus de 15 cm
-    // (joueur, terrain) -> discard ; le fond du bassin (plus loin) est conserve.
+    // La passe water dessine dans PostWater SANS depth-attachment : on compare
+    // MANUELLEMENT la profondeur du fragment d'eau à la scène opaque, en
+    // distances linéaires (bias métrique stable, cf. historique).
     float occluderDepth  = texture(u_sceneDepth, screenUv).r;
     float surfaceDist    = linearizeDepth(gl_FragCoord.z);   // distance camera->surface eau
     float bottomDist     = linearizeDepth(occluderDepth);    // distance camera->fond opaque
-    // Bord ADOUCI (anti-crawl TAA) : au lieu d'un discard BINAIRE (un bord franc
-    // d'1 px qui "rampe" sous le TAA quand la camera bouge -> sensation que l'eau
-    // bouge / "collision"), on fait varier une opacite de bord sur une bande
-    // metrique de ~0.20 m. edge=0 quand un opaque est nettement devant l'eau
-    // (occulte), edge=1 quand le fond est derriere (eau pleine). Le degrade donne
-    // au TAA de quoi anti-creneler proprement -> bord stable.
+    // Bord ADOUCI (anti-crawl TAA) sur ~0.20 m.
     float edge = smoothstep(surfaceDist - 0.20, surfaceDist - 0.02, bottomDist);
     if (edge <= 0.001)
         discard;   // entierement occulte (joueur/terrain devant) : rien a dessiner
 
-    // Flow effective : prend la direction per-vertex (rivière) ou le push constant (lac).
+    // Courant : direction per-vertex (rivière) ou push constant (lac / mer).
     vec2 flowEff = (length(vFlowDir) > 0.001) ? vFlowDir : pc.flowDirection;
     vec2 flow = flowEff * pc.flowSpeed * pc.timeSeconds;
+    float t = pc.timeSeconds;
 
+    // ── Normales : texture (si un jour fournie) + rides procédurales ─────────
     vec2 uv1 = vUv * 8.0  + flow;
     vec2 uv2 = vUv * 16.0 - flow * 0.5;
     vec3 n1 = unpackNormal(texture(u_normalMap, uv1).xyz);
     vec3 n2 = unpackNormal(texture(u_normalMap, uv2).xyz);
-    vec3 n  = normalize(n1 + n2);
+    vec3 nTex = normalize(n1 + n2);
+    // Rides plus marquées là où l'eau court (rivière), plus douces sinon.
+    // Atténuées avec la distance : au loin les rides deviennent plus petites
+    // qu'un pixel et scintilleraient (crénelage) au lieu de se fondre.
+    float distFade = 1.0 / (1.0 + surfaceDist * 0.025);
+    float rippleStrength = (0.9 + 1.6 * clamp(pc.flowSpeed, 0.0, 1.0)) * distFade;
+    vec3 nRip = rippleNormal(vWorldPos.xz, flow, t, rippleStrength);
+    vec3 surfaceN = normalize(vec3(nRip.x + nTex.x * 0.5, 1.0, nRip.z + nTex.z * 0.5));
 
-    vec2 refrUv   = clamp(screenUv + n.xz * pc.refractionAmount, vec2(0.0), vec2(1.0));
-    vec3 refr     = texture(u_sceneColor, refrUv).rgb;
-    refr          = mix(refr, pc.bottomColor, pc.turbidity);
+    vec3 viewDir = normalize(pc.cameraPos - vWorldPos);
+    float NdotV  = max(0.0, dot(surfaceN, viewDir));
 
-    vec3 viewDir    = normalize(pc.cameraPos - vWorldPos);
-    vec3 surfaceN   = normalize(vec3(n.x, 1.0, n.z));
-    vec3 reflectDir = reflect(-viewDir, surfaceN);
+    // ── Épaisseur de la colonne d'eau traversée (m) ──────────────────────────
+    float waterThickness = max(0.0, bottomDist - surfaceDist);
+
+    // ── Réfraction : le fond vu à travers l'eau, déformé par les rides ───────
+    // Déformation atténuée près du bord (sinon le sable de la rive « nage »).
+    float refrScale = pc.refractionAmount * clamp(waterThickness * 0.8, 0.0, 1.0);
+    vec2 refrUv = clamp(screenUv + surfaceN.xz * refrScale, vec2(0.0), vec2(1.0));
+    vec3 refr   = texture(u_sceneColor, refrUv).rgb;
+    refr        = mix(refr, pc.bottomColor, pc.turbidity * 0.5);
+
+    // ── EAU.1 — couleur selon la profondeur (aspect « Valheim ») ─────────────
+    // Absorption de Beer-Lambert PAR CANAL : le rouge disparaît en premier,
+    // puis le vert ; l'eau peu profonde laisse voir le fond teinté turquoise,
+    // l'eau profonde tourne au bleu sombre. Valeurs LINÉAIRES (tonemap après).
+    vec3 absorb      = vec3(0.45, 0.10, 0.07);            // par mètre
+    vec3 transmitted = refr * exp(-absorb * waterThickness);
+    vec3 shallowTint = vec3(0.04, 0.32, 0.34);            // turquoise (lagon)
+    vec3 deepTint    = vec3(0.010, 0.060, 0.140);         // bleu profond
+    float depthMix   = 1.0 - exp(-waterThickness * 0.18); // 0 bord .. 1 large
+    vec3 scatterCol  = mix(shallowTint, deepTint, depthMix);
+    // Part de diffusion : quasi nulle au bord (eau claire), forte au large.
+    float scatterAmt = clamp(1.0 - exp(-waterThickness * 0.55), 0.0, 1.0);
+    vec3 color = mix(transmitted, scatterCol, scatterAmt);
+
+    // ── Reflets (ciel / SSR), Fresnel ────────────────────────────────────────
+    vec3 reflectDir  = reflect(-viewDir, surfaceN);
     vec3 skyFallback = texture(u_skybox, reflectDir).rgb;
     vec3 refl = ssrTrace(vWorldPos, reflectDir, skyFallback);
-
-    float NdotV = max(0.0, dot(surfaceN, viewDir));
     float f = pow(1.0 - NdotV, pc.fresnelPower);
-
-    // ── Couleur d'eau GARANTIE visible ───────────────────────────────────────
-    // Les textures (normalMap/skybox) sont muettes (1x1) et reflectionStrength
-    // peut valoir 0 : on ne peut donc PAS compter sur le SSR/reflet pour rendre
-    // l'eau visible (sinon la nappe est quasi transparente = invisible). On
-    // impose une couleur d'eau bleu-vert nette, melangee a la refraction
-    // (garde un peu de transparence/profondeur), avec un lisere de Fresnel clair
-    // pour la brillance de surface. La nappe se lit ainsi toujours comme de l'eau.
+    color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
-    // Couleur cible demandee : bleu ocean moyen (~#1E6FA0). Valeurs LINEAIRES
-    // (la sortie passe par tonemap+exposition). deep = vu d'aplomb, shallow =
-    // angle rasant (legerement plus clair).
-    vec3 deepWater    = vec3(0.02, 0.17, 0.37);
-    vec3 shallowWater = vec3(0.05, 0.26, 0.47);
-    vec3 waterBody    = mix(deepWater, shallowWater, fres);
+    color += vec3(0.05, 0.08, 0.10) * fres;               // lisere clair rasant
 
-    // ── Opacite selon la profondeur (transparence du dessus) ─────────────────
-    // Epaisseur de la colonne d'eau traversee par le rayon = distance lineaire
-    // entre le FOND (u_sceneDepth, deja echantillonne plus haut) et la SURFACE
-    // (gl_FragCoord.z). Loi de Beer-Lambert : fin -> transparent (on voit le
-    // fond sableux via la refraction), epais -> bleu opaque (le fond disparait).
-    // L'epaisseur augmente avec la profondeur ET avec l'angle rasant : un joueur
-    // exterieur voit donc le fond pres du bord, mais plus du tout vers le centre.
-    // (surfaceDist / bottomDist deja calcules pour l'occlusion ci-dessus.)
-    float waterThickness = max(0.0, bottomDist - surfaceDist);          // metres approx
-    float beer    = 1.0 - exp(-waterThickness * 0.28);                  // 0 (fin) .. 1 (epais)
-    // Opacite ELEVEE : le corps de l'eau doit LIRE la couleur cible (bleu ocean),
-    // pas se deteindre vers le fond sableux clair. min 0.80 -> meme en eau peu
-    // profonde l'eau est franchement bleue ; max 0.99 au centre/profond. (Le bord
-    // reste adouci via l'alpha 'edge' calcule plus haut, independamment.)
-    float opacity = mix(0.80, 0.99, beer);
+    // ── EAU.1 — écume des rivages ────────────────────────────────────────────
+    // Bande blanche là où l'eau est mince (rive), découpée par du bruit et
+    // parcourue de lignes qui « lèchent » la rive (ressac), plus des taches
+    // d'écume entraînées par le courant. Disparaît au-delà d'~1,2 m d'épaisseur.
+    float shore   = 1.0 - smoothstep(0.0, 1.2, waterThickness);
+    float lap     = 0.5 + 0.5 * sin(waterThickness * 9.0 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
+    float breakup = valueNoise((vWorldPos.xz - flow) * 1.7 + vec2(t * 0.05, -t * 0.04));
+    // Au loin, les lignes de ressac (fines) sont remplacées par leur moyenne.
+    lap = mix(0.5, lap, distFade);
+    float foam    = shore * smoothstep(0.35, 0.85, lap * 0.6 + breakup * 0.7);
+    foam = max(foam, smoothstep(0.92, 1.0, shore) * 0.85); // liseré continu au ras du bord
+    vec3 foamCol  = vec3(0.85, 0.90, 0.92);
+    color = mix(color, foamCol, clamp(foam, 0.0, 1.0) * 0.85);
 
-    vec3 color = mix(refr, waterBody, opacity);                              // fond <-> eau selon profondeur
-    color = mix(color, refl, clamp(f * pc.reflectionStrength, 0.0, 1.0));    // reflet si dispo
-    color += vec3(0.06, 0.09, 0.12) * fres;                                  // sheen discret (etait
-                                                                             // 0.20,0.26,0.32 -> blanc)
-    // alpha = edge : bord de l'eau adouci (fondu vers le fond deja present dans
-    // PostWater) -> plus de crawl TAA. Interieur : edge=1 -> opaque (inchange).
+    // alpha : bord adouci (fondu vers le fond déjà présent dans PostWater).
     fragColor = vec4(color, edge);
 }

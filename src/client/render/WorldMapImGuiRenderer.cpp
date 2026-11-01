@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -191,18 +192,79 @@ namespace engine::render
 					}
 					if (bm == nullptr)
 						continue;
-					// Cellule visitée : séries de cases non découvertes, rangée par rangée.
+					// Cellule visitée. FIX.16 — une case découverte dégage à l'écran un
+					// DISQUE (dsc::kDisplayRevealRadiusM) et non un carré : la zone
+					// explorée a la forme ronde du champ de vision. Concrètement :
+					//  - case découverte : entièrement visible (son disque couvre ses coins) ;
+					//  - case cachée sans voisine découverte : voilée en entier (séries) ;
+					//  - case cachée au bord d'une zone découverte : subdivisée en
+					//    sous-cases voilées une à une selon IsPointRevealedSmooth.
+					// En vue très large (case < 6 px), le contour carré est invisible :
+					// on garde le voile par cases, moins coûteux.
 					const cells::CellPoint mn = cells::CellMinCorner(c);
-					for (int tz = 0; tz < dsc::kTilesPerSide; ++tz)
+					const double T = dsc::kTileM;
+					const long long gi0 = static_cast<long long>(std::llround(mn.x / T));
+					const long long gj0 = static_cast<long long>(std::llround(mn.z / T));
+					const float pxPerTile = std::fabs(worldToScreen(static_cast<float>(mn.x + T), static_cast<float>(mn.z)).x
+						- worldToScreen(static_cast<float>(mn.x), static_cast<float>(mn.z)).x);
+					// Case GLOBALE (i, j) découverte ? (peut tomber dans une cellule voisine)
+					auto tileFound = [&](long long i, long long j) -> bool {
+						const long long li = i - gi0, lj = j - gj0;
+						if (li >= 0 && lj >= 0 && li < dsc::kTilesPerSide && lj < dsc::kTilesPerSide)
+							return bm->Get(static_cast<int>(li), static_cast<int>(lj));
+						const dsc::TileRef t = dsc::TileAt((static_cast<double>(i) + 0.5) * T, (static_cast<double>(j) + 0.5) * T);
+						const dsc::CellBitmap* nb = disc.Find(t.cell);
+						return nb != nullptr && nb->Get(t.tx, t.tz);
+					};
+					auto nearFound = [&](long long i, long long j) -> bool {
+						for (long long dj = -1; dj <= 1; ++dj)
+							for (long long di = -1; di <= 1; ++di)
+								if ((di != 0 || dj != 0) && tileFound(i + di, j + dj))
+									return true;
+						return false;
+					};
+					const bool smooth = pxPerTile >= 6.0f;
+					const int sub = std::clamp(static_cast<int>(pxPerTile / 4.0f), 2, 12);
+					const double subM = T / sub;
+					// Cases de la cellule recoupant la vue (le reste est hors écran).
+					const double vx0 = std::min(wx0, wx1), vx1 = std::max(wx0, wx1);
+					const double vz0 = std::min(wz0, wz1), vz1 = std::max(wz0, wz1);
+					const int tx0 = std::clamp(static_cast<int>(std::floor((vx0 - mn.x) / T)), 0, dsc::kTilesPerSide - 1);
+					const int tx1 = std::clamp(static_cast<int>(std::floor((vx1 - mn.x) / T)), 0, dsc::kTilesPerSide - 1);
+					const int tz0 = std::clamp(static_cast<int>(std::floor((vz0 - mn.z) / T)), 0, dsc::kTilesPerSide - 1);
+					const int tz1 = std::clamp(static_cast<int>(std::floor((vz1 - mn.z) / T)), 0, dsc::kTilesPerSide - 1);
+					for (int tz = tz0; tz <= tz1; ++tz)
 					{
-						int tx = 0;
-						while (tx < dsc::kTilesPerSide)
+						int tx = tx0;
+						while (tx <= tx1)
 						{
 							if (bm->Get(tx, tz)) { ++tx; continue; }
+							const long long gi = gi0 + tx, gj = gj0 + tz;
+							if (smooth && nearFound(gi, gj))
+							{
+								// Case de bord : sous-cases voilées par séries horizontales.
+								const std::function<bool(long long, long long)> found = tileFound;
+								for (int sz = 0; sz < sub; ++sz)
+								{
+									const double z = mn.z + tz * T + (sz + 0.5) * subM;
+									int sx = 0;
+									while (sx < sub)
+									{
+										const double x = mn.x + tx * T + (sx + 0.5) * subM;
+										if (dsc::IsPointRevealedSmooth(x, z, found)) { ++sx; continue; }
+										const int s0 = sx;
+										while (sx < sub && !dsc::IsPointRevealedSmooth(mn.x + tx * T + (sx + 0.5) * subM, z, found)) ++sx;
+										rect(mn.x + tx * T + s0 * subM, mn.z + tz * T + sz * subM,
+											mn.x + tx * T + sx * subM, mn.z + tz * T + (sz + 1) * subM);
+									}
+								}
+								++tx;
+								continue;
+							}
+							// Série de cases entièrement voilées.
 							const int start = tx;
-							while (tx < dsc::kTilesPerSide && !bm->Get(tx, tz)) ++tx;
-							rect(mn.x + start * dsc::kTileM, mn.z + tz * dsc::kTileM,
-								mn.x + tx * dsc::kTileM, mn.z + (tz + 1) * dsc::kTileM);
+							while (tx <= tx1 && !bm->Get(tx, tz) && !(smooth && nearFound(gi0 + tx, gj))) ++tx;
+							rect(mn.x + start * T, mn.z + tz * T, mn.x + tx * T, mn.z + (tz + 1) * T);
 						}
 					}
 				}

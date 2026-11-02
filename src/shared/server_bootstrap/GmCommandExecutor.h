@@ -266,6 +266,8 @@ namespace engine::server
 		/// Archétypes désignés par numéro ou nom (sans casse ni accents).
 		std::vector<const CreatureArchetype*> FindArchetypes(std::string_view query, size_t maxResults) const;
 		/// Mob ciblé par l'appelant (nullptr + message sinon).
+		/// ADM.6 — refuse (réponse d'échec) si la hauteur de l'appelant est inconnue.
+		bool ActorHeightUnknown();
 		MobEntity* TargetMob();
 		void CmdNpc();        ///< /npc add|delete|move|info
 		void CmdNpcSearch();  ///< /npcsearch <mot|n°>

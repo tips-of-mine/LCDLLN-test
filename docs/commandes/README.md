@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md), [ADM.7](ADM.7_quetes_evenements.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md), [ADM.7](ADM.7_quetes_evenements.md), [ADM.8](ADM.8_moderation.md)
 
 ## Aide et outils
 
@@ -121,6 +121,15 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 
 | Commande | Alias | Rôle | Syntaxe | Description |
 |---|---|---|---|---|
+| `/unmute` |  | modérateur | `/unmute <joueur\|login>` | Lever la sanction de chat d'un joueur. |
+| `/mutes` |  | modérateur | `/mutes` | Sanctions de chat en cours. |
+| `/unban` |  | admin | `/unban <login>` | Réactiver un compte banni. |
+| `/bans` |  | modérateur | `/bans [mot]` | Comptes bannis ou verrouillés. |
+| `/warn` |  | modérateur | `/warn <joueur> <message>` | Avertissement officiel à un joueur. |
+| `/history` |  | modérateur | `/history <joueur\|login> [nombre]` | Historique de modération d'un joueur. |
+| `/notify` |  | MJ | `/notify <message>` | Annonce système à tous les joueurs connectés. |
+| `/gmw` | `/gmwhisper` | modérateur | `/gmw <joueur> <message>` | Message direct de l'équipe à un joueur. |
+| `/csr` |  | admin | `/csr <joueur> <commande> [arguments]` | Exécuter une commande du shard pour le compte d'un joueur. |
 | `/kick <player>` |  | modérateur | `/kick <player>` | Force-disconnect a player from the server. |
 | `/ban <player> <reason>` |  | MJ | `/ban <player> <reason>` | Ban a player account from the server. |
 | `/mute <player> <duration>` |  | modérateur | `/mute <player> <duration>` | Mute a player in chat for a duration. |

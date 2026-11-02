@@ -117,6 +117,7 @@ namespace engine::server
 		// d'une entrée "shard_command" pour y ajouter des informations (ex. /info).
 		RegisterInformation();
 		RegisterCharacter();
+		RegisterModeration();
 		InstallAuditSink();
 		LOG_INFO(Net, "[MasterGmCommands] ADM.0 commandes de jeu enregistrées ({} entrées dans le registre)",
 			m_s.registry->Size());

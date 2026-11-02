@@ -208,4 +208,58 @@ namespace engine::network
 	/// ETAPE5.6 — « courrier à créditer » pour \p characterId (kOpcodeMasterToShardMailboxPoke).
 	std::vector<uint8_t> BuildMailboxPokePacket(uint64_t characterId);
 	std::optional<uint64_t> ParseMailboxPokePayload(const uint8_t* payload, size_t payloadSize);
+
+	// =====================================================================
+	// ADM.0 — commandes de jeu (MJ) relayées du master au shard de l'acteur.
+	// Le master vérifie le rôle (slash_commands.json) puis envoie 216 au shard qui
+	// héberge le personnage de l'appelant ; le shard exécute au tick et répond 217
+	// (lignes de texte renvoyées dans le chat de l'appelant).
+	// =====================================================================
+
+	/// Statut d'exécution d'une commande relayée (kOpcodeShardToMasterGmCommandResult).
+	enum class GmCommandStatus : uint8_t
+	{
+		Ok = 0,          ///< exécutée.
+		Usage = 1,       ///< arguments invalides (les lignes donnent la syntaxe).
+		NotFound = 2,    ///< cible introuvable (joueur hors ligne, lieu, objet…).
+		Denied = 3,      ///< rôle insuffisant (double contrôle du shard) ou cible protégée.
+		Unknown = 4,     ///< commande inconnue de ce shard (binaire plus ancien que le master).
+		Unavailable = 5, ///< fonction indisponible (base absente, système non chargé…).
+		Failed = 6,      ///< erreur pendant l'exécution.
+	};
+
+	/// Bornes du wire (le paquet complet reste sous kProtocolV1MaxPacketSize).
+	inline constexpr size_t kGmCommandMaxNameBytes = 32u;
+	inline constexpr size_t kGmCommandMaxArgsBytes = 512u;
+	inline constexpr size_t kGmCommandMaxActorNameBytes = 64u;
+	inline constexpr size_t kGmCommandMaxLines = 48u;
+	inline constexpr size_t kGmCommandMaxLineBytes = 300u;
+	inline constexpr size_t kGmCommandMaxResultBytes = 14000u;
+
+	/// ADM.0 — demande d'exécution (kOpcodeMasterToShardGmCommand).
+	struct GmCommandRequestPayload
+	{
+		uint64_t requestId = 0;         ///< attribué par le master (corrélation de la réponse).
+		uint64_t actorAccountId = 0;    ///< compte qui a tapé la commande (réponse, audit).
+		uint64_t actorCharacterId = 0;  ///< personnage sur lequel la commande agit par défaut.
+		uint8_t actorRole = 0;          ///< engine::server::AccountRole de l'appelant.
+		std::string actorName;          ///< nom affiché de l'appelant (messages aux cibles).
+		std::string command;            ///< nom canonique, minuscules, sans « / » (ex. « tp »).
+		std::string args;               ///< texte après la commande.
+	};
+	std::vector<uint8_t> BuildMasterToShardGmCommandPacket(const GmCommandRequestPayload& p);
+	std::optional<GmCommandRequestPayload> ParseGmCommandRequestPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// ADM.0 — résultat (kOpcodeShardToMasterGmCommandResult).
+	struct GmCommandResultPayload
+	{
+		uint64_t requestId = 0;
+		uint64_t actorAccountId = 0;
+		uint8_t status = 0;             ///< GmCommandStatus.
+		std::vector<std::string> lines; ///< texte à afficher à l'appelant (≤ kGmCommandMaxLines).
+	};
+	/// Les lignes au-delà des bornes (nombre, taille unitaire, total) sont tronquées ;
+	/// une dernière ligne « … (réponse tronquée) » le signale.
+	std::vector<uint8_t> BuildShardToMasterGmCommandResultPacket(const GmCommandResultPayload& p);
+	std::optional<GmCommandResultPayload> ParseGmCommandResultPayload(const uint8_t* payload, size_t payloadSize);
 }

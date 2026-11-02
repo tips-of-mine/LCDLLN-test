@@ -7,9 +7,12 @@
     "client_only_legacy": "Command intercepts client-side, no rbac, no server log -- to refactor",
     "server_routed": "Command routed via ChatCommandRouter (master)",
     "shardd_routed": "Command parsed by shardd ChatCommandParser",
-    "planned": "Designed but not yet implemented"
+    "planned": "Designed but not yet implemented",
+    "server_route": "Command executed by the master (ChatCommandRouter, MasterGmCommands)",
+    "shard_command": "ADM.0 : role checked by the master, executed by the shard hosting the caller's character (opcodes 216/217)"
   },
   "categories": {
+    "core": "ADM.0 : help, search and audit tools",
     "ui_panel": "Toggle a UI panel (visual only, no state change)",
     "social": "Social actions (friends, ignore, who, report)",
     "gameplay": "Gameplay actions (trade, loot, group)",
@@ -18,6 +21,62 @@
     "admin": "System admin (server reload, dump, etc.)"
   },
   "commands": [
+    {
+      "command": "/help",
+      "aliases": ["/commands", "/aide", "/?"],
+      "description": "Liste paginée des commandes accessibles à votre rôle (15 par page).",
+      "usage": "/help [page] | /help <commande> | /help <catégorie> [page]",
+      "help": "Sans argument : page 1 de la liste. Un numéro affiche la page voulue. Un nom de commande (avec ou sans « / ») affiche sa fiche : syntaxe, explication, exemple, rôle minimum et alias. Un nom de catégorie (movement, information, character, items, appearance, world, quests, moderation, server…) liste seulement cette catégorie.",
+      "example": "/help 2",
+      "category": "core",
+      "minRole": "player",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmCommands.cpp"
+    },
+    {
+      "command": "/search",
+      "aliases": ["/apropos"],
+      "description": "Cherche une commande par mot-clé (nom, alias, description).",
+      "usage": "/search <mot>",
+      "help": "Affiche les commandes accessibles à votre rôle dont le nom, un alias, la description ou l'aide contient le mot (sans tenir compte des majuscules). Au plus 30 résultats.",
+      "example": "/search teleport",
+      "category": "core",
+      "minRole": "player",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmCommands.cpp"
+    },
+    {
+      "command": "/gmaudit",
+      "aliases": [],
+      "description": "Journal des dernières commandes réservées (audit).",
+      "usage": "/gmaudit [nombre] [login|cible]",
+      "help": "Affiche les dernières commandes de modérateur, de maître de jeu ou d'administrateur exécutées, ainsi que les refus faute de rôle (table gm_command_audit). Nombre : 1 à 50 (15 par défaut). Un login ou un nom de personnage filtre sur l'appelant ou sur la cible.",
+      "example": "/gmaudit 20 thedjinhn",
+      "category": "core",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmCommands.cpp"
+    },
+    {
+      "command": "/shardinfo",
+      "aliases": [],
+      "description": "État du shard de votre personnage (joueurs, mobs, charge).",
+      "usage": "/shardinfo",
+      "help": "Interroge le shard qui héberge votre personnage : nombre de joueurs, de mobs et de sacs de butin, spawners actifs, cadence et numéro du tick, temps de fonctionnement, charge lissée et délestage éventuel.",
+      "example": "/shardinfo",
+      "category": "core",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGm.cpp"
+    },
     {
       "command": "/mail",
       "aliases": [],
@@ -481,18 +540,6 @@
       "notes": "Commande admin horloge monde : le master appelle WorldClockHandler::SetTimeScale qui borne [1,1440] et broadcast 205. Hors bornes ou argument non numerique -> InvalidArgs."
     },
     {
-      "command": "/help [commande]",
-      "aliases": ["/commands", "/aide"],
-      "description": "Liste les commandes accessibles a VOTRE role (groupees par categorie) ; /help /commande donne le detail (description, role minimum, alias).",
-      "category": "ui_panel",
-      "minRole": "player",
-      "serverInteraction": true,
-      "serverLogged": true,
-      "status": "server_routed",
-      "implementation_file": "src/masterd/main_linux.cpp",
-      "notes": "Console 2026-07-18 : dispatch via ChatCommandRouter (master), liste construite depuis CE fichier (SlashCommandRegistry::Entries) filtree par le role de l'appelant ; les entrees status=planned sont omises. Reponses en notices system."
-    },
-    {
       "command": "/time",
       "aliases": [],
       "description": "Affiche la date et l'heure du serveur (UTC).",
@@ -540,5 +587,16 @@
       "implementation_file": "src/masterd/main_linux.cpp",
       "notes": "ETAPE2.6 : pose une demande dans character_restore_requests ; le master n'écrit pas l'état du personnage. Le niveau de l'instantané est restauré."
     }
-  ]
+  ],
+  "_fields": {
+    "command": "Canonical name, no placeholders (\"/tp\")",
+    "aliases": "Other names accepted by the master",
+    "description": "Short French description shown in /help lists",
+    "usage": "ADM.0 : full syntax shown by /help <command> (forms separated by |)",
+    "help": "ADM.0 : detailed French explanation (parameters, units, side effects)",
+    "example": "ADM.0 : ready-to-type example",
+    "category": "Key of the categories map",
+    "minRole": "player < moderator < game_master < administrator",
+    "status": "See _status_legend"
+  }
 }

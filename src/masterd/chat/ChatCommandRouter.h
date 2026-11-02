@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -36,12 +37,33 @@ namespace engine::server::chat
 	/// le nom de la commande, déjà trimé (espaces de début/fin retirés).
 	using CommandHandlerFn = std::function<void(uint64_t accountId, std::string_view args)>;
 
+	/// ADM.0 — contexte complet d'un appel de commande (connexion comprise : les
+	/// réponses repartent sur la connexion de l'appelant, sans balayer les sessions).
+	struct CommandCallContext
+	{
+		uint64_t    accountId = 0;
+		AccountRole role = AccountRole::Player;
+		uint32_t    connId = 0;      ///< connexion TCP master de l'appelant (0 = inconnue).
+		uint64_t    sessionId = 0;   ///< session de l'appelant (en-tête du paquet reçu).
+		std::string command;         ///< nom tapé, normalisé (minuscules, sans « / »).
+		AccountRole minRole = AccountRole::Player; ///< rôle minimum de la commande appelée.
+	};
+
+	/// ADM.0 — handler recevant le contexte complet (préféré pour les nouvelles commandes).
+	using CommandHandlerExFn = std::function<void(const CommandCallContext& ctx, std::string_view args)>;
+
+	/// ADM.0 — rappel d'audit : appelé après chaque commande connue (exécutée ou refusée
+	/// faute de rôle). \p result vaut Dispatched ou InsufficientRole.
+	using CommandAuditFn = std::function<void(const CommandCallContext& ctx, std::string_view args,
+		CommandDispatchResult result)>;
+
 	/// Entry de la table interne. minRole inclus : un GM peut appeler une
 	/// commande de minRole=Moderator (cf. RequireMinRole).
 	struct CommandEntry
 	{
 		AccountRole       minRole;
 		CommandHandlerFn  handler;
+		CommandHandlerExFn handlerEx; ///< ADM.0 — prioritaire sur \ref handler s'il est défini.
 	};
 
 	class ChatCommandRouter
@@ -54,6 +76,17 @@ namespace engine::server::chat
 		/// ASCII pour matcher case-insensitive. Idempotent : un appel
 		/// avec le même nom remplace l'entry précédente.
 		void Register(std::string_view name, AccountRole minRole, CommandHandlerFn handler);
+
+		/// ADM.0 — comme Register, avec un handler recevant le contexte complet
+		/// (connexion, session, rôle, nom normalisé). Même règle de remplacement.
+		void RegisterEx(std::string_view name, AccountRole minRole, CommandHandlerExFn handler);
+
+		/// ADM.0 — branche le rappel d'audit (nullptr = aucun). Appelé de façon
+		/// synchrone dans Dispatch, après le handler.
+		void SetAuditSink(CommandAuditFn sink) { m_audit = std::move(sink); }
+
+		/// ADM.0 — rôle minimum d'une commande enregistrée (nullopt si inconnue).
+		std::optional<AccountRole> MinRoleOf(std::string_view name) const;
 
 		/// Désinscrit une commande. Idempotent : no-op si pas trouvée.
 		void Unregister(std::string_view name);
@@ -74,9 +107,12 @@ namespace engine::server::chat
 		/// \param outName    Optionnel : reçoit le nom de la commande
 		///                   parsée (lower-case, sans le '/'). Pratique
 		///                   pour log et audit du caller.
+		/// \param connId     ADM.0 — connexion de l'appelant (transmise au contexte).
+		/// \param sessionId  ADM.0 — session de l'appelant (transmise au contexte).
 		CommandDispatchResult Dispatch(std::string_view text,
 			uint64_t accountId, AccountRole role,
-			std::string* outName = nullptr) const;
+			std::string* outName = nullptr,
+			uint32_t connId = 0, uint64_t sessionId = 0) const;
 
 		/// Retourne true si une commande est enregistrée (case-insensitive).
 		bool IsRegistered(std::string_view name) const;
@@ -89,5 +125,6 @@ namespace engine::server::chat
 		static std::string Normalize(std::string_view name);
 
 		std::unordered_map<std::string, CommandEntry> m_table;
+		CommandAuditFn m_audit; ///< ADM.0
 	};
 }

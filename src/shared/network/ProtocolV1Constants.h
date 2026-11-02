@@ -887,4 +887,14 @@ namespace engine::network
 	constexpr uint16_t kOpcodeMasterToShardMailDebit    = 213u; ///< Master to Shard (push) : (string operationId, u64 characterId, u64 gold).
 	constexpr uint16_t kOpcodeShardToMasterMailDebitResult = 214u; ///< Shard to Master : (string operationId, u8 MailDebitResult).
 	constexpr uint16_t kOpcodeMasterToShardMailboxPoke  = 215u; ///< Master to Shard (push) : (u64 characterId) — courrier à créditer.
+
+	// =====================================================================
+	// ADM.0 — commandes de jeu (MJ) exécutées par le shard. Le master contrôle le
+	// rôle de l'appelant (slash_commands.json, entrées "shard_command") puis relaie
+	// la commande au shard qui héberge son personnage (216) ; le shard l'exécute au
+	// tick et renvoie les lignes à afficher (217, connexion authentifiée par le
+	// registre des shards). Rétro-additif ; déploiement lock-step master + shard.
+	// =====================================================================
+	constexpr uint16_t kOpcodeMasterToShardGmCommand       = 216u; ///< Master to Shard (push) : GmCommandRequestPayload.
+	constexpr uint16_t kOpcodeShardToMasterGmCommandResult = 217u; ///< Shard to Master : GmCommandResultPayload.
 }

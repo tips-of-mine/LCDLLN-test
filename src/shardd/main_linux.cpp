@@ -313,6 +313,11 @@ int main(int argc, char** argv)
 	toMaster.SetMailboxPokeCallback([&gameplayApp](uint64_t characterId) {
 		gameplayApp.EnqueueMailboxPoke(characterId);
 	});
+	// ADM.0 — commandes de jeu (MJ) relayées par le master (216) : exécutées au tick par
+	// gameplayApp ; les résultats (217) repartent par la boucle principale.
+	toMaster.SetGmCommandCallback([&gameplayApp](const engine::network::GmCommandRequestPayload& request) {
+		gameplayApp.EnqueueGmCommand(request);
+	});
 	// TA.4 : pont position — pool MySQL (meme base que le master, cles db.* du config).
 	// Injecte dans ServerApp pour lire characters.spawn_x/y/z au HandleHello. DB non
 	// configuree => Init false => spawn depuis le fichier (pont inactif, non bloquant).
@@ -509,6 +514,13 @@ int main(int argc, char** argv)
 			const auto packet = engine::network::BuildMailDebitResultPacket(reply);
 			if (packet.empty() || !toMaster.SendPacketToMaster(packet))
 				LOG_WARN(Net, "[ShardMain] ETAPE5.6 réponse au master non envoyée (le master annulera au délai)");
+		}
+		// ADM.0 — résultats des commandes MJ vers le master (affichés dans le chat de l'appelant).
+		for (const auto& result : gameplayApp.TakeGmCommandResults())
+		{
+			const auto packet = engine::network::BuildShardToMasterGmCommandResultPacket(result);
+			if (packet.empty() || !toMaster.SendPacketToMaster(packet))
+				LOG_WARN(Net, "[ShardMain] ADM.0 résultat de commande MJ non envoyé (request_id={})", result.requestId);
 		}
 
 		// Wave 6 — Tick EventAI (1Hz). Convertit steady_clock en wall-clock

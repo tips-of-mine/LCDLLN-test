@@ -22,7 +22,8 @@
     "movement": "ADM.1 : teleport, speed, flight, freeze",
     "information": "ADM.2 : position, players, server state",
     "character": "ADM.3 : level, health, powers, skills",
-    "items": "ADM.4 : items and money"
+    "items": "ADM.4 : items and money",
+    "appearance": "ADM.5 : mount and appearance"
   },
   "commands": [
     {
@@ -794,6 +795,60 @@
       "serverLogged": true,
       "status": "shard_command",
       "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+    },
+    {
+      "command": "/mount",
+      "aliases": [],
+      "description": "Monter (ou descendre) d'une monture : vitesse ×1,6.",
+      "usage": "/mount [on|off|<vitesse 1 à 3>] [joueur]",
+      "help": "Sans argument : bascule. Monté, la vitesse est multipliée par 1,6 (ou par la valeur donnée, 1 à 3), en plus de /speed. Le personnage garde son apparence : les modèles 3D de montures et les objets « monture » sont un chantier de contenu à venir. Dure jusqu'à la déconnexion.",
+      "example": "/mount 2",
+      "category": "appearance",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmAppearance.cpp"
+    },
+    {
+      "command": "/dismount",
+      "aliases": [],
+      "description": "Mettre pied à terre.",
+      "usage": "/dismount [joueur]",
+      "help": "Équivaut à /mount off.",
+      "example": "/dismount",
+      "category": "appearance",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmAppearance.cpp"
+    },
+    {
+      "command": "/scale",
+      "aliases": [],
+      "description": "Changer la taille d'un personnage (prévue).",
+      "usage": "/scale <0.5 à 3> [joueur]",
+      "help": "Prévue : demande d'ajouter l'échelle de l'entité aux snapshots (format de réplication) pour que tous les joueurs voient la nouvelle taille.",
+      "example": "/scale 1.5",
+      "category": "appearance",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
+    },
+    {
+      "command": "/morph",
+      "aliases": ["/demorph"],
+      "description": "Prendre l'apparence d'une créature (prévue).",
+      "usage": "/morph <archétype> [joueur] | /demorph [joueur]",
+      "help": "Prévue : demande d'ajouter le modèle affiché d'une entité aux snapshots (format de réplication).",
+      "example": "/morph 12",
+      "category": "appearance",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
     },
     {
       "command": "/mail",

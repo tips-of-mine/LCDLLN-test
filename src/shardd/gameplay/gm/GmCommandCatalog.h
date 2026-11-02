@@ -96,6 +96,9 @@ namespace engine::server::gm
 		{ "equipment", GmRole::GameMaster },
 		{ "clearbag", GmRole::GameMaster },
 		{ "itemsearch", GmRole::GameMaster },
+		// ADM.5 — monture
+		{ "mount", GmRole::GameMaster },
+		{ "dismount", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

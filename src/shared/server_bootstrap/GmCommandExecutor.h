@@ -258,6 +258,10 @@ namespace engine::server
 		void CmdClearBag();   ///< /clearbag [joueur] confirm
 		void CmdItemSearch(); ///< /itemsearch <mot|n°>
 
+		// ---- ADM.5 — monture (ServerAppGmAppearance.cpp) ------------------------
+		void CmdMount();      ///< /mount [on|off|<vitesse>] [joueur]
+		void CmdDismount();   ///< /dismount [joueur]
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

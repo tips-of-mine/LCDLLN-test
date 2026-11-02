@@ -67,7 +67,16 @@ int main()
 	const std::string accents = "éééééééééééééééééééééééééééééé"; // 60 octets
 	for (const std::string& l : WrapUtf8(accents, 21))
 		Check(l.size() <= 21u && (l.size() % 2u == 0u || l.rfind("  ", 0) == 0), "WrapUtf8 sans couper un caractère");
-	Check(TruncateUtf8("éa", 1).empty() && TruncateUtf8("éa", 2) == "é", "TruncateUtf8");
+	Check(TruncateUtf8("éa", 2) == "é", "TruncateUtf8");
+	// Octets de continuation seuls (texte invalide envoyé par un client modifié) : la
+	// découpe doit avancer et se terminer.
+	const std::string garbage(600, static_cast<char>(0x80));
+	const auto garbageLines = WrapUtf8(garbage, 250);
+	size_t garbageBytes = 0;
+	for (const std::string& l : garbageLines)
+		garbageBytes += l.size();
+	Check(garbageLines.size() >= 3u && garbageLines.size() < 10u && garbageBytes >= 600u, "WrapUtf8 texte invalide : se termine");
+	Check(TruncateUtf8(garbage, 10).size() == 10u, "TruncateUtf8 texte invalide");
 
 	if (s_failCount == 0)
 		std::cout << "gm_command_text_tests : tout est vert" << std::endl;

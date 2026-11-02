@@ -137,7 +137,8 @@ namespace engine::server
 			return;
 		}
 		args = engine::admin::SplitArgs(request.args);
-		actor = app.FindConnectedClientByCharacterKey(request.actorCharacterId);
+		// Identifiant 0 = aucun personnage (sinon le premier client sans clé serait choisi).
+		actor = request.actorCharacterId != 0u ? app.FindConnectedClientByCharacterKey(request.actorCharacterId) : nullptr;
 		try
 		{
 			(this->*handler)();

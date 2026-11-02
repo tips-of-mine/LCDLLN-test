@@ -210,6 +210,30 @@ namespace engine::server
 			Reply(ctx.connId, ctx.sessionId, entry.command + " : entrez d'abord en jeu avec un personnage.");
 			return;
 		}
+		// Protection par rang : une commande ne vise jamais un joueur de rôle supérieur
+		// à celui de l'appelant (un MJ ne gèle pas un administrateur). Tout argument
+		// qui nomme un personnage en jeu est contrôlé.
+		if (m_s.accounts != nullptr)
+		{
+			for (const std::string& word : engine::admin::SplitArgs(args))
+			{
+				std::string name = word;
+				if (!name.empty() && name.front() == '@')
+					name.erase(name.begin());
+				if (name.empty() || engine::admin::ParseDouble(name))
+					continue;
+				const auto conn = m_s.charMap->FindConnByNormalizedName(SessionCharacterMap::Normalize(name));
+				if (!conn)
+					continue;
+				const auto target = m_s.charMap->GetByConnId(*conn);
+				if (target && target->accountId != ctx.accountId && m_s.accounts->GetRole(target->accountId) > ctx.role)
+				{
+					Reply(ctx.connId, ctx.sessionId, entry.command + " : " + target->characterName
+						+ " a un rôle supérieur au vôtre, commande refusée.");
+					return;
+				}
+			}
+		}
 		uint32_t shardId = shardOverride;
 		if (shardId == 0u && info)
 			shardId = info->shardId != 0u ? info->shardId : m_s.charMap->TicketShard(ctx.connId).value_or(0u);

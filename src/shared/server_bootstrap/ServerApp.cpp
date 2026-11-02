@@ -3317,9 +3317,18 @@ namespace engine::server
 	{
 		std::lock_guard lock(m_masterInboxMutex);
 		if (m_pendingGmCommands.size() < 256u)
+		{
 			m_pendingGmCommands.push_back(request);
-		else
-			LOG_WARN(Net, "[ServerApp] ADM.0 file des commandes MJ pleine : commande '{}' ignorée", request.command);
+			return;
+		}
+		// File pleine : réponse immédiate (l'appelant n'attend pas le délai du master).
+		LOG_WARN(Net, "[ServerApp] ADM.0 file des commandes MJ pleine : commande '{}' refusée", request.command);
+		engine::network::GmCommandResultPayload busy;
+		busy.requestId = request.requestId;
+		busy.actorAccountId = request.actorAccountId;
+		busy.status = static_cast<uint8_t>(engine::network::GmCommandStatus::Failed);
+		busy.lines.push_back("Le shard est saturé de commandes : réessayez dans quelques secondes.");
+		m_gmCommandResults.push_back(std::move(busy));
 	}
 
 	std::vector<engine::network::GmCommandResultPayload> ServerApp::TakeGmCommandResults()

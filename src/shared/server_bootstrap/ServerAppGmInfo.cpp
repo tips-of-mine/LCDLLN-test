@@ -90,8 +90,8 @@ namespace engine::server
 		if (const gm::GmPlace* region = Places().RegionAt(x, z))
 			where += ", région " + region->name;
 		float dist = 0.0f;
-		if (const gm::GmPlace* near = Places().Nearest(x, z, dist))
-			where += " — " + near->name + " à " + engine::admin::FormatFixed(dist, 0) + " m";
+		if (const gm::GmPlace* nearest = Places().Nearest(x, z, dist))
+			where += " — " + nearest->name + " à " + engine::admin::FormatFixed(dist, 0) + " m";
 		Say(where + ".");
 	}
 
@@ -102,21 +102,21 @@ namespace engine::server
 		const float x = actor->positionMetersX;
 		const float z = actor->positionMetersZ;
 		float dist = 0.0f;
-		const gm::GmPlace* near = Places().Nearest(x, z, dist);
+		const gm::GmPlace* nearest = Places().Nearest(x, z, dist);
 		const gm::GmPlace* region = Places().RegionAt(x, z);
-		if (near == nullptr && region == nullptr)
+		if (nearest == nullptr && region == nullptr)
 			return Say("Lieu inconnu (annuaire des lieux indisponible sur ce shard) — cellule " + CellLabel(x, z) + ".");
 		std::string line;
-		if (near != nullptr)
+		if (nearest != nullptr)
 		{
 			// Direction du lieu depuis le joueur (nord = -Z).
-			float deg = std::atan2(near->x - x, -(near->z - z)) * 180.0f / kPi;
+			float deg = std::atan2(nearest->x - x, -(nearest->z - z)) * 180.0f / kPi;
 			if (deg < 0.0f)
 				deg += 360.0f;
 			static const char* kNames[] = { "au nord", "au nord-est", "à l'est", "au sud-est", "au sud", "au sud-ouest", "à l'ouest", "au nord-ouest" };
 			const int sector = static_cast<int>(std::floor((deg + 22.5f) / 45.0f)) % 8;
-			line = dist < 30.0f ? "Vous êtes à " + near->name + " (" + near->detail + ")"
-				: near->name + " (" + near->detail + ") est à " + engine::admin::FormatFixed(dist, 0) + " m " + kNames[sector];
+			line = dist < 30.0f ? "Vous êtes à " + nearest->name + " (" + nearest->detail + ")"
+				: nearest->name + " (" + nearest->detail + ") est à " + engine::admin::FormatFixed(dist, 0) + " m " + kNames[sector];
 		}
 		if (region != nullptr)
 			line += (line.empty() ? "Région : " : " — région ") + region->name;

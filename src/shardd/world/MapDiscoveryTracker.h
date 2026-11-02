@@ -35,6 +35,9 @@ namespace engine::server
 		/// Nombre de cellules touchées pendant la session.
 		size_t CellCount() const { return m_cells.size(); }
 
+		/// ADM.6 — révèle TOUTES les cases de la cellule \p cellZoneId (commande
+		/// /revealmap d'un maître de jeu). \return cases nouvellement révélées.
+		int RevealWholeCell(uint32_t cellZoneId);
 		/// Oublie tout (nouvelle session).
 		void Reset();
 

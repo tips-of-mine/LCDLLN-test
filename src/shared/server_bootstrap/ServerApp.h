@@ -392,6 +392,8 @@ namespace engine::server
 		ambient::RoutineState routine;
 		/// Hors horaire et arrivé chez lui : à retirer sans délai de respawn.
 		bool scheduleRetired = false;
+		/// ADM.6 — apparu par un maître de jeu (/npc add) : hors spawner, retiré à sa mort.
+		bool gmSpawned = false;
 		/// ETAPE4.1 (chantier 2.2) — sommeil : endormi = ni IA ni déplacement (aucun
 		/// joueur à moins de server.mob_ai.wake_radius_m depuis sleep_delay_s).
 		mob_activity::SleepState sleep;
@@ -927,6 +929,17 @@ namespace engine::server
 
 		/// Spawn one authoritative mob for the requested spawner slot.
 		bool SpawnMobFromSpawner(SpawnerRuntimeState& spawner, uint32_t slotIndex);
+
+		/// ADM.6 — fait apparaître un mob de l'archétype \p archetypeId en (x, y, z),
+		/// hors de tout spawner (commande /npc add). Il garde sa position comme poste
+		/// (laisse de 40 m) et n'est jamais remplacé à sa mort.
+		/// \return l'identifiant d'entité, 0 si l'archétype est inconnu ou la grille
+		///         indisponible. Thread de tick.
+		EntityId SpawnGmMob(uint32_t archetypeId, uint32_t zoneId, float x, float y, float z);
+
+		/// ADM.6 — retire un mob quelle que soit son origine (spawner : réapparition
+		/// programmée ; événement dynamique ; apparu par un MJ). \return false si absent.
+		bool RemoveMobByGm(EntityId entityId);
 
 		/// Despawn one authoritative mob and optionally arm its respawn timer.
 		bool DespawnSpawnerMob(SpawnerRuntimeState& spawner, uint32_t slotIndex, std::string_view reason, bool scheduleRespawn);
@@ -1925,6 +1938,11 @@ namespace engine::server
 			engine::network::GmCommandResultPayload& out);
 		/// ADM.0 — l'exécuteur des commandes MJ (ServerAppGm.cpp) accède à l'état du tick.
 		friend struct GmCommandExecutor;
+		/// ADM.6 — mobs apparus par un maître de jeu (retirés à leur mort par
+		/// PurgeDeadGmMobs, appelé à chaque tick par ProcessGmCommands).
+		std::vector<EntityId> m_gmMobIds;
+		/// ADM.6 — retire de la grille et du monde les mobs MJ morts.
+		void PurgeDeadGmMobs();
 		/// ADM.1 — annuaire des lieux (/tp <lieu>, /places), chargé au premier usage.
 		gm::GmPlaceDirectory m_gmPlaces;
 		bool m_gmPlacesLoaded = false;

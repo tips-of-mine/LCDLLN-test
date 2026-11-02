@@ -57,6 +57,16 @@ int main()
 	Check(tracker.CellCount() == 0u, "Reset vide le traceur");
 	Check(tracker.RevealAround(0.0, 0.0) == first, "après Reset, mêmes cases révélées");
 
+	// ADM.6 — /revealmap : toute la cellule, une seule fois.
+	{
+		engine::server::MapDiscoveryTracker t;
+		const int all = t.RevealWholeCell(1234u);
+		Check(all == engine::world::discovery::kTilesPerCell, "cellule entière révélée");
+		Check(t.RevealWholeCell(1234u) == 0, "seconde révélation : rien de neuf");
+		Check(t.CellCount() == 1u && t.SessionCells()[0].second.Count() == engine::world::discovery::kTilesPerCell,
+			"cellule complète dans la session");
+	}
+
 	if (s_failCount == 0)
 		std::puts("[OK] map_discovery_tracker_tests");
 	return s_failCount == 0 ? 0 : 1;

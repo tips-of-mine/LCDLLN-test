@@ -262,6 +262,17 @@ namespace engine::server
 		void CmdMount();      ///< /mount [on|off|<vitesse>] [joueur]
 		void CmdDismount();   ///< /dismount [joueur]
 
+		// ---- ADM.6 — monde (ServerAppGmWorld.cpp) -------------------------------
+		/// Archétypes désignés par numéro ou nom (sans casse ni accents).
+		std::vector<const CreatureArchetype*> FindArchetypes(std::string_view query, size_t maxResults) const;
+		/// Mob ciblé par l'appelant (nullptr + message sinon).
+		MobEntity* TargetMob();
+		void CmdNpc();        ///< /npc add|delete|move|info
+		void CmdNpcSearch();  ///< /npcsearch <mot|n°>
+		void CmdCleanup();    ///< /cleanup [rayon]
+		void CmdRespawn();    ///< /respawn [rayon]
+		void CmdRevealMap();  ///< /revealmap [all] [joueur]
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

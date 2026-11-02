@@ -297,6 +297,19 @@ int main()
 		Check(!w.state.trustNextHeight, "ResetMovement remet la confiance à faux");
 	}
 
+	// ADM.1 — gelé (vitesse 0) : aucun déplacement, même pas la marge.
+	{
+		MovementState st;
+		ResetMovement(st, 10.0f, 0.0f, 10.0f);
+		MoveCommand c{};
+		c.sequence = 1;
+		c.clientTimeMs = 1050;
+		c.x = 10.04f;
+		c.z = 10.0f;
+		(void)ApplyMoveCommand(st, c, 0.0f, 50'050);
+		Check(std::fabs(st.x - 10.0f) < 1e-5f, "gelé : position inchangée");
+	}
+
 	if (s_failCount == 0)
 		std::puts("[OK] movement_rules_tests");
 	return s_failCount == 0 ? 0 : 1;

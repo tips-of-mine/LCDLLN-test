@@ -2801,7 +2801,7 @@ namespace engine::server
 	{
 		// ADM.1 — /speed, monture, gel : multiplicateur de MJ appliqué en dernier.
 		const float gmMultiplier = client.gm.EffectiveSpeedMultiplier();
-		client.movement.verticalFree = client.gm.flying;
+		client.movement.verticalFree = client.gm.flying && !client.gm.frozen;
 		client.maxMoveSpeed = 13.0f * gmMultiplier; // défaut du client tant que les stats manquent
 		if (!m_statsTables || client.factionId.empty() || client.classId.empty())
 			return;
@@ -3317,9 +3317,18 @@ namespace engine::server
 	{
 		std::lock_guard lock(m_masterInboxMutex);
 		if (m_pendingGmCommands.size() < 256u)
+		{
 			m_pendingGmCommands.push_back(request);
-		else
-			LOG_WARN(Net, "[ServerApp] ADM.0 file des commandes MJ pleine : commande '{}' ignorée", request.command);
+			return;
+		}
+		// File pleine : réponse immédiate (l'appelant n'attend pas le délai du master).
+		LOG_WARN(Net, "[ServerApp] ADM.0 file des commandes MJ pleine : commande '{}' refusée", request.command);
+		engine::network::GmCommandResultPayload busy;
+		busy.requestId = request.requestId;
+		busy.actorAccountId = request.actorAccountId;
+		busy.status = static_cast<uint8_t>(engine::network::GmCommandStatus::Failed);
+		busy.lines.push_back("Le shard est saturé de commandes : réessayez dans quelques secondes.");
+		m_gmCommandResults.push_back(std::move(busy));
 	}
 
 	std::vector<engine::network::GmCommandResultPayload> ServerApp::TakeGmCommandResults()
@@ -6407,8 +6416,10 @@ namespace engine::server
 		// ETAPE3.3 — vitesse maximale autoritaire du mouvement (allure la plus rapide).
 		{
 			const float fastest = (std::max)({ d->speedWalk, d->speedRun, d->speedSprint });
+			// ADM.1 — multiplicateur de MJ (/speed, monture, gel) conservé à chaque
+			// recalcul (équipement, auras, niveau).
 			if (std::isfinite(fastest) && fastest > 0.1f)
-				client.maxMoveSpeed = fastest;
+				client.maxMoveSpeed = fastest * client.gm.EffectiveSpeedMultiplier();
 		}
 		client.maxResource = d->resource;
 		if (client.currentResource > client.maxResource)

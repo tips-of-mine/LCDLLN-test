@@ -242,17 +242,20 @@ namespace engine::server
 
 	void GmCommandExecutor::TogglePower(bool gm::GmPlayerState::* field, const char* label, const char* syntax)
 	{
-		ConnectedClient* target = TargetOrSelf(1);
-		if (target == nullptr)
-			return;
-		bool on = !(target->gm.*field);
+		(void)syntax;
+		// « [on|off] [joueur] » : un nom seul bascule ce joueur.
+		std::optional<bool> wanted;
+		size_t targetIndex = 0;
 		if (!args.empty())
 		{
-			const auto parsed = engine::admin::ParseOnOff(args[0]);
-			if (!parsed)
-				return Usage(syntax);
-			on = *parsed;
+			wanted = engine::admin::ParseOnOff(args[0]);
+			if (wanted)
+				targetIndex = 1;
 		}
+		ConnectedClient* target = TargetOrSelf(targetIndex);
+		if (target == nullptr)
+			return;
+		const bool on = wanted.value_or(!(target->gm.*field));
 		target->gm.*field = on;
 		ApplyGmState(*target);
 		// Devenir invisible ou invincible : les mobs qui le visaient l'oublient.

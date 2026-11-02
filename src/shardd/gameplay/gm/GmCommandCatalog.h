@@ -88,6 +88,14 @@ namespace engine::server::gm
 		{ "unlearn", GmRole::GameMaster },
 		{ "resetskills", GmRole::GameMaster },
 		{ "profession", GmRole::GameMaster },
+		// ADM.4 — objets et argent
+		{ "additem", GmRole::GameMaster },
+		{ "removeitem", GmRole::GameMaster },
+		{ "money", GmRole::GameMaster },
+		{ "inventory", GmRole::GameMaster },
+		{ "equipment", GmRole::GameMaster },
+		{ "clearbag", GmRole::GameMaster },
+		{ "itemsearch", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

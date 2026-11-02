@@ -241,6 +241,23 @@ namespace engine::server
 		void CmdResetSkills(); ///< /resetskills [joueur]
 		void CmdProfession();  ///< /profession <métier> <niveau> [joueur]
 
+		// ---- ADM.4 — objets et argent (ServerAppGmItems.cpp) -------------------
+		/// Objets du catalogue désignés par \p query (numéro exact, sinon nom exact,
+		/// début ou partie du nom, sans casse ni accents), au plus \p maxResults.
+		std::vector<const engine::items::ItemDefinition*> FindItems(std::string_view query, size_t maxResults) const;
+		/// « Épée longue #1203 ».
+		std::string ItemLabel(uint32_t itemId) const;
+		/// Lit « <objet> [quantité] [joueur] » ; \return false (et message) si invalide.
+		bool ParseItemCommand(std::string_view syntax, const engine::items::ItemDefinition*& outItem,
+			uint32_t& outQuantity, ConnectedClient*& outTarget);
+		void CmdAddItem();    ///< /additem <objet> [qté] [joueur]
+		void CmdRemoveItem(); ///< /removeitem <objet> [qté] [joueur]
+		void CmdMoney();      ///< /money <±montant> [monnaie] [joueur]
+		void CmdInventory();  ///< /inventory [joueur]
+		void CmdEquipment();  ///< /equipment [joueur]
+		void CmdClearBag();   ///< /clearbag [joueur] confirm
+		void CmdItemSearch(); ///< /itemsearch <mot|n°>
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

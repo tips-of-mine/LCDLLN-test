@@ -119,7 +119,8 @@ namespace engine::server
 		// (nouvelle époque de mouvement), hauteur de la commande suivante acceptée.
 		app.m_antiCheat.Reset(client.persistenceCharacterKey);
 		app.SendForcePosition(client, kForcePositionReasonTeleport);
-		client.movement.trustNextHeight = true;
+		// Hauteur reprise du client seulement quand le shard ne la connaît pas.
+		client.movement.trustNextHeight = groundSnap || !std::isfinite(y);
 		app.UpdateClientInterest(client);
 		LOG_INFO(Net, "[GmCommand] ADM.1 téléport (client_id={}, vers=({:.1f},{:.1f},{:.1f}), sol={})",
 			client.clientId, x, client.positionMetersY, z, groundSnap ? "oui" : "non");
@@ -444,17 +445,19 @@ namespace engine::server
 
 	void GmCommandExecutor::CmdFly()
 	{
-		ConnectedClient* target = TargetOrSelf(1);
-		if (target == nullptr)
-			return;
-		bool on = !target->gm.flying;
+		// « [on|off] [joueur] » : un nom seul bascule ce joueur.
+		std::optional<bool> wanted;
+		size_t targetIndex = 0;
 		if (!args.empty())
 		{
-			const auto parsed = engine::admin::ParseOnOff(args[0]);
-			if (!parsed)
-				return Usage("/fly [on|off] [joueur]");
-			on = *parsed;
+			wanted = engine::admin::ParseOnOff(args[0]);
+			if (wanted)
+				targetIndex = 1;
 		}
+		ConnectedClient* target = TargetOrSelf(targetIndex);
+		if (target == nullptr)
+			return;
+		const bool on = wanted.value_or(!target->gm.flying);
 		target->gm.flying = on;
 		ApplyGmState(*target);
 		Say(std::string("Vol libre ") + (on ? "activé" : "désactivé") + " pour " + NameOf(*target)

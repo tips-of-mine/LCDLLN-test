@@ -2801,7 +2801,7 @@ namespace engine::server
 	{
 		// ADM.1 — /speed, monture, gel : multiplicateur de MJ appliqué en dernier.
 		const float gmMultiplier = client.gm.EffectiveSpeedMultiplier();
-		client.movement.verticalFree = client.gm.flying;
+		client.movement.verticalFree = client.gm.flying && !client.gm.frozen;
 		client.maxMoveSpeed = 13.0f * gmMultiplier; // défaut du client tant que les stats manquent
 		if (!m_statsTables || client.factionId.empty() || client.classId.empty())
 			return;
@@ -6331,8 +6331,10 @@ namespace engine::server
 		// ETAPE3.3 — vitesse maximale autoritaire du mouvement (allure la plus rapide).
 		{
 			const float fastest = (std::max)({ d->speedWalk, d->speedRun, d->speedSprint });
+			// ADM.1 — multiplicateur de MJ (/speed, monture, gel) conservé à chaque
+			// recalcul (équipement, auras, niveau).
 			if (std::isfinite(fastest) && fastest > 0.1f)
-				client.maxMoveSpeed = fastest;
+				client.maxMoveSpeed = fastest * client.gm.EffectiveSpeedMultiplier();
 		}
 		client.maxResource = d->resource;
 		if (client.currentResource > client.maxResource)

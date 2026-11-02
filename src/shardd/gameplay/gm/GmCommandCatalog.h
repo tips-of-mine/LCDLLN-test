@@ -105,6 +105,10 @@ namespace engine::server::gm
 		{ "cleanup", GmRole::GameMaster },
 		{ "respawn", GmRole::GameMaster },
 		{ "revealmap", GmRole::GameMaster },
+		// ADM.7 — quêtes et événements
+		{ "gmquest", GmRole::GameMaster },
+		{ "questsearch", GmRole::GameMaster },
+		{ "event", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

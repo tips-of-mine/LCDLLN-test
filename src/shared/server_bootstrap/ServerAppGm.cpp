@@ -110,6 +110,10 @@ namespace engine::server
 		{ "cleanup", &GmCommandExecutor::CmdCleanup },
 		{ "respawn", &GmCommandExecutor::CmdRespawn },
 		{ "revealmap", &GmCommandExecutor::CmdRevealMap },
+		// ADM.7 — quêtes et événements (ServerAppGmQuests.cpp)
+		{ "gmquest", &GmCommandExecutor::CmdGmQuest },
+		{ "questsearch", &GmCommandExecutor::CmdQuestSearch },
+		{ "event", &GmCommandExecutor::CmdEvent },
 	};
 
 	void GmCommandExecutor::Run()

@@ -68,12 +68,24 @@ namespace engine::server
 		return mob;
 	}
 
+	// Vrai si la hauteur de l'appelant n'est pas encore connue (téléport « au sol »
+	// en attente du premier mouvement client) : un mob posé là tomberait à -100 km.
+	bool GmCommandExecutor::ActorHeightUnknown()
+	{
+		if (actor != nullptr && actor->positionMetersY <= kGroundSnapY * 0.5f)
+		{
+			Fail(GmCommandStatus::Failed, "Hauteur inconnue (téléport en cours) : bougez d'un pas puis réessayez.");
+			return true;
+		}
+		return false;
+	}
+
 	void GmCommandExecutor::CmdNpc()
 	{
 		const std::string sub = args.empty() ? std::string() : engine::admin::ToLowerAscii(args[0]);
 		if (sub == "add" || sub == "spawn")
 		{
-			if (!RequireActor())
+			if (!RequireActor() || ActorHeightUnknown())
 				return;
 			if (args.size() < 2u)
 				return Usage("/npc add <archétype|n°> [nombre 1-25]");
@@ -127,7 +139,7 @@ namespace engine::server
 		if (sub == "move" || sub == "here")
 		{
 			MobEntity* mob = TargetMob();
-			if (mob == nullptr)
+			if (mob == nullptr || ActorHeightUnknown())
 				return;
 			if (CellGrid* grid = app.GetOrCreateZoneGrid(mob->zoneId))
 			{

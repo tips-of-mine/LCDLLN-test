@@ -266,6 +266,10 @@ namespace engine::admin
 			size_t cut = budget;
 			while (cut > 0 && (static_cast<unsigned char>(text[cut]) & 0xC0u) == 0x80u)
 				--cut;
+			// Texte invalide (suite d'octets de continuation) : coupe brute, sinon la
+			// boucle n'avancerait jamais.
+			if (cut == 0)
+				cut = budget;
 			const size_t space = text.substr(0, cut).find_last_of(' ');
 			if (space != std::string_view::npos && space > budget / 2u)
 				cut = space;
@@ -288,6 +292,8 @@ namespace engine::admin
 		size_t cut = maxBytes;
 		while (cut > 0 && (static_cast<unsigned char>(text[cut]) & 0xC0u) == 0x80u)
 			--cut;
+		if (cut == 0)
+			cut = maxBytes; // texte invalide : coupe brute
 		return std::string(text.substr(0, cut));
 	}
 }

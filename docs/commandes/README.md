@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md), [ADM.7](ADM.7_quetes_evenements.md), [ADM.8](ADM.8_moderation.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md), [ADM.7](ADM.7_quetes_evenements.md), [ADM.8](ADM.8_moderation.md), [ADM.9](ADM.9_serveur.md)
 
 ## Aide et outils
 
@@ -137,6 +137,18 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/uptime` |  | modérateur | `/uptime` | Temps de fonctionnement du serveur master (jours/heures/minutes/secondes). |
 | `/snapshots` |  | MJ | `/snapshots` | Liste les 10 derniers instantanés d'un personnage (copies datées prises à chaque déconnexion). |
 | `/restore` |  | MJ | `/restore` | Restaure un personnage depuis un instantané (/restore <personnage> <id>) : appliqué par le shard à sa prochaine connexion. |
+
+## Serveur
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/serverinfo` |  | modérateur | `/serverinfo` | Démarrage, durée de fonctionnement, accès et message du jour. |
+| `/motd` |  | joueur | `/motd` | Afficher le message du jour. |
+| `/setmotd` |  | admin | `/setmotd <texte> \| /setmotd clear` | Changer le message du jour. |
+| `/closed` |  | admin | `/closed [on\|off] [motif]` | Fermer ou rouvrir le serveur aux joueurs (maintenance). |
+| `/saveall` |  | admin | `/saveall` | Sauvegarder tout de suite tous les joueurs du shard. |
+| `/reload` |  | admin | `/reload config\|items\|quests\|zones` | *(prévue)* Recharger une partie de la configuration (prévue). |
+| `/restart` |  | admin | `/restart <secondes> [motif]` | *(prévue)* Redémarrer le cluster après un compte à rebours (prévue). |
 
 ## Fenêtres
 

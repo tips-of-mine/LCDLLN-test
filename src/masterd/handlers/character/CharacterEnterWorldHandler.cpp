@@ -85,6 +85,22 @@ namespace engine::server
 			return;
 		}
 
+		// ADM.9 — serveur fermé par un administrateur (/closed on) : seul le personnel entre.
+		if (m_accountGate && m_accountGate(*accountId))
+		{
+			LOG_INFO(Net, "[CharacterEnterWorldHandler] refusé : serveur fermé aux joueurs (account_id={})", *accountId);
+			auto notice = BuildChatRelayPacket(static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count()),
+				static_cast<uint8_t>(engine::net::ChatChannel::Server), "system",
+				"Le serveur est temporairement fermé aux joueurs (maintenance). Réessayez plus tard.", sessionIdHeader);
+			if (!notice.empty())
+				m_server->Send(connId, notice);
+			auto pkt = BuildCharacterEnterWorldResponsePacket(0u, requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
 		auto* stmtCache = guard.cache();
@@ -261,6 +277,10 @@ namespace engine::server
 		auto pkt = BuildCharacterEnterWorldResponsePacket(1u, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
+
+		// ADM.9 — message du jour (et autres notices d'entrée).
+		if (m_enteredWorld)
+			m_enteredWorld(connId, *accountId);
 
 		// Anniversaires (spec 2026-07-18) — après l'admission validée :
 		// paliers fidélité (rattrapage) + jour J de naissance (exploit +

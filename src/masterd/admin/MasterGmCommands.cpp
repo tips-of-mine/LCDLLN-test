@@ -118,6 +118,7 @@ namespace engine::server
 		RegisterInformation();
 		RegisterCharacter();
 		RegisterModeration();
+		RegisterServer();
 		InstallAuditSink();
 		LOG_INFO(Net, "[MasterGmCommands] ADM.0 commandes de jeu enregistrées ({} entrées dans le registre)",
 			m_s.registry->Size());

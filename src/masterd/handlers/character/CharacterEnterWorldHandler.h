@@ -56,6 +56,13 @@ namespace engine::server
 		/// en cours), toute entrée en jeu est refusée (réponse « refusé »).
 		void SetAdmissionBlockedProvider(std::function<bool()> blocked) { m_admissionBlocked = std::move(blocked); }
 
+		/// ADM.9 — facultatif : refus d'entrée en jeu par compte (serveur fermé par
+		/// « /closed on » : seul le personnel entre). Vrai = refusé.
+		void SetAccountAdmissionGate(std::function<bool(uint64_t accountId)> refused) { m_accountGate = std::move(refused); }
+
+		/// ADM.9 — facultatif : appelé après chaque entrée en jeu validée (message du jour).
+		void SetEnteredWorldCallback(std::function<void(uint32_t connId, uint64_t accountId)> cb) { m_enteredWorld = std::move(cb); }
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -68,5 +75,7 @@ namespace engine::server
 		ShardRegistry*                      m_shardRegistry = nullptr; ///< TA.3 — lookup connId pour push d'admission.
 		AnniversaryService*                 m_anniversary = nullptr;   ///< Anniversaires — facultatif (nullptr = off).
 		std::function<bool()>               m_admissionBlocked;        ///< ETAPE5.3 — arrêt ordonné en cours.
+		std::function<bool(uint64_t)>       m_accountGate;             ///< ADM.9 — serveur fermé (/closed).
+		std::function<void(uint32_t, uint64_t)> m_enteredWorld;        ///< ADM.9 — message du jour.
 	};
 }

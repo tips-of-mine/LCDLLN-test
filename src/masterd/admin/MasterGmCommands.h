@@ -17,6 +17,7 @@
 
 #include "src/masterd/account/AccountRole.h"
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -102,6 +103,18 @@ namespace engine::server
 		/// Envoie plusieurs lignes (Reply en boucle).
 		void ReplyLines(uint32_t connId, uint64_t sessionId, const std::vector<std::string>& lines) const;
 
+		/// ADM.9 — vrai si l'entrée en jeu de \p accountId doit être refusée (serveur
+		/// fermé par « /closed on » et compte sans rôle de modérateur ou plus).
+		/// Branché sur CharacterEnterWorldHandler et ShardTicketHandler.
+		bool IsAdmissionRefused(uint64_t accountId) const;
+
+		/// ADM.9 — après une entrée en jeu validée : envoie le message du jour (s'il y
+		/// en a un) et, au personnel, le rappel « serveur fermé ».
+		void OnEnteredWorld(uint32_t connId, uint64_t accountId) const;
+
+		/// ADM.9 — message du jour initial (clé master.motd de config.json).
+		void SetMotd(std::string motd) { m_motd = std::move(motd); }
+
 	private:
 		/// ADM.0 — aide et outils : /help, /search, /gmaudit.
 		void RegisterCore();
@@ -138,6 +151,9 @@ namespace engine::server
 		/// Envoie \p line à toutes les connexions authentifiées. \return nombre d'envois.
 		size_t BroadcastLine(std::string_view line) const;
 
+		/// ADM.9 — serveur : /serverinfo, /motd, /setmotd, /closed (MasterGmServer.cpp).
+		void RegisterServer();
+
 		/// Compte visé par \p name : personnage en jeu (sans casse), sinon login.
 		/// \return 0 si introuvable.
 		uint64_t ResolveAccount(std::string_view name) const;
@@ -152,5 +168,11 @@ namespace engine::server
 		AccountRole RoleOf(uint64_t accountId) const;
 
 		MasterGmServices m_s;
+		/// ADM.9 — état du serveur piloté par les commandes d'administration.
+		std::string m_motd;
+		bool m_closed = false;
+		std::string m_closedReason;
+		std::chrono::steady_clock::time_point m_startedAt = std::chrono::steady_clock::now();
+		std::chrono::system_clock::time_point m_startedAtWall = std::chrono::system_clock::now();
 	};
 }

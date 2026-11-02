@@ -43,6 +43,8 @@ namespace engine::server
 		/// ETAPE5.3 — facultatif : tant que \p blocked renvoie vrai (arrêt ordonné du cluster
 		/// en cours), aucun ticket n'est délivré (erreur SERVER_LIST_UNAVAILABLE).
 		void SetAdmissionBlockedProvider(std::function<bool()> blocked) { m_admissionBlocked = std::move(blocked); }
+		/// ADM.9 — facultatif : refus de ticket par compte (serveur fermé par « /closed on »).
+		void SetAccountAdmissionGate(std::function<bool(uint64_t accountId)> refused) { m_accountGate = std::move(refused); }
 
 		/// Handles REQUEST_SHARD_TICKET only. Ignores other opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -59,5 +61,6 @@ namespace engine::server
 		std::string m_secret;
 		int m_validity_sec = 60;
 		std::function<bool()> m_admissionBlocked; ///< ETAPE5.3
+		std::function<bool(uint64_t)> m_accountGate; ///< ADM.9 — serveur fermé (/closed)
 	};
 }

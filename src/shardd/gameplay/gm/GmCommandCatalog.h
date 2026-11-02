@@ -109,6 +109,8 @@ namespace engine::server::gm
 		{ "gmquest", GmRole::GameMaster },
 		{ "questsearch", GmRole::GameMaster },
 		{ "event", GmRole::GameMaster },
+		// ADM.9 — serveur
+		{ "saveall", GmRole::Administrator },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

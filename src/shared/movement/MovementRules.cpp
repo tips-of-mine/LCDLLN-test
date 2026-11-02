@@ -102,8 +102,11 @@ namespace engine::movement
 
 		const float speed = (std::max)(maxSpeed, 0.0f);
 		const float boostSpeed = (std::max)(speed, limits.dodgeSpeedMetersPerSecond);
-		const float maxDistance = (speed * static_cast<float>(gap - boostMs) / 1000.0f
-			+ boostSpeed * static_cast<float>(boostMs) / 1000.0f) * limits.speedTolerance + limits.distanceSlackMeters * slackFactor;
+		// ADM.1 — vitesse nulle (personnage gelé par un MJ) : aucun déplacement, ni
+		// marge, ni esquive.
+		const float maxDistance = speed <= 0.0f ? 0.0f
+			: (speed * static_cast<float>(gap - boostMs) / 1000.0f
+				+ boostSpeed * static_cast<float>(boostMs) / 1000.0f) * limits.speedTolerance + limits.distanceSlackMeters * slackFactor;
 		result.maxDistanceMeters = maxDistance;
 
 		const float oldX = state.x;
@@ -139,7 +142,7 @@ namespace engine::movement
 			}
 			// ADM.1 — vol de MJ ou première commande après un téléport de MJ : hauteur
 			// du client acceptée telle quelle.
-			const bool freeHeight = state.verticalFree || state.trustNextHeight;
+			const bool freeHeight = (state.verticalFree || state.trustNextHeight) && speed > 0.0f;
 			state.trustNextHeight = false;
 			// Vertical : pente, marche, nage, puis le saut en réserve.
 			const float dy = freeHeight ? 0.0f : newY - oldY;

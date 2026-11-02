@@ -286,6 +286,17 @@ namespace engine::client
 		uint16_t moveEpoch = 0;
 	};
 
+	/// ADM.1 — état « maître de jeu » du joueur local (GmStateUpdate, kind 104) :
+	/// vol libre, gel, multiplicateur de vitesse… Appliqué par Engine au
+	/// CharacterController à chaque frame. Remis à zéro au changement de session.
+	struct UIGmState
+	{
+		uint32_t flags = 0;            ///< engine::server::gm::GmStateFlag
+		float speedMultiplier = 1.0f;  ///< 1 = normal, 0 = gelé
+		bool Flying() const { return (flags & (1u << 0)) != 0u; }
+		bool Frozen() const { return (flags & (1u << 1)) != 0u; }
+	};
+
 	/// ETAPE3.3 — position officielle du shard pour une commande de mouvement
 	/// (MoveCorrection) en attente d'application par Engine (recalage + rejeu).
 	struct UIMoveCorrection
@@ -491,6 +502,8 @@ namespace engine::client
 		std::vector<UIRemoteEntity> remoteEntities;
 		/// Correction SP1 — position imposée par le serveur (consommée par Engine).
 		UIForcedPosition forcedPosition{};
+		/// ADM.1 — pouvoirs de maître de jeu de la session (vol, gel, vitesse).
+		UIGmState gmState{};
 		/// ETAPE3.3 — dernière position officielle reçue (MoveCorrection), à appliquer.
 		UIMoveCorrection moveCorrection{};
 		/// Validation v12 — fenêtre de butin automatique (LootNotify cumulés).
@@ -623,6 +636,9 @@ namespace engine::client
 		/// Correction SP1 — consomme la position imposée (après application par
 		/// Engine au CharacterController). Main thread uniquement.
 		void ClearForcedPosition();
+		/// ADM.1 — oublie l'état « maître de jeu » (nouveau Welcome : le shard repart de
+		/// l'état neutre). Thread principal.
+		void ClearGmState() { m_model.gmState = UIGmState{}; }
 
 		/// ETAPE3.3 — Engine a appliqué (ou écarté) la correction en attente.
 		void ClearMoveCorrection();
@@ -692,6 +708,8 @@ namespace engine::client
 		bool ApplyForcePosition(std::span<const std::byte> packet);
 		/// ETAPE3.3 — position officielle après une commande de mouvement (MoveCorrection).
 		bool ApplyMoveCorrection(std::span<const std::byte> packet);
+		/// ADM.1 — GmStateUpdate : met à jour m_model.gmState.
+		bool ApplyGmStateUpdate(std::span<const std::byte> packet);
 
 		/// Validation v12 — butin auto-crédité (LootNotify) : abonde la fenêtre.
 		bool ApplyLootNotify(std::span<const std::byte> packet);

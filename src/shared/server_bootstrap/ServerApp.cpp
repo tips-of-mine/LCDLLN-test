@@ -2799,7 +2799,10 @@ namespace engine::server
 
 	void ServerApp::RefreshMaxMoveSpeed(ConnectedClient& client)
 	{
-		client.maxMoveSpeed = 13.0f; // défaut du client tant que les stats manquent
+		// ADM.1 — /speed, monture, gel : multiplicateur de MJ appliqué en dernier.
+		const float gmMultiplier = client.gm.EffectiveSpeedMultiplier();
+		client.movement.verticalFree = client.gm.flying;
+		client.maxMoveSpeed = 13.0f * gmMultiplier; // défaut du client tant que les stats manquent
 		if (!m_statsTables || client.factionId.empty() || client.classId.empty())
 			return;
 		const engine::server::gameplay::Sex sex =
@@ -2813,7 +2816,7 @@ namespace engine::server
 		ApplyAuraStatModifiers(client.auras, *d);
 		const float fastest = (std::max)({ d->speedWalk, d->speedRun, d->speedSprint });
 		if (std::isfinite(fastest) && fastest > 0.1f)
-			client.maxMoveSpeed = fastest;
+			client.maxMoveSpeed = fastest * gmMultiplier;
 	}
 
 	void ServerApp::HandleGoodbye(const Endpoint& endpoint, uint32_t clientId)
@@ -6339,8 +6342,9 @@ namespace engine::server
 		if (client.persistenceCharacterKey != 0u)
 		{
 			const float spdPct = SumAuraPercent(client.auras, SpellEffectType::MoveSpeedPercent);
+			// ADM.1 — le multiplicateur de MJ (/speed, monture) s'y ajoute.
 			m_antiCheat.SetPlayerSpeedMultiplier(client.persistenceCharacterKey,
-				std::max(0.1f, 1.0f + spdPct / 100.0f));
+				std::max(0.1f, (1.0f + spdPct / 100.0f) * (std::max)(client.gm.EffectiveSpeedMultiplier(), 0.1f)));
 		}
 	}
 

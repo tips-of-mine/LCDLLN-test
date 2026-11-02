@@ -189,6 +189,19 @@ namespace engine::gameplay
 			if (sprint > 0.0f) m_cfg.sprintSpeed = sprint;
 		}
 
+		/// ADM.1 — multiplicateur de vitesse de maître de jeu (/speed, monture ; 0 =
+		/// gelé). Appliqué à la vitesse visée ET à l'accélération (une vitesse ×10 est
+		/// atteinte aussi vite qu'une vitesse normale). Borné à [0, 20]. Appelée chaque
+		/// frame par l'Engine (idempotente).
+		void SetSpeedMultiplier(float multiplier)
+		{
+			m_speedMultiplier = multiplier < 0.0f ? 0.0f : (multiplier > 20.0f ? 20.0f : multiplier);
+		}
+		/// ADM.1 — vol de maître de jeu (/fly) : vol sans limite d'endurance, vitesse
+		/// verticale pilotée directement (Espace / Accroupi), arrêt net sans touche.
+		/// Le mode vol lui-même reste piloté par MoveInput::flyPressed.
+		void SetGmFlight(bool enabled) { m_gmFlight = enabled; }
+
 		/// Declenche une impulsion d'esquive (roulade) dans la direction XZ donnee.
 		/// Pendant `dodgeDurationSec`, la vitesse horizontale est forcee a
 		/// `dodgeSpeed` dans cette direction ; collision (sweep) et gravite restent
@@ -247,6 +260,10 @@ namespace engine::gameplay
 		// Esquive en cours : temps restant (s) et direction XZ normalisee. Tant que
 		// m_dodgeTimeRemaining > 0, la vitesse horizontale est forcee (cf. Update).
 		float m_dodgeTimeRemaining = 0.0f;
+		/// ADM.1 — multiplicateur de vitesse de MJ (1 = normal).
+		float m_speedMultiplier = 1.0f;
+		/// ADM.1 — vol de MJ sans endurance.
+		bool m_gmFlight = false;
 		engine::math::Vec3 m_dodgeDirXZ{ 0.0f, 0.0f, 0.0f };
 	};
 }

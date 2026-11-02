@@ -17,6 +17,8 @@
 #include "src/shardd/gameplay/social/PartySystem.h"
 #include "src/shardd/gameplay/quest/QuestRuntime.h"
 #include "src/shardd/gameplay/spawner/SpawnerRuntime.h"
+#include "src/shardd/gameplay/gm/GmPlaceDirectory.h" // ADM.1
+#include "src/shardd/gameplay/gm/GmPlayerState.h"   // ADM.1
 #include "src/shardd/gameplay/ambient/AmbientRoutine.h"
 #include "src/shared/world/WorldClock.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
@@ -332,6 +334,9 @@ namespace engine::server
 		std::array<std::string, 10> actionBarLayout{};
 		/// SP-B — compétences par-classe déjà choisies (un skill par tier/niveau débloqué).
 		std::vector<std::string> knownSkillIds;
+		/// ADM.1 — pouvoirs de maître de jeu de la session (vitesse, vol, gel…). Non
+		/// persisté : une reconnexion remet l'état neutre.
+		gm::GmPlayerState gm;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -1920,6 +1925,14 @@ namespace engine::server
 			engine::network::GmCommandResultPayload& out);
 		/// ADM.0 — l'exécuteur des commandes MJ (ServerAppGm.cpp) accède à l'état du tick.
 		friend struct GmCommandExecutor;
+		/// ADM.1 — annuaire des lieux (/tp <lieu>, /places), chargé au premier usage.
+		gm::GmPlaceDirectory m_gmPlaces;
+		bool m_gmPlacesLoaded = false;
+		/// ADM.1 — favoris de position des MJ (/mark, /gomark), par personnage. En
+		/// mémoire : perdus au redémarrage du shard.
+		std::unordered_map<uint64_t, std::map<std::string, gm::GmSavedPosition>> m_gmBookmarks;
+		/// ADM.1 — envoie GmStateUpdate (drapeaux + multiplicateur) au client \p client.
+		void SendGmState(const ConnectedClient& client);
 		/// Prélève l'or d'un courrier dans la transaction qui passe le transfert à locked.
 		/// \return le MailDebitResult à répondre, ou 0xFF si le COMMIT est incertain (pas de
 		///         réponse : voir m_uncertainMailDebits).

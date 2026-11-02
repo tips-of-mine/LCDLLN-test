@@ -82,6 +82,13 @@ namespace engine::movement
 		uint32_t lastJumpClientMs = 0;   ///< dernier saut accepté.
 		float jumpRiseLeft = 0.0f;       ///< montée de saut encore disponible.
 		uint32_t dodgeStartClientMs = 0; ///< dernière esquive acceptée (0 = aucune).
+		/// ADM.1 — vol de maître de jeu (/fly) : la hauteur du client est acceptée telle
+		/// quelle (ni pente, ni saut, ni chute bornée). Conservé par ResetMovement.
+		bool verticalFree = false;
+		/// ADM.1 — après un téléport de MJ dont la hauteur est inconnue du shard (le
+		/// client se recale au sol) : la hauteur de la PROCHAINE commande acceptée est
+		/// prise telle quelle, puis les règles reprennent. Remis à faux par ResetMovement.
+		bool trustNextHeight = false;
 	};
 
 	/// Verdict d'une commande.

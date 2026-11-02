@@ -266,6 +266,37 @@ int main()
 		Check(w.state.x - start2 < kSprint * 0.6f * 1.1f + 0.05f, "rafale à +1 ms : bornée par le budget de temps");
 	}
 
+	// ADM.1 — vol de MJ : la hauteur du client est acceptée (montée de 50 m d'un coup),
+	// et le drapeau survit à un téléport (ResetMovement).
+	{
+		Walker w;
+		ResetMovement(w.state, 0, 0, 0);
+		w.state.verticalFree = true;
+		(void)w.Step(kSprint);
+		w.y = 50.0f;
+		(void)w.Step(kSprint);
+		Check(std::fabs(w.state.y - 50.0f) < 0.001f, "vol de MJ : montée libre acceptée");
+		ResetMovement(w.state, w.x, w.y, w.z);
+		Check(w.state.verticalFree, "vol de MJ : conservé après un téléport");
+	}
+
+	// ADM.1 — téléport de MJ à hauteur inconnue : la première commande fixe la hauteur,
+	// les suivantes reprennent les règles (pas de montée libre ensuite).
+	{
+		Walker w;
+		ResetMovement(w.state, 0, -10000.0f, 0);
+		w.state.trustNextHeight = true;
+		w.y = 37.0f;
+		(void)w.Step(kSprint);
+		Check(std::fabs(w.state.y - 37.0f) < 0.001f, "téléport MJ : hauteur du sol reprise du client");
+		Check(!w.state.trustNextHeight, "téléport MJ : confiance consommée");
+		w.y = 80.0f;
+		(void)w.Step(kSprint);
+		Check(w.state.y < 50.0f, "téléport MJ : montée suivante de nouveau bornée");
+		ResetMovement(w.state, 0, 0, 0);
+		Check(!w.state.trustNextHeight, "ResetMovement remet la confiance à faux");
+	}
+
 	if (s_failCount == 0)
 		std::puts("[OK] movement_rules_tests");
 	return s_failCount == 0 ? 0 : 1;

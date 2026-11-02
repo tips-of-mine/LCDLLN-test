@@ -70,6 +70,13 @@ namespace engine::server
 		{ "fly", &GmCommandExecutor::CmdFly },
 		{ "freeze", &GmCommandExecutor::CmdFreeze },
 		{ "unfreeze", &GmCommandExecutor::CmdUnfreeze },
+		// ADM.2 — informations (ServerAppGmInfo.cpp)
+		{ "pos", &GmCommandExecutor::CmdPos },
+		{ "where", &GmCommandExecutor::CmdWhere },
+		{ "info", &GmCommandExecutor::CmdInfo },
+		{ "target", &GmCommandExecutor::CmdTarget },
+		{ "zone", &GmCommandExecutor::CmdZone },
+		{ "nearby", &GmCommandExecutor::CmdNearby },
 	};
 
 	void GmCommandExecutor::Run()

@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -99,6 +100,20 @@ namespace engine::server
 		void RegisterShardForwarders();
 		/// ADM.0 — rappel d'audit (table gm_command_audit + journal).
 		void InstallAuditSink();
+		/// ADM.2 — informations : /online, /ping, /serverstats, /info (ligne de compte
+		/// ajoutée par le master avant le relais vers le shard du joueur visé).
+		void RegisterInformation();
+
+		/// Personnage en jeu nommé \p name (sans casse) : connexion et fiche, nullopt sinon.
+		struct OnlineCharacter
+		{
+			uint32_t connId = 0;
+			uint64_t accountId = 0;
+			uint64_t characterId = 0;
+			std::string characterName;
+			uint32_t shardId = 0;
+		};
+		std::optional<OnlineCharacter> FindOnlineCharacter(std::string_view name) const;
 
 		/// Relaie la commande \p entry tapée par \p ctx au shard de son personnage.
 		/// \param actorCharacterOverride 0 = personnage de l'appelant ; sinon le

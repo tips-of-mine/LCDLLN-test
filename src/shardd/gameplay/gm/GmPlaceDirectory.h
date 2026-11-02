@@ -40,6 +40,9 @@ namespace engine::server::gm
 		GmPlaceKind kind = GmPlaceKind::City;
 		float x = 0.0f;          ///< position monde (m).
 		float z = 0.0f;
+		/// ADM.2 — rectangle d'une région (m) ; faux pour les autres lieux.
+		bool hasBounds = false;
+		float xMin = 0.0f, xMax = 0.0f, zMin = 0.0f, zMax = 0.0f;
 	};
 
 	/// Texte replié pour la recherche : minuscules ASCII, accents français retirés,
@@ -67,6 +70,13 @@ namespace engine::server::gm
 
 		/// Tous les lieux dont le nom contient \p filter (vide = tous), triés par nom.
 		std::vector<const GmPlace*> List(std::string_view filter) const;
+
+		/// ADM.2 — plus petite région contenant (\p x, \p z), nullptr si aucune.
+		const GmPlace* RegionAt(float x, float z) const;
+
+		/// ADM.2 — ville, départ ou lieu remarquable le plus proche de (\p x, \p z)
+		/// (les régions sont ignorées) ; \p outDistance en mètres. nullptr si vide.
+		const GmPlace* Nearest(float x, float z, float& outDistance) const;
 
 		size_t Size() const { return m_places.size(); }
 		bool Empty() const { return m_places.empty(); }

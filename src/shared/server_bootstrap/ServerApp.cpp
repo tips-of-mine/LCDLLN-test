@@ -7079,6 +7079,7 @@ namespace engine::server
 						|| !engine::world::cells::SameMap(target->zoneId, mob.zoneId)
 						|| target->stats.currentHealth == 0
 						|| (target->stateFlags & kEntityStateDead) != 0u
+						|| target->gm.invisible // ADM.3 — un MJ invisible n'est jamais ciblé
 						|| entry.threat == 0;
 				}),
 			mob.threatTable.end());
@@ -7423,7 +7424,8 @@ namespace engine::server
 				}
 
 				// Garde ressource.
-				const uint32_t cost = cs->resourceCostPercent * client->maxResource / 100u;
+				// ADM.3 — /nocost : sorts gratuits.
+				const uint32_t cost = client->gm.noCost ? 0u : cs->resourceCostPercent * client->maxResource / 100u;
 				if (client->currentResource < cost)
 				{
 					LOG_WARN(Net,
@@ -7516,7 +7518,8 @@ namespace engine::server
 			return;
 		}
 
-		const uint32_t cost = spell->resourceCostPercent * client->maxResource / 100u;
+		// ADM.3 — /nocost : sorts gratuits.
+		const uint32_t cost = client->gm.noCost ? 0u : spell->resourceCostPercent * client->maxResource / 100u;
 		if (client->currentResource < cost)
 		{
 			LOG_WARN(Net, "[ServerApp] CastRequest ignored: not enough resource (client_id={}, spell={}, cost={}, current={})",
@@ -8042,10 +8045,11 @@ namespace engine::server
 		// Débit (clamp défensif : la ressource a pu varier pendant l'incantation)
 		// + cooldown. Validations de cible faites à la demande ; une cible morte
 		// entre-temps rend les effets ciblés no-op (le coût reste dû).
-		const uint32_t cost = spell.resourceCostPercent * client.maxResource / 100u;
+		// ADM.3 — /nocost : ni coût ni temps de recharge.
+		const uint32_t cost = client.gm.noCost ? 0u : spell.resourceCostPercent * client.maxResource / 100u;
 		client.currentResource = (client.currentResource >= cost) ? (client.currentResource - cost) : 0u;
 		SendResourceUpdate(client, true);
-		if (spell.cooldownMs > 0)
+		if (spell.cooldownMs > 0 && !client.gm.noCost)
 		{
 			client.spellCooldownUntilMs[spell.spellId] = nowMs + spell.cooldownMs;
 		}
@@ -8284,10 +8288,11 @@ namespace engine::server
 		const uint64_t nowMs = NowMonotonicMs();
 
 		// ── Débit ressource + cooldown (pattern identique à ResolveSpellCast) ──
-		const uint32_t cost = cs.resourceCostPercent * client.maxResource / 100u;
+		// ADM.3 — /nocost : ni coût ni temps de recharge.
+		const uint32_t cost = client.gm.noCost ? 0u : cs.resourceCostPercent * client.maxResource / 100u;
 		client.currentResource = (client.currentResource >= cost) ? (client.currentResource - cost) : 0u;
 		SendResourceUpdate(client, true);
-		if (cs.cooldownMs > 0)
+		if (cs.cooldownMs > 0 && !client.gm.noCost)
 		{
 			client.spellCooldownUntilMs[cs.skillId] = nowMs + cs.cooldownMs;
 		}
@@ -8669,7 +8674,8 @@ namespace engine::server
 		const uint32_t modifiedDamage = roll.miss
 			? 0u
 			: ApplyAuraDamageModifiers(roll.damage, mob.auras, target.auras);
-		const uint32_t appliedDamage = roll.miss ? 0u : std::min(modifiedDamage, target.stats.currentHealth);
+		// ADM.3 — maître de jeu invincible (/invincible) : aucun dégât.
+		const uint32_t appliedDamage = (roll.miss || target.gm.invincible) ? 0u : std::min(modifiedDamage, target.stats.currentHealth);
 		if (!roll.miss && appliedDamage == 0)
 		{
 			return false;
@@ -9666,6 +9672,11 @@ namespace engine::server
 			if (subjectClient != nullptr)
 			{
 				if (!subjectClient->hasReplicatedState)
+				{
+					continue;
+				}
+				// ADM.3 — maître de jeu invisible (/invisible) : absent des snapshots des autres.
+				if (subjectClient->gm.invisible)
 				{
 					continue;
 				}

@@ -45,6 +45,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmInfo.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmCharacter.cpp
     # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
@@ -1553,6 +1554,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmInfo.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmCharacter.cpp
     # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.

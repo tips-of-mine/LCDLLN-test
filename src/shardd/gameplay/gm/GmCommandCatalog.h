@@ -72,6 +72,22 @@ namespace engine::server::gm
 		{ "target", GmRole::GameMaster },
 		{ "zone", GmRole::GameMaster },
 		{ "nearby", GmRole::GameMaster },
+		// ADM.3 — personnage
+		{ "level", GmRole::GameMaster },
+		{ "xp", GmRole::GameMaster },
+		{ "heal", GmRole::GameMaster },
+		{ "revive", GmRole::GameMaster },
+		{ "kill", GmRole::GameMaster },
+		{ "hp", GmRole::GameMaster },
+		{ "mana", GmRole::GameMaster },
+		{ "invincible", GmRole::GameMaster },
+		{ "invisible", GmRole::GameMaster },
+		{ "nocost", GmRole::GameMaster },
+		{ "cooldown", GmRole::GameMaster },
+		{ "learn", GmRole::GameMaster },
+		{ "unlearn", GmRole::GameMaster },
+		{ "resetskills", GmRole::GameMaster },
+		{ "profession", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

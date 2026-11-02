@@ -29,6 +29,12 @@ namespace engine::server::db
 	class ConnectionPool;
 }
 
+namespace engine::server::reputation
+{
+	class ReputationManager;
+	class MysqlReputationStore;
+}
+
 namespace engine::server::chat
 {
 	class ChatCommandRouter;
@@ -62,6 +68,9 @@ namespace engine::server
 		ShardRegistry* shards = nullptr;
 		db::ConnectionPool* db = nullptr;
 		GmShardRelay* relay = nullptr;
+		/// ADM.3 — réputations (/setrep) : autorité en mémoire + persistance (nullptr = sans base).
+		reputation::ReputationManager* reputation = nullptr;
+		reputation::MysqlReputationStore* reputationStore = nullptr;
 		/// Horloge monotone en secondes (délais du relais).
 		std::function<double()> nowSeconds;
 	};
@@ -114,6 +123,13 @@ namespace engine::server
 			uint32_t shardId = 0;
 		};
 		std::optional<OnlineCharacter> FindOnlineCharacter(std::string_view name) const;
+
+		/// ADM.3 — personnage : /setrep (réputation tenue par le master).
+		void RegisterCharacter();
+
+		/// Compte visé par \p name : personnage en jeu (sans casse), sinon login.
+		/// \return 0 si introuvable.
+		uint64_t ResolveAccount(std::string_view name) const;
 
 		/// Relaie la commande \p entry tapée par \p ctx au shard de son personnage.
 		/// \param actorCharacterOverride 0 = personnage de l'appelant ; sinon le

@@ -817,6 +817,7 @@ namespace tools::world_gen
 		constexpr double kDamCrestM = 8.0;   // crête de la digue, au-dessus de l'eau (m)
 		constexpr double kDamReachM = 120.0; // portée maximale de la digue (m)
 		constexpr float kRiverKeepM = 12.0f; // pas de digue sur un lit de rivière (m)
+		constexpr double kEdgeRiseM = 6.0;   // remontée du fond vers la rive, dans le polygone (m)
 		double rMax = lake.radiusM;
 		for (const Vec2& p : lake.polygon)
 			rMax = std::max(rMax, std::hypot(p.x - lake.center.x, p.z - lake.center.z));
@@ -831,7 +832,18 @@ namespace tools::world_gen
 			{
 				// Fond : parabole sous la surface (0,6 m au bord, ≤ 9,6 m au centre).
 				const double q = d / rr;
-				h = std::min(h, lake.waterY - (depthMax * (1.0 - q * q) + 0.6));
+				const double bed = lake.waterY - (depthMax * (1.0 - q * q) + 0.6);
+				const double inside = rr - d;
+				if (inside < kEdgeRiseM)
+				{
+					// Bande du bord : le sol remonte AU-DESSUS de l'eau au ras du
+					// polygone ; le rivage réel est un peu en dedans et le bord de
+					// la nappe reste enfoui sous la rive (jamais visible, même entre
+					// deux échantillons de la heightmap).
+					h = Lerp(bankY, bed, SmoothStep(0.0, kEdgeRiseM, inside));
+				}
+				else
+					h = std::min(h, bed);
 				return;
 			}
 			const double out = d - rr;

@@ -515,12 +515,12 @@ namespace
 		{
 			const double a = 6.283185307179586 * k / 64;
 			const double rr = LakeRadiusAt(lake, a);
-			const Vec2 in{ 500.0 + std::cos(a) * (rr - 6.0), 500.0 + std::sin(a) * (rr - 6.0) };
+			const Vec2 in{ 500.0 + std::cos(a) * (rr - 13.0), 500.0 + std::sin(a) * (rr - 13.0) };
 			const Vec2 rim{ 500.0 + std::cos(a) * (rr + 3.0), 500.0 + std::sin(a) * (rr + 3.0) };
 			if (SampleBilinear(slope, in.x, in.z) >= lake.waterY) bedOk = false;
 			if (SampleBilinear(slope, rim.x, rim.z) < lake.waterY) rimOk = false;
 		}
-		Check(bedOk, "EAU.5 : fond sous l'eau partout dans le polygone");
+		Check(bedOk, "EAU.5 : fond sous l'eau dans le polygone (hors bande du bord)");
 		Check(rimOk, "EAU.5 : rive au-dessus de l'eau tout autour (digue cote aval)");
 		Check(std::fabs(SampleBilinear(slope, 900.0, 500.0) - (60.0 - 40.0 * 0.9)) < 1e-9,
 			"EAU.5 : relief d'origine retrouve au-dela de la digue");

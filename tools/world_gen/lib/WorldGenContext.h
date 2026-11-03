@@ -373,8 +373,9 @@ namespace tools::world_gen
 	/// \param meanHeight moyenne du relief de base sur le disque du lac.
 	double LakeWaterLevel(const WorldMaster& m, const Lake& lake, double meanHeight);
 	/// EAU.5 — Creuse la cuvette du lac et façonne ses rives d'après le
-	/// POLYGONE (et non plus un cercle) : le fond est sous l'eau partout dans
-	/// le polygone, et au ras du bord le sol est 0,3 m au-dessus de l'eau. Un
+	/// POLYGONE (et non plus un cercle) : le fond est sous l'eau dans le
+	/// polygone, sauf une bande de 6 m où il remonte jusqu'à 0,3 m au-dessus de
+	/// l'eau au ras du bord (le bord de la nappe reste enfoui sous la rive). Un
 	/// relief plus bas (lac à flanc de pente) est relevé en digue naturelle
 	/// (crête de 8 m, puis pente ≈ 19°) : la nappe ne déborde plus en « plaque » au-dessus du vide.
 	/// \param riverDist distance aux lits de rivière (m) ; la digue n'est pas

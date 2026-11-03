@@ -217,6 +217,15 @@ namespace engine::render
 		AssetId createSampledRgba8Texture(uint32_t width, uint32_t height,
 		                                  VkFormat format, const uint8_t* pixels);
 
+		/// PERF.1 — Texture DEVICE_LOCAL, tuilage OPTIMAL, chaîne de mips complète
+		/// (générée par blits linéaires), laissée en SHADER_READ_ONLY_OPTIMAL.
+		/// Upload via staging sur m_uploadQueue, attente de fin (chargement).
+		/// Utilisée par createSampledRgba8Texture quand SetUploadContext a été appelé.
+		/// \return kInvalidAssetId si le format ne le permet pas ou en cas d'échec
+		/// (ressources libérées ; l'appelant retombe sur le chemin LINEAR).
+		AssetId createOptimalMippedTexture(uint32_t width, uint32_t height,
+		                                   VkFormat format, const uint8_t* pixels);
+
 		void ReleasePendingPresentBlitStaging();
 
 		struct PendingPresentBlitUpload

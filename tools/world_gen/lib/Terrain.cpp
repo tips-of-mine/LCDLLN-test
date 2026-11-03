@@ -840,7 +840,10 @@ namespace tools::world_gen
 					// polygone ; le rivage réel est un peu en dedans et le bord de
 					// la nappe reste enfoui sous la rive (jamais visible, même entre
 					// deux échantillons de la heightmap).
-					h = Lerp(bankY, bed, SmoothStep(0.0, kEdgeRiseM, inside));
+					const double edgeY = Lerp(bankY, bed, SmoothStep(0.0, kEdgeRiseM, inside));
+					// Un lit de rivière qui entre ou sort du lac n'est jamais rehaussé.
+					const bool river = hasRivers && riverDist.At(i, j) < kRiverKeepM;
+					h = river ? std::min(h, edgeY) : edgeY;
 				}
 				else
 					h = std::min(h, bed);

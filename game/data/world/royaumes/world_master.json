@@ -127,6 +127,14 @@
       "n_max": 18
     },
     {
+      "id": "marches_du_nord_ouest",
+      "name": "Marches du Nord",
+      "e_min": 9,
+      "e_max": 12,
+      "n_min": 17,
+      "n_max": 18
+    },
+    {
       "id": "foret_occidentale",
       "name": "Foret occidentale",
       "e_min": -12,
@@ -449,7 +457,7 @@
     {
       "id": "ville_tbarak",
       "name": "Tbarak",
-      "cell": "N018_E014",
+      "cell": "N018_E010",
       "kind": "village",
       "race": "humains",
       "state": "intact",
@@ -457,6 +465,30 @@
       "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
+    },
+    {
+      "id": "ville_moorgate",
+      "name": "Moorgate",
+      "cell": "N015_E017",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (est des Marches) ; nom repris des lieux non utilisés."
+    },
+    {
+      "id": "ville_dunfold",
+      "name": "Dunfold",
+      "cell": "N017_E013",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (sud des Marches) ; nom repris des lieux non utilisés."
     },
     {
       "id": "ville_klindor",
@@ -473,7 +505,7 @@
     {
       "id": "ville_hazol",
       "name": "Hazol",
-      "cell": "N015_E015",
+      "cell": "N017_E011",
       "kind": "village",
       "race": "humains",
       "state": "intact",

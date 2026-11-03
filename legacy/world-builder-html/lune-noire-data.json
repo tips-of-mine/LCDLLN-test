@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.47",
+    "version": "1.0.48",
     "notes": [
+      "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
       "v1.0.47 : [VILLES] Kendrhir Vale en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
       "v1.0.46 : [VILLES] Kendrhir Vale : intérieur de la cité rempli (citadelle, muraille et trois portes, cinq quartiers, lices, emplacement des 19 PNJ de service, PNJ d'ambiance) et description complète (topographie, architecture, végétation, ciel, accès, prompt image) ; éléments hors BD marqués [INFÉRÉ].",
       "v1.0.45 : [CARTE] Positions confrontées au T1 : Kendrhir Vale en N015_E012, juste au sud de la Faille de Kashogs, en haut d'une falaise et sans vue sur la mer ; N014_E012 passée en plaine (plaine du siège) ; Tbarak (N018_E014), Klindor (N017_E019) et Hazol (N015_E015) replacées dans les Territoires des Marches selon la carte p.25 ; routes Tbarak–Klindor–Hazol–Kendrhir Vale (itinéraire de la horde) ; le port de la baie en S005_W004 devient Equiton (ville_equiton, nom non utilisé de carte_export.json) : ligne maritime du sud, ports et scénario « Les Abysses de la baie » (quest_abysses_1_equiton) rattachés à Equiton.",
@@ -7214,7 +7215,7 @@
       "alias": "",
       "type": "city",
       "importance": "",
-      "cell": "N018_E014",
+      "cell": "N018_E010",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -7242,7 +7243,7 @@
         "[BD-T1] Lecture du nom incertaine sur la carte (p.25 BD) : la deuxième lettre peut se lire « B » ou « H » (Tbarak / Tharak).",
         "[BD-T1] Position : nord-ouest des Territoires des Marches, première cité de l'itinéraire de la horde (carte p.25)."
       ],
-      "anchor_tile": "N018_E014",
+      "anchor_tile": "N018_E010",
       "taille": "ville",
       "service_npcs": [
         {
@@ -7681,7 +7682,7 @@
       "alias": "",
       "type": "city",
       "importance": "",
-      "cell": "N015_E015",
+      "cell": "N017_E011",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -7709,7 +7710,7 @@
       "notes": [
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
         "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
-        "[LORE_ETENDU] Probable carrefour commercial au centre des Marches.",
+        "[LORE_ETENDU] Probable carrefour commercial de l'ouest des Marches.",
         "[BD-T1] Position : ouest des Territoires des Marches, troisième cité de l'itinéraire de la horde (carte p.25)."
       ],
       "taille": "ville",
@@ -7875,7 +7876,217 @@
           "metier": "fossoyeur"
         }
       ],
-      "anchor_tile": "N015_E015"
+      "anchor_tile": "N017_E011"
+    },
+    {
+      "id": "ville_moorgate",
+      "name": "Moorgate",
+      "alias": "",
+      "type": "town",
+      "importance": "",
+      "cell": "N015_E017",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "forgeron",
+        "ecurie",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "features": [],
+      "notes": [
+        "[BD-T1] Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey, à l'est des Marches, quatrième étape avant la Faille de Kashogs ; pictogramme d'incendie (pillée par la horde).",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas cette cité)."
+      ],
+      "taille": "village",
+      "service_npcs": [
+        {
+          "id": "pnj_ville_moorgate_auberge_01",
+          "name": "Darance Bleucombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_moorgate_forgeron_01",
+          "name": "Darwald Sombremorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_moorgate_ecurie_01",
+          "name": "Renia Bleupré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moorgate_ecurie_02",
+          "name": "Norius Noirpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moorgate_guilde_01",
+          "name": "Lanald Fontmare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_ville_moorgate_infirmerie_01",
+          "name": "Dunine Noirvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_moorgate_cimetiere_01",
+          "name": "Aleline Sombrefort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ],
+      "anchor_tile": "N015_E017"
+    },
+    {
+      "id": "ville_dunfold",
+      "name": "Dunfold",
+      "alias": "",
+      "type": "town",
+      "importance": "",
+      "cell": "N017_E013",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "features": [],
+      "notes": [
+        "[BD-T1] Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey, au sud des Marches, cinquième et dernière étape avant la Faille de Kashogs ; pictogramme d'incendie (pillée par la horde).",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas cette cité)."
+      ],
+      "taille": "village",
+      "service_npcs": [
+        {
+          "id": "pnj_ville_dunfold_auberge_01",
+          "name": "Berald Chenrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_dunfold_potions_01",
+          "name": "Darran Noirombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_ville_dunfold_armes_01",
+          "name": "Ala Valombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_ville_dunfold_forgeron_01",
+          "name": "Edius Valmorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_dunfold_marche_01",
+          "name": "Alaude Fervigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_01",
+          "name": "Ralais Corbchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_02",
+          "name": "Lordor Fontlande",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_temple_01",
+          "name": "Yvia Saulombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_ville_dunfold_guilde_01",
+          "name": "Marbert Sombregarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_ville_dunfold_infirmerie_01",
+          "name": "Varora Marlfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_dunfold_cimetiere_01",
+          "name": "Osvin Valchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ],
+      "anchor_tile": "N017_E013"
     },
     {
       "id": "ville_feyhin_lokcthat",
@@ -28696,7 +28907,7 @@
     {
       "id": "raid_pillage_marches_t1",
       "name": "La Campagne des Marches",
-      "description": "Suivre la horde de Ghorghor Bey dans sa campagne de pillage à travers les Territoires des Marches : de Tbarak à Klindor, puis à Hazol, jusqu'à la Faille de Kashogs. Combat, pillage, et neutralisation de seigneurs locaux qui s'opposent au passage.",
+      "description": "Suivre la horde de Ghorghor Bey dans sa campagne de pillage à travers les Territoires des Marches : de Tbarak à Klindor, puis Hazol, Moorgate et Dunfold, jusqu'à la Faille de Kashogs. Combat, pillage, et neutralisation de seigneurs locaux qui s'opposent au passage.",
       "min_teams": 1,
       "min_players_per_team": 3,
       "min_players_total": 3,
@@ -153156,7 +153367,7 @@
     {
       "id": "region_marches",
       "name": "Territoires des Marches",
-      "description": "Vaste région frontalière entre les terres civilisées de l'Empire et les zones indomptées. Plusieurs cités-étapes : Tbarak (nord-ouest), Klindor (nord-est), Hazol (centre-ouest). Traversée par des routes de commerce et de guerre. Seigneurs locaux peu fiables, pillages fréquents. Ambiance de Far-West médiéval. La Faille de Kashogs en marque la frontière sud vers la 1ère Province de l'Empire.",
+      "description": "Vaste région frontalière entre les terres civilisées de l'Empire et les zones indomptées. Cités-étapes de l'itinéraire de la horde : Tbarak (nord-ouest), Klindor (nord-est), Hazol (ouest), Moorgate (est), Dunfold (sud). Traversée par des routes de commerce et de guerre. Seigneurs locaux peu fiables, pillages fréquents. Ambiance de Far-West médiéval. La Faille de Kashogs en marque la frontière sud vers la 1ère Province de l'Empire.",
       "notes": [
         "[BD-T1] Carte page 19 — itinéraire de la horde de Ghorghor tracé en pointillés rouges.",
         "[BD-T1] Ghorghor Bey y mène sa horde de pillards. C'est ici que Wismerhill la rejoint.",
@@ -165651,7 +165862,7 @@
     {
       "id": "N018_E009",
       "name": "cell_N018_E009",
-      "region_id": "foret_elfique",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165670,7 +165881,7 @@
     {
       "id": "N018_E010",
       "name": "cell_N018_E010",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165689,7 +165900,7 @@
     {
       "id": "N018_E011",
       "name": "cell_N018_E011",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165708,7 +165919,7 @@
     {
       "id": "N018_E012",
       "name": "cell_N018_E012",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165727,7 +165938,7 @@
     {
       "id": "N018_E013",
       "name": "cell_N018_E013",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166384,7 +166595,7 @@
     {
       "id": "N017_E009",
       "name": "cell_N017_E009",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166403,7 +166614,7 @@
     {
       "id": "N017_E010",
       "name": "cell_N017_E010",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166422,7 +166633,7 @@
     {
       "id": "N017_E011",
       "name": "cell_N017_E011",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166441,7 +166652,7 @@
     {
       "id": "N017_E012",
       "name": "cell_N017_E012",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166460,7 +166671,7 @@
     {
       "id": "N017_E013",
       "name": "cell_N017_E013",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -190462,7 +190673,7 @@
     {
       "id": "000112",
       "type": "road",
-      "from_place": "N018_E014",
+      "from_place": "N018_E010",
       "from_ville_id": "ville_tbarak",
       "from_lieu_id": "",
       "to_place": "N017_E019",
@@ -190477,7 +190688,7 @@
       "from_place": "N017_E019",
       "from_ville_id": "ville_klindor",
       "from_lieu_id": "",
-      "to_place": "N015_E015",
+      "to_place": "N017_E011",
       "to_ville_id": "ville_hazol",
       "to_lieu_id": "",
       "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
@@ -190486,13 +190697,37 @@
     {
       "id": "000114",
       "type": "road",
-      "from_place": "N015_E015",
-      "from_ville_id": "ville_hazol",
+      "from_place": "N017_E013",
+      "from_ville_id": "ville_dunfold",
       "from_lieu_id": "",
       "to_place": "N015_E012",
       "to_ville_id": "kendrhir_vale",
       "to_lieu_id": "",
       "description": "[BD-T1] Des Marches à Kendrhir par la Faille de Kashogs (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000115",
+      "type": "road",
+      "from_place": "N017_E011",
+      "from_ville_id": "ville_hazol",
+      "from_lieu_id": "",
+      "to_place": "N015_E017",
+      "to_ville_id": "ville_moorgate",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000116",
+      "type": "road",
+      "from_place": "N015_E017",
+      "from_ville_id": "ville_moorgate",
+      "from_lieu_id": "",
+      "to_place": "N017_E013",
+      "to_ville_id": "ville_dunfold",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
       "notes": []
     }
   ],
@@ -196180,7 +196415,7 @@
       "tome_source": "t01",
       "tier": "principal",
       "region_id": "region_marches",
-      "description": "Fil rouge du périple de la horde de Ghorghor Bey à travers les Territoires des Marches (Tbarak → Klindor → Hazol → Faille de Kashogs → Kendrhir). Décliné côté horde (pillage/conquête) vs côté défenseurs des cités et Ordres (résistance). S'appuie sur les raids existants raid_pillage_marches_t1 et raid_sac_kendrhir_t1.",
+      "description": "Fil rouge du périple de la horde de Ghorghor Bey à travers les Territoires des Marches (Tbarak → Klindor → Hazol → Moorgate → Dunfold → Faille de Kashogs → Kendrhir). Décliné côté horde (pillage/conquête) vs côté défenseurs des cités et Ordres (résistance). S'appuie sur les raids existants raid_pillage_marches_t1 et raid_sac_kendrhir_t1.",
       "linked_quest_ids": [
         "quest_t01_gd_escorte_horde",
         "quest_t01_gd_defendre_cite_marches",
@@ -196344,7 +196579,9 @@
       ],
       "prompt_image_ultra_detaille": "Immense canyon de fantasy, falaises rouges déchiquetées s'élevant à des centaines de mètres, profonde faille noire centrale plongeant dans l'obscurité, pics rocheux acérés, plateau herbeux vert vif en surplomb avec petites silhouettes humaines pour l'échelle, longues traînées blanches serpentant dans le ciel comme des vents matérialisés ou des rubans magiques, ciel bleu clair lumineux, ambiance dramatique et vertigineuse, style bande dessinée européenne heroic fantasy, encrage noir prononcé, couleurs saturées rouge orange et bleu.",
       "footprint_tiles": [],
-      "notes": []
+      "notes": [
+        "[BD-T1] Ferme les Territoires des Marches au sud (carte p.25) : la horde l'atteint depuis Dunfold, puis gagne Kendrhir, juste au sud (N015_E012)."
+      ]
     },
     {
       "id": "lieu_mont_neufs_pics",

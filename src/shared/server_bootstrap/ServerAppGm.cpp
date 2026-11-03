@@ -77,6 +77,22 @@ namespace engine::server
 		{ "target", &GmCommandExecutor::CmdTarget },
 		{ "zone", &GmCommandExecutor::CmdZone },
 		{ "nearby", &GmCommandExecutor::CmdNearby },
+		// ADM.3 — personnage (ServerAppGmCharacter.cpp)
+		{ "level", &GmCommandExecutor::CmdLevel },
+		{ "xp", &GmCommandExecutor::CmdXp },
+		{ "heal", &GmCommandExecutor::CmdHeal },
+		{ "revive", &GmCommandExecutor::CmdRevive },
+		{ "kill", &GmCommandExecutor::CmdKill },
+		{ "hp", &GmCommandExecutor::CmdHp },
+		{ "mana", &GmCommandExecutor::CmdMana },
+		{ "invincible", &GmCommandExecutor::CmdInvincible },
+		{ "invisible", &GmCommandExecutor::CmdInvisible },
+		{ "nocost", &GmCommandExecutor::CmdNoCost },
+		{ "cooldown", &GmCommandExecutor::CmdCooldown },
+		{ "learn", &GmCommandExecutor::CmdLearn },
+		{ "unlearn", &GmCommandExecutor::CmdUnlearn },
+		{ "resetskills", &GmCommandExecutor::CmdResetSkills },
+		{ "profession", &GmCommandExecutor::CmdProfession },
 	};
 
 	void GmCommandExecutor::Run()

@@ -212,6 +212,35 @@ namespace engine::server
 		/// /nearby [rayon] — entités proches.
 		void CmdNearby();
 
+		// ---- ADM.3 — personnage (ServerAppGmCharacter.cpp) ----------------------
+		/// Pousse les PV et l'état mort de \p client à tous les clients intéressés
+		/// (CombatEvent « résurrection » : sans ligne de journal de combat).
+		void SyncHealth(ConnectedClient& client);
+		/// Lit « <n> [joueur] » ou « <joueur> <n> » ; \return la cible (nullptr + message
+		/// sinon). \param allowNegative accepte un nombre négatif.
+		ConnectedClient* ParseAmountAndTarget(int64_t& outAmount, std::string_view syntax, bool allowNegative);
+		/// Fixe le niveau (borné aux tables), XP à 0, stats recalculées, soin complet,
+		/// fiche / XP / compétences poussées, sauvegarde.
+		void SetLevel(ConnectedClient& target, uint32_t level);
+		/// Bascule (ou fixe avec on/off) un pouvoir booléen de GmPlayerState.
+		/// \param field membre visé (invincible, invisible, noCost).
+		void TogglePower(bool gm::GmPlayerState::* field, const char* label, const char* syntax);
+		void CmdLevel();       ///< /level <n> [joueur]
+		void CmdXp();          ///< /xp <points> [joueur]
+		void CmdHeal();        ///< /heal [joueur]
+		void CmdRevive();      ///< /revive [joueur]
+		void CmdKill();        ///< /kill [joueur] (sans argument : la cible)
+		void CmdHp();          ///< /hp <n> [joueur]
+		void CmdMana();        ///< /mana <n> [joueur]
+		void CmdInvincible();  ///< /invincible [on|off] [joueur]
+		void CmdInvisible();   ///< /invisible [on|off] [joueur]
+		void CmdNoCost();      ///< /nocost [on|off] [joueur]
+		void CmdCooldown();    ///< /cooldown [joueur]
+		void CmdLearn();       ///< /learn <compétence>|all [joueur]
+		void CmdUnlearn();     ///< /unlearn <compétence> [joueur]
+		void CmdResetSkills(); ///< /resetskills [joueur]
+		void CmdProfession();  ///< /profession <métier> <niveau> [joueur]
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

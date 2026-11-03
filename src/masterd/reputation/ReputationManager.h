@@ -84,6 +84,17 @@ namespace engine::server::reputation
 			}
 		}
 
+		/// ADM.3 — fixe la réputation (commande /setrep d'un maître de jeu) : valeur
+		/// bornée à [kReputationMin, kReputationMax], SANS débordement (spillover) sur
+		/// les autres factions. \return la valeur retenue.
+		int32_t SetReputation(AccountId accountId, FactionId faction, int32_t value)
+		{
+			const int32_t current = GetReputation(accountId, faction);
+			ApplyDelta(accountId, faction, static_cast<int32_t>(
+				std::clamp<int64_t>(static_cast<int64_t>(value) - current, INT32_MIN, INT32_MAX)));
+			return GetReputation(accountId, faction);
+		}
+
 		int32_t GetReputation(AccountId accountId, FactionId faction) const
 		{
 			auto itAcc = m_reputation.find(accountId);

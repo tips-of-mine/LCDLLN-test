@@ -6,6 +6,9 @@
 #include "src/masterd/admin/GmAuditStore.h"
 #include "src/masterd/admin/GmShardRelay.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
+#include "src/masterd/reputation/MysqlReputationStore.h"
+#include "src/masterd/reputation/ReputationManager.h"
+#include "src/shared/account/AccountValidation.h"
 #include "src/masterd/chat/ChatCommandRouter.h"
 #include "src/masterd/chat/CommandHelp.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
@@ -113,6 +116,7 @@ namespace engine::server
 		// Après les relais génériques : une commande master peut remplacer le relais
 		// d'une entrée "shard_command" pour y ajouter des informations (ex. /info).
 		RegisterInformation();
+		RegisterCharacter();
 		InstallAuditSink();
 		LOG_INFO(Net, "[MasterGmCommands] ADM.0 commandes de jeu enregistrées ({} entrées dans le registre)",
 			m_s.registry->Size());
@@ -464,6 +468,48 @@ namespace engine::server
 			for (const std::string& alias : entry.aliases)
 				m_s.router->RegisterEx(alias, entry.minRole, info);
 		}
+	}
+
+	// ---- ADM.3 — personnage ---------------------------------------------------
+
+	uint64_t MasterGmCommands::ResolveAccount(std::string_view name) const
+	{
+		if (const auto online = FindOnlineCharacter(name))
+			return online->accountId;
+		if (m_s.accounts == nullptr)
+			return 0;
+		std::string login(engine::admin::Trim(name));
+		if (!login.empty() && login.front() == '@')
+			login.erase(login.begin());
+		if (const auto rec = m_s.accounts->FindByLogin(engine::server::NormaliseLoginView(login)))
+			return rec->account_id;
+		return 0;
+	}
+
+	void MasterGmCommands::RegisterCharacter()
+	{
+		using chat::CommandCallContext;
+		// /setrep <joueur|login> <faction> <valeur> — réputation d'un compte (MJ).
+		m_s.router->RegisterEx("/setrep", AccountRole::GameMaster, [this](const CommandCallContext& ctx, std::string_view args) {
+			const auto words = engine::admin::SplitArgs(args);
+			const auto faction = words.size() >= 2u ? engine::admin::ParseInt(words[1]) : std::nullopt;
+			const auto value = words.size() >= 3u ? engine::admin::ParseInt(words[2]) : std::nullopt;
+			if (!faction || *faction <= 0 || *faction > 0xFFFFFFFFll || !value)
+				return Reply(ctx.connId, ctx.sessionId, "Syntaxe : /setrep <joueur|login> <faction (n°)> <valeur, -42000 à 42999>");
+			if (m_s.reputation == nullptr)
+				return Reply(ctx.connId, ctx.sessionId, "Réputations indisponibles sur ce master.");
+			const uint64_t accountId = ResolveAccount(words[0]);
+			if (accountId == 0u)
+				return Reply(ctx.connId, ctx.sessionId, "Joueur ou compte introuvable : " + words[0]);
+			const auto factionId = static_cast<uint32_t>(*faction);
+			const int32_t before = m_s.reputation->GetReputation(accountId, factionId);
+			const int32_t after = m_s.reputation->SetReputation(accountId, factionId,
+				static_cast<int32_t>(std::clamp<int64_t>(*value, INT32_MIN, INT32_MAX)));
+			const bool saved = m_s.reputationStore == nullptr || m_s.reputationStore->Upsert(accountId, factionId, after);
+			Reply(ctx.connId, ctx.sessionId, "Réputation de " + words[0] + " auprès de la faction " + std::to_string(factionId)
+				+ " : " + std::to_string(before) + " → " + std::to_string(after)
+				+ (saved ? "." : " (non sauvegardée : base indisponible)."));
+		});
 	}
 }
 

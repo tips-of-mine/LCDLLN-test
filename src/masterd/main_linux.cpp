@@ -1041,6 +1041,8 @@ int main(int argc, char** argv)
 	gmServices.shards = &shardRegistry;
 	gmServices.db = dbPool.IsInitialized() ? &dbPool : nullptr;
 	gmServices.relay = &gmShardRelay;
+	gmServices.reputation = &reputationManager;                                    // ADM.3
+	gmServices.reputationStore = dbPool.IsInitialized() ? &reputationStore : nullptr; // ADM.3
 	gmServices.nowSeconds = []() {
 		return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	};

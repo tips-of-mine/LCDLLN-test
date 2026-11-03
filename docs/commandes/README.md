@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md)
 
 ## Aide et outils
 
@@ -53,6 +53,27 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/target` |  | MJ | `/target` | Fiche de votre dernière cible (mob ou joueur). |
 | `/zone` |  | MJ | `/zone` | Résumé de votre zone (joueurs, mobs, spawners). |
 | `/nearby` |  | MJ | `/nearby [rayon]` | Entités proches (joueurs, mobs, sacs de butin). |
+
+## Personnage
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/level` | `/setlevel` | MJ | `/level <niveau> [joueur]` | Fixer le niveau d'un personnage. |
+| `/xp` | `/addxp` | MJ | `/xp <points> [joueur]` | Donner de l'expérience (passages de niveau compris). |
+| `/heal` |  | MJ | `/heal [joueur]` | Soigner complètement (vie et ressource). |
+| `/revive` | `/resurrect` | MJ | `/revive [joueur]` | Ressusciter sur place. |
+| `/kill` |  | MJ | `/kill [joueur]` | Tuer sa cible ou un joueur. |
+| `/hp` |  | MJ | `/hp <points> [joueur]` | Fixer les points de vie actuels. |
+| `/mana` | `/resource` | MJ | `/mana <points> [joueur]` | Fixer la ressource actuelle (mana, rage, énergie…). |
+| `/invincible` | `/god` | MJ | `/invincible [on\|off] [joueur]` | Ne plus subir aucun dégât. |
+| `/invisible` | `/invis` | MJ | `/invisible [on\|off] [joueur]` | Devenir invisible pour les autres joueurs et les mobs. |
+| `/nocost` |  | MJ | `/nocost [on\|off] [joueur]` | Sorts sans coût ni temps de recharge. |
+| `/cooldown` | `/cd` | MJ | `/cooldown [joueur]` | Remettre à zéro les temps de recharge. |
+| `/learn` |  | MJ | `/learn <compétence> [joueur] \| /learn all [joueur]` | Apprendre une compétence de classe (ou toutes). |
+| `/unlearn` |  | MJ | `/unlearn <compétence> [joueur]` | Retirer une compétence de classe. |
+| `/resetskills` |  | MJ | `/resetskills [joueur]` | Réinitialiser toutes les compétences de classe. |
+| `/profession` | `/setprofession` | MJ | `/profession <métier> <niveau 1-300> [joueur]` | Fixer le niveau d'un métier (récolte, artisanat). |
+| `/setrep` |  | MJ | `/setrep <joueur\|login> <faction> <valeur>` | Fixer la réputation d'un compte auprès d'une faction. |
 
 ## Modération
 
@@ -124,5 +145,4 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/promote <account_id> <role>` |  | admin | `/promote <account_id> <role>` | Promote/demote a target account to a given role. |
 | `/settime <HH:MM>` |  | admin | `/settime <HH:MM>` | Fixe l'heure du jour (horloge monde serveur, broadcast a tous les clients). |
 | `/pausetime <on|off>` |  | admin | `/pausetime <on\|off>` | Gele ou reprend l'horloge monde serveur. |
-| `/setlevel <player> <level>` |  | admin | `/setlevel <player> <level>` | Fixe le niveau d'un joueur en ligne, recalcule ses stats (soin complet), re-pousse la fiche et persiste. Commande de test du level-up. |
 | `/settimescale <minutes reelles par jour>` |  | admin | `/settimescale <minutes reelles par jour>` | Vitesse du cycle jour/nuit (1..1440 ; 60 = 1 jour de jeu par heure reelle). |

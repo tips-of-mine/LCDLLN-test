@@ -45,6 +45,26 @@ namespace engine::server::gm
 	inline constexpr GmShardCommandInfo kGmShardCommands[] = {
 		// ADM.0 — socle
 		{ "shardinfo", GmRole::GameMaster },
+		// ADM.1 — déplacement
+		{ "tp", GmRole::GameMaster },
+		{ "goto", GmRole::GameMaster },
+		{ "summon", GmRole::GameMaster },
+		{ "recall", GmRole::GameMaster },
+		{ "back", GmRole::GameMaster },
+		{ "places", GmRole::GameMaster },
+		{ "mark", GmRole::GameMaster },
+		{ "marks", GmRole::GameMaster },
+		{ "gomark", GmRole::GameMaster },
+		{ "unmark", GmRole::GameMaster },
+		{ "forward", GmRole::GameMaster },
+		{ "up", GmRole::GameMaster },
+		{ "down", GmRole::GameMaster },
+		{ "ground", GmRole::GameMaster },
+		{ "spawn", GmRole::GameMaster },
+		{ "speed", GmRole::GameMaster },
+		{ "fly", GmRole::GameMaster },
+		{ "freeze", GmRole::GameMaster },
+		{ "unfreeze", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

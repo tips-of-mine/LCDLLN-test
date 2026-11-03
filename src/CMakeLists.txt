@@ -43,6 +43,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
+    # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
@@ -1343,6 +1346,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/CommandHelp.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp)
+  # ADM.1 : annuaire des lieux (/tp <lieu>) et état MJ d'un joueur (vitesse, vol, gel).
+  lcdlln_add_simple_test(gm_place_directory_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/tests/GmPlaceDirectoryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp)
   # ADM.0 : relais des commandes MJ master → shard (corrélation, délais, anti-usurpation).
   lcdlln_add_simple_test(gm_shard_relay_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/tests/GmShardRelayTests.cpp
@@ -1543,6 +1550,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
+    # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).

@@ -339,7 +339,11 @@ namespace engine::server
 		Reliable = 102,
 		/// ETAPE3.4 — accusé du canal fiable (les deux sens) : base u32 (tout reçu
 		/// jusqu'à base) + masque u64 (bit i = base + 1 + i reçu en avance).
-		ReliableAck = 103
+		ReliableAck = 103,
+		/// ADM.1 — shard → client : état « maître de jeu » du joueur local (vol, gel,
+		/// multiplicateur de vitesse…). Envoyé à chaque changement par une commande MJ.
+		/// Un client plus ancien l'ignore (message inconnu journalisé, sans effet).
+		GmStateUpdate = 104
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -641,6 +645,17 @@ namespace engine::server
 		uint16_t moveEpoch = 0;
 	};
 
+	/// ADM.1 — état « maître de jeu » du joueur local (MessageKind::GmStateUpdate).
+	/// Payload fixe : clientId (4) + flags (4) + speedMultiplier (4) = 12 octets.
+	struct GmStateUpdateMessage
+	{
+		uint32_t clientId = 0;
+		/// engine::server::gm::GmStateFlag (vol, gel, invincible, invisible, sans coût, monture).
+		uint32_t flags = 0;
+		/// Multiplicateur de vitesse appliqué au déplacement (1 = normal, 0 = gelé).
+		float speedMultiplier = 1.0f;
+	};
+
 	/// Client request asking the authoritative server to pick up one loot bag entity.
 	struct PickupRequestMessage
 	{
@@ -876,6 +891,11 @@ namespace engine::server
 
 	/// Correction SP1 — encode/decode de la position imposée (rétro-additif).
 	std::vector<std::byte> EncodeForcePosition(const ForcePositionMessage& message);
+	/// ADM.1 — état « maître de jeu » (MessageKind::GmStateUpdate).
+	std::vector<std::byte> EncodeGmStateUpdate(const GmStateUpdateMessage& message);
+	/// \return false si le paquet n'est pas un GmStateUpdate de 12 octets ou si le
+	///         multiplicateur n'est pas un réel fini dans [0, 100].
+	bool DecodeGmStateUpdate(std::span<const std::byte> packet, GmStateUpdateMessage& outMessage);
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
 
 	/// ETAPE3.3 — position officielle après une commande de mouvement (shard → client).

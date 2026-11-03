@@ -138,6 +138,7 @@ namespace engine::network::reliable
 		case MessageKind::PlayerXpUpdate:
 		case MessageKind::EquipmentUpdate:
 		case MessageKind::BeltLayoutUpdate:
+		case MessageKind::GmStateUpdate: // ADM.1 — envoyé seulement au changement
 			return true;
 		default:
 			// Non fiable : Hello/Welcome/Goodbye (gérés à part), Input, Snapshot,

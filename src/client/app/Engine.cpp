@@ -9926,8 +9926,14 @@ namespace engine
 				// mort » affiché ; le respawn rend la main). kEntityStateDead = bit 0.
 				const bool localPlayerDead = m_gameplayNetInitialized
 					&& (m_uiModelBinding.GetModel().playerStats.stateFlags & 1u) != 0u;
-				if (m_dialogueActive || moveLocked || localPlayerDead)
+				// ADM.1 — pouvoirs de maître de jeu (GmStateUpdate) : gel (aucun
+				// déplacement), vol libre, multiplicateur de vitesse (/speed).
+				const engine::client::UIGmState& gmState = m_uiModelBinding.GetModel().gmState;
+				if (m_dialogueActive || moveLocked || localPlayerDead || gmState.Frozen())
 					moveInput = engine::gameplay::MoveInput{};
+				moveInput.flyPressed = gmState.Flying() && !localPlayerDead;
+				m_characterController.SetGmFlight(gmState.Flying());
+				m_characterController.SetSpeedMultiplier(gmState.Frozen() ? 0.0f : gmState.speedMultiplier);
 				// Roadmap-2 (2026-07-19) — vitesses AUTORITAIRES du serveur
 				// (PlayerStats kind 79 : classe + équipement + buffs d'auras).
 				// 0 = pas encore reçu → la config locale reste en vigueur.
@@ -17478,6 +17484,8 @@ namespace engine
 			engine::server::MessageKind kind{};
 			if (engine::server::PeekMessageKind(packet, kind) && kind == engine::server::MessageKind::Welcome)
 			{
+				// ADM.1 — nouvelle session de jeu : le shard ne garde aucun pouvoir de MJ.
+				m_uiModelBinding.ClearGmState();
 				continue;
 			}
 			// ETAPE5.1 — chat de proximité (Dire, Crier) relayé par le shard : affiché

@@ -88,7 +88,8 @@ namespace engine::gameplay
 		// Detect water/flying mode (using optional water query + input flags).
 		IWorldCollider::WaterQuery wq{};
 		const bool inWater = world.QueryWater(m_positionCenter, wq) && wq.inWater;
-		const bool wantFly = m_cfg.enableFlying && input.flyPressed && (!inWater) && (m_staminaSec > 0.0f);
+		// ADM.1 — le vol de MJ (/fly) ne consomme pas d'endurance.
+		const bool wantFly = m_cfg.enableFlying && input.flyPressed && (!inWater) && (m_staminaSec > 0.0f || m_gmFlight);
 		const bool isFlying = wantFly;
 
 		const MovementMode desiredMode =
@@ -135,9 +136,10 @@ namespace engine::gameplay
 		const float moveLen = LengthXZ(desiredMoveXZ);
 		const bool hasMove = moveLen > 1e-5f;
 
-		const float targetSpeed = input.crouch ? m_cfg.crouchSpeed
+		// ADM.1 — multiplicateur de vitesse de MJ (/speed ; 0 = gelé).
+		const float targetSpeed = m_speedMultiplier * (input.crouch ? m_cfg.crouchSpeed
 		                        : (input.sprint ? m_cfg.sprintSpeed
-		                        : (input.run    ? m_cfg.runSpeed : m_cfg.walkSpeed));
+		                        : (input.run    ? m_cfg.runSpeed : m_cfg.walkSpeed)));
 		engine::math::Vec3 desiredVelXZ(0.0f, 0.0f, 0.0f);
 		if (hasMove)
 			desiredVelXZ = desiredMoveXZ * (targetSpeed / moveLen);
@@ -157,7 +159,7 @@ namespace engine::gameplay
 			const float deltaLen = delta.Length();
 			const float airMul =
 				(inWater || isFlying) ? 1.0f : (m_isGrounded ? 1.0f : m_cfg.airControlMultiplier);
-			const float maxChange = (m_cfg.acceleration * airMul) * dt;
+			const float maxChange = (m_cfg.acceleration * airMul * std::max(1.0f, m_speedMultiplier)) * dt;
 			if (deltaLen > maxChange && deltaLen > 0.0f)
 			{
 				const engine::math::Vec3 clamped = delta * (maxChange / deltaLen);
@@ -263,8 +265,16 @@ namespace engine::gameplay
 		if (isFlying)
 		{
 			const float verticalIntent = (input.swimUpPressed ? 1.0f : 0.0f) - (input.swimDownPressed ? 1.0f : 0.0f);
-			vel.y += (verticalIntent * m_cfg.flyVerticalControlAccel) * dt;
-			m_staminaSec = std::max(0.0f, m_staminaSec - (m_cfg.flyStaminaDrainPerSec * dt));
+			if (m_gmFlight)
+			{
+				// ADM.1 — vol de MJ : vitesse verticale directe (course × /speed), sans endurance.
+				vel.y = verticalIntent * std::max(m_cfg.runSpeed * m_speedMultiplier, 3.0f);
+			}
+			else
+			{
+				vel.y += (verticalIntent * m_cfg.flyVerticalControlAccel) * dt;
+				m_staminaSec = std::max(0.0f, m_staminaSec - (m_cfg.flyStaminaDrainPerSec * dt));
+			}
 		}
 
 		// If we can jump now (coyote or buffer), apply jump impulse before collision sweeps.

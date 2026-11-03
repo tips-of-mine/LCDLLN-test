@@ -27,11 +27,13 @@ namespace engine::movement
 	void ResetMovement(MovementState& state, float x, float y, float z)
 	{
 		const uint32_t keptSequence = state.lastSequence;
+		const bool keptVerticalFree = state.verticalFree; // ADM.1 : le vol de MJ survit au téléport
 		state = MovementState{};
 		state.x = x;
 		state.y = y;
 		state.z = z;
 		state.lastSequence = keptSequence; // un paquet ancien reste refusé après un téléport
+		state.verticalFree = keptVerticalFree;
 	}
 
 	MoveResult ApplyMoveCommand(MovementState& state, const MoveCommand& command, float maxSpeed,
@@ -100,8 +102,11 @@ namespace engine::movement
 
 		const float speed = (std::max)(maxSpeed, 0.0f);
 		const float boostSpeed = (std::max)(speed, limits.dodgeSpeedMetersPerSecond);
-		const float maxDistance = (speed * static_cast<float>(gap - boostMs) / 1000.0f
-			+ boostSpeed * static_cast<float>(boostMs) / 1000.0f) * limits.speedTolerance + limits.distanceSlackMeters * slackFactor;
+		// ADM.1 — vitesse nulle (personnage gelé par un MJ) : aucun déplacement, ni
+		// marge, ni esquive.
+		const float maxDistance = speed <= 0.0f ? 0.0f
+			: (speed * static_cast<float>(gap - boostMs) / 1000.0f
+				+ boostSpeed * static_cast<float>(boostMs) / 1000.0f) * limits.speedTolerance + limits.distanceSlackMeters * slackFactor;
 		result.maxDistanceMeters = maxDistance;
 
 		const float oldX = state.x;
@@ -135,8 +140,12 @@ namespace engine::movement
 				acceptedHorizontal = maxDistance;
 				corrected = true;
 			}
+			// ADM.1 — vol de MJ ou première commande après un téléport de MJ : hauteur
+			// du client acceptée telle quelle.
+			const bool freeHeight = (state.verticalFree || state.trustNextHeight) && speed > 0.0f;
+			state.trustNextHeight = false;
 			// Vertical : pente, marche, nage, puis le saut en réserve.
-			const float dy = newY - oldY;
+			const float dy = freeHeight ? 0.0f : newY - oldY;
 			const float freeRise = acceptedHorizontal * limits.maxSlopeRise + limits.stepHeightMeters * slackFactor
 				+ limits.swimRiseMetersPerSecond * dt;
 			if (dy > freeRise)

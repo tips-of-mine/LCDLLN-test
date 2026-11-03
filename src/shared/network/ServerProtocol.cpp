@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cmath>
 
 namespace engine::server
 {
@@ -1002,6 +1003,28 @@ namespace engine::server
 		outMessage.reason = ReadU8(payload, 20);
 		outMessage.moveEpoch = ReadU16(payload, 21);
 		return outMessage.reason <= kForcePositionReasonTeleport;
+	}
+
+	std::vector<std::byte> EncodeGmStateUpdate(const GmStateUpdateMessage& message)
+	{
+		// ADM.1 — payload fixe : clientId (4) + flags (4) + speedMultiplier (4) = 12 o.
+		std::vector<std::byte> packet = BeginPacket(MessageKind::GmStateUpdate, 12);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.flags);
+		WriteF32(packet, message.speedMultiplier);
+		return packet;
+	}
+
+	bool DecodeGmStateUpdate(std::span<const std::byte> packet, GmStateUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::GmStateUpdate, payload) || payload.size() != 12)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.flags = ReadU32(payload, 4);
+		outMessage.speedMultiplier = ReadF32(payload, 8);
+		return std::isfinite(outMessage.speedMultiplier) && outMessage.speedMultiplier >= 0.0f
+			&& outMessage.speedMultiplier <= 100.0f;
 	}
 
 	std::vector<std::byte> EncodeMoveCorrection(const MoveCorrectionMessage& message)

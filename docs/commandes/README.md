@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md)
 
 ## Aide et outils
 
@@ -15,6 +15,30 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle)
 | `/search` | `/apropos` | joueur | `/search <mot>` | Cherche une commande par mot-clé (nom, alias, description). |
 | `/gmaudit` |  | admin | `/gmaudit [nombre] [login\|cible]` | Journal des dernières commandes réservées (audit). |
 | `/shardinfo` |  | MJ | `/shardinfo` | État du shard de votre personnage (joueurs, mobs, charge). |
+
+## Déplacement
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/tp` | `/teleport` | MJ | `/tp <x> <z> \| /tp <x> <y> <z> \| /tp <lieu> \| /tp @<joueur>` | Téléportation : coordonnées, lieu ou joueur. |
+| `/goto` | `/appear` | MJ | `/goto <joueur>` | Rejoindre un joueur connecté. |
+| `/summon` |  | MJ | `/summon <joueur>` | Faire venir un joueur devant soi. |
+| `/recall` |  | MJ | `/recall <joueur>` | Renvoyer un joueur à sa position d'avant /summon. |
+| `/back` |  | MJ | `/back` | Revenir à la position d'avant le dernier déplacement MJ. |
+| `/places` |  | MJ | `/places [filtre] [page]` | Liste des lieux connus (villes, lieux remarquables, régions). |
+| `/mark` | `/bookmark` | MJ | `/mark <nom>` | Mémoriser la position actuelle sous un nom. |
+| `/marks` | `/bookmarks` | MJ | `/marks` | Lister ses favoris de position. |
+| `/gomark` |  | MJ | `/gomark <nom>` | Aller à un favori de position. |
+| `/unmark` |  | MJ | `/unmark <nom>` | Supprimer un favori de position. |
+| `/forward` | `/fwd` | MJ | `/forward <mètres>` | Avancer tout droit d'une distance donnée. |
+| `/up` |  | MJ | `/up <mètres>` | Monter d'une hauteur donnée. |
+| `/down` |  | MJ | `/down <mètres>` | Descendre d'une hauteur donnée. |
+| `/ground` |  | MJ | `/ground` | Se recaler au sol. |
+| `/spawn` |  | MJ | `/spawn` | Revenir au point d'entrée en monde. |
+| `/speed` |  | MJ | `/speed <0.1 à 10> [joueur] \| /speed reset [joueur]` | Multiplier sa vitesse de déplacement (0,1 à 10). |
+| `/fly` |  | MJ | `/fly [on\|off] [joueur]` | Vol libre (sans gravité). |
+| `/freeze` |  | MJ | `/freeze <joueur>` | Geler un joueur sur place. |
+| `/unfreeze` |  | MJ | `/unfreeze <joueur>` | Dégeler un joueur. |
 
 ## Modération
 

@@ -387,6 +387,7 @@ namespace engine::client
 		m_model.wallet = {};
 		m_model.shop = {};
 		m_model.auction = {};
+		m_model.gmState = {}; // ADM.1 — les pouvoirs de MJ ne survivent pas à la session
 		m_chatWorld.Reset();
 		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet | UIModelChangeShop | UIModelChangeAuction);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
@@ -654,6 +655,9 @@ namespace engine::client
 		// ETAPE3.3 — position officielle pour une commande de mouvement.
 		case engine::server::MessageKind::MoveCorrection:
 			return ApplyMoveCorrection(packet);
+		// ADM.1 — pouvoirs de maître de jeu (vol, gel, vitesse).
+		case engine::server::MessageKind::GmStateUpdate:
+			return ApplyGmStateUpdate(packet);
 		// Validation v12 — butin auto-crédité à la mort d'un mob.
 		case engine::server::MessageKind::LootNotify:
 			return ApplyLootNotify(packet);
@@ -1108,6 +1112,22 @@ namespace engine::client
 		LOG_INFO(Net, "[UIModelBinding] ForcePosition received (pos=({:.1f},{:.1f},{:.1f}), reason={})",
 			m_model.forcedPosition.x, m_model.forcedPosition.y, m_model.forcedPosition.z,
 			m_model.forcedPosition.reason);
+		NotifyObservers(UIModelChangeWorld);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyGmStateUpdate(std::span<const std::byte> packet)
+	{
+		engine::server::GmStateUpdateMessage message{};
+		if (!engine::server::DecodeGmStateUpdate(packet, message))
+		{
+			LOG_WARN(Net, "[UIModelBinding] GmStateUpdate FAILED: decode error");
+			return false;
+		}
+		m_model.gmState.flags = message.flags;
+		m_model.gmState.speedMultiplier = message.speedMultiplier;
+		LOG_INFO(Net, "[UIModelBinding] ADM.1 état MJ reçu (flags=0x{:x}, vitesse x{:.2f})",
+			message.flags, message.speedMultiplier);
 		NotifyObservers(UIModelChangeWorld);
 		return true;
 	}

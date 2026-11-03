@@ -322,10 +322,12 @@ void main()
     // parcourue de lignes de ressac. EAU.2 : bande resserrée (0,7 m au lieu de
     // 1,2 m) — autour d'un objet plongé dans l'eau (jambes, troncs) l'épaisseur
     // vue est faible aussi, et l'ancienne bande les peignait en blanc.
-    // EAU.5 : bande limitée en DISTANCE au rivage (≈ 1,8 m), quelle que soit la
-    // pente de la rive, ET en profondeur (0,7 m). Les lignes de ressac sont
-    // parallèles au rivage (fonction de la distance, plus de l'épaisseur).
-    float shore   = (1.0 - smoothstep(0.0, 1.8, shoreDist)) * (1.0 - smoothstep(0.0, 0.7, depthV));
+    // EAU.5 : bande limitée en DISTANCE au rivage (≈ 1,8 m ; 4,5 m pour le
+    // ressac de la mer), quelle que soit la pente de la rive, ET en profondeur
+    // (0,7 m). Les lignes de ressac sont parallèles au rivage (fonction de la
+    // distance, plus de l'épaisseur).
+    float shoreBand = isSea ? 4.5 : 1.8;
+    float shore   = (1.0 - smoothstep(0.0, shoreBand, shoreDist)) * (1.0 - smoothstep(0.0, 0.7, depthV));
     float lap     = 0.5 + 0.5 * sin(shoreDist * 3.5 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
     lap = mix(0.5, lap, distFade);
     float breakup = valueNoise((vWorldPos.xz - flowEff * (isRiver ? pc.flowSpeed * 2.5 * t : 0.0)) * 1.7 + vec2(t * 0.05, -t * 0.04));

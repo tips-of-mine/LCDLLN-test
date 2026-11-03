@@ -809,7 +809,7 @@ namespace tools::world_gen
 		return std::max(m.scale.seaLevelM + 0.5, std::min(meanHeight - 0.8, rimLow - 0.3));
 	}
 
-	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake, double floorY)
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Grid<uint8_t>& urban, const Lake& lake, double floorY)
 	{
 		constexpr double kBeachM = 40.0;     // fondu de la rive vers le relief d'origine (m)
 		constexpr double kBankAboveM = 0.3;  // sol au ras du bord : au-dessus de l'eau (m)
@@ -824,6 +824,7 @@ namespace tools::world_gen
 		const double depthMax = std::min(9.0, 1.0 + lake.radiusM * 0.025);
 		const double bankY = lake.waterY + kBankAboveM;
 		const bool hasRivers = riverDist.data.size() == height.data.size();
+		const bool hasUrban = urban.data.size() == height.data.size();
 		ForDisc(height, lake.center, rMax + kDamReachM, [&](int i, int j, double d) {
 			const double dx = height.WorldX(i) - lake.center.x, dz = height.WorldZ(j) - lake.center.z;
 			const double rr = std::max(1.0, LakeRadiusAt(lake, std::atan2(dz, dx)));
@@ -852,6 +853,8 @@ namespace tools::world_gen
 				return;
 			}
 			const double out = d - rr;
+			// Plateau urbain (aplani avant) : jamais retouché par la rive.
+			if (hasUrban && urban.At(i, j) != 0) return;
 			if (h >= bankY)
 			{
 				// Relief plus haut : grève jusqu'au bord de l'eau, élargie quand la
@@ -936,6 +939,6 @@ namespace tools::world_gen
 			}
 		}
 		for (const Lake& lake : w.lakes)
-			CarveLake(w.height, w.riverDist, lake, w.master.scale.seaLevelM + 0.1); // EAU.5
+			CarveLake(w.height, w.riverDist, w.urban, lake, w.master.scale.seaLevelM + 0.1); // EAU.5
 	}
 }

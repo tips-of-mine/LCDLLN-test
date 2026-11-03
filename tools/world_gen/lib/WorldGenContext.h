@@ -383,7 +383,9 @@ namespace tools::world_gen
 	///        resterait sinon barrée). Grille vide = aucune rivière.
 	/// \param floorY fond minimal (m) : niveau de la mer + 0,1 (la nappe de la
 	///        mer d'une cellule côtière apparaîtrait sinon sous l'eau du lac).
-	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake, double floorY);
+	/// \param urban emprise urbaine (≠ 0 : plateau jamais retouché hors du lac).
+	///        Grille vide = aucune.
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Grid<uint8_t>& urban, const Lake& lake, double floorY);
 	/// Plateaux urbains. Terrain.cpp
 	void FlattenSettlements(World& w);
 	/// Rivières et lacs (creusement, carte de distance). Terrain.cpp

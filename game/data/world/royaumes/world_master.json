@@ -701,6 +701,20 @@
       "description": "Plaine herissee de piques ou Ghorghor Bey ecrasa l'armee d'un seigneur local."
     },
     {
+      "id": "poi_mont_neuf_pics",
+      "name": "Mont des Neuf Pics",
+      "cell": "N007_E005",
+      "kind": "monolithe",
+      "description": "Ile aux neuf pics noirs ; au centre, le monolithe des Grands Vents ou Wismerhill devint pretre des vents."
+    },
+    {
+      "id": "poi_atmosphere",
+      "name": "L'Atmosphere",
+      "cell": "S001_W003",
+      "kind": "faille",
+      "description": "Gorge entre deux parois en forme de visage : entree de la Passe des Dragons."
+    },
+    {
       "id": "poi_faille_kashogs",
       "name": "Faille de Kashogs",
       "cell": "N016_E012",

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.49",
+    "version": "1.0.50",
     "notes": [
+      "v1.0.50 : [BD-T1/T2] corrections confrontées à la BD « Le Vent des Dragons » : Fey = Feidreiva (fusion char_fey, companion_fey_t2) ; Pilou = Pile-ou-Face ; Gunther = Gunthar (fusion) ; Goum = frère jumeau de Nasha (quête quest_t2_liberation_goum), Murata vainqueur de l'arène ; Lord Drakkhurst (char_lord_drakkhurst) et maître Orkhan (char_orkhan_t2) créés ; locuteurs des dialogues T2 corrigés ; Mont des Neuf Pics en N007_E005 ; Atmosphère = entrée de la Passe ; route Feyhin–Magistrya ; extrémités de routes resynchronisées (Kendrhir) ; 10 butins T1 orphelins créés ; arc arc_t02_vent_des_dragons. Détail : docs/world/LORE_BD.md.",
       "v1.0.49 : [CARTE] lieux mineurs du T1 placés : Forêt de la Rencontre (N012_E008, près de Whispers Hill alignée sur world_master en N011_E008), Haywick (N018_E013, village du poulailler et cour de Ghorghor, ruine), Camp de l'Étang (N018_E012, rencontre de Feidreiva), Champ de la Première Bataille (N018_E011) et citadelle d'Ashcroft (N017_E012, ruine) ; textes « forêt des Marches » corrigés ; noms Haywick et Ashcroft repris de carte_export.json.",
       "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
       "v1.0.47 : [VILLES] Kendrhir Vale en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
@@ -3714,17 +3715,23 @@
     {
       "id": "companion_feidreiva",
       "name": "Feidreiva (Fey)",
-      "type": "",
-      "notes": [],
+      "type": "combat_companion",
+      "notes": [
+        "[BD-T1/T2] Compagne de Wismerhill depuis la horde de Ghorghor ; « Fey » est son surnom (BD-T2 p.8). Fusion de companion_fey_t2 (v1.0.50)."
+      ],
       "variants": [],
       "level_titles": [],
-      "invocable_by": []
+      "invocable_by": [
+        "char_wismerhill"
+      ]
     },
     {
       "id": "companion_goum",
       "name": "Goum",
       "type": "",
-      "notes": [],
+      "notes": [
+        "[BD-T2] Colosse né d'un enfant de 7 ans transformé par un mage ; n'obéit qu'à sa sœur jumelle Nasha (p.15)."
+      ],
       "variants": [],
       "level_titles": [],
       "invocable_by": []
@@ -3834,7 +3841,7 @@
     },
     {
       "id": "companion_pilou",
-      "name": "Pilou",
+      "name": "Pile-ou-Face (Pilou)",
       "type": "goblin_companion",
       "notes": [
         "[BD-T5] Petit compagnon goblinoïde de Wismerhill, présent à Tsaroth. Crête rouge, traits expressifs et comiques.",
@@ -3853,7 +3860,8 @@
         "[BD-T5] Participe à la prise de Moork — suit Wismerhill dans la salle du trône.",
         "[BD-T9] À Moork, réaction comique à la vue du Juggernauth : 'MATE UN PEU L'HORREUR!'",
         "[BD-T9] Hellavnnea lui répond : 'HORREUR? ELLE EST TRÈS BELLE! TU N'AS AUCUN GOÛT, PILOU!'",
-        "[BD-T9] Toujours dans l'entourage de Wismerhill malgré la transformation en Prince de la Négation."
+        "[BD-T9] Toujours dans l'entourage de Wismerhill malgré la transformation en Prince de la Négation.",
+        "[BD-T2] « Pilou » = Pile-ou-Face (pp.8, 10, 12). [À VÉRIFIER] la description T5 d'un « petit compagnon goblinoïde » ne correspond pas au Pile-ou-Face des tomes 1-2."
       ],
       "variants": [],
       "level_titles": [
@@ -3890,7 +3898,8 @@
         "[BD-T6] P.15 : au couronnement de Moork — 'Ghorghor et Pépète d'ailleurs' — présente et mange bien.",
         "[BD-T6] P.23 : réveille Wismerhill et Hellavnnea en sautant sur le lit. Son, signature : 'SHTOUK SHTOUK SHTOUK'.",
         "[BD-T6] P.41 : signal du piège — livre les fleurs à George d'Horkher. Son: 'Mon plaisir, beau doux sire.' — parfaite actrice.",
-        "[BD-T6] P.42 : 'T'as été super Pépette!' — Ghorghor lui dit après la capture réussie."
+        "[BD-T6] P.42 : 'T'as été super Pépette!' — Ghorghor lui dit après la capture réussie.",
+        "[BD-T2] Première apparition à Feyhin Lokcthat : sœur jumelle de Goum, seule à pouvoir le commander (pp.12-15)."
       ],
       "variants": [],
       "level_titles": [
@@ -3916,26 +3925,12 @@
       ]
     },
     {
-      "id": "companion_fey_t2",
-      "name": "Fey (Elfe compagnon)",
-      "type": "combat_companion",
-      "notes": [
-        "[BD-T2] Elfe féminin. Compagnon de Wismerhill depuis la bataille de Kendrhir.",
-        "[BD-T2] À ne pas confondre avec Feidreiva (Chevalier-Dragon, T3)."
-      ],
-      "variants": [],
-      "level_titles": [],
-      "invocable_by": [
-        "char_wismerhill"
-      ]
-    },
-    {
       "id": "companion_murata_t2",
       "name": "Murata (Samouraï)",
       "type": "combat_companion",
       "notes": [
-        "[BD-T2] Rejoint le groupe à Feyhin Lokcthat après sa libération de l'arène.",
-        "[BD-T2] Samouraï d'une culture orientale — maîtrise du katana, méditation, cérémonie du Cha.",
+        "[BD-T2] Vainqueur de Goum dans l'arène de Feyhin Lokcthat ; rejoint le groupe après la libération de Goum (BD-T2 pp.9-14).",
+        "[BD-T2] Samouraï d'une culture orientale — maîtrise du sabre courbe, méditation, cérémonie du Cha.",
         "[BD-T4] Présent tout au long de la campagne des 6 mois.",
         "[BD-T4] 'Allons-nous continuer encore longtemps ainsi, Wis?' — il est le seul à questionner la direction.",
         "[BD-T4] 'Hay!' — son cri d'action habituel lors des combats.",
@@ -4723,7 +4718,9 @@
         "Lieu central religieux majeur du désert",
         "Organisation radiale autour du monolithe",
         "Afflux constant de fidèles et faux prophètes",
-        "Architecture sacrée fusionnée avec roche naturelle"
+        "Architecture sacrée fusionnée avec roche naturelle",
+        "[BD-T2] Page 46 — « L'Oracle était au centre d'une vaste plaine, au cœur d'un tumulus ; ses portes ne s'ouvraient que pour laisser passer ceux qui voulaient le voir... »",
+        "[BD-T2] Page 47 — chemin bordé d'« échoppes de faux voyants, magiciens, devins, et de vrais charlatans » ; un devin propose l'avenir pour cinq pièces d'argent."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -4986,7 +4983,9 @@
         "[BD-T11] Plus de mille ans d'histoire — rasée en quelques minutes.",
         "[BD-T11] D'autres Kraks annoncés comme futurs objectifs de démantèlement.",
         "Sur falaise, présence d'un petit port",
-        "Reliée à Lhynn par une longue plage"
+        "Reliée à Lhynn par une longue plage",
+        "[BD-T2] Pages 32-33 — « Altenberg ! La toute-puissante forteresse de l'Ordre des Chevaliers de la Lumière ! Jamais conquise, jamais soumise, phare de la pureté, siège de l'ordre, fief du Grand Maître Frater Sinister... » : tours carrées colossales gravées de croix, sur un rocher battu par les vagues.",
+        "[BD-T2] Page 34 — cathédrale aux bannières rouges à croix blanche, office de la Lumière, puis conjuration de Frater Sinister contre l'Empereur."
       ],
       "dimensions_estimees": {
         "hauteur": "150m+ pour la tour centrale",
@@ -8183,13 +8182,15 @@
       "notes": [
         "[BD-T2] Première cité visitée par Wismerhill et ses compagnons dans le Tome 2.",
         "[BD-T2] Cité des gladiateurs et du jeu. Les itinérants y sont exemptés de taxes — refuge naturel pour aventuriers et commerçants.",
-        "[BD-T2] Construite dans une vallée verdoyante avec rivière et long pont de bois pour y accéder.",
+        "[BD-T2] Construite dans une vallée verdoyante avec rivière et long pont de pierre à nombreuses arches ; ville haute sur un éperon rocheux, ville basse au pied (p.7).",
         "[BD-T2] Architecture médiévale dense, cathédrale/tour haute visible de loin.",
-        "[BD-T2] Grande arène de gladiateurs : récompense de 500 couronnes à qui vainc le champion Goum 'le Terrible'. Wismerhill remporte le combat.",
+        "[BD-T2] Grande arène de gladiateurs : récompense de 500 couronnes à qui vainc le champion Goum 'le Terrible'. C'est Murata qui l'emporte (p.9).",
         "[BD-T2] Marchés animés : banderoles colorées, foule diverse d'humains, elfes et aventuriers.",
         "[BD-T2] Ruelles nocturnes dangereuses — embuscade contre Murata (futur compagnon) y est perpétrée.",
-        "[BD-T2] Présence de la garde (intervient lors des bagarres dans les tavernes).",
-        "[BD-T2] Personnage notable : Dzorak (personnage de rue récurrent)."
+        "[BD-T2] « Dzorak ! » est un juron (Pile-ou-Face, p.8), pas un personnage (note retirée en v1.0.50).",
+        "[BD-T2] Arène : piste de sable, gradins à arcades, braseros ; geôles et cellules en sous-sol (pp.9-13). Place à la fontaine et colonnade (p.11).",
+        "[BD-T2] Maisons à colombages, toits d'ardoise bleue, tours rondes, bannières (deux poissons jaunes sur bleu), rue marchande en étages (p.8).",
+        "[BD-T2] Une route la relie à Magistrya (panneau « Feyhin Lokcthat » sur la chaussée de Magistrya, p.19) — route ajoutée en v1.0.50."
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8354,6 +8355,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_feyhin_lokcthat_ecurie_04",
+          "name": "Rolran Saulbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_feyhin_lokcthat_temple_01",
           "name": "Edelle Marlmorne",
           "gender": "female",
@@ -8447,14 +8456,16 @@
       ],
       "notes": [
         "[BD-T2] Immense ville-tour construite autour d'un pic rocheux, s'enroulant comme 'un serpent de pierre'. Les plus belles demeures sont vers les hauteurs.",
-        "[BD-T2] Accessible par un long pont de bois sur marécages (panneau 'Feylun Lockhat' à l'entrée).",
+        "[BD-T2] Accessible par un long pont de bois sur marécages (gibets à l'entrée et panneau « Feyhin Lokcthat »).",
         "[BD-T2] Architecture gothique spiralée formant 'un étonnant écheveau de dentelle' autour du pic.",
-        "[BD-T2] Gouvernée par le Magister (sorcier-roi très vieux à l'aspect tigroïde).",
-        "[BD-T2] SERVICES : Palais du Magister (au sommet, salle d'audience aux colonnes verdâtres géantes, laboratoire, geôles) / Arène de gladiateurs (prisonniers y combattent) / Auberge (au pied, fréquentée par nains, humains, aventuriers) / Geôles profondes (nombreux prisonniers).",
+        "[BD-T2] Gouvernée par le Magister (sorcier très vieux à longue moustache blanche et haute coiffe noire).",
+        "[BD-T2] SERVICES : Palais du Magister (au sommet, salle d'audience aux colonnes verdâtres géantes, laboratoire, geôles) / Auberge (au pied, fréquentée par nains, humains, aventuriers) / Geôles profondes (nombreux prisonniers).",
         "[BD-T2] Races présentes : Humains, Nains (nombreux), créatures diverses.",
         "[BD-T2] La rixe de l'auberge entre compagnons de Wismerhill et les nains de Magistrya est arrêtée par la garde. Tous emprisonnés — puis libérés par Wismerhill.",
         "[BD-T2] Le Magister cherche à extraire l'essence vitale des elfes/demi-elfes pour prolonger sa vie.",
-        "Une école de magie majeure parmi d’autres (justice, lune noire x2, elfes, démons, plus petites écoles)"
+        "Une école de magie majeure parmi d’autres (justice, lune noire x2, elfes, démons, plus petites écoles)",
+        "[BD-T2] Ville tout en hauteur : rues en rampes, escaliers volants et ponts s'enroulent autour du pic jusqu'au palais du sommet (« C'est tout en haut, impossible de vous tromper ! », p.20). Prévoir de très nombreux escaliers [GD].",
+        "[BD-T2] L'arène de gladiateurs est à Feyhin Lokcthat, pas à Magistrya (service retiré de la note en v1.0.50)."
       ],
       "dimensions_estimees": {
         "hauteur": "800-1200m",
@@ -8627,6 +8638,14 @@
           "id": "pnj_sauken_glude_of_magistrya_ecurie_02",
           "name": "Marance Pierremare",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_sauken_glude_of_magistrya_ecurie_03",
+          "name": "Maran Hautbrume",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -20607,7 +20626,7 @@
           "companion_ghorghor_bey",
           "companion_feidreiva",
           "companion_hizin",
-          "companion_pilou_ou_face"
+          "companion_pilou"
         ],
         "skills_unlocked": [
           "skill_magie_vents niveau 1",
@@ -23352,7 +23371,7 @@
         },
         {
           "type": "companion",
-          "id": "companion_pilou_ou_face",
+          "id": "companion_pilou",
           "description": "Pile-ou-Face dans le groupe"
         }
       ],
@@ -23468,7 +23487,7 @@
     {
       "id": "quest_t2_arene_feyhin",
       "name": "Vaincre Goum le Terrible",
-      "description": "500 couronnes de récompense pour qui vainc le champion de l'arène de Feyhin Lokcthat. Wismerhill se porte volontaire pour renflouer les bourses du groupe.",
+      "description": "Un crieur promet 500 couronnes à qui vaincra Goum le Terrible, champion enchaîné de l'arène de Feyhin Lokcthat. Dans la BD, c'est Murata (« Moi ! ») qui l'abat d'un seul coup de sabre ; le joueur peut tenter le défi à son tour [GD].",
       "category": "secondaire",
       "tags": [
         "t2",
@@ -23480,19 +23499,18 @@
       "repeatable": false,
       "type": "combat_solo",
       "steps": [
-        "Entendre l'annonce publique dans le marché de Feyhin Lokcthat.",
-        "Se porter volontaire ('Moi!').",
-        "Combattre Goum le Terrible dans l'arène.",
-        "Gagner — recevoir 500 couronnes et libérer Goum.",
-        "Proposer à Goum de rejoindre le groupe."
+        "Entendre le crieur sur la rue marchande de Feyhin Lokcthat.",
+        "Se porter volontaire (« Moi ! »).",
+        "Affronter Goum le Terrible dans l'arène.",
+        "Le vaincre et recevoir 500 couronnes du maître-gladiateur."
       ],
       "source_lore": [
         "char_goum",
+        "char_murata",
         "ville_feyhin_lokcthat"
       ],
       "rewards": {
-        "coins": 500,
-        "companion": "char_goum"
+        "coins": 500
       },
       "min_players": 1,
       "required_classes": [],
@@ -23507,7 +23525,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T2] Pages 8-9. Goum = prisonnier de l'arène avant de rejoindre le groupe."
+        "[BD-T2] Pages 8-9 : quatre adversaires seulement — un noble, un barbare ivre, un chevalier, puis Murata, seul vainqueur.",
+        "[BD-T2] Goum n'est pas libéré par ce combat : il est ramené en cellule (voir quest_t2_liberation_goum)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -23521,9 +23540,9 @@
       }
     },
     {
-      "id": "quest_t2_liberation_murata",
-      "name": "Libérer le Frère de Nasha",
-      "description": "Nasha demande de libérer son frère jumeau (Murata) emprisonné dans l'arène de Feyhin Lokcthat après un combat contre Goum. Un mage l'a transformé et il est maintenu captif. Nasha indique que ce mage sait peut-être où trouver l'Oracle.",
+      "id": "quest_t2_liberation_goum",
+      "name": "Libérer le frère de Nasha",
+      "description": "Après l'embuscade de la place à la fontaine, la petite Nasha supplie le groupe de libérer son frère jumeau Goum, prisonnier de l'arène. Un mage les a enlevés enfants et a fait de Goum un colosse ; ce mage, à quelques jours de marche, « sait tout » et pourrait savoir où se trouve l'Oracle.",
       "category": "secondaire",
       "tags": [
         "t2",
@@ -23536,20 +23555,21 @@
       "repeatable": false,
       "type": "rescue",
       "steps": [
-        "Rencontrer Nasha après le combat de l'arène.",
-        "Apprendre que son frère est prisonnier dans les couloirs de l'arène.",
-        "Infiltrer les couloirs (Pilou force les serrures).",
-        "Goum brise la porte de la cellule.",
-        "S'échapper de la ville en chariot."
+        "Aider Murata contre la bande venue reprendre sa bourse (place à la fontaine).",
+        "Écouter Nasha : son frère est retenu dans l'arène.",
+        "Forcer les couloirs gardés de l'arène (Pile-ou-Face crochète la grille).",
+        "Calmer Goum grâce à Nasha.",
+        "Quitter la ville en chariot, de nuit."
       ],
       "source_lore": [
         "char_nasha_t6",
+        "char_goum",
         "char_murata",
         "ville_feyhin_lokcthat"
       ],
       "rewards": {
-        "companion": "char_murata",
-        "info": "Le mage qui sait où est l'Oracle habite à quelques jours de marche"
+        "companion": "char_goum",
+        "info": "Le mage qui sait où est l'Oracle habite à quelques jours de marche (Magistrya)."
       },
       "min_players": 2,
       "required_classes": [],
@@ -23565,7 +23585,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T2] Pages 11-13."
+        "[BD-T2] Pages 11-15.",
+        "[v1.0.50] Id corrigé (ex quest_t2_liberation_murata) : c'est Goum que l'on libère, Murata aide le groupe."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -23665,10 +23686,10 @@
       "source_lore": [
         "char_magister_magistrya",
         "char_desdemone",
-        "ville_magistrya"
+        "sauken_glude_of_magistrya"
       ],
       "rewards": {
-        "info": "L'Oracle est à l'ouest, au-delà de la Passe des Dragons"
+        "info": "Selon Desdémone, l'Oracle est « à l'ouest, au-delà de la Passe des Dragons » (indication piégée, direction non fiable)."
       },
       "min_players": 1,
       "required_classes": [],
@@ -23684,7 +23705,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T2] Pages 19-27."
+        "[BD-T2] Pages 19-27.",
+        "[BD-T2] Magistrya est une ville tout en hauteur : la montée vers le palais du sommet se fait par rampes et escaliers (p.20)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -23700,7 +23722,7 @@
     {
       "id": "quest_t2_passe_dragons",
       "name": "Traverser la Passe des Dragons",
-      "description": "Pour atteindre l'Oracle, le groupe doit traverser la Passe des Dragons. Les Chevaliers-Dragons interceptent tout intrus. Wismerhill relève le défi de Dracchennauknh en combat singulier pour obtenir le droit de passage.",
+      "description": "Pour atteindre l'Oracle, le groupe franchit l'Atmosphère, entrée de la Passe des Dragons. Sur le pont de corde, le Maître des Chevaliers Dragons (Lord Drakkhurst), monté sur Dracchennauknh, les somme de partir ; Wismerhill relève le défi et les tue d'un seul coup de lance.",
       "category": "histoire",
       "tags": [
         "t2",
@@ -23713,19 +23735,20 @@
       "repeatable": false,
       "type": "combat_boss",
       "steps": [
-        "Arriver à la Passe des Dragons.",
-        "Être intercepté par Dracchennauknh et Feidreiva.",
-        "Wismerhill relève le défi en combat singulier.",
-        "Survivre au souffle de feu grâce à l'Armure de Glace des Vents.",
-        "Tuer Dracchennauknh (lance dans la gorge).",
-        "Se libérer d'avoir été enseveli sous le corps du dragon.",
-        "Combattre l'émissaire de Frater Sinister au Palais Abandonné.",
-        "Traverser vers la Plaine de l'Oracle."
+        "Camper devant l'entrée de la Passe (l'Atmosphère), sous l'œil des dragons-éclaireurs.",
+        "Franchir le pont de corde enneigé.",
+        "Être sommé de partir par le Maître des Dragons.",
+        "Relever le défi : joute à pied contre le Maître et son dragon.",
+        "Survivre au souffle de feu grâce à l'armure de glace des vents ; viser la gorge.",
+        "Se dégager de sous le dragon mort.",
+        "S'installer dans le palais du Maître ; repousser l'ambassade de Frater Sinister.",
+        "Repartir vers l'Oracle, guidé par les vents."
       ],
       "source_lore": [
+        "char_lord_drakkhurst",
         "char_dracchennauknh",
-        "char_feidreiva_t1",
-        "zone_passe_dragons_t2"
+        "zone_passe_dragons_t2",
+        "lieu_atmosphere"
       ],
       "rewards": {
         "access": "Plaine de l'Oracle",
@@ -23745,7 +23768,7 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T2] Pages 27-44."
+        "[BD-T2] Pages 27-45."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -23800,7 +23823,7 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T2] Pages 44-48.",
+        "[BD-T2] Pages 46-48.",
         "[BD-T2] 'L'Oracle t'appelle dans ta tête et alors tu y vas. Certains attendent des mois, d'autres très peu.' (Iaun Reith)"
       ],
       "quest_kind": "",
@@ -30276,11 +30299,13 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill, Pile-ou-Face et Fey arrivent à Feyhin Lokcthat, cité des gladiateurs exemptée de taxes. Wismerhill combat et bat Goum le Terrible dans l'arène (500 couronnes). Goum et Murata (libéré par le groupe) rejoignent la troupe.",
+      "description": "Wismerhill, Pile-ou-Face et Feidreiva arrivent à Feyhin Lokcthat, cité des gladiateurs où les itinérants sont exemptés de taxes. Murata y abat Goum le Terrible dans l'arène ; le groupe aide Murata contre une bande, puis libère Goum à la demande de sa sœur Nasha. Murata, Nasha et Goum rejoignent la troupe.",
       "factions": [],
       "ref_type": "quest",
       "ref_id": "quest_t2_arene_feyhin",
-      "notes": []
+      "notes": [
+        "[BD-T2] Pages 7-15."
+      ]
     },
     {
       "id": "event_t2_initiation_vents",
@@ -30289,7 +30314,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Au sommet du Monolithe des Neuf Pics, les Grands Vents apparaissent à Wismerhill. Ils lui révèlent que sa mère les a mis dans sa destinée. Il est initié aux secrets de l'air et reçoit le Sceptre de Cristal. Il descend 'le même et pourtant un autre'.",
+      "description": "Au sommet du Monolithe des Neuf Pics, les Grands Vents apparaissent à Wismerhill. Ils lui révèlent que sa mère l'a jadis confié à eux ; ils le font prêtre des vents. Il est initié aux secrets de l'air et reçoit le Sceptre de Cristal. Il descend 'le même et pourtant un autre'.",
       "factions": [],
       "ref_type": "quest",
       "ref_id": "quest_t2_initiation_mont_pics",
@@ -30302,7 +30327,7 @@
       "year": "",
       "month": "",
       "type": "political_event",
-      "description": "L'Empereur de Lhynn élève Frater Sinister au titre de Comte Frater Sinister, Pair de l'Empire. Frater prépare en secret l'alliance avec les Chevaliers-Dragons pour renverser ce même Empereur.",
+      "description": "L'Empereur de Lhynn élève Frater Sinister au titre de comte, pair de l'Empire (« comte Fratus Sinister »). Frater prépare en secret l'alliance avec les Chevaliers-Dragons pour renverser ce même Empereur.",
       "factions": [
         "chevaliers_de_la_lumiere",
         "faction_empire"
@@ -30318,7 +30343,7 @@
       "year": "",
       "month": "",
       "type": "battle",
-      "description": "Haazheel Thorn commande une armée non-humaine prodigieuse (orques + catapultes naines). En 2 jours et 2 nuits, le Krak des Chevaliers de la Lumière est pris. Le Baron de Moork sur son Shadrakkh anéantit les officiers dès le début. L'étendard de Thorn est planté.",
+      "description": "Au nom d'Haazheel Thorn, les troupes orques du Baron de Moork mènent une armée non-humaine prodigieuse (orques + catapultes naines). En 2 jours et 2 nuits, le Krak des Chevaliers de la Lumière est pris. Le Baron de Moork sur son Shadrakkh anéantit les officiers dès le début. L'étendard de Thorn est planté.",
       "factions": [
         "faction_black_moon",
         "chevaliers_de_la_lumiere"
@@ -30334,7 +30359,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill résiste à la machine d'extraction d'essence vitale. Le Magister de Magistrya tombe gravement malade/meurt. Wismerhill libère tous les prisonniers des geôles. Desdémone révèle son double-jeu démoniaque.",
+      "description": "Wismerhill résiste à la machine d'extraction d'essence vitale. Le Magister de Magistrya meurt, desséché par sa propre machine. Wismerhill libère tous les prisonniers des geôles. Desdémone révèle son double-jeu démoniaque.",
       "factions": [],
       "ref_type": "quest",
       "ref_id": "quest_t2_audience_magister",
@@ -30347,7 +30372,7 @@
       "year": "",
       "month": "",
       "type": "battle",
-      "description": "Wismerhill défie Dracchennauknh en combat singulier dans la Passe des Dragons. Grâce à l'Armure de Glace des Vents, il survit au souffle de feu. Il tue le dragon d'une lance dans la gorge. Son corps ensevelit Wismerhill qui survit. Le groupe peut traverser.",
+      "description": "Wismerhill relève le défi du Maître des Dragons (Lord Drakkhurst), monté sur Dracchennauknh, dans la Passe des Dragons. Grâce à l'Armure de Glace des Vents, il survit au souffle de feu. La lance traverse la gorge du dragon puis celle du Maître. Son corps ensevelit Wismerhill qui survit. Le groupe peut traverser.",
       "factions": [
         "faction_dragon_knights"
       ],
@@ -31766,6 +31791,51 @@
       "ref_type": "",
       "ref_id": "",
       "notes": []
+    },
+    {
+      "id": "event_t2_rapport_urmarcht",
+      "name": "Le rapport d'Urmarcht aux 666 abysses",
+      "era": "Tome 2",
+      "year": "",
+      "month": "",
+      "type": "revelation",
+      "description": "Urmarcht rend compte à l'Empereur des Ténèbres de ses actes du Tome 1 ; le Prince lui ordonne de continuer à servir Haazheel Thorn et de tout lui rapporter.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_urmarcht",
+      "notes": [
+        "[BD-T2] Pages 5-6."
+      ]
+    },
+    {
+      "id": "event_t2_conjuration_altenberg",
+      "name": "La conjuration d'Altenberg",
+      "era": "Tome 2",
+      "year": "",
+      "month": "",
+      "type": "political_event",
+      "description": "À Altenberg, après l'office, Frater Sinister et ses officiers (Gunthar, maître Orkhan) préparent la marche contre l'Empereur grâce à une alliance avec les Chevaliers Dragons.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_fratus_sinister",
+      "notes": [
+        "[BD-T2] Pages 32-35."
+      ]
+    },
+    {
+      "id": "event_t2_ambassade_massacree",
+      "name": "L'ambassade de Frater Sinister massacrée",
+      "era": "Tome 2",
+      "year": "",
+      "month": "",
+      "type": "battle",
+      "description": "L'envoyé de Frater Sinister arrive au palais du Maître des Dragons défunt, occupé par le groupe de Wismerhill, qui massacre l'ambassade : l'alliance de la Lumière avec les Chevaliers Dragons est compromise.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_orkhan_t2",
+      "notes": [
+        "[BD-T2] Page 44."
+      ]
     }
   ],
   "skill_trees": [
@@ -144703,7 +144773,11 @@
         "[HS] 'Il est impitoyable dans ses décisions de justice, mais apparemment juste.'",
         "[HS] Il n'est pas aimé : ses sujets le craignent plutôt. Ce qui pour diriger un empire est sûrement beaucoup mieux.",
         "[HS] Possède 7 épées magiques : Sorrow, Nox, Adamantine, Épée d'Âme, Hattique, Nihil, Hellvelkin.",
-        "[BD-T0] Étymologie du nom : voir zone_whispers_hill — vient des murmures des vents sur la colline natale."
+        "[BD-T0] Étymologie du nom : voir zone_whispers_hill — vient des murmures des vents sur la colline natale.",
+        "[BD-T2] Appelé « demi-elfe » par le Magister et son serviteur (p.20), « Wis » par ses compagnons (p.10).",
+        "[BD-T2] Mont des Neuf Pics : les Grands Vents lui révèlent que sa mère l'a jadis confié à eux, le font « prêtre des vents » et lui donnent un sceptre de cristal (pp.17-18).",
+        "[BD-T2] Rejette la machine du Magister, possédé (yeux de flamme rouge, aura verte), tue le Magister et arrache à Desdémone la position de l'Oracle (pp.24-25).",
+        "[BD-T2] Tue d'un coup de lance le dragon Dracchennauknh et le Maître des Dragons, protégé par une armure de glace tissée par les vents ; prend ensuite l'armure noire du Maître (pp.39-43)."
       ]
     },
     {
@@ -144784,7 +144858,8 @@
       "alive": true,
       "tomes": [
         "t3",
-        "t12"
+        "t12",
+        "t02"
       ],
       "faction_id": "",
       "race_id": "race_dark_elf",
@@ -144885,7 +144960,8 @@
         "[HS] Un réseau de prières lui parvient depuis toute la surface du monde via les bâtons de prière verts.",
         "[HS] Netzharine voit fugacement Haazheel assis sur un trône 'qui semblait tournoyer sur lui-même' en tenant son bâton.",
         "[HS] Sa voix grondante de titan provoque la peur même via le bâton de prière.",
-        "[HS] Une horde de prêtres prêche et développe son culte. Seule religion officielle de l'Empire."
+        "[HS] Une horde de prêtres prêche et développe son culte. Seule religion officielle de l'Empire.",
+        "[BD-T2] Apparaît en visage vert géant au diadème frappé d'un disque noir, dans le ciel du champ de bataille : « L'ombre de la Lune Noire commence à s'étendre. » (p.38) ; l'Empereur des Ténèbres se méfie de ses plans (p.6)."
       ]
     },
     {
@@ -144976,7 +145052,11 @@
         "[BD-T13] Hellaynnea confirme a Wismerhill : 'Fratus n est plus des notres, tu as un souci de moins!' -- Fratus elimine/mort via Hellaynnea (qui a tue son agent le Baron).",
         "[BD-T1] Nommé « Frater Sinister » dans le tome 1 : l'Empereur lui confie la tête des Chevaliers de la Lumière contre Ghorghor Bey, sans aucun survivant (p.28 BD).",
         "[BD-T1] Aspect : l'homme congédié par l'Empereur (« Vous pouvez aller, Frater ! ») est blond aux yeux bleus avec une marque en croix sur la joue ; au combat, robe et haute capuche blanches, visage caché — cohérent avec la « couverture de Grand Maître blond » relevée en T4 (déduction).",
-        "[BD-T1] Pendant la Grande Bataille, le démon Urmarcht parle par sa bouche et fait libérer Wismerhill (p.49 BD)."
+        "[BD-T1] Pendant la Grande Bataille, le démon Urmarcht parle par sa bouche et fait libérer Wismerhill (p.49 BD).",
+        "[BD-T2] « Relève-toi, comte Fratus Sinister, pair de l'Empire ! » — l'Empereur, après « Mission accomplie, Majesté » ; il l'appelle aussi « commandeur » (p.28).",
+        "[BD-T2] Altenberg, « fief du Grand Maître Frater Sinister » (pp.32-33) : il y conjure avec Gunthar contre l'Empereur, comptant sur l'alliance des Chevaliers Dragons négociée par maître Orkhan (p.34).",
+        "[BD-T2] Ne craint ni l'archimage Haazheel Thorn ni le Baron de Moork : « Que peuvent-ils contre la toute-puissance d'Altenberg et de la Lumière ?! » (p.35).",
+        "[INFÉRÉ] « Fratus » (p.28) et « Frater » (pp.32-34) désignent le même personnage (même visage blond, mêmes anneaux à croix cerclée) ; « Frater » est employé comme titre."
       ]
     },
     {
@@ -144985,7 +145065,8 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t3",
+        "t02"
       ],
       "faction_id": "",
       "race_id": "race_human",
@@ -145005,7 +145086,8 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T10] Commande la cavalerie lourde impériale contre la phalange de Murata. Se lance dans la charge avec les cris de guerre impériaux.",
-        "[BD-T10] MORT : Son cheval se fracasse sur la phalange de la Lune Noire. Il n'y eut pas de survivants à part lui… mais il périt dans la charge. Mort au combat à la tête de ses chevaliers."
+        "[BD-T10] MORT : Son cheval se fracasse sur la phalange de la Lune Noire. Il n'y eut pas de survivants à part lui… mais il périt dans la charge. Mort au combat à la tête de ses chevaliers.",
+        "[BD-T2] Première apparition au camp de l'Oracle : ranger blond aux lunettes à verres réticulés, gilet à franges, arc ; explique l'appel de l'Oracle et part rejoindre « un groupe de dingues » dont le clerc vient d'être appelé (p.46). Pile-ou-Face lui vole sa bourse."
       ]
     },
     {
@@ -145193,11 +145275,10 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T2] Première apparition : présent dans l'arène de Feyhin Lokcthat comme le '4ème challenger' à affronter Goum le Terrible — décrit comme 'un curieux guerrier jaune'.",
-        "[BD-T2] Son bateau a coulé et il erre dans cette 'étrange contrée'. Rejoint le groupe après la libération.",
+        "[BD-T2] Son bateau a coulé et il erre dans cette 'étrange contrée'. Wismerhill lui propose de les rejoindre au bivouac (« Joins-toi à nous ») après la libération de Goum (p.14).",
         "[BD-T2] Partage son 'Cha' (thé) avec le groupe autour du feu — service de 200 ans d'âge. Goum a failli casser la tasse précieuse.",
         "[BD-T2] Scrute les cieux à la Passe des Dragons — le Samouraï perçoit le danger en premier ('observant d'étranges oiseaux').",
         "[BD-T2] Médite seul dans le palais abandonné — discipline intérieure samouraï.",
-        "[BD-T2] Sa sœur jumelle est Nasha (effet d'une magie : 7 ans d'âge mais adulte).",
         "[BD-T10] En première ligne, galvanise ses troupes. Guerrier impassible et froid. S'enfonce toujours plus dans les rangs ennemis.",
         "[BD-T10] Commande la phalange de l'arrière-garde. Fait abattre les longues lances au dernier moment pour briser la charge de cavalerie lourde. La phalange tient — Iaun Reith se fracasse sur elle.",
         "[BD-T10] Survit à la bataille.",
@@ -145217,7 +145298,10 @@
         "[HS] Toujours assis par terre devant le trône impérial, sur le côté droit.",
         "[HS] Armure samouraï traditionnelle dorée avec arc. Casque oni laqué.",
         "[HS] Chef de file lors des cérémonies et événements impériaux.",
-        "[HS] 'Malheur à qui les trouve sur son passage' — les 2 000 hommes de la Garde d'Or."
+        "[HS] 'Malheur à qui les trouve sur son passage' — les 2 000 hommes de la Garde d'Or.",
+        "[BD-T2] Vainqueur de Goum le Terrible dans l'arène de Feyhin (« Moi ! », pp.8-9) ; reprend la bourse volée par Pile-ou-Face et lui coupe sa natte (p.10). Nommé « Murata » par Wismerhill (p.14).",
+        "[BD-T2] Robe noire à médaillons ronds dorés, ceinture rouge, crâne rasé à l'avant avec chignon, sabre courbe, boucle d'oreille rouge (pp.8-31).",
+        "[BD-T2] Le « samouraï méditait » (p.43) : la case le montre en fait endormi parmi les bouteilles (ironie du narrateur)."
       ]
     },
     {
@@ -145342,7 +145426,6 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t02",
         "t4"
       ],
       "faction_id": "",
@@ -145362,9 +145445,7 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T2] Lord Drakkhurst est le Maître des Dragons (titre) dans la Passe des Dragons. Porte une armure blanche et noire à masque angulaire. Parle la langue dracchen.",
-        "[BD-T2] Reçoit le rapport d'alerte de son chevalier messager en dracchen : 'Drakkahen Hurghoth Khaenkhen Khoï Knaheen Kurgha Hanharrh Zul !' (Maître, des intrus campent à l'extérieur!)",
-        "[BD-T2] Répond : 'Khaankhen Khorsht Urkht !' (Bien! Je m'en occupe! Salut à toi!) et prend sa lance lourde pour affronter les intrus."
+        "[BD-T2] « Drakkahen » est le premier mot du message draconique de la Passe (« Drakkahen hurghoth… », traduit « Maître, des intrus… », p.29) : [DÉDUCTION] terme d'adresse (« Maître »). Les notes T2 décrivant Lord Drakkhurst sont déplacées vers char_lord_drakkhurst (v1.0.50)."
       ]
     },
     {
@@ -145463,7 +145544,8 @@
       "tomes": [
         "t01",
         "t12",
-        "t13"
+        "t13",
+        "t02"
       ],
       "faction_id": "",
       "race_id": "",
@@ -145503,7 +145585,10 @@
         "[BD-T13] Passe la nuit avant la bataille avec ses premieres amours (T13 page 0). S inquiete du lendemain mais reste stoique.",
         "[BD-T13] Joue aux cartes la veille ('Bonne bourre!', 'C etait juste!'). Participe a la bataille de Moork.",
         "[BD-T1] Oreilles pointues (p.14 BD) — elfe ou sang-mêlé possible ; race non établie dans le tome 1, race_id laissé vide.",
-        "[BD-T1] « Dzorak ! » est l'un de ses jurons (p.15 BD)."
+        "[BD-T1] « Dzorak ! » est l'un de ses jurons (p.15 BD).",
+        "[BD-T2] « Pilou » est son surnom : « Ça suffit, Pilou ! » (Wismerhill, p.8), « 500 piécettes pour Pilou ! » (lui-même, p.10).",
+        "[BD-T2] Vole la bourse de Murata, qui lui tranche sa natte (p.10) ; crochète la grille de l'arène (« Ne trouble pas la concentration de l'artiste ! », p.12).",
+        "[BD-T2] Détrousse les morts, pille le palais du Maître des Dragons et couve en secret un œuf de dragon vert (pp.12, 43, 45)."
       ]
     },
     {
@@ -145562,17 +145647,20 @@
       "special_rule": "",
       "quote": "",
       "source": "[BD-T1] Pages 15-16 (pp.21-22 BD)",
-      "ville_ids": [],
+      "ville_ids": [
+        "ville_feyhin_lokcthat",
+        "sauken_glude_of_magistrya"
+      ],
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
         "[BD-T3 p.31] Nom complet 'Feydriva' confirmé par le narrateur : 'Nul n'entendit Feydriva hurler dans la nuit!'",
-        "[BD-T2] Monte le dragon Dracchennauknh lors de la patrouille à la Passe des Dragons.",
-        "[BD-T2] Plaide pour épargner le groupe de Wismerhill ('Maître ! Laissez-les moi !'). Ses efforts sont ignorés par Dracchennauknh.",
-        "[BD-T2] Assiste impuissant au combat singulier Wismerhill vs Dracchennauknh et à la mort de son dragon.",
-        "[BD-T2] NB : 'Fey' (compagnon de Wismerhill) et 'Feidreiva' (Chevalier-Dragon) sont deux personnages distincts dans ce tome.",
         "[BD-T1] Graphie du tome 1 : « Feidreiva » ; le tome 3 écrit « Feydriva ».",
-        "[BD-T1] Point à vérifier contre le tome 2 : les notes T2 font de Feidreiva un Chevalier-Dragon distinct de Fey, alors que le tome 1 la montre partant avec Wismerhill et Pile-ou-Face (p.52 BD)."
+        "[BD-T2] « Fey » est le surnom de Feidreiva : « Vas-y, Fey ! » (Pile-ou-Face, p.8) ; « Non, Feidreiva ! » (Wismerhill à sa compagne, p.31). Les fiches char_fey et companion_fey_t2 y sont fusionnées (v1.0.50).",
+        "[BD-T2] Rescapée de Kendrhir avec Wismerhill et Pile-ou-Face ; complice des vols à la tire de Feyhin Lokcthat (p.8), déclenche la rixe de l'auberge de Magistrya (p.21).",
+        "[BD-T2] Supplie Wismerhill de ne pas affronter le Maître des Dragons : « Non ! N'y va pas ! Il te tuera ! » (p.31) ; amante de Wismerhill (pp.28, 43).",
+        "[BD-T2] Cicatrice verticale sur l'œil gauche, marque jaune sous l'œil, armure dorée très échancrée (pp.7, 19, 42).",
+        "[BD-T2] Aucun Chevalier Dragon ne s'appelle Feidreiva : les notes antérieures qui l'affirmaient venaient d'une mauvaise attribution de « Non, Feidreiva ! » (v1.0.50)."
       ]
     },
     {
@@ -145581,7 +145669,8 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t01"
+        "t01",
+        "t02"
       ],
       "faction_id": "",
       "race_id": "race_human",
@@ -145600,7 +145689,8 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T1] Nom non donné dans le tome 1 ; l'identité avec l'Empereur Haghendorf des tomes suivants reste à confirmer."
+        "[BD-T1] Nom non donné dans le tome 1 ; l'identité avec l'Empereur Haghendorf des tomes suivants reste à confirmer.",
+        "[BD-T2] Anoblit Fratus Sinister « comte, pair de l'Empire » (p.28) ; Frater complote de marcher contre lui (p.34)."
       ]
     },
     {
@@ -145780,7 +145870,9 @@
       "name": "Seigneur Greldinard, Baron de Moork",
       "importance": "secondary",
       "alive": true,
-      "tomes": [],
+      "tomes": [
+        "t02"
+      ],
       "faction_id": "",
       "race_id": "",
       "class_id": "",
@@ -145829,7 +145921,10 @@
         "[HS] Maître absolu des légions vertes (armées orques).",
         "[HS] A mystérieusement réussi à prendre le contrôle des clans orques — personne ne sait comment.",
         "[HS] Illustration [HS] : inculquant des rudiments de discipline à un chef orque via son molosse dragonoïde.",
-        "[HS] Contrôle les Orques au point que les hordes se sont calmées et ne se livrent plus au saccage spontané."
+        "[HS] Contrôle les Orques au point que les hordes se sont calmées et ne se livrent plus au saccage spontané.",
+        "[BD-T2] « Le sombre Lord Greldinard se tourna vers la Lune Noire et pria » ; Haazheel lui répond « Excellent, Baron ! » (p.38) : [DÉDUCTION] Greldinard est le Baron de Moork.",
+        "[BD-T2] Masqué d'un haut couvre-chef rouge gravé, robe rouge au disque noir ; rend compte au « Maître » que « l'Épée est en sécurité et commence à être forgée » (p.28).",
+        "[DÉDUCTION] Le cavalier en armure rouge du shadrakkh, qui mène les troupes orques contre le krak de la Lumière, est le même Baron (pp.36-38)."
       ]
     },
     {
@@ -146233,8 +146328,8 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6",
-        "t02"
+        "t02",
+        "t6"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -146265,12 +146360,13 @@
         "[BD-T6] Joue le rôle de la fille de fleurs lors du piège d'Horkher — livre les fleurs → signal pour Ghorghor.",
         "[BD-T6] 'T'as été super Pépette!' dit Ghorghor une fois la capture réussie.",
         "[BD-T2] PREMIÈRE APPARITION (T2, avant T6) : demande de l'aide au groupe de Wismerhill dans la ruelle après leur combat contre des brigands à Feyhin Lokcthat.",
-        "[BD-T2] Son frère jumeau Murata a été transformé par un mage (7 ans mais adulte) et est prisonnier de l'arène. Wismerhill, Pilou et Fey le libèrent avec l'aide de Goum.",
         "[BD-T2] Indique que le mage responsable (qui réside à quelques jours de marche) sait peut-être où se trouve l'Oracle.",
         "[BD-T6] P.15 : présente au festin du couronnement. 'Ghorghor et Pépète d'ailleurs' — elle est la convive préférée de Ghorghor.",
         "[BD-T6] P.23 : réveille Wismerhill et Hellavnnea en sautant sur le lit : 'Debout! Hi hi hi! Il est l'heure!' — SHTOUK SHTOUK SHTOUK.",
         "[BD-T6] P.24 : 'Viens ici Dragounet, hi hi hi!' — Wismerhill l'appelle ainsi au petit-déjeuner. 3 surnoms : Pépète (Ghorghor), Pépette (Hellavnnea), Dragounet (Wismerhill).",
-        "[BD-T6] P.41 : livre les fleurs à George d'Horkher — SIGNAL du piège. 'Voici mille fleurs pour le preux sire d'Horkher.' — 'Merci ma petite fille.' — GASP — capture."
+        "[BD-T6] P.41 : livre les fleurs à George d'Horkher — SIGNAL du piège. 'Voici mille fleurs pour le preux sire d'Horkher.' — 'Merci ma petite fille.' — GASP — capture.",
+        "[BD-T2] Son frère jumeau est Goum : « Sept ans. C'est mon jumeau. » Un mage les a pris enfants et a transformé Goum en colosse simple d'esprit qui n'obéit qu'à elle (p.15). Le groupe et Murata le libèrent de l'arène (pp.12-13).",
+        "[BD-T2] Peau mate, yeux jaunes, tresses ornées de perles, tunique verte ; guide le groupe jusqu'à Magistrya (« C'est ici ! », p.19)."
       ]
     },
     {
@@ -146439,7 +146535,8 @@
         "[BD-T5] Présent dans la tente de commandement à Tsaroth aux côtés de Wismerhill et Greldinard.",
         "[LORE_ETENDU] PNJ clé pour les quêtes de messager/ordre dans les zones contrôlées Lune Noire.",
         "[BD-T1] Graphie du tome 1 : « Urmarcht » ; les tomes 4, 5 et 12 écrivent « Urmacht ».",
-        "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts ; invoqué dans un cercle par un vieux sorcier (le « Maître ») sous la menace (p.40 BD)."
+        "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts ; invoqué dans un cercle par un vieux sorcier (le « Maître ») sous la menace (p.40 BD).",
+        "[HYPOTHÈSE BD-T2] Le démon ailé rouge qui se réjouit avec Desdémone de la mort du Magister (p.26) est Urmarcht (même morphologie qu'aux pp.5-6)."
       ]
     },
     {
@@ -146751,10 +146848,10 @@
         "t3"
       ],
       "faction_id": "",
-      "race_id": "race_goblin",
+      "race_id": "race_human",
       "class_id": "class_thief",
       "role": "companion_comedique",
-      "visual": "Petite créature noire à grande bouche et yeux jaunes. Aspect vaguement simien ou reptilien.",
+      "visual": "[BD-T2] Colosse à crinière noire ornée de perles, peau sombre, fourrure et cape rouge ; dans l'arène : casque intégral, sangles noires et griffes-lames en éventail aux deux bras (pp.8-9, 13, 19).",
       "personality": "Peureux, discret, fidèle. Réagit à l'excès mais ne fuit jamais vraiment.",
       "description": "Peureux, discret, fidèle. Réagit à l'excès mais ne fuit jamais vraiment.",
       "arc": "Présent depuis le début du tome 3. Reçoit une armure naine sur mesure à Ghrunke Dash. Assiste à l'éclosion de Kruikna. Combat avec le groupe dans toutes les situations.",
@@ -146779,13 +146876,15 @@
         "[BD-T3 p.28] Parle en troisième personne : 'Goum l'a peur'",
         "[BD-T3 p.20] Armure naine faite pour 'Goum et sa sœur' = Pilou",
         "[BD-T2] Surnommé 'Goum le Terrible' dans l'arène de Feyhin Lokcthat. Enchaîné et revêtu de ses armes (griffes géantes), seulement 4 challengers avaient osé l'affronter : un noble en mal d'argent, un barbare ivre, un chevalier en quête de gloire, et Murata le 'curieux guerrier jaune'.",
-        "[BD-T2] Wismerhill remporte le combat et gagne 500 couronnes. Il propose à Goum de rejoindre le groupe.",
         "[BD-T2] S'entraîne dans le palais abandonné de la Passe des Dragons après la libération.",
-        "[BD-T2] Apprécie le 'Cha' de Murata après l'avoir d'abord reniflé avec scepticisme ('Ga bon!').",
+        "[BD-T2] Apprécie le 'Cha' de Murata après l'avoir d'abord reniflé avec scepticisme (« Ça bon ! », p.14).",
         "[BD-T2] Race exacte confirmée non précisée — ses armes de combat sont des griffes géantes portées comme des gantelets.",
         "[BD-T11] Son esprit est restauré à la normale par Wismerhill — cadeau à Pépette.",
         "[BD-T11] 'Pour toi, Pépette, j'ai ramené ton frère. Désormais, son esprit est normal!'",
-        "[BD-T11] 'GOUM?!' — réaction émue de Pépette."
+        "[BD-T11] 'GOUM?!' — réaction émue de Pépette.",
+        "[BD-T2] Vaincu par Murata, pas par Wismerhill (p.9) ; retenu prisonnier dans l'arène, il est libéré par le groupe à la demande de sa sœur jumelle Nasha (pp.12-13).",
+        "[BD-T2] Enfant de 7 ans transformé par un mage : adulte colossal, « un peu bête mais très gentil », n'obéit qu'à Nasha (p.15) — race corrigée en race_human (v1.0.50).",
+        "[À VÉRIFIER BD-T3] Ancienne description conservée : « Petite créature noire à grande bouche et yeux jaunes. Aspect vaguement simien ou reptilien. »"
       ]
     },
     {
@@ -146866,37 +146965,6 @@
       ]
     },
     {
-      "id": "char_gunther_t5",
-      "name": "Gunther (Fils de la Lumière)",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [],
-      "faction_id": "",
-      "race_id": "",
-      "class_id": "",
-      "role": "soldier_npc",
-      "visual": "",
-      "personality": "Sadique, fanatique, trouve de l'humour dans la mort des non-humains. Obéit aux ordres sans questionnement moral.",
-      "description": "Soldat des Fils de la Lumière, nommé. Crâne rasé, sourire sadique, armure blanche à croix rouge. Tient une matraque/bâton. Représente l'archétype du fanatisme de l'Ordre de la Lumière — capable de rire d'un enfant mort en disant 'Toujours le mot pour rire.'",
-      "arc": "",
-      "abilities": [],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T5] Pages 5-6",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T5] 'Il est cassé pépé, y peut plus jouer!' — parole d'un enfant Orkh sur son jouet brisé par Gunther.",
-        "[BD-T5] 'Ach, Gunther! Toujours le mot pour rire.' — supérieur à Gunther après sa 'blague'.",
-        "[BD-T5] 'D'ailleurs y s'fait chier pépé! Y veut que tu l'rejoignes!' — Gunther à un enfant Orkh blessé.",
-        "[BD-T5] Sa violence est saluée dans la hiérarchie — indique une culture d'impunité au sein de l'Ordre.",
-        "[BD-T5] 'Quel humour, Gunthar! Irresistible en effet, la mort d'un enfant!' — Ghorghor Bey, sarcastique (orthographe variante).",
-        "[LORE_ETENDU] PNJ hostile pour les personnages non-humains dans les zones contrôlées Lumière."
-      ]
-    },
-    {
       "id": "char_geant_dzorak_tsaroth_npc",
       "name": "Le Géant Dzorak (Tsaroth, sans nom)",
       "importance": "secondary",
@@ -146935,7 +147003,8 @@
       "tomes": [
         "t9",
         "t09",
-        "t00"
+        "t00",
+        "t02"
       ],
       "faction_id": "faction_demons",
       "race_id": "",
@@ -146966,7 +147035,8 @@
         "[BD-T9] Page 43 : commande son fils de diriger la légion infernale. Appelle par son fils : 'Ô EMPEREUR DES PLANS ABYSSAUX!'",
         "[BD-T4] Mentionné indirectement depuis T1/T4 comme source de la puissance d'Haazheel — confirmé en T9.",
         "[LORE_ETENDU] Entité non-jouable. Ne peut pas accéder au plan matériel directement — bloqué par ses propres chaînes cosmiques. Seule l'ouverture des Seuils Infernaux libérerait ses légions.",
-        "[T00] Première apparition — aspect Prince Démoniaque humanoïde (non enchaîné). Propose le Jeu Cruel à Pazuzu. Joue aux échecs avec des pièces vivantes."
+        "[T00] Première apparition — aspect Prince Démoniaque humanoïde (non enchaîné). Propose le Jeu Cruel à Pazuzu. Joue aux échecs avec des pièces vivantes.",
+        "[BD-T2] « L'Empereur des Ténèbres règne au milieu de ses 666 abysses » : appelé « ô Prince », il reçoit le rapport d'Urmarcht et lui ordonne d'espionner Haazheel (pp.5-6). [DÉDUCTION] même entité que le Prince des Ténèbres."
       ]
     },
     {
@@ -147235,45 +147305,6 @@
       ]
     },
     {
-      "id": "char_fey",
-      "name": "Fey",
-      "importance": "major",
-      "alive": true,
-      "tomes": [
-        "t02"
-      ],
-      "faction_id": "",
-      "race_id": "race_elf_dark",
-      "class_id": "",
-      "role": "companion_t2",
-      "visual": "Femme elfe aux oreilles pointues, tenue rouge et or ornée, port altier. Cheveux sombres. Traits élancés d'elfe.",
-      "personality": "Pragmatique, avide d'argent ('Elle sent le pognon, cette auberge!'). Fait partie du groupe depuis la bataille de Kendrhir.",
-      "description": "Compagnon elf de Wismerhill, rescapée de la bataille de Kendrhir. Fait partie du groupe fondateur avec Wismerhill et Pilou.",
-      "arc": "Compagnon de voyage tout au long du Tome 2",
-      "abilities": [
-        "Combat elfique",
-        "Survie"
-      ],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T2] Pages 7, 8, 19, 21, 43-47",
-      "ville_ids": [
-        "ville_feyhin_lokcthat",
-        "ville_magistrya"
-      ],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T2] Rescapée de la bataille de Kendrhir — l'un des trois survivants avec Wismerhill et Pilou.",
-        "[BD-T2] Attend à l'auberge de Magistrya pendant que Wismerhill rencontre seul le Magister.",
-        "[BD-T2] Impliquée dans la bagarre générale de l'auberge de Magistrya.",
-        "[BD-T2] À distinguer de Feidreiva (Chevalier-Dragon) — personnage entièrement différent.",
-        "[BD-T2] Présente lors du combat de l'Oracle et de l'arrivée finale au tumulus.",
-        "ATTENTION : 'companion_feidreiva' dans ce JSON réfère à Feidreiva le Chevalier-Dragon (T3+), pas à Fey."
-      ]
-    },
-    {
       "id": "char_magister_magistrya",
       "name": "Le Magister de Magistrya",
       "importance": "secondary",
@@ -147282,10 +147313,10 @@
         "t02"
       ],
       "faction_id": "faction_neutral",
-      "race_id": "human",
+      "race_id": "race_human",
       "class_id": "",
       "role": "antagonist_t2",
-      "visual": "Très vieux homme à l'aspect tigroïde (cheveux blancs tigrés, visage de félin). Port de coiffe royale et sceptre. Affaibli par l'âge.",
+      "visual": "[BD-T2] Très vieil homme à longue moustache blanche, haute coiffe noire cylindrique ornée d'un joyau, col d'hermine, robe bleu nuit, mains griffues (pp.20, 23).",
       "personality": "Rusé, manipulateur, désespéré de survivre. Utilise des êtres vivants comme carburant magique pour prolonger sa propre vie.",
       "description": "Sorcier-roi de Magistrya. Très vieux, cherche à prolonger sa vie en extrayant l'essence vitale des elfes et demi-elfes via une machine magique. Son amante Desdémone le manipule à son insu.",
       "arc": "Tente d'exploiter Wismerhill → échec → mort",
@@ -147299,7 +147330,7 @@
       "quote": "",
       "source": "[BD-T2] Pages 20, 23, 24, 25",
       "ville_ids": [
-        "ville_magistrya"
+        "sauken_glude_of_magistrya"
       ],
       "zone_ids": [],
       "dialogue_ids": [
@@ -147309,8 +147340,9 @@
         "[BD-T2] Réside au sommet de la Tour-Palais de Magistrya.",
         "[BD-T2] Invite Wismerhill à une 'collation' avant de tenter de lui soutirer la localisation de l'Oracle.",
         "[BD-T2] 'Les elfes sont immortels et leur essence vitale possède de grandes vertus — ceux en qui coule le sang des elfes ont la meilleure.'",
-        "[BD-T2] Sa machine est rejetée par l'énergie élémentale de Wismerhill — il tombe gravement malade / meurt.",
-        "[BD-T2] Son amante Desdémone le manipule et sert en réalité une entité démoniaque distincte."
+        "[BD-T2] Sa machine est rejetée par l'énergie élémentale de Wismerhill — il meurt, desséché ; « Il a rejoint notre maître ! » (p.26).",
+        "[BD-T2] Son amante Desdémone le manipule et sert en réalité une entité démoniaque distincte.",
+        "[BD-T2] Ses portes, son trône et sa salle portent un pentagramme marqué « H » (pp.20, 23)."
       ]
     },
     {
@@ -147322,7 +147354,7 @@
         "t02"
       ],
       "faction_id": "faction_demons",
-      "race_id": "human_or_demon",
+      "race_id": "race_demon",
       "class_id": "",
       "role": "antagonist_t2",
       "visual": "Femme à longs cheveux roux flamboyants, yeux verts, robe rouge foncé. Séduisante et dangereuse.",
@@ -147339,7 +147371,7 @@
       "quote": "",
       "source": "[BD-T2] Pages 23-26",
       "ville_ids": [
-        "ville_magistrya"
+        "sauken_glude_of_magistrya"
       ],
       "zone_ids": [],
       "dialogue_ids": [
@@ -147347,10 +147379,12 @@
       ],
       "notes": [
         "[BD-T2] Salue l'échec de la machine : 'Il s'est énervé, le petit !'",
-        "[BD-T2] Révèle son double-jeu : 'Mission accomplie, Maîtresse!'",
         "[BD-T2] Indique à Wismerhill sous contrainte : 'L'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons.'",
         "[BD-T2] Envoie Wismerhill vers la Passe sachant que cela le mènera à sa perte ('Brillant! Le petit va à sa perte!').",
-        "[BD-T2] Se fond dans un décor de feu et de démons à la fin — confirme sa nature démoniaque."
+        "[BD-T2] Se fond dans un décor de feu et de démons à la fin — confirme sa nature démoniaque.",
+        "[BD-T2] « Mission accomplie, maîtresse ! » (p.28) est une réplique de Wismerhill à Feidreiva, pas de Desdémone (note retirée en v1.0.50).",
+        "[BD-T2] Démone : défenestrée par Wismerhill, elle reparaît nue et indemne, avec une queue (p.26) ; complice amoureuse d'un démon ailé rouge (Urmarcht [HYPOTHÈSE]).",
+        "[BD-T2] L'indication « l'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons » est un piège (« Le petit va à sa perte ! ») : la direction n'est pas fiable, seule la Passe est confirmée sur le trajet."
       ]
     },
     {
@@ -147362,12 +147396,12 @@
         "t02"
       ],
       "faction_id": "faction_dragon_knights",
-      "race_id": "race_dragon",
+      "race_id": "dragon",
       "class_id": "",
       "role": "antagonist_t2",
-      "visual": "Grand dragon rouge/orange, ailes imposantes, yeux perçants. Monté par le Chevalier Feidreiva.",
-      "personality": "Territorial et fier. Propose lui-même le défi de combat à Wismerhill.",
-      "description": "Dragon gardien de la Passe des Dragons. Surveille le territoire avec son chevalier Feidreiva. Propose un défi de combat singulier à Wismerhill. Tué d'une lance dans la gorge. En mourant, ensevelit Wismerhill sous sa masse.",
+      "visual": "Grand dragon rouge au ventre jaune, ailes orange, bec crochu. Monture du Maître des Dragons (Lord Drakkhurst).",
+      "personality": "Monture obéissante : charge et crache le feu sur l'ordre de son cavalier.",
+      "description": "Dragon du Maître des Dragons, gardien de la Passe. Sur son ordre (« Fonce sur lui, Dracchennauknh ! »), il charge Wismerhill, qui a relevé le défi du Maître, et meurt la gorge traversée par sa lance ; sa masse ensevelit Wismerhill.",
       "arc": "Gardien → Duel contre Wismerhill → Mort",
       "abilities": [
         "Vol",
@@ -147386,11 +147420,10 @@
         "dial_t2_dracchennauknh_defi"
       ],
       "notes": [
-        "[BD-T2] Interpelle le groupe : 'Humains ! Vous êtes sur un territoire interdit ! Partez ou battez-vous !'",
-        "[BD-T2] Son chevalier Feidreiva plaide pour les épargner mais Dracchennauknh impose le duel.",
-        "[BD-T2] Ordonne à Wismerhill de s'exposer, puis crache un déluge de feu.",
         "[BD-T2] Wismerhill survit grâce à l'Armure de Glace des Vents et lui plante une lance dans la gorge.",
-        "[BD-T2] Sa mort provoque la fuite des autres Chevaliers-Dragons."
+        "[BD-T2] Sa mort provoque la fuite des autres Chevaliers-Dragons.",
+        "[BD-T2] « Humains ! Vous êtes sur un territoire interdit ! Partez ou battez-vous ! » est la sommation de son cavalier, le Maître (p.31).",
+        "[BD-T2] Nommé par le Maître : « Fonce sur lui, Dracchennauknh ! Puis crache ton feu, qu'il ne reste rien de ce jeune présomptueux ! » (p.39)."
       ]
     },
     {
@@ -147613,17 +147646,21 @@
     },
     {
       "id": "char_maitre_gunthar_t8",
-      "name": "Maître Gunthar",
+      "name": "Gunthar",
       "importance": "secondary",
       "alive": true,
-      "tomes": [],
+      "tomes": [
+        "t02",
+        "t05",
+        "t08"
+      ],
       "faction_id": "",
       "race_id": "",
       "class_id": "",
       "role": "Grand Maître corrompu de la Haute Commanderie d'Altenberg (installé par Fratus)",
       "visual": "",
       "personality": "Arrogant, brutal, loyal à Fratus par cupidité. Méprise la légitimité spirituelle.",
-      "description": "",
+      "description": "Soldat des Fils de la Lumière, nommé. Crâne rasé, sourire sadique, armure blanche à croix rouge. Tient une matraque/bâton. Représente l'archétype du fanatisme de l'Ordre de la Lumière — capable de rire d'un enfant mort en disant 'Toujours le mot pour rire.'",
       "arc": "",
       "abilities": [],
       "special_items": [],
@@ -147639,7 +147676,15 @@
         "[BD-T8] Ordonne de tuer Parsifal malgré la promesse d'asile du Vénérable : 'Soldats, tuez ce chien !'",
         "[BD-T8] Le Vénérable l'excommunie. Gunthar : 'Tu quoi ? Non mais je rêve ! Très bien, je change l'ordre — TUEZ-LES !'",
         "[BD-T8] Les soldats hésitent, puis tirent mais Gunthar est atteint par les flèches. 'Mais ! Pauvre fou... ARGHH !'",
-        "[BD-T8] Nommé par Fratus comme 'Maître des individus peu recommandables' selon Parsifal."
+        "[BD-T8] Nommé par Fratus comme 'Maître des individus peu recommandables' selon Parsifal.",
+        "[BD-T5] 'Il est cassé pépé, y peut plus jouer!' — parole d'un enfant Orkh sur son jouet brisé par Gunther.",
+        "[BD-T5] 'Ach, Gunther! Toujours le mot pour rire.' — supérieur à Gunther après sa 'blague'.",
+        "[BD-T5] 'D'ailleurs y s'fait chier pépé! Y veut que tu l'rejoignes!' — Gunther à un enfant Orkh blessé.",
+        "[BD-T5] Sa violence est saluée dans la hiérarchie — indique une culture d'impunité au sein de l'Ordre.",
+        "[BD-T5] 'Quel humour, Gunthar! Irresistible en effet, la mort d'un enfant!' — Ghorghor Bey, sarcastique (orthographe variante).",
+        "[LORE_ETENDU] PNJ hostile pour les personnages non-humains dans les zones contrôlées Lumière.",
+        "[BD-T2] « Commandeur Gunthar » (p.34) : gros, chauve, tunique rouge, conjuré aux côtés de Frater Sinister à Altenberg. Graphie de la BD : Gunthar.",
+        "[INFÉRÉ] Fusion de char_gunther_t5 (« Gunther », T5) : même officier de l'Ordre, Ghorghor l'appelle « Gunthar » (BD-T5) ; graphie retenue : Gunthar (v1.0.50)."
       ]
     },
     {
@@ -148565,6 +148610,84 @@
         "[HS] Drainer la vie et dévorer les âmes : pouvoirs confirmés par ouïe-dire.",
         "[HS] Illustration pleine page : portrait aquarelle de profil, cheveux flamboyants, yeux verts.",
         "[HS] Présente lors de la convocation de Netzharine au phare — co-séductrice de Netzharine avec Wismerhill."
+      ]
+    },
+    {
+      "id": "char_lord_drakkhurst",
+      "name": "Lord Drakkhurst",
+      "importance": "secondary",
+      "alive": false,
+      "tomes": [
+        "t02"
+      ],
+      "faction_id": "faction_dragon_knights",
+      "race_id": "chevaliers-dragons",
+      "class_id": "",
+      "role": "antagonist_t2",
+      "visual": "Armure noire à grande croix blanche, heaume cylindrique noir à fente en croix, disques blancs aux épaules, cape bleue, lance lourde, bouclier noir à croix blanche (pp.29-41).",
+      "personality": "Honneur martial et excès de confiance : accepte la joute et ne vise même pas Wismerhill (p.40).",
+      "description": "Maître des Chevaliers Dragons de la Passe des Dragons, monté sur Dracchennauknh. Alerté par un dragon messager, il somme le groupe de partir, accepte le défi de Wismerhill et meurt la gorge perforée par la même lance que son dragon.",
+      "arc": "Gardien de la Passe → joute contre Wismerhill → mort ; son palais devient le refuge du groupe.",
+      "abilities": [
+        "Monte un dragon",
+        "Langue draconique",
+        "Joute à la lance lourde"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Fonce sur lui, Dracchennauknh ! Puis crache ton feu, qu'il ne reste rien de ce jeune présomptueux !",
+      "source": "[BD-T2] Pages 29-42",
+      "ville_ids": [],
+      "zone_ids": [
+        "zone_passe_dragons_t2",
+        "zone_palais_abandonne_passe"
+      ],
+      "dialogue_ids": [
+        "dial_t2_dracchennauknh_defi",
+        "dial_t2_armure_glace_combat"
+      ],
+      "notes": [
+        "[BD-T2] Lord Drakkhurst est le Maître des Dragons (titre) dans la Passe des Dragons. Porte une armure blanche et noire à masque angulaire. Parle la langue dracchen.",
+        "[BD-T2] Reçoit le rapport d'alerte de son chevalier messager en dracchen : 'Drakkahen Hurghoth Khaenkhen Khoï Knaheen Kurgha Hanharrh Zul !' (Maître, des intrus campent à l'extérieur!)",
+        "[BD-T2] Répond : 'Khaankhen Khorsht Urkht !' (Bien! Je m'en occupe! Salut à toi!) et prend sa lance lourde pour affronter les intrus.",
+        "[BD-T2] « Va prévenir Lord Drakkhurst que des fous veulent passer ! » (un Chevalier Dragon à un petit dragon, p.29).",
+        "[DÉDUCTION] Le chevalier noir de la p.29 (destinataire du message) et le « Maître » de la joute (pp.31-41) sont Lord Drakkhurst.",
+        "[BD-T2] « Dans sa course, la lance avait aussi perforé la gorge du Maître ! » (p.42) ; ses chevaliers se dispersent."
+      ]
+    },
+    {
+      "id": "char_orkhan_t2",
+      "name": "Maître Orkhan",
+      "importance": "minor",
+      "alive": false,
+      "tomes": [
+        "t02"
+      ],
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "class_id": "",
+      "role": "envoye_t2",
+      "visual": "[BD-T2] Envoyé de l'Ordre en cape bleue à col d'hermine, escorté de chevaliers en blanc à bannières à croix rouge (p.44).",
+      "personality": "Diplomate (« l'un de nos meilleurs diplomates », p.34).",
+      "description": "Envoyé de Frater Sinister auprès des Chevaliers Dragons pour sceller l'alliance contre l'Empereur. Arrive au palais du Maître après sa mort et y est accueilli par le groupe de Wismerhill.",
+      "arc": "Ambassade d'Altenberg → massacre au palais du Maître des Dragons.",
+      "abilities": [
+        "Diplomatie"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Holà quelqu'un ! Je suis l'envoyé de Frater Sinister !",
+      "source": "[BD-T2] Pages 34, 44",
+      "ville_ids": [
+        "ville_altenberg"
+      ],
+      "zone_ids": [
+        "zone_palais_abandonne_passe"
+      ],
+      "dialogue_ids": [],
+      "notes": [
+        "[BD-T2] « Le maître Orkhan est l'un de nos meilleurs diplomates !... » (p.34).",
+        "[DÉDUCTION] L'envoyé de la p.44 est Orkhan ; « la réception qui leur fut réservée s'avéra enthousiaste » : l'ambassade est massacrée (mort [INFÉRÉ])."
       ]
     }
   ],
@@ -149612,7 +149735,7 @@
       "difficulty": "légendaire",
       "level_min": 40,
       "level_max": 55,
-      "description": "Grand dragon rouge/orange, gardien territorial de la Passe des Dragons. Monté par le Chevalier Feidreiva. Propose lui-même le défi de duel. Tué par Wismerhill d'une lance dans la gorge.",
+      "description": "Grand dragon rouge/orange, gardien territorial de la Passe des Dragons. Monté par le Maître des Chevaliers Dragons (Lord Drakkhurst) ; Wismerhill relève le défi du Maître. Tué par Wismerhill d'une lance dans la gorge.",
       "region_id": "royaume_drach",
       "ville_id": "",
       "faction_id": "faction_dragon_knights",
@@ -149675,7 +149798,7 @@
       "difficulty": "faible",
       "level_min": 5,
       "level_max": 12,
-      "description": "Créatures ailées ressemblant à des oiseaux mais aux 'yeux acérés'. Pas de véritables oiseaux — serviteurs de surveillance des Chevaliers-Dragons. Détectent les intrus et alertent le Maître des Dragons.",
+      "description": "« Étranges oiseaux » observés par Murata devant la Passe : ce sont en réalité les dragons-éclaireurs des Chevaliers Dragons, montés ou non, qui guettent les intrus et alertent le Maître des Dragons.",
       "region_id": "royaume_drach",
       "ville_id": "",
       "faction_id": "faction_dragon_knights",
@@ -149686,7 +149809,7 @@
         "Transmission d'alerte au Maître des Dragons"
       ],
       "notes": [
-        "[BD-T2] Le Samouraï Murata les observe avec méfiance : 'Ces oiseaux sont bizarres.'",
+        "[BD-T2] Le samouraï « scrutait les cieux… observant d'étranges oiseaux » (p.27) ; sur le pont : « Ces oiseaux sont bizarres » (p.31, locuteur incertain).",
         "[BD-T2] 'Des yeux acérés les guettaient, car il ne s'agissait pas d'oiseaux...'"
       ]
     },
@@ -153398,13 +153521,14 @@
     {
       "id": "royaume_drach",
       "name": "Royaume Drach",
-      "description": "",
+      "description": "Légendaire royaume des Grands Vers, immense contrée rocheuse et déchiquetée où dorment les dragons ; les plus vieux règnent sur leur progéniture avec l'aide des Chevaliers Dragons, qui en interdisent l'accès. La Passe des Dragons est l'une de ses rares entrées.",
       "notes": [
-        "[BD-T2] Accessible uniquement par la Passe des Dragons — décrite comme 'une des rares entrées du légendaire Royaume des Grands Verts'.",
+        "[BD-T2] Accessible uniquement par la Passe des Dragons — décrite comme 'une des rares entrées du légendaire royaume des Grands Vers'.",
         "[BD-T2] 'Au sein d'une immense contrée rocheuse et déchiquetée dorment les dragons, dont le nombre est inconnu.'",
         "[BD-T2] Les vieux dragons les plus anciens règnent impitoyablement sur leur progéniture.",
         "[BD-T2] Alliance entre les vieux dragons et quelques humains : les Chevaliers-Dragons. Ceux-ci veillent et interdisent tout accès au Royaume Drach.",
-        "[BD-T2] Langue dracchen parlée : 'Drakkahen Hurghoth Khaenkhen Khoï Knaheen Kurgha Hanharrh Zul' = message d'alerte, 'Khaankhen Khorsht Urkht' = réponse du Maître."
+        "[BD-T2] Langue dracchen parlée : 'Drakkahen Hurghoth Khaenkhen Khoï Knaheen Kurgha Hanharrh Zul' = message d'alerte, 'Khaankhen Khorsht Urkht' = réponse du Maître.",
+        "[BD-T2] Le royaume compte « sept régions » ; un dragon y est appelé « drachen » (p.29)."
       ]
     },
     {
@@ -154588,7 +154712,7 @@
       "source_raids": [],
       "notes": [
         "[BD-T2] Pile-ou-Face : 'Un service de 200 ans...'",
-        "[BD-T2] Goum l'apprécie après hésitation : 'Ga bon!'"
+        "[BD-T2] Goum l'apprécie après hésitation : « Ça bon ! »"
       ]
     },
     {
@@ -157052,6 +157176,196 @@
       "source_villes": [],
       "source_raids": [],
       "notes": []
+    },
+    {
+      "id": "loot_griffe_dragon",
+      "name": "Griffe de dragon",
+      "type": "craft_material",
+      "rarity": "peu_commun",
+      "description": "Griffe recourbée d'un dragon sauvage des Marches ; sert à l'artisanat d'armes perforantes.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_sauvage_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_dragon_sauvage_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_sang_dragon_sauvage",
+      "name": "Sang de dragon sauvage",
+      "type": "reagent",
+      "rarity": "rare",
+      "description": "Sang épais et chaud, réactif rare recherché des alchimistes.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_sauvage_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_dragon_sauvage_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_dent_dragon",
+      "name": "Dent de dragon",
+      "type": "craft_material",
+      "rarity": "peu_commun",
+      "description": "Croc de dragon, monnaie d'échange et composant de talismans.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_sauvage_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_dragon_sauvage_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_coeur_dragon_sauvage",
+      "name": "Cœur de dragon sauvage",
+      "type": "reagent",
+      "rarity": "epique",
+      "description": "Cœur encore tiède d'un dragon des Marches ; butin très rare.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_sauvage_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_dragon_sauvage_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_epee_longue_lumiere",
+      "name": "Épée longue de la Lumière",
+      "type": "arme_epee_guerriere",
+      "rarity": "peu_commun",
+      "description": "Épée longue droite des fantassins de l'Ordre de la Lumière, garde cruciforme.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_chevalier_lumiere_pied_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_chevalier_lumiere_pied_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_bouclier_croix_rouge",
+      "name": "Bouclier à croix rouge",
+      "type": "bouclier",
+      "rarity": "peu_commun",
+      "description": "Bouclier blanc frappé de la croix rouge des Chevaliers de la Lumière.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_chevalier_lumiere_pied_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_chevalier_lumiere_pied_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_symbole_lumiere",
+      "name": "Symbole de l'Ordre (médaillon)",
+      "type": "objet_quete",
+      "rarity": "commun",
+      "description": "Médaillon à croix porté par les chevaliers de l'Ordre ; preuve de victoire sur un chevalier.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_chevalier_lumiere_pied_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_chevalier_lumiere_pied_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_pieces_or_peage",
+      "name": "Pièces d'or de péage",
+      "type": "monnaie",
+      "rarity": "commun",
+      "description": "Bourse de péage prélevée par les gardes d'un seigneur des Marches.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_garde_seigneur_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_garde_seigneur_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_armure_cuir_local",
+      "name": "Armure de cuir locale",
+      "type": "armure_legere",
+      "rarity": "commun",
+      "description": "Armure de cuir de qualité médiocre des gardes seigneuriaux.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_garde_seigneur_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_garde_seigneur_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
+    },
+    {
+      "id": "loot_hallebarde_rouille",
+      "name": "Hallebarde rouillée",
+      "type": "arme_hast",
+      "rarity": "commun",
+      "description": "Hallebarde mal entretenue des gardes seigneuriaux des Marches.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_garde_seigneur_marches_t1"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GAMEPLAY] Butin créé pour la créature creature_garde_seigneur_marches_t1 (référence orpheline corrigée en v1.0.50)."
+      ]
     }
   ],
   "dialogues": [
@@ -160463,11 +160777,11 @@
       "lines": [
         {
           "speaker": "Les Grands Vents",
-          "text": "Wismerhill… Il y a longtemps… ta mère… nous t'a confié…"
+          "text": "Wismerhill… il y a longtemps… ta mère… t'a confié… à nous."
         },
         {
           "speaker": "Les Grands Vents",
-          "text": "À partir d'aujourd'hui, tu parleras en notre nom. Et parce que nous t'avons choisi — en souvenir d'elle — en ce lieu sacré — reçois, prince des vents, le symbole de notre pacte."
+          "text": "À partir d'aujourd'hui, tu parleras en notre nom, en ce lieu sacré, et parce que nous t'avons choisi, en souvenir d'elle. Reçois, prêtre des vents, le symbole de notre pacte."
         },
         {
           "speaker": "Les Grands Vents",
@@ -160479,7 +160793,7 @@
         }
       ],
       "notes": [
-        "[BD-T2] Pages 18 — scène clé de la saga."
+        "[BD-T2] Pages 17-18. « prêtre des vents » (et non « prince ») ; ordre des bulles reconstitué."
       ]
     },
     {
@@ -160496,7 +160810,7 @@
         }
       ],
       "notes": [
-        "[BD-T2] Page 47 — fin du Tome 2."
+        "[BD-T2] Page 48 — fin du Tome 2."
       ]
     },
     {
@@ -160508,28 +160822,36 @@
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "Dracchennauknh",
+          "speaker": "Le Maître des Dragons",
           "text": "Humains ! Vous êtes sur un territoire interdit ! Partez ou battez-vous !"
         },
         {
-          "speaker": "Feidreiva",
-          "text": "Maître ! Laissez-les moi !"
+          "speaker": "Chevalier Dragon",
+          "text": "Maître ! Laissez-les-moi !"
         },
         {
-          "speaker": "Dracchennauknh",
-          "text": "Non, Feidreiva ! Je dois voir l'oracle ! Je l'affronterai…"
+          "speaker": "Wismerhill",
+          "text": "Non, Feidreiva ! Je dois voir l'Oracle ! Je l'affronterai…"
         },
         {
           "speaker": "Wismerhill",
           "text": "Laissez-moi ! Il faut que j'y aille ! C'est mon destin, c'est écrit !"
         },
         {
-          "speaker": "Dracchennauknh",
-          "text": "Chevalier ! Je relève ton défi ! Si je gagne, nous passerons ?"
+          "speaker": "Feidreiva",
+          "text": "Non ! N'y va pas ! Il te tuera ! Nooon !"
+        },
+        {
+          "speaker": "Pile-ou-Face",
+          "text": "Laisse-le !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Chevalier ! Je relève ton défi ! Si je gagne, nous passerons ?…"
         }
       ],
       "notes": [
-        "[BD-T2] Page 31."
+        "[BD-T2] Page 31. Locuteurs corrigés en v1.0.50 : la sommation est du Maître des Dragons, « Non, Feidreiva ! » et le défi sont de Wismerhill."
       ]
     },
     {
@@ -160541,7 +160863,7 @@
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "Narrateur",
+          "speaker": "Le Maître des Dragons",
           "text": "Fonce sur lui, Dracchennauknh ! Puis crache ton feu, qu'il ne reste rien de ce jeune présomptueux !"
         },
         {
@@ -160550,7 +160872,7 @@
         }
       ],
       "notes": [
-        "[BD-T2] Page 40."
+        "[BD-T2] Pages 39-40."
       ]
     },
     {
@@ -160584,15 +160906,27 @@
       "lines": [
         {
           "speaker": "Desdémone",
-          "text": "Il s'est énervé, le petit ! Le vieux est au plus mal… Il a rejoint notre Maître !"
+          "text": "Hé hé hé… Il s'est énervé, le petit !"
+        },
+        {
+          "speaker": "Démon",
+          "text": "C'était parfait, ma belle ! J'y aurais presque cru… moi-même !"
         },
         {
           "speaker": "Desdémone",
-          "text": "Quant à l'avoir envoyé vers la Passe des Dragons… Brillant ! Le petit va à sa perte ! Le destin, mon amour, le destin…"
+          "text": "Le vieux est au plus mal…"
+        },
+        {
+          "speaker": "Démon",
+          "text": "Il a rejoint notre maître ! Quant à l'avoir envoyé vers la Passe des Dragons… Brillant ! Le petit va à sa perte !"
+        },
+        {
+          "speaker": "Desdémone",
+          "text": "Le destin, mon amour, le destin…"
         }
       ],
       "notes": [
-        "[BD-T2] Pages 25-26."
+        "[BD-T2] Page 26. Le démon ailé rouge est probablement Urmarcht [HYPOTHÈSE]."
       ]
     },
     {
@@ -163866,7 +164200,8 @@
         "[BD-T2] Camp permanent de pèlerins autour du tumulus : échoppes de faux voyants, magiciens, devins et charlatans sur le chemin d'accès.",
         "[BD-T2] L'Oracle 'appelle dans la tête' les élus — certains attendent des mois, d'autres très peu.",
         "[BD-T2] Des Chevaliers de la Lumière patrouillent même dans ce lieu saint.",
-        "[BD-T2] Wismerhill est accueilli directement par l'Oracle : 'Entre, Wismerhill… Je t'attendais !'"
+        "[BD-T2] Wismerhill est accueilli directement par l'Oracle : 'Entre, Wismerhill… Je t'attendais !'",
+        "[BD-T2] Porte : vantaux bleus encadrés d'inscriptions, frise de phases de lune, rosace d'écritures et masque blanc à oreilles pointues ; escalier de briques et brume (p.48)."
       ]
     },
     {
@@ -164388,10 +164723,11 @@
       },
       "source": "",
       "notes": [
-        "[BD-T2] Le groupe de Wismerhill est intercepté sur le pont par Dracchennauknh et Feidreiva.",
-        "[BD-T2] Wismerhill relève le défi de Dracchennauknh — combat singulier.",
+        "[BD-T2] Le groupe de Wismerhill est intercepté sur le pont de corde par le Maître des Dragons (Lord Drakkhurst), monté sur Dracchennauknh.",
+        "[BD-T2] Wismerhill relève le défi du Maître — combat singulier.",
         "[BD-T2] Après la mort de Dracchennauknh, les compagnons rejoignent le Palais Abandonné.",
-        "[BD-T2] Un émissaire de Frater Sinister y arrive ('Je suis l'envoyé de Frater Sinister!') — combat avec les compagnons."
+        "[BD-T2] Un émissaire de Frater Sinister y arrive ('Je suis l'envoyé de Frater Sinister!') — combat avec les compagnons.",
+        "[DÉDUCTION] L'entrée de la Passe (paroi en visage, BD-T2 p.27) est le lieu « Atmosphère » du lore (lieu_atmosphere, S001_W003)."
       ]
     },
     {
@@ -164413,7 +164749,8 @@
         "[BD-T2] Il laisse ses compagnons et gravit seul — 'Il faut que j'y aille seul.'",
         "[BD-T2] Les Grands Vents se manifestent en formes fantomatiques blanches au sommet du Piton.",
         "[BD-T2] 'De toutes les directions vinrent alors les Grands Vents, Seigneurs de l'Air !'",
-        "[BD-T2] Un Sceptre de Cristal naît dans la main de Wismerhill — palpite comme un cœur humain."
+        "[BD-T2] Un Sceptre de Cristal naît dans la main de Wismerhill — palpite comme un cœur humain.",
+        "[INFÉRÉ] Situé en N007_E005 (lieu_mont_neufs_pics), seule cellule lacustre libre entre Feyhin Lokcthat et Magistrya (v1.0.50)."
       ]
     },
     {
@@ -164432,7 +164769,9 @@
         "[BD-T2] Le groupe s'y installe après le combat contre Dracchennauknh.",
         "[BD-T2] Wismerhill y soigne ses blessures / Goum s'y entraîne / Murata y médite.",
         "[BD-T2] Pile-ou-Face y découvre et couve secrètement l'oeuf de dragon.",
-        "[BD-T2] Un émissaire des Chevaliers de la Lumière y arrive — combat."
+        "[BD-T2] L'envoyé de Frater Sinister (maître Orkhan [DÉDUCTION]) y arrive ; l'ambassade est massacrée (p.44).",
+        "[BD-T2] C'est le palais du Maître des Dragons (Lord Drakkhurst) : château noir gothique sur un pic au-dessus d'une mer de nuages, abandonné après sa mort (pp.29, 42).",
+        "[BD-T2] Salle du trône sur tertre à escalier (brume verte, or épars), salle aux colonnes vertes, chambres tendues de rouge (pp.43-44)."
       ]
     },
     {
@@ -189728,7 +190067,7 @@
     {
       "id": "000003",
       "type": "road",
-      "from_place": "N007_E001",
+      "from_place": "N015_E012",
       "from_ville_id": "kendrhir_vale",
       "from_lieu_id": "",
       "to_place": "N008_E007",
@@ -189851,7 +190190,7 @@
       "from_place": "N007_W005",
       "from_ville_id": "ville_northind",
       "from_lieu_id": "",
-      "to_place": "N007_E001",
+      "to_place": "N015_E012",
       "to_ville_id": "kendrhir_vale",
       "to_lieu_id": "",
       "description": "",
@@ -190124,7 +190463,7 @@
     {
       "id": "000058",
       "type": "road",
-      "from_place": "N007_E001",
+      "from_place": "N015_E012",
       "from_ville_id": "kendrhir_vale",
       "from_lieu_id": "",
       "to_place": "N004_E001",
@@ -190784,6 +191123,18 @@
       "to_ville_id": "ville_dunfold",
       "to_lieu_id": "",
       "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000117",
+      "type": "road",
+      "from_place": "N008_E007",
+      "from_ville_id": "ville_feyhin_lokcthat",
+      "from_lieu_id": "",
+      "to_place": "N003_W003",
+      "to_ville_id": "sauken_glude_of_magistrya",
+      "to_lieu_id": "",
+      "description": "[BD-T2] Panneau « Feyhin Lokcthat » sur la chaussée de Magistrya (p.19).",
       "notes": []
     }
   ],
@@ -196538,6 +196889,31 @@
         "hizin",
         "oracle"
       ]
+    },
+    {
+      "id": "arc_t02_vent_des_dragons",
+      "name": "Le Vent des Dragons",
+      "scope": "faction_multi",
+      "tome_source": "t02",
+      "tier": "principal",
+      "region_id": "",
+      "description": "Feyhin Lokcthat → Mont des Neuf Pics → Magistrya → Atmosphère et Passe des Dragons → palais du Maître des Dragons → Oracle. Wismerhill devient prêtre des vents, échappe au Magister, tue le Maître des Dragons et entre chez l'Oracle, tandis que Frater Sinister conjure à Altenberg et que la Lune Noire écrase un krak de la Lumière.",
+      "linked_quest_ids": [
+        "quest_t2_arene_feyhin",
+        "quest_t2_liberation_goum",
+        "quest_t2_initiation_mont_pics",
+        "quest_t2_audience_magister",
+        "quest_t2_passe_dragons",
+        "quest_t2_atteindre_oracle"
+      ],
+      "linked_raid_ids": [],
+      "tags": [
+        "[BD-T2]",
+        "t02",
+        "campagne",
+        "oracle",
+        "dragons"
+      ]
     }
   ],
   "lieux": [
@@ -196641,19 +197017,23 @@
     },
     {
       "id": "lieu_mont_neufs_pics",
-      "name": "Mont des Neufs Pics",
+      "name": "Mont des Neuf Pics",
       "alias": "",
       "type": "open_dungeon_poi",
-      "importance": "",
-      "cell": "",
+      "importance": "Ancien lieu du culte des Vents, initiation de Wismerhill (prêtre des vents, sceptre de cristal).",
+      "cell": "N007_E005",
       "region_id": "",
       "zone_id": "zone_mont_neuf_pics",
       "faction_control": "",
       "features": [
         "9 pics très fins et très hauts",
         "ancien sanctuaire elfique",
-        "point d’énergie du monde",
-        "hôtel au sommet"
+        "point d'énergie du monde",
+        "autel au sommet",
+        "monolithe central à escalier en spirale",
+        "cercle de pierres dressées",
+        "île au milieu d'un lac",
+        "pont à arches"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -196662,23 +197042,31 @@
         "zone_visible": ""
       },
       "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
+        "forme_generale": "Massif isolé hérissé de neuf pics, sur une île",
+        "relief": "Aiguilles noires, flancs verts",
+        "implantation": "Au milieu d'un lac",
+        "pentes": "Abruptes ; montée finale par l'escalier du monolithe",
         "gorge": ""
       },
-      "elements_principaux": [],
+      "elements_principaux": [
+        "Neuf aiguilles rocheuses noires",
+        "Colonne de pierre centrale (monolithe) à escalier taillé",
+        "Cercle de pierres dressées au pied du monolithe",
+        "Failles d'accès",
+        "Arche rocheuse naturelle",
+        "Lac et rochers émergents",
+        "Pont ou aqueduc à arches"
+      ],
       "architecture": {
         "presence": "",
         "style": "",
         "etat": ""
       },
       "hydrographie": {
-        "type": "",
-        "eau": "",
+        "type": "Lac",
+        "eau": "Calme",
         "couleur": "",
-        "elements": ""
+        "elements": "Rochers émergents"
       },
       "vegetation": {
         "densite": "",
@@ -196691,7 +197079,7 @@
       },
       "couleurs_dominantes": [],
       "ambiance": {
-        "atmosphere": "",
+        "atmosphere": "Lieu sacré oublié des hommes, vents tourbillonnants convergeant vers le monolithe",
         "sentiment": "",
         "niveau_menace": ""
       },
@@ -196715,8 +197103,14 @@
       },
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
-      "notes": []
+      "footprint_tiles": [
+        "N007_E005"
+      ],
+      "notes": [
+        "[BD-T2] Pages 15-18 — « le Mont des Neuf Pics où les vents semblaient converger » ; « Mont des Pics » p.15.",
+        "[INFÉRÉ] Cellule N007_E005 (forêt avec lac), seule cellule lacustre libre entre Feyhin Lokcthat et Magistrya.",
+        "[LORE] « hôtel au sommet » corrigé en « autel au sommet » (v1.0.50)."
+      ]
     },
     {
       "id": "lieu_black_moon_square_tower",
@@ -197183,7 +197577,9 @@
       "notes": [
         "Le lieu semble être un passage symbolique vers une zone intérieure sacrée ou interdite.",
         "La présence de visages naturels suggère un mythe ou une légende associée au site.",
-        "L’éclairage bleuté renforce l’idée d’une connexion céleste ou lunaire."
+        "L’éclairage bleuté renforce l’idée d’une connexion céleste ou lunaire.",
+        "[DÉDUCTION BD-T2] Entrée de la Passe des Dragons vue p.27 : paroi dont le relief forme un visage, défilé central, plaine en contrebas où le groupe campe ; même route depuis Magistrya, juste au nord de la Passe (S003_W004).",
+        "[BD-T2] Les « étranges oiseaux » qui survolent les crêtes sont les dragons-éclaireurs des Chevaliers Dragons (pp.27-29)."
       ]
     },
     {

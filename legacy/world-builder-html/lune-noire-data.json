@@ -1,8 +1,13 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.43",
+    "version": "1.0.48",
     "notes": [
+      "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
+      "v1.0.47 : [VILLES] Kendrhir Vale en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
+      "v1.0.46 : [VILLES] Kendrhir Vale : intérieur de la cité rempli (citadelle, muraille et trois portes, cinq quartiers, lices, emplacement des 19 PNJ de service, PNJ d'ambiance) et description complète (topographie, architecture, végétation, ciel, accès, prompt image) ; éléments hors BD marqués [INFÉRÉ].",
+      "v1.0.45 : [CARTE] Positions confrontées au T1 : Kendrhir Vale en N015_E012, juste au sud de la Faille de Kashogs, en haut d'une falaise et sans vue sur la mer ; N014_E012 passée en plaine (plaine du siège) ; Tbarak (N018_E014), Klindor (N017_E019) et Hazol (N015_E015) replacées dans les Territoires des Marches selon la carte p.25 ; routes Tbarak–Klindor–Hazol–Kendrhir Vale (itinéraire de la horde) ; le port de la baie en S005_W004 devient Equiton (ville_equiton, nom non utilisé de carte_export.json) : ligne maritime du sud, ports et scénario « Les Abysses de la baie » (quest_abysses_1_equiton) rattachés à Equiton.",
+      "v1.0.44 : [TOME 1] Confrontation avec la BD : graphie « Kendrhir » du T1 appliquée partout (textes et identifiants) ; fin du tome corrigée (Hizin mort, Feidreiva et Pile-ou-Face survivent et partent avec Wismerhill ; Chevaliers en déroute) ; Urmarcht parle par la bouche de Frater Sinister ; locuteurs rétablis dans 6 dialogues T1 (dont Whispers Hill, origine de Wismerhill et non de Pile-ou-Face) ; « monstre » d'ouverture = lapin, « dragon » des Marches = leurre de bois ; Grand Mage de Kendrhir (ex-Seigneur) ; fusions : Frater/Fratus Sinister, Ghorghor Bey ×2, Urmarcht/Urmacht, Methraton ×2, Le Serpent ×2, 7 doublons de timeline T1 ; références orphelines T1 rattachées (ville vers kendrhir_vale, char_feydriva, char_oracle*).",
       "v1.0.43 : [VILLES] Services de toutes les villes remplis selon la grille par taille (game_design.cities_services.grille) : hameau, village, ville, grande ville, capitale, forteresse ; champ « taille » par ville ; un PNJ de service par exemplaire de service (service_npcs : nom propre unique, métier) ; cimetière ajouté aux services ; Horker renommée Harrowdale ; types attribués aux 19 villes qui n'en avaient pas, Altenberg et Northind passées en grande ville.",
       "v1.0.42 : [BESTIAIRE] 125 espèces animales ajoutées aux créatures (catégorie, famille, variantes) ; 20 familles de familiers (19 normales, 1 exotique : Ver) dans familiar_families.",
       "v1.0.41 : [RÈGLES] Niveau des zones défini par faction (départs différents) ; grottes, mines et tours de fortification occupées ou abandonnées dans les plaines, forêts et montagnes ; hameaux affichés seulement en vue rapprochée dans l'éditeur.",
@@ -5640,11 +5645,11 @@
       "alias": "",
       "type": "training_city",
       "importance": "capitale stratégique",
-      "cell": "N007_E001",
+      "cell": "N015_E012",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "via_magna",
+      "region_id": "terres_des_gigantomorphes",
       "housing_count": null,
       "population": null,
       "services": [
@@ -5663,16 +5668,21 @@
         "cimetiere"
       ],
       "features": [
-        "ville en haut d’une colinne",
-        "vue mer depuis falaise depuis la nord",
+        "ville en haut d'une falaise",
+        "adossée au nord à la chaîne de la Faille de Kashogs ; pas de vue sur la mer",
         "immense plaine au sud bordée de collines",
         "remparts en bois 20m",
-        "centre de formation magie + apprentissage combat"
+        "centre de formation magie + apprentissage combat",
+        "PNJ d'ambiance [INFÉRÉ] : environ 25 PNJ sans métier (taille « ville » : 40 à 59 PNJ au total, dont 19 de service) — gardes de la cité, apprentis mages, conseillers du Grand Mage, porteurs d'eau, bûcherons et charpentiers, marchands ambulants, enfants.",
+        "État de jeu : en reconstruction (world_master.json, state « reconstruction ») — environ la moitié des maisons habitées, un tiers de ruines, le reste en chantier ; trois brèches avec gravats dans la muraille ; services, auberge et marché en activité. L'histoire jouable se situe après le tome 1."
       ],
       "notes": [
         "[BD-T1] Cité des Grands Mages — rasée par la horde de Ghorghor Bey.",
         "[BD-T1] C'est ici que Wismerhill rencontre Hizin — découverte de ses pouvoirs psychiques.",
-        "Kendrhir est la première grande ville après la Faille de Kashogs (au sud des Marches)"
+        "Kendrhir est la première grande ville après la Faille de Kashogs (au sud des Marches)",
+        "[BD-T1] Position : juste au sud de la Faille de Kashogs (N016_E012), que la horde franchit avant d'atteindre la cité au début de l'hiver (pp.25-29 BD).",
+        "[GD] v1.0.46 : intérieur de la cité proposé (quartiers, lieux et emplacement des PNJ de service, PNJ d'ambiance) — tout ce qui n'est pas montré dans la BD est marqué [INFÉRÉ]. Plan de référence : artefact « Plan de Kendrhir ».",
+        "[GD] v1.0.47 : Kendrhir Vale passe à l'état « reconstruction » (après le T1) — ruines, brèches et chantiers générés par tools/world_gen ; les quartiers et services décrits dans elements_principaux sont ceux de la cité relevée."
       ],
       "dimensions_estimees": {
         "hauteur": "40m",
@@ -5681,63 +5691,86 @@
         "zone_visible": ""
       },
       "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
+        "forme_generale": "éperon rocheux allongé nord-sud, adossé au nord à la chaîne de la Faille de Kashogs",
+        "relief": "falaises abruptes sur les flancs ouest et est [INFÉRÉ], pente douce au sud vers la plaine [BD-T1 p.41]",
+        "implantation": "en haut d'une falaise, au-dessus d'une vallée verdoyante [BD-T1 p.29]",
+        "pentes": "ruelles descendant de la citadelle vers la porte sud [INFÉRÉ]",
         "gorge": ""
       },
-      "elements_principaux": [],
+      "elements_principaux": [
+        "Citadelle des Grands Mages [BD-T1 pp.29-39] — château du Grand Mage au point haut, adossé à la montagne au nord : salle du conseil aux hautes baies grillagées et trône, haute tour à flèche, galeries à pans de bois sur plusieurs niveaux, escalier de pierre en colimaçon, salle aux tentures jaunes, grande salle de banquet, chambres, salle d'armes, cabinet de divination (fioles et livres). Emplacement exact dans la cité [INFÉRÉ].",
+        "Muraille [BD-T1 pp.43-45] — haute muraille à contreforts obliques massifs, doublée de remparts de bois de 20 m [JSON]. Trois portes [INFÉRÉ] : porte nord (route de la Faille de Kashogs et de Hazol), porte ouest (route en lacets vers Northind), porte sud (routes d'Arcanefield et de Feyhin Lokcthat).",
+        "Quartier des Mages [INFÉRÉ] (nord-ouest, au pied de la citadelle) — Bibliothèque des Grands Mages (Cedane Noirmare) ; centre de formation à la magie [JSON] ; demeures de mages en bois sculpté.",
+        "Place centrale [INFÉRÉ] — carrefour des rues des trois portes, autour d'une fontaine : marché principal (Branius Boiscombe), banque (Osane Valrade), maison de la guilde (Ralmond Marlcastel).",
+        "Quartier du Temple [INFÉRÉ] (est) — temple (Jorold Hautlac), infirmerie (Ralette Fontpré), herboristerie (Darvin Brunchêne) ; cimetière en bord de falaise (Cedeline Griscastel).",
+        "Quartier des Artisans [INFÉRÉ] (sud-ouest) — deux forges (Isvin Fontlac, Odoeline Belpré), marchand d'armes (Jorric Bleulac), armurier (Renus Chenlac).",
+        "Lices d'entraînement [INFÉRÉ] (sud-est) — terrain d'apprentissage du combat du centre de formation [JSON] ; la horde s'y exerce au maniement des armes pendant l'hiver du T1 (pp.36-38 BD).",
+        "Porte sud [INFÉRÉ] — marché de la porte (Ralmond Marlmare), auberge (Iseline Brunrive), écuries (Norran Corbmorne, Maelilde Rochvigne) : départ des routes d'Arcanefield et de Feyhin Lokcthat.",
+        "Porte nord [INFÉRÉ] — auberge relais des voyageurs venus de la Faille (Halette Valvigne), écurie (Mardor Bleumont).",
+        "Porte ouest [INFÉRÉ] — écurie (Ceda Ferval) ; route en lacets descendant la falaise vers Northind.",
+        "Quartiers d'habitation — maisons de bois aux toits très pentus et pignons superposés, serrées le long de ruelles en pente [BD-T1 p.29] ; découpage en îlots [INFÉRÉ]."
+      ],
       "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
+        "presence": "dense intra-muros",
+        "style": "bois sombre sculpté, toits très pentus à pignons superposés, haute tour à flèche, muraille à contreforts obliques [BD-T1]",
+        "etat": "en reconstruction après le tome 1 : la cité, prise par la horde puis dévastée par la tempête de Wismerhill (p.52 BD), garde des quartiers en ruine, des brèches dans sa muraille et des maisons en chantier [INFÉRÉ]"
       },
       "hydrographie": {
-        "type": "",
-        "eau": "",
+        "type": "aucune étendue d'eau visible",
+        "eau": "puits et citernes [INFÉRÉ]",
         "couleur": "",
-        "elements": ""
+        "elements": "fontaine de la place centrale [INFÉRÉ]"
       },
       "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
+        "densite": "faible intra-muros",
+        "type": "prairies, arbres aux teintes d'automne [BD-T1 p.32]",
+        "repartition": "vallée et plaine au sud de la cité",
+        "couleur": "vert prairie, orange automnal",
+        "champs": "plaine cultivée au sud [INFÉRÉ]",
+        "arbres": "arbres isolés dans la plaine [BD-T1 p.41]",
+        "herbe": "prairies vertes au pied de l'éperon [BD-T1 p.29]"
       },
-      "couleurs_dominantes": [],
+      "couleurs_dominantes": [
+        "brun sombre du bois",
+        "ocre",
+        "vert prairie",
+        "violet du ciel",
+        "blanc de la neige en hiver"
+      ],
       "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
+        "atmosphere": "cité savante et fermée des Grands Mages",
+        "sentiment": "méfiance envers les étrangers, ville meurtrie qui se relève",
+        "niveau_menace": "modéré"
       },
       "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
+        "ciel": "ciel violacé [BD-T1 p.29]",
+        "nuages": "nuages massifs blancs et violets [BD-T1 p.29]",
+        "luminosite": "lumière d'automne",
+        "meteo": "automne, puis neige en hiver [BD-T1 pp.38-41]"
       },
       "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
+        "medium": "illustration bande dessinée peinte",
+        "traits": "encrage fin, architecture très détaillée",
+        "texture": "aquarelle et gouache",
+        "inspiration": "heroic fantasy franco-belge ; architecture de bois de type stavkirke"
       },
-      "niveau_occupation": "",
+      "niveau_occupation": "élevé",
       "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
+        "route_principale": "route de la plaine montant en pente douce jusqu'à la porte sud",
+        "distance_visuelle": "visible de loin depuis la plaine",
+        "dominance_paysage": "domine la vallée du haut de son éperon"
       },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [
-        "N007_E001"
+      "remarques_visuelles": [
+        "silhouette hérissée de pignons et de flèches",
+        "citadelle aux hautes baies grillagées",
+        "muraille à contreforts obliques",
+        "neige et stalactites de glace sur les palissades en hiver [BD-T1 p.41]"
       ],
-      "anchor_tile": "N007_E001",
+      "prompt_image_ultra_detaille": "Cité médiévale-fantastique des Grands Mages perchée en haut d'une falaise, sur un éperon rocheux adossé à une chaîne de montagnes, maisons de bois sombre serrées aux toits très pentus et pignons superposés, haute tour à flèche au-dessus d'une citadelle aux grandes baies grillagées, muraille haute à contreforts obliques, prairies vertes et arbres d'automne orangés dans la vallée en contrebas, plaine montant en pente douce vers la porte sud, ciel violacé et nuages massifs blancs et violets, rendu peinture bande dessinée franco-belge, encrage fin, aquarelle et gouache, ambiance savante et inquiétante.",
+      "footprint_tiles": [
+        "N015_E012"
+      ],
+      "anchor_tile": "N015_E012",
       "taille": "ville",
       "service_npcs": [
         {
@@ -5832,6 +5865,14 @@
           "id": "pnj_kendrhir_vale_ecurie_03",
           "name": "Mardor Bleumont",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_kendrhir_vale_ecurie_04",
+          "name": "Ceda Ferval",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -7116,10 +7157,10 @@
       "features": [],
       "notes": [
         "[BD-T1] Lieu de naissance de Wismerhill. Communauté mixte humains/elfes.",
-        "[BD-T1] Tout le monde y est mort. Wismerhill est le seul survivant.",
-        "[BD-T1] Pile-ou-Face y a survécu aussi — il en repart seul.",
+        "[BD-T1] Tout le monde y est mort ; Wismerhill dit en être parti.",
+        "[BD-T1] Wismerhill en est parti seul (« Tout le monde est mort là-bas. Moi, je suis parti. »).",
         "[BD-T1] C'est de ce lieu que vient le nom 'Wismerhill' — 'La Colline aux Murmures' en langage elfique.",
-        "[BD-T1] Page 8 (p.14 BD) — Pile-ou-Face le mentionne au coin du feu.",
+        "[BD-T1] Page 8 (p.14 BD) — Wismerhill le mentionne au coin du feu ; Pile-ou-Face en tire le nom 'Wismerhill'.",
         "[LORE_ETENDU] Lieu de départ potentiel pour quête des origines du personnage joueur.",
         "[BD-T1] Lieu de naissance ou lieu associé à Wismerhill — origine du nom 'Wismerhill'.",
         "[BD-T1] Pile-ou-Face donne ce nom à Wismerhill d'après cet endroit."
@@ -7174,6 +7215,173 @@
       "alias": "",
       "type": "city",
       "importance": "",
+      "cell": "N018_E010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "features": [],
+      "notes": [
+        "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
+        "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
+        "[BD-T1] Lecture du nom incertaine sur la carte (p.25 BD) : la deuxième lettre peut se lire « B » ou « H » (Tbarak / Tharak).",
+        "[BD-T1] Position : nord-ouest des Territoires des Marches, première cité de l'itinéraire de la horde (carte p.25)."
+      ],
+      "anchor_tile": "N018_E010",
+      "taille": "ville",
+      "service_npcs": [
+        {
+          "id": "pnj_ville_tbarak_auberge_01",
+          "name": "Tormond Boismorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_tbarak_auberge_02",
+          "name": "Iselle Valgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_tbarak_potions_01",
+          "name": "Gareline Rosschêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_ville_tbarak_potions_02",
+          "name": "Rolora Brunmare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_ville_tbarak_armes_01",
+          "name": "Lania Belvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_ville_tbarak_armures_01",
+          "name": "Maeldor Grislac",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_ville_tbarak_forgeron_01",
+          "name": "Yva Brunlac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_tbarak_forgeron_02",
+          "name": "Torot Corbpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_tbarak_marche_01",
+          "name": "Branald Morfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_ville_tbarak_ecurie_01",
+          "name": "Edette Rochlande",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_tbarak_temple_01",
+          "name": "Marilde Boisgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_ville_tbarak_banque_01",
+          "name": "Berise Fontrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_ville_tbarak_guilde_01",
+          "name": "Kelric Boisvigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_ville_tbarak_infirmerie_01",
+          "name": "Gilette Saulfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_tbarak_infirmerie_02",
+          "name": "Tibin Corbfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_tbarak_cimetiere_01",
+          "name": "Hugisse Brunrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "ville_equiton",
+      "name": "Equiton",
+      "alias": "",
+      "type": "port_town",
+      "importance": "",
       "cell": "S005_W004",
       "coord_x": null,
       "coord_y": null,
@@ -7193,22 +7401,22 @@
         "banque",
         "guilde",
         "infirmerie",
+        "bibliotheque",
         "port",
+        "ecole_magie",
         "cimetiere"
       ],
       "features": [
         "Ponton d'embarquement de la ligne maritime du sud, au bord de la ville"
       ],
       "notes": [
-        "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
-        "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
-        "[LORE_ETENDU] Probable cité-étape commerciale, probablement avec une garnison impériale légère."
+        "[LORE_ETENDU] Port de la baie et tête de la ligne maritime du sud. Reprend en v1.0.45 le rôle portuaire attribué auparavant à Tbarak, replacée dans les Territoires des Marches d'après la BD (T1). Nom repris de la liste des lieux non utilisés de carte_export.json."
       ],
       "anchor_tile": "S005_W004",
       "taille": "ville",
       "service_npcs": [
         {
-          "id": "pnj_ville_tbarak_auberge_01",
+          "id": "pnj_ville_equiton_auberge_01",
           "name": "Odoan Fontrive",
           "gender": "male",
           "race_id": "race_human",
@@ -7216,7 +7424,7 @@
           "metier": "aubergiste"
         },
         {
-          "id": "pnj_ville_tbarak_auberge_02",
+          "id": "pnj_ville_equiton_auberge_02",
           "name": "Alette Clairombre",
           "gender": "female",
           "race_id": "race_human",
@@ -7224,7 +7432,7 @@
           "metier": "aubergiste"
         },
         {
-          "id": "pnj_ville_tbarak_potions_01",
+          "id": "pnj_ville_equiton_potions_01",
           "name": "Beria Bleuval",
           "gender": "female",
           "race_id": "race_human",
@@ -7232,15 +7440,7 @@
           "metier": "herboriste"
         },
         {
-          "id": "pnj_ville_tbarak_potions_02",
-          "name": "Lorisse Sombremare",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "potions",
-          "metier": "herboriste"
-        },
-        {
-          "id": "pnj_ville_tbarak_armes_01",
+          "id": "pnj_ville_equiton_armes_01",
           "name": "Ralora Bleurade",
           "gender": "female",
           "race_id": "race_human",
@@ -7248,7 +7448,15 @@
           "metier": "marchand_armes"
         },
         {
-          "id": "pnj_ville_tbarak_armures_01",
+          "id": "pnj_ville_equiton_armes_02",
+          "name": "Rolbert Belrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_ville_equiton_armures_01",
           "name": "Varbert Brunbrume",
           "gender": "male",
           "race_id": "race_human",
@@ -7256,7 +7464,15 @@
           "metier": "armurier"
         },
         {
-          "id": "pnj_ville_tbarak_forgeron_01",
+          "id": "pnj_ville_equiton_armures_02",
+          "name": "Perane Corbvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_ville_equiton_forgeron_01",
           "name": "Renine Rossmare",
           "gender": "female",
           "race_id": "race_human",
@@ -7264,15 +7480,7 @@
           "metier": "forgeron"
         },
         {
-          "id": "pnj_ville_tbarak_forgeron_02",
-          "name": "Norus Valmorne",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "forgeron",
-          "metier": "forgeron"
-        },
-        {
-          "id": "pnj_ville_tbarak_marche_01",
+          "id": "pnj_ville_equiton_marche_01",
           "name": "Branmond Boiscombe",
           "gender": "male",
           "race_id": "race_human",
@@ -7280,7 +7488,15 @@
           "metier": "marchand"
         },
         {
-          "id": "pnj_ville_tbarak_ecurie_01",
+          "id": "pnj_ville_equiton_marche_02",
+          "name": "Yvia Belchêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_ville_equiton_ecurie_01",
           "name": "Ulance Chenmare",
           "gender": "female",
           "race_id": "race_human",
@@ -7288,7 +7504,7 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_tbarak_temple_01",
+          "id": "pnj_ville_equiton_temple_01",
           "name": "Yvine Boiscastel",
           "gender": "female",
           "race_id": "race_human",
@@ -7296,7 +7512,7 @@
           "metier": "pretre"
         },
         {
-          "id": "pnj_ville_tbarak_banque_01",
+          "id": "pnj_ville_equiton_banque_01",
           "name": "Jorise Chencastel",
           "gender": "female",
           "race_id": "race_human",
@@ -7304,7 +7520,7 @@
           "metier": "banquier"
         },
         {
-          "id": "pnj_ville_tbarak_guilde_01",
+          "id": "pnj_ville_equiton_guilde_01",
           "name": "Renald Clairmorne",
           "gender": "male",
           "race_id": "race_human",
@@ -7312,7 +7528,7 @@
           "metier": "maitre_de_guilde"
         },
         {
-          "id": "pnj_ville_tbarak_infirmerie_01",
+          "id": "pnj_ville_equiton_infirmerie_01",
           "name": "Osine Corbfort",
           "gender": "female",
           "race_id": "race_human",
@@ -7320,15 +7536,15 @@
           "metier": "guerisseur"
         },
         {
-          "id": "pnj_ville_tbarak_infirmerie_02",
-          "name": "Maelmar Ferpré",
-          "gender": "male",
+          "id": "pnj_ville_equiton_bibliotheque_01",
+          "name": "Oselle Boisvigne",
+          "gender": "female",
           "race_id": "race_human",
-          "service": "infirmerie",
-          "metier": "guerisseur"
+          "service": "bibliotheque",
+          "metier": "bibliothecaire"
         },
         {
-          "id": "pnj_ville_tbarak_port_01",
+          "id": "pnj_ville_equiton_port_01",
           "name": "Branius Rosslande",
           "gender": "male",
           "race_id": "race_human",
@@ -7336,7 +7552,15 @@
           "metier": "capitaine_de_port"
         },
         {
-          "id": "pnj_ville_tbarak_cimetiere_01",
+          "id": "pnj_ville_equiton_ecole_magie_01",
+          "name": "Kelold Noirmare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecole_magie",
+          "metier": "maitre_de_magie"
+        },
+        {
+          "id": "pnj_ville_equiton_cimetiere_01",
           "name": "Berine Pierrelac",
           "gender": "female",
           "race_id": "race_human",
@@ -7351,11 +7575,11 @@
       "alias": "",
       "type": "fortress_city",
       "importance": "",
-      "cell": "",
+      "cell": "N017_E019",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "",
+      "region_id": "region_marches",
       "housing_count": null,
       "population": null,
       "services": [
@@ -7372,7 +7596,8 @@
       "notes": [
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
         "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
-        "[LORE_ETENDU] Probable forteresse frontalière côté Est des Marches."
+        "[LORE_ETENDU] Probable forteresse frontalière côté Est des Marches.",
+        "[BD-T1] Position : nord-est des Territoires des Marches, deuxième cité de l'itinéraire de la horde (carte p.25)."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -7403,6 +7628,14 @@
         {
           "id": "pnj_ville_klindor_ecurie_01",
           "name": "Weldor Fontrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_klindor_ecurie_02",
+          "name": "Corus Bleulac",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -7440,7 +7673,8 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
-      ]
+      ],
+      "anchor_tile": "N017_E019"
     },
     {
       "id": "ville_hazol",
@@ -7448,11 +7682,11 @@
       "alias": "",
       "type": "city",
       "importance": "",
-      "cell": "",
+      "cell": "N017_E011",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "",
+      "region_id": "region_marches",
       "housing_count": null,
       "population": null,
       "services": [
@@ -7476,7 +7710,8 @@
       "notes": [
         "[BD-T1] Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey.",
         "[BD-T1] Traversée ou pillée par la horde lors de la Campagne des Marches.",
-        "[LORE_ETENDU] Probable carrefour commercial au centre des Marches."
+        "[LORE_ETENDU] Probable carrefour commercial de l'ouest des Marches.",
+        "[BD-T1] Position : ouest des Territoires des Marches, troisième cité de l'itinéraire de la horde (carte p.25)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -7561,6 +7796,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_hazol_ecurie_02",
+          "name": "Lanbert Mormont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_hazol_temple_01",
           "name": "Yvdor Fercombe",
           "gender": "male",
@@ -7632,7 +7875,218 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
-      ]
+      ],
+      "anchor_tile": "N017_E011"
+    },
+    {
+      "id": "ville_moorgate",
+      "name": "Moorgate",
+      "alias": "",
+      "type": "town",
+      "importance": "",
+      "cell": "N015_E017",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "forgeron",
+        "ecurie",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "features": [],
+      "notes": [
+        "[BD-T1] Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey, à l'est des Marches, quatrième étape avant la Faille de Kashogs ; pictogramme d'incendie (pillée par la horde).",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas cette cité)."
+      ],
+      "taille": "village",
+      "service_npcs": [
+        {
+          "id": "pnj_ville_moorgate_auberge_01",
+          "name": "Darance Bleucombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_moorgate_forgeron_01",
+          "name": "Darwald Sombremorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_moorgate_ecurie_01",
+          "name": "Renia Bleupré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moorgate_ecurie_02",
+          "name": "Norius Noirpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moorgate_guilde_01",
+          "name": "Lanald Fontmare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_ville_moorgate_infirmerie_01",
+          "name": "Dunine Noirvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_moorgate_cimetiere_01",
+          "name": "Aleline Sombrefort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ],
+      "anchor_tile": "N015_E017"
+    },
+    {
+      "id": "ville_dunfold",
+      "name": "Dunfold",
+      "alias": "",
+      "type": "town",
+      "importance": "",
+      "cell": "N017_E013",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "features": [],
+      "notes": [
+        "[BD-T1] Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey, au sud des Marches, cinquième et dernière étape avant la Faille de Kashogs ; pictogramme d'incendie (pillée par la horde).",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas cette cité)."
+      ],
+      "taille": "village",
+      "service_npcs": [
+        {
+          "id": "pnj_ville_dunfold_auberge_01",
+          "name": "Berald Chenrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_ville_dunfold_potions_01",
+          "name": "Darran Noirombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_ville_dunfold_armes_01",
+          "name": "Ala Valombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_ville_dunfold_forgeron_01",
+          "name": "Edius Valmorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_ville_dunfold_marche_01",
+          "name": "Alaude Fervigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_01",
+          "name": "Ralais Corbchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_02",
+          "name": "Lordor Fontlande",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_temple_01",
+          "name": "Yvia Saulombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_ville_dunfold_guilde_01",
+          "name": "Marbert Sombregarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_ville_dunfold_infirmerie_01",
+          "name": "Varora Marlfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_ville_dunfold_cimetiere_01",
+          "name": "Osvin Valchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ],
+      "anchor_tile": "N017_E013"
     },
     {
       "id": "ville_feyhin_lokcthat",
@@ -18087,11 +18541,11 @@
       ]
     },
     {
-      "id": "exploit_sac_kendrhi_t1",
-      "name": "Le Sac de Kendrhi",
+      "id": "exploit_sac_kendrhir_t1",
+      "name": "Le Sac de Kendrhir",
       "type": "destruction_ville",
       "death_cause_detail": "",
-      "how_to_obtain": "Participer à l'assaut et à la prise de Kendrhi, la Cité des Grands Mages.",
+      "how_to_obtain": "Participer à l'assaut et à la prise de Kendrhir, la Cité des Grands Mages.",
       "eligible": {
         "races": [],
         "factions": [
@@ -18100,16 +18554,16 @@
         "classes": []
       },
       "location": {
-        "ville_id": "ville_kendrhi",
+        "ville_id": "kendrhir_vale",
         "details": "Assaut de la cité des mages"
       },
       "rewards": {
         "title": "Briseur de Tours",
-        "reward": "Accès aux archives pillées de Kendrhi. Fragment de Connaissance Magique (loot rare).",
+        "reward": "Accès aux archives pillées de Kendrhir. Fragment de Connaissance Magique (loot rare).",
         "power": "Malus de réputation permanent avec toutes les factions de mages."
       },
       "notes": [
-        "[BD-T1] Kendrhi est la Cité des Grands Mages — sa destruction est un acte majeur.",
+        "[BD-T1] Kendrhir est la Cité des Grands Mages — sa destruction est un acte majeur.",
         "[BD-T1] C'est ici que Wismerhill rencontre Hizin et découvre ses pouvoirs psychiques.",
         "[GAMEPLAY] L'exploit est conditionnel : si Hizin est épargné, il devient compagnon."
       ]
@@ -18129,8 +18583,8 @@
         "classes": []
       },
       "location": {
-        "ville_id": "ville_kendrhi",
-        "details": "Entraînement hivernal dans Kendrhi rasée"
+        "ville_id": "kendrhir_vale",
+        "details": "Entraînement hivernal dans Kendrhir rasée"
       },
       "rewards": {
         "title": "Apprenti Psychique",
@@ -18139,7 +18593,7 @@
       },
       "notes": [
         "[BD-T1] 'Excellent !' — Hizin, quand Wismerhill enflamme une chaise avec son rayon psychique.",
-        "[BD-T1] 'Joli coup, Capitaine !' — Feidreiva qui observe depuis la fenêtre enneigée."
+        "[BD-T1] 'Joli coup, Capitaine !' — Feidreiva, allongée dans la neige avec Wismerhill (scène suivante)."
       ]
     },
     {
@@ -18154,8 +18608,8 @@
         "classes": []
       },
       "location": {
-        "ville_id": "ville_kendrhi",
-        "details": "Grande Bataille hivernal de Kendrhi"
+        "ville_id": "kendrhir_vale",
+        "details": "Grande Bataille hivernal de Kendrhir"
       },
       "rewards": {
         "title": "Survivant des Ténèbres",
@@ -18164,8 +18618,8 @@
       },
       "notes": [
         "[BD-T1] La grande majorité de la horde de Ghorghor périt dans cette bataille.",
-        "[BD-T1] Ghorghor survit grâce à son anneau de régénération (exploit_regeneration_ghorghor).",
-        "[BD-T1] Wismerhill est capturé puis libéré par Frater Sinister."
+        "[BD] Ghorghor survit grâce à son anneau de régénération (tomes suivants) — son sort n'est pas montré dans le tome 1.",
+        "[BD-T1] Wismerhill est capturé puis libéré : le démon Urmarcht parle par la bouche de Frater Sinister."
       ]
     },
     {
@@ -18173,7 +18627,7 @@
       "name": "Libéré par l'Ennemi",
       "type": "lore_revelation",
       "death_cause_detail": "",
-      "how_to_obtain": "Être capturé par les Chevaliers de la Lumière et libéré par Frater Sinister qui reconnaît les armoiries du père de Wismerhill.",
+      "how_to_obtain": "Être capturé par les Chevaliers de la Lumière et libéré sur l'intervention du démon Urmarcht, qui parle par la bouche de Frater Sinister et reconnaît les armoiries du père de Wismerhill.",
       "eligible": {
         "races": [
           "race_dark_elf"
@@ -18182,12 +18636,12 @@
         "classes": []
       },
       "location": {
-        "ville_id": "ville_kendrhi",
+        "ville_id": "kendrhir_vale",
         "details": "Après la Grande Bataille"
       },
       "rewards": {
         "title": "Marqué par le Destin",
-        "reward": "Révélation : Frater Sinister connaît le père de Wismerhill. Déblocage du lore sur le père. Début de la quête des origines.",
+        "reward": "Révélation : le démon Urmarcht a combattu aux côtés du père de Wismerhill. Déblocage du lore sur le père. Début de la quête des origines.",
         "power": "Accès à quest_mort_du_pere et quest_fils_du_destin"
       },
       "notes": [
@@ -18210,8 +18664,8 @@
         "classes": []
       },
       "location": {
-        "ville_id": "ville_kendrhi",
-        "details": "Fin de la Grande Bataille — plaine devant Kendrhi"
+        "ville_id": "kendrhir_vale",
+        "details": "Fin de la Grande Bataille — plaine devant Kendrhir"
       },
       "rewards": {
         "title": "Enfant de la Tempête",
@@ -20047,7 +20501,7 @@
     {
       "id": "quest_signe_tenebres",
       "name": "Le Signe des Ténèbres",
-      "description": "Quête d'introduction reprenant les événements du tome 1 : naissance sans nom, rencontre avec Pile-ou-Face, intégration à la horde de Ghorghor Bey, première grande bataille dans la Faille de Kashogs.",
+      "description": "Quête d'introduction reprenant les événements du tome 1 : naissance sans nom, rencontre avec Pile-ou-Face, intégration à la horde de Ghorghor Bey, embuscade déjouée dans la Faille de Kashogs.",
       "category": "histoire",
       "tags": [
         "histoire_principale",
@@ -20062,25 +20516,25 @@
       "steps": [
         "1. [PROLOGUE] Visionner la Prophétie de l'Oracle donnée à l'Empereur de Lhynn (30 ans avant) — scène cinématique non interactive.",
         "2. [ORIGINE] Survivre seul dans la forêt des Marches sans nom ni compagnon — chasse, abri, défense contre la faune hostile.",
-        "3. [RENCONTRE] Tuer le monstre de forêt. Faire face à Pile-ou-Face qui vole le repas. Choisir amitié ou combat.",
+        "3. [RENCONTRE] Charger le « monstre » de la forêt — ce n'est qu'un lapin. Faire face à Pile-ou-Face qui vole le repas. Choisir amitié ou combat.",
         "4. [NOM] Accepter le nom 'Wismerhill' proposé par Pile-ou-Face d'après Whispers Hill — débloque exploit_premier_nom_t1.",
         "5. [HORDE] Tenter de voler les poules de Ghorghor Bey. Se faire capturer. Impressionner Ghorghor — recruté dans la horde.",
         "6. [CAMPAGNE] Traverser les Marches avec la horde (Tbarak, Klindor, Hazol). Combat, pillage, rencontres.",
-        "7. [FEIDREIVA] Rencontrer Feidreiva lors d'une halte au lac — débuter la relation romantique.",
+        "7. [FEIDREIVA] Rencontrer Feidreiva lors d'une halte à l'étang — débuter la relation romantique.",
         "8. [FAILLE] Écouter les vents pour détecter l'embuscade à la Faille de Kashogs — avertir Ghorghor — contre-attaque victorieuse — promu lieutenant.",
-        "9. [KENDRHI] Participer au Sac de Kendrhi. Rencontrer Hizin — choisir de l'épargner ou non (choix conséquent).",
-        "10. [HIVER] Passer l'hiver à Kendrhi : entraînement armé (Feidreiva), festins (Ghorghor), leçons de Pile-ou-Face, apprentissage psychique (Hizin).",
+        "9. [KENDRHIR] Participer au Sac de Kendrhir. Rencontrer Hizin — choisir de l'épargner ou non (choix conséquent).",
+        "10. [HIVER] Passer l'hiver à Kendrhir : entraînement armé (Feidreiva), festins (Ghorghor), leçons de Pile-ou-Face, apprentissage psychique (Hizin).",
         "11. [PSYCHIQUE] Réussir le premier exercice de magie psychique — rayon mental — débloque exploit_premier_pouvoir_psychique_t1.",
         "12. [ARMÉE] Les Chevaliers de la Lumière approchent à l'aurore. Préparer les défenses.",
-        "13. [BATAILLE] Survivre à la Grande Bataille. Les compagnons tombent. Ghorghor survit (anneau). Mode survie.",
-        "14. [CAPTURE] Être capturé par les Chevaliers. Scène narrative devant Frater Sinister — libéré grâce aux armoiries du père.",
+        "13. [BATAILLE] Survivre à la Grande Bataille. Les compagnons tombent ; Ghorghor, criblé de piques, a un sort inconnu. Mode survie.",
+        "14. [CAPTURE] Être capturé par les Chevaliers. Scène narrative : le démon Urmarcht, par la bouche de Frater Sinister, reconnaît les armoiries du père et fait libérer Wismerhill.",
         "15. [VENGEANCE] Invoquer la tempête de vengeance — 'Ô vents, mes frères...' — débloque exploit_vents_vengeance_t1.",
-        "16. [FUITE] Fuir dans les ténèbres avec Hizin et Feidreiva. Fin du tome 1."
+        "16. [FUITE] Partir dans les ténèbres avec Feidreiva et Pile-ou-Face. Fin du tome 1."
       ],
       "source_lore": [
         "char_wismerhill",
         "char_pile_ou_face",
-        "char_ghorghor_bey_t1",
+        "char_ghorghor_bey",
         "zone_whispers_hill",
         "zone_faille_kashogs"
       ],
@@ -20089,7 +20543,7 @@
           "exploit_premier_nom_t1",
           "exploit_recrute_ghorghor_t1",
           "exploit_lieutenant_kashogs_t1",
-          "exploit_sac_kendrhi_t1",
+          "exploit_sac_kendrhir_t1",
           "exploit_premier_pouvoir_psychique_t1",
           "exploit_survivant_maree_blanche_t1",
           "exploit_libere_par_ennemi_t1",
@@ -20138,7 +20592,7 @@
         "[BD-T1] Couvre l'intégralité du Tome 1 — Le Signe des Ténèbres.",
         "[GAMEPLAY] Quête d'introduction obligatoire. Tutoriel narratif du jeu.",
         "[BD-T1] La prophétie de l'Oracle (30 ans avant) sert de prologue cinématique.",
-        "[GAMEPLAY] Le choix d'épargner Hizin au raid_sac_kendrhi_t1 est le premier grand choix moral du jeu."
+        "[GAMEPLAY] Le choix d'épargner Hizin au raid_sac_kendrhir_t1 est le premier grand choix moral du jeu."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -20557,18 +21011,18 @@
     {
       "id": "quest_apprentissage_hizin",
       "name": "L'Apprentissage Psychique d'Hizin",
-      "description": "Hizin propose d'enseigner la magie psychique à Wismerhill après avoir survécu au sac de Kendrhi. L'entraînement dure tout l'hiver et nécessite des épreuves de difficulté croissante.",
+      "description": "Hizin propose d'enseigner la magie psychique à Wismerhill après avoir survécu au sac de Kendrhir. L'entraînement dure tout l'hiver et nécessite des épreuves de difficulté croissante.",
       "category": "magie",
       "tags": [
         "magie",
         "hizin",
-        "kendrhi",
+        "kendrhir",
         "psychique",
         "long_terme"
       ],
       "difficulty": 3,
       "repeatable": false,
-      "type": "[LORE_DIRECT] — hiver à Kendrhi, tome 1",
+      "type": "[LORE_DIRECT] — hiver à Kendrhir, tome 1",
       "steps": [
         "Épreuve 1 — Vide : méditer sans interruption dans une zone de combat actif (10 minutes de jeu).",
         "Épreuve 2 — Focalisation : brûler une cible précise à distance sans toucher les adjacentes.",
@@ -20578,7 +21032,7 @@
       ],
       "source_lore": [
         "char_hizin_t1",
-        "zone_kendrhi",
+        "zone_kendrhir",
         "lore_t1.magic_t1_new.psychic_magic"
       ],
       "rewards": {},
@@ -20673,7 +21127,7 @@
       "steps": [
         "Retrouver Pile-ou-Face ou ses traces pour accéder aux deux épées (sa disparition est un mystère).",
         "Mener des tests en conditions réelles : dégainer Nepher, observer le comportement du groupe.",
-        "Trouver l'origine des épées dans les archives de Kendrhi (Cité des Grands Mages).",
+        "Trouver l'origine des épées dans les archives de Kendrhir (Cité des Grands Mages).",
         "Découvrir qu'elles ont été forgées à Ghrunke Dash sur commande d'un mage dont l'identité est effacée.",
         "Relier les deux épées à un artefact plus grand — elles sont des fragments d'une lame brisée autrefois unique."
       ],
@@ -20681,7 +21135,7 @@
         "char_pile_ou_face",
         "item_nepher",
         "item_bepher",
-        "zone_kendrhi"
+        "zone_kendrhir"
       ],
       "rewards": {},
       "min_players": 1,
@@ -20723,16 +21177,16 @@
       "type": "[GAMEPLAY] — extrapolé depuis la disparition de Feydriva tome 3",
       "steps": [
         "Interroger le démon du village sur sa localisation — son prix est exorbitant.",
-        "Trouver un mage ayant déjà traversé les brumes — il en existe un, à Kendrhi en ruines.",
+        "Trouver un mage ayant déjà traversé les brumes — il en existe un, à Kendrhir en ruines.",
         "Préparer le rituel d'accès : un objet personnel de Feidreiva + l'incantation exacte.",
         "Naviguer dans les brumes sans se perdre — chaque erreur de navigation coûte du temps réel.",
         "Ramener Feidreiva avant que l'accès aux brumes ne se referme (contrainte de temps strict)."
       ],
       "source_lore": [
-        "char_feydriva",
+        "char_feidreiva_t1",
         "zone_phantom_village",
         "zone_cursed_swamp",
-        "zone_kendrhi"
+        "zone_kendrhir"
       ],
       "rewards": {},
       "min_players": 1,
@@ -20880,7 +21334,7 @@
         "Recevoir la réponse : le père est un Prince Elfen Ténébreux errant avec les vents. Cherche-le."
       ],
       "source_lore": [
-        "char_entite_oracle",
+        "loracle_dieu_enchaine",
         "zone_oracle",
         "char_wismerhill"
       ],
@@ -22798,7 +23252,7 @@
     {
       "id": "quest_apprendre_a_chasser_t1",
       "name": "L'Art de la Chasse dans les Marches",
-      "description": "Pile-ou-Face enseigne les rudiments de la chasse à Wismerhill pendant la traversée des Marches. Apprendre à pister, tendre un piège, cuisiner le gibier. Sous-quête de quest_signe_tenebres.",
+      "description": "Pile-ou-Face enseigne les rudiments de la chasse à Wismerhill après leur rencontre, avant leur capture par Ghorghor Bey. Apprendre à pister, tendre un piège, cuisiner le gibier. Sous-quête de quest_signe_tenebres.",
       "category": "formation",
       "tags": [
         "formation",
@@ -22840,7 +23294,7 @@
         {
           "type": "quete",
           "id": "quest_signe_tenebres",
-          "description": "Avoir intégré la horde de Ghorghor Bey (étape 5)"
+          "description": "Avoir rencontré Pile-ou-Face (étape 4)"
         },
         {
           "type": "companion",
@@ -22868,9 +23322,9 @@
       }
     },
     {
-      "id": "quest_formation_hivernale_kendrhi_t1",
-      "name": "L'Hiver de l'Apprentissage — Kendrhi",
-      "description": "La horde passe l'hiver dans Kendrhi rasée. Wismerhill suit un programme d'entraînement intensif : combat à l'épée le matin (avec Feidreiva), festins et stratégie à midi (avec Ghorghor), leçons de combat avec Pile-ou-Face l'après-midi, et enseignement de la magie psychique le soir (avec Hizin). Sous-quête de quest_signe_tenebres.",
+      "id": "quest_formation_hivernale_kendrhir_t1",
+      "name": "L'Hiver de l'Apprentissage — Kendrhir",
+      "description": "La horde passe l'hiver dans Kendrhir rasée. Wismerhill suit un programme d'entraînement intensif : combat à l'épée le matin (avec Feidreiva), festins et stratégie à midi (avec Ghorghor), leçons de combat avec Pile-ou-Face l'après-midi, et enseignement de la magie psychique le soir (avec Hizin). Sous-quête de quest_signe_tenebres.",
       "category": "formation",
       "tags": [
         "formation",
@@ -22879,7 +23333,7 @@
         "tome1",
         "hizin",
         "feidreiva",
-        "kendrhi",
+        "kendrhir",
         "hiver"
       ],
       "difficulty": 2,
@@ -22898,7 +23352,7 @@
         "char_feidreiva_t1",
         "char_pile_ou_face",
         "char_ghorghor_bey",
-        "ville_kendrhi"
+        "kendrhir_vale"
       ],
       "rewards": {
         "skills_unlocked": [
@@ -22910,7 +23364,7 @@
           "exploit_premier_pouvoir_psychique_t1"
         ],
         "xp": 2000,
-        "title": "Apprenti de Kendrhi"
+        "title": "Apprenti de Kendrhir"
       },
       "min_players": 1,
       "required_classes": [],
@@ -22922,8 +23376,8 @@
       "unlock_conditions": [
         {
           "type": "raid",
-          "id": "raid_sac_kendrhi_t1",
-          "description": "Avoir complété le Sac de Kendrhi"
+          "id": "raid_sac_kendrhir_t1",
+          "description": "Avoir complété le Sac de Kendrhir"
         },
         {
           "type": "companion",
@@ -27221,12 +27675,12 @@
     {
       "id": "quest_t01_gd_tenir_les_rangs",
       "name": "Tenir les Rangs",
-      "description": "À Kendrhi, l'armée de la Lumière fond sur la horde. Survivre à la marée blanche : tenir la ligne assez longtemps pour permettre le repli des chefs.",
+      "description": "À Kendrhir, l'armée de la Lumière fond sur la horde. Survivre à la marée blanche : tenir la ligne assez longtemps pour permettre le repli des chefs.",
       "category": "histoire_principale",
       "tags": [
         "[GD]",
         "t01",
-        "kendrhi",
+        "kendrhir",
         "survie",
         "lune_noire"
       ],
@@ -27234,7 +27688,7 @@
       "repeatable": false,
       "type": "[GD] Quête jouable dérivée T1",
       "steps": [
-        "Prendre position sur les remparts de Kendrhi.",
+        "Prendre position sur les remparts de Kendrhir.",
         "Repousser les charges des Chevaliers de la Lumière.",
         "Tenir jusqu'au signal de repli.",
         "Survivre à la déroute."
@@ -27283,12 +27737,12 @@
     {
       "id": "quest_t01_gd_assaut_sacre",
       "name": "L'Assaut Sacré",
-      "description": "Sous la bannière de Frater Sinister et de l'Empereur, marcher sur Kendrhi pour anéantir la horde de Ghorghor Bey. La Lumière contre les Ténèbres.",
+      "description": "Sous la bannière de Frater Sinister et de l'Empereur, marcher sur Kendrhir pour anéantir la horde de Ghorghor Bey. La Lumière contre les Ténèbres.",
       "category": "histoire_principale",
       "tags": [
         "[GD]",
         "t01",
-        "kendrhi",
+        "kendrhir",
         "lumiere",
         "contre_quete"
       ],
@@ -27296,7 +27750,7 @@
       "repeatable": false,
       "type": "[GD] Quête jouable dérivée T1",
       "steps": [
-        "Rejoindre l'armée de la Lumière en marche sur Kendrhi.",
+        "Rejoindre l'armée de la Lumière en marche sur Kendrhir.",
         "Percer les défenses de la horde.",
         "Affronter les champions ennemis.",
         "Planter l'oriflamme sur la cité."
@@ -27348,7 +27802,7 @@
     {
       "id": "quest_t01_gd_observer_le_signe",
       "name": "Le Signe dans le Ciel",
-      "description": "La Lune Noire observe la bataille de Kendrhi : un Signe des Ténèbres s'y éveille. Agent occulte, recueillir les présages et identifier l'élu naissant sans intervenir.",
+      "description": "La Lune Noire observe la bataille de Kendrhir : un Signe des Ténèbres s'y éveille. Agent occulte, recueillir les présages et identifier l'élu naissant sans intervenir.",
       "category": "histoire_principale",
       "tags": [
         "[GD]",
@@ -27573,9 +28027,9 @@
       }
     },
     {
-      "id": "quest_abysses_1_tbarak",
-      "name": "Murmures de la baie — Tbarak",
-      "description": "Les pêcheurs de Tbarak parlent de filets arrachés par quelque chose venu du fond.",
+      "id": "quest_abysses_1_equiton",
+      "name": "Murmures de la baie — Equiton",
+      "description": "Les pêcheurs de Equiton parlent de filets arrachés par quelque chose venu du fond.",
       "category": "exploration",
       "tags": [
         "abysses_baie_sud",
@@ -27587,8 +28041,8 @@
       "type": "[GD] Chaîne « Les Abysses de la baie »",
       "quest_kind": "group",
       "steps": [
-        "Écouter les rumeurs des PNJ de Tbarak.",
-        "Enquêter sur le phénomène autour de Tbarak.",
+        "Écouter les rumeurs des PNJ de Equiton.",
+        "Enquêter sur le phénomène autour de Equiton.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
       ],
       "source_lore": [],
@@ -27605,7 +28059,7 @@
       "counter_quest_races": [],
       "has_counter_quest": false,
       "notes": [
-        "Ville : Tbarak (ville_tbarak).",
+        "Ville : Equiton (ville_equiton).",
         "Les PNJ de la baie parlent de plus en plus des profondeurs à mesure que les quêtes de la chaîne sont terminées."
       ]
     },
@@ -28453,7 +28907,7 @@
     {
       "id": "raid_pillage_marches_t1",
       "name": "La Campagne des Marches",
-      "description": "Suivre la horde de Ghorghor Bey dans sa campagne de pillage à travers les Territoires des Marches. De Tbarak à Klindor en passant par Hazol, jusqu'à la Faille de Kashogs. Combat, pillage, et neutralisation de seigneurs locaux qui s'opposent au passage.",
+      "description": "Suivre la horde de Ghorghor Bey dans sa campagne de pillage à travers les Territoires des Marches : de Tbarak à Klindor, puis Hazol, Moorgate et Dunfold, jusqu'à la Faille de Kashogs. Combat, pillage, et neutralisation de seigneurs locaux qui s'opposent au passage.",
       "min_teams": 1,
       "min_players_per_team": 3,
       "min_players_total": 3,
@@ -28472,13 +28926,14 @@
       },
       "notes": [
         "[BD-T1] Aventure montage pages 9-17 + bataille Faille pages 18-19.",
-        "[BD-T1] Montre la vie quotidienne dans la horde : chasse, marchands, combat, humour."
+        "[BD-T1] Montre la vie quotidienne dans la horde : chasse, marchands, combat, humour.",
+        "[BD-T1] 'Et la faille se remplit du sang des vaincus...' — texte narratif de la contre-embuscade de la Faille de Kashogs (p.27 BD)."
       ]
     },
     {
-      "id": "raid_sac_kendrhi_t1",
-      "name": "Le Sac de Kendrhi — Cité des Grands Mages",
-      "description": "La horde de Ghorghor Bey attaque Kendrhi, la Cité des Grands Mages, qui a refusé le passage hivernal en menaçant de transformer Ghorghor en 'grosse limace baveuse'. Ghorghor ordonne de tout raser.",
+      "id": "raid_sac_kendrhir_t1",
+      "name": "Le Sac de Kendrhir — Cité des Grands Mages",
+      "description": "La horde de Ghorghor Bey attaque Kendrhir, la Cité des Grands Mages, qui a refusé le passage hivernal en menaçant de transformer Ghorghor en 'grosse limace baveuse'. Ghorghor ordonne de tout raser.",
       "min_teams": 1,
       "min_players_per_team": 4,
       "min_players_total": 5,
@@ -28489,7 +28944,7 @@
       ],
       "for_races": [],
       "difficulty": 3,
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "rewards": {
         "title": "Briseur de Tours",
         "reward": "Fragment de Connaissance Magique, pièces d'or (×500). Si Hizin épargné : compagnon companion_hizin débloqué.",
@@ -28497,14 +28952,14 @@
       },
       "notes": [
         "[BD-T1] Pages 21-23 (pp.29-33 BD).",
-        "[BD-T1] Kendrhi = 'Cité des Grands Mages' — architecture gothique sombre sur hauteur.",
-        "[BD-T1] Le seigneur de Kendrhi avait menacé : 'je vous transformerai en grosse limace baveuse et vous jetterai à mes corbeaux'. Ghorghor : 'Rasez-moi tout ça !!!'."
+        "[BD-T1] Kendrhir = 'Cité des Grands Mages' — cité de bois aux toits très pentus, perchée sur un éperon rocheux.",
+        "[BD-T1] Menace du Grand Mage, rapportée par le messager de Ghorghor changé en batracien : « ...il vous transformera en grosse limace baveuse et vous jettera à ses corbeaux ! ». Ghorghor : « Rasez-moi tout ça !!! »."
       ]
     },
     {
-      "id": "raid_grande_bataille_kendrhi_t1",
+      "id": "raid_grande_bataille_kendrhir_t1",
       "name": "La Grande Bataille — L'Aube des Ténèbres",
-      "description": "Les Chevaliers de la Lumière (armée de milliers) marchent sur Kendrhi pour anéantir Ghorghor Bey et sa horde. Commandés par Frater Sinister sous ordre de l'Empereur. Raid de survie : tenir jusqu'à ce que Wismerhill puisse s'échapper.",
+      "description": "Les Chevaliers de la Lumière (armée de milliers) marchent sur Kendrhir pour anéantir Ghorghor Bey et sa horde. Commandés par Frater Sinister sous ordre de l'Empereur. Raid de survie : tenir jusqu'à ce que Wismerhill puisse s'échapper.",
       "min_teams": 2,
       "min_players_per_team": 5,
       "min_players_total": 10,
@@ -28515,7 +28970,7 @@
       ],
       "for_races": [],
       "difficulty": 5,
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "rewards": {
         "title": "Survivant des Ténèbres",
         "reward": "Médaille de la Grande Bataille, armure de Chevalier de la Lumière (dropable), lore sur le père de Wismerhill si scène de libération déclenchée.",
@@ -28524,8 +28979,7 @@
       "notes": [
         "[BD-T1] Pages 31-43 (pp.41-49 BD).",
         "[BD-T1] 'L'aube des ténèbres...' — texte narratif en ouverture de la scène.",
-        "[BD-T1] Frater Sinister (T1) : blond, yeux bleus, croix runique tatouée sur la joue — aspect différent du Menthat rasé des tomes 3-4.",
-        "[BD-T1] 'Et la faille se remplit du sang des vaincus...' — scène épique sans retenue."
+        "[BD-T1] Frater Sinister (T1) : blond, yeux bleus, marque en croix sur la joue — aspect différent du Menthat rasé des tomes 3-4 (voir char_fratus_sinister)."
       ]
     },
     {
@@ -29003,9 +29457,9 @@
       ]
     },
     {
-      "id": "raid_t01_gd_defense_kendrhi",
-      "name": "Défense de Kendrhi — Les Grands Mages",
-      "description": "Côté défenseurs : les Grands Mages de Kendrhi et leurs alliés tentent de repousser le sac de la horde de Ghorghor Bey. Raid miroir de raid_sac_kendrhi_t1.",
+      "id": "raid_t01_gd_defense_kendrhir",
+      "name": "Défense de Kendrhir — Les Grands Mages",
+      "description": "Côté défenseurs : les Grands Mages de Kendrhir et leurs alliés tentent de repousser le sac de la horde de Ghorghor Bey. Raid miroir de raid_sac_kendrhir_t1.",
       "min_teams": 1,
       "min_players_per_team": 4,
       "min_players_total": 5,
@@ -29019,19 +29473,19 @@
       "difficulty": 3,
       "location_ville_id": "kendrhir_vale",
       "rewards": {
-        "title": "Défenseur de Kendrhi",
+        "title": "Défenseur de Kendrhir",
         "reward": "Savoir arcanique des Grands Mages, or, fragments de cristal.",
-        "power": "Accès partiel à l'arbre arcanique de Kendrhi."
+        "power": "Accès partiel à l'arbre arcanique de Kendrhir."
       },
       "notes": [
         "[GD]",
-        "[GD] Perspective adverse de raid_sac_kendrhi_t1 (horde). Même évènement, camp opposé."
+        "[GD] Perspective adverse de raid_sac_kendrhir_t1 (horde). Même évènement, camp opposé."
       ]
     },
     {
       "id": "raid_t01_gd_contre_grande_bataille",
       "name": "L'Aube des Ténèbres — Croisade de la Lumière",
-      "description": "Contre-raid de raid_grande_bataille_kendrhi_t1. Côté Chevaliers de la Lumière sous Frater Sinister : anéantir la horde, mais sans empêcher l'éveil du Signe des Ténèbres. Objectif : briser les rangs ennemis avant l'aube.",
+      "description": "Contre-raid de raid_grande_bataille_kendrhir_t1. Côté Chevaliers de la Lumière sous Frater Sinister : anéantir la horde, mais sans empêcher l'éveil du Signe des Ténèbres. Objectif : briser les rangs ennemis avant l'aube.",
       "min_teams": 2,
       "min_players_per_team": 5,
       "min_players_total": 10,
@@ -29050,7 +29504,7 @@
       },
       "notes": [
         "[GD]",
-        "[GD] CONTRE-RAID de raid_grande_bataille_kendrhi_t1 — xp_weight contre_raid. Premier contre-raid de la base."
+        "[GD] CONTRE-RAID de raid_grande_bataille_kendrhir_t1 — xp_weight contre_raid. Premier contre-raid de la base."
       ]
     },
     {
@@ -29068,7 +29522,7 @@
         "power": ""
       },
       "notes": [
-        "Prérequis : toutes les quêtes de la chaîne « Les Abysses de la baie » (quest_abysses_1_tbarak, quest_abysses_2_brookend, quest_abysses_3_hishtarland, quest_abysses_4_saltfen, quest_abysses_5_harrowbrook, quest_abysses_6_millford)."
+        "Prérequis : toutes les quêtes de la chaîne « Les Abysses de la baie » (quest_abysses_1_equiton, quest_abysses_2_brookend, quest_abysses_3_hishtarland, quest_abysses_4_saltfen, quest_abysses_5_harrowbrook, quest_abysses_6_millford)."
       ],
       "required_classes": [],
       "for_factions": [],
@@ -29221,91 +29675,13 @@
       "notes": []
     },
     {
-      "id": "event_oracle_prophecy",
-      "name": "La Prophétie de l'Oracle",
+      "id": "event_winter_kendrhir",
+      "name": "L'Hiver à Kendrhir — Entraînement",
       "era": "Tome 1",
       "year": "",
       "month": "",
       "type": "event",
-      "description": "L'Empereur de Lhynn consulte l'Oracle. L'Oracle prononce la prophétie complète de l'Élu (Wismerhill) devant lui. 30 ans après, cette prophétie sombra dans l'oubli.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_wismerhill_pile_ou_face_meeting",
-      "name": "Rencontre Wismerhill / Pile-ou-Face",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "Wismerhill (sans nom) tue un monstre dans la forêt. Pile-ou-Face mange son lapin. Presque une rixe. Pile-ou-Face reconnaît la qualité de son épée, lui propose l'amitié, lui présente Nepher et Bepher, lui donne le nom 'Wismerhill' d'après le lieu de sa naissance.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_join_ghorghor",
-      "name": "Intégration à la horde de Ghorghor Bey",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "Wismerhill et Pile-ou-Face tentent de voler les poules de Ghorghor Bey — arrêtés. Ghorghor les emprisonne puis, impressionné par leur audace et leurs capacités, les recrute dans sa bande.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_feidreiva_meeting",
-      "name": "Rencontre avec Feidreiva",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "Lors d'une halte, Wismerhill aperçoit Feidreiva se baignant. Après un désaccord (gifle d'épée), ils se séduisent mutuellement et deviennent compagnons romantiques.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_faille_kashogs",
-      "name": "Bataille de la Faille de Kashogs",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "Wismerhill 'entend' les vents lui révéler une embuscade dans la Faille. Prévient Ghorghor. La horde contre-attaque et écrase la troupe en embuscade. Wismerhill est promu lieutenant par Ghorghor Bey.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_kendrhi_sac",
-      "name": "Sac de Kendrhi",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "La horde de Ghorghor rase la cité des Grands Mages de Kendrhi. Wismerhill y combat Hizin (psychiquement très puissant). Hizin survit grâce à son bouclier mental. Wismerhill le sauve de Ghorghor. Hizin révèle que Wismerhill a des pouvoirs psychiques et propose de les entraîner.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_winter_kendrhi",
-      "name": "L'Hiver à Kendrhi — Entraînement",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "La horde passe l'hiver à Kendrhi rasée. Wismerhill s'entraîne : maniement des armes le matin (avec Feidreiva), festins de Ghorghor le midi, leçons de Pile-ou-Face, puis enseignements psychiques de Hizin le soir. L'hiver est consumé. Wismerhill bat Pile-ou-Face à la lutte et maîtrise le rayon psychique.",
+      "description": "La horde passe l'hiver à Kendrhir. Wismerhill s'entraîne : maniement des armes le matin (avec Feidreiva), festins de Ghorghor le midi, leçons de Pile-ou-Face, cours de stratégie avec les officiers, puis enseignements psychiques de Hizin le soir. L'hiver était à demi consumé quand Wismerhill battit Pile-ou-Face à l'entraînement ; il maîtrise ensuite le rayon psychique.",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
@@ -29318,20 +29694,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "L'armée immense des Chevaliers de la Lumière marche sur Kendrhi, menée par Frater Sinister, mandatée par l'Empereur pour éliminer Ghorghor Bey. Wismerhill voit l'armée et annonce qu'il faut faire une sortie.",
-      "factions": [],
-      "ref_type": "",
-      "ref_id": "",
-      "notes": []
-    },
-    {
-      "id": "event_grande_bataille",
-      "name": "La Grande Bataille",
-      "era": "Tome 1",
-      "year": "",
-      "month": "",
-      "type": "event",
-      "description": "Ghorghor Bey mène la sortie. Combat acharné contre les Chevaliers de la Lumière. Le démon Urmarcht intervient (envoyé par un mage pour protéger l'enfant). Malgré le courage, la marée blanche des Chevaliers est inexorable. Un à un, les compagnons tombent. Ghorghor est apparemment tué.",
+      "description": "Les vents avertissent Wismerhill de l'approche d'une immense armée blanche ; Ghorghor minimise la menace. Les Chevaliers de la Lumière, menés par Frater Sinister sur ordre de l'Empereur, assiègent Kendrhir. Le démon Urmarcht souffle à Ghorghor de tenter une sortie, et Ghorghor ordonne : « Il faut faire une sortie !! ».",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
@@ -29339,12 +29702,12 @@
     },
     {
       "id": "event_wismerhill_freed",
-      "name": "Wismerhill Libéré par Frater Sinister",
+      "name": "Wismerhill libéré — Urmarcht parle par Frater Sinister",
       "era": "Tome 1",
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill est capturé et amené devant Frater Sinister. Le démon Urmarcht prend la parole et révèle qu'il reconnaît les armoiries de Wismerhill — il a combattu aux côtés de son père autrefois. Frater Sinister ordonne de lui rendre ses armes et de le libérer.",
+      "description": "Wismerhill est capturé et amené devant Frater Sinister, mais c'est le démon Urmarcht qui parle par sa bouche : il reconnaît les armoiries de Wismerhill, dit avoir combattu aux côtés de son père autrefois, fait rendre ses armes et le libère (« Qu'il parte ! Remercie la Lumière... Tu es libre »).",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
@@ -29357,7 +29720,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill appelle les vents à la vengeance. Tempête, tonnerre, éclairs s'abattent sur les Chevaliers en déroute. Wismerhill, Hizin et un troisième personnage (Feidreiva?) disparaissent dans les ténèbres. La Lune Noire raconte que Wismerhill 'part vers son destin'.",
+      "description": "Wismerhill retrouve le corps de Hizin et croit tous ses compagnons morts. Il appelle les vents à la vengeance : tempête, tonnerre et éclairs s'abattent sur Kendrhir et sur les Chevaliers, qui sont mis en déroute. Feidreiva et Pile-ou-Face reparaissent alors vivants, vêtus de robes de Chevaliers de la Lumière ; les trois silhouettes disparaissent dans les ténèbres sous une lune noire. La Lune Noire raconte que Wismerhill 'part vers son destin'.",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
@@ -29538,12 +29901,12 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Le village natal de Wismerhill — Whispers Hill — est détruit. Tous ses habitants meurent. Wismerhill et Pile-ou-Face sont les seuls survivants, chacun de leur côté. Cause de la destruction non précisée dans le tome 1.",
+      "description": "Le village natal de Wismerhill — Whispers Hill — est détruit. Tous ses habitants meurent ; Wismerhill dit en être parti (« Tout le monde est mort là-bas. Moi, je suis parti. »). Cause de la destruction non précisée dans le tome 1.",
       "factions": [],
       "ref_type": "ville",
       "ref_id": "ville_whispers_hill",
       "notes": [
-        "[BD-T1] Mentionné page 8 au coin du feu.",
+        "[BD-T1] Mentionné page 8 au coin du feu, par Wismerhill.",
         "[LORE_ETENDU] Cause de la destruction à définir — possible attaque de bandits ou événement magique."
       ]
     },
@@ -29554,7 +29917,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill (sans nom) tue un monstre dans la forêt des Marches. Pile-ou-Face mange son lapin. Presque une rixe. Pile-ou-Face reconnaît la qualité de son épée, lui propose l'amitié, lui présente Nepher et Bepher, et lui donne le nom 'Wismerhill'.",
+      "description": "Wismerhill (sans nom) charge un « monstre » de la forêt qui n'est qu'un lapin. Pile-ou-Face s'empare du lapin rôti ; presque une rixe, puis repas partagé (« Tu as plu à mon épée, donc tu me plais aussi ! »). Pile-ou-Face lui présente Nepher et Bepher et lui donne le nom 'Wismerhill', forme elfique de Whispers Hill, le lieu d'où vient Wismerhill et où tout le monde est mort.",
       "factions": [],
       "ref_type": "dialogue",
       "ref_id": "dial_pile_ou_face_rencontre_t1",
@@ -29586,7 +29949,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Lors d'une halte dans les Marches, Wismerhill aperçoit Feidreiva se baignant. Après un désaccord (gifle d'épée), ils se séduisent mutuellement et deviennent compagnons romantiques.",
+      "description": "Lors d'une halte, Wismerhill surprend Feidreiva qui se baigne dans un étang. Elle lance son épée, qui se plante dans l'arbre à côté de sa tête (« SSTONK »), puis le séduit ; ils deviennent amants.",
       "factions": [
         "dzorak_orcs"
       ],
@@ -29614,18 +29977,18 @@
       ]
     },
     {
-      "id": "event_sac_kendrhi_hizin_t1",
-      "name": "Sac de Kendrhi — Rencontre avec Hizin",
-      "era": "Tome 1 — Automne",
+      "id": "event_sac_kendrhir_hizin_t1",
+      "name": "Sac de Kendrhir — Rencontre avec Hizin",
+      "era": "Tome 1 — Début de l'hiver",
       "year": "",
-      "month": "Automne",
+      "month": "Début de l'hiver",
       "type": "event",
-      "description": "La horde rase Kendrhi. Wismerhill sauve le Grand Mage Hizin. Hizin révèle que Wismerhill a des pouvoirs psychiques latents. Marché conclu : Hizin enseignera. La horde passe l'hiver dans Kendrhi rasée.",
+      "description": "La horde de Ghorghor rase Kendrhir, la cité des Grands Mages. Wismerhill y affronte Hizin, psychiste au service du Grand Mage, et l'emporte en duel psychique. Ghorghor remercie Wismerhill (« Merci, Wis ! ») puis écrase le Grand Mage entre ses poings. Hizin, qui a survécu grâce à son pouvoir mental, révèle à Wismerhill ses pouvoirs psychiques et accepte de les lui enseigner (« Marché conclu »). La horde passe l'hiver dans la cité.",
       "factions": [
         "dzorak_orcs"
       ],
       "ref_type": "raid",
-      "ref_id": "raid_sac_kendrhi_t1",
+      "ref_id": "raid_sac_kendrhir_t1",
       "notes": [
         "[BD-T1] Pages 21-23."
       ]
@@ -29637,14 +30000,14 @@
       "year": "",
       "month": "Hiver",
       "type": "event",
-      "description": "Les Chevaliers de la Lumière (armée de milliers) marchent sur Kendrhi. Grande bataille perdue. Les compagnons tombent. Ghorghor survit grâce à son anneau. Wismerhill capturé est libéré par Frater Sinister (reconnaît les armoiries du père). Wismerhill invoque une tempête de vengeance. Fuit dans les ténèbres avec Hizin et Feidreiva.",
+      "description": "Les Chevaliers de la Lumière (armée de milliers) marchent sur Kendrhir. Grande bataille perdue après la sortie que le démon Urmarcht a soufflée à Ghorghor. Les compagnons tombent ; Ghorghor, criblé de piques, a un sort inconnu à la fin du tome (il survit dans les tomes suivants grâce à son anneau). Wismerhill, capturé, est libéré : Urmarcht, parlant par la bouche de Frater Sinister, reconnaît les armoiries de son père. Wismerhill invoque une tempête de vengeance, puis part dans les ténèbres avec Feidreiva et Pile-ou-Face.",
       "factions": [
         "chevaliers_de_la_lumiere",
         "faction_empire",
         "dzorak_orcs"
       ],
       "ref_type": "raid",
-      "ref_id": "raid_grande_bataille_kendrhi_t1",
+      "ref_id": "raid_grande_bataille_kendrhir_t1",
       "notes": [
         "[BD-T1] Pages 31-46 — climax du tome 1.",
         "[BD-T1] 'Et la Lune Noire raconte que Wismerhill partit alors vers son destin...' — dernière ligne du tome."
@@ -144293,8 +144656,9 @@
       "importance": "major",
       "alive": true,
       "tomes": [
-        "t3",
         "t00",
+        "t01",
+        "t03",
         "t12"
       ],
       "faction_id": "",
@@ -144313,7 +144677,7 @@
       "special_items": [],
       "special_rule": "",
       "quote": "",
-      "source": "[BD] Pages 9–14, 17–20, 42–44",
+      "source": "[BD] Pages 9–14, 17–20, 42–44 — [BD-T1] Pages 9-22 (pp.15-28 BD)",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
@@ -144351,7 +144715,10 @@
         "[BD-T12] Repond a l appel de Wismerhill : Chouette! De la baston!",
         "[BD-T13] Reunit les allies sur ordre de Wismerhill. Joue aux cartes la veille de la bataille avec les compagnons.",
         "[BD-T13] Dans la bataille de Moork : charge avec fureur les demons, cri de guerre 'CREEEEVVVVVE!' Formule poetique dans le combat : 'Puissions... Nous... Nous... Revoir...' avant de charger.",
-        "[BD-T13] A les nerfs lors de la mission impossible : 'Ou merde! Bon ben quand faut y aller...' lors de la bataille. Manque de peu d etre tue par un demon lacerateur."
+        "[BD-T13] A les nerfs lors de la mission impossible : 'Ou merde! Bon ben quand faut y aller...' lors de la bataille. Manque de peu d etre tue par un demon lacerateur.",
+        "[BD-T1] Demi-ogre, chef invaincu d'une horde de pillards ; monture colossale cornue « venue des temps oubliés » (p.18 BD).",
+        "[BD-T1] Capture Wismerhill et Pile-ou-Face en train de voler ses poules, puis les engage ; promeut Wismerhill lieutenant (Faille de Kashogs) puis capitaine (Kendrhir).",
+        "[BD-T1] Pendant le siège de Kendrhir, le démon Urmarcht lui souffle de tenter une sortie ; criblé de piques, son sort reste inconnu à la fin du tome (p.49 BD)."
       ]
     },
     {
@@ -144471,14 +144838,15 @@
       "importance": "major",
       "alive": true,
       "tomes": [
+        "t01",
         "t02",
-        "t3"
+        "t03"
       ],
       "faction_id": "",
       "race_id": "race_menthat",
       "class_id": "",
       "role": "antagonist_secondary",
-      "visual": "Crâne parfaitement rasé, gemme frontale orange incandescente, yeux jaunes, traits fins et cruels. Long manteau vert foncé. Tête de mort en pendentif.",
+      "visual": "Crâne parfaitement rasé, gemme frontale orange incandescente, yeux jaunes, traits fins et cruels. Long manteau vert foncé. Tête de mort en pendentif. — [BD-T1, sous le nom de Frater Sinister] Chevalier blond aux yeux bleus, cheveux longs blonds, croix runique tatouée sur la joue. Armure blanche des Chevaliers de la Lumière. Grand et imposant.",
       "personality": "",
       "description": "",
       "arc": " → T6 : Disgracié par Haghendorf, erre à Moork, drainé par la succube Esmeralda.",
@@ -144492,7 +144860,7 @@
       "special_items": [],
       "special_rule": "",
       "quote": "",
-      "source": "[BD] Pages 21, 22, 23, 24, 25",
+      "source": "[BD] Pages 21, 22, 23, 24, 25 — [BD-T1] Pages 22 (p.28 BD)",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
@@ -144549,7 +144917,10 @@
         "[BD-T10] L'Empereur lui dit sarcastiquement : 'Finalement vous vivrez, Xhan, car votre incompétence nous fut bénéfique !' (confusion possible — c'est Fratus qui est fustigé).",
         "[BD-T13] Informe le Baron des evenements : fermeture de la porte, colere de la Lune Noire. Lui dit que le Maitre lui fait confiance pour devenir Empereur.",
         "[BD-T13] Absent lors de l attaque finale de Moork -- en retard/absent. Haazheel : 'Tant pis pour lui!'",
-        "[BD-T13] Hellaynnea confirme a Wismerhill : 'Fratus n est plus des notres, tu as un souci de moins!' -- Fratus elimine/mort via Hellaynnea (qui a tue son agent le Baron)."
+        "[BD-T13] Hellaynnea confirme a Wismerhill : 'Fratus n est plus des notres, tu as un souci de moins!' -- Fratus elimine/mort via Hellaynnea (qui a tue son agent le Baron).",
+        "[BD-T1] Nommé « Frater Sinister » dans le tome 1 : l'Empereur lui confie la tête des Chevaliers de la Lumière contre Ghorghor Bey, sans aucun survivant (p.28 BD).",
+        "[BD-T1] Aspect : l'homme congédié par l'Empereur (« Vous pouvez aller, Frater ! ») est blond aux yeux bleus avec une marque en croix sur la joue ; au combat, robe et haute capuche blanches, visage caché — cohérent avec la « couverture de Grand Maître blond » relevée en T4 (déduction).",
+        "[BD-T1] Pendant la Grande Bataille, le démon Urmarcht parle par sa bouche et fait libérer Wismerhill (p.49 BD)."
       ]
     },
     {
@@ -145034,14 +145405,15 @@
       "importance": "major",
       "alive": true,
       "tomes": [
-        "t1",
-        "t12"
+        "t01",
+        "t12",
+        "t13"
       ],
       "faction_id": "",
-      "race_id": "indéterminée — entité démoniaque ou créature magique ancienne",
+      "race_id": "",
       "class_id": "",
       "role": "companion_t1",
-      "visual": "Créature humanoïde de taille variable selon les cases, peau jaune-orangé couverte de motifs d'écailles ou de reptile, tête plate et mâchoire large, yeux rouges brillants, tenue de guerrier composite. Porte deux épées dans le dos (Nepher et Bepher).",
+      "visual": "Grand, sec et musclé. Crinière noire hérissée et longue tresse, oreilles pointues, grands anneaux d'oreille. Pagne et ceinture rouges, harnais de cuir noir, bottes rouges. Porte deux épées dans le dos : Nepher (lame rouge dentelée) et Bepher (lame bleue cristalline).",
       "personality": "Pragmatique, gourmand, instinctif. Parle franchement. Aime manger (lapins, volailles). Impulsif mais loyal une fois le pacte d'amitié scellé. Humour brutal.",
       "description": "Pragmatique, gourmand, instinctif. Parle franchement. Aime manger (lapins, volailles). Impulsif mais loyal une fois le pacte d'amitié scellé. Humour brutal.",
       "arc": "",
@@ -145056,7 +145428,7 @@
         "item_bepher"
       ],
       "special_rule": "Pile-ou-Face change de caractère selon l'épée dégainée : Nepher = brutal et destructeur, Bepher = pacifique et doux.",
-      "quote": "Nepher, pour te servir, Wismerhill ! Destruction et souffrance sur tes ennemis ! / Bepher, pour te servir, Wismerhill ! La paix soit avec toi !",
+      "quote": "Je te présente mes deux anges gardiens, petit. Deux épées, une bonne, une mauvaise ! Mon caractère change selon celle que je dégaine...",
       "source": "[BD-T1] Pages 7-8 (pp.13-14 BD)",
       "ville_ids": [],
       "zone_ids": [],
@@ -145064,8 +145436,8 @@
       "notes": [
         "[BD-T1] Présent tout au long du tome 1 : rencontre Wismerhill, intègre la horde de Ghorghor, participe aux batailles.",
         "[BD-T1] Enseigne la chasse à Wismerhill pendant la montage des aventures des Marches.",
-        "[BD-T1] 'Il rejoignait ensuite les officiers pour des cours de stratégie' — Pile-ou-Face avait une réelle valeur tactique.",
-        "[BD-T1] Disparu après la Grande Bataille — statut inconnu dans les tomes 3-4.",
+        "[BD-T1] Donne des leçons à Wismerhill pendant l'hiver à Kendrhir ; Wismerhill finit par le battre (« Hum ! Je crois que j'ai dû glisser... »).",
+        "[BD-T1] Survit à la Grande Bataille, blessé : reparaît vêtu d'une robe de Chevalier de la Lumière et part avec Wismerhill et Feidreiva (p.52 BD). Statut dans les tomes 3-4 à vérifier.",
         "[GAMEPLAY] Son arc de disparition mystérieuse est le point de départ de la quête quest_deux_epees.",
         "[BD-T12] Recoit son fief de Wismerhill -- magnifique domaine avec chateau et donjon. Wow! Il s est pas foutu de moi le Wismy!",
         "[BD-T12] Arrive sur son dragon (encore jeune). Delegue tout a son intendant Wis.",
@@ -145073,25 +145445,27 @@
         "[BD-T12] Accorde place preponderante a l economie -- tresor garde sous son dragon.",
         "[BD-T12] Repond a l appel de Wismerhill en grognant : Zut!",
         "[BD-T13] Passe la nuit avant la bataille avec ses premieres amours (T13 page 0). S inquiete du lendemain mais reste stoique.",
-        "[BD-T13] Joue aux cartes la veille ('Bonne bourre!', 'C etait juste!'). Participe a la bataille de Moork."
+        "[BD-T13] Joue aux cartes la veille ('Bonne bourre!', 'C etait juste!'). Participe a la bataille de Moork.",
+        "[BD-T1] Oreilles pointues (p.14 BD) — elfe ou sang-mêlé possible ; race non établie dans le tome 1, race_id laissé vide.",
+        "[BD-T1] « Dzorak ! » est l'un de ses jurons (p.15 BD)."
       ]
     },
     {
       "id": "char_hizin_t1",
       "name": "Hizin",
       "importance": "secondary",
-      "alive": true,
+      "alive": false,
       "tomes": [
-        "t1"
+        "t01"
       ],
       "faction_id": "",
-      "race_id": "race_human",
+      "race_id": "",
       "class_id": "",
       "role": "mentor_t1",
-      "visual": "Humain au crâne rasé, yeux bleu très clair (quasi-blanc), traits sévères et froids, tenu noire sobre. Gemme ou marque sur le front. Allure de moine ou d'ascète. Calme absolu en toutes circonstances.",
-      "personality": "Zen, calculateur, économe de mots. Pragmatique. Offre un marché direct : il enseigne à Wismerhill en échange de quelque chose (non précisé dans le tome 1). Philosophe.",
-      "description": "Zen, calculateur, économe de mots. Pragmatique. Offre un marché direct : il enseigne à Wismerhill en échange de quelque chose (non précisé dans le tome 1). Philosophe.",
-      "arc": "Seigneur ou grand mage de Kendrhi. Refuse la soumission à Ghorghor Bey. Survit à l'assaut de Ghorghor grâce à son bouclier mental. Sauvé par Wismerhill. Révèle à Wismerhill ses pouvoirs psychiques latents. Propose un marché : il l'entraîne. Enseigne tout l'hiver à Kendrhi. Fuit avec Wismerhill à la fin de la Grande Bataille.",
+      "visual": "Crâne rasé, oreilles pointues, yeux bleu très clair, traits sévères et froids. Marque au front qui s'illumine en jaune lorsqu'il use de son pouvoir. Robe noire, gemme violette sur la poitrine. Allure d'ascète, calme en toutes circonstances.",
+      "personality": "Calme, froid, économe de mots. Pragmatique : vaincu en duel psychique, il accepte le marché que lui propose Wismerhill (« Marché conclu ») et devient son maître. Lucide sur son sort : il ne se voit plus dans l'avenir.",
+      "description": "Calme, froid, économe de mots. Pragmatique : vaincu en duel psychique, il accepte le marché que lui propose Wismerhill (« Marché conclu ») et devient son maître. Lucide sur son sort : il ne se voit plus dans l'avenir.",
+      "arc": "Psychiste au service du Grand Mage de Kendrhir, qu'il appelle « Seigneur ». Affronte Wismerhill lors de l'assaut et perd le duel psychique, mais survit grâce à son pouvoir mental. Révèle à Wismerhill ses pouvoirs psychiques et accepte de les lui enseigner. Enseigne tout l'hiver à Kendrhir ; sa divination annonce une destinée étrange que seul l'Oracle pourrait éclairer. Frappé au front pendant la Grande Bataille ; Wismerhill retrouve et pleure son corps.",
       "abilities": [
         "Pouvoirs psychiques de haut niveau (mental shield, attaque mentale, projection)",
         "Résistance aux attaques psychiques et physiques via 'pouvoir mental'",
@@ -145100,11 +145474,14 @@
       "special_items": [],
       "special_rule": "",
       "quote": "",
-      "source": "[BD-T1] Pages 23-30 (pp.33-40 BD)",
+      "source": "[BD-T1] Pages 26-44 (pp.32-50 BD)",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T1] Oreilles pointues visibles (p.35 BD) — race non établie dans le tome 1, race_id laissé vide.",
+        "[BD-T1] Mort (déduction) : Wismerhill retrouve son corps et crie son nom (p.50 BD)."
+      ]
     },
     {
       "id": "char_feidreiva_t1",
@@ -145112,17 +145489,18 @@
       "importance": "major",
       "alive": true,
       "tomes": [
+        "t01",
         "t02",
-        "t1"
+        "t03"
       ],
       "faction_id": "",
       "race_id": "race_dark_elf",
       "class_id": "",
       "role": "companion_t1",
-      "visual": "Elfe aux cheveux noir-bleu, traits fins, oreilles pointues, yeux sombres expressifs. Corps athlétique. Tenue guerrière légère et fonctionnelle. Queue de cheval. Allure de combattante.",
-      "personality": "Directe, fière, indépendante. N'hésite pas à frapper Wismerhill avec son épée pour lui signifier qu'elle n'est pas impressionnée. Charme naturel et confiance en soi.",
-      "description": "Directe, fière, indépendante. N'hésite pas à frapper Wismerhill avec son épée pour lui signifier qu'elle n'est pas impressionnée. Charme naturel et confiance en soi.",
-      "arc": "Membre de la horde de Ghorghor Bey. Rencontre Wismerhill lors d'une halte. Devient sa compagne romantique. S'entraîne avec lui tout l'hiver à Kendrhi. Participe à la Grande Bataille. Probablement parmi les trois fugitifs de la scène finale.",
+      "visual": "Elfe aux oreilles pointues, très longue queue de cheval noire cerclée d'or, anneaux et collier d'or. Armure dorée minimale (gantelets, jambières). Épée au pommeau orné d'une gemme rouge.",
+      "personality": "Directe, fière, sûre d'elle. Quand elle surprend Wismerhill à l'épier, elle lance son épée, qui se plante dans l'arbre à côté de sa tête, puis prend l'initiative de la séduction. Possessive (« son homme ») et assez d'ascendant pour rabrouer Ghorghor.",
+      "description": "Directe, fière, sûre d'elle. Quand elle surprend Wismerhill à l'épier, elle lance son épée, qui se plante dans l'arbre à côté de sa tête, puis prend l'initiative de la séduction. Possessive (« son homme ») et assez d'ascendant pour rabrouer Ghorghor.",
+      "arc": "Membre de la horde de Ghorghor Bey. Rencontre Wismerhill lors d'une halte et devient son amante. L'entraîne à l'épée tout l'hiver à Kendrhir. Blessée pendant la Grande Bataille, elle survit et part avec Wismerhill et Pile-ou-Face à la fin du tome, vêtue d'une robe de Chevalier de la Lumière.",
       "abilities": [],
       "special_items": [],
       "special_rule": "",
@@ -145136,7 +145514,9 @@
         "[BD-T2] Monte le dragon Dracchennauknh lors de la patrouille à la Passe des Dragons.",
         "[BD-T2] Plaide pour épargner le groupe de Wismerhill ('Maître ! Laissez-les moi !'). Ses efforts sont ignorés par Dracchennauknh.",
         "[BD-T2] Assiste impuissant au combat singulier Wismerhill vs Dracchennauknh et à la mort de son dragon.",
-        "[BD-T2] NB : 'Fey' (compagnon de Wismerhill) et 'Feidreiva' (Chevalier-Dragon) sont deux personnages distincts dans ce tome."
+        "[BD-T2] NB : 'Fey' (compagnon de Wismerhill) et 'Feidreiva' (Chevalier-Dragon) sont deux personnages distincts dans ce tome.",
+        "[BD-T1] Graphie du tome 1 : « Feidreiva » ; le tome 3 écrit « Feydriva ».",
+        "[BD-T1] Point à vérifier contre le tome 2 : les notes T2 font de Feidreiva un Chevalier-Dragon distinct de Fey, alors que le tome 1 la montre partant avec Wismerhill et Pile-ou-Face (p.52 BD)."
       ]
     },
     {
@@ -145145,77 +145525,27 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t1"
+        "t01"
       ],
       "faction_id": "",
       "race_id": "race_human",
       "class_id": "",
       "role": "npc_ruler_t1",
-      "visual": "Homme imposant aux cheveux noirs longs, coiffure et parure de plumes (style amérindien/aztèque stylisé), torse nu orné de bijoux et peintures, regard intense et trouble. Allure de conquérant.",
-      "personality": "",
+      "visual": "Prologue : longs cheveux noirs, couronne-bandeau ornée d'une gemme, robe rouge à large col de fourrure blanche, boucles d'oreilles. Trente ans plus tard (p.28 BD) : cheveux gris, traits vieillis, même type de couronne et de vêtements.",
+      "personality": "Ambitieux, soucieux du destin de son règne ; terrifié par la prophétie. Implacable trente ans plus tard : il ordonne qu'il n'y ait aucun survivant parmi la horde de Ghorghor Bey.",
       "description": "",
       "arc": "",
       "abilities": [],
       "special_items": [],
       "special_rule": "",
       "quote": "",
-      "source": "[BD-T1] Pages 3-5 (pp.9-11 BD)",
+      "source": "[BD-T1] Pages 3-5 (pp.9-11 BD), page 22 (p.28 BD)",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
-    },
-    {
-      "id": "char_frater_sinister_t1",
-      "name": "Frater Sinister (tome 1)",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t1"
-      ],
-      "faction_id": "",
-      "race_id": "race_human",
-      "class_id": "",
-      "role": "antagonist_t1",
-      "visual": "Chevalier blond aux yeux bleus, cheveux longs blonds, croix runique tatouée sur la joue. Armure blanche des Chevaliers de la Lumière. Grand et imposant.",
-      "personality": "",
-      "description": "",
-      "arc": "",
-      "abilities": [],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T1] Pages 22 (p.28 BD)",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": []
-    },
-    {
-      "id": "char_ghorghor_bey_t1",
-      "name": "Ghorghor Bey (tome 1 — origine)",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t1"
-      ],
-      "faction_id": "",
-      "race_id": "",
-      "class_id": "",
-      "role": "companion_t1_leader",
-      "visual": "",
-      "personality": "",
-      "description": "",
-      "arc": "",
-      "abilities": [],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T1] Pages 9-22 (pp.15-28 BD)",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T1] Nom non donné dans le tome 1 ; l'identité avec l'Empereur Haghendorf des tomes suivants reste à confirmer."
+      ]
     },
     {
       "id": "char_haghendorf",
@@ -145515,36 +145845,6 @@
         "[BD-T5] Haazheel répond en apparition lumineuse dorée : 'Ah je vois, l'épée est là. Dis-lui...'",
         "[BD-T5] Conclut la transmission : 'Mon maître t'attend à Moork! Adieu mon fils!'",
         "[BD-T5] Semble mourir ou perdre conscience après la communication — sacrifice rituel de médium."
-      ]
-    },
-    {
-      "id": "char_urmacht_t5",
-      "name": "Urmacht",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [],
-      "faction_id": "",
-      "race_id": "",
-      "class_id": "",
-      "role": "herald_lieutenant",
-      "visual": "",
-      "personality": "Obéissant, efficace, sans initiative propre. Exécute les ordres à la lettre.",
-      "description": "Entité démoniaque servante de haut rang. Déjà référencé en T4 comme 'Urmarcht'. Envoyé par Haazheel à Tsaroth avec les ordres de bataille.",
-      "arc": "",
-      "abilities": [],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T5] Pages 9, 27",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T5] Haazheel : 'Je t'envoie Urmacht avec des ordres, tu feras au mieux. Le combat aura lieu à Tsaroth.'",
-        "[BD-T5] 'Ton verbe est mon ordre, Seigneur.' — réponse d'Urmacht.",
-        "[BD-T4] Référencé comme 'Urmarcht (démon serviteur)' dans les subordonnées de Haazheel — même entité.",
-        "[BD-T5] Présent dans la tente de commandement à Tsaroth aux côtés de Wismerhill et Greldinard.",
-        "[LORE_ETENDU] PNJ clé pour les quêtes de messager/ordre dans les zones contrôlées Lune Noire."
       ]
     },
     {
@@ -146042,17 +146342,21 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
+        "t01",
         "t02",
-        "t1_t3"
+        "t03",
+        "t04",
+        "t05",
+        "t12"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_demon",
       "class_id": "",
       "role": "demon_serviteur_haazheel",
-      "visual": "Entité noire bipède colossale, forme draconique/reptilienne, dents acérées multiples, queue longue, armure rouge cramoisie lacérée, regard incandescent. Type émissaire de haut rang. [BD-T1 / BD-T3 p.40]",
-      "personality": "Puissant, obéissant mais partial — les démons obéissent 'à moitié' selon Haazheel. Loyal malgré tout. A combattu aux côtés du père de Wismerhill autrefois.",
-      "description": "Démon majeur au service direct d'Haazheel Thorn. Chargé de missions complexes — protection de Wismerhill en T1, missions secrètes en T3. Reconnaît les armoiries du père de Wismerhill (T1).",
-      "arc": "T1 : envoyé par un mage pour protéger Wismerhill lors de la bataille de Kendrhi. Reconnaît les armoiries de son père. Obtient la libération de Wismerhill par Frater Sinister. — T3 : apparaît dans le château loué par Haazheel au retour de L'hynn. Haazheel le punit pour avoir 'obéi à moitié'. [BD-T3 p.40]",
+      "visual": "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts. — [BD-T3 p.40] Entité noire bipède colossale, forme draconique/reptilienne, dents acérées multiples, queue longue, armure rouge cramoisie lacérée, regard incandescent. Type émissaire de haut rang.",
+      "personality": "Puissant, obéissant mais partial — les démons obéissent 'à moitié' selon Haazheel. Loyal malgré tout. A combattu aux côtés du père de Wismerhill autrefois. — Obéissant, efficace, sans initiative propre. Exécute les ordres à la lettre.",
+      "description": "Démon majeur au service direct d'Haazheel Thorn. Chargé de missions complexes — protection de Wismerhill en T1, missions secrètes en T3. Reconnaît les armoiries du père de Wismerhill (T1). — Entité démoniaque servante de haut rang. Déjà référencé en T4 comme 'Urmarcht'. Envoyé par Haazheel à Tsaroth avec les ordres de bataille.",
+      "arc": "T1 : invoqué par un vieux sorcier (le « Maître ») et envoyé à Kendrhir protéger « l'enfant ». Souffle à Ghorghor de tenter une sortie, puis, parlant par la bouche de Frater Sinister, reconnaît les armoiries du père de Wismerhill et le fait libérer. — T3 : apparaît dans le château loué par Haazheel au retour de L'hynn. Haazheel le punit pour avoir 'obéi à moitié'. [BD-T3 p.40]",
       "abilities": [
         "Puissance démoniaque de haut rang",
         "Reconnaissance des armoiries et lignages",
@@ -146061,7 +146365,7 @@
       "special_items": [],
       "special_rule": "Démons de ce rang obéissent toujours 'à moitié' selon Haazheel — ils trahissent constamment [BD-T3 p.41].",
       "quote": "Oui certes... mon maître est-il satisfait? [BD-T3 p.40]",
-      "source": "[BD-T1] Pages 35-43 / [BD-T3] Pages 40, 41",
+      "source": "[BD-T1] Pages 35-43 / [BD-T3] Pages 40, 41 — [BD-T5] Pages 9, 27",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
@@ -146072,7 +146376,14 @@
         "[BD-T2] Rend compte au Sombre Prince depuis les 666 Abysses. Confirme ses actions du Tome 1 : 'après avoir forcé Ghorghor à sortir, son armée se fit anéantir'.",
         "[BD-T2] Confesse avoir 'protégé l'enfant (Wismerhill) lors de son jugement' — révèle une implication directe dans le destin de Wismerhill depuis T1.",
         "[BD-T2] Reçoit ses nouvelles instructions : continuer à servir Haazheel Thorn comme espion.",
-        "[BD-T2] Réplique : 'Ton verbe est mon ordre ! Ô Sombre Prince, tu seras servi avec haine et amour !'"
+        "[BD-T2] Réplique : 'Ton verbe est mon ordre ! Ô Sombre Prince, tu seras servi avec haine et amour !'",
+        "[BD-T5] Haazheel : 'Je t'envoie Urmacht avec des ordres, tu feras au mieux. Le combat aura lieu à Tsaroth.'",
+        "[BD-T5] 'Ton verbe est mon ordre, Seigneur.' — réponse d'Urmacht.",
+        "[BD-T4] Référencé comme 'Urmarcht (démon serviteur)' dans les subordonnées de Haazheel — même entité.",
+        "[BD-T5] Présent dans la tente de commandement à Tsaroth aux côtés de Wismerhill et Greldinard.",
+        "[LORE_ETENDU] PNJ clé pour les quêtes de messager/ordre dans les zones contrôlées Lune Noire.",
+        "[BD-T1] Graphie du tome 1 : « Urmarcht » ; les tomes 4, 5 et 12 écrivent « Urmacht ».",
+        "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts ; invoqué dans un cercle par un vieux sorcier (le « Maître ») sous la menace (p.40 BD)."
       ]
     },
     {
@@ -146609,29 +146920,39 @@
       "alive": true,
       "tomes": [
         "t07",
-        "t9"
+        "t09",
+        "t12"
       ],
       "faction_id": "faction_neutral",
       "race_id": "",
       "class_id": "",
       "role": "cosmic_neutral_archimage",
-      "visual": "Entité cosmique aux multiples visages de feu/lave (lion, humain, autres). Présence monumentale, couleurs orange et or. Chaque visage a un regard différent. Siège dans un vaste temple aux colonnes énormes entouré de serpents. Son agent visible est 'le Serpent' — une silhouette noire encapuchonnée portant un bâton.",
-      "personality": "Neutre absolu. Gardien de l'Équilibre. Refuse toute ingérence dans le destin des mortels. Observe sans intervenir. Ses mages reçoivent l'ordre de ne soutenir aucune faction.",
-      "description": "Le Grand Archimage cosmique. Entité aux multiples faces de feu. Gardien de l'équilibre entre les forces du monde. Connu depuis T4 sous le nom de 'Mage Ultime' (refus catégorique à l'Empereur qui le sollicitait). Son agent 'le Serpent' observe les conflits et rapporte.",
-      "arc": "T4 : Sa pyramide flottante est visitée par Haghendorf sur Drakkahen — refus absolu. T7 : Wismerhill l'invoque dans le Temple du Jade — confrontation directe, déchaîne sa puissance, repart sans intervenir. T9 : Observe la montée de la Lune Noire. Ordonne à ses mages neutralité absolue.",
+      "visual": "Entité cosmique aux multiples visages de feu/lave (lion, humain, autres). Présence monumentale, couleurs orange et or. Chaque visage a un regard différent. Siège dans un vaste temple aux colonnes énormes entouré de serpents. Son agent visible est 'le Serpent' — une silhouette noire encapuchonnée portant un bâton. — Etre de lumiere intense, silhouette humanoide massive entouree d energie doree/solaire. Vetements blancs cérémoniels.",
+      "personality": "Neutre absolu. Gardien de l'Équilibre. Refuse toute ingérence dans le destin des mortels. Observe sans intervenir. Ses mages reçoivent l'ordre de ne soutenir aucune faction. — Vindicatif envers les dieux. Stratege patient -- attend depuis des millenaires.",
+      "description": "Le Grand Archimage cosmique. Entité aux multiples faces de feu. Gardien de l'équilibre entre les forces du monde. Connu depuis T4 sous le nom de 'Mage Ultime' (refus catégorique à l'Empereur qui le sollicitait). Son agent 'le Serpent' observe les conflits et rapporte. — Entite ancienne ennemie des dieux. Emprisonnee depuis des millenaires. Reactivee via la Pyramide Archimages. Annonce sa revanche.",
+      "arc": "T4 : Sa pyramide flottante est visitée par Haghendorf sur Drakkahen — refus absolu. T7 : Wismerhill l'invoque dans le Temple du Jade — confrontation directe, déchaîne sa puissance, repart sans intervenir. T9 : Observe la montée de la Lune Noire. Ordonne à ses mages neutralité absolue. — T12 : Reapparait dans le monde via la Pyramide Archimages. Declare vouloir venger les crimes des dieux. Repart dans son plan pour preparer sa revanche.",
       "abilities": [
         "Divination cosmique (voit tout ce qui se passe dans le monde)",
         "Contrôle des mages (réseau secret de mages neutres)",
         "Pouvoir incommensurable (niveau demi-dieu)",
-        "Communication à travers le Serpent"
+        "Communication à travers le Serpent",
+        "Presence cosmique",
+        "Manifestation d energie divine corrompue",
+        "Omniscience partielle"
       ],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "L'ÉQUILIBRE NE DOIT PAS ÊTRE TROUBLÉ. LE DESTIN DOIT S'ACCOMPLIR.",
-      "source": "[BD-T9] Pages 39-41 (pages 41-43 du PDF)",
+      "special_items": [
+        "loot_pyramide_archimages_t12"
+      ],
+      "special_rule": "Faction propre faction_archimages. Ennemi des dieux.",
+      "quote": "L'ÉQUILIBRE NE DOIT PAS ÊTRE TROUBLÉ. LE DESTIN DOIT S'ACCOMPLIR. — Apres des millenaires, je suis enfin present sur ce monde! L heure de la revanche a sonne!",
+      "source": "[BD-T9] Pages 39-41 (pages 41-43 du PDF) — [BD-T12]",
       "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
+      "zone_ids": [
+        "zone_pyramide_archimages_t12"
+      ],
+      "dialogue_ids": [
+        "diag_t12_methraton_serpent"
+      ],
       "notes": [
         "[BD-T7] Wismerhill l'invoque directement dans le Temple du Jade — confrontation épique. 'QUI ME VEUT-IL, TOI QUI OSES M'APPELER!' Methraton se manifeste sous forme d'un visage de feu immense entouré de flammes dorées tourbillonnantes. Réticent mais répond à l'appel. Déchaîne une fraction de sa puissance (explosion 'FOOOOO BOOSH!'). Confrontation révèle que Wismerhill est capable de l'invoquer — fait extraordinaire.",
         "[BD-T7] Révèle son symbole — silhouette ankh-like bras écartés (même que celui gravé sur sa pyramide volante en T4). Ce symbole est présent dans les deux confrontations.",
@@ -146656,7 +146977,14 @@
         "[HS] Habite dans un plan caché du multivers — accessible uniquement via ses temples.",
         "[HS] Collectionne des milliers d'objets magiques dans son palais.",
         "[HS] Haine légendaire envers les dieux. Sa puissance est comparable à celle d'un dieu — ne pas le lui dire.",
-        "[HS] Ne pose quasiment jamais les pieds sur ce monde — les panthéons fondraient sur lui."
+        "[HS] Ne pose quasiment jamais les pieds sur ce monde — les panthéons fondraient sur lui.",
+        "[BD-T12] Son serviteur est Le Serpent.",
+        "[BD-T12] Les dieux vont maintenant payer pour leurs innombrables crimes!",
+        "[BD-T12] Storyline parallele a la fermeture de la Porte des Enfers -- menace T13+.",
+        "[BD-T13] Interpelle par Wismerhill qui l invoque. Lui explique sa neutralite : agit uniquement quand la balance penche trop d un cote ou quand les Dieux appuient trop fort.",
+        "[BD-T13] Accepte d aider : prepare son 'quelque chose' -- le bouclier planetaire via 72 pyramides. Ne peut l activer qu au moment ou Haazheel sera face a Wismerhill.",
+        "[BD-T13] Sur signal du Serpent, active les 72 pyramides archimages sur toute la planete. Un ecran protecteur entoure la planete. Les Dieux ne peuvent plus venir sur Terre ou y agir. 'Apres trois mille ans de bannissement, Methraton etait revenu.'",
+        "[BD-T13] Haazheel perd instantanement ses pouvoirs divins quand le bouclier s active. 'Il est l heure, o Maitre!' -- 'Parfait, Serpent, que soient activees les pyramides sur toutes les faces de ce monde!'"
       ]
     },
     {
@@ -146665,34 +146993,46 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t9"
+        "t09",
+        "t12"
       ],
       "faction_id": "faction_neutral",
       "race_id": "",
       "class_id": "",
       "role": "agent_cosmic_neutral",
-      "visual": "Silhouette encapuchonnée, longue robe noire, bâton fin. Visage dans l'ombre. Allure sobre et discrète.",
-      "personality": "Obéissant à Methraton. Observateur silencieux. Ne s'implique pas.",
-      "description": "Agent et messager de Methraton. Chargé d'observer les conflits et de transmettre les ordres de neutralité aux mages dispersés dans le monde.",
-      "arc": "T9 : Reçoit l'ordre d'observer la guerre et d'informer les mages de rester neutres.",
+      "visual": "Silhouette encapuchonnée, longue robe noire, bâton fin. Visage dans l'ombre. Allure sobre et discrète. — Visage reptilien aux yeux verts lumineux felins, traits dores, humanoide serpentin.",
+      "personality": "Obéissant à Methraton. Observateur silencieux. Ne s'implique pas. — Devoue totalement a Methraton.",
+      "description": "Agent et messager de Methraton. Chargé d'observer les conflits et de transmettre les ordres de neutralité aux mages dispersés dans le monde. — Serviteur ancien de Methraton, gardien de la Pyramide Archimages. Active et desactive l artefact sur ordre.",
+      "arc": "T9 : Reçoit l'ordre d'observer la guerre et d'informer les mages de rester neutres. — Gere la Pyramide Archimages, surveille les energies divines.",
       "abilities": [
         "Discrétion absolue",
         "Voyage rapide",
-        "Communication avec les mages du réseau"
+        "Communication avec les mages du réseau",
+        "Activation Pyramide Archimages",
+        "Surveillance energies divines"
       ],
-      "special_items": [],
+      "special_items": [
+        "loot_pyramide_archimages_t12"
+      ],
       "special_rule": "",
-      "quote": "J'OBÉIS, Ô METHRATON.",
-      "source": "[BD-T9] Pages 39-41",
+      "quote": "J'OBÉIS, Ô METHRATON. — C est fait, o Serpent! L artefact est pret a etre active!",
+      "source": "[BD-T9] Pages 39-41 — [BD-T12]",
       "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
+      "zone_ids": [
+        "zone_pyramide_archimages_t12"
+      ],
+      "dialogue_ids": [
+        "diag_t12_methraton_serpent"
+      ],
       "notes": [
         "[BD-T9] Appelé 'SERPENT' par Methraton : 'SERPENT, VA ET OBSERVE, RAPPORTE-MOI TES OBSERVATIONS.'",
         "[BD-T9] Son nom de code 'Le Serpent' suggère un lien symbolique avec la neutralité et le cycle du monde.",
         "[LORE_ETENDU] PNJ neutre exploitable — peut donner des informations en échange de quêtes non-partisanes.",
         "[BD-T13] Recoit le message de Wismerhill via l Oracle : Ce sera demain a minuit.",
-        "[BD-T13] Rapporte a Methraton l heure de l attaque. Execute l ordre d activation des pyramides : 'Il est l heure, o Maitre!'"
+        "[BD-T13] Rapporte a Methraton l heure de l attaque. Execute l ordre d activation des pyramides : 'Il est l heure, o Maitre!'",
+        "[BD-T12] O Methraton! Nous avons reussi!",
+        "[BD-T12] Attention, le Maitre arrive! Archimages, evacuez la zone!",
+        "[BD-T13] Meme role -- entite lien entre Wismerhill et Methraton."
       ]
     },
     {
@@ -146803,37 +147143,39 @@
       ]
     },
     {
-      "id": "char_seigneur_kendrhi",
-      "name": "Le Seigneur de Kendrhi (non nommé)",
+      "id": "char_grand_mage_kendrhir",
+      "name": "Le Grand Mage de Kendrhir (non nommé)",
       "importance": "secondary",
       "alive": false,
       "tomes": [
-        "t1"
+        "t01"
       ],
       "faction_id": "faction_neutral",
       "race_id": "race_human",
       "class_id": "class_mage",
       "role": "npc_boss_t1",
-      "visual": "Humain aux allures de grand mage — longue robe sombre, cheveux blancs, regard arrogant. Barbe courte soignée. Baguette ou sceptre de mage. Visible depuis les remparts de Kendrhi menaçant Ghorghor Bey.",
+      "visual": "Grand Mage en longue robe, siégeant sur un trône dans la salle du conseil aux hautes baies grillagées, entouré de mages en robes colorées.",
       "personality": "Arrogant, sûr de ses pouvoirs magiques. Sous-estime complètement Ghorghor Bey. Sa forfanterie sera sa perte.",
-      "description": "Seigneur mage de Kendrhi. Quand Ghorghor Bey arrive et demande à passer l'hiver dans la ville, le seigneur refuse avec mépris et menace de transformer Ghorghor en 'grosse limace baveuse' et de le jeter à ses corbeaux. Ghorghor répond : 'Rasez-moi tout ça !!!'.",
-      "arc": "Tué lors du Sac de Kendrhi — probablement en défendant ses appartements ou sa bibliothèque. Le raid_sac_kendrhi_t1 ne précise pas sa mort directe mais elle est implicite.",
+      "description": "Grand Mage de Kendrhir. Quand Ghorghor Bey veut passer l'hiver dans la cité, il refuse malgré son conseil (« Cédez, Sire ! ») ; le messager de Ghorghor revient changé en batracien avec la menace de transformer Ghorghor en « grosse limace baveuse ». Ghorghor répond : « Rasez-moi tout ça !!! ».",
+      "arc": "Tué lors du sac de Kendrhir : il foudroie Ghorghor, qui l'écrase entre ses poings (« Main droite, main gauche ! ») (p.35 BD).",
       "abilities": [
         "Bouclier magique (défense personnelle)",
-        "Contrôle des golems de défense de Kendrhi",
-        "Malédiction de transformation (menace proférée mais jamais exécutée)"
+        "Contrôle des golems de défense de Kendrhir",
+        "Malédiction de transformation (le messager de Ghorghor revient changé en batracien)",
+        "Rayon foudroyant (p.34 BD)"
       ],
       "special_items": [],
       "special_rule": "",
       "quote": "'...et si vous l'attaquez il vous transformera en grosse limace baveuse et vous jettera à ses corbeaux ! qu'il a dit, chef !' — Messager rapportant les paroles du seigneur à Ghorghor.",
-      "source": "[BD-T1] Page 21 (p.29 BD) — scène de négociation ratée depuis les remparts.",
+      "source": "[BD-T1] Page 23 (p.29 BD) — refus prononcé depuis la salle du conseil ; pages 26-27 (pp.34-35 BD) — sa mort.",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
         "[BD-T1] Sa menace de transformation en limace est un running joke repris par Ghorghor ('Une limace, mm ?').",
         "[BD-T1] Représente l'arrogance typique des mages envers les forces militaires brutes.",
-        "[GAMEPLAY] Boss du raid_sac_kendrhi_t1 phase 1 — ses golems défendent les remparts."
+        "[GAMEPLAY] Boss du raid_sac_kendrhir_t1 phase 1 — ses golems défendent les remparts (golems absents de la BD).",
+        "[BD-T1] Hizin, son psychiste, l'appelle « Seigneur »."
       ]
     },
     {
@@ -147860,89 +148202,6 @@
       ]
     },
     {
-      "id": "char_methraton_t12",
-      "name": "Methraton",
-      "importance": "major_antagonist_futur",
-      "alive": true,
-      "tomes": [
-        "t12"
-      ],
-      "faction_id": "faction_archimages",
-      "race_id": "",
-      "class_id": "",
-      "role": "npc_ancient_deity",
-      "visual": "Etre de lumiere intense, silhouette humanoide massive entouree d energie doree/solaire. Vetements blancs cérémoniels.",
-      "personality": "Vindicatif envers les dieux. Stratege patient -- attend depuis des millenaires.",
-      "description": "Entite ancienne ennemie des dieux. Emprisonnee depuis des millenaires. Reactivee via la Pyramide Archimages. Annonce sa revanche.",
-      "arc": "T12 : Reapparait dans le monde via la Pyramide Archimages. Declare vouloir venger les crimes des dieux. Repart dans son plan pour preparer sa revanche.",
-      "abilities": [
-        "Presence cosmique",
-        "Manifestation d energie divine corrompue",
-        "Omniscience partielle"
-      ],
-      "special_items": [
-        "loot_pyramide_archimages_t12"
-      ],
-      "special_rule": "Faction propre faction_archimages. Ennemi des dieux.",
-      "quote": "Apres des millenaires, je suis enfin present sur ce monde! L heure de la revanche a sonne!",
-      "source": "[BD-T12]",
-      "ville_ids": [],
-      "zone_ids": [
-        "zone_pyramide_archimages_t12"
-      ],
-      "dialogue_ids": [
-        "diag_t12_methraton_serpent"
-      ],
-      "notes": [
-        "[BD-T12] Son serviteur est Le Serpent.",
-        "[BD-T12] Les dieux vont maintenant payer pour leurs innombrables crimes!",
-        "[BD-T12] Storyline parallele a la fermeture de la Porte des Enfers -- menace T13+.",
-        "[BD-T13] Interpelle par Wismerhill qui l invoque. Lui explique sa neutralite : agit uniquement quand la balance penche trop d un cote ou quand les Dieux appuient trop fort.",
-        "[BD-T13] Accepte d aider : prepare son 'quelque chose' -- le bouclier planetaire via 72 pyramides. Ne peut l activer qu au moment ou Haazheel sera face a Wismerhill.",
-        "[BD-T13] Sur signal du Serpent, active les 72 pyramides archimages sur toute la planete. Un ecran protecteur entoure la planete. Les Dieux ne peuvent plus venir sur Terre ou y agir. 'Apres trois mille ans de bannissement, Methraton etait revenu.'",
-        "[BD-T13] Haazheel perd instantanement ses pouvoirs divins quand le bouclier s active. 'Il est l heure, o Maitre!' -- 'Parfait, Serpent, que soient activees les pyramides sur toutes les faces de ce monde!'"
-      ]
-    },
-    {
-      "id": "char_le_serpent_t12",
-      "name": "Le Serpent",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t12"
-      ],
-      "faction_id": "faction_archimages",
-      "race_id": "",
-      "class_id": "",
-      "role": "npc_servant_ancient",
-      "visual": "Visage reptilien aux yeux verts lumineux felins, traits dores, humanoide serpentin.",
-      "personality": "Devoue totalement a Methraton.",
-      "description": "Serviteur ancien de Methraton, gardien de la Pyramide Archimages. Active et desactive l artefact sur ordre.",
-      "arc": "Gere la Pyramide Archimages, surveille les energies divines.",
-      "abilities": [
-        "Activation Pyramide Archimages",
-        "Surveillance energies divines"
-      ],
-      "special_items": [
-        "loot_pyramide_archimages_t12"
-      ],
-      "special_rule": "",
-      "quote": "C est fait, o Serpent! L artefact est pret a etre active!",
-      "source": "[BD-T12]",
-      "ville_ids": [],
-      "zone_ids": [
-        "zone_pyramide_archimages_t12"
-      ],
-      "dialogue_ids": [
-        "diag_t12_methraton_serpent"
-      ],
-      "notes": [
-        "[BD-T12] O Methraton! Nous avons reussi!",
-        "[BD-T12] Attention, le Maitre arrive! Archimages, evacuez la zone!",
-        "[BD-T13] Meme role -- entite lien entre Wismerhill et Methraton."
-      ]
-    },
-    {
       "id": "char_grand_pretre_rapporteur_t12",
       "name": "Grand Pretre de la Lune Noire (rapporteur T12)",
       "importance": "minor",
@@ -148757,7 +149016,7 @@
       "difficulty": "Normale",
       "level_min": 1,
       "level_max": 5,
-      "description": "Grande créature bestiale territoriale, morphologie animale agressive, taille humaine +50%. Détails flous dans la BD — première créature visible tuée par Wismerhill dans la scène d'ouverture. Probablement un prédateur des forêts des Marches. Pile-ou-Face en profite pour voler le lapin que Wismerhill chassait juste avant.",
+      "description": "Grande créature bestiale territoriale, morphologie animale agressive, taille humaine +50%. [LORE_ETENDU] Prédateur des forêts inspiré de la scène d'ouverture, où le « monstre » que charge Wismerhill n'est en réalité qu'un lapin, que Pile-ou-Face lui vole ensuite.",
       "region_id": "region_marches",
       "ville_id": "ville_whispers_hill",
       "faction_id": "",
@@ -148784,8 +149043,8 @@
         "Résistance : normale aux dégâts physiques, faible aux dégâts de feu"
       ],
       "notes": [
-        "[BD-T1] Page 6 (p.12 BD) — scène d'ouverture, tué par Wismerhill dans la forêt.",
-        "[BD-T1] Sa mort déclenche indirectement la rencontre avec Pile-ou-Face (qui vole le lapin).",
+        "[BD-T1] Page 6 (p.12 BD) — scène d'ouverture : Wismerhill charge un « monstre » qui s'avère être un lapin.",
+        "[BD-T1] Pile-ou-Face vole le lapin rôti, ce qui déclenche leur rencontre.",
         "[LORE_ETENDU] Représente la faune dangereuse des forêts des Marches."
       ]
     },
@@ -148796,7 +149055,7 @@
       "difficulty": "Légendaire",
       "level_min": 35,
       "level_max": 50,
-      "description": "Dragon adulte non domestiqué, territorial. Aperçu lors du voyage de la horde à travers les Marches. Ghorghor s'exclame 'Dzorak! Un dragon! On se replie, petit!' — même Ghorghor Bey, demi-ogre à la force titanesque, préfère battre en retraite face à lui. Note : 'Dzorak' semble être un juron ou terme culturel de Ghorghor lié aux dragons.",
+      "description": "Dragon adulte non domestiqué, territorial. [LORE_ETENDU] Inspiré de la scène où Pile-ou-Face s'écrie « Dzorak ! Un dragon ! On se replie, petit ! » — dans la BD, ce « dragon » est un leurre de bois manœuvré par de petites créatures à bonnets rouges (« Hou les niais ! Ça ne rate jamais ! »).",
       "region_id": "region_marches",
       "ville_id": "",
       "faction_id": "",
@@ -148835,9 +149094,9 @@
         "Résistance : immunité au feu, forte résistance physique, faible aux dégâts magiques de glace"
       ],
       "notes": [
-        "[BD-T1] Page 9 (p.15 BD) — aperçu lors de la montage des aventures des Marches.",
-        "[BD-T1] 'Dzorak! Un dragon! On se replie, petit!' — Ghorghor Bey (réaction de recul inhabituelle).",
-        "[LORE_ETENDU] Connexion possible entre 'Dzorak' (nom de la race de Ghorghor) et un ancien culte du dragon.",
+        "[BD-T1] Page 9 (p.15 BD) — faux dragon de bois, pendant les aventures de Wismerhill et Pile-ou-Face (avant leur capture par Ghorghor).",
+        "[BD-T1] 'Dzorak! Un dragon! On se replie, petit!' — Pile-ou-Face.",
+        "[LORE_ETENDU] « Dzorak » est ici un juron de Pile-ou-Face ; lien éventuel avec le nom de la race de Ghorghor à vérifier.",
         "[LORE_ETENDU] Présent dans les zones peu peuplées des Marches — probablement plusieurs individus."
       ]
     },
@@ -149216,7 +149475,7 @@
       "level_max": 25,
       "description": "Fantassin d'élite de l'Ordre des Chevaliers de la Lumière. Armure complète blanche avec croix rouge sur le plastron. Heaume fermé, cape blanche, épée longue et bouclier. Discipline militaire stricte — attaque toujours en formation, jamais seul.",
       "region_id": "region_marches",
-      "ville_id": "ville_kendrhi",
+      "ville_id": "kendrhir_vale",
       "faction_id": "chevaliers_de_la_lumiere",
       "drops": [
         {
@@ -153108,11 +153367,11 @@
     {
       "id": "region_marches",
       "name": "Territoires des Marches",
-      "description": "Vaste région frontalière entre les terres civilisées de l'Empire et les zones indomptées. Plusieurs cités-étapes : Tbarak (nord-ouest), Klindor (nord-est), Hazol (centre-ouest). Traversée par des routes de commerce et de guerre. Seigneurs locaux peu fiables, pillages fréquents. Ambiance de Far-West médiéval. La Faille de Kashogs en marque la frontière sud vers la 1ère Province de l'Empire.",
+      "description": "Vaste région frontalière entre les terres civilisées de l'Empire et les zones indomptées. Cités-étapes de l'itinéraire de la horde : Tbarak (nord-ouest), Klindor (nord-est), Hazol (ouest), Moorgate (est), Dunfold (sud). Traversée par des routes de commerce et de guerre. Seigneurs locaux peu fiables, pillages fréquents. Ambiance de Far-West médiéval. La Faille de Kashogs en marque la frontière sud vers la 1ère Province de l'Empire.",
       "notes": [
         "[BD-T1] Carte page 19 — itinéraire de la horde de Ghorghor tracé en pointillés rouges.",
         "[BD-T1] Ghorghor Bey y mène sa horde de pillards. C'est ici que Wismerhill la rejoint.",
-        "[BD-T1] Un dragon sauvage est aperçu dans cette région lors du voyage de la horde.",
+        "[BD-T1] Wismerhill et Pile-ou-Face y fuient un « dragon » qui n'est qu'un leurre de bois manœuvré par de petites créatures (p.15 BD, lieu exact non précisé).",
         "[BD-T6] La Grande Arche est dans les Marches, contiguë à la Baronnie de Moork au sud."
       ]
     },
@@ -153537,10 +153796,10 @@
     },
     {
       "id": "loot_armure_wismerhill_t1",
-      "name": "Armure Initiale de Wismerhill — Noire et Or",
+      "name": "Armure Initiale de Wismerhill — Écailles grises",
       "type": "armure_legere",
       "rarity": "rare",
-      "description": "Armure légère noire ornée d'or avec symbole circulaire sur le torse. Allie mobilité et protection modérée. Caractéristique de l'esthétique elfe ténébreux. Moins élaborée que les versions des tomes suivants — pas encore de cape violette.",
+      "description": "Armure d'écailles grises portée avec ceinture et jupe rouges (tome 1). Allie mobilité et protection modérée. Moins élaborée que l'armure noire et or des tomes suivants — pas encore de cape violette.",
       "min_level": 1,
       "eligible_races": [
         "race_dark_elf"
@@ -153553,8 +153812,8 @@
       ],
       "source_raids": [],
       "notes": [
-        "[BD-T1] Armure portée dès le début du tome 1.",
-        "[BD-T1] Symbole circulaire sur le torse — probable symbole de sa lignée elfique.",
+        "[BD-T1] Armure d'écailles portée dès la rencontre avec Pile-ou-Face (p.13 BD) ; dans la scène d'ouverture, armure de plaques complète, casque à visière grimaçante et écu à damier rouge et blanc (p.12 BD).",
+        "[BD-T1] Ses armoiries, reconnues par Urmarcht (p.49 BD), ne sont pas décrites ; il porte un écu blanc à croix rouge à Kendrhir (p.33, 47 BD).",
         "[GAMEPLAY] Bonus mobilité : -10% de pénalité de mouvement. Défense modérée."
       ]
     },
@@ -153587,7 +153846,7 @@
       "name": "Tenue de Combattante Elfique (Feidreiva)",
       "type": "armure_legere_elfique",
       "rarity": "rare",
-      "description": "Tenue guerrière légère et fonctionnelle d'une elfe ténébreuse. Combine mobilité extrême et style distinctif. Queue de cheval, lanières de cuir renforcé, lame légère portée en bandoulière. Esthétique de chasseresse forestière.",
+      "description": "Tenue guerrière légère d'une combattante elfe : armure dorée minimale (gantelets, jambières), anneaux et collier d'or, longue queue de cheval cerclée d'or ; épée au pommeau orné d'une gemme rouge.",
       "min_level": 5,
       "eligible_races": [
         "race_dark_elf"
@@ -154117,10 +154376,10 @@
       ],
       "source_quests": [],
       "source_raids": [
-        "raid_grande_bataille_kendrhi_t1"
+        "raid_grande_bataille_kendrhir_t1"
       ],
       "notes": [
-        "[BD-T1] Pages 35-43 — armure des milliers de Chevaliers de la Lumière qui marchent sur Kendrhi.",
+        "[BD-T1] Pages 35-43 — armure des milliers de Chevaliers de la Lumière qui marchent sur Kendrhir.",
         "[BD-T1] Couleur blanche distinctive avec croix rouge — identification immédiate de la faction.",
         "[GAMEPLAY] Porter cette armure en zone Lune Noire provoque une attaque à vue immédiate."
       ]
@@ -154148,10 +154407,10 @@
     },
     {
       "id": "loot_fragment_connaissance_magique_t1",
-      "name": "Fragment de Connaissance Magique (Archives de Kendrhi)",
+      "name": "Fragment de Connaissance Magique (Archives de Kendrhir)",
       "type": "objet_lore_quete",
       "rarity": "rare",
-      "description": "Parchemin ou tablette récupéré dans les archives pillées/brûlées de la Cité des Grands Mages de Kendrhi. Contient une fraction du savoir des mages — sort, formule, fragment d'histoire. Chaque fragment est unique (tirage aléatoire dans une table de 50 entrées).",
+      "description": "Parchemin ou tablette récupéré dans les archives pillées/brûlées de la Cité des Grands Mages de Kendrhir. Contient une fraction du savoir des mages — sort, formule, fragment d'histoire. Chaque fragment est unique (tirage aléatoire dans une table de 50 entrées).",
       "min_level": 10,
       "eligible_races": [],
       "eligible_classes": [
@@ -154160,16 +154419,16 @@
       ],
       "source_monsters": [],
       "source_villes": [
-        "ville_kendrhi"
+        "kendrhir_vale"
       ],
       "source_quests": [],
       "source_raids": [
-        "raid_sac_kendrhi_t1"
+        "raid_sac_kendrhir_t1"
       ],
       "notes": [
-        "[BD-T1] Pages 21-23 — archives de Kendrhi accessibles lors du sac.",
+        "[BD-T1] Pages 21-23 — archives de Kendrhir accessibles lors du sac.",
         "[GAMEPLAY] Source principale de sorts rares de bas-niveau. 50 fragments différents à collecter.",
-        "[BD-T1] La bibliothèque de Kendrhi contenait le savoir de générations de Grands Mages — sa destruction est une perte irréparable pour le monde."
+        "[BD-T1] La bibliothèque de Kendrhir contenait le savoir de générations de Grands Mages — sa destruction est une perte irréparable pour le monde."
       ]
     },
     {
@@ -154188,7 +154447,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[BD-T1] Page 9 — dragon aperçu dans les Marches, Ghorghor bat en retraite devant lui."
+        "[LORE_ETENDU] Dragon sauvage extrapolé ; dans la BD (p.15), le « dragon » aperçu est un leurre de bois."
       ]
     },
     {
@@ -154211,7 +154470,8 @@
       "source_raids": [],
       "notes": [
         "[BD-T1] La cape violette signature de Wismerhill n'est pas encore présente en T1.",
-        "[GAMEPLAY] Étape de progression cosmétique — remplacée par la cape violette en fin de quête d'origine."
+        "[GAMEPLAY] Étape de progression cosmétique — remplacée par la cape violette en fin de quête d'origine.",
+        "[BD-T1] Grande cape rouge pendant le siège de Kendrhir (p.41 BD)."
       ]
     },
     {
@@ -157910,12 +158170,12 @@
       "location_ville_id": "ville_oracle_camp",
       "lines": [
         {
-          "speaker": "L'Oracle",
-          "text": "Je sais... L'Empereur ! Et tu veux connaître le destin de ton règne."
-        },
-        {
           "speaker": "L'Empereur",
           "text": "Oracle !! Je suis..."
+        },
+        {
+          "speaker": "L'Oracle",
+          "text": "Je sais... L'Empereur ! Et tu veux connaître le destin de ton règne."
         },
         {
           "speaker": "L'Oracle",
@@ -158010,14 +158270,18 @@
         },
         {
           "speaker": "Pile-ou-Face",
-          "text": "Pas de nom ? C'est bizarre, ça... Je te jure ! On ne m'en a jamais donné."
+          "text": "Pas de nom ? C'est bizarre, ça..."
         },
         {
           "speaker": "Wismerhill",
-          "text": "Tu sais au moins d'où tu viens ?"
+          "text": "Je te jure ! On ne m'en a jamais donné."
         },
         {
           "speaker": "Pile-ou-Face",
+          "text": "Tu sais au moins d'où tu viens ?"
+        },
+        {
+          "speaker": "Wismerhill",
           "text": "Ça oui ! Ça s'appelait Whispers Hill. Tout le monde est mort là-bas. Moi, je suis parti."
         },
         {
@@ -158026,18 +158290,18 @@
         },
         {
           "speaker": "Wismerhill",
-          "text": "Oui, d'autant plus qu'on me dit moitié-elfe !"
+          "text": "Oui, d'autant plus qu'on me dit moitié-elfe ! Et toi, pourquoi t'appelle-t-on « Pile-ou-Face », ça a un sens ?"
         },
         {
           "speaker": "Pile-ou-Face",
           "text": "En voilà l'explication, petit..."
         },
         {
-          "speaker": "Pile-ou-Face (à Nepher)",
+          "speaker": "Nepher (épée rouge)",
           "text": "Nepher, pour te servir, Wismerhill ! Destruction et souffrance sur tes ennemis !"
         },
         {
-          "speaker": "Pile-ou-Face (à Bepher)",
+          "speaker": "Bepher (épée bleue)",
           "text": "Bepher, pour te servir, Wismerhill ! La paix soit avec toi !"
         },
         {
@@ -158050,7 +158314,15 @@
         },
         {
           "speaker": "Pile-ou-Face",
+          "text": "Certains ont dit qu'elles me dominaient, mais ils en parlent aux vers qui les rongent..."
+        },
+        {
+          "speaker": "Pile-ou-Face",
           "text": "Voilà, tu sais tout ! Allons dormir, la route sera longue demain !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Hum... je dormirai tranquille..."
         }
       ],
       "notes": [
@@ -158115,7 +158387,7 @@
     },
     {
       "id": "dial_feidreiva_lac_t1",
-      "name": "La Rencontre au Lac — Feidreiva",
+      "name": "La Rencontre à l'Étang — Feidreiva",
       "npc_name": "Feidreiva",
       "faction_id": "dzorak_orcs",
       "race_id": "race_dark_elf",
@@ -158143,11 +158415,15 @@
         },
         {
           "speaker": "Feidreiva",
-          "text": "Petit menteur ! [gifle d'épée — SSTONK]"
+          "text": "Petit menteur ! [elle lance son épée, qui se plante dans l'arbre à côté de la tête de Wismerhill — SSTONK]"
         },
         {
           "speaker": "Feidreiva",
           "text": "Viens par ici !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Pourquoi ça ?"
         },
         {
           "speaker": "Feidreiva",
@@ -158159,13 +158435,21 @@
         },
         {
           "speaker": "Feidreiva",
-          "text": "Déshabille-toi, je vais t'apprendre un jeu ! Hi hi ! Tu me plais, joli bêta !"
+          "text": "Déshabille-toi, je vais t'apprendre un jeu !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Vraiment ?!"
+        },
+        {
+          "speaker": "Feidreiva",
+          "text": "Hi hi ! Tu me plais, joli bêta !"
         }
       ],
       "notes": [
         "[BD-T1] Débloque la relation romantique avec Feidreiva. Accès à ses dialogues de compagnon.",
         "[BD-T1] Feidreiva est déjà membre de la horde de Ghorghor avant cette rencontre.",
-        "[BD-T1] 'SSTONK' — sonomatopée de la gifle d'épée plat sur le crâne de Wismerhill."
+        "[BD-T1] « SSTONK » — l'épée lancée par Feidreiva se plante dans l'arbre, à côté de la tête de Wismerhill."
       ]
     },
     {
@@ -158174,18 +158458,18 @@
       "npc_name": "Hizin",
       "faction_id": "",
       "race_id": "race_human",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
           "speaker": "Ghorghor",
           "text": "Merci, Wis ! Ah ! Te voilà donc ! On va jouer à un jeu !"
         },
         {
-          "speaker": "Hizin",
+          "speaker": "Wismerhill",
           "text": "Ainsi... tu n'es pas mort ?"
         },
         {
-          "speaker": "Wismerhill",
+          "speaker": "Hizin",
           "text": "Non ! Tu n'as pas utilisé toute ta force."
         },
         {
@@ -158213,7 +158497,7 @@
           "text": "...vous pourriez m'y aider..."
         },
         {
-          "speaker": "Hizin",
+          "speaker": "Wismerhill",
           "text": "D'accord ?"
         },
         {
@@ -158222,7 +158506,7 @@
         }
       ],
       "notes": [
-        "[BD-T1] Condition : avoir épargné Hizin lors du raid_sac_kendrhi_t1.",
+        "[GAMEPLAY] Condition : avoir épargné Hizin lors du raid_sac_kendrhir_t1.",
         "[GAMEPLAY] Débloque le compagnon companion_hizin et l'arbre de compétences skill_magie_psychique."
       ]
     },
@@ -158232,7 +158516,7 @@
       "npc_name": "Hizin",
       "faction_id": "",
       "race_id": "race_human",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
           "speaker": "Hizin",
@@ -158251,30 +158535,30 @@
           "text": "Excellent ! [la chaise s'enflamme]"
         },
         {
-          "speaker": "Feidreiva (de loin, dans la neige)",
+          "speaker": "Feidreiva (allongée dans la neige avec Wismerhill)",
           "text": "Joli coup, Capitaine !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Merci."
         }
       ],
       "notes": [
         "[GAMEPLAY] Déclenche l'exploit exploit_premier_pouvoir_psychique_t1.",
         "[BD-T1] La chaise qui s'enflamme = preuve visuelle du rayon psychique rouge sang.",
-        "[BD-T1] Feidreiva observe depuis une fenêtre — ellipse narrative sur leur relation hivernale."
+        "[BD-T1] Scène suivante (« ...tout comme Feidreiva ») : allongée dans la neige avec Wismerhill, elle le félicite — ellipse sur leur relation hivernale."
       ]
     },
     {
       "id": "dial_frater_sinister_liberation_t1",
-      "name": "La Libération — Frater Sinister reconnaît les armoiries",
+      "name": "La Libération — Urmarcht reconnaît les armoiries",
       "npc_name": "Frater Sinister (T1) / Urmarcht",
       "faction_id": "chevaliers_de_la_lumiere",
       "race_id": "race_human",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
-          "speaker": "Urmarcht (démon)",
-          "text": "Je comprends : on t'a enlevé et forcé à te battre ! Rendez-lui ses armes !"
-        },
-        {
-          "speaker": "Frater Sinister",
+          "speaker": "Urmarcht (par la bouche de Frater Sinister)",
           "text": "Je reconnais tes armoiries. J'ai combattu aux côtés de ton père autrefois..."
         },
         {
@@ -158282,15 +158566,19 @@
           "text": "?!?"
         },
         {
-          "speaker": "Frater Sinister",
+          "speaker": "Urmarcht (par la bouche de Frater Sinister)",
+          "text": "Je comprends : on t'a enlevé et forcé à te battre ! Rendez-lui ses armes !"
+        },
+        {
+          "speaker": "Urmarcht (par la bouche de Frater Sinister)",
           "text": "Qu'il parte ! Remercie la Lumière... Tu es libre."
         }
       ],
       "notes": [
-        "[BD-T1] Révélation narrative majeure : Frater Sinister connaît le père de Wismerhill.",
-        "[BD-T1] C'est Urmarcht, le démon, qui prend l'initiative de demander la libération — Frater Sinister approuve.",
+        "[BD-T1] Révélation majeure : le démon Urmarcht, qui parle par la bouche de Frater Sinister (« c'est le démon qui parla alors »), a combattu aux côtés du père de Wismerhill.",
+        "[BD-T1] Toutes les répliques sont celles du démon (bulles vertes), prononcées par Frater Sinister.",
         "[GAMEPLAY] Débloque exploit_libere_par_ennemi_t1. Ouvre les quêtes quest_fils_du_destin et quest_mort_du_pere.",
-        "[BD-T1] Frater Sinister T1 = blond, yeux bleus — différent du Menthat rasé des tomes 3-4 (évolution ou personnage différent)."
+        "[BD-T1] Ici, Frater Sinister apparaît en robe et haute capuche blanches, visage caché ; son aspect blond du tome 1 et la fusion avec Fratus Sinister sont décrits dans char_fratus_sinister."
       ]
     },
     {
@@ -158299,7 +158587,7 @@
       "npc_name": "Wismerhill",
       "faction_id": "",
       "race_id": "race_dark_elf",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
           "speaker": "Wismerhill",
@@ -158318,11 +158606,11 @@
       "npc_name": "Narrateur",
       "faction_id": "",
       "race_id": "",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
           "speaker": "Narrateur",
-          "text": "Et pendant que la tempête secouait Kendrhi dévastée, et que la foudre balayait les chevaliers en déroute, trois silhouettes disparaissaient dans les ténèbres..."
+          "text": "Et pendant que la tempête secouait Kendrhir dévastée, et que la foudre balayait les chevaliers en déroute, trois silhouettes disparaissaient dans les ténèbres..."
         },
         {
           "speaker": "Narrateur",
@@ -158331,7 +158619,7 @@
       ],
       "notes": [
         "[BD-T1] Écran de fin de chapitre / acte. Transition vers le tome 2/3.",
-        "[GAMEPLAY] Les trois silhouettes = Wismerhill, Hizin, et probablement Feidreiva.",
+        "[BD-T1] Les trois silhouettes = Wismerhill, Feidreiva et Pile-ou-Face (p.52 BD).",
         "[BD-T1] 'La Lune Noire raconte' — titre de la série utilisé comme voix narrative pour la première fois."
       ]
     },
@@ -160058,43 +160346,43 @@
       ]
     },
     {
-      "id": "dial_seigneur_kendrhi_menace_t1",
-      "name": "Le Refus de Kendrhi — La Limace et les Corbeaux",
-      "npc_name": "Le Seigneur de Kendrhi / Messager / Ghorghor Bey",
+      "id": "dial_seigneur_kendrhir_menace_t1",
+      "name": "Le Refus de Kendrhir — La Limace et les Corbeaux",
+      "npc_name": "Le Grand Mage de Kendrhir / Messager / Ghorghor Bey",
       "faction_id": "faction_neutral",
       "race_id": "race_human",
-      "location_ville_id": "ville_kendrhi",
+      "location_ville_id": "kendrhir_vale",
       "lines": [
         {
-          "speaker": "Ghorghor",
-          "text": "L'hiver arrivait. Ghorghor Bey comptait bien le passer à Kendrhi, cité des Grands Mages..."
+          "speaker": "Narrateur",
+          "text": "L'hiver arrivait. Ghorghor Bey comptait bien le passer à Kendrhir, cité des Grands Mages..."
         },
         {
-          "speaker": "Défenseur (depuis les remparts)",
+          "speaker": "Conseiller (salle du conseil)",
           "text": "Cédez, Sire !"
         },
         {
-          "speaker": "Autre défenseur",
+          "speaker": "Autre conseiller",
           "text": "Son armée est puissante ! Mieux vaut l'amadouer !"
         },
         {
-          "speaker": "Seigneur de Kendrhi",
+          "speaker": "Grand Mage de Kendrhir",
           "text": "Jamais ! Qu'il m'attaque et il verra ma magie à l'œuvre !"
         },
         {
-          "speaker": "Seigneur de Kendrhi",
+          "speaker": "Grand Mage de Kendrhir",
           "text": "Messager ! Viens donc ici !"
         },
         {
-          "speaker": "Messager (à Ghorghor)",
+          "speaker": "Messager de Ghorghor (changé en batracien)",
           "text": "...et si vous l'attaquez il vous transformera en grosse limace baveuse et vous jettera à ses corbeaux ! qu'il a dit, chef !"
         },
         {
-          "speaker": "Ghorghor (à ses officiers)",
+          "speaker": "Messager de Ghorghor (changé en batracien)",
           "text": "Dites, chef, vous allez pas me laisser comme ça, hein ?"
         },
         {
-          "speaker": "Wismerhill",
+          "speaker": "Ghorghor",
           "text": "Une limace, mm ?"
         },
         {
@@ -160103,10 +160391,10 @@
         }
       ],
       "notes": [
-        "[BD-T1] Scène culte — l'arrogance du seigneur mage déclenchant la destruction de Kendrhi.",
+        "[BD-T1] Scène culte — l'arrogance du seigneur mage déclenchant la destruction de Kendrhir.",
         "[BD-T1] 'Rasez-moi tout ça !!!' — réplique iconique de Ghorghor Bey.",
-        "[GAMEPLAY] Déclenche automatiquement le raid_sac_kendrhi_t1.",
-        "[BD-T1] Wismerhill répète la menace ('Une limace, mm ?') avec un sourire en coin — humour caractéristique."
+        "[GAMEPLAY] Déclenche automatiquement le raid_sac_kendrhir_t1.",
+        "[BD-T1] « Une limace, mm ? » est dit par Ghorghor, juste avant « Rasez-moi tout ça !!! »."
       ]
     },
     {
@@ -162605,27 +162893,27 @@
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "char_le_serpent_t12",
+          "speaker": "char_serpent_methraton",
           "text": "C est fait! L artefact est pret a etre active!"
         },
         {
-          "speaker": "char_le_serpent_t12",
+          "speaker": "char_serpent_methraton",
           "text": "O Methraton! Nous avons reussi!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Apres des millenaires, je suis enfin present sur ce monde!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "L heure de la revanche a sonne! Les dieux vont maintenant payer pour leurs innombrables crimes!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Je retourne dans mon plan. Desactive la pyramide, Serpent!"
         },
         {
-          "speaker": "char_le_serpent_t12",
+          "speaker": "char_serpent_methraton",
           "text": "Attention, le Maitre arrive! Archimages, evacuez la zone!"
         }
       ],
@@ -163027,27 +163315,27 @@
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Vous me connaissez tous, je pense! Je suis Methraton, le Mage Ultime!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Vous êtes tous dans cette pièce les souverains des royaumes et des empires des hommes qui existent sur cette planète. Et c'est à ce titre que vous êtes ici. Ce monde est perdu mais cela ne veut pas dire que nous devons mourir avec lui."
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "J'ai trouvé un autre monde, quasiment parfait... Nous pouvons y établir l'humanité pour un nouveau départ!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Mais il y aura un prix à payer, un terrible prix. Vous gouvernerez ensemble sous un seul Empereur élu. Je ne veux plus de ces guerres innombrables et stupides. Je veux la paix!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "En outre, si vous ou vos peuples désirez toujours perdre votre temps à adorer vos dieux, j'ai une mauvaise nouvelle pour vous: vous n'aurez droit qu'à un dieu, le même pour tous!"
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Êtes-vous d'accord?"
         },
         {
@@ -163055,7 +163343,7 @@
           "text": "Oui. / Oui. / Oui. / Oui. / Oui. / Oui."
         },
         {
-          "speaker": "char_methraton_t12",
+          "speaker": "char_methraton",
           "text": "Parfait, je vais donc ouvrir les portes."
         }
       ],
@@ -163070,11 +163358,11 @@
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "char_oracle",
+          "speaker": "loracle_dieu_enchaine",
           "text": "Tu ne peux pas savoir depuis combien de temps j'ai été enchaînée dans cette masse immonde, tu ne peux pas comprendre l'infinie étendue de ma joie, même si elle annonce le glas de ce monde!"
         },
         {
-          "speaker": "char_oracle",
+          "speaker": "loracle_dieu_enchaine",
           "text": "Oui, Wismerhill, oui, Élu! La prophétie est accomplie, les temps sont venus, tu es bien l'élu! Celui dont le bras a soulevé la lune et maintenant les ténèbres se font marées, il n'y aura bientôt plus rien, plus rien que le néant."
         },
         {
@@ -163082,11 +163370,11 @@
           "text": "J'ai détruit le monde! Tous vont périr à cause de moi!"
         },
         {
-          "speaker": "char_oracle",
+          "speaker": "loracle_dieu_enchaine",
           "text": "Non, quand je regarde les choix que tu as faits dans le passé, ils étaient au moment où tu les as faits les plus proches du fil d'or du destin parfait. Ce n'est pas toi qui as détruit ce monde, c'est la Lune Noire."
         },
         {
-          "speaker": "char_oracle",
+          "speaker": "loracle_dieu_enchaine",
           "text": "Puis-je venir avec toi?"
         },
         {
@@ -163094,7 +163382,7 @@
           "text": "Demande, Oracle!... Viens!"
         },
         {
-          "speaker": "char_oracle",
+          "speaker": "loracle_dieu_enchaine",
           "text": "Merci!"
         }
       ],
@@ -163702,7 +163990,7 @@
       "tome": "t1",
       "faction": "",
       "biome": "colline / forêt",
-      "visual_description": "Colline boisée et tranquille. Lieu de vie d'une communauté mixte (humains et elfes). Aujourd'hui rasée — tout le monde y est mort. Wismerhill est le seul survivant.",
+      "visual_description": "Colline boisée et tranquille. Lieu de vie d'une communauté mixte (humains et elfes). Aujourd'hui rasée — tout le monde y est mort. Wismerhill dit en être parti.",
       "atmosphere": "Mélancolique, perdu dans le temps. Absence et ruines.",
       "strategic_importance": "",
       "lore": "Lieu d'origine de Wismerhill. Pas de vrai nom propre à la naissance — c'est Pile-ou-Face qui lui propose 'Wismerhill' d'après ce lieu, ce que les elfes appelleraient 'Wismerhill' ('chantant comme nom'). Wismerhill le conserve.",
@@ -163741,16 +164029,16 @@
       "notes": []
     },
     {
-      "id": "zone_kendrhi",
-      "name": "Kendrhi",
+      "id": "zone_kendrhir",
+      "name": "Kendrhir",
       "type": "city_mages",
       "tome": "t1",
       "faction": "",
       "biome": "plaine / sommet de falaise",
-      "visual_description": "Cité médiévale aux bâtisses gothiques serrées, tours à plusieurs étages, perchée sur une hauteur. Architecture sombre de bois noir et pierre. Clochers et fenêtres à meneaux. Brume légère.",
+      "visual_description": "Cité de bois aux toits très pentus et pignons superposés, haute tour à flèche, perchée sur un éperon rocheux au bord d'une falaise ; muraille haute à contreforts massifs.",
       "atmosphere": "Mystérieuse, académique mais fermée. Peu accueillante pour les étrangers.",
       "strategic_importance": "",
-      "lore": "Cité des Grands Mages. Ghorghor Bey veut y passer l'hiver. Le seigneur menace de le transformer en 'grosse limace baveuse'. Ghorghor rase la ville. C'est là que Wismerhill rencontre Hizin — un mage bouddhiste aux pouvoirs psychiques qui lui propose de lui enseigner à maîtriser ses dons.",
+      "lore": "Cité des Grands Mages. Ghorghor Bey veut y passer l'hiver. Le Grand Mage menace de le transformer en 'grosse limace baveuse'. Ghorghor rase la ville. C'est là que Wismerhill rencontre Hizin — un psychiste au service du Grand Mage, qui lui enseigne ensuite à maîtriser ses dons.",
       "source": "[BD-T1] Pages 21-23 (pp.29-33 BD)",
       "notes": []
     },
@@ -164607,69 +164895,69 @@
       },
       "major_events_t1": [
         {
-          "id": "event_oracle_prophecy",
+          "id": "event_oracle_prophecy_t1",
           "name": "La Prophétie de l'Oracle",
           "description": "L'Empereur de Lhynn consulte l'Oracle. L'Oracle prononce la prophétie complète de l'Élu (Wismerhill) devant lui. 30 ans après, cette prophétie sombra dans l'oubli.",
           "source": "[BD-T1] Pages 3-5"
         },
         {
-          "id": "event_wismerhill_pile_ou_face_meeting",
+          "id": "event_wismerhill_pile_rencontre_t1",
           "name": "Rencontre Wismerhill / Pile-ou-Face",
-          "description": "Wismerhill (sans nom) tue un monstre dans la forêt. Pile-ou-Face mange son lapin. Presque une rixe. Pile-ou-Face reconnaît la qualité de son épée, lui propose l'amitié, lui présente Nepher et Bepher, lui donne le nom 'Wismerhill' d'après le lieu de sa naissance.",
+          "description": "Wismerhill (sans nom) charge un « monstre » de la forêt qui n'est qu'un lapin. Pile-ou-Face s'empare du lapin rôti ; presque une rixe, puis repas partagé (« Tu as plu à mon épée, donc tu me plais aussi ! »). Pile-ou-Face lui présente Nepher et Bepher et lui donne le nom 'Wismerhill', forme elfique de Whispers Hill, le lieu d'où vient Wismerhill et où tout le monde est mort.",
           "source": "[BD-T1] Pages 6-8 (pp.12-14 BD)"
         },
         {
-          "id": "event_join_ghorghor",
+          "id": "event_join_ghorghor_t1",
           "name": "Intégration à la horde de Ghorghor Bey",
           "description": "Wismerhill et Pile-ou-Face tentent de voler les poules de Ghorghor Bey — arrêtés. Ghorghor les emprisonne puis, impressionné par leur audace et leurs capacités, les recrute dans sa bande.",
           "source": "[BD-T1] Pages 9-12 (pp.15-20 BD)"
         },
         {
-          "id": "event_feidreiva_meeting",
+          "id": "event_feidreiva_meeting_t1",
           "name": "Rencontre avec Feidreiva",
-          "description": "Lors d'une halte, Wismerhill aperçoit Feidreiva se baignant. Après un désaccord (gifle d'épée), ils se séduisent mutuellement et deviennent compagnons romantiques.",
+          "description": "Lors d'une halte, Wismerhill surprend Feidreiva qui se baigne dans un étang. Elle lance son épée, qui se plante dans l'arbre à côté de sa tête (« SSTONK »), puis le séduit ; ils deviennent amants.",
           "source": "[BD-T1] Pages 15-16 (pp.21-22 BD)"
         },
         {
-          "id": "event_faille_kashogs",
+          "id": "event_faille_kashogs_t1",
           "name": "Bataille de la Faille de Kashogs",
           "description": "Wismerhill 'entend' les vents lui révéler une embuscade dans la Faille. Prévient Ghorghor. La horde contre-attaque et écrase la troupe en embuscade. Wismerhill est promu lieutenant par Ghorghor Bey.",
           "source": "[BD-T1] Pages 18-19 (pp.26-27 BD)"
         },
         {
-          "id": "event_kendrhi_sac",
-          "name": "Sac de Kendrhi",
-          "description": "La horde de Ghorghor rase la cité des Grands Mages de Kendrhi. Wismerhill y combat Hizin (psychiquement très puissant). Hizin survit grâce à son bouclier mental. Wismerhill le sauve de Ghorghor. Hizin révèle que Wismerhill a des pouvoirs psychiques et propose de les entraîner.",
+          "id": "event_sac_kendrhir_hizin_t1",
+          "name": "Sac de Kendrhir",
+          "description": "La horde de Ghorghor rase Kendrhir, la cité des Grands Mages. Wismerhill y affronte Hizin, psychiste au service du Grand Mage, et l'emporte en duel psychique. Ghorghor remercie Wismerhill (« Merci, Wis ! ») puis écrase le Grand Mage entre ses poings. Hizin, qui a survécu grâce à son pouvoir mental, révèle à Wismerhill ses pouvoirs psychiques et accepte de les lui enseigner (« Marché conclu »).",
           "source": "[BD-T1] Pages 21-23 (pp.29-33 BD)"
         },
         {
-          "id": "event_winter_kendrhi",
-          "name": "L'Hiver à Kendrhi — Entraînement",
-          "description": "La horde passe l'hiver à Kendrhi rasée. Wismerhill s'entraîne : maniement des armes le matin (avec Feidreiva), festins de Ghorghor le midi, leçons de Pile-ou-Face, puis enseignements psychiques de Hizin le soir. L'hiver est consumé. Wismerhill bat Pile-ou-Face à la lutte et maîtrise le rayon psychique.",
+          "id": "event_winter_kendrhir",
+          "name": "L'Hiver à Kendrhir — Entraînement",
+          "description": "La horde passe l'hiver à Kendrhir. Wismerhill s'entraîne : maniement des armes le matin (avec Feidreiva), festins de Ghorghor le midi, leçons de Pile-ou-Face, cours de stratégie avec les officiers, puis enseignements psychiques de Hizin le soir. L'hiver était à demi consumé quand Wismerhill battit Pile-ou-Face à l'entraînement ; il maîtrise ensuite le rayon psychique.",
           "source": "[BD-T1] Pages 24-30 (pp.36-40 BD)"
         },
         {
           "id": "event_chevaliers_lumiere_arrive",
           "name": "Arrivée des Chevaliers de la Lumière",
-          "description": "L'armée immense des Chevaliers de la Lumière marche sur Kendrhi, menée par Frater Sinister, mandatée par l'Empereur pour éliminer Ghorghor Bey. Wismerhill voit l'armée et annonce qu'il faut faire une sortie.",
+          "description": "Les vents avertissent Wismerhill de l'approche d'une immense armée blanche ; Ghorghor minimise la menace. Les Chevaliers de la Lumière, menés par Frater Sinister sur ordre de l'Empereur, assiègent Kendrhir. Le démon Urmarcht souffle à Ghorghor de tenter une sortie, et Ghorghor ordonne : « Il faut faire une sortie !! ».",
           "source": "[BD-T1] Pages 31-35 (pp.41-43 BD)"
         },
         {
-          "id": "event_grande_bataille",
+          "id": "event_grande_bataille_t1",
           "name": "La Grande Bataille",
-          "description": "Ghorghor Bey mène la sortie. Combat acharné contre les Chevaliers de la Lumière. Le démon Urmarcht intervient (envoyé par un mage pour protéger l'enfant). Malgré le courage, la marée blanche des Chevaliers est inexorable. Un à un, les compagnons tombent. Ghorghor est apparemment tué.",
+          "description": "Ghorghor Bey mène la sortie que lui a soufflée le démon Urmarcht, envoyé par un vieux sorcier (le « Maître ») pour protéger « l'enfant ». Combat acharné contre les Chevaliers de la Lumière ; la marée blanche est inexorable. Un à un, les compagnons tombent ; Ghorghor, criblé de piques, a un sort inconnu à la fin du tome.",
           "source": "[BD-T1] Pages 35-43 (pp.43-49 BD)"
         },
         {
           "id": "event_wismerhill_freed",
-          "name": "Wismerhill Libéré par Frater Sinister",
-          "description": "Wismerhill est capturé et amené devant Frater Sinister. Le démon Urmarcht prend la parole et révèle qu'il reconnaît les armoiries de Wismerhill — il a combattu aux côtés de son père autrefois. Frater Sinister ordonne de lui rendre ses armes et de le libérer.",
+          "name": "Wismerhill libéré — Urmarcht parle par Frater Sinister",
+          "description": "Wismerhill est capturé et amené devant Frater Sinister, mais c'est le démon Urmarcht qui parle par sa bouche : il reconnaît les armoiries de Wismerhill, dit avoir combattu aux côtés de son père autrefois, fait rendre ses armes et le libère (« Qu'il parte ! Remercie la Lumière... Tu es libre »).",
           "source": "[BD-T1] Pages 43 (p.49 BD)"
         },
         {
           "id": "event_finale_t1",
           "name": "Fuite dans les Ténèbres",
-          "description": "Wismerhill appelle les vents à la vengeance. Tempête, tonnerre, éclairs s'abattent sur les Chevaliers en déroute. Wismerhill, Hizin et un troisième personnage (Feidreiva?) disparaissent dans les ténèbres. La Lune Noire raconte que Wismerhill 'part vers son destin'.",
+          "description": "Wismerhill retrouve le corps de Hizin et croit tous ses compagnons morts. Il appelle les vents à la vengeance : tempête, tonnerre et éclairs s'abattent sur Kendrhir et sur les Chevaliers, qui sont mis en déroute. Feidreiva et Pile-ou-Face reparaissent alors vivants, vêtus de robes de Chevaliers de la Lumière ; les trois silhouettes disparaissent dans les ténèbres sous une lune noire. La Lune Noire raconte que Wismerhill 'part vers son destin'.",
           "quote": "Et la Lune Noire raconte que Wismerhill partit alors vers son destin...",
           "source": "[BD-T1] Page 46 (p.52 BD)"
         }
@@ -164699,12 +164987,12 @@
         }
       },
       "world_state_end_of_tome1": {
-        "wismerhill_status": "Libéré par Frater Sinister (car Urmarcht connaissait son père). Fuit avec Hizin et probablement Feidreiva. Part vers son destin.",
-        "ghorghor_status": "Apparemment tué ou vaincu lors de la grande bataille — statut incertain. Retrouvé vivant dans les tomes ultérieurs (anneau de régénération).",
-        "pile_ou_face_status": "Statut inconnu après la bataille. Absent des tomes 3-4.",
-        "chevaliers_lumiere": "Victoire — ont pris Kendrhi et battu la horde.",
-        "hizin_status": "Survit — repart avec Wismerhill. Son rôle de mentor continue dans les tomes suivants.",
-        "feidreiva_status": "Probablement parmi les fugitifs avec Wismerhill (voir silhouette finale)."
+        "wismerhill_status": "Libéré sur l'intervention du démon Urmarcht, qui parle par la bouche de Frater Sinister et a combattu aux côtés de son père. Part avec Feidreiva et Pile-ou-Face vers son destin.",
+        "ghorghor_status": "Criblé de piques pendant la sortie — sort inconnu à la fin du tome 1. Retrouvé vivant dans les tomes ultérieurs (anneau de régénération).",
+        "pile_ou_face_status": "Survit : reparaît vivant et blessé, vêtu d'une robe de Chevalier de la Lumière, et part avec Wismerhill et Feidreiva [BD-T1 p.52].",
+        "chevaliers_lumiere": "Prennent la citadelle de Kendrhir et battent la horde, puis sont mis en déroute par la tempête de Wismerhill [BD-T1 p.52].",
+        "hizin_status": "Mort (déduction) : frappé au front pendant la bataille, Wismerhill retrouve et pleure son corps [BD-T1 p.49-50].",
+        "feidreiva_status": "Survit : reparaît vivante et blessée, vêtue d'une robe de Chevalier de la Lumière, et part avec Wismerhill et Pile-ou-Face [BD-T1 p.52]."
       }
     },
     "tome4": {
@@ -165574,7 +165862,7 @@
     {
       "id": "N018_E009",
       "name": "cell_N018_E009",
-      "region_id": "foret_elfique",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165593,7 +165881,7 @@
     {
       "id": "N018_E010",
       "name": "cell_N018_E010",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165612,7 +165900,7 @@
     {
       "id": "N018_E011",
       "name": "cell_N018_E011",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165631,7 +165919,7 @@
     {
       "id": "N018_E012",
       "name": "cell_N018_E012",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -165650,7 +165938,7 @@
     {
       "id": "N018_E013",
       "name": "cell_N018_E013",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166307,7 +166595,7 @@
     {
       "id": "N017_E009",
       "name": "cell_N017_E009",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166326,7 +166614,7 @@
     {
       "id": "N017_E010",
       "name": "cell_N017_E010",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166345,7 +166633,7 @@
     {
       "id": "N017_E011",
       "name": "cell_N017_E011",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166364,7 +166652,7 @@
     {
       "id": "N017_E012",
       "name": "cell_N017_E012",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -166383,7 +166671,7 @@
     {
       "id": "N017_E013",
       "name": "cell_N017_E013",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "region_marches",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -168564,7 +168852,7 @@
       "id": "N014_E012",
       "name": "cell_N014_E012",
       "region_id": "terres_des_gigantomorphes",
-      "terrain_type": "forest",
+      "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -168574,7 +168862,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[BD-T1] Grande plaine au sud de Kendrhir, où campent les Chevaliers de la Lumière (p.41 BD)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -190022,7 +190312,7 @@
       "from_ville_id": "city_dragon_palace",
       "from_lieu_id": "",
       "to_place": "S005_W004",
-      "to_ville_id": "ville_tbarak",
+      "to_ville_id": "ville_equiton",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -190271,7 +190561,7 @@
       "id": "000107",
       "type": "sea_route",
       "from_place": "S005_W004",
-      "from_ville_id": "ville_tbarak",
+      "from_ville_id": "ville_equiton",
       "from_lieu_id": "",
       "to_place": "S008_W002",
       "to_ville_id": "town_0137",
@@ -190341,7 +190631,7 @@
       "from_ville_id": "hamlet_0172",
       "from_lieu_id": "",
       "to_place": "S005_W004",
-      "to_ville_id": "ville_tbarak",
+      "to_ville_id": "ville_equiton",
       "to_lieu_id": "",
       "description": "Étape 4 de la ligne maritime du sud",
       "notes": [],
@@ -190379,6 +190669,66 @@
         "N011_E002",
         "N012_E002"
       ]
+    },
+    {
+      "id": "000112",
+      "type": "road",
+      "from_place": "N018_E010",
+      "from_ville_id": "ville_tbarak",
+      "from_lieu_id": "",
+      "to_place": "N017_E019",
+      "to_ville_id": "ville_klindor",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000113",
+      "type": "road",
+      "from_place": "N017_E019",
+      "from_ville_id": "ville_klindor",
+      "from_lieu_id": "",
+      "to_place": "N017_E011",
+      "to_ville_id": "ville_hazol",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000114",
+      "type": "road",
+      "from_place": "N017_E013",
+      "from_ville_id": "ville_dunfold",
+      "from_lieu_id": "",
+      "to_place": "N015_E012",
+      "to_ville_id": "kendrhir_vale",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Des Marches à Kendrhir par la Faille de Kashogs (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000115",
+      "type": "road",
+      "from_place": "N017_E011",
+      "from_ville_id": "ville_hazol",
+      "from_lieu_id": "",
+      "to_place": "N015_E017",
+      "to_ville_id": "ville_moorgate",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
+    },
+    {
+      "id": "000116",
+      "type": "road",
+      "from_place": "N015_E017",
+      "from_ville_id": "ville_moorgate",
+      "from_lieu_id": "",
+      "to_place": "N017_E013",
+      "to_ville_id": "ville_dunfold",
+      "to_lieu_id": "",
+      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
+      "notes": []
     }
   ],
   "competences": [
@@ -190473,10 +190823,10 @@
       ],
       "source": "[BD-T1] pages 29-30",
       "notes": [
-        "[BD-T1] Enseignée par Hizin à Kendrhi lors de l'hiver. 4 étapes : focaliser la volonté → vide de l'esprit → concentration → projection.",
-        "[BD-T1] Première démonstration : Hizin brûle une chaise en la regardant ('rayon d'énergie rouge sang').",
+        "[BD-T1] Enseignée par Hizin à Kendrhir lors de l'hiver. 4 étapes : focaliser la volonté → vide de l'esprit → concentration → projection.",
+        "[BD-T1] Hizin projette un rayon jaune lors du duel contre Wismerhill ; le rayon de Wismerhill est rouge sang (pp.33-35 BD).",
         "[BD-T1] Premier succès de Wismerhill : il enflamme une chaise avec un rayon psychique. Hizin : 'Excellent !'",
-        "[BD-T1] Hizin est le seul enseignant psychique connu — sa mort au raid_sac_kendrhi_t1 empêche l'apprentissage."
+        "[GAMEPLAY] Hizin est le seul enseignant psychique connu — s'il est tué au raid_sac_kendrhir_t1, l'apprentissage est bloqué. [BD-T1] Il meurt pendant la Grande Bataille."
       ]
     },
     {
@@ -190667,7 +191017,7 @@
         "race_dark_elf"
       ],
       "prerequisite": "Demi-sang elfen ténébreux uniquement (père ou mère elfe ténébreux)",
-      "description": "Capacité passive innée chez les demi-sangs elfes ténébreux. Wismerhill, ayant grandi seul à Whispers Hill après la destruction du village, a développé un instinct de survie en milieu sauvage exceptionnel. Chasse, pistage, orientation dans les forêts et les régions isolées.",
+      "description": "Capacité passive innée chez les demi-sangs elfes ténébreux. Wismerhill, venu seul de Whispers Hill où tout le monde est mort, a développé un instinct de survie en milieu sauvage exceptionnel. Chasse, pistage, orientation dans les forêts et les régions isolées.",
       "progression": [
         {
           "level": 1,
@@ -190700,8 +191050,8 @@
       ],
       "source": "[BD-T1] Pages 6-7 — Wismerhill chasse seul avant de rencontrer Pile-ou-Face. Survie autonome évidente.",
       "notes": [
-        "[BD-T1] Wismerhill tue une créature de forêt seul, sans groupe, au tout début du tome — indicateur de compétence de survie innée.",
-        "[BD-T1] 'Trente ans ont passé...' — texte narratif indiquant que Wismerhill a survécu longtemps seul.",
+        "[BD-T1] Au tout début du tome, Wismerhill voyage et chasse seul (le « monstre » qu'il charge est un lapin).",
+        "[BD-T1] « Trente ans plus tard... » mesure le temps écoulé depuis la prophétie de l'Oracle ; la durée de la solitude de Wismerhill n'est pas précisée.",
         "[GAMEPLAY] Cette compétence compense l'absence d'équipe pendant la phase d'introduction solo."
       ]
     },
@@ -190743,12 +191093,12 @@
       "incantation": "",
       "training_steps": [
         "Niveau 1 : automatique pour demi-sangs guerriers",
-        "Niveaux 2-3 : entraînement avec Feidreiva (hiver à Kendrhi) [BD-T1] pages 28-29",
+        "Niveaux 2-3 : entraînement avec Feidreiva (hiver à Kendrhir) [BD-T1] pages 28-29",
         "Niveau 4 : après maîtrise niveau 3 magie des vents"
       ],
       "source": "[BD-T1] Pages 15-16, 28-29, 41-43 — Wismerhill combat avec fluidité et précision tout au long du tome.",
       "notes": [
-        "[BD-T1] Feidreiva entraîne Wismerhill à l'épée le matin pendant l'hiver à Kendrhi.",
+        "[BD-T1] Feidreiva entraîne Wismerhill à l'épée le matin pendant l'hiver à Kendrhir.",
         "[BD-T1] 'Plus haut, ta garde, là !' — Feidreiva corrige Wismerhill pendant l'entraînement.",
         "[GAMEPLAY] Compétence transversale — utilisable en même temps que la magie des vents."
       ]
@@ -190799,7 +191149,7 @@
       ],
       "source": "[BD-T1] Pages 18-19, 28-43 — Wismerhill promu lieutenant, participe aux stratégies de Ghorghor.",
       "notes": [
-        "[BD-T1] 'Il rejoignait ensuite les officiers pour des cours de stratégie' — Wismerhill apprend la tactique à Kendrhi.",
+        "[BD-T1] 'Il rejoignait ensuite les officiers pour des cours de stratégie' — Wismerhill apprend la tactique à Kendrhir.",
         "[BD-T1] 'Wismerhill ! Je t'élève au rang de combattant d'élite ! Tu seras mon lieutenant !' — Ghorghor Bey.",
         "[GAMEPLAY] Compétence de groupe — plus efficace avec de vrais joueurs dans le groupe qu'avec des PNJ seuls."
       ]
@@ -191662,7 +192012,7 @@
       "description": "L'Oracle ne reçoit qu'un être à la fois. Le visiteur doit formuler SA question lui-même (rite du 'tu prononces la question'). L'Oracle ne peut révéler qu'une seule information par visite. Il a déjà été puni pour en avoir dit trop — ne risquera plus jamais sa liberté.",
       "applies_to": [
         "zone_oracle",
-        "char_entite_oracle"
+        "loracle_dieu_enchaine"
       ],
       "mechanique_jeu": "",
       "apparition_window": "",
@@ -192196,8 +192546,8 @@
       "description": "L'Oracle ne peut révéler l'avenir que sous forme de prophéties cryptées, jamais en langage clair. Il a été puni autrefois pour avoir dit trop — il ne risquera plus jamais sa liberté. Une prophétie de l'Oracle est toujours vraie, mais toujours ambiguë : seul l'accomplissement des événements permet de la comprendre rétrospectivement. En jeu : les joueurs peuvent consulter l'Oracle, mais la réponse est toujours une énigme poétique.",
       "applies_to": [
         "ville_oracle_camp",
-        "char_entite_oracle",
-        "char_oracle_entity_t1"
+        "loracle_dieu_enchaine",
+        "loracle_dieu_enchaine"
       ],
       "mechanique_jeu": "Consultation de l'Oracle : 1 question par visite, 1 visite par semaine de jeu. Réponse toujours sous forme de prophétie (5-7 lignes poétiques). L'interprétation est à la charge du joueur — pas d'aide du système.",
       "apparition_window": "",
@@ -192641,19 +192991,19 @@
     },
     {
       "id": "rule_formation_schedule_hivernale_t1",
-      "name": "Programme de Formation Hivernale (Kendrhi)",
+      "name": "Programme de Formation Hivernale (Kendrhir)",
       "category": "progression_personnage",
-      "description": "L'hiver à Kendrhi établit un modèle de formation intensif pour Wismerhill : 4 blocs d'activités quotidiennes → 4 types de progression simultanée. Ce modèle peut être reproduit en jeu via des 'périodes d'entraînement' dans une ville sécurisée : le joueur choisit 4 activités pour la journée (combat matin, social midi, tactique après-midi, magie soir) et gagne des bonus de XP dans chaque domaine selon le choix.",
+      "description": "L'hiver à Kendrhir établit un modèle de formation intensif pour Wismerhill : 4 blocs d'activités quotidiennes → 4 types de progression simultanée. Ce modèle peut être reproduit en jeu via des 'périodes d'entraînement' dans une ville sécurisée : le joueur choisit 4 activités pour la journée (combat matin, social midi, tactique après-midi, magie soir) et gagne des bonus de XP dans chaque domaine selon le choix.",
       "applies_to": [
         "char_wismerhill",
-        "quest_formation_hivernale_kendrhi_t1",
-        "ville_kendrhi"
+        "quest_formation_hivernale_kendrhir_t1",
+        "kendrhir_vale"
       ],
       "mechanique_jeu": "Système de 'journée d'entraînement' : le joueur peut déclencher une période d'entraînement de 24h réelles dans une ville alliée. Chaque bloc (matin/midi/après-midi/soir) donne +15% XP dans la compétence associée pendant cette période. Coût : ressources de nourriture et logement.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
-      "source": "[BD-T1] Pages 28-31 — routine hivernale de Wismerhill à Kendrhi.",
+      "source": "[BD-T1] Pages 28-31 — routine hivernale de Wismerhill à Kendrhir.",
       "notes": [
         "[BD-T1] Schedule : matin (épée/Feidreiva), midi (festin/Ghorghor), après-midi (Pile-ou-Face), soir (Hizin/magie).",
         "[GAMEPLAY] Ce système valorise le temps passé dans les villes — équilibre entre aventure et progression passive.",
@@ -192664,10 +193014,10 @@
       "id": "rule_armoiries_et_reconnaissances_lignees_t1",
       "name": "Armoiries et Reconnaissance des Lignées",
       "category": "lore_social",
-      "description": "Les armoiries d'une grande lignée sont reconnaissables par ceux qui ont combattu aux côtés de cette famille. En jeu : certains PNJ peuvent reconnaître les armoiries d'un personnage joueur et modifier leur comportement en conséquence. Exemple canonique : Frater Sinister libère Wismerhill parce qu'Urmarcht reconnaît les armoiries du père. Ce système de 'reconnaissance d'armoiries' peut créer des événements narratifs inattendus.",
+      "description": "Les armoiries d'une grande lignée sont reconnaissables par ceux qui ont combattu aux côtés de cette famille. En jeu : certains PNJ peuvent reconnaître les armoiries d'un personnage joueur et modifier leur comportement en conséquence. Exemple canonique : le démon Urmarcht, parlant par la bouche de Frater Sinister, reconnaît les armoiries du père de Wismerhill et le fait libérer. Ce système de 'reconnaissance d'armoiries' peut créer des événements narratifs inattendus.",
       "applies_to": [
         "char_wismerhill",
-        "char_frater_sinister_t1",
+        "char_fratus_sinister",
         "char_urmarcht",
         "char_wismerhill_father"
       ],
@@ -192677,7 +193027,7 @@
       "training_minimum": "",
       "source": "[BD-T1] Page 43 — Urmarcht reconnaît les armoiries de Wismerhill ('J'ai combattu aux côtés de ton père autrefois...').",
       "notes": [
-        "[BD-T1] 'Je reconnais tes armoiries. J'ai combattu aux côtés de ton père autrefois...' — Frater Sinister.",
+        "[BD-T1] 'Je reconnais tes armoiries. J'ai combattu aux côtés de ton père autrefois...' — Urmarcht, par la bouche de Frater Sinister.",
         "[GAMEPLAY] Ce système encourage les joueurs à personnaliser leurs armoiries avec des symboles de lignée narratifs.",
         "[LORE_ETENDU] Applicable à toutes les grandes familles et lignées de l'Empire et au-delà."
       ]
@@ -192773,7 +193123,7 @@
       "description": "L'Oracle confirme en T3 que la prophétie du Sang Impur concerne bien Wismerhill. 'Le sang impur luttera, tuera et corrompra les structures. Repoussant l'humanité.' L'Oracle lui révèle aussi l'identité de son père comme premier élément de compréhension.",
       "applies_to": [
         "char_wismerhill",
-        "char_entite_oracle",
+        "loracle_dieu_enchaine",
         "zone_oracle"
       ],
       "mechanique_jeu": "",
@@ -193456,8 +193806,8 @@
       "description": "Methraton, entite ancienne ennemie des dieux, est de retour dans le monde physique apres des millenaires d absence via la Pyramide Archimages. Troisieme faction cosmique : ni du cote de Dieu/Justice, ni des Demons.",
       "applies_to": [
         "faction_archimages",
-        "char_methraton_t12",
-        "char_le_serpent_t12"
+        "char_methraton",
+        "char_serpent_methraton"
       ],
       "mechanique_jeu": "Post-T12 : faction_archimages devient active comme faction cachee. Quetes de faction disponibles (niveau 65+). Pyramide Archimages = zone haute difficulte. Methraton prepare sa revanche -- ne frappe pas encore.",
       "apparition_window": "T12+",
@@ -193602,7 +193952,7 @@
       "category": "cosmique_majeur",
       "description": "Methraton a active ses 72 pyramides archimages. Un ecran protecteur entoure desormais la planete entiere. Les Dieux ne peuvent plus venir sur Terre ni y agir. Valide pour une duree indeterminine (Opus II+).",
       "applies_to": [
-        "char_methraton_t12",
+        "char_methraton",
         "faction_archimages",
         "faction_gods"
       ],
@@ -193739,7 +194089,7 @@
       "category": "politique_monde_majeur",
       "description": "Methraton ouvre des Portes de Transfert colossales partout dans le monde. Toute l'humanité migre vers Terra Secunda. Le nouveau monde est gouverné par un Conseil des Souverains sous un seul Empereur élu, avec un seul Dieu pour tous.",
       "applies_to": [
-        "char_methraton_t12",
+        "char_methraton",
         "faction_empire",
         "faction_conseil_souverains",
         "region_terra_secunda"
@@ -193764,7 +194114,7 @@
       "category": "cosmique_majeur",
       "description": "L'Oracle est libéré de ses chaînes éternelles lorsque la prophétie est accomplie. Il prend forme humanoïde argentée féminine, rejoint Wismerhill, et passe avec lui vers Terra Secunda. Plus aucun oracle fixe dans le monde originel.",
       "applies_to": [
-        "char_oracle",
+        "loracle_dieu_enchaine",
         "char_wismerhill"
       ],
       "mechanique_jeu": "Oracle: PNJ compagnon de Wismerhill (Opus II). Plus de chambre d'oracle fixe. Capacités d'oracle disponibles via Wismerhill (accès à certaines révélations de destin). Oracle non jouable.",
@@ -194111,16 +194461,16 @@
     },
     {
       "id": "rule_ligne_maritime_sud",
-      "name": "Ligne maritime Tbarak – Brookend – Hishtarland – Saltfen",
+      "name": "Ligne maritime Equiton – Brookend – Hishtarland – Saltfen",
       "category": "transport",
-      "description": "Ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Tbarak ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
+      "description": "Ligne en boucle Equiton → Brookend → Hishtarland → Saltfen → Equiton, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Equiton ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
       "applies_to": [
-        "ville_tbarak",
+        "ville_equiton",
         "town_0137",
         "hishtarland",
         "hamlet_0172"
       ],
-      "mechanique_jeu": "Ligne en boucle Tbarak → Brookend → Hishtarland → Saltfen → Tbarak, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Tbarak ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
+      "mechanique_jeu": "Ligne en boucle Equiton → Brookend → Hishtarland → Saltfen → Equiton, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Equiton ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -194131,21 +194481,21 @@
       "id": "rule_abysses_baie_acces",
       "name": "Les Abysses de la baie — conditions d'accès",
       "category": "exploration",
-      "description": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
+      "description": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Equiton, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
       "applies_to": [
         "zone_abysses_baie",
         "lieu_abysses_baie",
         "raid_ile_hishtarland",
         "raid_abysses_temple_englouti",
         "raid_abysses_antre",
-        "quest_abysses_1_tbarak",
+        "quest_abysses_1_equiton",
         "quest_abysses_2_brookend",
         "quest_abysses_3_hishtarland",
         "quest_abysses_4_saltfen",
         "quest_abysses_5_harrowbrook",
         "quest_abysses_6_millford"
       ],
-      "mechanique_jeu": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
+      "mechanique_jeu": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Equiton, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -195408,7 +195758,7 @@
           "town_0123",
           "ville_lhynn",
           "hamlet_0172",
-          "ville_tbarak",
+          "ville_equiton",
           "town_0137",
           "hishtarland"
         ],
@@ -196065,7 +196415,7 @@
       "tome_source": "t01",
       "tier": "principal",
       "region_id": "region_marches",
-      "description": "Fil rouge du périple de la horde de Ghorghor Bey à travers les Territoires des Marches (Tbarak → Hazol → Klindor → Faille de Kashogs → Kendrhi). Décliné côté horde (pillage/conquête) vs côté défenseurs des cités et Ordres (résistance). S'appuie sur les raids existants raid_pillage_marches_t1 et raid_sac_kendrhi_t1.",
+      "description": "Fil rouge du périple de la horde de Ghorghor Bey à travers les Territoires des Marches (Tbarak → Klindor → Hazol → Moorgate → Dunfold → Faille de Kashogs → Kendrhir). Décliné côté horde (pillage/conquête) vs côté défenseurs des cités et Ordres (résistance). S'appuie sur les raids existants raid_pillage_marches_t1 et raid_sac_kendrhir_t1.",
       "linked_quest_ids": [
         "quest_t01_gd_escorte_horde",
         "quest_t01_gd_defendre_cite_marches",
@@ -196073,8 +196423,8 @@
       ],
       "linked_raid_ids": [
         "raid_pillage_marches_t1",
-        "raid_sac_kendrhi_t1",
-        "raid_t01_gd_defense_kendrhi"
+        "raid_sac_kendrhir_t1",
+        "raid_t01_gd_defense_kendrhir"
       ],
       "tags": [
         "[GD]",
@@ -196092,20 +196442,20 @@
       "tier": "principal",
       "region_id": "region_marches",
       "ville_id": "kendrhir_vale",
-      "description": "La grande bataille finale de Kendrhi : les Chevaliers de la Lumière (Frater Sinister, sous l'Empereur) marchent anéantir la horde. Pivot du tome — la Lune Noire s'éveille. Décliné en survie (horde), assaut sacré (Ordres), et exploitation occulte (Lune Noire qui observe le Signe).",
+      "description": "La grande bataille finale de Kendrhir : les Chevaliers de la Lumière (Frater Sinister, sous l'Empereur) marchent anéantir la horde. Pivot du tome — la Lune Noire s'éveille. Décliné en survie (horde), assaut sacré (Ordres), et exploitation occulte (Lune Noire qui observe le Signe).",
       "linked_quest_ids": [
         "quest_t01_gd_assaut_sacre",
         "quest_t01_gd_tenir_les_rangs",
         "quest_t01_gd_observer_le_signe"
       ],
       "linked_raid_ids": [
-        "raid_grande_bataille_kendrhi_t1",
+        "raid_grande_bataille_kendrhir_t1",
         "raid_t01_gd_contre_grande_bataille"
       ],
       "tags": [
         "[GD]",
         "t01",
-        "kendrhi",
+        "kendrhir",
         "lumiere",
         "lune_noire",
         "pivot"
@@ -196229,7 +196579,9 @@
       ],
       "prompt_image_ultra_detaille": "Immense canyon de fantasy, falaises rouges déchiquetées s'élevant à des centaines de mètres, profonde faille noire centrale plongeant dans l'obscurité, pics rocheux acérés, plateau herbeux vert vif en surplomb avec petites silhouettes humaines pour l'échelle, longues traînées blanches serpentant dans le ciel comme des vents matérialisés ou des rubans magiques, ciel bleu clair lumineux, ambiance dramatique et vertigineuse, style bande dessinée européenne heroic fantasy, encrage noir prononcé, couleurs saturées rouge orange et bleu.",
       "footprint_tiles": [],
-      "notes": []
+      "notes": [
+        "[BD-T1] Ferme les Territoires des Marches au sud (carte p.25) : la horde l'atteint depuis Dunfold, puis gagne Kendrhir, juste au sud (N015_E012)."
+      ]
     },
     {
       "id": "lieu_mont_neufs_pics",
@@ -198114,7 +198466,7 @@
       "name": "Ligne maritime du sud",
       "stops": [
         {
-          "ville_id": "ville_tbarak",
+          "ville_id": "ville_equiton",
           "ponton_cell": "S005_W004",
           "stop_seconds": 30
         },
@@ -198179,7 +198531,7 @@
       "name": "Les Abysses de la baie",
       "cell": "S008_W005",
       "quests": [
-        "quest_abysses_1_tbarak",
+        "quest_abysses_1_equiton",
         "quest_abysses_2_brookend",
         "quest_abysses_3_hishtarland",
         "quest_abysses_4_saltfen",

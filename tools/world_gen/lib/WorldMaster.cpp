@@ -156,7 +156,7 @@ namespace tools::world_gen
 		std::set<std::string> ids;
 		static const std::set<std::string> kKinds = { "capitale", "grande_ville", "ville", "forteresse", "village", "hameau", "camp" };
 		static const std::set<std::string> kRaces = { "humains", "elfes", "orcs", "nains", "demons", "neutre" };
-		static const std::set<std::string> kStates = { "intact", "ruine", "camp" };
+		static const std::set<std::string> kStates = { "intact", "ruine", "reconstruction", "camp" };
 		const JsonValue* cs = FindObjectMember(root, "cities");
 		if (!cs || cs->type != JsonType::Array || cs->arrayValue.empty()) { err = "master: 'cities' vide"; return false; }
 		for (const JsonValue& c : cs->arrayValue)

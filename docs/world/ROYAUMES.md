@@ -171,6 +171,12 @@ voisines raccord au mètre près :
 7. Routes découpées + **chemins locaux** reliant chaque lieu au réseau.
 8. `Settlements.cpp` : rues, lots, auberge, forge, marché, remparts/palissades,
    champs, cimetière, accessoires de métier (bûcherons, mine, bandits).
+   État d'une ville (`cities[].state` du master) : `intact`, `ruine` (ruines,
+   pillards, ni auberge ni marché), `camp`, ou `reconstruction` (ville relevée
+   après un sac : environ 51 % de maisons habitées, 31 % de ruines et 18 % de
+   chantiers entourés d'étais et de matériaux, trois brèches avec gravats dans
+   le rempart ou la palissade ; auberge, marché, forge, pavage et PNJ comme une
+   ville intacte — ex. Kendrhir Vale après le tome 1).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
 10. `Population.cpp` : PNJ d'ambiance, voyageurs/patrouilles sur les routes,

@@ -21,9 +21,10 @@ int main()
 	using namespace engine::client;
 	const char* json = R"({ "schema_version": 1, "world": "t", "display_name": "Test", "map_image": "world/t/world_map.png",
 	  "terrain": { "origin_x": -100, "origin_z": -200, "size_m": 400 },
-	  "city_count": 2, "cities": [
+	  "city_count": 3, "cities": [
 	    { "id": "a", "name": "Alpha", "kind": "capitale", "race": "humains", "state": "intact", "x": 0, "z": 0, "radius_m": 30, "start_for": ["humains"], "description": "d" },
-	    { "id": "b", "name": "Beta", "kind": "village", "race": "elfes", "state": "ruine", "x": 120, "z": 50, "radius_m": 10, "start_for": [], "description": "" } ],
+	    { "id": "b", "name": "Beta", "kind": "village", "race": "elfes", "state": "ruine", "x": 120, "z": 50, "radius_m": 10, "start_for": [], "description": "" },
+	    { "id": "g", "name": "Gamma", "kind": "ville", "race": "humains", "state": "reconstruction", "x": 185, "z": 90, "radius_m": 6, "start_for": [], "description": "" } ],
 	  "poi_count": 1, "pois": [ { "id": "p", "name": "Oracle", "kind": "monolithe", "x": 10, "z": 10, "description": "" } ],
 	  "region_count": 2, "regions": [
 	    { "id": "big", "name": "Grande", "x_min": -100, "x_max": 300, "z_min": -200, "z_max": 200 },
@@ -32,7 +33,7 @@ int main()
 	WorldPlaces w;
 	std::string err;
 	Check(w.LoadFromText(json, err), "chargement valide");
-	Check(w.Cities().size() == 2 && w.Pois().size() == 1 && w.Regions().size() == 2, "comptes");
+	Check(w.Cities().size() == 3 && w.Pois().size() == 1 && w.Regions().size() == 2, "comptes");
 	Check(w.GeneratedCells().size() == 2 && w.GeneratedCells()[1] == "S009_E011", "cellules generees");
 	Check(w.Cities()[0].startFor.size() == 1 && w.Cities()[0].startFor[0] == "humains", "start_for");
 	Check(w.StartCityFor("humains") == &w.Cities()[0], "ville de depart humains");
@@ -67,6 +68,9 @@ int main()
 	Check(t.Visible() && t.Title() == "Petite", "entree de region");
 	t.Update(w, 120, 50, 0.016f); // entre dans Beta (ruine)
 	Check(t.Visible() && t.Title() == "Beta" && t.Subtitle().find("ruine") != std::string::npos, "entree de ville en ruine");
+	t.Update(w, 185, 90, 0.016f); // entre dans Gamma (reconstruction), même région
+	Check(t.Visible() && t.Title() == "Gamma" && t.Subtitle().find("en reconstruction") != std::string::npos,
+		"entree de ville en reconstruction");
 	Check(t.Alpha() >= 0.0f && t.Alpha() <= 1.0f, "alpha borne");
 
 	Check(!w.LoadFromText("{ \"schema_version\": 2 }", err) && !w.IsLoaded(), "schema refuse");

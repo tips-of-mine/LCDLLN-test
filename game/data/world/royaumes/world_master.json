@@ -54,7 +54,7 @@
       "                            -,............  ",
       "                           --,MMMMM.......  ",
       "                           -,.tTTTTM......  ",
-      "                           -,tTTTTTtM.....  ",
+      "                           -,tTTT.TtM.....  ",
       "     --------------       -,tTTTTTTTtM....  ",
       "   ---,,,,,,,,--,,-   -----,tTTTTTTTTtM...  ",
       "   -,,.r......,R%%-----oo-,,tTTTTTTTTt.M..  ",
@@ -124,6 +124,14 @@
       "e_min": 13,
       "e_max": 20,
       "n_min": 9,
+      "n_max": 18
+    },
+    {
+      "id": "marches_du_nord_ouest",
+      "name": "Marches du Nord",
+      "e_min": 9,
+      "e_max": 12,
+      "n_min": 17,
       "n_max": 18
     },
     {
@@ -273,14 +281,14 @@
     {
       "id": "kendrhir_vale",
       "name": "Kendrhir Vale",
-      "cell": "N007_E001",
+      "cell": "N015_E012",
       "kind": "ville",
       "race": "humains",
-      "state": "ruine",
+      "state": "reconstruction",
       "faction": "neutre",
       "start_for": [],
       "source": "[BD] BD-T1",
-      "description": "Cité des Grands Mages — rasée par la horde de Ghorghor Bey."
+      "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."
     },
     {
       "id": "horker",
@@ -449,7 +457,7 @@
     {
       "id": "ville_tbarak",
       "name": "Tbarak",
-      "cell": "N006_E002",
+      "cell": "N018_E010",
       "kind": "village",
       "race": "humains",
       "state": "intact",
@@ -459,9 +467,33 @@
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
     },
     {
+      "id": "ville_moorgate",
+      "name": "Moorgate",
+      "cell": "N015_E017",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (est des Marches) ; nom repris des lieux non utilisés."
+    },
+    {
+      "id": "ville_dunfold",
+      "name": "Dunfold",
+      "cell": "N017_E013",
+      "kind": "village",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (sud des Marches) ; nom repris des lieux non utilisés."
+    },
+    {
       "id": "ville_klindor",
       "name": "Klindor",
-      "cell": "N004_E004",
+      "cell": "N017_E019",
       "kind": "forteresse",
       "race": "humains",
       "state": "intact",
@@ -473,7 +505,7 @@
     {
       "id": "ville_hazol",
       "name": "Hazol",
-      "cell": "N001_E003",
+      "cell": "N017_E011",
       "kind": "village",
       "race": "humains",
       "state": "intact",

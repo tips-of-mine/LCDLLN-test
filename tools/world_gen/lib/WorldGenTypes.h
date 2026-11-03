@@ -52,7 +52,7 @@ namespace tools::world_gen
 		std::string cell;        ///< "N003_W009"
 		std::string kind;        ///< capitale|grande_ville|ville|forteresse|village|hameau|camp
 		std::string race;        ///< humains|elfes|orcs|nains|demons|neutre
-		std::string state;       ///< intact|ruine|camp
+		std::string state;       ///< intact|ruine|reconstruction|camp
 		std::string faction;
 		std::vector<std::string> startFor; ///< races dont c'est la ville de départ
 		std::string source;      ///< [BD] … / [INFÉRÉ] …

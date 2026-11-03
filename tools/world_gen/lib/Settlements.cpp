@@ -11,6 +11,10 @@
 //   - un REMPART (capitale, grande ville, forteresse) ou une PALISSADE (orcs,
 //     camps), percé de portes là où passent les routes ;
 //   - des CHAMPS clôturés hors les murs (hameaux et villages), un CIMETIÈRE.
+// État « reconstruction » (ville relevée après un sac, ex. Kendrhir après le
+// tome 1) : ruines et CHANTIERS (ruine entourée d'étais et de matériaux) mêlés
+// aux maisons neuves, BRÈCHES avec gravats dans le rempart ou la palissade ;
+// auberge, marché, forge, pavage et PNJ restent ceux d'une ville habitée.
 // Le graphe de rues (noeuds tous les ~9 m) sert aux tournées des villageois et
 // aux rondes des gardes (Population.cpp).
 
@@ -38,6 +42,7 @@ namespace tools::world_gen
 			double halfW = 2.0;   ///< demi-largeur X (m)
 			double halfD = 3.0;   ///< demi-profondeur Z hors perron (m)
 			double weight = 1.0;
+			bool site = false;    ///< chantier de reconstruction : étais et matériaux posés autour
 		};
 
 		TemplateRef House(const char* id, double weight)
@@ -47,6 +52,14 @@ namespace tools::world_gen
 			t.type = "maison"; t.variant = id; t.weight = weight;
 			t.halfW = s ? s->widthM * 0.5 : 2.0;
 			t.halfD = s ? s->depthM * 0.5 : 3.0;
+			return t;
+		}
+		/// Chantier de reconstruction : la ruine `ruinId` du catalogue, marquée pour
+		/// recevoir étais, briques et outils (cf. « Chantiers » dans BuildSettlements).
+		TemplateRef Site(const char* ruinId, double weight)
+		{
+			TemplateRef t = House(ruinId, weight);
+			t.site = true;
 			return t;
 		}
 		TemplateRef Hand(const char* type, const char* variant, double halfW, double halfD, double weight)
@@ -68,6 +81,23 @@ namespace tools::world_gen
 				return { House("ruine_6x6", 2), House("chaumiere_4x4", 2) };
 			if (c.state == "ruine")
 				return { House("ruine_6x6", 3), House("ruine_6x10", 2), House("ruine_8x10", 2), House("chaumiere_4x4", 0.5) };
+			if (c.state == "reconstruction")
+			{
+				// Palette de la ville intacte (≈ 51 % des lots), plus des ruines (≈ 31 %)
+				// et des chantiers (≈ 18 %), en proportion du poids total de la palette.
+				CityDef intact = c;
+				intact.state = "intact";
+				std::vector<TemplateRef> pal = Palette(intact);
+				double total = 0.0;
+				for (const TemplateRef& t : pal) total += t.weight;
+				pal.push_back(House("ruine_6x6", total * 0.25));
+				pal.push_back(House("ruine_6x10", total * 0.20));
+				pal.push_back(House("ruine_8x10", total * 0.15));
+				pal.push_back(Site("ruine_6x6", total * 0.15));
+				pal.push_back(Site("ruine_6x10", total * 0.12));
+				pal.push_back(Site("ruine_8x10", total * 0.08));
+				return pal;
+			}
 			if (c.race == "nains")
 				return { House("maison_6x6", 3), House("manoir_8x12", 1), House("caserne_8x14", 0.6), House("forge_6x6", 0.8), House("echoppe_4x8", 1) };
 			if (c.race == "orcs")
@@ -433,6 +463,7 @@ namespace tools::world_gen
 			// --- Lots le long des rues.
 			const std::vector<TemplateRef> pal = Palette(c);
 			int lotCount = 0;
+			std::vector<int> sites; // bâtiments posés depuis un modèle « chantier »
 			for (const auto& st : streets)
 			{
 				const std::vector<Vec2> pts = ResamplePolyline(st, 1.0);
@@ -452,8 +483,8 @@ namespace tools::world_gen
 						if (rng.Chance(c.kind == "hameau" ? 0.35 : 0.12)) continue; // jardins / vides
 						const Vec2 nrm{ -tdir.z * side, tdir.x * side };
 						const Vec2 center = p + nrm * (kStreetHalf + 1.2 + t.halfD);
-						const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, "Maison");
-						if (b >= 0) { L.buildingIndices.push_back(b); any = true; ++lotCount; }
+						const int b = TryPlaceBuilding(w, c, t, center, nrm * -1.0, t.site ? "Chantier" : "Maison");
+						if (b >= 0) { L.buildingIndices.push_back(b); any = true; ++lotCount; if (t.site) sites.push_back(b); }
 					}
 					along += any ? (2.0 * t.halfW + 1.6 + rng.Range(0.0, 1.8)) : 2.0;
 				}
@@ -478,8 +509,8 @@ namespace tools::world_gen
 					if (fl < 4.0 || fl > 22.0) continue; // trop collé à la rue ou sans accès
 					face = face * (1.0 / fl);
 					const TemplateRef& t = PickWeighted(pal, rng.Next());
-					const int b = TryPlaceBuilding(w, c, t, center, face, "Maison");
-					if (b >= 0) { L.buildingIndices.push_back(b); ++lotCount; }
+					const int b = TryPlaceBuilding(w, c, t, center, face, t.site ? "Chantier" : "Maison");
+					if (b >= 0) { L.buildingIndices.push_back(b); ++lotCount; if (t.site) sites.push_back(b); }
 				}
 			}
 
@@ -548,13 +579,51 @@ namespace tools::world_gen
 				}
 			}
 
-			// --- Remparts / palissade, percés aux portes.
+			// --- Chantiers de reconstruction : étais le long des murs latéraux,
+			//     tas de briques, outils et matériaux devant la façade.
+			for (int bi : sites)
+			{
+				const BuildingPlacementDef& b = w.buildings[static_cast<size_t>(bi)];
+				const double yawRad = b.yawDeg * kPi / 180.0;
+				const Vec2 front{ -std::sin(yawRad), -std::cos(yawRad) };
+				const Vec2 side{ -front.z, front.x };
+				for (int s = -1; s <= 1; s += 2)
+				{
+					const Vec2 p = b.position + side * (s * (b.halfW + 0.7));
+					if (!w.IsOccupied(p, 0.4)) AddProp(w, "Prop_Support", p, b.yawDeg, 1.0, kSolid, 1, 0.4);
+				}
+				const char* bricks[] = { "Prop_Brick1", "Prop_Brick2", "Prop_Brick3", "Prop_Brick4" };
+				const char* kit[] = { "Pickaxe_Bronze", "Axe_Bronze", "Rope_1", "Crate_Wooden", "Bucket_Wooden_1", "Anvil_Log" };
+				const Vec2 pile = b.doorPoint + side * (rng.Chance(0.5) ? 2.6 : -2.6);
+				if (!w.IsOccupied(pile, 0.6)) AddProp(w, bricks[rng.Below(4)], pile, rng.Range(0, 360), 1.0, kSolid, 1, 0.5);
+				const Vec2 tool = b.doorPoint - front * 0.8 + side * (rng.Range(-1.2, 1.2));
+				if (!w.IsOccupied(tool, 0.4)) AddProp(w, kit[rng.Below(6)], tool, rng.Range(0, 360), 1.0, 0, 2);
+			}
+
+			// --- Remparts / palissade, percés aux portes. Une ville en
+			//     reconstruction garde des BRÈCHES (gravats, pas de mur).
 			const bool walls = HasWalls(c), palisade = HasPalisade(c);
 			if (walls || palisade)
 			{
 				const double rw = R + 3.0;
 				const double segLen = 2.0;
 				const int segs = static_cast<int>(std::floor(2.0 * kPi * rw / segLen));
+				// Brèches : (angle central, demi-ouverture angulaire), loin des portes.
+				std::vector<std::pair<double, double>> breaches;
+				if (c.state == "reconstruction")
+				{
+					for (int attempt = 0; attempt < 24 && breaches.size() < 3; ++attempt)
+					{
+						const double a = rng.Range(0.0, 2.0 * kPi);
+						const double half = rng.Range(4.0, 7.0) / rw;
+						bool clear = true;
+						for (double ga : angles)
+							if (std::fabs(std::remainder(a - ga, 2.0 * kPi)) * rw < 12.0 + half * rw) clear = false;
+						for (const auto& br : breaches)
+							if (std::fabs(std::remainder(a - br.first, 2.0 * kPi)) < br.second + half + 8.0 / rw) clear = false;
+						if (clear) breaches.emplace_back(a, half);
+					}
+				}
 				for (int k = 0; k < segs; ++k)
 				{
 					const double a = 2.0 * kPi * (k + 0.5) / segs;
@@ -564,6 +633,17 @@ namespace tools::world_gen
 						if (std::fabs(std::remainder(a - ga, 2.0 * kPi)) * rw < 4.2) gate = true;
 					if (gate) continue;
 					if (w.IsWater(p) || !w.InPlayableBounds(p, 40.0)) continue;
+					bool breach = false;
+					for (const auto& br : breaches)
+						if (std::fabs(std::remainder(a - br.first, 2.0 * kPi)) < br.second) breach = true;
+					if (breach)
+					{
+						// Gravats éparpillés de part et d'autre de la ligne du mur (franchissables).
+						const char* rubble[] = { "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3", "Prop_Brick1", "Prop_Brick3" };
+						const Vec2 jitter = Dir(a) * rng.Range(-1.6, 1.6);
+						AddProp(w, rubble[rng.Below(5)], p + jitter, rng.Range(0, 360), rng.Range(0.5, 0.9), 0, 1);
+						continue;
+					}
 					// Tangente : le mur s'étend le long du cercle (axe X local).
 					const Vec2 tan{ -std::sin(a), std::cos(a) };
 					const double yaw = std::atan2(tan.z, tan.x) * -180.0 / kPi; // X local -> tangente
@@ -688,7 +768,7 @@ namespace tools::world_gen
 
 			// --- Pavage : rues et place (villes moyennes+ et forteresses), dalles rondes
 			//     pour les villages ; les hameaux, camps et ruines restent en terre.
-			if (c.state == "intact" && c.kind != "hameau" && c.kind != "camp" && c.procedural.empty())
+			if ((c.state == "intact" || c.state == "reconstruction") && c.kind != "hameau" && c.kind != "camp" && c.procedural.empty())
 			{
 				const bool cobble = (c.kind != "village");
 				const char* tile = cobble ? "RockPath_Square_Wide" : "RockPath_Round_Wide";

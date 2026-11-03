@@ -63,6 +63,8 @@
 #include "src/masterd/handlers/admin/AdminCommandHandler.h"
 #include "src/masterd/handlers/retired/RetiredGameplayHandler.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
+#include "src/masterd/admin/GmShardRelay.h"     // ADM.0
+#include "src/masterd/admin/MasterGmCommands.h" // ADM.0
 #include "src/shared/network/ChatPayloads.h" // Console /help /time /uptime (2026-07-18)
 #include "src/shared/net/ChatSystem.h"
 #include "src/masterd/account/AccountRoleService.h"
@@ -914,83 +916,8 @@ int main(int argc, char** argv)
 			}
 		};
 
-		// Libellé FR d'un rôle (affichage /help).
-		auto roleLabelFr = [](engine::server::AccountRole r) -> const char*
-		{
-			switch (r)
-			{
-				case engine::server::AccountRole::Moderator:     return "modérateur";
-				case engine::server::AccountRole::GameMaster:    return "maître de jeu";
-				case engine::server::AccountRole::Administrator: return "administrateur";
-				default:                                          return "joueur";
-			}
-		};
-
-		// /help [commande] — liste par catégorie des commandes accessibles au
-		// rôle de l'appelant, ou détail d'une commande précise.
-		auto helpHandler = [&slashCommandRegistry, &accountStore, replyToAccount, roleLabelFr](
-			uint64_t accountId, std::string_view args)
-		{
-			const engine::server::AccountRole role = accountStore->GetRole(accountId);
-			if (!args.empty())
-			{
-				// Détail d'une commande : accepte "/kick" ou "kick".
-				std::string wanted(args);
-				if (wanted.front() != '/') wanted.insert(wanted.begin(), '/');
-				const engine::server::SlashCommandEntry* e = slashCommandRegistry.Lookup(wanted);
-				if (e == nullptr)
-				{
-					replyToAccount(accountId, "Commande inconnue : " + wanted);
-					return;
-				}
-				if (!engine::server::AccountRoleService::RequireMinRole(role, e->minRole))
-				{
-					replyToAccount(accountId, wanted + " est réservée au rôle "
-						+ std::string(roleLabelFr(e->minRole)) + " (ou supérieur).");
-					return;
-				}
-				std::string detail = e->command;
-				if (!e->description.empty()) detail += " — " + e->description;
-				detail += " [rôle min : " + std::string(roleLabelFr(e->minRole)) + "]";
-				if (!e->aliases.empty())
-				{
-					detail += " [alias :";
-					for (const std::string& a : e->aliases) detail += " " + a;
-					detail += "]";
-				}
-				replyToAccount(accountId, detail);
-				return;
-			}
-
-			// Liste groupée par catégorie, filtrée par le rôle de l'appelant.
-			// Les commandes "planned" (pas encore implémentées) sont omises.
-			replyToAccount(accountId, std::string("Commandes disponibles pour votre rôle (")
-				+ roleLabelFr(role) + ") — « /help /commande » pour le détail :");
-			std::vector<std::string> categories;
-			for (const auto& e : slashCommandRegistry.Entries())
-			{
-				if (e.status == "planned") continue;
-				if (!engine::server::AccountRoleService::RequireMinRole(role, e.minRole)) continue;
-				bool seen = false;
-				for (const std::string& c : categories)
-					if (c == e.category) { seen = true; break; }
-				if (!seen) categories.push_back(e.category);
-			}
-			for (const std::string& cat : categories)
-			{
-				std::string line = (cat.empty() ? std::string("autres") : cat) + " :";
-				for (const auto& e : slashCommandRegistry.Entries())
-				{
-					if (e.category != cat || e.status == "planned") continue;
-					if (!engine::server::AccountRoleService::RequireMinRole(role, e.minRole)) continue;
-					line += " " + e.command;
-				}
-				replyToAccount(accountId, line);
-			}
-		};
-		chatRelayHandler.CommandRouter().Register("/help", engine::server::AccountRole::Player, helpHandler);
-		chatRelayHandler.CommandRouter().Register("/commands", engine::server::AccountRole::Player, helpHandler);
-		chatRelayHandler.CommandRouter().Register("/aide", engine::server::AccountRole::Player, helpHandler);
+		// ADM.0 — /help, /commands, /aide, /search, /gmaudit et les relais vers les
+		// shards sont enregistrés par MasterGmCommands (src/masterd/admin/), plus bas.
 
 		// /time — date et heure serveur (UTC).
 		chatRelayHandler.CommandRouter().Register("/time", engine::server::AccountRole::Player,
@@ -1096,8 +1023,29 @@ int main(int argc, char** argv)
 					break;
 				}
 			});
-		LOG_INFO(Net, "[ServerMain] Console : /help /commands /aide /time /uptime /snapshots /restore enregistrées");
+		LOG_INFO(Net, "[ServerMain] Console : /time /uptime /snapshots /restore enregistrées");
 	}
+
+	// ADM.0 — commandes de jeu : aide paginée (/help), recherche (/search), audit
+	// (/gmaudit, table gm_command_audit) et relais des commandes "shard_command" de
+	// slash_commands.json vers le shard du personnage de l'appelant (opcodes 216/217).
+	engine::server::GmShardRelay gmShardRelay(config.GetDouble("master.gm_commands.shard_timeout_sec", 8.0));
+	engine::server::MasterGmServices gmServices;
+	gmServices.router = &chatRelayHandler.CommandRouter();
+	gmServices.registry = &slashCommandRegistry;
+	gmServices.accounts = accountStore;
+	gmServices.server = &server;
+	gmServices.connMap = &connSessionMap;
+	gmServices.sessions = &sessionManager;
+	gmServices.charMap = &sessionCharMap;
+	gmServices.shards = &shardRegistry;
+	gmServices.db = dbPool.IsInitialized() ? &dbPool : nullptr;
+	gmServices.relay = &gmShardRelay;
+	gmServices.nowSeconds = []() {
+		return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+	};
+	engine::server::MasterGmCommands masterGmCommands(gmServices);
+	masterGmCommands.RegisterAll();
 
 	engine::server::AdminCommandHandler adminCommandHandler;
 	adminCommandHandler.SetServer(&server);
@@ -1179,13 +1127,15 @@ int main(int argc, char** argv)
 	retiredGameplayHandler.SetServer(&server);
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &reputationHandler, &exploitHandler, &mapDiscoveryHandler, &cinematicHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler, &retiredGameplayHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &ignoreListHandler, &gmTicketHandler, &reputationHandler, &exploitHandler, &mapDiscoveryHandler, &cinematicHandler, &lunarHandler, &worldClockHandler, &adminCommandHandler, &retiredGameplayHandler, &masterGmCommands](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
 			shardRegisterHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeShardToMasterMailDebitResult)
 			mailHandler.HandleShardDebitResult(connId, payload, payloadSize); // ETAPE5.6
+		else if (opcode == kOpcodeShardToMasterGmCommandResult)
+			masterGmCommands.OnShardResultPacket(connId, payload, payloadSize); // ADM.0
 		else if (opcode == kOpcodeRequestShardTicket)
 			shardTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeServerListRequest)
@@ -1760,6 +1710,8 @@ int main(int argc, char** argv)
 				LOG_WARN(Server, "[ServerMain] ETAPE5.3 signal d'arrêt reçu : arrêt ordonné déjà en cours (second signal = arrêt immédiat)");
 			}
 		}
+		// ADM.0 — commandes relayées aux shards restées sans réponse : l'appelant est prévenu.
+		masterGmCommands.Tick();
 		for (const auto& action : clusterShutdown.Tick(nowSec))
 		{
 			using Kind = engine::server::ClusterShutdownAction::Kind;

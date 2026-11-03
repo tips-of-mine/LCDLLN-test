@@ -215,7 +215,7 @@ namespace engine::server
 			std::string cmdName;
 			const auto callerRole = m_accounts->GetRole(*accountId);
 			const auto dispatch = m_commandRouter.Dispatch(parsed->text, *accountId,
-				callerRole, &cmdName);
+				callerRole, &cmdName, connId, sessionIdHeader);
 			switch (dispatch)
 			{
 				case chat::CommandDispatchResult::Dispatched:
@@ -227,7 +227,7 @@ namespace engine::server
 					const uint64_t ts0 = NowUnixMsUtc();
 					auto notice = BuildChatRelayPacket(ts0,
 						static_cast<uint8_t>(engine::net::ChatChannel::Server),
-						"system", "Insufficient permissions for that command.",
+						"system", "Vous n'avez pas le rôle requis pour /" + cmdName + " (voir /help /" + cmdName + ").",
 						sessionIdHeader);
 					if (!notice.empty())
 						m_server->Send(connId, notice);
@@ -240,7 +240,7 @@ namespace engine::server
 					const uint64_t ts0 = NowUnixMsUtc();
 					auto notice = BuildChatRelayPacket(ts0,
 						static_cast<uint8_t>(engine::net::ChatChannel::Server),
-						"system", "Unknown command : /" + cmdName,
+						"system", "Commande inconnue : /" + cmdName + " — tapez /help pour la liste ou /search <mot>.",
 						sessionIdHeader);
 					if (!notice.empty())
 						m_server->Send(connId, notice);

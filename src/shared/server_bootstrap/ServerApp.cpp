@@ -3309,9 +3309,57 @@ namespace engine::server
 		return out;
 	}
 
+	// ADM.0 — commandes de jeu (MJ) relayées par le master.
+	void ServerApp::EnqueueGmCommand(const engine::network::GmCommandRequestPayload& request)
+	{
+		std::lock_guard lock(m_masterInboxMutex);
+		if (m_pendingGmCommands.size() < 256u)
+		{
+			m_pendingGmCommands.push_back(request);
+			return;
+		}
+		// File pleine : réponse immédiate (l'appelant n'attend pas le délai du master).
+		LOG_WARN(Net, "[ServerApp] ADM.0 file des commandes MJ pleine : commande '{}' refusée", request.command);
+		engine::network::GmCommandResultPayload busy;
+		busy.requestId = request.requestId;
+		busy.actorAccountId = request.actorAccountId;
+		busy.status = static_cast<uint8_t>(engine::network::GmCommandStatus::Failed);
+		busy.lines.push_back("Le shard est saturé de commandes : réessayez dans quelques secondes.");
+		m_gmCommandResults.push_back(std::move(busy));
+	}
+
+	std::vector<engine::network::GmCommandResultPayload> ServerApp::TakeGmCommandResults()
+	{
+		std::lock_guard lock(m_masterInboxMutex);
+		std::vector<engine::network::GmCommandResultPayload> out;
+		out.swap(m_gmCommandResults);
+		return out;
+	}
+
+	void ServerApp::ProcessGmCommands()
+	{
+		std::vector<engine::network::GmCommandRequestPayload> batch;
+		{
+			std::lock_guard lock(m_masterInboxMutex);
+			const size_t n = (std::min)(m_pendingGmCommands.size(), kMaxGmCommandsPerTick);
+			batch.assign(m_pendingGmCommands.begin(), m_pendingGmCommands.begin() + static_cast<std::ptrdiff_t>(n));
+			m_pendingGmCommands.erase(m_pendingGmCommands.begin(), m_pendingGmCommands.begin() + static_cast<std::ptrdiff_t>(n));
+		}
+		for (const auto& request : batch)
+		{
+			engine::network::GmCommandResultPayload result;
+			result.requestId = request.requestId;
+			result.actorAccountId = request.actorAccountId;
+			ExecuteGmCommand(request, result);
+			std::lock_guard lock(m_masterInboxMutex);
+			m_gmCommandResults.push_back(std::move(result));
+		}
+	}
+
 	void ServerApp::ProcessMasterInbox()
 	{
 		ResolveUncertainMailDebits();
+		ProcessGmCommands(); // ADM.0
 		// Au plus 4 prélèvements par tick : chacun est une transaction synchrone (rare, mais
 		// une rafale ne doit pas faire caler le tick). Le reste attend le tick suivant.
 		constexpr size_t kMaxMailDebitsPerTick = 4u;

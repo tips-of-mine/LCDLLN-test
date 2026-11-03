@@ -211,6 +211,47 @@ namespace
 		LOG_INFO(Core, "[ChatCommandRouterTests] empty args OK");
 		return true;
 	}
+
+	/// ADM.0 — handler à contexte : connexion, session, rôle et nom normalisé transmis ;
+	/// rappel d'audit appelé après l'exécution et sur refus de rôle.
+	bool TestContextHandlerAndAudit()
+	{
+		using engine::server::chat::CommandCallContext;
+		ChatCommandRouter r;
+		CommandCallContext seen;
+		std::string seenArgs;
+		r.RegisterEx("/Tp", AccountRole::GameMaster, [&](const CommandCallContext& ctx, std::string_view args) {
+			seen = ctx;
+			seenArgs = std::string(args);
+		});
+		int audits = 0;
+		CommandDispatchResult lastAudit = CommandDispatchResult::NotACommand;
+		r.SetAuditSink([&](const CommandCallContext&, std::string_view, CommandDispatchResult res) {
+			++audits;
+			lastAudit = res;
+		});
+		const auto ok = r.Dispatch("/TP  10 20 ", 5, AccountRole::Administrator, nullptr, 42, 77);
+		if (ok != CommandDispatchResult::Dispatched || seen.connId != 42 || seen.sessionId != 77 || seen.accountId != 5
+			|| seen.command != "tp" || seen.minRole != AccountRole::GameMaster || seenArgs != "10 20"
+			|| audits != 1 || lastAudit != CommandDispatchResult::Dispatched)
+		{
+			LOG_ERROR(Core, "[ChatCommandRouterTests] RegisterEx/audit dispatch KO");
+			return false;
+		}
+		const auto denied = r.Dispatch("/tp 1 2", 6, AccountRole::Moderator);
+		if (denied != CommandDispatchResult::InsufficientRole || audits != 2 || lastAudit != CommandDispatchResult::InsufficientRole)
+		{
+			LOG_ERROR(Core, "[ChatCommandRouterTests] audit du refus KO");
+			return false;
+		}
+		if (!r.MinRoleOf("tp") || *r.MinRoleOf("/TP") != AccountRole::GameMaster || r.MinRoleOf("/zz"))
+		{
+			LOG_ERROR(Core, "[ChatCommandRouterTests] MinRoleOf KO");
+			return false;
+		}
+		LOG_INFO(Core, "[ChatCommandRouterTests] RegisterEx + audit OK");
+		return true;
+	}
 }
 
 int main(int argc, char** argv)
@@ -229,7 +270,8 @@ int main(int argc, char** argv)
 		&& TestUnregister()
 		&& TestSlashOnly()
 		&& TestOutName()
-		&& TestEmptyArgs();
+		&& TestEmptyArgs()
+		&& TestContextHandlerAndAudit();
 
 	if (ok)
 		LOG_INFO(Core, "[ChatCommandRouterTests] ALL OK");

@@ -281,6 +281,20 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' display='{}' endpoint='{}' cap={} 
 			if (m_mail_debit_callback)
 				m_mail_debit_callback(*debit);
 		}
+		else if (opcode == kOpcodeMasterToShardGmCommand)
+		{
+			// ADM.0 — commande MJ relayée par le master (rôle déjà vérifié par lui).
+			auto request = ParseGmCommandRequestPayload(view.Payload(), view.PayloadSize());
+			if (!request)
+			{
+				LOG_WARN(Core, "[ShardToMasterClient] ADM.0 commande MJ illisible (size={})", view.PayloadSize());
+				return;
+			}
+			if (m_gm_command_callback)
+				m_gm_command_callback(*request);
+			else
+				LOG_WARN(Core, "[ShardToMasterClient] ADM.0 commande MJ ignorée : aucun rappel (command='{}')", request->command);
+		}
 		else if (opcode == kOpcodeMasterToShardMailboxPoke)
 		{
 			// ETAPE5.6 — courrier déposé pour un personnage : à créditer sans attendre.

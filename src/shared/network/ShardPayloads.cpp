@@ -387,4 +387,115 @@ namespace engine::network
 			return std::nullopt;
 		return characterId;
 	}
+
+	// ADM.0 — commandes de jeu relayées (Master → Shard 216, Shard → Master 217).
+	namespace
+	{
+		/// Tronque sans couper un caractère UTF-8 (lignes et arguments du wire MJ).
+		std::string_view CutUtf8(std::string_view text, size_t maxBytes)
+		{
+			if (text.size() <= maxBytes)
+				return text;
+			size_t cut = maxBytes;
+			while (cut > 0u && (static_cast<unsigned char>(text[cut]) & 0xC0u) == 0x80u)
+				--cut;
+			return text.substr(0, cut);
+		}
+	}
+
+	std::vector<uint8_t> BuildMasterToShardGmCommandPacket(const GmCommandRequestPayload& p)
+	{
+		if (p.requestId == 0u || p.command.empty() || p.command.size() > kGmCommandMaxNameBytes)
+			return {};
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteU64(p.requestId) || !w.WriteU64(p.actorAccountId) || !w.WriteU64(p.actorCharacterId)
+			|| !w.WriteBytes(&p.actorRole, 1u)
+			|| !w.WriteString(CutUtf8(p.actorName, kGmCommandMaxActorNameBytes))
+			|| !w.WriteString(p.command)
+			|| !w.WriteString(CutUtf8(p.args, kGmCommandMaxArgsBytes)))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeMasterToShardGmCommand, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<GmCommandRequestPayload> ParseGmCommandRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 24u + 1u + 6u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		GmCommandRequestPayload out;
+		if (!r.ReadU64(out.requestId) || !r.ReadU64(out.actorAccountId) || !r.ReadU64(out.actorCharacterId)
+			|| !r.ReadBytes(&out.actorRole, 1u) || !r.ReadString(out.actorName) || !r.ReadString(out.command)
+			|| !r.ReadString(out.args))
+			return std::nullopt;
+		if (out.requestId == 0u || out.command.empty() || out.command.size() > kGmCommandMaxNameBytes
+			|| out.args.size() > kGmCommandMaxArgsBytes || out.actorName.size() > kGmCommandMaxActorNameBytes)
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildShardToMasterGmCommandResultPacket(const GmCommandResultPayload& p)
+	{
+		if (p.requestId == 0u)
+			return {};
+		// Bornes : nombre de lignes, taille unitaire, total du payload.
+		std::vector<std::string_view> lines;
+		size_t total = 0u;
+		bool truncated = false;
+		for (const std::string& line : p.lines)
+		{
+			const std::string_view cut = CutUtf8(line, kGmCommandMaxLineBytes);
+			if (lines.size() + 1u >= kGmCommandMaxLines || total + cut.size() + 2u > kGmCommandMaxResultBytes)
+			{
+				truncated = true;
+				break;
+			}
+			lines.push_back(cut);
+			total += cut.size() + 2u;
+		}
+		static constexpr std::string_view kTruncated = "… (réponse tronquée)";
+		if (truncated)
+			lines.push_back(kTruncated);
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteU64(p.requestId) || !w.WriteU64(p.actorAccountId) || !w.WriteBytes(&p.status, 1u)
+			|| !w.WriteArrayCount(static_cast<uint16_t>(lines.size())))
+			return {};
+		for (const std::string_view line : lines)
+		{
+			if (!w.WriteString(line))
+				return {};
+		}
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeShardToMasterGmCommandResult, 0, 0, 0, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<GmCommandResultPayload> ParseGmCommandResultPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 16u + 1u + 2u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		GmCommandResultPayload out;
+		uint16_t count = 0;
+		if (!r.ReadU64(out.requestId) || !r.ReadU64(out.actorAccountId) || !r.ReadBytes(&out.status, 1u)
+			|| !r.ReadArrayCount(count))
+			return std::nullopt;
+		if (out.requestId == 0u || count > kGmCommandMaxLines)
+			return std::nullopt;
+		out.lines.reserve(count);
+		for (uint16_t i = 0; i < count; ++i)
+		{
+			std::string line;
+			if (!r.ReadString(line) || line.size() > kGmCommandMaxLineBytes)
+				return std::nullopt;
+			out.lines.push_back(std::move(line));
+		}
+		return out;
+	}
 }
+

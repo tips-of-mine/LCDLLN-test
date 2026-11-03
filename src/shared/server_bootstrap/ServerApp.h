@@ -511,6 +511,14 @@ namespace engine::server
 		/// l'appelant). Thread-safe ; vide la boîte.
 		std::vector<engine::network::MailDebitResultPayload> TakeMasterOutbox();
 
+		/// ADM.0 — commande de jeu (MJ) relayée par le master (opcode 216), reçue par le
+		/// thread principal du shard. Thread-safe : exécutée au prochain tick (au plus
+		/// kMaxGmCommandsPerTick par tick) ; le résultat est déposé pour TakeGmCommandResults.
+		void EnqueueGmCommand(const engine::network::GmCommandRequestPayload& request);
+		/// ADM.0 — résultats à renvoyer au master (opcode 217, paquet construit par
+		/// l'appelant : ShardPayloads n'est pas compilé dans server_app WIN32). Thread-safe.
+		std::vector<engine::network::GmCommandResultPayload> TakeGmCommandResults();
+
 		/// TA.4 : pool MySQL (même base que le master) d'où lire la position de spawn
 		/// (table characters) au HandleHello. Optionnel : absent → spawn depuis le fichier
 		/// (build Windows ou DB non configurée). Possédé par l'appelant.
@@ -1899,6 +1907,19 @@ namespace engine::server
 		void ResolveUncertainMailDebits();
 		/// Traite les ordres du master (thread de tick).
 		void ProcessMasterInbox();
+		/// ADM.0 — commandes MJ en attente (thread principal → tick) et résultats.
+		std::vector<engine::network::GmCommandRequestPayload> m_pendingGmCommands;
+		std::vector<engine::network::GmCommandResultPayload> m_gmCommandResults;
+		/// ADM.0 — au plus N commandes MJ exécutées par tick (le reste attend le suivant).
+		static constexpr size_t kMaxGmCommandsPerTick = 16u;
+		/// ADM.0 — exécute les commandes MJ en attente (thread de tick, depuis ProcessMasterInbox).
+		void ProcessGmCommands();
+		/// ADM.0 — exécute UNE commande MJ et remplit \p out (statut + lignes). Corps dans
+		/// ServerAppGm.cpp (GmCommandExecutor, ami de ServerApp). Thread de tick.
+		void ExecuteGmCommand(const engine::network::GmCommandRequestPayload& request,
+			engine::network::GmCommandResultPayload& out);
+		/// ADM.0 — l'exécuteur des commandes MJ (ServerAppGm.cpp) accède à l'état du tick.
+		friend struct GmCommandExecutor;
 		/// Prélève l'or d'un courrier dans la transaction qui passe le transfert à locked.
 		/// \return le MailDebitResult à répondre, ou 0xFF si le COMMIT est incertain (pas de
 		///         réponse : voir m_uncertainMailDebits).

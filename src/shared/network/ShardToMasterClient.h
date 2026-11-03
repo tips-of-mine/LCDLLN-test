@@ -112,6 +112,12 @@ namespace engine::network
 		using MailboxPokeCallback = std::function<void(uint64_t characterId)>;
 		void SetMailboxPokeCallback(MailboxPokeCallback cb) { m_mailbox_poke_callback = std::move(cb); }
 
+		/// ADM.0 — commande de jeu (MJ) relayée par le master (kOpcodeMasterToShardGmCommand).
+		/// Appelé depuis Pump() ; le destinataire la met en file pour le thread de tick
+		/// (ServerApp::EnqueueGmCommand). `nullptr` (défaut) = commande ignorée (journalisé).
+		using GmCommandCallback = std::function<void(const GmCommandRequestPayload& request)>;
+		void SetGmCommandCallback(GmCommandCallback cb) { m_gm_command_callback = std::move(cb); }
+
 		/// ETAPE5.6 — envoie un paquet déjà construit au master (ex. réponse 214). À appeler
 		/// depuis le thread de Pump(). \return false si non enregistré ou envoi impossible.
 		bool SendPacketToMaster(const std::vector<uint8_t>& packet);
@@ -163,6 +169,7 @@ namespace engine::network
 		ShutdownCallback m_shutdown_callback; ///< ETAPE5.3
 		MailDebitCallback m_mail_debit_callback;     ///< ETAPE5.6
 		MailboxPokeCallback m_mailbox_poke_callback; ///< ETAPE5.6
+		GmCommandCallback m_gm_command_callback;     ///< ADM.0
 		/// Présence enrichie (v9) — fournisseur optionnel de la liste des joueurs. Voir SetPlayerPresenceProvider.
 		PlayerPresenceProvider m_presence_provider;
 		BackPressureProvider m_backpressure_provider; ///< ETAPE5.4

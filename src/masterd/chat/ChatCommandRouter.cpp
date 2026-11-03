@@ -29,7 +29,23 @@ namespace engine::server::chat
 		const auto key = Normalize(name);
 		if (key.empty())
 			return;
-		m_table[key] = CommandEntry{minRole, std::move(handler)};
+		m_table[key] = CommandEntry{minRole, std::move(handler), {}};
+	}
+
+	void ChatCommandRouter::RegisterEx(std::string_view name, AccountRole minRole, CommandHandlerExFn handler)
+	{
+		const auto key = Normalize(name);
+		if (key.empty())
+			return;
+		m_table[key] = CommandEntry{minRole, {}, std::move(handler)};
+	}
+
+	std::optional<AccountRole> ChatCommandRouter::MinRoleOf(std::string_view name) const
+	{
+		const auto it = m_table.find(Normalize(name));
+		if (it == m_table.end())
+			return std::nullopt;
+		return it->second.minRole;
 	}
 
 	void ChatCommandRouter::Unregister(std::string_view name)
@@ -46,7 +62,8 @@ namespace engine::server::chat
 	}
 
 	CommandDispatchResult ChatCommandRouter::Dispatch(std::string_view text,
-		uint64_t accountId, AccountRole role, std::string* outName) const
+		uint64_t accountId, AccountRole role, std::string* outName,
+		uint32_t connId, uint64_t sessionId) const
 	{
 		// Doit commencer par '/' — sinon pas une commande, le caller
 		// continue le routage normal.
@@ -81,13 +98,31 @@ namespace engine::server::chat
 		if (it == m_table.end())
 			return CommandDispatchResult::UnknownCommand;
 
+		CommandCallContext ctx;
+		ctx.accountId = accountId;
+		ctx.role = role;
+		ctx.connId = connId;
+		ctx.sessionId = sessionId;
+		ctx.command = key;
+		ctx.minRole = it->second.minRole;
+
 		// Check rôle.
 		if (!engine::server::AccountRoleService::RequireMinRole(role, it->second.minRole))
+		{
+			if (m_audit)
+				m_audit(ctx, args, CommandDispatchResult::InsufficientRole);
 			return CommandDispatchResult::InsufficientRole;
+		}
 
-		// Dispatch.
-		if (it->second.handler)
-			it->second.handler(accountId, args);
+		// Dispatch (ADM.0 : le handler à contexte est prioritaire).
+		// Copie de l'entrée : un handler peut ré-enregistrer des commandes.
+		const CommandEntry entry = it->second;
+		if (entry.handlerEx)
+			entry.handlerEx(ctx, args);
+		else if (entry.handler)
+			entry.handler(accountId, args);
+		if (m_audit)
+			m_audit(ctx, args, CommandDispatchResult::Dispatched);
 		return CommandDispatchResult::Dispatched;
 	}
 }

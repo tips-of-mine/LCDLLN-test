@@ -37,7 +37,24 @@ namespace engine::server
 		/// (reprises du JSON ; vides si absentes).
 		std::string                description;
 		std::string                category;
+		/// ADM.0 — forme déclarée complète (« /help [commande] »), placeholders compris.
+		std::string                signature;
+		/// ADM.0 — syntaxe affichée par « /help <commande> » (champ JSON "usage" ;
+		/// repli sur \ref signature si absent). Plusieurs formes séparées par « | ».
+		std::string                usage;
+		/// ADM.0 — explication détaillée (champ JSON "help") : paramètres, unités, effets.
+		std::string                details;
+		/// ADM.0 — exemple prêt à taper (champ JSON "example").
+		std::string                example;
 	};
+
+	/// ADM.0 — statut d'une entrée exécutée par le shard du joueur : le master vérifie
+	/// le rôle puis relaie la commande (opcode 216) au shard qui héberge l'acteur.
+	inline constexpr const char* kSlashStatusShardCommand = "shard_command";
+	/// ADM.0 — statut d'une entrée exécutée par le master (ChatCommandRouter).
+	inline constexpr const char* kSlashStatusServerRoute = "server_route";
+	/// Statut d'une entrée prévue mais pas encore disponible (masquée par /help).
+	inline constexpr const char* kSlashStatusPlanned = "planned";
 
 	/// Registre des slash commands lu au boot. Read-only apres LoadFromFile.
 	class SlashCommandRegistry
@@ -63,6 +80,7 @@ namespace engine::server
 
 		/// Lookup par nom. Accepte la forme canonique ("/sky moon") ou un alias
 		/// (ex: "/sky"). Retourne nullptr si non trouve.
+		/// ADM.0 — sans casse, et le « / » de tête est facultatif (« tp » = « /TP »).
 		const SlashCommandEntry* Lookup(const std::string& command) const;
 
 		/// Verifie si \p userRole peut executer \p command. Retourne :

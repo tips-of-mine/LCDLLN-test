@@ -8,6 +8,7 @@
 
 #include "src/masterd/admin/SlashCommandRegistry.h"
 
+#include "src/shared/admin/GmCommandText.h"
 #include "src/shared/core/Log.h"
 
 #include <cctype>
@@ -232,7 +233,9 @@ namespace engine::server
 		/// (en remontant le dernier espace pour ne pas garder l'espace).
 		std::string ExtractCanonical(const std::string& declared)
 		{
-			const size_t lt = declared.find('<');
+			// ADM.0 — un paramètre facultatif « [x] » coupe aussi (« /help [commande] »
+			// était indexé tel quel : « /help » restait introuvable).
+			const size_t lt = declared.find_first_of("<[|");
 			if (lt == std::string::npos)
 				return declared; // pas de placeholder, c'est deja canonique
 			// Remonte le dernier espace avant le '<' pour exclure le separateur.
@@ -316,14 +319,24 @@ namespace engine::server
 				entry.description = descNode->s;
 			if (const JsonNode* catNode = FindString(item.o, "category"))
 				entry.category = catNode->s;
+			// ADM.0 — aide détaillée (/help <commande>).
+			entry.signature = cmdNode->s;
+			if (const JsonNode* usageNode = FindString(item.o, "usage"))
+				entry.usage = usageNode->s;
+			if (entry.usage.empty())
+				entry.usage = entry.signature;
+			if (const JsonNode* helpNode = FindString(item.o, "help"))
+				entry.details = helpNode->s;
+			if (const JsonNode* exampleNode = FindString(item.o, "example"))
+				entry.example = exampleNode->s;
 
 			const size_t idx = m_entries.size();
 			m_entries.push_back(std::move(entry));
 
-			// Index par canonique + alias.
-			m_byName[m_entries[idx].command] = idx;
+			// Index par canonique + alias (ADM.0 : clé en minuscules, cf. Lookup).
+			m_byName[engine::admin::ToLowerAscii(m_entries[idx].command)] = idx;
 			for (const auto& alias : m_entries[idx].aliases)
-				m_byName[alias] = idx;
+				m_byName[engine::admin::ToLowerAscii(alias)] = idx;
 		}
 
 		LOG_INFO(Net, "[SlashCommandRegistry] loaded {} commands from {}",
@@ -333,7 +346,14 @@ namespace engine::server
 
 	const SlashCommandEntry* SlashCommandRegistry::Lookup(const std::string& command) const
 	{
-		auto it = m_byName.find(command);
+		// ADM.0 — sans casse, « / » de tête facultatif, espaces de bord ignorés.
+		const std::string_view trimmed = engine::admin::Trim(command);
+		std::string key = engine::admin::ToLowerAscii(trimmed);
+		if (key.empty())
+			return nullptr;
+		if (key.front() != '/')
+			key.insert(key.begin(), '/');
+		auto it = m_byName.find(key);
 		if (it == m_byName.end()) return nullptr;
 		return &m_entries[it->second];
 	}

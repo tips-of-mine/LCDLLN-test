@@ -41,6 +41,8 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
@@ -235,6 +237,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/retired/RetiredGameplayOpcodes.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
+    # ADM.0 : commandes de jeu (aide paginée, relais vers les shards, audit).
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/MasterGmCommands.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/GmShardRelay.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/GmAuditStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/CommandHelp.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/DungeonPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
@@ -1327,6 +1334,25 @@ elseif(UNIX)
   target_compile_options(chat_command_router_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME chat_command_router_tests COMMAND chat_command_router_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # ADM.0 : outils texte des commandes (découpe, nombres, durées, lignes de chat).
+  lcdlln_add_simple_test(gm_command_text_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/admin/tests/GmCommandTextTests.cpp)
+  # ADM.0 : aide paginée (/help, /search) + cohérence slash_commands.json ↔ catalogue shard.
+  lcdlln_add_simple_test(command_help_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/tests/CommandHelpTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/chat/CommandHelp.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp)
+  # ADM.0 : relais des commandes MJ master → shard (corrélation, délais, anti-usurpation).
+  lcdlln_add_simple_test(gm_shard_relay_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/tests/GmShardRelayTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/GmShardRelay.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ShardPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatChannelRegistry pure tests
   add_executable(chat_channel_registry_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatChannelRegistryTests.cpp
@@ -1515,6 +1541,8 @@ elseif(UNIX)
     # (membre m_moderationAuditLog) → on l'ajoute ici.
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
+    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).

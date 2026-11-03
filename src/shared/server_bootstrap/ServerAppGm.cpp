@@ -93,6 +93,14 @@ namespace engine::server
 		{ "unlearn", &GmCommandExecutor::CmdUnlearn },
 		{ "resetskills", &GmCommandExecutor::CmdResetSkills },
 		{ "profession", &GmCommandExecutor::CmdProfession },
+		// ADM.4 — objets et argent (ServerAppGmItems.cpp)
+		{ "additem", &GmCommandExecutor::CmdAddItem },
+		{ "removeitem", &GmCommandExecutor::CmdRemoveItem },
+		{ "money", &GmCommandExecutor::CmdMoney },
+		{ "inventory", &GmCommandExecutor::CmdInventory },
+		{ "equipment", &GmCommandExecutor::CmdEquipment },
+		{ "clearbag", &GmCommandExecutor::CmdClearBag },
+		{ "itemsearch", &GmCommandExecutor::CmdItemSearch },
 	};
 
 	void GmCommandExecutor::Run()

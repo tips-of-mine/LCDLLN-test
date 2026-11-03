@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md)
 
 ## Aide et outils
 
@@ -74,6 +74,18 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/resetskills` |  | MJ | `/resetskills [joueur]` | Réinitialiser toutes les compétences de classe. |
 | `/profession` | `/setprofession` | MJ | `/profession <métier> <niveau 1-300> [joueur]` | Fixer le niveau d'un métier (récolte, artisanat). |
 | `/setrep` |  | MJ | `/setrep <joueur\|login> <faction> <valeur>` | Fixer la réputation d'un compte auprès d'une faction. |
+
+## Objets et argent
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/additem` | `/give` | MJ | `/additem <objet\|n°> [quantité] [joueur]` | Donner un objet (par numéro ou par nom). |
+| `/removeitem` |  | MJ | `/removeitem <objet\|n°> [quantité] [joueur]` | Retirer un objet du sac. |
+| `/money` | `/gold` | MJ | `/money <+/-montant> [gold\|honor\|badges\|premium] [joueur]` | Ajouter ou retirer de l'argent (or, honneur, insignes, premium). |
+| `/inventory` | `/inv` | MJ | `/inventory [joueur]` | Contenu du sac et de la bourse d'un joueur. |
+| `/equipment` | `/equip` | MJ | `/equipment [joueur]` | Objets portés par un joueur. |
+| `/clearbag` |  | MJ | `/clearbag [joueur] confirm` | Vider le sac (l'équipement porté est conservé). |
+| `/itemsearch` | `/lookupitem` `/finditem` | MJ | `/itemsearch <mot\|n°>` | Chercher un objet du catalogue (numéro et nom). |
 
 ## Modération
 

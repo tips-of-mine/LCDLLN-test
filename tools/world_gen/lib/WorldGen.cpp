@@ -46,6 +46,7 @@ namespace tools::world_gen
 			dst.respawnPoints += src.respawnPoints;
 			dst.interactables += src.interactables;
 			dst.proceduralPlaces += src.proceduralPlaces;
+			dst.seaPocketSamples += src.seaPocketSamples;
 			dst.warnings.insert(dst.warnings.end(), src.warnings.begin(), src.warnings.end());
 			dst.writtenFiles.insert(dst.writtenFiles.end(), src.writtenFiles.begin(), src.writtenFiles.end());
 		}

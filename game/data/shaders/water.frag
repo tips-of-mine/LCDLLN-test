@@ -182,6 +182,27 @@ void main()
     float occluderDepth  = texture(u_sceneDepth, screenUv).r;
     float surfaceDist    = linearizeDepth(gl_FragCoord.z);   // distance camera->surface eau
     float bottomDist     = linearizeDepth(occluderDepth);    // distance camera->fond opaque
+
+    // ── EAU.5 — distance horizontale au rivage (m) ───────────────────────────
+    // Le fond vu à travers ce pixel est sur le même rayon caméra que la surface,
+    // à la distance (le long de l'axe) bottomDist : profondeur VERTICALE exacte.
+    // Distance au rivage ≈ profondeur / pente du fond (pente mesurée d'un pixel
+    // à l'autre). L'écume en dépend : avant, elle suivait l'épaisseur d'eau et
+    // couvrait des dizaines de mètres sur une rive presque plate.
+    // Calculé AVANT le discard : les dérivées écran exigent des voisins actifs.
+    vec3  bottomPos   = pc.cameraPos + (vWorldPos - pc.cameraPos) * (bottomDist / max(surfaceDist, 1e-3));
+    float depthV      = max(0.0, vWorldPos.y - bottomPos.y);
+    vec2  dDepth      = vec2(dFdx(depthV), dFdy(depthV));
+    vec2  dPx         = dFdx(vWorldPos.xz);
+    vec2  dPy         = dFdy(vWorldPos.xz);
+    float det         = dPx.x * dPy.y - dPx.y * dPy.x;
+    // Gradient de la profondeur dans le plan (x, z) : système 2×2 des dérivées écran.
+    vec2  gradDepth   = abs(det) > 1e-8
+        ? vec2(dDepth.x * dPy.y - dDepth.y * dPx.y, dDepth.y * dPx.x - dDepth.x * dPy.x) / det
+        : vec2(0.0);
+    float bedSlope    = clamp(length(gradDepth), 0.03, 3.0);
+    float shoreDist   = depthV / bedSlope;
+
     // Bord ADOUCI (anti-crawl TAA) sur ~0.20 m.
     float edge = smoothstep(surfaceDist - 0.20, surfaceDist - 0.02, bottomDist);
     if (edge <= 0.001)
@@ -297,12 +318,15 @@ void main()
     color += vec3(0.05, 0.08, 0.10) * fres * skyLight;    // lisere clair rasant
 
     // ── Écume (EAU.1, affinée EAU.2) ─────────────────────────────────────────
-    // Rives : bande blanche là où l'eau est mince, découpée par du bruit et
+    // Rives : bande blanche près du bord, découpée par du bruit et
     // parcourue de lignes de ressac. EAU.2 : bande resserrée (0,7 m au lieu de
     // 1,2 m) — autour d'un objet plongé dans l'eau (jambes, troncs) l'épaisseur
     // vue est faible aussi, et l'ancienne bande les peignait en blanc.
-    float shore   = 1.0 - smoothstep(0.0, 0.7, waterThickness);
-    float lap     = 0.5 + 0.5 * sin(waterThickness * 12.0 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
+    // EAU.5 : bande limitée en DISTANCE au rivage (≈ 1,8 m), quelle que soit la
+    // pente de la rive, ET en profondeur (0,7 m). Les lignes de ressac sont
+    // parallèles au rivage (fonction de la distance, plus de l'épaisseur).
+    float shore   = (1.0 - smoothstep(0.0, 1.8, shoreDist)) * (1.0 - smoothstep(0.0, 0.7, depthV));
+    float lap     = 0.5 + 0.5 * sin(shoreDist * 3.5 - t * 1.6 + valueNoise(vWorldPos.xz * 0.6) * 6.0);
     lap = mix(0.5, lap, distFade);
     float breakup = valueNoise((vWorldPos.xz - flowEff * (isRiver ? pc.flowSpeed * 2.5 * t : 0.0)) * 1.7 + vec2(t * 0.05, -t * 0.04));
     float foam    = shore * smoothstep(0.45, 0.9, lap * 0.6 + breakup * 0.7);

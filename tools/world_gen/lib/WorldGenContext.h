@@ -348,8 +348,39 @@ namespace tools::world_gen
 	void InitCell(World& w, const GlobalWorld& g, engine::world::cells::CellCoord c);
 	/// Lieux procéduraux (hameaux, fermes, camps, ruines, mines). Places.cpp
 	void BuildPlaces(World& w);
-	/// Altitude de base + biome de la cellule. Terrain.cpp
+	/// Altitude de base + biome de la cellule, puis comblement des cuvettes
+	/// intérieures sous le niveau de la mer (EAU.5). Terrain.cpp
 	void BuildCellTerrain(World& w);
+	/// EAU.5 — Comble les cuvettes sous \p seaLevel qui ne communiquent pas avec
+	/// la mer : la nappe de la mer couvre toute la cellule, une cuvette isolée
+	/// y faisait apparaître une « mare de mer » (eau de mer, écume) en pleine
+	/// terre. Une cuvette communique avec la mer si elle touche, par des
+	/// échantillons sous la mer (voisinage 4), un échantillon de biome marin
+	/// (' ' ou '-') ou le bord de la grille (prudence : la mer peut être dans
+	/// la cellule voisine). Les autres sont relevées à \p fillY.
+	/// \param biome même cadrage que \p height ; vide = seul le bord compte.
+	/// \return nombre d'échantillons relevés.
+	size_t FillLandlockedSea(Grid<double>& height, const Grid<char>& biome, double seaLevel, double fillY);
+	/// EAU.5 — Rayon (m) du polygone du lac dans la direction \p angleRad
+	/// (atan2(dz, dx)) : interpolation entre les sommets, posés à angles
+	/// réguliers par BuildMacroTerrain. Sans polygone : radiusM.
+	double LakeRadiusAt(const Lake& lake, double angleRad);
+	/// EAU.5 — Niveau d'eau d'un lac (m) : moyenne du relief − 0,8 m (ancienne
+	/// règle), mais jamais plus haut que le BAS de sa rive (15e centile du relief
+	/// de base, 10 m au-delà du polygone) − 0,3 m : un lac à flanc de pente n'est
+	/// plus « perché » (il aurait fallu une digue de dizaines de mètres). Au moins
+	/// 0,5 m au-dessus de la mer. Fonction pure (raccord exact entre cellules).
+	/// \param meanHeight moyenne du relief de base sur le disque du lac.
+	double LakeWaterLevel(const WorldMaster& m, const Lake& lake, double meanHeight);
+	/// EAU.5 — Creuse la cuvette du lac et façonne ses rives d'après le
+	/// POLYGONE (et non plus un cercle) : le fond est sous l'eau partout dans
+	/// le polygone, et au ras du bord le sol est 0,3 m au-dessus de l'eau. Un
+	/// relief plus bas (lac à flanc de pente) est relevé en digue naturelle
+	/// (crête de 8 m, puis pente ≈ 19°) : la nappe ne déborde plus en « plaque » au-dessus du vide.
+	/// \param riverDist distance aux lits de rivière (m) ; la digue n'est pas
+	///        élevée à moins de 12 m d'un lit (une rivière qui sort du lac
+	///        resterait sinon barrée). Grille vide = aucune rivière.
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake);
 	/// Plateaux urbains. Terrain.cpp
 	void FlattenSettlements(World& w);
 	/// Rivières et lacs (creusement, carte de distance). Terrain.cpp

@@ -165,6 +165,7 @@ namespace tools::world_gen
 		uint64_t houseTemplates = 0;
 		uint64_t cells = 0;
 		uint64_t proceduralPlaces = 0;
+		uint64_t seaPocketSamples = 0; ///< EAU.5 : échantillons de cuvettes sous la mer comblés
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

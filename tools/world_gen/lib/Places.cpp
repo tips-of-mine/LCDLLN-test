@@ -71,7 +71,6 @@ namespace tools::world_gen
 		void BuildPonds(World& w)
 		{
 			const WorldMaster& m = w.master;
-			const double sea = m.scale.seaLevelM;
 			const char code = LoreCode(m, w.cell.n, w.cell.e);
 			int target = 0;
 			if (code == '.' || code == 'r' || code == 'T' || code == 'R' || code == 't' || code == 'L') target = 5;
@@ -110,7 +109,6 @@ namespace tools::world_gen
 				pond.name = w.cellName + "_etang_" + std::to_string(made);
 				pond.center = c;
 				pond.radiusM = R;
-				pond.waterY = std::max(sea + 0.5, sum / cnt - 0.8);
 				const int verts = std::clamp(static_cast<int>(R / 3.0), 20, 48);
 				for (int k = 0; k < verts; ++k)
 				{
@@ -118,6 +116,11 @@ namespace tools::world_gen
 					const double rr = R * (1.0 + 0.12 * Fbm(std::cos(a) * 3.0, std::sin(a) * 3.0, 1.0, 2, Hash(m.seed, HashString(pond.name.c_str()))));
 					pond.polygon.push_back({ c.x + std::cos(a) * rr, c.z + std::sin(a) * rr });
 				}
+				// EAU.5 : niveau calé aussi sur le bas de la rive (pas d'étang perché).
+				pond.waterY = LakeWaterLevel(m, pond, sum / cnt);
+				// Trop près de la mer : étang de quelques décimètres (fond borné à la
+				// mer, cf. CarveLake). Emplacement refusé sous 1,2 m de profondeur.
+				if (pond.waterY < m.scale.seaLevelM + 1.2) continue;
 				w.lakes.push_back(std::move(pond));
 				++made;
 			}

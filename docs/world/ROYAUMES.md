@@ -166,8 +166,11 @@ voisines raccord au mètre près :
 5. `Places.cpp` — **lieux procéduraux** selon le biome : hameaux, fermes,
    camps de bûcherons, repaires de bandits, ruines, mines (> 700 m des bords),
    puis étangs.
-6. Heightmap 2049², plateaux urbains, lits de rivière (berges jamais sous
-   l'eau), lacs.
+6. Heightmap 2049² ; cuvettes sous la mer **isolées** comblées (sinon la
+   nappe de la mer y apparaît en pleine terre, EAU.5) ; plateaux urbains ;
+   lits de rivière (berges jamais sous l'eau) ; lacs et étangs creusés selon
+   leur polygone, niveau jamais au-dessus du bas de la rive, bord de la nappe
+   enfoui sous la rive, digue si besoin, fond jamais sous la mer (EAU.5).
 7. Routes découpées + **chemins locaux** reliant chaque lieu au réseau.
 8. `Settlements.cpp` : rues, lots, auberge, forge, marché, remparts/palissades,
    champs, cimetière, accessoires de métier (bûcherons, mine, bandits).

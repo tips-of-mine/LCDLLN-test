@@ -11,6 +11,9 @@
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture).
 // 6. État « reconstruction » (Kendrhir Vale) : maisons, ruines et chantiers
 //    mêlés, auberge en service, étais autour des chantiers.
+// 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
+//    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
+//    de pente (digue), pas de digue sur un lit de rivière.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -454,6 +457,82 @@ namespace
 	}
 }
 
+namespace
+{
+	void TestWaterShores()
+	{
+		using namespace tools::world_gen;
+		// 1) Cuvettes : grille 40×40 à 45 m ; mer (biome '-') à gauche, une cuvette
+		//    isolée au centre, une autre au bord droit (prudence : conservée).
+		Grid<double> h;
+		Grid<char> b;
+		h.Init(40, 40, 0.0, 0.0, 5.0, 45.0);
+		b.Init(40, 40, 0.0, 0.0, 5.0, '.');
+		for (int j = 0; j < 40; ++j)
+			for (int i = 0; i < 6; ++i) { h.At(i, j) = 30.0; b.At(i, j) = '-'; }
+		for (int j = 5; j < 10; ++j) h.At(6, j) = 39.0;           // chenal relié à la mer
+		for (int j = 18; j < 22; ++j)
+			for (int i = 18; i < 22; ++i) h.At(i, j) = 38.0;     // cuvette isolée
+		for (int j = 30; j < 33; ++j) h.At(39, j) = 39.5;        // touche le bord
+		const size_t n = FillLandlockedSea(h, b, 40.0, 40.5);
+		Check(n == 16, "EAU.5 : cuvette isolee comblee (16 echantillons)");
+		Check(h.At(19, 19) == 40.5 && h.At(3, 3) == 30.0 && h.At(6, 7) == 39.0,
+			"EAU.5 : mer et chenal relie conserves, cuvette relevee");
+		Check(h.At(39, 31) == 39.5, "EAU.5 : cuvette au bord de la cellule conservee");
+		Grid<char> noBiome;
+		Grid<double> h2 = h;
+		h2.At(20, 20) = 39.0;
+		Check(FillLandlockedSea(h2, noBiome, 40.0, 40.5) == 1, "EAU.5 : sans biome, seul le bord relie a la mer");
+
+		// 2) Lac sur une pente (sol de 60 m à l'ouest à 20 m à l'est), eau à 40 m.
+		Lake lake;
+		lake.center = { 500.0, 500.0 };
+		lake.radiusM = 100.0;
+		lake.waterY = 40.0;
+		for (int k = 0; k < 32; ++k)
+		{
+			const double a = 6.283185307179586 * k / 32;
+			const double rr = 100.0 * (k % 2 ? 1.08 : 0.92);
+			lake.polygon.push_back({ 500.0 + std::cos(a) * rr, 500.0 + std::sin(a) * rr });
+		}
+		Check(std::fabs(LakeRadiusAt(lake, 0.0) - 92.0) < 1e-6
+			&& std::fabs(LakeRadiusAt(lake, 6.283185307179586 / 32) - 108.0) < 1e-6
+			&& std::fabs(LakeRadiusAt(lake, 6.283185307179586 / 64) - 100.0) < 1e-6
+			&& std::fabs(LakeRadiusAt(lake, -6.283185307179586 / 32) - 108.0) < 1e-6,
+			"EAU.5 : rayon du lac interpole entre les sommets du polygone");
+		Grid<double> slope;
+		slope.Init(201, 201, 0.0, 0.0, 5.0, 0.0);
+		for (int j = 0; j < 201; ++j)
+			for (int i = 0; i < 201; ++i) slope.At(i, j) = 60.0 - 40.0 * (slope.WorldX(i) / 1000.0);
+		Grid<double> withRiver = slope;
+		Grid<float> rivers;
+		rivers.Init(201, 201, 0.0, 0.0, 5.0, 1e9f);
+		for (int i = 0; i < 201; ++i) rivers.At(i, 100) = 0.0f;   // lit le long de z = 500
+		CarveLake(slope, Grid<float>{}, Grid<uint8_t>{}, lake, 0.0);
+		CarveLake(withRiver, rivers, Grid<uint8_t>{}, lake, 0.0);
+		bool bedOk = true, rimOk = true;
+		for (int k = 0; k < 64; ++k)
+		{
+			const double a = 6.283185307179586 * k / 64;
+			const double rr = LakeRadiusAt(lake, a);
+			const Vec2 in{ 500.0 + std::cos(a) * (rr - 13.0), 500.0 + std::sin(a) * (rr - 13.0) };
+			const Vec2 rim{ 500.0 + std::cos(a) * (rr + 3.0), 500.0 + std::sin(a) * (rr + 3.0) };
+			if (SampleBilinear(slope, in.x, in.z) >= lake.waterY) bedOk = false;
+			if (SampleBilinear(slope, rim.x, rim.z) < lake.waterY) rimOk = false;
+		}
+		Check(bedOk, "EAU.5 : fond sous l'eau dans le polygone (hors bande du bord)");
+		Check(rimOk, "EAU.5 : rive au-dessus de l'eau tout autour (digue cote aval)");
+		Check(std::fabs(SampleBilinear(slope, 900.0, 500.0) - (60.0 - 40.0 * 0.9)) < 1e-9,
+			"EAU.5 : relief d'origine retrouve au-dela de la digue");
+		Check(SampleBilinear(slope, 600.0, 500.0) >= lake.waterY && SampleBilinear(withRiver, 600.0, 500.0) < lake.waterY,
+			"EAU.5 : digue sauf sur un lit de riviere");
+		Grid<double> flat;
+		flat.Init(201, 201, 0.0, 0.0, 5.0, 45.0);
+		CarveLake(flat, Grid<float>{}, Grid<uint8_t>{}, lake, 39.0);
+		Check(std::fabs(SampleBilinear(flat, 500.0, 500.0) - 39.0) < 1e-9, "EAU.5 : fond du lac jamais sous la mer");
+	}
+}
+
 int main()
 {
 	TestScatterRoundTrip();
@@ -463,6 +542,7 @@ int main()
 	TestGenerationAndInvariants();
 	TestReconstruction();
 	TestMapFeatures();
+	TestWaterShores();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

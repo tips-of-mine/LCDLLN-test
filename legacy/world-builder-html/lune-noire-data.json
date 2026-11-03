@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.48",
+    "version": "1.0.49",
     "notes": [
+      "v1.0.49 : [CARTE] lieux mineurs du T1 placés : Forêt de la Rencontre (N012_E008, près de Whispers Hill alignée sur world_master en N011_E008), Haywick (N018_E013, village du poulailler et cour de Ghorghor, ruine), Camp de l'Étang (N018_E012, rencontre de Feidreiva), Champ de la Première Bataille (N018_E011) et citadelle d'Ashcroft (N017_E012, ruine) ; textes « forêt des Marches » corrigés ; noms Haywick et Ashcroft repris de carte_export.json.",
       "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
       "v1.0.47 : [VILLES] Kendrhir Vale en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
       "v1.0.46 : [VILLES] Kendrhir Vale : intérieur de la cité rempli (citadelle, muraille et trois portes, cinq quartiers, lices, emplacement des 19 PNJ de service, PNJ d'ambiance) et description complète (topographie, architecture, végétation, ciel, accès, prompt image) ; éléments hors BD marqués [INFÉRÉ].",
@@ -7140,11 +7141,11 @@
       "alias": "",
       "type": "village",
       "importance": "",
-      "cell": "",
+      "cell": "N011_E008",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
-      "region_id": "",
+      "region_id": "terres_des_gigantomorphes",
       "housing_count": null,
       "population": null,
       "services": [
@@ -7163,7 +7164,8 @@
         "[BD-T1] Page 8 (p.14 BD) — Wismerhill le mentionne au coin du feu ; Pile-ou-Face en tire le nom 'Wismerhill'.",
         "[LORE_ETENDU] Lieu de départ potentiel pour quête des origines du personnage joueur.",
         "[BD-T1] Lieu de naissance ou lieu associé à Wismerhill — origine du nom 'Wismerhill'.",
-        "[BD-T1] Pile-ou-Face donne ce nom à Wismerhill d'après cet endroit."
+        "[BD-T1] Pile-ou-Face donne ce nom à Wismerhill d'après cet endroit.",
+        "[INFÉRÉ] Position N011_E008 reprise de world_master.json (la BD ne situe pas le village) ; la forêt de la rencontre avec Pile-ou-Face est placée juste au nord (N012_E008)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -7207,7 +7209,8 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
-      ]
+      ],
+      "anchor_tile": "N011_E008"
     },
     {
       "id": "ville_tbarak",
@@ -8087,6 +8090,57 @@
         }
       ],
       "anchor_tile": "N017_E013"
+    },
+    {
+      "id": "ville_ashcroft",
+      "name": "Ashcroft",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N017_E012",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [],
+      "features": [],
+      "notes": [
+        "[BD-T1] Page 18 (p.24 BD) — citadelle du seigneur local qui interdisait le passage à Ghorghor Bey ; on la voit brûler à l'arrière-plan du champ de la première bataille, couronnée de têtes plantées sur des piques.",
+        "[BD-T1] Le seigneur, couronné et blond, est décapité par Ghorghor (« Victoire ! »).",
+        "[INFÉRÉ] Au nord de la Faille de Kashogs, voisine du champ de bataille (N018_E011).",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas cette citadelle)."
+      ],
+      "taille": "sans_service",
+      "service_npcs": [],
+      "anchor_tile": "N017_E012"
+    },
+    {
+      "id": "ville_haywick",
+      "name": "Haywick",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N018_E013",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "",
+      "region_id": "region_marches",
+      "housing_count": null,
+      "population": null,
+      "services": [],
+      "features": [],
+      "notes": [
+        "[BD-T1] Pages 10-14 (p.16-20 BD) — village que la horde de Ghorghor Bey vient de prendre (« Nous venons de prendre ce village… ») quand Wismerhill et Pile-ou-Face y attaquent le poulailler, un soir de pleine lune.",
+        "[BD-T1] Ghorghor y tient sa cour : salle de pierre éclairée de torches, trône sur une estrade à degrés, cachot à barreaux (« Jetez-les en cage ! », « Au trou ! ») ; c'est là qu'il engage les deux compères et qu'on boit à leur honneur.",
+        "[BD-T1] « Derrière lui, il ne laissait que cendres et cadavres » : le village est ruiné après le passage de la horde.",
+        "[INFÉRÉ] Situé au nord des Marches, avant Tbarak : la carte p.25 fait entrer la horde dans les Marches par le nord.",
+        "[INFÉRÉ] Nom repris de la liste des lieux non utilisés de carte_export.json (la BD ne nomme pas ce village)."
+      ],
+      "taille": "sans_service",
+      "service_npcs": [],
+      "anchor_tile": "N018_E013"
     },
     {
       "id": "ville_feyhin_lokcthat",
@@ -18474,7 +18528,7 @@
       },
       "location": {
         "ville_id": "ville_whispers_hill",
-        "details": "Feu de camp dans la forêt des Marches"
+        "details": "Feu de camp dans la forêt de la Rencontre, près de Whispers Hill"
       },
       "rewards": {
         "title": "Wismerhill",
@@ -18498,8 +18552,8 @@
         "classes": []
       },
       "location": {
-        "ville_id": "",
-        "details": "Campement de la horde de Ghorghor dans les Marches"
+        "ville_id": "ville_haywick",
+        "details": "Salle du trône de Ghorghor Bey, dans le village de Haywick que la horde vient de prendre"
       },
       "rewards": {
         "title": "Camarade de Ghorghor",
@@ -20515,12 +20569,12 @@
       "type": "[LORE_DIRECT] — quête d'introduction tome 1",
       "steps": [
         "1. [PROLOGUE] Visionner la Prophétie de l'Oracle donnée à l'Empereur de Lhynn (30 ans avant) — scène cinématique non interactive.",
-        "2. [ORIGINE] Survivre seul dans la forêt des Marches sans nom ni compagnon — chasse, abri, défense contre la faune hostile.",
+        "2. [ORIGINE] Survivre seul dans la forêt de la Rencontre sans nom ni compagnon — chasse, abri, défense contre la faune hostile.",
         "3. [RENCONTRE] Charger le « monstre » de la forêt — ce n'est qu'un lapin. Faire face à Pile-ou-Face qui vole le repas. Choisir amitié ou combat.",
         "4. [NOM] Accepter le nom 'Wismerhill' proposé par Pile-ou-Face d'après Whispers Hill — débloque exploit_premier_nom_t1.",
-        "5. [HORDE] Tenter de voler les poules de Ghorghor Bey. Se faire capturer. Impressionner Ghorghor — recruté dans la horde.",
+        "5. [HORDE] Tenter de voler les poules de Ghorghor Bey à Haywick. Se faire capturer. Impressionner Ghorghor — recruté dans la horde.",
         "6. [CAMPAGNE] Traverser les Marches avec la horde (Tbarak, Klindor, Hazol). Combat, pillage, rencontres.",
-        "7. [FEIDREIVA] Rencontrer Feidreiva lors d'une halte à l'étang — débuter la relation romantique.",
+        "7. [FEIDREIVA] Rencontrer Feidreiva lors d'une halte au camp de l'Étang — débuter la relation romantique.",
         "8. [FAILLE] Écouter les vents pour détecter l'embuscade à la Faille de Kashogs — avertir Ghorghor — contre-attaque victorieuse — promu lieutenant.",
         "9. [KENDRHIR] Participer au Sac de Kendrhir. Rencontrer Hizin — choisir de l'épargner ou non (choix conséquent).",
         "10. [HIVER] Passer l'hiver à Kendrhir : entraînement armé (Feidreiva), festins (Ghorghor), leçons de Pile-ou-Face, apprentissage psychique (Hizin).",
@@ -23251,7 +23305,7 @@
     },
     {
       "id": "quest_apprendre_a_chasser_t1",
-      "name": "L'Art de la Chasse dans les Marches",
+      "name": "L'Art de la Chasse",
       "description": "Pile-ou-Face enseigne les rudiments de la chasse à Wismerhill après leur rencontre, avant leur capture par Ghorghor Bey. Apprendre à pister, tendre un piège, cuisiner le gibier. Sous-quête de quest_signe_tenebres.",
       "category": "formation",
       "tags": [
@@ -23265,7 +23319,7 @@
       "repeatable": false,
       "type": "[LORE_DIRECT] — montage d'apprentissage tome 1",
       "steps": [
-        "1. Suivre Pile-ou-Face dans la forêt des Marches.",
+        "1. Suivre Pile-ou-Face dans la forêt de la Rencontre.",
         "2. Identifier les traces de 3 types d'animaux différents (pistage).",
         "3. Tendre un piège à gibier sous les instructions de Pile-ou-Face.",
         "4. Chasser une créature de forêt de niveau 1-5.",
@@ -29939,7 +29993,8 @@
       "ref_type": "dialogue",
       "ref_id": "dial_ghorghor_recrutement_t1",
       "notes": [
-        "[BD-T1] Pages 9-12."
+        "[BD-T1] Pages 9-12.",
+        "[INFÉRÉ] Lieu : ville_haywick (N018_E013)."
       ]
     },
     {
@@ -29956,7 +30011,8 @@
       "ref_type": "dialogue",
       "ref_id": "dial_feidreiva_lac_t1",
       "notes": [
-        "[BD-T1] Pages 15-16."
+        "[BD-T1] Pages 15-16.",
+        "[INFÉRÉ] Lieu : lieu_camp_etang_t1 (N018_E012)."
       ]
     },
     {
@@ -154306,7 +154362,7 @@
       "name": "Viande de Bête Sauvage",
       "type": "consommable_nourriture",
       "rarity": "commun",
-      "description": "Morceau de viande crue provenant d'une créature de la forêt des Marches. Peut être cuit sur un feu de camp pour restaurer des PV.",
+      "description": "Morceau de viande crue provenant d'une créature de la forêt de la Rencontre. Peut être cuit sur un feu de camp pour restaurer des PV.",
       "min_level": 1,
       "eligible_races": [],
       "eligible_classes": [],
@@ -154342,7 +154398,7 @@
       "name": "Croc de Prédateur de Forêt",
       "type": "composant_craft_bijou",
       "rarity": "peu_commun",
-      "description": "Croc acéré d'un prédateur de la forêt des Marches. Peut être transformé en pendentif ou composant d'arme tranchante.",
+      "description": "Croc acéré d'un prédateur de la forêt de la Rencontre. Peut être transformé en pendentif ou composant d'arme tranchante.",
       "min_level": 1,
       "eligible_races": [],
       "eligible_classes": [],
@@ -154400,7 +154456,7 @@
       ],
       "source_raids": [],
       "notes": [
-        "[BD-T1] Pages 9-10 — la tentative de vol de poule est le déclencheur de la rencontre avec Ghorghor.",
+        "[BD-T1] Pages 10-11 (p.16-17 BD), à Haywick — la tentative de vol de poule est le déclencheur de la rencontre avec Ghorghor.",
         "[GAMEPLAY] Objet humoristique — récompense de quête légère lors de l'intégration à la horde.",
         "[BD-T1] 'Vous avez mal choisi votre jour ! Nous venons de prendre ce village... et ce sont donc les poules de Ghorghor Bey que vous volez !'"
       ]
@@ -198159,6 +198215,262 @@
       ],
       "notes": [
         "Accès : voir règle rule_volcan_acces."
+      ]
+    },
+    {
+      "id": "lieu_foret_rencontre_t1",
+      "name": "Forêt de la Rencontre",
+      "alias": "",
+      "type": "forest_poi",
+      "importance": "Lieu de la rencontre de Wismerhill et Pile-ou-Face, où Wismerhill reçoit son nom.",
+      "cell": "N012_E008",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Futaie dense",
+        "Clairière de bivouac",
+        "Faune hostile"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "Futaie de feuillus sur terrain doux.",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "Grands arbres aux troncs droits",
+        "Sous-bois traversé de rais de lumière",
+        "Feu de camp et broche à gibier"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "Dense.",
+        "type": "Feuillus anciens, fougères.",
+        "repartition": "",
+        "couleur": "Vert doré.",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "Forêt calme le jour, inquiétante la nuit autour du feu.",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T1] Pages 6-8 (p.12-14 BD) — Wismerhill, encore sans nom, y tue un chevalier-monstre ; Pile-ou-Face mange son lapin au coin du feu, lui offre son amitié, lui présente Nepher et Bepher et le nomme d'après Whispers Hill.",
+        "[INFÉRÉ] La BD ne nomme ni ne situe la forêt : placée juste au nord de Whispers Hill (N011_E008), dont Wismerhill vient de partir. Nom descriptif."
+      ]
+    },
+    {
+      "id": "lieu_camp_etang_t1",
+      "name": "Camp de l'Étang",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "Halte de ravitaillement de la horde de Ghorghor Bey ; rencontre de Wismerhill et Feidreiva.",
+      "cell": "N018_E012",
+      "region_id": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Campement de tentes",
+        "Étang aux nénuphars",
+        "Point d'eau"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "Tentes et huttes de peaux",
+        "Feux de camp",
+        "Étang bordé de roseaux et de nénuphars rouges",
+        "Grand arbre au bord de l'eau"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "Étang",
+        "eau": "Calme, peu profonde.",
+        "couleur": "",
+        "elements": "Nénuphars, roseaux, massettes."
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "« Lors des haltes de ravitaillement, le camp baignait dans un calme trompeur. »",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T1] Pages 15-17 (p.21-23 BD) — le camp de la horde « sous l'autorité incontestée de Ghorghor Bey » ; Wismerhill surprend Feidreiva au bain dans l'étang (« SSTONK »), puis la horde lève le camp (« Nous marchons dans une heure ! »).",
+        "[INFÉRÉ] Entre Haywick (N018_E013) et le champ de la première bataille (N018_E011). Nom descriptif."
+      ]
+    },
+    {
+      "id": "lieu_champ_premiere_bataille_t1",
+      "name": "Champ de la Première Bataille",
+      "alias": "",
+      "type": "battlefield_poi",
+      "importance": "Première bataille de Wismerhill : la horde écrase l'armée d'un seigneur local qui lui refusait le passage.",
+      "cell": "N018_E011",
+      "region_id": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Plaine dégagée",
+        "Champ de bataille",
+        "Têtes sur des piques"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "Plaine d'herbes hautes et sèches",
+        "Piques plantées portant des têtes",
+        "Citadelle en flammes à l'horizon (Ashcroft)"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "Plaine ocre balayée de fumée, corbeaux.",
+        "sentiment": "",
+        "niveau_menace": "Élevé (pillards, charognards)."
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T1] Page 18 (p.24 BD) — deux jours après le départ du camp, un messager annonce qu'un seigneur local interdit le passage ; il est exécuté et Ghorghor charge. « Ce fut la première bataille de Wismerhill… »",
+        "[INFÉRÉ] Dernière étape avant Tbarak (N018_E010), où commence l'itinéraire de la carte p.25. Nom descriptif."
       ]
     }
   ],

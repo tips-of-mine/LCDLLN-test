@@ -491,6 +491,30 @@
       "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (sud des Marches) ; nom repris des lieux non utilisés."
     },
     {
+      "id": "ville_haywick",
+      "name": "Haywick",
+      "cell": "N018_E013",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Village pris par la horde de Ghorghor Bey (le poulailler, la cour et le cachot du T1), laisse en cendres."
+    },
+    {
+      "id": "ville_ashcroft",
+      "name": "Ashcroft",
+      "cell": "N017_E012",
+      "kind": "forteresse",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[INFÉRÉ] BD-T1",
+      "description": "Citadelle du seigneur local vaincu a la premiere bataille de Wismerhill, incendiee par la horde."
+    },
+    {
       "id": "ville_klindor",
       "name": "Klindor",
       "cell": "N017_E019",
@@ -654,6 +678,27 @@
       "cell": "N000_E000",
       "kind": "monolithe",
       "description": "Structure cristalline colossale ; nul ne combat a l'ombre de l'Oracle."
+    },
+    {
+      "id": "poi_foret_rencontre",
+      "name": "Foret de la Rencontre",
+      "cell": "N012_E008",
+      "kind": "foret",
+      "description": "Clairiere ou Pile-ou-Face donna son nom a Wismerhill, au coin du feu."
+    },
+    {
+      "id": "poi_camp_etang",
+      "name": "Camp de l'Etang",
+      "cell": "N018_E012",
+      "kind": "etang",
+      "description": "Halte de la horde de Ghorghor Bey au bord d'un etang aux nenuphars."
+    },
+    {
+      "id": "poi_premiere_bataille",
+      "name": "Champ de la Premiere Bataille",
+      "cell": "N018_E011",
+      "kind": "champ_bataille",
+      "description": "Plaine herissee de piques ou Ghorghor Bey ecrasa l'armee d'un seigneur local."
     },
     {
       "id": "poi_faille_kashogs",

@@ -469,6 +469,11 @@ namespace engine::render
 				dl->AddLine(ImVec2(s.x - r, s.y - r), ImVec2(s.x + r, s.y + r), IM_COL32(40, 30, 30, 255), 1.5f);
 				dl->AddLine(ImVec2(s.x - r, s.y + r), ImVec2(s.x + r, s.y - r), IM_COL32(40, 30, 30, 255), 1.5f);
 			}
+			else if (c.state == "reconstruction")
+			{
+				// Ville en reconstruction : un seul trait (demi-croix des ruines).
+				dl->AddLine(ImVec2(s.x - r, s.y + r), ImVec2(s.x + r, s.y - r), IM_COL32(40, 30, 30, 255), 1.5f);
+			}
 			const float d2 = (io.MousePos.x - s.x) * (io.MousePos.x - s.x) + (io.MousePos.y - s.y) * (io.MousePos.y - s.y);
 			if (hovered && d2 < std::max(bestHover, (r + 3.0f) * (r + 3.0f))) { bestHover = d2; hoveredCity = &c; hoveredPoi = nullptr; }
 			if (AlwaysLabelled(c) || view.zoom >= 2.0f)
@@ -498,6 +503,7 @@ namespace engine::render
 			ImGui::TextUnformatted(hoveredCity->name.c_str());
 			std::string line = engine::client::PlaceKindLabel(hoveredCity->kind);
 			if (hoveredCity->state == "ruine") line += " (en ruine)";
+			else if (hoveredCity->state == "reconstruction") line += " (en reconstruction)";
 			if (!hoveredCity->race.empty()) line += " - " + hoveredCity->race;
 			ImGui::TextDisabled("%s", line.c_str());
 			if (!hoveredCity->startFor.empty())

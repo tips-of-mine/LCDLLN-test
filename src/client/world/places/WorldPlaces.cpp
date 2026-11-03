@@ -198,6 +198,7 @@ namespace engine::client
 			{
 				std::string sub = PlaceKindLabel(city->kind);
 				if (city->state == "ruine") sub += " en ruine";
+				else if (city->state == "reconstruction") sub += " en reconstruction";
 				if (region != nullptr) sub += " - " + region->name;
 				Show(city->name, std::move(sub));
 			}

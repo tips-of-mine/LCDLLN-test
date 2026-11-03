@@ -9,6 +9,8 @@
 //    départ humain, spawners en coordonnées globales DANS la cellule).
 // 5. Génération de la cellule voisine (ouest) : la colonne de frontière de la
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture).
+// 6. État « reconstruction » (Kendrhir Vale) : maisons, ruines et chantiers
+//    mêlés, auberge en service, étais autour des chantiers.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -330,6 +332,54 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// État « reconstruction » (Kendrhir Vale, N015_E012) : la ville mêle maisons
+	/// habitées, ruines et chantiers (étais), et garde son auberge.
+	void TestReconstruction()
+	{
+		namespace fs = std::filesystem;
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_tests_reconstruction";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		tools::world_gen::GenReport r;
+		std::string err;
+		tools::world_gen::GenOptions o;
+		o.contentRoot = LCDLLN_CONTENT_DIR;
+		o.worldId = "royaumes";
+		o.cells = { "N015_E012" };
+		o.outputRoot = tmp.string();
+		const bool ok = tools::world_gen::RunWorldGen(o, r, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "reconstruction : generation cellule N015_E012 (Kendrhir Vale)");
+		if (!ok) return;
+
+		const std::string cell = "cell_n015_e012";
+		std::vector<engine::world::instances::BuildingPlacement> pls; std::string e;
+		Check(engine::world::instances::LoadBuildingsBin(ReadBytes(tmp / "instances" / ("zone_" + cell) / "buildings.bin"), pls, e),
+			"reconstruction : buildings.bin relu");
+		const std::string suffix = "(Kendrhir Vale)";
+		int intactHouses = 0, ruins = 0, sites = 0, inns = 0;
+		for (const auto& p : pls)
+		{
+			if (p.displayName.find(suffix) == std::string::npos) continue;
+			const bool ruinVariant = p.variantId.rfind("ruine_", 0) == 0;
+			if (p.templateType == "tavern") ++inns;
+			else if (p.displayName.rfind("Chantier", 0) == 0 && ruinVariant) ++sites;
+			else if (ruinVariant) ++ruins;
+			else ++intactHouses;
+		}
+		Check(intactHouses > 0 && ruins > 0 && sites > 0, "reconstruction : maisons, ruines et chantiers melanges");
+		Check(intactHouses > ruins && intactHouses > sites, "reconstruction : les maisons habitees restent majoritaires");
+		Check(inns == 1, "reconstruction : auberge en service");
+
+		engine::world::instances::ScatterFile sf;
+		const bool okScatter = engine::world::instances::LoadScatterBin(ReadBytes(tmp / "instances" / ("zone_" + cell) / "scatter.bin"), sf, e);
+		bool supports = false;
+		for (const std::string& m : sf.meshPaths)
+			if (m == "meshes/props/Prop_Support.gltf") supports = true;
+		Check(okScatter && supports, "reconstruction : etais poses autour des chantiers");
+		fs::remove_all(tmp, ec);
+	}
+
 	/// FIX.12 — tracés de la carte : routes globales, chemins locaux, rues
 	/// (une arête par paire de noeuds) et bâtiments (emprise ou repli du rayon).
 	void TestMapFeatures()
@@ -411,6 +461,7 @@ int main()
 	TestMaster();
 	TestStartCorridors();
 	TestGenerationAndInvariants();
+	TestReconstruction();
 	TestMapFeatures();
 	if (g_failures)
 	{

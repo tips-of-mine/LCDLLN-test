@@ -54,7 +54,7 @@
       "                            -,............  ",
       "                           --,MMMMM.......  ",
       "                           -,.tTTTTM......  ",
-      "                           -,tTTTTTtM.....  ",
+      "                           -,tTTT.TtM.....  ",
       "     --------------       -,tTTTTTTTtM....  ",
       "   ---,,,,,,,,--,,-   -----,tTTTTTTTTtM...  ",
       "   -,,.r......,R%%-----oo-,,tTTTTTTTTt.M..  ",
@@ -273,14 +273,14 @@
     {
       "id": "kendrhir_vale",
       "name": "Kendrhir Vale",
-      "cell": "N007_E001",
+      "cell": "N015_E012",
       "kind": "ville",
       "race": "humains",
-      "state": "ruine",
+      "state": "reconstruction",
       "faction": "neutre",
       "start_for": [],
       "source": "[BD] BD-T1",
-      "description": "Cité des Grands Mages — rasée par la horde de Ghorghor Bey."
+      "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."
     },
     {
       "id": "horker",
@@ -449,7 +449,7 @@
     {
       "id": "ville_tbarak",
       "name": "Tbarak",
-      "cell": "N006_E002",
+      "cell": "N018_E014",
       "kind": "village",
       "race": "humains",
       "state": "intact",
@@ -461,7 +461,7 @@
     {
       "id": "ville_klindor",
       "name": "Klindor",
-      "cell": "N004_E004",
+      "cell": "N017_E019",
       "kind": "forteresse",
       "race": "humains",
       "state": "intact",
@@ -473,7 +473,7 @@
     {
       "id": "ville_hazol",
       "name": "Hazol",
-      "cell": "N001_E003",
+      "cell": "N015_E015",
       "kind": "village",
       "race": "humains",
       "state": "intact",

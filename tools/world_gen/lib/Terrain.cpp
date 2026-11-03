@@ -904,6 +904,7 @@ namespace tools::world_gen
 
 	void CarveWater(World& w)
 	{
+		const double sea = w.master.scale.seaLevelM;
 		w.riverDist.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, 1e9f);
 		auto inCity = [&](double x, double z) {
 			for (const CityDef& c : w.cities)
@@ -917,7 +918,10 @@ namespace tools::world_gen
 			{
 				const Vec2 p = river.points[k];
 				const double half = river.widthM[k] * 0.5;
-				const double bed = river.waterY[k] - 2.4;
+				// EAU.5 : en amont de l'embouchure, lit jamais sous la mer (la nappe de
+				// la mer d'une cellule côtière apparaîtrait sous la rivière).
+				const double bed = river.waterY[k] > sea + 0.6 ? std::max(river.waterY[k] - 2.4, sea + 0.1)
+				                                               : river.waterY[k] - 2.4;
 				const double reach = half + 30.0;
 				ForDisc(w.height, p, reach, [&](int i, int j, double d) {
 					// Jamais de lit creusé dans une ville (plateau préservé).
@@ -939,6 +943,6 @@ namespace tools::world_gen
 			}
 		}
 		for (const Lake& lake : w.lakes)
-			CarveLake(w.height, w.riverDist, w.urban, lake, w.master.scale.seaLevelM + 0.1); // EAU.5
+			CarveLake(w.height, w.riverDist, w.urban, lake, sea + 0.1); // EAU.5
 	}
 }

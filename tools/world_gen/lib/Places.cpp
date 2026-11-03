@@ -119,8 +119,8 @@ namespace tools::world_gen
 				// EAU.5 : niveau calé aussi sur le bas de la rive (pas d'étang perché).
 				pond.waterY = LakeWaterLevel(m, pond, sum / cnt);
 				// Trop près de la mer : étang de quelques décimètres (fond borné à la
-				// mer, cf. CarveLake), tout en écume. Emplacement refusé.
-				if (pond.waterY < m.scale.seaLevelM + 3.0) continue;
+				// mer, cf. CarveLake). Emplacement refusé sous 1,2 m de profondeur.
+				if (pond.waterY < m.scale.seaLevelM + 1.2) continue;
 				w.lakes.push_back(std::move(pond));
 				++made;
 			}

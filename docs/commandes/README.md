@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md)
 
 ## Aide et outils
 
@@ -39,6 +39,20 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/fly` |  | MJ | `/fly [on\|off] [joueur]` | Vol libre (sans gravité). |
 | `/freeze` |  | MJ | `/freeze <joueur>` | Geler un joueur sur place. |
 | `/unfreeze` |  | MJ | `/unfreeze <joueur>` | Dégeler un joueur. |
+
+## Informations
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/pos` | `/gps` `/coords` | joueur | `/pos \| /pos <joueur>` | Votre position (coordonnées, orientation, cellule, région). |
+| `/where` |  | joueur | `/where` | Lieu connu le plus proche et sa direction. |
+| `/online` | `/players` | joueur | `/online [page]` | Liste des personnages en jeu. |
+| `/ping` |  | joueur | `/ping` | Vérifie que le serveur reçoit vos commandes. |
+| `/serverstats` | `/stats` | modérateur | `/serverstats` | Connexions, joueurs par rôle et état des shards. |
+| `/info` | `/pinfo` | MJ | `/info <joueur>` | Fiche d'un joueur connecté (compte, niveau, vie, position…). |
+| `/target` |  | MJ | `/target` | Fiche de votre dernière cible (mob ou joueur). |
+| `/zone` |  | MJ | `/zone` | Résumé de votre zone (joueurs, mobs, spawners). |
+| `/nearby` |  | MJ | `/nearby [rayon]` | Entités proches (joueurs, mobs, sacs de butin). |
 
 ## Modération
 

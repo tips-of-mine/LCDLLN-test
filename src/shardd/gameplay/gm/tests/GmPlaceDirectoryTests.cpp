@@ -80,6 +80,14 @@ int main()
 		&& std::fabs(r[0]->z + 1000.0f) < 0.01f, "région : centre du rectangle");
 	Check(dir.Search("zzz").empty() && dir.Search("").empty(), "recherche sans résultat");
 
+	// --- ADM.2 : région contenant un point, lieu le plus proche ---
+	const GmPlace* region = dir.RegionAt(1000.0f, -500.0f);
+	Check(region != nullptr && region->id == "empire", "région contenant le point");
+	Check(dir.RegionAt(-5000.0f, 5000.0f) == nullptr, "hors de toute région");
+	float dist = 0.0f;
+	const GmPlace* near = dir.Nearest(330.0f, 470.0f, dist);
+	Check(near != nullptr && near->id == "lac_marn" && dist < 20.0f, "lieu le plus proche (régions ignorées)");
+
 	// --- Liste ---
 	const auto all = dir.List("");
 	Check(all.size() == 6u, "liste complète");

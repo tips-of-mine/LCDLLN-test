@@ -6,6 +6,7 @@
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
+#include <utility>
 #include <cmath>
 #include <cstdint>
 #include <format>
@@ -133,8 +134,15 @@ namespace engine::server::gm
 			p.name = c.GetString(b + "name", p.id);
 			p.detail = "région";
 			p.kind = GmPlaceKind::Region;
-			p.x = (GetF(c, b + "x_min", 0.0f) + GetF(c, b + "x_max", 0.0f)) * 0.5f;
-			p.z = (GetF(c, b + "z_min", 0.0f) + GetF(c, b + "z_max", 0.0f)) * 0.5f;
+			p.xMin = GetF(c, b + "x_min", 0.0f);
+			p.xMax = GetF(c, b + "x_max", 0.0f);
+			p.zMin = GetF(c, b + "z_min", 0.0f);
+			p.zMax = GetF(c, b + "z_max", 0.0f);
+			if (p.xMax < p.xMin) std::swap(p.xMin, p.xMax);
+			if (p.zMax < p.zMin) std::swap(p.zMin, p.zMax);
+			p.hasBounds = true;
+			p.x = (p.xMin + p.xMax) * 0.5f;
+			p.z = (p.zMin + p.zMax) * 0.5f;
 			if (std::isfinite(p.x) && std::isfinite(p.z) && !p.name.empty())
 				m_places.push_back(std::move(p));
 		}
@@ -195,5 +203,44 @@ namespace engine::server::gm
 			return FoldPlaceText(a->name) < FoldPlaceText(b->name);
 		});
 		return out;
+	}
+
+	const GmPlace* GmPlaceDirectory::RegionAt(float x, float z) const
+	{
+		const GmPlace* best = nullptr;
+		float bestArea = 0.0f;
+		for (const GmPlace& p : m_places)
+		{
+			if (!p.hasBounds || x < p.xMin || x > p.xMax || z < p.zMin || z > p.zMax)
+				continue;
+			const float area = (p.xMax - p.xMin) * (p.zMax - p.zMin);
+			if (best == nullptr || area < bestArea)
+			{
+				best = &p;
+				bestArea = area;
+			}
+		}
+		return best;
+	}
+
+	const GmPlace* GmPlaceDirectory::Nearest(float x, float z, float& outDistance) const
+	{
+		const GmPlace* best = nullptr;
+		float bestSq = 0.0f;
+		for (const GmPlace& p : m_places)
+		{
+			if (p.kind == GmPlaceKind::Region)
+				continue;
+			const float dx = p.x - x;
+			const float dz = p.z - z;
+			const float sq = dx * dx + dz * dz;
+			if (best == nullptr || sq < bestSq)
+			{
+				best = &p;
+				bestSq = sq;
+			}
+		}
+		outDistance = best != nullptr ? std::sqrt(bestSq) : 0.0f;
+		return best;
 	}
 }

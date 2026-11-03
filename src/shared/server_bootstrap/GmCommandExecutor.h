@@ -194,6 +194,24 @@ namespace engine::server
 		/// Commun à /up et /down : déplacement vertical signé.
 		void VerticalMove(float sign);
 
+		// ---- ADM.2 — informations (ServerAppGmInfo.cpp) ------------------------
+		/// Cellule « N003_W009 » d'une position (ou « monde historique »).
+		std::string CellLabel(float x, float z) const;
+		/// « Loup gris niv. 4 #1234 » : archétype, niveau, entité.
+		std::string MobLabel(const MobEntity& mob) const;
+		/// /pos [joueur] — position, orientation, cellule, région, lieu proche.
+		void CmdPos();
+		/// /where — lieu le plus proche et direction, région.
+		void CmdWhere();
+		/// /info <joueur> — fiche d'un joueur connecté.
+		void CmdInfo();
+		/// /target — fiche de la dernière cible de l'appelant.
+		void CmdTarget();
+		/// /zone — résumé de la zone courante.
+		void CmdZone();
+		/// /nearby [rayon] — entités proches.
+		void CmdNearby();
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

@@ -65,6 +65,13 @@ namespace engine::server::gm
 		{ "fly", GmRole::GameMaster },
 		{ "freeze", GmRole::GameMaster },
 		{ "unfreeze", GmRole::GameMaster },
+		// ADM.2 — informations
+		{ "pos", GmRole::Player },
+		{ "where", GmRole::Player },
+		{ "info", GmRole::GameMaster },
+		{ "target", GmRole::GameMaster },
+		{ "zone", GmRole::GameMaster },
+		{ "nearby", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

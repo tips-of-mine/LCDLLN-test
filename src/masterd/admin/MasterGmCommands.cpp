@@ -20,6 +20,7 @@
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/ShardPayloads.h"
 
+#include <algorithm>
 #include <chrono>
 
 namespace engine::server
@@ -109,6 +110,9 @@ namespace engine::server
 		}
 		RegisterCore();
 		RegisterShardForwarders();
+		// Après les relais génériques : une commande master peut remplacer le relais
+		// d'une entrée "shard_command" pour y ajouter des informations (ex. /info).
+		RegisterInformation();
 		InstallAuditSink();
 		LOG_INFO(Net, "[MasterGmCommands] ADM.0 commandes de jeu enregistrées ({} entrées dans le registre)",
 			m_s.registry->Size());
@@ -331,4 +335,135 @@ namespace engine::server
 		if (m_s.relay != nullptr && m_s.nowSeconds)
 			(void)m_s.relay->Tick(m_s.nowSeconds());
 	}
+
+	// ---- ADM.2 — informations -------------------------------------------------
+
+	std::optional<MasterGmCommands::OnlineCharacter> MasterGmCommands::FindOnlineCharacter(std::string_view name) const
+	{
+		if (m_s.charMap == nullptr)
+			return std::nullopt;
+		std::string wanted(engine::admin::Trim(name));
+		if (!wanted.empty() && wanted.front() == '@')
+			wanted.erase(wanted.begin());
+		const auto conn = m_s.charMap->FindConnByNormalizedName(SessionCharacterMap::Normalize(wanted));
+		if (!conn)
+			return std::nullopt;
+		const auto info = m_s.charMap->GetByConnId(*conn);
+		if (!info)
+			return std::nullopt;
+		OnlineCharacter out;
+		out.connId = *conn;
+		out.accountId = info->accountId;
+		out.characterId = info->characterId;
+		out.characterName = info->characterName;
+		out.shardId = info->shardId != 0u ? info->shardId : m_s.charMap->TicketShard(*conn).value_or(0u);
+		return out;
+	}
+
+	void MasterGmCommands::RegisterInformation()
+	{
+		using chat::CommandCallContext;
+		// /ping — le master répond (vérifie que la connexion et le chat fonctionnent).
+		m_s.router->RegisterEx("/ping", AccountRole::Player, [this](const CommandCallContext& ctx, std::string_view) {
+			Reply(ctx.connId, ctx.sessionId, "Pong ! (le master a reçu votre commande).");
+		});
+
+		// /online [page] — personnages en jeu (alias /players).
+		auto online = [this](const CommandCallContext& ctx, std::string_view args) {
+			if (m_s.charMap == nullptr)
+				return Reply(ctx.connId, ctx.sessionId, "Liste des joueurs indisponible.");
+			std::vector<std::string> names;
+			for (const auto& [accountId, name] : m_s.charMap->SnapshotAccountIdToCharacterName())
+			{
+				(void)accountId;
+				names.push_back(name);
+			}
+			std::sort(names.begin(), names.end());
+			const size_t perPage = 30u;
+			const size_t pages = names.empty() ? 1u : (names.size() + perPage - 1u) / perPage;
+			size_t page = 1;
+			if (const auto p = engine::admin::ParseInt(args); p && *p > 0)
+				page = (std::min)(static_cast<size_t>(*p), pages);
+			Reply(ctx.connId, ctx.sessionId, std::to_string(names.size()) + " joueur(s) en jeu"
+				+ (pages > 1u ? " — page " + std::to_string(page) + "/" + std::to_string(pages) : std::string()) + " :");
+			std::string line;
+			for (size_t i = (page - 1u) * perPage; i < names.size() && i < page * perPage; ++i)
+			{
+				const std::string next = line.empty() ? names[i] : line + ", " + names[i];
+				if (next.size() > 240u)
+				{
+					Reply(ctx.connId, ctx.sessionId, line);
+					line = names[i];
+				}
+				else
+				{
+					line = next;
+				}
+			}
+			if (!line.empty())
+				Reply(ctx.connId, ctx.sessionId, line);
+		};
+		m_s.router->RegisterEx("/online", AccountRole::Player, online);
+		m_s.router->RegisterEx("/players", AccountRole::Player, online);
+
+		// /serverstats — connexions, joueurs en jeu par rôle, shards (alias /stats).
+		auto stats = [this](const CommandCallContext& ctx, std::string_view) {
+			const size_t connections = m_s.connMap != nullptr ? m_s.connMap->Snapshot().size() : 0u;
+			if (m_s.charMap != nullptr)
+			{
+				const auto r = m_s.charMap->CountByRole();
+				Reply(ctx.connId, ctx.sessionId, std::to_string(connections) + " connexion(s) au master, "
+					+ std::to_string(m_s.charMap->Count()) + " en jeu (" + std::to_string(r.player) + " joueur(s), "
+					+ std::to_string(r.moderator) + " modérateur(s), " + std::to_string(r.game_master) + " MJ, "
+					+ std::to_string(r.administrator) + " admin).");
+			}
+			if (m_s.shards != nullptr)
+			{
+				const auto shards = m_s.shards->ListShards();
+				Reply(ctx.connId, ctx.sessionId, std::to_string(shards.size()) + " shard(s) :");
+				for (const auto& sh : shards)
+				{
+					const char* state = sh.state == ShardState::Online ? "en ligne"
+						: sh.state == ShardState::Degraded ? "dégradé"
+						: sh.state == ShardState::Offline ? "hors ligne" : "enregistrement";
+					Reply(ctx.connId, ctx.sessionId, "  #" + std::to_string(sh.shard_id) + " "
+						+ (sh.display_name.empty() ? sh.name : sh.display_name) + " — " + state + ", charge "
+						+ std::to_string(sh.current_load) + "/" + std::to_string(sh.max_capacity)
+						+ (sh.saturated ? " (saturé)" : ""));
+				}
+			}
+			if (m_s.relay != nullptr)
+				Reply(ctx.connId, ctx.sessionId, std::to_string(m_s.relay->PendingCount()) + " commande(s) MJ en attente de réponse d'un shard.");
+		};
+		m_s.router->RegisterEx("/serverstats", AccountRole::Moderator, stats);
+		m_s.router->RegisterEx("/stats", AccountRole::Moderator, stats);
+
+		// /info <joueur> — ligne de compte (master) puis fiche de jeu (shard du joueur).
+		if (const SlashCommandEntry* infoEntry = m_s.registry->Lookup("/info"))
+		{
+			const SlashCommandEntry entry = *infoEntry;
+			auto info = [this, entry](const CommandCallContext& ctx, std::string_view args) {
+				const auto words = engine::admin::SplitArgs(args);
+				if (words.empty())
+					return Reply(ctx.connId, ctx.sessionId, "Syntaxe : /info <joueur>");
+				const auto target = FindOnlineCharacter(words[0]);
+				if (!target)
+					return Reply(ctx.connId, ctx.sessionId, "Joueur introuvable (pas en jeu) : " + words[0]);
+				if (m_s.accounts != nullptr)
+				{
+					if (const auto rec = m_s.accounts->FindByAccountId(target->accountId))
+					{
+						Reply(ctx.connId, ctx.sessionId, "Compte : " + rec->login + " (#" + std::to_string(rec->account_id)
+							+ ", rôle " + std::string(chat::RoleLabelFr(m_s.accounts->GetRole(target->accountId)))
+							+ ", shard #" + std::to_string(target->shardId) + ")");
+					}
+				}
+				ForwardToShard(ctx, entry, args, 0, target->shardId);
+			};
+			m_s.router->RegisterEx(entry.command, entry.minRole, info);
+			for (const std::string& alias : entry.aliases)
+				m_s.router->RegisterEx(alias, entry.minRole, info);
+		}
+	}
 }
+

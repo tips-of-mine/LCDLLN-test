@@ -612,11 +612,213 @@ namespace engine::render
 		return id;
 	}
 
+	AssetId AssetRegistry::createOptimalMippedTexture(uint32_t width, uint32_t height,
+		VkFormat format, const uint8_t* pixels)
+	{
+		// PERF.1 — Image DEVICE_LOCAL en tuilage OPTIMAL, chaîne de mips complète.
+		// Les textures étaient créées en tuilage LINEAR, mémoire HOST_VISIBLE, sans
+		// mips : le GPU les lit via le bus et sans cache efficace, et chaque
+		// texel de feuillage lointain coûte une lecture « pleine résolution ».
+		// Mesuré (log du 02/11, RTX 3080, 5760×1080) : passe Geometry à 20–150 ms
+		// dès qu'une cinquantaine d'arbres est visible.
+		VkFormatProperties fp{};
+		vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &fp);
+		const VkFormatFeatureFlags need = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+		if ((fp.optimalTilingFeatures & need) != need)
+			return kInvalidAssetId;
+		const bool canBlit = (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) != 0
+			&& (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT) != 0
+			&& (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) != 0;
+		uint32_t mipLevels = 1;
+		if (canBlit)
+			for (uint32_t d = std::max(width, height); d > 1u; d >>= 1u)
+				++mipLevels;
+
+		TextureAsset asset{};
+		asset.width = width;
+		asset.height = height;
+		VkImageCreateInfo imgInfo{};
+		imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imgInfo.imageType = VK_IMAGE_TYPE_2D;
+		imgInfo.format = format;
+		imgInfo.extent = { width, height, 1 };
+		imgInfo.mipLevels = mipLevels;
+		imgInfo.arrayLayers = 1;
+		imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+			| (mipLevels > 1u ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : 0u);
+		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS || asset.image == VK_NULL_HANDLE)
+			return kInvalidAssetId;
+
+		VkMemoryRequirements memReq{};
+		vkGetImageMemoryRequirements(m_device, asset.image, &memReq);
+		const uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VkDeviceMemory imgMem = VK_NULL_HANDLE;
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memReq.size;
+		allocInfo.memoryTypeIndex = memTypeIdx;
+		if (memTypeIdx == UINT32_MAX || vkAllocateMemory(m_device, &allocInfo, nullptr, &imgMem) != VK_SUCCESS
+			|| vkBindImageMemory(m_device, asset.image, imgMem, 0) != VK_SUCCESS)
+		{
+			if (imgMem != VK_NULL_HANDLE) vkFreeMemory(m_device, imgMem, nullptr);
+			vkDestroyImage(m_device, asset.image, nullptr);
+			return kInvalidAssetId;
+		}
+
+		// Tampon de staging (pixels du niveau 0).
+		const VkDeviceSize bytes = static_cast<VkDeviceSize>(width) * height * 4u;
+		VkBuffer staging = VK_NULL_HANDLE;
+		VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+		VkBufferCreateInfo bci{};
+		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bci.size = bytes;
+		bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		bool ok = vkCreateBuffer(m_device, &bci, nullptr, &staging) == VK_SUCCESS;
+		if (ok)
+		{
+			VkMemoryRequirements breq{};
+			vkGetBufferMemoryRequirements(m_device, staging, &breq);
+			VkMemoryAllocateInfo bai{};
+			bai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			bai.allocationSize = breq.size;
+			bai.memoryTypeIndex = FindMemoryType(m_physicalDevice, breq.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			ok = bai.memoryTypeIndex != UINT32_MAX && vkAllocateMemory(m_device, &bai, nullptr, &stagingMem) == VK_SUCCESS
+				&& vkBindBufferMemory(m_device, staging, stagingMem, 0) == VK_SUCCESS;
+			void* p = nullptr;
+			if (ok && vkMapMemory(m_device, stagingMem, 0, bytes, 0, &p) == VK_SUCCESS)
+			{
+				memcpy(p, pixels, static_cast<size_t>(bytes));
+				vkUnmapMemory(m_device, stagingMem);
+			}
+			else
+				ok = false;
+		}
+
+		// Commandes : copie niveau 0, réductions successives (blit linéaire), passage
+		// de chaque niveau en SHADER_READ_ONLY_OPTIMAL.
+		VkCommandPool pool = VK_NULL_HANDLE;
+		if (ok)
+		{
+			VkCommandPoolCreateInfo poolCI{};
+			poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			poolCI.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+			poolCI.queueFamilyIndex = m_uploadQueueFamily;
+			ok = vkCreateCommandPool(m_device, &poolCI, nullptr, &pool) == VK_SUCCESS;
+		}
+		VkCommandBuffer cmd = VK_NULL_HANDLE;
+		if (ok)
+		{
+			VkCommandBufferAllocateInfo cbAI{};
+			cbAI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			cbAI.commandPool = pool;
+			cbAI.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			cbAI.commandBufferCount = 1;
+			ok = vkAllocateCommandBuffers(m_device, &cbAI, &cmd) == VK_SUCCESS;
+		}
+		if (ok)
+		{
+			VkCommandBufferBeginInfo bi{};
+			bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			vkBeginCommandBuffer(cmd, &bi);
+
+			auto barrier = [&](uint32_t mip, VkImageLayout from, VkImageLayout to, VkAccessFlags srcA, VkAccessFlags dstA,
+				VkPipelineStageFlags srcS, VkPipelineStageFlags dstS, uint32_t count) {
+				VkImageMemoryBarrier b{};
+				b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				b.oldLayout = from;
+				b.newLayout = to;
+				b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				b.image = asset.image;
+				b.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, mip, count, 0, 1 };
+				b.srcAccessMask = srcA;
+				b.dstAccessMask = dstA;
+				vkCmdPipelineBarrier(cmd, srcS, dstS, 0, 0, nullptr, 0, nullptr, 1, &b);
+			};
+			// Tous les niveaux → TRANSFER_DST.
+			barrier(0, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, mipLevels);
+			VkBufferImageCopy region{};
+			region.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+			region.imageExtent = { width, height, 1 };
+			vkCmdCopyBufferToImage(cmd, staging, asset.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+			int32_t mw = static_cast<int32_t>(width), mh = static_cast<int32_t>(height);
+			for (uint32_t i = 1; i < mipLevels; ++i)
+			{
+				// Niveau i-1 : source du blit.
+				barrier(i - 1, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 1);
+				const int32_t nw = std::max(1, mw / 2), nh = std::max(1, mh / 2);
+				VkImageBlit blit{};
+				blit.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, i - 1, 0, 1 };
+				blit.srcOffsets[1] = { mw, mh, 1 };
+				blit.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, i, 0, 1 };
+				blit.dstOffsets[1] = { nw, nh, 1 };
+				vkCmdBlitImage(cmd, asset.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					asset.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+				barrier(i - 1, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 1);
+				mw = nw;
+				mh = nh;
+			}
+			// Dernier niveau → lecture shader.
+			barrier(mipLevels - 1, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 1);
+			vkEndCommandBuffer(cmd);
+			VkSubmitInfo si{};
+			si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			si.commandBufferCount = 1;
+			si.pCommandBuffers = &cmd;
+			ok = vkQueueSubmit(m_uploadQueue, 1, &si, VK_NULL_HANDLE) == VK_SUCCESS
+				&& vkQueueWaitIdle(m_uploadQueue) == VK_SUCCESS;
+		}
+		if (pool != VK_NULL_HANDLE) vkDestroyCommandPool(m_device, pool, nullptr);
+		if (staging != VK_NULL_HANDLE) vkDestroyBuffer(m_device, staging, nullptr);
+		if (stagingMem != VK_NULL_HANDLE) vkFreeMemory(m_device, stagingMem, nullptr);
+
+		VkImageViewCreateInfo viewInfo{};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = asset.image;
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = format;
+		viewInfo.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 };
+		if (!ok || vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
+		{
+			vkDestroyImage(m_device, asset.image, nullptr);
+			vkFreeMemory(m_device, imgMem, nullptr);
+			return kInvalidAssetId;
+		}
+		asset.allocation = reinterpret_cast<void*>(imgMem);
+		const AssetId id = m_nextTextureId++;
+		m_textures[id] = std::move(asset);
+		return id;
+	}
+
 	AssetId AssetRegistry::createSampledRgba8Texture(uint32_t width, uint32_t height,
 		VkFormat format, const uint8_t* pixels)
 	{
 		if (m_device == VK_NULL_HANDLE || width == 0u || height == 0u || pixels == nullptr)
 			return kInvalidAssetId;
+		// PERF.1 — chemin rapide (OPTIMAL + mips) dès qu'une queue d'upload existe ;
+		// l'ancien chemin LINEAR reste le repli (pas de queue, format non supporté).
+		if (m_uploadQueue != VK_NULL_HANDLE)
+		{
+			const AssetId fast = createOptimalMippedTexture(width, height, format, pixels);
+			if (fast != kInvalidAssetId)
+				return fast;
+			LOG_WARN(Render, "[AssetRegistry] texture {}x{} : upload OPTIMAL impossible, repli LINEAR", width, height);
+		}
 
 		TextureAsset asset{};
 		asset.width = width;
@@ -938,7 +1140,8 @@ namespace engine::render
 			const AssetId id = createSampledRgba8Texture(width, height, format, owned.data());
 			if (id == kInvalidAssetId)
 				return kInvalidAssetId;
-			LOG_INFO(Render, "AssetRegistry: loaded PNG texture {} ({}x{}, LINEAR)", relativePath, width, height, useSrgb ? "sRGB" : "linear");
+			LOG_INFO(Render, "AssetRegistry: loaded PNG texture {} ({}x{}, {})", relativePath, width, height,
+				m_uploadQueue != VK_NULL_HANDLE ? "OPTIMAL+mips" : "LINEAR");
 			return id;
 		}
 

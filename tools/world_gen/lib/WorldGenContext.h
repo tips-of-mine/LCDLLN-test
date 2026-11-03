@@ -381,7 +381,9 @@ namespace tools::world_gen
 	/// \param riverDist distance aux lits de rivière (m) ; la digue n'est pas
 	///        élevée à moins de 12 m d'un lit (une rivière qui sort du lac
 	///        resterait sinon barrée). Grille vide = aucune rivière.
-	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake);
+	/// \param floorY fond minimal (m) : niveau de la mer + 0,1 (la nappe de la
+	///        mer d'une cellule côtière apparaîtrait sinon sous l'eau du lac).
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake, double floorY);
 	/// Plateaux urbains. Terrain.cpp
 	void FlattenSettlements(World& w);
 	/// Rivières et lacs (creusement, carte de distance). Terrain.cpp

@@ -508,8 +508,8 @@ namespace
 		Grid<float> rivers;
 		rivers.Init(201, 201, 0.0, 0.0, 5.0, 1e9f);
 		for (int i = 0; i < 201; ++i) rivers.At(i, 100) = 0.0f;   // lit le long de z = 500
-		CarveLake(slope, Grid<float>{}, lake);
-		CarveLake(withRiver, rivers, lake);
+		CarveLake(slope, Grid<float>{}, lake, 0.0);
+		CarveLake(withRiver, rivers, lake, 0.0);
 		bool bedOk = true, rimOk = true;
 		for (int k = 0; k < 64; ++k)
 		{
@@ -526,6 +526,10 @@ namespace
 			"EAU.5 : relief d'origine retrouve au-dela de la digue");
 		Check(SampleBilinear(slope, 600.0, 500.0) >= lake.waterY && SampleBilinear(withRiver, 600.0, 500.0) < lake.waterY,
 			"EAU.5 : digue sauf sur un lit de riviere");
+		Grid<double> flat;
+		flat.Init(201, 201, 0.0, 0.0, 5.0, 45.0);
+		CarveLake(flat, Grid<float>{}, lake, 39.0);
+		Check(std::fabs(SampleBilinear(flat, 500.0, 500.0) - 39.0) < 1e-9, "EAU.5 : fond du lac jamais sous la mer");
 	}
 }
 

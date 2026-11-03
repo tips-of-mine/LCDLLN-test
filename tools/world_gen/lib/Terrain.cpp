@@ -809,7 +809,7 @@ namespace tools::world_gen
 		return std::max(m.scale.seaLevelM + 0.5, std::min(meanHeight - 0.8, rimLow - 0.3));
 	}
 
-	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake)
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Lake& lake, double floorY)
 	{
 		constexpr double kBeachM = 40.0;     // fondu de la rive vers le relief d'origine (m)
 		constexpr double kBankAboveM = 0.3;  // sol au ras du bord : au-dessus de l'eau (m)
@@ -832,7 +832,9 @@ namespace tools::world_gen
 			{
 				// Fond : parabole sous la surface (0,6 m au bord, ≤ 9,6 m au centre).
 				const double q = d / rr;
-				const double bed = lake.waterY - (depthMax * (1.0 - q * q) + 0.6);
+				// Jamais sous floorY (la mer) : la nappe de la mer couvre toute une
+				// cellule côtière et apparaîtrait sous l'eau du lac.
+				const double bed = std::max(floorY, lake.waterY - (depthMax * (1.0 - q * q) + 0.6));
 				const double inside = rr - d;
 				if (inside < kEdgeRiseM)
 				{
@@ -934,6 +936,6 @@ namespace tools::world_gen
 			}
 		}
 		for (const Lake& lake : w.lakes)
-			CarveLake(w.height, w.riverDist, lake); // EAU.5 : polygone + rives au-dessus de l'eau
+			CarveLake(w.height, w.riverDist, lake, w.master.scale.seaLevelM + 0.1); // EAU.5
 	}
 }

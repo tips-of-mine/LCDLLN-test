@@ -232,6 +232,13 @@ namespace engine::client
 		if (kind == "camp") return "Camp";
 		if (kind == "ruine") return "Ruines";
 		if (kind == "monolithe") return "Monolithe";
+		// Genres de POI (section `pois` du master). Accents en octets UTF-8
+		// explicites : le source ne dépend pas du jeu de caractères du compilateur.
+		if (kind == "faille") return "Faille";
+		if (kind == "portail") return "Portail";
+		if (kind == "foret") return "For\xC3\xAAt"; // « Forêt » en UTF-8
+		if (kind == "etang") return "\xC3\x89tang"; // « Étang » en UTF-8
+		if (kind == "champ_bataille") return "Champ de bataille";
 		return std::string(kind);
 	}
 }

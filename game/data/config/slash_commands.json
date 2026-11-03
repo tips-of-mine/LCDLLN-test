@@ -24,7 +24,8 @@
     "character": "ADM.3 : level, health, powers, skills",
     "items": "ADM.4 : items and money",
     "appearance": "ADM.5 : mount and appearance",
-    "world": "ADM.6 : creatures, respawns, map"
+    "world": "ADM.6 : creatures, respawns, map",
+    "quests": "ADM.7 : quests and dynamic events"
   },
   "commands": [
     {
@@ -894,6 +895,61 @@
       "serverLogged": true,
       "status": "shard_command",
       "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/gmquest",
+      "aliases": ["/questadmin"],
+      "description": "Gérer les quêtes d'un joueur (ajouter, terminer, retirer…).",
+      "usage": "/gmquest add|complete|ready|remove|reset|status <quête> [joueur] | /gmquest list [joueur]",
+      "help": "add : quête en cours, étapes à zéro. ready : étapes remplies, à rendre au PNJ. complete : terminée avec sa récompense (XP, or, objets). remove / reset : état oublié (la quête peut être reproposée). status : état et avancement des étapes. list : quêtes proposées, en cours ou terminées. Les quêtes débloquées ou verrouillées en conséquence sont mises à jour. Sauvegardé.",
+      "example": "/gmquest complete q_loups_marn Hubert",
+      "category": "quests",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+    },
+    {
+      "command": "/questsearch",
+      "aliases": ["/lookupquest"],
+      "description": "Chercher une quête (identifiant, PNJ).",
+      "usage": "/questsearch [mot]",
+      "help": "Liste jusqu'à 25 quêtes dont l'identifiant ou le PNJ donneur contient le mot (toutes sans mot), avec le nombre d'étapes et l'XP de récompense.",
+      "example": "/questsearch loup",
+      "category": "quests",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+    },
+    {
+      "command": "/event",
+      "aliases": ["/gmevent"],
+      "description": "Événements dynamiques : liste, démarrage, arrêt.",
+      "usage": "/event list | /event start|stop|complete <événement>",
+      "help": "list : événements du shard, état, phase et participants. start : démarre l'événement (première phase). stop : l'arrête sans récompense (mobs retirés, recharge normale). complete : le termine en récompensant les participants.",
+      "example": "/event start invasion_marn",
+      "category": "quests",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+    },
+    {
+      "command": "/instance",
+      "aliases": [],
+      "description": "Gérer les instances (prévue).",
+      "usage": "/instance list | /instance reset [joueur]",
+      "help": "Prévue : les instances (donjons) ne sont pas encore simulées par le shard.",
+      "example": "/instance list",
+      "category": "quests",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
     },
     {
       "command": "/setweather",

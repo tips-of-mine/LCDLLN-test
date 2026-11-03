@@ -275,6 +275,14 @@ namespace engine::server
 		void CmdRespawn();    ///< /respawn [rayon]
 		void CmdRevealMap();  ///< /revealmap [all] [joueur]
 
+		// ---- ADM.7 — quêtes et événements (ServerAppGmQuests.cpp) ---------------
+		/// Envoie le changement de \p changed et les conséquences de la
+		/// resynchronisation (prérequis, exclusions), puis sauvegarde.
+		void PushQuestChanges(ConnectedClient& target, QuestState& changed);
+		void CmdGmQuest();     ///< /gmquest add|complete|ready|remove|reset|status|list
+		void CmdQuestSearch(); ///< /questsearch [mot]
+		void CmdEvent();       ///< /event list|start|stop|complete
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

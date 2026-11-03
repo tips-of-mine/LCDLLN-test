@@ -169,6 +169,9 @@ namespace engine::server
 		/// Find one quest definition by id, or return `nullptr` when it is absent.
 		const QuestDefinition* FindQuestDefinition(std::string_view questId) const;
 
+		/// ADM.7 — toutes les définitions chargées (commandes /gmquest, /questsearch).
+		const std::vector<QuestDefinition>& Definitions() const { return m_definitions; }
+
 		/// Vrai si \p state peut être accepté au PNJ \p giverTargetId : quête Offered
 		/// et \p giverTargetId == def.giverId. Pur, sans effet de bord.
 		bool CanAccept(const QuestState& state, const QuestDefinition& def, std::string_view giverTargetId) const;

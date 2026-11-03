@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md), [ADM.6](ADM.6_monde.md), [ADM.7](ADM.7_quetes_evenements.md)
 
 ## Aide et outils
 
@@ -107,6 +107,15 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/revealmap` |  | MJ | `/revealmap [all] [joueur]` | Révéler la carte à découvrir (cellule courante ou monde entier). |
 | `/setweather` |  | MJ | `/setweather <clear\|rain\|snow\|storm\|fog> [zone]` | *(prévue)* Imposer la météo d'une zone (prévue). |
 | `/object` |  | MJ | `/object add\|delete\|move\|activate` | *(prévue)* Ajouter, supprimer ou déplacer un objet du monde (prévue). |
+
+## Quêtes et événements
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/gmquest` | `/questadmin` | MJ | `/gmquest add\|complete\|ready\|remove\|reset\|status <quête> [joueur] \| /gmquest list [joueur]` | Gérer les quêtes d'un joueur (ajouter, terminer, retirer…). |
+| `/questsearch` | `/lookupquest` | MJ | `/questsearch [mot]` | Chercher une quête (identifiant, PNJ). |
+| `/event` | `/gmevent` | MJ | `/event list \| /event start\|stop\|complete <événement>` | Événements dynamiques : liste, démarrage, arrêt. |
+| `/instance` |  | MJ | `/instance list \| /instance reset [joueur]` | *(prévue)* Gérer les instances (prévue). |
 
 ## Modération
 

@@ -252,6 +252,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/GmAuditStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/GmModerationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/MasterGmModeration.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/MasterGmServer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/CommandHelp.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/DungeonPayloads.cpp

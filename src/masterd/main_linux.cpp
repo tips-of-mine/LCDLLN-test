@@ -1047,7 +1047,15 @@ int main(int argc, char** argv)
 		return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	};
 	engine::server::MasterGmCommands masterGmCommands(gmServices);
+	masterGmCommands.SetMotd(config.GetString("master.motd", "")); // ADM.9
 	masterGmCommands.RegisterAll();
+	// ADM.9 — « /closed on » : entrée en jeu refusée aux joueurs ; message du jour à l'entrée.
+	characterEnterWorldHandler.SetAccountAdmissionGate([&masterGmCommands](uint64_t accountId) {
+		return masterGmCommands.IsAdmissionRefused(accountId);
+	});
+	characterEnterWorldHandler.SetEnteredWorldCallback([&masterGmCommands](uint32_t connId, uint64_t accountId) {
+		masterGmCommands.OnEnteredWorld(connId, accountId);
+	});
 
 	engine::server::AdminCommandHandler adminCommandHandler;
 	adminCommandHandler.SetServer(&server);
@@ -1095,6 +1103,9 @@ int main(int argc, char** argv)
 	shardTicketHandler.SetSessionCharacterMap(&sessionCharMap); shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
 	shardTicketHandler.SetAdmissionBlockedProvider([&clusterShutdown]() { return clusterShutdown.AdmissionsBlocked(); });
+	shardTicketHandler.SetAccountAdmissionGate([&masterGmCommands](uint64_t accountId) { // ADM.9 — /closed
+		return masterGmCommands.IsAdmissionRefused(accountId);
+	});
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);

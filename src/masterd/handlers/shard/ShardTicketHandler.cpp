@@ -105,6 +105,15 @@ namespace engine::server
 				m_server->Send(connId, pkt);
 			return;
 		}
+		// ADM.9 — serveur fermé aux joueurs (/closed on) : seul le personnel obtient un ticket.
+		if (m_accountGate && m_accountGate(*accountOpt))
+		{
+			LOG_INFO(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET refusé : serveur fermé aux joueurs (account={})", *accountOpt);
+			auto pkt = BuildErrorPacket(NetErrorCode::SERVER_LIST_UNAVAILABLE, "server closed", requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
 		auto shardOpt = m_registry->GetShard(req->target_shard_id);
 		if (!shardOpt || shardOpt->state != ShardState::Online)
 		{

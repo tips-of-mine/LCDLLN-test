@@ -25,7 +25,8 @@
     "items": "ADM.4 : items and money",
     "appearance": "ADM.5 : mount and appearance",
     "world": "ADM.6 : creatures, respawns, map",
-    "quests": "ADM.7 : quests and dynamic events"
+    "quests": "ADM.7 : quests and dynamic events",
+    "server": "ADM.9 : server administration"
   },
   "commands": [
     {
@@ -1063,6 +1064,102 @@
       "serverLogged": true,
       "status": "server_route",
       "implementation_file": "src/masterd/admin/MasterGmModeration.cpp"
+    },
+    {
+      "command": "/serverinfo",
+      "aliases": [],
+      "description": "Démarrage, durée de fonctionnement, accès et message du jour.",
+      "usage": "/serverinfo",
+      "help": "Date de démarrage du master et durée de fonctionnement, nombre de connexions, de joueurs en jeu et de shards, état d'ouverture (/closed) et message du jour.",
+      "example": "/serverinfo",
+      "category": "server",
+      "minRole": "moderator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmServer.cpp"
+    },
+    {
+      "command": "/motd",
+      "aliases": [],
+      "description": "Afficher le message du jour.",
+      "usage": "/motd",
+      "help": "Affiche le message du jour (envoyé aussi à chaque entrée en jeu).",
+      "example": "/motd",
+      "category": "server",
+      "minRole": "player",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmServer.cpp"
+    },
+    {
+      "command": "/setmotd",
+      "aliases": [],
+      "description": "Changer le message du jour.",
+      "usage": "/setmotd <texte> | /setmotd clear",
+      "help": "Change le message du jour (200 caractères au plus) et le diffuse à toutes les connexions ; il est ensuite envoyé à chaque entrée en jeu. « clear » le supprime. Valeur de départ : clé master.motd de config.json ; non conservé au redémarrage du master.",
+      "example": "/setmotd Bienvenue sur le serveur de test !",
+      "category": "server",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmServer.cpp"
+    },
+    {
+      "command": "/closed",
+      "aliases": [],
+      "description": "Fermer ou rouvrir le serveur aux joueurs (maintenance).",
+      "usage": "/closed [on|off] [motif]",
+      "help": "on : les comptes sans rôle de modérateur ou plus ne peuvent plus entrer en jeu (choix du personnage et ticket de shard refusés) ; les joueurs déjà en jeu restent connectés. off : rouvre. Sans argument : affiche l'état. Non conservé au redémarrage du master.",
+      "example": "/closed on mise à jour",
+      "category": "server",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "server_route",
+      "implementation_file": "src/masterd/admin/MasterGmServer.cpp"
+    },
+    {
+      "command": "/saveall",
+      "aliases": [],
+      "description": "Sauvegarder tout de suite tous les joueurs du shard.",
+      "usage": "/saveall",
+      "help": "Dépose une sauvegarde de chaque personnage connecté au shard de votre personnage dans la file d'écriture (hors du tick).",
+      "example": "/saveall",
+      "category": "server",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGm.cpp"
+    },
+    {
+      "command": "/reload",
+      "aliases": [],
+      "description": "Recharger une partie de la configuration (prévue).",
+      "usage": "/reload config|items|quests|zones",
+      "help": "Prévue : les catalogues sont chargés au démarrage ; un rechargement à chaud demande de les rendre remplaçables sans arrêter le tick.",
+      "example": "/reload items",
+      "category": "server",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
+    },
+    {
+      "command": "/restart",
+      "aliases": [],
+      "description": "Redémarrer le cluster après un compte à rebours (prévue).",
+      "usage": "/restart <secondes> [motif]",
+      "help": "Prévue : /shutdown arrête proprement le cluster ; le relancer automatiquement dépend de l'orchestrateur (systemd, Docker). En attendant : /shutdown puis relance.",
+      "example": "/restart 300 mise à jour",
+      "category": "server",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
     },
     {
       "command": "/instance",

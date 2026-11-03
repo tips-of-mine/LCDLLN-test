@@ -283,6 +283,9 @@ namespace engine::server
 		void CmdQuestSearch(); ///< /questsearch [mot]
 		void CmdEvent();       ///< /event list|start|stop|complete
 
+		// ---- ADM.9 — serveur (ServerAppGm.cpp) ----------------------------------
+		void CmdSaveAll();     ///< /saveall
+
 		/// Point d'entrée : catalogue, rôle, cible par défaut, handler, journal.
 		void Run();
 	};

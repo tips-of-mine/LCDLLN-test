@@ -94,6 +94,19 @@ namespace
 		LOG_INFO(Core, "[ReputationManagerTests] spillover negative OK");
 		return true;
 	}
+
+	/// ADM.3 — /setrep : valeur absolue, bornée, sans débordement sur les autres factions.
+	bool TestSetReputationNoSpillover()
+	{
+		ReputationManager mgr;
+		mgr.AddSpilloverRule({100, 200, 0.5f});
+		mgr.GainReputation(1, 100, 1000);
+		if (mgr.SetReputation(1, 100, 9000) != 9000) return false;
+		if (mgr.GetReputation(1, 200) != 500) return false; // inchangée par SetReputation
+		if (mgr.SetReputation(1, 100, -2000000000) != engine::server::reputation::kReputationMin) return false;
+		LOG_INFO(Core, "[ReputationManagerTests] SetReputation OK");
+		return true;
+	}
 }
 
 int main(int argc, char** argv)
@@ -107,7 +120,7 @@ int main(int argc, char** argv)
 	const bool ok = TestBasicGainAndQuery() && TestClamping()
 		&& TestStandingThresholds() && TestSpillover()
 		&& TestSpilloverNotReverse() && TestMultiAccountIsolation()
-		&& TestSpilloverNegative();
+		&& TestSpilloverNegative() && TestSetReputationNoSpillover();
 
 	if (ok) LOG_INFO(Core, "[ReputationManagerTests] ALL OK");
 	else LOG_ERROR(Core, "[ReputationManagerTests] FAIL");

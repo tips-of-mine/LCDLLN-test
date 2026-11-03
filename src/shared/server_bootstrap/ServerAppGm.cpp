@@ -46,6 +46,22 @@ namespace engine::server
 			+ (app.m_loadShedder.Active() ? " (délestage ACTIF)." : "."));
 	}
 
+	// ---- ADM.9 — serveur ----------------------------------------------------
+
+	/// /saveall — sauvegarde immédiate de tous les joueurs connectés à ce shard.
+	void GmCommandExecutor::CmdSaveAll()
+	{
+		size_t saved = 0;
+		for (ConnectedClient& c : app.m_clients)
+		{
+			if (c.persistenceCharacterKey == 0u)
+				continue;
+			app.SaveConnectedClient(c, "gm_saveall");
+			++saved;
+		}
+		Say(std::to_string(saved) + " personnage(s) sauvegardé(s) sur ce shard (écriture en file, hors du tick).");
+	}
+
 	/// Nom canonique → méthode de GmCommandExecutor. Toute entrée de kGmShardCommands
 	/// doit y figurer ; sinon l'appel répond « pas encore disponible » (Unavailable).
 	constexpr std::pair<std::string_view, GmCommandExecutor::Handler> kGmHandlers[] = {
@@ -114,6 +130,8 @@ namespace engine::server
 		{ "gmquest", &GmCommandExecutor::CmdGmQuest },
 		{ "questsearch", &GmCommandExecutor::CmdQuestSearch },
 		{ "event", &GmCommandExecutor::CmdEvent },
+		// ADM.9 — serveur
+		{ "saveall", &GmCommandExecutor::CmdSaveAll },
 	};
 
 	void GmCommandExecutor::Run()

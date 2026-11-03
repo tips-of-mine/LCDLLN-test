@@ -127,6 +127,17 @@ namespace engine::server
 		/// ADM.3 — personnage : /setrep (réputation tenue par le master).
 		void RegisterCharacter();
 
+		/// ADM.8 — modération : /unmute, /mutes, /unban, /bans, /warn, /history,
+		/// /notify, /gmw, /csr (MasterGmModeration.cpp).
+		void RegisterModeration();
+
+		/// Envoie \p line à la connexion \p connId (session retrouvée dans la table
+		/// des connexions). Sans effet si la connexion n'existe plus.
+		void SendToConnection(uint32_t connId, std::string_view line) const;
+
+		/// Envoie \p line à toutes les connexions authentifiées. \return nombre d'envois.
+		size_t BroadcastLine(std::string_view line) const;
+
 		/// Compte visé par \p name : personnage en jeu (sans casse), sinon login.
 		/// \return 0 si introuvable.
 		uint64_t ResolveAccount(std::string_view name) const;

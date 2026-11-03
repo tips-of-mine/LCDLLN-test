@@ -64,6 +64,8 @@ namespace engine::server
 
 		/// Nombre d'archétypes chargés (0 avant Init).
 		size_t Count() const { return m_archetypes.size(); }
+		/// ADM.6 — tous les archétypes chargés (recherche /npcsearch). Lecture seule.
+		const std::unordered_map<uint32_t, CreatureArchetype>& All() const { return m_archetypes; }
 
 		/// Variante testable sans I/O : parse et valide un texte JSON en mémoire.
 		/// Utilisée par Init() (qui lit le fichier) et par les tests unitaires.

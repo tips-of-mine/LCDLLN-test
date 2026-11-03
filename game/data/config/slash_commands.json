@@ -23,7 +23,8 @@
     "information": "ADM.2 : position, players, server state",
     "character": "ADM.3 : level, health, powers, skills",
     "items": "ADM.4 : items and money",
-    "appearance": "ADM.5 : mount and appearance"
+    "appearance": "ADM.5 : mount and appearance",
+    "world": "ADM.6 : creatures, respawns, map"
   },
   "commands": [
     {
@@ -823,6 +824,102 @@
       "serverLogged": true,
       "status": "shard_command",
       "implementation_file": "src/shared/server_bootstrap/ServerAppGmAppearance.cpp"
+    },
+    {
+      "command": "/npc",
+      "aliases": ["/creature"],
+      "description": "Faire apparaître, supprimer ou déplacer un mob.",
+      "usage": "/npc add <archétype|n°> [nombre 1-25] | /npc delete | /npc move | /npc info",
+      "help": "add : fait apparaître 1 à 25 mobs de l'archétype devant vous (en cercle s'il y en a plusieurs) ; ils sont hors spawner, gardent leur poste, donnent butin et expérience et ne réapparaissent pas (/cleanup les retire). delete : supprime le mob ciblé (un mob de spawner réapparaît au délai du spawner). move : amène le mob ciblé à votre position (nouveau poste). info : fiche du mob ciblé (comme /target).",
+      "example": "/npc add loup 3",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/npcsearch",
+      "aliases": ["/lookupnpc"],
+      "description": "Chercher un archétype de créature (numéro, nom, niveau).",
+      "usage": "/npcsearch <mot|n°>",
+      "help": "Affiche jusqu'à 25 archétypes dont le nom correspond, avec leur numéro et leur niveau (à utiliser avec /npc add).",
+      "example": "/npcsearch loup",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/cleanup",
+      "aliases": [],
+      "description": "Retirer les mobs apparus par un maître de jeu.",
+      "usage": "/cleanup [rayon]",
+      "help": "Sans rayon : retire tous les mobs apparus par /npc add sur le shard. Avec un rayon en mètres : seulement ceux à moins de cette distance de vous.",
+      "example": "/cleanup 50",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/respawn",
+      "aliases": [],
+      "description": "Faire réapparaître tout de suite les mobs des spawners proches.",
+      "usage": "/respawn [rayon]",
+      "help": "Avance la réapparition des emplacements vides des spawners à moins de N mètres (100 par défaut, 2000 au plus) : les mobs reviennent dès que le spawner est actif.",
+      "example": "/respawn 200",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/revealmap",
+      "aliases": [],
+      "description": "Révéler la carte à découvrir (cellule courante ou monde entier).",
+      "usage": "/revealmap [all] [joueur]",
+      "help": "Révèle toutes les cases de la cellule de 10 km où se trouve le joueur, ou de toutes les cellules générées avec « all ». Sauvegardé ; visible à la prochaine ouverture de la carte (touche M).",
+      "example": "/revealmap all",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "shard_command",
+      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+    },
+    {
+      "command": "/setweather",
+      "aliases": [],
+      "description": "Imposer la météo d'une zone (prévue).",
+      "usage": "/setweather <clear|rain|snow|storm|fog> [zone]",
+      "help": "Prévue : la météo n'est pas encore simulée par le shard (WeatherManager non branché au jeu).",
+      "example": "/setweather rain",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
+    },
+    {
+      "command": "/object",
+      "aliases": [],
+      "description": "Ajouter, supprimer ou déplacer un objet du monde (prévue).",
+      "usage": "/object add|delete|move|activate",
+      "help": "Prévue : les objets interactifs du monde ne sont pas encore gérés par le shard.",
+      "example": "/object add 12",
+      "category": "world",
+      "minRole": "game_master",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "planned"
     },
     {
       "command": "/scale",

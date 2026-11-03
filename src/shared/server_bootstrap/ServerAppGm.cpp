@@ -104,6 +104,12 @@ namespace engine::server
 		// ADM.5 — monture (ServerAppGmAppearance.cpp)
 		{ "mount", &GmCommandExecutor::CmdMount },
 		{ "dismount", &GmCommandExecutor::CmdDismount },
+		// ADM.6 — monde (ServerAppGmWorld.cpp)
+		{ "npc", &GmCommandExecutor::CmdNpc },
+		{ "npcsearch", &GmCommandExecutor::CmdNpcSearch },
+		{ "cleanup", &GmCommandExecutor::CmdCleanup },
+		{ "respawn", &GmCommandExecutor::CmdRespawn },
+		{ "revealmap", &GmCommandExecutor::CmdRevealMap },
 	};
 
 	void GmCommandExecutor::Run()

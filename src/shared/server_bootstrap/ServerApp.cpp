@@ -3341,6 +3341,7 @@ namespace engine::server
 
 	void ServerApp::ProcessGmCommands()
 	{
+		PurgeDeadGmMobs(); // ADM.6 — mobs apparus par un MJ et morts depuis
 		std::vector<engine::network::GmCommandRequestPayload> batch;
 		{
 			std::lock_guard lock(m_masterInboxMutex);
@@ -5139,6 +5140,90 @@ namespace engine::server
 			mob.entityId,
 			mob.zoneId,
 			mob.archetypeId);
+		return true;
+	}
+
+	EntityId ServerApp::SpawnGmMob(uint32_t archetypeId, uint32_t zoneId, float x, float y, float z)
+	{
+		const CreatureArchetype* arch = m_archetypeLibrary.Find(archetypeId);
+		if (arch == nullptr)
+			return 0;
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(zoneId);
+		if (zoneGrid == nullptr)
+			return 0;
+		MobEntity mob{};
+		mob.entityId = m_nextServerEntityId++;
+		mob.zoneId = zoneId;
+		mob.archetypeId = archetypeId;
+		mob.positionMetersX = x;
+		mob.positionMetersY = y;
+		mob.positionMetersZ = z;
+		ApplyArchetypeStatsToMob(mob, arch, m_tickHz);
+		mob.homePositionMetersX = x;
+		mob.homePositionMetersY = y;
+		mob.homePositionMetersZ = z;
+		mob.patrolTargetMetersX = x + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = z;
+		mob.leashDistanceMeters = 40.0f;
+		mob.moveSpeedMetersPerSecond = arch->moveSpeedMetersPerSecond > 0.0f ? arch->moveSpeedMetersPerSecond
+			: static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.spawnTick = m_currentTick;
+		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+		// Hors spawner : indice invalide (routine et agenda ignorés, cf. FindMobRoutine).
+		mob.owningSpawnerIndex = std::numeric_limits<uint32_t>::max();
+		mob.ambient = arch->ambient;
+		mob.attackable = arch->attackable;
+		mob.gmSpawned = true;
+		CellCoord mappedCell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
+			return 0;
+		m_mobs.push_back(mob);
+		m_gmMobIds.push_back(mob.entityId);
+		LOG_INFO(Net, "[ServerApp] ADM.6 mob MJ apparu (entity_id={}, archetype_id={}, zone_id={}, pos=({:.1f},{:.1f},{:.1f}))",
+			mob.entityId, archetypeId, zoneId, x, y, z);
+		return mob.entityId;
+	}
+
+	void ServerApp::PurgeDeadGmMobs()
+	{
+		for (size_t i = 0; i < m_gmMobIds.size();)
+		{
+			const MobEntity* mob = FindMobByEntityId(m_gmMobIds[i]);
+			if (mob == nullptr)
+			{
+				m_gmMobIds.erase(m_gmMobIds.begin() + static_cast<std::ptrdiff_t>(i));
+				continue;
+			}
+			if (mob->pendingDespawn)
+			{
+				(void)RemoveMobByGm(m_gmMobIds[i]); // retire aussi l'entrée de m_gmMobIds
+				continue;
+			}
+			++i;
+		}
+	}
+
+	bool ServerApp::RemoveMobByGm(EntityId entityId)
+	{
+		MobEntity* mob = FindMobByEntityId(entityId);
+		if (mob == nullptr)
+			return false;
+		if (!mob->gmSpawned && !mob->isDynamicEventMob && mob->owningSpawnerIndex < m_spawners.size())
+		{
+			SpawnerRuntimeState& spawner = m_spawners[mob->owningSpawnerIndex];
+			if (mob->owningSpawnerSlot < spawner.slots.size() && spawner.slots[mob->owningSpawnerSlot].mobEntityId == entityId)
+				return DespawnSpawnerMob(spawner, mob->owningSpawnerSlot, "gm_delete", true);
+		}
+		if (mob->isDynamicEventMob && mob->owningEventIndex < m_dynamicEvents.size())
+			return DespawnDynamicEventMob(m_dynamicEvents[mob->owningEventIndex], entityId, "gm_delete");
+		PurgeThreatForEntity(entityId);
+		if (CellGrid* zoneGrid = GetOrCreateZoneGrid(mob->zoneId); zoneGrid != nullptr)
+			(void)zoneGrid->RemoveEntity(entityId);
+		m_mobs.erase(std::remove_if(m_mobs.begin(), m_mobs.end(),
+			[entityId](const MobEntity& m) { return m.entityId == entityId; }), m_mobs.end());
+		m_gmMobIds.erase(std::remove(m_gmMobIds.begin(), m_gmMobIds.end(), entityId), m_gmMobIds.end());
 		return true;
 	}
 

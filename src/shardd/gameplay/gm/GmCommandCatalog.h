@@ -99,6 +99,12 @@ namespace engine::server::gm
 		// ADM.5 — monture
 		{ "mount", GmRole::GameMaster },
 		{ "dismount", GmRole::GameMaster },
+		// ADM.6 — monde
+		{ "npc", GmRole::GameMaster },
+		{ "npcsearch", GmRole::GameMaster },
+		{ "cleanup", GmRole::GameMaster },
+		{ "respawn", GmRole::GameMaster },
+		{ "revealmap", GmRole::GameMaster },
 	};
 
 	/// Entrée du catalogue pour \p name (nom canonique exact), nullptr sinon.

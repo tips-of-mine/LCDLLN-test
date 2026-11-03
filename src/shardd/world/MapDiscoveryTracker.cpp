@@ -45,4 +45,19 @@ namespace engine::server
 		m_hasLastTile = false;
 		m_lastTile = {};
 	}
+
+	int MapDiscoveryTracker::RevealWholeCell(uint32_t cellZoneId)
+	{
+		disc::CellBitmap& bm = m_cells[cellZoneId];
+		int added = 0;
+		for (int tz = 0; tz < disc::kTilesPerSide; ++tz)
+		{
+			for (int tx = 0; tx < disc::kTilesPerSide; ++tx)
+			{
+				if (bm.Set(tx, tz))
+					++added;
+			}
+		}
+		return added;
+	}
 }

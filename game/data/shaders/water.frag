@@ -39,33 +39,61 @@ float linearizeDepth(float d)
     return (NEAR_PLANE * FAR_PLANE) / (FAR_PLANE - d * (FAR_PLANE - NEAR_PLANE));
 }
 
-// SSR mince : raymarch en screen-space, max 32 steps, fallback skybox.
-vec3 ssrTrace(vec3 worldPos, vec3 reflectDir, vec3 fallback)
+// EAU.4 — Reflet écran (SSR) : marche le long du rayon réfléchi et cherche
+// la surface de la scène qu'il traverse. Renvoie la couleur trouvée (rgb) et
+// une CONFIANCE (a, 0..1) qui sert à fondre le reflet trouvé avec le ciel.
+// Corrige l'ancienne version, cause des reflets « par plaques » :
+//  - la profondeur NDC Vulkan est déjà dans [0, 1] ; l'ancien test la
+//    remappait (z * 0,5 + 0,5) et comparait des grandeurs incompatibles :
+//    certains rayons « touchaient » à tort, leurs voisins non ;
+//  - un toucher ou un raté donnait une bascule nette arbre ↔ ciel ;
+//  - portée limitée à 16 m (pas fixe de 0,5 m).
+// Désormais : distances LINÉAIRES (m), pas croissants (≈ 200 m de portée),
+// affinage par dichotomie, et confiance qui s'éteint aux bords de l'écran et
+// au bout de la portée → transition douce vers le reflet du ciel.
+vec4 ssrTrace(vec3 worldPos, vec3 reflectDir)
 {
-    const int   kMaxSteps  = 32;
-    const float kStepSize  = 0.5;
-    const float kDepthEpsilon = 0.05;  // ~5% NDC depth = thin surface tolerance
-
-    vec3 rayPos = worldPos + reflectDir * 0.05;
+    const int   kMaxSteps = 40;
+    float stepLen = 0.4;
+    vec3  prevPos = worldPos;
+    vec3  rayPos  = worldPos + reflectDir * 0.1;
     for (int i = 0; i < kMaxSteps; ++i)
     {
-        rayPos += reflectDir * kStepSize;
+        rayPos += reflectDir * stepLen;
         vec4 clip = pc.viewProj * vec4(rayPos, 1.0);
         if (clip.w <= 0.0) break;
         vec3 ndc = clip.xyz / clip.w;
-        if (any(lessThan(ndc.xy, vec2(-1.0))) || any(greaterThan(ndc.xy, vec2(1.0))))
+        if (any(lessThan(ndc.xy, vec2(-1.0))) || any(greaterThan(ndc.xy, vec2(1.0))) || ndc.z > 1.0)
             break;
-        vec2 screenUv = ndc.xy * 0.5 + 0.5;
-        float sampledDepth = texture(u_sceneDepth, screenUv).r;
-        float rayDepthNorm = ndc.z * 0.5 + 0.5;
-        if (sampledDepth < rayDepthNorm - 1e-4)
+        vec2  uv       = ndc.xy * 0.5 + 0.5;
+        float sceneLin = linearizeDepth(texture(u_sceneDepth, uv).r);
+        float rayLin   = linearizeDepth(ndc.z);
+        float diff     = rayLin - sceneLin;          // > 0 : le rayon est passé derrière la scène
+        if (diff > 0.0 && diff < max(0.6, stepLen * 2.0))
         {
-            float depthDiff = rayDepthNorm - sampledDepth;
-            if (depthDiff < kDepthEpsilon)
-                return texture(u_sceneColor, screenUv).rgb;
+            // Affinage : dichotomie entre la position précédente et l'actuelle.
+            vec3 lo = prevPos, hi = rayPos;
+            for (int k = 0; k < 5; ++k)
+            {
+                vec3 mid = (lo + hi) * 0.5;
+                vec4 c = pc.viewProj * vec4(mid, 1.0);
+                vec3 n = c.xyz / c.w;
+                vec2 u = n.xy * 0.5 + 0.5;
+                if (linearizeDepth(n.z) > linearizeDepth(texture(u_sceneDepth, u).r)) hi = mid; else lo = mid;
+            }
+            vec4 c = pc.viewProj * vec4(hi, 1.0);
+            vec2 hitUv = (c.xy / c.w) * 0.5 + 0.5;
+            // Le ciel (profondeur lointaine) n'est pas un « toucher ».
+            if (texture(u_sceneDepth, hitUv).r >= 0.9999) break;
+            vec2  edge  = smoothstep(vec2(0.0), vec2(0.12), hitUv) * smoothstep(vec2(0.0), vec2(0.12), 1.0 - hitUv);
+            float reach = 1.0 - float(i) / float(kMaxSteps);
+            float conf  = edge.x * edge.y * smoothstep(0.0, 0.35, reach);
+            return vec4(texture(u_sceneColor, hitUv).rgb, conf);
         }
+        prevPos = rayPos;
+        stepLen *= 1.12;
     }
-    return fallback;
+    return vec4(0.0);
 }
 
 // ── EAU.1 — bruit procédural (houle fine, écume) ─────────────────────────────
@@ -251,13 +279,19 @@ void main()
     // flou (mip 0,6) pour que les rides le brouillent naturellement ; le
     // disque solaire du ciel (HDR > 1) donne les éclats de soleil sur l'eau.
     // Les objets proches (arbres, rives) viennent du SSR (scène à l'écran).
-    vec3 reflectDir  = reflect(-viewDir, surfaceN);
+    // EAU.4 : le rayon réfléchi utilise une normale ADOUCIE (rides atténuées de
+    // moitié) : sinon chaque ride l'envoie ailleurs et le reflet des arbres se
+    // déchire en lambeaux.
+    vec3 reflN       = normalize(mix(vec3(0.0, 1.0, 0.0), surfaceN, 0.5));
+    vec3 reflectDir  = reflect(-viewDir, reflN);
     reflectDir.y = abs(reflectDir.y);                     // jamais « sous » l'horizon
     vec3 skyRefl = textureLod(u_skybox, reflectDir, min(0.6, skyMaxLod)).rgb;
-    vec3 refl = ssrTrace(vWorldPos, reflectDir, skyRefl);
+    vec4 ssr  = ssrTrace(vWorldPos, reflectDir);
+    vec3 refl = mix(skyRefl, ssr.rgb, ssr.a);             // fondu continu ciel ↔ scène
     float f = pow(1.0 - NdotV, pc.fresnelPower);
-    // Fresnel de l'eau (F0 ≈ 0,02) : même vue d'aplomb, un léger reflet du ciel.
-    float reflAmt = clamp(0.02 + f * pc.reflectionStrength * 1.6, 0.0, 0.9);
+    // Fresnel de l'eau (F0 ≈ 0,02) : même vue d'aplomb, un léger reflet.
+    // EAU.4 : plafond 0,65 (miroir moins dur, l'eau garde sa couleur).
+    float reflAmt = clamp(0.02 + f * pc.reflectionStrength * 1.4, 0.0, 0.65);
     color = mix(color, refl, reflAmt);
     float fres = clamp(pow(1.0 - NdotV, 3.0), 0.0, 1.0);
     color += vec3(0.05, 0.08, 0.10) * fres * skyLight;    // lisere clair rasant

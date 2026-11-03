@@ -351,6 +351,10 @@ namespace tools::world_gen
 	/// Altitude de base + biome de la cellule, puis comblement des cuvettes
 	/// intérieures sous le niveau de la mer (EAU.5). Terrain.cpp
 	void BuildCellTerrain(World& w);
+	/// EAU.5 — Comble les cuvettes isolées sous la mer de la cellule
+	/// (FillLandlockedSea, relevées à mer + 0,5 m) puis recalcule hasSea.
+	/// Appelée après le relief de base, puis après les routes (déblais). Terrain.cpp
+	void FillSeaPockets(World& w);
 	/// EAU.5 — Comble les cuvettes sous \p seaLevel qui ne communiquent pas avec
 	/// la mer : la nappe de la mer couvre toute la cellule, une cuvette isolée
 	/// y faisait apparaître une « mare de mer » (eau de mer, écume) en pleine

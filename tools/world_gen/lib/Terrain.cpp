@@ -730,9 +730,14 @@ namespace tools::world_gen
 				w.biome.At(i, j) = MacroBiome(m, x, z);
 			}
 		});
-		const double sea = m.scale.seaLevelM;
-		// EAU.5 : pas de « mare de mer » à l'intérieur des terres (cf. en-tête).
+		FillSeaPockets(w);
+	}
+
+	void FillSeaPockets(World& w)
+	{
+		const double sea = w.master.scale.seaLevelM;
 		w.report.seaPocketSamples += FillLandlockedSea(w.height, w.biome, sea, sea + 0.5);
+		w.hasSea = false;
 		for (double hv : w.height.data)
 			if (hv < sea) { w.hasSea = true; break; }
 	}

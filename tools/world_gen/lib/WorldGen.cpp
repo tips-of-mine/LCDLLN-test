@@ -256,6 +256,7 @@ namespace tools::world_gen
 			FlattenSettlements(*w); // plateaux urbains
 			CarveWater(*w);         // lits de rivière, lacs
 			ApplyRoads(*w);         // routes globales + chemins locaux
+			FillSeaPockets(*w);     // EAU.5 : un déblai de route ne crée pas de « mare de mer »
 			if (!ImportLegacyContent(*w, err)) return false; // occupe la place des objets historiques
 			BuildSettlements(*w);   // rues, bâtiments, remparts, mobilier, graphe PNJ
 			BuildVegetation(*w);    // décor naturel (respecte l'occupation)

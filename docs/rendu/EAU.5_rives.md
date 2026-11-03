@@ -40,7 +40,7 @@ toute cette bande au lieu d'un liseré au bord.
 
 | Fichier | Changement |
 |---|---|
-| `tools/world_gen/lib/Terrain.cpp` | `FillLandlockedSea` : après le relief de base, les cuvettes sous la mer qui ne communiquent pas avec la mer sont relevées à 40,5 m. Communiquer = toucher, par des échantillons sous la mer, un biome marin (` ` ou `-`) ou le bord de la cellule (prudence : la mer peut être chez la voisine). |
+| `tools/world_gen/lib/Terrain.cpp` | `FillLandlockedSea` (via `FillSeaPockets`, après le relief de base puis après les routes) : les cuvettes sous la mer qui ne communiquent pas avec la mer sont relevées à 40,5 m. Communiquer = toucher, par des échantillons sous la mer, un biome marin (` ` ou `-`) ou le bord de la cellule (prudence : la mer peut être chez la voisine). |
 | `tools/world_gen/lib/Terrain.cpp` | `LakeWaterLevel` : niveau = moyenne − 0,8 m, mais **jamais plus haut que le bas de la rive** (15e centile du relief de base, 10 m au-delà du contour) − 0,3 m. Fonction pure : raccord exact entre cellules. |
 | `tools/world_gen/lib/Terrain.cpp` | `CarveLake` : cuvette creusée d'après le **polygone** (`LakeRadiusAt`) ; sur les 6 derniers mètres, le fond remonte jusqu'à 0,3 m au-dessus de l'eau : le bord de la nappe est **enfoui sous la rive**. Dehors : grève élargie quand la rive domine (pente ≤ 22° environ), **digue** quand le relief est plus bas (crête de 8 m puis pente ≈ 19°). Jamais de rehaussement sur un lit de rivière (moins de 12 m) ni sur un plateau urbain. Fond jamais sous la mer + 0,1 m. |
 | `tools/world_gen/lib/Places.cpp` | Étangs : même règle de niveau ; emplacement refusé si l'eau serait à moins de 1,2 m au-dessus de la mer (étang trop peu profond, fond borné à la mer). |

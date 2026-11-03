@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.50",
+    "version": "1.0.51",
     "notes": [
+      "v1.0.51 : [BD-T3] corrections confrontées à la BD « La Marque des Démons » : Goum (armure à nacelle de Nasha, notes fausses retirées) ; locuteurs de l'éclosion de Kruikna ; Haazheel en vieillard au turban ; fusions companion_dragon_pilou → companion_kruikna, char_desdemone → char_succubus « Hellavnnea (la Succube) », char_emperor_lhynn_t1 → char_haghendorf, lieu_garundel_estate → ville_garundel_fief ; alias Hizim ; Baron de Mhoorkh ; Garundel sans meurtrier nommé ; trajet continu Oracle → Ghrunke Dash (S007_E016) → village fantôme (S003_E006, marais) → fief de Garundel (S001_E004), routes Camp de l'Oracle–Ghrunke Dash–Fief ; 8 évènements T3 ; arc arc_t03_marque_des_demons. Détail : docs/world/LORE_BD.md.",
       "v1.0.50 : [BD-T1/T2] corrections confrontées à la BD « Le Vent des Dragons » : Fey = Feidreiva (fusion char_fey, companion_fey_t2) ; Pilou = Pile-ou-Face ; Gunther = Gunthar (fusion) ; Goum = frère jumeau de Nasha (quête quest_t2_liberation_goum), Murata vainqueur de l'arène ; Lord Drakkhurst (char_lord_drakkhurst) et maître Orkhan (char_orkhan_t2) créés ; locuteurs des dialogues T2 corrigés ; Mont des Neuf Pics en N007_E005 ; Atmosphère = entrée de la Passe ; route Feyhin–Magistrya ; extrémités de routes resynchronisées (Kendrhir) ; 10 butins T1 orphelins créés ; arc arc_t02_vent_des_dragons. Détail : docs/world/LORE_BD.md.",
       "v1.0.49 : [CARTE] lieux mineurs du T1 placés : Forêt de la Rencontre (N012_E008, près de Whispers Hill alignée sur world_master en N011_E008), Haywick (N018_E013, village du poulailler et cour de Ghorghor, ruine), Camp de l'Étang (N018_E012, rencontre de Feidreiva), Champ de la Première Bataille (N018_E011) et citadelle d'Ashcroft (N017_E012, ruine) ; textes « forêt des Marches » corrigés ; noms Haywick et Ashcroft repris de carte_export.json.",
       "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
@@ -3717,7 +3718,8 @@
       "name": "Feidreiva (Fey)",
       "type": "combat_companion",
       "notes": [
-        "[BD-T1/T2] Compagne de Wismerhill depuis la horde de Ghorghor ; « Fey » est son surnom (BD-T2 p.8). Fusion de companion_fey_t2 (v1.0.50)."
+        "[BD-T1/T2] Compagne de Wismerhill depuis la horde de Ghorghor ; « Fey » est son surnom (BD-T2 p.8). Fusion de companion_fey_t2 (v1.0.50).",
+        "[BD-T3 pl.29-30] Indisponible après le village fantôme (disparue dans les brumes du temps)."
       ],
       "variants": [],
       "level_titles": [],
@@ -3742,11 +3744,18 @@
       "type": "",
       "notes": [
         "[BD-T6] P.30 : confirmé résidant à Moork. Terrorise les dames de compagnie officielles d'Hellavnnea ('À moi Lucifer!!!').",
-        "[BD-T6] P.19 : 'Kruki! À toi!' — Wismerhill l'appelle peut-être au banquet pour 'gérer' l'émissaire impérial. Surnom probable : Kruki."
+        "[BD-T6] P.19 : 'Kruki! À toi!' — Wismerhill l'appelle peut-être au banquet pour 'gérer' l'émissaire impérial. Surnom probable : Kruki.",
+        "[BD-T2] Oeuf de dragon trouvé et couvé secrètement par Pile-ou-Face dans le palais abandonné de la Passe des Dragons.",
+        "[BD-T2] Pile-ou-Face : 'J'ai pas le droit de monter un dragon, moi?!' — part avec lui vers l'Oracle.",
+        "[BD-T2] Futur compagnon-monture de Pile-ou-Face.",
+        "[v1.0.51] Fusion de companion_dragon_pilou : le dragonnet de l'œuf de Pile-ou-Face (T2) est Kruikna, éclos au T3 (pl.27).",
+        "[BD-T3 pl.27] S'attache à Nasha ; [BD-T3 pl.29] brûle les renards démoniaques qui veulent le dévorer (« Cuit, repas, cuit ! »)."
       ],
       "variants": [],
       "level_titles": [],
-      "invocable_by": []
+      "invocable_by": [
+        "class_thief"
+      ]
     },
     {
       "id": "hellavnnea_la_succube",
@@ -3793,7 +3802,8 @@
         "[BD-T11] Fait l'amour avec Wismerhill parmi les flammes du palais — 'violemment, passionnément, sauvagement, inlassablement'.",
         "[BD-T11] Reçoit les plus belles parures du monde comme cadeau de Wismerhill : 'Elles sont magnifiques, merci.'",
         "[BD-T11] Donne naissance à un enfant dans la forteresse naine d'Heureux.",
-        "[BD-T11] À la fin du tome, ouvre la porte et annonce : 'Il y a là quelqu'un qui dit qu'il souhaite rencontrer sa petite-fille...' — cliffhanger T12."
+        "[BD-T11] À la fin du tome, ouvre la porte et annonce : 'Il y a là quelqu'un qui dit qu'il souhaite rencontrer sa petite-fille...' — cliffhanger T12.",
+        "[v1.0.51] Fiche personnage : char_succubus « Hellavnnea (la Succube) », qui absorbe Desdémone (T2) [DÉDUCTION]."
       ],
       "variants": [],
       "level_titles": [
@@ -3834,7 +3844,9 @@
       "id": "companion_hizin",
       "name": "Hizin",
       "type": "",
-      "notes": [],
+      "notes": [
+        "[BD-T3 pl.4] Graphie « Hizim » : « Le Menthat Hizim m'a conseillé de venir te voir ! » — alias ; la graphie « Hizin » du T1 est conservée. Confirme que Hizin est un Menthat."
+      ],
       "variants": [],
       "level_titles": [],
       "invocable_by": []
@@ -3941,26 +3953,6 @@
       "level_titles": [],
       "invocable_by": [
         "char_wismerhill"
-      ]
-    },
-    {
-      "id": "companion_dragon_pilou",
-      "name": "Dragon de Pile-ou-Face (Dragonnet)",
-      "type": "",
-      "notes": [
-        "[BD-T2] Oeuf de dragon trouvé et couvé secrètement par Pile-ou-Face dans le palais abandonné de la Passe des Dragons.",
-        "[BD-T2] Pile-ou-Face : 'J'ai pas le droit de monter un dragon, moi?!' — part avec lui vers l'Oracle.",
-        "[BD-T2] Futur compagnon-monture de Pile-ou-Face."
-      ],
-      "variants": [],
-      "level_titles": [
-        {
-          "level": 0,
-          "title": ""
-        }
-      ],
-      "invocable_by": [
-        "class_thief"
       ]
     },
     {
@@ -4449,7 +4441,7 @@
       "alias": "",
       "type": "major_city",
       "importance": "",
-      "cell": "",
+      "cell": "S007_E016",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -4478,13 +4470,15 @@
         "[BD-T3] 'Les portes de la ville étaient d'acier et semblaient imprenables.'",
         "[BD-T3] On peut y acheter armes, armures, char blindé nain avec escorte.",
         "[BD-T3] Paiement en gemmes accepté. 'Je pense que ce sac de gemmes devrait suffire!'",
-        "[BD-T3] Les nains ne s'entendent pas avec les elfes (animosité ancienne mentionnée).",
+        "[À VÉRIFIER BD-T3] Animosité nains/elfes : non trouvée dans les planches 16-18 du T3 (note antérieure conservée).",
         "[BD-T5] Wismerhill y revient pour acheter le 'palais roulant' — machine de siège naine gigantesque.",
         "[BD-T5] Le palais roulant était commandé à 50 000 couronnes par un acheteur mort — vendu à moitié prix à Wismerhill.",
         "[BD-T5] La machine est stockée dans une grande salle souterraine en stalactites — tunnels nains à double rangée de colonnes.",
         "[BD-T5] Description palais roulant : immense machine à roues, catapulte intégrée, bras mécanique, plates-formes de combat superposées.",
         "[BD-T5] 'Magnifique engin! De quoi sagit-il maître Grhulnpdeth?' / 'C'est un palais roulant, une commande! L'acheteur est mort.'",
-        "[BD-T5] Maître Grhulnpdeth identifié comme maître nain de Ghrunkedash — possible variante orthographique de Grhumpdeth (T3)."
+        "[BD-T5] Maître Grhulnpdeth identifié comme maître nain de Ghrunkedash — possible variante orthographique de Grhumpdeth (T3).",
+        "[BD-T3 pl.16] « La ville naine de Ghrunke Dash, célèbre dans l'Empire pour la qualité de ses métaux » : carapace rocheuse grise veinée de rouge, fente de lave à la base, fumée au sommet, eau à l'est.",
+        "[BD-T3 pl.17-18] Maître des forges Grhumpdeth (« Nous fournissons toutes les nations ! ») ; auberge « presque assez haute » pour Ghorghor ; le groupe achète armes, un char blindé et des mercenaires nains."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -4572,6 +4566,14 @@
           "id": "pnj_ville_ghrunke_dash_ecurie_01",
           "name": "Brakbur Enclume-de-Granit",
           "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_ghrunke_dash_ecurie_02",
+          "name": "Bofhild Bouclier-de-Roc",
+          "gender": "female",
           "race_id": "race_dwarf",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -4882,6 +4884,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_oracle_camp_ecurie_06",
+          "name": "Maelance Hautchêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_oracle_camp_temple_01",
           "name": "Rolia Valchêne",
           "gender": "female",
@@ -4905,7 +4915,7 @@
       "alias": "",
       "type": "other",
       "importance": "",
-      "cell": "",
+      "cell": "S003_E006",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -4916,8 +4926,10 @@
       "features": [],
       "notes": [
         "[BD-T3] 'Qu'une semaine, tous les cent ans, attirant à chaque fois un groupe d'aventuriers.'",
-        "[BD-T3] Feidreiva disparaît emportée par les démons lors de la disparition du village.",
-        "[BD-T3] Les deux vieux du village partagent un 'étrange secret' — ils sont les entités démoniaques déguisées."
+        "[BD-T3 pl.29-30] Feydriva (Feidreiva) disparaît la dernière nuit ; le démon rouge : « J'ai perdu ton amie dans... les brumes du temps ! ».",
+        "[BD-T3 pl.29-30] Les vieux « partagent un étrange secret » : le village, protégé jadis par un archimage, attire des aventuriers « afin que le sang soit sans cesse renouvelé » (« On va en avoir de beaux enfants !!! »). [DÉDUCTION] Les villageois ne sont pas les démons : le piège est orchestré par le démon Urmarcht (pl.38) et ses démons.",
+        "[BD-T3 pl.25-30] Vallée de conifères, étang allongé, maisons de pierre aux toits de chaume jaune, champs de blé ; le reste du siècle, « le sombre marais ressurgit » (arbres morts, brume).",
+        "[INFÉRÉ] Cellule S003_E006 (marais), entre la forêt des lutins et le fief de Garundel, sur le trajet du T3 (Oracle → Ghrunke Dash → forêt → village → fief) ; ancienne cellule N010_W004 du monde jouable abandonnée (v1.0.51)."
       ],
       "taille": "sans_service",
       "service_npcs": []
@@ -8722,7 +8734,7 @@
       "alias": "",
       "type": "fortress_city",
       "importance": "",
-      "cell": "",
+      "cell": "S001_E004",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -8742,7 +8754,10 @@
       "features": [],
       "notes": [
         "[BD-T3 p.45-46] Wismerhill y passe l'automne. La succube l'enchante chaque soir.",
-        "[BD-T3 p.46] Des Menthats surveillent déjà depuis l'extérieur."
+        "[BD-T3 p.46] Des Menthats surveillent déjà depuis l'extérieur.",
+        "[BD-T3 pl.41-43] Route pavée en terrasse bordée de murets, pont de pierre en arche sur un ruisseau, château à tour carrée au toit pointu et corps de logis, enceinte à herse (brisée par Ghorghor), forêt d'automne ; bannière blanche et bleue au blason rond rouge.",
+        "[v1.0.51] Fusion de lieu_garundel_estate (« Garundel Estate », S002_E007) : routes 000012, 000013 et 000018 repartent du fief (S001_E004).",
+        "[v1.0.51] Les références « p.45-46 » ci-dessus suivent la page du PDF (= planches 43-44)."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -8773,6 +8788,30 @@
         {
           "id": "pnj_ville_garundel_fief_ecurie_01",
           "name": "Eldisse Grispré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_garundel_fief_ecurie_02",
+          "name": "Ulan Valchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_garundel_fief_ecurie_03",
+          "name": "Roline Valcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_garundel_fief_ecurie_04",
+          "name": "Edia Belmorne",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -21452,7 +21491,7 @@
     {
       "id": "quest_bataille_oracle_camp_t3",
       "name": "La Bataille du Camp de l'Oracle",
-      "description": "À la sortie de l'Oracle, Wismerhill découvre que son groupe est attaqué par les Chevaliers de la Lumière. Ghorghor Bey resurge des morts grâce à son anneau. Les Menthats de la Lune Noire ordonnent un cessez-le-feu — zone neutre.",
+      "description": "À la sortie de l'Oracle, Wismerhill découvre que son groupe est attaqué par les Chevaliers de la Lumière. Ghorghor Bey, qui a survécu à la Grande Bataille (« n'étant pas parmi les morts »), réapparaît et sauve le groupe. Les Menthats de la Lune Noire ordonnent un cessez-le-feu — zone neutre.",
       "category": "histoire",
       "tags": [
         "histoire_principale",
@@ -21494,7 +21533,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T3] pages 7-12"
+        "[BD-T3] pages 7-12",
+        "[v1.0.51] « grâce à son anneau » retiré : la BD-T3 n'en parle pas (pl.7-10)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -21649,7 +21689,7 @@
     {
       "id": "quest_foret_lutins_t3",
       "name": "La Forêt des Lutins et Iaun Reith",
-      "description": "Le groupe traverse une forêt infestée de lutins espièges. Ils y rencontrent Iaun Reith, chevalier errant sur sa mante géante, seul être que les farces des lutins ne touchent pas. Il propose de guider à travers le marais.",
+      "description": "Le groupe traverse une forêt infestée de lutins espièges. Ils y rencontrent Iaun Reith, chevalier errant sur sa mante géante, égaré par les tours des lutins. Il met en garde contre le « marais maudit » qui suit la forêt, puis guide le groupe.",
       "category": "exploration",
       "tags": [
         "exploration",
@@ -21715,7 +21755,7 @@
     {
       "id": "quest_village_fantome_feidreiva_t3",
       "name": "Le Village Fantôme et la Disparition de Feidreiva",
-      "description": "Le groupe arrive devant un village accueillant en plein marais. Les vieux du village sont des entités démoniaques. À l'aube, le village disparaît — et Feidreiva disparaît avec lui, emportée dans les brumes du temps.",
+      "description": "Le groupe arrive devant un village accueillant en plein marais. Les vieux du village partagent un secret : le village attire des voyageurs pour renouveler son sang, tandis que des démons (Urmarcht) tendent un piège. À l'aube, le village disparaît — et Feidreiva disparaît avec lui, emportée dans les brumes du temps.",
       "category": "histoire",
       "tags": [
         "histoire_principale",
@@ -23685,7 +23725,7 @@
       ],
       "source_lore": [
         "char_magister_magistrya",
-        "char_desdemone",
+        "char_succubus",
         "sauken_glude_of_magistrya"
       ],
       "rewards": {
@@ -31835,6 +31875,126 @@
       "ref_id": "char_orkhan_t2",
       "notes": [
         "[BD-T2] Page 44."
+      ]
+    },
+    {
+      "id": "event_t3_coeur_oracle",
+      "name": "Au cœur de l'Aérolithe",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Wismerhill rencontre l'Oracle, dieu du destin enchaîné, qui refuse de lui révéler sa vie.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "loracle_dieu_enchaine",
+      "notes": [
+        "[BD-T3] pl.2-4."
+      ]
+    },
+    {
+      "id": "event_t3_retour_ghorghor",
+      "name": "Le retour de Ghorghor Bey",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Ghorghor sauve le groupe des Chevaliers de la Lumière ; Wismerhill le bat et prend le commandement.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_ghorghor_bey",
+      "notes": [
+        "[BD-T3] pl.5-12."
+      ]
+    },
+    {
+      "id": "event_t3_forges_ghrunke_dash",
+      "name": "Les forges de Ghrunke Dash",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Maître Grhumpdeth forge l'armure de Goum à nacelle pour Nasha ; achat d'un char blindé et de mercenaires nains.",
+      "factions": [],
+      "ref_type": "ville",
+      "ref_id": "ville_ghrunke_dash",
+      "notes": [
+        "[BD-T3] pl.16-18."
+      ]
+    },
+    {
+      "id": "event_t3_hommage_lhynn",
+      "name": "Le serment d'Haazheel à Lhynn",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Haazheel Thorn renouvelle son serment de vassalité à l'Empereur Haghendorf ; Fratus Sinister lui interdit l'entrée avec son armée.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_haazheel_thorn",
+      "notes": [
+        "[BD-T3] pl.19-21."
+      ]
+    },
+    {
+      "id": "event_t3_conjuration_lhynn",
+      "name": "La conjuration du krak de Lhynn",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Fratus Sinister, les Chevaliers Dragons et six nobles lésés jurent la mort d'Haghendorf.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_fratus_sinister",
+      "notes": [
+        "[BD-T3] pl.22-23."
+      ]
+    },
+    {
+      "id": "event_t3_village_fantome",
+      "name": "La dernière nuit du village fantôme",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Kruikna éclot ; le village centennal disparaît et Feydriva est perdue dans les brumes du temps.",
+      "factions": [],
+      "ref_type": "ville",
+      "ref_id": "ville_village_fantome",
+      "notes": [
+        "[BD-T3] pl.25-30."
+      ]
+    },
+    {
+      "id": "event_t3_pacte_succube",
+      "name": "Le pacte de la succube",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Wismerhill appelle les vents, vainc la succube et l'épargne ; elle se lie à lui par un pacte.",
+      "factions": [],
+      "ref_type": "char",
+      "ref_id": "char_succubus",
+      "notes": [
+        "[BD-T3] pl.31-40."
+      ]
+    },
+    {
+      "id": "event_t3_fief_garundel",
+      "name": "Seigneurs du fief de Garundel",
+      "era": "Tome 3",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "La maison Garundel est anéantie sur son pont ; le groupe devient seigneur de droit du fief pour l'automne.",
+      "factions": [],
+      "ref_type": "ville",
+      "ref_id": "ville_garundel_fief",
+      "notes": [
+        "[BD-T3] pl.41-43."
       ]
     }
   ],
@@ -144848,7 +145008,9 @@
         "[BD-T13] A les nerfs lors de la mission impossible : 'Ou merde! Bon ben quand faut y aller...' lors de la bataille. Manque de peu d etre tue par un demon lacerateur.",
         "[BD-T1] Demi-ogre, chef invaincu d'une horde de pillards ; monture colossale cornue « venue des temps oubliés » (p.18 BD).",
         "[BD-T1] Capture Wismerhill et Pile-ou-Face en train de voler ses poules, puis les engage ; promeut Wismerhill lieutenant (Faille de Kashogs) puis capitaine (Kendrhir).",
-        "[BD-T1] Pendant le siège de Kendrhir, le démon Urmarcht lui souffle de tenter une sortie ; criblé de piques, son sort reste inconnu à la fin du tome (p.49 BD)."
+        "[BD-T1] Pendant le siège de Kendrhir, le démon Urmarcht lui souffle de tenter une sortie ; criblé de piques, son sort reste inconnu à la fin du tome (p.49 BD).",
+        "[BD-T3 pl.7-10] Réapparaît au camp de l'Oracle et sauve le groupe des Chevaliers de la Lumière : « n'étant pas parmi les morts », il a suivi la route de l'Oracle ; veut relever une armée.",
+        "[BD-T3 pl.10-12] Wismerhill refuse, le bat par la magie (« ZARRHAHULL AKNESH ZAIN TAUSHAARK ! ») et prend le commandement : « Ou tu obéis ou tu te casses ». Monte ensuite une énorme bête noire velue aux cornes de buffle."
       ]
     },
     {
@@ -144865,7 +145027,7 @@
       "race_id": "race_dark_elf",
       "class_id": "",
       "role": "primary_antagonist",
-      "visual": "Traits elfens fins et aristocratiques, cheveux blonds longs, gemme frontale verte incandescente, yeux jaunes perçants, sourire sadique permanent. Long manteau vert et rouge à ornements dorés. Stature imposante.",
+      "visual": "[BD-T3] Vieillard à longue barbe et moustache, turban vert et rouge orné d'une gemme verte ovale au front, yeux blancs ou jaunes lumineux, mains griffues (pl.19, 38-39). Se déplace dans un temple à degrés vert porté, trône rouge au sommet, sous des bannières à disque noir (pl.15).",
       "personality": "Sadique, calculateur, patient. Adore humilier ses adversaires. Cache un plan de très long terme.",
       "description": "Sadique, calculateur, patient. Adore humilier ses adversaires. Cache un plan de très long terme.",
       "arc": "",
@@ -144961,7 +145123,12 @@
         "[HS] Netzharine voit fugacement Haazheel assis sur un trône 'qui semblait tournoyer sur lui-même' en tenant son bâton.",
         "[HS] Sa voix grondante de titan provoque la peur même via le bâton de prière.",
         "[HS] Une horde de prêtres prêche et développe son culte. Seule religion officielle de l'Empire.",
-        "[BD-T2] Apparaît en visage vert géant au diadème frappé d'un disque noir, dans le ciel du champ de bataille : « L'ombre de la Lune Noire commence à s'étendre. » (p.38) ; l'Empereur des Ténèbres se méfie de ses plans (p.6)."
+        "[BD-T2] Apparaît en visage vert géant au diadème frappé d'un disque noir, dans le ciel du champ de bataille : « L'ombre de la Lune Noire commence à s'étendre. » (p.38) ; l'Empereur des Ténèbres se méfie de ses plans (p.6).",
+        "[À VÉRIFIER BD-T3] Ancienne description conservée : « Traits elfens fins et aristocratiques, cheveux blonds longs, gemme frontale verte incandescente, yeux jaunes perçants, sourire sadique permanent. Long manteau vert et rouge à ornements dorés. Stature imposante. » — la BD-T3 le montre en vieillard au turban.",
+        "[DÉDUCTION] Le « Maître au capuchon vert » du T2 et le vieillard au turban vert du T3 sont le même personnage (gemme verte, Lune Noire).",
+        "[BD-T3 pl.1] Ordonne de protéger « l'enfant » à tout prix, sans contact direct : « le plan en serait faussé ».",
+        "[BD-T3 pl.15-21] Officiellement vassal : vient à Lhynn renouveler son serment de vassalité à l'Empereur ; Fratus Sinister lui barre l'entrée avec son armée (« ce sera sans ton armée ! »).",
+        "[BD-T3 pl.39] « Je perds une succube mais il y gagnera en perversité ! » ; « L'épée est forgée sinon encore trempée » (Greldinard)."
       ]
     },
     {
@@ -145056,7 +145223,9 @@
         "[BD-T2] « Relève-toi, comte Fratus Sinister, pair de l'Empire ! » — l'Empereur, après « Mission accomplie, Majesté » ; il l'appelle aussi « commandeur » (p.28).",
         "[BD-T2] Altenberg, « fief du Grand Maître Frater Sinister » (pp.32-33) : il y conjure avec Gunthar contre l'Empereur, comptant sur l'alliance des Chevaliers Dragons négociée par maître Orkhan (p.34).",
         "[BD-T2] Ne craint ni l'archimage Haazheel Thorn ni le Baron de Moork : « Que peuvent-ils contre la toute-puissance d'Altenberg et de la Lumière ?! » (p.35).",
-        "[INFÉRÉ] « Fratus » (p.28) et « Frater » (pp.32-34) désignent le même personnage (même visage blond, mêmes anneaux à croix cerclée) ; « Frater » est employé comme titre."
+        "[INFÉRÉ] « Fratus » (p.28) et « Frater » (pp.32-34) désignent le même personnage (même visage blond, mêmes anneaux à croix cerclée) ; « Frater » est employé comme titre.",
+        "[BD-T3 pl.19-20] Accueille Haazheel Thorn à Lhynn et lui interdit d'entrer avec son armée (« Si tu dois entrer dans cette ville, ce sera sans ton armée ! ») ; Haazheel le traite de « blondinet efféminé ».",
+        "[BD-T3 pl.22-23] Préside au krak des chevaliers de Lhynn la conjuration avec les Chevaliers Dragons : « N'ayons, frères, de repos avant que l'aigle bicéphale ne gise au sol, ensanglanté par le sang du tyran Haghendorf ! » — « Par le fer, le feu et la lumière ! »"
       ]
     },
     {
@@ -145087,7 +145256,8 @@
       "notes": [
         "[BD-T10] Commande la cavalerie lourde impériale contre la phalange de Murata. Se lance dans la charge avec les cris de guerre impériaux.",
         "[BD-T10] MORT : Son cheval se fracasse sur la phalange de la Lune Noire. Il n'y eut pas de survivants à part lui… mais il périt dans la charge. Mort au combat à la tête de ses chevaliers.",
-        "[BD-T2] Première apparition au camp de l'Oracle : ranger blond aux lunettes à verres réticulés, gilet à franges, arc ; explique l'appel de l'Oracle et part rejoindre « un groupe de dingues » dont le clerc vient d'être appelé (p.46). Pile-ou-Face lui vole sa bourse."
+        "[BD-T2] Première apparition au camp de l'Oracle : ranger blond aux lunettes à verres réticulés, gilet à franges, arc ; explique l'appel de l'Oracle et part rejoindre « un groupe de dingues » dont le clerc vient d'être appelé (p.46). Pile-ou-Face lui vole sa bourse.",
+        "[BD-T3 pl.24] Monté sur sa mante religieuse géante, il est « un peu perdu » dans la forêt : ce sont les tours des lutins. Il déconseille de franchir la forêt (« après s'étend un terrible marais ») puis guide le groupe."
       ]
     },
     {
@@ -145141,18 +145311,22 @@
       "class_id": "",
       "role": "creature_companion",
       "visual": "Petit dragon juvénile aux écailles orange/jaune, yeux orange brillants, cornes naissantes, ailes rudimentaires, dents acérées, queue traçante. Taille d'un gros chien à la naissance.",
-      "personality": "Agressive à la naissance, territoriale, attachée à celui qui la protège.",
-      "description": "Agressive à la naissance, territoriale, attachée à celui qui la protège.",
-      "arc": "Naît d'un œuf vert luminescent acquis par le groupe. Vif, mordu des doigts à la naissance, instinctivement territorial.",
+      "personality": "Vif et vorace, crache le feu ; attaché à Nasha qui l'a pris dans ses bras.",
+      "description": "Vif et vorace, crache le feu ; attaché à Nasha qui l'a pris dans ses bras.",
+      "arc": "Éclot au T3 (pl.27) de l'œuf vert trouvé et couvé par Pile-ou-Face au palais du Maître des Dragons (T2). Crache du feu au visage de Pile-ou-Face, s'attache à Nasha.",
       "abilities": [],
       "special_items": [],
       "special_rule": "",
       "quote": "",
-      "source": "[BD] Pages 29, 30",
+      "source": "[BD-T3] Planches 27, 29, 43 (pp.29, 31, 45 du PDF)",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T3 pl.27] Nom tiré de son cri : « KRUIKNA ?? ».",
+        "[BD-T3 pl.29] Met le feu à un lit au village fantôme et brûle les renards démoniaques venus le dévorer.",
+        "[BD-T3 pl.43] Présent au fief de Garundel pendant l'automne."
+      ]
     },
     {
       "id": "char_garundel",
@@ -145166,9 +145340,9 @@
       "race_id": "race_human",
       "class_id": "class_warrior",
       "role": "antagonist_local",
-      "visual": "Homme corpulent au visage brutal, barbe épaisse, armure de brigand composite. Accompagné de ses fils — copies légèrement plus petites.",
+      "visual": "[BD-T3 pl.41] Chauve, un œil abîmé, vêtu de fourrures ; ses fils sont barbus.",
       "personality": "Brigand seigneurial. Profite des droits féodaux absolus pour extorquer les voyageurs. 'En Garundel, celui qui passe me doit ses biens... ou trépasse!'",
-      "description": "Seigneur brigand d'un petit fief. Pratique l'extorsion systématique sur un pont stratégique. Tué par Ghorghor Bey lors de la tentative d'extorsion contre le groupe.",
+      "description": "Seigneur brigand d'un petit fief. Pratique l'extorsion systématique sur un pont stratégique. Tué avec ses fils dans la charge du groupe sur le pont (« la maison Garundel fut anéantie ») ; la BD ne dit pas qui l'a tué.",
       "arc": "Apparaît lors de la traversée du fief. Défie le groupe. Tué avec ses fils. Son fief passe au groupe par droit de conquête féodal.",
       "abilities": [
         "Combat à l'épée de guerre",
@@ -145176,14 +145350,18 @@
       ],
       "special_items": [],
       "special_rule": "",
-      "quote": "Holà mes tourteréaux! En Garundel, celui qui passe me doit ses biens... ou trépasse! [BD-T3 p.43]",
+      "quote": "Holà mes tourtereaux ! En Garundel celui qui passe me doit ses biens... ou trépasse ! [BD-T3 pl.41]",
       "source": "[BD-T3] Pages 41, 42, 43, 44",
       "ville_ids": [],
       "zone_ids": [
         "zone_garundel_fief"
       ],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T3 pl.41] « Le passe-temps favori de certains consistait à occire ceux qui passaient sur leurs terres. Garundel et ses fils en étaient de fiers exemples... »",
+        "[BD-T3 pl.41] Appelle aux armes un certain Hubert (« Toi aussi, Hubert ! » — « Mheu ! Ma soupe ! »).",
+        "[v1.0.51] « Tué par Ghorghor Bey » retiré : Ghorghor dit seulement « J'prends l'gros ! » avant la charge (pl.42)."
+      ]
     },
     {
       "id": "loracle_dieu_enchaine",
@@ -145534,7 +145712,9 @@
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[HYPOTHÈSE] Graphie T4 du « Prince Draakh » du T3 (char_prince_draakh), conjuré du krak de Lhynn — fusion à confirmer dans la BD-T4."
+      ]
     },
     {
       "id": "char_pile_ou_face",
@@ -145545,7 +145725,8 @@
         "t01",
         "t12",
         "t13",
-        "t02"
+        "t02",
+        "t03"
       ],
       "faction_id": "",
       "race_id": "",
@@ -145588,7 +145769,8 @@
         "[BD-T1] « Dzorak ! » est l'un de ses jurons (p.15 BD).",
         "[BD-T2] « Pilou » est son surnom : « Ça suffit, Pilou ! » (Wismerhill, p.8), « 500 piécettes pour Pilou ! » (lui-même, p.10).",
         "[BD-T2] Vole la bourse de Murata, qui lui tranche sa natte (p.10) ; crochète la grille de l'arène (« Ne trouble pas la concentration de l'artiste ! », p.12).",
-        "[BD-T2] Détrousse les morts, pille le palais du Maître des Dragons et couve en secret un œuf de dragon vert (pp.12, 43, 45)."
+        "[BD-T2] Détrousse les morts, pille le palais du Maître des Dragons et couve en secret un œuf de dragon vert (pp.12, 43, 45).",
+        "[BD-T3 pl.11, 27] Protège l'œuf vert pendant la bagarre (« Mon œuf, merde ! »), puis l'accueille à l'éclosion : « Mon bébé, enfin ! » — le dragonnet lui crache du feu au visage."
       ]
     },
     {
@@ -145621,7 +145803,8 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T1] Oreilles pointues visibles (p.35 BD) — race non établie dans le tome 1, race_id laissé vide.",
-        "[BD-T1] Mort (déduction) : Wismerhill retrouve son corps et crie son nom (p.50 BD)."
+        "[BD-T1] Mort (déduction) : Wismerhill retrouve son corps et crie son nom (p.50 BD).",
+        "[BD-T3 pl.4] Graphie « Hizim » : « Le Menthat Hizim m'a conseillé de venir te voir ! » — alias ; la graphie « Hizin » du T1 est conservée. Confirme que Hizin est un Menthat."
       ]
     },
     {
@@ -145660,37 +145843,8 @@
         "[BD-T2] Rescapée de Kendrhir avec Wismerhill et Pile-ou-Face ; complice des vols à la tire de Feyhin Lokcthat (p.8), déclenche la rixe de l'auberge de Magistrya (p.21).",
         "[BD-T2] Supplie Wismerhill de ne pas affronter le Maître des Dragons : « Non ! N'y va pas ! Il te tuera ! » (p.31) ; amante de Wismerhill (pp.28, 43).",
         "[BD-T2] Cicatrice verticale sur l'œil gauche, marque jaune sous l'œil, armure dorée très échancrée (pp.7, 19, 42).",
-        "[BD-T2] Aucun Chevalier Dragon ne s'appelle Feidreiva : les notes antérieures qui l'affirmaient venaient d'une mauvaise attribution de « Non, Feidreiva ! » (v1.0.50)."
-      ]
-    },
-    {
-      "id": "char_emperor_lhynn_t1",
-      "name": "L'Empereur de Lhynn (tome 1)",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t01",
-        "t02"
-      ],
-      "faction_id": "",
-      "race_id": "race_human",
-      "class_id": "",
-      "role": "npc_ruler_t1",
-      "visual": "Prologue : longs cheveux noirs, couronne-bandeau ornée d'une gemme, robe rouge à large col de fourrure blanche, boucles d'oreilles. Trente ans plus tard (p.28 BD) : cheveux gris, traits vieillis, même type de couronne et de vêtements.",
-      "personality": "Ambitieux, soucieux du destin de son règne ; terrifié par la prophétie. Implacable trente ans plus tard : il ordonne qu'il n'y ait aucun survivant parmi la horde de Ghorghor Bey.",
-      "description": "",
-      "arc": "",
-      "abilities": [],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T1] Pages 3-5 (pp.9-11 BD), page 22 (p.28 BD)",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T1] Nom non donné dans le tome 1 ; l'identité avec l'Empereur Haghendorf des tomes suivants reste à confirmer.",
-        "[BD-T2] Anoblit Fratus Sinister « comte, pair de l'Empire » (p.28) ; Frater complote de marcher contre lui (p.34)."
+        "[BD-T2] Aucun Chevalier Dragon ne s'appelle Feidreiva : les notes antérieures qui l'affirmaient venaient d'une mauvaise attribution de « Non, Feidreiva ! » (v1.0.50).",
+        "[BD-T3 pl.29-30] Disparaît la dernière nuit du village fantôme, « perdue dans les brumes du temps » selon le démon ; Wismerhill la croit perdue « à jamais » (pl.40). Sort ultérieur : voir les tomes suivants."
       ]
     },
     {
@@ -145700,7 +145854,10 @@
       "alive": false,
       "tomes": [
         "t4",
-        "t09"
+        "t09",
+        "t01",
+        "t02",
+        "t03"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -145782,7 +145939,12 @@
         "[BD-T11] Son âme est dévorée par Haazheel Thorn immédiatement après sa mort.",
         "[BD-T11] Avant de mourir, il maudit Haazheel : 'Je te maudis, Haazheel Thorn! Les ténèbres que tu sers t'engloutiront!'",
         "[BD-T11] Wismerhill crie : 'J'ai vaincu!' après l'avoir terrassé — Haghendorf se vide de son sang.",
-        "[BD-T11] Son palais millénaire est détruit par Haazheel après la victoire (sortilège d'incantation colossale)."
+        "[BD-T11] Son palais millénaire est détruit par Haazheel après la victoire (sortilège d'incantation colossale).",
+        "[BD-T1] Apparence (fiche char_emperor_lhynn_t1) : Prologue : longs cheveux noirs, couronne-bandeau ornée d'une gemme, robe rouge à large col de fourrure blanche, boucles d'oreilles. Trente ans plus tard (p.28 BD) : cheveux gris, traits vieillis, même type de couronne et de vêtements.",
+        "[BD-T1] Caractère (fiche char_emperor_lhynn_t1) : Ambitieux, soucieux du destin de son règne ; terrifié par la prophétie. Implacable trente ans plus tard : il ordonne qu'il n'y ait aucun survivant parmi la horde de Ghorghor Bey.",
+        "[BD-T2] Anoblit Fratus Sinister « comte, pair de l'Empire » (p.28) ; Frater complote de marcher contre lui (p.34).",
+        "[BD-T3 pl.19-21] À Lhynn : cheveux gris longs, hermine, couronne à pointes et gemme ; reçoit le serment de vassalité d'Haazheel (« Enfin, il vient faire serment de vassalité ! »). Les conjurés le nomment « Haghendorf » (pl.23).",
+        "[v1.0.51] Fusion de char_emperor_lhynn_t1 [DÉDUCTION] : même trône de Lhynn, même apparence (cheveux gris trente ans après le prologue du T1), aucune succession mentionnée ; le nom Haghendorf est donné au T3."
       ]
     },
     {
@@ -145871,7 +146033,8 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t02"
+        "t02",
+        "t03"
       ],
       "faction_id": "",
       "race_id": "",
@@ -145924,7 +146087,9 @@
         "[HS] Contrôle les Orques au point que les hordes se sont calmées et ne se livrent plus au saccage spontané.",
         "[BD-T2] « Le sombre Lord Greldinard se tourna vers la Lune Noire et pria » ; Haazheel lui répond « Excellent, Baron ! » (p.38) : [DÉDUCTION] Greldinard est le Baron de Moork.",
         "[BD-T2] Masqué d'un haut couvre-chef rouge gravé, robe rouge au disque noir ; rend compte au « Maître » que « l'Épée est en sécurité et commence à être forgée » (p.28).",
-        "[DÉDUCTION] Le cavalier en armure rouge du shadrakkh, qui mène les troupes orques contre le krak de la Lumière, est le même Baron (pp.36-38)."
+        "[DÉDUCTION] Le cavalier en armure rouge du shadrakkh, qui mène les troupes orques contre le krak de la Lumière, est le même Baron (pp.36-38).",
+        "[BD-T3 pl.21] Annoncé à Lhynn : « Son Altesse le Baron de Mhoorkh » (graphie du T3) aux côtés d'Haazheel Thorn ; heaume rouge cylindrique.",
+        "[BD-T3 pl.38-39] Au château loué par Haazheel : « Maître ! Il s'en est fallu de peu ! » ; « Il est bientôt prêt ! L'épée est forgée sinon encore trempée »."
       ]
     },
     {
@@ -146329,7 +146494,8 @@
       "alive": true,
       "tomes": [
         "t02",
-        "t6"
+        "t6",
+        "t03"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -146366,7 +146532,8 @@
         "[BD-T6] P.24 : 'Viens ici Dragounet, hi hi hi!' — Wismerhill l'appelle ainsi au petit-déjeuner. 3 surnoms : Pépète (Ghorghor), Pépette (Hellavnnea), Dragounet (Wismerhill).",
         "[BD-T6] P.41 : livre les fleurs à George d'Horkher — SIGNAL du piège. 'Voici mille fleurs pour le preux sire d'Horkher.' — 'Merci ma petite fille.' — GASP — capture.",
         "[BD-T2] Son frère jumeau est Goum : « Sept ans. C'est mon jumeau. » Un mage les a pris enfants et a transformé Goum en colosse simple d'esprit qui n'obéit qu'à elle (p.15). Le groupe et Murata le libèrent de l'arène (pp.12-13).",
-        "[BD-T2] Peau mate, yeux jaunes, tresses ornées de perles, tunique verte ; guide le groupe jusqu'à Magistrya (« C'est ici ! », p.19)."
+        "[BD-T2] Peau mate, yeux jaunes, tresses ornées de perles, tunique verte ; guide le groupe jusqu'à Magistrya (« C'est ici ! », p.19).",
+        "[BD-T3 pl.18] Voyage assise dans la nacelle blindée de l'armure naine de Goum. [BD-T3 pl.27] Prend le dragonnet dans ses bras : « Heu ?? Moi trop gentille, dragounet joli » ; Kruikna s'attache à elle."
       ]
     },
     {
@@ -146628,7 +146795,8 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T3 p.25] Salutation des Chevaliers-Dragons : 'Haak Haak Draakhs!'"
+        "[BD-T3 p.25] Salutation des Chevaliers-Dragons : 'Haak Haak Draakhs!'",
+        "[BD-T3 pl.23] « Baron d'Hurkel spolié ! » — « Mort à Haghendorf ! » (vieillard à barbe blanche)."
       ]
     },
     {
@@ -146657,7 +146825,9 @@
       ],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T3 pl.23] « Prince Agnos... banni ! » — « Mort au tyran ! » (cheveux gris, cicatrice)."
+      ]
     },
     {
       "id": "char_haut_drakkhen",
@@ -146686,7 +146856,8 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T3] 'Kastotsh' = terme en langue Draakhs signifiant probablement 'mort/abattre'."
+        "[BD-T3] 'Kastotsh' = terme en langue Draakhs signifiant probablement 'mort/abattre'.",
+        "[BD-T3 pl.23] « Haut Drakkhen... oublié ! » — « KASTÖTSH KAKT KAISER ! » (masque de dragon rouge)."
       ]
     },
     {
@@ -146715,7 +146886,9 @@
       ],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T3 pl.23] « Duc d'Ornan dépossédé ! » — « Que crève le porc immonde ! » (moustache, boucle d'oreille)."
+      ]
     },
     {
       "id": "char_duc_ushker",
@@ -146743,7 +146916,9 @@
       ],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T3 pl.23] « Duc Ushker... bafoué ! » — « La peste soit du bâtard ! » (roux)."
+      ]
     },
     {
       "id": "char_prince_draakh",
@@ -146773,17 +146948,20 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T3 p.25] La réunion a lieu dans le 'Krak des Chevaliers de L'hynn'.",
-        "[BD-T3] Fratus Sinister préside la réunion et prononce le serment : 'Par le fer, le feu et la lumière!'"
+        "[BD-T3] Fratus Sinister préside la réunion et prononce le serment : 'Par le fer, le feu et la lumière!'",
+        "[BD-T3 pl.23] « Prince Draakh... mésestimé ! » — « KASTÖTSH HAGHENDORF ! » ; heaume noir aux yeux rouges, motif blanc. « Draakhs » désigne les Chevaliers Dragons (salut « Haak haak »).",
+        "[HYPOTHÈSE] Même personnage que le Prince Brakkh du T4 (char_prince_brakkh) : graphies proches, même rang chez les Chevaliers Dragons."
       ]
     },
     {
       "id": "char_succubus",
-      "name": "La Succube (non nommée)",
+      "name": "Hellavnnea (la Succube)",
       "importance": "major",
       "alive": true,
       "tomes": [
         "t3",
-        "t07"
+        "t07",
+        "t02"
       ],
       "faction_id": "faction_demons",
       "race_id": "race_demon",
@@ -146792,7 +146970,7 @@
       "visual": "Chevelure de feu rouge-orangée vivante, ailes de chauve-souris brun-rouge, corps féminin humanoïde, griffes aux pieds, gemmes vertes enchâssées en ornements frontaux, yeux verts brillants.",
       "personality": "Arrogante, séductrice, imprévisible. Accepte mal la servitude mais honore le pacte.",
       "description": "Arrogante, séductrice, imprévisible. Accepte mal la servitude mais honore le pacte.",
-      "arc": "Envoyée contre Wismerhill par les démons du marais. Combat violent et presque fatal. Épargnée par Wismerhill, prononce spontanément le rite du pacte. En T4, enseigne la téléportation démoniaque à Wismerhill.",
+      "arc": "Démone d'Haazheel Thorn ; au T2, sous le nom de Desdémone, amante du Magister de Magistrya ; au T3, complice du démon rouge (Urmarcht) au marais du village fantôme, elle affronte Wismerhill. Combat violent et presque fatal. Épargnée par Wismerhill, prononce spontanément le rite du pacte. En T4, enseigne la téléportation démoniaque à Wismerhill.",
       "abilities": [
         "Métamorphose (toutes races, tous visages)",
         "Attaque mentale",
@@ -146804,18 +146982,25 @@
         "Magie démoniaque offensive — Agghrul Shai Zain Hoorghith",
         "Résistance aux attaques physiques ordinaires",
         "Régénération dans une boule de feu (si mortellement blessée)",
-        "Enseignement de téléportation démoniaque (T4)"
+        "Enseignement de téléportation démoniaque (T4)",
+        "Manipulation/séduction",
+        "Magie de feu",
+        "Double-jeu politique"
       ],
       "special_items": [],
       "special_rule": "Pacte irrévocable avec Wismerhill. Doublement liée (T4) : Haazheel peut la commander en parallèle via menace directe. Se nourrit de la haine — si le joueur la frappe par colère hors combat, elle devient temporairement plus puissante.",
       "quote": "Oui, hais-moi, cela me rendra plus forte! Hahaaaha! [BD-T3 p.34] / Merci, tu m'as épargnée, je suis à toi... je te servirai! [BD-T3 p.35] / Je suis de toutes les races, de toutes les couleurs, de toutes les éternités... [BD-T3 p.36]",
       "source": "[BD] Pages 33–42 / [BD-T3] Pages 30-43",
-      "ville_ids": [],
+      "ville_ids": [
+        "sauken_glude_of_magistrya"
+      ],
       "zone_ids": [
         "zone_cursed_swamp",
         "zone_phantom_village"
       ],
-      "dialogue_ids": [],
+      "dialogue_ids": [
+        "dial_t2_desdemone_double_jeu"
+      ],
       "notes": [
         "[BD-T7] Présente tout au long du voyage dans l'Empire du Jade. Chevelure rousse flamboyante signature. Participe aux négociations politiques avec le Seigneur du Jade.",
         "[BD-T7] Intervient activement dans les scènes d'intrique politique — conseille Wismerhill avec son instinct démoniaque.",
@@ -146835,7 +147020,19 @@
         "[BD-T8] À Der Hem Shelbem, prend part à la défense du groupe. Invoque un Seuil Infernal ('Zeennsheeender !!') pour ouvrir un portail de renfort démoniaque.",
         "[BD-T8] 'Je vais essayer... d'ouvrir un seuil infernal, occupe-le !' — dialogue lors de la bataille.",
         "[BD-T8] 'Le seuil s'ouvre, j'ai réussi !' — succès de l'invocation.",
-        "[BD-T8] Reste aux côtés de Wismerhill à Moork après le retour. Présente dans les scènes finales au Palais Roulant."
+        "[BD-T8] Reste aux côtés de Wismerhill à Moork après le retour. Présente dans les scènes finales au Palais Roulant.",
+        "[Desdémone] [BD-T2] Salue l'échec de la machine : 'Il s'est énervé, le petit !'",
+        "[Desdémone] [BD-T2] Indique à Wismerhill sous contrainte : 'L'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons.'",
+        "[Desdémone] [BD-T2] Envoie Wismerhill vers la Passe sachant que cela le mènera à sa perte ('Brillant! Le petit va à sa perte!').",
+        "[Desdémone] [BD-T2] Se fond dans un décor de feu et de démons à la fin — confirme sa nature démoniaque.",
+        "[Desdémone] [BD-T2] « Mission accomplie, maîtresse ! » (p.28) est une réplique de Wismerhill à Feidreiva, pas de Desdémone (note retirée en v1.0.50).",
+        "[Desdémone] [BD-T2] Démone : défenestrée par Wismerhill, elle reparaît nue et indemne, avec une queue (p.26) ; complice amoureuse d'un démon ailé rouge (Urmarcht [HYPOTHÈSE]).",
+        "[Desdémone] [BD-T2] L'indication « l'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons » est un piège (« Le petit va à sa perte ! ») : la direction n'est pas fiable, seule la Passe est confirmée sur le trajet.",
+        "[Desdémone] Fiche T2 : Amante du Magister de Magistrya. Manipule le vieillard pour ses propres fins et celles de son vrai maître démoniaque. Envoie délibérément Wismerhill vers la Passe des Dragons en espérant qu'il y trouvera la mort. Apparence : Femme à longs cheveux roux flamboyants, yeux verts, robe rouge foncé. Séduisante et dangereuse.",
+        "[DÉDUCTION] Desdémone (T2) est la succube du T3 : même chevelure rousse, mêmes yeux verts, même boucle verte (BD-T3 pl.31-32) ; elle quitte le marais en disant « Allons, partons ! Mon amant est vengé ! » (pl.31). Alias : Desdémone. Nom « Hellavnnea » révélé au T5.",
+        "[BD-T3 pl.39] Appartenait à Haazheel Thorn : « Je perds une succube mais il y gagnera en perversité ! ».",
+        "[BD-T3 pl.34-35] Épargnée par Wismerhill (blessée, cicatrices au visage, œil gauche touché), elle se lie à lui par un pacte : « J'ai passé un pacte, je dois le respecter ! ».",
+        "[v1.0.51] Fusion de char_desdemone (fiche T2) dans cette fiche ; le compagnon jouable reste hellavnnea_la_succube."
       ]
     },
     {
@@ -146852,19 +147049,17 @@
       "class_id": "class_thief",
       "role": "companion_comedique",
       "visual": "[BD-T2] Colosse à crinière noire ornée de perles, peau sombre, fourrure et cape rouge ; dans l'arène : casque intégral, sangles noires et griffes-lames en éventail aux deux bras (pp.8-9, 13, 19).",
-      "personality": "Peureux, discret, fidèle. Réagit à l'excès mais ne fuit jamais vraiment.",
-      "description": "Peureux, discret, fidèle. Réagit à l'excès mais ne fuit jamais vraiment.",
-      "arc": "Présent depuis le début du tome 3. Reçoit une armure naine sur mesure à Ghrunke Dash. Assiste à l'éclosion de Kruikna. Combat avec le groupe dans toutes les situations.",
+      "personality": "Colosse « un peu bête mais très gentil » (BD-T2), n'obéit qu'à Nasha. Craintif devant l'inconnu (« Goum l'a peur ») mais toujours prêt à la bagarre (« Goum rien comprendre à tout ça... mais vouloir taper, quand même »).",
+      "description": "Colosse « un peu bête mais très gentil » (BD-T2), n'obéit qu'à Nasha. Craintif devant l'inconnu (« Goum l'a peur ») mais toujours prêt à la bagarre (« Goum rien comprendre à tout ça... mais vouloir taper, quand même »).",
+      "arc": "T3 : combat au camp de l'Oracle (pl.6-9) ; à Ghrunke Dash, maître Grhumpdeth prend ses mesures et lui forge une armure lourde à pointes portant une nacelle blindée où s'assied Nasha (pl.17-18) ; suit le groupe jusqu'au fief de Garundel (pl.41-43).",
       "abilities": [
-        "Discrétion (petite taille)",
-        "Garde de Kruikna — lien de familier"
+        "Porteur de Nasha — nacelle blindée sur les épaules (armure naine, BD-T3 pl.18)"
       ],
       "special_items": [
-        "item_goum_armor_naine",
-        "item_oeuf_kruikna"
+        "item_goum_armor_naine"
       ],
-      "special_rule": "Lié à Kruikna — si Goum est en danger, Kruikna attaque instinctivement même sans ordre.",
-      "quote": "Goum a peur... [BD-T3 p.28] / Mon bébé, enfin! [BD-T3 p.29]",
+      "special_rule": "[GAMEPLAY] N'obéit qu'à Nasha, qu'il porte dans la nacelle blindée de son armure naine : si Nasha est attaquée, Goum s'interpose et frappe en priorité son agresseur.",
+      "quote": "Goum l'a peur [BD-T3 pl.26] / Goum rien comprendre à tout ça... mais vouloir taper, quand même [BD-T3 pl.6]",
       "source": "[BD] Présent dans plusieurs pages / [BD-T3] Pages 3, 7, 8, 9, 10, 18, 19, 20, 28, 29, 30, 40, 42, 43, 44, 45",
       "ville_ids": [],
       "zone_ids": [
@@ -146872,9 +147067,7 @@
       ],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T3] Race exacte non précisée — gobelin ou créature similaire par apparence",
         "[BD-T3 p.28] Parle en troisième personne : 'Goum l'a peur'",
-        "[BD-T3 p.20] Armure naine faite pour 'Goum et sa sœur' = Pilou",
         "[BD-T2] Surnommé 'Goum le Terrible' dans l'arène de Feyhin Lokcthat. Enchaîné et revêtu de ses armes (griffes géantes), seulement 4 challengers avaient osé l'affronter : un noble en mal d'argent, un barbare ivre, un chevalier en quête de gloire, et Murata le 'curieux guerrier jaune'.",
         "[BD-T2] S'entraîne dans le palais abandonné de la Passe des Dragons après la libération.",
         "[BD-T2] Apprécie le 'Cha' de Murata après l'avoir d'abord reniflé avec scepticisme (« Ça bon ! », p.14).",
@@ -146884,7 +147077,8 @@
         "[BD-T11] 'GOUM?!' — réaction émue de Pépette.",
         "[BD-T2] Vaincu par Murata, pas par Wismerhill (p.9) ; retenu prisonnier dans l'arène, il est libéré par le groupe à la demande de sa sœur jumelle Nasha (pp.12-13).",
         "[BD-T2] Enfant de 7 ans transformé par un mage : adulte colossal, « un peu bête mais très gentil », n'obéit qu'à Nasha (p.15) — race corrigée en race_human (v1.0.50).",
-        "[À VÉRIFIER BD-T3] Ancienne description conservée : « Petite créature noire à grande bouche et yeux jaunes. Aspect vaguement simien ou reptilien. »"
+        "[BD-T3 pl.18] « L'armure faite pour Goum et sa sœur était un bijou » : la sœur est Nasha, assise dans la nacelle blindée portée sur les épaules de Goum (la note « sœur = Pilou » est retirée en v1.0.51).",
+        "[v1.0.51] Retirés : l'œuf de Kruikna (couvé par Pile-ou-Face, BD-T2/T3 pl.11, 27), la capacité « Discrétion (petite taille) » et la réplique « Mon bébé, enfin ! » (dite par Pile-ou-Face, pl.27)."
       ]
     },
     {
@@ -147343,48 +147537,6 @@
         "[BD-T2] Sa machine est rejetée par l'énergie élémentale de Wismerhill — il meurt, desséché ; « Il a rejoint notre maître ! » (p.26).",
         "[BD-T2] Son amante Desdémone le manipule et sert en réalité une entité démoniaque distincte.",
         "[BD-T2] Ses portes, son trône et sa salle portent un pentagramme marqué « H » (pp.20, 23)."
-      ]
-    },
-    {
-      "id": "char_desdemone",
-      "name": "Desdémone",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t02"
-      ],
-      "faction_id": "faction_demons",
-      "race_id": "race_demon",
-      "class_id": "",
-      "role": "antagonist_t2",
-      "visual": "Femme à longs cheveux roux flamboyants, yeux verts, robe rouge foncé. Séduisante et dangereuse.",
-      "personality": "Manipulatrice, double-jeu. Prétend être l'amante du Magister mais sert en réalité une entité démoniaque. Cynique et impitoyable.",
-      "description": "Amante du Magister de Magistrya. Manipule le vieillard pour ses propres fins et celles de son vrai maître démoniaque. Envoie délibérément Wismerhill vers la Passe des Dragons en espérant qu'il y trouvera la mort.",
-      "arc": "Double agent → révèle sa véritable allégeance démoniaque",
-      "abilities": [
-        "Manipulation/séduction",
-        "Magie de feu",
-        "Double-jeu politique"
-      ],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "",
-      "source": "[BD-T2] Pages 23-26",
-      "ville_ids": [
-        "sauken_glude_of_magistrya"
-      ],
-      "zone_ids": [],
-      "dialogue_ids": [
-        "dial_t2_desdemone_double_jeu"
-      ],
-      "notes": [
-        "[BD-T2] Salue l'échec de la machine : 'Il s'est énervé, le petit !'",
-        "[BD-T2] Indique à Wismerhill sous contrainte : 'L'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons.'",
-        "[BD-T2] Envoie Wismerhill vers la Passe sachant que cela le mènera à sa perte ('Brillant! Le petit va à sa perte!').",
-        "[BD-T2] Se fond dans un décor de feu et de démons à la fin — confirme sa nature démoniaque.",
-        "[BD-T2] « Mission accomplie, maîtresse ! » (p.28) est une réplique de Wismerhill à Feidreiva, pas de Desdémone (note retirée en v1.0.50).",
-        "[BD-T2] Démone : défenestrée par Wismerhill, elle reparaît nue et indemne, avec une queue (p.26) ; complice amoureuse d'un démon ailé rouge (Urmarcht [HYPOTHÈSE]).",
-        "[BD-T2] L'indication « l'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons » est un piège (« Le petit va à sa perte ! ») : la direction n'est pas fiable, seule la Passe est confirmée sur le trajet."
       ]
     },
     {
@@ -157366,6 +157518,28 @@
       "notes": [
         "[GAMEPLAY] Butin créé pour la créature creature_garde_seigneur_marches_t1 (référence orpheline corrigée en v1.0.50)."
       ]
+    },
+    {
+      "id": "item_goum_armor_naine",
+      "name": "Armure naine de Goum (à nacelle)",
+      "type": "armure_lourde",
+      "rarity": "legendaire",
+      "description": "Armure lourde à pointes forgée sur mesure par maître Grhumpdeth ; une nacelle blindée sur les épaules accueille Nasha.",
+      "min_level": 1,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [],
+      "source_villes": [
+        "ville_ghrunke_dash"
+      ],
+      "source_quests": [
+        "quest_ghrunke_dash_forge_t3"
+      ],
+      "source_raids": [],
+      "notes": [
+        "[BD-T3 pl.17-18] Commande « plein d'acier », payée d'un sac de gemmes ; prête le lendemain.",
+        "[GAMEPLAY] Objet unique créé en v1.0.51 (référence orpheline de char_goum)."
+      ]
     }
   ],
   "dialogues": [
@@ -161178,86 +161352,84 @@
     },
     {
       "id": "dial_kruikna_naissance_t3",
-      "name": "",
+      "name": "L'éclosion de Kruikna",
       "npc_name": "",
       "faction_id": "",
       "race_id": "",
       "location_ville_id": "",
       "lines": [
         {
-          "speaker": "Pilou",
-          "text": "Tu regardes quoi?"
+          "speaker": "Feidreiva",
+          "text": "Tu regardes quoi ?"
         },
         {
-          "speaker": "Goum",
-          "text": "Rien, Fey!"
+          "speaker": "Wismerhill",
+          "text": "Rien, Fey !"
         },
         {
           "speaker": "Bruit",
-          "text": "KRUIKNA??"
+          "text": "KRAAK (l'œuf vert éclot)"
         },
         {
-          "speaker": "Succube",
-          "text": "Tu as entendu? C'est l'œuf..."
+          "speaker": "Feidreiva",
+          "text": "Tu as entendu ? C'est l'œuf..."
         },
         {
           "speaker": "Wismerhill",
-          "text": "Tu crois?"
+          "text": "Tu crois ?"
         },
         {
-          "speaker": "Fey",
+          "speaker": "Feidreiva",
           "text": "Non, il ne..."
         },
         {
-          "speaker": "Dragon (éclosion)",
-          "text": "KRUIKNA??"
+          "speaker": "Kruikna",
+          "text": "KRUIKNA ??"
         },
         {
-          "speaker": "Goum",
-          "text": "Kruikna! Mon bébé, enfin!"
+          "speaker": "Wismerhill [HYPOTHÈSE]",
+          "text": "Pilou ! Viens ! Ton œuf..."
         },
         {
-          "speaker": "Pilou (appelée)",
-          "text": "Pilou! Viens! Ton œuf!"
+          "speaker": "Pile-ou-Face",
+          "text": "Mon bébé, enfin !"
         },
         {
-          "speaker": "Goum",
-          "text": "Mais qu'est-ce que... Aille!!"
+          "speaker": "Kruikna",
+          "text": "Kruikna ?"
         },
         {
-          "speaker": "Kruikna (mordit Goum)",
-          "text": "Kruiknaka!!"
+          "speaker": "Pile-ou-Face",
+          "text": "Mais qu'est-ce que... Aïe !!"
         },
         {
-          "speaker": "Succube",
-          "text": "SSCHROOCHS!!! [bruit d'explosion/chaos]"
+          "speaker": "Kruikna",
+          "text": "KRUIKNAKA ! (souffle de feu : « SCHROOCHS »)"
+        },
+        {
+          "speaker": "Pile-ou-Face",
+          "text": "Qu'est-ce que tu as dis à mon bébé ?!"
         },
         {
           "speaker": "Wismerhill",
-          "text": "Qu'est-ce que tu as dis à mon bébé?!"
-        },
-        {
-          "speaker": "Goum",
           "text": "Mais rien..."
         },
         {
-          "speaker": "Succube",
-          "text": "Krukh"
+          "speaker": "Kruikna",
+          "text": "KRUKH"
         },
         {
-          "speaker": "Homme au chapeau",
-          "text": "Je vais te crever salope!!!"
+          "speaker": "Pile-ou-Face",
+          "text": "Je vais te crever salope !!!"
         },
         {
-          "speaker": "Succube",
-          "text": "Heu?? Moi très gentille, dragonnet jo..."
-        },
-        {
-          "speaker": "Narrateur",
-          "text": "Goum: 'Je vais mieux! Tais-toi et tape!'"
+          "speaker": "Nasha",
+          "text": "Heu ?? Moi trop gentille, dragounet joli"
         }
       ],
-      "notes": []
+      "notes": [
+        "[v1.0.51] Locuteurs corrigés d'après la BD-T3 pl.27 : Feidreiva et Wismerhill ouvrent la scène, Pile-ou-Face (et non Goum) accueille « son bébé », Nasha (et non la succube, absente de la scène) adopte le dragonnet. Réplique « Goum : Je vais mieux ! Tais-toi et tape ! » retirée (absente de la planche)."
+      ]
     },
     {
       "id": "dial_wismerhill_apres_succube_t3",
@@ -181734,7 +181906,7 @@
       "id": "S003_E006",
       "name": "cell_S003_E006",
       "region_id": "",
-      "terrain_type": "forest",
+      "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181744,7 +181916,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[BD-T3 pl.25-30] Marais du village fantôme (le village n'apparaît qu'une semaine tous les cent ans) — v1.0.51."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190127,9 +190301,9 @@
     {
       "id": "000012",
       "type": "road",
-      "from_place": "S002_E007",
-      "from_ville_id": "",
-      "from_lieu_id": "lieu_garundel_estate",
+      "from_place": "S001_E004",
+      "from_ville_id": "ville_garundel_fief",
+      "from_lieu_id": "",
       "to_place": "N000_E000",
       "to_ville_id": "ville_oracle_camp",
       "to_lieu_id": "",
@@ -190139,9 +190313,9 @@
     {
       "id": "000013",
       "type": "road",
-      "from_place": "S002_E007",
-      "from_ville_id": "",
-      "from_lieu_id": "lieu_garundel_estate",
+      "from_place": "S001_E004",
+      "from_ville_id": "ville_garundel_fief",
+      "from_lieu_id": "",
       "to_place": "S002_E015",
       "to_ville_id": "ville_moork",
       "to_lieu_id": "",
@@ -190163,9 +190337,9 @@
     {
       "id": "000018",
       "type": "road",
-      "from_place": "S002_E007",
-      "from_ville_id": "",
-      "from_lieu_id": "lieu_garundel_estate",
+      "from_place": "S001_E004",
+      "from_ville_id": "ville_garundel_fief",
+      "from_lieu_id": "",
       "to_place": "S008_E010",
       "to_ville_id": "",
       "to_lieu_id": "lieu_deathtrap_canyon",
@@ -191136,6 +191310,34 @@
       "to_lieu_id": "",
       "description": "[BD-T2] Panneau « Feyhin Lokcthat » sur la chaussée de Magistrya (p.19).",
       "notes": []
+    },
+    {
+      "id": "000118",
+      "type": "road",
+      "from_place": "N000_E000",
+      "from_ville_id": "ville_oracle_camp",
+      "from_lieu_id": "",
+      "to_place": "S007_E016",
+      "to_ville_id": "ville_ghrunke_dash",
+      "to_lieu_id": "",
+      "description": "[BD-T3 pl.13-16] Itinéraire du groupe après l'Oracle : « toujours plus profond dans l'Empire » jusqu'à Ghrunke Dash.",
+      "notes": [
+        "[INFÉRÉ] v1.0.51"
+      ]
+    },
+    {
+      "id": "000119",
+      "type": "road",
+      "from_place": "S007_E016",
+      "from_ville_id": "ville_ghrunke_dash",
+      "from_lieu_id": "",
+      "to_place": "S001_E004",
+      "to_ville_id": "ville_garundel_fief",
+      "to_lieu_id": "",
+      "description": "[BD-T3 pl.24-41] De Ghrunke Dash au fief de Garundel par la forêt des lutins et le marais du village fantôme.",
+      "notes": [
+        "[INFÉRÉ] v1.0.51"
+      ]
     }
   ],
   "competences": [
@@ -196914,6 +197116,35 @@
         "oracle",
         "dragons"
       ]
+    },
+    {
+      "id": "arc_t03_marque_des_demons",
+      "name": "La Marque des Démons",
+      "scope": "faction_multi",
+      "tome_source": "t03",
+      "tier": "principal",
+      "region_id": "",
+      "description": "Oracle → camp de l'Oracle (retour de Ghorghor) → armée de la Lune Noire → Ghrunke Dash → forêt des lutins → village fantôme et marais → fief de Garundel. Wismerhill perd Feydriva et gagne une succube, tandis qu'Haazheel prête serment à Lhynn et que Fratus conjure avec les Chevaliers Dragons.",
+      "linked_quest_ids": [
+        "quest_consultation_oracle_t3",
+        "quest_bataille_oracle_camp_t3",
+        "quest_traversee_armee_haazheel_t3",
+        "quest_ghrunke_dash_forge_t3",
+        "quest_hommage_haazheel_lhynn_t3",
+        "quest_conspiration_chevaliers_dragons_t3",
+        "quest_foret_lutins_t3",
+        "quest_village_fantome_feidreiva_t3",
+        "quest_rencontre_urmarcht_t3",
+        "quest_automne_chateau_garundel_t3"
+      ],
+      "linked_raid_ids": [],
+      "tags": [
+        "[BD-T3]",
+        "t03",
+        "campagne",
+        "demons",
+        "succube"
+      ]
     }
   ],
   "lieux": [
@@ -197963,82 +198194,6 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [
         "S013_E000"
-      ],
-      "notes": []
-    },
-    {
-      "id": "lieu_garundel_estate",
-      "name": "Garundel Estate",
-      "alias": "",
-      "type": "",
-      "importance": "",
-      "cell": "S002_E007",
-      "region_id": "via_magna",
-      "zone_id": "",
-      "faction_control": "",
-      "features": [],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": ""
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [
-        "S002_E007"
       ],
       "notes": []
     },

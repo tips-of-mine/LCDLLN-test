@@ -5,7 +5,7 @@ En jeu : `/help` (15 commandes par page), `/help <commande>` pour la fiche compl
 
 Rôles : joueur < modérateur < MJ (maître de jeu) < admin. Les commandes « prévues » ne sont pas encore disponibles.
 
-Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md)
+Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.md), [ADM.2](ADM.2_informations.md), [ADM.3](ADM.3_personnage.md), [ADM.4](ADM.4_objets_argent.md), [ADM.5](ADM.5_monture_apparence.md)
 
 ## Aide et outils
 
@@ -86,6 +86,15 @@ Chantier : [ADM.0](ADM.0_socle_commandes.md) (socle), [ADM.1](ADM.1_deplacement.
 | `/equipment` | `/equip` | MJ | `/equipment [joueur]` | Objets portés par un joueur. |
 | `/clearbag` |  | MJ | `/clearbag [joueur] confirm` | Vider le sac (l'équipement porté est conservé). |
 | `/itemsearch` | `/lookupitem` `/finditem` | MJ | `/itemsearch <mot\|n°>` | Chercher un objet du catalogue (numéro et nom). |
+
+## Monture et apparence
+
+| Commande | Alias | Rôle | Syntaxe | Description |
+|---|---|---|---|---|
+| `/mount` |  | MJ | `/mount [on\|off\|<vitesse 1 à 3>] [joueur]` | Monter (ou descendre) d'une monture : vitesse ×1,6. |
+| `/dismount` |  | MJ | `/dismount [joueur]` | Mettre pied à terre. |
+| `/scale` |  | MJ | `/scale <0.5 à 3> [joueur]` | *(prévue)* Changer la taille d'un personnage (prévue). |
+| `/morph` | `/demorph` | MJ | `/morph <archétype> [joueur] \| /demorph [joueur]` | *(prévue)* Prendre l'apparence d'une créature (prévue). |
 
 ## Modération
 

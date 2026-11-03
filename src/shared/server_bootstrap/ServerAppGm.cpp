@@ -101,6 +101,9 @@ namespace engine::server
 		{ "equipment", &GmCommandExecutor::CmdEquipment },
 		{ "clearbag", &GmCommandExecutor::CmdClearBag },
 		{ "itemsearch", &GmCommandExecutor::CmdItemSearch },
+		// ADM.5 — monture (ServerAppGmAppearance.cpp)
+		{ "mount", &GmCommandExecutor::CmdMount },
+		{ "dismount", &GmCommandExecutor::CmdDismount },
 	};
 
 	void GmCommandExecutor::Run()

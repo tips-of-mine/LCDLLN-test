@@ -16,9 +16,11 @@ namespace engine::world::cells
 		using engine::render::terrain::HeightmapLoader;
 		out = CellAssets{};
 		out.cell = job.cell;
+		out.map = job.map;
 		out.wantRender = job.wantRender;
 
-		const std::string dir = CellDirName(job.cell);
+		// Dossier propre à la carte (cell_* des Royaumes, enfers_* des Enfers).
+		const std::string dir = CellDirName(job.cell, job.map);
 		const std::string content = job.baseConfig.GetString("paths.content", "game/data");
 
 		// zone.json SEUL (contenu propre à la cellule : PNJ, réglages) et fusionné
@@ -68,7 +70,7 @@ namespace engine::world::cells
 			engine::render::terrain::HeightmapBorders borders;
 			const auto neighbourPath = [&](int dn, int de) {
 				const CellCoord c{ job.cell.n + dn, job.cell.e + de };
-				const std::string d = CellDirName(c);
+				const std::string d = CellDirName(c, job.map);
 				return content + "/zones/" + d + "/terrain_height.r16h";
 			};
 			uint32_t nw = 0, nh = 0;

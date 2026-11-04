@@ -544,6 +544,14 @@ namespace engine::client
 					appearance.dialogueId = dlg->stringValue;
 				if (const JsonValue* talk = FindObjectMember(*behavior, "talkTarget"); talk != nullptr && talk->type == JsonType::String)
 					appearance.talkTarget = talk->stringValue;
+				// Seconde carte (Les Enfers) — hostilité à vue par race (tolérant : ignorée si mal formée).
+				if (const JsonValue* races = FindObjectMember(*behavior, "hostileToRaces");
+					races != nullptr && races->type == JsonType::Array)
+				{
+					for (const JsonValue& race : races->arrayValue)
+						if (race.type == JsonType::String && !race.stringValue.empty())
+							appearance.hostileToRaces.push_back(race.stringValue);
+				}
 			}
 
 			if (!m_appearances.emplace(archetypeId, std::move(appearance)).second)

@@ -640,6 +640,18 @@ namespace engine::client
 		/// l'état neutre). Thread principal.
 		void ClearGmState() { m_model.gmState = UIGmState{}; }
 
+		/// Seconde carte (Les Enfers) — dernier ZoneChange reçu du shard (zone = cellule,
+		/// donc carte ; point d'arrivée en coordonnées GLOBALES, non converties).
+		const engine::server::ZoneChangeMessage& LastZoneChange() const { return m_zoneChangeMessage; }
+		/// Seconde carte — oublie la zone annoncée (nouvelle entrée en monde : le shard
+		/// annoncera de nouveau la carte du personnage s'il n'est pas sur le continent).
+		/// Thread principal.
+		void ClearZone()
+		{
+			m_model.playerStats.zoneId = 0;
+			m_zoneChangeMessage = engine::server::ZoneChangeMessage{};
+		}
+
 		/// ETAPE3.3 — Engine a appliqué (ou écarté) la correction en attente.
 		void ClearMoveCorrection();
 

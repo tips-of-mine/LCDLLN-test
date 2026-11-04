@@ -558,7 +558,9 @@ namespace engine
 		m_worldPlacesAttempted = true;
 		// Le monde porte le nom de la zone active (« royaumes ») ; une zone
 		// historique (feyhin…) n'a pas de places.json → ni carte ni bannière.
-		const std::string world = m_cfg.GetString("world.active_zone", "");
+		// Seconde carte : en monde en cellules, celui de la carte résidente (« enfers »).
+		const std::string world = m_cellWorld ? std::string(engine::world::cells::WorldIdOf(m_activeCellMap))
+			: m_cfg.GetString("world.active_zone", "");
 		if (world.empty())
 			return;
 		std::string err;
@@ -608,8 +610,9 @@ namespace engine
 		in.playerRace = m_localRaceId.c_str();
 		in.viewportW = dw;
 		in.viewportH = dh;
-		// Monde en cellules : carte à découvrir (le reste est voilé).
-		in.discovery = m_cellWorld ? &m_mapDiscovery : nullptr;
+		// Monde en cellules : carte à découvrir (le reste est voilé) — continent seulement,
+		// la carte des Enfers est toujours entièrement visible.
+		in.discovery = m_cellWorld && m_activeCellMap == engine::world::cells::CellMap::Royaumes ? &m_mapDiscovery : nullptr;
 		// FIX.11 — zoom en mètres visibles (ouverture / zoom maximal).
 		in.defaultViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.default_view_m", 2000.0)));
 		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));

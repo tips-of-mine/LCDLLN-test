@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::client
 {
@@ -37,6 +38,21 @@ namespace engine::client
 		std::string dialogueId;
 		/// Cible Talk envoyée au shard (ex. "vendor:1" : ouvre la boutique).
 		std::string talkTarget;
+		/// Seconde carte (Les Enfers) — races que ce PNJ attaque à vue
+		/// (behavior.hostileToRaces, ex. gardes de la Légion contre les humains) :
+		/// pour un personnage de ces races, plaque d'ennemi et ciblage au Tab.
+		std::vector<std::string> hostileToRaces;
+
+		/// Vrai si ce PNJ est hostile à la race \p raceId (identifiant exact).
+		bool IsHostileToRace(std::string_view raceId) const
+		{
+			if (raceId.empty())
+				return false;
+			for (const std::string& race : hostileToRaces)
+				if (race == raceId)
+					return true;
+			return false;
+		}
 	};
 
 	/// Combat SP1 — catalogue client des archétypes de créatures (lecture seule,

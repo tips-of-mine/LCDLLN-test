@@ -85,6 +85,45 @@ int main()
 	Check(ZoneDirBelongsToWorld("feyhin", "feyhin") && ZoneDirBelongsToWorld("zone_1", "")
 		&& !ZoneDirBelongsToWorld("cell_n003_w009", "feyhin"), "dossiers des zones historiques");
 
+	// Seconde carte : les Enfers (5 cellules en croix, repère propre).
+	Check(CellDirName({ 0, 0 }, CellMap::Enfers) == "enfers_n000_e000", "nom dossier enfers");
+	Check(CellDirName({ -1, 0 }, CellMap::Enfers) == "enfers_s001_e000", "nom dossier enfers sud");
+	Check(ParseCellDirName("enfers_n000_w001", CellMap::Enfers) == CellCoord{ 0, -1 }, "parse dossier enfers");
+	Check(!ParseCellDirName("enfers_n000_e000").has_value(), "dossier enfers refuse pour les royaumes");
+	Check(!ParseCellDirName("cell_n000_e000", CellMap::Enfers).has_value(), "dossier royaumes refuse pour les enfers");
+	Check(CellMapOfDirName("enfers_n001_e000") == CellMap::Enfers && CellMapOfDirName("cell_n001_e000") == CellMap::Royaumes
+		&& !CellMapOfDirName("feyhin").has_value(), "carte d'un dossier");
+	Check(IsInLoreGrid({ 1, 0 }, CellMap::Enfers) && IsInLoreGrid({ -1, -1 }, CellMap::Enfers)
+		&& !IsInLoreGrid({ 2, 0 }, CellMap::Enfers) && !IsInLoreGrid({ 0, -2 }, CellMap::Enfers), "grille des enfers");
+	// Identifiants : aller-retour sur les deux cartes, plages disjointes.
+	for (int map = 0; map < kCellMapCount; ++map)
+		for (int n = -1; n <= 1; ++n)
+			for (int e = -1; e <= 1; ++e)
+			{
+				const CellMap m = static_cast<CellMap>(map);
+				const uint32_t id = CellZoneId({ n, e }, m);
+				Check(IsCellZoneId(id) && CellFromZoneId(id) == CellCoord{ n, e } && CellMapOfZoneId(id) == m,
+					"zone id bijectif (deux cartes)");
+				Check(MapCellFromZoneId(id).has_value() && *MapCellFromZoneId(id) == MapCell({ n, e }, m)
+					&& MapCellZoneId(MapCell({ n, e }, m)) == id, "region aller-retour");
+			}
+	Check(CellZoneId({ 0, 0 }, CellMap::Enfers) != CellZoneId({ 0, 0 }), "pas de collision en (0,0)");
+	Check(CellZoneId({ 0, 0 }, CellMap::Enfers) >= kEnfersZoneIdBase, "plage enfers");
+	Check(MapIdOfZone(CellZoneId({ 0, 1 }, CellMap::Enfers)) == kEnfersMapId, "carte d'une cellule des enfers");
+	Check(!SameMap(CellZoneId({ 0, 0 }, CellMap::Enfers), CellZoneId({ 0, 0 })), "enfers et royaumes : cartes differentes");
+	Check(SameMap(CellZoneId({ 0, 0 }, CellMap::Enfers), CellZoneId({ 1, 0 }, CellMap::Enfers)), "deux cellules des enfers = meme carte");
+	Check(!IsCellZoneId(kEnfersMapId) && !IsCellZoneId(kEnfersZoneIdBase + kCellZoneIdSpan), "hors plage enfers");
+	Check(CellMapFromWorldId("enfers") == CellMap::Enfers && CellMapFromWorldId("royaumes") == CellMap::Royaumes
+		&& !CellMapFromWorldId("feyhin").has_value() && WorldIdOf(CellMap::Enfers) == "enfers", "identifiants de monde");
+	Check(CellMapFromMapId(kEnfersMapId) == CellMap::Enfers && CellMapFromMapId(kCellWorldMapId) == CellMap::Royaumes
+		&& !CellMapFromMapId(1u).has_value() && MapIdOf(CellMap::Enfers) == kEnfersMapId, "identifiants de carte");
+	Check(CellMapOfZoneOr(1u) == CellMap::Royaumes && CellMapOfZoneOr(CellZoneId({ 0, 0 }, CellMap::Enfers)) == CellMap::Enfers,
+		"carte d'une zone avec repli");
+	Check(ZoneDirBelongsToWorld("enfers_n000_e000", "royaumes") && !ZoneDirBelongsToWorld("enfers_n000_e000", "feyhin"),
+		"dossiers des enfers dans le monde en cellules");
+	Check(MapCellLabel(MapCell({ 0, -1 }, CellMap::Enfers)) == "ENFERS:N000_W001" && MapCellLabel(MapCell(3, -9)) == "N003_W009",
+		"libelle de region");
+
 	if (g_fail == 0) std::printf("world_cells_tests: OK\n");
 	return g_fail == 0 ? 0 : 1;
 }

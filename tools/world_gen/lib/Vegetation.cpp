@@ -10,7 +10,10 @@
 // clairières) ; les exclusions (eau, routes, bâti, pente) s'appliquent ensuite.
 
 #include "WorldGenContext.h"
+#include "Parallel.h"
 #include "Random.h"
+
+#include "src/client/world/instances/ForestMask.h"
 
 #include <algorithm>
 #include <cmath>
@@ -148,6 +151,57 @@ namespace tools::world_gen
 		};
 	}
 
+	bool IsFillerForestCode(char code)
+	{
+		return code == 'T' || code == 'R' || code == 'L' || code == 't';
+	}
+
+	void BuildForestMask(World& w)
+	{
+		const int N = static_cast<int>(engine::world::instances::kForestMaskResolution);
+		const double px = w.terrainSizeM / N;
+		const double sea = w.master.scale.seaLevelM;
+		const uint64_t seed = w.master.seed;
+		w.forestMaskRes = N;
+		w.forestMask.assign(static_cast<size_t>(N) * N, 0u);
+		ParallelRows(N, [&](int j) {
+			for (int i = 0; i < N; ++i)
+			{
+				const Vec2 p{ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px };
+				const int bi = w.biome.IndexX(p.x), bj = w.biome.IndexZ(p.z);
+				if (!w.biome.InBounds(bi, bj)) continue;
+				const char code = EffectiveCover(w.biome.At(bi, bj), p.x, p.z, seed);
+				// Pleine forêt 1 ; lisière ≈ 0,38 (un arbre tous les ~8 m, la vue passe).
+				double cover = 0.0;
+				if (code == 'T' || code == 'R' || code == 'L') cover = 1.0;
+				else if (code == 't') cover = 0.38;
+				if (cover <= 0.0) continue;
+				// Exclusions (mêmes règles que les arbres stockés, élargies d'un
+				// demi-texel : le client échantillonne la carte en bilinéaire).
+				const double alt = w.HeightAt(p);
+				if (alt < sea + 0.6 || alt > 560.0 || w.IsWater(p)) continue;
+				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 5.0 + px * 0.5) continue;
+				const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
+				if (w.urban.InBounds(ui, uj) && w.urban.At(ui, uj) != 0)
+				{
+					// Les villages elfes vivent SOUS les arbres (emprise 1 seulement).
+					bool elfGrove = false;
+					for (const CityDef& c : w.cities)
+						if (c.race == "elfes" && std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 2.0)
+							elfGrove = w.urban.At(ui, uj) == 1;
+					if (!elfGrove) continue;
+				}
+				if (w.IsOccupied(p, 1.8 + px * 0.5) || w.SlopeDegAt(p) > 34.0) continue;
+				// Massifs et landes (≈ 1,5 km) puis fourrés et trouées (≈ 110 m).
+				const double big = 0.75 + 0.25 * Clamp(Fbm(p.x, p.z, 1500.0, 2, seed + 1010) + 0.5, 0.0, 1.0);
+				const double local = Clamp(1.0 + 1.1 * Fbm(p.x, p.z, 110.0, 3, seed + 1001), 0.35, 1.0);
+				const double d = Clamp(cover * big * local, 0.0, 1.0);
+				w.forestMask[static_cast<size_t>(j) * N + i] = static_cast<uint8_t>(std::lround(d * 255.0));
+			}
+		});
+	}
+
 	void BuildVegetation(World& w)
 	{
 		const double sea = w.master.scale.seaLevelM;
@@ -176,6 +230,9 @@ namespace tools::world_gen
 					if (!w.OwnsPoint(p)) continue;
 					const int bi = w.biome.IndexX(p.x), bj = w.biome.IndexZ(p.z);
 					const char code = EffectiveCover(w.biome.At(bi, bj), p.x, p.z, w.master.seed);
+					// FORET.1 : les arbres des forêts et lisières sont posés par le client
+					// (carte de densité terrain_forest.frms), pas stockés ici.
+					if (cp.cls == VegClass::Tree && IsFillerForestCode(code)) continue;
 					const BiomeDensity d = DensityOf(code);
 					double dens = 0.0;
 					switch (cp.cls)

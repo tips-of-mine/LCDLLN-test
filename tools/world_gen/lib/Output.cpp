@@ -6,6 +6,7 @@
 //   zones/<c>/terrain_height.r16h      heightmap 2049² (HAMP), 10 km de côté
 //   zones/<c>/terrain_splat.slap       splat 2048² RGBA (herbe/terre/roche/neige)
 //   zones/<c>/terrain_grass.grms       masque herbe 2048²
+//   zones/<c>/terrain_forest.frms      densité forestière 1024² (FORET.1 : arbres posés par le client)
 //   zones/<c>/zone.json                réglages client de la cellule (terrain, PNJ statiques…)
 //   zones/<c>/spawners.json            spawners serveur (+ routines d'ambiance), zoneId = cellule
 //   zones/<c>/respawn_points.txt       cimetières / auberges
@@ -28,6 +29,7 @@
 #include "Random.h"
 
 #include "src/client/world/instances/Buildings.h"
+#include "src/client/world/instances/ForestMask.h"
 #include "src/client/world/instances/ScatterInstances.h"
 #include "src/client/world/water/WaterSurfaces.h"
 
@@ -557,6 +559,17 @@ namespace tools::world_gen
 			if (!WriteBytes(w, zoneDir + "terrain_splat.slap", splat, err)) return false;
 			if (!WriteBytes(w, zoneDir + "terrain_grass.grms", grass, err)) return false;
 		}
+		// ---- FORET.1 : densité forestière (le client y pose arbres et sous-bois).
+		{
+			engine::world::instances::ForestMask fm;
+			fm.width = fm.height = static_cast<uint32_t>(w.forestMaskRes);
+			fm.originX = w.terrainOriginX;
+			fm.originZ = w.terrainOriginZ;
+			fm.sizeM = w.terrainSizeM;
+			fm.density = w.forestMask;
+			if (fm.Empty()) { err = "carte de densite forestiere absente (BuildForestMask non appele)"; return false; }
+			if (!WriteBytes(w, zoneDir + "terrain_forest.frms", engine::world::instances::SaveForestMask(fm), err)) return false;
+		}
 		// ---- Décor instancié (scatter.bin v2) : trié par chunk de 500 m puis case de
 		//      64 m puis mesh ; table de chunks pour le streaming client.
 		{
@@ -697,6 +710,7 @@ namespace tools::world_gen
 			rt.objectValue["heightmap"] = JStr(zoneDir + "terrain_height.r16h");
 			rt.objectValue["splatmap"] = JStr(zoneDir + "terrain_splat.slap");
 			rt.objectValue["grass_mask"] = JStr(zoneDir + "terrain_grass.grms");
+			rt.objectValue["forest_mask"] = JStr(zoneDir + "terrain_forest.frms");
 			rt.objectValue["hole_mask"] = JStr("");
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
 			JsonValue& tr = Child(root, "terrain");
@@ -844,6 +858,7 @@ namespace tools::world_gen
 				",\n  \"terrain_heightmap\": " + Q(zoneDir + "terrain_height.r16h") +
 				",\n  \"terrain_splatmap\": " + Q(zoneDir + "terrain_splat.slap") +
 				",\n  \"terrain_grass_mask\": " + Q(zoneDir + "terrain_grass.grms") +
+				",\n  \"terrain_forest_mask\": " + Q(zoneDir + "terrain_forest.frms") +
 				",\n  \"source_edit_format_version\": 1,\n  \"terrain_world_size_m\": " + Num(w.terrainSizeM) +
 				",\n  \"texture_assets\": [],\n  \"exported_textures\": [],\n  \"texture_assets_source_missing\": [],\n  \"object_prefab_ids\": [],\n" +
 				"  \"note\": \"GENERE par tools/world_gen depuis world/" + wid + "/world_master.json.\"\n}\n";

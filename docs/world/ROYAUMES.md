@@ -129,6 +129,7 @@ Seuls `world/royaumes/world_master.json` (source) et
 |---|---|
 | `zones/<c>/terrain_height.r16h` | heightmap 2049² (≈ 4,9 m), 10 km, altitude max 1 200 m |
 | `zones/<c>/terrain_splat.slap` / `terrain_grass.grms` | sol 2048² (herbe/terre/roche/neige), masque d'herbe |
+| `zones/<c>/terrain_forest.frms` | densité forestière 1024² (FORET.1) : arbres et sous-bois des forêts posés par le client |
 | `zones/<c>/zone.json` | cadrage (`terrain.origin_x/z` = coin min GLOBAL), PNJ statiques, réglages client |
 | `zones/<c>/spawners.json` | PNJ d'ambiance (routines, agendas de métier — cf. `docs/architecture/etape4_simulation.md` §4.4) + faune, `zoneId` = id de la cellule, positions globales |
 | `zones/<c>/respawn_points.txt` | cimetières / auberges |
@@ -191,6 +192,17 @@ voisines raccord au mètre près :
    ville intacte — ex. Kendrhir Vale après le tome 1).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
+   **Forêts et lisières (FORET.1)** : leurs arbres ne sont plus stockés dans
+   `scatter.bin`. `BuildForestMask` écrit une densité par texel de ~10 m (pleine
+   forêt 1, lisière ≈ 0,38, nulle sur l'eau, les routes, le bâti, les champs, les
+   pentes > 34° et la neige) et le client pose lui-même, autour du joueur, un arbre
+   tous les 4 à 5 m en pleine forêt (~8 m en lisière) et le sous-bois (fougères,
+   buissons), à des positions déterministes (`src/client/world/instances/ForestMask.h`,
+   reconstruites tous les `world.forest.rebuild_step_m` m). Troncs solides côté
+   client ; le serveur ne lit pas le décor. Rayon : `world.forest.filler_radius_m`,
+   par défaut `world.scatter.cull_large_m` × facteur du préréglage + 30 m (réglages
+   dans `zone_overrides` du master). Coût mesuré (Whispers Hill, forêt) : décor
+   22,3 → 11,8 Mo + 1 Mo de densité.
 10. `Population.cpp` : PNJ d'ambiance, voyageurs/patrouilles sur les routes,
     faune par biome et distance aux villes de départ, quêtes d'accueil.
 

@@ -17,6 +17,7 @@
 #include "src/client/world/cells/CellSurfaceMap.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
 #include "src/client/world/instances/Buildings.h"
+#include "src/client/world/instances/ForestMask.h"
 #include "src/client/world/instances/ScatterInstances.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/world/WorldCells.h"
@@ -69,6 +70,10 @@ namespace engine::world::cells
 		/// SND.2 — couche dominante du splat par texel (sons de pas), construite
 		/// sur le thread de travail ; nulle si la cellule n'a pas de splat.
 		std::shared_ptr<CellSurfaceMap> surface;
+		/// FORET.1 — densité forestière (zone.json render.terrain.forest_mask) : le
+		/// client y pose arbres et sous-bois autour du joueur. Nulle si absente
+		/// (monde généré avant FORET.1) ou invalide.
+		std::shared_ptr<const engine::world::instances::ForestMask> forestMask;
 		/// Décor instancié décodé (absent = cellule sans décor).
 		bool hasScatter = false;
 		engine::world::instances::ScatterFile scatter;

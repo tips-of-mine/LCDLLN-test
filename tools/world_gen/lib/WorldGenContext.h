@@ -65,7 +65,7 @@ namespace tools::world_gen
 		if (code == '.' || code == 'r' || code == 'p')
 			return Fbm(x, z, 3500.0, 2, seed + 77) > 0.22 ? 't' : code;
 		if (code == 'T' || code == 'R' || code == 'L')
-			return Fbm(x, z, 2600.0, 2, seed + 78) < -0.32 ? '.' : code;
+			return Fbm(x, z, 2600.0, 2, seed + 78) < -0.45 ? '.' : code; // clairières (FORET.1 : moitié moins)
 		return code;
 	}
 
@@ -279,6 +279,10 @@ namespace tools::world_gen
 		Grid<float>  roadDist;      ///< distance à la chaussée la plus proche (m)
 		Grid<float>  riverDist;     ///< distance au lit de rivière le plus proche (m)
 		Grid<uint8_t> urban;        ///< 1 = emprise urbaine, 2 = place/rue
+		/// FORET.1 — densité forestière (0..255) de la cellule, kForestMaskResolution²
+		/// texels sur terrainSizeM (BuildForestMask) ; écrite dans terrain_forest.frms.
+		std::vector<uint8_t> forestMask;
+		int forestMaskRes = 0;
 		SparseOccupancy occupied;   ///< occupation fine (1 m) pour bâtiments/props
 
 		std::vector<CityDef> cities;  ///< agglomérations DE la cellule (lore + procédurales)
@@ -400,6 +404,16 @@ namespace tools::world_gen
 	void BuildSettlements(World& w);
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
 	void BuildVegetation(World& w);
+	/// FORET.1 — carte de densité des forêts et lisières (codes T, R, L, t de la
+	/// couverture effective), exclusions comprises : eau, routes, bâti et champs
+	/// (grille d'occupation), emprise urbaine, pentes, neige. Le client y pose les
+	/// arbres de remplissage (src/client/world/instances/ForestMask.h).
+	/// Effet de bord : remplit w.forestMask. À appeler après BuildSettlements et
+	/// avant BuildVegetation (les rochers posés ensuite n'y creusent pas de trous).
+	void BuildForestMask(World& w);
+	/// Vrai si un code de couverture effective est une forêt dont les arbres sont
+	/// posés par le client (carte de densité) au lieu de scatter.bin.
+	bool IsFillerForestCode(char code);
 	/// Spawners PNJ/créatures, respawns, départs, interactibles. Population.cpp
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp

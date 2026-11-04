@@ -136,6 +136,7 @@ namespace engine
 		for (CellRenderTile& tile : m_cellTiles)
 			if (tile.terrain)
 				tile.terrain->SetMaxDrawDistance(m_cellTerrainDrawDistanceM);
+		ApplyForestFillerSettings();
 		LOG_INFO(Core, "[Cells] Distance de vue (preset {}) : camera {:.0f} m, terrain {:.0f} m, rendu/dechargement/hauteurs = {:.0f}/{:.0f}/{:.0f} m, decor x{:.2f}",
 			preset, m_viewDistance.cameraFarM, m_cellTerrainDrawDistanceM,
 			m_cellRenderRadiusM, m_cellUnloadRadiusM, m_cellHeightRadiusM, m_viewDistance.scatterScale);
@@ -270,6 +271,7 @@ namespace engine
 		}
 		UpdateCellStreamingAround(gx, gz, synchronous);
 		ContinueCellPlacement(synchronous);
+		UpdateForestFiller(gx, gz);
 		DestroyRetiredCellTiles(false);
 	}
 
@@ -524,6 +526,7 @@ namespace engine
 		tile.biomeGridSize = static_cast<int>(assets.zoneOnly.GetInt("audio.biome_grid_size", 0));
 		tile.scatter = std::make_unique<engine::world::scatter::ScatterField>();
 		tile.collider = std::make_unique<engine::gameplay::CompositeWorldCollider>(nullptr);
+		tile.forestMask = assets.forestMask; // FORET.1 — forêt de remplissage (UpdateForestFiller)
 		const cells::CellPoint center = cells::CellCenter(cell);
 		(void)center;
 		// Pose des instances différée : par tranches sur les frames suivantes
@@ -588,6 +591,84 @@ namespace engine
 		}
 	}
 
+	void Engine::ApplyForestFillerSettings()
+	{
+		m_forestFillerEnabled = m_cfg.GetBool("world.forest.filler", true);
+		// Par défaut : au-delà de la distance d'affichage des arbres (classe « grand »)
+		// du préréglage, plus une marge pour que la lisière lointaine soit déjà là.
+		const double cullLarge = m_cfg.GetDouble("world.scatter.cull_large_m", 150.0) * m_viewDistance.scatterScale;
+		const double radius = m_cfg.Has("world.forest.filler_radius_m")
+			? m_cfg.GetDouble("world.forest.filler_radius_m", cullLarge + 30.0)
+			: cullLarge + 30.0;
+		m_forestFillerRadiusM = static_cast<float>(std::clamp(radius, 40.0, 1500.0));
+		m_forestFillerStepM = static_cast<float>(std::clamp(m_cfg.GetDouble("world.forest.rebuild_step_m", 24.0), 4.0, 200.0));
+		// Rayon ou activation changés : tout est reconstruit au prochain passage.
+		for (CellRenderTile& tile : m_cellTiles)
+			tile.fillerCenterX = tile.fillerCenterZ = std::numeric_limits<double>::quiet_NaN();
+		LOG_INFO(Core, "[Forest] remplissage {} : rayon {:.0f} m, reconstruction tous les {:.0f} m",
+			m_forestFillerEnabled ? "actif" : "desactive", m_forestFillerRadiusM, m_forestFillerStepM);
+	}
+
+	void Engine::UpdateForestFiller(double globalX, double globalZ)
+	{
+		if (!m_cellHeights)
+			return;
+		bool collidersChanged = false;
+		for (CellRenderTile& tile : m_cellTiles)
+		{
+			const bool wanted = m_forestFillerEnabled && tile.forestMask && !tile.forestMask->Empty()
+				&& cells::DistanceToCell(tile.cell, globalX, globalZ) <= m_forestFillerRadiusM;
+			if (!wanted)
+			{
+				if (tile.filler || tile.fillerCollider)
+				{
+					tile.filler.reset();
+					tile.fillerCollider.reset();
+					collidersChanged = true;
+				}
+				tile.fillerCenterX = tile.fillerCenterZ = std::numeric_limits<double>::quiet_NaN();
+				continue;
+			}
+			// Reconstruction seulement après un déplacement suffisant (NaN = jamais).
+			const double dx = globalX - tile.fillerCenterX, dz = globalZ - tile.fillerCenterZ;
+			if (!std::isnan(tile.fillerCenterX) && dx * dx + dz * dz < static_cast<double>(m_forestFillerStepM) * m_forestFillerStepM)
+				continue;
+			engine::world::instances::ForestFillerParams params;
+			params.radiusM = m_forestFillerRadiusM;
+			engine::world::instances::ScatterFile file;
+			const std::function<double(double, double)> altitude = [this](double x, double z) {
+				float h = 0.0f;
+				(void)m_cellHeights->SampleGlobal(x, z, h);
+				return static_cast<double>(h);
+			};
+			engine::world::instances::GenerateForestFiller(*tile.forestMask, globalX, globalZ, params, altitude, file);
+			auto field = std::make_unique<engine::world::scatter::ScatterField>();
+			auto collider = std::make_unique<engine::gameplay::CompositeWorldCollider>(nullptr);
+			const cells::CellPoint center = cells::CellCenter(tile.cell);
+			InstanceTarget target;
+			target.field = field.get();
+			target.collider = collider.get();
+			target.originX = center.x;
+			target.originZ = center.z;
+			target.ground = [this, center](float lx, float lz) {
+				float h = 0.0f;
+				(void)m_cellHeights->SampleGlobal(center.x + lx, center.z + lz, h);
+				return h;
+			};
+			(void)PlaceScatterFile(file, target, "foret de remplissage " + cells::CellDirName(tile.cell));
+			tile.filler = std::move(field);
+			tile.fillerCollider = std::move(collider);
+			tile.fillerCenterX = globalX;
+			tile.fillerCenterZ = globalZ;
+			collidersChanged = true;
+			if ((m_cellFrameCounter % 600u) == 0u)
+				LOG_DEBUG(Render, "[Forest] {} : {} instance(s) de remplissage, {} tronc(s)",
+					cells::CellDirName(tile.cell), tile.filler->Count(), tile.fillerCollider->CylinderCount());
+		}
+		if (collidersChanged)
+			RefreshCellOffsets();
+	}
+
 	void Engine::RetireCellTile(size_t index)
 	{
 		if (index >= m_cellTiles.size())
@@ -644,6 +725,8 @@ namespace engine
 				tile.terrain->SetTextureWorldOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
 			}
 			entries.push_back({ tile.collider.get(), static_cast<float>(center.x), static_cast<float>(center.z) });
+			if (tile.fillerCollider) // FORET.1 — troncs de la forêt de remplissage
+				entries.push_back({ tile.fillerCollider.get(), static_cast<float>(center.x), static_cast<float>(center.z) });
 		}
 		m_cellCollider.SetCells(std::move(entries));
 	}

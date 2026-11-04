@@ -95,6 +95,16 @@ int main()
 	const auto viaV = net.Update(other, CellMap::Enfers, 30.0, 302.0, true, 0);
 	Check(viaV && viaV->toId == "poi_porte_5" && std::fabs(viaV->z - (-80000.0 + 8.0)) < 1e-9, "porte V vers la Porte V");
 	Check(!net.Update(other, CellMap::Royaumes, NAN, 0.0, true, 1).has_value(), "position invalide ignoree");
+	// Téléport (MJ /tp sur une Porte des enfers) : Disarm → aucun passage au premier Input,
+	// il faut d'abord sortir 5 s du rayon.
+	PortalTravelState gm;
+	gm.armed = true;
+	PortalNetwork::Disarm(gm);
+	Check(!gm.armed && !net.Update(gm, CellMap::Royaumes, 0.0, 130000.0, true, 100).has_value(),
+		"teleport sur un portail : pas de passage immediat");
+	Check(!net.Update(gm, CellMap::Royaumes, 0.0, 130020.0, true, 200).has_value()
+		&& !net.Update(gm, CellMap::Royaumes, 0.0, 130020.0, true, 5200).has_value() && gm.armed,
+		"teleport : rearme 5 s apres la sortie du rayon");
 
 	if (g_fail == 0) std::printf("portal_network_tests: OK\n");
 	return g_fail == 0 ? 0 : 1;

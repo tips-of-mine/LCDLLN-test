@@ -235,8 +235,8 @@ namespace engine
 			std::chrono::system_clock::now().time_since_epoch()).count());
 		line.channel = engine::net::ChatChannel::Server;
 		line.sender = "Système";
-		line.text = map == cells::CellMap::Enfers ? "Vous franchissez le portail : bienvenue aux Enfers."
-			: "Vous franchissez le portail : retour sur le continent.";
+		// Message neutre : portail, reconnexion ou téléport MJ.
+		line.text = map == cells::CellMap::Enfers ? "Vous arrivez dans les Enfers." : "Vous revenez dans les Royaumes.";
 		m_chatUi.PushNetworkLine(line);
 		return true;
 	}

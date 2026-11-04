@@ -202,8 +202,9 @@ namespace engine::server
 		void VerticalMove(float sign);
 
 		// ---- ADM.2 — informations (ServerAppGmInfo.cpp) ------------------------
-		/// Cellule « N003_W009 » d'une position (ou « monde historique »).
-		std::string CellLabel(float x, float z) const;
+		/// Cellule « N003_W009 » d'une position (ou « monde historique ») ; seconde carte :
+		/// \p who donne la carte (« ENFERS:N000_E000 » pour un joueur des Enfers).
+		std::string CellLabel(const ConnectedClient& who, float x, float z) const;
 		/// « Loup gris niv. 4 #1234 » : archétype, niveau, entité.
 		std::string MobLabel(const MobEntity& mob) const;
 		/// /pos [joueur] — position, orientation, cellule, région, lieu proche.

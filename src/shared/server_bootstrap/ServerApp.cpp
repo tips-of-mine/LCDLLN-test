@@ -5996,7 +5996,7 @@ namespace engine::server
 		}
 		const uint64_t nowMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::steady_clock::now().time_since_epoch()).count());
-		// Un joueur mort ne passe pas (il reste désarmé tant qu'il est dans le rayon).
+		// Un joueur mort ne passe pas : son armement est conservé, seul le passage est bloqué.
 		const bool alive = client.stats.currentHealth > 0u && (client.stateFlags & kEntityStateDead) == 0u;
 		const std::optional<PortalDestination> destination = m_portalNetwork.Update(client.portalTravel,
 			ClientCellMap(client), client.positionMetersX, client.positionMetersZ, alive, nowMs);
@@ -7754,7 +7754,9 @@ namespace engine::server
 							const float allyDistSq = DistanceSquaredXZ(
 								client->positionMetersX, client->positionMetersZ,
 								ally->positionMetersX, ally->positionMetersZ);
+							// Seconde carte : jamais un allié d'une autre carte (même (x, z) possible).
 							if (sameParty && (ally->stateFlags & kEntityStateDead) == 0u
+								&& engine::world::cells::SameMap(ally->zoneId, client->zoneId)
 								&& allyDistSq <= csRange * csRange)
 							{
 								csResolvedTarget = ally->entityId;
@@ -7847,7 +7849,9 @@ namespace engine::server
 					const float allyDistanceSquared = DistanceSquaredXZ(
 						client->positionMetersX, client->positionMetersZ,
 						ally->positionMetersX, ally->positionMetersZ);
+					// Seconde carte : jamais un allié d'une autre carte (même (x, z) possible).
 					if (sameParty && (ally->stateFlags & kEntityStateDead) == 0u
+						&& engine::world::cells::SameMap(ally->zoneId, client->zoneId)
 						&& allyDistanceSquared <= range * range)
 					{
 						resolvedTarget = ally->entityId;
@@ -8491,7 +8495,9 @@ namespace engine::server
 				ConnectedClient* ally = &client;
 				if (targetEntityId != 0 && targetEntityId != client.entityId)
 				{
-					if (ConnectedClient* other = FindClientByEntityId(targetEntityId))
+					// Seconde carte : allié passé sur une autre carte pendant l'incantation → soi.
+					if (ConnectedClient* other = FindClientByEntityId(targetEntityId);
+						other != nullptr && engine::world::cells::SameMap(other->zoneId, client.zoneId))
 					{
 						ally = other;
 					}
@@ -8660,7 +8666,9 @@ namespace engine::server
 			ConnectedClient* ally = &client;
 			if (targetEntityId != 0 && targetEntityId != client.entityId)
 			{
-				if (ConnectedClient* other = FindClientByEntityId(targetEntityId))
+				// Seconde carte : allié passé sur une autre carte → soi.
+				if (ConnectedClient* other = FindClientByEntityId(targetEntityId);
+					other != nullptr && engine::world::cells::SameMap(other->zoneId, client.zoneId))
 				{
 					ally = other;
 				}
@@ -9143,11 +9151,12 @@ namespace engine::server
 						party->partyId, client.clientId,
 						client.positionMetersX, client.positionMetersZ,
 						kCakeBuffRadiusMeters,
-						[this](uint32_t memberClientId, float& outX, float& outZ) -> bool
+						[this, &client](uint32_t memberClientId, float& outX, float& outZ) -> bool
 						{
 							for (const ConnectedClient& c : m_clients)
 							{
-								if (c.clientId == memberClientId)
+								// Seconde carte : un membre d'une autre carte n'est jamais « à portée ».
+								if (c.clientId == memberClientId && engine::world::cells::SameMap(c.zoneId, client.zoneId))
 								{
 									outX = c.positionMetersX;
 									outZ = c.positionMetersZ;
@@ -9178,6 +9187,7 @@ namespace engine::server
 				{
 					if (other.clientId == client.clientId) continue;
 					if (other.guildId != client.guildId) continue;
+					if (!engine::world::cells::SameMap(other.zoneId, client.zoneId)) continue; // autre carte
 					const float dx = other.positionMetersX - client.positionMetersX;
 					const float dz = other.positionMetersZ - client.positionMetersZ;
 					if (dx * dx + dz * dz > kCakeBuffRadiusMeters * kCakeBuffRadiusMeters) continue;
@@ -12114,11 +12124,12 @@ namespace engine::server
 		    killPosX,
 		    killPosZ,
 		    kPartyShareRangeMeters,
-		    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+		    [this, &attacker](uint32_t clientId, float& outX, float& outZ) -> bool
 		    {
 			    for (const ConnectedClient& c : m_clients)
 			    {
-				    if (c.clientId == clientId)
+				    // Seconde carte : un membre d'une autre carte n'est jamais « à portée ».
+				    if (c.clientId == clientId && engine::world::cells::SameMap(c.zoneId, attacker.zoneId))
 				    {
 					    outX = c.positionMetersX;
 					    outZ = c.positionMetersZ;
@@ -12189,11 +12200,12 @@ namespace engine::server
 			    killerClient.positionMetersX,
 			    killerClient.positionMetersZ,
 			    kPartyShareRangeMeters,
-			    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+			    [this, &killerClient](uint32_t clientId, float& outX, float& outZ) -> bool
 			    {
 				    for (const ConnectedClient& c : m_clients)
 				    {
-					    if (c.clientId == clientId)
+					    // Seconde carte : un membre d'une autre carte n'est jamais « à portée ».
+					    if (c.clientId == clientId && engine::world::cells::SameMap(c.zoneId, killerClient.zoneId))
 					    {
 						    outX = c.positionMetersX;
 						    outZ = c.positionMetersZ;

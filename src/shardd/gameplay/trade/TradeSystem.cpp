@@ -445,6 +445,10 @@ namespace engine::server
 
 	float TradeSystem::Distance2D(const ConnectedClient& a, const ConnectedClient& b)
 	{
+		// Seconde carte (Les Enfers) : deux joueurs de cartes différentes ne sont jamais
+		// « à portée », même à coordonnées voisines (les repères se recouvrent).
+		if (!engine::world::cells::SameMap(a.zoneId, b.zoneId))
+			return std::numeric_limits<float>::max();
 		const float dx = a.positionMetersX - b.positionMetersX;
 		const float dz = a.positionMetersZ - b.positionMetersZ;
 		return std::sqrt(dx * dx + dz * dz);

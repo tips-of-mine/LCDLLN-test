@@ -64,9 +64,12 @@ if [[ -d "$ROOT/game/data" ]]; then
   # (heightmap, splat, herbe, décor, bâtiments, eau : ~40 Mo par cellule, plusieurs
   # Go au total) restent dans le seul paquet client : exclues DÈS la copie (pas de
   # copie puis suppression, qui doublerait l'espace disque du runner).
+  # Seconde carte « enfers » (zones/enfers_*, instances/zone_enfers_*) : même règle.
   (cd "$ROOT/game/data" && tar -cf - \
     --exclude='./zones/cell_*/*.r16h' --exclude='./zones/cell_*/*.slap' --exclude='./zones/cell_*/*.grms' \
-    --exclude='./instances/zone_cell_*' .) | (cd "$DOCKER_DIR/game/data" && tar -xf -)
+    --exclude='./instances/zone_cell_*' \
+    --exclude='./zones/enfers_*/*.r16h' --exclude='./zones/enfers_*/*.slap' --exclude='./zones/enfers_*/*.grms' \
+    --exclude='./instances/zone_enfers_*' .) | (cd "$DOCKER_DIR/game/data" && tar -xf -)
 else
   echo "Warning: game/data missing" >&2
 fi

@@ -2650,3 +2650,14 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/shardd/world/RegionActivity.{h,cpp}` | **Régions actives** : une cellule n'est simulée que si un joueur s'y trouve ou à moins de `world.region_activation_margin_m` de son bord (pur, `region_activity_tests`). |
 | `src/shardd/world/SpatialPartition.{h,cpp}` (`CellGrid`) | Grille d'intérêt 100 m **creuse** ; une seule grille pour tout le continent (`kCellWorldHalfExtentMeters`), une par zone historique. |
 | `src/shared/server_bootstrap/ServerApp.cpp` (`InitCellWorld`, `RefreshRegionActivity`, `UpdateClientRegion`, `NormalizeCellWorldLoginPosition`) | Monde en cellules côté shard : une carte, régions = cellules, mur invisible serveur, relocalisation au départ de la race. |
+
+### Seconde carte « Les Enfers » (2026-11)
+
+Petite carte volcanique de 5 cellules en croix, séparée du continent (`game/data/world/enfers/world_master.json`, `lcdlln_world_gen --world enfers`). Doc : **`docs/world/ENFERS.md`**.
+
+| Fichier | Rôle |
+|---|---|
+| `src/shared/world/WorldCells.{h,cpp}` (`CellMap`, `MapCell`) | Registre des cartes : préfixe `cell_` / `enfers_`, zone ids 1 000 000+ / 2 000 000+, id de carte 999 999 / 999 998, grille ; `CellMapOfZoneId`, `SameMap` faux entre cartes. |
+| `src/shardd/world/PortalNetwork.{h,cpp}` | Portails entre cartes (`world/<monde>/portals.json`) : rayon 6 m, arrivée à 8 m de l'apparié, réarmement 5 s hors rayon, mort = pas de passage (pur, `portal_network_tests`). |
+| `src/shared/server_bootstrap/ServerApp.cpp` (`MaybeApplyPortal`, `TransferToMap`, `EngageHostileRaces`) | Passage de carte côté shard (ZoneChange puis ForcePosition), entrée en monde aux Enfers, PNJ d'ambiance hostiles à certaines races (`behavior.hostileToRaces`). |
+| `src/client/app/EngineCells.cpp` (`SwitchCellMap`, `FollowServerCellMap`) | Client : une carte résidente à la fois ; bascule complète (tuiles, hauteurs, eau, PNJ, POI, carte du monde) à l'annonce du shard. |

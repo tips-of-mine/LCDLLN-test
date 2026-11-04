@@ -80,7 +80,11 @@ namespace engine::server
 	/// l'époque (21 → 23 octets), nouveau kind MoveCorrection (101, shard → client :
 	/// position officielle pour un numéro de commande). Cf. MovementRules.h.
 	/// Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 19;
+	/// Seconde carte (Les Enfers) — bump 19 → 20 : aucun message nouveau, mais les
+	/// zone ids des cellules des Enfers (2 000 000+, WorldCells.h) circulent dans
+	/// ZoneChange (kind 7) et désignent une AUTRE carte : un client v19 resterait
+	/// sur le continent aux coordonnées des Enfers. Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 20;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t

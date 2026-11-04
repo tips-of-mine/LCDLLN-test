@@ -8,9 +8,12 @@
 // trouve, ou si un joueur se tient à moins de `marginMeters` de son bord (le
 // joueur voit et attire déjà ce qui est de l'autre côté de la frontière).
 //
+// Seconde carte (Les Enfers) : une région est une cellule D'UNE carte
+// (cells::MapCell) — les cellules (0,0) des Royaumes et des Enfers sont distinctes.
+//
 // Usage (shard, une fois par seconde) :
 //   activity.Begin();
-//   for (joueur) activity.AddPlayer(x, z);
+//   for (joueur) activity.AddPlayer(x, z, carte);
 //   … activity.IsActive(cellule) …
 //
 // Module PUR (WorldCells uniquement) → testé en CI (region_activity_tests).
@@ -43,28 +46,29 @@ namespace engine::server
 		/// Oublie toutes les activations (début d'un recalcul).
 		void Begin();
 
-		/// Active la cellule du joueur (position GLOBALE en m) et les voisines
-		/// (8 au plus) dont le bord est à moins de la marge.
-		void AddPlayer(double x, double z);
+		/// Active la cellule du joueur (position GLOBALE en m sur la carte \p map) et
+		/// les voisines (8 au plus, même carte) dont le bord est à moins de la marge.
+		void AddPlayer(double x, double z, engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes);
 
-		/// Vrai si la cellule est active.
-		bool IsActive(engine::world::cells::CellCoord cell) const;
-		/// Vrai si la cellule du point global (x, z) est active.
-		bool IsActiveAt(double x, double z) const;
-		/// Vrai si au moins un joueur se trouve DANS la cellule.
-		bool IsOccupied(engine::world::cells::CellCoord cell) const;
+		/// Vrai si la région (cellule d'une carte ; une CellCoord seule = Royaumes) est active.
+		bool IsActive(const engine::world::cells::MapCell& region) const;
+		/// Vrai si la cellule du point global (x, z) de la carte \p map est active.
+		bool IsActiveAt(double x, double z, engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes) const;
+		/// Vrai si au moins un joueur se trouve DANS la région.
+		bool IsOccupied(const engine::world::cells::MapCell& region) const;
 
 		/// Nombre de cellules actives / occupées (télémétrie, logs).
 		size_t ActiveCount() const { return m_players.size(); }
 		size_t OccupiedCount() const;
-		/// ETAPE4.3 — liste des cellules actives (ordre non spécifié) : entrée de
+		/// ETAPE4.3 — liste des régions actives (ordre non spécifié) : entrée de
 		/// RegionLifecycle::Update.
-		std::vector<engine::world::cells::CellCoord> ActiveCells() const;
+		std::vector<engine::world::cells::MapCell> ActiveCells() const;
 
 	private:
-		/// Clé compacte d'une cellule (n, e ∈ [−500, 500[ : toujours vrai pour un joueur,
-		/// le mur invisible le garde dans les cellules générées de la carte du lore).
-		static uint32_t Key(engine::world::cells::CellCoord cell);
+		/// Clé compacte d'une région = son identifiant de zone (unique toutes cartes ;
+		/// n, e ∈ [−500, 500[ : toujours vrai pour un joueur, le mur invisible le garde
+		/// dans les cellules générées).
+		static uint32_t Key(const engine::world::cells::MapCell& region);
 
 		double m_marginMeters = kDefaultMarginMeters;
 		/// Cellule active → nombre de joueurs DEDANS (0 = activée par la marge seulement).

@@ -600,9 +600,10 @@ namespace engine::server
 				return false;
 			}
 			// Monde « Royaumes » : une cellule générée peut n'avoir aucun spawner
-			// (désert, mer) — liste vide acceptée pour les dossiers cell_* seulement.
+			// (désert, mer) — liste vide acceptée pour les dossiers de cellules seulement
+			// (cell_* des Royaumes, enfers_* des Enfers).
 			if (spawnersValue != nullptr && spawnersValue->type == JsonType::Array && spawnersValue->arrayValue.empty()
-				&& engine::world::cells::ParseCellDirName(zoneEntry.filename().string()).has_value())
+				&& engine::world::cells::CellMapOfDirName(zoneEntry.filename().string()).has_value())
 			{
 				LOG_INFO(Net, "[SpawnerRuntime] Zone spawner file empty (cellule sans spawner) : {}", relativePath);
 				continue;

@@ -125,6 +125,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shared/world/MapDiscovery.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    # Seconde carte (Les Enfers) : portails entre cartes.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.
@@ -648,6 +650,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(region_activity_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/RegionActivityTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
+  # Seconde carte (Les Enfers) : portails entre cartes (passage, rayon, réarmement).
+  lcdlln_add_simple_test(portal_network_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/PortalNetworkTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
   # Monde « Royaumes » (client) : repère de rendu, cellules résidentes, mur invisible.
@@ -1594,6 +1602,8 @@ elseif(UNIX)
     # ETAPE2.5 : carte à découvrir calculée par le shard (MapDiscovery.cpp vient d'engine_core).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
+    # Seconde carte (Les Enfers) : portails entre cartes.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.

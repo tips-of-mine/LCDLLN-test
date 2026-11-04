@@ -52,7 +52,9 @@ namespace engine::server
 	{
 		if (!app.m_cellWorld)
 			return "monde historique";
-		return engine::world::cells::LoreCellId(engine::world::cells::CellFromPosition(x, z));
+		// Cellule du lore sur la carte de l'acteur (« ENFERS:N000_E000 » aux Enfers).
+		const engine::world::cells::CellMap map = actor != nullptr ? ServerApp::ClientCellMap(*actor) : engine::world::cells::CellMap::Royaumes;
+		return engine::world::cells::MapCellLabel(engine::world::cells::MapCell(engine::world::cells::CellFromPosition(x, z), map));
 	}
 
 	std::string GmCommandExecutor::MobLabel(const MobEntity& mob) const
@@ -87,10 +89,14 @@ namespace engine::server
 		Say((target == actor ? std::string("Position") : "Position de " + NameOf(*target)) + " : "
 			+ FormatPosition(x, y, z) + " — orientation " + HeadingOf(target->yawRadians));
 		std::string where = "Cellule " + CellLabel(x, z) + ", zone " + std::to_string(target->zoneId);
-		if (const gm::GmPlace* region = Places().RegionAt(x, z))
+		// Seconde carte : lieux de la carte du joueur seulement.
+		const engine::world::cells::CellMap map = ServerApp::ClientCellMap(*target);
+		if (map != engine::world::cells::CellMap::Royaumes)
+			where += ", carte " + std::string(engine::world::cells::WorldIdOf(map));
+		if (const gm::GmPlace* region = Places().RegionAt(x, z, map))
 			where += ", région " + region->name;
 		float dist = 0.0f;
-		if (const gm::GmPlace* nearest = Places().Nearest(x, z, dist))
+		if (const gm::GmPlace* nearest = Places().Nearest(x, z, dist, map))
 			where += " — " + nearest->name + " à " + engine::admin::FormatFixed(dist, 0) + " m";
 		Say(where + ".");
 	}
@@ -102,8 +108,9 @@ namespace engine::server
 		const float x = actor->positionMetersX;
 		const float z = actor->positionMetersZ;
 		float dist = 0.0f;
-		const gm::GmPlace* nearest = Places().Nearest(x, z, dist);
-		const gm::GmPlace* region = Places().RegionAt(x, z);
+		const engine::world::cells::CellMap map = ServerApp::ClientCellMap(*actor);
+		const gm::GmPlace* nearest = Places().Nearest(x, z, dist, map);
+		const gm::GmPlace* region = Places().RegionAt(x, z, map);
 		if (nearest == nullptr && region == nullptr)
 			return Say("Lieu inconnu (annuaire des lieux indisponible sur ce shard) — cellule " + CellLabel(x, z) + ".");
 		std::string line;

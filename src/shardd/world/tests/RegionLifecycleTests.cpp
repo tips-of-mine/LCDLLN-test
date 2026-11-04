@@ -53,7 +53,7 @@ int main()
 	(void)life.Update({}, at(1));
 	Check(life.IsWarm(a) && life.StateOf(a) == GridState::Loaded, "départ : encore chaude (Loaded)");
 	Check(life.Update({}, at(60)).empty() && life.IsWarm(a), "59 s après le départ : chaude");
-	const std::vector<CellCoord> cold = life.Update({}, at(61));
+	const std::vector<engine::world::cells::MapCell> cold = life.Update({}, at(61));
 	Check(cold.size() == 1u && cold[0] == a, "60 s : signalée froide une fois");
 	Check(!life.IsWarm(a) && life.StateOf(a) == GridState::Idle, "froide (Idle)");
 	Check(life.Update({}, at(62)).empty(), "pas signalée deux fois");
@@ -66,7 +66,7 @@ int main()
 
 	// 4. Déchargement après 300 s : région oubliée.
 	(void)life.Update({}, at(401));
-	const std::vector<CellCoord> unloaded = life.DrainUnloaded();
+	const std::vector<engine::world::cells::MapCell> unloaded = life.DrainUnloaded();
 	Check(unloaded.size() == 1u && unloaded[0] == a, "300 s : déchargée");
 	Check(life.TrackedCount() == 0u && !life.IsWarm(a), "déchargée : oubliée");
 	Check(life.DrainUnloaded().empty(), "rien à décharger deux fois");
@@ -79,6 +79,22 @@ int main()
 	(void)life.Update({ b }, at(600));
 	Check(!life.IsWarm(a) && life.IsWarm(b) && life.WarmCount() == 1u, "a froide, b chaude");
 
+	// 5 bis. Seconde carte : (0,0) des Enfers ≠ (0,0) des Royaumes.
+	{
+		using engine::world::cells::CellMap;
+		using engine::world::cells::MapCell;
+		RegionLifecycle l3(cfg);
+		const MapCell hell({ 0, -1 }, CellMap::Enfers);
+		(void)l3.Update({ hell }, at(0));
+		Check(l3.IsWarm(hell) && !l3.IsWarm(Region(0, -1)), "enfers : region distincte des royaumes");
+		(void)l3.Update({}, at(1));
+		const std::vector<MapCell> coldHell = l3.Update({}, at(62));
+		Check(coldHell.size() == 1u && coldHell[0] == hell, "enfers : froide avec sa carte");
+		(void)l3.Update({}, at(400));
+		const std::vector<MapCell> gone = l3.DrainUnloaded();
+		Check(gone.size() == 1u && gone[0].map == CellMap::Enfers && gone[0].cell == CellCoord{ 0, -1 }, "enfers : dechargee avec sa carte");
+	}
+
 	// 6. Délais incohérents corrigés : déchargement jamais avant la froideur.
 	{
 		GridStateConfig bad{};
@@ -88,7 +104,7 @@ int main()
 		Check(l2.Config().unloadTimeout == std::chrono::seconds{ 120 }, "déchargement relevé à la froideur");
 		(void)l2.Update({ a }, at(0));
 		(void)l2.Update({}, at(1));
-		const std::vector<CellCoord> c2 = l2.Update({}, at(122));
+		const std::vector<engine::world::cells::MapCell> c2 = l2.Update({}, at(122));
 		Check(c2.size() == 1u && !l2.IsWarm(a), "froide et déchargeable au même délai : signalée froide");
 		Check(l2.DrainUnloaded().size() == 1u, "puis déchargée");
 	}

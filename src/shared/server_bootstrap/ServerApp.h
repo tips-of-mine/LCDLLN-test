@@ -46,6 +46,7 @@
 #include "src/shardd/world/ZoneTransitions.h"
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shardd/world/RegionLifecycle.h"
+#include "src/shardd/world/PortalNetwork.h"
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/LoadShedding.h"
 #include "src/shared/core/StallGuard.h"
@@ -276,6 +277,9 @@ namespace engine::server
 		/// ETAPE2.5 — carte à découvrir : cases révélées pendant la session autour de
 		/// la position autoritaire (monde en cellules). Écrites à chaque sauvegarde.
 		MapDiscoveryTracker mapDiscovery;
+		/// Seconde carte (Les Enfers) — état de passage des portails entre cartes
+		/// (réarmement 5 s après la sortie du rayon). Désarmé à la connexion.
+		PortalTravelState portalTravel;
 		/// ETAPE2.6 — instantané restauré à la connexion (0 = aucun) ; recopié dans
 		/// chaque sauvegarde (marque la demande appliquée, sans effet ensuite).
 		uint64_t restoreSnapshotId = 0;
@@ -388,6 +392,10 @@ namespace engine::server
 		bool ambient = false;
 		/// Les joueurs peuvent-ils lui infliger des dégâts ? (archétype)
 		bool attackable = true;
+		/// Seconde carte (Les Enfers) — vrai si l'archétype attaque à vue certaines
+		/// races (behavior.hostileToRaces, ex. gardes de la Légion contre les humains) :
+		/// le PNJ d'ambiance quitte alors sa routine pour combattre (UpdateMobAi).
+		bool raceHostile = false;
 		/// Monde vivant — état de la routine (cible, pause, retour au logis).
 		ambient::RoutineState routine;
 		/// Hors horaire et arrivé chez lui : à retirer sans délai de respawn.
@@ -424,7 +432,8 @@ namespace engine::server
 		/// Monde « Royaumes » — vrai si le spawner appartient à une cellule de 10 km ;
 		/// il n'est alors évalué que si sa région (\ref regionCell) est active.
 		bool inCellWorld = false;
-		engine::world::cells::CellCoord regionCell{};
+		/// Région du spawner : cellule de SA position, sur la carte de sa zone.
+		engine::world::cells::MapCell regionCell{};
 		bool isActive = false;
 		/// ETAPE4.3 (chantier 2.4) — tick où le spawner est devenu inactif (plus aucun
 		/// joueur à portée) : ses mobs restent server.spawners.despawn_grace_s avant
@@ -987,6 +996,42 @@ namespace engine::server
 		/// Validate and apply a server-authoritative zone transition when a player enters a transition volume.
 		void MaybeApplyZoneTransition(ConnectedClient& client);
 
+		/// Seconde carte (Les Enfers) — après chaque position acceptée : si le joueur,
+		/// vivant et armé, est dans le rayon d'un portail relié, il est transféré sur
+		/// l'autre carte (TransferToMap). No-op hors monde en cellules.
+		void MaybeApplyPortal(ConnectedClient& client);
+
+		/// Seconde carte (Les Enfers) — transfère le joueur sur la carte \p map au point
+		/// GLOBAL (x, z) de cette carte : retrait de la grille d'intérêt de l'ancienne
+		/// carte, zone = cellule d'arrivée, sauvegarde, ZoneChange puis ForcePosition
+		/// (nouvelle époque de mouvement, hauteur reprise du client comme un téléport
+		/// MJ : \p y est indicatif), trace anti-triche remise à zéro, portails désarmés.
+		/// Le point de réapparition de repli devient le point d'arrivée (même carte).
+		/// \param reason court libellé journalisé et passé à la sauvegarde.
+		/// \return false (rien changé) si (x, z) n'est pas dans une cellule générée de \p map.
+		bool TransferToMap(ConnectedClient& client, engine::world::cells::CellMap map, float x, float y, float z,
+			const char* reason);
+
+		/// Seconde carte (Les Enfers) — carte du joueur, déduite de sa zone (cellule
+		/// des Royaumes ou des Enfers ; Royaumes par défaut hors cellules).
+		static engine::world::cells::CellMap ClientCellMap(const ConnectedClient& client);
+
+		/// Seconde carte (Les Enfers) — annonce au client sa zone (cellule, donc carte)
+		/// et sa position courante par un ZoneChange (canal fiable, ETAPE3.4 : jamais
+		/// perdu, mais il peut arriver après le ForcePosition — le client suit la carte
+		/// annoncée dès qu'il la reçoit). Idempotent côté client.
+		void SendMapZoneChange(ConnectedClient& client);
+
+		/// Seconde carte (Les Enfers) — PNJ d'ambiance hostile à certaines races : cherche
+		/// un joueur de ces races (vivant, même carte, non MJ invisible) dans le rayon
+		/// d'agression et l'inscrit dans sa table de menace. \return vrai si le PNJ doit
+		/// mener l'IA de combat ce tour-ci (menace, cible, ou retour au poste en cours).
+		bool EngageHostileRaces(MobEntity& mob);
+
+		/// Vrai si \p attacker peut infliger des dégâts à \p mob : archétype attaquable,
+		/// ou PNJ hostile à la race de l'attaquant (Enfers : riposte contre la Légion).
+		bool IsMobAttackableBy(const MobEntity& mob, const ConnectedClient& attacker) const;
+
 		/// Validate one attack request, apply damage and broadcast the authoritative event.
 		void HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId);
 
@@ -1530,21 +1575,26 @@ namespace engine::server
 		/// qui ont encore un mob vivant (jamais de mob abandonné dans une région froide).
 		void RebuildEvaluatedSpawners();
 
-		/// ETAPE4.3 — clé compacte d'une région (cellule de 10 km) pour m_spawnersByRegion.
-		static uint32_t RegionKey(engine::world::cells::CellCoord region);
+		/// ETAPE4.3 — clé compacte d'une région (cellule de 10 km d'une carte) pour
+		/// m_spawnersByRegion : son identifiant de zone (unique toutes cartes).
+		static uint32_t RegionKey(const engine::world::cells::MapCell& region);
 
 		/// Monde « Royaumes » — met à jour la région (zoneId = cellule) du joueur d'après
 		/// sa position : présence, événement de quête « zone:<id> ». Aucun message réseau
 		/// (le monde est continu). No-op hors monde en cellules.
 		void UpdateClientRegion(ConnectedClient& client);
 
-		/// Monde « Royaumes » — vrai si le point global (x, z) est dans une cellule générée.
-		/// Toujours vrai hors monde en cellules.
-		bool IsInsideGeneratedWorld(float positionX, float positionZ) const;
+		/// Monde « Royaumes » — vrai si le point global (x, z) de la carte \p map est dans
+		/// une cellule générée de cette carte. Toujours vrai hors monde en cellules.
+		bool IsInsideGeneratedWorld(float positionX, float positionZ,
+			engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes) const;
 
 		/// Monde « Royaumes » — à l'entrée en monde : si la position chargée n'est pas
 		/// dans une cellule générée, ou si elle provient d'une zone historique (repère
 		/// local feyhin), le joueur est replacé au point de départ de sa race.
+		/// Seconde carte : la carte vient de la zone persistée (cellule des Enfers ou des
+		/// Royaumes) ; sans zone persistée (nouveau personnage), de la carte du départ
+		/// de sa race (démons : les Enfers). Une relocalisation prend la carte du départ.
 		/// \param persistedZoneFromFile zone lue dans le fichier personnage (nullopt si absent).
 		/// Hors monde en cellules : un personnage sauvegardé dans une cellule (retour
 		/// arrière) revient en zone 1 au point character_creation.default_spawn.*.
@@ -1843,6 +1893,8 @@ namespace engine::server
 		engine::world::StartLocationTable m_worldStarts;
 		/// Monde « Royaumes » — régions (cellules) actives, recalculées chaque seconde.
 		RegionActivity m_regionActivity;
+		/// Seconde carte (Les Enfers) — portails entre cartes (world/<monde>/portals.json).
+		PortalNetwork m_portalNetwork;
 		/// ETAPE4.3 (chantier 2.1) — cycle de vie des régions (Active / Loaded / Idle /
 		/// Removal, délais world.region_idle_s et world.region_unload_s), mis à jour par
 		/// RefreshRegionActivity (1 Hz).

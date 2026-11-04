@@ -11,7 +11,13 @@
 // « L'hynn », « foret » trouve « Forêt ») : nom exact d'abord, puis identifiant,
 // puis début de nom, puis nom contenant le texte.
 //
+// Seconde carte (Les Enfers) : chaque lieu porte sa carte (champ "world" de
+// places.json) ; les lieux des Enfers s'ajoutent à ceux du continent
+// (AppendFromContent) et /tp vers l'un d'eux change de carte.
+//
 // Module pur (Config + FileSystem) : testé par gm_place_directory_tests.
+
+#include "src/shared/world/WorldCells.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -43,6 +49,8 @@ namespace engine::server::gm
 		/// ADM.2 — rectangle d'une région (m) ; faux pour les autres lieux.
 		bool hasBounds = false;
 		float xMin = 0.0f, xMax = 0.0f, zMin = 0.0f, zMax = 0.0f;
+		/// Carte du lieu (Royaumes par défaut ; Enfers pour world/enfers/places.json).
+		engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes;
 	};
 
 	/// Texte replié pour la recherche : minuscules ASCII, accents français retirés,
@@ -61,6 +69,14 @@ namespace engine::server::gm
 		/// Effet de bord : lecture disque.
 		bool LoadFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError);
 
+		/// Seconde carte — AJOUTE les lieux d'un autre places.json (texte) sans retirer
+		/// les existants ; la carte des lieux est celle du champ "world".
+		/// \return false (rien ajouté) si le JSON est invalide ou ne contient aucun lieu.
+		bool AppendFromText(std::string_view json, std::string& outError);
+		/// Seconde carte — AJOUTE les lieux de `world/<worldId>/places.json`. Effet de
+		/// bord : lecture disque. \return false si absent ou invalide.
+		bool AppendFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError);
+
 		/// Ajoute un lieu (villes de départ, tests).
 		void Add(GmPlace place) { m_places.push_back(std::move(place)); }
 
@@ -71,12 +87,14 @@ namespace engine::server::gm
 		/// Tous les lieux dont le nom contient \p filter (vide = tous), triés par nom.
 		std::vector<const GmPlace*> List(std::string_view filter) const;
 
-		/// ADM.2 — plus petite région contenant (\p x, \p z), nullptr si aucune.
-		const GmPlace* RegionAt(float x, float z) const;
+		/// ADM.2 — plus petite région de la carte \p map contenant (\p x, \p z), nullptr si aucune.
+		const GmPlace* RegionAt(float x, float z,
+			engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes) const;
 
-		/// ADM.2 — ville, départ ou lieu remarquable le plus proche de (\p x, \p z)
-		/// (les régions sont ignorées) ; \p outDistance en mètres. nullptr si vide.
-		const GmPlace* Nearest(float x, float z, float& outDistance) const;
+		/// ADM.2 — ville, départ ou lieu remarquable de la carte \p map le plus proche de
+		/// (\p x, \p z) (les régions sont ignorées) ; \p outDistance en mètres. nullptr si vide.
+		const GmPlace* Nearest(float x, float z, float& outDistance,
+			engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes) const;
 
 		size_t Size() const { return m_places.size(); }
 		bool Empty() const { return m_places.empty(); }

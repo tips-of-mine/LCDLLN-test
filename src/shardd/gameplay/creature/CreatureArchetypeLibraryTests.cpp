@@ -105,6 +105,42 @@ namespace
 		return true;
 	}
 
+	/// Seconde carte (Les Enfers) — hostilité à vue par race : garde de la Légion
+	/// hostile aux humains (rayon donné), qui peuvent riposter ; défauts et rejets.
+	bool TestRaceHostility()
+	{
+		const char* json = R"({ "archetypes": [
+    { "id": 241, "name": "Legionnaire", "level": 10,
+      "stats": { "hp": 500, "damage": 12, "accuracy": 85, "rangeMeters": 2.0, "critRate": 2, "critMult": 1.5, "attackPeriodMs": 2200 },
+      "xpReward": 0, "model": { "mesh": "humains" },
+      "behavior": { "kind": "ambient", "attackable": false, "hostileToRaces": ["humains"], "aggroRadius": 15 } },
+    { "id": 200, "name": "Villageois", "level": 1,
+      "stats": { "hp": 50, "damage": 0, "accuracy": 0, "rangeMeters": 1.0, "critRate": 0, "critMult": 1.0, "attackPeriodMs": 2000 },
+      "xpReward": 0, "model": { "mesh": "humains" }, "behavior": { "kind": "ambient" } } ] })";
+		CreatureArchetypeLibrary library = MakeLibrary();
+		std::string error;
+		if (!library.LoadFromText(json, error)) { LOG_ERROR(Core, "[CreatureArchetypeLibraryTests] hostility rejected: {}", error); return false; }
+		const CreatureArchetype* guard = library.Find(241);
+		const CreatureArchetype* villager = library.Find(200);
+		if (!guard || !villager) return false;
+		if (!guard->IsHostileToRace("humains") || guard->IsHostileToRace("demons") || guard->IsHostileToRace("")) return false;
+		if (guard->aggroRadiusMeters < 14.99f || guard->aggroRadiusMeters > 15.01f) return false;
+		// Non attaquable par défaut, sauf par une race hostile (riposte).
+		if (guard->attackable || !guard->CanBeAttackedByRace("humains") || guard->CanBeAttackedByRace("orcs")) return false;
+		if (!villager->hostileToRaces.empty() || villager->IsHostileToRace("humains")
+			|| villager->aggroRadiusMeters != CreatureArchetype::kDefaultAggroRadiusMeters) return false;
+		for (const char* bad : {
+				R"({ "archetypes": [ { "id": 1, "name": "X", "level": 1, "stats": { "hp": 5, "damage": 0, "accuracy": 0, "rangeMeters": 1, "critRate": 0, "critMult": 1, "attackPeriodMs": 1000 }, "xpReward": 0, "model": { "mesh": "humains" }, "behavior": { "hostileToRaces": "humains" } } ] })",
+				R"({ "archetypes": [ { "id": 1, "name": "X", "level": 1, "stats": { "hp": 5, "damage": 0, "accuracy": 0, "rangeMeters": 1, "critRate": 0, "critMult": 1, "attackPeriodMs": 1000 }, "xpReward": 0, "model": { "mesh": "humains" }, "behavior": { "hostileToRaces": [""] } } ] })",
+				R"({ "archetypes": [ { "id": 1, "name": "X", "level": 1, "stats": { "hp": 5, "damage": 0, "accuracy": 0, "rangeMeters": 1, "critRate": 0, "critMult": 1, "attackPeriodMs": 1000 }, "xpReward": 0, "model": { "mesh": "humains" }, "behavior": { "aggroRadius": 500 } } ] })" })
+		{
+			CreatureArchetypeLibrary lib = MakeLibrary();
+			if (lib.LoadFromText(bad, error)) return false;
+		}
+		LOG_INFO(Core, "[CreatureArchetypeLibraryTests] race hostility OK");
+		return true;
+	}
+
 	bool TestMissingArchetypesArray()
 	{
 		CreatureArchetypeLibrary library = MakeLibrary();
@@ -205,7 +241,8 @@ int main(int argc, char** argv)
 		&& TestZeroHpRejected()
 		&& TestZeroAttackPeriodRejected()
 		&& TestMissingModelRejected()
-		&& TestBehavior();
+		&& TestBehavior()
+		&& TestRaceHostility();
 
 	if (ok) LOG_INFO(Core, "[CreatureArchetypeLibraryTests] ALL OK");
 	else LOG_ERROR(Core, "[CreatureArchetypeLibraryTests] FAIL");

@@ -15,6 +15,7 @@
 //               délais de réapparition en cours continuent (aucun raccourci pour
 //               « farmer » un mob rare en s'éloignant).
 // Une région jamais visitée n'est pas suivie : elle est froide d'office.
+// Une région est une cellule D'UNE carte (cells::MapCell : Royaumes ou Enfers).
 //
 // Module PUR (pas de réseau ni de ServerApp) : testé seul (region_lifecycle_tests).
 // Pas thread-safe : thread de tick du shard.
@@ -46,19 +47,19 @@ namespace engine::server
 		/// \p now : entrées / sorties notifiées au tracker, puis avancement des délais.
 		/// À appeler à chaque recalcul (1 Hz).
 		/// \return les régions qui viennent de devenir FROIDES (Idle) à cet appel.
-		std::vector<engine::world::cells::CellCoord> Update(
-			const std::vector<engine::world::cells::CellCoord>& activeRegions, TimePoint now);
+		std::vector<engine::world::cells::MapCell> Update(
+			const std::vector<engine::world::cells::MapCell>& activeRegions, TimePoint now);
 
 		/// Vrai si les spawners de la région doivent être évalués : région suivie et
 		/// Active ou Loaded (pas encore froide).
-		bool IsWarm(engine::world::cells::CellCoord region) const;
+		bool IsWarm(const engine::world::cells::MapCell& region) const;
 
 		/// État de la région (Loaded si jamais suivie ou déjà déchargée).
-		GridState StateOf(engine::world::cells::CellCoord region) const;
+		GridState StateOf(const engine::world::cells::MapCell& region) const;
 
 		/// Régions arrivées au déchargement (Removal) depuis le dernier appel ; elles
 		/// sont oubliées (une visite ultérieure repart de zéro).
-		std::vector<engine::world::cells::CellCoord> DrainUnloaded();
+		std::vector<engine::world::cells::MapCell> DrainUnloaded();
 
 		/// Oublie tout (réinitialisation du shard).
 		void Clear();
@@ -68,9 +69,9 @@ namespace engine::server
 		size_t WarmCount() const;
 
 	private:
-		static uint32_t Key(engine::world::cells::CellCoord region);
-		static CellCoord ToGrid(engine::world::cells::CellCoord region);
-		static engine::world::cells::CellCoord FromGrid(CellCoord cell);
+		static uint32_t Key(const engine::world::cells::MapCell& region);
+		static CellCoord ToGrid(const engine::world::cells::MapCell& region);
+		static engine::world::cells::MapCell FromGrid(CellCoord cell);
 
 		GridStateTracker m_tracker;
 		std::unordered_set<uint32_t> m_known;   ///< régions suivies (visitées, pas encore déchargées)

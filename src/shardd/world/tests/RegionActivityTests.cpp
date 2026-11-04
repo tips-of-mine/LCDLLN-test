@@ -51,6 +51,24 @@ int main()
 	Check(a.IsActiveAt(-91000.0, -31000.0) && !a.IsActiveAt(0.0, 0.0), "IsActiveAt");
 	Check(a.ActiveCells().size() == 1u && a.ActiveCells()[0] == CellCoord{ 3, -9 }, "liste : coordonnées négatives restituées");
 
+	// Seconde carte : les cellules (0,0) des Royaumes et des Enfers sont distinctes.
+	{
+		using engine::world::cells::CellMap;
+		using engine::world::cells::MapCell;
+		RegionActivity m;
+		m.AddPlayer(0.0, 0.0, CellMap::Enfers);
+		Check(m.IsActive(MapCell({ 0, 0 }, CellMap::Enfers)) && !m.IsActive({ 0, 0 }), "enfers : seule la cellule des enfers est active");
+		Check(m.IsActiveAt(10.0, 10.0, CellMap::Enfers) && !m.IsActiveAt(10.0, 10.0), "IsActiveAt par carte");
+		m.AddPlayer(0.0, 0.0);
+		Check(m.ActiveCount() == 2 && m.OccupiedCount() == 2, "meme (0,0), deux cartes : deux regions");
+		m.Begin();
+		m.AddPlayer(4700.0, 0.0, CellMap::Enfers);
+		Check(m.IsActive(MapCell({ 0, 1 }, CellMap::Enfers)) && !m.IsActive({ 0, 1 }), "voisine activee sur la meme carte");
+		bool allEnfers = true;
+		for (const MapCell& r : m.ActiveCells()) allEnfers = allEnfers && r.map == CellMap::Enfers;
+		Check(allEnfers && m.ActiveCells().size() == 2u, "liste : carte restituee");
+	}
+
 	// Marge nulle : jamais de voisine ; marge bornée à la demi-cellule.
 	RegionActivity strict(0.0);
 	strict.AddPlayer(4999.0, 0.0);

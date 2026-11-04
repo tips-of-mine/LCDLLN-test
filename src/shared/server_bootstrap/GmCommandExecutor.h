@@ -14,6 +14,7 @@
 #include "src/shardd/gameplay/gm/GmCommandCatalog.h"
 #include "src/shared/admin/GmCommandText.h"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -141,7 +142,13 @@ namespace engine::server
 		/// \return false (et message) si la destination est hors du monde généré.
 		/// Effets : ForcePosition (nouvelle époque de mouvement), anti-triche remis à
 		/// zéro, grille d'intérêt et région mises à jour. Thread de tick.
-		bool Teleport(ConnectedClient& client, float x, float y, float z, bool groundSnap, bool saveBack);
+		/// Seconde carte (Les Enfers) — \p map : carte de la destination (nullopt = celle
+		/// du joueur) ; une autre carte passe par ServerApp::TransferToMap.
+		bool Teleport(ConnectedClient& client, float x, float y, float z, bool groundSnap, bool saveBack,
+			std::optional<engine::world::cells::CellMap> map = std::nullopt);
+		/// Seconde carte — carte d'une position mémorisée (zone enregistrée), à défaut
+		/// celle de \p client.
+		static engine::world::cells::CellMap SavedMapOf(const gm::GmSavedPosition& saved, const ConnectedClient& client);
 		/// Position actuelle de \p client sous forme mémorisable.
 		static gm::GmSavedPosition SavedPositionOf(const ConnectedClient& client);
 		/// Annuaire des lieux, chargé au premier appel (places.json + villes de départ).

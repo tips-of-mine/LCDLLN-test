@@ -276,6 +276,9 @@ namespace engine::server
 		}
 		else
 		{
+			// Seconde carte : la carte à découvrir ne couvre que le continent.
+			if (ServerApp::ClientCellMap(*target) != cells::CellMap::Royaumes)
+				return Fail(GmCommandStatus::Unavailable, "Carte à découvrir indisponible aux Enfers (seul le continent se découvre) ; /revealmap all révèle le continent.");
 			revealed = target->mapDiscovery.RevealWholeCell(
 				cells::CellZoneId(cells::CellFromPosition(target->positionMetersX, target->positionMetersZ)));
 			cellCount = 1;

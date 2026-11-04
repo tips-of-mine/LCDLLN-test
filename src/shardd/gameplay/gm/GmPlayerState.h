@@ -43,6 +43,9 @@ namespace engine::server::gm
 		float y = 0.0f;
 		float z = 0.0f;
 		float yawRadians = 0.0f;
+		/// Seconde carte (Les Enfers) — zone au moment de la mémorisation (cellule :
+		/// donne la carte) ; 0 = inconnue (même carte que le joueur).
+		uint32_t zoneId = 0;
 	};
 
 	struct GmPlayerState

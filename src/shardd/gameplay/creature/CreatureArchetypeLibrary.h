@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::server
 {
@@ -41,6 +42,26 @@ namespace engine::server
 		bool attackable = true;
 		/// Vitesse de marche propre (m/s) ; 0 = server.mob_move_speed_meters_per_second.
 		float moveSpeedMetersPerSecond = 0.0f;
+		/// Seconde carte (Les Enfers) — races de joueurs que ce PNJ attaque à vue
+		/// (`behavior.hostileToRaces`, ex. ["humains"] pour les gardes de la Légion).
+		/// Vide = aucune hostilité (comportement historique). Un PNJ d'ambiance
+		/// hostile quitte sa routine pour combattre un joueur de ces races entré
+		/// dans \ref aggroRadiusMeters, puis la reprend ; ces joueurs peuvent le
+		/// frapper même s'il n'est pas `attackable` (cf. CanBeAttackedByRace).
+		std::vector<std::string> hostileToRaces;
+		/// Rayon (m) d'agression à vue des races hostiles (`behavior.aggroRadius`,
+		/// défaut kDefaultAggroRadiusMeters, borné à [1, 60]).
+		float aggroRadiusMeters = 12.0f;
+
+		/// Rayon d'agression par défaut (m) d'un PNJ hostile à une race.
+		static constexpr float kDefaultAggroRadiusMeters = 12.0f;
+
+		/// Vrai si ce PNJ attaque à vue les joueurs de la race \p raceId
+		/// (identifiant exact, ex. "humains"). Faux si la race est vide.
+		bool IsHostileToRace(std::string_view raceId) const;
+		/// Vrai si un joueur de la race \p raceId peut lui infliger des dégâts :
+		/// archétype attaquable, ou race hostile (on peut toujours riposter).
+		bool CanBeAttackedByRace(std::string_view raceId) const { return attackable || IsHostileToRace(raceId); }
 	};
 
 	/// Combat SP1 — catalogue serveur des archétypes de créatures, résolu depuis

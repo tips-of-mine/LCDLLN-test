@@ -25,7 +25,7 @@ namespace tools::world_gen
 		{
 			switch (code)
 			{
-			case '.': case 'r': case 'o': case '_': case ',':
+			case '.': case 'r': case 'p': case 'o': case '_': case ',':
 				return { { "hameau", 2 }, { "ferme", 4 }, { "ruine", 1 }, { "bandits", 1 } };
 			case 'T': case 'R': case 'L': case 't':
 				return { { "hameau", 1 }, { "bucherons", 2 }, { "ferme", 1 }, { "bandits", 1 }, { "ruine", 1 } };
@@ -73,7 +73,7 @@ namespace tools::world_gen
 			const WorldMaster& m = w.master;
 			const char code = LoreCode(m, w.cell.n, w.cell.e);
 			int target = 0;
-			if (code == '.' || code == 'r' || code == 'T' || code == 'R' || code == 't' || code == 'L') target = 5;
+			if (code == '.' || code == 'r' || code == 'p' || code == 'T' || code == 'R' || code == 't' || code == 'L') target = 5;
 			else if (code == '%' || code == '&') target = 8;
 			else if (code == ':' || code == '^' || code == 'o') target = 2;
 			Rng rng(Hash(m.seed, static_cast<uint64_t>(w.cell.n + 1000), static_cast<uint64_t>(w.cell.e + 1000), 6161));

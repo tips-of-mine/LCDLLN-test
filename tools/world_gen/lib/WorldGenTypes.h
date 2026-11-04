@@ -73,7 +73,7 @@ namespace tools::world_gen
 		std::string id;
 		std::string name;
 		std::string cell;
-		std::string kind;        ///< monolithe|faille|ruine|portail
+		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre
 		std::string description;
 		int  n = 0, e = 0;
 		Vec2 center;

@@ -23,9 +23,10 @@ namespace engine::server
 	inline constexpr int kCellGridAxisCount = kZoneSizeMeters / kCellSizeMeters;
 
 	/// Demi-côté (m) de la grille unique du monde « Royaumes » : couvre toute la
-	/// carte du lore (cellules E-19 … E20 et S14 … N18, ±205 km) avec une marge.
-	/// 2 × 210 km / 100 m = 4200 cases par axe (tient dans un int16).
-	inline constexpr float kCellWorldHalfExtentMeters = 210000.0f;
+	/// carte du lore (cellules W019 … E026 et S018 … N023 depuis le lore v1.0.52,
+	/// soit x ∈ [−195, 265] km et z ∈ [−235, 185] km) avec une marge.
+	/// 2 × 270 km / 100 m = 5400 cases par axe (tient dans un int16).
+	inline constexpr float kCellWorldHalfExtentMeters = 270000.0f;
 
 	static_assert(kZoneSizeMeters % kCellSizeMeters == 0,
 	              "Zone size must be a multiple of spatial cell size (interest grid)");

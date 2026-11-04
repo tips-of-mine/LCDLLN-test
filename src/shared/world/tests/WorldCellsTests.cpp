@@ -64,8 +64,9 @@ int main()
 	Check(!IsCellZoneId(0u) && !IsCellZoneId(1u) && !IsCellZoneId(2u), "zones historiques hors plage");
 	Check(!CellFromZoneId(1u).has_value(), "zone 1 n'est pas une cellule");
 
-	Check(IsInLoreGrid({ 18, -19 }) && IsInLoreGrid({ -14, 20 }), "coins du lore");
-	Check(!IsInLoreGrid({ 19, 0 }) && !IsInLoreGrid({ 0, 21 }), "hors lore");
+	Check(IsInLoreGrid({ 23, -19 }) && IsInLoreGrid({ -18, 26 }), "coins du lore");
+	Check(IsInLoreGrid({ 19, 12 }) && IsInLoreGrid({ -15, 0 }) && IsInLoreGrid({ 0, 24 }), "terres ajoutees en v1.0.52 dans le lore");
+	Check(!IsInLoreGrid({ 24, 0 }) && !IsInLoreGrid({ -19, 0 }) && !IsInLoreGrid({ 0, 27 }) && !IsInLoreGrid({ 0, -20 }), "hors lore");
 
 	Check(Near(DistanceToCellBorder(0.0, 0.0), 5000.0), "distance au bord : centre");
 	Check(Near(DistanceToCellBorder(4900.0, 100.0), 100.0), "distance au bord : pres de l'est");

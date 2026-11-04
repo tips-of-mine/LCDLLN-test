@@ -43,7 +43,7 @@ namespace tools::world_gen
 			// chunks de 500 m proches du joueur.
 			case 'T': case 'R': case 'L': return { 0.32, 0.20, 0.08, 0.04 };
 			case 't':                     return { 0.14, 0.13, 0.07, 0.03 };
-			case '.': case 'r':           return { 0.017, 0.03, 0.04, 0.02 };
+			case '.': case 'r': case 'p': return { 0.017, 0.03, 0.04, 0.02 };
 			case '_': case ',':           return { 0.0, 0.007, 0.014, 0.025 };
 			case '~':                     return { 0.006, 0.004, 0.0, 0.06 };
 			case ':': case 'l':           return { 0.012, 0.012, 0.006, 0.06 };
@@ -81,7 +81,7 @@ namespace tools::world_gen
 			if (c == '%' || c == '&') return swamp;
 			if (c == '~' || c == ':' || c == 'V' || c == 'l') return dead;
 			if (c == '^' || c == 'M' || altitude > 300.0) return conifer;
-			if (c == '.' || c == 'r' || c == 'o') return grove;
+			if (c == '.' || c == 'r' || c == 'p' || c == 'o') return grove;
 			return broadleaf;
 		}
 
@@ -191,7 +191,7 @@ namespace tools::world_gen
 					// Bosquets et clairières (bruit ~100 m) + massifs et landes (≈ 1,5 km).
 					const double cluster = Fbm(p.x, p.z, cp.cls == VegClass::Tree ? 110.0 : 70.0, 3, seed + cp.salt);
 					double mod = 1.0 + 1.1 * cluster;
-					if (code == '.' || code == 'r') mod = std::max(0.0, cluster - 0.05) * 3.2; // copses isolés
+					if (code == '.' || code == 'r' || code == 'p') mod = std::max(0.0, cluster - 0.05) * 3.2; // copses isolés
 					mod *= 0.55 + 1.5 * Clamp(Fbm(p.x, p.z, 1500.0, 2, seed + cp.salt + 9) + 0.5, 0.0, 1.0);
 					const double accept = dens * cellArea100 * std::max(0.0, mod);
 					if (u >= accept) continue;

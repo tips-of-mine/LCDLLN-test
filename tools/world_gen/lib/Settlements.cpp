@@ -10,7 +10,8 @@
 //   - l'AUBERGE face à la place ; une FORGE en périphérie ;
 //   - un REMPART (capitale, grande ville, forteresse) ou une PALISSADE (orcs,
 //     camps), percé de portes là où passent les routes ;
-//   - des CHAMPS clôturés hors les murs (hameaux et villages), un CIMETIÈRE.
+//   - des CHAMPS clôturés hors les murs (toutes les agglomérations habitées,
+//     parcelles plus grandes pour les villes), un CIMETIÈRE.
 // État « reconstruction » (ville relevée après un sac, ex. Kendrhir après le
 // tome 1) : ruines et CHANTIERS (ruine entourée d'étais et de matériaux) mêlés
 // aux maisons neuves, BRÈCHES avec gravats dans le rempart ou la palissade ;
@@ -149,6 +150,32 @@ namespace tools::world_gen
 		bool HasPalisade(const CityDef& c)
 		{
 			return c.state != "ruine" && !HasWalls(c) && (c.race == "orcs" || c.kind == "camp" || c.kind == "ville");
+		}
+
+		/// Parcelles cultivées d'une agglomération (champs clôturés hors les murs).
+		struct FieldPlan
+		{
+			int count = 0;        ///< nombre de champs visés
+			int attempts = 0;     ///< tirages d'emplacement (les grands champs exigent un sol plus plat)
+			double halfW = 8.0;   ///< demi-largeur (m), le long de la clôture d'entrée
+			double halfD = 5.0;   ///< demi-profondeur (m), dans l'axe de la ville
+			double rowU = 1.4;    ///< pas des rangs de cultures en largeur (m)
+			double rowV = 1.1;    ///< pas des plants dans un rang (m)
+		};
+
+		/// Plan des champs selon le type d'agglomération : rien pour les camps, les
+		/// ruines et les villes démoniaques ; plus de champs, et plus grands, pour
+		/// les villes (pas des rangs élargi pour borner le nombre d'instances).
+		FieldPlan FieldsFor(const CityDef& c)
+		{
+			FieldPlan p;
+			if (c.state == "ruine" || c.race == "demons" || c.kind == "camp") return p;
+			if (c.kind == "hameau") { p.count = c.procedural == "ferme" ? 4 : 2; p.attempts = 30; }
+			else if (c.kind == "village") { p.count = c.procedural == "ferme" ? 4 : 3; p.attempts = 30; }
+			else if (c.kind == "ville") { p = { 4, 50, 12.0, 7.0, 1.6, 1.3 }; }
+			else if (c.kind == "grande_ville" || c.kind == "forteresse") { p = { 5, 60, 14.0, 8.0, 1.8, 1.5 }; }
+			else if (c.kind == "capitale") { p = { 6, 70, 16.0, 9.0, 2.0, 1.6 }; }
+			return p;
 		}
 
 		double YawFacing(Vec2 f) { return std::atan2(-f.x, -f.z) * 180.0 / kPi; }
@@ -674,17 +701,21 @@ namespace tools::world_gen
 				}
 			}
 
-			// --- Champs clôturés hors les murs (hameaux, villages, fiefs).
-			if ((c.kind == "hameau" || c.kind == "village") && c.state != "ruine" && c.race != "demons")
+			// --- Champs clôturés hors les murs : toutes les agglomérations habitées
+			//     (lore v1.0.52 : villes, grandes villes, capitales et forteresses
+			//     comprises, avec des parcelles plus grandes) ; pas de camps, ruines
+			//     ni villes démoniaques.
+			const FieldPlan fp = FieldsFor(c);
+			if (fp.count > 0)
 			{
-				const int fields = c.procedural == "ferme" ? 4 : (c.kind == "hameau" ? 2 : 3);
 				int made = 0;
-				for (int attempt = 0; attempt < 30 && made < fields; ++attempt)
+				for (int attempt = 0; attempt < fp.attempts && made < fp.count; ++attempt)
 				{
 					const double a = rng.Range(0.0, 2.0 * kPi);
 					const Vec2 dir = Dir(a);
-					const Vec2 fc = c.center + dir * (R + rng.Range(14.0, 30.0));
-					const double hw = 8.0, hd = 5.0;
+					const double hw = fp.halfW, hd = fp.halfD;
+					// Au-delà du rempart ou de la palissade (posés à R + 3 m).
+					const Vec2 fc = c.center + dir * (R + hd + 9.0 + rng.Range(0.0, 20.0));
 					const double fr = std::hypot(hw, hd) + 1.0;
 					const int ri = w.roadDist.IndexX(fc.x), rj = w.roadDist.IndexZ(fc.z);
 					if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < fr) continue;
@@ -708,8 +739,8 @@ namespace tools::world_gen
 					}
 					// Rangs de cultures.
 					const char* crop = (attempt % 2) ? "Plant_7" : "Carrot";
-					for (double u = -hw + 1.5; u < hw - 1.0; u += 1.4)
-						for (double v = -hd + 1.2; v < hd - 1.0; v += 1.1)
+					for (double u = -hw + 1.5; u < hw - 1.0; u += fp.rowU)
+						for (double v = -hd + 1.2; v < hd - 1.0; v += fp.rowV)
 							AddProp(w, crop, fc + ax * u + az * v, rng.Range(0, 360), rng.Range(0.9, 1.4), 0, 2);
 					AddProp(w, "FarmCrate_Carrot", fc - az * (hd + 1.2) + ax * 2.0, rng.Range(0, 360), 1.0, kSolid, 1, 0.4);
 				}

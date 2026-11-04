@@ -50,6 +50,7 @@ namespace tools::world_gen
 			// d'environ 0,2 ; une amplitude A donne donc un relief de ±0,2 A environ.
 			case '.': return { 62.0, 46.0, 0.0, 0 };     // plaine (collines douces)
 			case 'r': return { 56.0, 32.0, 0.0, 0 };     // plaine + rivière
+			case 'p': return { 58.0, 36.0, 0.0, 0 };     // plaine + lac
 			case 'T': return { 80.0, 70.0, 0.0, 0 };     // forêt
 			case 't': return { 72.0, 56.0, 0.0, 0 };     // lisière
 			case 'R': return { 66.0, 46.0, 0.0, 0 };     // forêt + rivière
@@ -68,7 +69,7 @@ namespace tools::world_gen
 		}
 
 		bool IsRiverCode(char c) { return c == 'r' || c == 'R' || c == '&'; }
-		bool IsLakeCode(char c) { return c == 'L' || c == 'l'; }
+		bool IsLakeCode(char c) { return c == 'L' || c == 'l' || c == 'p'; }
 
 		/// Rayon urbain (m) selon le type d'agglomération (échelle 10 km).
 		double CityRadius(const std::string& kind, const std::string& procedural)

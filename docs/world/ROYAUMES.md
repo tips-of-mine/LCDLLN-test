@@ -1,7 +1,8 @@
 # Monde « Royaumes de la Lune Noire » — monde continu en cellules de 10 km
 
-> Chantier « Royaumes » (2026-10). Le continent du lore (carte de 33 × 44
-> cases) devient un **monde continu de ~330 km × 440 km** découpé en
+> Chantier « Royaumes » (2026-10). Le continent du lore (carte de 42 × 46
+> cases N023→S018 × W019→E026 depuis le lore v1.0.52, 42 × 50 avec les marges de
+> mer du master) devient un **monde continu de ~420 km × 460 km** découpé en
 > **cellules de 10 km × 10 km** (1 case du lore = 1 cellule = 1 zone moteur).
 > Seules les cellules listées dans `generated_cells` sont générées et jouables ;
 > on commence par les **5 cellules des villes de départ par race**.
@@ -47,7 +48,7 @@ Activé par `world.active_zone = "royaumes"` sur **le shard ET le master**
 
 | Point | Règle |
 |---|---|
-| Carte | Toutes les cellules partagent la carte `kCellWorldMapId` : une seule grille d'intérêt (100 m, creuse, ±210 km). Un joueur voit, combat, ramasse, parle à travers une frontière de cellule comme au milieu d'une cellule (`SameMap`). |
+| Carte | Toutes les cellules partagent la carte `kCellWorldMapId` : une seule grille d'intérêt (100 m, creuse, ±270 km depuis le lore v1.0.52). Un joueur voit, combat, ramasse, parle à travers une frontière de cellule comme au milieu d'une cellule (`SameMap`). |
 | Région | `zoneId` d'un joueur = id de SA cellule, recalculé à chaque mouvement (`UpdateClientRegion`) : présence (amis, web), quêtes `zone:<id>`, canal /zone, /who zone. Aucun message réseau (monde continu). |
 | Activation | `RegionActivity`, recalculée 1 fois/s : une cellule est **active** si un joueur s'y trouve ou à moins de `world.region_activation_margin_m` (1000 m) de son bord. Les spawners d'une cellule inactive ne sont **pas évalués** ; leurs mobs sont retirés (hors combat), comme avant à l'échelle du spawner. |
 | Chargement | Spawners, événements, récolte : uniquement `zones/cell_*` en monde en cellules ; uniquement les autres dossiers sinon (`ZoneDirBelongsToWorld`). Cimetières/auberges : `respawn_points.txt` de chaque cellule générée, le plus proche gagne. |
@@ -157,7 +158,8 @@ voisines raccord au mètre près :
    pays plats / vallonnés (≈ 7 km), chaînons de collines, vallons, plancher
    souple au-dessus de la mer. Bruit de **gradient** (pas de terrasses).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
-   emplacement plat et sec de la case) ; lacs du lore et lacs manuels.
+   emplacement plat et sec de la case) ; lacs du lore (codes `L` forêt avec lac,
+   `l` aride avec lac, `p` plaine avec lac depuis le lore v1.0.52) et lacs manuels.
 3. **Rivières** : descente sur la grille grossière remplie (priority-flood),
    méandres, profil de surface non croissant.
 4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
@@ -177,6 +179,10 @@ voisines raccord au mètre près :
 7. Routes découpées + **chemins locaux** reliant chaque lieu au réseau.
 8. `Settlements.cpp` : rues, lots, auberge, forge, marché, remparts/palissades,
    champs, cimetière, accessoires de métier (bûcherons, mine, bandits).
+   Champs clôturés hors les murs (`FieldsFor`) : 2 à 4 petits champs (16 × 10 m)
+   par hameau ou village, 4 à 6 grandes parcelles (24 × 14 m à 32 × 18 m) par
+   ville, grande ville, forteresse ou capitale ; aucun pour les camps, les
+   ruines et les villes démoniaques.
    État d'une ville (`cities[].state` du master) : `intact`, `ruine` (ruines,
    pillards, ni auberge ni marché), `camp`, ou `reconstruction` (ville relevée
    après un sac : environ 51 % de maisons habitées, 31 % de ruines et 18 % de

@@ -239,6 +239,8 @@ namespace engine::client
 		if (kind == "foret") return "For\xC3\xAAt"; // « Forêt » en UTF-8
 		if (kind == "etang") return "\xC3\x89tang"; // « Étang » en UTF-8
 		if (kind == "champ_bataille") return "Champ de bataille";
+		if (kind == "volcan") return "Volcan";
+		if (kind == "gouffre") return "Gouffre";
 		return std::string(kind);
 	}
 }

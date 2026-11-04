@@ -189,20 +189,20 @@ namespace
 		}
 	}
 
-	/// Monde « Royaumes » : une seule grille creuse pour toute la carte (±210 km),
+	/// Monde « Royaumes » : une seule grille creuse pour toute la carte (±270 km),
 	/// visibilité continue à travers la frontière de deux cellules de 10 km.
 	void TestCellWorldGridAcrossCellBorder()
 	{
 		CellGrid grid;
 		Require(grid.Init(kCellWorldHalfExtentMeters), "init grille monde");
-		Require(grid.AxisCount() == 4200, "4200 cases par axe");
+		Require(grid.AxisCount() == 5400, "5400 cases par axe");
 		CellCoord cell{};
 		// Hameau de Marn (N003_W009, centre (-90000, -30000)) : frontière ouest de la
 		// cellule en x = -95000. Un joueur à l'est de la frontière, un mob à l'ouest.
 		Require(grid.UpsertEntity(1, -94950.0f, -30000.0f, cell), "joueur dans N003_W009");
 		Require(grid.UpsertEntity(2, -95150.0f, -30000.0f, cell), "mob dans N003_W010");
-		Require(grid.UpsertEntity(3, 204999.0f, -184999.0f, cell), "coin de la carte");
-		Require(!grid.UpsertEntity(4, 210000.0f, 0.0f, cell), "hors carte rejete");
+		Require(grid.UpsertEntity(3, 264999.0f, -234999.0f, cell), "coin nord-est de la carte (N023_E026)");
+		Require(!grid.UpsertEntity(4, 270000.0f, 0.0f, cell), "hors carte rejete");
 		Require(grid.OccupiedCellCount() == 3, "stockage creux : 3 cases");
 
 		std::vector<EntityId> visited;

@@ -62,7 +62,7 @@ namespace tools::world_gen
 	/// Partagé par la végétation et le splat (cohérence sol / arbres).
 	inline char EffectiveCover(char code, double x, double z, uint64_t seed)
 	{
-		if (code == '.' || code == 'r')
+		if (code == '.' || code == 'r' || code == 'p')
 			return Fbm(x, z, 3500.0, 2, seed + 77) > 0.22 ? 't' : code;
 		if (code == 'T' || code == 'R' || code == 'L')
 			return Fbm(x, z, 2600.0, 2, seed + 78) < -0.32 ? '.' : code;

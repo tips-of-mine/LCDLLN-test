@@ -31,12 +31,14 @@ namespace engine::world::cells
 	/// Demi-côté (m) : les coordonnées LOCALES d'une cellule sont dans [−5000, 5000[.
 	inline constexpr double kCellHalfMeters = kCellSizeMeters * 0.5;
 
-	/// Bornes de la carte du lore (indices inclus) : 33 rangées N018 → S014,
-	/// 40 colonnes W019 → E020.
-	inline constexpr int kMinN = -14;
-	inline constexpr int kMaxN = 18;
+	/// Bornes de la carte du lore (indices inclus) : 42 rangées N023 → S018,
+	/// 46 colonnes W019 → E026 (agrandie en lore v1.0.52 : extrême nord, côte
+	/// orientale et confins du Midi). Doit couvrir la grille du master
+	/// (game/data/world/royaumes/world_master.json) hors colonnes de marge.
+	inline constexpr int kMinN = -18;
+	inline constexpr int kMaxN = 23;
 	inline constexpr int kMinE = -19;
-	inline constexpr int kMaxE = 20;
+	inline constexpr int kMaxE = 26;
 
 	/// Base des identifiants numériques de zone « cellule ». Les zones historiques
 	/// (feyhin = 1, zone_0/1/2…) restent sous cette valeur.

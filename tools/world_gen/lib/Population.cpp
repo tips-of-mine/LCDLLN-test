@@ -113,7 +113,7 @@ namespace tools::world_gen
 				if (isNear) return rng.Chance(0.5) ? 107u : (rng.Chance(0.5) ? 102u : 105u);
 				if (mid) return rng.Chance(0.5) ? 101u : 105u;
 				return rng.Chance(0.6) ? 160u : 101u;           // ours bruns, loups
-			case '.': case 'r': case 'o':
+			case '.': case 'r': case 'p': case 'o':
 				if (isNear) return rng.Chance(0.6) ? 102u : 100u;
 				if (mid) return rng.Chance(0.5) ? 100u : 107u;
 				return rng.Chance(0.6) ? 162u : 104u;           // gobelins pillards, sangliers alpha

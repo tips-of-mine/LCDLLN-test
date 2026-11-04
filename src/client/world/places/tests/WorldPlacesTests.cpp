@@ -53,6 +53,8 @@ int main()
 	Check(w.RegionAt(150, 50) && w.RegionAt(150, 50)->id == "small", "region la plus specifique");
 	Check(w.RegionAt(0, 0) && w.RegionAt(0, 0)->id == "big", "grande region");
 	Check(w.RegionAt(1000, 0) == nullptr, "aucune region");
+	Check(engine::client::PlaceKindLabel("volcan") == "Volcan" && engine::client::PlaceKindLabel("gouffre") == "Gouffre",
+		"PlaceKindLabel : genres de POI volcan et gouffre (v1.0.52)");
 	Check(engine::client::PlaceKindLabel("champ_bataille") == "Champ de bataille" && engine::client::PlaceKindLabel("etang") == "\xC3\x89tang"
 	      && engine::client::PlaceKindLabel("inconnu") == "inconnu", "libelles des genres de POI");
 

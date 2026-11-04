@@ -123,7 +123,71 @@ forêt des lutins → **village fantôme** (S003_E006) → **fief de Garundel** 
 - Notes T3 ajoutées : Fratus Sinister (Lhynn, conjuration), six conjurés (répliques
   pl.23), Feidreiva (disparition), Kruikna, Nasha, Pile-ou-Face, Iaun Reith.
 
-## 5. Plans de référence
+## 5. Carte du monde agrandie et densifiée (v1.0.52)
+
+Choix de conception [INFÉRÉ], sans source BD sauf mention : le continent était coupé
+net par les bords nord (N018), sud (S014) et est (E020) de la carte. Il est refermé par
+une côte, et l'intérieur reçoit les villes du lore qui n'existaient pas encore dans le
+monde jouable.
+
+### 5.1 Grille
+
+| Élément | Avant | Après |
+|---|---|---|
+| Carte du lore (`WorldCells.h`, `cells` du lore) | N018→S014 × W019→E020 (33 × 40) | **N023→S018 × W019→E026** (42 × 46) |
+| Grille du master (`grid.rows`) | 33 × 44 (W021→E022) | **42 × 50** (W021→E028, 2 colonnes de marge de chaque côté) |
+| Grille d'intérêt du shard (`kCellWorldHalfExtentMeters`) | ±210 km | **±270 km** |
+
+| Terres ajoutées | Cellules | Contenu |
+|---|---|---|
+| Extrême nord des **Terres des Gigantomorphes** | N019–N023, E009–E023 | Collines, forêt boréale, monts et sommets enneigés, côte. Le lore situe les Géants de froid à l'extrême nord ([HS], région `terres_des_gigantomorphes`). |
+| **Rivage des Géants** | E021–E025, N018→S014 | Côte orientale : plaines, forêts, terres arides, montagnes naines jusqu'à la mer. Le lore repousse les géants vers le nord et l'est ([HS]). |
+| **Confins du Midi** | S015–S018 | Plaines, chaîne du désert prolongée, terres arides, côte sud. |
+
+Nouveau code de grille `p` = `plain_with_lake` (déjà dans `terrain_types` du lore),
+traité par le générateur comme une plaine qui porte un lac.
+
+### 5.2 Cohérence monde jouable ↔ lore
+
+- **23 cellules** du lore, plus récentes que le master, sont reportées sur la grille :
+  16 lisières (v1.0.29), île de Deepbrook en N012_E002-E003 (v1.0.36), côtes
+  S006_W004 et S006_W007, rivière de Feyhin en N008_E007.
+- **Millway, Stonemark, Ridgeholt** sont retirées du master : elles avaient été
+  supprimées du lore (v1.0.29-1.0.30).
+- **Leviathan** reste en N009_E011 dans le master (ville de départ des orcs), alors que le
+  lore la place en N012_E012 (v1.0.40) : voir les questions ouvertes.
+
+### 5.3 Villes
+
+- **44 villes du lore** entrent dans le monde jouable : race déduite de la région, sauf
+  factions humaines, ports du royaume Drach et Horkher (comté humain, BD-T6) ; faction
+  reprise du lore.
+- Le **palais du Maître des Dragons** reste un POI (`poi_palais_passe`). La Cité du Jade,
+  la Nécropole du Jade et le Krak de Jhenner n'ont pas de cellule et restent hors carte.
+- Noms : Unnamed-64 → **Runecroft**, Unnamed-143 → **Clearfen** (noms libres de
+  `carte_export.json`).
+- **Deepmoor** passe de N014_E016 (cellule de Hoengardt) à N014_E017.
+- **10 villes** sont créées sur les nouvelles terres : Coldhollow, Fernhill, Draketon,
+  Stonebridge, Riverfold (port à l'embouchure de la rivière de Rivercross), Greyfield,
+  Dustfield, Ironbrook (nains), Fairbrook, Thistle Creek.
+- Le master compte **90 agglomérations** et le lore 93 villes (1 008 PNJ de service).
+- Nouveaux POI : Haawling Spines (N002_E006), cratère du volcan (S008_E014), entrée des
+  Abysses (S008_W005) ; genres `volcan` et `gouffre` ajoutés au client.
+
+### 5.4 Eau, forêts, champs
+
+- **Rivières** : de Rivercross (N010_E019 → Rivercross → Riverfold, mer orientale) et de
+  Southport (S013_E006 → Southport → mer du sud).
+- **Lacs de plaine** : Clearwater (S014_E014), Hillwatch (N010_E017), Millend
+  (S002_E002), Nightward (N001_E012), Darkwater (S011_E021).
+- **Forêts** (avec lisières) : Blackmoor (N007–N005, E016–E018), Harrowbrook
+  (S005–S006, W010–W008), Millford (S011–S012, E001–E003), Landes (N016–N015,
+  E019–E020) ; **marais des landes** en N013_E017.
+- **Champs cultivés** autour de toutes les agglomérations habitées : 2 à 4 petits champs
+  par hameau ou village (comme avant), 4 à 6 grandes parcelles par ville, grande ville,
+  forteresse ou capitale.
+
+## 6. Plans de référence
 
 Plans vus du dessus (repères pleins = BD, en pointillés = lore placé) publiés comme
 documents de conception : Kendrhir (en reconstruction), Feyhin Lokcthat, Magistrya,
@@ -131,7 +195,7 @@ puis Mont des Neuf Pics, l'Atmosphère, le palais du Maître des Dragons, Altenb
 l'Oracle (extérieur) ; pour le T3 : Ghrunke Dash, Lhynn, le village fantôme (village et
 marais) et le fief de Garundel.
 
-## 6. Questions ouvertes
+## 7. Questions ouvertes
 
 - Compagnon `companion_pilou` du T5 (« petit goblinoïde ») : contredit les T1-T3, à relire
   dans ce tome.
@@ -144,3 +208,8 @@ marais) et le fief de Garundel.
   blancs (lore, BD-T3).
 - Palais du Maître des Dragons « au-delà des sept régions » (p.29) mais visible depuis le
   pont de la Passe (p.42) : hyperbole ou second palais.
+- Leviathan : N009_E011 dans le monde jouable (ville de départ des orcs, cellules
+  générées) contre N012_E012 dans le lore (v1.0.40) ; déplacer une ville de départ
+  touche aux départs des personnages et aux cellules générées.
+- Cité du Jade, Nécropole du Jade (T7) et Krak de Jhenner : sans cellule ; l'Empire du
+  Jade est outre-mer et pourrait occuper une île ou un second continent.

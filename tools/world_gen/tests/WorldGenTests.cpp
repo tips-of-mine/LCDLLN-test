@@ -130,6 +130,24 @@ namespace
 			"master : une ville de depart par race jouable");
 		Check(m.scale.cellSizeM == 10000.0 && m.scale.heightmapRes == 2049, "master : cellules de 10 km, heightmap 2049");
 		Check(m.generatedCells.size() >= 5, "master : au moins les 5 cellules de depart");
+		// v1.0.52 : la grille couvre toute la carte du lore (marge de 2 colonnes de
+		// mer de chaque cote) et chaque ville du master est dans le lore, hors de l'eau.
+		namespace wc = engine::world::cells;
+		Check(m.scale.northN == wc::kMaxN && m.scale.northN - static_cast<int>(m.gridRows.size()) + 1 == wc::kMinN,
+			"master : rangees N(kMaxN)..S(kMinN) du lore");
+		Check(m.scale.westE == wc::kMinE - 2 && m.scale.westE + m.scale.gridCols - 1 == wc::kMaxE + 2,
+			"master : colonnes du lore + 2 colonnes de marge de chaque cote");
+		bool citiesOk = true;
+		for (const auto& c : m.cities)
+		{
+			const int r = m.scale.northN - c.n, col = c.e - m.scale.westE;
+			if (!wc::IsInLoreGrid({ c.n, c.e }) || r < 0 || col < 0 || r >= static_cast<int>(m.gridRows.size()) || col >= m.scale.gridCols)
+			{ citiesOk = false; std::fprintf(stderr, "  ville hors carte : %s\n", c.id.c_str()); continue; }
+			const char code = m.gridRows[static_cast<size_t>(r)][static_cast<size_t>(col)];
+			if (code == ' ' || code == '-') { citiesOk = false; std::fprintf(stderr, "  ville en mer : %s\n", c.id.c_str()); }
+		}
+		Check(citiesOk, "master : villes dans la carte du lore et hors de la mer");
+		Check(m.cities.size() >= 80, "master : villes du lore integrees (v1.0.52)");
 	}
 
 	std::vector<uint16_t> ReadHeights(const std::filesystem::path& p, uint32_t& n)
@@ -380,6 +398,11 @@ namespace
 		for (const std::string& m : sf.meshPaths)
 			if (m == "meshes/props/Prop_Support.gltf") supports = true;
 		Check(okScatter && supports, "reconstruction : etais poses autour des chantiers");
+		// v1.0.52 : champs cultives aussi autour des villes (Kendrhir Vale est une ville).
+		bool crops = false;
+		for (const std::string& m : sf.meshPaths)
+			if (m == "meshes/props/Carrot.gltf" || m == "meshes/props/Plant_7.gltf") crops = true;
+		Check(okScatter && crops, "champs : cultures autour d'une ville");
 		fs::remove_all(tmp, ec);
 	}
 

@@ -259,6 +259,7 @@ namespace tools::world_gen
 			FillSeaPockets(*w);     // EAU.5 : un déblai de route ne crée pas de « mare de mer »
 			if (!ImportLegacyContent(*w, err)) return false; // occupe la place des objets historiques
 			BuildSettlements(*w);   // rues, bâtiments, remparts, mobilier, graphe PNJ
+			BuildForestMask(*w);    // FORET.1 : densité des forêts (arbres posés par le client)
 			BuildVegetation(*w);    // décor naturel (respecte l'occupation)
 			BuildPopulation(*w);    // spawners, respawns, départs
 			w->report.scatterInstances = w->scatter.size();

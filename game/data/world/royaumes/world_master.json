@@ -1479,6 +1479,11 @@
         "cull_large_m": 150.0,
         "cull_medium_m": 80.0,
         "cull_small_m": 42.0
+      },
+      "forest": {
+        "_comment": "FORET.1 - foret de remplissage posee par le client autour du joueur (densite zones/<c>/terrain_forest.frms). filler : active ; rebuild_step_m : deplacement (m) avant reconstruction ; filler_radius_m (optionnel) : rayon (m), par defaut scatter.cull_large_m x facteur du preset + 30 m.",
+        "filler": true,
+        "rebuild_step_m": 24.0
       }
     }
   },

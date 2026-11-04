@@ -102,6 +102,18 @@ namespace engine::world::cells
 		if (!grass.empty()
 			&& !engine::render::terrain::TerrainGrassDetail::LoadFromFile(content + "/" + grass, out.terrain.grassMask))
 			out.terrain.grassMask = {};
+		// FORET.1 — densité forestière (arbres de remplissage posés au main thread).
+		const std::string forest = out.config.GetString("render.terrain.forest_mask", "");
+		if (!forest.empty())
+		{
+			const std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(out.config, forest);
+			auto mask = std::make_shared<engine::world::instances::ForestMask>();
+			std::string err;
+			if (!bytes.empty() && engine::world::instances::LoadForestMask(bytes, *mask, err))
+				out.forestMask = std::move(mask);
+			else
+				LOG_WARN(Render, "[Cells] {} : densite forestiere ignoree ({})", dir, bytes.empty() ? "fichier absent" : err);
+		}
 
 		// ── Rendu : décor instancié ──────────────────────────────────────────────
 		{

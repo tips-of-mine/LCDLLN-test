@@ -25,6 +25,7 @@
 #include "src/shared/world/WorldCells.h"
 
 #include "src/client/world/instances/Buildings.h"
+#include "src/client/world/instances/ForestMask.h"
 #include "src/client/world/instances/ScatterInstances.h"
 
 #include <zone_builder/JsonDocument.h>
@@ -403,6 +404,22 @@ namespace
 		for (const std::string& m : sf.meshPaths)
 			if (m == "meshes/props/Carrot.gltf" || m == "meshes/props/Plant_7.gltf") crops = true;
 		Check(okScatter && crops, "champs : cultures autour d'une ville");
+		// FORET.1 — densité forestière écrite (Kendrhir Vale est en forêt) et
+		// cadrée sur la cellule ; plus aucun arbre de forêt dans scatter.bin.
+		engine::world::instances::ForestMask fm;
+		const bool okForest = engine::world::instances::LoadForestMask(
+			ReadBytes(tmp / "zones" / cell / "terrain_forest.frms"), fm, e);
+		int dense = 0;
+		for (uint8_t v : fm.density) if (v >= 200) ++dense;
+		Check(okForest && fm.width == engine::world::instances::kForestMaskResolution && fm.sizeM > 9000.0
+			&& dense > 1000, "foret : carte de densite forestiere (pleine foret presente)");
+		bool zoneKey = false;
+		{
+			std::ifstream z(tmp / "zones" / cell / "zone.json");
+			std::stringstream ss; ss << z.rdbuf();
+			zoneKey = ss.str().find("terrain_forest.frms") != std::string::npos;
+		}
+		Check(zoneKey, "foret : zone.json reference la densite forestiere");
 		fs::remove_all(tmp, ec);
 	}
 

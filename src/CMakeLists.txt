@@ -686,6 +686,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(world_places_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/tests/WorldPlacesTests.cpp)
 
+  # FORET.1 — forêt de remplissage : format terrain_forest.frms et génération
+  # déterministe des arbres autour du joueur (header-only).
+  lcdlln_add_simple_test(forest_mask_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/instances/tests/ForestMaskTests.cpp)
+
   # Carte à découvrir (client) : révélation au fil du déplacement, pages du
   # master, cellules modifiées à envoyer.
   lcdlln_add_simple_test(map_discovery_client_tests

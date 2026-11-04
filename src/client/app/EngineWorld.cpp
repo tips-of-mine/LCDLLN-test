@@ -378,7 +378,7 @@ namespace engine
 	{
 		out.clear();
 		if (m_scatterField.Count() > 0)
-			out.push_back({ &m_scatterField, 0.0f, 0.0f, 0u });
+			out.push_back({ &m_scatterField, 0.0f, 0.0f, 0u, 0u });
 		// Monde « Royaumes » : un champ par cellule résidente, en coordonnées locales
 		// à la cellule, décalé par son centre exprimé dans le repère de rendu.
 		for (const CellRenderTile& tile : m_cellTiles)
@@ -388,7 +388,17 @@ namespace engine
 			const engine::world::cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
 			const std::uint32_t id = 1u + ((static_cast<std::uint32_t>(tile.cell.n) & 7u) << 3
 				| (static_cast<std::uint32_t>(tile.cell.e) & 7u));
-			out.push_back({ tile.scatter.get(), static_cast<float>(c.x), static_cast<float>(c.z), id });
+			out.push_back({ tile.scatter.get(), static_cast<float>(c.x), static_cast<float>(c.z), id, 0u });
+		}
+		// FORET.1 — forêt de remplissage (même repère local que le décor stocké).
+		for (const CellRenderTile& tile : m_cellTiles)
+		{
+			if (!tile.filler || tile.filler->Count() == 0)
+				continue;
+			const engine::world::cells::CellPoint c = m_renderFrame.CellCenterRender(tile.cell);
+			const std::uint32_t id = 1u + ((static_cast<std::uint32_t>(tile.cell.n) & 7u) << 3
+				| (static_cast<std::uint32_t>(tile.cell.e) & 7u));
+			out.push_back({ tile.filler.get(), static_cast<float>(c.x), static_cast<float>(c.z), id, kScatterFillerItemBase });
 		}
 	}
 
@@ -410,7 +420,7 @@ namespace engine
 			{
 				const auto& it = layer.field->Item(idx);
 				const engine::math::Vec3 center{ it.center.x + layer.offsetX, it.center.y, it.center.z + layer.offsetZ };
-				out.push_back({ ScatterOccluderId(layer.id, idx), center, it.radius });
+				out.push_back({ ScatterOccluderId(layer.id, layer.itemBase + idx), center, it.radius });
 			}
 		}
 	}
@@ -467,7 +477,7 @@ namespace engine
 				uint32_t fadeQ = 16u; // 16 = opaque
 				if ((it.flags & engine::world::instances::kScatterFlagOccluder) != 0u)
 				{
-					const float f = m_cameraOcclusionFade.FadeFor(ScatterOccluderId(layer.id, idx));
+					const float f = m_cameraOcclusionFade.FadeFor(ScatterOccluderId(layer.id, layer.itemBase + idx));
 					if (f < 0.999f) fadeQ = static_cast<uint32_t>(std::lround(std::clamp(f, 0.0f, 1.0f) * 15.0f));
 				}
 				for (const PropPart& part : m_scatterMeshes[it.meshId].parts)
@@ -621,11 +631,15 @@ namespace engine
 		// Volume de la scène : ce que la frame a dû trier, envoyer et tester.
 		size_t cyl = m_worldCollider.CylinderCount(), boxes = m_worldCollider.BoxCount();
 		for (const CellRenderTile& tile : m_cellTiles)
+		{
 			if (tile.collider)
 			{
 				cyl += tile.collider->CylinderCount();
 				boxes += tile.collider->BoxCount();
 			}
+			if (tile.fillerCollider) // FORET.1 — troncs de la forêt de remplissage
+				cyl += tile.fillerCollider->CylinderCount();
+		}
 		const VkExtent2D ext = m_vkSwapchain.GetExtent();
 		LOG_INFO(Core, "[Perf] scene : decor visibles={} parties={} lots={} (sur {} dans {} champ(s)) ; cellules={} ; props={} ; collisions={} cyl / {} boites ; ecran={}x{}",
 			m_perfScatter.visible, m_perfScatter.parts, m_perfScatter.batches, m_perfScatter.total, m_perfScatter.layers,

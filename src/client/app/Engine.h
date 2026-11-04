@@ -196,6 +196,7 @@ namespace engine::editor::world
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -1308,8 +1309,16 @@ namespace engine
 			/// 1 + ((n & 7) << 3 | (e & 7)) pour une cellule — unique entre cellules
 			/// voisines (< 8 cellules d'écart), indépendant de l'ordre de chargement.
 			std::uint32_t id = 0;
+			/// Décalage ajouté à l'index d'instance dans l'identifiant d'occulteur :
+			/// 0 pour le décor stocké, kScatterFillerItemBase pour la forêt de
+			/// remplissage de la même cellule (même \ref id, plages disjointes).
+			std::uint32_t itemBase = 0;
 		};
-		/// Liste les champs de décor à dessiner cette frame (non vides).
+		/// Base des index d'instance de la forêt de remplissage (identifiants
+		/// d'occulteurs) : le décor stocké d'une cellule reste sous 8 M d'instances.
+		static constexpr std::uint32_t kScatterFillerItemBase = 0x800000u;
+		/// Liste les champs de décor à dessiner cette frame (non vides) : décor stocké
+		/// puis forêt de remplissage de chaque cellule.
 		void GatherScatterLayers(std::vector<ScatterLayer>& out) const;
 		/// Identifiant d'occulteur stable d'une instance (champ \p layer, index \p item) :
 		/// kScatterOccluderIdBase | layer << 24 | item (128 champs × 16 M d'instances).
@@ -1379,6 +1388,16 @@ namespace engine
 			/// SND.4 — biomes du lore (zone.json audio.biome_grid) pour les ambiances.
 			std::string biomeGrid;
 			int biomeGridSize = 0;
+			/// FORET.1 — densité forestière de la cellule (nulle = pas de forêt de
+			/// remplissage) et forêt de remplissage posée autour du joueur : champ de
+			/// décor et collisions (troncs) en coordonnées LOCALES à la cellule,
+			/// reconstruits quand le joueur s'est déplacé (UpdateForestFiller).
+			std::shared_ptr<const engine::world::instances::ForestMask> forestMask;
+			std::unique_ptr<engine::world::scatter::ScatterField> filler;
+			std::unique_ptr<engine::gameplay::CompositeWorldCollider> fillerCollider;
+			/// Centre GLOBAL (m) de la dernière construction ; NaN = jamais construite.
+			double fillerCenterX = std::numeric_limits<double>::quiet_NaN();
+			double fillerCenterZ = std::numeric_limits<double>::quiet_NaN();
 		};
 		/// Tuile retirée : détruite quelques frames plus tard (ressources GPU encore en vol).
 		struct RetiredCellTile
@@ -1446,6 +1465,18 @@ namespace engine
 		/// Avance la pose différée du décor / des bâtiments : une tuile, une tranche
 		/// (\p unlimited = tout poser). Main thread, chaque frame.
 		void ContinueCellPlacement(bool unlimited);
+		/// FORET.1 — forêt de remplissage : pour chaque tuile dotée d'une densité
+		/// forestière et proche du joueur (\p globalX, \p globalZ, m), régénère les
+		/// arbres et le sous-bois dans m_forestFillerRadiusM dès que le joueur s'est
+		/// déplacé de m_forestFillerStepM depuis la dernière construction ; vide le
+		/// remplissage des tuiles trop lointaines. Effet de bord : champs filler et
+		/// collisionneurs des tuiles, décalages des collisions (RefreshCellOffsets).
+		/// Main thread, chaque frame (après ContinueCellPlacement).
+		void UpdateForestFiller(double globalX, double globalZ);
+		/// FORET.1 — lit world.forest.* (activation, rayon, pas de reconstruction) ;
+		/// rayon par défaut = distance de culling des arbres (world.scatter.cull_large_m
+		/// × facteur du préréglage) + 30 m. Appelée par ApplyViewDistancePreset.
+		void ApplyForestFillerSettings();
 		/// Retire la tuile d'indice \p index (destruction différée).
 		void RetireCellTile(size_t index);
 		/// Détruit les tuiles retirées depuis assez longtemps (\p all = toutes, au shutdown).
@@ -1503,6 +1534,11 @@ namespace engine
 		float m_cellUnloadRadiusM = 3500.0f;
 		float m_cellHeightRadiusM = 6000.0f;
 		float m_cellTerrainDrawDistanceM = 2500.0f;
+		/// FORET.1 — forêt de remplissage : activée, rayon (m) autour du joueur, pas de
+		/// reconstruction (m de déplacement) ; cf. ApplyForestFillerSettings.
+		bool m_forestFillerEnabled = true;
+		float m_forestFillerRadiusM = 180.0f;
+		float m_forestFillerStepM = 24.0f;
 		/// Distances de vue du préréglage courant (cf. ApplyViewDistancePreset).
 		engine::client::ViewDistanceSettings m_viewDistance{};
 		/// Compteur d'appels du streaming (journalisation périodique).

@@ -38,3 +38,9 @@ game/data/zones/cell_*/
 game/data/instances/zone_cell_*/
 game/data/world/royaumes/*
 !game/data/world/royaumes/world_master.json
+# Seconde carte « Les Enfers » (lcdlln_world_gen --world enfers) : même règle,
+# seule world/enfers/world_master.json est versionnée. Cf. docs/world/ENFERS.md.
+game/data/zones/enfers_*/
+game/data/instances/zone_enfers_*/
+game/data/world/enfers/*
+!game/data/world/enfers/world_master.json

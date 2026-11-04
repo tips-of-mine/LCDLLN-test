@@ -115,7 +115,7 @@
   },
   "demons_chasse": {
     "title": "Engeance de la Faille",
-    "description": "Detruisez six diablotins errants autour de Tsaroth.",
+    "description": "Detruisez six diablotins errants autour de la Citadelle de la Legion.",
     "completion": "Les murs tiendront encore un peu. Bien.",
     "steps": ["Diablotins detruits : {current}/{required}"]
   },

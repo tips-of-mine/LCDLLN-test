@@ -59,8 +59,9 @@ namespace tools::world_gen
 		w.contentRoot = g.contentRoot;
 		w.outputRoot = g.outputRoot;
 		w.cell = c;
-		w.cellName = engine::world::cells::CellDirName(c);
-		w.zoneId = engine::world::cells::CellZoneId(c);
+		// Dossier et identifiant de zone propres à la carte (cell_* / enfers_*).
+		w.cellName = engine::world::cells::CellDirName(c, g.master.cellMap);
+		w.zoneId = engine::world::cells::CellZoneId(c, g.master.cellMap);
 		const engine::world::cells::CellPoint mn = engine::world::cells::CellMinCorner(c);
 		w.terrainOriginX = mn.x;
 		w.terrainOriginZ = mn.z;
@@ -248,6 +249,10 @@ namespace tools::world_gen
 		{
 			int n = 0, e = 0;
 			if (!ParseCellId(id, n, e)) { err = "cellule invalide : " + id; return false; }
+			if (!engine::world::cells::IsInLoreGrid({ n, e }, g.master.cellMap))
+			{
+				err = "cellule hors de la grille de la carte '" + g.master.worldId + "' : " + id; return false;
+			}
 			auto w = std::make_unique<World>();
 			InitCell(*w, g, { n, e });
 			// L'ordre compte : chaque étape s'appuie sur les champs des précédentes.
@@ -273,6 +278,10 @@ namespace tools::world_gen
 					return false;
 				}
 			if (!opt.dryRun && !WriteCellOutputs(*w, err)) return false;
+			// Altitude du sol au centre des lieux remarquables (portails : portals.json),
+			// relevée AVANT la libération de la heightmap.
+			for (PoiDef& p : w->pois)
+				p.y = w->HeightAt(p.center);
 			Accumulate(total, w->report);
 			++total.cells;
 			// Libère les champs lourds (≈ 100 Mo par cellule) : seules les listes
@@ -297,6 +306,7 @@ namespace tools::world_gen
 		total.rivers = g.report.rivers;
 		total.lakes = g.report.lakes;
 		total.houseTemplates = g.report.houseTemplates;
+		total.portals = g.report.portals;
 		total.warnings.insert(total.warnings.begin(), g.report.warnings.begin(), g.report.warnings.end());
 		total.writtenFiles.insert(total.writtenFiles.end(), g.report.writtenFiles.begin(), g.report.writtenFiles.end());
 		outReport = std::move(total);

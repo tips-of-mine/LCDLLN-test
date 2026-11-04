@@ -1,6 +1,7 @@
 // lcdlln_world_gen — CLI du générateur de monde (outil offline, sans GPU).
 //
 //   lcdlln_world_gen [--content <dir>] [--world <id>] [--output <dir>]
+//   (--world royaumes : le continent ; --world enfers : la seconde carte)
 //                    [--cells N003_W009,N011_E008] [--dry-run]
 //
 // Code retour : 0 succès, 1 échec (message sur stderr). Les avertissements
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
 		static_cast<unsigned long long>(rep.spawners), static_cast<unsigned long long>(rep.ambientNpcs), static_cast<unsigned long long>(rep.creatures));
 	std::printf("  respawns        : %llu, PNJ statiques : %llu\n",
 		static_cast<unsigned long long>(rep.respawnPoints), static_cast<unsigned long long>(rep.interactables));
+	std::printf("  portails        : %llu (relies a une autre carte)\n", static_cast<unsigned long long>(rep.portals));
 	for (const std::string& f : rep.writtenFiles) std::printf("  ecrit : %s\n", f.c_str());
 	for (const std::string& wmsg : rep.warnings) std::printf("  [avertissement] %s\n", wmsg.c_str());
 	return 0;

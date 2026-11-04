@@ -80,6 +80,7 @@ namespace tools::world_gen
 		out.displayName = GetStr(root, "display_name", out.worldId);
 		out.seed = static_cast<uint64_t>(GetNum(root, "seed", 1.0));
 		if (out.worldId != worldId) { err = "master: world_id '" + out.worldId + "' != '" + worldId + "'"; return false; }
+		out.cellMap = engine::world::cells::CellMapFromWorldId(out.worldId).value_or(engine::world::cells::CellMap::Royaumes);
 
 		// --- échelle ---
 		const JsonValue* sc = FindObjectMember(root, "scale");
@@ -187,8 +188,20 @@ namespace tools::world_gen
 				PoiDef d;
 				d.id = GetStr(p, "id"); d.name = GetStr(p, "name", d.id); d.cell = GetStr(p, "cell");
 				d.kind = GetStr(p, "kind", "monolithe"); d.description = GetStr(p, "description");
+				d.link = GetStr(p, "link");
 				if (d.id.empty() || !ids.insert(d.id).second) { err = "master: id de POI vide ou duplique '" + d.id + "'"; return false; }
 				if (!ParseCellId(d.cell, d.n, d.e)) { err = "master: cellule invalide pour POI '" + d.id + "'"; return false; }
+				// Lien de portail « <monde>:<id> » : monde connu, différent du monde courant.
+				if (!d.link.empty())
+				{
+					const size_t colon = d.link.find(':');
+					const std::string linkWorld = colon == std::string::npos ? std::string() : d.link.substr(0, colon);
+					if (d.kind != "portail" || colon == std::string::npos || colon + 1 >= d.link.size()
+						|| !engine::world::cells::CellMapFromWorldId(linkWorld) || linkWorld == out.worldId)
+					{
+						err = "master: link invalide pour POI '" + d.id + "' (attendu : portail, \"<autre monde>:<id>\")"; return false;
+					}
+				}
 				out.pois.push_back(std::move(d));
 			}
 		}

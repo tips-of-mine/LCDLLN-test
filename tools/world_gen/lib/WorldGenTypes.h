@@ -19,6 +19,8 @@
 
 #include <zone_builder/JsonDocument.h>
 
+#include "src/shared/world/WorldCells.h"
+
 namespace tools::world_gen
 {
 	/// Point 2D monde (plan XZ), mètres.
@@ -75,8 +77,14 @@ namespace tools::world_gen
 		std::string cell;
 		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre
 		std::string description;
+		/// Portail (kind "portail") : identifiant du portail APPARIÉ dans l'autre carte
+		/// (clé `link`, ex. "enfers:poi_enfers_porte_1"). Vide = portail décoratif.
+		std::string link;
 		int  n = 0, e = 0;
 		Vec2 center;
+		/// Altitude du sol au centre (m), relevée sur la heightmap de la cellule
+		/// pendant la génération (sortie portals.json). 0 tant que non calculée.
+		double y = 0.0;
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).
@@ -115,6 +123,10 @@ namespace tools::world_gen
 	struct WorldMaster
 	{
 		std::string worldId;
+		/// Carte des cellules du monde (WorldCells::CellMap) : dossiers `cell_*` et
+		/// zone ids 1 000 000+ pour « royaumes », `enfers_*` et 2 000 000+ pour
+		/// « enfers ». Déduite de world_id (identifiant inconnu → Royaumes).
+		engine::world::cells::CellMap cellMap = engine::world::cells::CellMap::Royaumes;
 		std::string displayName;
 		uint64_t    seed = 1;
 		WorldScale  scale;
@@ -166,6 +178,7 @@ namespace tools::world_gen
 		uint64_t cells = 0;
 		uint64_t proceduralPlaces = 0;
 		uint64_t seaPocketSamples = 0; ///< EAU.5 : échantillons de cuvettes sous la mer comblés
+		uint64_t portals = 0;          ///< portails reliés à une autre carte (portals.json)
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

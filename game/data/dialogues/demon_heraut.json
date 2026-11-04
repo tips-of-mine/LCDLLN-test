@@ -8,7 +8,7 @@
             "lines": {
                 "count": 2,
                 "0": {
-                    "text": "La Faille t'a vu naitre. Sers-la."
+                    "text": "Les Enfers t'ont vu naitre. Sers la Legion."
                 },
                 "1": {
                     "text": "(Maltheus deploie une banniere frangee de cendres.)",
@@ -36,7 +36,7 @@
             "lines": {
                 "count": 1,
                 "0": {
-                    "text": "Le bouclier de Tsaroth. Ceux qui tiennent la Faille fermee pendant que les autres dorment."
+                    "text": "Le bouclier de la Citadelle. Ceux qui gardent les portes des Enfers pendant que les autres dorment."
                 }
             },
             "choices": {

@@ -86,8 +86,10 @@ int main()
 	if (real.LoadFromContent(cfg, "royaumes", err))
 	{
 		Check(real.Cities().size() >= 30, "royaumes : villes");
-		for (const char* race : { "humains", "elfes", "orcs", "nains", "demons" })
+		// Les démons naissent aux Enfers (seconde carte), plus sur le continent.
+		for (const char* race : { "humains", "elfes", "orcs", "nains" })
 			Check(real.StartCityFor(race) != nullptr, race);
+		Check(real.StartCityFor("demons") == nullptr, "royaumes : plus de depart demon sur le continent");
 		// Repère global des cellules : Marn au centre de la cellule N003_W009.
 		const PlaceCity* marn = real.CityAt(-90000.0f, -30000.0f);
 		Check(marn && marn->id == "hameau_marn", "royaumes : hameau de Marn au centre de N003_W009");
@@ -96,6 +98,20 @@ int main()
 	else
 	{
 		std::printf("note: %s (test donnees reelles ignore)\n", err.c_str());
+	}
+
+	// Seconde carte (si générée) : la Citadelle de la Légion, départ des démons.
+	WorldPlaces hell;
+	if (hell.LoadFromContent(cfg, "enfers", err))
+	{
+		const PlaceCity* citadel = hell.StartCityFor("demons");
+		Check(citadel && citadel->id == "citadelle_legion", "enfers : depart des demons a la Citadelle");
+		Check(hell.GeneratedCells().size() == 5u, "enfers : 5 cellules generees");
+		Check(hell.StartCityFor("humains") == nullptr, "enfers : aucun depart humain");
+	}
+	else
+	{
+		std::printf("note: %s (test donnees enfers ignore)\n", err.c_str());
 	}
 
 	if (g_fail == 0) std::printf("world_places_tests: OK\n");

@@ -316,7 +316,9 @@ namespace tools::world_gen
 		for (const Lake& l : lakes)
 		{
 			const double dx = p.x - l.center.x, dz = p.z - l.center.z;
-			if (dx * dx + dz * dz < (l.radiusM + 2.0) * (l.radiusM + 2.0)) return true;
+			// EAU.5 : contour réel (polygone bruité ±8 %), plus le cercle moyen.
+			const double r = LakeRadiusAt(l, std::atan2(dz, dx)) + 2.0;
+			if (dx * dx + dz * dz < r * r) return true;
 		}
 		return false;
 	}
@@ -527,7 +529,6 @@ namespace tools::world_gen
 		}
 		for (Lake& lake : g.lakes)
 		{
-			lake.waterY = std::max(sea + 0.5, MeanMacroHeight(m, lake.center, lake.radiusM + 30.0, std::max(4.0, lake.radiusM / 12.0)) - 0.8);
 			// Polygone CCW (vu de dessus, X est / Z sud), sommets bruités.
 			const int verts = std::clamp(static_cast<int>(lake.radiusM / 6.0), 28, 96);
 			for (int k = 0; k < verts; ++k)
@@ -536,6 +537,8 @@ namespace tools::world_gen
 				const double rr = lake.radiusM * (1.0 + 0.08 * Fbm(std::cos(a) * 3.0, std::sin(a) * 3.0, 1.0, 2, Hash(m.seed, HashString(lake.name.c_str()))));
 				lake.polygon.push_back({ lake.center.x + std::cos(a) * rr, lake.center.z + std::sin(a) * rr });
 			}
+			lake.waterY = LakeWaterLevel(m, lake,
+				MeanMacroHeight(m, lake.center, lake.radiusM + 30.0, std::max(4.0, lake.radiusM / 12.0)));
 		}
 	}
 
@@ -727,9 +730,149 @@ namespace tools::world_gen
 				w.biome.At(i, j) = MacroBiome(m, x, z);
 			}
 		});
-		const double sea = m.scale.seaLevelM;
+		FillSeaPockets(w);
+	}
+
+	void FillSeaPockets(World& w)
+	{
+		const double sea = w.master.scale.seaLevelM;
+		w.report.seaPocketSamples += FillLandlockedSea(w.height, w.biome, sea, sea + 0.5);
+		w.hasSea = false;
 		for (double hv : w.height.data)
 			if (hv < sea) { w.hasSea = true; break; }
+	}
+
+	size_t FillLandlockedSea(Grid<double>& height, const Grid<char>& biome, double seaLevel, double fillY)
+	{
+		const int W = height.width, H = height.height;
+		if (W <= 0 || H <= 0) return 0;
+		const bool useBiome = biome.data.size() == height.data.size();
+		std::vector<uint8_t> sea(height.data.size(), 0); // 1 = relié à la mer
+		std::vector<size_t> stack;
+		auto seed = [&](size_t idx) {
+			if (!sea[idx] && height.data[idx] < seaLevel) { sea[idx] = 1; stack.push_back(idx); }
+		};
+		for (int j = 0; j < H; ++j)
+			for (int i = 0; i < W; ++i)
+			{
+				const size_t idx = static_cast<size_t>(j) * W + i;
+				const bool border = i == 0 || j == 0 || i == W - 1 || j == H - 1;
+				const bool marine = useBiome && (biome.data[idx] == ' ' || biome.data[idx] == '-');
+				if (border || marine) seed(idx);
+			}
+		while (!stack.empty())
+		{
+			const size_t idx = stack.back();
+			stack.pop_back();
+			const int i = static_cast<int>(idx % W), j = static_cast<int>(idx / W);
+			if (i > 0) seed(idx - 1);
+			if (i < W - 1) seed(idx + 1);
+			if (j > 0) seed(idx - W);
+			if (j < H - 1) seed(idx + W);
+		}
+		size_t filled = 0;
+		for (size_t idx = 0; idx < height.data.size(); ++idx)
+			if (!sea[idx] && height.data[idx] < seaLevel)
+			{
+				height.data[idx] = fillY;
+				++filled;
+			}
+		return filled;
+	}
+
+	double LakeRadiusAt(const Lake& lake, double angleRad)
+	{
+		const size_t n = lake.polygon.size();
+		if (n < 3) return lake.radiusM;
+		constexpr double kTwoPi = 6.283185307179586;
+		double a = std::fmod(angleRad, kTwoPi);
+		if (a < 0.0) a += kTwoPi;
+		const double f = a / kTwoPi * static_cast<double>(n);
+		const size_t k0 = static_cast<size_t>(f) % n, k1 = (k0 + 1) % n;
+		const double t = f - std::floor(f);
+		auto radius = [&](size_t k) {
+			return std::hypot(lake.polygon[k].x - lake.center.x, lake.polygon[k].z - lake.center.z);
+		};
+		return Lerp(radius(k0), radius(k1), t);
+	}
+
+	double LakeWaterLevel(const WorldMaster& m, const Lake& lake, double meanHeight)
+	{
+		// Relief de base juste au-delà du contour (10 m), 64 directions.
+		std::vector<double> rim;
+		rim.reserve(64);
+		for (int k = 0; k < 64; ++k)
+		{
+			const double a = 6.283185307179586 * k / 64.0;
+			const double r = LakeRadiusAt(lake, a) + 10.0;
+			rim.push_back(MacroHeight(m, lake.center.x + std::cos(a) * r, lake.center.z + std::sin(a) * r));
+		}
+		// 15e centile : quelques creux isolés de la rive ne font pas tout baisser
+		// (la digue de CarveLake les comble).
+		std::nth_element(rim.begin(), rim.begin() + 9, rim.end());
+		const double rimLow = rim[9];
+		return std::max(m.scale.seaLevelM + 0.5, std::min(meanHeight - 0.8, rimLow - 0.3));
+	}
+
+	void CarveLake(Grid<double>& height, const Grid<float>& riverDist, const Grid<uint8_t>& urban, const Lake& lake, double floorY)
+	{
+		constexpr double kBeachM = 40.0;     // fondu de la rive vers le relief d'origine (m)
+		constexpr double kBankAboveM = 0.3;  // sol au ras du bord : au-dessus de l'eau (m)
+		constexpr double kDamSlope = 0.35;   // pente de la digue naturelle (≈ 19°)
+		constexpr double kDamCrestM = 8.0;   // crête de la digue, au-dessus de l'eau (m)
+		constexpr double kDamReachM = 120.0; // portée maximale de la digue (m)
+		constexpr float kRiverKeepM = 12.0f; // pas de digue sur un lit de rivière (m)
+		constexpr double kEdgeRiseM = 6.0;   // remontée du fond vers la rive, dans le polygone (m)
+		double rMax = lake.radiusM;
+		for (const Vec2& p : lake.polygon)
+			rMax = std::max(rMax, std::hypot(p.x - lake.center.x, p.z - lake.center.z));
+		const double depthMax = std::min(9.0, 1.0 + lake.radiusM * 0.025);
+		const double bankY = lake.waterY + kBankAboveM;
+		const bool hasRivers = riverDist.data.size() == height.data.size();
+		const bool hasUrban = urban.data.size() == height.data.size();
+		ForDisc(height, lake.center, rMax + kDamReachM, [&](int i, int j, double d) {
+			const double dx = height.WorldX(i) - lake.center.x, dz = height.WorldZ(j) - lake.center.z;
+			const double rr = std::max(1.0, LakeRadiusAt(lake, std::atan2(dz, dx)));
+			double& h = height.At(i, j);
+			if (d <= rr)
+			{
+				// Fond : parabole sous la surface (0,6 m au bord, ≤ 9,6 m au centre).
+				const double q = d / rr;
+				// Jamais sous floorY (la mer) : la nappe de la mer couvre toute une
+				// cellule côtière et apparaîtrait sous l'eau du lac.
+				const double bed = std::max(floorY, lake.waterY - (depthMax * (1.0 - q * q) + 0.6));
+				const double inside = rr - d;
+				if (inside < kEdgeRiseM)
+				{
+					// Bande du bord : le sol remonte AU-DESSUS de l'eau au ras du
+					// polygone ; le rivage réel est un peu en dedans et le bord de
+					// la nappe reste enfoui sous la rive (jamais visible, même entre
+					// deux échantillons de la heightmap).
+					const double edgeY = Lerp(bankY, bed, SmoothStep(0.0, kEdgeRiseM, inside));
+					// Un lit de rivière qui entre ou sort du lac n'est jamais rehaussé.
+					const bool river = hasRivers && riverDist.At(i, j) < kRiverKeepM;
+					h = river ? std::min(h, edgeY) : edgeY;
+				}
+				else
+					h = std::min(h, bed);
+				return;
+			}
+			const double out = d - rr;
+			// Plateau urbain (aplani avant) : jamais retouché par la rive.
+			if (hasUrban && urban.At(i, j) != 0) return;
+			if (h >= bankY)
+			{
+				// Relief plus haut : grève jusqu'au bord de l'eau, élargie quand la
+				// rive domine l'eau de haut (pente moyenne ≤ 22° environ).
+				const double beach = std::clamp((h - bankY) * 2.5, kBeachM, kDamReachM);
+				if (out < beach) h = Lerp(bankY, h, SmoothStep(0.0, beach, out));
+			}
+			else if (!hasRivers || riverDist.At(i, j) >= kRiverKeepM)
+			{
+				// Relief plus bas : digue naturelle (sinon la nappe flotte au-dessus du vide).
+				h = std::max(h, bankY - std::max(0.0, out - kDamCrestM) * kDamSlope);
+			}
+		});
 	}
 
 	void FlattenSettlements(World& w)
@@ -766,6 +909,7 @@ namespace tools::world_gen
 
 	void CarveWater(World& w)
 	{
+		const double sea = w.master.scale.seaLevelM;
 		w.riverDist.Init(w.height.width, w.height.height, w.height.originX, w.height.originZ, w.height.step, 1e9f);
 		auto inCity = [&](double x, double z) {
 			for (const CityDef& c : w.cities)
@@ -779,7 +923,10 @@ namespace tools::world_gen
 			{
 				const Vec2 p = river.points[k];
 				const double half = river.widthM[k] * 0.5;
-				const double bed = river.waterY[k] - 2.4;
+				// EAU.5 : en amont de l'embouchure, lit jamais sous la mer (la nappe de
+				// la mer d'une cellule côtière apparaîtrait sous la rivière).
+				const double bed = river.waterY[k] > sea + 0.6 ? std::max(river.waterY[k] - 2.4, sea + 0.1)
+				                                               : river.waterY[k] - 2.4;
 				const double reach = half + 30.0;
 				ForDisc(w.height, p, reach, [&](int i, int j, double d) {
 					// Jamais de lit creusé dans une ville (plateau préservé).
@@ -801,21 +948,6 @@ namespace tools::world_gen
 			}
 		}
 		for (const Lake& lake : w.lakes)
-		{
-			const double R = lake.radiusM;
-			ForDisc(w.height, lake.center, R + 40.0, [&](int i, int j, double d) {
-				double& h = w.height.At(i, j);
-				if (d <= R)
-				{
-					const double depth = std::min(9.0, 1.0 + R * 0.025) * (1.0 - (d / R) * (d / R)) + 0.6;
-					h = std::min(h, lake.waterY - depth);
-				}
-				else
-				{
-					const double t = SmoothStep(R, R + 40.0, d);
-					h = Lerp(std::min(h, lake.waterY + 0.3), h, t);
-				}
-			});
-		}
+			CarveLake(w.height, w.riverDist, w.urban, lake, sea + 0.1); // EAU.5
 	}
 }

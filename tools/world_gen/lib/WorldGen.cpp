@@ -46,6 +46,7 @@ namespace tools::world_gen
 			dst.respawnPoints += src.respawnPoints;
 			dst.interactables += src.interactables;
 			dst.proceduralPlaces += src.proceduralPlaces;
+			dst.seaPocketSamples += src.seaPocketSamples;
 			dst.warnings.insert(dst.warnings.end(), src.warnings.begin(), src.warnings.end());
 			dst.writtenFiles.insert(dst.writtenFiles.end(), src.writtenFiles.begin(), src.writtenFiles.end());
 		}
@@ -255,6 +256,7 @@ namespace tools::world_gen
 			FlattenSettlements(*w); // plateaux urbains
 			CarveWater(*w);         // lits de rivière, lacs
 			ApplyRoads(*w);         // routes globales + chemins locaux
+			FillSeaPockets(*w);     // EAU.5 : un déblai de route ne crée pas de « mare de mer »
 			if (!ImportLegacyContent(*w, err)) return false; // occupe la place des objets historiques
 			BuildSettlements(*w);   // rues, bâtiments, remparts, mobilier, graphe PNJ
 			BuildVegetation(*w);    // décor naturel (respecte l'occupation)

@@ -55,6 +55,9 @@ int main(int argc, char** argv)
 	}
 	std::printf("[world_gen] monde '%s' genere%s : %llu cellule(s) de 10 km, %llu lieux proceduraux\n", opt.worldId.c_str(), opt.dryRun ? " (dry-run)" : "",
 		static_cast<unsigned long long>(rep.cells), static_cast<unsigned long long>(rep.proceduralPlaces));
+	if (rep.seaPocketSamples > 0)
+		std::printf("  eau (EAU.5)     : %llu echantillon(s) de cuvettes sous la mer combles\n",
+			static_cast<unsigned long long>(rep.seaPocketSamples));
 	std::printf("  decor instancie : %llu instances, %llu meshes\n",
 		static_cast<unsigned long long>(rep.scatterInstances), static_cast<unsigned long long>(rep.scatterMeshes));
 	std::printf("  batiments       : %llu (modeles parametriques : %llu)\n",

@@ -5,6 +5,9 @@
 > **cellules de 10 km × 10 km** (1 case du lore = 1 cellule = 1 zone moteur).
 > Seules les cellules listées dans `generated_cells` sont générées et jouables ;
 > on commence par les **5 cellules des villes de départ par race**.
+>
+> Les placements tirés des albums (villes, lieux, POI, états) et les corrections du
+> lore qui les accompagnent sont tracés dans [`LORE_BD.md`](LORE_BD.md).
 
 ## 0. Avancement (une PR par étape)
 

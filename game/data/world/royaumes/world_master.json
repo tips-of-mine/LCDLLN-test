@@ -561,18 +561,6 @@
       "description": "Carte page 19 (p.25 BD) — cité identifiable sur l'itinéraire de Ghorghor Bey."
     },
     {
-      "id": "ville_chateau_ruine_t00",
-      "name": "Chateau en ruine",
-      "cell": "N016_E015",
-      "kind": "hameau",
-      "race": "humains",
-      "state": "ruine",
-      "faction": "neutre",
-      "start_for": [],
-      "source": "[INFÉRÉ] BD-T00",
-      "description": "Chateau en ruine"
-    },
-    {
       "id": "ville_garundel_fief",
       "name": "Fief de Garundel",
       "cell": "S001_E004",
@@ -1475,9 +1463,9 @@
     {
       "id": "poi_ruines_wismerhill",
       "name": "Ruines de Wismerhill",
-      "cell": "N009_E017",
+      "cell": "N011_E008",
       "kind": "ruine",
-      "description": "Chateau incendie de la colline des murmures, enfance de Wismerhill (BD-T00) ; bordure sud des Marches du Nord [INFERE] (lore v1.0.56, lieu_ruines_wismerhill)."
+      "description": "Chateau incendie de la colline des murmures, enfance de Wismerhill (BD-T00), a cote du village de Whispers Hill (decision du proprietaire, lore v1.0.56, lieu_ruines_wismerhill)."
     },
     {
       "id": "poi_grand_hall_nains",

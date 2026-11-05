@@ -397,7 +397,7 @@ Frise relative (Q3) : A4 → A5 → M2/M3 → A3, puis T00, A1 et A2, qui conver
   Grundur, Shaadrak, le commandant et le prêtre du Château de la Mort), A5 (Phocrathus, Hermann, Glurkha, la
   démonesse à la couronne d'épines), Methraton (Hokkham, Bastet, Râ, Ptah, Pharaon, l'archimage d'Erypt,
   Smenethep, Tanith, Hopt, Merweenn, le Grand Vizir, Narankhorhh).
-- **Lieux (19, `lieux`)** : Ruines de Wismerhill (placées, voir 10.4) ; Erypt, Memphis, Thèbes, Île des Mages,
+- **Lieux (19, `lieux`)** : Ruines de Wismerhill (placées en N011_E008, fusion de `ville_chateau_ruine_t00`, voir 10.4) ; Erypt, Memphis, Thèbes, Île des Mages,
   tête de mort volante, village de Sekh, plan de Methraton, plan des aiguilles, Montagne de Feu, pays Krell
   (hors carte) ; Khurden, Rériah, Almuria, Château de la Mort, village natal de Ghorghor, ruines de Thenhart,
   sanctuaire des deux fois nés, Passe de Syzygie (sans cellule, placement : PR de carte à part).
@@ -445,10 +445,21 @@ Frise relative (Q3) : A4 → A5 → M2/M3 → A3, puis T00, A1 et A2, qui conver
 
 Le château de la colline des murmures (enfance de Wismerhill, incendié au T00) est **en ruine** à
 l'époque du jeu et figure sur la carte jouable : lieu `lieu_ruines_wismerhill` (alias colline des
-murmures, château de Wismerhill), cellule **N009_E017** [INFÉRÉ] — plaine libre de la bordure sud des
-Marches du Nord (région `marches_du_nord` du monde jouable, hors des Territoires orcques), sans ville ni
-POI. Monde jouable : POI `poi_ruines_wismerhill` (genre `ruine`). La cellule n'est pas générée par défaut.
-Le village `ville_whispers_hill` (N011_E008, T1) reste une fiche distincte, notée `[À VÉRIFIER BD-T00]`.
+murmures, château de Wismerhill, Wisperhill, Château en Ruine du Vieux Seigneur), région
+`region_terres_nord_t00`.
+
+**Décision du propriétaire** : le village vivant `ville_whispers_hill` (N011_E008, ville de départ des
+elfes) **reste tel quel** ; le château en ruine est un POI de la **même case N011_E008**, à côté du village.
+
+- Monde jouable : POI `poi_ruines_wismerhill` (genre `ruine`) en N011_E008. Le générateur le pousse hors
+  du plateau du village et de son raccord (rayon du village + marge), sans chevauchement. Plus rien en
+  N009_E017 (première proposition abandonnée).
+- Doublon fusionné : `ville_chateau_ruine_t00` (« Château en Ruine du Vieux Seigneur », ville sans cellule
+  dans le lore, hameau en ruine en N016_E015 dans le monde jouable) est fusionné dans
+  `lieu_ruines_wismerhill` : nom gardé en alias, 4 dialogues du T00 repointés (`location_ville_id`), ville
+  retirée de `world_master.json` (88 villes) et entrée retirée de `TAILLE_VILLES`
+  (`tools/lore/generate_city_services.py`).
+- `region_terres_nord_t00` et `zone_whispers_hill` renvoient à la case N011_E008 et au lieu fusionné.
 
 ### 10.5 Points ouverts restants
 
@@ -458,7 +469,6 @@ Le village `ville_whispers_hill` (N011_E008, T1) reste une fiche distincte, not�
 - Lecture « Ogun » du T11 à revérifier (Q14).
 - Okhost / Hokhost : identité `[HYPOTHÈSE]`, fusion éventuelle des deux fiches.
 - L'impératrice du THS (`char_imperatrice_hs`) = Hellaynnea : `[HYPOTHÈSE]` forte, fiches non fusionnées.
-- Whispers Hill (N011_E008) et Ruines de Wismerhill (N009_E017) : deux lieux « colline des murmures ».
 - Page imprimée 037 d'A5 manquante (copie de la page 025) : événements entre la mort de Glurkha et Moork inconnus.
 
 ## 11. Questions ouvertes

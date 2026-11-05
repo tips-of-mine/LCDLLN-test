@@ -3,7 +3,7 @@
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
     "version": "1.0.56",
     "notes": [
-      "v1.0.56 : [BD-HS] albums hors série (Tome 0 « En un jeu cruel », « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5) : 25 décisions du propriétaire (propositions par défaut) — THS après T11, préquelles avant T1 (état de fin d'album) ; Sysigie affichée « Aurore » (alias Sysigie, Syzygie ; principauté syzygie) ; char_wismerhill_father fusionné dans char_pazuzu ; Greldinard demi-orque, Ghorghor demi-ogre, Pile-ou-Face elfe des bois (alias Nelfe) ; jumelles « Carole et Caroline » ; Okhost alias Hokhost ; Dvorak / Dzorak ; régions Marche de l'Est et royaume d'Hishtarland ; Orkland alias des Territoires orcques ; Erypt et plans hors carte ; Sekh = le Serpent ; Haghendorf empereur des préquelles ; Ruines de Wismerhill placées en N009_E017 (POI poi_ruines_wismerhill) ; personnages, lieux, objets et frise des albums ajoutés. Détail : docs/world/LORE_BD.md, section 10.",
+      "v1.0.56 : [BD-HS] albums hors série (Tome 0 « En un jeu cruel », « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5) : 25 décisions du propriétaire (propositions par défaut) — THS après T11, préquelles avant T1 (état de fin d'album) ; Sysigie affichée « Aurore » (alias Sysigie, Syzygie ; principauté syzygie) ; char_wismerhill_father fusionné dans char_pazuzu ; Greldinard demi-orque, Ghorghor demi-ogre, Pile-ou-Face elfe des bois (alias Nelfe) ; jumelles « Carole et Caroline » ; Okhost alias Hokhost ; Dvorak / Dzorak ; régions Marche de l'Est et royaume d'Hishtarland ; Orkland alias des Territoires orcques ; Erypt et plans hors carte ; Sekh = le Serpent ; Haghendorf empereur des préquelles ; Ruines de Wismerhill : POI poi_ruines_wismerhill à côté du village de Whispers Hill (N011_E008), fusion de ville_chateau_ruine_t00 ; personnages, lieux, objets et frise des albums ajoutés. Détail : docs/world/LORE_BD.md, section 10.",
       "v1.0.55 : placements T7-T14 et fleuve de Sysigie — temple de Methraton et Seuil de Lhynn dans la cellule de Lhynn (N001_W010), forteresse naine d'Heureux / Heusgly en S006_E004, sanctuaire des Chevaliers Dragons en S003_W004 (décisions) ; Port Franc (S003_W013), Hoengardt (N014_E016), défilé de Mordrek (N016_E013), Moros (N000_W007), Grand Hall des nains (S008_E014) [INFÉRÉ] ; fleuve « [à nommer] » qui entoure l'île de Sysigie (N006_W010 → N012_W011) ; fusion char_haut_tharque → char_meldrim_t11 (décision) ; notes : enfants de Wismerhill, Kruikna / Cruik / dragon bleu distincts, Parsifal caché au T12, titre « Baron » de Greldinard. Détail : docs/world/LORE_BD.md, section 8.",
       "v1.0.54 : [BD-T7 à T14] corrections confrontées aux albums « De Vents, de Jade et de Jais », « Le Glaive de justice », « Les Chants de la négation », « L'Aigle foudroyé », « Ave Tenebrae », « La Porte des Enfers », « La Prophétie », « La Fin des Temps » : fusions char_prince_tenebres_t11 → char_lucifer_prince_tenebres (le Sombre Prince est le père d'Haazheel), char_baron_aspirant_t13 → char_fratus_sinister, char_pilou → char_pile_ou_face, char_methrhton_herald → char_serpent_methraton ; contenu « Jade » du T7 marqué [À VÉRIFIER] ; bataille finale du T13 dans la salle du trône de Lhynn ; Lhynn sur la mer de l'ouest, Sysigie (Syzygie) île fluviale noyée de brouillard (décisions) ; notes BD d'Horkher déplacées depuis Harrowdale ; graphies Grhumpdeth, Hellwelkin, Feu Solaire ; statuts (Haazheel, Fratus, Urmacht, Gunthar morts ; père de Wismerhill et Iaun Reith vivants) ; frise T7-T14 complétée (90 fiches vides remplies ou ajoutées) ; 4 personnages et 8 lieux ajoutés. Détail : docs/world/LORE_BD.md, section 7.",
       "v1.0.53 : [BD-T4/T5/T6] corrections confrontées aux BD « Quand sifflent les serpents », « La Danse écarlate », « La Couronne des ombres » : graphies Hellaynnea, Selinporf, Pharix, Hokhost, Sysigie, Krukh ; fusions char_esmeralda_succubus → char_succubus (Esmeralda = apparence), char_grand_maitre_lion → char_fratus_sinister ; titan de Tsaroth = Haazheel ; Tsaroth sans service ; Faille tenue par la Lune Noire ; Krak de Jhenner ; plan de bataille ; palais lunaire et son reflet, Passe de Heniak, citadelle impériale ; 9 évènements corrigés, 2 ajoutés ; tomes des personnages normalisés (tNN). Détail : docs/world/LORE_BD.md.",
@@ -6003,14 +6003,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_kendrhir_vale_ecurie_04",
-          "name": "Ceda Ferval",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_kendrhir_vale_temple_01",
           "name": "Jorold Hautlac",
           "gender": "male",
@@ -7243,7 +7235,7 @@
         "[BD-T1] Lieu de naissance ou lieu associé à Wismerhill — origine du nom 'Wismerhill'.",
         "[BD-T1] Pile-ou-Face donne ce nom à Wismerhill d'après cet endroit.",
         "[INFÉRÉ] Position N011_E008 reprise de world_master.json (la BD ne situe pas le village) ; la forêt de la rencontre avec Pile-ou-Face est placée juste au nord (N012_E008).",
-        "[À VÉRIFIER BD-T00] (v1.0.56) Le T00 situe la « colline des murmures » au château du vieux seigneur (lieu_ruines_wismerhill, N009_E017) ; ce village du T1 (N011_E008, [INFÉRÉ]) reste une fiche distincte en attendant une décision."
+        "[DÉCISION] (v1.0.56) Le village vivant reste tel quel ; le château en ruine de l'enfance de Wismerhill (lieu_ruines_wismerhill) est un POI de la même case N011_E008."
       ],
       "taille": "village",
       "service_npcs": [
@@ -9384,14 +9376,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_northind_ecurie_04",
-          "name": "Marbert Fontpré",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_northind_temple_01",
           "name": "Kelald Marlmare",
           "gender": "male",
@@ -9496,27 +9480,6 @@
           "metier": "fossoyeur"
         }
       ]
-    },
-    {
-      "id": "ville_chateau_ruine_t00",
-      "name": "Château en Ruine du Vieux Seigneur",
-      "alias": "",
-      "type": "ruins_settlement",
-      "importance": "",
-      "cell": "",
-      "coord_x": null,
-      "coord_y": null,
-      "faction_control": "",
-      "region_id": "",
-      "housing_count": null,
-      "population": null,
-      "services": [],
-      "features": [],
-      "notes": [
-        "[v1.0.56] Même lieu que lieu_ruines_wismerhill (Ruines de Wismerhill, N009_E017), fiche placée sur la carte jouable ; cette fiche reste sans cellule."
-      ],
-      "taille": "sans_service",
-      "service_npcs": []
     },
     {
       "id": "ville_hoengardt_t11",
@@ -158129,7 +158092,8 @@
       "name": "Terres du Nord — Château en Ruine",
       "description": "Région de collines boisées et de montagnes enneigées où se situe le château en ruine du vieux seigneur. Forêts de conifères et de feuillus, villages médiévaux, hivers rudes. Zone de l'enfance de Wismerhill.",
       "notes": [
-        "[v1.0.56] Château et village de l'enfance de Wismerhill : lieu_ruines_wismerhill (N009_E017)."
+        "[v1.0.56] Château et village de l'enfance de Wismerhill : lieu_ruines_wismerhill (N011_E008).",
+        "[DÉCISION] (v1.0.56) Le château en ruine (lieu_ruines_wismerhill) et le village de Whispers Hill (ville_whispers_hill) sont dans la case N011_E008."
       ]
     },
     {
@@ -167052,7 +167016,7 @@
       "npc_name": "Pazuzu / Vents / Princesse Elfique",
       "faction_id": "faction_nuees",
       "race_id": "",
-      "location_ville_id": "ville_chateau_ruine_t00",
+      "location_ville_id": "lieu_ruines_wismerhill",
       "lines": [
         {
           "speaker": "Vent",
@@ -167080,7 +167044,8 @@
         }
       ],
       "notes": [
-        "Pages 8-9, Tome 00. Pazuzu choisit la mère de Wismerhill."
+        "Pages 8-9, Tome 00. Pazuzu choisit la mère de Wismerhill.",
+        "[v1.0.56] Lieu : lieu_ruines_wismerhill (fiche de lieu, ex-ville_chateau_ruine_t00)."
       ]
     },
     {
@@ -167089,7 +167054,7 @@
       "npc_name": "Pazuzu / Princesse Elfique",
       "faction_id": "faction_nuees",
       "race_id": "",
-      "location_ville_id": "ville_chateau_ruine_t00",
+      "location_ville_id": "lieu_ruines_wismerhill",
       "lines": [
         {
           "speaker": "Pazuzu",
@@ -167125,7 +167090,8 @@
         }
       ],
       "notes": [
-        "Pages 26-27, Tome 00."
+        "Pages 26-27, Tome 00.",
+        "[v1.0.56] Lieu : lieu_ruines_wismerhill (fiche de lieu, ex-ville_chateau_ruine_t00)."
       ]
     },
     {
@@ -167134,7 +167100,7 @@
       "npc_name": "Vieux Garde / Wismerhill",
       "faction_id": "",
       "race_id": "",
-      "location_ville_id": "ville_chateau_ruine_t00",
+      "location_ville_id": "lieu_ruines_wismerhill",
       "lines": [
         {
           "speaker": "Wismerhill",
@@ -167158,7 +167124,8 @@
         }
       ],
       "notes": [
-        "Pages 29 et 28, Tome 00. Les Vents et le Vieux Garde sont les seuls liens de Wismerhill avec sa mère."
+        "Pages 29 et 28, Tome 00. Les Vents et le Vieux Garde sont les seuls liens de Wismerhill avec sa mère.",
+        "[v1.0.56] Lieu : lieu_ruines_wismerhill (fiche de lieu, ex-ville_chateau_ruine_t00)."
       ]
     },
     {
@@ -167167,7 +167134,7 @@
       "npc_name": "Wismerhill / Vieux Seigneur / Pazuzu",
       "faction_id": "",
       "race_id": "",
-      "location_ville_id": "ville_chateau_ruine_t00",
+      "location_ville_id": "lieu_ruines_wismerhill",
       "lines": [
         {
           "speaker": "Vieux Seigneur",
@@ -167207,7 +167174,8 @@
         }
       ],
       "notes": [
-        "Pages 43-44, Tome 00. Scène clé : Wismerhill tue le Vieux Seigneur et rejette Pazuzu."
+        "Pages 43-44, Tome 00. Scène clé : Wismerhill tue le Vieux Seigneur et rejette Pazuzu.",
+        "[v1.0.56] Lieu : lieu_ruines_wismerhill (fiche de lieu, ex-ville_chateau_ruine_t00)."
       ]
     },
     {
@@ -169113,7 +169081,8 @@
       "notes": [
         "[BD-T0] ÉTYMOLOGIE DOUBLE — corrige/complète le champ 'lore'. Le nom Wismerhill / Wisperhill ('la colline des murmures') est d'abord né AU T0, du vivant de la princesse elfique : les mélopées des vents tourbillonnant autour de la colline lui donnèrent ce nom. La proposition de Pile-ou-Face en T1 est une RÉ-attribution du nom au personnage (l'enfant n'avait pas de nom propre), pas l'origine du toponyme.",
         "[BD-T0] Avant sa destruction : vieux château à moitié en ruine sur une colline, vieux seigneur déchu + village décati en contrebas. Détruit en deux temps : village rasé par l'armée de Ghorghor Bey (planches 32-33), château incendié par Wismerhill lui-même au départ (planches 45-46).",
-        "[DÉCISION] (v1.0.56) Étymologie (Q7) : nom de la colline d'abord [BD-T00 p.4], redonné au T1 par Pile-ou-Face. Le château incendié au T00 est placé sur la carte : lieu_ruines_wismerhill."
+        "[DÉCISION] (v1.0.56) Étymologie (Q7) : nom de la colline d'abord [BD-T00 p.4], redonné au T1 par Pile-ou-Face. Le château incendié au T00 est placé sur la carte : lieu_ruines_wismerhill.",
+        "[DÉCISION] (v1.0.56) Case N011_E008 : village vivant de Whispers Hill (ville_whispers_hill) et, à côté, château en ruine (lieu_ruines_wismerhill)."
       ]
     },
     {
@@ -207216,18 +207185,6 @@
       "notes": []
     },
     {
-      "id": "000020",
-      "type": "road",
-      "from_place": "N007_W005",
-      "from_ville_id": "ville_northind",
-      "from_lieu_id": "",
-      "to_place": "N015_E012",
-      "to_ville_id": "kendrhir_vale",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000021",
       "type": "road",
       "from_place": "N009_W011",
@@ -216891,11 +216848,11 @@
     {
       "id": "lieu_ruines_wismerhill",
       "name": "Ruines de Wismerhill",
-      "alias": "colline des murmures, château de Wismerhill, Wisperhill",
+      "alias": "colline des murmures, château de Wismerhill, Wisperhill, Château en Ruine du Vieux Seigneur",
       "type": "ruins_settlement",
       "importance": "",
-      "cell": "N009_E017",
-      "region_id": "region_marches",
+      "cell": "N011_E008",
+      "region_id": "region_terres_nord_t00",
       "zone_id": "",
       "faction_control": "",
       "features": [
@@ -216970,8 +216927,9 @@
         "[BD-T00 p.32] Le village est massacré et brûlé par l'armée de Ghor-Ghor Bey, qui dédaigne le château.",
         "[BD-T00 p.45] Wismerhill met le feu au château et demande aux vents de nourrir l'incendie.",
         "[ÉPOQUE] avant T1 (incendie) ; ruines à l'époque du jeu.",
-        "[INFÉRÉ] (v1.0.56) Cellule N009_E017 : plaine libre de la bordure sud des Marches du Nord (région marches_du_nord du monde jouable, hors des Territoires orcques), sans ville ni POI ; l'album ne situe pas le fief (« fief oublié de tout et de tous », T00 p.1). Monde jouable : POI poi_ruines_wismerhill (genre « ruine »).",
-        "[DÉCISION] (v1.0.56) Ajout du propriétaire : le château de la colline des murmures est en ruine à l'époque du jeu et figure sur la carte jouable, près des Marches du Nord."
+        "[DÉCISION] (v1.0.56) Ajout du propriétaire : le château de la colline des murmures est en ruine à l'époque du jeu et figure sur la carte jouable.",
+        "[DÉCISION] (v1.0.56) Château en ruine à côté du village de Whispers Hill (ville_whispers_hill), dans la même case N011_E008 ; le village vivant reste tel quel. Monde jouable : POI poi_ruines_wismerhill de la case, écarté du plateau du village par le générateur.",
+        "[v1.0.56] Fusion de ville_chateau_ruine_t00 (« Château en Ruine du Vieux Seigneur », ville sans cellule dans le lore, hameau en ruine en N016_E015 dans le monde jouable) : même château ; nom conservé en alias ; références repointées (dialogues du T00) ; la ville du monde jouable est retirée au profit du POI de N011_E008."
       ]
     },
     {

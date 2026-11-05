@@ -4718,10 +4718,12 @@ var MAX_CARTE_ZOOM = 12;      // zoom maximum demandé : ×12
 // Côté physique d'une cellule (km), repris de map-viewer-v23 (cellSizeKm). Sert
 // à estimer la surface d'une région : nb_cellules × CARTE_CELL_SIDE_KM².
 var CARTE_CELL_SIDE_KM = 10;
-// Zoom minimal d'affichage des villes par palier de type de lieu (cités et villes
-// toujours visibles ; hameaux et villages seulement en vue rapprochée).
-var CARTE_TIER_MIN_ZOOM = { major:1, town:1, hamlet:5, poi:1 };
-window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null,
+// Zoom minimal d'affichage des villes par palier de type de lieu : tous les paliers,
+// hameaux et villages compris, sont visibles à tous les zooms (demande du propriétaire).
+var CARTE_TIER_MIN_ZOOM = { major:1, town:1, hamlet:1, poi:1 };
+// selectedRouteId : identifiant de la route sélectionnée dans la liste (surlignée en
+// noir sur la carte), ou null.
+window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null, selectedRouteId:null,
   filters:{ villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true } };
 if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
 if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
@@ -4868,7 +4870,8 @@ function carteHintText() {
       : '🛣️ Mode route : cliquez la cellule de départ, puis la cellule d\'arrivée.';
   }
   return '✎ Mode sélection : cliquez une cellule pour éditer son terrain, sa ville et ses points importants.'
-    + (st.zoom < CARTE_TIER_MIN_ZOOM.hamlet ? ' — Hameaux masqués : zoomez à ×'+CARTE_TIER_MIN_ZOOM.hamlet+' ou plus pour les afficher.' : '');
+    + (st.zoom < CARTE_TIER_MIN_ZOOM.hamlet ? ' — Hameaux masqués : zoomez à ×'+CARTE_TIER_MIN_ZOOM.hamlet+' ou plus pour les afficher.' : '')
+    + (st.selectedRouteId ? ' — Route '+st.selectedRouteId+' sélectionnée (en noir) : recliquez-la dans la liste pour la désélectionner.' : '');
 }
 
 // Dessine la grille, les routes, les villes et les POI sur le canvas.
@@ -4925,7 +4928,10 @@ function drawCarte() {
 
   // Une route peut porter un tracé (waypoints : liste d'ids de cellules, ex. route
   // maritime suivant l'eau navigable) ; sinon ligne droite entre ses extrémités.
+  // La route sélectionnée (st.selectedRouteId) est sautée ici et redessinée en noir
+  // par-dessus tout le reste, en fin de drawCarte.
   if (fl.routes) (db.routes||[]).forEach(function(r){
+    if (st.selectedRouteId && r.id===st.selectedRouteId) return;
     var ids=(r.waypoints&&r.waypoints.length>=2)?r.waypoints:[r.from_place,r.to_place];
     var pts=ids.map(carteCellCenter).filter(Boolean);
     if(pts.length<2) return;
@@ -5000,6 +5006,25 @@ function drawCarte() {
   if (st.mode==='route' && st.routeFrom) {
     var f=carteCellCenter(st.routeFrom);
     if(f){ ctx.strokeStyle='#c9a84c'; ctx.lineWidth=3; ctx.strokeRect(f.x-px/2+1.5,f.y-px/2+1.5,px-3,px-3); }
+  }
+
+  // Route sélectionnée : dessinée en dernier, en noir sur un liseré clair (lisible sur
+  // tous les terrains), un peu plus épaisse que les autres ; affichée même si la
+  // couche « Routes » est masquée, pour la retrouver.
+  var sel = st.selectedRouteId ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
+  if (sel) {
+    var sIds=(sel.waypoints&&sel.waypoints.length>=2)?sel.waypoints:[sel.from_place,sel.to_place];
+    var sPts=sIds.map(carteCellCenter).filter(Boolean);
+    if (sPts.length>=2) {
+      var w=Math.max(3,px*0.2);
+      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
+      [['#f0e6cc', w+4], ['#000000', w]].forEach(function(pass){
+        ctx.strokeStyle=pass[0]; ctx.lineWidth=pass[1];
+        ctx.beginPath(); ctx.moveTo(sPts[0].x,sPts[0].y);
+        for(var i=1;i<sPts.length;i++) ctx.lineTo(sPts[i].x,sPts[i].y);
+        ctx.stroke();
+      });
+    }
   }
 }
 
@@ -5273,14 +5298,32 @@ function carteRoutesListHTML() {
     var v=vid&&(db.villes||[]).find(function(x){return x.id===vid;}); if(v) return v.name;
     var l=lid&&(db.lieux||[]).find(function(x){return x.id===lid;}); return l?l.name:'';
   }
+  var selId=window._carteState.selectedRouteId;
   return routes.map(function(r){ var gi=db.routes.indexOf(r); var d=routeTypeDef(r.type);
     var a=endName(r.from_ville_id,r.from_lieu_id), b=endName(r.to_ville_id,r.to_lieu_id);
-    return '<div class="note-edit-item"><span><span style="color:'+d.color+'">'+d.icon+' '+esc(d.label)+'</span> '+(a||b?'<span style="font-size:0.8rem;color:var(--text-primary)">'+esc(a||'?')+' → '+esc(b||'?')+'</span> ':'')+'<span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary)">'+esc(r.from_place)+' → '+esc(r.to_place)+'</span></span>'+
-      '<button class="note-del-btn" onclick="deleteRoute('+gi+')">✕</button></div>';
+    // Clic sur la ligne : (dé)sélectionne la route ; la ligne sélectionnée est encadrée.
+    var isSel=!!(selId && r.id===selId);
+    return '<div class="note-edit-item" title="Cliquer pour sélectionner / désélectionner la route sur la carte" style="cursor:pointer'+(isSel?';outline:2px solid #000;background:rgba(240,230,204,0.18)':'')+'" onclick="carteToggleRouteSelection(\''+esc(r.id)+'\')"><span><span style="color:'+d.color+'">'+d.icon+' '+esc(d.label)+'</span> '+(a||b?'<span style="font-size:0.8rem;color:var(--text-primary)">'+esc(a||'?')+' → '+esc(b||'?')+'</span> ':'')+'<span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary)">'+esc(r.from_place)+' → '+esc(r.to_place)+'</span></span>'+
+      '<button class="note-del-btn" onclick="event.stopPropagation();deleteRoute('+gi+')">✕</button></div>';
   }).join('');
 }
+/// Sélectionne la route `id` (surlignée en noir sur la carte) ou la désélectionne si
+/// elle l'était déjà ; une seule route sélectionnée à la fois.
+/// Effet de bord : modifie window._carteState.selectedRouteId, redessine la carte,
+/// la liste des routes et le texte d'aide (aucune donnée de db n'est modifiée).
+function carteToggleRouteSelection(id) {
+  var st=window._carteState;
+  st.selectedRouteId = (st.selectedRouteId===id) ? null : id;
+  drawCarte();
+  var list=document.getElementById('carteRoutesList'); if(list) list.innerHTML=carteRoutesListHTML();
+  var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
+}
 function deleteRoute(idx) {
-  confirmDelete('Supprimer cette route ?', function(){ db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée'); });
+  confirmDelete('Supprimer cette route ?', function(){
+    // La route supprimée ne doit pas rester « sélectionnée ».
+    var r=db.routes[idx]; if(r && window._carteState.selectedRouteId===r.id) window._carteState.selectedRouteId=null;
+    db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée');
+  });
 }
 
 // ─────────────────────────────────────────────

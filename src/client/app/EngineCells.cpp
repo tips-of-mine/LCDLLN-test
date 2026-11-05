@@ -9,7 +9,10 @@
 //     déchargement avec hystérésis et destruction GPU différée ;
 //   - le contenu « léger » chargé une fois par cellule (PNJ / interactibles,
 //     marqueurs de respawn, eau) en coordonnées de rendu ;
-//   - le changement d'origine (« rebase ») quand le joueur change de cellule.
+//   - le changement d'origine (« rebase ») quand le joueur change de cellule ;
+//   - le changement de CARTE (seconde carte « Les Enfers », SwitchCellMap) : une
+//     seule carte est résidente à la fois (m_activeCellMap) ; les clés internes
+//     (hauteurs, eau, échecs) n'ont donc besoin d'être uniques que dans la carte.
 // Les conversions réseau (shard, master) sont faites aux frontières : UIModel
 // (snapshots), Engine::UpdateGameplayNet (Input, ForcePosition), sauvegarde de
 // position et EnterWorld.
@@ -64,20 +67,11 @@ namespace engine
 		if (!m_cellWorld)
 			return false;
 
-		m_generatedCells.Clear();
-		engine::client::WorldPlaces places;
-		std::string err;
-		if (places.LoadFromContent(m_cfg, zone, err))
-		{
-			for (const std::string& lore : places.GeneratedCells())
-				if (const std::optional<cells::CellCoord> c = cells::ParseLoreCellId(lore))
-					m_generatedCells.Add(*c);
-		}
-		if (m_generatedCells.Empty())
-		{
-			LOG_ERROR(Core, "[Cells] Monde en cellules '{}' sans cellule generee ({}) : lancer tools/world_gen", zone, err);
+		// Le client démarre toujours sur le continent ; le shard annonce une autre carte
+		// (ZoneChange) à l'entrée en monde d'un personnage des Enfers.
+		m_activeCellMap = cells::CellMap::Royaumes;
+		if (!LoadGeneratedCellsOfActiveMap())
 			return true;
-		}
 
 		// Réglages client du monde (brouillard, culling du décor, profondeur de champ…) :
 		// identiques dans toutes les cellules (importés par le générateur) — on prend
@@ -85,13 +79,13 @@ namespace engine
 		const cells::CellCoord first = m_generatedCells.Cells().front();
 		const std::string content = m_cfg.GetString("paths.content", "game/data");
 		engine::core::Config cellCfg;
-		if (cellCfg.LoadFromFile(content + "/zones/" + cells::CellDirName(first) + "/zone.json"))
+		if (cellCfg.LoadFromFile(content + "/zones/" + cells::CellDirName(first, m_activeCellMap) + "/zone.json"))
 		{
 			for (const char* prefix : { "world.interactables", "world.default_spawn", "world.cell",
 					"world.scatter_path", "world.scenery", "world.test_water" })
 				cellCfg.EraseUnderPrefix(prefix);
 			const size_t merged = m_cfg.MergeFrom(cellCfg, "world.");
-			LOG_INFO(Core, "[Cells] Reglages client de {} fusionnes ({} cle(s))", cells::CellDirName(first), merged);
+			LOG_INFO(Core, "[Cells] Reglages client de {} fusionnes ({} cle(s))", cells::CellDirName(first, m_activeCellMap), merged);
 		}
 		// Le monde en cellules n'a pas de bassin de test.
 		m_cfg.SetValue("world.test_water.enabled", false);
@@ -110,6 +104,140 @@ namespace engine
 		m_renderFrame.SetOriginCell(cells::CellFromPosition(m_cellBootGlobalX, m_cellBootGlobalZ));
 		LOG_INFO(Core, "[Cells] Monde en cellules '{}' : {} cellule(s) generee(s), rayons rendu/dechargement/hauteurs = {:.0f}/{:.0f}/{:.0f} m",
 			zone, m_generatedCells.Cells().size(), m_cellRenderRadiusM, m_cellUnloadRadiusM, m_cellHeightRadiusM);
+		return true;
+	}
+
+	bool Engine::LoadGeneratedCellsOfActiveMap()
+	{
+		m_generatedCells.Clear();
+		const std::string world(cells::WorldIdOf(m_activeCellMap));
+		engine::client::WorldPlaces places;
+		std::string err;
+		if (places.LoadFromContent(m_cfg, world, err))
+		{
+			for (const std::string& lore : places.GeneratedCells())
+				if (const std::optional<cells::CellCoord> c = cells::ParseLoreCellId(lore))
+					m_generatedCells.Add(*c);
+		}
+		if (m_generatedCells.Empty())
+		{
+			LOG_ERROR(Core, "[Cells] Carte '{}' sans cellule generee ({}) : lancer tools/world_gen --world {}", world, err, world);
+			return false;
+		}
+		return true;
+	}
+
+	void Engine::LoadCellWorldWater()
+	{
+		// Eau : TOUTES les cellules générées de la carte active (peu de données) — la
+		// passe d'eau est choisie à la construction du FrameGraph, qui exige un mesh valide.
+		m_cellWaterGlobal.clear();
+		for (const cells::CellCoord& cell : m_generatedCells.Cells())
+		{
+			const std::string rel = "instances/zone_" + cells::CellDirName(cell, m_activeCellMap) + "/water.bin";
+			LOG_DEBUG(Render, "[Cells] Eau '{}'", rel);
+			const std::vector<uint8_t> bytes = ReadContentBytes(m_cfg, rel);
+			if (bytes.empty())
+				continue;
+			engine::world::water::WaterScene scene;
+			engine::world::water::OceanSectionData oceanIgnored;
+			std::string err;
+			if (!engine::world::water::LoadWaterBin(std::span<const uint8_t>(bytes), scene, oceanIgnored, err))
+			{
+				LOG_WARN(Render, "[Cells] water.bin invalide ({}) : {}", rel, err);
+				continue;
+			}
+			m_cellWaterGlobal[cells::CellZoneId(cell, m_activeCellMap)] = std::move(scene);
+		}
+		RebuildCellWater();
+		m_terrainCollider.BindWater(m_clientWaterScene.get());
+		LOG_INFO(Render, "[Cells] Eau ({}) : {} cellule(s) avec eau", cells::WorldIdOf(m_activeCellMap), m_cellWaterGlobal.size());
+	}
+
+	bool Engine::SwitchCellMap(cells::CellMap map)
+	{
+		if (!m_cellWorld || !m_cellHeights || map == m_activeCellMap)
+			return false;
+		const cells::CellMap previous = m_activeCellMap;
+		LOG_INFO(Core, "[Cells] Changement de carte : {} -> {}", cells::WorldIdOf(previous), cells::WorldIdOf(map));
+		const auto t0 = std::chrono::steady_clock::now();
+
+		// 1) Plus aucun chargement en vol (les résultats de l'ancienne carte sont perdus),
+		//    puis GPU au repos avant de détruire terrains, props et eau.
+		m_cellLoader.Stop();
+		m_cellReady.clear();
+		VkDevice device = m_vkDeviceContext.IsValid() ? m_vkDeviceContext.GetDevice() : VK_NULL_HANDLE;
+		if (device != VK_NULL_HANDLE)
+			vkDeviceWaitIdle(device);
+		for (CellRenderTile& tile : m_cellTiles)
+			if (tile.terrain && device != VK_NULL_HANDLE)
+				tile.terrain->Destroy(device);
+		m_cellTiles.clear();
+		DestroyRetiredCellTiles(true);
+		m_cellCollider.SetCells({});
+
+		// 2) Contenu « léger » des cellules : PNJ statiques, leurs props et collisions,
+		//    coffre animé, marqueurs de respawn. Rechargés avec les cellules de la carte.
+		m_interactables.clear();
+		m_interactableInRange = -1;
+		m_props.clear();
+		m_worldCollider.ClearCylinders();
+		m_worldCollider.ClearBoxes();
+		m_chestLoaded = false;
+		m_chestOpen = false;
+		m_chestInteractableIndex = -1;
+		m_respawnMarkers.clear();
+		m_cellsWithStaticContent.clear();
+		m_failedCells.clear();
+		m_remoteSmoothed.clear(); // entités de l'ancienne carte (retirées par les snapshots)
+
+		// 3) Carte active : cellules générées, heightmaps CPU neuves, eau.
+		m_activeCellMap = map;
+		if (!LoadGeneratedCellsOfActiveMap())
+			LOG_ERROR(Core, "[Cells] Carte '{}' indisponible sur ce client (donnees non generees)", cells::WorldIdOf(map));
+		m_cellHeights = std::make_unique<cells::CellHeightFields>(&m_renderFrame);
+		m_terrainCollider.BindHeightFields(nullptr, m_cellHeights.get());
+		LoadCellWorldWater();
+
+		// 4) Données de la carte pour l'interface : POI de quêtes (minimap), lieux et
+		//    carte du monde (relus à la prochaine ouverture), bannière d'entrée.
+		const std::string world(cells::WorldIdOf(map));
+		if (!m_questPoiTable.LoadFrom(m_cfg, "world/" + world + "/quest_poi.json"))
+			LOG_WARN(Core, "[Cells] world/{}/quest_poi.json absent : pas de reperes de quete", world);
+		m_questPoiTable.SetOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
+		m_worldPlaces = engine::client::WorldPlaces{};
+		m_worldMapFeatures = engine::world::mapfeatures::MapFeatures{};
+		m_worldPlacesAttempted = false;
+		m_placeBanner = engine::client::PlaceBannerTracker{};
+		// Carte à découvrir : le continent seulement (cases en attente envoyées avant de partir).
+		if (previous == cells::CellMap::Royaumes)
+			FlushMapDiscovery();
+
+		m_cellLoader.Start();
+		m_taaHistoryInvalid = true;
+		LOG_INFO(Core, "[Cells] Carte '{}' active : {} cellule(s) generee(s) ({} ms)", world, m_generatedCells.Cells().size(),
+			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0).count());
+		return true;
+	}
+
+	bool Engine::FollowServerCellMap()
+	{
+		if (!m_cellWorld)
+			return false;
+		const uint32_t zone = m_uiModelBinding.GetModel().playerStats.zoneId;
+		if (!cells::IsCellZoneId(zone))
+			return false;
+		const cells::CellMap map = cells::CellMapOfZoneOr(zone);
+		if (map == m_activeCellMap || !SwitchCellMap(map))
+			return false;
+		engine::net::ChatMessage line{};
+		line.timestampUnixMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()).count());
+		line.channel = engine::net::ChatChannel::Server;
+		line.sender = "Système";
+		// Message neutre : portail, reconnexion ou téléport MJ.
+		line.text = map == cells::CellMap::Enfers ? "Vous arrivez dans les Enfers." : "Vous revenez dans les Royaumes.";
+		m_chatUi.PushNetworkLine(line);
 		return true;
 	}
 
@@ -162,30 +290,8 @@ namespace engine
 		m_questPoiTable.SetOrigin(m_renderFrame.OriginX(), m_renderFrame.OriginZ());
 		LOG_INFO(Core, "[Cells] Boot : collisions et origine OK, lecture de l'eau ({} cellule(s))", m_generatedCells.Cells().size());
 
-		// Eau : TOUTES les cellules générées dès le boot (peu de données) — la passe
-		// d'eau est choisie à la construction du FrameGraph, qui exige un mesh valide.
-		m_cellWaterGlobal.clear();
-		for (const cells::CellCoord& cell : m_generatedCells.Cells())
-		{
-			const std::string rel = "instances/zone_" + cells::CellDirName(cell) + "/water.bin";
-			LOG_DEBUG(Render, "[Cells] Boot : eau '{}'", rel);
-			const std::vector<uint8_t> bytes = ReadContentBytes(m_cfg, rel);
-			if (bytes.empty())
-				continue;
-			engine::world::water::WaterScene scene;
-			engine::world::water::OceanSectionData oceanIgnored;
-			std::string err;
-			if (!engine::world::water::LoadWaterBin(std::span<const uint8_t>(bytes), scene, oceanIgnored, err))
-			{
-				LOG_WARN(Render, "[Cells] water.bin invalide ({}) : {}", rel, err);
-				continue;
-			}
-			m_cellWaterGlobal[cells::CellZoneId(cell)] = std::move(scene);
-		}
-		LOG_INFO(Core, "[Cells] Boot : eau lue, scene de rendu");
-		RebuildCellWater();
-		m_terrainCollider.BindWater(m_clientWaterScene.get());
-		LOG_INFO(Render, "[Cells] Eau : {} cellule(s) avec eau", m_cellWaterGlobal.size());
+		// Eau de toutes les cellules générées de la carte active (boot : le continent).
+		LoadCellWorldWater();
 	}
 
 	void Engine::StartMapDiscovery()
@@ -208,6 +314,9 @@ namespace engine
 			return;
 		// Build de test (Xvfb, marche automatique) : révélation sans entrée en jeu.
 		if (!m_mapDiscoveryActive && std::getenv("LCDLLN_DEBUG_AUTOWALK") == nullptr)
+			return;
+		// Seconde carte : rien à révéler hors du continent (cases indexées par cellule des Royaumes).
+		if (m_activeCellMap != cells::CellMap::Royaumes)
 			return;
 		const engine::math::Vec3 p = m_characterController.GetPosition();
 		const int added = m_mapDiscovery.RevealAround(m_renderFrame.ToGlobalX(p.x), m_renderFrame.ToGlobalZ(p.z));
@@ -277,7 +386,7 @@ namespace engine
 
 	void Engine::UpdateCellStreamingAround(double globalX, double globalZ, bool synchronous)
 	{
-		const auto isFailed = [this](cells::CellCoord c) { return m_failedCells.count(cells::CellZoneId(c)) != 0; };
+		const auto isFailed = [this](cells::CellCoord c) { return m_failedCells.count(cells::CellZoneId(c, m_activeCellMap)) != 0; };
 		const auto hasTile = [this](cells::CellCoord c) {
 			return std::any_of(m_cellTiles.begin(), m_cellTiles.end(),
 				[&](const CellRenderTile& t) { return t.cell == c; });
@@ -293,11 +402,17 @@ namespace engine
 			for (size_t i = 0; i < m_cellReady.size();)
 			{
 				cells::CellAssets& a = m_cellReady[i];
+				// Résultat d'une autre carte (changement de carte en cours) : ignoré.
+				if (a.map != m_activeCellMap)
+				{
+					m_cellReady.erase(m_cellReady.begin() + static_cast<std::ptrdiff_t>(i));
+					continue;
+				}
 				const double dist = cells::DistanceToCell(a.cell, globalX, globalZ);
 				if (!a.heightsOk)
 				{
-					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(a.cell), a.error);
-					m_failedCells.insert(cells::CellZoneId(a.cell));
+					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(a.cell, m_activeCellMap), a.error);
+					m_failedCells.insert(cells::CellZoneId(a.cell, m_activeCellMap));
 					m_cellReady.erase(m_cellReady.begin() + static_cast<std::ptrdiff_t>(i));
 					continue;
 				}
@@ -351,8 +466,8 @@ namespace engine
 				(void)cells::LoadCellAssets(MakeCellJob(cell, /*wantRender*/ true), a);
 				if (!a.heightsOk)
 				{
-					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell), a.error);
-					m_failedCells.insert(cells::CellZoneId(cell));
+					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell, m_activeCellMap), a.error);
+					m_failedCells.insert(cells::CellZoneId(cell, m_activeCellMap));
 					continue;
 				}
 				if (!m_cellHeights->Has(cell))
@@ -395,6 +510,7 @@ namespace engine
 	{
 		cells::CellAssetJob job;
 		job.cell = cell;
+		job.map = m_activeCellMap; // dossier zones/cell_* ou zones/enfers_*
 		job.wantRender = wantRender;
 		job.baseConfig = m_cfg; // copie : le thread de travail ne lit jamais m_cfg
 		return job;
@@ -407,8 +523,8 @@ namespace engine
 		cells::CellAssets a;
 		if (!cells::LoadCellAssets(MakeCellJob(cell, /*wantRender*/ false), a))
 		{
-			LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell), a.error);
-			m_failedCells.insert(cells::CellZoneId(cell));
+			LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell, m_activeCellMap), a.error);
+			m_failedCells.insert(cells::CellZoneId(cell, m_activeCellMap));
 			return false;
 		}
 		IntegrateCellHeights(a);
@@ -418,12 +534,12 @@ namespace engine
 	void Engine::IntegrateCellHeights(cells::CellAssets& a)
 	{
 		const cells::CellCoord cell = a.cell;
-		const std::string dir = cells::CellDirName(cell);
+		const std::string dir = cells::CellDirName(cell, m_activeCellMap);
 		const engine::core::Config& zcfg = a.zoneOnly;
 		m_cellHeights->Put(std::move(a.heights));
 		LOG_INFO(Render, "[Cells] {} : heightmap CPU residente", dir);
 
-		const uint32_t id = cells::CellZoneId(cell);
+		const uint32_t id = cells::CellZoneId(cell, m_activeCellMap);
 		if (m_cellsWithStaticContent.insert(id).second)
 		{
 			// Interactibles (PNJ, coffres) et marqueurs de respawn, en coordonnées de rendu.
@@ -474,7 +590,7 @@ namespace engine
 		if (!m_vkDeviceContext.IsValid() || !m_pipeline || !assets.renderOk)
 			return false;
 		const cells::CellCoord cell = assets.cell;
-		const std::string dir = cells::CellDirName(cell);
+		const std::string dir = cells::CellDirName(cell, m_activeCellMap);
 		const auto t0 = std::chrono::steady_clock::now();
 
 		// Configuration du terrain : config moteur + zone.json de la cellule (préparée
@@ -553,7 +669,7 @@ namespace engine
 			if (!tile.pending)
 				continue;
 			cells::CellAssets& a = *tile.pending;
-			const std::string dir = cells::CellDirName(tile.cell);
+			const std::string dir = cells::CellDirName(tile.cell, m_activeCellMap);
 			const cells::CellPoint center = cells::CellCenter(tile.cell);
 			InstanceTarget target;
 			target.field = tile.scatter.get();
@@ -655,7 +771,7 @@ namespace engine
 				(void)m_cellHeights->SampleGlobal(center.x + lx, center.z + lz, h);
 				return h;
 			};
-			(void)PlaceScatterFile(file, target, "foret de remplissage " + cells::CellDirName(tile.cell));
+			(void)PlaceScatterFile(file, target, "foret de remplissage " + cells::CellDirName(tile.cell, m_activeCellMap));
 			tile.filler = std::move(field);
 			tile.fillerCollider = std::move(collider);
 			tile.fillerCenterX = globalX;
@@ -663,7 +779,7 @@ namespace engine
 			collidersChanged = true;
 			if ((m_cellFrameCounter % 600u) == 0u)
 				LOG_DEBUG(Render, "[Forest] {} : {} instance(s) de remplissage, {} tronc(s)",
-					cells::CellDirName(tile.cell), tile.filler->Count(), tile.fillerCollider->CylinderCount());
+					cells::CellDirName(tile.cell, m_activeCellMap), tile.filler->Count(), tile.fillerCollider->CylinderCount());
 		}
 		if (collidersChanged)
 			RefreshCellOffsets();
@@ -673,7 +789,7 @@ namespace engine
 	{
 		if (index >= m_cellTiles.size())
 			return;
-		LOG_INFO(Render, "[Cells] {} dechargee", cells::CellDirName(m_cellTiles[index].cell));
+		LOG_INFO(Render, "[Cells] {} dechargee", cells::CellDirName(m_cellTiles[index].cell, m_activeCellMap));
 		RetiredCellTile retired;
 		retired.tile = std::move(m_cellTiles[index]);
 		retired.retiredAtFrame = m_cellFrameCounter;

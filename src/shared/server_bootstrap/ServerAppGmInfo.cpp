@@ -48,11 +48,13 @@ namespace engine::server
 		}
 	}
 
-	std::string GmCommandExecutor::CellLabel(float x, float z) const
+	std::string GmCommandExecutor::CellLabel(const ConnectedClient& who, float x, float z) const
 	{
 		if (!app.m_cellWorld)
 			return "monde historique";
-		return engine::world::cells::LoreCellId(engine::world::cells::CellFromPosition(x, z));
+		// Cellule du lore sur la carte du joueur concerné (« ENFERS:N000_E000 » aux Enfers).
+		const engine::world::cells::CellMap map = ServerApp::ClientCellMap(who);
+		return engine::world::cells::MapCellLabel(engine::world::cells::MapCell(engine::world::cells::CellFromPosition(x, z), map));
 	}
 
 	std::string GmCommandExecutor::MobLabel(const MobEntity& mob) const
@@ -86,11 +88,15 @@ namespace engine::server
 		const float z = target->positionMetersZ;
 		Say((target == actor ? std::string("Position") : "Position de " + NameOf(*target)) + " : "
 			+ FormatPosition(x, y, z) + " — orientation " + HeadingOf(target->yawRadians));
-		std::string where = "Cellule " + CellLabel(x, z) + ", zone " + std::to_string(target->zoneId);
-		if (const gm::GmPlace* region = Places().RegionAt(x, z))
+		std::string where = "Cellule " + CellLabel(*target, x, z) + ", zone " + std::to_string(target->zoneId);
+		// Seconde carte : lieux de la carte du joueur seulement.
+		const engine::world::cells::CellMap map = ServerApp::ClientCellMap(*target);
+		if (map != engine::world::cells::CellMap::Royaumes)
+			where += ", carte " + std::string(engine::world::cells::WorldIdOf(map));
+		if (const gm::GmPlace* region = Places().RegionAt(x, z, map))
 			where += ", région " + region->name;
 		float dist = 0.0f;
-		if (const gm::GmPlace* nearest = Places().Nearest(x, z, dist))
+		if (const gm::GmPlace* nearest = Places().Nearest(x, z, dist, map))
 			where += " — " + nearest->name + " à " + engine::admin::FormatFixed(dist, 0) + " m";
 		Say(where + ".");
 	}
@@ -102,10 +108,11 @@ namespace engine::server
 		const float x = actor->positionMetersX;
 		const float z = actor->positionMetersZ;
 		float dist = 0.0f;
-		const gm::GmPlace* nearest = Places().Nearest(x, z, dist);
-		const gm::GmPlace* region = Places().RegionAt(x, z);
+		const engine::world::cells::CellMap map = ServerApp::ClientCellMap(*actor);
+		const gm::GmPlace* nearest = Places().Nearest(x, z, dist, map);
+		const gm::GmPlace* region = Places().RegionAt(x, z, map);
 		if (nearest == nullptr && region == nullptr)
-			return Say("Lieu inconnu (annuaire des lieux indisponible sur ce shard) — cellule " + CellLabel(x, z) + ".");
+			return Say("Lieu inconnu (annuaire des lieux indisponible sur ce shard) — cellule " + CellLabel(*actor, x, z) + ".");
 		std::string line;
 		if (nearest != nullptr)
 		{
@@ -140,7 +147,7 @@ namespace engine::server
 			+ ((t->stateFlags & kEntityStateDead) != 0u ? " — MORT" : "") + " — or " + std::to_string(t->gold)
 			+ ", " + std::to_string(t->inventory.size()) + " pile(s) au sac");
 		Say("Position " + FormatPosition(t->positionMetersX, t->positionMetersY, t->positionMetersZ) + " — cellule "
-			+ CellLabel(t->positionMetersX, t->positionMetersZ) + ", zone " + std::to_string(t->zoneId)
+			+ CellLabel(*t, t->positionMetersX, t->positionMetersZ) + ", zone " + std::to_string(t->zoneId)
 			+ (t->guildId != 0u ? ", guilde #" + std::to_string(t->guildId) : std::string()));
 		std::string gmLine = "État MJ :";
 		if (!t->gm.IsActive())
@@ -219,7 +226,7 @@ namespace engine::server
 			if (s.isActive)
 				++activeSpawners;
 		}
-		Say("Zone " + std::to_string(actor->zoneId) + " — cellule " + CellLabel(actor->positionMetersX, actor->positionMetersZ)
+		Say("Zone " + std::to_string(actor->zoneId) + " — cellule " + CellLabel(*actor, actor->positionMetersX, actor->positionMetersZ)
 			+ (app.m_cellWorld ? " (monde en cellules de 10 km)" : ""));
 		Say(std::to_string(players) + " joueur(s), " + std::to_string(mobs) + " mob(s) dont " + std::to_string(combat)
 			+ " en combat — spawners actifs " + std::to_string(activeSpawners) + "/" + std::to_string(spawners) + ".");

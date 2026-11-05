@@ -87,12 +87,20 @@ namespace engine::server::gm
 				keptStarts.push_back(p);
 		}
 		m_places = std::move(keptStarts);
+		return AppendFromText(json, outError);
+	}
+
+	bool GmPlaceDirectory::AppendFromText(std::string_view json, std::string& outError)
+	{
 		engine::core::Config c;
 		if (!c.LoadFromString(json))
 		{
 			outError = "places: JSON invalide";
 			return false;
 		}
+		// Carte des lieux : champ "world" ("enfers" → Enfers, sinon Royaumes).
+		const engine::world::cells::CellMap map =
+			engine::world::cells::CellMapFromWorldId(c.GetString("world", "")).value_or(engine::world::cells::CellMap::Royaumes);
 		const size_t before = m_places.size();
 		for (int64_t i = 0; i < c.GetInt("city_count", 4096); ++i)
 		{
@@ -104,6 +112,7 @@ namespace engine::server::gm
 			p.name = c.GetString(b + "name", p.id);
 			p.detail = c.GetString(b + "kind", "ville");
 			p.kind = GmPlaceKind::City;
+			p.map = map;
 			p.x = GetF(c, b + "x", 0.0f);
 			p.z = GetF(c, b + "z", 0.0f);
 			if (std::isfinite(p.x) && std::isfinite(p.z) && !p.name.empty())
@@ -119,6 +128,7 @@ namespace engine::server::gm
 			p.name = c.GetString(b + "name", p.id);
 			p.detail = c.GetString(b + "kind", "lieu");
 			p.kind = GmPlaceKind::Poi;
+			p.map = map;
 			p.x = GetF(c, b + "x", 0.0f);
 			p.z = GetF(c, b + "z", 0.0f);
 			if (std::isfinite(p.x) && std::isfinite(p.z) && !p.name.empty())
@@ -134,6 +144,7 @@ namespace engine::server::gm
 			p.name = c.GetString(b + "name", p.id);
 			p.detail = "région";
 			p.kind = GmPlaceKind::Region;
+			p.map = map;
 			p.xMin = GetF(c, b + "x_min", 0.0f);
 			p.xMax = GetF(c, b + "x_max", 0.0f);
 			p.zMin = GetF(c, b + "z_min", 0.0f);
@@ -164,6 +175,18 @@ namespace engine::server::gm
 			return false;
 		}
 		return LoadFromText(text, outError);
+	}
+
+	bool GmPlaceDirectory::AppendFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError)
+	{
+		const std::string rel = "world/" + std::string(worldId) + "/places.json";
+		const std::string text = engine::platform::FileSystem::ReadAllTextContent(config, rel);
+		if (text.empty())
+		{
+			outError = rel + " absent";
+			return false;
+		}
+		return AppendFromText(text, outError);
 	}
 
 	std::vector<const GmPlace*> GmPlaceDirectory::Search(std::string_view query, size_t maxResults) const
@@ -205,13 +228,13 @@ namespace engine::server::gm
 		return out;
 	}
 
-	const GmPlace* GmPlaceDirectory::RegionAt(float x, float z) const
+	const GmPlace* GmPlaceDirectory::RegionAt(float x, float z, engine::world::cells::CellMap map) const
 	{
 		const GmPlace* best = nullptr;
 		float bestArea = 0.0f;
 		for (const GmPlace& p : m_places)
 		{
-			if (!p.hasBounds || x < p.xMin || x > p.xMax || z < p.zMin || z > p.zMax)
+			if (p.map != map || !p.hasBounds || x < p.xMin || x > p.xMax || z < p.zMin || z > p.zMax)
 				continue;
 			const float area = (p.xMax - p.xMin) * (p.zMax - p.zMin);
 			if (best == nullptr || area < bestArea)
@@ -223,13 +246,13 @@ namespace engine::server::gm
 		return best;
 	}
 
-	const GmPlace* GmPlaceDirectory::Nearest(float x, float z, float& outDistance) const
+	const GmPlace* GmPlaceDirectory::Nearest(float x, float z, float& outDistance, engine::world::cells::CellMap map) const
 	{
 		const GmPlace* best = nullptr;
 		float bestSq = 0.0f;
 		for (const GmPlace& p : m_places)
 		{
-			if (p.kind == GmPlaceKind::Region)
+			if (p.kind == GmPlaceKind::Region || p.map != map)
 				continue;
 			const float dx = p.x - x;
 			const float dz = p.z - z;

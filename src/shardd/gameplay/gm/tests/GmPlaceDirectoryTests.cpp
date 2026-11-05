@@ -88,6 +88,7 @@ int main()
 	const GmPlace* near = dir.Nearest(330.0f, 470.0f, dist);
 	Check(near != nullptr && near->id == "lac_marn" && dist < 20.0f, "lieu le plus proche (régions ignorées)");
 
+
 	// --- Liste ---
 	const auto all = dir.List("");
 	Check(all.size() == 6u, "liste complète");
@@ -130,6 +131,26 @@ int main()
 	msg.speedMultiplier = NAN;
 	engine::server::GmStateUpdateMessage bad{};
 	Check(!engine::server::DecodeGmStateUpdate(engine::server::EncodeGmStateUpdate(msg), bad), "GmStateUpdate NaN refusé");
+
+	// Seconde carte (Les Enfers) : lieux ajoutés avec leur carte, recherches par carte.
+	{
+		using engine::world::cells::CellMap;
+		const size_t before = dir.Size();
+		Check(dir.AppendFromText(R"({ "schema_version": 1, "world": "enfers",
+		  "cities": [ { "id": "citadelle_legion", "name": "Citadelle de la Legion", "kind": "camp", "x": 0, "z": 3 } ],
+		  "pois": [ { "id": "poi_enfers_porte_5", "name": "Portail V", "kind": "portail", "x": 30, "z": 300 } ] })", err),
+			"ajout des lieux des enfers : " + err);
+		Check(dir.Size() == before + 2u, "lieux des enfers ajoutés sans retirer ceux du continent");
+		const auto hell = dir.Search("citadelle");
+		Check(!hell.empty() && hell[0]->map == CellMap::Enfers, "lieu des enfers : carte enfers");
+		Check(!dir.Search("Marn").empty() && dir.Search("Marn")[0]->map == CellMap::Royaumes, "lieu du continent : carte royaumes");
+		float d = 0.0f;
+		const GmPlace* nearHell = dir.Nearest(10.0f, 10.0f, d, CellMap::Enfers);
+		Check(nearHell != nullptr && nearHell->id == "citadelle_legion", "plus proche sur la carte des enfers");
+		const GmPlace* nearContinent = dir.Nearest(10.0f, 10.0f, d);
+		Check(nearContinent != nullptr && nearContinent->map == CellMap::Royaumes, "plus proche sur le continent (carte par défaut)");
+		Check(dir.RegionAt(2000.0f, 0.0f, CellMap::Enfers) == nullptr, "régions du continent absentes des enfers");
+	}
 
 	if (s_failCount == 0)
 		std::cout << "gm_place_directory_tests : tout est vert" << std::endl;

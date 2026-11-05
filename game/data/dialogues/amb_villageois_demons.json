@@ -8,7 +8,7 @@
             "lines": {
                 "count": 2,
                 "0": {
-                    "text": "La Faille t'a crache ici aussi, on dirait."
+                    "text": "Les Enfers t'ont crache ici aussi, on dirait."
                 },
                 "1": {
                     "text": "(Ses yeux brillent d'une lueur de braise.)",
@@ -18,7 +18,7 @@
             "choices": {
                 "count": 3,
                 "0": {
-                    "text": "Qu'est-ce que Tsaroth ?",
+                    "text": "Qu'est-ce que la Citadelle ?",
                     "next": "a"
                 },
                 "1": {
@@ -36,7 +36,7 @@
             "lines": {
                 "count": 1,
                 "0": {
-                    "text": "Une cite batie au bord du gouffre. On y vit vite, on y meurt jeune, et on revient parfois."
+                    "text": "Une forteresse batie sur la lave, au coeur des Enfers. On y vit vite, on y meurt jeune, et on revient parfois."
                 }
             },
             "choices": {
@@ -62,7 +62,7 @@
             "choices": {
                 "count": 2,
                 "0": {
-                    "text": "Qu'est-ce que Tsaroth ?",
+                    "text": "Qu'est-ce que la Citadelle ?",
                     "next": "a"
                 },
                 "1": {

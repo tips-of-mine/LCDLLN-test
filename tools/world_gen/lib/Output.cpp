@@ -21,6 +21,7 @@
 //   world/<w>/map_features.bin         routes, rues, bâtiments en vectoriel (FIX.12)
 //   world/<w>/start_locations.json     points de départ par race (master)
 //   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
+//   world/<w>/portals.json             portails reliés à une autre carte (shard)
 
 #include "WorldGenContext.h"
 #include "HouseCatalog.h"
@@ -1084,12 +1085,34 @@ namespace tools::world_gen
 				const StartLocationDef& st = *starts[k];
 				const CityDef* c = g.FindCity(st.cityId);
 				j += "    " + Q(st.race) + ": { \"city\": " + Q(st.cityId) + ", \"city_name\": " + Q(c ? c->name : st.cityId) +
-					", \"cell\": " + Q(engine::world::cells::CellDirName(engine::world::cells::CellFromPosition(st.position.x, st.position.z))) +
+					", \"cell\": " + Q(engine::world::cells::CellDirName(engine::world::cells::CellFromPosition(st.position.x, st.position.z), g.master.cellMap)) +
 					", \"x\": " + Num(st.position.x) + ", \"y\": " + Num(st.y) + ", \"z\": " + Num(st.position.z) +
 					", \"yaw_deg\": " + Num(st.yawDeg) + " }" + (k + 1 < starts.size() ? ",\n" : "\n");
 			}
 			j += "  }\n}\n";
 			if (!WriteFile(g.outputRoot, g.report, dir + "start_locations.json", j, err)) return false;
+		}
+
+		// ---- portals.json : portails reliés à une AUTRE carte (Enfers ↔ Royaumes), lus
+		//      par le shard (src/shardd/world/PortalNetwork.h). Seuls les portails des
+		//      cellules générées y figurent (altitude connue, cellule jouable).
+		{
+			std::vector<const PoiDef*> portals;
+			for (const World* w : cells)
+				for (const PoiDef& p : w->pois)
+					if (p.kind == "portail" && !p.link.empty()) portals.push_back(&p);
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — portails entre cartes (positions GLOBALES de la carte '" + wid + "'). link = <monde>:<id du portail apparie>. Un joueur vivant dans radius_m est transfere a arrival_offset_m du portail apparie (docs/world/ENFERS.md).\",\n";
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"portal_count\": " + std::to_string(portals.size()) + ",\n  \"portals\": [\n";
+			for (size_t k = 0; k < portals.size(); ++k)
+			{
+				const PoiDef& p = *portals[k];
+				j += "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"link\": " + Q(p.link) +
+					", \"cell\": " + Q(p.cell) + ", \"x\": " + Num(p.center.x) + ", \"y\": " + Num(p.y) + ", \"z\": " + Num(p.center.z) +
+					", \"radius_m\": 6, \"arrival_offset_m\": 8 }" + (k + 1 < portals.size() ? ",\n" : "\n");
+			}
+			j += "  ]\n}\n";
+			if (!WriteFile(g.outputRoot, g.report, dir + "portals.json", j, err)) return false;
+			g.report.portals = portals.size();
 		}
 
 		// ---- quest_poi.json (positions GLOBALES) : POI historiques translatés sur la

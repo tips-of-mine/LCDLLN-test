@@ -42,10 +42,16 @@ namespace engine::server
 				return;
 			}
 			std::string startErr;
-			if (m_startLocations.LoadForWorld(*m_config, activeZone, startErr))
-				LOG_INFO(Net, "[CharacterCreateHandler] Points de depart charges ({} race(s), monde '{}')", m_startLocations.Count(), activeZone);
+			std::string startWarning;
+			// Seconde carte (Les Enfers) : la table fusionne world/enfers/start_locations.json
+			// (départ des démons à la Citadelle de la Légion, coordonnées du repère des Enfers).
+			if (m_startLocations.LoadForWorld(*m_config, activeZone, startErr, startWarning))
+				LOG_INFO(Net, "[CharacterCreateHandler] Points de depart charges ({} race(s), monde '{}', enfers={})",
+					m_startLocations.Count(), activeZone, m_startLocations.HasMap(engine::world::cells::CellMap::Enfers) ? "oui" : "non");
 			else
 				LOG_WARN(Net, "[CharacterCreateHandler] Points de depart indisponibles ({}) — repli default_spawn", startErr);
+			if (!startWarning.empty())
+				LOG_WARN(Net, "[CharacterCreateHandler] {} — les demons partiront du depart par defaut", startWarning);
 		}
 	}
 

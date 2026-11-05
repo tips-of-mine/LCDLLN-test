@@ -1,0 +1,163 @@
+{
+  "_comment": "SOURCE DE VERITE de la seconde carte jouable 'enfers' (editable a la main). Petite carte volcanique de 5 cellules de 10 km en croix, SEPAREE du continent (repere global propre, dossiers zones/enfers_*, zone ids 2 000 000+, cf. src/shared/world/WorldCells.h). Tout le contenu de zones/enfers_*, instances/zone_enfers_* et world/enfers/ est DERIVE de ce fichier par tools/world_gen (lcdlln_world_gen --world enfers) : ne jamais editer ces sorties a la main. Voir docs/world/ENFERS.md.",
+  "schema_version": 1,
+  "world_id": "enfers",
+  "display_name": "Les Enfers",
+  "seed": 20261104,
+  "scale": {
+    "_comment": "Meme echelle que le continent : 1 case = 1 cellule moteur de 10 km. grid.rows : rangees N002 -> S002, colonnes W002 -> E002 (une couronne de chaine de montagnes 'M' borde la croix volcanique 'V').",
+    "cell_size_m": 10000,
+    "grid_cols": 5,
+    "west_e": -2,
+    "north_n": 2,
+    "height_scale_m": 1200.0,
+    "sea_level_m": 40.0,
+    "heightmap_resolution": 2049
+  },
+  "_comment_generated_cells": "Les 5 cellules jouables, en croix : la Citadelle de la Legion au centre (N000_E000) et les 4 bras. Les coins de la grille ne sont pas generes (mur invisible). Pas de corridor : la carte n'a qu'une ville de depart (connect_start_cities = false).",
+  "connect_start_cities": false,
+  "generated_cells": [
+    "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001"
+  ],
+  "grid": {
+    "_comment": "Une ligne par rangee de N002 (haut) a S002 (bas), 5 caracteres de W002 a E002. Memes codes que le continent (legende reduite).",
+    "legend": {
+      "M": "mountain_range",
+      "V": "volcanic_area"
+    },
+    "rows": [
+      "MMMMM",
+      "MMVMM",
+      "MVVVM",
+      "MMVMM",
+      "MMMMM"
+    ]
+  },
+  "regions": [
+    {
+      "id": "enfers",
+      "name": "Les Enfers",
+      "e_min": -1,
+      "e_max": 1,
+      "n_min": -1,
+      "n_max": 1
+    }
+  ],
+  "cities": [
+    {
+      "id": "citadelle_legion",
+      "name": "Citadelle de la Legion",
+      "cell": "N000_E000",
+      "kind": "camp",
+      "race": "demons",
+      "state": "camp",
+      "faction": "legion",
+      "start_for": [
+        "demons"
+      ],
+      "source": "[INFÉRÉ] BD-T5",
+      "description": "Forteresse de la Legion batie sur la lave, au coeur des Enfers : les demons y naissent, et ses gardes chassent tout humain qui s'y aventure."
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_enfers_porte_1",
+      "name": "Portail I (vers la Porte des enfers I)",
+      "cell": "S001_E000",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires ; au-dela, la Porte des enfers I, au sud du continent.",
+      "link": "royaumes:poi_porte_1"
+    },
+    {
+      "id": "poi_enfers_porte_2",
+      "name": "Portail II (vers la Porte des enfers II)",
+      "cell": "N001_E000",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires ; au-dela, la Porte des enfers II, pres de Feyhin Lokcthat.",
+      "link": "royaumes:poi_porte_2"
+    },
+    {
+      "id": "poi_enfers_porte_3",
+      "name": "Portail III (vers la Porte des enfers III)",
+      "cell": "N000_W001",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires ; au-dela, la Porte des enfers III, au sud-ouest du continent.",
+      "link": "royaumes:poi_porte_3"
+    },
+    {
+      "id": "poi_enfers_porte_4",
+      "name": "Portail IV (vers la Porte des enfers IV)",
+      "cell": "N000_E001",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires ; au-dela, la Porte des enfers IV, au sud-est du continent.",
+      "link": "royaumes:poi_porte_4"
+    },
+    {
+      "id": "poi_enfers_porte_5",
+      "name": "Portail V (vers la Porte des enfers V)",
+      "cell": "N000_E000",
+      "kind": "portail",
+      "description": "Un cercle de pierres noires aux portes de la Citadelle ; au-dela, la Porte des enfers V, au nord-ouest du continent.",
+      "link": "royaumes:poi_porte_5"
+    }
+  ],
+  "imports": {
+    "_comment": "Seulement les reglages client world.* (brouillard, DOF, impostors...) de l'ancienne zone de test, recopies dans chaque zone.json (pas de ville d'ancrage : aucun contenu historique importe).",
+    "zone_config": "zones/feyhin/zone.json"
+  },
+  "zone_overrides": {
+    "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config) dans chaque zone.json de cellule. Memes distances que le continent.",
+    "world": {
+      "fog": {
+        "start_m": 60.0,
+        "end_m": 185.0
+      },
+      "props": {
+        "cull_distance_m": 140.0
+      },
+      "scatter": {
+        "cull_large_m": 150.0,
+        "cull_medium_m": 80.0,
+        "cull_small_m": 42.0
+      },
+      "forest": {
+        "filler": true,
+        "rebuild_step_m": 24.0
+      }
+    }
+  },
+  "interactables": [
+    {
+      "city": "citadelle_legion",
+      "x": 4,
+      "z": -2,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Maltheus",
+      "role": "Heraut de la Legion",
+      "message": "Maltheus : Les Enfers t'ont vu naitre. Sers la Legion.",
+      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 270,
+      "dialogue_id": "demon_heraut",
+      "npc_target_id": "npc:demon_maltheus"
+    },
+    {
+      "city": "citadelle_legion",
+      "x": -5,
+      "z": 3,
+      "radius": 1.5,
+      "npc": true,
+      "label": "Ysviel",
+      "role": "Succube de la garde",
+      "message": "Ysviel : Ta haine me nourrit... continue.",
+      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
+      "scale": 95.0,
+      "rot_x_deg": -90.0,
+      "yaw_deg": 90,
+      "dialogue_id": "demon_ysviel",
+      "npc_target_id": "npc:demon_ysviel"
+    }
+  ]
+}

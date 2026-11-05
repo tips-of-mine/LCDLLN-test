@@ -182,7 +182,8 @@ jobs:
       # Monde actif « royaumes » : cellules, départs par race (start_locations.json,
       # exigé au boot du shard et du master) et carte générés dans game/data AVANT
       # l'assemblage du bundle Docker (sorties non versionnées, cf. docs/world/ROYAUMES.md).
-      - name: Générer le monde « royaumes » (tools/world_gen)
+      # Seconde carte « enfers » : départ des démons et portails (docs/world/ENFERS.md).
+      - name: Générer les mondes « royaumes » et « enfers » (tools/world_gen)
         run: |
           set -euo pipefail
           GEN=$(find "$GITHUB_WORKSPACE/build/linux-x64-release/pkg" -type f -name lcdlln_world_gen -print -quit)
@@ -191,6 +192,15 @@ jobs:
           STARTS="$GITHUB_WORKSPACE/game/data/world/royaumes/start_locations.json"
           test -s "$STARTS" || { echo "[FAIL] $STARTS absent"; exit 1; }
           grep -q generated_cells "$STARTS" || { echo "[FAIL] generated_cells absent de $STARTS"; exit 1; }
+          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
+          HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
+          test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }
+          grep -q '"demons"' "$HELL/start_locations.json" || { echo "[FAIL] depart des demons absent de $HELL/start_locations.json"; exit 1; }
+          for W in royaumes enfers; do
+            P="$GITHUB_WORKSPACE/game/data/world/$W/portals.json"
+            test -s "$P" || { echo "[FAIL] $P absent"; exit 1; }
+            grep -q '"portal_count": 5' "$P" || { echo "[FAIL] 5 portails attendus dans $P"; exit 1; }
+          done
 
       # Copie automatique sql/schema.sql + sql/migrations/ → deploy/docker/sql/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).

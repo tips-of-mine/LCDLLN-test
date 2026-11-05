@@ -8,7 +8,7 @@
             "lines": {
                 "count": 2,
                 "0": {
-                    "text": "Legionnaire de Tsaroth. Avance."
+                    "text": "Legionnaire de la Citadelle. Avance."
                 },
                 "1": {
                     "text": "(Des cendres tombent doucement de son armure noircie.)",
@@ -36,7 +36,7 @@
             "lines": {
                 "count": 1,
                 "0": {
-                    "text": "La cite contre ce qui rampe hors de la Faille. Diablotins, chiens des cendres, et pire."
+                    "text": "La Citadelle contre ce qui rampe hors des failles de lave. Diablotins, chiens des cendres, et pire."
                 }
             },
             "choices": {

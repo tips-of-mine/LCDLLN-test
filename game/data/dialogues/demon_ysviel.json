@@ -36,7 +36,7 @@
             "lines": {
                 "count": 1,
                 "0": {
-                    "text": "Des diablotins, echappes de la Faille, qui rongent les murs de la cite."
+                    "text": "Des diablotins, echappes des failles de lave, qui rongent les murs de la Citadelle."
                 }
             },
             "choices": {
@@ -56,7 +56,7 @@
             "lines": {
                 "count": 2,
                 "0": {
-                    "text": "Detruis six diablotins errants autour de Tsaroth avant qu'ils ne se multiplient."
+                    "text": "Detruis six diablotins errants autour de la Citadelle avant qu'ils ne se multiplient."
                 },
                 "1": {
                     "text": "(Pour t'engager ou rendre une tache, choisis 'Accepter' / 'Rendre' ci-dessous.)",

@@ -54,7 +54,8 @@ Activé par `world.active_zone = "royaumes"` sur **le shard ET le master**
 | Chargement | Spawners, événements, récolte : uniquement `zones/cell_*` en monde en cellules ; uniquement les autres dossiers sinon (`ZoneDirBelongsToWorld`). Cimetières/auberges : `respawn_points.txt` de chaque cellule générée, le plus proche gagne. |
 | Mur invisible | Un Input dans une cellule non générée est refusé et le client recalé (`ForcePosition`, raison « téléport », ≤ 1 / 500 ms). |
 | Entrée en monde | Position hors cellule générée, ou fichier personnage d'une zone historique (repère local feyhin) → point de départ de la race (`characters.race_str`, sinon race par défaut) + `ForcePosition`. |
-| Création (master) | Ville de départ de la race lue dans `world/royaumes/start_locations.json` ; en zone historique, repli `character_creation.default_spawn.*`. |
+| Création (master) | Ville de départ de la race lue dans `world/royaumes/start_locations.json`, fusionné avec `world/enfers/start_locations.json` (démons aux Enfers) ; en zone historique, repli `character_creation.default_spawn.*`. |
+| Seconde carte | Les Enfers (`docs/world/ENFERS.md`) : carte `kEnfersMapId`, cellules `enfers_*` (zone ids 2 000 000+), grille d'intérêt et régions propres ; portails `world/<monde>/portals.json` ; passage = `TransferToMap` (ZoneChange puis ForcePosition). |
 | Boot | Monde en cellules sans `world/royaumes/start_locations.json` (avec `generated_cells`) = **refus de démarrer** : lancer le générateur avant. |
 
 Le canal « groupe / guilde » (encore un relais provisoire) diffuse à toute la carte.
@@ -146,7 +147,10 @@ rivières, routes, cellules générées encadrées), `map_features.bin` (FIX.12 
 routes, chemins, rues et emprises des bâtiments en vectoriel pour la carte zoomée,
 format `src/shared/world/MapFeatures.h`), `start_locations.json`
 (départs par race + `generated_cells`, lus par le master et le shard),
-`quest_poi.json`.
+`quest_poi.json`, `portals.json` (portails reliés à une autre carte, lus par le shard).
+
+La seconde carte se génère de la même façon : `--world enfers` (5 cellules,
+~1 min ; sorties `zones/enfers_*`, `world/enfers/`). La CI génère les deux.
 
 ## 5. Pipeline du générateur (`tools/world_gen/lib`)
 
@@ -214,7 +218,14 @@ voisines raccord au mètre près :
 | Elfes | Whispers Hill | `cell_n011_e008` |
 | Orcs | Leviathan | `cell_n009_e011` |
 | Nains | Ghrunke Dash | `cell_s007_e016` |
-| Démons | Faille de Tsaroth | `cell_s009_e011` |
+| Démons | Citadelle de la Légion — **seconde carte « Les Enfers »** (`docs/world/ENFERS.md`) | `enfers_n000_e000` |
+
+Le camp de la Légion de la Faille de Tsaroth (`ville_tsaroth`, `S009_E011`) a été
+retiré du continent avec ses PNJ (Maltheus, Ysviel, déplacés à la Citadelle) ;
+la cellule `S009_E011`, ses voisines et les 7 cellules de la route qui y menait
+restent générées (listées explicitement dans `generated_cells` : les corridors
+sont inchangés). Les 5 Portes des enfers (`poi_porte_1..5`) sont reliées aux
+5 portails des Enfers ; leurs cellules sont générées (sans leurs voisines).
 
 Chaîne d'accueil (elfes / orcs / nains / démons) : `<race>_accueil` →
 `<race>_chasse` → `<race>_epreuve` (`quests/quest_definitions.json`).

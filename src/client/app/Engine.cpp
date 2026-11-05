@@ -1204,8 +1204,11 @@ namespace engine
 		if (remote.archetypeId == 0u || remote.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 			return engine::client::NameplateCategory::Other;
 		const engine::client::CreatureAppearance* appearance = m_creatureCatalog.Find(remote.archetypeId);
+		// Seconde carte (Les Enfers) — PNJ d'ambiance hostile à la race du joueur : ennemi.
 		if (appearance != nullptr && appearance->ambient)
-			return engine::client::NameplateCategory::AmbientNpc;
+			return appearance->IsHostileToRace(m_localRaceId)
+				? engine::client::NameplateCategory::HostileMob
+				: engine::client::NameplateCategory::AmbientNpc;
 		if (appearance != nullptr && appearance->animal)
 			return engine::client::NameplateCategory::Animal;
 		return engine::client::NameplateCategory::HostileMob;
@@ -9087,6 +9090,12 @@ namespace engine
 				// du shard (zone audio) et eventuellement de futures musiques in-game.
 				m_audioEngine.StopMenuMusic();
 
+				// Seconde carte (Les Enfers) : toute entrée en monde repart du continent ; le
+				// shard annoncera (ZoneChange) la carte d'un personnage resté aux Enfers.
+				m_uiModelBinding.ClearZone();
+				if (m_cellWorld && m_activeCellMap != engine::world::cells::CellMap::Royaumes)
+					(void)SwitchCellMap(engine::world::cells::CellMap::Royaumes);
+
 				// Phase 3.5/3.6 — Téléportation de la caméra à la position de spawn.
 				// Priorité 1 (Phase 3.6) : spawn par-personnage, lu depuis characters.spawn_*
 				// via la payload CHARACTER_LIST puis posé dans EnterWorldCommand par
@@ -12305,8 +12314,9 @@ namespace engine
 								continue;
 							// Monde vivant : les PNJ d'ambiance (villageois, gardes…) ne sont
 							// pas des ennemis — jamais ciblés au Tab (le serveur refuse l'attaque).
+							// Seconde carte : sauf ceux hostiles à la race du joueur (Légion / humains).
 							if (const engine::client::CreatureAppearance* tabApp = m_creatureCatalog.Find(re.archetypeId);
-								tabApp != nullptr && tabApp->ambient)
+								tabApp != nullptr && tabApp->ambient && !tabApp->IsHostileToRace(m_localRaceId))
 								continue;
 							// Rejet des ennemis non visibles (hors frustum / dans le dos).
 							if (!isOnScreen(re.positionX, re.positionY + 1.0f, re.positionZ))
@@ -17554,6 +17564,24 @@ namespace engine
 		// depuis la position imposée au lieu d'écraser la téléportation serveur
 		// (c'était le bug du respawn SP2 : « Réapparaître » soignait sur place).
 		{
+			// Seconde carte (Les Enfers) — le shard a annoncé une autre carte (ZoneChange,
+			// canal fiable) : elle devient résidente ici. Le ForcePosition (non fiable) peut
+			// arriver avant ou après : sans lui, le joueur est posé au point d'arrivée du
+			// ZoneChange ; avec lui, le bloc ci-dessous le place (mêmes coordonnées).
+			if (FollowServerCellMap() && !m_uiModelBinding.GetModel().forcedPosition.pending)
+			{
+				const engine::server::ZoneChangeMessage& arrival = m_uiModelBinding.LastZoneChange();
+				EnterCellWorldAt(arrival.spawnPositionX, arrival.spawnPositionZ);
+				const float arrivalX = m_renderFrame.ToRenderX(arrival.spawnPositionX);
+				const float arrivalZ = m_renderFrame.ToRenderZ(arrival.spawnPositionZ);
+				const engine::math::Vec3 arrivalPos{ arrivalX,
+					std::max(arrival.spawnPositionY, SampleGroundHeight(arrivalX, arrivalZ) + 0.9f), arrivalZ };
+				(void)m_characterController.Init(arrivalPos);
+				m_orbitalCameraController.SetTargetPosition(arrivalPos);
+				m_lastSyncedPosition = arrivalPos;
+				LOG_INFO(Core, "[Engine] Changement de carte : arrivee ({:.1f}, {:.1f}, {:.1f})",
+					arrival.spawnPositionX, arrival.spawnPositionY, arrival.spawnPositionZ);
+			}
 			const engine::client::UIForcedPosition& forced = m_uiModelBinding.GetModel().forcedPosition;
 			if (forced.pending)
 			{

@@ -14,6 +14,10 @@
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
 //    de pente (digue), pas de digue sur un lit de rivière.
+// 8. Seconde carte « enfers » : master (5 cellules en croix, départ des démons,
+//    5 portails appariés aux Portes des enfers du continent), puis génération
+//    complète → dossiers zones/enfers_*, zone ids 2 000 000+, cimetière neutre,
+//    start_locations.json et portals.json de la carte.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -30,6 +34,7 @@
 
 #include <zone_builder/JsonDocument.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -127,10 +132,23 @@ namespace
 		Check(m.cities.size() >= 30, "master : au moins 30 agglomerations");
 		std::set<std::string> races;
 		for (const auto& c : m.cities) for (const auto& r : c.startFor) races.insert(r);
-		Check(races == std::set<std::string>{ "humains", "elfes", "orcs", "nains", "demons" },
-			"master : une ville de depart par race jouable");
+		// Les démons naissent aux Enfers (world/enfers/world_master.json), plus sur le continent.
+		Check(races == std::set<std::string>{ "humains", "elfes", "orcs", "nains" },
+			"master : une ville de depart par race jouable du continent (demons aux enfers)");
+		bool noTsaroth = true;
+		for (const auto& c : m.cities) noTsaroth = noTsaroth && c.id != "ville_tsaroth";
+		for (const auto& i : m.interactables) noTsaroth = noTsaroth && i.cityId != "ville_tsaroth";
+		Check(noTsaroth, "master : camp de Tsaroth retire du continent (ville et PNJ)");
+		Check(m.cellMap == engine::world::cells::CellMap::Royaumes, "master : carte des Royaumes");
 		Check(m.scale.cellSizeM == 10000.0 && m.scale.heightmapRes == 2049, "master : cellules de 10 km, heightmap 2049");
 		Check(m.generatedCells.size() >= 5, "master : au moins les 5 cellules de depart");
+		// Les 5 Portes des enfers : cellule générée, lien vers un portail des Enfers.
+		size_t linkedGates = 0;
+		for (const auto& p : m.pois)
+			if (p.kind == "portail" && p.link.rfind("enfers:", 0) == 0
+				&& std::find(m.generatedCells.begin(), m.generatedCells.end(), p.cell) != m.generatedCells.end())
+				++linkedGates;
+		Check(linkedGates == 5, "master : 5 portes des enfers reliees, dans des cellules generees");
 		// v1.0.52 : la grille couvre toute la carte du lore (marge de 2 colonnes de
 		// mer de chaque cote) et chaque ville du master est dans le lore, hors de l'eau.
 		namespace wc = engine::world::cells;
@@ -149,6 +167,118 @@ namespace
 		}
 		Check(citiesOk, "master : villes dans la carte du lore et hors de la mer");
 		Check(m.cities.size() >= 80, "master : villes du lore integrees (v1.0.52)");
+	}
+
+	/// Seconde carte : master des Enfers (croix de 5 cellules, départ des démons,
+	/// portails appariés aux 5 Portes des enfers du continent).
+	void TestMasterEnfers()
+	{
+		namespace wc = engine::world::cells;
+		tools::world_gen::WorldMaster m, royaumes;
+		std::string err;
+		const bool ok = tools::world_gen::LoadWorldMaster(LCDLLN_CONTENT_DIR, "enfers", m, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "master enfers : chargement et validation");
+		if (!ok) return;
+		Check(m.cellMap == wc::CellMap::Enfers && !m.connectStartCities, "master enfers : carte des Enfers, sans corridor");
+		const std::set<std::string> cross(m.generatedCells.begin(), m.generatedCells.end());
+		Check(cross == std::set<std::string>{ "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001" },
+			"master enfers : 5 cellules en croix");
+		bool inGrid = true, volcanic = true;
+		for (const std::string& id : m.generatedCells)
+		{
+			int n = 0, e = 0;
+			inGrid = inGrid && tools::world_gen::ParseCellId(id, n, e) && wc::IsInLoreGrid({ n, e }, wc::CellMap::Enfers);
+			volcanic = volcanic && tools::world_gen::LoreCode(m, n, e) == 'V';
+		}
+		Check(inGrid && volcanic, "master enfers : cellules dans la grille, biome volcanique");
+		const tools::world_gen::CityDef* citadel = nullptr;
+		for (const auto& c : m.cities)
+			if (std::find(c.startFor.begin(), c.startFor.end(), "demons") != c.startFor.end()) citadel = &c;
+		Check(citadel && citadel->cell == "N000_E000" && citadel->kind == "camp" && citadel->race == "demons",
+			"master enfers : depart des demons a la Citadelle (centre)");
+		bool heralds = false, succube = false;
+		for (const auto& i : m.interactables)
+		{
+			heralds = heralds || (i.dialogueId == "demon_heraut" && citadel && i.cityId == citadel->id);
+			succube = succube || (i.dialogueId == "demon_ysviel" && citadel && i.cityId == citadel->id);
+		}
+		Check(heralds && succube, "master enfers : Maltheus et Ysviel a la Citadelle");
+		// Appariement 1-1 avec les Portes du continent.
+		Check(tools::world_gen::LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", royaumes, err), "master royaumes recharge");
+		size_t paired = 0, portals = 0;
+		for (const auto& p : m.pois)
+		{
+			if (p.kind != "portail") continue;
+			++portals;
+			for (const auto& q : royaumes.pois)
+				if ("royaumes:" + q.id == p.link && q.link == "enfers:" + p.id && cross.count(p.cell)) ++paired;
+		}
+		Check(portals == 5 && paired == 5, "master enfers : 5 portails apparies aux portes du continent");
+	}
+
+	/// Seconde carte : génération complète des Enfers (5 cellules) → dossiers et
+	/// identifiants propres à la carte, sorties globales sous world/enfers/.
+	void TestGenerationEnfers()
+	{
+		namespace fs = std::filesystem;
+		namespace wc = engine::world::cells;
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_tests_enfers";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		tools::world_gen::GenOptions o;
+		o.contentRoot = LCDLLN_CONTENT_DIR;
+		o.worldId = "enfers";
+		o.outputRoot = tmp.string();
+		tools::world_gen::GenReport r;
+		std::string err;
+		const bool ok = tools::world_gen::RunWorldGen(o, r, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && r.cells == 5, "enfers : generation des 5 cellules");
+		if (!ok) return;
+		Check(fs::exists(tmp / "zones/enfers_n000_e000/terrain_height.r16h") && !fs::exists(tmp / "zones/cell_n000_e000"),
+			"enfers : dossiers zones/enfers_* (pas de cell_*)");
+		// Spawners : zoneId de la cellule DANS la plage des Enfers ; gardes de la Légion.
+		{
+			tools::zone_builder::JsonValue root; std::string e;
+			const bool okJ = tools::zone_builder::ParseJsonDocument(ReadText(tmp / "zones/enfers_n000_e000/spawners.json"), root, e);
+			const auto* zid = okJ ? tools::zone_builder::FindObjectMember(root, "zoneId") : nullptr;
+			Check(zid && static_cast<uint32_t>(zid->numberValue) == wc::CellZoneId({ 0, 0 }, wc::CellMap::Enfers)
+				&& wc::MapIdOfZone(static_cast<uint32_t>(zid->numberValue)) == wc::kEnfersMapId,
+				"enfers : spawners avec l'identifiant de zone des Enfers");
+			const std::string text = ReadText(tmp / "zones/enfers_n000_e000/spawners.json");
+			Check(text.find("\"archetypeId\": 241") != std::string::npos, "enfers : legionnaires a la Citadelle");
+		}
+		// Cimetière neutre (toutes factions) à la Citadelle.
+		{
+			const std::string text = ReadText(tmp / "zones/enfers_n000_e000/respawn_points.txt");
+			const std::string line = std::to_string(wc::CellZoneId({ 0, 0 }, wc::CellMap::Enfers)) + " graveyard ";
+			const size_t at = text.find(line);
+			const size_t eol = at == std::string::npos ? std::string::npos : text.find('\n', at);
+			Check(at != std::string::npos && eol != std::string::npos && text[eol - 1] == '-',
+				"enfers : cimetiere neutre a la Citadelle");
+		}
+		// Sorties globales de la carte.
+		{
+			const std::string starts = ReadText(tmp / "world/enfers/start_locations.json");
+			Check(starts.find("\"world\": \"enfers\"") != std::string::npos && starts.find("\"demons\"") != std::string::npos
+				&& starts.find("enfers_n000_e000") != std::string::npos && starts.find("\"humains\": {") == std::string::npos,
+				"enfers : start_locations.json (depart des demons, carte enfers)");
+			tools::zone_builder::JsonValue root; std::string e;
+			const bool okJ = tools::zone_builder::ParseJsonDocument(ReadText(tmp / "world/enfers/portals.json"), root, e);
+			const auto* list = okJ ? tools::zone_builder::FindObjectMember(root, "portals") : nullptr;
+			bool linked = list && list->type == tools::zone_builder::JsonType::Array && list->arrayValue.size() == 5u;
+			for (size_t k = 0; linked && k < list->arrayValue.size(); ++k)
+			{
+				const auto* link = tools::zone_builder::FindObjectMember(list->arrayValue[k], "link");
+				const auto* y = tools::zone_builder::FindObjectMember(list->arrayValue[k], "y");
+				linked = link && link->stringValue.rfind("royaumes:poi_porte_", 0) == 0 && y && y->numberValue > 40.0;
+			}
+			Check(linked && r.portals == 5, "enfers : portals.json (5 portails relies, altitude du sol)");
+			Check(fs::exists(tmp / "world/enfers/places.json") && fs::exists(tmp / "world/enfers/world_map.png"),
+				"enfers : places.json et carte du monde");
+		}
+		fs::remove_all(tmp, ec);
 	}
 
 	std::vector<uint16_t> ReadHeights(const std::filesystem::path& p, uint32_t& n)
@@ -578,11 +708,13 @@ int main()
 	TestScatterRoundTrip();
 	TestPng();
 	TestMaster();
+	TestMasterEnfers();
 	TestStartCorridors();
 	TestGenerationAndInvariants();
 	TestReconstruction();
 	TestMapFeatures();
 	TestWaterShores();
+	TestGenerationEnfers();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

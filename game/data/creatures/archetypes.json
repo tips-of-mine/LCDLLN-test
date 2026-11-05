@@ -736,11 +736,11 @@
     },
     {
       "id": 240,
-      "name": "Citoyen de Tsaroth",
-      "level": 1,
+      "name": "Citoyen de la Citadelle",
+      "level": 8,
       "stats": {
         "hp": 500,
-        "damage": 1,
+        "damage": 7,
         "accuracy": 80.0,
         "rangeMeters": 2.0,
         "critRate": 2.0,
@@ -754,16 +754,18 @@
         "attackable": false,
         "moveSpeed": 1.4,
         "role": "Citoyen",
+        "hostileToRaces": ["humains"],
+        "aggroRadius": 10.0,
         "dialogueId": "amb_villageois_demons"
       }
     },
     {
       "id": 241,
       "name": "Legionnaire",
-      "level": 1,
+      "level": 12,
       "stats": {
-        "hp": 500,
-        "damage": 1,
+        "hp": 800,
+        "damage": 14,
         "accuracy": 80.0,
         "rangeMeters": 2.0,
         "critRate": 2.0,
@@ -777,16 +779,18 @@
         "attackable": false,
         "moveSpeed": 1.7,
         "role": "Garde",
+        "hostileToRaces": ["humains"],
+        "aggroRadius": 18.0,
         "dialogueId": "amb_garde_demons"
       }
     },
     {
       "id": 242,
-      "name": "Marchand de la Faille",
-      "level": 1,
+      "name": "Marchand de la Citadelle",
+      "level": 8,
       "stats": {
         "hp": 500,
-        "damage": 1,
+        "damage": 6,
         "accuracy": 80.0,
         "rangeMeters": 2.0,
         "critRate": 2.0,
@@ -795,7 +799,7 @@
       },
       "xpReward": 0,
       "model": {"mesh": "humains", "scale": 1.02, "gender": "female"},
-      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1"}
+      "behavior": {"kind": "ambient", "attackable": false, "moveSpeed": 1.2, "role": "Marchand", "talkTarget": "vendor:1", "hostileToRaces": ["humains"], "aggroRadius": 8.0}
     },
     {
       "id": 250,

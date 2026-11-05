@@ -37,6 +37,9 @@ namespace engine::world::cells
 	struct CellAssetJob
 	{
 		CellCoord cell{};
+		/// Seconde carte (Les Enfers) — carte de la cellule : choisit le dossier
+		/// (zones/cell_* ou zones/enfers_*).
+		CellMap map = CellMap::Royaumes;
 		/// true = aussi les données de rendu (terrain, décor, bâtiments) ;
 		/// false = seulement zone.json + heightmap CPU (collision, pose au sol).
 		bool wantRender = false;
@@ -50,6 +53,9 @@ namespace engine::world::cells
 	struct CellAssets
 	{
 		CellCoord cell{};
+		/// Carte de la cellule (copie de CellAssetJob::map) : un résultat d'une autre
+		/// carte que la carte active est ignoré (changement de carte en cours).
+		CellMap map = CellMap::Royaumes;
 		bool wantRender = false;
 
 		/// zone.json + heightmap lus (sinon la cellule est inutilisable).

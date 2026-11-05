@@ -56,7 +56,14 @@ namespace engine::server
 	gm::GmSavedPosition GmCommandExecutor::SavedPositionOf(const ConnectedClient& client)
 	{
 		return gm::GmSavedPosition{ true, client.positionMetersX, client.positionMetersY, client.positionMetersZ,
-			client.yawRadians };
+			client.yawRadians, client.zoneId };
+	}
+
+	engine::world::cells::CellMap GmCommandExecutor::SavedMapOf(const gm::GmSavedPosition& saved, const ConnectedClient& client)
+	{
+		return engine::world::cells::IsCellZoneId(saved.zoneId)
+			? engine::world::cells::CellMapOfZoneOr(saved.zoneId)
+			: ServerApp::ClientCellMap(client);
 	}
 
 	float GmCommandExecutor::DistanceXZ(const ConnectedClient& a, const ConnectedClient& b)
@@ -77,10 +84,12 @@ namespace engine::server
 		if (!app.m_gmPlacesLoaded)
 		{
 			app.m_gmPlacesLoaded = true;
-			// Villes de départ (toujours présentes sur un shard « Royaumes »).
+			// Villes de départ (toujours présentes sur un shard « Royaumes ») ; la Citadelle
+			// de la Légion est sur la seconde carte (Les Enfers).
 			for (const engine::world::StartLocation& start : app.m_worldStarts.All())
 			{
 				gm::GmPlace p;
+				p.map = start.map;
 				p.id = start.cityId;
 				p.name = start.cityName.empty() ? start.cityId : start.cityName;
 				p.detail = "départ des " + start.race;
@@ -96,22 +105,51 @@ namespace engine::server
 				LOG_WARN(Net, "[GmCommand] ADM.1 annuaire des lieux : {} ({} départ(s) seulement)", error, app.m_gmPlaces.Size());
 			else
 				LOG_INFO(Net, "[GmCommand] ADM.1 annuaire des lieux chargé ({} lieux)", app.m_gmPlaces.Size());
+			// Seconde carte : les lieux des Enfers s'ajoutent (téléport inter-carte).
+			if (app.m_cellWorld)
+			{
+				std::string enfersError;
+				const std::string enfers(engine::world::cells::WorldIdOf(engine::world::cells::CellMap::Enfers));
+				if (!app.m_gmPlaces.AppendFromContent(app.m_config, enfers, enfersError))
+					LOG_WARN(Net, "[GmCommand] ADM.1 lieux des Enfers : {}", enfersError);
+			}
 		}
 		return app.m_gmPlaces;
 	}
 
-	bool GmCommandExecutor::Teleport(ConnectedClient& client, float x, float y, float z, bool groundSnap, bool saveBack)
+	bool GmCommandExecutor::Teleport(ConnectedClient& client, float x, float y, float z, bool groundSnap, bool saveBack,
+		std::optional<engine::world::cells::CellMap> map)
 	{
-		if (!std::isfinite(x) || !std::isfinite(z) || !app.IsInsideGeneratedWorld(x, z))
+		// Seconde carte (Les Enfers) : sans carte donnée, la destination est sur celle du joueur.
+		const engine::world::cells::CellMap currentMap = ServerApp::ClientCellMap(client);
+		const engine::world::cells::CellMap targetMap = map.value_or(currentMap);
+		if (!std::isfinite(x) || !std::isfinite(z) || !app.IsInsideGeneratedWorld(x, z, targetMap))
 		{
-			Fail(GmCommandStatus::Usage, "Destination hors du monde jouable (" + FormatPosition(x, y, z) + ").");
+			Fail(GmCommandStatus::Usage, "Destination hors du monde jouable (" + FormatPosition(x, y, z) + ", carte "
+				+ std::string(engine::world::cells::WorldIdOf(targetMap)) + ").");
 			return false;
 		}
 		if (saveBack)
 			client.gm.back = SavedPositionOf(client);
+		if (app.m_cellWorld && targetMap != currentMap)
+		{
+			// Autre carte : transfert complet (grille d'intérêt, ZoneChange, ForcePosition).
+			const float arrivalY = groundSnap || !std::isfinite(y) ? kGroundSnapY : y;
+			if (!app.TransferToMap(client, targetMap, x, arrivalY, z, "gm_teleport"))
+			{
+				Fail(GmCommandStatus::Usage, "Changement de carte impossible (" + FormatPosition(x, y, z) + ").");
+				return false;
+			}
+			LOG_INFO(Net, "[GmCommand] ADM.1 téléport inter-carte (client_id={}, vers {} ({:.1f},{:.1f}))",
+				client.clientId, engine::world::cells::WorldIdOf(targetMap), x, z);
+			return true;
+		}
 		client.positionMetersX = x;
 		client.positionMetersY = groundSnap || !std::isfinite(y) ? kGroundSnapY : y;
 		client.positionMetersZ = z;
+		// Seconde carte : un téléport (même sur une Porte des enfers, /tp Porte des enfers I)
+		// ne déclenche pas le portail au premier Input ; réarmement 5 s hors du rayon.
+		PortalNetwork::Disarm(client.portalTravel);
 		client.velocityMetersPerSecondX = 0.0f;
 		client.velocityMetersPerSecondY = 0.0f;
 		client.velocityMetersPerSecondZ = 0.0f;
@@ -172,7 +210,7 @@ namespace engine::server
 			if (!places.empty() && (exactPlace || player == nullptr))
 			{
 				const gm::GmPlace& p = *places.front();
-				if (!Teleport(*actor, p.x, kGroundSnapY, p.z, true, true))
+				if (!Teleport(*actor, p.x, kGroundSnapY, p.z, true, true, p.map))
 					return;
 				Say("Téléporté vers " + p.name + " (" + p.detail + ") — " + FormatPosition(p.x, kGroundSnapY, p.z) + ".");
 				if (places.size() > 1u)
@@ -195,7 +233,8 @@ namespace engine::server
 		float dx = 0.0f;
 		float dz = 0.0f;
 		gm::ForwardOffset(player->yawRadians, -kBesidePlayerMeters, dx, dz);
-		if (Teleport(*actor, player->positionMetersX + dx, player->positionMetersY, player->positionMetersZ + dz, false, true))
+		if (Teleport(*actor, player->positionMetersX + dx, player->positionMetersY, player->positionMetersZ + dz, false, true,
+				ServerApp::ClientCellMap(*player)))
 			Say("Téléporté auprès de " + NameOf(*player) + " (retour : /back).");
 	}
 
@@ -224,7 +263,8 @@ namespace engine::server
 		float dx = 0.0f;
 		float dz = 0.0f;
 		gm::ForwardOffset(actor->yawRadians, kBesidePlayerMeters, dx, dz);
-		if (!Teleport(*target, actor->positionMetersX + dx, actor->positionMetersY, actor->positionMetersZ + dz, false, true))
+		if (!Teleport(*target, actor->positionMetersX + dx, actor->positionMetersY, actor->positionMetersZ + dz, false, true,
+				ServerApp::ClientCellMap(*actor)))
 			return;
 		NotifyTarget(*target, "Vous avez été convoqué par le maître de jeu " + (request.actorName.empty() ? std::string("?") : request.actorName) + ".");
 		Say(NameOf(*target) + " convoqué devant vous (renvoi : /recall " + NameOf(*target) + ").");
@@ -241,7 +281,7 @@ namespace engine::server
 		if (!saved.valid)
 			return Fail(GmCommandStatus::NotFound, NameOf(*target) + " n'a pas été déplacé par un maître de jeu.");
 		target->gm.recall = gm::GmSavedPosition{};
-		if (!Teleport(*target, saved.x, saved.y, saved.z, false, true))
+		if (!Teleport(*target, saved.x, saved.y, saved.z, false, true, SavedMapOf(saved, *target)))
 			return;
 		NotifyTarget(*target, "Un maître de jeu vous a renvoyé à votre position précédente.");
 		Say(NameOf(*target) + " renvoyé en " + FormatPosition(saved.x, saved.y, saved.z) + ".");
@@ -255,7 +295,7 @@ namespace engine::server
 		if (!saved.valid)
 			return Fail(GmCommandStatus::NotFound, "Aucune position précédente (aucun déplacement MJ depuis la connexion).");
 		// La position quittée devient la nouvelle « précédente » : /back deux fois = aller-retour.
-		if (Teleport(*actor, saved.x, saved.y, saved.z, false, true))
+		if (Teleport(*actor, saved.x, saved.y, saved.z, false, true, SavedMapOf(saved, *actor)))
 			Say("Retour en " + FormatPosition(saved.x, saved.y, saved.z) + ".");
 	}
 
@@ -343,7 +383,7 @@ namespace engine::server
 		if (it == app.m_gmBookmarks.end() || it->second.find(name) == it->second.end())
 			return Fail(GmCommandStatus::NotFound, "Favori inconnu : « " + name + " » (voir /marks).");
 		const gm::GmSavedPosition pos = it->second.at(name);
-		if (Teleport(*actor, pos.x, pos.y, pos.z, false, true))
+		if (Teleport(*actor, pos.x, pos.y, pos.z, false, true, SavedMapOf(pos, *actor)))
 			Say("Téléporté au favori « " + name + " ».");
 	}
 

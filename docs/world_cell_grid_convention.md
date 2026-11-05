@@ -57,6 +57,20 @@ partagé client / shard / master / `tools/world_gen`, testé par
   seule carte** (`kCellWorldMapId` = 999 999, `SameMap`) : on voit et on agit
   à travers les frontières, seule la simulation est découpée par cellule.
 
+**Une carte par monde.** Le registre `CellMap` de `WorldCells.h` connaît deux
+cartes en cellules, chacune avec son repère global propre (même convention que
+ci-dessus, origine au centre de SA cellule N000_E000) :
+
+| Carte | Monde (`world/<id>/`) | Dossiers | Zone ids | Id de carte | Grille |
+|---|---|---|---|---|---|
+| `Royaumes` | `royaumes` | `zones/cell_*`, `instances/zone_cell_*` | 1 000 000 + … | 999 999 | lore (N023..S018, W019..E026) |
+| `Enfers` | `enfers` | `zones/enfers_*`, `instances/zone_enfers_*` | 2 000 000 + … | 999 998 | −1..1 (croix de 5 cellules) |
+
+La carte d'un point ne se déduit PAS de sa position (les deux repères se
+recouvrent) mais de la zone du joueur : `CellMapOfZoneId(zoneId)`. Deux zones
+de cartes différentes ne sont jamais `SameMap`. Les fonctions de nom et d'id
+prennent la carte en paramètre (Royaumes par défaut). Voir `docs/world/ENFERS.md`.
+
 Le monde « Royaumes » généré à partir de cette grille est décrit dans
 `docs/world/ROYAUMES.md`.
 

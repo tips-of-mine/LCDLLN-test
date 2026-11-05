@@ -26,15 +26,18 @@ namespace engine::server
 		m_players.clear();
 	}
 
-	uint32_t RegionActivity::Key(cells::CellCoord cell)
+	uint32_t RegionActivity::Key(const cells::MapCell& region)
 	{
-		return static_cast<uint32_t>(cell.n + 500) * 1000u + static_cast<uint32_t>(cell.e + 500);
+		return cells::MapCellZoneId(region);
 	}
 
-	void RegionActivity::AddPlayer(double x, double z)
+	void RegionActivity::AddPlayer(double x, double z, cells::CellMap map)
 	{
 		const cells::CellCoord home = cells::CellFromPosition(x, z);
-		++m_players[Key(home)];
+		// Position hors des clés représentables (joueur hors de toute grille) : ignorée.
+		if (home.n < -500 || home.n >= 500 || home.e < -500 || home.e >= 500)
+			return;
+		++m_players[Key({ home, map })];
 		for (int dn = -1; dn <= 1; ++dn)
 		{
 			for (int de = -1; de <= 1; ++de)
@@ -47,25 +50,25 @@ namespace engine::server
 					continue;
 				if (cells::DistanceToCell(neighbour, x, z) <= m_marginMeters)
 				{
-					m_players.try_emplace(Key(neighbour), 0u);
+					m_players.try_emplace(Key({ neighbour, map }), 0u);
 				}
 			}
 		}
 	}
 
-	bool RegionActivity::IsActive(cells::CellCoord cell) const
+	bool RegionActivity::IsActive(const cells::MapCell& region) const
 	{
-		return m_players.find(Key(cell)) != m_players.end();
+		return m_players.find(Key(region)) != m_players.end();
 	}
 
-	bool RegionActivity::IsActiveAt(double x, double z) const
+	bool RegionActivity::IsActiveAt(double x, double z, cells::CellMap map) const
 	{
-		return IsActive(cells::CellFromPosition(x, z));
+		return IsActive({ cells::CellFromPosition(x, z), map });
 	}
 
-	bool RegionActivity::IsOccupied(cells::CellCoord cell) const
+	bool RegionActivity::IsOccupied(const cells::MapCell& region) const
 	{
-		const auto it = m_players.find(Key(cell));
+		const auto it = m_players.find(Key(region));
 		return it != m_players.end() && it->second > 0u;
 	}
 
@@ -80,17 +83,15 @@ namespace engine::server
 		return count;
 	}
 
-	std::vector<cells::CellCoord> RegionActivity::ActiveCells() const
+	std::vector<cells::MapCell> RegionActivity::ActiveCells() const
 	{
-		std::vector<cells::CellCoord> out;
+		std::vector<cells::MapCell> out;
 		out.reserve(m_players.size());
 		for (const auto& [key, count] : m_players)
 		{
 			(void)count;
-			cells::CellCoord cell{};
-			cell.n = static_cast<int>(key / 1000u) - 500;
-			cell.e = static_cast<int>(key % 1000u) - 500;
-			out.push_back(cell);
+			if (const std::optional<cells::MapCell> region = cells::MapCellFromZoneId(key))
+				out.push_back(*region);
 		}
 		return out;
 	}

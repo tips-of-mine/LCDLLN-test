@@ -646,6 +646,36 @@ namespace engine::server
 						return false;
 					}
 				}
+				// Seconde carte (Les Enfers) — hostilité à vue envers certaines races.
+				if (const JsonValue* races = FindObjectMember(*behavior, "hostileToRaces"); races != nullptr)
+				{
+					if (races->type != JsonType::Array)
+					{
+						outError = entryLabel + ": behavior.hostileToRaces must be an array of strings";
+						m_archetypes.clear();
+						return false;
+					}
+					for (const JsonValue& race : races->arrayValue)
+					{
+						if (race.type != JsonType::String || race.stringValue.empty())
+						{
+							outError = entryLabel + ": behavior.hostileToRaces must be an array of non-empty strings";
+							m_archetypes.clear();
+							return false;
+						}
+						archetype.hostileToRaces.push_back(race.stringValue);
+					}
+				}
+				if (const JsonValue* radius = FindObjectMember(*behavior, "aggroRadius"); radius != nullptr)
+				{
+					if (!TryGetFloat(*radius, archetype.aggroRadiusMeters) || archetype.aggroRadiusMeters < 1.0f
+						|| archetype.aggroRadiusMeters > 60.0f)
+					{
+						outError = entryLabel + ": behavior.aggroRadius must be within [1, 60]";
+						m_archetypes.clear();
+						return false;
+					}
+				}
 			}
 
 			const uint32_t archetypeId = archetype.archetypeId;
@@ -667,5 +697,15 @@ namespace engine::server
 		}
 
 		return true;
+	}
+
+	bool CreatureArchetype::IsHostileToRace(std::string_view raceId) const
+	{
+		if (raceId.empty())
+			return false;
+		for (const std::string& race : hostileToRaces)
+			if (race == raceId)
+				return true;
+		return false;
 	}
 }

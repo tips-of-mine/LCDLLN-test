@@ -14,8 +14,8 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 5 villes de depart par race (premiere de chaque ligne) et leurs 8 voisines (regions contigues, on marche de l'une a l'autre). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
-  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les 5 villes de depart sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 4 villes de depart par race du continent (premiere de chaque ligne) et leurs 8 voisines (regions contigues, on marche de l'une a l'autre). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Derniere ligne : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
   "generated_cells": [
@@ -23,7 +23,9 @@
     "N011_E008", "N012_E007", "N012_E008", "N012_E009", "N011_E007", "N011_E009", "N010_E007", "N010_E008", "N010_E009",
     "N009_E011", "N010_E010", "N010_E011", "N010_E012", "N009_E010", "N009_E012", "N008_E010", "N008_E011", "N008_E012",
     "S007_E016", "S006_E015", "S006_E016", "S006_E017", "S007_E015", "S007_E017", "S008_E015", "S008_E016", "S008_E017",
-    "S009_E011", "S008_E010", "S008_E011", "S008_E012", "S009_E010", "S009_E012", "S010_E010", "S010_E011", "S010_E012"
+    "S009_E011", "S008_E010", "S008_E011", "S008_E012", "S009_E010", "S009_E012", "S010_E010", "S010_E011", "S010_E012",
+    "S006_E008", "S006_E009", "S007_E008", "S007_E009", "S008_E008", "S008_E009", "S009_E009",
+    "S013_E000", "N008_E007", "S005_W011", "S005_E011", "N008_W007"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -461,20 +463,6 @@
       "start_for": [],
       "source": "[INFÉRÉ] BD-T11",
       "description": "Ancienne forteresse naine reconvertie en refuge pour les concubines de Wismerhill."
-    },
-    {
-      "id": "ville_tsaroth",
-      "name": "Faille de Tsaroth",
-      "cell": "S009_E011",
-      "kind": "camp",
-      "race": "demons",
-      "state": "camp",
-      "faction": "legion",
-      "start_for": [
-        "demons"
-      ],
-      "source": "[INFÉRÉ] BD-T5",
-      "description": "Campement de la Legion au bord de la Faille de Tsaroth, la crevasse qui plonge jusqu'aux enfers."
     },
     {
       "id": "ville_hoengardt_t11",
@@ -1393,35 +1381,40 @@
       "name": "Porte des enfers I",
       "cell": "S013_E000",
       "kind": "portail",
-      "description": "Un cercle de pierres noires qui suinte la chaleur."
+      "description": "Un cercle de pierres noires qui suinte la chaleur.",
+      "link": "enfers:poi_enfers_porte_1"
     },
     {
       "id": "poi_porte_2",
       "name": "Porte des enfers II",
       "cell": "N008_E007",
       "kind": "portail",
-      "description": "Un cercle de pierres noires qui suinte la chaleur."
+      "description": "Un cercle de pierres noires qui suinte la chaleur.",
+      "link": "enfers:poi_enfers_porte_2"
     },
     {
       "id": "poi_porte_3",
       "name": "Porte des enfers III",
       "cell": "S005_W011",
       "kind": "portail",
-      "description": "Un cercle de pierres noires qui suinte la chaleur."
+      "description": "Un cercle de pierres noires qui suinte la chaleur.",
+      "link": "enfers:poi_enfers_porte_3"
     },
     {
       "id": "poi_porte_4",
       "name": "Porte des enfers IV",
       "cell": "S005_E011",
       "kind": "portail",
-      "description": "Un cercle de pierres noires qui suinte la chaleur."
+      "description": "Un cercle de pierres noires qui suinte la chaleur.",
+      "link": "enfers:poi_enfers_porte_4"
     },
     {
       "id": "poi_porte_5",
       "name": "Porte des enfers V",
       "cell": "N008_W007",
       "kind": "portail",
-      "description": "Un cercle de pierres noires qui suinte la chaleur."
+      "description": "Un cercle de pierres noires qui suinte la chaleur.",
+      "link": "enfers:poi_enfers_porte_5"
     },
     {
       "id": "poi_haawling_spines",
@@ -1583,38 +1576,6 @@
       "yaw_deg": 90,
       "dialogue_id": "nain_capitaine",
       "npc_target_id": "npc:nain_brunhild"
-    },
-    {
-      "city": "ville_tsaroth",
-      "x": 4,
-      "z": -2,
-      "radius": 1.5,
-      "npc": true,
-      "label": "Maltheus",
-      "role": "Heraut de la Legion",
-      "message": "Maltheus : La Faille t'a vu naitre. Sers-la.",
-      "mesh": "models/characters/humains/Male_Ranger/Male_Ranger.glb",
-      "scale": 95.0,
-      "rot_x_deg": -90.0,
-      "yaw_deg": 270,
-      "dialogue_id": "demon_heraut",
-      "npc_target_id": "npc:demon_maltheus"
-    },
-    {
-      "city": "ville_tsaroth",
-      "x": -5,
-      "z": 3,
-      "radius": 1.5,
-      "npc": true,
-      "label": "Ysviel",
-      "role": "Succube de la garde",
-      "message": "Ysviel : Ta haine me nourrit... continue.",
-      "mesh": "models/characters/humains/Female_Ranger/Female_Ranger.glb",
-      "scale": 95.0,
-      "rot_x_deg": -90.0,
-      "yaw_deg": 90,
-      "dialogue_id": "demon_ysviel",
-      "npc_target_id": "npc:demon_ysviel"
     }
   ]
 }

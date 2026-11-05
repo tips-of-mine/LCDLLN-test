@@ -1411,6 +1411,28 @@ namespace engine
 		/// (brouillard, culling…) du zone.json d'une cellule, sans son contenu.
 		/// \return true si le monde en cellules est actif. Effet de bord : m_cfg modifié.
 		bool LoadCellWorldSettings();
+		/// Relit `world/<carte active>/places.json` : cellules générées de la carte
+		/// active (m_generatedCells). \return false si aucune (carte non générée).
+		/// Effet de bord : lecture disque. Main thread.
+		bool LoadGeneratedCellsOfActiveMap();
+		/// Lit l'eau (water.bin) de toutes les cellules générées de la carte active,
+		/// reconstruit la scène d'eau de rendu et la relie au collisionneur (nage).
+		/// Effet de bord : m_cellWaterGlobal, m_clientWaterScene. Main thread.
+		void LoadCellWorldWater();
+		/// Seconde carte (Les Enfers) — change la carte résidente : arrête le thread de
+		/// chargement, attend le GPU (vkDeviceWaitIdle), détruit toutes les tuiles,
+		/// vide heightmaps, eau, PNJ statiques, props, marqueurs et échecs, puis relit
+		/// les cellules générées, l'eau, les POI de quêtes et (à la prochaine ouverture)
+		/// la carte du monde de \p map. Le chargement des cellules autour du point
+		/// d'arrivée est fait ensuite par EnterCellWorldAt (synchrone).
+		/// Main thread, sous l'écran de chargement (coûteux : à ne pas appeler par frame).
+		/// \return true si la carte a changé.
+		bool SwitchCellMap(engine::world::cells::CellMap map);
+		/// Seconde carte — suit la carte annoncée par le shard (zone du dernier ZoneChange,
+		/// UIModel playerStats.zoneId) : si elle diffère de la carte active, SwitchCellMap
+		/// puis message système dans le chat. \return true si la carte a changé.
+		/// Main thread (UpdateGameplayNet, avant l'application du ForcePosition).
+		bool FollowServerCellMap();
 		/// Boot du rendu (après les passes, avant le FrameGraph) : sources de hauteur,
 		/// eau de toutes les cellules générées (la passe eau est choisie au premier
 		/// FrameGraph), origine initiale. Main thread.
@@ -1508,6 +1530,9 @@ namespace engine
 		void ShutdownCellWorld();
 
 		bool m_cellWorld = false;
+		/// Seconde carte (Les Enfers) — carte résidente (une seule à la fois) : dossiers
+		/// zones/cell_* ou zones/enfers_*, world/<carte>/ pour les lieux et la carte.
+		engine::world::cells::CellMap m_activeCellMap = engine::world::cells::CellMap::Royaumes;
 		engine::world::cells::RenderFrame m_renderFrame;
 		engine::world::cells::GeneratedCellSet m_generatedCells;
 		std::unique_ptr<engine::world::cells::CellHeightFields> m_cellHeights;

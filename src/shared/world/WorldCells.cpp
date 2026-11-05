@@ -44,6 +44,28 @@ namespace engine::world::cells
 			if ((ns == south && n == 0) || (ew == west && e == 0)) return std::nullopt;
 			return CellCoord{ ns == north ? n : -n, ew == east ? e : -e };
 		}
+
+		/// Description d'une carte du registre (cf. CellMap). Indexée par la valeur
+		/// de l'énumération : l'ordre doit suivre celui de CellMap.
+		struct MapInfo
+		{
+			std::string_view worldId;   ///< sous-dossier world/<id>/
+			std::string_view dirPrefix; ///< préfixe des dossiers zones/<prefix>…
+			uint32_t zoneIdBase;        ///< base des identifiants de zone des cellules
+			uint32_t mapId;             ///< identifiant de carte (grille d'intérêt)
+			int minN, maxN, minE, maxE; ///< bornes de la grille (indices inclus)
+		};
+
+		constexpr MapInfo kMaps[kCellMapCount] = {
+			{ "royaumes", "cell_", kCellZoneIdBase, kCellWorldMapId, kMinN, kMaxN, kMinE, kMaxE },
+			{ "enfers", "enfers_", kEnfersZoneIdBase, kEnfersMapId, kEnfersMinN, kEnfersMaxN, kEnfersMinE, kEnfersMaxE },
+		};
+
+		/// Entrée du registre de la carte \p map.
+		const MapInfo& Info(CellMap map)
+		{
+			return kMaps[static_cast<size_t>(map)];
+		}
 	}
 
 	CellCoord CellFromPosition(double x, double z)
@@ -76,20 +98,32 @@ namespace engine::world::cells
 		return { ctr.x + localX, ctr.z + localZ };
 	}
 
-	bool IsInLoreGrid(CellCoord c)
+	bool IsInLoreGrid(CellCoord c, CellMap map)
 	{
-		return c.n >= kMinN && c.n <= kMaxN && c.e >= kMinE && c.e <= kMaxE;
+		const MapInfo& m = Info(map);
+		return c.n >= m.minN && c.n <= m.maxN && c.e >= m.minE && c.e <= m.maxE;
 	}
 
-	std::string CellDirName(CellCoord c)
+	std::string CellDirName(CellCoord c, CellMap map)
 	{
-		return "cell_" + Format(c, 'n', 's', 'e', 'w');
+		return std::string(Info(map).dirPrefix) + Format(c, 'n', 's', 'e', 'w');
 	}
 
-	std::optional<CellCoord> ParseCellDirName(std::string_view s)
+	std::optional<CellCoord> ParseCellDirName(std::string_view s, CellMap map)
 	{
-		if (s.substr(0, 5) != "cell_") return std::nullopt;
-		return Parse(s, 5, 'n', 's', 'e', 'w');
+		const std::string_view prefix = Info(map).dirPrefix;
+		if (s.substr(0, prefix.size()) != prefix) return std::nullopt;
+		return Parse(s, prefix.size(), 'n', 's', 'e', 'w');
+	}
+
+	std::optional<CellMap> CellMapOfDirName(std::string_view s)
+	{
+		for (int i = 0; i < kCellMapCount; ++i)
+		{
+			const CellMap map = static_cast<CellMap>(i);
+			if (ParseCellDirName(s, map).has_value()) return map;
+		}
+		return std::nullopt;
 	}
 
 	std::string LoreCellId(CellCoord c)
@@ -102,20 +136,31 @@ namespace engine::world::cells
 		return Parse(s, 0, 'N', 'S', 'E', 'W');
 	}
 
-	uint32_t CellZoneId(CellCoord c)
+	uint32_t CellZoneId(CellCoord c, CellMap map)
 	{
-		return kCellZoneIdBase + static_cast<uint32_t>(c.n + 500) * 1000u + static_cast<uint32_t>(c.e + 500);
+		return Info(map).zoneIdBase + static_cast<uint32_t>(c.n + 500) * 1000u + static_cast<uint32_t>(c.e + 500);
+	}
+
+	std::optional<CellMap> CellMapOfZoneId(uint32_t zoneId)
+	{
+		for (int i = 0; i < kCellMapCount; ++i)
+		{
+			const MapInfo& m = kMaps[i];
+			if (zoneId >= m.zoneIdBase && zoneId < m.zoneIdBase + kCellZoneIdSpan) return static_cast<CellMap>(i);
+		}
+		return std::nullopt;
 	}
 
 	bool IsCellZoneId(uint32_t zoneId)
 	{
-		return zoneId >= kCellZoneIdBase && zoneId < kCellZoneIdBase + 1000000u;
+		return CellMapOfZoneId(zoneId).has_value();
 	}
 
 	std::optional<CellCoord> CellFromZoneId(uint32_t zoneId)
 	{
-		if (!IsCellZoneId(zoneId)) return std::nullopt;
-		const uint32_t v = zoneId - kCellZoneIdBase;
+		const std::optional<CellMap> map = CellMapOfZoneId(zoneId);
+		if (!map) return std::nullopt;
+		const uint32_t v = zoneId - Info(*map).zoneIdBase;
 		return CellCoord{ static_cast<int>(v / 1000u) - 500, static_cast<int>(v % 1000u) - 500 };
 	}
 
@@ -138,9 +183,39 @@ namespace engine::world::cells
 		return activeZone == kCellWorldName;
 	}
 
+	std::string_view WorldIdOf(CellMap map)
+	{
+		return Info(map).worldId;
+	}
+
+	std::optional<CellMap> CellMapFromWorldId(std::string_view worldId)
+	{
+		for (int i = 0; i < kCellMapCount; ++i)
+			if (kMaps[i].worldId == worldId) return static_cast<CellMap>(i);
+		return std::nullopt;
+	}
+
+	uint32_t MapIdOf(CellMap map)
+	{
+		return Info(map).mapId;
+	}
+
+	std::optional<CellMap> CellMapFromMapId(uint32_t mapId)
+	{
+		for (int i = 0; i < kCellMapCount; ++i)
+			if (kMaps[i].mapId == mapId) return static_cast<CellMap>(i);
+		return std::nullopt;
+	}
+
+	CellMap CellMapOfZoneOr(uint32_t zoneId, CellMap fallback)
+	{
+		return CellMapOfZoneId(zoneId).value_or(fallback);
+	}
+
 	uint32_t MapIdOfZone(uint32_t zoneId)
 	{
-		return IsCellZoneId(zoneId) ? kCellWorldMapId : zoneId;
+		const std::optional<CellMap> map = CellMapOfZoneId(zoneId);
+		return map ? MapIdOf(*map) : zoneId;
 	}
 
 	bool SameMap(uint32_t zoneA, uint32_t zoneB)
@@ -150,7 +225,29 @@ namespace engine::world::cells
 
 	bool ZoneDirBelongsToWorld(std::string_view dirName, std::string_view activeZone)
 	{
-		const bool isCellDir = ParseCellDirName(dirName).has_value();
+		const bool isCellDir = CellMapOfDirName(dirName).has_value();
 		return IsCellWorld(activeZone) ? isCellDir : !isCellDir;
+	}
+
+	uint32_t MapCellZoneId(const MapCell& region)
+	{
+		return CellZoneId(region.cell, region.map);
+	}
+
+	std::optional<MapCell> MapCellFromZoneId(uint32_t zoneId)
+	{
+		const std::optional<CellMap> map = CellMapOfZoneId(zoneId);
+		const std::optional<CellCoord> cell = CellFromZoneId(zoneId);
+		if (!map || !cell) return std::nullopt;
+		return MapCell{ *cell, *map };
+	}
+
+	std::string MapCellLabel(const MapCell& region)
+	{
+		if (region.map == CellMap::Royaumes) return LoreCellId(region.cell);
+		std::string label(WorldIdOf(region.map));
+		for (char& ch : label)
+			if (ch >= 'a' && ch <= 'z') ch = static_cast<char>(ch - 'a' + 'A');
+		return label + ":" + LoreCellId(region.cell);
 	}
 }

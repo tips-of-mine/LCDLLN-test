@@ -629,6 +629,68 @@ namespace
 
 namespace
 {
+	/// v1.0.55 : fleuve de Sysigie (cours tracé à la main, île fluviale) et POI
+	/// partageant une case (temple et Seuil de Lhynn) — couche macro seule.
+	void TestRiverIslandAndSharedPois()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && !g.master.riverCourses.empty(), "fleuve : river_courses charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		const CityDef* sys = g.FindCity("ville_sysigie");
+		const River* mainArm = nullptr;
+		const River* arm = nullptr;
+		for (const River& r : g.rivers)
+		{
+			if (r.name == "fleuve_sysigie") mainArm = &r;
+			if (r.name == "fleuve_sysigie_bras") arm = &r;
+		}
+		Check(sys && mainArm && arm, "fleuve : lit principal et second bras autour de Sysigie");
+		if (!sys || !mainArm || !arm) return;
+		// Angle balayé autour de la ville par chaque bras : ~+pi d'un côté, ~-pi de
+		// l'autre ; leur différence ~2 pi = la ville est encerclée par l'eau.
+		auto sweep = [&](const River& r) {
+			double s = 0.0;
+			for (size_t k = 1; k < r.points.size(); ++k)
+			{
+				const double a0 = std::atan2(r.points[k - 1].z - sys->center.z, r.points[k - 1].x - sys->center.x);
+				const double a1 = std::atan2(r.points[k].z - sys->center.z, r.points[k].x - sys->center.x);
+				double d = a1 - a0;
+				while (d > 3.141592653589793) d -= 6.283185307179586;
+				while (d < -3.141592653589793) d += 6.283185307179586;
+				s += d;
+			}
+			return s;
+		};
+		const double loop = std::fabs(sweep(*mainArm) - sweep(*arm));
+		Check(std::fabs(loop - 6.283185307179586) < 0.5, "fleuve : Sysigie sur une ile (deux bras qui l'encerclent)");
+		double minD = 1e18;
+		for (const River* r : { mainArm, arm })
+			for (const Vec2& p : r->points) minD = std::min(minD, std::hypot(p.x - sys->center.x, p.z - sys->center.z));
+		Check(minD > sys->radiusM + 6.0 + std::max(46.0, sys->radiusM * 0.6) + 40.0, "fleuve : bras hors du plateau urbain");
+		Check(mainArm->waterY.back() < g.master.scale.seaLevelM + 0.5 && mainArm->widthM.back() >= 60.0,
+			"fleuve : se jette dans la mer, largeur de grand fleuve");
+		bool monotone = true;
+		for (size_t k = 1; k < mainArm->waterY.size(); ++k) monotone = monotone && mainArm->waterY[k] <= mainArm->waterY[k - 1];
+		Check(monotone, "fleuve : surface non croissante vers l'aval");
+		// POI d'une même case écartés (case de Lhynn : temple et Seuil).
+		const PoiDef* temple = nullptr;
+		const PoiDef* seuil = nullptr;
+		for (const PoiDef& p : g.pois)
+		{
+			if (p.id == "poi_temple_methraton") temple = &p;
+			if (p.id == "poi_seuil_lhynn") seuil = &p;
+		}
+		Check(temple && seuil && temple->cell == seuil->cell
+			&& std::hypot(temple->center.x - seuil->center.x, temple->center.z - seuil->center.z) >= 300.0,
+			"POI : deux lieux de la meme case ecartes (temple et Seuil de Lhynn)");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -714,6 +776,7 @@ int main()
 	TestReconstruction();
 	TestMapFeatures();
 	TestWaterShores();
+	TestRiverIslandAndSharedPois();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

@@ -265,7 +265,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 | Horkher | Notes BD (T6) de la fiche `horker` (Harrowdale, N004_E009) déplacées vers `city_horkher` (N006_E014). Harrowdale reste une ville du jeu (`RENOMMAGES` du générateur). |
 | Der Hem Shelbem | Province du Grand Sud, au sud de Moork ; on y affronte le prince mort-vivant archimage (la note « Dragon Rouge » est retirée). |
 | Altenberg, Northind, Moork, Feyhin, Magistrya | Notes : Altenberg côtière au nord de Lhynn, démantelée (T11) ; Northind dans les marches nord-ouest ; Moork, Feyhin et Magistrya détruites au T14. |
-| Nouveaux lieux | `lieu_temple_methraton_lhynn`, `lieu_port_franc`, `lieu_tharsulatis` (hors carte), `lieu_seuil_lhynn`, `lieu_defile_mordrek`, `lieu_grand_hall_nains`, `lieu_sanctuaire_chevaliers_dragons`, `lieu_ville_moros` — sans cellule [INFÉRÉ à placer]. |
+| Nouveaux lieux | `lieu_temple_methraton_lhynn`, `lieu_port_franc`, `lieu_tharsulatis` (hors carte), `lieu_seuil_lhynn`, `lieu_defile_mordrek`, `lieu_grand_hall_nains`, `lieu_sanctuaire_chevaliers_dragons`, `lieu_ville_moros` — placés en v1.0.55 (section 8), sauf Tharsulatis. |
 | « Empire du Jade » | **Aucun appui dans l'album T7** : ni Empire, ni cité, ni temple, ni seigneur « du Jade ». Conservé comme extension de jeu `[GD]` (voir 7.4). Les zones de « voyage mystique » sont les épreuves de l'initiation (p.22-27) ; la « Nécropole du Désert » est celle de Der Hem Shelbem. |
 
 ### 7.3 Frise et personnages
@@ -293,10 +293,67 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 
 ### 7.5 Points ouverts restants
 
-Voir la section 9 : placements sans cellule, Haut Tharque = Meldrim [DÉDUCTION], nom de la fille de
-Wismerhill, retour de Parsifal au T12, Kruikna / Cruik / dragon de Pilou.
+Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 10) : le nom
+de la fille de Wismerhill.
 
-## 8. Plans de référence
+## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
+
+Placements des lieux des tomes 7 à 14 dans le lore (`cell`) et dans le monde jouable
+(`world_master.json`). Script reproductible : `lore_v1055.py` (appliqué au fichier v1.0.54).
+
+### 8.1 Lieux placés
+
+| Lieu | Cellule | Monde jouable | Justification |
+|---|---|---|---|
+| Temple de Methraton (`lieu_temple_methraton_lhynn`) | N001_W010 | POI `poi_temple_methraton` (`temple`) | **Décision du propriétaire** : dans Lhynn. |
+| Seuil de Lhynn (`lieu_seuil_lhynn`) | N001_W010 | POI `poi_seuil_lhynn` (`portail`, sans liaison) | **Décision du propriétaire** : près du palais de Lhynn (T14 p.26). |
+| Forteresse naine d'Heureux / « Heusgly » (`ville_forteresse_naine_heureux_t11`) | S006_E004 | forteresse naine déplacée de S004_W004 | **Décision du propriétaire** : refuge des neuf mères (T9 p.26) et forteresse « d'Heusgly » (T11 p.36). |
+| Sanctuaire des Chevaliers Dragons (`lieu_sanctuaire_chevaliers_dragons`) | S003_W004 | POI `poi_sanctuaire_chevaliers_dragons` (`sanctuaire`) | **Décision du propriétaire** : case du palais du Maître des Dragons. |
+| Hoengardt (`ville_hoengardt_t11`) | N014_E016 | cellule inchangée, type `ville` → `forteresse` (comme le lore) | [INFÉRÉ] Plaine au pied de la chaîne, dans la région des Marches du Nord ; l'armée non humaine doit y « remonter » (T11 p.25). |
+| Port Franc (`lieu_port_franc`) | S003_W013 | POI `poi_port_franc` (`port`) | [INFÉRÉ] Plage de la côte ouest, ~40 km au sud de Lhynn : la flotte tharque vient de la mer de l'ouest (T10-T11) et le raz-de-marée tharque doit atteindre Lhynn (T14 p.40) ; Altenberg tient la côte au nord. |
+| Défilé de Mordrek (`lieu_defile_mordrek`) | N016_E013 | POI `poi_defile_mordrek` (`defile`) | [INFÉRÉ] Chaîne (code `M`) des Marches du Nord, entre les Terres des Gigantomorphes (N019+) et le sud : les géants « descendaient vers Lhynn » (T14 p.28). |
+| Moros (`lieu_ville_moros`) | N000_W007 | POI `poi_moros` (`cite`, ville non bâtie) | [INFÉRÉ] Aucune indication : plaine des Terres de l'Empereur (seigneur « félon » de l'Empire, T12 p.22). Intacte à l'époque du jeu. |
+| Grand Hall des nains (`lieu_grand_hall_nains`) | S008_E014 | POI `poi_grand_hall_nains` (`salle`) | [INFÉRÉ] Sous le volcan (`poi_volcan_cratere`), à une case de Ghrunke Dash : salle sous un volcan, cité naine au pied du cratère (T14 p.39). |
+
+- Plusieurs POI d'une même case (Lhynn, S003_W004, S008_E014) : le générateur les écarte
+  d'un quart de tour autour de la ville de la case (ou de 400 m), sans changer les POI existants.
+  Les POI restent hors du plateau urbain : temple et Seuil sont des marqueurs aux abords de Lhynn.
+- Nouveaux genres de POI côté client (`PlaceKindLabel`) : `temple`, `sanctuaire`, `port`, `cite`,
+  `defile`, `salle`.
+- Aucune de ces cellules n'est générée par défaut (`generated_cells` inchangé).
+
+### 8.2 Fleuve de Sysigie
+
+**Décision du propriétaire** : Sysigie (N009_W011) est une île au milieu d'un grand fleuve.
+Tracé [INFÉRÉ], nom provisoire « [à nommer] » (le propriétaire nommera fleuves, rivières et lacs) :
+
+- source dans la lisière de la forêt occidentale (N006_W010), vers le nord par N007_W010
+  (la rivière de N007_W011 s'y joint), N008_W011, **l'île de Sysigie** (N009_W011), N010_W011,
+  N011_W011 ; embouchure dans la mer du nord en N012_W011 ;
+- grille : N006_W010 et N007_W010 `t` → `R`, N008_W011 à N011_W011 `.` → `r` (lore : cellules
+  `forest_with_river` / `plain_with_river`, `has_river`) ; lore : `hydrography.rivers` →
+  `riv_fleuve_sysigie` ;
+- monde jouable : nouvelle section `river_courses` du master (`fleuve_sysigie`, `width_m` 80,
+  `island_city` `ville_sysigie`). Le générateur suit les centres des cases (le centre de la ville
+  remplace celui de sa case), contourne les autres villes, ajoute de grands méandres, puis descend
+  vers la mer depuis la case d'embouchure. Autour de l'île, le lit se divise en **deux bras**
+  (~40 m) écartés d'environ 340 m du centre, hors du plateau urbain ; les routes les franchissent.
+  Largeur ~50 m à la source, 80 m à l'embouchure.
+- Limite : les lieux procéduraux de la rive opposée aux routes n'ont pas toujours de chemin local
+  (avertissement « chemin impossible » du générateur dans N008_W011 à N011_W011).
+
+### 8.3 Notes du propriétaire
+
+| Sujet | Décision |
+|---|---|
+| Haut Tharque | **Est Meldrim**, Empereur de Tharque : `char_haut_tharque` (T9 p.44) fusionné dans `char_meldrim_t11` (T11 p.16-17) ; alias « le Haut Tharque » dans la description, tomes T9 et T11. |
+| Enfants de Wismerhill | Plusieurs enfants (T12) ; « Elle s'appelle Hellaynnea, n'est-ce pas ? » (T12 p.7) reste à préciser. |
+| Dragons | Kruikna (T3-T6), « Cruik » (T9 p.36) et le dragon bleu de Pilou (T11) sont **trois dragons différents** ; fiches non fusionnées, note ajoutée sur chacune. |
+| Parsifal | Caché dans une cité au T12 (simplement plus montré) : son retour n'est pas une incohérence. |
+| Greldinard | « Baron » (T10-T13) est l'appellation de la BD : aucun fief supplémentaire. |
+
+## 9. Plans de référence
 
 Plans vus du dessus (repères pleins = BD, en pointillés = lore placé) publiés comme
 documents de conception : Kendrhir (en reconstruction), Feyhin Lokcthat, Magistrya,
@@ -304,7 +361,7 @@ puis Mont des Neuf Pics, l'Atmosphère, le palais du Maître des Dragons, Altenb
 l'Oracle (extérieur) ; pour le T3 : Ghrunke Dash, Lhynn, le village fantôme (village et
 marais) et le fief de Garundel (circulaire, douves, tour ronde, logis accolé).
 
-## 9. Questions ouvertes
+## 10. Questions ouvertes
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer
@@ -322,12 +379,14 @@ marais) et le fief de Garundel (circulaire, douves, tour ronde, logis accolé).
   générées) contre N012_E012 dans le lore (v1.0.40) ; déplacer une ville de départ
   touche aux départs des personnages et aux cellules générées.
 - Krak de Jhenner : sans cellule.
-- Sysigie (N009_W011) : vérifier qu'un grand fleuve entoure la cellule sur la carte.
-- Placements sans cellule : temple de Methraton (dans Lhynn), Port Franc, Seuil de Lhynn,
-  défilé de Mordrek (Marches du Nord), Grand Hall des nains, sanctuaire des Chevaliers
-  Dragons, Moros, Hoengardt, forteresse naine « Heusgly ».
-- Le Haut Tharque (T9) est-il Meldrim (T11) [DÉDUCTION] ? Fusion des fiches à décider.
-- Nom de la fille de Wismerhill : « Elle s'appelle Hellaynnea, n'est-ce pas ? » (T12 p.7).
-- Parsifal reparaît au T12 après la disparition de la Syzygie (T11), sans explication.
-- Kruikna (T3-T6), « Cruik » (T9) et le dragon bleu offert à Pilou (T11) : un ou plusieurs dragons ?
-- Greldinard appelé « Baron » (T10, T11, T13) alors que Wismerhill est Baron de Moork depuis le T6.
+- ~~Sysigie (N009_W011) : grand fleuve autour de la cellule~~ : **close** (v1.0.55) — fleuve
+  `riv_fleuve_sysigie` à deux bras autour de l'île (section 8.2).
+- ~~Placements sans cellule (T7-T14)~~ : **close** (v1.0.55) — section 8.1.
+- Nom de la fille de Wismerhill (il a plusieurs enfants, T12) : « Elle s'appelle Hellaynnea,
+  n'est-ce pas ? » (T12 p.7) — reste à préciser.
+- ~~Retour de Parsifal au T12~~ : **close** (v1.0.55) — caché dans une cité, plus montré.
+- ~~Kruikna, « Cruik », dragon bleu de Pilou~~ : **close** (v1.0.55) — trois dragons différents.
+- ~~Greldinard appelé « Baron » (T10-T13)~~ : **close** (v1.0.55) — appellation de la BD, sans fief.
+- Noms des fleuves, rivières et lacs : à donner par le propriétaire (fleuve de Sysigie « [à nommer] »).
+- Forteresse naine d'Heureux (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
+  « proche de Moork » (S002_E015), sans appui BD.

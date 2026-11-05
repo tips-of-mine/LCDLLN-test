@@ -483,6 +483,31 @@ namespace tools::world_gen
 					p.center = c.center + Vec2{ std::cos(a), std::sin(a) } * need;
 				}
 			}
+			// Plusieurs POI dans la même case (ex. temple et Seuil dans la case de
+			// Lhynn) : décalés d'un quart de tour autour de la ville de la case (ou de
+			// 400 m vers l'est sans ville) tant qu'ils sont à moins de 300 m d'un POI
+			// déjà placé.
+			const CityDef* host = nullptr;
+			for (const CityDef& c : g.cities)
+				if (c.n == p.n && c.e == p.e) { host = &c; break; }
+			for (int tries = 0; tries < 8; ++tries)
+			{
+				bool clash = false;
+				for (const PoiDef& q : g.pois)
+				{
+					if (&q == &p) break; // POI suivants pas encore placés
+					if (q.n == p.n && q.e == p.e && std::hypot(q.center.x - p.center.x, q.center.z - p.center.z) < 300.0) clash = true;
+				}
+				if (!clash) break;
+				if (host)
+				{
+					const Vec2 d = p.center - host->center;
+					const double a = std::atan2(d.z, d.x) + 1.5707963267948966;
+					p.center = host->center + Vec2{ std::cos(a), std::sin(a) } * std::hypot(d.x, d.z);
+				}
+				else
+					p.center.x += 400.0;
+			}
 		}
 		for (const CityDef& c : g.cities)
 			if (!c.startFor.empty()) g.startCenters.push_back(c.center);
@@ -606,6 +631,13 @@ namespace tools::world_gen
 		const double sea = s.seaLevelM;
 		const int rows = static_cast<int>(m.gridRows.size());
 
+		// Cases tenues par un cours d'eau tracé à la main (`river_courses`) : leur
+		// composante n'a pas de rivière automatique.
+		std::vector<uint8_t> courseCell(static_cast<size_t>(rows) * s.gridCols, 0);
+		for (const RiverCourseDef& rc : m.riverCourses)
+			for (auto [n, e] : rc.cellNE)
+				courseCell[static_cast<size_t>(s.northN - n) * s.gridCols + (e - s.westE)] = 1;
+
 		// Une rivière par composante connexe (8-voisinage) de cases « avec rivière ».
 		std::vector<int> comp(static_cast<size_t>(rows) * s.gridCols, -1);
 		std::vector<std::vector<std::pair<int, int>>> comps;
@@ -634,21 +666,10 @@ namespace tools::world_gen
 			}
 
 		const Grid<double> filled = FilledCoarse(g);
-		int riverIndex = 0;
-		for (const auto& cells : comps)
-		{
-			// Source = point le plus haut de la composante (centres de cases).
-			Vec2 src{};
-			double best = -1e9;
-			for (auto [r, c] : cells)
-			{
-				const engine::world::cells::CellPoint p = engine::world::cells::CellCenter({ s.northN - r, s.westE + c });
-				const double h = SampleBilinear(g.coarse, p.x, p.z);
-				if (h > best) { best = h; src = { p.x, p.z }; }
-			}
-			std::vector<Vec2> path;
-			int ci = static_cast<int>(Clamp(filled.IndexX(src.x), 1, filled.width - 2));
-			int cj = static_cast<int>(Clamp(filled.IndexZ(src.z), 1, filled.height - 2));
+
+		// Descente de plus grande pente sur la grille remplie, depuis le nœud (ci, cj),
+		// jusqu'à la mer (ou le bord) ; les points sont ajoutés à `path`.
+		auto descend = [&](int ci, int cj, std::vector<Vec2>& path) {
 			std::vector<uint8_t> visited(filled.data.size(), 0);
 			for (int stepIdx = 0; stepIdx < 60000; ++stepIdx)
 			{
@@ -672,18 +693,35 @@ namespace tools::world_gen
 				ci = bi; cj = bj;
 				if (ci <= 0 || cj <= 0 || ci >= filled.width - 1 || cj >= filled.height - 1) break;
 			}
-			if (path.size() < 12) continue; // trop court : pas une rivière
-			// Méandres : déplacement latéral bruité (≈ ±60 m) avant lissage.
+		};
+
+		// Méandres, lissage, ré-échantillonnage, surface et largeur d'une rivière.
+		// `meanderWeight(p)` (0..1) atténue les méandres (1 = ±60 m, plus ±`bigMeanderM`
+		// sur ~7 km pour un grand cours tracé à la main) ; largeur de `widthSrc`
+		// (source) à `widthSrc + widthGain` (aval).
+		auto finish = [&](std::vector<Vec2> path, const std::string& name, double widthSrc, double widthGain,
+			double bigMeanderM, const auto& meanderWeight) {
+			// Petits méandres : appliqués de proche en proche (comportement historique).
+			// Grands méandres : normale prise sur le tracé d'origine (pas de boucle).
+			const std::vector<Vec2> straight = path;
 			for (size_t k = 1; k + 1 < path.size(); ++k)
 			{
+				const double w = meanderWeight(path[k]);
+				if (bigMeanderM > 0.0)
+				{
+					const Vec2 d0 = straight[std::min(k + 8, straight.size() - 1)] - straight[k >= 8 ? k - 8 : 0];
+					const double l0 = std::hypot(d0.x, d0.z);
+					if (l0 > 1e-6)
+						path[k] = path[k] + Vec2{ -d0.z / l0, d0.x / l0 } * (Fbm(straight[k].x, straight[k].z, 7000.0, 2, m.seed + 917) * 2.0 * bigMeanderM * w);
+				}
 				const Vec2 d = path[k + 1] - path[k - 1];
 				const double l = std::hypot(d.x, d.z);
 				if (l < 1e-6) continue;
-				const double off = Fbm(path[k].x, path[k].z, 1800.0, 3, m.seed + 909) * 120.0;
+				const double off = Fbm(path[k].x, path[k].z, 1800.0, 3, m.seed + 909) * 120.0 * w;
 				path[k] = path[k] + Vec2{ -d.z / l, d.x / l } * off;
 			}
 			River river;
-			river.name = "riviere_" + std::to_string(riverIndex++);
+			river.name = name;
 			river.points = ResamplePolyline(SmoothPolyline(path, 4), 6.0);
 			const size_t np = river.points.size();
 			// Surface : altitude du relief lissée (minimum glissant ±150 m) moins 1,6 m,
@@ -705,10 +743,124 @@ namespace tools::world_gen
 				double y = std::min(lo - 1.6, prev - 0.002);
 				y = std::max(y, sea - 0.05);
 				river.waterY[k] = y;
-				river.widthM[k] = 10.0 + 22.0 * t;
+				river.widthM[k] = widthSrc + widthGain * t;
 				prev = y;
 			}
-			g.rivers.push_back(std::move(river));
+			return river;
+		};
+
+		int riverIndex = 0;
+		for (const auto& cells : comps)
+		{
+			bool ownedByCourse = false;
+			for (auto [r, c] : cells)
+				if (courseCell[static_cast<size_t>(r) * s.gridCols + c]) ownedByCourse = true;
+			if (ownedByCourse) continue;
+			// Source = point le plus haut de la composante (centres de cases).
+			Vec2 src{};
+			double best = -1e9;
+			for (auto [r, c] : cells)
+			{
+				const engine::world::cells::CellPoint p = engine::world::cells::CellCenter({ s.northN - r, s.westE + c });
+				const double h = SampleBilinear(g.coarse, p.x, p.z);
+				if (h > best) { best = h; src = { p.x, p.z }; }
+			}
+			std::vector<Vec2> path;
+			descend(static_cast<int>(Clamp(filled.IndexX(src.x), 1, filled.width - 2)),
+				static_cast<int>(Clamp(filled.IndexZ(src.z), 1, filled.height - 2)), path);
+			if (path.size() < 12) continue; // trop court : pas une rivière
+			g.rivers.push_back(finish(std::move(path), "riviere_" + std::to_string(riverIndex++), 10.0, 22.0, 0.0,
+				[](Vec2) { return 1.0; }));
+		}
+
+		// Cours tracés à la main : centres des cases dans l'ordre (le centre de la
+		// ville-île remplace celui de sa case), contournement des autres villes,
+		// puis descente vers la mer depuis la dernière case (case d'embouchure,
+		// côtière : une cuvette intérieure sous le niveau de la mer arrêterait la
+		// descente avant la côte).
+		for (const RiverCourseDef& rc : m.riverCourses)
+		{
+			const CityDef* island = rc.islandCity.empty() ? nullptr : g.FindCity(rc.islandCity);
+			std::vector<Vec2> way;
+			for (auto [n, e] : rc.cellNE)
+			{
+				const engine::world::cells::CellPoint p = engine::world::cells::CellCenter({ n, e });
+				way.push_back((island && island->n == n && island->e == e) ? island->center : Vec2{ p.x, p.z });
+			}
+			std::vector<Vec2> path;
+			for (size_t k = 0; k + 1 < way.size(); ++k)
+			{
+				const double len = std::hypot(way[k + 1].x - way[k].x, way[k + 1].z - way[k].z);
+				const int steps = std::max(1, static_cast<int>(std::ceil(len / 250.0)));
+				for (int i = 0; i < steps; ++i)
+				{
+					Vec2 p = way[k] + (way[k + 1] - way[k]) * (static_cast<double>(i) / steps);
+					for (const CityDef& c : g.cities)
+					{
+						if (island && c.id == island->id) continue;
+						const double need = c.radiusM + 400.0;
+						const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
+						if (d < need && d > 1e-6) p = c.center + (p - c.center) * (need / d);
+					}
+					path.push_back(p);
+				}
+			}
+			descend(static_cast<int>(Clamp(filled.IndexX(way.back().x), 1, filled.width - 2)),
+				static_cast<int>(Clamp(filled.IndexZ(way.back().z), 1, filled.height - 2)), path);
+
+			// Rayon de l'île : plateau urbain + raccord + demi-lit + berge.
+			const double half = rc.widthM * 0.5;
+			const double ri = island ? island->radiusM + 6.0 + std::max(46.0, island->radiusM * 0.6) + half + 40.0 : 0.0;
+			const double split = 2.5 * ri; // demi-longueur de la zone des deux bras (m)
+			River main = finish(std::move(path), rc.id, rc.widthM * 0.6, rc.widthM * 0.4, 700.0, [&](Vec2 p) {
+				return island ? SmoothStep(split, split + 1500.0, std::hypot(p.x - island->center.x, p.z - island->center.z)) : 1.0;
+			});
+			if (!island)
+			{
+				g.rivers.push_back(std::move(main));
+				continue;
+			}
+			// Île fluviale : point du lit le plus proche du centre, abscisse curviligne.
+			const size_t np = main.points.size();
+			size_t kc = 0;
+			double dc = 1e18;
+			for (size_t k = 0; k < np; ++k)
+			{
+				const double d = std::hypot(main.points[k].x - island->center.x, main.points[k].z - island->center.z);
+				if (d < dc) { dc = d; kc = k; }
+			}
+			const size_t span = static_cast<size_t>(split / 6.0);
+			if (kc < span || kc + span >= np)
+			{
+				g.Warn("cours " + rc.id + " : ile de " + rc.islandCity + " trop pres d'un bout du cours, bras non crees");
+				g.rivers.push_back(std::move(main));
+				continue;
+			}
+			const size_t k0 = kc - span, k1 = kc + span;
+			Vec2 dir = main.points[k1] - main.points[k0];
+			const double dl = std::max(1e-6, std::hypot(dir.x, dir.z));
+			dir = dir * (1.0 / dl);
+			const Vec2 nrm{ -dir.z, dir.x };
+			// Bras = lit d'origine ramené sur l'axe passant par le centre, écarté de
+			// ±1,15 ri au droit de la ville (cloche en cosinus nulle aux deux bouts) :
+			// la ville reste à plus de ~1,15 ri de l'axe de chaque bras.
+			River arm;
+			arm.name = rc.id + "_bras";
+			for (size_t k = k0; k <= k1; ++k)
+			{
+				const double u = (static_cast<double>(k) - static_cast<double>(kc)) * 6.0;
+				const double bell = 0.5 * (1.0 + std::cos(3.141592653589793 * u / split));
+				const Vec2 axis = island->center + dir * u;
+				const Vec2 base = main.points[k] * (1.0 - bell) + axis * bell;
+				const double w = main.widthM[k] * (1.0 - 0.35 * bell);
+				arm.points.push_back(base - nrm * (1.15 * ri * bell));
+				arm.waterY.push_back(main.waterY[k]);
+				arm.widthM.push_back(w);
+				main.points[k] = base + nrm * (1.15 * ri * bell);
+				main.widthM[k] = w;
+			}
+			g.rivers.push_back(std::move(main));
+			g.rivers.push_back(std::move(arm));
 		}
 		g.report.rivers = g.rivers.size();
 		g.report.lakes = g.lakes.size();

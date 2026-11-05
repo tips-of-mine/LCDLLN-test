@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.54",
+    "version": "1.0.55",
     "notes": [
+      "v1.0.55 : placements T7-T14 et fleuve de Sysigie — temple de Methraton et Seuil de Lhynn dans la cellule de Lhynn (N001_W010), forteresse naine d'Heureux / Heusgly en S006_E004, sanctuaire des Chevaliers Dragons en S003_W004 (décisions) ; Port Franc (S003_W013), Hoengardt (N014_E016), défilé de Mordrek (N016_E013), Moros (N000_W007), Grand Hall des nains (S008_E014) [INFÉRÉ] ; fleuve « [à nommer] » qui entoure l'île de Sysigie (N006_W010 → N012_W011) ; fusion char_haut_tharque → char_meldrim_t11 (décision) ; notes : enfants de Wismerhill, Kruikna / Cruik / dragon bleu distincts, Parsifal caché au T12, titre « Baron » de Greldinard. Détail : docs/world/LORE_BD.md, section 8.",
       "v1.0.54 : [BD-T7 à T14] corrections confrontées aux albums « De Vents, de Jade et de Jais », « Le Glaive de justice », « Les Chants de la négation », « L'Aigle foudroyé », « Ave Tenebrae », « La Porte des Enfers », « La Prophétie », « La Fin des Temps » : fusions char_prince_tenebres_t11 → char_lucifer_prince_tenebres (le Sombre Prince est le père d'Haazheel), char_baron_aspirant_t13 → char_fratus_sinister, char_pilou → char_pile_ou_face, char_methrhton_herald → char_serpent_methraton ; contenu « Jade » du T7 marqué [À VÉRIFIER] ; bataille finale du T13 dans la salle du trône de Lhynn ; Lhynn sur la mer de l'ouest, Sysigie (Syzygie) île fluviale noyée de brouillard (décisions) ; notes BD d'Horkher déplacées depuis Harrowdale ; graphies Grhumpdeth, Hellwelkin, Feu Solaire ; statuts (Haazheel, Fratus, Urmacht, Gunthar morts ; père de Wismerhill et Iaun Reith vivants) ; frise T7-T14 complétée (90 fiches vides remplies ou ajoutées) ; 4 personnages et 8 lieux ajoutés. Détail : docs/world/LORE_BD.md, section 7.",
       "v1.0.53 : [BD-T4/T5/T6] corrections confrontées aux BD « Quand sifflent les serpents », « La Danse écarlate », « La Couronne des ombres » : graphies Hellaynnea, Selinporf, Pharix, Hokhost, Sysigie, Krukh ; fusions char_esmeralda_succubus → char_succubus (Esmeralda = apparence), char_grand_maitre_lion → char_fratus_sinister ; titan de Tsaroth = Haazheel ; Tsaroth sans service ; Faille tenue par la Lune Noire ; Krak de Jhenner ; plan de bataille ; palais lunaire et son reflet, Passe de Heniak, citadelle impériale ; 9 évènements corrigés, 2 ajoutés ; tomes des personnages normalisés (tNN). Détail : docs/world/LORE_BD.md.",
       "v1.0.52 : [CARTE] carte agrandie et densifiée : grille du lore N023..S018 x W019..E026 (côte orientale « Rivage des Géants », extrême nord des Terres des Gigantomorphes, confins du Midi : le continent n'est plus coupé par les bords) ; 23 cellules du lore reportées dans le monde jouable ; 45 villes du lore intégrées au monde jouable, Unnamed-64 → Runecroft, Unnamed-143 → Clearfen, Deepmoor décalée en N014_E017, 10 villes créées sur les nouvelles terres ; rivières de Rivercross et de Southport, 5 lacs de plaine, 4 forêts, marais des landes ; champs cultivés autour de toutes les villes. Détail : docs/world/LORE_BD.md.",
@@ -3757,7 +3758,8 @@
         "[BD-T2] Pile-ou-Face : 'J'ai pas le droit de monter un dragon, moi?!' — part avec lui vers l'Oracle.",
         "[BD-T2] Futur compagnon-monture de Pile-ou-Face.",
         "[v1.0.51] Fusion de companion_dragon_pilou : le dragonnet de l'œuf de Pile-ou-Face (T2) est Kruikna, éclos au T3 (pl.27).",
-        "[BD-T3 pl.27] S'attache à Nasha ; [BD-T3 pl.29] brûle les renards démoniaques qui veulent le dévorer (« Cuit, repas, cuit ! »)."
+        "[BD-T3 pl.27] S'attache à Nasha ; [BD-T3 pl.29] brûle les renards démoniaques qui veulent le dévorer (« Cuit, repas, cuit ! »).",
+        "[DÉCISION] (v1.0.55) Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées."
       ],
       "variants": [],
       "level_titles": [],
@@ -3983,7 +3985,8 @@
         "[BD-T11] 'OH! QU'IL EST BEAU! DANS MES BRAS, PETIT!'",
         "[BD-T11] Dragon : 'GNIARD MIAM GLASHP!' — sons gutturaux affectueux.",
         "[BD-T11] 'On va être très copains, tous les deux!'",
-        "[BD-T11] 'JE VAIS VOIR LE DRAGON, IL DOIT AVOIR FAIM!' — Pilou s'en occupe immédiatement."
+        "[BD-T11] 'JE VAIS VOIR LE DRAGON, IL DOIT AVOIR FAIM!' — Pilou s'en occupe immédiatement.",
+        "[DÉCISION] (v1.0.55) Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées."
       ],
       "variants": [],
       "level_titles": [],
@@ -5401,7 +5404,8 @@
         "[BD-T10] p.8, 11 : « principauté de Syzygie » ; cité-cathédrale dorée sur un rocher au-dessus d'une mer de nuages (= brouillard du fleuve).",
         "[BD-T11] p.4-5 : « vaste royaume bordé de hautes montagnes infranchissables », seul accès par une gorge fermée de portes d'airain ; la cité est au cœur de ce royaume [INFÉRÉ].",
         "[BD-T11] p.12 : projetée « dans un autre plan d'existence » ; à sa place, un cirque désolé. État du monde jouable à décider (game design).",
-        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+        "[INFÉRÉ] (v1.0.55) Le fleuve de Sysigie (riv_fleuve_sysigie, nom à donner) vient du sud, se divise en deux bras autour de l'île et se jette dans la mer du nord en N012_W011."
       ],
       "dimensions_estimees": {
         "hauteur": "500m",
@@ -9420,7 +9424,7 @@
       "alias": "",
       "type": "fortress_city",
       "importance": "",
-      "cell": "",
+      "cell": "N014_E016",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -9442,7 +9446,8 @@
         "[BD-T11] Wismerhill ordonne à Goristroy de faire remonter les troupes vers Hoengardt.",
         "[BD-T11] 'Vous avez ordre de faire remonter les troupes vers la ville de Hoengardt!'",
         "[BD-T11] Centre de commandement de l'armée non humaine des Marches du Nord.",
-        "[BD-T11] p.25 : rendez-vous de l'armée non humaine des Marches du Nord « dans deux mois » ; jamais montré ensuite (T12-T14)."
+        "[BD-T11] p.25 : rendez-vous de l'armée non humaine des Marches du Nord « dans deux mois » ; jamais montré ensuite (T12-T14).",
+        "[INFÉRÉ] (v1.0.55) Cellule N014_E016 (déjà celle du monde jouable) : plaine au pied de la chaîne des Marches du Nord, centre de commandement de l'armée non humaine qui doit y « remonter » (T11 p.25) ; type forteresse aligné dans le monde jouable."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -9518,7 +9523,7 @@
       "alias": "Heusgly",
       "type": "fortress_city",
       "importance": "",
-      "cell": "",
+      "cell": "S006_E004",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -9542,7 +9547,8 @@
         "[BD-T11] 'LE TEMPS AVAIT PASSÉ LENTEMENT, ET DANS L'ANCIENNE FORTERESSE NAINE D'HEUREUX DES ÉVÉNEMENTS SE PRÉPARAIENT.'",
         "[BD-T11] Les bébés impériaux y sont gardés par des démons — rarissime protection.",
         "[BD-T11] Lieu de naissance des 10 héritiers impériaux (9 filles + 1 garçon).",
-        "[À VÉRIFIER BD-T11] p.36 : le cartouche se lit « l'ancienne forteresse naine d'Heusgly » (lecture incertaine) ; « d'Heureux » est une lecture du lore, conservée. Même forteresse que celle du T9 p.26 (zone_forteresse_naine_abandonnee_t9) [DÉDUCTION]."
+        "[À VÉRIFIER BD-T11] p.36 : le cartouche se lit « l'ancienne forteresse naine d'Heusgly » (lecture incertaine) ; « d'Heureux » est une lecture du lore, conservée. Même forteresse que celle du T9 p.26 (zone_forteresse_naine_abandonnee_t9) [DÉDUCTION].",
+        "[DÉCISION] (v1.0.55) Cellule S006_E004 (montagnes) : refuge des neuf mères au T9 (p.26, pendant la livraison du Juggernauth) et « forteresse naine d'Heusgly » du T11 (p.36). Le monde jouable la déplace de S004_W004 à S006_E004."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -147198,7 +147204,9 @@
         "[BD-T14] p.5-9 : appelle ses compagnons morts, puis ressuscite en masse tous les morts de la salle « toutes factions confondues », épuisant la mana de l'Empire ; p.10 : l'Écho lui transmet « le grand secret de la divinité ».",
         "[BD-T14] p.12-15 : libère l'Oracle ; p.16-17 : réunit chez Methraton les souverains des hommes (pacte de l'exode) ; p.26-41 : conduit l'exode par le Seuil de Lhynn (« J'ai détruit un monde, notre monde ! ») ; p.43 : « Que... s'active... le... passage ! ».",
         "[BD-T13] p.40 (v1.0.54) : c'est Haazheel qui se dit « fils de Lucifer » (« Mais moi je suis le fils de... Lucifer ! ») ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Wismerhill est « l'enfant des Vents » ; son père est le Prince des Nuées (T9, T12, T14).",
-        "[DÉCISION] (v1.0.54) Fils de Pazuzu (char_pazuzu) et de la princesse elfique, pas de Lucifer."
+        "[DÉCISION] (v1.0.54) Fils de Pazuzu (char_pazuzu) et de la princesse elfique, pas de Lucifer.",
+        "[DÉCISION] (v1.0.55) Wismerhill a plusieurs enfants (T12) : la fille d'Hellaynnea et les neuf enfants des concubines (T11 p.36). Le nom de la fille (« Elle s'appelle Hellaynnea, n'est-ce pas ? », T12 p.7) reste à préciser.",
+        "[DÉCISION] (v1.0.55) « Cruik » (T9 p.36, dragonnet de Nasha) n'est pas Kruikna (T3-T6) : deux dragons différents, distincts aussi du dragon bleu offert à Pilou (T11)."
       ]
     },
     {
@@ -147639,7 +147647,8 @@
         "[BD-T3 pl.27] Nom tiré de son cri : « KRUIKNA ?? ».",
         "[BD-T3 pl.29] Met le feu à un lit au village fantôme et brûle les renards démoniaques venus le dévorer.",
         "[BD-T3 pl.43] Présent au fief de Garundel pendant l'automne.",
-        "[BD-T6] p.21 : Wismerhill l'appelle « Krukh » ; il brûle l'émissaire impérial au banquet."
+        "[BD-T6] p.21 : Wismerhill l'appelle « Krukh » ; il brûle l'émissaire impérial au banquet.",
+        "[DÉCISION] (v1.0.55) Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées."
       ]
     },
     {
@@ -147899,7 +147908,7 @@
         "[BD-T12] Pilier de lumiere divine du ciel : Ce seuil a jamais soit scelle!",
         "[BD-T12] Post-victoire a Wismerhill : Ne me remerciez pas, vous savez bien que je n ai pas fait cela pour vous!",
         "[BD-T12] Puissent-ils aussi etre sauves de vous! -- Parsifal a Wismerhill apres la victoire.",
-        "[BD-T11] p.1-12 : évacue puis fait démanteler Altenberg par un archange, mène l'exode, entre dans la Syzygie, projetée dans un autre plan ; il reparaît pourtant au T12 (p.48) sans explication [À VÉRIFIER]."
+        "[BD-T11] p.1-12 : évacue puis fait démanteler Altenberg par un archange, mène l'exode, entre dans la Syzygie, projetée dans un autre plan. [DÉCISION] (v1.0.55) Il est caché dans une cité pendant le T12 (simplement plus montré) : son retour au T12 (p.48) n'est pas une incohérence."
       ]
     },
     {
@@ -148452,7 +148461,8 @@
         "[BD-T8] p.5 : informe Haazheel que « notre jeune Baron » est parti dans la vallée de Der Hem Shelbem.",
         "[BD-T11] p.23 : Wismerhill lui confie l'Empire (« Baron ») pendant ses voyages secrets.",
         "[BD-T13] p.12 : à Fratus qui lui annonce qu'il sera Empereur : « Je suis un guerrier, pas un politicien ! » ; p.16 : seul, se demande lequel de ses deux maîtres a raison.",
-        "[BD-T14] p.5-6 : entre dans la salle du trône dévastée et s'agenouille devant Wismerhill (« MAÎTRE ! »), imité par toute la salle ; p.11 : gère l'Empire pendant l'absence de Wismerhill ; p.30 : brise la charge des orcs sans les poursuivre."
+        "[BD-T14] p.5-6 : entre dans la salle du trône dévastée et s'agenouille devant Wismerhill (« MAÎTRE ! »), imité par toute la salle ; p.11 : gère l'Empire pendant l'absence de Wismerhill ; p.30 : brise la charge des orcs sans les poursuivre.",
+        "[DÉCISION] (v1.0.55) Le titre « Baron » des T10-T13 (« Baron », T11 p.23) est l'appellation de la BD : Greldinard n'est baron d'aucun autre fief."
       ]
     },
     {
@@ -148922,7 +148932,8 @@
         "[BD-T6] p.32, 44 : surnommée « Pépette » par la succube ; tend à George d'Horkher le bouquet piégé.",
         "[BD-T7] p.44 : « Pépète », reste à Moork sur ordre de Wismerhill.",
         "[BD-T11] p.27 : « Pépette » ; Wismerhill lui ramène son frère Goum guéri (« son esprit est normal »).",
-        "[BD-T13] p.13 : une fillette appelée « Pépette » est confiée par Hellaynnea, avec « ton frère » [HYPOTHÈSE : autre enfant]."
+        "[BD-T13] p.13 : une fillette appelée « Pépette » est confiée par Hellaynnea, avec « ton frère » [HYPOTHÈSE : autre enfant].",
+        "[BD-T9] p.36 : court en tirant « Cruik », dragonnet orange (« Bonjour Nasha, salut Cruik ! ») ; [DÉCISION] (v1.0.55) Cruik n'est pas Kruikna."
       ]
     },
     {
@@ -149726,40 +149737,6 @@
         "[BD-T12] p.36 : active la pyramide-artefact (« Archimages, évacuez la zone ! ») ; son Maître se manifeste, annonce sa revanche contre les dieux, puis retourne « dans son plan ».",
         "[BD-T13] p.15 : fixe l'action à « minuit cinq » ; p.36 : « Il est l'heure, ô Maître ! ».",
         "[BD-T14] p.37 : la Pyramide du Serpent rapporte à Methraton le départ des grands vers."
-      ]
-    },
-    {
-      "id": "char_haut_tharque",
-      "name": "Le Haut Tharque",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t09"
-      ],
-      "faction_id": "faction_tharque",
-      "race_id": "race_human",
-      "class_id": "",
-      "role": "faction_leader_tharque",
-      "visual": "Humain massif et imposant. Cheveux argentés courts. Armure complète dorée de qualité impériale. Cape rouge sang courte. Regard d'autorité absolue. Posture de commandant né.",
-      "personality": "Pragmatique, impérial, calculateur. Raisonne en termes stratégiques. L'alliance avec la Lune Noire est une décision d'opportunité, pas d'idéologie.",
-      "description": "Souverain de l'Empire Tharque. Titre : 'Le Haut Tharque'. Joint la coalition de la Lune Noire en T9 en échange d'un port franc.",
-      "arc": "T9 : Accepte l'offre d'alliance de la Lune Noire. Lance son armada.",
-      "abilities": [
-        "Commandement naval",
-        "Stratégie militaire"
-      ],
-      "special_items": [],
-      "special_rule": "",
-      "quote": "RÉPONDEZ QUE MOI, LE HAUT THARQUE, J'ACCEPTE LES TERMES DU CONTRAT ET QUE L'ALLIANCE EST SCELLÉE!",
-      "source": "[BD-T9] Page 42",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T9] 'L'INCOMMENSURABLE ARMADA DE L'EMPIRE THARQUE EST EN MARCHE, NOUS ARRIVONS!'",
-        "[BD-T9] L'Empire Tharque possède une flotte navale gigantesque — les navires ont des proues en forme de tête de monstre.",
-        "[LORE_ETENDU] Premier personnage de l'Empire Tharque nommé — force navale inédite dans la géographie du jeu.",
-        "[DÉDUCTION] Le Haut Tharque du T9 (« Ô Majesté », allié contre un port franc) est vraisemblablement Meldrim, Empereur de Tharque (T11) ; fiches non fusionnées."
       ]
     },
     {
@@ -150617,6 +150594,7 @@
       "importance": "secondary_npc",
       "alive": true,
       "tomes": [
+        "t09",
         "t11"
       ],
       "faction_id": "faction_tharque",
@@ -150625,13 +150603,16 @@
       "role": "rival_emperor",
       "visual": "Homme âgé aux cheveux blancs, cape rouge impériale, armure dorée. Expression calculatrice.",
       "personality": "Ambitieux, calculateur. Voulait profiter de la victoire sur Lhynn pour s'emparer du nouvel Empire.",
-      "description": "Frère de l'Amiral Tharque Sierhelt. Empereur de l'Empire Tharque. Tente un coup lors de la cérémonie de départ de la flotte mais son plan est déjoué par Wismerhill.",
-      "arc": "",
-      "abilities": [],
+      "description": "Frère de l'Amiral Tharque Sierhelt. Empereur de l'Empire Tharque. Tente un coup lors de la cérémonie de départ de la flotte mais son plan est déjoué par Wismerhill. Appelé « le Haut Tharque » au T9 : joint la coalition de la Lune Noire en échange d'un port franc.",
+      "arc": "T9 : accepte l'offre d'alliance de la Lune Noire contre un port franc, lance son armada. T11 : reçoit le Port Franc à Lhynn ; son complot pendant la cérémonie de l'octroi est déjoué.",
+      "abilities": [
+        "Commandement naval",
+        "Stratégie militaire"
+      ],
       "special_items": [],
       "special_rule": "",
-      "quote": "",
-      "source": "",
+      "quote": "RÉPONDEZ QUE MOI, LE HAUT THARQUE, J'ACCEPTE LES TERMES DU CONTRAT ET QUE L'ALLIANCE EST SCELLÉE!",
+      "source": "[BD-T9] p.44 ; [BD-T11] p.16-17",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
@@ -150641,7 +150622,11 @@
         "[BD-T11] Wismerhill prévient le coup en se faisant escorter par des démons lors de la cérémonie.",
         "[BD-T11] 'Ha, ha, ha, ha! Ils ont dû être très déçus! Ils nous prenaient pour des lapereaux de quinze jours ou quoi?!'",
         "[BD-T11] 'Serai-je l'Empereur qui redonnera à Tharque son ancien empire...? Ou serai-je celui qui le mènera à sa perte?!'",
-        "[DÉDUCTION] Probablement le « Haut Tharque » du T9 (char_haut_tharque) ; frère de l'amiral Sierhelt."
+        "[BD-T9] 'L'INCOMMENSURABLE ARMADA DE L'EMPIRE THARQUE EST EN MARCHE, NOUS ARRIVONS!'",
+        "[BD-T9] L'Empire Tharque possède une flotte navale gigantesque — les navires ont des proues en forme de tête de monstre.",
+        "[LORE_ETENDU] Premier personnage de l'Empire Tharque nommé — force navale inédite dans la géographie du jeu.",
+        "[BD-T11] p.16 : frère de l'amiral Sierhelt.",
+        "[v1.0.55] Fusion de char_haut_tharque (« Le Haut Tharque », T9) : décision du propriétaire, le Haut Tharque du T9 (« Ô Majesté », « Ô Empereur », alliance contre un port franc, T9 p.44) est Meldrim, Empereur de Tharque (T11 p.16-17) ; alias « le Haut Tharque »."
       ]
     },
     {
@@ -150748,7 +150733,8 @@
         "[BD-T12] Deja aussi terrible que belle, tout comme sa mere!",
         "[v1.0.54] Les notes [BD-T13] de cette fiche concernaient la mère (la succube Hellaynnea) : déplacées vers char_succubus.",
         "[BD-T12] p.7 : « grand-père » = le père de Wismerhill ; il demande « Elle s'appelle Hellaynnea, n'est-ce pas ? » (nom de l'enfant ou désignation de la mère : à suivre).",
-        "[BD-T11] p.36 : naît dans l'ancienne forteresse naine le même jour que les neuf autres enfants de Wismerhill."
+        "[BD-T11] p.36 : naît dans l'ancienne forteresse naine le même jour que les neuf autres enfants de Wismerhill.",
+        "[DÉCISION] (v1.0.55) Une des enfants de Wismerhill (il en a plusieurs) ; « Elle s'appelle Hellaynnea, n'est-ce pas ? » (T12 p.7) : nom de l'enfant ou de la mère, reste à préciser."
       ]
     },
     {
@@ -167337,7 +167323,8 @@
         "[BD-T9] 'LES NEUF FEMMES FURENT MISES EN SÉCURITÉ DANS UNE FORTERESSE NAINE ABANDONNÉE OÙ ELLES RESTERAIENT RECLUSES PENDANT 9 MOIS.'",
         "[BD-T9] Escortées par une escouade de la Garde Noire.",
         "[LORE_ETENDU] Lieu de naissance potentiel des 10 héritiers de Wismerhill — quêtes futures (enfants qui grandissent).",
-        "[BD-T11] p.36 : les dix enfants y naissent le même jour (ville_forteresse_naine_heureux_t11, « Heusgly » en lecture incertaine)."
+        "[BD-T11] p.36 : les dix enfants y naissent le même jour (ville_forteresse_naine_heureux_t11, « Heusgly » en lecture incertaine).",
+        "[DÉCISION] (v1.0.55) Cellule S006_E004 : même forteresse que ville_forteresse_naine_heureux_t11. La mention « reliefs proches de Moork » (atmosphère) n'a pas d'appui BD."
       ]
     },
     {
@@ -178273,7 +178260,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Embouchure du fleuve de Sysigie (riv_fleuve_sysigie) dans la mer du nord."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -179118,17 +179107,19 @@
       "id": "N011_W011",
       "name": "cell_N011_W011",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -179990,17 +179981,19 @@
       "id": "N010_W011",
       "name": "cell_N010_W011",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -180858,17 +180851,20 @@
       "id": "N009_W011",
       "name": "cell_N009_W011",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner).",
+        "[DÉCISION] (v1.0.55) Sysigie sur une île : le fleuve s'y divise en deux bras qui entourent la cité, puis se rejoignent en aval."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -181733,17 +181729,19 @@
       "id": "N008_W011",
       "name": "cell_N008_W011",
       "region_id": "syzygie",
-      "terrain_type": "plain",
+      "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -182612,15 +182610,16 @@
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "Présence de rivière allant vers le nord"
+        "Présence de rivière allant vers le nord",
+        "[INFÉRÉ] (v1.0.55) Sa rivière rejoint le fleuve de Sysigie (riv_fleuve_sysigie) en N007_W010."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -182630,17 +182629,19 @@
       "id": "N007_W010",
       "name": "cell_N007_W010",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "forest_edge",
+      "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -183504,17 +183505,19 @@
       "id": "N006_W010",
       "name": "cell_N006_W010",
       "region_id": "region_premiere_province_empire",
-      "terrain_type": "forest_edge",
+      "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
-      "has_river": false,
-      "river_count": 0,
+      "has_river": true,
+      "river_count": 1,
       "has_mountain_range": false,
-      "river_direction": "",
+      "river_direction": "nord",
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -214073,7 +214076,7 @@
       "alias": "",
       "type": "shrine_poi",
       "importance": "",
-      "cell": "",
+      "cell": "N001_W010",
       "region_id": "",
       "zone_id": "",
       "faction_control": "neutre",
@@ -214145,7 +214148,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T7] p.6-11 : Wismerhill crie « Methraton, ouvre !!! », la porte s'ouvre ; à l'intérieur, Methraton apparaît en figure de flammes.",
-        "[BD-T13] p.9, 36 : bloc doré à ankh sur une place de Lhynn [DÉDUCTION]. Cellule : dans Lhynn [INFÉRÉ]."
+        "[BD-T13] p.9, 36 : bloc doré à ankh sur une place de Lhynn [DÉDUCTION]. Cellule : dans Lhynn [INFÉRÉ].",
+        "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn) ; monde jouable : POI poi_temple_methraton, marqueur aux abords de la ville."
       ]
     },
     {
@@ -214154,7 +214158,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "S003_W013",
       "region_id": "",
       "zone_id": "",
       "faction_control": "",
@@ -214223,7 +214227,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T9] p.44 : prix de l'alliance tharque ; [BD-T11] p.17 : Wismerhill remet « la cession du Port Franc et des terres qui le bordent ». Emplacement inconnu : cellule à décider [INFÉRÉ]."
+        "[BD-T9] p.44 : prix de l'alliance tharque ; [BD-T11] p.17 : Wismerhill remet « la cession du Port Franc et des terres qui le bordent ». Emplacement inconnu : cellule à décider [INFÉRÉ].",
+        "[INFÉRÉ] (v1.0.55) Cellule S003_W013 : plage de la côte ouest, à environ 40 km au sud de Lhynn. La flotte tharque arrive par la mer de l'ouest (siège de Lhynn, T10-T11) et le raz-de-marée tharque doit atteindre Lhynn (T14 p.40) : l'aire tharque est outre-mer, à l'ouest ; Altenberg tient la côte au nord de Lhynn, le port cédé est donc placé au sud. Monde jouable : POI poi_port_franc."
       ]
     },
     {
@@ -214310,7 +214315,7 @@
       "alias": "",
       "type": "portal_tower",
       "importance": "",
-      "cell": "",
+      "cell": "N001_W010",
       "region_id": "",
       "zone_id": "",
       "faction_control": "empire_humain",
@@ -214380,7 +214385,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T14] p.18 : Methraton crée les Seuils (« Que les portes soient ! ») ; p.26 : le Seuil de Lhynn s'ouvre, les Gardes noires canalisent le flot ; p.27-35 : les Vents puis tous les dragons du monde le franchissent. Cellule : près du palais de Lhynn [INFÉRÉ]."
+        "[BD-T14] p.18 : Methraton crée les Seuils (« Que les portes soient ! ») ; p.26 : le Seuil de Lhynn s'ouvre, les Gardes noires canalisent le flot ; p.27-35 : les Vents puis tous les dragons du monde le franchissent. Cellule : près du palais de Lhynn [INFÉRÉ].",
+        "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn), près du palais ; monde jouable : POI poi_seuil_lhynn (portail décoratif, sans liaison)."
       ]
     },
     {
@@ -214389,7 +214395,7 @@
       "alias": "",
       "type": "passage_poi",
       "importance": "",
-      "cell": "",
+      "cell": "N016_E013",
       "region_id": "",
       "zone_id": "",
       "faction_control": "empire_humain",
@@ -214458,7 +214464,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T14] p.28 : une armée de Gigantomorphes descendue des Marches du Nord y est arrêtée (armes naines à naphte, lanceurs impériaux, mages). Cellule à placer dans les Marches du Nord [INFÉRÉ]."
+        "[BD-T14] p.28 : une armée de Gigantomorphes descendue des Marches du Nord y est arrêtée (armes naines à naphte, lanceurs impériaux, mages). Cellule à placer dans les Marches du Nord [INFÉRÉ].",
+        "[INFÉRÉ] (v1.0.55) Cellule N016_E013 : chaîne de montagnes (code M) des Marches du Nord (région marches_du_nord du monde jouable), entre les Terres des Gigantomorphes (N019 et au-delà) et le sud ; les Gigantomorphes « descendaient vers Lhynn » et y sont arrêtés (T14 p.28), le défilé franchit donc la chaîne qui ferme les Marches au sud-ouest. Monde jouable : POI poi_defile_mordrek."
       ]
     },
     {
@@ -214467,7 +214474,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "S008_E014",
       "region_id": "",
       "zone_id": "",
       "faction_control": "",
@@ -214536,7 +214543,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T14] p.39 : les nains y attendent la fin en frappant le sol de leurs marteaux (« nés du métal, du feu et de la lave ») et meurent dans l'éruption. Emplacement inconnu [INFÉRÉ : sous Ghrunke Dash ?]."
+        "[BD-T14] p.39 : les nains y attendent la fin en frappant le sol de leurs marteaux (« nés du métal, du feu et de la lave ») et meurent dans l'éruption. Emplacement inconnu [INFÉRÉ : sous Ghrunke Dash ?].",
+        "[INFÉRÉ] (v1.0.55) Cellule S008_E014 : cratère du volcan (poi_volcan_cratere), à une case de Ghrunke Dash (S007_E016) ; le Grand Hall est sous un volcan, la cité naine au pied du cratère (T14 p.39). Monde jouable : POI poi_grand_hall_nains."
       ]
     },
     {
@@ -214545,7 +214553,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "S003_W004",
       "region_id": "",
       "zone_id": "",
       "faction_control": "",
@@ -214614,7 +214622,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T14] p.21-23 : le Premier Dragon s'y pose ; le pacte « jusqu'à la fin des temps » est rompu et les dragons consument les Chevaliers Dragons. Emplacement inconnu [INFÉRÉ]."
+        "[BD-T14] p.21-23 : le Premier Dragon s'y pose ; le pacte « jusqu'à la fin des temps » est rompu et les dragons consument les Chevaliers Dragons. Emplacement inconnu [INFÉRÉ].",
+        "[DÉCISION] (v1.0.55) Cellule S003_W004 (sommets du palais du Maître des Dragons, poi_palais_passe) ; monde jouable : POI poi_sanctuaire_chevaliers_dragons."
       ]
     },
     {
@@ -214623,7 +214632,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "N000_W007",
       "region_id": "",
       "zone_id": "",
       "faction_control": "lune_noire",
@@ -214692,7 +214701,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T12] p.22 : un seigneur « félon » et ses « impies » sont brûlés avec la ville ; le prêtre de Moros offre leurs âmes à Haazheel (graphie en lecture incertaine). Emplacement inconnu [INFÉRÉ]."
+        "[BD-T12] p.22 : un seigneur « félon » et ses « impies » sont brûlés avec la ville ; le prêtre de Moros offre leurs âmes à Haazheel (graphie en lecture incertaine). Emplacement inconnu [INFÉRÉ].",
+        "[INFÉRÉ] (v1.0.55) Cellule N000_W007 : plaine des Terres de l'Empereur, entre Lhynn et le désert de l'Oracle ; ville d'un seigneur « félon » de l'Empire (T12 p.22), aucune indication de lieu. Époque du jeu antérieure au T12 : ville intacte. Monde jouable : POI poi_moros (ville non bâtie)."
       ]
     }
   ],
@@ -215411,6 +215421,41 @@
         ],
         "notes": [
           "[INFÉRÉ] v1.0.52 : descend du pied de la chaîne du désert, traverse Southport et se jette dans la mer au sud."
+        ]
+      },
+      {
+        "id": "riv_fleuve_sysigie",
+        "name": "[à nommer]",
+        "from": "source_n006_w010",
+        "to": "mer",
+        "source": {
+          "cell": "N006_W010",
+          "notes": "Lisière de la forêt occidentale."
+        },
+        "cells": [
+          "N006_W010",
+          "N007_W010",
+          "N008_W011",
+          "N009_W011",
+          "N010_W011",
+          "N011_W011",
+          "N012_W011"
+        ],
+        "traverse_villes": [
+          {
+            "ville_id": "ville_sysigie",
+            "cell": "N009_W011",
+            "au_centre": true,
+            "ponts": 2,
+            "notes": [
+              "Le fleuve se divise en deux bras qui entourent l'île de Sysigie (« cité dans les nuages » : brouillard fréquent sur le fleuve)."
+            ]
+          }
+        ],
+        "notes": [
+          "[DÉCISION] (v1.0.55) Grand fleuve qui entoure Sysigie (décision du propriétaire) ; nom provisoire « [à nommer] » : le propriétaire nommera les fleuves, rivières et lacs.",
+          "[INFÉRÉ] (v1.0.55) Tracé : source en N006_W010, vers le nord par N007_W010 (confluent de la rivière de N007_W011), N008_W011, l'île de Sysigie (N009_W011), N010_W011, N011_W011 ; se jette dans la mer en N012_W011. Large d'environ 50 m à la source et 80 m à l'embouchure ; bras de l'île d'environ 40 m.",
+          "Monde jouable : river_courses.fleuve_sysigie de world_master.json (tools/world_gen)."
         ]
       }
     ],

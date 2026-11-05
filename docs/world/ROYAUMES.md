@@ -166,7 +166,14 @@ voisines raccord au mètre près :
    emplacement plat et sec de la case) ; lacs du lore (codes `L` forêt avec lac,
    `l` aride avec lac, `p` plaine avec lac depuis le lore v1.0.52) et lacs manuels.
 3. **Rivières** : descente sur la grille grossière remplie (priority-flood),
-   méandres, profil de surface non croissant.
+   méandres, profil de surface non croissant. **Cours tracés à la main**
+   (`river_courses` du master, lore v1.0.55) : la rivière suit les centres des
+   cases listées (codes rivière ; la dernière peut être la case d'embouchure),
+   contourne les autres villes, prend de grands méandres (~7 km) puis descend
+   vers la mer ; elle remplace la rivière automatique de sa composante.
+   `island_city` : le lit se divise en deux bras qui entourent la ville (île
+   fluviale de Sysigie). POI : plusieurs POI d'une même case sont écartés d'un
+   quart de tour autour de la ville de la case.
 4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
    simplification RDP (plus d'escalier), méandres ±110 m, lissage ; profil en
    long **global** (pente ≤ 16 %) → chaque cellule aplanit sa portion au même profil.

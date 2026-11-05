@@ -55,6 +55,9 @@ int main()
 	Check(w.RegionAt(1000, 0) == nullptr, "aucune region");
 	Check(engine::client::PlaceKindLabel("volcan") == "Volcan" && engine::client::PlaceKindLabel("gouffre") == "Gouffre",
 		"PlaceKindLabel : genres de POI volcan et gouffre (v1.0.52)");
+	Check(engine::client::PlaceKindLabel("temple") == "Temple" && engine::client::PlaceKindLabel("cite") == "Cit\xC3\xA9"
+		&& engine::client::PlaceKindLabel("defile") == "D\xC3\xA9" "fil\xC3\xA9" && engine::client::PlaceKindLabel("salle") == "Salle souterraine",
+		"PlaceKindLabel : genres de POI des tomes 7 a 14 (v1.0.55)");
 	Check(engine::client::PlaceKindLabel("champ_bataille") == "Champ de bataille" && engine::client::PlaceKindLabel("etang") == "\xC3\x89tang"
 	      && engine::client::PlaceKindLabel("inconnu") == "inconnu", "libelles des genres de POI");
 

@@ -187,18 +187,62 @@ traité par le générateur comme une plaine qui porte un lac.
   par hameau ou village (comme avant), 4 à 6 grandes parcelles par ville, grande ville,
   forteresse ou capitale.
 
-## 6. Plans de référence
+## 6. Tomes 4 à 6 — « Quand sifflent les serpents », « La Danse écarlate », « La Couronne des ombres » (v1.0.53)
+
+Références : T4 `pl.N` = planche imprimée (page du PDF moins 2) ; T5 et T6 `p.N` = page
+imprimée (page du PDF plus 2).
+
+### 6.1 Identités et graphies tranchées par la BD
+
+| Question | Réponse | Preuve |
+|---|---|---|
+| Succube | Graphie **Hellaynnea** (confirmée sur l'album) ; « Hellavnnea » remplacée dans tous les textes, identifiants inchangés (`char_succubus`, `hellavnnea_la_succube`…). | « Hellaynnea ça suffit ! » (T5 p.9). |
+| Esmeralda | **Apparence** prise par Hellaynnea pour vider l'âme d'un homme blond anonyme de Moork ; `char_esmeralda_succubus` fusionnée dans `char_succubus`. La victime n'est **pas** Fratus. | T6 p.22-25 ; Fratus repart vers Altenberg (p.13) et reparaît p.48. |
+| « Grand Maître Lion » | C'est **Fratus Sinister** : `char_grand_maitre_lion` fusionné dans `char_fratus_sinister`, dialogue et règle repointés. Les deux « discrets observateurs » sont **Haazheel et Greldinard**. | T6 p.48. |
+| Titan de Tsaroth | **Haazheel** se transforme en titan à quatre bras ; Wismerhill n'engage pas la Garde Noire. `creature_titan_wismerhill` renommée (identifiant inchangé), note fausse de Wismerhill retirée. | T5 p.39, 43-46. |
+| Conseil de Moork | **Selinporf**, **Pharix**, **Hokhost** (au lieu de Selindorf, Dharix, Hokhosi). | T6 p.30. |
+| Dragonnet | Wismerhill l'appelle **« Krukh »** (et non « Kruki »). | T6 p.21. |
+| Urmarcht | Graphie « Urmacht » aux T4-T5, notée sans renommage. | T4 pl.15, 17 ; T5 p.11. |
+| Pilou au T5 | C'est **Pile-ou-Face** (crinière noire, oreilles pointues), pas un goblinoïde. | T5 p.27. |
+| Garundel | Vassal d'Haazheel, « un Dvorak » (sans doute Dzorak). | T4 pl.13. |
+| Autres | Sysigie (et non « Sysgié »), Serpent « Hérault », alias « Dis » de Dys, garde Gaspard, Nasha « Pépette », « sire Cédric ». | T4 pl.9, 20, 36 ; T6 p.32, 51. |
+
+### 6.2 Lieux
+
+| Lieu | Décision |
+|---|---|
+| Tsaroth (`ville_tsaroth`) | **Sans service** (« lieu désolé et loin de tout », T5 p.23) : 6 PNJ de service retirés, cellule S009_E011 reportée. Le camp de départ des Démons reste dans `world_master.json` en attendant son déplacement (voir 8). |
+| Faille de Tsaroth | Tenue par la **Lune Noire** (et non la Lumière), cellule S009_E011. |
+| Krak de Jhenner | Ne « donne » plus « accès à la Faille » : il tombe avant la citadelle impériale, dernier obstacle (T5 p.22-23). |
+| Nouveaux lieux | `lieu_passe_heniak`, `lieu_citadelle_imperiale_tsaroth`, `lieu_palais_lune_noire_reflet` (tour et arche verte au bout de la baronnie de Moork), `lieu_palais_lune_noire_lunaire` (hors carte). |
+| Moork | Baronnie de Greldinard puis de Wismerhill ; le palais d'Haazheel est sur la Lune (T6 p.33-34). |
+| Sysigie | Biome montagnard, au-dessus d'une mer de nuages. |
+| Horkher | Notes des cartes du T6 (Horkher au-dessus de Moork, cohérent avec N006_E014) et du titre « duc des Marches ». |
+
+### 6.3 Frise et règles
+
+- 9 évènements corrigés : dénonciation de Fratus par son agent double, massacre orkh (sans
+  Fratus), serment de Wismerhill (pas encore baron ; Garde Noire 500 + 3 000), bataille de
+  Tsaroth (titan = Haazheel, défaite mise en scène), retour à Moork, succube et âme
+  solitaire, palais lunaire, observateurs Haazheel et Greldinard (2 évènements).
+- 2 évènements ajoutés : chute du Krak de Jhenner, villes qui se rendent (Arthus, Shamballeau).
+- Plan de bataille de Tsaroth réaligné sur la carte de T5 p.34 (le « commandeur roux »
+  n'existe pas).
+- Quête `quest_esmeralda_succube_t6` : les joueurs découvrent qu'Esmeralda est la succube du baron.
+- Tomes des personnages normalisés en `tNN` ; T4-T6 ajoutés aux fiches concernées.
+
+## 7. Plans de référence
 
 Plans vus du dessus (repères pleins = BD, en pointillés = lore placé) publiés comme
 documents de conception : Kendrhir (en reconstruction), Feyhin Lokcthat, Magistrya,
 puis Mont des Neuf Pics, l'Atmosphère, le palais du Maître des Dragons, Altenberg et
 l'Oracle (extérieur) ; pour le T3 : Ghrunke Dash, Lhynn, le village fantôme (village et
-marais) et le fief de Garundel.
+marais) et le fief de Garundel (circulaire, douves, tour ronde, logis accolé).
 
-## 7. Questions ouvertes
+## 8. Questions ouvertes
 
-- Compagnon `companion_pilou` du T5 (« petit goblinoïde ») : contredit les T1-T3, à relire
-  dans ce tome.
+- Départ des Démons : Tsaroth n'a plus de service ; selon Hubert, les Démons partent des
+  **Enfers**, avec 5 sorties possibles (`lieu_portail_enfer_1` à `_5` ?) — PR à part.
 - Lhynn : la BD-T3 la montre sur une presqu'île dans un grand lac cerné de montagnes,
   alors que sa cellule (N001_W010) est une plaine près de la côte.
 - Identité de « l'amant » vengé par la succube (pl.31) : non nommé.

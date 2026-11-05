@@ -126,7 +126,7 @@ TAILLE_VILLES = {
     "city_dragon_palace": ("ville", None),
     "ville_whispers_hill": ("village", "village"),
     "leviathan_jungle": ("village", "village"),
-    "ville_tsaroth": ("village", "village"),
+    "ville_tsaroth": ("sans_service", "other"),
     "ville_orkh": ("village", "village"),
     "ville_oracle_camp": ("village", None),
     "ville_klindor": ("forteresse", "fortress_city"),
@@ -151,7 +151,6 @@ RACE_VILLES = {
     "ville_orkh": [("race_orkh", 1)],
     "ville_ghrunke_dash": [("race_dwarf", 1)],
     "ville_forteresse_naine_heureux_t11": [("race_dwarf", 1)],
-    "ville_tsaroth": [("race_demon", 2), ("race_dark_elf", 1)],
 }
 RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],

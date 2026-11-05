@@ -1,10 +1,11 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.52",
+    "version": "1.0.53",
     "notes": [
+      "v1.0.53 : [BD-T4/T5/T6] corrections confrontées aux BD « Quand sifflent les serpents », « La Danse écarlate », « La Couronne des ombres » : graphies Hellaynnea, Selinporf, Pharix, Hokhost, Sysigie, Krukh ; fusions char_esmeralda_succubus → char_succubus (Esmeralda = apparence), char_grand_maitre_lion → char_fratus_sinister ; titan de Tsaroth = Haazheel ; Tsaroth sans service ; Faille tenue par la Lune Noire ; Krak de Jhenner ; plan de bataille ; palais lunaire et son reflet, Passe de Heniak, citadelle impériale ; 9 évènements corrigés, 2 ajoutés ; tomes des personnages normalisés (tNN). Détail : docs/world/LORE_BD.md.",
       "v1.0.52 : [CARTE] carte agrandie et densifiée : grille du lore N023..S018 x W019..E026 (côte orientale « Rivage des Géants », extrême nord des Terres des Gigantomorphes, confins du Midi : le continent n'est plus coupé par les bords) ; 23 cellules du lore reportées dans le monde jouable ; 45 villes du lore intégrées au monde jouable, Unnamed-64 → Runecroft, Unnamed-143 → Clearfen, Deepmoor décalée en N014_E017, 10 villes créées sur les nouvelles terres ; rivières de Rivercross et de Southport, 5 lacs de plaine, 4 forêts, marais des landes ; champs cultivés autour de toutes les villes. Détail : docs/world/LORE_BD.md.",
-      "v1.0.51 : [BD-T3] corrections confrontées à la BD « La Marque des Démons » : Goum (armure à nacelle de Nasha, notes fausses retirées) ; locuteurs de l'éclosion de Kruikna ; Haazheel en vieillard au turban ; fusions companion_dragon_pilou → companion_kruikna, char_desdemone → char_succubus « Hellavnnea (la Succube) », char_emperor_lhynn_t1 → char_haghendorf, lieu_garundel_estate → ville_garundel_fief ; alias Hizim ; Baron de Mhoorkh ; Garundel sans meurtrier nommé ; trajet continu Oracle → Ghrunke Dash (S007_E016) → village fantôme (S003_E006, marais) → fief de Garundel (S001_E004), routes Camp de l'Oracle–Ghrunke Dash–Fief ; 8 évènements T3 ; arc arc_t03_marque_des_demons. Détail : docs/world/LORE_BD.md.",
+      "v1.0.51 : [BD-T3] corrections confrontées à la BD « La Marque des Démons » : Goum (armure à nacelle de Nasha, notes fausses retirées) ; locuteurs de l'éclosion de Kruikna ; Haazheel en vieillard au turban ; fusions companion_dragon_pilou → companion_kruikna, char_desdemone → char_succubus « Hellaynnea (la Succube) », char_emperor_lhynn_t1 → char_haghendorf, lieu_garundel_estate → ville_garundel_fief ; alias Hizim ; Baron de Mhoorkh ; Garundel sans meurtrier nommé ; trajet continu Oracle → Ghrunke Dash (S007_E016) → village fantôme (S003_E006, marais) → fief de Garundel (S001_E004), routes Camp de l'Oracle–Ghrunke Dash–Fief ; 8 évènements T3 ; arc arc_t03_marque_des_demons. Détail : docs/world/LORE_BD.md.",
       "v1.0.50 : [BD-T1/T2] corrections confrontées à la BD « Le Vent des Dragons » : Fey = Feidreiva (fusion char_fey, companion_fey_t2) ; Pilou = Pile-ou-Face ; Gunther = Gunthar (fusion) ; Goum = frère jumeau de Nasha (quête quest_t2_liberation_goum), Murata vainqueur de l'arène ; Lord Drakkhurst (char_lord_drakkhurst) et maître Orkhan (char_orkhan_t2) créés ; locuteurs des dialogues T2 corrigés ; Mont des Neuf Pics en N007_E005 ; Atmosphère = entrée de la Passe ; route Feyhin–Magistrya ; extrémités de routes resynchronisées (Kendrhir) ; 10 butins T1 orphelins créés ; arc arc_t02_vent_des_dragons. Détail : docs/world/LORE_BD.md.",
       "v1.0.49 : [CARTE] lieux mineurs du T1 placés : Forêt de la Rencontre (N012_E008, près de Whispers Hill alignée sur world_master en N011_E008), Haywick (N018_E013, village du poulailler et cour de Ghorghor, ruine), Camp de l'Étang (N018_E012, rencontre de Feidreiva), Champ de la Première Bataille (N018_E011) et citadelle d'Ashcroft (N017_E012, ruine) ; textes « forêt des Marches » corrigés ; noms Haywick et Ashcroft repris de carte_export.json.",
       "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Moorgate (N015_E017) → Dunfold (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Moorgate et Dunfold créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
@@ -86,7 +87,7 @@
         "[BD-T5] Lors de la bataille de Tsaroth, les Chevaliers de la Lumière sous Fratus restent en retrait — Fratus banquette et apprécie le 'spectacle', envoyant les messagers de ses alliés à la mort avec cynisme. Ils n'entrent dans la mêlée qu'une fois les troupes de la Lune Noire affaiblies.",
         "[BD-T5] Sous Parsifal, les Chevaliers de Justice balaient les démons irresistiblement après l'entrée en scène de leur prince.",
         "[BD-T6] Fratus Sinister est officiellement dépouillé de son titre de 'Pair de l'Empire' par Haghendorf en audience publique — il devient 'ex-Pair'. L'Ordre de la Lumière est humilié. Fratus réplique qu'il se vengera ('Il va le regretter ce porc ! À Altenberg!'). Les chevaliers grondent mais obéissent à Parsifal qui leur dit d'accepter.",
-        "[BD-T6] Les chevaliers de Lumière discutent d'attaquer l'Empire mais Parsifal (Justice) les arrête : 'À Sysgié mes frères, puisque c'est ainsi.' — les deux ordres quittent l'Empire.",
+        "[BD-T6] Les chevaliers de Lumière discutent d'attaquer l'Empire mais Parsifal (Justice) les arrête : 'À Sysigie mes frères, puisque c'est ainsi.' — les deux ordres quittent l'Empire.",
         "[BD-T8] Sous Fratus (absent à Northind), le Grand Maître corrompu Gunthar prend le contrôle d'Altenberg. Il est installé par Fratus depuis T6.",
         "[BD-T8] L'Archiprêtre/Vénérable (chef spirituel) était resté dans l'Ordre mais aveuglé. Il se rallie à Parsifal et invite l'armée de Justice dans Altenberg.",
         "[BD-T8] Gunthar est excommunié et tué. L'Archiprêtre reprend le contrôle de l'Ordre.",
@@ -178,7 +179,7 @@
         "[BD-T4] Granit séculaire et cœur pur — telle est leur devise selon Parsifal.",
         "[BD-T4] Parsifal est à la fois commandeur militaire ET prince territorial — double pouvoir.",
         "[BD-T6] Parsifal est ressuscité par miracle dans la Grande Tente-Chapelle des Chevaliers de Justice, par une prière collective fervente et l'appel du Seigneur éternel. Un enfant de chœur est présent. Il se lève dans la lumière dorée — 'Louée soit le Seigneur, Alléluia!'",
-        "[BD-T6] Parsifal réclame à l'Empereur le droit de construire des Kracks (forteresses) dans l'Empire — l'Empereur refuse : 'Un ordre guerrier, vois-tu, est un trop…' Parsifal le salue ironiquement et part avec ses hommes vers Sysgié.",
+        "[BD-T6] Parsifal réclame à l'Empereur le droit de construire des Kracks (forteresses) dans l'Empire — l'Empereur refuse : 'Un ordre guerrier, vois-tu, est un trop…' Parsifal le salue ironiquement et part avec ses hommes vers Sysigie.",
         "[BD-T6] Après le départ de Parsifal, l'Empereur soupire : 'Me voilà seul, victorieux mais seul !'",
         "[BD-T8] Parsifal convoque un conseil d'urgence à Syzigie : décision d'attaquer Altenberg.",
         "[BD-T8] Armée de la Justice + Armée Altenberg réunies marchent sur Northind.",
@@ -289,7 +290,7 @@
         "[BD-T6] RÉVÉLATION LORE MAJEURE : Le palais de la Lune Noire est sur la LUNE elle-même, pas sur Terre. Seul son reflet (l'ombre noire dans le ciel — l'éclipse permanente) est visible sur Terre. C'est là que Haazheel Thorn réside et observe le monde depuis l'orbite. Seuls ses proches serviteurs connaissent ce secret.",
         "[BD-T6] Haazheel observe depuis la Lune la progression de Wismerhill avec satisfaction : 'Ha ha ha ! Excellent ! Ce petit va me faire mourir de rire...' — il est amusé et approuve.",
         "[BD-T6] Des gardes noirs, des prêtres de la Lune Noire et des administrateurs arrivent à Horkher quelques jours après la victoire de Wismerhill — l'Ordre de Wismerhill s'installe.",
-        "[BD-T6] La succube Esmeralda (en rouge, distincte d'Hellavnnea) est envoyée ou opère de façon autonome dans la ville de Moork — elle draine l'âme d'un homme seul ('car les succubes sont trésors aux mortels interdits!').",
+        "[BD-T6] « Esmeralda » est une apparence prise par Hellaynnea (la succube de Wismerhill), pas une succube distincte.",
         "[BD-T9] Forces totales rassemblées pour la grande campagne : 20 000 gardes de la Garde Noire + Juggernauth (machine de guerre naine) ; 100 000+ orcs (sans compter trolls et géants) ; 80 000 armées régulières ; démons de Lucifer (légion infernale) ; Hors-Vivants de Haazheel ; créatures diverses. Alliés : Empire Tharque (armada navale). Chevaliers-Dragons : en cours de délibération.",
         "[BD-T9] La Lune Noire dispose désormais d'un 'Prince de la Négation' : Wismerhill, chef suprême des Seigneurs de la Négation. La prophétie 'L'épée est enfin trempée, les ténèbres vont pouvoir déferler' est accomplie.",
         "[BD-T9] FORCES TOTALES CHIFFRÉES T9 (conseil de guerre) : Garde Noire de Wismerhill : 20 000 hommes + Juggernauth. Orcs de Greldinard : 100 000+ (sans trolls/géants). Armées régulières : ~80 000. Légions infernales de Lucifer : indéterminé (légion entière). Hors-Vivants d'Haazheel : indéterminé (horde). Armée rebelle de Fratus : indéterminé (régiment). Armada Tharque : incommensurable (flotte navale). TOTAL ESTIMÉ : 200 000+ + légions démoniaques.",
@@ -3744,8 +3745,8 @@
       "name": "Kruikna",
       "type": "",
       "notes": [
-        "[BD-T6] P.30 : confirmé résidant à Moork. Terrorise les dames de compagnie officielles d'Hellavnnea ('À moi Lucifer!!!').",
-        "[BD-T6] P.19 : 'Kruki! À toi!' — Wismerhill l'appelle peut-être au banquet pour 'gérer' l'émissaire impérial. Surnom probable : Kruki.",
+        "[BD-T6] P.30 : confirmé résidant à Moork. Terrorise les dames de compagnie officielles d'Hellaynnea ('À moi Lucifer!!!').",
+        "[BD-T6] P.19 : 'Krukh ! À toi !' — Wismerhill l'appelle peut-être au banquet pour 'gérer' l'émissaire impérial. Surnom : Krukh.",
         "[BD-T2] Oeuf de dragon trouvé et couvé secrètement par Pile-ou-Face dans le palais abandonné de la Passe des Dragons.",
         "[BD-T2] Pile-ou-Face : 'J'ai pas le droit de monter un dragon, moi?!' — part avec lui vers l'Oracle.",
         "[BD-T2] Futur compagnon-monture de Pile-ou-Face.",
@@ -3760,10 +3761,10 @@
     },
     {
       "id": "hellavnnea_la_succube",
-      "name": "Hellavnnea (La Succube)",
+      "name": "Hellaynnea (La Succube)",
       "type": "demon",
       "notes": [
-        "[BD-T5] Son nom 'Hellavnnea' est révélé pour la première fois au tome 5 — Wismerhill la nomme directement : 'Hellavnnea ça suffit! On doit partir.'",
+        "[BD-T5] Son nom 'Hellaynnea' est révélé pour la première fois au tome 5 — Wismerhill la nomme directement : 'Hellaynnea ça suffit! On doit partir.'",
         "[BD-T5] Chevelure rousse flamboyante vivante, grandes ailes de chauve-souris brun-rouge, griffes, tenue très légère rouge.",
         "[BD-T5] Après la nuit au camp des Fils de la Lumière (capture des prisonniers), elle doit être rappelée à l'ordre par Wismerhill au matin.",
         "[BD-T5] Elle vole avec Wismerhill au-dessus des villes, servant de transport aérien, mais aussi de compagne intime.",
@@ -3781,7 +3782,6 @@
         "[BD-T6] À Moork, elle assume le rôle de conseillère discrète et de facto consort du baron.",
         "[BD-T6] Elle conjure instantanément une tenue de baronne complète d'un claquement de doigts ('Snap !') — robe bleue nuit, coiffe, ornements.",
         "[BD-T6] Elle gère les 'dames de compagnie' (probable coven démoniaque) et défend son rang à la bibliothèque contre les nobles moqueurs.",
-        "[BD-T6] Elle perçoit les 'âmes solitaires et tristes' à distance — détecte Esmeralda et Fratus dans leur séquence.",
         "[BD-T6] 'On règne ou presque !' — réplique après transformation en baronne.",
         "[BD-T6] Elle participe à la prise d'Horkher : brûle les portes lors de l'assaut nocturne.",
         "[BD-T6] Elle s'occupe de Nasha pendant que Wismerhill planifie : 'Allez Nasha, viens on va s'occuper de nous.'",
@@ -3804,7 +3804,8 @@
         "[BD-T11] Reçoit les plus belles parures du monde comme cadeau de Wismerhill : 'Elles sont magnifiques, merci.'",
         "[BD-T11] Donne naissance à un enfant dans la forteresse naine d'Heureux.",
         "[BD-T11] À la fin du tome, ouvre la porte et annonce : 'Il y a là quelqu'un qui dit qu'il souhaite rencontrer sa petite-fille...' — cliffhanger T12.",
-        "[v1.0.51] Fiche personnage : char_succubus « Hellavnnea (la Succube) », qui absorbe Desdémone (T2) [DÉDUCTION]."
+        "[v1.0.51] Fiche personnage : char_succubus « Hellaynnea (la Succube) », qui absorbe Desdémone (T2) [DÉDUCTION].",
+        "[BD-T6] p.22-24 : Esmeralda est une apparence prise par la succube elle-même ; sa victime est un homme blond anonyme de Moork (pas Fratus)."
       ],
       "variants": [],
       "level_titles": [
@@ -3857,7 +3858,7 @@
       "name": "Pile-ou-Face (Pilou)",
       "type": "goblin_companion",
       "notes": [
-        "[BD-T5] Petit compagnon goblinoïde de Wismerhill, présent à Tsaroth. Crête rouge, traits expressifs et comiques.",
+        "[BD-T5] p.27 : « Pilou » est Pile-ou-Face lui-même (crinière noire hérissée, oreilles pointues, cape rouge), présent à Tsaroth aux côtés de Wismerhill. L'ancienne note « petit compagnon goblinoïde à crête rouge » est contredite par la BD (v1.0.53).",
         "[BD-T5] Personnalité comique — réagit avec exagération aux dangers : 'Ouf! On l'a échappé belle, heureusement que je regardais en haut! Pouah!'",
         "[BD-T5] 'Quelle mort atroce! Tu crois que c'est une arme secrète? Beurk!' — référence à la mort d'un géant.",
         "[BD-T5] 'Ha! J'aperçois la tente de commandement là-bas. Viens Pilou!' — Wismerhill le rappelle à l'ordre.",
@@ -3872,7 +3873,7 @@
         "[BD-T5] 'Ha! J'aperçois la tente de commandement là-bas, viens Pilou!' — confirmé qu'il est avec Wismerhill à Tsaroth.",
         "[BD-T5] Participe à la prise de Moork — suit Wismerhill dans la salle du trône.",
         "[BD-T9] À Moork, réaction comique à la vue du Juggernauth : 'MATE UN PEU L'HORREUR!'",
-        "[BD-T9] Hellavnnea lui répond : 'HORREUR? ELLE EST TRÈS BELLE! TU N'AS AUCUN GOÛT, PILOU!'",
+        "[BD-T9] Hellaynnea lui répond : 'HORREUR? ELLE EST TRÈS BELLE! TU N'AS AUCUN GOÛT, PILOU!'",
         "[BD-T9] Toujours dans l'entourage de Wismerhill malgré la transformation en Prince de la Négation.",
         "[BD-T2] « Pilou » = Pile-ou-Face (pp.8, 10, 12). [À VÉRIFIER] la description T5 d'un « petit compagnon goblinoïde » ne correspond pas au Pile-ou-Face des tomes 1-2."
       ],
@@ -3906,10 +3907,10 @@
       "notes": [
         "[BD-T6] Jeune fille à la peau sombre, fidèle compagnon de Wismerhill à Moork.",
         "[BD-T6] Joue un rôle clé dans le piège du Comte d'Horkher — livraison des fleurs / signal.",
-        "[BD-T6] Wismerhill l'envoie avec Hellavnnea pour 's'occuper d'elles'.",
+        "[BD-T6] Wismerhill l'envoie avec Hellaynnea pour 's'occuper d'elles'.",
         "[LORE_ETENDU] Compagnon de type 'éclaireur urbain' — petite taille, discrétion, courses de messages.",
         "[BD-T6] P.15 : au couronnement de Moork — 'Ghorghor et Pépète d'ailleurs' — présente et mange bien.",
-        "[BD-T6] P.23 : réveille Wismerhill et Hellavnnea en sautant sur le lit. Son, signature : 'SHTOUK SHTOUK SHTOUK'.",
+        "[BD-T6] P.23 : réveille Wismerhill et Hellaynnea en sautant sur le lit. Son, signature : 'SHTOUK SHTOUK SHTOUK'.",
         "[BD-T6] P.41 : signal du piège — livre les fleurs à George d'Horkher. Son: 'Mon plaisir, beau doux sire.' — parfaite actrice.",
         "[BD-T6] P.42 : 'T'as été super Pépette!' — Ghorghor lui dit après la capture réussie.",
         "[BD-T2] Première apparition à Feyhin Lokcthat : sœur jumelle de Goum, seule à pouvoir le commander (pp.12-15)."
@@ -6179,7 +6180,7 @@
     {
       "id": "dys",
       "name": "Dys",
-      "alias": "",
+      "alias": "Dis",
       "type": "city",
       "importance": "",
       "cell": "N005_W009",
@@ -6219,7 +6220,9 @@
         "[BD-T4] Page 19 — auberge 'Auroch Assomé' visible sur l'enseigne.",
         "[BD-T4] Page 26 — '3 couronnes pour une soierie' — monnaie locale = couronnes impériales.",
         "[BD-T4] Page 29 — Queue de Dondaines déployée dans les rues lors de l'embuscade.",
-        "[BD-T4] Page 32 — téléportation de groupe 'Bamf!' — le groupe s'échappe via la succube."
+        "[BD-T4] Page 32 — téléportation de groupe 'Bamf!' — le groupe s'échappe via la succube.",
+        "[BD-T4] pl.20 : un garde de la porte de la ville s'appelle Gaspard.",
+        "[BD-T4] pl.17 : « Auberge de l'Auroch Assoiffé » (lecture incertaine de l'enseigne)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -6404,7 +6407,7 @@
         "[BD-T6] L'Hôte d'Horkher part de Lhynn pour marcher sur Moork avec trois compagnies impériales.",
         "[BD-T6] La ville est décorée en couleurs d'Horkher (jaune/or/rouge) — bannières, guirlandes.",
         "[BD-T6] Wismerhill et ses compagnons se téléportent directement dans la ville cette nuit-là.",
-        "[BD-T6] Assaut nocturne : Hellavnnea brûle les portes, Ghorghor et ses troupes envahissent.",
+        "[BD-T6] Assaut nocturne : Hellaynnea brûle les portes, Ghorghor et ses troupes envahissent.",
         "[BD-T6] La ville était 'fortement gardée mais profitant de l'effet de surprise, Wismerhill et ses compagnons anéantirent les gardes des portes' — le flot de ses armées se répand dans Horkher.",
         "[BD-T6] Malgré une forte résistance, les défenseurs succombent peu à peu.",
         "[BD-T6] Le lendemain, cérémonie d'abdication dans la Salle du Trône d'Horkher — George d'Horkher abdique, les vassaux prêtent serment à Wismerhill.",
@@ -6716,88 +6719,33 @@
       "id": "ville_tsaroth",
       "name": "Tsaroth (Faille de Tsaroth)",
       "alias": "",
-      "type": "village",
+      "type": "other",
       "importance": "",
-      "cell": "",
+      "cell": "S009_E011",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
       "region_id": "",
       "housing_count": null,
       "population": null,
-      "services": [
-        "auberge",
-        "armes",
-        "marche",
-        "ecurie",
-        "temple",
-        "cimetiere"
-      ],
+      "services": [],
       "features": [],
       "notes": [
         "[BD-T5] Lieu désert et désolé, loin de tout — 'lieu inconnu de tous'. Tsaroth va écrire son nom dans l'histoire.",
         "[BD-T5] La Faille de Tsaroth : gigantesque crevasse/canyon qui plonge 'tout droit jusqu'aux enfers' selon le lore.",
         "[BD-T5] Dans le prolongement de la Faille, le camp de la Lune Noire forme un mur inexpugnable interdisant l'accès à l'Empire.",
         "[BD-T5] Les forces de la Lune Noire (Wismerhill + Greldinard) y attendent les armées impériales depuis une colline stratégique.",
-        "[BD-T5] Krak de Jhenner était la dernière forteresse impériale sur cet axe — désormais tombé.",
+        "[BD-T5] La dernière place forte avant la Faille est une citadelle impériale non nommée (p.23) ; le Krak de Jhenner est tombé avant.",
         "[BD-T5] Haazheel invoque les deux fois nés depuis la Faille de nuit, en descendant jusqu'au bord : 'La faille de Tsaroth plongeait tout droit jusqu'aux enfers. Il était bien dit!'",
         "[BD-T5] La plaine entière après la bataille n'est 'plus qu'un formidable embrasement endigué par des flots d'ichor et de sang.'",
         "[LORE_ETENDU] Zone de raid majeure — environnement désertique avec canyon imprenable. La Faille est un portail vers l'enfer utilisable en raid.",
         "[BD-T5] Lieu désert et aride — 'lieu inconnu de tous'. La Faille plonge directement vers les enfers.",
         "[BD-T5] Post-bataille : plaine entière couverte de cadavres — zone dangereuse.",
-        "[BD-T5] Zone de raid permanente après la bataille (post-Tsaroth Faille ouverte)."
+        "[BD-T5] Zone de raid permanente après la bataille (post-Tsaroth Faille ouverte).",
+        "[BD-T5] p.23, 26 : « lieu désolé et loin de tout », « inconnu de tous » : aucun habitant ni service (v1.0.53)."
       ],
-      "taille": "village",
-      "service_npcs": [
-        {
-          "id": "pnj_ville_tsaroth_auberge_01",
-          "name": "Vorphas Braise-Vive",
-          "gender": "male",
-          "race_id": "race_demon",
-          "service": "auberge",
-          "metier": "aubergiste"
-        },
-        {
-          "id": "pnj_ville_tsaroth_armes_01",
-          "name": "Vorviel Ombre-Rouge",
-          "gender": "female",
-          "race_id": "race_demon",
-          "service": "armes",
-          "metier": "marchand_armes"
-        },
-        {
-          "id": "pnj_ville_tsaroth_marche_01",
-          "name": "Malthor Plaie-Rouge",
-          "gender": "male",
-          "race_id": "race_demon",
-          "service": "marche",
-          "metier": "marchand"
-        },
-        {
-          "id": "pnj_ville_tsaroth_ecurie_01",
-          "name": "Uzessa Cicatrice-Hurlante",
-          "gender": "female",
-          "race_id": "race_demon",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_tsaroth_temple_01",
-          "name": "Shaedris Umbross",
-          "gender": "male",
-          "race_id": "race_dark_elf",
-          "service": "temple",
-          "metier": "pretre"
-        },
-        {
-          "id": "pnj_ville_tsaroth_cimetiere_01",
-          "name": "Vormon Cicatrice-Froide",
-          "gender": "male",
-          "race_id": "race_demon",
-          "service": "cimetiere",
-          "metier": "fossoyeur"
-        }
-      ]
+      "taille": "sans_service",
+      "service_npcs": []
     },
     {
       "id": "ville_moork",
@@ -6834,7 +6782,7 @@
         "protégée par magie lunaire permanente"
       ],
       "notes": [
-        "[BD-T5] Siège de Haazheel Thorn — grande ville fortifiée avec hautes murailles de bois/pierre.",
+        "[BD-T5] Haazheel y reçoit Wismerhill ; baronnie de Greldinard, puis de Wismerhill (T6) — grande ville fortifiée aux hautes murailles.",
         "[BD-T5] 'Après un long voyage, l'armée survivante vit se dresser devant elle les hautes murailles de Moork!'",
         "[BD-T5] Wismerhill y est reçu en audience solennelle dans une salle circulaire aux runes jaune/vert.",
         "[BD-T5] Salle du trône de Haazheel : trône central sur estrade, symbole étoilé au sol, gardes menthats en méditation.",
@@ -6869,7 +6817,10 @@
         "[BD-T13] Haazheel y residait comme base de la Lune Noire.",
         "[BD-T13] Greldinard, Baron de Moork, y commande les forces de la Lune Noire.",
         "[BD-T13] Post-T13 : ville sans maitre -- Haazheel mort, Greldinard en retrait, Fratus mort. Statut : libre / en transition.",
-        "Les chevaliers de la lumière/justice et soldats de Lhynn ne peuvent pas y aller sans être tués (sauf furtif)"
+        "Les chevaliers de la lumière/justice et soldats de Lhynn ne peuvent pas y aller sans être tués (sauf furtif)",
+        "[BD-T6] p.33-34 : le palais d'Haazheel est sur la Lune ; son reflet se dresse à l'extrémité de la baronnie (lieu_palais_lune_noire_reflet).",
+        "[BD-T6] p.20 : convives nommés au banquet du couronnement : Helmo, Hurym, Eric.",
+        "[BD-T6] p.36 : la ville peut soutenir un siège d'un an."
       ],
       "dimensions_estimees": {
         "hauteur": "100m",
@@ -10599,7 +10550,9 @@
         "N006_E014"
       ],
       "notes": [
-        "Située au nord de Moork"
+        "Située au nord de Moork",
+        "[BD-T6] p.35, 37 : cartes de George d'Horkher — Horkher en haut, Moork en bas ; « un voisin » de Moork (Haazheel).",
+        "[BD-T6] p.37 : George espère devenir « duc des Marches » en reprenant Moork."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -10758,7 +10711,7 @@
         "cimetiere"
       ],
       "features": [
-        "donne accès à la Faille de Tsaroth"
+        "forteresse sur la route de la Lune Noire vers Tsaroth"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -10821,7 +10774,10 @@
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
-      "notes": [],
+      "notes": [
+        "[BD-T5] p.18 : Fratus souhaite qu'il tienne en perdant « le moins d'hommes possible ».",
+        "[BD-T5] p.22 : « au grand désespoir de Fratus, le Krak de Jhenner était tombé »."
+      ],
       "taille": "forteresse",
       "service_npcs": [
         {
@@ -20878,7 +20834,7 @@
       "name": "Noblesse de Fouine",
       "type": "social_confrontation",
       "death_cause_detail": "",
-      "how_to_obtain": "Assister à la scène où Hellavnnea proclame sa 'noblesse de fouine' face aux nobles médisants de Moork.",
+      "how_to_obtain": "Assister à la scène où Hellaynnea proclame sa 'noblesse de fouine' face aux nobles médisants de Moork.",
       "eligible": {
         "races": [
           "race_demon"
@@ -20898,7 +20854,7 @@
         "power": ""
       },
       "notes": [
-        "[BD-T6] P.29-30 : 'Les plus hautes ducon! Noblesse de fouine.' — Hellavnnea face aux nobles.",
+        "[BD-T6] P.29-30 : 'Les plus hautes ducon! Noblesse de fouine.' — Hellaynnea face aux nobles.",
         "[BD-T6] Uniquement accessible si on joue une succube/démon ou si on assiste à la scène."
       ]
     },
@@ -20907,7 +20863,7 @@
       "name": "La Veille du Petit Elfe",
       "type": "lore_intime",
       "death_cause_detail": "",
-      "how_to_obtain": "Découvrir la scène nocturne où Hellavnnea veille sur Wismerhill endormi à Moork.",
+      "how_to_obtain": "Découvrir la scène nocturne où Hellaynnea veille sur Wismerhill endormi à Moork.",
       "eligible": {
         "races": [],
         "factions": [],
@@ -20919,7 +20875,7 @@
       },
       "rewards": {
         "title": "Témoin de la Tendresse",
-        "reward": "Lore : révélation des sentiments protecteurs d'Hellavnnea envers Wismerhill. +5% bonus d'équipe si les deux combattent ensemble.",
+        "reward": "Lore : révélation des sentiments protecteurs d'Hellaynnea envers Wismerhill. +5% bonus d'équipe si les deux combattent ensemble.",
         "power": ""
       },
       "notes": [
@@ -23620,7 +23576,7 @@
     {
       "id": "quest_route_moork_t5",
       "name": "La Route vers Moork",
-      "description": "Wismerhill, après avoir brûlé son château (fin T4), prend la route vers Moork avec Hellavnnea, Pilou et ses hommes. En chemin, il traverse des villes qui se rendent sans combat, passe par Ghrunkedash pour acheter le palais roulant, et rencontre le Mage Shamballeau dans une auberge explosive.",
+      "description": "Wismerhill, après avoir brûlé son château (fin T4), prend la route vers Moork avec Hellaynnea, Pilou et ses hommes. En chemin, il traverse des villes qui se rendent sans combat, passe par Ghrunkedash pour acheter le palais roulant, et rencontre le Mage Shamballeau dans une auberge explosive.",
       "category": "histoire",
       "tags": [
         "histoire_principale",
@@ -24024,7 +23980,7 @@
         "S'installer sur le trône de Moork — déléguer aux gardes noirs la sécurité du palais.",
         "Gérer les premières affaires : soldats pillards (punir), gardes réfractaires (menacer), guildes (renvoi + nouveau chef).",
         "Se rendre à la Grande Bibliothèque — rencontrer Argon (Grand Mhenthat).",
-        "Découvrir les conseillers : Selindorf (mage), Dharix (espion), Zharhol (diplomate), Hokhosi (militaire), Nerellhen (finances), Zhenner (intendant).",
+        "Découvrir les conseillers : Selinporf (mage), Pharix (espion), Zharhol (diplomate), Hokhost (militaire), Nerellhen (finances), Zhenner (intendant).",
         "Recevoir l'information : l'Empereur a donné Moork à George d'Horkher. Horkher marche sur Moork. Préparer le piège."
       ],
       "source_lore": [
@@ -24065,7 +24021,7 @@
         "[BD-T6] La page 26 présente explicitement la routine quotidienne en 5 vignettes labelliées.",
         "[BD-T6] Étape doléances : les guildes demandent révision de leurs statuts. Wismerhill détruit le porte-parole, nomme un nouveau Grand Maître.",
         "[BD-T6] Étape justice : arbitrage de litiges dans la salle du trône (crânes ornementaux).",
-        "[BD-T6] Habillage cérémoniel : Hellavnnea aide Wismerhill à s'habiller pour les audiences formelles.",
+        "[BD-T6] Habillage cérémoniel : Hellaynnea aide Wismerhill à s'habiller pour les audiences formelles.",
         "[BD-T6] Règle associée : rule_gouvernance_quotidienne_baron.",
         "[BD-T6] P.24-28 : 'Les journées de Wismerhill commençaient tôt' — 5 activités quotidiennes labellisées : petit-déjeuner, habillage cérémoniel, affaires, justice, doléances.",
         "[BD-T6] L'explosion du maître de guilde (détonation magique, fenêtre brisée) déclenche la réputation de baron impulsif mais efficace."
@@ -24155,7 +24111,7 @@
     {
       "id": "quest_prise_horkher_t6",
       "name": "La Nuit d'Horkher",
-      "description": "La nuit même du piège, Wismerhill téléporte son groupe dans la ville d'Horkher. Assaut éclair par surprise : Hellavnnea brûle les portes, Ghorghor et ses troupes envahissent. La ville capitule après une résistance soutenue. Le lendemain, abdication officielle du Comte et serment des vassaux.",
+      "description": "La nuit même du piège, Wismerhill téléporte son groupe dans la ville d'Horkher. Assaut éclair par surprise : Hellaynnea brûle les portes, Ghorghor et ses troupes envahissent. La ville capitule après une résistance soutenue. Le lendemain, abdication officielle du Comte et serment des vassaux.",
       "category": "histoire",
       "tags": [
         "histoire_principale",
@@ -24170,7 +24126,7 @@
       "steps": [
         "Forcer le Comte d'Horkher à signer son abdication de Moork (couteau à la gorge).",
         "Cette nuit même : téléporter le groupe dans la ville d'Horkher.",
-        "Attaquer les portes — Hellavnnea brûle les défenses, Ghorghor ouvre une brèche.",
+        "Attaquer les portes — Hellaynnea brûle les défenses, Ghorghor ouvre une brèche.",
         "Le flot des armées de Wismerhill se répand dans Horkher — combat de rues.",
         "Malgré une forte résistance, les défenseurs succombent. Victoire.",
         "Lendemain : Cérémonie d'abdication dans la Salle du Trône — George d'Horkher abdique officiellement. Les vassaux prêtent serment de vassalité à Wismerhill."
@@ -24274,7 +24230,7 @@
         "[BD-T6] 'Oyez, oyez sire Cedric, plénipotentiaire de la Baronnie de Moork reçoit audience.'",
         "[BD-T6] L'Empereur : 'Le chien ! Comment ose-t-il venir me narguler dans mon palais ! Quelle audace ! Il va me le payer très, très cher !'",
         "[BD-T6] Haazheel (depuis la Lune) réagit avec amusement : 'Non ! Bien fait pour sa gueule ! Et si ça peut faire chier l'Empereur, c'est parfait !'",
-        "[BD-T6] P.48-49 : 'Silence tous! Moi je vais y aller!' — Hellavnnea se porte volontaire, se transforme en 'Sire Cedric'. Trio polymorphé : Hellavnnea + 2 inconnus.",
+        "[BD-T6] P.48-49 : 'Silence tous! Moi je vais y aller!' — Hellaynnea se porte volontaire, se transforme en 'Sire Cedric'. Trio polymorphé : Hellaynnea + 2 inconnus.",
         "[BD-T6] P.52 : Haghendorf furieux seul sur son trône. 'Le chien! Comment ose-t-il venir me narguler dans mon palais! Il va me le payer très, très cher!'"
       ],
       "quest_kind": "",
@@ -24768,19 +24724,19 @@
     {
       "id": "quest_neuf_femmes_avant_transformation_t9",
       "name": "Les Neuf Mères",
-      "description": "Avant de subir le rituel de la Négation qui lui ôtera l'humanité et la fertilité, Wismerhill doit choisir des mères pour ses héritiers. Hellavnnea lui présente 9 femmes d'exception.",
+      "description": "Avant de subir le rituel de la Négation qui lui ôtera l'humanité et la fertilité, Wismerhill doit choisir des mères pour ses héritiers. Hellaynnea lui présente 9 femmes d'exception.",
       "category": "lore_character",
       "tags": [
         "lore",
         "descendance",
-        "Hellavnnea",
+        "Hellaynnea",
         "personnel"
       ],
       "difficulty": 1,
       "repeatable": false,
       "type": "",
       "steps": [
-        "Accepter l'offre d'Hellavnnea",
+        "Accepter l'offre d'Hellaynnea",
         "Rencontrer les 9 femmes (guerrières, prêtresses, mages, nobles — l'une était reine)",
         "Passer plusieurs jours enfermé avec elles",
         "Confirmer les grossesses",
@@ -24815,7 +24771,7 @@
         {
           "type": "companion",
           "companion_id": "companion_succubus_t3",
-          "description": "Hellavnnea doit être compagnon actif"
+          "description": "Hellaynnea doit être compagnon actif"
         }
       ],
       "region_id": "",
@@ -24823,7 +24779,7 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T9] Hellavnnea porte elle-même un enfant : 'POUR QU'IL POSSÈDE NOTRE PUISSANCE CONJUGUÉE.'",
+        "[BD-T9] Hellaynnea porte elle-même un enfant : 'POUR QU'IL POSSÈDE NOTRE PUISSANCE CONJUGUÉE.'",
         "[BD-T9] L'une des femmes était reine d'un pays lointain.",
         "[BD-T9] Les 10 femmes seront recluses 9 mois dans la forteresse naine abandonnée."
       ],
@@ -25600,7 +25556,7 @@
     {
       "id": "quest_esmeralda_succube_t6",
       "name": "Esmeralda — Le Trésor Interdit",
-      "description": "Une succube inconnue (Esmeralda) opère dans Moork de nuit, drainant des âmes solitaires. Les joueurs doivent l'identifier et décider de son sort — la chasser ou l'ignorer (et risquer de perdre des PNJ importants).",
+      "description": "La nuit, des âmes solitaires de Moork meurent desséchées. Les joueurs enquêtent et découvrent qu'« Esmeralda » n'est qu'une apparence prise par la succube du baron, Hellaynnea ; ils décident de se taire ou de la dénoncer.",
       "category": "exploration",
       "tags": [
         "moork",
@@ -25620,7 +25576,7 @@
         "Si combat : Esmeralda est une adversaire redoutable — fuite ou soumission."
       ],
       "source_lore": [
-        "char_esmeralda_succubus",
+        "char_succubus",
         "ville_moork",
         "creature_succube"
       ],
@@ -25644,7 +25600,8 @@
       "notes": [
         "[BD-T6] P.20-22 : 'Car les succubes sont trésors aux mortels interdits!!' — Esmeralda vide l'âme d'un homme blond.",
         "[BD-T6] 'Où êtes-vous âmes solitaires et tristes?' — Esmeralda cherchant ses victimes dans les rues.",
-        "[BD-T6] 'C'est que j'avais une petite faim moi!' — après le drain d'âme."
+        "[BD-T6] 'C'est que j'avais une petite faim moi!' — après le drain d'âme.",
+        "[BD-T6] p.22-24 (v1.0.53) : Esmeralda = apparence d'Hellaynnea, pas une succube distincte."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -30328,7 +30285,7 @@
     },
     {
       "id": "mount_hellavnnea_aerial",
-      "name": "Hellavnnea (Transport Aérien Démoniaque)",
+      "name": "Hellaynnea (Transport Aérien Démoniaque)",
       "types": [
         "aerial_demon_companion_mount"
       ],
@@ -30344,15 +30301,15 @@
       "eligible_classes": [],
       "eligible_factions": [],
       "acquisition": [],
-      "description": "Hellavnnea peut porter Wismerhill en vol grâce à ses grandes ailes de chauve-souris. Transport aérien silencieux et discret. Pas une 'monture' au sens classique — elle le porte dans ses bras ou il s'accroche à elle. Utilisée pour les entrées spectaculaires en ville et les reconnaissances aériennes.",
+      "description": "Hellaynnea peut porter Wismerhill en vol grâce à ses grandes ailes de chauve-souris. Transport aérien silencieux et discret. Pas une 'monture' au sens classique — elle le porte dans ses bras ou il s'accroche à elle. Utilisée pour les entrées spectaculaires en ville et les reconnaissances aériennes.",
       "notes": [
-        "[BD-T5] Pages 13-15 : Wismerhill et Hellavnnea volent au-dessus des toits d'une ville. 'Pigeon vole!'",
+        "[BD-T5] Pages 13-15 : Wismerhill et Hellaynnea volent au-dessus des toits d'une ville. 'Pigeon vole!'",
         "[BD-T5] Elle l'emmène dans les nuages — scène romantique/stratégique combinée.",
         "[BD-T5] 'Il se concentra et, déjà perdus dans les nuages, ils s'enfoncèrent un peu plus dans les vents brûlants de la passion.'",
         "[BD-T5] 'À quoi tu joues espèce de garce?' — réaction de Wismerhill après une pirouette aérienne.",
-        "[BD-T5] 'Hi! Hi! Hi!' — Hellavnnea s'amuse de ses réactions.",
+        "[BD-T5] 'Hi! Hi! Hi!' — Hellaynnea s'amuse de ses réactions.",
         "[BD-T5] 'Nous partirons demain.' / 'Je vois qu'on est concentré, c'est agréable!' — dialogue post-vol.",
-        "[LORE_ETENDU] Monture disponible uniquement si Hellavnnea est compagnon actif et en mode 'confiance totale' (relation ≥ 80%)."
+        "[LORE_ETENDU] Monture disponible uniquement si Hellaynnea est compagnon actif et en mode 'confiance totale' (relation ≥ 80%)."
       ]
     },
     {
@@ -30643,7 +30600,7 @@
     {
       "id": "raid_assaut_horkher_t6",
       "name": "La Nuit des Ombres — Assaut de Horkher",
-      "description": "Raid nocturne éclair sur la cité d'Horkher. Wismerhill téléporte son groupe directement dans la ville. Hellavnnea brûle les défenses, Ghorghor ouvre les portes depuis l'intérieur, le flot d'armée entre. Résistance soutenue mais victoire totale.",
+      "description": "Raid nocturne éclair sur la cité d'Horkher. Wismerhill téléporte son groupe directement dans la ville. Hellaynnea brûle les défenses, Ghorghor ouvre les portes depuis l'intérieur, le flot d'armée entre. Résistance soutenue mais victoire totale.",
       "min_teams": 2,
       "min_players_per_team": 3,
       "min_players_total": 6,
@@ -31427,11 +31384,13 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "L'Empereur révèle à un Chevalier de Lumière loyal la trahison de Fratus Sinister. Il savait depuis longtemps grâce à une prophétie et son grand astrologue. Le Commandeur loyal est rallié contre Fratus et promu futur Grand Maître de l'Ordre épuré.",
+      "description": "Un chevalier roux de l'Ordre de la Lumière dénonce à l'Empereur le complot de Fratus. Haghendorf le savait déjà par une prophétie et son Grand Astrologue ; il promet au chevalier la maîtrise de l'Ordre épuré, puis rallie le Commandeur de l'Ordre de Justice, le prince Parsifal. Le chevalier roux était en fait l'agent de Fratus : « Il m'a cru, Grand Maître ! Il a tout gobé ! »",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
-      "notes": []
+      "notes": [
+        "[BD-T4] pl.4-8, pl.22."
+      ]
     },
     {
       "id": "event_succubus_control",
@@ -31500,12 +31459,12 @@
     },
     {
       "id": "event_wismerhill_pledges_haazheel_t5",
-      "name": "Wismerhill Prête Serment à Haazheel (Baron de Moork)",
+      "name": "Wismerhill Prête Serment à Haazheel",
       "era": "Tome 5",
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill, après sa route de conquête, entre à Moork et prête serment de vassalité à Haazheel Thorn. Il reçoit la Garde Noire (3 500 soldats) et le titre de Baron de Moork. Haazheel en aparté : il manipule Wismerhill mais c'est son pion le plus utile.",
+      "description": "Après une ville rasée, un prêtre de la Lune Noire transporte Wismerhill à Moork, où il rend hommage à Haazheel Thorn. Haazheel l'accepte comme vassal, promet un grand fief après la guerre et lui confie la Garde Noire : 500 grands guerriers et plus de 3 000 soldats d'élite. Ordre : se rendre à la Faille de Tsaroth.",
       "factions": [
         "faction_black_moon",
         "faction_garde_noire"
@@ -31513,7 +31472,8 @@
       "ref_type": "quest",
       "ref_id": "quest_serment_moork_t5",
       "notes": [
-        "[BD-T5] Pages 18-22. Pivot majeur — Wismerhill devient officiellement vassal de la Lune Noire."
+        "[BD-T5] Pages 18-22. Pivot majeur — Wismerhill devient officiellement vassal de la Lune Noire.",
+        "[BD-T5] p.19-21. Le titre de baron de Moork n'est pris qu'au T6."
       ]
     },
     {
@@ -31523,7 +31483,7 @@
       "year": "",
       "month": "",
       "type": "battle",
-      "description": "Grande bataille entre la Lune Noire et les forces impériales. Haazheel invoque les deux fois nés de nuit. Wismerhill se transforme en Titan. Parsifal mène les Chevaliers de Justice. Greldinard et Parsifal se tuent en duel. La Lune Noire perd militairement mais la Faucheuse exulte — les enfers récoltent des milliers d'âmes.",
+      "description": "Grande bataille entre la Lune Noire et les forces impériales. Haazheel invoque les deux fois nés de nuit. Haazheel ouvre la Faille aux démons puis se transforme en titan à quatre bras ; Wismerhill n'engage pas la Garde Noire. Parsifal mène les Chevaliers de Justice. Greldinard et Parsifal se tuent en duel. La Lune Noire perd militairement mais la Faucheuse exulte — les enfers récoltent des milliers d'âmes. La défaite est une mise en scène : Haazheel et Greldinard sont vivants (T5 p.52, T6 p.5).",
       "factions": [
         "faction_black_moon",
         "faction_empire",
@@ -31546,7 +31506,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Après Tsaroth, Wismerhill retourne à Moork avec ses survivants. La ville ouvre ses portes. Il entre dans la salle du trône et découvre Haazheel. Révélation : Wismerhill ne comprend pas le jeu dans lequel il est — Haazheel s'en amuse. Fin de tome. Cliffhanger.",
+      "description": "Après Tsaroth, Wismerhill rentre à Moork, force la citadelle, défenestre le vieillard du trône et descend à la salle de justice chercher la couronne : Haazheel et Greldinard y sont vivants. Fin de tome.",
       "factions": [
         "faction_black_moon",
         "faction_garde_noire"
@@ -31584,7 +31544,7 @@
       "year": "",
       "month": "",
       "type": "miracle",
-      "description": "Parsifal est ressuscité par miracle collectif dans la Grande Tente-Chapelle des Chevaliers de Justice. Il réclame des Kracks à l'Empereur, essuie un refus, et part avec ses chevaliers vers Sysgié.",
+      "description": "Parsifal est ressuscité par miracle collectif dans la Grande Tente-Chapelle des Chevaliers de Justice. Il réclame des Kracks à l'Empereur, essuie un refus, et part avec ses chevaliers vers Sysigie.",
       "factions": [
         "chevaliers_de_la_justice"
       ],
@@ -31601,7 +31561,7 @@
       "year": "",
       "month": "",
       "type": "lore_revelation",
-      "description": "RÉVÉLATION MAJEURE : Le palais de la Lune Noire est sur la Lune réelle, pas sur Terre. Seul son reflet (l'ombre noire dans le ciel, l'éclipse permanente) est visible. C'est là que réside Haazheel Thorn, d'où il observe le monde. L'immense tour s'élève sur la surface lunaire, la Terre bleue visible en arrière-plan. Seuls ses proches serviteurs connaissent ce secret.",
+      "description": "Le palais de la Lune Noire se dresse sur la Lune ; seul son reflet se trouve sur Terre, « au confin des marches de l'Empire, à l'extrémité de la baronnie de Moork ». Une grande arche verte sert de seuil entre la Terre et la Lune. De là vient le surnom d'Haazheel ; seuls ses proches serviteurs connaissent le secret.",
       "factions": [
         "faction_black_moon"
       ],
@@ -31637,7 +31597,7 @@
       "year": "",
       "month": "",
       "type": "battle_conquete",
-      "description": "Wismerhill piège et défait les troupes du Comte d'Horkher dans Moork, puis assaut éclair nocturne sur Horkher. Les deux fiefs sont réunis sous sa main de fer. Il envoie une ambassade à l'Empereur pour déclarer la vassalité. Haazheel observe depuis la Lune et approuve. L'Empereur fulmine.",
+      "description": "Wismerhill piège et défait les troupes du Comte d'Horkher dans Moork, puis assaut éclair nocturne sur Horkher. Les deux fiefs sont réunis sous sa main de fer. Il envoie une ambassade à l'Empereur pour déclarer la vassalité. Haazheel et Greldinard l'observent et approuvent. L'Empereur fulmine.",
       "factions": [
         "faction_black_moon",
         "faction_empire"
@@ -31794,7 +31754,7 @@
       "year": "",
       "month": "",
       "type": "atrocity_event",
-      "description": "Une colonne des Fils de la Lumière sous commandement de Fratus Sinister massacre le village Orkh en forêt, s'attaquant aux femmes et enfants en premier. Ghorghor Bey et Wismerhill arrivent après les faits — réaction de dégoût de Ghorghor. Hellavnnea prend les survivants soldats pour son plaisir. Cet événement marque le début de la campagne de marche vers Moork.",
+      "description": "L'avant-garde d'une colonne des Fils de la Lumière massacre un village orkh en forêt, s'attaquant d'abord aux femmes et aux enfants. Wismerhill et son armée surviennent ; il livre les chevaliers Gunther et un compagnon à Hellaynnea. Début de la marche vers Ghrunkedash.",
       "factions": [
         "chevaliers_de_la_lumiere"
       ],
@@ -31804,7 +31764,8 @@
         "[BD-T5] Pages 3-7.",
         "[BD-T5] 'En ces temps cruels, il ne faisait pas bon se trouver sur le chemin des armées.'",
         "[BD-T5] 'Il n'était pas bon se trouver sur le chemin d'une armée.' — répété deux fois dans le texte.",
-        "[BD-T5] Cet événement précède directement le départ vers Ghrunkedash et Moork."
+        "[BD-T5] Cet événement précède directement le départ vers Ghrunkedash et Moork.",
+        "[BD-T5] p.6-8 : Fratus n'est pas présent ; c'est Wismerhill qui réagit (« Vous n'êtes que des larves immondes »)."
       ]
     },
     {
@@ -31831,22 +31792,20 @@
     },
     {
       "id": "event_esmeralda_draine_fratus_t6",
-      "name": "Esmeralda Draine Fratus Sinister",
+      "name": "La Succube Draine une Âme Solitaire de Moork",
       "era": "Tome 6",
       "year": "",
       "month": "",
       "type": "event_surnaturel",
-      "description": "Après sa disgrâce, Fratus Sinister erre seul et ivre à Moork. La succube Esmeralda, flairant une âme solitaire et brisée, le séduit et draine son énergie vitale. Fratus survit dans un état quasi-comateux ('petit elfe blond endormi'). Hellavnnea détecte la scène depuis le palais.",
+      "description": "La nuit, Hellaynnea cherche les « âmes solitaires et tristes » de Moork. Elle prend les traits d'Esmeralda, l'amour perdu d'un homme blond, obtient la promesse de son âme et le laisse desséché, puis revient auprès de Wismerhill.",
       "factions": [
-        "faction_demons",
-        "chevaliers_de_la_lumiere"
+        "faction_black_moon"
       ],
       "ref_type": "rule",
       "ref_id": "rule_succubes_mortels_interdits",
       "notes": [
-        "[BD-T6] Pages 22-25. Esmeralda : 'C'est que j'avais une petite faim, moi !'",
-        "[BD-T6] Fratus survit vraisemblablement mais est considérablement affaibli.",
-        "[BD-T6] Sa chute : de Grand Maître de l'Empire à proie d'une succube en quelques pages."
+        "[BD-T6] p.22-25. « Car les succubes sont trésors aux mortels interdits !! » ; « C'est que j'avais une petite faim moi ! »",
+        "[BD-T6] La victime n'est pas nommée ; ce n'est pas Fratus, qui repart vers Altenberg (p.13) et réapparaît p.48."
       ]
     },
     {
@@ -31885,7 +31844,7 @@
       "ref_id": "raid_assaut_horkher_t6",
       "notes": [
         "[BD-T6] Pages 45-46. 'Ah ! Ben j'ai failli attendre !' — Ghorghor.",
-        "[BD-T6] Hellavnnea brûle les portes, Wismerhill combat en vol.",
+        "[BD-T6] Hellaynnea brûle les portes, Wismerhill combat en vol.",
         "[BD-T6] 'Wismerhill avait une fois de plus vaincu.' — narrateur."
       ]
     },
@@ -31955,7 +31914,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Avant sa transformation, Wismerhill engendre 10 enfants : 9 mères humaines d'exception (dont une ex-reine) + Hellavnnea. Elles sont envoyées en forteresse naine pour 9 mois.",
+      "description": "Avant sa transformation, Wismerhill engendre 10 enfants : 9 mères humaines d'exception (dont une ex-reine) + Hellaynnea. Elles sont envoyées en forteresse naine pour 9 mois.",
       "factions": [],
       "ref_type": "",
       "ref_id": "",
@@ -32112,7 +32071,7 @@
       "year": "",
       "month": "",
       "type": "event_gouvernance",
-      "description": "Wismerhill s'installe dans sa routine de baron : petit-déjeuner (Ghorghor demi-porc), habillage cérémoniel, affaires, justice, doléances. Rencontre ses 6 conseillers à la Grande Bibliothèque (Argon, Selindorf, Dharix, Zharhol, Hokhosi, Nerellhen, Zhenner). Explose un maître de guilde à travers la fenêtre.",
+      "description": "Wismerhill s'installe dans sa routine de baron : petit-déjeuner (Ghorghor demi-porc), habillage cérémoniel, affaires, justice, doléances. Rencontre ses 6 conseillers à la Grande Bibliothèque (Argon, Selinporf, Pharix, Zharhol, Hokhost, Nerellhen, Zhenner). Explose un maître de guilde à travers la fenêtre.",
       "factions": [
         "faction_black_moon"
       ],
@@ -32129,7 +32088,7 @@
       "year": "",
       "month": "",
       "type": "event_militaire_politique",
-      "description": "Après les événements post-Tsaroth, l'armée rassemblée autour de l'Empereur se scinde en trois : Fratus (Lumière) vers Altenberg, Parsifal (Justice) vers Sysgié, troupes impériales restent avec Haghendorf. L'Empereur est seul et affaibli. 'L'immense se scinda en trois fleuves.'",
+      "description": "Après les événements post-Tsaroth, l'armée rassemblée autour de l'Empereur se scinde en trois : Fratus (Lumière) vers Altenberg, Parsifal (Justice) vers Sysigie, troupes impériales restent avec Haghendorf. L'Empereur est seul et affaibli. 'L'immense se scinda en trois fleuves.'",
       "factions": [
         "faction_empire",
         "chevaliers_de_la_lumiere",
@@ -32148,7 +32107,7 @@
       "year": "",
       "month": "",
       "type": "event_politique_fin_tome",
-      "description": "Après la prise de Horkher et la cérémonie de vassalité, Wismerhill réunit deux fiefs. 'Les deux grands fiefs étaient désormais unis dans la main de fer du jeune seigneur aux yeux de braise et aussi puissant qu'un duc.' Les deux observateurs (Haazheel + Grand Maître Lion) approuvent. Haghendorf fulmine seul.",
+      "description": "Après la prise de Horkher et la cérémonie de vassalité, Wismerhill réunit deux fiefs. 'Les deux grands fiefs étaient désormais unis dans la main de fer du jeune seigneur aux yeux de braise et aussi puissant qu'un duc.' Les deux observateurs (Haazheel et Greldinard) approuvent. Haghendorf fulmine seul.",
       "factions": [
         "faction_black_moon",
         "faction_empire"
@@ -32157,7 +32116,7 @@
       "ref_id": "quest_prise_horkher_t6",
       "notes": [
         "[BD-T6] P.47-52. Fin du tome 6.",
-        "[BD-T6] Haghendorf : 'Le chien! Comment ose-t-il venir me narguler dans mon palais!'"
+        "[BD-T6] Haghendorf : 'Le chien! Comment ose-t-il venir me narguer dans mon palais!'"
       ]
     },
     {
@@ -32167,7 +32126,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Wismerhill, Hellavnnea et leurs compagnons voyagent vers l'Empire du Jade, traversant les Eaux des Serpents Marins, la Cathédrale des Ossements, la Porte du Crâne et le Passage du Serpent Doré. Arrivée dans la Cité du Jade — première rencontre avec cette civilisation orientale inédite.",
+      "description": "Wismerhill, Hellaynnea et leurs compagnons voyagent vers l'Empire du Jade, traversant les Eaux des Serpents Marins, la Cathédrale des Ossements, la Porte du Crâne et le Passage du Serpent Doré. Arrivée dans la Cité du Jade — première rencontre avec cette civilisation orientale inédite.",
       "factions": [
         "faction_tharque"
       ],
@@ -33650,6 +33609,41 @@
       "ref_id": "ville_garundel_fief",
       "notes": [
         "[BD-T3] pl.41-43."
+      ]
+    },
+    {
+      "id": "event_t5_chute_krak_jhenner",
+      "name": "Chute du Krak de Jhenner",
+      "era": "Tome 5",
+      "year": "",
+      "month": "",
+      "type": "battle",
+      "description": "La Lune Noire prend le Krak de Jhenner, « au grand désespoir de Fratus », puis assiège la dernière citadelle impériale avant la Faille de Tsaroth.",
+      "factions": [
+        "faction_black_moon",
+        "chevaliers_de_la_lumiere"
+      ],
+      "ref_type": "ville",
+      "ref_id": "city_krak_de_jhenner",
+      "notes": [
+        "[BD-T5] p.18, p.22-23."
+      ]
+    },
+    {
+      "id": "event_t5_villes_rendues",
+      "name": "Les Villes qui se Rendent",
+      "era": "Tome 5",
+      "year": "",
+      "month": "",
+      "type": "event",
+      "description": "Sur la route, des villes se rendent à Wismerhill : un bourgmestre remet les clés, les bourgeois (dont un certain Arthus) livrent leurs biens. Wismerhill y engage le mage Shamballeau.",
+      "factions": [
+        "faction_black_moon"
+      ],
+      "ref_type": "",
+      "ref_id": "",
+      "notes": [
+        "[BD-T5] p.12-14."
       ]
     }
   ],
@@ -146450,23 +146444,22 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T5] Après avoir brûlé son château (T4), il prend la route vers Moork avec Hellavnnea, Pilou et ses hommes.",
+        "[BD-T5] Après avoir brûlé son château (T4), il prend la route vers Moork avec Hellaynnea, Pilou et ses hommes.",
         "[BD-T5] Traverse des villes qui se rendent volontairement pour éviter pillage et ruine — montre un talent politique naturel.",
         "[BD-T5] Se rend à Ghrunkedash pour acheter un 'palais roulant' (machine de siège naine à 50 000 couronnes).",
         "[BD-T5] Rencontre le Mage Shamballeau dans une auberge — bagarre, explosion — le recrute brièvement ou l'observe.",
         "[BD-T5] À Moork : prête serment à Haazheel. Reçoit la Garde Noire (500 guerriers + 3 000 soldats d'élite) et le titre de Baron de Moork.",
         "[BD-T5] Commande les troupes de la Garde Noire à la Faille de Tsaroth — stratégie 'tenir le mur'.",
-        "[BD-T5] Se transforme en Titan à 4 bras (invocation via la Lune Noire / son pouvoir de demi-sang) pour déverser un océan de feu sur les forces impériales.",
         "[BD-T5] Après la victoire : 'Comment ont-ils pu perdre cette bataille? Ils devaient gagner!' — questionnement moral sur sa position.",
         "[BD-T5] Prend Moork par droit du plus fort après la bataille — devient baron effectif.",
         "[BD-T5] Titre acquis : Baron de Moork (vassal de Haazheel Thorn, Seigneur de la Lune Noire).",
         "[BD-T6] Après Tsaroth, il revient à Moork avec ~6000 survivants — devient baron effectif.",
-        "[BD-T6] Installe son gouvernement à Moork : siège dans la Salle du Trône ornée de crânes, délègue aux administrateurs (Argon, Selindorf, Dharix, Zharhol, Hokhosi, Nerellhen, Zhenner).",
+        "[BD-T6] Installe son gouvernement à Moork : siège dans la Salle du Trône ornée de crânes, délègue aux administrateurs (Argon, Selinporf, Pharix, Zharhol, Hokhost, Nerellhen, Zhenner).",
         "[BD-T6] Gère quotidiennement des affaires de baron : soldats pillant des rues (il punit), maîtres de guildes (il les renvoie mais nomme un nouveau Grand Maître), justice dans la salle du trône.",
         "[BD-T6] Se rend à la Grande Bibliothèque (siège de l'administration de Moork) pour rencontrer Argon.",
         "[BD-T6] Piège le Comte d'Horkher : décore Moork aux couleurs d'Horkher, l'accueille en fête, puis au signal Nasha livre des fleurs → Ghorghor capture le duc d'Horkher.",
         "[BD-T6] Force le Comte d'Horkher à signer son abdication ('Tu vas abdiquer en ma faveur...').",
-        "[BD-T6] Cette nuit même, téléporte son groupe à Horkher — assaut éclair, Hellavnnea brûle les portes, Ghorghor et ses troupes envahissent la ville. Horkher capitule.",
+        "[BD-T6] Cette nuit même, téléporte son groupe à Horkher — assaut éclair, Hellaynnea brûle les portes, Ghorghor et ses troupes envahissent la ville. Horkher capitule.",
         "[BD-T6] Cérémonie d'abdication d'Horkher dans la Salle du Trône d'Horkher — les vassaux prêtent serment.",
         "[BD-T6] Envoie l'ambassadeur Cedric à l'Empereur pour déclarer la vassalité des deux fiefs.",
         "[BD-T6] Haazheel observe depuis la Lune et approuve : 'Beau résultat considérant le peu de moyens à sa disposition. Nous avons bien choisi !'",
@@ -146478,15 +146471,15 @@
         "[BD-T9] Reçoit l'invitation de Haazheel à devenir 'Haut Seigneur de la Négation' — le poste manquant dans les Seigneurs de la Négation.",
         "[BD-T9] Haazheel prévient : 'TU VAS PERDRE BEAUCOUP DE TON HUMANITÉ ET IL SE POURRAIT QUE TU NE PUISSES PLUS PROCRÉER.'",
         "[BD-T9] Prend conseil auprès de ses vents confidants — une présence mystérieuse et plus forte le guide : 'TON DESTIN S'ANNONCE ENFIN, PRENDS-EN LES GUIDES DANS TES MAINS.'",
-        "[BD-T9] Hellavnnea lui présente 9 femmes d'exception (guerrières, prêtresses, mages, nobles — l'une était reine) pour lui donner des enfants avant la transformation.",
-        "[BD-T9] Hellavnnea elle-même porte un enfant de lui : 'POUR QU'IL POSSÈDE NOTRE PUISSANCE CONJUGUÉE.'",
-        "[BD-T9] Les 10 femmes enceintes (9 humaines + Hellavnnea) sont envoyées dans une forteresse naine abandonnée sous escorte de la Garde Noire pour 9 mois.",
+        "[BD-T9] Hellaynnea lui présente 9 femmes d'exception (guerrières, prêtresses, mages, nobles — l'une était reine) pour lui donner des enfants avant la transformation.",
+        "[BD-T9] Hellaynnea elle-même porte un enfant de lui : 'POUR QU'IL POSSÈDE NOTRE PUISSANCE CONJUGUÉE.'",
+        "[BD-T9] Les 10 femmes enceintes (9 humaines + Hellaynnea) sont envoyées dans une forteresse naine abandonnée sous escorte de la Garde Noire pour 9 mois.",
         "[BD-T9] Subit le rituel de la Négation — les Seigneurs de la Négation dansent autour de lui, le frappent avec leurs lames, drainant sa vie. Résiste à l'extinction ('NON...').",
         "[BD-T9] Survit et est proclamé SEIGNEUR DE LA NÉGATION : 'RELÈVE-TOI, WISMERHILL, SEIGNEUR DE LA NÉGATION, CAR C'EST CE QUE TU ES MAINTENANT!'",
         "[BD-T9] Reçoit : nouvelle armure (métal des étoiles), épée du hors-monde ('chante les sombres pavanes de la négation, elle dévore la vie'), heaume et couronne, opale de feu émeraude (comme celle de Haazheel).",
         "[BD-T9] Haazeel : 'CAR TU ES LE PRINCE DE LA NÉGATION, LEUR MAÎTRE, ET EN TOI COULENT TOUTES LES ÉNERGIES. DONT CERTAINES MÊME QUE JE N'AI JAMAIS PU MAÎTRISER.'",
         "[BD-T9] Reçoit comme monture le 'PLUS PUISSANT DES SOMBRES CHEVAUCHEURS DE TÉNÈBRES AVEC LEQUEL SEULS LES PLUS PUISSANTS DRAGONS PEUVENT RIVALISER.'",
-        "[BD-T9] Révèle sa transformation à ses proches (Hellavnnea, Nasha, Ghorghor, compagnons) dans la salle du trône de Moork.",
+        "[BD-T9] Révèle sa transformation à ses proches (Hellaynnea, Nasha, Ghorghor, compagnons) dans la salle du trône de Moork.",
         "[BD-T9] Titre officiel final T9 : Prince des Seigneurs de la Négation, Baron de Moork et Maître d'Horkher.",
         "[BD-T9] Visuel T9 : armure noire et or spiked, heaume à pointes dorées, gemme verte sur le front, cape noire. Yeux restent violets/hétérochromes.",
         "[BD-T9] Les Vents disent de lui : 'LA LUNE NOIRE A ENFIN SON ÉPÉE. SON BRAS VA MAINTENANT SOULEVER LA LUNE ET LES TÉNÈBRES SE FERONT MARÉES.'",
@@ -146512,7 +146505,7 @@
         "[BD-T6] P.43-46 : téléporte groupe à Horkher de nuit — assaut éclair. Épée enflammée levée dans la victoire : 'Wismerhill! Wismerhill!'",
         "[BD-T6] P.48 : préside le conseil de guerre sur l'ambassade à Haghendorf. Dicte la lettre de vassalité pour les deux fiefs.",
         "[BD-T6] Titre final T6 : 'maître et seigneur de Moork et d'Horkher, aussi puissant qu'un duc'. En première ligne face à l'Empire.",
-        "[BD-T7] Voyage dans l'Empire du Jade avec ses compagnons (Hellavnnea, Ghorghor et autres).",
+        "[BD-T7] Voyage dans l'Empire du Jade avec ses compagnons (Hellaynnea, Ghorghor et autres).",
         "[BD-T7] Accomplit l'invocation de Methraton dans le Temple du Jade — confrontation directe avec l'entité fire cosmique.",
         "[BD-T7] Survit à la colère de Methraton ('FOOOOO BOOSH!' explosion) — sa résistance partielle aux entités divines est confirmée.",
         "[BD-T7] Navigue les politiques de l'Empire du Jade — rencontre le Seigneur du Jade dans sa grande salle aux colonnes.",
@@ -146530,7 +146523,7 @@
         "[BD-T8] Titre à la fin de T8 : Baron de Moork, Maître d'Horkher, Allié de l'Empire du Jade, Maître de Fratus Sinister.",
         "[BD-T9] Conseil de guerre T9 avec Haazheel et Greldinard : rapport des forces (20K gardes + Juggernauth / 100K+ orcs / 80K réguliers / démons + hors-vivants).",
         "[BD-T9] Fratus Sinister vient en personne présenter son armée (haine de l'Empire, prête à embrasser la Lune Noire). Wismerhill : 'SUPERBE, FRATUS, SUPERBE!'",
-        "[BD-T9] Révèle sa transformation à ses compagnons (Hellavnnea, Nasha, Ghorghor, Cruik) dans la salle du trône de Moork.",
+        "[BD-T9] Révèle sa transformation à ses compagnons (Hellaynnea, Nasha, Ghorghor, Cruik) dans la salle du trône de Moork.",
         "[BD-T9] 'JE TENAIS À VOUS VOIR, MES AMIS, VOUS AVANT TOUS LES AUTRES, CAR J'AI UN PEU CHANGÉ... ÉTANT DEVENU LE PRINCE DES SEIGNEURS DE LA NÉGATION.'",
         "[BD-T9] Titre final T9 : Prince des Seigneurs de la Négation, Baron de Moork, Maître d'Horkher, allié Empire du Jade (T7), Maître Désert (T8).",
         "[BD-T9] Dernière image du tome : EN AVANT! sur son Sombre Chevaucheur, à la tête de la plus grande armée jamais vue.",
@@ -146592,7 +146585,8 @@
         "[BD-T2] Appelé « demi-elfe » par le Magister et son serviteur (p.20), « Wis » par ses compagnons (p.10).",
         "[BD-T2] Mont des Neuf Pics : les Grands Vents lui révèlent que sa mère l'a jadis confié à eux, le font « prêtre des vents » et lui donnent un sceptre de cristal (pp.17-18).",
         "[BD-T2] Rejette la machine du Magister, possédé (yeux de flamme rouge, aura verte), tue le Magister et arrache à Desdémone la position de l'Oracle (pp.24-25).",
-        "[BD-T2] Tue d'un coup de lance le dragon Dracchennauknh et le Maître des Dragons, protégé par une armure de glace tissée par les vents ; prend ensuite l'armure noire du Maître (pp.39-43)."
+        "[BD-T2] Tue d'un coup de lance le dragon Dracchennauknh et le Maître des Dragons, protégé par une armure de glace tissée par les vents ; prend ensuite l'armure noire du Maître (pp.39-43).",
+        "[BD-T5] p.39-48 : n'engage pas la Garde Noire à Tsaroth (« C'est trop tôt ») ; ramène plus de six mille hommes (T6 p.5)."
       ]
     },
     {
@@ -146604,6 +146598,9 @@
         "t00",
         "t01",
         "t03",
+        "t04",
+        "t05",
+        "t06",
         "t12"
       ],
       "faction_id": "",
@@ -146637,8 +146634,8 @@
         "[BD-T5] 'On dira ce qu'on voudra, mais les Luminelix c'est des sacrés boute-en-train!' — ton sarcastique/amer.",
         "[BD-T5] Reste dans le groupe de Wismerhill lors de la route vers Moork.",
         "[BD-T5] 'J'ai les pieds un peu crottés, je peux me les essuyer, wis?' — comportement décontracté post-massacre.",
-        "[BD-T5] 'Laisse Ghorghor! Ils sont pour moi, hein wis?' — Hellavnnea réclamant les prisonniers Fils de la Lumière.",
-        "[BD-T5] Page 6 : présent dans la scène du camp avec Wismerhill, Hellavnnea et les autres survivants.",
+        "[BD-T5] 'Laisse Ghorghor! Ils sont pour moi, hein wis?' — Hellaynnea réclamant les prisonniers Fils de la Lumière.",
+        "[BD-T5] Page 6 : présent dans la scène du camp avec Wismerhill, Hellaynnea et les autres survivants.",
         "[BD-T8] À Der Hem Shelbem, Ghorghor est grièvement blessé au combat contre les mort-vivants : 'à demi dévoré', il gît inconscient. Il ne régénère même plus.",
         "[BD-T8] Haazheel Thorn le soigne magiquement ('S'il vous plaît Maître, pour Ghorghor' — 'C'est comme si c'était fait!'). Après le soin : 'Wow! Oups j'y suis allé un peu fort!'",
         "[BD-T8] Ghorghor demande 'Oula, qui a éteint la lumière?' après le soin, confus mais vivant.",
@@ -146674,9 +146671,12 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3",
-        "t12",
-        "t02"
+        "t02",
+        "t03",
+        "t04",
+        "t05",
+        "t06",
+        "t12"
       ],
       "faction_id": "",
       "race_id": "race_dark_elf",
@@ -146794,7 +146794,10 @@
       "tomes": [
         "t01",
         "t02",
-        "t03"
+        "t03",
+        "t04",
+        "t05",
+        "t06"
       ],
       "faction_id": "",
       "race_id": "race_menthat",
@@ -146803,7 +146806,7 @@
       "visual": "Crâne parfaitement rasé, gemme frontale orange incandescente, yeux jaunes, traits fins et cruels. Long manteau vert foncé. Tête de mort en pendentif. — [BD-T1, sous le nom de Frater Sinister] Chevalier blond aux yeux bleus, cheveux longs blonds, croix runique tatouée sur la joue. Armure blanche des Chevaliers de la Lumière. Grand et imposant.",
       "personality": "",
       "description": "",
-      "arc": " → T6 : Disgracié par Haghendorf, erre à Moork, drainé par la succube Esmeralda.",
+      "arc": " → T6 : déchu de sa pairie par Haghendorf (comte → baron, ex-pair), repart vers Altenberg ; refuse d'agir contre Wismerhill pour gêner l'Empereur.",
       "abilities": [
         "Magie de la Lune Noire (Prêtrise Menthat) — gemme orange dissimulée sous un glamour",
         "Double Infiltration niveau 4 — maintient sa couverture de Grand Maître blond depuis des années",
@@ -146837,8 +146840,7 @@
         "[BD-T4] Page 41 — dans la plaine, il passe en revue les troupes de la Lumière aux côtés du Prince Brakkh : 'L'Empereur n'avait-il pas ordonné d'être prêts, mes frères, et ne sommes-nous pas d'obédients serviteurs?'",
         "[BD-T4] Page 46 — portrait final en Grand Maître blond, entouré des croix rouges de l'Ordre de la Lumière. Alliée visible avec les Chevaliers-Dragons (Prince Brakkh à ses côtés).",
         "[BD-T4] Sa double identité (Menthat vs Grand Maître blond) est un enjeu de jeu : les joueurs de la Lumière ne savent pas qu'il est Menthat.",
-        "[BD-T6] Après sa disgrâce par Haghendorf, Fratus erre ivre et seul dans Moork — repéré par Hellavnnea comme 'âme solitaire'.",
-        "[BD-T6] La succube Esmeralda le retrouve et joue l'amante retrouvée — il accepte : 'J'aurais donné mon âme, ma vie pour te revoir !' — elle prend sa promesse au pied de la lettre et draine son énergie vitale.",
+        "[BD-T6] Après sa disgrâce par Haghendorf, Fratus erre ivre et seul dans Moork — repéré par Hellaynnea comme 'âme solitaire'.",
         "[BD-T6] Sa chute narrative est complète dans ce tome : Grand Maître → Disgracié → Proie d'une succube.",
         "[BD-T6] Page 13 : 'Il va le regretter ce porc ! À Altenberg !' — Fratus rage en partant.",
         "[BD-T9] A rejoint la coalition de la Lune Noire — commandant d'armée sous Wismerhill. Son armée (haine de l'Empire, prête à embrasser la Lune Noire) a été présentée à Wismerhill.",
@@ -146880,7 +146882,12 @@
         "[BD-T2] Ne craint ni l'archimage Haazheel Thorn ni le Baron de Moork : « Que peuvent-ils contre la toute-puissance d'Altenberg et de la Lumière ?! » (p.35).",
         "[INFÉRÉ] « Fratus » (p.28) et « Frater » (pp.32-34) désignent le même personnage (même visage blond, mêmes anneaux à croix cerclée) ; « Frater » est employé comme titre.",
         "[BD-T3 pl.19-20] Accueille Haazheel Thorn à Lhynn et lui interdit d'entrer avec son armée (« Si tu dois entrer dans cette ville, ce sera sans ton armée ! ») ; Haazheel le traite de « blondinet efféminé ».",
-        "[BD-T3 pl.22-23] Préside au krak des chevaliers de Lhynn la conjuration avec les Chevaliers Dragons : « N'ayons, frères, de repos avant que l'aigle bicéphale ne gise au sol, ensanglanté par le sang du tyran Haghendorf ! » — « Par le fer, le feu et la lumière ! »"
+        "[BD-T3 pl.22-23] Préside au krak des chevaliers de Lhynn la conjuration avec les Chevaliers Dragons : « N'ayons, frères, de repos avant que l'aigle bicéphale ne gise au sol, ensanglanté par le sang du tyran Haghendorf ! » — « Par le fer, le feu et la lumière ! »",
+        "[BD-T4] pl.5 : signe astral « Archer Chien de Métal » selon le Grand Astrologue impérial.",
+        "[BD-T4] pl.22 : le chevalier roux qui le dénonce à l'Empereur est son agent double (« Il m'a cru, Grand Maître ! »).",
+        "[BD-T5] p.40 : à Tsaroth, la Lumière banquette à l'écart et abat les estafettes impériales.",
+        "[BD-T6] p.9 : « comte Fratus Sinister pair de l'Empire » renvoyé comme « baron Fratus Sinister, ex-pair de l'Empire ».",
+        "[BD-T6] p.48 : informé de la prise d'Horkher : « Non ! Bien fait pour sa gueule ! Et si ça peut faire chier l'Empereur c'est parfait ! » (fiche « Grand Maître Lion » fusionnée ici)."
       ]
     },
     {
@@ -146889,8 +146896,8 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3",
-        "t02"
+        "t02",
+        "t03"
       ],
       "faction_id": "",
       "race_id": "race_human",
@@ -146921,7 +146928,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "",
       "race_id": "race_dwarf",
@@ -146959,7 +146966,9 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03",
+        "t04",
+        "t06"
       ],
       "faction_id": "",
       "race_id": "dragon_juvenile",
@@ -146980,7 +146989,8 @@
       "notes": [
         "[BD-T3 pl.27] Nom tiré de son cri : « KRUIKNA ?? ».",
         "[BD-T3 pl.29] Met le feu à un lit au village fantôme et brûle les renards démoniaques venus le dévorer.",
-        "[BD-T3 pl.43] Présent au fief de Garundel pendant l'automne."
+        "[BD-T3 pl.43] Présent au fief de Garundel pendant l'automne.",
+        "[BD-T6] p.21 : Wismerhill l'appelle « Krukh » ; il brûle l'émissaire impérial au banquet."
       ]
     },
     {
@@ -146989,7 +146999,8 @@
       "importance": "secondary",
       "alive": false,
       "tomes": [
-        "t3"
+        "t03",
+        "t04"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -147015,7 +147026,8 @@
       "notes": [
         "[BD-T3 pl.41] « Le passe-temps favori de certains consistait à occire ceux qui passaient sur leurs terres. Garundel et ses fils en étaient de fiers exemples... »",
         "[BD-T3 pl.41] Appelle aux armes un certain Hubert (« Toi aussi, Hubert ! » — « Mheu ! Ma soupe ! »).",
-        "[v1.0.51] « Tué par Ghorghor Bey » retiré : Ghorghor dit seulement « J'prends l'gros ! » avant la charge (pl.42)."
+        "[v1.0.51] « Tué par Ghorghor Bey » retiré : Ghorghor dit seulement « J'prends l'gros ! » avant la charge (pl.42).",
+        "[BD-T4] pl.13 : « Garundel était un mien vassal » (Haazheel) ; « c'était un Dvorak » (graphie de la BD, sans doute pour Dzorak)."
       ]
     },
     {
@@ -147024,7 +147036,7 @@
       "importance": "major",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_neutral",
       "race_id": "",
@@ -147082,7 +147094,9 @@
       "alive": true,
       "tomes": [
         "t02",
-        "t4",
+        "t04",
+        "t05",
+        "t06",
         "t12"
       ],
       "faction_id": "",
@@ -147143,7 +147157,9 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4",
+        "t04",
+        "t05",
+        "t06",
         "t12"
       ],
       "faction_id": "",
@@ -147180,11 +147196,11 @@
         "[BD-T6] Se redresse devant l'armée impériale — acclamé. L'Empereur le reçoit, le remercie.",
         "[BD-T6] Réclame à l'Empereur le droit de construire des Kracks dans l'Empire. Haghendorf refuse — 'Un ordre guerrier est un trop... ne pourrait menacer l'Empire comme Fratus l'a fait.'",
         "[BD-T6] Parsifal accepte la décision mais annonce 'je serai plus que généreux' — l'Empereur reste méfiant.",
-        "[BD-T6] Quitte l'Empire avec ses chevaliers vers Sysgié — 'À Sysgié mes frères, puisque c'est ainsi.'",
+        "[BD-T6] Quitte l'Empire avec ses chevaliers vers Sysigie — 'À Sysigie mes frères, puisque c'est ainsi.'",
         "[BD-T6] Ses chevaliers grondent mais suivent. L'Ordre de Justice sort intact de la guerre.",
         "[BD-T6] P.8 : résurrection miraculeuse dans la Grande Tente-Chapelle des Chevaliers de Justice. Invocations collectives. Lumière dorée explosive. 'Louée soit le Seigneur, Alléluia!'",
-        "[BD-T6] P.9 : face à Haghendorf — réclame le droit de construire des Kracks. Refus catégorique. Accepte avec dignité : 'À Sysgié mes frères!'",
-        "[BD-T6] P.10-12 : quitte l'Empire avec ses chevaliers vers Sysgié. L'Ordre de Justice sort intact moralement.",
+        "[BD-T6] P.9 : face à Haghendorf — réclame le droit de construire des Kracks. Refus catégorique. Accepte avec dignité : 'À Sysigie mes frères!'",
+        "[BD-T6] P.10-12 : quitte l'Empire avec ses chevaliers vers Sysigie. L'Ordre de Justice sort intact moralement.",
         "[BD-T8] Réunit un conseil à Syzigie : les Ordres sont menacés par la sécession de Fratus. Décide d'attaquer Altenberg.",
         "[BD-T8] Rencontre le Vénérable/Archiprêtre de la Lumière hors d'Altenberg. Après lecture de son âme, ce dernier l'invite à entrer seul dans Altenberg pour négocier.",
         "[BD-T8] Entre seul dans Altenberg avec le Vénérable. Face à Maître Gunthar (corrompu). Gunthar ordonne de les tuer — les soldats hésitent. Gunthar est excommunié par l'Archiprêtre et tué par ses propres soldats.",
@@ -147222,7 +147238,7 @@
       "importance": "secondary",
       "alive": false,
       "tomes": [
-        "t4",
+        "t04",
         "t12"
       ],
       "faction_id": "",
@@ -147259,7 +147275,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "",
       "race_id": "dragon_adult",
@@ -147287,7 +147303,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "",
       "race_id": "serpent_mystique",
@@ -147309,7 +147325,10 @@
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
-      "notes": []
+      "notes": [
+        "[BD-T4] pl.9 : graphie de la BD « Serpent Hérault de Methrhton ».",
+        "[BD-T5] p.25 : envoyé observer Tsaroth sans intervenir (« ne pas agir, c'est déjà agir »)."
+      ]
     },
     {
       "id": "char_haghendorf_wife",
@@ -147317,7 +147336,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4",
+        "t04",
         "t09"
       ],
       "faction_id": "",
@@ -147349,7 +147368,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "",
       "race_id": "race_dragon_knight",
@@ -147378,10 +147397,13 @@
       "alive": true,
       "tomes": [
         "t01",
-        "t12",
-        "t13",
         "t02",
-        "t03"
+        "t03",
+        "t04",
+        "t05",
+        "t06",
+        "t12",
+        "t13"
       ],
       "faction_id": "",
       "race_id": "",
@@ -147508,11 +147530,11 @@
       "importance": "major",
       "alive": false,
       "tomes": [
-        "t4",
-        "t09",
         "t01",
         "t02",
-        "t03"
+        "t03",
+        "t04",
+        "t09"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -147608,7 +147630,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "chevaliers_de_la_lumiere",
       "race_id": "race_human",
@@ -147654,7 +147676,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "faction_empire",
       "race_id": "dragon_adult",
@@ -147689,7 +147711,9 @@
       "alive": true,
       "tomes": [
         "t02",
-        "t03"
+        "t03",
+        "t05",
+        "t06"
       ],
       "faction_id": "",
       "race_id": "",
@@ -147752,7 +147776,9 @@
       "name": "Le Mage Shamballeau",
       "importance": "secondary",
       "alive": true,
-      "tomes": [],
+      "tomes": [
+        "t05"
+      ],
       "faction_id": "",
       "race_id": "",
       "class_id": "",
@@ -147856,7 +147882,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -147904,7 +147930,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_menthat",
@@ -147938,11 +147964,11 @@
     },
     {
       "id": "char_selindorf_moork",
-      "name": "Selindorf",
+      "name": "Selinporf",
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -147959,7 +147985,7 @@
       ],
       "special_items": [],
       "special_rule": "",
-      "quote": "Messire, mon nom est Selindorf, Grand Mage du Palais.",
+      "quote": "Messire, mon nom est Selinporf, Grand Mage du Palais.",
       "source": "[BD-T6] Pages 30",
       "ville_ids": [
         "ville_moork"
@@ -147967,16 +147993,17 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T6] Un des conseillers présentés spontanément à Wismerhill dans la Grande Bibliothèque."
+        "[BD-T6] Un des conseillers présentés spontanément à Wismerhill dans la Grande Bibliothèque.",
+        "[BD-T6] p.30 : graphie « Selinporf », grand mage du palais (identifiant inchangé)."
       ]
     },
     {
       "id": "char_dharix_moork",
-      "name": "Dharix",
+      "name": "Pharix",
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -147993,7 +148020,7 @@
       ],
       "special_items": [],
       "special_rule": "",
-      "quote": "Seigneur, mon nom est Dharix. Je suis chargé des affaires qui concernent l'espionnage.",
+      "quote": "Seigneur, mon nom est Pharix. Je suis chargé des affaires qui concernent l'espionnage.",
       "source": "[BD-T6] Pages 30",
       "ville_ids": [
         "ville_moork"
@@ -148001,7 +148028,8 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T6] Wismerhill lui dit : 'Enchanté, vos services me seront certainement précieux.'"
+        "[BD-T6] Wismerhill lui dit : 'Enchanté, vos services me seront certainement précieux.'",
+        "[BD-T6] p.30 : graphie « Pharix », chargé de l'espionnage (identifiant inchangé)."
       ]
     },
     {
@@ -148010,7 +148038,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -148041,11 +148069,11 @@
     },
     {
       "id": "char_hokhosi_moork",
-      "name": "Hokhosi",
+      "name": "Hokhost",
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_garde_noire",
       "race_id": "race_human",
@@ -148062,7 +148090,7 @@
       ],
       "special_items": [],
       "special_rule": "",
-      "quote": "Nous nous connaissons déjà sire. Je suis Hokhosi, chef de la Garde Noire et des armées.",
+      "quote": "Nous nous connaissons déjà sire. Je suis Hokhost, chef de la Garde Noire et des armées.",
       "source": "[BD-T6] Pages 30",
       "ville_ids": [
         "ville_moork"
@@ -148071,7 +148099,8 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T6] 'Certes je connais ta valeur et te renouvelle ma confiance.' — Wismerhill.",
-        "[BD-T6] Ils se connaissaient déjà — probablement lors du serment à Moork (T5)."
+        "[BD-T6] Ils se connaissaient déjà — probablement lors du serment à Moork (T5).",
+        "[BD-T6] p.30 : graphie « Hokhost », chef de la garde noire et des armées (identifiant inchangé)."
       ]
     },
     {
@@ -148080,7 +148109,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -148114,7 +148143,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -148149,8 +148178,10 @@
       "alive": true,
       "tomes": [
         "t02",
-        "t6",
-        "t03"
+        "t03",
+        "t04",
+        "t05",
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -148177,59 +148208,19 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-T6] Présente à Moork comme compagne de Wismerhill.",
-        "[BD-T6] Wismerhill la confie à Hellavnnea : 'Allez Nasha, viens on va s'occuper de nous.'",
+        "[BD-T6] Wismerhill la confie à Hellaynnea : 'Allez Nasha, viens on va s'occuper de nous.'",
         "[BD-T6] Joue le rôle de la fille de fleurs lors du piège d'Horkher — livre les fleurs → signal pour Ghorghor.",
         "[BD-T6] 'T'as été super Pépette!' dit Ghorghor une fois la capture réussie.",
         "[BD-T2] PREMIÈRE APPARITION (T2, avant T6) : demande de l'aide au groupe de Wismerhill dans la ruelle après leur combat contre des brigands à Feyhin Lokcthat.",
         "[BD-T2] Indique que le mage responsable (qui réside à quelques jours de marche) sait peut-être où se trouve l'Oracle.",
         "[BD-T6] P.15 : présente au festin du couronnement. 'Ghorghor et Pépète d'ailleurs' — elle est la convive préférée de Ghorghor.",
-        "[BD-T6] P.23 : réveille Wismerhill et Hellavnnea en sautant sur le lit : 'Debout! Hi hi hi! Il est l'heure!' — SHTOUK SHTOUK SHTOUK.",
-        "[BD-T6] P.24 : 'Viens ici Dragounet, hi hi hi!' — Wismerhill l'appelle ainsi au petit-déjeuner. 3 surnoms : Pépète (Ghorghor), Pépette (Hellavnnea), Dragounet (Wismerhill).",
+        "[BD-T6] P.23 : réveille Wismerhill et Hellaynnea en sautant sur le lit : 'Debout! Hi hi hi! Il est l'heure!' — SHTOUK SHTOUK SHTOUK.",
+        "[BD-T6] P.24 : 'Viens ici Dragounet, hi hi hi!' — Wismerhill l'appelle ainsi au petit-déjeuner. 3 surnoms : Pépète (Ghorghor), Pépette (Hellaynnea), Dragounet (Wismerhill).",
         "[BD-T6] P.41 : livre les fleurs à George d'Horkher — SIGNAL du piège. 'Voici mille fleurs pour le preux sire d'Horkher.' — 'Merci ma petite fille.' — GASP — capture.",
         "[BD-T2] Son frère jumeau est Goum : « Sept ans. C'est mon jumeau. » Un mage les a pris enfants et a transformé Goum en colosse simple d'esprit qui n'obéit qu'à elle (p.15). Le groupe et Murata le libèrent de l'arène (pp.12-13).",
         "[BD-T2] Peau mate, yeux jaunes, tresses ornées de perles, tunique verte ; guide le groupe jusqu'à Magistrya (« C'est ici ! », p.19).",
-        "[BD-T3 pl.18] Voyage assise dans la nacelle blindée de l'armure naine de Goum. [BD-T3 pl.27] Prend le dragonnet dans ses bras : « Heu ?? Moi trop gentille, dragounet joli » ; Kruikna s'attache à elle."
-      ]
-    },
-    {
-      "id": "char_esmeralda_succubus",
-      "name": "Esmeralda",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t6"
-      ],
-      "faction_id": "faction_demons",
-      "race_id": "race_demon",
-      "class_id": "",
-      "role": "antagonist_demon_secondary",
-      "visual": "Femme en robe rouge profond à décolleté, cheveux noirs longs lisses, collier rouge/rubis, allure vampirique et séductrice. Distincte d'Hellavnnea (rousse).",
-      "personality": "Séductrice calculatrice, joue le rôle de l'amante passionnée puis vide l'âme de sa cible. Désinvolte et cynique après la mise à mort ('j'avais une petite faim, moi !').",
-      "description": "Succube en robe rouge, distincte d'Hellavnnea. Opère dans Moork. Victime principale : Fratus Sinister (après sa disgrâce). Rappel : 'Les succubes sont trésors aux mortels interdits !'",
-      "arc": "Succube autonome ou agent de la Lune Noire → draine un mortel à Moork.",
-      "abilities": [
-        "Séduction démoniaque",
-        "Drain d'âme (fatal)",
-        "Métamorphose",
-        "Vol (ailes)"
-      ],
-      "special_items": [],
-      "special_rule": "Toute liaison mortelle avec une succube est interdite et fatale (règle cosmique).",
-      "quote": "C'est que j'avais une petite faim, moi !",
-      "source": "[BD-T6] Pages 20-23",
-      "ville_ids": [
-        "ville_moork"
-      ],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T6] Vient auprès d'un homme seul (elfe blond probable — peut-être Fratus ou personnage non identifié) dans un grenier/chambre. Se présente comme 'Esmeralda, ton amour'. L'homme dit 'j'aurais donné mon âme pour te revoir' — elle lui prend littéralement.",
-        "[BD-T6] 'Car les succubes sont trésors aux mortels interdits !' — caption narrative.",
-        "[BD-T6] Distincte d'Hellavnnea (qui est rousse). Esmeralda est brune, en rouge.",
-        "[BD-T6] 'J'avais une petite faim moi !' — désinvolture après le meurtre d'âme.",
-        "[BD-T6] Sa cible confirmée est Fratus Sinister — elle joue sur sa solitude et son désespoir post-disgrâce.",
-        "[BD-T6] P.20-22 : opère de nuit dans Moork. Cherche 'les âmes solitaires et tristes'. Séduit un homme blond (peut-être Fratus ou un Chevalier de Lumière isolé). Vide son âme. 'Pourquoi slurp?' - 'C'est que j'avais une petite faim moi!'",
-        "[BD-T6] Distincte d'Hellavnnea (rousse) : Esmeralda est brune, robe rouge, vampirique. Même type de créature, faction différente ou autonome."
+        "[BD-T3 pl.18] Voyage assise dans la nacelle blindée de l'armure naine de Goum. [BD-T3 pl.27] Prend le dragonnet dans ses bras : « Heu ?? Moi trop gentille, dragounet joli » ; Kruikna s'attache à elle.",
+        "[BD-T6] p.32, 44 : surnommée « Pépette » par la succube ; tend à George d'Horkher le bouquet piégé."
       ]
     },
     {
@@ -148238,7 +148229,7 @@
       "importance": "minor",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -148271,7 +148262,7 @@
       "importance": "secondary",
       "alive": false,
       "tomes": [
-        "t3",
+        "t03",
         "t09"
       ],
       "faction_id": "",
@@ -148304,7 +148295,7 @@
         "[BD-T9] Présent lors de la revue de l'armée de Fratus avec Wismerhill. Éclate de rire avec Wismerhill et Fratus en réalisant que le 'monstre' aperçu était le Juggernauth : 'MATE UN PEU L'HORREUR!' — 'HORREUR? ELLE EST TRÈS BELLE! TU N'AS AUCUN GOÛT, PILOU!'",
         "[BD-T9] Sa fidélité à Wismerhill se confirme — il est toujours dans l'entourage malgré la transformation de son maître.",
         "[BD-T9] Sa personnalité comique contraste avec la gravité de la transformation de Wismerhill.",
-        "[LORE_ETENDU] En T9, Pilou est un compagnon secondaire mais toujours présent — la relation avec Hellavnnea reste tendue.",
+        "[LORE_ETENDU] En T9, Pilou est un compagnon secondaire mais toujours présent — la relation avec Hellaynnea reste tendue.",
         "[BD-T11] Reçoit un dragon bleu de Wismerhill — son vœu secret.",
         "[BD-T11] 'Oh! Qu'il est beau! Dans mes bras, petit!'",
         "[BD-T11] Dragon dit : 'GNIARD MIAM GLASHP!' — signe d'affection à sa façon."
@@ -148358,7 +148349,8 @@
         "[LORE_ETENDU] PNJ clé pour les quêtes de messager/ordre dans les zones contrôlées Lune Noire.",
         "[BD-T1] Graphie du tome 1 : « Urmarcht » ; les tomes 4, 5 et 12 écrivent « Urmacht ».",
         "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts ; invoqué dans un cercle par un vieux sorcier (le « Maître ») sous la menace (p.40 BD).",
-        "[HYPOTHÈSE BD-T2] Le démon ailé rouge qui se réjouit avec Desdémone de la mort du Magister (p.26) est Urmarcht (même morphologie qu'aux pp.5-6)."
+        "[HYPOTHÈSE BD-T2] Le démon ailé rouge qui se réjouit avec Desdémone de la mort du Magister (p.26) est Urmarcht (même morphologie qu'aux pp.5-6).",
+        "[BD-T4] pl.15, 17 et [BD-T5] p.11 : graphie « Urmacht »."
       ]
     },
     {
@@ -148367,7 +148359,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_demon",
@@ -148401,7 +148393,7 @@
       "importance": "minor",
       "alive": false,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -148429,7 +148421,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148460,7 +148452,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148490,7 +148482,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148521,7 +148513,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148551,7 +148543,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148581,7 +148573,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t3"
+        "t03"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "race_dragon_knight",
@@ -148610,13 +148602,16 @@
     },
     {
       "id": "char_succubus",
-      "name": "Hellavnnea (la Succube)",
+      "name": "Hellaynnea (la Succube)",
       "importance": "major",
       "alive": true,
       "tomes": [
-        "t3",
-        "t07",
-        "t02"
+        "t02",
+        "t03",
+        "t04",
+        "t05",
+        "t06",
+        "t07"
       ],
       "faction_id": "faction_demons",
       "race_id": "race_demon",
@@ -148670,7 +148665,7 @@
         "[BD-T4] Doublement liée — sert Wismerhill mais Haazheel peut la contrôler.",
         "[LORE_ETENDU] Nom 'Malia' proposé pour le jeu — non confirmé dans les BD.",
         "[BD-T6] À Moork : 3 formes distinctes — (1) robe formelle bleue + couronne mécanique dorée (baronne), (2) ailes blanches papillon (vol social), (3) ailes chauves-souris (combat). Transformation par claquement de doigts.",
-        "[BD-T6] Surnommée 'Hellavnnea' définitivement. Relation protectrice-romantique avec Wismerhill (terme affectueux 'petit elfe').",
+        "[BD-T6] Surnommée 'Hellaynnea' définitivement. Relation protectrice-romantique avec Wismerhill (terme affectueux 'petit elfe').",
         "[BD-T6] Forme Sire Cedric (homme) : utilisée pour l'ambassade à Haghendorf — métamorphose complète de sexe et d'apparence.",
         "[BD-T8] À Der Hem Shelbem, prend part à la défense du groupe. Invoque un Seuil Infernal ('Zeennsheeender !!') pour ouvrir un portail de renfort démoniaque.",
         "[BD-T8] 'Je vais essayer... d'ouvrir un seuil infernal, occupe-le !' — dialogue lors de la bataille.",
@@ -148684,10 +148679,14 @@
         "[Desdémone] [BD-T2] Démone : défenestrée par Wismerhill, elle reparaît nue et indemne, avec une queue (p.26) ; complice amoureuse d'un démon ailé rouge (Urmarcht [HYPOTHÈSE]).",
         "[Desdémone] [BD-T2] L'indication « l'Oracle se trouve à l'ouest, au-delà de la Passe des Dragons » est un piège (« Le petit va à sa perte ! ») : la direction n'est pas fiable, seule la Passe est confirmée sur le trajet.",
         "[Desdémone] Fiche T2 : Amante du Magister de Magistrya. Manipule le vieillard pour ses propres fins et celles de son vrai maître démoniaque. Envoie délibérément Wismerhill vers la Passe des Dragons en espérant qu'il y trouvera la mort. Apparence : Femme à longs cheveux roux flamboyants, yeux verts, robe rouge foncé. Séduisante et dangereuse.",
-        "[DÉDUCTION] Desdémone (T2) est la succube du T3 : même chevelure rousse, mêmes yeux verts, même boucle verte (BD-T3 pl.31-32) ; elle quitte le marais en disant « Allons, partons ! Mon amant est vengé ! » (pl.31). Alias : Desdémone. Nom « Hellavnnea » révélé au T5.",
+        "[DÉDUCTION] Desdémone (T2) est la succube du T3 : même chevelure rousse, mêmes yeux verts, même boucle verte (BD-T3 pl.31-32) ; elle quitte le marais en disant « Allons, partons ! Mon amant est vengé ! » (pl.31). Alias : Desdémone. Nom « Hellaynnea » révélé au T5.",
         "[BD-T3 pl.39] Appartenait à Haazheel Thorn : « Je perds une succube mais il y gagnera en perversité ! ».",
         "[BD-T3 pl.34-35] Épargnée par Wismerhill (blessée, cicatrices au visage, œil gauche touché), elle se lie à lui par un pacte : « J'ai passé un pacte, je dois le respecter ! ».",
-        "[v1.0.51] Fusion de char_desdemone (fiche T2) dans cette fiche ; le compagnon jouable reste hellavnnea_la_succube."
+        "[v1.0.51] Fusion de char_desdemone (fiche T2) dans cette fiche ; le compagnon jouable reste hellavnnea_la_succube.",
+        "[BD-T5] pl.9 : graphie « Hellaynnea » (confirmée) ; ancienne graphie du lore « Hellavnnea », identifiants inchangés.",
+        "[BD-T6] p.22-24 : prend les traits d'« Esmeralda », l'amour perdu d'un homme blond de Moork, obtient son âme et le laisse desséché (« les succubes sont trésors aux mortels interdits »). Esmeralda n'est qu'une apparence.",
+        "[BD-T6] p.25 : « tu as beaucoup de chance que je doive te servir, te protéger, t'aimer » (à Wismerhill endormi).",
+        "[BD-T6] p.50-51 : se change en jeune homme roux et se présente à l'Empereur comme « sire Cédric », plénipotentiaire de la baronnie de Moork."
       ]
     },
     {
@@ -148697,7 +148696,7 @@
       "alive": true,
       "tomes": [
         "t02",
-        "t3"
+        "t03"
       ],
       "faction_id": "",
       "race_id": "race_human",
@@ -148742,7 +148741,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_human",
@@ -148784,7 +148783,7 @@
       "importance": "minor",
       "alive": true,
       "tomes": [
-        "t4"
+        "t04"
       ],
       "faction_id": "faction_empire",
       "race_id": "race_human",
@@ -148850,10 +148849,9 @@
       "importance": "major",
       "alive": true,
       "tomes": [
-        "t9",
-        "t09",
         "t00",
-        "t02"
+        "t02",
+        "t09"
       ],
       "faction_id": "faction_demons",
       "race_id": "",
@@ -149016,7 +149014,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t9"
+        "t09"
       ],
       "faction_id": "faction_tharque",
       "race_id": "race_human",
@@ -149049,7 +149047,6 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t9",
         "t09"
       ],
       "faction_id": "chevaliers_de_la_justice",
@@ -149088,7 +149085,7 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t9"
+        "t09"
       ],
       "faction_id": "faction_dragon_knights",
       "race_id": "",
@@ -149234,47 +149231,12 @@
       ]
     },
     {
-      "id": "char_grand_maitre_lion",
-      "name": "Le Grand Maître Lion (non nommé)",
-      "importance": "secondary",
-      "alive": true,
-      "tomes": [
-        "t6"
-      ],
-      "faction_id": "faction_neutral",
-      "race_id": "race_human",
-      "class_id": "",
-      "role": "observateur_puissant",
-      "visual": "Silhouette imposante à crinière jaune-or extraordinairement volumineuse évoquant un lion humanisé. Grand, en intérieur luxueux. Bijou sur la poitrine. Allure de grand seigneur.",
-      "personality": "Cynique, satisfait de voir l'Empereur affaibli. Pragmatique. Pratique une 'communion' mystique non définie.",
-      "description": "Grand Maître mystérieux, l'un des 'deux discrets observateurs' (avec Haazheel) de la double victoire de Wismerhill. Il a des agents informateurs à travers l'Empire. Sa réaction à la prise d'Horkher : satisfaction et refus d'intervenir ('Bien fait pour sa gueule!'). Lié à un groupe qui a 'bien choisi' Wismerhill.",
-      "arc": "Observateur de la montée de Wismerhill — probable allié futur ou manipulateur secondaire.",
-      "abilities": [
-        "Réseau d'informateurs impérial",
-        "Ritual de Communion (nature inconnue)",
-        "Influence politique"
-      ],
-      "special_items": [],
-      "special_rule": "N'intervient jamais directement — agit par agents.",
-      "quote": "Non! Bien fait pour sa gueule! Et si ça peut faire chier l'Empereur, c'est parfait! Maintenant laisse-moi communier.",
-      "source": "[BD-T6] Page 46",
-      "ville_ids": [],
-      "zone_ids": [],
-      "dialogue_ids": [],
-      "notes": [
-        "[BD-T6] P.46 : l'un des 'deux discrets observateurs' avec Haazheel. Le pluriel 'Nous avons bien choisi' suggère un groupe qui a sélectionné Wismerhill.",
-        "[BD-T6] Ses agents lui rapportent les événements de Moork et Horkher.",
-        "[BD-T6] 'Devons-nous intervenir?' → 'Non!' — satisfait que l'Empereur soit contrarié.",
-        "[LORE_ETENDU] Identité probable : grand duc/prince impérial opposé à Haghendorf, ou représentant d'une faction encore non révélée."
-      ]
-    },
-    {
       "id": "char_messager_lunaire",
       "name": "Le Messager Lunaire (non nommé)",
       "importance": "minor",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "faction_black_moon",
       "race_id": "race_menthat",
@@ -149309,7 +149271,7 @@
       "importance": "minor",
       "alive": true,
       "tomes": [
-        "t6"
+        "t06"
       ],
       "faction_id": "chevaliers_de_la_justice",
       "race_id": "race_human",
@@ -150964,12 +150926,12 @@
     },
     {
       "id": "creature_titan_wismerhill",
-      "name": "Le Titan de la Lune Noire (Forme de Wismerhill)",
+      "name": "Le Titan de la Lune Noire (Forme d'Haazheel Thorn)",
       "type": "boss_transformation",
       "difficulty": "Mythique",
       "level_min": 45,
       "level_max": 50,
-      "description": "Transformation titanesque de Wismerhill via le pouvoir de la Lune Noire. Corps de pierre vivante, 4 bras déversant des océans de feu. Taille gigantesque — comparable à plusieurs étages de fortification. Entouré de petits esprits/gardiens lumineux verts.",
+      "description": "Transformation titanesque d'Haazheel Thorn à Tsaroth. Colosse gris-brun à quatre bras, gemme au front, déversant un océan de feu ; entouré de Menthats en lévitation. Abattu par « cent mille traits ».",
       "region_id": "baronnie_de_moorks",
       "ville_id": "",
       "faction_id": "faction_black_moon",
@@ -150992,7 +150954,8 @@
         "[BD-T5] 'Il s'affaissa, s'embrasa avant de s'écrouler, tel un géant terrassé par les moustiques!'",
         "[BD-T5] Les troupes impériales 'furent prises d'un vent de panique' à sa vue.",
         "[BD-T5] 'Mais les soldats tinrent bon et ne cédèrent pas à la panique. Ils déferlèrent à nouveau vers les brèches.'",
-        "[LORE_ETENDU] Transformation ultime de Wismerhill en fin de raid — nécessite 80% de la jauge de Lune Noire."
+        "[LORE_ETENDU] Transformation ultime de Wismerhill en fin de raid — nécessite 80% de la jauge de Lune Noire.",
+        "[BD-T5] p.43-46 : c'est Haazheel qui se transforme ; Wismerhill reste spectateur (« C'est stupide ! »). Identifiant inchangé."
       ]
     },
     {
@@ -155753,7 +155716,7 @@
       "source_raids": [],
       "notes": [
         "[BD-T6] Symbolique — la couronne d'ombres que Wismerhill porte maintenant sur les deux fiefs.",
-        "[BD-T6] Hellavnnea en plaisante : 'Où j'ai collé ma couronne moi ?' lors de leur prise de possession de la chambre de baron.",
+        "[BD-T6] Hellaynnea en plaisante : 'Où j'ai collé ma couronne moi ?' lors de leur prise de possession de la chambre de baron.",
         "[LORE_ETENDU] Objet de lore — symbole du nouveau pouvoir de Wismerhill, pas nécessairement physique."
       ]
     },
@@ -156056,7 +156019,7 @@
       "source_raids": [],
       "notes": [
         "[BD-T5] Présente de manière constante tout au long du tome — élément identitaire fort.",
-        "[BD-T5] Page 13 : clairement visible lors du vol avec Hellavnnea.",
+        "[BD-T5] Page 13 : clairement visible lors du vol avec Hellaynnea.",
         "[BD-T5] Page 47 : toujours présente lors de la marche sur Moork post-Tsaroth.",
         "[LORE_ETENDU] Objet cosmétique de prestige — représente le rang de Baron de Moork."
       ]
@@ -156083,7 +156046,7 @@
     },
     {
       "id": "loot_tenue_hellavnnea_t5",
-      "name": "Tenue de Succube d'Hellavnnea",
+      "name": "Tenue de Succube d'Hellaynnea",
       "type": "demon_outfit",
       "rarity": "unique",
       "description": "Tenue démoniaque minimale rouge. Bustier de cuir rouge à laçages. Lanières de cuir rouge sur les cuisses. Griffes naturelles aux pieds. Chevelure de feu rousse vivante (se meut indépendamment). Ailes de chauve-souris brun-rouge (déployées ou repliées). Gemmes/ornements tribaux verts incrustés sur le visage et le front.",
@@ -156098,7 +156061,7 @@
         "[BD-T5] Page 6-7 : tenue visible en clair lors des scènes matinales.",
         "[BD-T5] Page 13-15 : ailes déployées lors du vol avec Wismerhill.",
         "[BD-T5] Tenue inchangée par rapport à T3/T4 — constante du personnage.",
-        "[LORE_ETENDU] Pas récupérable (fait partie du corps d'Hellavnnea) — référence visuelle pour le jeu uniquement."
+        "[LORE_ETENDU] Pas récupérable (fait partie du corps d'Hellaynnea) — référence visuelle pour le jeu uniquement."
       ]
     },
     {
@@ -156143,10 +156106,10 @@
     },
     {
       "id": "loot_hellavnnea_robe_baronne",
-      "name": "Robe de Baronne — Hellavnnea (conjurée)",
+      "name": "Robe de Baronne — Hellaynnea (conjurée)",
       "type": "vetement_magique",
       "rarity": "unique_magique",
-      "description": "Robe somptueuse bleu nuit à décolleté et ornements dorés, conjurée instantanément par Hellavnnea d'un claquement de doigts. Accompagnée d'une coiffe et d'accessoires complets de grande dame.",
+      "description": "Robe somptueuse bleu nuit à décolleté et ornements dorés, conjurée instantanément par Hellaynnea d'un claquement de doigts. Accompagnée d'une coiffe et d'accessoires complets de grande dame.",
       "min_level": 0,
       "eligible_races": [],
       "eligible_classes": [],
@@ -156155,7 +156118,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[BD-T6] 'Snap !' — Hellavnnea conjure la tenue d'un claquement de doigts.",
+        "[BD-T6] 'Snap !' — Hellaynnea conjure la tenue d'un claquement de doigts.",
         "[BD-T6] Wismerhill : 'Bel objet.' — approbation laconique.",
         "[BD-T6] Elle déclare : 'On règne ou presque !' après la transformation.",
         "[BD-T6] La robe inclut la coiffe de baronesse visible page 19 panneau 3."
@@ -157041,10 +157004,10 @@
     },
     {
       "id": "loot_robe_formelle_hellavnnea_t6",
-      "name": "Robe Formelle Baroniale d'Hellavnnea",
+      "name": "Robe Formelle Baroniale d'Hellaynnea",
       "type": "robe_demon_formelle",
       "rarity": "epique",
-      "description": "Grande robe bleu nuit profond à ornements dorés et ceinture d'or. Décolleté généreux. Style noblesse ténébreuse. Portée par Hellavnnea dans ses fonctions de baronne officieuse de Moork. Invoquée par claquement de doigts.",
+      "description": "Grande robe bleu nuit profond à ornements dorés et ceinture d'or. Décolleté généreux. Style noblesse ténébreuse. Portée par Hellaynnea dans ses fonctions de baronne officieuse de Moork. Invoquée par claquement de doigts.",
       "min_level": 30,
       "eligible_races": [
         "race_demon"
@@ -157063,7 +157026,7 @@
     },
     {
       "id": "loot_couronne_mecanique_hellavnnea_t6",
-      "name": "Couronne Mécanique d'Hellavnnea",
+      "name": "Couronne Mécanique d'Hellaynnea",
       "type": "couronne_magique_unique",
       "rarity": "legendaire",
       "description": "Couronne à bras articulés façon araignée/insecte métallique doré. Les pattes s'agrippent dans la chevelure. Invoquée par magie (claquement de doigts). Signature de son statut de baronne. Non portable par d'autres.",
@@ -157085,7 +157048,7 @@
     },
     {
       "id": "loot_ailes_blanches_papillon_hellavnnea",
-      "name": "Ailes de Papillon Blanches (Forme Sociale Hellavnnea)",
+      "name": "Ailes de Papillon Blanches (Forme Sociale Hellaynnea)",
       "type": "transformation_wings",
       "rarity": "legendaire",
       "description": "Transformation volontaire des ailes de chauve-souris brun-rouge (combat) en grandes ailes blanches de papillon/ange (social). Réversible à volonté. Réduit la réaction de terreur des civils.",
@@ -157181,7 +157144,7 @@
       "name": "Robes de Dames de Compagnie de Moork",
       "type": "robe_formelle_cour",
       "rarity": "peu_commun",
-      "description": "Grandes robes noires formelles identiques portées par les dames de compagnie officielles de la cour de Moork (celles qu'Hellavnnea renvoie immédiatement). Style noblesse rigoriste et coincée.",
+      "description": "Grandes robes noires formelles identiques portées par les dames de compagnie officielles de la cour de Moork (celles qu'Hellaynnea renvoie immédiatement). Style noblesse rigoriste et coincée.",
       "min_level": 1,
       "eligible_races": [
         "race_human"
@@ -157194,7 +157157,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[BD-T6] 'Amusant! Virez-moi toutes ces vieilles peaux!' — Hellavnnea.",
+        "[BD-T6] 'Amusant! Virez-moi toutes ces vieilles peaux!' — Hellaynnea.",
         "[BD-T6] L'une d'elles crie 'À moi Lucifer!!!' à l'apparition de Kruikna."
       ]
     },
@@ -160189,7 +160152,7 @@
         },
         {
           "speaker": "Parsifal (aux chevaliers)",
-          "text": "À Sysgié, mes frères ! Puisque c'est ainsi."
+          "text": "À Sysigie, mes frères ! Puisque c'est ainsi."
         }
       ],
       "notes": [
@@ -161545,7 +161508,7 @@
       "notes": [
         "[BD-T5] Scène révélatrice du moral du groupe face aux atrocités de la Lumière.",
         "[BD-T5] Ghorghor dégoûté mais ne peut rien faire — son sarcasme est sa seule réponse.",
-        "[BD-T5] Hellavnnea prend les soldats prisonniers pour son plaisir personnel — côté prédateur de la succube.",
+        "[BD-T5] Hellaynnea prend les soldats prisonniers pour son plaisir personnel — côté prédateur de la succube.",
         "[BD-T5] 'Vous n'êtes que des larves immondes.' — Wismerhill aux soldats captifs (dialogue hors-champ).",
         "[BD-T5] 'Installez le camp dans cette clairière!' — ordre final de Wismerhill."
       ]
@@ -161741,8 +161704,8 @@
       "location_ville_id": "",
       "lines": [],
       "notes": [
-        "[BD-T6] Hellavnnea agit déjà comme conseillère discrète dès le premier jour.",
-        "[BD-T6] Le dialogue cryptique de Hellavnnea ('sur ce que vous savez...') est sa façon de lui rapporter les accords avec les agents de la Lune Noire."
+        "[BD-T6] Hellaynnea agit déjà comme conseillère discrète dès le premier jour.",
+        "[BD-T6] Le dialogue cryptique de Hellaynnea ('sur ce que vous savez...') est sa façon de lui rapporter les accords avec les agents de la Lune Noire."
       ]
     },
     {
@@ -161783,7 +161746,7 @@
       "lines": [],
       "notes": [
         "[BD-T6] L'émissaire est littéralement anéanti par une explosion magique dorée.",
-        "[BD-T6] Wismerhill dit 'Il trouvera une baronne soumise' — ironie sur Hellavnnea qui est tout sauf soumise.",
+        "[BD-T6] Wismerhill dit 'Il trouvera une baronne soumise' — ironie sur Hellaynnea qui est tout sauf soumise.",
         "[BD-T6] 'Ho quel gâchis !' — commentaire cynique d'un convive sur le corps de l'émissaire."
       ]
     },
@@ -161796,10 +161759,10 @@
       "location_ville_id": "",
       "lines": [],
       "notes": [
-        "[BD-T6] Esmeralda est distincte d'Hellavnnea — elle est en robe rouge, cheveux noirs, style vampirique.",
+        "[BD-T6] p.22-24 : Esmeralda (cheveux noirs à tresses, robe rouge) est l'apparence que prend Hellaynnea ; elle reprend ensuite sa vraie forme.",
         "[BD-T6] La scène montre clairement sa vraie forme démoniaque après le drain (page 24).",
         "[BD-T6] Fratus est ivre et affaibli — sa disgrâce l'a rendu vulnérable.",
-        "[BD-T6] Après avoir drainé Fratus, Esmeralda se retrouve avec un 'petit elfe' blond endormi — probablement Fratus dans un état quasi-mort."
+        "[BD-T6] p.25 : « Dors petit elfe » s'adresse à Wismerhill endormi, au retour de la succube au palais. La victime n'est pas Fratus."
       ]
     },
     {
@@ -161811,7 +161774,7 @@
       "location_ville_id": "",
       "lines": [],
       "notes": [
-        "[BD-T6] Hellavnnea balaie les nobles héraldistes de la bibliothèque.",
+        "[BD-T6] Hellaynnea balaie les nobles héraldistes de la bibliothèque.",
         "[BD-T6] Ses 'dames de compagnie' portent des robes noires — probable coven de démons.",
         "[BD-T6] Ghorghor : 'Amusant ! Virez-moi toutes ces vieilles peaux !'",
         "[BD-T6] Nasha participe avec enthousiasme : 'Whoa ! Super !'"
@@ -161827,7 +161790,7 @@
       "lines": [],
       "notes": [
         "[BD-T6] Le conseil se tient dans une grande salle avec Ghorghor qui occupe la moitié de l'espace.",
-        "[BD-T6] Nasha et Hellavnnea partent à ce moment : 'Allez Nasha, viens on va s'occuper de nous.'",
+        "[BD-T6] Nasha et Hellaynnea partent à ce moment : 'Allez Nasha, viens on va s'occuper de nous.'",
         "[BD-T6] Wismerhill a l'idée du piège de l'accueil festif — décorer Moork aux couleurs d'Horkher."
       ]
     },
@@ -162022,8 +161985,8 @@
     },
     {
       "id": "dial_hellavnnea_wismerhill_neuf_femmes_t9",
-      "name": "Hellavnnea convainc Wismerhill d'accepter la transformation",
-      "npc_name": "Hellavnnea & Wismerhill",
+      "name": "Hellaynnea convainc Wismerhill d'accepter la transformation",
+      "npc_name": "Hellaynnea & Wismerhill",
       "faction_id": "faction_demons",
       "race_id": "",
       "location_ville_id": "ville_moork",
@@ -162037,7 +162000,7 @@
           "text": "OUI, HAAZEEL THORN VEUT QUE JE DEVIENNE LE HAUT SEIGNEUR DE LA NÉGATION!"
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "FICHTRE, ÇA C'EST UNE PROMOTION!"
         },
         {
@@ -162045,7 +162008,7 @@
           "text": "IL M'A DIT QUE JE PERDRAIS MON HUMANITÉ."
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "OH, TU SAIS, ÇA, CE N'EST PAS SI GRAVE... HAHA MOI JE NE SUIS PAS HUMAINE PAR EXEMPLE."
         },
         {
@@ -162053,11 +162016,11 @@
           "text": "ÇA N'EST PAS PAREIL ET JE NE SAIS PAS..."
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "ET ALORS? TU ES DÉJÀ PUISSANT... TRÈS PUISSANT, TU M'AS VAINCU!"
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "ET DEPUIS CE MOMENT-LÀ, TU ES DEVENU ENCORE PLUS PUISSANT. ET IL Y A EN TOI DES FORCES PLUS QU'HUMAINES, QUE JE NE COMPRENDS PAS!"
         },
         {
@@ -162065,11 +162028,11 @@
           "text": "JE NE COMPRENDS PAS TOUT MOI-MÊME, MAIS C'EST UN GRAND SAUT. ET IL M'A DIT QUE JE PERDRAIS LA FACULTÉ DE PROCRÉER."
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "DANS CE MONDE COMME DANS LE MIEN, IL N'Y A QUE LA PUISSANCE QUI COMPTE ET SEULE LA PUISSANCE PERMET D'ÊTRE LIBRE ET DE SURVIVRE."
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "TU VEUX DES ENFANTS? ALORS JE T'EN DONNERAI UN, ET J'IRAI CHERCHER 9 HUMAINES POUR QUE TU PUISSES EN AVOIR D'AUTRES."
         },
         {
@@ -162077,7 +162040,7 @@
           "text": "JE NE SAIS PAS, MAIS SI J'EN VEUX C'EST MAINTENANT OU JAMAIS."
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "OUI, PEUT-ÊTRE MAIS CE N'EST PAS VRAIMENT CE QUI ME PRÉOCCUPE LE PLUS. ACCEPTE, SEULE UNE INFINIE PUISSANCE PERMET UNE INFINIE LIBERTÉ. ACCEPTE!"
         }
       ],
@@ -163504,7 +163467,7 @@
         }
       ],
       "notes": [
-        "[BD-T6] P.18 : banquet de couronnement. Helmo admire Hellavnnea."
+        "[BD-T6] P.18 : banquet de couronnement. Helmo admire Hellaynnea."
       ]
     },
     {
@@ -163575,30 +163538,30 @@
     },
     {
       "id": "dial_hellavnnea_petit_elfe_t6",
-      "name": "Hellavnnea veille sur le Petit Elfe",
-      "npc_name": "Hellavnnea",
+      "name": "Hellaynnea veille sur le Petit Elfe",
+      "npc_name": "Hellaynnea",
       "faction_id": "faction_black_moon",
       "race_id": "race_demon",
       "location_ville_id": "ville_moork",
       "lines": [
         {
-          "speaker": "Hellavnnea (cherchant)",
+          "speaker": "Hellaynnea (cherchant)",
           "text": "Où êtes-vous âmes solitaires et tristes?"
         },
         {
-          "speaker": "Hellavnnea (trouvant Wismerhill)",
+          "speaker": "Hellaynnea (trouvant Wismerhill)",
           "text": "Là! Tu es là!"
         },
         {
-          "speaker": "Hellavnnea (douce)",
+          "speaker": "Hellaynnea (douce)",
           "text": "Dors petit elfe, tu as beaucoup de chance..."
         },
         {
-          "speaker": "Hellavnnea (hésitante)",
+          "speaker": "Hellaynnea (hésitante)",
           "text": "...Que je poive te servir, te protéger, t'aimer?"
         },
         {
-          "speaker": "Hellavnnea (se reprenant)",
+          "speaker": "Hellaynnea (se reprenant)",
           "text": "Rien. Dors."
         },
         {
@@ -163606,12 +163569,12 @@
           "text": "Hue?"
         },
         {
-          "speaker": "Hellavnnea (ferme)",
+          "speaker": "Hellaynnea (ferme)",
           "text": "Rien. Dors."
         }
       ],
       "notes": [
-        "[BD-T6] P.23 : scène nocturne intime. Hellavnnea erre puis retrouve Wismerhill endormi.",
+        "[BD-T6] P.23 : scène nocturne intime. Hellaynnea erre puis retrouve Wismerhill endormi.",
         "[BD-T6] 'Petit elfe' = terme affectueux pour Wismerhill (demi-elfe). Révèle attachement au-delà du pacte."
       ]
     },
@@ -163636,7 +163599,7 @@
           "text": "Grrr! Arrête!"
         },
         {
-          "speaker": "Hellavnnea",
+          "speaker": "Hellaynnea",
           "text": "Ça va! Pitié! On se lève!"
         }
       ],
@@ -163647,8 +163610,8 @@
     },
     {
       "id": "dial_grand_maitre_lion_satisfait_t6",
-      "name": "Le Grand Maître Lion — Satisfaction",
-      "npc_name": "Grand Maître Lion (non nommé)",
+      "name": "Fratus Sinister — Satisfaction",
+      "npc_name": "Fratus Sinister",
       "faction_id": "faction_neutral",
       "race_id": "race_human",
       "location_ville_id": "",
@@ -163658,11 +163621,11 @@
           "text": "Grand Maître, le nouveau Baron de Moork vient de se rendre maître du fief d'Horkher."
         },
         {
-          "speaker": "Grand Maître Lion",
+          "speaker": "Fratus Sinister",
           "text": "Ha!Ha!Ha!Ha! Excellent! Ce petit va me faire mourir de rire..."
         },
         {
-          "speaker": "Grand Maître Lion",
+          "speaker": "Fratus Sinister",
           "text": "Beau résultat considérant le peu de moyens à sa disposition... Nous avons bien choisi!"
         },
         {
@@ -163670,17 +163633,18 @@
           "text": "Devons-nous intervenir?"
         },
         {
-          "speaker": "Grand Maître Lion",
+          "speaker": "Fratus Sinister",
           "text": "Non! Bien fait pour sa gueule! Et si ça peut faire chier l'Empereur, c'est parfait!"
         },
         {
-          "speaker": "Grand Maître Lion",
+          "speaker": "Fratus Sinister",
           "text": "Maintenant laisse-moi communier."
         }
       ],
       "notes": [
         "[BD-T6] P.46 : l'un des 'deux discrets observateurs' avec Haazheel. Satisfait de la montée de Wismerhill.",
-        "[BD-T6] 'Nous avons bien choisi' — pluriel révélant un groupe qui a sélectionné Wismerhill."
+        "[BD-T6] 'Nous avons bien choisi' — pluriel révélant un groupe qui a sélectionné Wismerhill.",
+        "[BD-T6] p.48 : le « Grand Maître » au lit qui reçoit la nouvelle est Fratus Sinister."
       ]
     },
     {
@@ -166155,7 +166119,7 @@
       "type": "city_order_justice",
       "tome": "t4",
       "faction": "chevaliers_de_la_justice",
-      "biome": "collines / zone côtière ou montagnarde (brume légère)",
+      "biome": "montagne au-dessus d'une mer de nuages (brume)",
       "visual_description": "Principauté de Parsifal dans les hauteurs. À l'approche à l'aube : silhouette dorée et lumineuse depuis les nuages, tours blanches et lumière céleste (effet dramatique du lever du soleil sur la pierre blanche). ENTRÉE : hautes murailles grises épaisses, statues d'anges aux ailes déployées. INTÉRIEUR : architecture épurée et austère. Enfants/novices en uniforme gris accueillent les visiteurs — l'Ordre forme sa relève dès le plus jeune âge. SALLE DU CONSEIL : circulaire, sol en dalles rouges avec symbole blanc (étoile/croix Justice) au centre, bancs en demi-cercle pour les frères, présidé par Parsifal.",
       "atmosphere": "Paix et harmonie affichées. Sobre, pur, austère. Blanc, gris, bleu.",
       "strategic_importance": "",
@@ -166165,7 +166129,8 @@
         "[BD-T4] Pages 38-39 — Parsifal arrive à Sysigie au lever du jour. Vue extérieure : ville illuminée comme une vision céleste depuis les nuages (effet architectural ou magique).",
         "[BD-T4] Page 39 — enfants en uniforme gris (novices ?) saluent Parsifal : 'Que sont le Granit, un ordre séculaire et le cœur pur des Chevaliers de Justice.' — récitation rituelle.",
         "[BD-T4] Page 39 — 'Lieu de paix et d'harmonie à l'abri des puissantes murailles...' — description narrative officielle.",
-        "[BD-T4] La salle du Conseil a des frères aînés qui valident/orientent les décisions de Parsifal ('Bien mon fils!')."
+        "[BD-T4] La salle du Conseil a des frères aînés qui valident/orientent les décisions de Parsifal ('Bien mon fils!').",
+        "[BD-T4] pl.36-37 : cité au-dessus des nuages, statues d'anges colossales, montagnes au loin."
       ]
     },
     {
@@ -166435,7 +166400,7 @@
       "source": "[BD-T6] Page 18-19",
       "notes": [
         "[BD-T6] 'A notre nouveau Baron, un toast !' — premier grand banquet de Wismerhill comme Baron.",
-        "[BD-T6] Le mage (probablement Selindorf) médite au plafond pendant le banquet.",
+        "[BD-T6] Le mage (probablement Selinporf) médite au plafond pendant le banquet.",
         "[BD-T6] C'est ici que l'émissaire impérial est reçu puis anéanti par Wismerhill."
       ]
     },
@@ -166654,7 +166619,7 @@
       "source": "[BD-T7] Page 22 (pleine page narrative)",
       "notes": [
         "[BD-T7] Pleine page narrative — séquence de voyage mystique.",
-        "[BD-T7] Deux figures traversent cet espace — probablement Wismerhill et Hellavnnea."
+        "[BD-T7] Deux figures traversent cet espace — probablement Wismerhill et Hellaynnea."
       ]
     },
     {
@@ -205904,9 +205869,9 @@
         "Maîtrise de sa nature démoniaque",
         "Contrôle volontaire de l'aspect"
       ],
-      "source": "[BD-T6] P.36 — ailes blanches papillon d'Hellavnnea lors du survol de Moork",
+      "source": "[BD-T6] P.36 — ailes blanches papillon d'Hellaynnea lors du survol de Moork",
       "notes": [
-        "[BD-T6] Hellavnnea bascule entre les deux formes selon les situations (combat vs social)."
+        "[BD-T6] Hellaynnea bascule entre les deux formes selon les situations (combat vs social)."
       ]
     },
     {
@@ -205987,7 +205952,7 @@
       "training_steps": [],
       "source": "",
       "notes": [
-        "[BD-T8] 'Je vais essayer... d'ouvrir un seuil infernal, occupe-le !' — Hellavnnea (T8 p.6).",
+        "[BD-T8] 'Je vais essayer... d'ouvrir un seuil infernal, occupe-le !' — Hellaynnea (T8 p.6).",
         "[BD-T8] 'Le seuil s'ouvre, j'ai réussi !' — après succès."
       ]
     },
@@ -206946,10 +206911,10 @@
       "id": "rule_succubes_mortels_interdits",
       "name": "Les Succubes — Trésors aux Mortels Interdits",
       "category": "cosmique_demonique",
-      "description": "Toute liaison complète entre un mortel et une succube est fatale pour le mortel. La succube vidant l'âme lors de l'union. Exception rare : un pacte démoniaque (comme Wismerhill avec Hellavnnea) lie la succube sans acte fatal. Hors pacte, la succube est inaccessible aux mortels — 'trésors aux mortels interdits'.",
+      "description": "Toute liaison complète entre un mortel et une succube est fatale pour le mortel. La succube vidant l'âme lors de l'union. Exception rare : un pacte démoniaque (comme Wismerhill avec Hellaynnea) lie la succube sans acte fatal. Hors pacte, la succube est inaccessible aux mortels — 'trésors aux mortels interdits'.",
       "applies_to": [
         "companion_succubus_t3",
-        "char_esmeralda_succubus",
+        "char_succubus",
         "faction_demons"
       ],
       "mechanique_jeu": "Tout mortel qui tente de s'unir à une succube sans pacte actif est vidé de son âme (mort instantanée, âme non récupérable). La succube peut maintenir des illusions d'amour pour approcher sa cible. Seul un pacte officiel protège le mortel.",
@@ -207273,7 +207238,7 @@
       "id": "rule_plan_bataille_tsaroth_5_armees",
       "name": "Dispositif de Bataille à 5 Armées (Tsaroth)",
       "category": "tactique_militaire",
-      "description": "La Bataille de Tsaroth oppose 5 forces distinctes sur le terrain selon une carte précise. Lune Noire : troupes d'élite (centre), hordes non-humains (flanc gauche), Garde Noire Wismerhill (droite). Empire : troupes impériales + commandeur roux (centre), Fils de la Lumière Fratus (flanc droit), troupes bleues impériales (flanc gauche). Chaque commandant reçoit sa zone et ses ordres d'attaque — coordination séquentielle.",
+      "description": "La Bataille de Tsaroth suit la carte de l'Empereur (parchemin, sans orientation). Derrière le mur de la Lune Noire : troupes d'élite (en haut, face à la Lumière) et hordes non humaines (au centre, face à Parsifal) ; la Garde Noire de Wismerhill reste en réserve. Côté impérial : Fils de la Lumière de Fratus (en haut, attaquent sur ordre), armée rouge à l'aigle noir de l'Empereur (au centre, attaque la première), Chevaliers de Justice de Parsifal (en bas, attaquent sur ordre).",
       "applies_to": [
         "raid_bataille_tsaroth_t5",
         "char_wismerhill",
@@ -207293,7 +207258,8 @@
       "notes": [
         "[BD-T5] La carte est présentée sur parchemin lors du conseil de guerre dans la tente de commandement.",
         "[BD-T5] Disposition réelle visualisée page 32 — 5 blocs de troupes codés par couleur.",
-        "[BD-T5] Fratus n'attaque pas dans sa zone tant que ses alliés ne sont pas épuisés — trahison stratégique."
+        "[BD-T5] Fratus n'attaque pas dans sa zone tant que ses alliés ne sont pas épuisés — trahison stratégique.",
+        "[BD-T5] p.34 (v1.0.53) : dispositif réaligné sur la carte ; le « commandeur roux » de l'ancienne fiche n'existe pas."
       ]
     },
     {
@@ -207343,24 +207309,24 @@
     },
     {
       "id": "rule_hellavnnea_double_nature_companion_mount",
-      "name": "Hellavnnea — Double Nature Compagnon/Monture",
+      "name": "Hellaynnea — Double Nature Compagnon/Monture",
       "category": "companion_mechanique",
-      "description": "Hellavnnea possède une double nature en jeu : compagnon de combat ET monture aérienne. En mode compagnon, elle combat aux côtés de Wismerhill avec ses sorts de séduction et attaques démoniaques. En mode transport, elle porte Wismerhill en vol. Les deux modes sont exclusifs — elle ne peut pas faire les deux simultanément.",
+      "description": "Hellaynnea possède une double nature en jeu : compagnon de combat ET monture aérienne. En mode compagnon, elle combat aux côtés de Wismerhill avec ses sorts de séduction et attaques démoniaques. En mode transport, elle porte Wismerhill en vol. Les deux modes sont exclusifs — elle ne peut pas faire les deux simultanément.",
       "applies_to": [
         "companion_succubus_t3",
         "mount_hellavnnea_aerial",
         "char_wismerhill"
       ],
-      "mechanique_jeu": "Toggle 'Mode Combat' / 'Mode Transport' avec 30s de délai entre les deux. Mode Combat : Hellavnnea agit comme compagnon actif (sort démo, séduction). Mode Transport : Hellavnnea monte Wismerhill en vol (vitesse x3, inaccessible au sol). Si blessée en mode transport : atterrissage forcé, délai de récupération 5 min.",
+      "mechanique_jeu": "Toggle 'Mode Combat' / 'Mode Transport' avec 30s de délai entre les deux. Mode Combat : Hellaynnea agit comme compagnon actif (sort démo, séduction). Mode Transport : Hellaynnea monte Wismerhill en vol (vitesse x3, inaccessible au sol). Si blessée en mode transport : atterrissage forcé, délai de récupération 5 min.",
       "apparition_window": "",
       "incantations_connues": [],
-      "training_minimum": "Relation Hellavnnea ≥ 50% (confiance)",
+      "training_minimum": "Relation Hellaynnea ≥ 50% (confiance)",
       "source": "[BD-T5] Pages 13-15 (transport), Pages 6-7 (combat/capture)",
       "notes": [
-        "[BD-T5] Pages 13-15 : Hellavnnea en mode transport — Wismerhill dans les nuages.",
-        "[BD-T5] Pages 6-7 : Hellavnnea en mode 'prédateur' — capture les soldats Fils de la Lumière.",
-        "[BD-T5] 'Hellavnnea, ça suffit! On doit partir.' — Wismerhill la rappelant du mode combat.",
-        "[LORE_ETENDU] Mécanique unique — justifie la double entrée companion + mount pour Hellavnnea."
+        "[BD-T5] Pages 13-15 : Hellaynnea en mode transport — Wismerhill dans les nuages.",
+        "[BD-T5] Pages 6-7 : Hellaynnea en mode 'prédateur' — capture les soldats Fils de la Lumière.",
+        "[BD-T5] 'Hellaynnea, ça suffit! On doit partir.' — Wismerhill la rappelant du mode combat.",
+        "[LORE_ETENDU] Mécanique unique — justifie la double entrée companion + mount pour Hellaynnea."
       ]
     },
     {
@@ -207381,7 +207347,7 @@
       "notes": [
         "[BD-T6] La page 26 présente explicitement les 5 étapes sous forme de vignettes labellisées : 'Petit Déjeuner', 'Habillage Cérémoniel', 'Prise de connaissance des affaires récentes', 'Rendre la Justice', 'Puis enfin les doléances'.",
         "[BD-T6] Wismerhill éclate lors des doléances — détruit le porte-parole des guildes, nomme un remplaçant.",
-        "[BD-T6] Hellavnnea participe à l'habillage cérémoniel.",
+        "[BD-T6] Hellaynnea participe à l'habillage cérémoniel.",
         "[BD-T6] La fenêtre de la bibliothèque a été réparée 3 fois en une semaine — indicateur humoristique des explosions de Wismerhill."
       ]
     },
@@ -207747,10 +207713,10 @@
       "id": "rule_succubes_mortels_interdits_t6",
       "name": "Les Succubes — Trésors aux Mortels Interdits",
       "category": "cosmique_demonique",
-      "description": "Toute union complète entre un mortel et une succube sans pacte actif est fatale. La succube vide l'âme lors de l'acte. Exception : un pacte démoniaque scellé (comme Wismerhill/Hellavnnea) protège le mortel. Esmeralda illustre la règle par défaut — sa victime meurt. Hellavnnea est l'exception liée.",
+      "description": "Toute union complète entre un mortel et une succube sans pacte actif est fatale. La succube vide l'âme lors de l'acte. Exception : un pacte démoniaque scellé (comme Wismerhill/Hellaynnea) protège le mortel. Esmeralda illustre la règle par défaut — sa victime meurt. Hellaynnea est l'exception liée.",
       "applies_to": [
         "creature_succube",
-        "char_esmeralda_succubus",
+        "char_succubus",
         "hellavnnea_la_succube"
       ],
       "mechanique_jeu": "Tout joueur/PNJ qui s'unit à une succube sans pacte actif = mort instantanée, âme non récupérable. La succube utilise des illusions pour approcher. Seul pacte officiel (quest_pacte_succube) protège.",
@@ -207776,14 +207742,14 @@
       "apparition_window": "Permanent pour succubes rang 2+",
       "incantations_connues": [],
       "training_minimum": "Rang Companion Démoniaque Niveau 2",
-      "source": "[BD-T6] P.36 — Hellavnnea avec ailes blanches papillon au-dessus de Moork",
+      "source": "[BD-T6] P.36 — Hellaynnea avec ailes blanches papillon au-dessus de Moork",
       "notes": []
     },
     {
       "id": "rule_surnoms_nasha_t6",
       "name": "Les Trois Surnoms de Nasha",
       "category": "lore_companion",
-      "description": "Nasha est appelée par trois surnoms différents selon le personnage : 'Pépète' (Ghorghor), 'Pépette' (Hellavnnea), 'Dragounet' (Wismerhill au petit-déjeuner). Ces surnoms révèlent l'affection spécifique de chaque personnage.",
+      "description": "Nasha est appelée par trois surnoms différents selon le personnage : 'Pépète' (Ghorghor), 'Pépette' (Hellaynnea), 'Dragounet' (Wismerhill au petit-déjeuner). Ces surnoms révèlent l'affection spécifique de chaque personnage.",
       "applies_to": [
         "char_nasha_t6",
         "companion_nasha",
@@ -207798,7 +207764,7 @@
       "source": "[BD-T6] Pages 15, 23, 24, 41, 42",
       "notes": [
         "[BD-T6] 'T'as été super Pépette!' — Ghorghor (P.42).",
-        "[BD-T6] 'Viens Pépette, on va faire shtonk!' — Hellavnnea (P.30).",
+        "[BD-T6] 'Viens Pépette, on va faire shtonk!' — Hellaynnea (P.30).",
         "[BD-T6] 'Viens ici Dragounet, hi hi hi!' — Wismerhill (P.24)."
       ]
     },
@@ -207806,10 +207772,10 @@
       "id": "rule_deux_discrets_observateurs",
       "name": "Les Deux Discrets Observateurs de Wismerhill",
       "category": "lore_politique",
-      "description": "Deux entités distinctes observent en secret la montée en puissance de Wismerhill : (1) Haazheel Thorn depuis la Lune via orbe de vision, (2) Le Grand Maître Lion depuis son palais terrestre via agents. Les deux approuvent la progression de Wismerhill pour des raisons différentes : Haazheel car il est son pion, le Lion car cela affaiblit l'Empereur.",
+      "description": "Deux discrets observateurs suivent la montée en puissance de Wismerhill : Haazheel Thorn et Greldinard, par une sphère de vision (« Nous avons bien choisi ! »). Fratus Sinister, informé par un messager de la Lumière, refuse d'intervenir pour gêner l'Empereur.",
       "applies_to": [
         "char_haazheel_thorn",
-        "char_grand_maitre_lion",
+        "char_fratus_sinister",
         "char_wismerhill"
       ],
       "mechanique_jeu": "Deux factions secrètes observent le joueur Wismerhill. Leurs actions passives peuvent influencer les événements (aides ou obstacles discrets). Révélation progressive via quêtes de renseignement.",
@@ -207819,14 +207785,15 @@
       "source": "[BD-T6] P.46 : 'Ce qui ne manqua pas de réjouir deux discrets observateurs.'",
       "notes": [
         "[BD-T6] Haazheel : 'Beau résultat considérant le peu de moyens à sa disposition. Nous avons bien choisi!'",
-        "[BD-T6] Grand Maître Lion : 'Non! Bien fait pour sa gueule! Et si ça peut faire chier l'Empereur, c'est parfait!'"
+        "[BD-T6] Fratus Sinister : 'Non! Bien fait pour sa gueule! Et si ça peut faire chier l'Empereur, c'est parfait!'",
+        "[BD-T6] p.48 : observateurs = Haazheel et Greldinard (case 1) ; Fratus apparaît dans la case suivante, à part."
       ]
     },
     {
       "id": "rule_tres_armees_apres_tsaroth",
       "name": "La Triple Scission de l'Armée Impériale après Tsaroth",
       "category": "militaire_politique",
-      "description": "Après la bataille de Tsaroth et les événements post-guerre, l'armée rassemblée autour de l'Empereur se scinde en trois fleuves séparés retournant à leur source : (1) Chevaliers de la Lumière vers Altenberg (sous Fratus, furieux), (2) Chevaliers de Justice vers Sysgié (sous Parsifal, digne), (3) Troupes impériales restant avec Haghendorf. L'Empire est politiquement affaibli par ces départs.",
+      "description": "Après la bataille de Tsaroth et les événements post-guerre, l'armée rassemblée autour de l'Empereur se scinde en trois fleuves séparés retournant à leur source : (1) Chevaliers de la Lumière vers Altenberg (sous Fratus, furieux), (2) Chevaliers de Justice vers Sysigie (sous Parsifal, digne), (3) Troupes impériales restant avec Haghendorf. L'Empire est politiquement affaibli par ces départs.",
       "applies_to": [
         "chevaliers_de_la_lumiere",
         "chevaliers_de_la_justice",
@@ -207835,7 +207802,7 @@
         "char_fratus_sinister",
         "char_parsifal"
       ],
-      "mechanique_jeu": "Événement de timeline majeur. Après T6 : Altenberg (Lumière), Sysgié (Justice), L'Hynn (Empire) sont des zones séparées politiquement. L'Ordre de Lumière est exclu de l'Empire.",
+      "mechanique_jeu": "Événement de timeline majeur. Après T6 : Altenberg (Lumière), Sysigie (Justice), L'Hynn (Empire) sont des zones séparées politiquement. L'Ordre de Lumière est exclu de l'Empire.",
       "apparition_window": "T6 post-bataille",
       "incantations_connues": [],
       "training_minimum": "",
@@ -211347,10 +211314,10 @@
       "alias": "",
       "type": "passage_poi",
       "importance": "",
-      "cell": "",
+      "cell": "S009_E011",
       "region_id": "",
       "zone_id": "zone_tsaroth",
-      "faction_control": "chevaliers_de_la_lumiere",
+      "faction_control": "lune_noire",
       "features": [
         "lieu de passage principal",
         "lié à un événement ancien oublié"
@@ -211417,7 +211384,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "Proche du sud, mer au sud avec golfe"
+        "Proche du sud, mer au sud avec golfe",
+        "[BD-T5] p.26 : le camp de la Lune Noire, dans le prolongement de la Faille, forme un mur interdisant l'accès à l'Empire ; la Lumière campe à l'écart sur une hauteur (p.40)."
       ]
     },
     {
@@ -212917,6 +212885,323 @@
       "notes": [
         "[BD-T1] Page 18 (p.24 BD) — deux jours après le départ du camp, un messager annonce qu'un seigneur local interdit le passage ; il est exécuté et Ghorghor charge. « Ce fut la première bataille de Wismerhill… »",
         "[INFÉRÉ] Dernière étape avant Tbarak (N018_E010), où commence l'itinéraire de la carte p.25. Nom descriptif."
+      ]
+    },
+    {
+      "id": "lieu_passe_heniak",
+      "name": "Passe de Heniak",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "empire_humain",
+      "features": [
+        "col tenu par les Impériaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T5] p.11 : « Tu éviteras la passe de Heniak, elle est tenue par les impériaux » (Haazheel à Greldinard), sur la route de Tsaroth."
+      ]
+    },
+    {
+      "id": "lieu_citadelle_imperiale_tsaroth",
+      "name": "Citadelle impériale (avant Tsaroth)",
+      "alias": "",
+      "type": "battlefield_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "lune_noire",
+      "features": [
+        "dernier obstacle avant la Faille de Tsaroth",
+        "murailles et tours ocre, toits de tuiles",
+        "lac ou rivière dans la vallée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T5] p.22-23 : prise par la Lune Noire après le Krak de Jhenner. Non nommée dans la BD."
+      ]
+    },
+    {
+      "id": "lieu_palais_lune_noire_reflet",
+      "name": "Reflet du palais de la Lune Noire",
+      "alias": "",
+      "type": "portal_tower",
+      "importance": "",
+      "cell": "",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "lune_noire",
+      "features": [
+        "tour-palais monolithique ocre et dorée",
+        "grande arche verte : seuil entre la Terre et la Lune",
+        "plaine pâle, arbres morts, montagnes sombres"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T6] p.33 : « au confin des marches de l'Empire à l'extrémité de la baronnie de Moork ». Cellule à placer près de Moork [INFÉRÉ]."
+      ]
+    },
+    {
+      "id": "lieu_palais_lune_noire_lunaire",
+      "name": "Palais de la Lune Noire (sur la Lune)",
+      "alias": "",
+      "type": "",
+      "importance": "",
+      "cell": "",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "lune_noire",
+      "features": [
+        "sol lunaire à cratères, Terre bleue dans le ciel",
+        "terrasse aux piliers jaunes, aire de pose des « vers »"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T6] p.34-35 : résidence réelle d'Haazheel Thorn ; atteinte à dos de « grand ver » par l'arche. Hors de la carte terrestre."
       ]
     }
   ],

@@ -266,7 +266,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 | Der Hem Shelbem | Province du Grand Sud, au sud de Moork ; on y affronte le prince mort-vivant archimage (la note « Dragon Rouge » est retirée). |
 | Altenberg, Northind, Moork, Feyhin, Magistrya | Notes : Altenberg côtière au nord de Lhynn, démantelée (T11) ; Northind dans les marches nord-ouest ; Moork, Feyhin et Magistrya détruites au T14. |
 | Nouveaux lieux | `lieu_temple_methraton_lhynn`, `lieu_port_franc`, `lieu_tharsulatis` (hors carte), `lieu_seuil_lhynn`, `lieu_defile_mordrek`, `lieu_grand_hall_nains`, `lieu_sanctuaire_chevaliers_dragons`, `lieu_ville_moros` — sans cellule [INFÉRÉ à placer]. |
-| « Empire du Jade » | **Aucun appui dans l'album T7** : ni Empire, ni cité, ni temple, ni seigneur « du Jade ». 44 objets marqués `[À VÉRIFIER BD-T7]` (voir 9). Les zones de « voyage mystique » sont les épreuves de l'initiation (p.22-27) ; la « Nécropole du Désert » est celle de Der Hem Shelbem. |
+| « Empire du Jade » | **Aucun appui dans l'album T7** : ni Empire, ni cité, ni temple, ni seigneur « du Jade ». Conservé comme extension de jeu `[GD]` (voir 7.4). Les zones de « voyage mystique » sont les épreuves de l'initiation (p.22-27) ; la « Nécropole du Désert » est celle de Der Hem Shelbem. |
 
 ### 7.3 Frise et personnages
 
@@ -280,10 +280,20 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
   le Haut Elfe et Turuk (T14). Tomes ajoutés aux fiches (115 entrées, format `tNN`) ;
   notes `[BD-Tn]` paginées ajoutées ou corrigées sur 46 fiches.
 
-### 7.4 Points ouverts
+### 7.4 Décisions du propriétaire (05/11/2026)
 
-Voir la section 9 : contenu « Jade », objets « Fils de Lucifer », état du monde après les
-T11-T14, placements sans cellule, Haut Tharque = Meldrim [DÉDUCTION], nom de la fille de
+| Sujet | Décision |
+|---|---|
+| Empire du Jade | Extension de jeu `[GD]` (territoire à ouvrir plus tard, ouverture au monde) : contenu conservé, notes passées en `[GD]`. Le T7 n'en montre rien. |
+| Ascendances | Haazheel Thorn est le **fils de Lucifer** [BD-T12 p.7 ; T13 p.40 ; T14 p.7]. Wismerhill est le **fils de Pazuzu** (`char_pazuzu`) : règle `regle_wismerhill_fils_lucifer_t13` réécrite et compétence renommée « Forme Démoniaque — Fils de Pazuzu » (identifiants inchangés). |
+| Époque du jeu | **Avant** les destructions des T11 et T14 : Altenberg, Sysigie, Moork, Feyhin Lokcthat et Magistrya restent intactes dans le monde jouable. |
+| Pile-ou-Face, Goum | Pile-ou-Face est un **elfe** (sous-race à préciser), Goum un humain : tous deux retirés de `rule_gobelins_size_advantage`. |
+| Orthographe | « L'hynn » → **Lhynn** et « Der hem Shelsem » → **Der Hem Shelbem** dans le lore, `world_master.json` et `factions.json` (identifiants inchangés). |
+| Carte | Placement des nouveaux lieux, du fleuve de Sysigie et d'autres rivières et lacs : PR de carte à part. |
+
+### 7.5 Points ouverts restants
+
+Voir la section 9 : placements sans cellule, Haut Tharque = Meldrim [DÉDUCTION], nom de la fille de
 Wismerhill, retour de Parsifal au T12, Kruikna / Cruik / dragon de Pilou.
 
 ## 8. Plans de référence
@@ -312,21 +322,6 @@ marais) et le fief de Garundel (circulaire, douves, tour ronde, logis accolé).
   générées) contre N012_E012 dans le lore (v1.0.40) ; déplacer une ville de départ
   touche aux départs des personnages et aux cellules générées.
 - Krak de Jhenner : sans cellule.
-- **Contenu « Jade » (T7)** sans appui dans l'album : villes `ville_cite_jade_t7` et
-  `ville_necropolis_jade_t7` (doublon probable de `ville_der_hem_shelsem`), région
-  `region_empire_jade`, 6 zones, 7 quêtes, 2 raids, 4 exploits, 4 créatures, 11 butins,
-  2 dialogues, 1 compétence, 2 PNJ (`char_seigneur_jade_t7`, `char_jeune_elfe_jade_t7`), 4 règles et
-  `event_t7_alliance_jade` : supprimer, réaffecter (Lhynn, initiation, Der Hem Shelbem)
-  ou garder comme ajout de jeu `[GD]` ? Décision du propriétaire.
-- **« Fils de Lucifer »** : `exploit_t13_fils_de_lucifer`, `regle_wismerhill_fils_lucifer_t13`
-  et le nom de `comp_forme_demoniaque_wismerhill_t13` reposent sur une réplique d'Haazheel.
-- **État du monde après les T11-T14** : Altenberg démantelée et Syzygie hors du monde (T11),
-  Moork, Feyhin Lokcthat et Magistrya détruites (T14) ; à refléter dans le générateur
-  (comme l'état `reconstruction` de Kendrhir) ou non.
-- Règle `rule_gobelins_size_advantage` : Pile-ou-Face (`companion_pilou`) et Goum (humain)
-  n'y ont pas leur place ; `race_goblin` et `loot_armure_naine_pilou` citent une « sœur » inexistante.
-- Noms de ville du lore « L'hynn » et « Der hem Shelsem » (BD : Lhynn, Der Hem Shelbem),
-  partagés avec `world_master.json` : renommage à décider.
 - Sysigie (N009_W011) : vérifier qu'un grand fleuve entoure la cellule sur la carte.
 - Placements sans cellule : temple de Methraton (dans Lhynn), Port Franc, Seuil de Lhynn,
   défilé de Mordrek (Marches du Nord), Grand Hall des nains, sanctuaire des Chevaliers

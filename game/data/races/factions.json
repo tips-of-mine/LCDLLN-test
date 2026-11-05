@@ -57,6 +57,6 @@
       { "id": "voleur_tenebreux", "name": "Voleur", "subclass": "Ténébreux", "profile": "voleur", "resource": "reflexes" },
       { "id": "mage", "name": "Mage", "profile": "lanceur", "resource": "magie_base" }
     ] },
-    { "id": "empire_hynn", "name": "L'Empire de L'hynn", "race": "humains", "selectable": false, "classes": [] }
+    { "id": "empire_hynn", "name": "L'Empire de Lhynn", "race": "humains", "selectable": false, "classes": [] }
   ]
 }

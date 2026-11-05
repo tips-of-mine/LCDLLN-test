@@ -240,11 +240,11 @@
         "humains"
       ],
       "source": "[INFÉRÉ] INFERE",
-      "description": "Hameau agricole aux portes de L'hynn ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus."
+      "description": "Hameau agricole aux portes de Lhynn ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus."
     },
     {
       "id": "ville_lhynn",
-      "name": "L'hynn",
+      "name": "Lhynn",
       "cell": "N001_W010",
       "kind": "capitale",
       "race": "humains",
@@ -376,7 +376,7 @@
     },
     {
       "id": "ville_der_hem_shelsem",
-      "name": "Der hem Shelsem",
+      "name": "Der Hem Shelbem",
       "cell": "S009_E010",
       "kind": "ville",
       "race": "humains",

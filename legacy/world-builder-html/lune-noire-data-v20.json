@@ -18,17 +18,17 @@
       "v1.0.42 : [BESTIAIRE] 125 espèces animales ajoutées aux créatures (catégorie, famille, variantes) ; 20 familles de familiers (19 normales, 1 exotique : Ver) dans familiar_families.",
       "v1.0.41 : [RÈGLES] Niveau des zones défini par faction (départs différents) ; grottes, mines et tours de fortification occupées ou abandonnées dans les plaines, forêts et montagnes ; hameaux affichés seulement en vue rapprochée dans l'éditeur.",
       "v1.0.40 : [CARTE] Leviathan Jungle (ville et lieu) déplacée de N009_E011 en N012_E012 ; route Mossy Rock → Leviathan Jungle ajustée.",
-      "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der hem Shelsem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
+      "v1.0.39 : [CARTE+SCÉNARIO] Volcan actif sur 12 cellules (cratère fumant en S008_E014, cheminées de lave) ; scénario « Le Cœur du volcan » : 4 quêtes (Der Hem Shelbem, Moork, Shadowfen, Frosthollow), recette de potion de résistance à la chaleur, entrée par le cratère, raid à 4 groupes contre une créature de la lave.",
       "v1.0.38 : [RENDU] Règles des rivières (méandres, petits rapides) et des ponts (pierre taillée là où une route traverse une rivière — 1 ponts repérés dans hydrography.bridges ; petits ponts en bois ailleurs).",
       "v1.0.37 : [CARTE] Rivière de la cascade (N003_W005) : N004_W005 → N005_W005 → N006_W005 → Northind (sur le côté, ponts) → N007_W004 → N008_W004, puis bras ouest N009_W004 → N010_W004 → Hayfen → mer (N012_W004) et bras est N009_W003 → mer (N010_W002) ; rivière de la source de N008_W002 → N009_W002 → mer (N010_W002).",
       "v1.0.36 : [CARTE] Île de Deepbrook décalée d'une cellule vers le haut (N012_E002–E003, Deepbrook en N012_E002, navette retracée) ; rivière de Verdansur : source dans la ville, bras sud (N009_W015 → mer) et bras nord (N010_W014 → N011_W014 → mer).",
       "v1.0.35 : [CARTE] Hydrographie du nord (nouvelle clé hydrography) : grand lac de l'ouest (N007_E005–E006), grand lac de l'est (N007_E007–E008), lac du sud (N005_E008) ; rivières des deux lacs (via N008_E007), du lac du sud (via N006_E007) et d'Ashwick (N008_E006 → N009_E005 → N010_E005 → mer), qui traverse Ashwick hors du centre avec 2 ponts.",
-      "v1.0.34 : [CARTE] Ports d'Altenberg et de L'hynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
+      "v1.0.34 : [CARTE] Ports d'Altenberg et de Lhynn (ponton dans la cellule de la ville, côté ouest) ; destinations maritimes à décider (îles ou continent à l'ouest).",
       "v1.0.33 : [CARTE] Ville portuaire Deepbrook sur l'île N011_E002 ; navette maritime aller-retour Ashwick – Deepbrook (1 bateau, pause 30 s, ponton dans chaque ville).",
       "v1.0.32 : [SCÉNARIO] Les Abysses de la baie (S008_W005) : 6 quêtes « Murmures de la baie » (Tbarak, Brookend, Hishtarland, Saltfen, Harrowbrook, Millford), raid en petite équipe sur l'île d'Hishtarland (recette de potion de respiration aquatique), entrée sous-marine cachée, 2 raids (Temple englouti à 3 groupes, Antre de la créature à 2 groupes), règle d'accès et fiche scenarios.",
       "v1.0.31 : [CARTE] Ligne maritime du sud : ponton dans la cellule de chaque ville ; vraie rotation, chaque étape de la boucle suit un chenal différent de la baie.",
       "v1.0.30 : [CARTE] Feyhin Lokcthat sur une très grosse colline, Porte 2 des enfers dessous (nouveau lieu N008_E007) ; Oldbridge, Ironmere, Deepvale, Millway, Stonemark supprimées ; routes Nightfield–Blackmoor, Hillwatch–Rivercross, Rivercross–Ebonvale, Farwatch–Rivercross, Farwatch–Westmoor ; routes maritimes tracées sur l'eau navigable (waypoints) avec un ponton à chaque escale.",
-      "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, L'hynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
+      "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brookend ; routes Orderfen–Hayfen, Nightward–Nightfield, Tbarak–Brookend et Saltfen–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, Lhynn–Sauken et Harrowbrook–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Duskmere–Blackmoor, Blackmoor–Ebonvale (villes isolées par les suppressions).",
       "v1.0.28 : [CARTE] Routes : Dustfen–Scalebrook, Millend–Frosthollow, Camp de l'Oracle–Arcanefield (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nightfield–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mossy Rock–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Justfall et Dys.",
       "v1.0.27 : [CARTE] Longmere supprimée, Scalebrook rétablie (S003_W008), Hayfen décalée en N011_W004 ; routes : Sysigie–Verdansur (au lieu de Sysigie–Trueford), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arcanefield–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harrowbrook–Tbarak (au lieu de Palais des Maîtres des Dragons–Harrowbrook), route maritime Saltfen–Hishtarland, Scalebrook reliée à Harrowbrook.",
       "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Millford, Unnamed-146→Claybury, Unnamed-144→Longmere, Unnamed-68→Stonehaven, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Justfall, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
@@ -276,7 +276,7 @@
         "[BD] Leader suprême : Haazheel (demi-dieu, fils du diable).",
         "[BD] Objectifs : renverser l'ordre religieux, détruire les tablettes de Lhynn, tuer les dieux humains.",
         "[BD-T3] Haazheel dispose de succubes qu'il 'entretient' comme faveurs personnelles et outils de manipulation.",
-        "[BD-T3] Armée accompagnant Haazheel vers L'hynn — nombreuse, avec porte-étendards Lune Noire et Menthats.",
+        "[BD-T3] Armée accompagnant Haazheel vers Lhynn — nombreuse, avec porte-étendards Lune Noire et Menthats.",
         "[BD-T4] La Lune Noire a bougé — l'armée immense (Dzorak + gardes + entités) se met en marche contre l'Empire. Cri : 'Pour la Lune Noire ! Pour Haazheel Thorn ! En avant !'",
         "[BD-T4] Haazheel connaît la localisation du père de Wismerhill (ville de Dis). Il envoie Urmacht le chercher comme 'cadeau' pour Wismerhill, puis le fait éliminer par les gardes de l'Empereur pour manipuler Wismerhill.",
         "[BD-T4] L'épée destinée à Wismerhill est en cours de forge chez les Nains — bientôt terminée. Objet central du plan de Haazheel.",
@@ -326,7 +326,7 @@
     },
     {
       "id": "faction_empire",
-      "name": "L'Empire de L'hynn",
+      "name": "L'Empire de Lhynn",
       "type": "feudal_empire",
       "alignment": "order_human",
       "playable": false,
@@ -338,7 +338,7 @@
       "notes": [
         "[BD] L'Empire est traversé par un réseau de routes féodales reliant les fiefs.",
         "[BD] Les droits des seigneurs sont absolus sur leurs terres — chaque fief peut être un piège mortel pour les voyageurs.",
-        "[BD] La ville de L'hynn est survolée par d'étranges oiseaux (montures des Chevaliers-Dragons) la nuit du complot.",
+        "[BD] La ville de Lhynn est survolée par d'étranges oiseaux (montures des Chevaliers-Dragons) la nuit du complot.",
         "[BD-T3] L'aigle bicéphale est le symbole impérial mentionné dans le serment des Chevaliers-Dragons.",
         "[BD-T4] Haghendorf nourrit lui-même ses dragons — un de ses rares plaisirs. Son dragon personnel s'appelle 'Drakkahen', surnommé 'fidèle seigneur des nuées' et 'Grand Ver'.",
         "[BD-T4] Haghendorf est appelé 'Primus' par ses gardes et serviteurs proches.",
@@ -497,9 +497,9 @@
         "[BD] Mercenaires se déplaçant sur dragons volants.",
         "[BD] Royaume de montagnes, gorges profondes, ponts suspendus, neiges éternelles.",
         "[BD] Accès à zones isolées, mobilité/air combat.",
-        "[BD] La nuit du complot, leurs dragons survolent L'hynn sans que la ville ne se doute de rien.",
+        "[BD] La nuit du complot, leurs dragons survolent Lhynn sans que la ville ne se doute de rien.",
         "[BD] 'Haak Haak Draakhs ! Bienvenue à vous Chevaliers Dragons !' — cri de ralliement.",
-        "[BD-T3 p.24-25] Réunion secrète dans le Krak des Chevaliers de L'hynn — complot pour tuer l'Empereur Haghendorf.",
+        "[BD-T3 p.24-25] Réunion secrète dans le Krak des Chevaliers de Lhynn — complot pour tuer l'Empereur Haghendorf.",
         "[BD-T8] Les Chevaliers-Dragons ('Princes Dragons') sont alliés à Fratus lors du siège de Northind.",
         "[BD-T8] Ils prennent leur envol pour attaquer l'armée de Parsifal lors de la dernière nuit : 'Les Chevaliers-Dragons prirent leur envol.'",
         "[BD-T8] Après la débandade des troupes de Fratus (intervention de Gabriel), les Princes Dragons fuient également.",
@@ -3182,7 +3182,7 @@
           "Lhynn (capitale impériale) — gouverne l'ordre Lumière/Justice (trône + tablettes sacrées)",
           "Altenberg : ville principale Lumière",
           "Sysigie : ville principale Justice",
-          "[BD] L'hynn est une ville côtière dans un fjord montagneux, brumeux, architecture gothique imposante"
+          "[BD] Lhynn est une ville côtière dans un fjord montagneux, brumeux, architecture gothique imposante"
         ]
       },
       "faction_affiliations": [
@@ -3862,7 +3862,7 @@
     {
       "id": "companion_pilou",
       "name": "Pile-ou-Face (Pilou)",
-      "type": "goblin_companion",
+      "type": "elf_companion",
       "notes": [
         "[BD-T5] p.27 : « Pilou » est Pile-ou-Face lui-même (crinière noire hérissée, oreilles pointues, cape rouge), présent à Tsaroth aux côtés de Wismerhill. L'ancienne note « petit compagnon goblinoïde à crête rouge » est contredite par la BD (v1.0.53).",
         "[BD-T5] Personnalité comique — réagit avec exagération aux dangers : 'Ouf! On l'a échappé belle, heureusement que je regardais en haut! Pouah!'",
@@ -3881,7 +3881,8 @@
         "[BD-T9] À Moork, réaction comique à la vue du Juggernauth : 'MATE UN PEU L'HORREUR!'",
         "[BD-T9] Hellaynnea lui répond : 'HORREUR? ELLE EST TRÈS BELLE! TU N'AS AUCUN GOÛT, PILOU!'",
         "[BD-T9] Toujours dans l'entourage de Wismerhill malgré la transformation en Prince de la Négation.",
-        "[BD-T2] « Pilou » = Pile-ou-Face (pp.8, 10, 12). [À VÉRIFIER] la description T5 d'un « petit compagnon goblinoïde » ne correspond pas au Pile-ou-Face des tomes 1-2."
+        "[BD-T2] « Pilou » = Pile-ou-Face (pp.8, 10, 12). [À VÉRIFIER] la description T5 d'un « petit compagnon goblinoïde » ne correspond pas au Pile-ou-Face des tomes 1-2.",
+        "[DÉCISION] (v1.0.54) Elfe, pas un gobelin."
       ],
       "variants": [],
       "level_titles": [
@@ -3992,7 +3993,7 @@
   "villes": [
     {
       "id": "ville_lhynn",
-      "name": "L'hynn",
+      "name": "Lhynn",
       "alias": "La capitale",
       "type": "capital_city",
       "importance": "capitale impériale",
@@ -5014,7 +5015,8 @@
         "Reliée à Lhynn par une longue plage",
         "[BD-T2] Pages 32-33 — « Altenberg ! La toute-puissante forteresse de l'Ordre des Chevaliers de la Lumière ! Jamais conquise, jamais soumise, phare de la pureté, siège de l'ordre, fief du Grand Maître Frater Sinister... » : tours carrées colossales gravées de croix, sur un rocher battu par les vagues.",
         "[BD-T2] Page 34 — cathédrale aux bannières rouges à croix blanche, office de la Lumière, puis conjuration de Frater Sinister contre l'Empereur.",
-        "[BD-T11] p.1 : forteresse côtière « au nord de Lhynn », « jamais conquise ni soumise par la force durant plus de mille ans » ; p.2-3 : démantelée pierre par pierre par un archange, il ne reste qu'une falaise nue. État du monde jouable à décider (game design)."
+        "[BD-T11] p.1 : forteresse côtière « au nord de Lhynn », « jamais conquise ni soumise par la force durant plus de mille ans » ; p.2-3 : démantelée pierre par pierre par un archange, il ne reste qu'une falaise nue. État du monde jouable à décider (game design).",
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
       ],
       "dimensions_estimees": {
         "hauteur": "150m+ pour la tour centrale",
@@ -5398,7 +5400,8 @@
         "[BD-T9] p.39 : rocher sombre sur l'eau portant une haute tour-cathédrale, statues d'anges, nuées : cohérent avec l'île fluviale.",
         "[BD-T10] p.8, 11 : « principauté de Syzygie » ; cité-cathédrale dorée sur un rocher au-dessus d'une mer de nuages (= brouillard du fleuve).",
         "[BD-T11] p.4-5 : « vaste royaume bordé de hautes montagnes infranchissables », seul accès par une gorge fermée de portes d'airain ; la cité est au cœur de ce royaume [INFÉRÉ].",
-        "[BD-T11] p.12 : projetée « dans un autre plan d'existence » ; à sa place, un cirque désolé. État du monde jouable à décider (game design)."
+        "[BD-T11] p.12 : projetée « dans un autre plan d'existence » ; à sa place, un cirque désolé. État du monde jouable à décider (game design).",
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
       ],
       "dimensions_estimees": {
         "hauteur": "500m",
@@ -6830,7 +6833,8 @@
         "[BD-T7] p.12-44 : palais de Wismerhill (salle du trône, salle du conseil à grande verrière, bibliothèque, terrains d'exercice) ; trône rapporté de Der Hem Shelbem par Greldinard (p.43).",
         "[BD-T9] p.12-17 : le Juggernaut est cantonné hors les murs.",
         "[BD-T13] p.5, 12, 17 : Haazheel y rassemble ses forces, arrive de la Lune par un portail vert et téléporte son armée dans la salle du trône du palais de Lhynn.",
-        "[BD-T14] p.38 : « la puissante cité de la Lune Noire » est détruite par une secousse pendant l'exode. État du monde jouable à décider (game design)."
+        "[BD-T14] p.38 : « la puissante cité de la Lune Noire » est détruite par une secousse pendant l'exode. État du monde jouable à décider (game design).",
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
       ],
       "dimensions_estimees": {
         "hauteur": "100m",
@@ -8165,7 +8169,8 @@
         "[BD-T2] Arène : piste de sable, gradins à arcades, braseros ; geôles et cellules en sous-sol (pp.9-13). Place à la fontaine et colonnade (p.11).",
         "[BD-T2] Maisons à colombages, toits d'ardoise bleue, tours rondes, bannières (deux poissons jaunes sur bleu), rue marchande en étages (p.8).",
         "[BD-T2] Une route la relie à Magistrya (panneau « Feyhin Lokcthat » sur la chaussée de Magistrya, p.19) — route ajoutée en v1.0.50.",
-        "[BD-T14] p.38 : graphie « Feyhin Lockthat » (lecture incertaine) ; un séisme fend son piton rocheux : « première des villes de l'Empire à disparaître ». État à décider (game design)."
+        "[BD-T14] p.38 : graphie « Feyhin Lockthat » (lecture incertaine) ; un séisme fend son piton rocheux : « première des villes de l'Empire à disparaître ». État à décider (game design).",
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -8442,7 +8447,8 @@
         "[BD-T2] Ville tout en hauteur : rues en rampes, escaliers volants et ponts s'enroulent autour du pic jusqu'au palais du sommet (« C'est tout en haut, impossible de vous tromper ! », p.20). Prévoir de très nombreux escaliers [GD].",
         "[BD-T2] L'arène de gladiateurs est à Feyhin Lokcthat, pas à Magistrya (service retiré de la note en v1.0.50).",
         "[BD-T12] p.22 : les fiefs de Magistrya se convertissent à la Lune Noire.",
-        "[BD-T14] p.38 : « la haute cité de Magistra » (lecture incertaine) s'abat pendant l'exode. État à décider (game design)."
+        "[BD-T14] p.38 : « la haute cité de Magistra » (lecture incertaine) s'abat pendant l'exode. État à décider (game design).",
+        "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable."
       ],
       "dimensions_estimees": {
         "hauteur": "800-1200m",
@@ -8849,7 +8855,7 @@
       "features": [],
       "notes": [
         "[BD-T7] Grande cité orientale avec tavernes, arènes gladiatoriales, places de marché, temples imposants.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -9057,7 +9063,7 @@
       "notes": [
         "[BD-T7] Zone de bataille majeure du tome 7. Ruines d'une ancienne cité avec pyramides et structures ossifiées.",
         "[DÉDUCTION] La seule nécropole du T7 est celle de Der Hem Shelbem (dunes, Shedu, morts vivants) : doublon probable de ville_der_hem_shelsem, fusion à décider (game design).",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ],
       "taille": "sans_service",
       "service_npcs": []
@@ -9608,7 +9614,7 @@
     },
     {
       "id": "ville_der_hem_shelsem",
-      "name": "Der hem Shelsem",
+      "name": "Der Hem Shelbem",
       "alias": "Der Hem Shelbem",
       "type": "undead_kingdom",
       "importance": "",
@@ -20859,7 +20865,7 @@
       },
       "location": {
         "ville_id": "",
-        "details": "Route vers L'hynn — armée de la Lune Noire — T3"
+        "details": "Route vers Lhynn — armée de la Lune Noire — T3"
       },
       "rewards": {
         "title": "Fantôme parmi les Démons",
@@ -20947,7 +20953,7 @@
       "notes": [
         "[BD-T7] Wismerhill et ses compagnons arrivent dans la cité jade — civilisation inédite.",
         "Premier joueur de l'alliance à atteindre l'Empire du Jade.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -20977,7 +20983,7 @@
       "notes": [
         "[BD-T7] Methraton déchaîne sa puissance — seul Wismerhill (demi-sang lié aux vents) peut survivre.",
         "Exploit ultra-rare — requiert la compétence Invocation de Methraton + constitution exceptionnelle.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -21003,7 +21009,7 @@
       "notes": [
         "[BD-T7] La bataille de la Nécropole est l'affrontement militaire central du Tome 7.",
         "Requiert de gérer les émergences d'undead et l'assaut des pyramides.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -21029,7 +21035,7 @@
       "notes": [
         "[BD-T7] Scène finale de la grande salle avec statues de lions/sphinx — alliance scellée.",
         "Ouvre des quêtes et contenus exclusifs de l'Empire du Jade.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -21765,7 +21771,7 @@
       },
       "notes": [
         "[BD-T13] 'Mais moi je suis le fils de... Lucifer! Le plus puissant de tous!'",
-        "[À VÉRIFIER BD-T13] (v1.0.54) La réplique « Mais moi je suis le fils de... Lucifer ! » est d'Haazheel (p.40), pas de Wismerhill ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Contenu de jeu à revoir (décision du propriétaire)."
+        "[DÉCISION] (v1.0.54) Titre d'Haazheel Thorn (« Mais moi je suis le fils de... Lucifer ! », T13 p.40) ; Wismerhill est fils de Pazuzu."
       ]
     },
     {
@@ -23276,7 +23282,7 @@
     {
       "id": "quest_hommage_haazheel_lhynn_t3",
       "name": "L'Hommage de Haazheel",
-      "description": "Être témoin (ou infiltré) lors du renouvellement du serment de vassalité d'Haazheel Thorn à l'Empereur Haghendorf à L'hynn. Une comédie diplomatique pleine de menaces voilées et de complots.",
+      "description": "Être témoin (ou infiltré) lors du renouvellement du serment de vassalité d'Haazheel Thorn à l'Empereur Haghendorf à Lhynn. Une comédie diplomatique pleine de menaces voilées et de complots.",
       "category": "faction",
       "tags": [
         "politique",
@@ -23290,7 +23296,7 @@
       "repeatable": false,
       "type": "[LORE_DIRECT] — événement tome 3",
       "steps": [
-        "Infiltrer L'hynn pendant la visite d'Haazheel — la ville est en état d'alerte maximale.",
+        "Infiltrer Lhynn pendant la visite d'Haazheel — la ville est en état d'alerte maximale.",
         "Observer la confrontation entre Haazheel et les Chevaliers de la Lumière aux portes.",
         "Assister ou espionner la cérémonie du serment — menaces intérieures des deux côtés.",
         "Découvrir que l'armée de Haazheel attend à l'extérieur — révèle ses intentions réelles.",
@@ -24354,7 +24360,7 @@
     {
       "id": "quest_traversee_armee_haazheel_t3",
       "name": "Traverser l'Armée de la Lune Noire",
-      "description": "Le groupe tombe nez à nez avec l'immense armée de Haazheel marchant vers L'hynn. Il faut traverser sans se faire remarquer, en gardant son calme malgré les géants et créatures démoniaques.",
+      "description": "Le groupe tombe nez à nez avec l'immense armée de Haazheel marchant vers Lhynn. Il faut traverser sans se faire remarquer, en gardant son calme malgré les géants et créatures démoniaques.",
       "category": "exploration",
       "tags": [
         "exploration",
@@ -24381,7 +24387,7 @@
         "char_ghorghor_bey"
       ],
       "rewards": {
-        "lore": "Confirmation que l'armée marche vers L'hynn pour l'hommage vassalique.",
+        "lore": "Confirmation que l'armée marche vers Lhynn pour l'hommage vassalique.",
         "exploit": null
       },
       "min_players": 1,
@@ -24413,7 +24419,7 @@
     {
       "id": "quest_conspiration_chevaliers_dragons_t3",
       "name": "La Nuit des Chevaliers-Dragons",
-      "description": "Infiltrer ou espionner la réunion secrète des Chevaliers-Dragons au Krak de L'hynn. Fratus Sinister y rassemble six nobles lésés par l'Empereur pour prêter le serment de renverser Haghendorf.",
+      "description": "Infiltrer ou espionner la réunion secrète des Chevaliers-Dragons au Krak de Lhynn. Fratus Sinister y rassemble six nobles lésés par l'Empereur pour prêter le serment de renverser Haghendorf.",
       "category": "faction",
       "tags": [
         "faction",
@@ -24428,7 +24434,7 @@
       "repeatable": false,
       "type": "[LORE_DIRECT] — événement tome 3",
       "steps": [
-        "Suivre les étranges oiseaux/wyvernes survolant L'hynn la nuit.",
+        "Suivre les étranges oiseaux/wyvernes survolant Lhynn la nuit.",
         "Localiser le Krak des Chevaliers sans se faire repérer.",
         "Observer la réunion : six nobles se présentent et prêtent serment.",
         "Retenir les noms des conspirateurs (Baron d'Hurkel, Prince Agnos, Haut Drakkhen, Duc d'Ornan, Duc Ushker, Prince Draakh).",
@@ -25719,7 +25725,7 @@
       "notes": [
         "[BD-T7] Séquence de voyage pp.21-29 — plusieurs pleine pages narratives illustrant le voyage mystique.",
         "Chronologie : premier acte du Tome 7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -25800,7 +25806,7 @@
         "[BD-T7] Pages 7-10 — invocation et confrontation avec Methraton.",
         "Quête unique — ne peut être accomplie qu'une seule fois par serveur.",
         "Chronologie : acte 2 du Tome 7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -25875,7 +25881,7 @@
       "notes": [
         "[BD-T7] Pages 29, 33-36 — interactions politiques avec le Seigneur du Jade.",
         "Chronologie : parallèle à l'acte 2 du Tome 7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -25942,7 +25948,7 @@
         "[BD-T7] Pages 14-15 — apparition des Grands Vents dans la tempête de neige.",
         "Quête solo uniquement — révélation personnelle de Wismerhill.",
         "Chronologie : acte 3 du Tome 7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -26015,7 +26021,7 @@
       "notes": [
         "[BD-T7] Pages 25-28 — séquence rituelle en 4 pleine pages.",
         "Chronologie : parallèle à l'acte 3 du Tome 7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -26088,7 +26094,7 @@
         "[BD-T7] Pages 50-53 — grande salle aux lions, conseil de guerre, alliance scellée.",
         "Chronologie : acte final du Tome 7 — ouvre la voie au Tome 8.",
         "Dépendances : requiert d'avoir accompli TOUTES les quêtes T7 principales.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -26138,7 +26144,7 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T8] Wismerhill va dans la vallée malgré les risques — Greldinard ne l'a pas arrêté.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -30032,8 +30038,8 @@
     },
     {
       "id": "quest_volcan_1_ville_der_hem_shelsem",
-      "name": "Le Souffle du volcan — Der hem Shelsem",
-      "description": "Les habitants de Der hem Shelsem sentent le sol trembler de plus en plus souvent.",
+      "name": "Le Souffle du volcan — Der Hem Shelbem",
+      "description": "Les habitants de Der Hem Shelbem sentent le sol trembler de plus en plus souvent.",
       "category": "exploration",
       "tags": [
         "volcan_sud_est",
@@ -30044,8 +30050,8 @@
       "type": "[GD] Chaîne « Le Cœur du volcan »",
       "quest_kind": "group",
       "steps": [
-        "Écouter les PNJ de Der hem Shelsem parler du volcan.",
-        "Enquêter autour de Der hem Shelsem.",
+        "Écouter les PNJ de Der Hem Shelbem parler du volcan.",
+        "Enquêter autour de Der Hem Shelbem.",
         "Rapporter l'indice ou l'ingrédient trouvé."
       ],
       "source_lore": [],
@@ -30062,7 +30068,7 @@
       "counter_quest_races": [],
       "has_counter_quest": false,
       "notes": [
-        "Ville : Der hem Shelsem (ville_der_hem_shelsem).",
+        "Ville : Der Hem Shelbem (ville_der_hem_shelsem).",
         "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
       ]
     },
@@ -30889,7 +30895,7 @@
         "[BD-T7] Pages 8-10 — l'invocation de Methraton et la survie à son explosion.",
         "Methraton est unkillable — la victoire = survivre 10 minutes à sa présence.",
         "Phase finale : explosion 'FOOOOO BOOSH' — zone de damage massive, 80% mortalité normale.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -30918,7 +30924,7 @@
         "[BD-T7] Pages 43-49 — séquence complète de la bataille de la Nécropole.",
         "Machine de siège 'W' de Wismerhill — mécanisme d'attaque des murailles.",
         "'La bataille est terminée?' — condition de victoire : détruire le nécromancien gardien.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -147191,7 +147197,8 @@
         "[BD-T12] p.6 : « l'enfant des Vents » ; p.32 : tue le Prince Démon par le « flux divin » ; p.35 : téléporte son armée autour de la Porte des Enfers.",
         "[BD-T14] p.5-9 : appelle ses compagnons morts, puis ressuscite en masse tous les morts de la salle « toutes factions confondues », épuisant la mana de l'Empire ; p.10 : l'Écho lui transmet « le grand secret de la divinité ».",
         "[BD-T14] p.12-15 : libère l'Oracle ; p.16-17 : réunit chez Methraton les souverains des hommes (pacte de l'exode) ; p.26-41 : conduit l'exode par le Seuil de Lhynn (« J'ai détruit un monde, notre monde ! ») ; p.43 : « Que... s'active... le... passage ! ».",
-        "[BD-T13] p.40 (v1.0.54) : c'est Haazheel qui se dit « fils de Lucifer » (« Mais moi je suis le fils de... Lucifer ! ») ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Wismerhill est « l'enfant des Vents » ; son père est le Prince des Nuées (T9, T12, T14)."
+        "[BD-T13] p.40 (v1.0.54) : c'est Haazheel qui se dit « fils de Lucifer » (« Mais moi je suis le fils de... Lucifer ! ») ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Wismerhill est « l'enfant des Vents » ; son père est le Prince des Nuées (T9, T12, T14).",
+        "[DÉCISION] (v1.0.54) Fils de Pazuzu (char_pazuzu) et de la princesse elfique, pas de Lucifer."
       ]
     },
     {
@@ -147407,7 +147414,8 @@
         "[BD-T13] p.23 : a fait de Wismerhill « [son] fils », un « demi-dieu » ; lui reproche de l'avoir « empêché de devenir dieu » et de « siéger à la gauche de [son] père ».",
         "[BD-T7] p.30-36 : accueille Wismerhill Grand Prêtre (« mon fils », « mon enfant »), lui fait visiter son palais sur la Lune et la salle sphérique où la foi des fidèles est captée ; part « en voyage pour quelque temps » (plans extérieurs).",
         "[BD-T10] p.12 : apparaît en songe à l'Empereur (« HAAGHENDORFF !!! … C'est la fin de ton règne ! ») ; p.46 : attendait cette victoire depuis « trente ans ».",
-        "[BD-T14] p.4 : mourant, lance une malédiction qui arrache la Lune Noire à son orbite ; p.7 : son âme est avalée par Lucifer ; p.9-10 : il avait préparé « il y a longtemps » un « processus de vœux et d'énergie divine » pour que la Lune frappe la Terre ; son Écho (clone) le confirme."
+        "[BD-T14] p.4 : mourant, lance une malédiction qui arrache la Lune Noire à son orbite ; p.7 : son âme est avalée par Lucifer ; p.9-10 : il avait préparé « il y a longtemps » un « processus de vœux et d'énergie divine » pour que la Lune frappe la Terre ; son Écho (clone) le confirme.",
+        "[BD-T12 p.7 ; BD-T13 p.40 ; BD-T14 p.7] « Fils de Lucifer »."
       ]
     },
     {
@@ -148103,7 +148111,8 @@
         "[BD-T7] p.5-12 : guerrier à crête noire hérissée et oreilles pointues qui accompagne Wismerhill à Lhynn [DÉDUCTION : Pile-ou-Face].",
         "[BD-T11] p.26-27 : reçoit de Wismerhill un dragon bleu, son vœu secret (« Dans mes bras, petit ! »).",
         "[BD-T13] p.11 : passe la dernière nuit à jouer avec son dragon ; p.34 : abattu par Haazheel démoniaque (« et de quatre »).",
-        "[BD-T14] p.9 : ressuscité par la résurrection de masse ; p.36 : deux dragons restés le reniflent, il reconnaît « MAMAN ! BÉBÉ ! », sa famille adoptive de dragons, et part avec eux par la Porte de Lhynn."
+        "[BD-T14] p.9 : ressuscité par la résurrection de masse ; p.36 : deux dragons restés le reniflent, il reconnaît « MAMAN ! BÉBÉ ! », sa famille adoptive de dragons, et part avec eux par la Porte de Lhynn.",
+        "[DÉCISION] (v1.0.54) Elfe (sous-race à préciser) ; pas un gobelin."
       ]
     },
     {
@@ -148202,7 +148211,7 @@
       "role": "emperor_antagonist",
       "visual": "Vieillard imposant, cheveux blancs longs flottants, couronne à pointes dorées ornée de rubis, armure cérémonielle rouge et or, manteau d'hermine. Regard perçant malgré l'âge. Grand et encore puissant de stature.",
       "personality": "Machavélique, patient, plus intelligent que ses ennemis ne le croient. Cruel sur le fond — l'Elfe ténébreux (père de Wismerhill) est exécuté simplement parce qu'il est une race non aimée. Pragmatique avant tout.",
-      "description": "Empereur de L'hynn, maître féodal de l'Empire. Appelé 'Primus' par ses gardes proches. Nourrit lui-même ses dragons comme rare plaisir personnel. A su depuis longtemps la trahison de Fratus grâce à son grand astrologue.",
+      "description": "Empereur de Lhynn, maître féodal de l'Empire. Appelé 'Primus' par ses gardes proches. Nourrit lui-même ses dragons comme rare plaisir personnel. A su depuis longtemps la trahison de Fratus grâce à son grand astrologue.",
       "arc": "Tente d'obtenir l'aide de Methrhton (refus). Déjoue ou croit déjouer le complot de Fratus. Déclare la guerre à la Lune Noire. En réalité dupé — le chevalier 'loyal' était l'agent de Fratus. Scène de jardin : trop occupé par l'Empire pour passer du temps avec sa famille. Tient un conseil de guerre et convoque tous ses vassaux (3 grandes maisons : Taureau, Serpent, Oiseaux) pour déclarer la guerre à la Lune Noire.",
       "abilities": [
         "Commandement impérial absolu",
@@ -148969,7 +148978,7 @@
       "visual": "[BD-T1] Démon rouge, cornu et ailé, griffu, avec une queue, aux yeux verts. — [BD-T3 p.40] Entité noire bipède colossale, forme draconique/reptilienne, dents acérées multiples, queue longue, armure rouge cramoisie lacérée, regard incandescent. Type émissaire de haut rang.",
       "personality": "Puissant, obéissant mais partial — les démons obéissent 'à moitié' selon Haazheel. Loyal malgré tout. A combattu aux côtés du père de Wismerhill autrefois. — Obéissant, efficace, sans initiative propre. Exécute les ordres à la lettre.",
       "description": "Démon majeur au service direct d'Haazheel Thorn. Chargé de missions complexes — protection de Wismerhill en T1, missions secrètes en T3. Reconnaît les armoiries du père de Wismerhill (T1). — Entité démoniaque servante de haut rang. Déjà référencé en T4 comme 'Urmarcht'. Envoyé par Haazheel à Tsaroth avec les ordres de bataille.",
-      "arc": "T1 : invoqué par un vieux sorcier (le « Maître ») et envoyé à Kendrhir protéger « l'enfant ». Souffle à Ghorghor de tenter une sortie, puis, parlant par la bouche de Frater Sinister, reconnaît les armoiries du père de Wismerhill et le fait libérer. — T3 : apparaît dans le château loué par Haazheel au retour de L'hynn. Haazheel le punit pour avoir 'obéi à moitié'. [BD-T3 p.40]",
+      "arc": "T1 : invoqué par un vieux sorcier (le « Maître ») et envoyé à Kendrhir protéger « l'enfant ». Souffle à Ghorghor de tenter une sortie, puis, parlant par la bouche de Frater Sinister, reconnaît les armoiries du père de Wismerhill et le fait libérer. — T3 : apparaît dans le château loué par Haazheel au retour de Lhynn. Haazheel le punit pour avoir 'obéi à moitié'. [BD-T3 p.40]",
       "abilities": [
         "Puissance démoniaque de haut rang",
         "Reconnaissance des armoiries et lignages",
@@ -149079,7 +149088,7 @@
       "visual": "Humanoïde peau grise, âgé, grande barbe blanche, armure sombre. Allure de noble dépossédé.",
       "personality": "Rancunier, animé par la vengeance de ses terres perdues.",
       "description": "Baron dépossédé de ses terres par l'Empereur Haghendorf. Rejoint la conspiration des Chevaliers-Dragons menée par Fratus Sinister.",
-      "arc": "Présent à la réunion secrète à L'hynn. Cri : 'Mort à Haghendorf!'",
+      "arc": "Présent à la réunion secrète à Lhynn. Cri : 'Mort à Haghendorf!'",
       "abilities": [],
       "special_items": [],
       "special_rule": "",
@@ -149245,7 +149254,7 @@
       "zone_ids": [],
       "dialogue_ids": [],
       "notes": [
-        "[BD-T3 p.25] La réunion a lieu dans le 'Krak des Chevaliers de L'hynn'.",
+        "[BD-T3 p.25] La réunion a lieu dans le 'Krak des Chevaliers de Lhynn'.",
         "[BD-T3] Fratus Sinister préside la réunion et prononce le serment : 'Par le fer, le feu et la lumière!'",
         "[BD-T3 pl.23] « Prince Draakh... mésestimé ! » — « KASTÖTSH HAGHENDORF ! » ; heaume noir aux yeux rouges, motif blanc. « Draakhs » désigne les Chevaliers Dragons (salut « Haak haak »).",
         "[HYPOTHÈSE] Même personnage que le Prince Brakkh du T4 (char_prince_brakkh) : graphies proches, même rang chez les Chevaliers Dragons.",
@@ -149463,7 +149472,7 @@
       "role": "npc_background",
       "visual": "Jeune enfant, traits fins, allure noble, présent dans le jardin du palais impérial en compagnie de la favorite de l'Empereur.",
       "personality": "Inconnu — apparition de fond uniquement.",
-      "description": "Enfant présent dans les jardins du palais impérial de L'hynn lors de la scène de famille d'Haghendorf. Accompagne la favorite/épouse de l'Empereur dans les jardins. Identité exacte non confirmée — possible héritier impérial ou enfant de cour.",
+      "description": "Enfant présent dans les jardins du palais impérial de Lhynn lors de la scène de famille d'Haghendorf. Accompagne la favorite/épouse de l'Empereur dans les jardins. Identité exacte non confirmée — possible héritier impérial ou enfant de cour.",
       "arc": "",
       "abilities": [],
       "special_items": [],
@@ -150058,7 +150067,7 @@
         "[BD-T7] Associé à un jeune personnage elfe jade qui pourrait être son disciple ou son héritier.",
         "[BD-T7] 'CE JOUR EST LE JOUR DE NOTRE FÊTE BIENHEUREUSE...' — annonce le jour du grand rituel.",
         "[LORE_ETENDU] PNJ clé pour la chaîne de quêtes de l'Empire du Jade.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Seigneur du Jade » dans l'album (relecture page à page) : fiche sans source, conservée en attente de décision."
+        "[GD] (v1.0.54) Personnage d'extension (Empire du Jade, territoire futur) ; aucun « Seigneur du Jade » dans l'album (relecture page à page) : fiche sans source, conservée en attente de décision."
       ]
     },
     {
@@ -150332,7 +150341,8 @@
       "notes": [
         "Père de Wismerhill — cf. char_wismerhill",
         "L'Oracle de T3 le décrit à Wismerhill comme 'un prince elfen ténébreux qui erre sur le monde au gré des vents, au cœur des nuées'",
-        "Règle du Jeu : ne peut aider son enfant qu'au minimum — intervient rarement et indirectement"
+        "Règle du Jeu : ne peut aider son enfant qu'au minimum — intervient rarement et indirectement",
+        "[DÉCISION] (v1.0.54) Père de Wismerhill (confirmé par le propriétaire ; tomes à fournir)."
       ]
     },
     {
@@ -152476,7 +152486,7 @@
       "notes": [
         "[BD-T7] Apparaissent page 21 — pleine page narrative — dans les eaux sombres menant aux royaumes jade.",
         "[BD-T7] Plusieurs serpents visibles simultanément — attaque de groupe.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -152512,7 +152522,7 @@
         "[BD-T7] Pages 43-49 — bataille de la Nécropole — sortent du sol en masse.",
         "[BD-T7] Armés d'armes ancestrales jade — lances et épées de pierre jade.",
         "[BD-T7] Les crânes et pyramides sont leurs points d'émergence.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -152554,7 +152564,7 @@
         "[BD-T7] Page 30 — combat aérien entre dragon vert et dragon rouge dans le ciel de l'Empire du Jade.",
         "[BD-T7] Ce dragon semble être sous le contrôle ou la protection de l'Empire du Jade.",
         "[BD-T7] L'affrontement des deux dragons est un événement spectaculaire visible depuis le village en dessous.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -152590,7 +152600,7 @@
       "notes": [
         "[BD-T7] Page 30 — combat aérien contre le Dragon Vert de l'Empire du Jade.",
         "[BD-T7] Son origine et son commanditaire restent inconnus dans le tome.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -156109,7 +156119,7 @@
         "[BD-T5] La Faille de Tsaroth constitue la nouvelle frontière est de l'Empire — tenue précairement.",
         "[BD-T5] Après Tsaroth, l'Empire a perdu le contrôle de cet axe — repli stratégique impérial.",
         "[BD-T5] Fratus Sinister opère dans cette région lors de la campagne militaire.",
-        "[BD-T4] Contient : Dis (ville commerciale), L'hynn (capitale), territoire des grands vassaux.",
+        "[BD-T4] Contient : Dis (ville commerciale), Lhynn (capitale), territoire des grands vassaux.",
         "[BD-T4] Présence militaire impériale renforcée dans toutes les villes — gardes rouges.",
         "[BD-T4] Les vassaux (Maison Taureau, Serpent, Oiseaux Blancs) tiennent leurs fiefs ici."
       ]
@@ -156145,7 +156155,7 @@
         "[BD-T7] Le Seigneur du Jade (nom inconnu) est à la tête de cet empire.",
         "[BD-T7] Lié à la Lune Noire — leur culte du Soleil Noir est une expression locale du culte de la Lune Noire.",
         "[LORE_ETENDU] À positionner à l'est de la carte — région encore inexplorée dans les tomes précédents.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -156389,8 +156399,8 @@
         "[HS] Dans les batailles : ses mages et clercs lançaient leurs incantations en toute sécurité, protégés des flèches par les blindages ou les épaisses vitres.",
         "[HS] Permettait de diriger une bataille depuis le milieu du terrain.",
         "[HS] 'Le baron fut tellement satisfait de ce palais qu'il commanda aux Nains une gigantesque machine encore plus puissante : le Juggernaut.'",
-        "[HS] Illustration BD couleur : palais roulant à Der hem Shelsem (deux tours massives sur châssis).",
-        "[HS] Vu en vrai dans la BD tome 8 à Der hem Shelsem."
+        "[HS] Illustration BD couleur : palais roulant à Der Hem Shelbem (deux tours massives sur châssis).",
+        "[HS] Vu en vrai dans la BD tome 8 à Der Hem Shelbem."
       ]
     },
     {
@@ -156770,7 +156780,7 @@
       "name": "Couronne Impériale d'Haghendorf",
       "type": "artefact_imperial",
       "rarity": "legendaire",
-      "description": "Couronne à pointes dorées ornée de rubis sertis à chaque pointe. Symbole de l'autorité absolue de l'Empereur de L'hynn. Poids : lourd. Porte-bonheur dynastique selon les traditions impériales.",
+      "description": "Couronne à pointes dorées ornée de rubis sertis à chaque pointe. Symbole de l'autorité absolue de l'Empereur de Lhynn. Poids : lourd. Porte-bonheur dynastique selon les traditions impériales.",
       "min_level": 50,
       "eligible_races": [
         "race_human"
@@ -158142,7 +158152,7 @@
       "notes": [
         "[BD-T7] Portée par des centaines de prêtres alignés dans le Temple du Soleil Noir.",
         "[BD-T7] Couleur vert jade distinctif — reconnaissable immédiatement dans l'Empire du Jade.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158167,7 +158177,7 @@
       "notes": [
         "[BD-T7] Matériau sacré de l'Empire du Jade.",
         "[LORE_ETENDU] Clé d'accès à certaines zones du temple.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158187,7 +158197,7 @@
       "source_raids": [],
       "notes": [
         "[BD-T7] Loot des serpents marins gardant les eaux profondes de l'Empire du Jade.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158209,7 +158219,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -158235,7 +158245,7 @@
       ],
       "notes": [
         "[BD-T7] Loot des guerriers squelettiques de la Nécropole du Désert.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158256,7 +158266,7 @@
         "raid_bataille_necropolis_jade_t7"
       ],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158277,7 +158287,7 @@
         "raid_bataille_necropolis_jade_t7"
       ],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158296,7 +158306,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158315,7 +158325,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158334,7 +158344,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -158353,7 +158363,7 @@
       "source_quests": [],
       "source_raids": [],
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -164512,7 +164522,7 @@
         "[BD-T7] Pages 8-9 — dialogue approximatif reconstruit depuis les bulles (partiellement lisibles).",
         "Wismerhill provoque Methraton en niant être un dieu — paradoxe de sa nature demi-sang.",
         "Methraton pose des questions sur les allégeances et le service — révèle son intérêt pour l'équilibre.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -164544,7 +164554,7 @@
         "[BD-T7] Pages 29, 33, 34 — dialogue partiel reconstruit depuis les bulles.",
         "L'audience établit les bases de l'alliance politique jade.",
         "Le Seigneur du Jade est méfiant mais pragmatique face à Wismerhill.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -166698,7 +166708,7 @@
         "applies_to": []
       },
       {
-        "rule": "[BD] Dans L'hynn, les armées vassales restent à la porte — seuls le seigneur et une escorte réduite peuvent entrer en armes.",
+        "rule": "[BD] Dans Lhynn, les armées vassales restent à la porte — seuls le seigneur et une escorte réduite peuvent entrer en armes.",
         "applies_to": []
       },
       {
@@ -166837,14 +166847,14 @@
     },
     {
       "id": "zone_lhynn",
-      "name": "L'hynn — Capitale de l'Empire",
+      "name": "Lhynn — Capitale de l'Empire",
       "type": "imperial_capital",
       "tome": "t3",
       "faction": "faction_empire",
       "biome": "côtier / fjord montagneux",
       "visual_description": "Grande ville dense nichée dans un fjord entre des montagnes noires. Mer à l'horizon. Nuages tempétueux permanents. Palais central imposant en rouge et noir dominant la ville. Architecture gothique massive, colonnes, tapisseries rouges, grandes portes de palais ornées.",
       "atmosphere": "Sombre, politique, tendu. Brume et pluie fréquentes. Rouge et or omniprésents.",
-      "strategic_importance": "Contrôler L'hynn = contrôler l'Empire",
+      "strategic_importance": "Contrôler Lhynn = contrôler l'Empire",
       "lore": "Capitale de l'Empire, trône de l'Empereur Haghendorf. Lieu du serment de vassalité. Cible principale du complot des Chevaliers-Dragons.",
       "source": "[BD] Pages 21, 22, 23, 24",
       "notes": [
@@ -166984,7 +166994,7 @@
     },
     {
       "id": "zone_lhynn_palace_interior",
-      "name": "Palais Impérial de L'hynn — Intérieur",
+      "name": "Palais Impérial de Lhynn — Intérieur",
       "type": "imperial_palace_interior",
       "tome": "t4",
       "faction": "faction_empire",
@@ -167087,18 +167097,18 @@
     },
     {
       "id": "zone_krak_lhynn",
-      "name": "Krak des Chevaliers de L'hynn",
+      "name": "Krak des Chevaliers de Lhynn",
       "type": "fortress_secret_meeting",
       "tome": "t3",
       "faction": "faction_dragon_knights",
-      "biome": "urbain / forteresse dans L'hynn",
-      "visual_description": "Forteresse sombre dans la capitale. Visible depuis la cour des Chevaliers de L'hynn. Dragons/wyvernes y atterrissent la nuit. Salle intérieure avec un grand feu central pour le serment.",
+      "biome": "urbain / forteresse dans Lhynn",
+      "visual_description": "Forteresse sombre dans la capitale. Visible depuis la cour des Chevaliers de Lhynn. Dragons/wyvernes y atterrissent la nuit. Salle intérieure avec un grand feu central pour le serment.",
       "atmosphere": "Secret, ténébreux. Lueur de feu sur les visages des conspirateurs.",
       "strategic_importance": "Lieu de la réunion des Chevaliers-Dragons conspirateurs dirigés par Fratus Sinister. Point focal du complot contre l'Empereur Haghendorf.",
       "lore": "C'est ici que Fratus Sinister réunit six nobles dépossédés par l'Empereur pour le serment de renversement : 'Par le fer, le feu et la lumière!'",
       "source": "[BD-T3] Pages 24, 25",
       "notes": [
-        "[BD-T3 p.24] 'Au dessus du Krak des Chevaliers de L'hynn, d'étranges oiseaux volaient.'",
+        "[BD-T3 p.24] 'Au dessus du Krak des Chevaliers de Lhynn, d'étranges oiseaux volaient.'",
         "[BD-T3 p.25] Les dragons des Chevaliers atterrissent directement dans la cour."
       ]
     },
@@ -167415,7 +167425,7 @@
         "[BD-T7] L'invocation de Methraton provoque une explosion 'FOOOOO BOOSH' qui fissure le sol.",
         "[BD-T7] Le grand rituel du Soleil Noir rassemble tous les prêtres jade — moment de puissance maximale du culte.",
         "[BD-T7] Le temple est perturbé/interrompu lors du rituel — irruption de végétation/flammes géantes.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -167435,7 +167445,7 @@
         "[BD-T7] Les armées de morts-vivants sortent du sol lors de l'assaut.",
         "[BD-T7] 'La bataille est terminée?' — dialogue signalant la fin du combat.",
         "[BD-T7] Les explosions 'GHAAASSH!' et 'BHOOM!' marquent les moments décisifs.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -167453,7 +167463,7 @@
       "notes": [
         "[BD-T7] Pleine page narrative — séquence de voyage mystique.",
         "[BD-T7] Deux figures traversent cet espace — probablement Wismerhill et Hellaynnea.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
         "[DÉDUCTION] (v1.0.54) Ces pleines pages du T7 sont les épreuves de l'initiation de Wismerhill (p.22-27) : boyau et chute (Terre), salle inondée aux statues aquatiques sous une presque pleine lune (Eau), grotte aux os pétrifiés d'un titan au-dessus d'abîmes ardents (Feu), caverne aux gaz (Air), salle sous le visage de jais de la Grande Faucheuse (Métal et Mort)."
       ]
     },
@@ -167472,7 +167482,7 @@
       "notes": [
         "[BD-T7] Pleine page narrative — séquence de voyage mystique.",
         "[BD-T7] L'imagerie évoque clairement un passage vers la mort ou l'au-delà.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7).",
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade.",
         "[DÉDUCTION] (v1.0.54) Ces pleines pages du T7 sont les épreuves de l'initiation de Wismerhill (p.22-27) : boyau et chute (Terre), salle inondée aux statues aquatiques sous une presque pleine lune (Eau), grotte aux os pétrifiés d'un titan au-dessus d'abîmes ardents (Feu), caverne aux gaz (Air), salle sous le visage de jais de la Grande Faucheuse (Métal et Mort)."
       ]
     },
@@ -167491,7 +167501,7 @@
       "notes": [
         "[BD-T7] Pleine page narrative — séquence de voyage mystique.",
         "[BD-T7] Les textes en cartouche narrent le voyage à travers le serpent — il 'permet aux élus d'entrer et de traverser'.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
         "[DÉDUCTION] (v1.0.54) Ces pleines pages du T7 sont les épreuves de l'initiation de Wismerhill (p.22-27) : boyau et chute (Terre), salle inondée aux statues aquatiques sous une presque pleine lune (Eau), grotte aux os pétrifiés d'un titan au-dessus d'abîmes ardents (Feu), caverne aux gaz (Air), salle sous le visage de jais de la Grande Faucheuse (Métal et Mort)."
       ]
     },
@@ -167510,7 +167520,7 @@
       "notes": [
         "[BD-T7] Pleine page narrative — première étape de la séquence de voyage mystique.",
         "[BD-T7] Le portail visible en arrière-plan indique que ces eaux sont le premier obstacle à franchir.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7).",
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade.",
         "[DÉDUCTION] (v1.0.54) Ces pleines pages du T7 sont les épreuves de l'initiation de Wismerhill (p.22-27) : boyau et chute (Terre), salle inondée aux statues aquatiques sous une presque pleine lune (Eau), grotte aux os pétrifiés d'un titan au-dessus d'abîmes ardents (Feu), caverne aux gaz (Air), salle sous le visage de jais de la Grande Faucheuse (Métal et Mort)."
       ]
     },
@@ -167887,7 +167897,7 @@
     },
     "world_map_notes": [
       "[BD] Une carte partielle est visible page 15 — itinéraire du groupe tracé en pointillés rouges",
-      "[BD] Lieux identifiables sur la carte : L'Oracle (au centre), Ghrunke Dash (à l'ouest/nord), L'hynn (capitale)",
+      "[BD] Lieux identifiables sur la carte : L'Oracle (au centre), Ghrunke Dash (à l'ouest/nord), Lhynn (capitale)",
       "[BD] La forêt et le marais précèdent une région verdoyante de fiefs féodaux",
       "[LORE_ETENDU] À l'est de la Tour Carrée de la Lune Noire : territoire des Géants",
       "[BD-T1] 'Dzorak' semble être une exclamation/juron culturel de Ghorghor lié aux dragons ('Dzorak! Un dragon!') — connexion possible entre le nom de sa race et la vénération des dragons chez les demi-ogres."
@@ -206752,7 +206762,7 @@
         "[BD-T7] 'QUI ME VEUT-IL, TOI QUI OSES M'APPELER!' — réaction de Methraton.",
         "[BD-T7] L'explosion 'FOOOOO BOOSH' fissure le sol et projette tout le monde.",
         "[LORE_ETENDU] Compétence ultra-rare — quête de découverte complexe requise.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -207146,11 +207156,11 @@
     },
     {
       "id": "comp_forme_demoniaque_wismerhill_t13",
-      "name": "Forme Demoniaque -- Fils de Lucifer",
+      "name": "Forme Démoniaque — Fils de Pazuzu",
       "school": "",
       "usable_by": [],
       "prerequisite": "Reveler l origine luciferienne (quete T13)",
-      "description": "Transformation complete de Wismerhill en demon : peau grise, yeux rouges incandescents, griffes puissantes, ailes. Declenche par la haine a l etat pur coulant dans ses veines (sang de Lucifer). Enleye toute douleur, decuple force et destruction.",
+      "description": "Transformation complete de Wismerhill en demon : peau grise, yeux rouges incandescents, griffes puissantes, ailes. Declenche par la haine a l etat pur coulant dans ses veines (sang de Pazuzu). Enleye toute douleur, decuple force et destruction.",
       "progression": [],
       "effects": [],
       "incantation": "",
@@ -207160,8 +207170,8 @@
         "[BD-T13] Les esprits des vents (p.38) : 'Ton sang, ta haine! Ne les oublie pas! Ton sang! Laisse-le bouillir! Tu es plus que ce que tu crois!'",
         "[BD-T13] Wismerhill se jette sur la Lune Noire 'avec une rage et une volonte de destruction absolues'.",
         "[BD-T13] 'Il s etait transforme en Demon!' -- confirmation narrative.",
-        "[BD-T13] Revele que Wismerhill est fils de Lucifer -- information capitale pour sa race/classe.",
-        "[À VÉRIFIER BD-T13] (v1.0.54) Wismerhill ne se dit pas fils de Lucifer : c'est Haazheel (p.40). Nom « Fils de Lucifer » et mécanique à revoir (game design)."
+        "[À VÉRIFIER BD-T13] (v1.0.54) Wismerhill ne se dit pas fils de Lucifer : c'est Haazheel (p.40). Nom « Fils de Lucifer » et mécanique à revoir (game design).",
+        "[DÉCISION] (v1.0.54) Wismerhill est le fils de Pazuzu (char_pazuzu), pas de Lucifer ; « fils de Lucifer » désigne Haazheel Thorn [BD-T12 p.7 ; BD-T13 p.40 ; BD-T14 p.7]. Tomes suivants à fournir."
       ]
     },
     {
@@ -208382,12 +208392,9 @@
       "id": "rule_gobelins_size_advantage",
       "name": "Avantage de la Petite Taille (Gobelins)",
       "category": "race_mechanique",
-      "description": "Les gobelins (Goum, Pilou) peuvent accéder à des zones inaccessibles aux autres races (passages étroits, conduits, espaces de moins de 1m). Ils subissent un malus en combat vs grandes races mais bénéficient d'un bonus naturel de furtivité.",
+      "description": "Les gobelins peuvent accéder à des zones inaccessibles aux autres races (passages étroits, conduits, espaces de moins de 1m). Ils subissent un malus en combat vs grandes races mais bénéficient d'un bonus naturel de furtivité.",
       "applies_to": [
-        "race_goblin",
-        "char_goum",
-        "companion_goum",
-        "companion_pilou"
+        "race_goblin"
       ],
       "mechanique_jeu": "Accès zones < 1m : exclusif gobelins. Discrétion +15% passive. -20% dégâts vs créatures > 2m de haut.",
       "apparition_window": "",
@@ -208395,7 +208402,8 @@
       "training_minimum": "",
       "source": "[BD-T3] Goum se faufile partout — implicite dans les pages T3",
       "notes": [
-        "[À VÉRIFIER BD-T2/T9] (v1.0.54) Pilou est Pile-ou-Face (fiche char_pilou fusionnée) et Goum est un colosse humain (T11 p.27) : companion_pilou et Goum ne sont pas des gobelins. Retrait de companion_pilou, char_goum et companion_goum à décider (game design)."
+        "[À VÉRIFIER BD-T2/T9] (v1.0.54) Pilou est Pile-ou-Face (fiche char_pilou fusionnée) et Goum est un colosse humain (T11 p.27) : companion_pilou et Goum ne sont pas des gobelins. Retrait de companion_pilou, char_goum et companion_goum à décider (game design).",
+        "[DÉCISION] (v1.0.54) Goum (humain, jumeau de Nasha) et Pile-ou-Face (elfe) retirés de la règle."
       ]
     },
     {
@@ -208674,7 +208682,7 @@
       "source": "[BD-T7] Bataille de la Nécropole — les morts-vivants ressurgissent en vagues.",
       "notes": [
         "S'applique uniquement dans le raid raid_bataille_necropolis_jade_t7.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -208693,7 +208701,7 @@
       "source": "[BD-T7] Pages 8-10 — confrontation Methraton/Wismerhill.",
       "notes": [
         "Règle cohérente avec sa neutralité cosmique (T4, T7, T9).",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -208713,7 +208721,7 @@
       "source": "[BD-T7] Pages 7-10.",
       "notes": [
         "Régulation stricte — permet d'éviter un usage abusif du rituel.",
-        "[À VÉRIFIER BD-T7] (v1.0.54) Aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
       ]
     },
     {
@@ -208730,7 +208738,7 @@
       "training_minimum": "Niveau 30, quête T6 accomplie",
       "source": "[BD-T7] Séquence de voyage initiatique pp.21-29.",
       "notes": [
-        "[À VÉRIFIER BD-T7] (v1.0.54) L'album « De Vents, de Jade et de Jais » ne montre ni Empire, ni cité, ni temple, ni seigneur « du Jade » (relecture page à page) : contenu conservé en attente de décision (docs/world/LORE_BD.md, section 7)."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
       ]
     },
     {
@@ -209296,9 +209304,9 @@
     },
     {
       "id": "regle_wismerhill_fils_lucifer_t13",
-      "name": "Wismerhill -- Fils de Lucifer Revele",
+      "name": "Wismerhill — Fils de Pazuzu",
       "category": "revelation_raciale",
-      "description": "Wismerhill est le fils de Lucifer, le plus puissant de tous les demons. Cette origine luciferienne explique ses capacites hors normes et sa capacite a se transformer en demon. Information revelee lors de la Bataille de la salle du trône de Lhynn.",
+      "description": "Wismerhill est le fils de Pazuzu, prince démoniaque des vents et des tempêtes, et de la princesse elfique ; cette ascendance explique sa capacité à se transformer en démon. Haazheel Thorn, lui, est le fils de Lucifer et ignore de quel démon descend Wismerhill (T13 p.38).",
       "applies_to": [
         "char_wismerhill",
         "race_half_demon"
@@ -209312,7 +209320,8 @@
         "[BD-T13] 'Mais moi je suis le fils de... Lucifer! Le plus puissant de tous!'",
         "[À VÉRIFIER BD-T13] Information connue de l Oracle depuis le debut -- il avait guide Wismerhill en ce sens.",
         "[BD-T13] Corrige et complete la description raciale de Wismerhill (demi-demon = demi-luciferien).",
-        "[À VÉRIFIER BD-T13] (v1.0.54) La réplique « Mais moi je suis le fils de... Lucifer ! » est d'Haazheel (p.40), pas de Wismerhill ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Contenu de jeu à revoir (décision du propriétaire)."
+        "[À VÉRIFIER BD-T13] (v1.0.54) La réplique « Mais moi je suis le fils de... Lucifer ! » est d'Haazheel (p.40), pas de Wismerhill ; Haazheel ignore « de quel démon » descend Wismerhill (p.38). Contenu de jeu à revoir (décision du propriétaire).",
+        "[DÉCISION] (v1.0.54) Ascendance corrigée selon le propriétaire ; identifiant inchangé."
       ]
     },
     {
@@ -209845,14 +209854,14 @@
     },
     {
       "id": "rule_ports_ouest",
-      "name": "Ports d'Altenberg et de L'hynn",
+      "name": "Ports d'Altenberg et de Lhynn",
       "category": "transport",
-      "description": "Altenberg et L'hynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
+      "description": "Altenberg et Lhynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
       "applies_to": [
         "ville_altenberg",
         "ville_lhynn"
       ],
-      "mechanique_jeu": "Altenberg et L'hynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
+      "mechanique_jeu": "Altenberg et Lhynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -209895,7 +209904,7 @@
       "id": "rule_volcan_acces",
       "name": "Le Cœur du volcan — conditions d'accès",
       "category": "exploration",
-      "description": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der hem Shelsem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
+      "description": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der Hem Shelbem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
       "applies_to": [
         "zone_volcan_sud_est",
         "lieu_volcan_cratere",
@@ -209905,7 +209914,7 @@
         "quest_volcan_3_shadowfen",
         "quest_volcan_4_hamlet_0193"
       ],
-      "mechanique_jeu": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der hem Shelsem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
+      "mechanique_jeu": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der Hem Shelbem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -210600,7 +210609,7 @@
         "Hameau (5-20 PNJ)",
         "Village (20-50)",
         "Grande ville (50+)",
-        "Capitale (L'hynn)",
+        "Capitale (Lhynn)",
         "Ville forteresse",
         "Cité neutre (<50)",
         "Tour arcane",

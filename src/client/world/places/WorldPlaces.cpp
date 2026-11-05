@@ -241,6 +241,13 @@ namespace engine::client
 		if (kind == "champ_bataille") return "Champ de bataille";
 		if (kind == "volcan") return "Volcan";
 		if (kind == "gouffre") return "Gouffre";
+		// Lieux des tomes 7 à 14 (lore v1.0.55).
+		if (kind == "temple") return "Temple";
+		if (kind == "sanctuaire") return "Sanctuaire";
+		if (kind == "port") return "Port";
+		if (kind == "cite") return "Cit\xC3\xA9"; // « Cité » en UTF-8
+		if (kind == "defile") return "D\xC3\xA9" "fil\xC3\xA9"; // « Défilé » en UTF-8
+		if (kind == "salle") return "Salle souterraine";
 		return std::string(kind);
 	}
 }

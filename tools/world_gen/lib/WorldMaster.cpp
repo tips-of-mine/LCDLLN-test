@@ -10,6 +10,7 @@
 #include <zone_builder/JsonDocument.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <set>
 #include <sstream>
@@ -238,6 +239,50 @@ namespace tools::world_gen
 				if (d.id.empty() || d.radiusM < 4.0 || d.radiusM > 600.0) { err = "master: extra_lakes invalide '" + d.id + "'"; return false; }
 				if (!d.cityId.empty() && !ids.count(d.cityId)) { err = "master: extra_lakes ancre sur ville inconnue '" + d.cityId + "'"; return false; }
 				out.extraLakes.push_back(std::move(d));
+			}
+		}
+
+		// --- cours d'eau tracés à la main ---
+		if (const JsonValue* rc = FindObjectMember(root, "river_courses"); rc && rc->type == JsonType::Array)
+		{
+			std::set<std::string> courseIds;
+			for (const JsonValue& v : rc->arrayValue)
+			{
+				RiverCourseDef d;
+				d.id = GetStr(v, "id"); d.name = GetStr(v, "name", d.id);
+				d.cells = GetStrArray(v, "cells");
+				d.widthM = GetNum(v, "width_m", 32.0);
+				d.islandCity = GetStr(v, "island_city");
+				if (d.id.empty() || !courseIds.insert(d.id).second || d.cells.size() < 2 || d.widthM < 6.0 || d.widthM > 200.0)
+				{
+					err = "master: river_courses invalide '" + d.id + "'"; return false;
+				}
+				for (const std::string& cell : d.cells)
+				{
+					int n = 0, e = 0;
+					if (!ParseCellId(cell, n, e)) { err = "master: river_courses '" + d.id + "' : cellule invalide " + cell; return false; }
+					const int r = s.northN - n, c = e - s.westE;
+					if (r < 0 || c < 0 || r >= static_cast<int>(out.gridRows.size()) || c >= s.gridCols) { err = "master: river_courses '" + d.id + "' : " + cell + " hors grille"; return false; }
+					const char code = out.gridRows[static_cast<size_t>(r)][static_cast<size_t>(c)];
+					// Toutes les cases ont un code « rivière », sauf la dernière qui peut être
+					// l'embouchure (côte, plage ou mer).
+					const bool mouth = &cell == &d.cells.back() && (code == ',' || code == '_' || code == '-' || code == ' ');
+					if (code != 'r' && code != 'R' && code != '&' && !mouth) { err = "master: river_courses '" + d.id + "' : " + cell + " sans code riviere dans la grille"; return false; }
+					if (!d.cellNE.empty() && (std::abs(n - d.cellNE.back().first) > 1 || std::abs(e - d.cellNE.back().second) > 1 || (n == d.cellNE.back().first && e == d.cellNE.back().second)))
+					{
+						err = "master: river_courses '" + d.id + "' : " + cell + " non voisine de la case precedente"; return false;
+					}
+					d.cellNE.push_back({ n, e });
+				}
+				if (!d.islandCity.empty())
+				{
+					const auto it = std::find_if(out.cities.begin(), out.cities.end(), [&](const CityDef& c) { return c.id == d.islandCity; });
+					if (it == out.cities.end() || std::find(d.cells.begin(), d.cells.end(), it->cell) == d.cells.end())
+					{
+						err = "master: river_courses '" + d.id + "' : island_city inconnue ou hors du cours '" + d.islandCity + "'"; return false;
+					}
+				}
+				out.riverCourses.push_back(std::move(d));
 			}
 		}
 

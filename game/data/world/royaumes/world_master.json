@@ -65,12 +65,12 @@
       "                           -,tTTT.TtM..tttTTTt,-  ",
       "     --------------       -,tTTTTTTTtM%...TTTt_-  ",
       "   ---,,,,,,,,--,,-   -oo--,tTTTTTTTTtM...tTt.,-  ",
-      "   -,,.r.....t,R%%--------,,tTTTTTTTTt.M......,-  ",
-      "   -,.rr....tTRR%&%,,,,___rtTTTTTTTTt.p.r.....,-  ",
-      "   -,.r.....tTTTTRRRt....tRTTTTTTTTt....r....._-  ",
-      "   -,,,,....tTTTTRTRTt..tTTRRTTTTtt.tttrt....,-   ",
-      "   -----..rtTTTTTRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
-      "       -,..tTTTTRTTTTt..tTTTRTTt....tTTTt.rrr,-   ",
+      "   -,,.r..r..t,R%%--------,,tTTTTTTTTt.M......,-  ",
+      "   -,.rr..r.tTRR%&%,,,,___rtTTTTTTTTt.p.r.....,-  ",
+      "   -,.r...r.tTTTTRRRt....tRTTTTTTTTt....r....._-  ",
+      "   -,,,,..r.tTTTTRTRTt..tTTRRTTTTtt.tttrt....,-   ",
+      "   -----..rRTTTTTRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
+      "       -,..RTTTTRTTTTt..tTTTRTTt....tTTTt.rrr,-   ",
       "       -,...tTTTRTTtt....tTTTLTt....tTTTt.....,-  ",
       "       -__...tTTR~~~......tttttt....ttttt.....,-  ",
       "       --_....ttM:l:......~~~~~t..........tt..,-  ",
@@ -455,20 +455,20 @@
     {
       "id": "ville_forteresse_naine_heureux_t11",
       "name": "Forteresse d'Heureux",
-      "cell": "S004_W004",
+      "cell": "S006_E004",
       "kind": "forteresse",
       "race": "nains",
       "state": "intact",
       "faction": "naine",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T11",
+      "source": "[INFÉRÉ] BD-T9, BD-T11 (v1.0.55 : cellule du proprietaire)",
       "description": "Ancienne forteresse naine reconvertie en refuge pour les concubines de Wismerhill."
     },
     {
       "id": "ville_hoengardt_t11",
       "name": "Hoengardt",
       "cell": "N014_E016",
-      "kind": "ville",
+      "kind": "forteresse",
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
@@ -1436,6 +1436,55 @@
       "cell": "S008_W005",
       "kind": "gouffre",
       "description": "Entree sous-marine cachee des Abysses de la baie."
+    },
+    {
+      "id": "poi_temple_methraton",
+      "name": "Temple de Methraton",
+      "cell": "N001_W010",
+      "kind": "temple",
+      "description": "Bloc dore a l'ankh apparu en une nuit sur l'esplanade des temples de Lhynn ; Wismerhill en ouvre la porte d'airain (BD-T7)."
+    },
+    {
+      "id": "poi_seuil_lhynn",
+      "name": "Seuil de Lhynn",
+      "cell": "N001_W010",
+      "kind": "portail",
+      "description": "Porte colossale creee par Methraton pres du palais de Lhynn, passage vers Terra Secunda (BD-T14)."
+    },
+    {
+      "id": "poi_port_franc",
+      "name": "Le Port Franc",
+      "cell": "S003_W013",
+      "kind": "port",
+      "description": "Port et terres cedes a l'Empire tharque contre son alliance (BD-T9, BD-T11) [INFERE : cote ouest, au sud de Lhynn]."
+    },
+    {
+      "id": "poi_moros",
+      "name": "Moros",
+      "cell": "N000_W007",
+      "kind": "cite",
+      "description": "Ville d'un seigneur felon de l'Empire, brulee par les fideles de la Lune Noire (BD-T12) [INFERE]."
+    },
+    {
+      "id": "poi_defile_mordrek",
+      "name": "Defile de Mordrek",
+      "cell": "N016_E013",
+      "kind": "defile",
+      "description": "Defile a falaises rouges des Marches du Nord ou l'armee des Gigantomorphes est arretee (BD-T14) [INFERE]."
+    },
+    {
+      "id": "poi_grand_hall_nains",
+      "name": "Grand Hall des nains",
+      "cell": "S008_E014",
+      "kind": "salle",
+      "description": "Salle souterraine sous le volcan, statues colossales et bassin de lave ; les nains y attendent la fin (BD-T14) [INFERE]."
+    },
+    {
+      "id": "poi_sanctuaire_chevaliers_dragons",
+      "name": "Sanctuaire des Chevaliers Dragons",
+      "cell": "S003_W004",
+      "kind": "sanctuaire",
+      "description": "Sanctuaire au milieu de montagnes ocre ou le Premier Dragon rompt le pacte (BD-T14)."
     }
   ],
   "imports": {
@@ -1448,6 +1497,17 @@
     "spawners": "zones/feyhin/spawners.json",
     "quest_poi": "quests/quest_poi_feyhin.json"
   },
+  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs.",
+  "river_courses": [
+    {
+      "id": "fleuve_sysigie",
+      "name": "[à nommer]",
+      "cells": ["N006_W010", "N007_W010", "N008_W011", "N009_W011", "N010_W011", "N011_W011", "N012_W011"],
+      "width_m": 80,
+      "island_city": "ville_sysigie",
+      "source": "[INFÉRÉ] v1.0.55 : Sysigie sur une île au milieu d'un grand fleuve (décision du propriétaire) ; source dans la lisière de la forêt occidentale, embouchure sur la côte nord (N012_W011)."
+    }
+  ],
   "extra_lakes": [
     {
       "id": "etang_de_marn",

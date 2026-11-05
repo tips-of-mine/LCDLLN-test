@@ -75,7 +75,7 @@ namespace tools::world_gen
 		std::string id;
 		std::string name;
 		std::string cell;
-		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre
+		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle
 		std::string description;
 		/// Portail (kind "portail") : identifiant du portail APPARIÉ dans l'autre carte
 		/// (clé `link`, ex. "enfers:poi_enfers_porte_1"). Vide = portail décoratif.
@@ -119,6 +119,22 @@ namespace tools::world_gen
 		double radiusM = 20.0;
 	};
 
+	/// Cours d'eau tracé à la main (section `river_courses`) : la rivière suit les
+	/// centres des cellules listées (8-voisines, à code « rivière » dans la grille ;
+	/// la dernière peut être la case d'embouchure, côte ou mer), puis descend vers
+	/// la mer. Elle remplace la rivière automatique de la composante de cases
+	/// qu'elle traverse. `island_city` : la rivière passe par le centre de cette
+	/// ville et se divise en deux bras qui l'entourent (île fluviale, ex. Sysigie).
+	struct RiverCourseDef
+	{
+		std::string id;
+		std::string name;                 ///< nom affiché (provisoire « [à nommer] » admis)
+		std::vector<std::string> cells;   ///< cases traversées, de la source vers l'aval
+		std::vector<std::pair<int, int>> cellNE; ///< (n, e) résolus
+		double widthM = 32.0;             ///< largeur à l'embouchure (m), 40 % de moins à la source
+		std::string islandCity;           ///< ville entourée par deux bras (vide = aucune)
+	};
+
 	/// Contenu complet du master après chargement + validation.
 	struct WorldMaster
 	{
@@ -137,6 +153,7 @@ namespace tools::world_gen
 		std::vector<PoiDef> pois;
 		std::vector<InteractableDef> interactables;
 		std::vector<ExtraLakeDef> extraLakes;
+		std::vector<RiverCourseDef> riverCourses;
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;
 		// Imports du contenu existant (chemins relatifs au content root).

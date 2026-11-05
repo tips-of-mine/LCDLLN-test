@@ -211,12 +211,12 @@ imprimée (page du PDF plus 2).
 
 | Lieu | Décision |
 |---|---|
-| Tsaroth (`ville_tsaroth`) | **Sans service** (« lieu désolé et loin de tout », T5 p.23) : 6 PNJ de service retirés, cellule S009_E011 reportée. Le camp de départ des Démons reste dans `world_master.json` en attendant son déplacement (voir 8). |
+| Tsaroth (`ville_tsaroth`) | **Sans service** (« lieu désolé et loin de tout », T5 p.23) : 6 PNJ de service retirés, cellule S009_E011 reportée. Le camp de départ des Démons reste dans `world_master.json` en attendant son déplacement (voir 9). |
 | Faille de Tsaroth | Tenue par la **Lune Noire** (et non la Lumière), cellule S009_E011. |
 | Krak de Jhenner | Ne « donne » plus « accès à la Faille » : il tombe avant la citadelle impériale, dernier obstacle (T5 p.22-23). |
 | Nouveaux lieux | `lieu_passe_heniak`, `lieu_citadelle_imperiale_tsaroth`, `lieu_palais_lune_noire_reflet` (tour et arche verte au bout de la baronnie de Moork), `lieu_palais_lune_noire_lunaire` (hors carte). |
 | Moork | Baronnie de Greldinard puis de Wismerhill ; le palais d'Haazheel est sur la Lune (T6 p.33-34). |
-| Sysigie | Biome montagnard, au-dessus d'une mer de nuages. |
+| Sysigie | Biome montagnard, au-dessus d'une mer de nuages (remplacé en v1.0.54 : île fluviale, voir 7.2). |
 | Horkher | Notes des cartes du T6 (Horkher au-dessus de Moork, cohérent avec N006_E014) et du titre « duc des Marches ». |
 
 ### 6.3 Frise et règles
@@ -231,7 +231,62 @@ imprimée (page du PDF plus 2).
 - Quête `quest_esmeralda_succube_t6` : les joueurs découvrent qu'Esmeralda est la succube du baron.
 - Tomes des personnages normalisés en `tNN` ; T4-T6 ajoutés aux fiches concernées.
 
-## 7. Plans de référence
+## 7. Tomes 7 à 14 — de « De Vents, de Jade et de Jais » à « La Fin des Temps » (v1.0.54)
+
+Albums : T7 « De Vents, de Jade et de Jais », T8 « Le Glaive de justice », T9 « Les Chants
+de la négation », T10 « L'Aigle foudroyé », T11 « Ave Tenebrae », T12 « La Porte des
+Enfers », T13 « La Prophétie », T14 « La Fin des Temps ». Références : T7 à T12 `p.N` =
+page (planche) imprimée ; T13 et T14 `p.N` = page du PDF (aucun folio fiable). Script
+reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
+
+### 7.1 Identités et graphies tranchées par la BD
+
+| Question | Réponse | Preuve |
+|---|---|---|
+| « Prince des Ténèbres (fils de Haazheel) » | C'est **Lucifer**, le **père** d'Haazheel : `char_prince_tenebres_t11` fusionné dans `char_lucifer_prince_tenebres` ; règle `regle_seuil_infernal_t11` corrigée (le sceptre de commande est remis à Haazheel). | « Voilà, mon père, c'est fait » (T11 p.35) ; « père d'Haazheel Thorn » (T12 p.7). |
+| « Le Baron (aspirant Empereur) » | C'est **Fratus** (cache-œil) ; le « Baron » de Moork à qui il promet l'Empire est **Greldinard**. `char_baron_aspirant_t13` fusionné dans `char_fratus_sinister`, mort (`alive` faux). | T13 p.12-14 ; « Je suis un guerrier, pas un politicien ! » (Greldinard, p.12). |
+| Pilou | **Surnom de Pile-ou-Face** : `char_pilou` (« sœur gobeline de Goum », morte) fusionné dans `char_pile_ou_face`. | T2 p.8, 10 ; T9 p.17 ; T14 p.36. |
+| Serpent | Le « Serpent Hérault de Methrhton » (T4-T5) et le Serpent de Methraton (T9-T14) ne font qu'un [DÉDUCTION] : `char_methrhton_herald` fusionné dans `char_serpent_methraton`. | Même titre, même rôle d'observateur (T5 p.25, T10 p.16, T11 p.42). |
+| « Fils de Lucifer » | C'est **Haazheel** qui le dit ; Haazheel ignore « de quel démon » descend Wismerhill, « enfant des Vents ». L'appel « Ton sang ! » vient des **esprits des vents**, pas de l'Oracle. Notes fausses de Wismerhill et de l'Oracle retirées. | T13 p.38-40. |
+| Hellaynnea et sa fille | Les notes T13 de la fiche de la fille (`char_hellaynnea_t12`) concernaient la mère : déplacées vers `char_succubus`. | T13 p.7, 13-14, 40. |
+| Bataille finale du T13 | Dans la **salle du trône du palais de Lhynn** [DÉDUCTION], pas à Moork (Haazheel y rassemble seulement son armée) : textes, zone `zone_moork_salle_trone_t13` et raid renommés (identifiants inchangés). | T13 p.6, 20-22 ; T14 p.5. |
+| Fratus au T11 | Il **accompagne** Haazheel dans l'extermination d'une ville du Sud ; ni « royaume de Fratus » attaqué, ni âmes de Fratus dévorées. | T11 p.44. |
+| Statuts | Morts : Haazheel (T13, âme dévorée T14), Fratus (T13), Urmacht (T12), Gunthar (T8). Vivants : le père de Wismerhill (mort simulée par Urmacht), Iaun Reith (« seul survivant », T10 p.30). | — |
+| Répliques | « Finalement vous vivrez, Xhan » est de **Fratus** (T10 p.47) ; « Ce combat inepte n'est pas le mien ! » (Greldinard, T13 p.26) ; les démons lacérateurs sont ceux d'**Haazheel** (p.28). | — |
+| Graphies | **Grhumpdeth** (lore « Grhulnpdeth » corrigé ; « Grumpedth » au T7), **Hellwelkin** (lore « Hellvekkin »), Lame du **Feu** Solaire (lore « Feli »), Methraton (sans accent). Notées sans renommage : Hellaynea (T7), Dharix (T7, Pharix au T6), Syzigie (T8), Haazeel (T9), HAAGHENDORFF (T10), Urmacht, Heusgly (forteresse naine, T11), Oghan (T12), Feyhin Lockthat et Magistra (T14), Der Hem Shelbem (ville du lore « Der hem Shelsem », alias ajouté). | — |
+| Auberge de Dis | « l'Auroch Assoiffé » (lecture retenue) en alias de « l'Auroch Assomé » (ancienne lecture). | T4 pl.17. |
+
+### 7.2 Lieux
+
+| Lieu | Décision |
+|---|---|
+| Lhynn | **Décision du propriétaire** : au bord de l'océan / la mer de l'ouest, pas d'un lac. Le « lac » des vues T3, T11 p.38 et T14 p.25-33 est la baie en fjord ; « dernier coucher de soleil sur la mer » (T14 p.40). |
+| Sysigie (alias Syzygie) | **Décision du propriétaire** : cité sur une **île au milieu d'un grand fleuve** ; le brouillard fréquent sur le fleuve produit la « cité dans les nuages » (T4, T10) ; île à tour-cathédrale (T9 p.39) ; la principauté est bordée de montagnes, accès par une gorge (T11). Biome, topographie et hydrographie corrigés ; projetée dans un autre plan au T11. |
+| Horkher | Notes BD (T6) de la fiche `horker` (Harrowdale, N004_E009) déplacées vers `city_horkher` (N006_E014). Harrowdale reste une ville du jeu (`RENOMMAGES` du générateur). |
+| Der Hem Shelbem | Province du Grand Sud, au sud de Moork ; on y affronte le prince mort-vivant archimage (la note « Dragon Rouge » est retirée). |
+| Altenberg, Northind, Moork, Feyhin, Magistrya | Notes : Altenberg côtière au nord de Lhynn, démantelée (T11) ; Northind dans les marches nord-ouest ; Moork, Feyhin et Magistrya détruites au T14. |
+| Nouveaux lieux | `lieu_temple_methraton_lhynn`, `lieu_port_franc`, `lieu_tharsulatis` (hors carte), `lieu_seuil_lhynn`, `lieu_defile_mordrek`, `lieu_grand_hall_nains`, `lieu_sanctuaire_chevaliers_dragons`, `lieu_ville_moros` — sans cellule [INFÉRÉ à placer]. |
+| « Empire du Jade » | **Aucun appui dans l'album T7** : ni Empire, ni cité, ni temple, ni seigneur « du Jade ». 44 objets marqués `[À VÉRIFIER BD-T7]` (voir 9). Les zones de « voyage mystique » sont les épreuves de l'initiation (p.22-27) ; la « Nécropole du Désert » est celle de Der Hem Shelbem. |
+
+### 7.3 Frise et personnages
+
+- T7 : 5 évènements « Jade » réécrits sur la BD (séjour à Lhynn, temple de Methraton,
+  initiation, conseil des Vents, nécropole de Der Hem Shelbem) ; `event_t7_alliance_jade`
+  marqué `[À VÉRIFIER]` ; 3 ajoutés (chute de Northind, palais lunaire, Fratus averti).
+- T8 : 5 évènements ajoutés ; T9 : 6 évènements nommés et datés, 1 ajouté.
+- T10 à T14 : les **85 fiches vides** de la frise (`tl_t10_*`, `timeline_t11_*`,
+  `timeline_t12_*`, `tl_t13_*`, `tl_t14_*`) remplies, identifiants inchangés.
+- Personnages ajoutés : Snippy (T7), Shenniterrann (dragon d'or de l'Empereur, T8-T10),
+  le Haut Elfe et Turuk (T14). Tomes ajoutés aux fiches (115 entrées, format `tNN`) ;
+  notes `[BD-Tn]` paginées ajoutées ou corrigées sur 46 fiches.
+
+### 7.4 Points ouverts
+
+Voir la section 9 : contenu « Jade », objets « Fils de Lucifer », état du monde après les
+T11-T14, placements sans cellule, Haut Tharque = Meldrim [DÉDUCTION], nom de la fille de
+Wismerhill, retour de Parsifal au T12, Kruikna / Cruik / dragon de Pilou.
+
+## 8. Plans de référence
 
 Plans vus du dessus (repères pleins = BD, en pointillés = lore placé) publiés comme
 documents de conception : Kendrhir (en reconstruction), Feyhin Lokcthat, Magistrya,
@@ -239,21 +294,45 @@ puis Mont des Neuf Pics, l'Atmosphère, le palais du Maître des Dragons, Altenb
 l'Oracle (extérieur) ; pour le T3 : Ghrunke Dash, Lhynn, le village fantôme (village et
 marais) et le fief de Garundel (circulaire, douves, tour ronde, logis accolé).
 
-## 8. Questions ouvertes
+## 9. Questions ouvertes
 
-- Départ des Démons : Tsaroth n'a plus de service ; selon Hubert, les Démons partent des
-  **Enfers**, avec 5 sorties possibles (`lieu_portail_enfer_1` à `_5` ?) — PR à part.
-- Lhynn : la BD-T3 la montre sur une presqu'île dans un grand lac cerné de montagnes,
-  alors que sa cellule (N001_W010) est une plaine près de la côte.
+- ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
+- ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer
+  de l'ouest, décision du propriétaire ; le « lac » est la baie en fjord.
+- ~~Pilou~~ : **close** (v1.0.54) — surnom de Pile-ou-Face ; `char_pilou` fusionné.
 - Identité de « l'amant » vengé par la succube (pl.31) : non nommé.
 - Sort de Feidreiva après les « brumes du temps » : à suivre dans les tomes suivants.
 - Race `race_half_dark_elf` utilisée par des quêtes et compétences mais absente de `races`.
 - Escaliers de l'Oracle : rampe et escalier de briques (BD-T2) contre huit escaliers
-  blancs (lore, BD-T3).
+  blancs (lore, BD-T3) ; s'y ajoutent les « lacs du destin » au cœur de l'Empire (T11),
+  une colline à sanctuaire (T12) et un antre souterrain où il est enchaîné (T14).
 - Palais du Maître des Dragons « au-delà des sept régions » (p.29) mais visible depuis le
   pont de la Passe (p.42) : hyperbole ou second palais.
 - Leviathan : N009_E011 dans le monde jouable (ville de départ des orcs, cellules
   générées) contre N012_E012 dans le lore (v1.0.40) ; déplacer une ville de départ
   touche aux départs des personnages et aux cellules générées.
-- Cité du Jade, Nécropole du Jade (T7) et Krak de Jhenner : sans cellule ; l'Empire du
-  Jade est outre-mer et pourrait occuper une île ou un second continent.
+- Krak de Jhenner : sans cellule.
+- **Contenu « Jade » (T7)** sans appui dans l'album : villes `ville_cite_jade_t7` et
+  `ville_necropolis_jade_t7` (doublon probable de `ville_der_hem_shelsem`), région
+  `region_empire_jade`, 6 zones, 7 quêtes, 2 raids, 4 exploits, 4 créatures, 11 butins,
+  2 dialogues, 1 compétence, 2 PNJ (`char_seigneur_jade_t7`, `char_jeune_elfe_jade_t7`), 4 règles et
+  `event_t7_alliance_jade` : supprimer, réaffecter (Lhynn, initiation, Der Hem Shelbem)
+  ou garder comme ajout de jeu `[GD]` ? Décision du propriétaire.
+- **« Fils de Lucifer »** : `exploit_t13_fils_de_lucifer`, `regle_wismerhill_fils_lucifer_t13`
+  et le nom de `comp_forme_demoniaque_wismerhill_t13` reposent sur une réplique d'Haazheel.
+- **État du monde après les T11-T14** : Altenberg démantelée et Syzygie hors du monde (T11),
+  Moork, Feyhin Lokcthat et Magistrya détruites (T14) ; à refléter dans le générateur
+  (comme l'état `reconstruction` de Kendrhir) ou non.
+- Règle `rule_gobelins_size_advantage` : Pile-ou-Face (`companion_pilou`) et Goum (humain)
+  n'y ont pas leur place ; `race_goblin` et `loot_armure_naine_pilou` citent une « sœur » inexistante.
+- Noms de ville du lore « L'hynn » et « Der hem Shelsem » (BD : Lhynn, Der Hem Shelbem),
+  partagés avec `world_master.json` : renommage à décider.
+- Sysigie (N009_W011) : vérifier qu'un grand fleuve entoure la cellule sur la carte.
+- Placements sans cellule : temple de Methraton (dans Lhynn), Port Franc, Seuil de Lhynn,
+  défilé de Mordrek (Marches du Nord), Grand Hall des nains, sanctuaire des Chevaliers
+  Dragons, Moros, Hoengardt, forteresse naine « Heusgly ».
+- Le Haut Tharque (T9) est-il Meldrim (T11) [DÉDUCTION] ? Fusion des fiches à décider.
+- Nom de la fille de Wismerhill : « Elle s'appelle Hellaynnea, n'est-ce pas ? » (T12 p.7).
+- Parsifal reparaît au T12 après la disparition de la Syzygie (T11), sans explication.
+- Kruikna (T3-T6), « Cruik » (T9) et le dragon bleu offert à Pilou (T11) : un ou plusieurs dragons ?
+- Greldinard appelé « Baron » (T10, T11, T13) alors que Wismerhill est Baron de Moork depuis le T6.

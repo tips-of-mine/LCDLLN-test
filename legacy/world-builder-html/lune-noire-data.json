@@ -69,7 +69,8 @@
       "regle_canon_priorite_sources",
       "regle_canon_epoque_jeu",
       "regle_canon_etiquettes",
-      "regle_canon_registre_decisions"
+      "regle_canon_registre_decisions",
+      "regle_canon_calendrier"
     ]
   },
   "factions": [
@@ -209492,7 +209493,7 @@
       "id": "regle_canon_epoque_jeu",
       "name": "Époque du jeu",
       "category": "canon",
-      "description": "Le jeu se situe juste avant les destructions des Tomes 11 et 14 : Altenberg, Aurore (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
+      "description": "Moment du jeu : après la destruction de Kendrhir Vale par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Aurore (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
       "applies_to": [
         "regle_epoque_hors_serie",
         "ville_altenberg",
@@ -209507,7 +209508,118 @@
       "training_minimum": "",
       "source": "[DÉCISION] v1.0.54 (LORE_BD §7.4) et v1.0.56 (LORE_BD §10.3, Q1-Q3)",
       "notes": [
-        "Les fiches des T11 à T14 décrivent l'avenir du monde jouable : récit, quêtes de prophétie ou contenu hors époque, pas l'état des lieux."
+        "Les fiches des T11 à T14 décrivent l'avenir du monde jouable : récit, quêtes de prophétie ou contenu hors époque, pas l'état des lieux.",
+        "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur)."
+      ]
+    },
+    {
+      "id": "regle_canon_calendrier",
+      "name": "Calendrier lunaire du monde",
+      "category": "canon",
+      "description": "Ère unique : les années se comptent depuis l'Oblivion, l'effacement de Methraton (an 0) ; les albums Methraton se situent vers l'an 3000. L'année est lunaire : 13 lunes de 28 jours (4 semaines de 7 jours), puis un jour hors lune, la Nuit de la Lune Noire, qui clôt l'année (365 jours). 4 saisons. L'année de jeu est unique (monde figé).",
+      "applies_to": [],
+      "mechanique_jeu": "Le temps du serveur fait tourner jours, lunes et saisons sans changer l'année ni faire avancer l'histoire.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Décisions du propriétaire (06/11/2026) ; [BD-M1 p.24, 4e de couv.] « 3000 ans » ; noms des lunes et des jours [GD].",
+      "ere": {
+        "nom": "Ère de l'Oblivion",
+        "abreviation": "AO",
+        "an_zero": "Effacement de Methraton (l'Oblivion)"
+      },
+      "annee_jeu": null,
+      "jours_par_lune": 28,
+      "lunes": [
+        {
+          "rang": 1,
+          "nom": "Lune de Givre",
+          "saison": "hiver"
+        },
+        {
+          "rang": 2,
+          "nom": "Lune des Loups",
+          "saison": "hiver"
+        },
+        {
+          "rang": 3,
+          "nom": "Lune des Brumes",
+          "saison": "hiver"
+        },
+        {
+          "rang": 4,
+          "nom": "Lune des Semailles",
+          "saison": "printemps"
+        },
+        {
+          "rang": 5,
+          "nom": "Lune des Pluies",
+          "saison": "printemps"
+        },
+        {
+          "rang": 6,
+          "nom": "Lune des Fleurs",
+          "saison": "printemps"
+        },
+        {
+          "rang": 7,
+          "nom": "Lune du Soleil",
+          "saison": "été"
+        },
+        {
+          "rang": 8,
+          "nom": "Lune des Moissons",
+          "saison": "été"
+        },
+        {
+          "rang": 9,
+          "nom": "Lune des Orages",
+          "saison": "été"
+        },
+        {
+          "rang": 10,
+          "nom": "Lune des Vendanges",
+          "saison": "automne"
+        },
+        {
+          "rang": 11,
+          "nom": "Lune des Feuilles",
+          "saison": "automne"
+        },
+        {
+          "rang": 12,
+          "nom": "Lune de la Chasse",
+          "saison": "automne"
+        },
+        {
+          "rang": 13,
+          "nom": "Lune des Ombres",
+          "saison": "hiver"
+        }
+      ],
+      "jour_hors_lune": {
+        "nom": "Nuit de la Lune Noire",
+        "position": "après la 13e lune, dernier jour de l'année"
+      },
+      "jours_semaine": [
+        "Jour de la Lune",
+        "Jour du Fer",
+        "Jour des Eaux",
+        "Jour du Vent",
+        "Jour du Feu",
+        "Jour de la Terre",
+        "Jour des Ombres"
+      ],
+      "saisons": [
+        "hiver",
+        "printemps",
+        "été",
+        "automne"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.57) Un seul calendrier, ère comptée depuis l'Oblivion (an 0) ; année lunaire ; année de jeu unique, monde figé.",
+        "[GD] (v1.0.57) Structure 13 × 28 jours + 1 jour hors lune, noms des lunes, des jours et répartition des saisons : proposition à valider par le propriétaire.",
+        "[À VÉRIFIER] Année de jeu exacte (champ annee_jeu) à fixer par le propriétaire : postérieure à l'an 3000 AO (enfance de Sekh dans Methraton) ; le Tome 0 cite « décembre » (naissance de Wismerhill), à lire comme la Lune des Ombres [GD]."
       ]
     },
     {
@@ -210944,9 +211056,23 @@
         },
         {
           "collection": "regles_transverses",
+          "id": "regle_canon_calendrier",
+          "nom": "Calendrier lunaire du monde",
+          "decision": "[DÉCISION] (v1.0.57) Un seul calendrier, ère comptée depuis l'Oblivion (an 0) ; année lunaire ; année de jeu unique, monde figé.",
+          "version": "1.0.57"
+        },
+        {
+          "collection": "regles_transverses",
           "id": "regle_canon_corpus",
           "nom": "Corpus de référence du lore",
           "decision": "Font foi pour le lore, et eux seuls : Tome 0 « En un jeu cruel », Tomes 1 à 14 (de « Le Signe des Ténèbres » à « La Fin des Temps »), le hors-série « L'Empire de la Négation », Methraton 1 à 3 et Arcanes de la Lune Noire 1 à 5. Les tomes postérieurs au 14, et tout autre album, sont EXCLUS : le jeu ne couvre pas ce monde (décision du propriétaire).",
+          "version": "1.0.57"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_epoque_jeu",
+          "nom": "Époque du jeu",
+          "decision": "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur).",
           "version": "1.0.57"
         },
         {

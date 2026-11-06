@@ -136,7 +136,6 @@ TAILLE_VILLES = {
     "city_krak_de_jhenner": ("forteresse", None),
     "ville_village_fantome": ("sans_service", "other"),
     "ville_necropolis_jade_t7": ("sans_service", "ruins_settlement"),
-    "ville_chateau_ruine_t00": ("sans_service", "ruins_settlement"),
     "ville_der_hem_shelsem": ("sans_service", "undead_kingdom"),
 }
 

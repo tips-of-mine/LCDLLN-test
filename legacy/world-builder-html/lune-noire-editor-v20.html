@@ -1652,11 +1652,12 @@ function buildExportSchema() {
   // terrain_types, et toute clé future). Le schéma normalisé est ensuite superposé.
   var _out = JSON.parse(JSON.stringify(db||{}));
   var _schema = {
-    meta: {
+    // Object.assign conserve les autres champs de meta (canon : ids des règles canon…).
+    meta: Object.assign({}, db.meta || {}, {
       source:  (db.meta && db.meta.source)  || "",
       version: (db.meta && db.meta.version) || "0.1.0",
       notes:   (db.meta && db.meta.notes)   || []
-    },
+    }),
     factions: (db.factions||[]).map(function(f) {
       // Object.assign({}, f, …) préserve les champs riches éventuels (game_design…).
       return Object.assign({}, f, {
@@ -1814,7 +1815,8 @@ function buildExportSchema() {
     quest_categories: db.quest_categories||[],
     tomes_config: (db.tomes_config||[]).map(function(t){return{id:t.id||'',label:t.label||''};}),
     competences: (db.competences||[]).map(function(c){return{id:c.id||'',name:c.name||'',school:c.school||'',usable_by:c.usable_by||[],prerequisite:c.prerequisite||'',description:c.description||'',progression:c.progression||[],effects:c.effects||[],incantation:c.incantation||c.incantation_known||'',training_steps:c.training_steps||c.learning_steps||[],source:c.source||'',notes:c.notes||[]};}),
-    regles_transverses: (db.regles_transverses||[]).map(function(r){return{id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]};}),
+    // Object.assign conserve les champs propres à certaines règles (registre des règles canon…).
+    regles_transverses: (db.regles_transverses||[]).map(function(r){return Object.assign({}, r, {id:r.id||'',name:r.name||'',category:r.category||'',description:r.description||'',applies_to:r.applies_to||[],mechanique_jeu:r.mechanique_jeu||'',apparition_window:r.apparition_window||'',incantations_connues:r.incantations_connues||[],training_minimum:r.training_minimum||'',source:r.source||'',notes:r.notes||[]});}),
     weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',hands:w.hands||'one',dual_wield:!!w.dual_wield,eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
     server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
   };
@@ -8949,6 +8951,7 @@ function deleteCompetence(idx) {
 // ═══════════════════════════════════════════════════════════
 
 var REGLE_CATEGORIES = {
+  canon:          {label:'Canon (ce qui fait foi)', color:'#e0c060', icon:'§'},
   lore_mecanique: {label:'Lore & Mécanique',    color:'#9060c0', icon:'📖'},
   combat:         {label:'Combat',               color:'#c05060', icon:'⚔️'},
   politique:      {label:'Politique',            color:'#c9a84c', icon:'⚜️'},
@@ -9055,6 +9058,25 @@ function renderReglesTransverses(el) {
         if (apB) content += '<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.2rem">'+apB+'</div>';
       }
 
+      // Notes des règles canon (sens des étiquettes, exclusions) : dépliables.
+      if (r.category==='canon' && (r.notes||[]).length) {
+        content += '<details style="margin-top:0.4rem"><summary style="font-size:0.72rem;color:'+cat.color+';cursor:pointer">Notes ('+r.notes.length+')</summary>';
+        r.notes.forEach(function(n){ content += '<div style="font-size:0.74rem;color:var(--text-secondary);margin-top:0.2rem">'+esc(n)+'</div>'; });
+        content += '</details>';
+      }
+
+      // Registre des décisions (règle canon regle_canon_registre_decisions) : dépliable.
+      if (Array.isArray(r.registre) && r.registre.length) {
+        content += '<details style="margin-top:0.4rem"><summary style="font-size:0.72rem;color:'+cat.color+';cursor:pointer">Registre : '+r.registre.length+' décisions</summary>';
+        content += '<div style="max-height:22rem;overflow:auto;margin-top:0.3rem">';
+        r.registre.forEach(function(e){
+          content += '<div style="font-size:0.72rem;color:var(--text-secondary);padding:0.2rem 0;border-bottom:1px solid var(--border)">'
+                   + '<span style="color:var(--text-dim)">'+esc(e.version?('v'+e.version):'—')+' · '+esc(e.collection||'')+' · '+esc(e.id||'')+'</span> '
+                   + '<b>'+esc(e.nom||'')+'</b> : '+esc(e.decision||'')+'</div>';
+        });
+        content += '</div></details>';
+      }
+
       if (r.source) content += '<div style="margin-top:0.35rem;font-size:0.65rem;color:var(--text-dim)">📚 '+esc(r.source)+'</div>';
       content += '</div>';
       content += '<div style="display:flex;gap:0.3rem;flex-shrink:0">';
@@ -9132,6 +9154,8 @@ function saveRegle(idx) {
   };
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if(!db.regles_transverses) db.regles_transverses=[];
+  // Conserve les champs que le formulaire ne gère pas (registre des règles canon…).
+  if(idx!==undefined) obj = Object.assign({}, db.regles_transverses[idx], obj);
   if(idx!==undefined) db.regles_transverses[idx]=obj; else db.regles_transverses.push(obj);
   closeModal(); showSection('regles_transverses'); toast(idx!==undefined?'Règle modifiée':'Règle ajoutée');
 }

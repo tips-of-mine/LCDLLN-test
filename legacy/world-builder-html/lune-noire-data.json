@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.56",
+    "version": "1.0.57",
     "notes": [
+      "v1.0.57 : [CANON] règles « ce qui fait foi » (regles_transverses, catégorie canon) : corpus (Tome 0, Tomes 1-14, L'Empire de la Négation, Methraton 1-3, Arcanes 1-5 ; tomes 15 et suivants exclus), priorité des sources, époque du jeu, étiquettes, registre de 198 décisions du propriétaire (173 notes [DÉCISION], 16 fiches dictées par le propriétaire, 7 décisions de LORE_BD inscrites sur leurs fiches, 2 décisions de corpus et de priorité). Détail : docs/world/LORE_BD.md, section 0.",
       "v1.0.56 : [BD-HS] albums hors série (Tome 0 « En un jeu cruel », « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5) : 25 décisions du propriétaire (propositions par défaut) — THS après T11, préquelles avant T1 (état de fin d'album) ; Sysigie affichée « Aurore » (alias Sysigie, Syzygie ; principauté syzygie) ; char_wismerhill_father fusionné dans char_pazuzu ; Greldinard demi-orque, Ghorghor demi-ogre, Pile-ou-Face elfe des bois (alias Nelfe) ; jumelles « Carole et Caroline » ; Okhost alias Hokhost ; Dvorak / Dzorak ; régions Marche de l'Est et royaume d'Hishtarland ; Orkland alias des Territoires orcques ; Erypt et plans hors carte ; Sekh = le Serpent ; Haghendorf empereur des préquelles ; Ruines de Wismerhill : POI poi_ruines_wismerhill à côté du village de Whispers Hill (N011_E008), fusion de ville_chateau_ruine_t00 ; personnages, lieux, objets et frise des albums ajoutés. Détail : docs/world/LORE_BD.md, section 10.",
       "v1.0.55 : placements T7-T14 et fleuve de Sysigie — temple de Methraton et Seuil de Lhynn dans la cellule de Lhynn (N001_W010), forteresse naine d'Heureux / Heusgly en S006_E004, sanctuaire des Chevaliers Dragons en S003_W004 (décisions) ; Port Franc (S003_W013), Hoengardt (N014_E016), défilé de Mordrek (N016_E013), Moros (N000_W007), Grand Hall des nains (S008_E014) [INFÉRÉ] ; fleuve « [à nommer] » qui entoure l'île de Sysigie (N006_W010 → N012_W011) ; fusion char_haut_tharque → char_meldrim_t11 (décision) ; notes : enfants de Wismerhill, Kruikna / Cruik / dragon bleu distincts, Parsifal caché au T12, titre « Baron » de Greldinard. Détail : docs/world/LORE_BD.md, section 8.",
       "v1.0.54 : [BD-T7 à T14] corrections confrontées aux albums « De Vents, de Jade et de Jais », « Le Glaive de justice », « Les Chants de la négation », « L'Aigle foudroyé », « Ave Tenebrae », « La Porte des Enfers », « La Prophétie », « La Fin des Temps » : fusions char_prince_tenebres_t11 → char_lucifer_prince_tenebres (le Sombre Prince est le père d'Haazheel), char_baron_aspirant_t13 → char_fratus_sinister, char_pilou → char_pile_ou_face, char_methrhton_herald → char_serpent_methraton ; contenu « Jade » du T7 marqué [À VÉRIFIER] ; bataille finale du T13 dans la salle du trône de Lhynn ; Lhynn sur la mer de l'ouest, Sysigie (Syzygie) île fluviale noyée de brouillard (décisions) ; notes BD d'Horkher déplacées depuis Harrowdale ; graphies Grhumpdeth, Hellwelkin, Feu Solaire ; statuts (Haazheel, Fratus, Urmacht, Gunthar morts ; père de Wismerhill et Iaun Reith vivants) ; frise T7-T14 complétée (90 fiches vides remplies ou ajoutées) ; 4 personnages et 8 lieux ajoutés. Détail : docs/world/LORE_BD.md, section 7.",
@@ -62,6 +63,14 @@
       "v1.0.0 : Enrichissement profond Tome 0 — En un jeu cruel",
       "v0.0.9 : modèle de base.",
       "[INTÉGRATION] Game design du classeur LCDLLN_Faction_Races_Classes.xlsx intégré: stats, XP, quêtes, déplacements spéciaux, montures, relations factions, loot, villes/services, hors-la-loi, armes. Voir clé racine 'game_design' + 'game_design' par faction/classe."
+    ],
+    "canon": [
+      "regle_canon_corpus",
+      "regle_canon_priorite_sources",
+      "regle_canon_epoque_jeu",
+      "regle_canon_etiquettes",
+      "regle_canon_registre_decisions",
+      "regle_canon_calendrier"
     ]
   },
   "factions": [
@@ -4151,7 +4160,9 @@
         "[BD-T14] p.26 : le Seuil de Lhynn s'ouvre « près du palais » (lieu_seuil_lhynn) ; p.38 : guidés par le Grand Phare, les dragons s'y posent ; p.40 : dernier coucher de soleil « sur la mer ».",
         "[BD-THS p.41] Plan de Lhynn : ville en deux parties de part et d'autre d'un chenal, deux enceintes, port.",
         "[BD-THS p.36-41] Après T11 : l'ancien palais est rasé par un « tremblement de terre magique » sur ordre de Wismerhill Ier ; palais-ziggourat de 280 m [ÉPOQUE] après T11.",
-        "[DÉCISION] (v1.0.56) Plan de Lhynn retenu pour le monde jouable (Q1) : chenal, deux enceintes, port ; l'ancien palais reste en place (ni palais-ziggourat ni grandes artères, postérieurs à l'avènement)."
+        "[DÉCISION] (v1.0.56) Plan de Lhynn retenu pour le monde jouable (Q1) : chenal, deux enceintes, port ; l'ancien palais reste en place (ni palais-ziggourat ni grandes artères, postérieurs à l'avènement).",
+        "[DÉCISION] (v1.0.54) Lhynn est au bord de l'océan / de la mer de l'ouest, pas d'un lac : le « lac » des vues T3, T11 p.38 et T14 p.25-33 est la baie en fjord (docs/world/LORE_BD.md §7.2 ; inscrit en v1.0.57).",
+        "[DÉCISION] (v1.0.54) « L'hynn » devient « Lhynn » dans le lore, world_master.json et factions.json (identifiants inchangés) (docs/world/LORE_BD.md §7.4 ; inscrit en v1.0.57)."
       ],
       "dimensions_estimees": {
         "hauteur": "colline centrale dominant la baie, élévation marquée",
@@ -5494,7 +5505,8 @@
         "[BD-A3 pl.49-50] Parsifal couronné « PRINCE PARSIFAL DE SYZYGIE » ; les géants reviennent bâtir gratuitement la cathédrale.",
         "[BD-THS p.5] « SYZYGIE » posé sur une péninsule montagneuse : schéma, sans effet sur la grille.",
         "[ÉPOQUE] fondation et cathédrale avant T1 ; projetée dans un autre plan au T11 ; intacte à l'époque du jeu.",
-        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac d'Aurore, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore)."
+        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac d'Aurore, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
+        "[DÉCISION] (v1.0.54) La cité de Sysigie (affichée « Aurore » depuis la v1.0.56) est sur une île au milieu d'un grand fleuve ; le brouillard fréquent sur le fleuve produit la « cité dans les nuages » (T4, T10) (docs/world/LORE_BD.md §7.2 ; inscrit en v1.0.57)."
       ],
       "dimensions_estimees": {
         "hauteur": "500m",
@@ -9699,7 +9711,8 @@
       "notes": [
         "[HS] Lieu où le Palais Roulant fut aperçu lors de la grande bataille (illustration BD couleur).",
         "[HS] Cité dans le contexte du Palais Roulant.",
-        "[BD-T7] p.43, 47-52 / [BD-T8] p.5-20 (v1.0.54) : province du « Grand Sud », au sud de Moork ; nécropole gardée par des Shedu, horde des « deux fois nés » ; Wismerhill y affronte le prince mort-vivant archimage (pas un Dragon Rouge). Graphie de la BD : « Der Hem Shelbem » (nom du lore conservé, aligné sur world_master.json)."
+        "[BD-T7] p.43, 47-52 / [BD-T8] p.5-20 (v1.0.54) : province du « Grand Sud », au sud de Moork ; nécropole gardée par des Shedu, horde des « deux fois nés » ; Wismerhill y affronte le prince mort-vivant archimage (pas un Dragon Rouge). Graphie de la BD : « Der Hem Shelbem » (nom du lore conservé, aligné sur world_master.json).",
+        "[DÉCISION] (v1.0.54) « Der hem Shelsem » devient « Der Hem Shelbem » dans le lore, world_master.json et factions.json (identifiants inchangés) (docs/world/LORE_BD.md §7.4 ; inscrit en v1.0.57)."
       ],
       "taille": "sans_service",
       "service_npcs": []
@@ -151099,7 +151112,8 @@
         "[BD-T9] L'Empire Tharque possède une flotte navale gigantesque — les navires ont des proues en forme de tête de monstre.",
         "[LORE_ETENDU] Premier personnage de l'Empire Tharque nommé — force navale inédite dans la géographie du jeu.",
         "[BD-T11] p.16 : frère de l'amiral Sierhelt.",
-        "[v1.0.55] Fusion de char_haut_tharque (« Le Haut Tharque », T9) : décision du propriétaire, le Haut Tharque du T9 (« Ô Majesté », « Ô Empereur », alliance contre un port franc, T9 p.44) est Meldrim, Empereur de Tharque (T11 p.16-17) ; alias « le Haut Tharque »."
+        "[v1.0.55] Fusion de char_haut_tharque (« Le Haut Tharque », T9) : décision du propriétaire, le Haut Tharque du T9 (« Ô Majesté », « Ô Empereur », alliance contre un port franc, T9 p.44) est Meldrim, Empereur de Tharque (T11 p.16-17) ; alias « le Haut Tharque ».",
+        "[DÉCISION] (v1.0.55) Le Haut Tharque du T9 (p.44) est Meldrim, Empereur de Tharque (T11 p.16-17) : char_haut_tharque fusionné dans char_meldrim_t11 (docs/world/LORE_BD.md §8.3 ; inscrit en v1.0.57)."
       ]
     },
     {
@@ -158064,7 +158078,8 @@
         "[BD-T7] Le Seigneur du Jade (nom inconnu) est à la tête de cet empire.",
         "[BD-T7] Lié à la Lune Noire — leur culte du Soleil Noir est une expression locale du culte de la Lune Noire.",
         "[LORE_ETENDU] À positionner à l'est de la carte — région encore inexplorée dans les tomes précédents.",
-        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade.",
+        "[DÉCISION] (v1.0.54) L'Empire du Jade est une extension de jeu [GD] (territoire à ouvrir plus tard, ouverture au monde) : contenu conservé, notes passées en [GD] ; le T7 n'en montre rien (docs/world/LORE_BD.md §7.4 ; inscrit en v1.0.57)."
       ]
     },
     {
@@ -170287,35 +170302,35 @@
     },
     {
       "id": "t15",
-      "label": "Tome 15 Terra Secunda 1/2"
+      "label": "Tome 15 Terra Secunda 1/2 (hors corpus)"
     },
     {
       "id": "t16",
-      "label": "Tome 16 Terra Secunda 2/2"
+      "label": "Tome 16 Terra Secunda 2/2 (hors corpus)"
     },
     {
       "id": "t17",
-      "label": "Tome 17 Guerres Ophidiennes"
+      "label": "Tome 17 Guerres Ophidiennes (hors corpus)"
     },
     {
       "id": "t18",
-      "label": "Tome 18 Le Trône d'Opale"
+      "label": "Tome 18 Le Trône d'Opale (hors corpus)"
     },
     {
       "id": "t19",
-      "label": "Tome 19 Une semaine ordinaire"
+      "label": "Tome 19 Une semaine ordinaire (hors corpus)"
     },
     {
       "id": "t20",
-      "label": "Tome 20 Une porte sur l'Enfer"
+      "label": "Tome 20 Une porte sur l'Enfer (hors corpus)"
     },
     {
       "id": "t21",
-      "label": "Tome 21 Sic Transit Gloria Mundi"
+      "label": "Tome 21 Sic Transit Gloria Mundi (hors corpus)"
     },
     {
       "id": "t22",
-      "label": "Tome 22 La Forteresse d'Opale"
+      "label": "Tome 22 La Forteresse d'Opale (hors corpus)"
     },
     {
       "id": "tome_13",
@@ -209433,6 +209448,1642 @@
     }
   ],
   "regles_transverses": [
+    {
+      "id": "regle_canon_corpus",
+      "name": "Corpus de référence du lore",
+      "category": "canon",
+      "description": "Font foi pour le lore, et eux seuls : Tome 0 « En un jeu cruel », Tomes 1 à 14 (de « Le Signe des Ténèbres » à « La Fin des Temps »), le hors-série « L'Empire de la Négation », Methraton 1 à 3 et Arcanes de la Lune Noire 1 à 5. Les tomes postérieurs au 14, et tout autre album, sont EXCLUS : le jeu ne couvre pas ce monde (décision du propriétaire).",
+      "applies_to": [
+        "tomes_config",
+        "regle_canon_priorite_sources",
+        "regle_canon_epoque_jeu"
+      ],
+      "mechanique_jeu": "",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] du propriétaire (v1.0.57)",
+      "notes": [
+        "Identifiants retenus de tomes_config : t00, t01 à t14, t_hs_empire, t_hs_methraton1 à 3, t_hs_arcanes1 à 5 (tome_13 et T14 sont des doublons sans libellé de t13 et t14).",
+        "Exclus, encore présents dans le fichier sans faire foi : t15, t16, t17, t18, t19, t20, t21, t22 dans tomes_config, les mêmes dans la liste tomes de char_wismerhill, et les mentions de l'Opus II (Tomes 15-21) et du Trône d'Opale dans regle_opus_i_clos_t14.",
+        "[DÉCISION] (v1.0.57) Hors corpus : t15 (Tome 15 Terra Secunda 1/2), t16 (Tome 16 Terra Secunda 2/2), t17 (Tome 17 Guerres Ophidiennes), t18 (Tome 18 Le Trône d'Opale), t19 (Tome 19 Une semaine ordinaire), t20 (Tome 20 Une porte sur l'Enfer), t21 (Tome 21 Sic Transit Gloria Mundi), t22 (Tome 22 La Forteresse d'Opale) restent dans tomes_config pour la traçabilité des sources mais ne font pas foi ; toute note qui ne s'appuie que sur eux (ex. char_wismerhill) est hors du monde jouable."
+      ]
+    },
+    {
+      "id": "regle_canon_priorite_sources",
+      "name": "Priorité des sources en cas de contradiction",
+      "category": "canon",
+      "description": "En cas de contradiction, l'ordre est : 1) décision du propriétaire [DÉCISION] ; 2) Tomes 0 à 14 ([BD-T00], [BD-T1] à [BD-T14]) ; 3) « L'Empire de la Négation » ([BD-THS], [HS]) ; 4) Arcanes et Methraton ([BD-A1] à [BD-A5], [BD-M1] à [BD-M3]). Le game design [GD] (et [GAMEPLAY], [LORE_ETENDU], [JSON]) comble les vides et ne contredit jamais une source de rang supérieur. [INFÉRÉ], [HYPOTHÈSE] et [À VÉRIFIER] ne font pas foi.",
+      "applies_to": [
+        "regle_canon_corpus",
+        "regle_canon_etiquettes",
+        "regle_canon_registre_decisions"
+      ],
+      "mechanique_jeu": "",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] du propriétaire (v1.0.57)",
+      "notes": [
+        "[DÉDUCTION] (indices de la BD cités) est retenue au rang de l'album qui la fonde, tant qu'aucune lecture directe ne la contredit.",
+        "Une source de rang inférieur peut compléter une source de rang supérieur (détail, nom, lieu) sans la contredire."
+      ]
+    },
+    {
+      "id": "regle_canon_epoque_jeu",
+      "name": "Époque du jeu",
+      "category": "canon",
+      "description": "Moment du jeu : après la destruction de Kendrhir Vale par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Aurore (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
+      "applies_to": [
+        "regle_epoque_hors_serie",
+        "ville_altenberg",
+        "ville_sysigie",
+        "ville_moork",
+        "ville_feyhin_lokcthat",
+        "sauken_glude_of_magistrya"
+      ],
+      "mechanique_jeu": "",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] v1.0.54 (LORE_BD §7.4) et v1.0.56 (LORE_BD §10.3, Q1-Q3)",
+      "notes": [
+        "Les fiches des T11 à T14 décrivent l'avenir du monde jouable : récit, quêtes de prophétie ou contenu hors époque, pas l'état des lieux.",
+        "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur)."
+      ]
+    },
+    {
+      "id": "regle_canon_calendrier",
+      "name": "Calendrier lunaire du monde",
+      "category": "canon",
+      "description": "Ère unique : les années se comptent depuis l'Oblivion, l'effacement de Methraton (an 0) ; les albums Methraton se situent vers l'an 3000. L'année est lunaire : 13 lunes de 28 jours (4 semaines de 7 jours), puis un jour hors lune, la Nuit de la Lune Noire, qui clôt l'année (365 jours). 4 saisons. L'année de jeu est unique (monde figé).",
+      "applies_to": [],
+      "mechanique_jeu": "Le temps du serveur fait tourner jours, lunes et saisons sans changer l'année ni faire avancer l'histoire.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Décisions du propriétaire (06/11/2026) ; [BD-M1 p.24, 4e de couv.] « 3000 ans » ; noms des lunes et des jours [GD].",
+      "ere": {
+        "nom": "Ère de l'Oblivion",
+        "abreviation": "AO",
+        "an_zero": "Effacement de Methraton (l'Oblivion)"
+      },
+      "annee_jeu": null,
+      "jours_par_lune": 28,
+      "lunes": [
+        {
+          "rang": 1,
+          "nom": "Lune de Givre",
+          "saison": "hiver"
+        },
+        {
+          "rang": 2,
+          "nom": "Lune des Loups",
+          "saison": "hiver"
+        },
+        {
+          "rang": 3,
+          "nom": "Lune des Brumes",
+          "saison": "hiver"
+        },
+        {
+          "rang": 4,
+          "nom": "Lune des Semailles",
+          "saison": "printemps"
+        },
+        {
+          "rang": 5,
+          "nom": "Lune des Pluies",
+          "saison": "printemps"
+        },
+        {
+          "rang": 6,
+          "nom": "Lune des Fleurs",
+          "saison": "printemps"
+        },
+        {
+          "rang": 7,
+          "nom": "Lune du Soleil",
+          "saison": "été"
+        },
+        {
+          "rang": 8,
+          "nom": "Lune des Moissons",
+          "saison": "été"
+        },
+        {
+          "rang": 9,
+          "nom": "Lune des Orages",
+          "saison": "été"
+        },
+        {
+          "rang": 10,
+          "nom": "Lune des Vendanges",
+          "saison": "automne"
+        },
+        {
+          "rang": 11,
+          "nom": "Lune des Feuilles",
+          "saison": "automne"
+        },
+        {
+          "rang": 12,
+          "nom": "Lune de la Chasse",
+          "saison": "automne"
+        },
+        {
+          "rang": 13,
+          "nom": "Lune des Ombres",
+          "saison": "hiver"
+        }
+      ],
+      "jour_hors_lune": {
+        "nom": "Nuit de la Lune Noire",
+        "position": "après la 13e lune, dernier jour de l'année"
+      },
+      "jours_semaine": [
+        "Jour de la Lune",
+        "Jour du Fer",
+        "Jour des Eaux",
+        "Jour du Vent",
+        "Jour du Feu",
+        "Jour de la Terre",
+        "Jour des Ombres"
+      ],
+      "saisons": [
+        "hiver",
+        "printemps",
+        "été",
+        "automne"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.57) Un seul calendrier, ère comptée depuis l'Oblivion (an 0) ; année lunaire ; année de jeu unique, monde figé.",
+        "[GD] (v1.0.57) Structure 13 × 28 jours + 1 jour hors lune, noms des lunes, des jours et répartition des saisons : proposition à valider par le propriétaire.",
+        "[À VÉRIFIER] Année de jeu exacte (champ annee_jeu) à fixer par le propriétaire : postérieure à l'an 3000 AO (enfance de Sekh dans Methraton) ; le Tome 0 cite « décembre » (naissance de Wismerhill), à lire comme la Lune des Ombres [GD]."
+      ]
+    },
+    {
+      "id": "regle_canon_etiquettes",
+      "name": "Étiquettes des notes",
+      "category": "canon",
+      "description": "Sens des étiquettes entre crochets employées dans les notes et les textes du lore (inventaire du fichier v1.0.57 par expression régulière). Le rang de chaque source est donné par regle_canon_priorite_sources.",
+      "applies_to": [
+        "regle_canon_priorite_sources"
+      ],
+      "mechanique_jeu": "",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Inventaire du fichier ; docs/world/LORE_BD.md §1",
+      "notes": [
+        "[BD-Tn], [BD-Tn p.N], [BD-Tn pl.N] : Fait lu dans le tome n (1 à 14), texte ou image. p. = page (imprimée ou du PDF selon le tome, voir LORE_BD §1, §4, §6, §7), pl. = planche, pp. = pages. Formes groupées des notes de version : [BD-T1/T2], [BD-T4/T5/T6], [BD-T7 à T14]. Rang 2. (3394 occurrences)",
+        "[BD-T00 p.N] : Fait lu dans le Tome 0 « En un jeu cruel » (planche imprimée). Rang 2. (23 occurrences)",
+        "[BD-T0] : Ancienne forme : quêtes dérivées de la période du Tome 0 (joueur non-héros). Pas une lecture paginée : le fait se vérifie avec [BD-T00]. (14 occurrences)",
+        "[T00], [T6] : Renvois courts à un tome (monture, visuel) : à lire comme [BD-T00] et [BD-T6]. (7 occurrences)",
+        "[BD-THS p.N] : Fait lu dans « L'Empire de la Négation » (page imprimée). Rang 3 ; hors époque du jeu sauf ce que retient regle_canon_epoque_jeu. (24 occurrences)",
+        "[HS] : Contenu de « L'Empire de la Négation » saisi avant la lecture paginée (ancienne étiquette). Rang 3, hors époque du jeu sauf décision contraire. (330 occurrences)",
+        "[BD-HS] : Note de version : lot des albums hors série (v1.0.56). (1 occurrence)",
+        "[BD-M1] à [BD-M3] : Fait lu dans Methraton 1 à 3 (page du PDF). Rang 4. (72 occurrences)",
+        "[BD-A1] à [BD-A5] : Fait lu dans Arcanes 1 à 5 (A1, A4, A5 : page ou folio imprimé ; A2, A3 : planche). Rang 4. (180 occurrences)",
+        "[BD] : Fait de la BD sans tome ni page : à paginer ; rang de l'album une fois identifié. (96 occurrences)",
+        "[DÉCISION] (v1.0.xx) : Décision du propriétaire, prise dans la version indiquée. Rang 1 : prime sur toute source. Indexée dans regle_canon_registre_decisions. (180 occurrences)",
+        "[GD] : Game design sans source BD : comble un vide, ne contredit jamais une source de rang supérieur. (258 occurrences)",
+        "[GAMEPLAY], [GAME] : Règle ou mécanique de jeu : même statut que [GD]. (59 occurrences)",
+        "[LORE_ETENDU] : Extrapolation du lore sans source BD directe (intégration du classeur de game design) : même statut que [GD]. (147 occurrences)",
+        "[LORE_DIRECT], [LORE], [LORE+GAMEPLAY], [HISTOIRE+BOSS] : Type de quête (champ type ou source_lore) : quête tirée d'un événement de la BD, du lore, ou mixte. Ne source pas un fait : le fait se lit dans les notes [BD-Tn]. (50 occurrences)",
+        "[JSON] : Élément repris de l'ancienne fiche de données, non confronté à la BD : même statut que [GD]. (3 occurrences)",
+        "[INFÉRÉ] : Choix de conception faute d'indication dans la BD (cellule, nom repris de carte_export.json, emplacement). Ne fait pas foi : cède devant toute source. (697 occurrences)",
+        "[DÉDUCTION] : Conclusion tirée de plusieurs indices concordants de la BD, indices cités : retenue tant qu'aucune lecture directe ne la contredit. (51 occurrences)",
+        "[HYPOTHÈSE] : Lecture plausible non confirmée : ne fait pas foi, à vérifier. (31 occurrences)",
+        "[À VÉRIFIER], [À VÉRIFIER BD-Tn] : Donnée conservée mais contredite ou non trouvée dans le tome indiqué : ne fait pas foi. (21 occurrences)",
+        "[ÉPOQUE] : Place d'une fiche des albums hors série dans le temps (avant T1, seuil du T1, après T11…) : voir regle_epoque_hors_serie. (122 occurrences)",
+        "[v1.0.xx] : Trace d'une modification faite dans cette version (fusion, correction) : la note dit la source qui la justifie. (38 occurrences)",
+        "[CANON], [CARTE], [VILLES], [RÈGLES], [RENDU], [SCÉNARIO], [CARTE+SCÉNARIO], [BESTIAIRE], [INTÉGRATION], [TOME 1] : Thème d'une note de version (meta.notes) : pas une source. (27 occurrences)",
+        "Crochets qui ne sont pas des étiquettes : intitulés d'étapes de quêtes ([PROLOGUE], [ORIGINE], [RENCONTRE], [NOM], [HORDE], [CAMPAGNE], [FEIDREIVA], [FAILLE], [KENDRHIR], [HIVER], [PSYCHIQUE], [ARMÉE], [BATAILLE], [CAPTURE], [VENGEANCE], [FUITE], [MATIN], [MIDI], [APRÈS-MIDI], [SOIR]) ; locuteur d'une réplique ([Desdémone], [Haghendorf, BD-T4 p.2]) ; onomatopée ([BOOM]) ; gabarit d'incantation ([Nom]) ; nom provisoire (« [à nommer] »)."
+      ]
+    },
+    {
+      "id": "regle_canon_registre_decisions",
+      "name": "Registre des décisions du propriétaire",
+      "category": "canon",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index.",
+      "applies_to": [
+        "regle_canon_priorite_sources"
+      ],
+      "mechanique_jeu": "",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4",
+      "notes": [
+        "Une même décision appliquée à plusieurs fiches figure une fois par fiche.",
+        "Les décisions v1.0.57 de ce corpus (regle_canon_corpus, regle_canon_priorite_sources) figurent aussi au registre.",
+        "Les fiches de source « Hubert » (revue de la carte du 25/10/2026) sont des décisions du propriétaire sans note [DÉCISION] : leur texte est la description de la fiche.",
+        "Toute nouvelle décision se note d'abord [DÉCISION] (v1.0.xx) sur sa fiche, puis s'ajoute au registre."
+      ],
+      "registre": [
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_foret",
+          "nom": "Forêt dense et visibilité",
+          "decision": "Terrain fortement occupé par une végétation dense, surtout pleine d'arbres. Visibilité réduite à l'intérieur : on ne voit pas loin.",
+          "version": "1.0.29"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_lisiere",
+          "nom": "Lisière entre plaine et forêt",
+          "decision": "Les cellules entre plaine et forêt sont des lisières. Transition entre plaine et forêt : de moins en moins d'arbres en sortant de la forêt. La distance de vue se réduit en entrant dans la forêt et se rétablit en en sortant.",
+          "version": "1.0.29"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_plaine",
+          "nom": "Relief et occupation de la plaine",
+          "decision": "Terrain pas forcément plat : collines, petits monts, champs cultivés, petits bosquets, hautes herbes, pour occuper le terrain et le visuel du joueur.",
+          "version": "1.0.29"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_routes_eau",
+          "nom": "Routes le long de l'eau",
+          "decision": "Une route qui coupe une cellule de côte longe la côte, et une route qui coupe une rivière la longe : le joueur ne marche jamais dans l'eau. Une route qui coupe une cellule de plage longe le sable.",
+          "version": "1.0.29"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_ligne_maritime_sud",
+          "nom": "Ligne maritime Equiton – Brookend – Hishtarland – Saltfen",
+          "decision": "Ligne en boucle Equiton → Brookend → Hishtarland → Saltfen → Equiton, desservie par 2 bateaux en positions opposées. Vraie rotation : chaque étape suit son propre chenal dans la baie (le retour Saltfen → Equiton ne reprend pas le chemin de l'aller). Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre. Le ponton de chaque escale est dans la cellule de la ville, juste à côté d'elle ; pause de 30 secondes avant de repartir.",
+          "version": "1.0.31"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_abysses_baie_acces",
+          "nom": "Les Abysses de la baie — conditions d'accès",
+          "decision": "Accès aux Abysses de la baie (S008_W005) : 1) terminer toutes les quêtes « Murmures de la baie » autour de Equiton, Brookend, Hishtarland, Saltfen, Harrowbrook et Millford — les PNJ en parlent de plus en plus à mesure que la chaîne avance ; 2) réussir le raid en petite équipe « Le Secret de l'île d'Hishtarland », qui fait tomber la recette de la potion de respiration aquatique ; 3) avoir le niveau minimum (à définir) ; 4) boire la potion, plonger depuis le bateau de la ligne maritime du sud quand il passe au-dessus de S008_W005, et nager vers le fond. L'entrée n'est jamais indiquée : les joueurs doivent la trouver. Elle ouvre deux chemins vers deux raids : le Temple englouti (3 groupes) et l'Antre de la créature (2 groupes).",
+          "version": "1.0.32"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_abysses_baie",
+          "nom": "Les Abysses de la baie",
+          "decision": "",
+          "version": "1.0.32"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_navette_ashwick_ile",
+          "nom": "Navette Ashwick – Deepbrook",
+          "decision": "Navette aller-retour Ashwick ↔ Deepbrook (île N012_E002–N012_E003), 1 bateau. Le bateau ne navigue que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
+          "version": "1.0.33"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_ports_ouest",
+          "nom": "Ports d'Altenberg et de Lhynn",
+          "decision": "Altenberg et Lhynn ont chacune un port, ponton dans la cellule de la ville côté mer (ouest). Les liaisons maritimes partiront vers des îles ou vers un autre continent plus à l'ouest : destination pas encore arrêtée. Mêmes règles que les autres lignes : eau navigable uniquement, pause de 30 secondes au ponton.",
+          "version": "1.0.34"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_ponts",
+          "nom": "Ponts sur les rivières",
+          "decision": "Là où une route traverse une rivière, un pont en pierre taillée permet de passer (liste hydrography.bridges). Ailleurs, quelques petits ponts en bois permettent de traverser à certains endroits où il n'y a pas de pont de route.",
+          "version": "1.0.38"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_rivieres",
+          "nom": "Rendu des rivières",
+          "decision": "Dans le jeu, les rivières ne sont jamais droites : elles serpentent (méandres, zigzags) entre les cellules de leur tracé, qui ne donne que l'ordre des cellules traversées. Elles comportent par endroits de petits rapides.",
+          "version": "1.0.38"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_volcan_acces",
+          "nom": "Le Cœur du volcan — conditions d'accès",
+          "decision": "Accès au raid « Le Cœur du volcan » : 1) terminer la chaîne « Le Souffle du volcan » (Der Hem Shelbem, Moork, Shadowfen, Frosthollow), qui donne la recette de la potion de résistance à la chaleur ; 2) avoir le niveau minimum (à définir) ; 3) boire la potion et entrer par le cratère, au sommet du volcan (S008_E014). Raid à 4 groupes ; boss : une créature qui vit dans la lave.",
+          "version": "1.0.39"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_volcan_sud_est",
+          "nom": "Le Volcan",
+          "decision": "",
+          "version": "1.0.39"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_affichage_hameaux",
+          "nom": "Affichage des hameaux sur la carte",
+          "decision": "Les villes du lore sont en général très grandes et très peuplées ; les petits hameaux existent mais ne sont affichés sur la carte qu'en vue rapprochée (zoom).",
+          "version": "1.0.41"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_niveaux_par_faction",
+          "nom": "Niveaux des zones selon la faction",
+          "decision": "Toutes les factions ne commencent pas au même endroit. Le niveau d'une zone n'est pas global : il est défini pour chaque faction, en fonction de son point de départ et de sa progression.",
+          "version": "1.0.41"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_rendu_points_interet",
+          "nom": "Points d'intérêt des plaines, forêts et montagnes",
+          "decision": "Les plaines, les forêts et les montagnes accueillent des grottes, des mines et des tours de fortification, occupées ou abandonnées, pour occuper le terrain et donner des lieux à explorer.",
+          "version": "1.0.41"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "LORE_BD §7.4",
+          "nom": "Carte",
+          "decision": "Le placement des nouveaux lieux, du fleuve de Sysigie et d'autres rivières et lacs se fait dans une PR de carte à part. (§7.4)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "region_empire_jade",
+          "nom": "Empire du Jade",
+          "decision": "L'Empire du Jade est une extension de jeu [GD] (territoire à ouvrir plus tard, ouverture au monde) : contenu conservé, notes passées en [GD] ; le T7 n'en montre rien. (§7.4)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "ville_der_hem_shelsem",
+          "nom": "Orthographe de Der Hem Shelbem",
+          "decision": "« Der hem Shelsem » devient « Der Hem Shelbem » dans le lore, world_master.json et factions.json (identifiants inchangés). (§7.4)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "ville_lhynn",
+          "nom": "Lhynn",
+          "decision": "Lhynn est au bord de l'océan / de la mer de l'ouest, pas d'un lac : le « lac » des vues T3, T11 p.38 et T14 p.25-33 est la baie en fjord. (§7.2)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "ville_lhynn",
+          "nom": "Orthographe de Lhynn",
+          "decision": "« L'hynn » devient « Lhynn » dans le lore, world_master.json et factions.json (identifiants inchangés). (§7.4)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "ville_sysigie",
+          "nom": "Sysigie",
+          "decision": "La cité de Sysigie (affichée « Aurore » depuis la v1.0.56) est sur une île au milieu d'un grand fleuve ; le brouillard fréquent sur le fleuve produit la « cité dans les nuages » (T4, T10). (§7.2)",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "companions",
+          "id": "companion_pilou",
+          "nom": "Pile-ou-Face (Pilou)",
+          "decision": "Elfe, pas un gobelin.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "competences",
+          "id": "comp_forme_demoniaque_wismerhill_t13",
+          "nom": "Forme Démoniaque — Fils de Pazuzu",
+          "decision": "Wismerhill est le fils de Pazuzu (char_pazuzu), pas de Lucifer ; « fils de Lucifer » désigne Haazheel Thorn [BD-T12 p.7 ; BD-T13 p.40 ; BD-T14 p.7]. Tomes suivants à fournir.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "exploits",
+          "id": "exploit_t13_fils_de_lucifer",
+          "nom": "Fils de Lucifer",
+          "decision": "Titre d'Haazheel Thorn (« Mais moi je suis le fils de... Lucifer ! », T13 p.40) ; Wismerhill est fils de Pazuzu.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pazuzu",
+          "nom": "Pazuzu",
+          "decision": "Père de Wismerhill (confirmé par le propriétaire ; tomes à fournir).",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pile_ou_face",
+          "nom": "Pile-ou-Face",
+          "decision": "Elfe (sous-race à préciser) ; pas un gobelin.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "persons",
+          "id": "char_wismerhill",
+          "nom": "Wismerhill",
+          "decision": "Fils de Pazuzu (char_pazuzu) et de la princesse elfique, pas de Lucifer.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_wismerhill_fils_lucifer_t13",
+          "nom": "Wismerhill — Fils de Pazuzu",
+          "decision": "Ascendance corrigée selon le propriétaire ; identifiant inchangé.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_gobelins_size_advantage",
+          "nom": "Avantage de la Petite Taille (Gobelins)",
+          "decision": "Goum (humain, jumeau de Nasha) et Pile-ou-Face (elfe) retirés de la règle.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya",
+          "nom": "Sauken Glude of Magistrya",
+          "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_altenberg",
+          "nom": "Altenberg",
+          "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_feyhin_lokcthat",
+          "nom": "Feyhin Lokcthat",
+          "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_moork",
+          "nom": "Moork",
+          "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_sysigie",
+          "nom": "Aurore",
+          "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
+          "version": "1.0.54"
+        },
+        {
+          "collection": "LORE_BD",
+          "id": "char_meldrim_t11",
+          "nom": "Haut Tharque",
+          "decision": "Le Haut Tharque du T9 (p.44) est Meldrim, Empereur de Tharque (T11 p.16-17) : char_haut_tharque fusionné dans char_meldrim_t11. (§8.3)",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "cells",
+          "id": "N009_W011",
+          "nom": "cell_N009_W011",
+          "decision": "Sysigie sur une île : le fleuve s'y divise en deux bras qui entourent la cité, puis se rejoignent en aval.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "companions",
+          "id": "companion_dragon_bleu_pilou_t11",
+          "nom": "Le Dragon Bleu de Pilou",
+          "decision": "Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "companions",
+          "id": "companion_kruikna",
+          "nom": "Kruikna",
+          "decision": "Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "hydrography.rivers",
+          "id": "riv_fleuve_sysigie",
+          "nom": "[à nommer]",
+          "decision": "Grand fleuve qui entoure Sysigie (décision du propriétaire) ; nom provisoire « [à nommer] » : le propriétaire nommera les fleuves, rivières et lacs.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_sanctuaire_chevaliers_dragons",
+          "nom": "Sanctuaire des Chevaliers Dragons",
+          "decision": "Cellule S003_W004 (sommets du palais du Maître des Dragons, poi_palais_passe) ; monde jouable : POI poi_sanctuaire_chevaliers_dragons.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_seuil_lhynn",
+          "nom": "Le Seuil de Lhynn",
+          "decision": "Cellule N001_W010, celle de Lhynn (ville_lhynn), près du palais ; monde jouable : POI poi_seuil_lhynn (portail décoratif, sans liaison).",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_temple_methraton_lhynn",
+          "nom": "Temple de Methraton (Lhynn)",
+          "decision": "Cellule N001_W010, celle de Lhynn (ville_lhynn) ; monde jouable : POI poi_temple_methraton, marqueur aux abords de la ville.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_greldinard_t5",
+          "nom": "Seigneur Greldinard, Baron de Moork",
+          "decision": "Le titre « Baron » des T10-T13 (« Baron », T11 p.23) est l'appellation de la BD : Greldinard n'est baron d'aucun autre fief.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_hellaynnea_t12",
+          "nom": "Hellaynnea",
+          "decision": "Une des enfants de Wismerhill (il en a plusieurs) ; « Elle s'appelle Hellaynnea, n'est-ce pas ? » (T12 p.7) : nom de l'enfant ou de la mère, reste à préciser.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_kruikna",
+          "nom": "Kruikna",
+          "decision": "Trois dragons différents : Kruikna (T3-T6, éclos de l'œuf de Pile-ou-Face), « Cruik » (T9 p.36, dragonnet orange de Nasha) et le dragon bleu offert à Pilou (T11 p.26-27). Fiches à garder séparées.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_nasha_t6",
+          "nom": "Nasha",
+          "decision": "Cruik n'est pas Kruikna.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_parsifal",
+          "nom": "Prince Parsifal",
+          "decision": "Il est caché dans une cité pendant le T12 (simplement plus montré) : son retour au T12 (p.48) n'est pas une incohérence.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_wismerhill",
+          "nom": "Wismerhill",
+          "decision": "Wismerhill a plusieurs enfants (T12) : la fille d'Hellaynnea et les neuf enfants des concubines (T11 p.36). Le nom de la fille (« Elle s'appelle Hellaynnea, n'est-ce pas ? », T12 p.7) reste à préciser.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "persons",
+          "id": "char_wismerhill",
+          "nom": "Wismerhill",
+          "decision": "« Cruik » (T9 p.36, dragonnet de Nasha) n'est pas Kruikna (T3-T6) : deux dragons différents, distincts aussi du dragon bleu offert à Pilou (T11).",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_forteresse_naine_heureux_t11",
+          "nom": "Forteresse Naine d'Heureux",
+          "decision": "Cellule S006_E004 (montagnes) : refuge des neuf mères au T9 (p.26, pendant la livraison du Juggernauth) et « forteresse naine d'Heusgly » du T11 (p.36). Le monde jouable la déplace de S004_W004 à S006_E004.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_forteresse_naine_abandonnee_t9",
+          "nom": "Forteresse Naine Abandonnée (lieu de refuge des Neuf Mères)",
+          "decision": "Cellule S006_E004 : même forteresse que ville_forteresse_naine_heureux_t11. La mention « reliefs proches de Moork » (atmosphère) n'a pas d'appui BD.",
+          "version": "1.0.55"
+        },
+        {
+          "collection": "companions",
+          "id": "companion_pilou",
+          "nom": "Pile-ou-Face (Pilou)",
+          "decision": "Pile-ou-Face est un elfe des bois (Q21) ; alias « Nelfe ».",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "competences",
+          "id": "skill_mentat_lecture_esprit",
+          "nom": "Lecture d'Esprit (Menthat)",
+          "decision": "Graphie canonique « Menthat(s) » (Q12) ; « mentats » (THS) en alias ; identifiant inchangé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "competences",
+          "id": "skill_mentat_levitation",
+          "nom": "Lévitation (Menthat)",
+          "decision": "Graphie canonique « Menthat(s) » (Q12) ; « mentats » (THS) en alias ; identifiant inchangé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "competences",
+          "id": "skill_mentat_reseau",
+          "nom": "Réseau Télépathique des Menthats",
+          "decision": "Graphie canonique « Menthat(s) » (Q12) ; « mentats » (THS) en alias ; identifiant inchangé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "creatures",
+          "id": "creature_dzorak_marais_t11",
+          "nom": "Dzorak des Marais (Dvorak des Marais, créature ancienne)",
+          "decision": "Espèce ancienne et rare des Marais maudits (Q9) : graphie canonique « Dvorak », alias « Dzorak » ; l'insulte en dérive. Alias « Dvorak des Marais » ajouté au nom affiché (identifiant inchangé).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "exploits",
+          "id": "exploit_regeneration_ghorghor",
+          "nom": "Ghorghor est Vivant !",
+          "decision": "Indépendant de l'anneau de régénération d'A1 (Q8), objet historique perdu avant le T3.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "dzorak_orcs",
+          "nom": "Dzorak (Orcs)",
+          "decision": "Faction à revoir à part (Q9) : Ghorghor est un demi-ogre (A1) et non un Dzorak ; le Dvorak des Marais est une créature ancienne distincte.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_chiens_de_loi",
+          "nom": "Les Chiens de Loi",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_garde_blanche",
+          "nom": "La Garde Blanche",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_garde_ecarlate",
+          "nom": "La Garde Écarlate",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_garde_or",
+          "nom": "La Garde d'Or",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "la_smargada_magna",
+          "nom": "La Smargada Magna",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "factions",
+          "id": "les_archimages",
+          "nom": "Les Archimages",
+          "decision": "Libérés avant le T9 (Q4) : événement tl_hs_liberation_archimages de la frise [HYPOTHÈSE].",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "hydrography.rivers",
+          "id": "riv_fleuve_sysigie",
+          "nom": "[à nommer]",
+          "decision": "Le fleuve traverse le lac d'Aurore, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_almuria",
+          "nom": "Almuria",
+          "decision": "Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_chateau_de_la_mort",
+          "nom": "Le Château de la Mort (ruines)",
+          "decision": "Ruine placée en bordure de l'Orkland (territoires_orcques, Q19) ; placement effectif dans la PR de carte à part.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_crane_volant",
+          "nom": "La tête de mort volante d'Erypt",
+          "decision": "Sous-lieu historique de l'Erypt (lieu_erypt), hors carte (Q16).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_erypt",
+          "nom": "L'Erypt",
+          "decision": "Hors carte (Q16), comme Tharsulatis : « Grand Sud lointain ». Sous-lieux historiques : lieu_memphis, lieu_thebes, lieu_ile_des_mages, lieu_crane_volant. Accès par récit ou quête de mémoire seulement. Graphie « Erypt », adjectif « érypte » (Q12) ; alias Érypt, Erypte.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_ile_des_mages",
+          "nom": "L'Île des Mages (École de magie d'Erypt)",
+          "decision": "Sous-lieu historique de l'Erypt (lieu_erypt), hors carte (Q16).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_khurden",
+          "nom": "Khurden",
+          "decision": "Placée près de la lisière orientale de la forêt elfique (Q19) [HYPOTHÈSE : à l'est des montagnes] ; placement effectif dans la PR de carte à part.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_memphis",
+          "nom": "Memphis",
+          "decision": "Sous-lieu historique de l'Erypt (lieu_erypt), hors carte (Q16).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_montagne_de_feu",
+          "nom": "La Montagne de Feu",
+          "decision": "Hors carte, au-delà de l'Orkland (Q17).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_lune_noire_lunaire",
+          "nom": "Palais de la Lune Noire (sur la Lune)",
+          "decision": "Hors carte et non accessible au joueur à l'époque du jeu (Q20).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_lune_noire_reflet",
+          "nom": "Reflet du palais de la Lune Noire",
+          "decision": "Seule exception (Q20) : le « reflet » (tour et arche verte au bout de la baronnie de Moork) reste un lieu visible et non franchissable.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_passe_syzygie",
+          "nom": "La Passe de Syzygie et sa muraille",
+          "decision": "La Passe et sa muraille = gorge du T11 et Portes d'Aurore (Q5). Placement : PR de carte à part (Q19).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_pays_krell",
+          "nom": "Le pays Krell",
+          "decision": "Hors carte, au-delà de l'Orkland (Q17).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_plan_aiguilles",
+          "nom": "Le plan des aiguilles",
+          "decision": "Hors carte, non accessible au joueur (Q20).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_plan_methraton",
+          "nom": "Le plan de Methraton",
+          "decision": "Hors carte, non accessible au joueur (Q4, Q20) ; Methraton y reste caché, accessible par son temple de Lhynn (lieu_temple_methraton_lhynn).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_reriah",
+          "nom": "Rériah",
+          "decision": "Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_ruines_wismerhill",
+          "nom": "Ruines de Wismerhill",
+          "decision": "Ajout du propriétaire : le château de la colline des murmures est en ruine à l'époque du jeu et figure sur la carte jouable.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_ruines_wismerhill",
+          "nom": "Ruines de Wismerhill",
+          "decision": "Château en ruine à côté du village de Whispers Hill (ville_whispers_hill), dans la même case N011_E008 ; le village vivant reste tel quel. Monde jouable : POI poi_ruines_wismerhill de la case, écarté du plateau du village par le générateur.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_temple_methraton_lhynn",
+          "nom": "Temple de Methraton (Lhynn)",
+          "decision": "Seul accès au plan de Methraton (lieu_plan_methraton) à l'époque du jeu (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_thebes",
+          "nom": "Thèbes",
+          "decision": "Sous-lieu historique de l'Erypt (lieu_erypt), hors carte (Q16).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_village_sekh",
+          "nom": "Village de Sekh (ruines)",
+          "decision": "Sous-lieu historique de l'Erypt (lieu_erypt), hors carte (Q16).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "loots",
+          "id": "loot_anneau_changement_taille_t11",
+          "nom": "Anneau de Changement de Taille",
+          "decision": "Objet distinct de l'anneau de régénération d'A1 (loot_anneau_regeneration, Q8).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "loots",
+          "id": "loot_anneau_ogunta",
+          "nom": "L'anneau d'Ogunta",
+          "decision": "Porté par Greldinard ; l'esprit d'Ogunta y reste lié à l'époque du jeu (Q22).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "loots",
+          "id": "loot_anneau_regeneration",
+          "nom": "Anneau de Régénération de Ghorghor",
+          "decision": "Objet historique (Q8) : la décision T3 « sans anneau » est conservée ; sans effet sur exploit_regeneration_ghorghor. Distinct de l'anneau de changement de taille du T11 (loot_anneau_changement_taille_t11).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "loots",
+          "id": "loot_baton_priere_lune_noire",
+          "nom": "Baton de Priere de la Lune Noire",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "loots",
+          "id": "loot_hellvelkin_hs",
+          "nom": "Hellwelkin",
+          "decision": "Graphie canonique « Hellwelkin » (Q12) ; « Hellvelkin » (THS) en alias ; identifiant inchangé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_archimage_erypt",
+          "nom": "L'Archimage d'Erypt (ancien Grand Maître de l'École)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_bastet",
+          "nom": "Bastet",
+          "decision": "Panthéon d'Erypt présent comme culte lointain, sans dieu incarné en jeu (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_capitan_thurgen_a1",
+          "nom": "Le Capitan Thurgen",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_chef_geants_syzygie_a3",
+          "nom": "Le chef du clan des géants (Syzygie)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_cherubin_a2",
+          "nom": "Chérubin",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_commandant_chateau_mort_a4",
+          "nom": "Le commandant impérial du Château de la Mort",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_couette_a3",
+          "nom": "Couette",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_dame_syzygie_a3",
+          "nom": "La dame de Syzygie (mère de Parsifal)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_demon_sanglier_a3",
+          "nom": "Le démon-sanglier",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_demonesse_couronne_epines_a5",
+          "nom": "La démonesse à la couronne d'épines",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_dragonne_a2",
+          "nom": "La dragonne (mère adoptive de Pile-ou-Face)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_dragonnet_vert_a2",
+          "nom": "Le dragonnet vert (frère de lait de Pile-ou-Face)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_eleonore_a1",
+          "nom": "Éléonore (mère de Ghorghor Bey)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_feidreiva_t1",
+          "nom": "Feidreiva",
+          "decision": "Graphie canonique « Feidreiva » (Q12) ; « Feydriva » (T3, A1) et « Feidriva » (THS) en alias.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ghorghor_bey",
+          "nom": "Ghorghor Bey",
+          "decision": "Demi-ogre (A1, Q9) et non Dzorak : race_id passe de race_dzorak à race_half_ogre. « Ogur » est son nom de scène canonique, « Ogun » (T11) un alias, sans lien avec Ogunta (Q14).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ghorghor_bey",
+          "nom": "Ghorghor Bey",
+          "decision": "Graphies (Q12) : forme du lore conservée ; variantes en alias : « Ghor-Ghor » (T00), « Ghor Ghor », « Georg », « Ogur », « Ogun ».",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ghrukkkkh_a2",
+          "nom": "Ghrukkkkh (géant)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_glurkha_a5",
+          "nom": "Glurkha",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_grand_tresorier_nord_a1",
+          "nom": "Le Grand Trésorier du Nord",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_grand_vizir_erypt",
+          "nom": "Le Grand Vizir d'Erypt",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_greldinard_t5",
+          "nom": "Seigneur Greldinard, Baron de Moork",
+          "decision": "Race de jeu « demi-orque » (Q22, race_half_orc), hybride par fusion rituelle ; le secret est conservé : aucun PNJ ne le connaît à l'époque du jeu. L'esprit d'Ogunta reste lié à son anneau, porté par Greldinard.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_greldinard_t5",
+          "nom": "Seigneur Greldinard, Baron de Moork",
+          "decision": "Moork (Q10) : baron jusqu'au T5, Wismerhill du T5 au T11, puis Moork lui revient après le couronnement (état THS, hors époque). À l'époque du jeu, Moork est la baronnie de Wismerhill et Greldinard y siège comme seigneur de guerre.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_grundur_a4",
+          "nom": "Grundur (chef orque)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_haazheel_thorn",
+          "nom": "Haazheel Thorn",
+          "decision": "Visuel canonique (Q23) : turban vert et rouge, gemme verte au front. Le heaume vert-or cornu (M2, M3) est sa tenue de guerre (variante) ; la gemme jaune et les cheveux blond-gris d'A4 sont un écart de couleur non retenu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_haazheel_thorn",
+          "nom": "Haazheel Thorn",
+          "decision": "Graphies (Q12) : forme du lore conservée ; variantes en alias : « Haazhell » (M3).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_haghendorf",
+          "nom": "Haghendorf",
+          "decision": "L'Empereur non nommé d'A1, A3 et A5 (proches du T1) est Haghendorf (Q25) ; celui d'A4 (jeunesse de Greldinard, bien plus ancienne) est un prédécesseur non nommé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_helene_a1",
+          "nom": "Hélène (la jolie brune du cirque)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_helmen_horst_a1",
+          "nom": "Helmen d'Horst (capitaine impérial)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_hermann_a5",
+          "nom": "Hermann (chef des armées)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_hokhosi_moork",
+          "nom": "Hokhost",
+          "decision": "Même personnage que char_okhost (Okhost, Grand Maître de la Garde Noire sous Wismerhill Ier, THS p.17) [HYPOTHÈSE] (Q13) ; fiches non fusionnées.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_hokkham_m1",
+          "nom": "Hokkham (maître de Sekh)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_hopt_m2",
+          "nom": "Hopt",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_imperatrice_hs",
+          "nom": "L'Impératrice",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_magnifique_a1",
+          "nom": "Le Magnifique (directeur de cirque)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_maitre_ombre_khurden_a2",
+          "nom": "Le Maître de la guilde de Khurden",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_marchand_borgne_a2",
+          "nom": "Le marchand d'esclaves borgne",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_merweenn_m2",
+          "nom": "Merweenn (Minette, fille de Bastet)",
+          "decision": "Panthéon d'Erypt présent comme culte lointain, sans dieu incarné en jeu (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_methraton",
+          "nom": "Methraton",
+          "decision": "Époque du jeu (Q4) : Methraton reste caché dans son plan (lieu_plan_methraton), accessible par son temple de Lhynn (lieu_temple_methraton_lhynn).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_methraton",
+          "nom": "Methraton",
+          "decision": "Service (Q11) : « le seul homme que j'aie servi » (T7) est le « roi des rois », pharaon ancien et mort ; les « maîtres » de M1 sont ses archimages et pairs emprisonnés par les dieux. Les deux phrases sont conservées.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_methraton",
+          "nom": "Methraton",
+          "decision": "Graphies (Q12) : forme du lore conservée ; variantes en alias : « Méthraton » (M2), « Methrhton » (T4), « Médirayon » (T11).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_minidou_a1",
+          "nom": "Minidou (troll du cirque)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_netzharine",
+          "nom": "Népharianne Netzharine",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ogun_jumelles_t11",
+          "nom": "Carole et Caroline (les jumelles de Ghorghor)",
+          "decision": "Fiche renommée « Carole et Caroline (les jumelles de Ghorghor) » (Q14), identifiant inchangé. « Ogun » (T11) est un alias de Ghorghor, dont « Ogur » est le nom de scène canonique ; lecture du T11 à revérifier. Elles sont ses compagnes et non ses filles ; aucun lien avec Ogunta.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ogunta",
+          "nom": "Ogunta (mère de Greldinard)",
+          "decision": "Aucun lien avec « Ogun » (alias de Ghorghor, T11) ni « Ogur » (Q14).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_okhost",
+          "nom": "Okhost",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_okhost",
+          "nom": "Okhost",
+          "decision": "Okhost = Hokhost (Q13) : le conseiller de Moork devenu Grand Maître de la Garde Noire sous l'empire ; alias « Hokhost », [HYPOTHÈSE].",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pazuzu",
+          "nom": "Pazuzu",
+          "decision": "Père de Wismerhill (Q6) : le « prince elfe ténébreux » de l'Oracle est la forme elfique de Pazuzu ; il n'est pas mort au T4 (imposture d'Urmarcht). Le vieux seigneur du T00 est le père légal (char_vieux_seigneur_t00).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pharaon_erypt",
+          "nom": "Pharaon (seigneur des Deux Royaumes)",
+          "decision": "Distinct du « roi des rois », pharaon ancien servi par Methraton (Q11).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_phocrathus_a5",
+          "nom": "Phocrathus (Menthat)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pile_ou_face",
+          "nom": "Pile-ou-Face",
+          "decision": "Sous-race « elfe des bois (sylvain) » (Q21, race_elfe_des_bois) : petit pendant l'enfance (A2), de taille normale adulte (T7-T14, fiche inchangée) ; barbe et favoris = trait individuel atypique ; alias « Nelfe ».",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pile_ou_face",
+          "nom": "Pile-ou-Face",
+          "decision": "Graphies (Q12) : forme du lore conservée ; variantes en alias : « Pile ou Face » (A1), « Pile-ou-face » (THS), « Nelfe ».",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pretre_chateau_mort_a4",
+          "nom": "Le prêtre du Château de la Mort",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ptah",
+          "nom": "Ptah",
+          "decision": "Graphie « Ptah » (Q12) ; Pthat, Ptath en alias.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ptah",
+          "nom": "Ptah",
+          "decision": "Panthéon d'Erypt présent comme culte lointain, sans dieu incarné en jeu (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_ra",
+          "nom": "Râ",
+          "decision": "Panthéon d'Erypt présent comme culte lointain, sans dieu incarné en jeu (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_serpent_methraton",
+          "nom": "Le Serpent",
+          "decision": "Sekh est le Serpent (Q24) : passé « Sekh, enfant d'Erypt, élu de Bastet », alias Sekh / Sekhmet ; transformation en créature inexpliquée (mystère conservé).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_smenethep_m2",
+          "nom": "Smenethep (archimage)",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_soeur_pile_ou_face_a2",
+          "nom": "La petite sœur de Pile-ou-Face",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_surin_a2",
+          "nom": "Le Surin",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_tanith_m2",
+          "nom": "Tanith",
+          "decision": "Graphie « Tanith » (Q12), Thanith en alias.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_tanith_m2",
+          "nom": "Tanith",
+          "decision": "PNJ vivant sans suite connue : présent seulement si une quête l'utilise (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_tendresse_a2",
+          "nom": "La Tendresse",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_thenhart_a1",
+          "nom": "Le seigneur Thenhart",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_urmarcht",
+          "nom": "Urmarcht",
+          "decision": "Graphies (Q12) : forme du lore conservée ; variantes en alias : « Urmacht » (T4-T5).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_vieux_seigneur_t00",
+          "nom": "Le Vieux Seigneur du Château en Ruine",
+          "decision": "Père légal de Wismerhill (Q6), distinct du père biologique Pazuzu (char_pazuzu).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_wilf_a1",
+          "nom": "Wilf",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_will_forgeron_a1",
+          "nom": "Will (forgeron, beau-père de Ghorghor)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_willhem_syzygie_a3",
+          "nom": "Willhem de Syzygie (père de Parsifal)",
+          "decision": "Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "persons",
+          "id": "char_wismerhill",
+          "nom": "Wismerhill",
+          "decision": "Nom (Q7) : le nom vient de la colline (T00) ; au T1, Pile-ou-Face le « baptise » de nouveau sans le savoir — clin d'œil du destin (les Vents).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "races",
+          "id": "race_elfe_des_bois",
+          "nom": "Elfe des bois (sylvain)",
+          "decision": "Sous-race de Pile-ou-Face (Q21) ; PNJ seulement.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "races",
+          "id": "race_half_ogre",
+          "nom": "Demi-ogre",
+          "decision": "Ghorghor est un demi-ogre et non un Dzorak (Q9) ; identifiant déjà employé par loot_anneau_changement_taille_t11 (référence jusque-là sans race).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "races",
+          "id": "race_half_orc",
+          "nom": "Demi-orque",
+          "decision": "Race de jeu de Greldinard (Q22) ; PNJ seulement.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_marches_est_t14",
+          "nom": "La Défense des Marches de l'Est -- Turuk",
+          "decision": "Rattaché à la région « Marche de l'Est » (region_marche_est, Q15).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "baronnie_de_moorks",
+          "nom": "Baronnie de Moorks",
+          "decision": "Baronnie rattachée à la région « Marche de l'Est » (Q15, region_marche_est) ; tenue par Wismerhill à l'époque du jeu (Q10).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "foret_elfique",
+          "nom": "Forêt elfique",
+          "decision": "Une seule forêt elfique (Q19) : territoire elfe enclavé dans l'Empire (« Empire des Elfes » du THS).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "region_enfers_t00",
+          "nom": "Les Enfers",
+          "decision": "Hors carte du monde des Royaumes et non accessible au joueur à l'époque du jeu par les albums hors série (Q20) ; la carte des Enfers jouable (ENFERS.md) n'est pas modifiée.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "region_hishtarland",
+          "nom": "Royaume d'Hishtarland",
+          "decision": "Hishtarland devient un royaume (Q18) ; la ville actuelle en est la capitale, à la même case. Correspond à la région « hishtarland » du monde jouable (world_master.json, inchangée).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "region_marche_est",
+          "nom": "Marche de l'Est",
+          "decision": "Région créée (Q15) ; contenu : baronnie_de_moorks, city_horkher, raid_marches_est_t14. Aucune emprise sur la carte jouable dans cette PR.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "region_marches",
+          "nom": "Territoires des Marches",
+          "decision": "Les Marches du Nord sont distinctes de la Marche de l'Est (region_marche_est, Q15). Rériah et Almuria (A1) y sont rattachées (Q19).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "region_terres_nord_t00",
+          "nom": "Terres du Nord — Château en Ruine",
+          "decision": "Le château en ruine (lieu_ruines_wismerhill) et le village de Whispers Hill (ville_whispers_hill) sont dans la case N011_E008.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "royaume_drach",
+          "nom": "Royaume Drach",
+          "decision": "« Royaume Drach » retenu comme nom de région (Q18) ; « draakh » (THS) en alias.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "syzygie",
+          "nom": "Syzygie",
+          "decision": "Syzygie = principauté (Q5) ; sa cité est Aurore (ville_sysigie).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "territoires_orcques",
+          "nom": "Territoires orcques",
+          "decision": "« Orkland » est le nom orque de la région (Q17), en alias ; région et identifiant inchangés. « orcs » dans les données de jeu, « orques » accepté en texte (Q12).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regions",
+          "id": "via_magna",
+          "nom": "Via Magna",
+          "decision": "Entre dans le monde jouable (Q1, Q18) : route principale Lhynn → Moork héritée de l'Empire tharque [BD-THS p.7], sans reproduire la distance de 8 000 km ; tracé dans la PR de carte.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_baton_priere_demon_ward",
+          "nom": "Bâton de Prière — Protège des Démons",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_citoyennete_imperiale",
+          "nom": "Papiers de Citoyenneté Impériaux",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_epoque_hors_serie",
+          "nom": "Albums hors série — époque et présence dans le monde jouable",
+          "decision": "Frise relative sans dates absolues : A4 → A5 → M2/M3 → A3, puis T00, A1 et A2, qui convergent au seuil du T1 [BD-T00 p.46 ; BD-A1 p.68 ; BD-A2 pl.46] ; positions de M2, M3 et A3 par rapport à A5 : [HYPOTHÈSE]. Seule durée chiffrée : la chute de Methraton « il y a 3000 ans » [BD-M2 p.27 ; BD-M3 p.32].",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_epoque_hors_serie",
+          "nom": "Albums hors série — époque et présence dans le monde jouable",
+          "decision": "THS : institutions du nouvel empire (gardes d'or, écarlate et blanche, chiens de loi, papiers de citoyenneté, Smargada Magna), porte des Enfers ouverte et bâtons de prière distribués = lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_mentat_lecture_verite",
+          "nom": "Lecture d'Esprit Menthat — Vérité Absolue",
+          "decision": "Graphie canonique « Menthat(s) » (Q12) ; « mentats » (THS) en alias ; identifiant inchangé.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_porte_enfers_demons_libres",
+          "nom": "La Porte des Enfers — Flux de Démons",
+          "decision": "THS classé « après T11 » (Q1) : élément du nouvel empire de Wismerhill Ier, lore [HS] hors époque du jeu.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "timeline",
+          "id": "event_wismerhill_pile_rencontre_t1",
+          "nom": "Rencontre Wismerhill / Pile-ou-Face — Le Nom",
+          "decision": "Événement conservé (Q7) : la colline portait déjà ce nom [BD-T00 p.4] ; Pile-ou-Face le redonne sans le savoir, clin d'œil du destin (les Vents).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "timeline",
+          "id": "tl_hs_liberation_archimages",
+          "nom": "Libération des archimages de Methraton",
+          "decision": "Événement placé dans la frise (Q4).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "timeline",
+          "id": "tl_hs_regne_wismerhill_ier",
+          "nom": "Règne de Wismerhill Ier (L'Empire de la Négation)",
+          "decision": "THS classé « après T11 » (Q1).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "city_horkher",
+          "nom": "Horkher",
+          "decision": "Comté rattaché à la Marche de l'Est (Q15) ; graphie THS « Horker » en alias (Q12).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "hishtarland",
+          "nom": "Hishtarland",
+          "decision": "Capitale du royaume d'Hishtarland (Q18, region_hishtarland), même case S011_W006 ; alias « Ishtarland » (Q12).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "sauken_glude_of_magistrya",
+          "nom": "Sauken Glude of Magistrya",
+          "decision": "Graphie THS « Magestrya » en alias (Q12) ; Magistrya garde sa case N003_W003 (Q18), malgré sa position au sud de Lhynn sur la carte THS.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_lhynn",
+          "nom": "Lhynn",
+          "decision": "Plan de Lhynn retenu pour le monde jouable (Q1) : chenal, deux enceintes, port ; l'ancien palais reste en place (ni palais-ziggourat ni grandes artères, postérieurs à l'avènement).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_moork",
+          "nom": "Moork",
+          "decision": "Historique (Q15) : ancienne cité impériale conquise par la Lune Noire, dans la région « Marche de l'Est » (region_marche_est).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_moork",
+          "nom": "Moork",
+          "decision": "Seigneurs (Q10) : Greldinard jusqu'au T5, Wismerhill du T5 au T11, de nouveau Greldinard après le couronnement (hors époque). À l'époque du jeu : baronnie de Wismerhill, Greldinard seigneur de guerre.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_moork",
+          "nom": "Moork",
+          "decision": "Intacte et refortifiée à l'époque du jeu (Q2).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_sysigie",
+          "nom": "Aurore",
+          "decision": "Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac d'Aurore, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_whispers_hill",
+          "nom": "Whispers Hill (La Colline aux Murmures)",
+          "decision": "Le village vivant reste tel quel ; le château en ruine de l'enfance de Wismerhill (lieu_ruines_wismerhill) est un POI de la même case N011_E008.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_sysigie",
+          "nom": "Aurore (Syzygie)",
+          "decision": "Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie / Syzygie.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_whispers_hill",
+          "nom": "Whispers Hill (La Colline aux Murmures)",
+          "decision": "Étymologie (Q7) : nom de la colline d'abord [BD-T00 p.4], redonné au T1 par Pile-ou-Face. Le château incendié au T00 est placé sur la carte : lieu_ruines_wismerhill.",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "zones",
+          "id": "zone_whispers_hill",
+          "nom": "Whispers Hill (La Colline aux Murmures)",
+          "decision": "Case N011_E008 : village vivant de Whispers Hill (ville_whispers_hill) et, à côté, château en ruine (lieu_ruines_wismerhill).",
+          "version": "1.0.56"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_calendrier",
+          "nom": "Calendrier lunaire du monde",
+          "decision": "[DÉCISION] (v1.0.57) Un seul calendrier, ère comptée depuis l'Oblivion (an 0) ; année lunaire ; année de jeu unique, monde figé.",
+          "version": "1.0.57"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_corpus",
+          "nom": "Corpus de référence du lore",
+          "decision": "Font foi pour le lore, et eux seuls : Tome 0 « En un jeu cruel », Tomes 1 à 14 (de « Le Signe des Ténèbres » à « La Fin des Temps »), le hors-série « L'Empire de la Négation », Methraton 1 à 3 et Arcanes de la Lune Noire 1 à 5. Les tomes postérieurs au 14, et tout autre album, sont EXCLUS : le jeu ne couvre pas ce monde (décision du propriétaire).",
+          "version": "1.0.57"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_epoque_jeu",
+          "nom": "Époque du jeu",
+          "decision": "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur).",
+          "version": "1.0.57"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_priorite_sources",
+          "nom": "Priorité des sources en cas de contradiction",
+          "decision": "En cas de contradiction, l'ordre est : 1) décision du propriétaire [DÉCISION] ; 2) Tomes 0 à 14 ([BD-T00], [BD-T1] à [BD-T14]) ; 3) « L'Empire de la Négation » ([BD-THS], [HS]) ; 4) Arcanes et Methraton ([BD-A1] à [BD-A5], [BD-M1] à [BD-M3]). Le game design [GD] (et [GAMEPLAY], [LORE_ETENDU], [JSON]) comble les vides et ne contredit jamais une source de rang supérieur. [INFÉRÉ], [HYPOTHÈSE] et [À VÉRIFIER] ne font pas foi.",
+          "version": "1.0.57"
+        }
+      ]
+    },
     {
       "id": "rule_oracle_protocole",
       "name": "Protocole de l'Oracle",

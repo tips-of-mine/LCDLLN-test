@@ -170301,35 +170301,35 @@
     },
     {
       "id": "t15",
-      "label": "Tome 15 Terra Secunda 1/2"
+      "label": "Tome 15 Terra Secunda 1/2 (hors corpus)"
     },
     {
       "id": "t16",
-      "label": "Tome 16 Terra Secunda 2/2"
+      "label": "Tome 16 Terra Secunda 2/2 (hors corpus)"
     },
     {
       "id": "t17",
-      "label": "Tome 17 Guerres Ophidiennes"
+      "label": "Tome 17 Guerres Ophidiennes (hors corpus)"
     },
     {
       "id": "t18",
-      "label": "Tome 18 Le Trône d'Opale"
+      "label": "Tome 18 Le Trône d'Opale (hors corpus)"
     },
     {
       "id": "t19",
-      "label": "Tome 19 Une semaine ordinaire"
+      "label": "Tome 19 Une semaine ordinaire (hors corpus)"
     },
     {
       "id": "t20",
-      "label": "Tome 20 Une porte sur l'Enfer"
+      "label": "Tome 20 Une porte sur l'Enfer (hors corpus)"
     },
     {
       "id": "t21",
-      "label": "Tome 21 Sic Transit Gloria Mundi"
+      "label": "Tome 21 Sic Transit Gloria Mundi (hors corpus)"
     },
     {
       "id": "t22",
-      "label": "Tome 22 La Forteresse d'Opale"
+      "label": "Tome 22 La Forteresse d'Opale (hors corpus)"
     },
     {
       "id": "tome_13",
@@ -209464,7 +209464,8 @@
       "source": "[DÉCISION] du propriétaire (v1.0.57)",
       "notes": [
         "Identifiants retenus de tomes_config : t00, t01 à t14, t_hs_empire, t_hs_methraton1 à 3, t_hs_arcanes1 à 5 (tome_13 et T14 sont des doublons sans libellé de t13 et t14).",
-        "Exclus, encore présents dans le fichier sans faire foi : t15, t16, t17, t18, t19, t20, t21, t22 dans tomes_config, les mêmes dans la liste tomes de char_wismerhill, et les mentions de l'Opus II (Tomes 15-21) et du Trône d'Opale dans regle_opus_i_clos_t14."
+        "Exclus, encore présents dans le fichier sans faire foi : t15, t16, t17, t18, t19, t20, t21, t22 dans tomes_config, les mêmes dans la liste tomes de char_wismerhill, et les mentions de l'Opus II (Tomes 15-21) et du Trône d'Opale dans regle_opus_i_clos_t14.",
+        "[DÉCISION] (v1.0.57) Hors corpus : t15 (Tome 15 Terra Secunda 1/2), t16 (Tome 16 Terra Secunda 2/2), t17 (Tome 17 Guerres Ophidiennes), t18 (Tome 18 Le Trône d'Opale), t19 (Tome 19 Une semaine ordinaire), t20 (Tome 20 Une porte sur l'Enfer), t21 (Tome 21 Sic Transit Gloria Mundi), t22 (Tome 22 La Forteresse d'Opale) restent dans tomes_config pour la traçabilité des sources mais ne font pas foi ; toute note qui ne s'appuie que sur eux (ex. char_wismerhill) est hors du monde jouable."
       ]
     },
     {

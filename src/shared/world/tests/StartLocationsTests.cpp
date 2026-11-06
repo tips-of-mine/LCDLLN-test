@@ -1,4 +1,4 @@
-// start_locations_tests — table des points de départ par race (master).
+// start_locations_tests — table des points de départ par faction, repli par race (master).
 #include "src/shared/world/StartLocations.h"
 
 #include <cmath>
@@ -65,6 +65,38 @@ int main()
 	Check(!t.IsGeneratedCell({ 2, 0 }, cells::CellMap::Enfers), "hors grille des enfers");
 	Check(!t.MergeFromText(enfers, err) && t.Count() == 2, "carte deja chargee : fusion refusee");
 	Check(t.Resolve("orcs") && t.Resolve("orcs")->race == "humains", "race par defaut de la table principale");
+
+	// v1.0.61 : départs par faction (prioritaires), repli par race.
+	const char* byFaction = R"({ "schema_version": 1, "world": "royaumes", "default_race": "humains",
+	  "generated_cells": "N002_W010,N005_W011", "start_factions": "empire_hynn, lumiere,fantome",
+	  "factions": {
+	    "lumiere": { "city": "hameau_lumiere", "city_name": "Lumiere", "race": "humains", "x": -110000, "y": 60, "z": -50000, "yaw_deg": 45 },
+	    "empire_hynn": { "city": "hameau_legion", "race": "humains", "x": -100000, "y": 55, "z": -20000 },
+	    "nains": { "city": "hors_liste", "x": 1, "z": 1 } },
+	  "races": { "humains": { "city": "hameau_legion", "x": -100000, "y": 55, "z": -20000 } } })";
+	Check(t.LoadFromText(byFaction, err) && t.Count() == 3 && t.FactionCount() == 2, "factions listees seulement (absente ou hors liste ignoree)");
+	const auto* lum = t.ResolveFor("lumiere", "humains");
+	Check(lum && lum->faction == "lumiere" && lum->race == "humains" && lum->cityId == "hameau_lumiere"
+		&& std::fabs(lum->yawDeg - 45.0) < 1e-9, "faction lumiere : son hameau");
+	const auto* noFaction = t.ResolveFor("", "humains");
+	Check(noFaction && noFaction->faction.empty() && noFaction->race == "humains", "sans faction : repli race");
+	const auto* unknownFaction = t.ResolveFor("serpent", "orcs");
+	Check(unknownFaction && unknownFaction->race == "humains", "faction sans depart : repli race puis race par defaut");
+	Check(t.Resolve("humains") && t.Resolve("humains")->faction.empty(), "Resolve : race seulement");
+	const char* hellFaction = R"({ "schema_version": 1, "world": "enfers", "generated_cells": "N000_E000",
+	  "start_factions": "legion", "factions": { "legion": { "city": "citadelle_legion", "race": "demons", "x": 0, "y": 200, "z": 0 } },
+	  "races": { "demons": { "city": "citadelle_legion", "x": 0, "y": 200, "z": 0 } } })";
+	Check(t.MergeFromText(hellFaction, err) && t.FactionCount() == 3, "fusion : faction des enfers");
+	const auto* legion = t.ResolveFor("legion", "demons");
+	Check(legion && legion->map == cells::CellMap::Enfers && legion->faction == "legion", "legion : depart aux enfers");
+	const char* dupFaction = R"({ "schema_version": 1, "world": "enfers", "start_factions": "lumiere",
+	  "factions": { "lumiere": { "x": 0, "z": 0 } } })";
+	StartLocationTable t2;
+	Check(t2.LoadFromText(byFaction, err) && !t2.MergeFromText(dupFaction, err) && t2.FactionCount() == 2, "faction deja dotee : fusion refusee");
+	Check(t2.LoadFromText(R"({ "schema_version": 1, "start_factions": "dzorak",
+	  "factions": { "dzorak": { "city": "hameau_dzorak", "race": "orcs", "x": 5, "z": 6 } } })", err)
+		&& t2.ResolveFor("dzorak", "orcs") && t2.ResolveFor("lumiere", "humains") == nullptr, "factions sans races : valide, aucun repli");
+	Check(!t2.LoadFromText(R"({ "schema_version": 1, "races": {} })", err), "ni race ni faction : rejete");
 	if (g_fail == 0) std::printf("StartLocationsTests: OK\n");
 	return g_fail == 0 ? 0 : 1;
 }

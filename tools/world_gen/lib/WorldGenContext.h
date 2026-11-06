@@ -193,10 +193,12 @@ namespace tools::world_gen
 		std::string faction;                ///< "-" = neutre
 	};
 
-	/// Point de départ par race (consommé par le master à la création).
+	/// Point de départ d'une faction de jeu (consommé par le master à la création,
+	/// v1.0.61) ; la race est celle de la ville (repli par race de start_locations.json).
 	struct StartLocationDef
 	{
-		std::string race;
+		std::string faction;   ///< faction de jeu (entrée de CityDef::startFor)
+		std::string race;      ///< race de la ville de départ (CityDef::race)
 		std::string cityId;
 		Vec2 position;
 		double y = 0.0;

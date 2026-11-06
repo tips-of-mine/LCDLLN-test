@@ -5,7 +5,8 @@
 > mer du master) devient un **monde continu de ~420 km × 460 km** découpé en
 > **cellules de 10 km × 10 km** (1 case du lore = 1 cellule = 1 zone moteur).
 > Seules les cellules listées dans `generated_cells` sont générées et jouables ;
-> on commence par les **5 cellules des villes de départ par race**.
+> on a commencé par les **5 cellules des villes de départ par race** ; depuis la v1.0.61
+> les départs sont **par faction** (section 6).
 >
 > Les placements tirés des albums (villes, lieux, POI, états) et les corrections du
 > lore qui les accompagnent sont tracés dans [`LORE_BD.md`](LORE_BD.md).
@@ -99,11 +100,12 @@ job « Client (jeu) » (`Invoke-WorldGen` de `.github/scripts/package-windows.ps
 avant `Copy-GameData`) et build Linux (étape « Générer le monde », avant le bundle
 Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
 `generated_cells` manquent. Les cellules générées sont celles de
-`world_master.json` : les 5 villes de départ et leurs 8 voisines (45 cellules),
+`world_master.json` : les anciennes villes de départ et leurs 8 voisines, puis
+(v1.0.61) les 7 hameaux de départ par faction et leurs voisines hors mer (104 cellules listées),
 plus — `connect_start_cities: true` — les cellules traversées par les routes qui
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
 routier, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
-= 300 m de la frontière) : **117 cellules**, on va à pied d'un royaume à l'autre en
+= 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
 suivant la route. Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
 données de rendu restent dans le paquet client. En local (Windows) :
@@ -217,15 +219,34 @@ voisines raccord au mètre près :
 10. `Population.cpp` : PNJ d'ambiance, voyageurs/patrouilles sur les routes,
     faune par biome et distance aux villes de départ, quêtes d'accueil.
 
-## 6. Points de départ par race
+## 6. Points de départ par faction (v1.0.61)
 
-| Race | Ville | Cellule |
+Décision du propriétaire : les départs sont **par faction**, plus par race. `start_for`
+(nom inchangé) porte les identifiants de faction de jeu (`game/data/races/factions.json`,
+`characters.faction_str`). Détail, justifications et correspondance avec le lore :
+[`LORE_BD.md`](LORE_BD.md) section 14.
+
+| Faction de jeu | Ville de départ | Cellule |
 |---|---|---|
-| Humains | Hameau de Marn (ancien contenu feyhin, translaté) | `cell_n003_w009` |
-| Elfes | Whispers Hill | `cell_n011_e008` |
-| Orcs | Leviathan | `cell_n009_e011` |
-| Nains | Ghrunke Dash | `cell_s007_e016` |
-| Démons | Citadelle de la Légion — **seconde carte « Les Enfers »** (`docs/world/ENFERS.md`) | `enfers_n000_e000` |
+| `legions_imperiales` (réservé, absent de `factions.json`) | Eaglewatch, près de Lhynn | `cell_n002_w010` |
+| `lumiere` | Dawnmere, près d'Altenberg | `cell_n005_w011` |
+| `justice` | Oathford, près d'Aurore | `cell_n009_w010` |
+| `dragons` | Wyrmhallow, près du Palais des Maîtres des Dragons | `cell_s004_w004` |
+| `dzorak` | Grakhul, près de Leviathan | `cell_n008_e012` |
+| `naine` | Durnhalde, près de Ghrunke Dash | `cell_s007_e017` |
+| `elfe` | Silverglade, près de Northind | `cell_n007_w006` |
+| `legion` | Citadelle de la Légion — **seconde carte « Les Enfers »** (`docs/world/ENFERS.md`) | `enfers_n000_e000` |
+
+`lune_noire` (palais lunaire), Archimages (pyramide de Methraton) : départs hors carte,
+portés par le lore seulement ; `serpent` : à définir ; Hors-La-Loi : aucun départ.
+Une faction sans départ suit le **repli par race** de `start_locations.json` (section
+`races` : première ville de départ du master de la race, humains → Eaglewatch) puis
+`default_race`. Format : `start_factions` (liste) + `factions` (prioritaires) + `races`.
+Le master (création) et le shard (relocalisation hors monde) appellent
+`StartLocationTable::ResolveFor(faction, race)`.
+
+Le Hameau de Marn (ancien contenu feyhin, translaté), Whispers Hill, Leviathan et
+Ghrunke Dash ne sont plus des départs ; leurs cellules restent générées.
 
 Le camp de la Légion de la Faille de Tsaroth (`ville_tsaroth`, `S009_E011`) a été
 retiré du continent avec ses PNJ (Maltheus, Ysviel, déplacés à la Citadelle) ;
@@ -234,7 +255,8 @@ restent générées (listées explicitement dans `generated_cells` : les corrido
 sont inchangés). Les 5 Portes des enfers (`poi_porte_1..5`) sont reliées aux
 5 portails des Enfers ; leurs cellules sont générées (sans leurs voisines).
 
-Chaîne d'accueil (elfes / orcs / nains / démons) : `<race>_accueil` →
+Chaîne d'accueil (elfes / orcs / nains / démons, faune autour de la ville de départ selon
+la race de la ville) : `<race>_accueil` →
 `<race>_chasse` → `<race>_epreuve` (`quests/quest_definitions.json`).
 
 ## 7. Contenu historique (ex-zone feyhin)

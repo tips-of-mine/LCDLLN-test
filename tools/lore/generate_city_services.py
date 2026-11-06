@@ -141,7 +141,8 @@ TAILLE_VILLES = {
 
 RENOMMAGES = {"horker": "Harrowdale"}
 
-# Race des PNJ : connue pour les villes de depart (world_master.json), deduite
+# Race des PNJ : connue pour les villes de depart (world_master.json, anciennes et
+# hameaux de depart par faction v1.0.61), deduite
 # de la faction pour la Lune Noire, humains par defaut. Liste ponderee.
 RACE_VILLES = {
     "ville_whispers_hill": [("race_human", 1), ("race_haut_elfe", 1)],
@@ -150,6 +151,10 @@ RACE_VILLES = {
     "ville_orkh": [("race_orkh", 1)],
     "ville_ghrunke_dash": [("race_dwarf", 1)],
     "ville_forteresse_naine_heureux_t11": [("race_dwarf", 1)],
+    # v1.0.61 : hameaux de depart par faction (les hameaux humains gardent le defaut).
+    "hameau_grakhul": [("race_dzorak", 1)],
+    "hameau_durnhalde": [("race_dwarf", 1)],
+    "hameau_silverglade": [("race_haut_elfe", 1)],
 }
 RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],

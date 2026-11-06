@@ -1359,8 +1359,12 @@ namespace engine
 		/// Prochain envoi des cases nouvellement révélées au master.
 		std::chrono::steady_clock::time_point m_mapDiscoveryNextSend{};
 		engine::render::WorldMapViewState m_worldMapView;
-		/// Race du personnage en jeu (payload EnterWorld) — met sa ville de départ en évidence.
+		/// Race du personnage en jeu (payload EnterWorld) : mesh, perception, hostilité.
 		std::string m_localRaceId;
+		/// Faction de jeu du personnage local (characters.faction_str via CHARACTER_LIST,
+		/// ex. "lumiere") : met en évidence sa ville de départ sur la carte (v1.0.61).
+		/// Vide = personnage sans faction.
+		std::string m_localFactionId;
 		/// Charge `world/<monde>/places.json` une seule fois (monde = zone active).
 		/// Effet de bord : lecture disque, log si absent. Main thread.
 		void EnsureWorldPlaces();

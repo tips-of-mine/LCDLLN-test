@@ -179,10 +179,10 @@ jobs:
             exit 1
           fi
 
-      # Monde actif « royaumes » : cellules, départs par race (start_locations.json,
+      # Monde actif « royaumes » : cellules, départs par faction (repli race) (start_locations.json,
       # exigé au boot du shard et du master) et carte générés dans game/data AVANT
       # l'assemblage du bundle Docker (sorties non versionnées, cf. docs/world/ROYAUMES.md).
-      # Seconde carte « enfers » : départ des démons et portails (docs/world/ENFERS.md).
+      # Seconde carte « enfers » : départ de la Légion infernale (démons) et portails (docs/world/ENFERS.md).
       - name: Générer les mondes « royaumes » et « enfers » (tools/world_gen)
         run: |
           set -euo pipefail
@@ -192,10 +192,12 @@ jobs:
           STARTS="$GITHUB_WORKSPACE/game/data/world/royaumes/start_locations.json"
           test -s "$STARTS" || { echo "[FAIL] $STARTS absent"; exit 1; }
           grep -q generated_cells "$STARTS" || { echo "[FAIL] generated_cells absent de $STARTS"; exit 1; }
+          grep -q start_factions "$STARTS" || { echo "[FAIL] start_factions (departs par faction) absent de $STARTS"; exit 1; }
           "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }
-          grep -q '"demons"' "$HELL/start_locations.json" || { echo "[FAIL] depart des demons absent de $HELL/start_locations.json"; exit 1; }
+          grep -q '"legion"' "$HELL/start_locations.json" || { echo "[FAIL] depart de la Legion infernale absent de $HELL/start_locations.json"; exit 1; }
+          grep -q '"demons"' "$HELL/start_locations.json" || { echo "[FAIL] repli des demons absent de $HELL/start_locations.json"; exit 1; }
           for W in royaumes enfers; do
             P="$GITHUB_WORKSPACE/game/data/world/$W/portals.json"
             test -s "$P" || { echo "[FAIL] $P absent"; exit 1; }

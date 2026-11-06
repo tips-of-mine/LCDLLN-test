@@ -19,7 +19,7 @@
 //   world/<w>/places.json              villes, lieux, régions, cellules générées (UI client)
 //   world/<w>/world_map.png            carte du continent (fenêtre Carte)
 //   world/<w>/map_features.bin         routes, rues, bâtiments en vectoriel (FIX.12)
-//   world/<w>/start_locations.json     points de départ par race (master)
+//   world/<w>/start_locations.json     points de départ par faction, repli par race (master, shard)
 //   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
 //   world/<w>/portals.json             portails reliés à une autre carte (shard)
 
@@ -743,7 +743,7 @@ namespace tools::world_gen
 			}
 			Child(world, "test_water").objectValue["enabled"] = JBool(false);
 			Child(world, "scenery").objectValue["count"] = JNum(0);
-			// Spawn par défaut : départ de la race dont la ville est dans la cellule.
+			// Spawn par défaut : premier départ (faction) dont la ville est dans la cellule.
 			if (!w.starts.empty())
 			{
 				const StartLocationDef& st = w.starts.front();
@@ -1069,26 +1069,53 @@ namespace tools::world_gen
 			if (!WriteBytes(g.outputRoot, g.report, dir + "map_features.bin", engine::world::mapfeatures::Serialize(features), err)) return false;
 		}
 
-		// ---- Points de départ par race (lus par le master à la création).
+		// ---- Points de départ par faction (v1.0.61), repli par race (lus par le master
+		//      à la création et par le shard).
 		{
 			std::vector<const StartLocationDef*> starts;
 			for (const World* w : cells) for (const StartLocationDef& s : w->starts) starts.push_back(&s);
-			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — point d'apparition d'un NOUVEAU personnage selon sa race (positions GLOBALES). Repli : character_creation.default_spawn.* puis (0,100,0).\",\n";
+			// Ordre stable : celui des villes dans le master (puis des factions de start_for).
+			auto cityRank = [&](const std::string& id) {
+				for (size_t i = 0; i < g.cities.size(); ++i) if (g.cities[i].id == id) return i;
+				return g.cities.size();
+			};
+			std::stable_sort(starts.begin(), starts.end(), [&](const StartLocationDef* a, const StartLocationDef* b) {
+				return cityRank(a->cityId) < cityRank(b->cityId); });
+			// Repli par race : la PREMIÈRE ville de départ du master dont la ville est de
+			// cette race (personnage sans faction, ou faction sans départ).
+			std::vector<const StartLocationDef*> raceStarts;
+			for (const StartLocationDef* st : starts)
+			{
+				if (st->race.empty()) continue;
+				const bool known = std::any_of(raceStarts.begin(), raceStarts.end(),
+					[&](const StartLocationDef* r) { return r->race == st->race; });
+				if (!known) raceStarts.push_back(st);
+			}
+			// Une entrée « { "city": …, "x": … } » d'un départ (sections factions et races).
+			auto entry = [&](const StartLocationDef& st, bool withRace) {
+				const CityDef* c = g.FindCity(st.cityId);
+				return std::string("{ \"city\": ") + Q(st.cityId) + ", \"city_name\": " + Q(c ? c->name : st.cityId) +
+					(withRace ? ", \"race\": " + Q(st.race) : std::string()) +
+					", \"cell\": " + Q(engine::world::cells::CellDirName(engine::world::cells::CellFromPosition(st.position.x, st.position.z), g.master.cellMap)) +
+					", \"x\": " + Num(st.position.x) + ", \"y\": " + Num(st.y) + ", \"z\": " + Num(st.position.z) +
+					", \"yaw_deg\": " + Num(st.yawDeg) + " }";
+			};
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — point d'apparition d'un NOUVEAU personnage selon sa faction (factions, cles de game/data/races/factions.json), a defaut selon sa race (races : premiere ville de depart de la race dans le master) (positions GLOBALES). Repli : character_creation.default_spawn.* puis (0,100,0).\",\n";
 			// Cellules générées (jouables) : lues par le shard (mur invisible côté serveur,
 			// relocalisation d'une position hors monde). Identifiants du lore séparés par des virgules.
 			std::string cellList;
 			for (const World* w : cells) cellList += (cellList.empty() ? "" : ",") + engine::world::cells::LoreCellId(w->cell);
+			// Liste des factions : le Config du serveur n'énumère pas les clés.
+			std::string factionList;
+			for (const StartLocationDef* st : starts) factionList += (factionList.empty() ? "" : ",") + st->faction;
 			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"default_race\": \"humains\",\n";
-			j += "  \"generated_cells\": " + Q(cellList) + ",\n  \"races\": {\n";
+			j += "  \"generated_cells\": " + Q(cellList) + ",\n";
+			j += "  \"start_factions\": " + Q(factionList) + ",\n  \"factions\": {\n";
 			for (size_t k = 0; k < starts.size(); ++k)
-			{
-				const StartLocationDef& st = *starts[k];
-				const CityDef* c = g.FindCity(st.cityId);
-				j += "    " + Q(st.race) + ": { \"city\": " + Q(st.cityId) + ", \"city_name\": " + Q(c ? c->name : st.cityId) +
-					", \"cell\": " + Q(engine::world::cells::CellDirName(engine::world::cells::CellFromPosition(st.position.x, st.position.z), g.master.cellMap)) +
-					", \"x\": " + Num(st.position.x) + ", \"y\": " + Num(st.y) + ", \"z\": " + Num(st.position.z) +
-					", \"yaw_deg\": " + Num(st.yawDeg) + " }" + (k + 1 < starts.size() ? ",\n" : "\n");
-			}
+				j += "    " + Q(starts[k]->faction) + ": " + entry(*starts[k], true) + (k + 1 < starts.size() ? ",\n" : "\n");
+			j += "  },\n  \"races\": {\n";
+			for (size_t k = 0; k < raceStarts.size(); ++k)
+				j += "    " + Q(raceStarts[k]->race) + ": " + entry(*raceStarts[k], false) + (k + 1 < raceStarts.size() ? ",\n" : "\n");
 			j += "  }\n}\n";
 			if (!WriteFile(g.outputRoot, g.report, dir + "start_locations.json", j, err)) return false;
 		}

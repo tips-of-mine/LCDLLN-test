@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.60",
+    "version": "1.0.61",
     "notes": [
+      "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
       "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
       "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 12.",
       "v1.0.58 : [GD bestiaire] créatures vues ou citées dans les 24 albums : nouvelles fiches d'espèces (ogre, troll, Krell, géants, titan, Grand Ancien, morts-vivants, démons mineurs, bêtes de guerre…), fiches existantes complétées (habitat, zones de chasse, groupe, butin), butins thématiques et règle regle_bestiaire_echelles. Détail : gd/bestiaire.md.",
@@ -115,7 +116,8 @@
         "[BD-T11] Les Chevaliers de la Lumière suivent Parsifal dans l'exode vers Syzygie.",
         "[BD-T11] Disparaissent avec Syzygie dans un autre plan — plus présents dans le monde physique post-T11.",
         "[BD-T8] p.34 : Gunthar est abattu par les frères convers sur ordre de l'Archiprêtre (et non « par ses propres soldats »).",
-        "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere)."
+        "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Dawnmere (hameau_dawnmere, N005_W011), près de Altenberg. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [
         {
@@ -171,7 +173,14 @@
       ],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "empire"
+        "relation_bloc": "empire",
+        "faction_jeu": "lumiere",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_dawnmere",
+          "cell": "N005_W011",
+          "pres_de": "ville_altenberg"
+        }
       },
       "region_id": "region_premiere_province_empire",
       "region_ids": [
@@ -213,7 +222,8 @@
         "[BD-T11] SYZYGIE DÉTRUITE/TRANSPORTÉE — après la brisure des Tables de la Loi, l'Archange annonce le retrait.",
         "[BD-T11] Dieu vide l'Empire de ses croyants et les projette dans un autre plan d'existence — protégés pour l'éternité.",
         "[BD-T11] La faction Justice n'est plus présente dans le monde physique après T11 — plan d'existence séparé.",
-        "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere)."
+        "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Oathford (hameau_oathford, N009_W010), près de Aurore. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [
         {
@@ -269,7 +279,14 @@
       ],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "empire"
+        "relation_bloc": "empire",
+        "faction_jeu": "justice",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_oathford",
+          "cell": "N009_W010",
+          "pres_de": "ville_sysigie"
+        }
       },
       "region_id": "syzygie",
       "region_ids": [
@@ -322,7 +339,8 @@
         "[BD-T13] p.14, 26 (v1.0.54) : Greldinard quitte la bataille ; Fratus, qui voulait soumettre Hellaynnea, a été détruit par elle avant la bataille (il n'y a pas de « Baron aspirant » distinct).",
         "[BD-T7] p.34 : la foi des fidèles est captée dans une salle sphérique alvéolée du palais lunaire, stockée et redistribuée à Haazheel et à ses prêtres (« sortilèges cléricaux », renseignement sur tout l'Empire).",
         "[BD-T14] p.4, 9 : la Lune Noire, « collecteur de prières », quitte son orbite à la malédiction d'Haazheel et se dirige vers la Terre.",
-        "[GD] (v1.0.58) Religion : « Le culte de la Lune Noire » (lore.religions, religion_lune_noire)."
+        "[GD] (v1.0.58) Religion : « Le culte de la Lune Noire » (lore.religions, religion_lune_noire).",
+        "[DÉCISION] (v1.0.61) Départ de la faction DANS le palais de la Lune Noire, sur la Lune (lieu_palais_lune_noire_lunaire) ; pas de hameau. Lieu hors carte terrestre : tant que sa carte n'existe pas, le jeu applique le repli par race (start_locations.json) [À VÉRIFIER]. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [
         {
@@ -337,7 +355,13 @@
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "lune_noire"
+        "relation_bloc": "lune_noire",
+        "faction_jeu": "lune_noire",
+        "depart": {
+          "type": "lieu",
+          "id": "lieu_palais_lune_noire_lunaire",
+          "cell": ""
+        }
       },
       "region_id": "",
       "region_ids": []
@@ -480,7 +504,8 @@
         "[BD] Les Dzorak peuvent se régénérer via artefacts magiques anciens.",
         "[LORE_ETENDU] 'Orc' est le terme générique utilisé par les autres races ; 'Dzorak' est le nom propre de la race.",
         "[DÉCISION] (v1.0.56) Faction à revoir à part (Q9) : Ghorghor est un demi-ogre (A1) et non un Dzorak ; le Dvorak des Marais est une créature ancienne distincte.",
-        "[GD] (v1.0.58) Religion : « Les esprits des orques » (lore.religions, religion_esprits_orques)."
+        "[GD] (v1.0.58) Religion : « Les esprits des orques » (lore.religions, religion_esprits_orques).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Grakhul (hameau_grakhul, N008_E012), près de Leviathan Jungle. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [
         {
@@ -495,7 +520,14 @@
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "lune_noire"
+        "relation_bloc": "lune_noire",
+        "faction_jeu": "dzorak",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_grakhul",
+          "cell": "N008_E012",
+          "pres_de": "leviathan_jungle"
+        }
       },
       "region_id": "territoires_orcques",
       "region_ids": [
@@ -525,7 +557,8 @@
         "[BD-T8] Après la débandade des troupes de Fratus (intervention de Gabriel), les Princes Dragons fuient également.",
         "[BD-T8] Un Prince Dragon furieux reproche à Fratus sa débauche au lieu de commander ses troupes : 'Au lieu de te pavaner dans tes orgies...' / 'Tu aurais mieux fait de t'occuper de tes troupes !'",
         "[BD-T7] p.16-17 : avec Fratus, prennent Northind ; [BD-T10] p.9 : neutres, offrent une dizaine de dragons à Haazheel ; [BD-T14] p.23 : consumés par les dragons du Premier Dragon, le pacte étant rompu.",
-        "[GD] (v1.0.58) Religion : « Croyances mineures et cultes anciens » (lore.religions, religion_croyances_mineures)."
+        "[GD] (v1.0.58) Religion : « Croyances mineures et cultes anciens » (lore.religions, religion_croyances_mineures).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Wyrmhallow (hameau_wyrmhallow, S004_W004), près de Palais des Maîtres des Dragons. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [
         {
@@ -540,7 +573,14 @@
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "independants_allies"
+        "relation_bloc": "independants_allies",
+        "faction_jeu": "dragons",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_wyrmhallow",
+          "cell": "S004_W004",
+          "pres_de": "city_dragon_palace"
+        }
       },
       "region_id": "",
       "region_ids": []
@@ -618,13 +658,21 @@
         "[BD] Ghrunke Dash est célèbre dans tout l'Empire pour la qualité de ses métaux.",
         "[BD] L'intérieur est décrit comme un dédale de feu et d'acier.",
         "[BD] Ne s'entendent pas avec les elfes (conflit ancien — modèle v0.1).",
-        "[GD] (v1.0.58) Religion : « Le Métal, le Feu et la Lave » (lore.religions, religion_nains)."
+        "[GD] (v1.0.58) Religion : « Le Métal, le Feu et la Lave » (lore.religions, religion_nains).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Durnhalde (hameau_durnhalde, S007_E017), près de Ghrunke Dash. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [],
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "independants_allies"
+        "relation_bloc": "independants_allies",
+        "faction_jeu": "naine",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_durnhalde",
+          "cell": "S007_E017",
+          "pres_de": "ville_ghrunke_dash"
+        }
       },
       "region_id": "royaumes_des_nains_du_sud",
       "region_ids": [
@@ -728,13 +776,20 @@
       "notes": [
         "[BD-T4] Blason central (le plus grand) sur la page du conseil impérial.",
         "[LORE_ETENDU] Le serpent renvoie au titre du tome 4 'Quand Sifflent les Serpents' — lien possible avec la Lune Noire ou Methrhton.",
-        "[LORE_ETENDU] Maison possiblement liée à la magie ou aux serpents mystiques — spécialité à définir."
+        "[LORE_ETENDU] Maison possiblement liée à la magie ou aux serpents mystiques — spécialité à définir.",
+        "[DÉCISION] (v1.0.61) [À VÉRIFIER] Départ de la faction pas encore défini par le propriétaire : aucun départ créé. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [],
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "empire"
+        "relation_bloc": "empire",
+        "faction_jeu": "serpent",
+        "depart": {
+          "type": "a_definir",
+          "id": "",
+          "cell": ""
+        }
       },
       "region_id": "",
       "region_ids": []
@@ -830,13 +885,22 @@
       "military_structure": null,
       "politics": null,
       "notes": [
-        "[GD] (v1.0.58) Religion : « Mère Nature et les Vents » (lore.religions, religion_peuples_des_bois)."
+        "[GD] (v1.0.58) Religion : « Mère Nature et les Vents » (lore.religions, religion_peuples_des_bois).",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Silverglade (hameau_silverglade, N007_W006), près de Northind. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[INFÉRÉ] (v1.0.61) Faction de jeu « elfe » (Faction Elfe de factions.json) ; Whispers Hill n'est plus le départ des elfes."
       ],
       "faction_relations": [],
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "relation_bloc": "lune_noire"
+        "relation_bloc": "lune_noire",
+        "faction_jeu": "elfe",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_silverglade",
+          "cell": "N007_W006",
+          "pres_de": "ville_northind"
+        }
       },
       "region_id": "foret_elfique",
       "region_ids": [
@@ -861,12 +925,21 @@
         "[BD-T12] Archimages, evacuez la zone! quand le Maitre arrive.",
         "[BD-M2 p.34 ; BD-M3 p.20] Archimages de Methraton « répartis et emprisonnés » par les panthéons avant T1 ; [BD-THS] « refont surface ».",
         "[DÉCISION] (v1.0.56) Libérés avant le T9 (Q4) : événement tl_hs_liberation_archimages de la frise [HYPOTHÈSE].",
-        "[GD] (v1.0.58) Religion : « Methraton et le culte du Serpent » (lore.religions, religion_methraton_serpent)."
+        "[GD] (v1.0.58) Religion : « Methraton et le culte du Serpent » (lore.religions, religion_methraton_serpent).",
+        "[DÉCISION] (v1.0.61) Départ de la faction DANS la pyramide de Methraton (lieu_plan_methraton, zone_flying_pyramid) ; pas de hameau. Lieu hors carte ; faction absente de game/data/races/factions.json [À VÉRIFIER]. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
       ],
       "faction_relations": [],
       "ville_relations": [],
       "region_id": "",
-      "region_ids": []
+      "region_ids": [],
+      "game_design": {
+        "faction_jeu": "",
+        "depart": {
+          "type": "lieu",
+          "id": "lieu_plan_methraton",
+          "cell": ""
+        }
+      }
     },
     {
       "id": "faction_conseil_souverains",
@@ -1098,7 +1171,9 @@
         "[HS] 'Chacune avait sa propre dotation de machines de siège, cavalerie, ingénieurs.'",
         "[HS] Massacrées lors de la grande guerre. 'Il faudra du temps avant que la saignée ne soit résorbée.'",
         "[HS] Deux blasons : ancien (Haghendorf) et nouveau (Wismerhill).",
-        "[HS] Corps d'ingénieurs pour les machines de siège attaché à chaque légion."
+        "[HS] Corps d'ingénieurs pour les machines de siège attaché à chaque légion.",
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Eaglewatch (hameau_eaglewatch, N002_W010), près de Lhynn. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[À VÉRIFIER] (v1.0.61) Faction jouable (playable) mais game_design.selectable false, et absente de game/data/races/factions.json (seule « empire_hynn », L'Empire de Lhynn = faction_empire, non sélectionnable) : identifiant de jeu réservé « legions_imperiales » ; region_id region_enfers_t00 incohérent avec un départ près de Lhynn."
       ],
       "faction_relations": [
         {
@@ -1145,7 +1220,14 @@
       "ville_relations": [],
       "game_design": {
         "selectable": false,
-        "relation_bloc": "lune_noire"
+        "relation_bloc": "lune_noire",
+        "faction_jeu": "legions_imperiales",
+        "depart": {
+          "type": "hameau",
+          "id": "hameau_eaglewatch",
+          "cell": "N002_W010",
+          "pres_de": "ville_lhynn"
+        }
       },
       "region_id": "region_enfers_t00",
       "region_ids": [
@@ -1163,7 +1245,9 @@
       "territory": null,
       "military_structure": null,
       "politics": null,
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Faction spécifique qui se débloque pendant le jeu (statut acquis) : aucun départ, aucune création de personnage dans cette faction."
+      ],
       "faction_relations": [
         {
           "faction_id": "chevaliers_de_la_justice",
@@ -1233,10 +1317,51 @@
       "ville_relations": [],
       "game_design": {
         "selectable": true,
-        "note": "statut acquis, pas une faction de naissance; ennemi de tous"
+        "note": "statut acquis, pas une faction de naissance; ennemi de tous",
+        "faction_jeu": "",
+        "depart": {
+          "type": "aucun",
+          "id": "",
+          "cell": ""
+        }
       },
       "region_id": "",
       "region_ids": []
+    },
+    {
+      "id": "faction_legion_infernale",
+      "name": "La Légion infernale",
+      "type": "standard_army",
+      "alignment": "chaotic_evil",
+      "playable": true,
+      "visual_identity": null,
+      "leadership": null,
+      "territory": null,
+      "military_structure": null,
+      "politics": null,
+      "notes": [
+        "[DÉCISION] (v1.0.61) Faction démon jouable, alignée sur la faction de jeu « legion » (game/data/races/factions.json, race demons) : décision du propriétaire du 06/11/2026. Distincte des Légions Impériales (faction_legions_imperiales).",
+        "[DÉCISION] (v1.0.61) Départ aux Enfers, à la Citadelle de la Légion (citadelle_legion, cellule N000_E000 de la carte des Enfers, game/data/world/enfers/world_master.json) : lieu central de la croix des 5 cellules ; un démon sort et rentre par n'importe laquelle des 5 portes (docs/world/ENFERS.md §2-3).",
+        "[GD] (v1.0.58) Lieu central des démons jouables : la Citadelle de la Légion (lore.religions, religion_enfers_princes_demons).",
+        "[GD] (v1.0.61) Hostile aux humains qui s'aventurent aux Enfers (docs/world/ENFERS.md §4)."
+      ],
+      "faction_relations": [],
+      "ville_relations": [],
+      "game_design": {
+        "selectable": true,
+        "relation_bloc": "",
+        "faction_jeu": "legion",
+        "depart": {
+          "type": "ville",
+          "id": "citadelle_legion",
+          "carte": "enfers",
+          "cell": "N000_E000"
+        }
+      },
+      "region_id": "region_enfers_t00",
+      "region_ids": [
+        "region_enfers_t00"
+      ]
     }
   ],
   "classes": [
@@ -4460,6 +4585,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_lhynn_ecurie_05",
+          "name": "Renance Grispré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_lhynn_temple_01",
           "name": "Norwald Belbrume",
           "gender": "male",
@@ -4633,7 +4766,8 @@
         "[BD-T5] Maître Grhumpdeth, maître nain de Ghrunkedash (graphie corrigée v1.0.54, ancienne lecture « Grhulnpdeth »).",
         "[BD-T3 pl.16] « La ville naine de Ghrunke Dash, célèbre dans l'Empire pour la qualité de ses métaux » : carapace rocheuse grise veinée de rouge, fente de lave à la base, fumée au sommet, eau à l'est.",
         "[BD-T3 pl.17-18] Maître des forges Grhumpdeth (« Nous fournissons toutes les nations ! ») ; auberge « presque assez haute » pour Ghorghor ; le groupe achète armes, un char blindé et des mercenaires nains.",
-        "[GD] (v1.0.58) Économie : forges et acier nain, armes, armures, chars blindés et machines sur commande ; vend à toutes les nations, en gemmes ou en or [BD-T3 pl.16-20] [BD-T5] ; charbon [BD-T9 p.12]."
+        "[GD] (v1.0.58) Économie : forges et acier nain, armes, armures, chars blindés et machines sur commande ; vend à toutes les nations, en gemmes ou en or [BD-T3 pl.16-20] [BD-T5] ; charbon [BD-T9 p.12].",
+        "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14)."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -4728,6 +4862,14 @@
         {
           "id": "pnj_ville_ghrunke_dash_ecurie_02",
           "name": "Bofhild Bouclier-de-Roc",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_ghrunke_dash_ecurie_03",
+          "name": "Korhild Torche-d'Acier",
           "gender": "female",
           "race_id": "race_dwarf",
           "service": "ecurie",
@@ -5346,6 +5488,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_altenberg_ecurie_04",
+          "name": "Hugin Boiscastel",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_altenberg_temple_01",
           "name": "Joreline Fontlac",
           "gender": "female",
@@ -5707,6 +5857,14 @@
         {
           "id": "pnj_ville_sysigie_ecurie_03",
           "name": "Eldold Fontrive",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_sysigie_ecurie_04",
+          "name": "Lanais Chenvigne",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -7297,7 +7455,8 @@
         "[BD-T1] Pile-ou-Face donne ce nom à Wismerhill d'après cet endroit.",
         "[INFÉRÉ] Position N011_E008 reprise de world_master.json (la BD ne situe pas le village) ; la forêt de la rencontre avec Pile-ou-Face est placée juste au nord (N012_E008).",
         "[DÉCISION] (v1.0.56) Le village vivant reste tel quel ; le château en ruine de l'enfance de Wismerhill (lieu_ruines_wismerhill) est un POI de la même case N011_E008.",
-        "[GD] (v1.0.58) Économie : village agricole ; produit bois d'œuvre, gibier et peaux, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : village agricole ; produit bois d'œuvre, gibier et peaux, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -9443,6 +9602,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_northind_ecurie_04",
+          "name": "Marbert Fontpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_northind_temple_01",
           "name": "Kelald Marlmare",
           "gender": "male",
@@ -9798,7 +9965,8 @@
       ],
       "features": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : village agricole ; produit bois d'œuvre, gibier et peaux ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : village agricole ; produit bois d'œuvre, gibier et peaux ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14)."
       ],
       "anchor_tile": "N012_E012",
       "taille": "village",
@@ -9823,6 +9991,14 @@
           "id": "pnj_leviathan_jungle_ecurie_01",
           "name": "Zugruk Os-Tordu",
           "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_leviathan_jungle_ecurie_02",
+          "name": "Gorgha Sang-Brisé",
+          "gender": "female",
           "race_id": "race_dzorak",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -11255,6 +11431,14 @@
         {
           "id": "pnj_city_dragon_palace_ecurie_02",
           "name": "Dunan Saulfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_city_dragon_palace_ecurie_03",
+          "name": "Welmar Saulpré",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -20026,6 +20210,922 @@
           "name": "Darmond Belmorne",
           "gender": "male",
           "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_eaglewatch",
+      "name": "Eaglewatch",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N002_W010",
+      "anchor_tile": "N002_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_legions_imperiales",
+      "region_id": "terres_de_lempereur",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Hameau de départ de la faction Les Légions Impériales"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Les Légions Impériales (faction_legions_imperiales ; faction de jeu « legions_imperiales »), « pas loin de Lhynn » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau de garnison des Légions Impériales dans les pâturages au nord de Lhynn : les recrues y prêtent serment avant de rejoindre la capitale.",
+        "[INFÉRÉ] (v1.0.61) Cellule N002_W010 : Plaine des Terres de l'Empereur au nord de Lhynn (N001_W010), dans les pâturages des élevages impériaux ; cellule déjà jouable, voisine du hameau de Marn.",
+        "[GD] (v1.0.61) Population : humains ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_eaglewatch_auberge_01",
+          "name": "Tiba Hautvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_eaglewatch_potions_01",
+          "name": "Perald Rochmare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hameau_eaglewatch_armures_01",
+          "name": "Dunan Saulvigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hameau_eaglewatch_ecurie_01",
+          "name": "Elda Valbrume",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_eaglewatch_cimetiere_01",
+          "name": "Maelora Brungarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_dawnmere",
+      "name": "Dawnmere",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N005_W011",
+      "anchor_tile": "N005_W011",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_lumiere",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armures",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Hameau de départ de la faction Chevaliers de la Lumière"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Chevaliers de la Lumière (chevaliers_de_la_lumiere ; faction de jeu « lumiere »), « pas loin de Altenberg » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Chevaliers de la Lumière dans la plaine à l'est d'Altenberg : les novices y sont formés avant d'entrer dans la citadelle.",
+        "[INFÉRÉ] (v1.0.61) Cellule N005_W011 : Plaine de la Première Province à l'est d'Altenberg (N005_W012) ; ouest et sud d'Altenberg sont côte et plage.",
+        "[GD] (v1.0.61) Population : humains ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_dawnmere_auberge_01",
+          "name": "Garwald Grisbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_potions_01",
+          "name": "Varran Grisvigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_armures_01",
+          "name": "Hugelle Belrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_forgeron_01",
+          "name": "Renane Clairfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_ecurie_01",
+          "name": "Lanette Noirchêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_cimetiere_01",
+          "name": "Welran Mormont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_oathford",
+      "name": "Oathford",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N009_W010",
+      "anchor_tile": "N009_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_justice",
+      "region_id": "syzygie",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Hameau de départ de la faction Chevaliers de la Justice"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Chevaliers de la Justice (chevaliers_de_la_justice ; faction de jeu « justice »), « pas loin de Aurore » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Chevaliers de la Justice sur la rive est du lac d'Aurore, face à l'île de la cité.",
+        "[INFÉRÉ] (v1.0.61) Cellule N009_W010 : Plaine de la Syzygie à l'est d'Aurore (N009_W011), hors du fleuve (N008_W011, N010_W011) ; la route franchit un bras pour gagner l'île.",
+        "[GD] (v1.0.61) Population : humains ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_oathford_auberge_01",
+          "name": "Tiba Rossvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_oathford_armes_01",
+          "name": "Tibelle Saulmorne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hameau_oathford_ecurie_01",
+          "name": "Iselle Corblac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_oathford_cimetiere_01",
+          "name": "Odoald Noirfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_wyrmhallow",
+      "name": "Wyrmhallow",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "S004_W004",
+      "anchor_tile": "S004_W004",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dragon_knights",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau de départ de la faction Chevaliers-Dragons"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Chevaliers-Dragons (faction_dragon_knights ; faction de jeu « dragons »), « pas loin de Palais des Maîtres des Dragons » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau montagnard des Chevaliers-Dragons, au sud du Palais des Maîtres des Dragons : les écuyers y apprennent à monter.",
+        "[INFÉRÉ] (v1.0.61) Cellule S004_W004 : Montagne (et non neige éternelle comme les cases nord, est et ouest) au sud du Palais des Maîtres des Dragons (S003_W004).",
+        "[GD] (v1.0.61) Population : humains ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_wyrmhallow_auberge_01",
+          "name": "Serric Fontbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_wyrmhallow_potions_01",
+          "name": "Ralisse Corbcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hameau_wyrmhallow_ecurie_01",
+          "name": "Corelle Bruncastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_wyrmhallow_cimetiere_01",
+          "name": "Marald Belgarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_grakhul",
+      "name": "Grakhul",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N008_E012",
+      "anchor_tile": "N008_E012",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "dzorak_orcs",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest_edge",
+        "Hameau de départ de la faction Dzorak (Orcs)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Dzorak (Orcs) (dzorak_orcs ; faction de jeu « dzorak »), « pas loin de Leviathan Jungle » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes.",
+        "[INFÉRÉ] (v1.0.61) Cellule N008_E012 : Lisière de forêt au sud-est de Leviathan dans le monde jouable (N009_E011) ; cellule déjà jouable. Le lore place Leviathan en N012_E012 (question ouverte, section 15).",
+        "[GD] (v1.0.61) Population : Dzorak ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_grakhul_auberge_01",
+          "name": "Vrogthar Poing-Sanglant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_grakhul_potions_01",
+          "name": "Ugruk Sang-Brûlant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hameau_grakhul_ecurie_01",
+          "name": "Ugash Tibia-Rouge",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_grakhul_cimetiere_01",
+          "name": "Moggha Sang-Noir",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_durnhalde",
+      "name": "Durnhalde",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "S007_E017",
+      "anchor_tile": "S007_E017",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dwarves",
+      "region_id": "royaume_des_nains_de_lest",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau de départ de la faction Nains"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Nains (faction_dwarves ; faction de jeu « naine »), « pas loin de Ghrunke Dash » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau nain à flanc de montagne, à l'est de Ghrunke Dash : mines d'apprentissage et forges des jeunes nains.",
+        "[INFÉRÉ] (v1.0.61) Cellule S007_E017 : Montagne du royaume des nains de l'Est à l'est de Ghrunke Dash (S007_E016), hors des zones volcaniques de l'ouest ; cellule déjà jouable.",
+        "[GD] (v1.0.61) Population : nains ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_durnhalde_auberge_01",
+          "name": "Narok Bras-de-Houille",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_durnhalde_forgeron_01",
+          "name": "Thurek Torche-de-Basalte",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hameau_durnhalde_ecurie_01",
+          "name": "Ostdur Bouclier-de-Roc",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_durnhalde_cimetiere_01",
+          "name": "Brombur Marteau-de-Roc",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hameau_silverglade",
+      "name": "Silverglade",
+      "alias": "",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N007_W006",
+      "anchor_tile": "N007_W006",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_hauts_elfes",
+      "region_id": "region_northind",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest",
+        "Hameau de départ de la faction Les Hauts Elfes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Les Hauts Elfes (faction_hauts_elfes ; faction de jeu « elfe »), « pas loin de Northind » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Hauts Elfes dans la forêt, à l'ouest de Northind : les jeunes elfes y reçoivent leur premier enseignement.",
+        "[INFÉRÉ] (v1.0.61) Cellule N007_W006 : Forêt de la région de Northind à l'ouest de Northind (N007_W005), hors des cases à rivière de l'est et du sud et de la case d'Orkh (N008_W006).",
+        "[GD] (v1.0.61) Population : hauts elfes ; services d'un hameau (grille game_design.cities_services)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_silverglade_auberge_01",
+          "name": "Ithilie Venessa",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_silverglade_armes_01",
+          "name": "Luaion Loraris",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hameau_silverglade_ecurie_01",
+          "name": "Faerion Lorandel",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_silverglade_cimetiere_01",
+          "name": "Caelad Celion",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -173911,7 +175011,7 @@
         ],
         "source": "[BD-T1] à [BD-T3], [BD-T11], [BD-T14], [BD-THS] ; vides comblés [GD]",
         "notes": [
-          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §14 ; la fiche ne tranche pas.",
+          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §15 ; la fiche ne tranche pas.",
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
         ]
       },
@@ -187830,7 +188930,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Oathford (hameau_oathford, faction Chevaliers de la Justice)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -189163,7 +190265,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Grakhul (hameau_grakhul, faction Dzorak (Orcs))."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -189690,7 +190794,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Silverglade (hameau_silverglade, faction Les Hauts Elfes)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -191374,7 +192480,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Dawnmere (hameau_dawnmere, faction Chevaliers de la Lumière)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194017,7 +195125,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008."
+        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008.",
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Eaglewatch (hameau_eaglewatch, faction Les Légions Impériales)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -199357,7 +200466,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Wyrmhallow (hameau_wyrmhallow, faction Chevaliers-Dragons)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -202343,7 +203454,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Durnhalde (hameau_durnhalde, faction Nains)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -213295,6 +214408,104 @@
         "S001_E015",
         "S002_E015"
       ]
+    },
+    {
+      "id": "000121",
+      "type": "road",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N001_W010",
+      "to_ville_id": "ville_lhynn",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Eaglewatch à Lhynn.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000122",
+      "type": "road",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N005_W012",
+      "to_ville_id": "ville_altenberg",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Dawnmere à Altenberg.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000123",
+      "type": "road",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N009_W011",
+      "to_ville_id": "ville_sysigie",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Oathford à Aurore.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000124",
+      "type": "road",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S003_W004",
+      "to_ville_id": "city_dragon_palace",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Wyrmhallow à Palais des Maîtres des Dragons.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000125",
+      "type": "road",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N012_E012",
+      "to_ville_id": "leviathan_jungle",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Grakhul à Leviathan Jungle.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000126",
+      "type": "road",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S007_E016",
+      "to_ville_id": "ville_ghrunke_dash",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Durnhalde à Ghrunke Dash.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000127",
+      "type": "road",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N007_W005",
+      "to_ville_id": "ville_northind",
+      "to_lieu_id": "",
+      "description": "Route de rattachement du hameau de départ Silverglade à Northind.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
     }
   ],
   "competences": [
@@ -215511,7 +216722,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -215519,7 +216730,7 @@
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
-      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §12, §13",
+      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §12, §13, §14",
       "notes": [
         "Une même décision appliquée à plusieurs fiches figure une fois par fiche.",
         "Les décisions v1.0.57 de ce corpus (regle_canon_corpus, regle_canon_priorite_sources) figurent aussi au registre.",
@@ -217003,6 +218214,188 @@
           "nom": "Via Magna",
           "decision": "Tracé de la Via Magna demandé par le propriétaire ; étapes intermédiaires et cellules [INFÉRÉ] (LORE_BD §13).",
           "version": "1.0.60"
+        },
+        {
+          "collection": "factions",
+          "id": "Hors-La-Loi",
+          "nom": "Hors-La-Loi",
+          "decision": "Faction débloquée en jeu : aucun départ (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "chevaliers_de_la_justice",
+          "nom": "Chevaliers de la Justice",
+          "decision": "Départ au hameau Oathford près de Aurore (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "chevaliers_de_la_lumiere",
+          "nom": "Chevaliers de la Lumière",
+          "decision": "Départ au hameau Dawnmere près de Altenberg (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "dzorak_orcs",
+          "nom": "Dzorak (Orcs)",
+          "decision": "Départ au hameau Grakhul près de Leviathan Jungle (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_black_moon",
+          "nom": "La Lune Noire",
+          "decision": "Départ dans le palais de la Lune Noire, sur la Lune (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_dragon_knights",
+          "nom": "Chevaliers-Dragons",
+          "decision": "Départ au hameau Wyrmhallow près de Palais des Maîtres des Dragons (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_dwarves",
+          "nom": "Nains",
+          "decision": "Départ au hameau Durnhalde près de Ghrunke Dash (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_hauts_elfes",
+          "nom": "Les Hauts Elfes",
+          "decision": "Départ au hameau Silverglade près de Northind (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legion_infernale",
+          "nom": "La Légion infernale",
+          "decision": "Faction démon jouable alignée sur « legion » ; départ aux Enfers, Citadelle de la Légion (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legion_infernale",
+          "nom": "La Légion infernale",
+          "decision": "Départ des démons aux Enfers : Citadelle de la Légion, lieu central de la carte des Enfers (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legions_imperiales",
+          "nom": "Les Légions Impériales",
+          "decision": "Départ au hameau Eaglewatch près de Lhynn (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "les_archimages",
+          "nom": "Les Archimages",
+          "decision": "Départ dans la pyramide de Methraton (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "factions",
+          "id": "maison_du_serpent",
+          "nom": "Maison du Serpent",
+          "decision": "Départ pas encore défini : aucun départ créé (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_palais_lune_noire_lunaire",
+          "nom": "Palais de la Lune Noire (sur la Lune)",
+          "decision": "Lieu de départ de la Lune Noire, sur la Lune ; remplace « non accessible » pour cette faction (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_plan_methraton",
+          "nom": "Le plan de Methraton",
+          "decision": "Lieu de départ des Archimages, dans la pyramide de Methraton ; remplace « non accessible » pour cette faction (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_niveaux_par_faction",
+          "nom": "Niveaux des zones selon la faction",
+          "decision": "Départs par faction et non par race (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_dawnmere",
+          "nom": "Dawnmere",
+          "decision": "Hameau de départ de la faction Chevaliers de la Lumière près de Altenberg ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_durnhalde",
+          "nom": "Durnhalde",
+          "decision": "Hameau de départ de la faction Nains près de Ghrunke Dash ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_eaglewatch",
+          "nom": "Eaglewatch",
+          "decision": "Hameau de départ de la faction Les Légions Impériales près de Lhynn ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_grakhul",
+          "nom": "Grakhul",
+          "decision": "Hameau de départ de la faction Dzorak (Orcs) près de Leviathan Jungle ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_oathford",
+          "nom": "Oathford",
+          "decision": "Hameau de départ de la faction Chevaliers de la Justice près de Aurore ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_silverglade",
+          "nom": "Silverglade",
+          "decision": "Hameau de départ de la faction Les Hauts Elfes près de Northind ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_wyrmhallow",
+          "nom": "Wyrmhallow",
+          "decision": "Hameau de départ de la faction Chevaliers-Dragons près de Palais des Maîtres des Dragons ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "leviathan_jungle",
+          "nom": "Leviathan Jungle",
+          "decision": "Ancien départ par race redevenu ville normale (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_ghrunke_dash",
+          "nom": "Ghrunke Dash",
+          "decision": "Ancien départ par race redevenu ville normale (LORE_BD §14).",
+          "version": "1.0.61"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_whispers_hill",
+          "nom": "Whispers Hill (La Colline aux Murmures)",
+          "decision": "Ancien départ par race redevenu ville normale (LORE_BD §14).",
+          "version": "1.0.61"
         }
       ]
     },
@@ -219628,7 +221021,9 @@
       "incantations_connues": [],
       "training_minimum": "",
       "source": "Hubert, revue de la carte du 25/10/2026",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales."
+      ]
     },
     {
       "id": "rule_rendu_points_interet",
@@ -225994,7 +227389,8 @@
       "notes": [
         "[BD-T6] p.34-35 : résidence réelle d'Haazheel Thorn ; atteinte à dos de « grand ver » par l'arche. Hors de la carte terrestre.",
         "[DÉCISION] (v1.0.56) Hors carte et non accessible au joueur à l'époque du jeu (Q20).",
-        "[BD-A5 p.3-4] « Son palais inaccessible, une gigantesque forteresse édifiée sur la Lune » : salle du trône, « cœur des prières », grande bibliothèque, réfectoire ; accès par un cercle de flammes vertes (p.12)."
+        "[BD-A5 p.3-4] « Son palais inaccessible, une gigantesque forteresse édifiée sur la Lune » : salle du trône, « cœur des prières », grande bibliothèque, réfectoire ; accès par un cercle de flammes vertes (p.12).",
+        "[DÉCISION] (v1.0.61) Lieu de départ de la faction La Lune Noire (faction_black_moon) : remplace la décision v1.0.56 « non accessible au joueur » pour les personnages de cette faction. Hors carte terrestre : carte ou instance à créer [À VÉRIFIER]."
       ]
     },
     {
@@ -227380,7 +228776,8 @@
         "[BD-M3 p.20] Methraton renforce les protections de son « plan » caché dans les dimensions.",
         "[BD-THS p.50-51] « le plan de Methraton ».",
         "[ÉPOQUE] avant T1 → T14.",
-        "[DÉCISION] (v1.0.56) Hors carte, non accessible au joueur (Q4, Q20) ; Methraton y reste caché, accessible par son temple de Lhynn (lieu_temple_methraton_lhynn)."
+        "[DÉCISION] (v1.0.56) Hors carte, non accessible au joueur (Q4, Q20) ; Methraton y reste caché, accessible par son temple de Lhynn (lieu_temple_methraton_lhynn).",
+        "[DÉCISION] (v1.0.61) Lieu de départ de la faction Les Archimages (les_archimages), dans la pyramide de Methraton : remplace la décision v1.0.56 « non accessible au joueur » pour cette faction. Hors carte : carte ou instance à créer [À VÉRIFIER]."
       ]
     },
     {

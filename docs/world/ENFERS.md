@@ -23,9 +23,10 @@ sur la carte du départ de sa race.
 
 ## 2. La Citadelle de la Légion
 
-Au centre (`citadelle_legion`, kind `camp`, race `demons`, `start_for` `["demons"]`) :
+Au centre (`citadelle_legion`, kind `camp`, race `demons`, `start_for` `["legion"]` : faction de jeu
+« Légion infernale », v1.0.61, lore `faction_legion_infernale`) :
 
-- les **démons naissent ici** (`world/enfers/start_locations.json`, fusionné par
+- les **démons naissent ici** (faction `legion`, repli race `demons` ; `world/enfers/start_locations.json`, fusionné par
   `StartLocationTable::LoadForWorld` côté master et shard) ;
 - **Maltheus** (`demon_heraut`) et **Ysviel** (`demon_ysviel`) y ont été déplacés
   depuis l'ancien camp de Tsaroth (retiré du continent) ;

@@ -200,7 +200,7 @@ Voir `docs/world_editor_zone_pipeline.md` pour le pipeline complet
 | Cellule | Statut | Notes |
 |---------|--------|-------|
 | `cell_n000_e000` | Stub (manifest vide) | Oracle, créée pour valider la convention. |
-| `cell_n003_w009`, `cell_n011_e008`, `cell_n009_e011`, `cell_s007_e016`, `cell_s009_e011` | **Générées** par `tools/world_gen` (non versionnées) | Cellules des 5 villes de départ, cf. `docs/world/ROYAUMES.md`. |
+| `cell_n003_w009`, `cell_n011_e008`, `cell_n009_e011`, `cell_s007_e016`, `cell_s009_e011` | **Générées** par `tools/world_gen` (non versionnées) | Cellules des 5 anciennes villes de départ par race ; depuis la v1.0.61, départs par faction (7 hameaux), cf. `docs/world/ROYAUMES.md` §6. |
 | `demo_plains` | Zone démo legacy | Conservée pour les tests et la checklist ; pas renommée. |
 | `zone_0`, `zone_1`, `zone_2` | Zones de test legacy | Conservées pour les exemples de layout. |
 

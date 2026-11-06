@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Les 5 cellules jouables, en croix : la Citadelle de la Legion au centre (N000_E000) et les 4 bras. Les coins de la grille ne sont pas generes (mur invisible). Pas de corridor : la carte n'a qu'une ville de depart (connect_start_cities = false).",
+  "_comment_generated_cells": "Les 5 cellules jouables, en croix : la Citadelle de la Legion au centre (N000_E000) et les 4 bras. Les coins de la grille ne sont pas generes (mur invisible). Pas de corridor : la carte n'a qu'une ville de depart (faction legion, Legion infernale, v1.0.61) (connect_start_cities = false).",
   "connect_start_cities": false,
   "generated_cells": [
     "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001"
@@ -53,7 +53,7 @@
       "state": "camp",
       "faction": "legion",
       "start_for": [
-        "demons"
+        "legion"
       ],
       "source": "[INFÉRÉ] BD-T5",
       "description": "Forteresse de la Legion batie sur la lave, au coeur des Enfers : les demons y naissent, et ses gardes chassent tout humain qui s'y aventure."

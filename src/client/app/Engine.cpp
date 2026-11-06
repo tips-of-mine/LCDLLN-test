@@ -9208,6 +9208,7 @@ namespace engine
 						// Monde jouable : race mémorisée pour la carte (ville de départ en
 						// évidence) ; la bannière se réarme (accueil dans la ville d'arrivée).
 						m_localRaceId = raceId;
+						m_localFactionId = enterCmd.factionId;
 						m_placeBanner = engine::client::PlaceBannerTracker{};
 						// SND.2/SND.3 — nouvelle entrée en jeu : pas et sons d'interface repartent de zéro.
 						m_localCharacterNameForAudio = enterCmd.characterName;

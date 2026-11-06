@@ -149,11 +149,11 @@ namespace engine::client
 		return best;
 	}
 
-	const PlaceCity* WorldPlaces::StartCityFor(std::string_view race) const
+	const PlaceCity* WorldPlaces::StartCityFor(std::string_view faction) const
 	{
 		for (const PlaceCity& c : m_cities)
 			for (const std::string& s : c.startFor)
-				if (s == race) return &c;
+				if (s == faction) return &c;
 		return nullptr;
 	}
 

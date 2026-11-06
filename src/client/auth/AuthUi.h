@@ -117,6 +117,10 @@ namespace engine::client
 			/// `m_currentSkinnedMesh` via `Engine::GetRaceMesh(raceId)` (avec fallback
 			/// humains si la race n'est pas chargée dans `m_raceMeshes`).
 			std::string raceId;
+			/// Faction de jeu du personnage (faction_str de CHARACTER_LIST, ex. "lumiere").
+			/// Vide = personnage sans faction. Consommée par Engine::EnterWorld (carte du
+			/// monde : ville de départ de la faction en évidence, v1.0.61).
+			std::string factionId;
 			/// #1 serveur — genre du personnage ("male"/"female"), reçu via CHARACTER_LIST
 			/// (migration 0067). Vide = legacy/pré-migration -> 'male' par défaut côté Engine.
 			std::string gender;

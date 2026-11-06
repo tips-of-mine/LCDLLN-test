@@ -22,7 +22,7 @@ int main()
 	const char* json = R"({ "schema_version": 1, "world": "t", "display_name": "Test", "map_image": "world/t/world_map.png",
 	  "terrain": { "origin_x": -100, "origin_z": -200, "size_m": 400 },
 	  "city_count": 3, "cities": [
-	    { "id": "a", "name": "Alpha", "kind": "capitale", "race": "humains", "state": "intact", "x": 0, "z": 0, "radius_m": 30, "start_for": ["humains"], "description": "d" },
+	    { "id": "a", "name": "Alpha", "kind": "capitale", "race": "humains", "state": "intact", "x": 0, "z": 0, "radius_m": 30, "start_for": ["lumiere"], "description": "d" },
 	    { "id": "b", "name": "Beta", "kind": "village", "race": "elfes", "state": "ruine", "x": 120, "z": 50, "radius_m": 10, "start_for": [], "description": "" },
 	    { "id": "g", "name": "Gamma", "kind": "ville", "race": "humains", "state": "reconstruction", "x": 185, "z": 90, "radius_m": 6, "start_for": [], "description": "" } ],
 	  "poi_count": 1, "pois": [ { "id": "p", "name": "Oracle", "kind": "monolithe", "x": 10, "z": 10, "description": "" } ],
@@ -35,9 +35,9 @@ int main()
 	Check(w.LoadFromText(json, err), "chargement valide");
 	Check(w.Cities().size() == 3 && w.Pois().size() == 1 && w.Regions().size() == 2, "comptes");
 	Check(w.GeneratedCells().size() == 2 && w.GeneratedCells()[1] == "S009_E011", "cellules generees");
-	Check(w.Cities()[0].startFor.size() == 1 && w.Cities()[0].startFor[0] == "humains", "start_for");
-	Check(w.StartCityFor("humains") == &w.Cities()[0], "ville de depart humains");
-	Check(w.StartCityFor("orcs") == nullptr, "pas de depart orcs");
+	Check(w.Cities()[0].startFor.size() == 1 && w.Cities()[0].startFor[0] == "lumiere", "start_for (faction)");
+	Check(w.StartCityFor("lumiere") == &w.Cities()[0], "ville de depart de la faction lumiere");
+	Check(w.StartCityFor("dzorak") == nullptr && w.StartCityFor("humains") == nullptr, "pas de depart dzorak ni par race");
 
 	float u = 0, v = 0;
 	Check(w.WorldToMapUv(-100, -200, u, v) && std::fabs(u) < 1e-6 && std::fabs(v) < 1e-6, "uv origine");
@@ -90,10 +90,11 @@ int main()
 	if (real.LoadFromContent(cfg, "royaumes", err))
 	{
 		Check(real.Cities().size() >= 30, "royaumes : villes");
-		// Les démons naissent aux Enfers (seconde carte), plus sur le continent.
-		for (const char* race : { "humains", "elfes", "orcs", "nains" })
-			Check(real.StartCityFor(race) != nullptr, race);
-		Check(real.StartCityFor("demons") == nullptr, "royaumes : plus de depart demon sur le continent");
+		// v1.0.61 : un départ par faction de jeu ; la Légion infernale naît aux Enfers.
+		for (const char* faction : { "lumiere", "justice", "dzorak", "dragons", "naine", "elfe", "legions_imperiales" })
+			Check(real.StartCityFor(faction) != nullptr && real.StartCityFor(faction)->kind == "hameau", faction);
+		Check(real.StartCityFor("legion") == nullptr, "royaumes : pas de depart de la Legion sur le continent");
+		Check(real.StartCityFor("humains") == nullptr, "royaumes : plus de depart par race");
 		// Repère global des cellules : Marn au centre de la cellule N003_W009.
 		const PlaceCity* marn = real.CityAt(-90000.0f, -30000.0f);
 		Check(marn && marn->id == "hameau_marn", "royaumes : hameau de Marn au centre de N003_W009");
@@ -108,10 +109,10 @@ int main()
 	WorldPlaces hell;
 	if (hell.LoadFromContent(cfg, "enfers", err))
 	{
-		const PlaceCity* citadel = hell.StartCityFor("demons");
-		Check(citadel && citadel->id == "citadelle_legion", "enfers : depart des demons a la Citadelle");
+		const PlaceCity* citadel = hell.StartCityFor("legion");
+		Check(citadel && citadel->id == "citadelle_legion", "enfers : depart de la Legion infernale a la Citadelle");
 		Check(hell.GeneratedCells().size() == 5u, "enfers : 5 cellules generees");
-		Check(hell.StartCityFor("humains") == nullptr, "enfers : aucun depart humain");
+		Check(hell.StartCityFor("lumiere") == nullptr, "enfers : aucun depart du continent");
 	}
 	else
 	{

@@ -607,7 +607,7 @@ namespace engine
 		in.playerX = pos.x;
 		in.playerZ = pos.z;
 		in.playerYaw = m_avatarYaw;
-		in.playerRace = m_localRaceId.c_str();
+		in.playerFaction = m_localFactionId.c_str();
 		in.viewportW = dw;
 		in.viewportH = dh;
 		// Monde en cellules : carte à découvrir (le reste est voilé) — continent seulement,

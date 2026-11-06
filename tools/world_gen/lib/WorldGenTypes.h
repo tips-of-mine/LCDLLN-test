@@ -56,7 +56,10 @@ namespace tools::world_gen
 		std::string race;        ///< humains|elfes|orcs|nains|demons|neutre
 		std::string state;       ///< intact|ruine|reconstruction|camp
 		std::string faction;
-		std::vector<std::string> startFor; ///< races dont c'est la ville de départ
+		/// Factions de jeu dont c'est la ville de départ (v1.0.61 : identifiants de
+		/// game/data/races/factions.json, ex. "lumiere", "legion" ; avant : races).
+		/// Une faction n'a qu'une ville de départ par carte.
+		std::vector<std::string> startFor;
 		std::string source;      ///< [BD] … / [INFÉRÉ] …
 		std::string description;
 		// --- résolu par le générateur ---

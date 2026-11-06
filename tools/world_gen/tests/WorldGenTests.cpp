@@ -3,18 +3,20 @@
 // 1. scatter.bin : round-trip bit-à-bit v1 et v2 (table de chunks) + rejets.
 // 2. PNG : l'encodeur maison est relu par stb_image (décodeur du client).
 // 3. Master réel (game/data/world/royaumes/world_master.json) : chargement OK,
-//    échelle 10 km, villes de départ dans les cellules générées.
+//    échelle 10 km, une ville de départ par faction (v1.0.61 : hameaux dédiés
+//    voisins de leur ville), villes de départ dans les cellules générées.
 // 4. Génération de la cellule du hameau de Marn vers DEUX dossiers : octets
 //    identiques (déterminisme), puis invariants (heightmap 2049², chunks,
-//    départ humain, spawners en coordonnées globales DANS la cellule).
+//    plus de départ à Marn, spawners en coordonnées globales DANS la cellule).
 // 5. Génération de la cellule voisine (ouest) : la colonne de frontière de la
-//    heightmap est IDENTIQUE des deux côtés (raccord sans couture).
+//    heightmap est IDENTIQUE des deux côtés (raccord sans couture) ; puis d'une
+//    cellule de départ de faction (Eaglewatch) : spawn par défaut au sec.
 // 6. État « reconstruction » (Kendrhir Vale) : maisons, ruines et chantiers
 //    mêlés, auberge en service, étais autour des chantiers.
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
 //    de pente (digue), pas de digue sur un lit de rivière.
-// 8. Seconde carte « enfers » : master (5 cellules en croix, départ des démons,
+// 8. Seconde carte « enfers » : master (5 cellules en croix, départ de la Légion infernale,
 //    5 portails appariés aux Portes des enfers du continent), puis génération
 //    complète → dossiers zones/enfers_*, zone ids 2 000 000+, cimetière neutre,
 //    start_locations.json et portals.json de la carte.
@@ -37,9 +39,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <set>
 #include <sstream>
 #include <string>
@@ -130,11 +134,40 @@ namespace
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok, "master royaumes : chargement et validation");
 		Check(m.cities.size() >= 30, "master : au moins 30 agglomerations");
-		std::set<std::string> races;
-		for (const auto& c : m.cities) for (const auto& r : c.startFor) races.insert(r);
-		// Les démons naissent aux Enfers (world/enfers/world_master.json), plus sur le continent.
-		Check(races == std::set<std::string>{ "humains", "elfes", "orcs", "nains" },
-			"master : une ville de depart par race jouable du continent (demons aux enfers)");
+		// v1.0.61 : départs par FACTION (identifiants de game/data/races/factions.json) ;
+		// la Légion infernale naît aux Enfers (world/enfers/world_master.json).
+		std::set<std::string> factions;
+		std::map<std::string, const tools::world_gen::CityDef*> startOf;
+		for (const auto& c : m.cities) for (const auto& f : c.startFor) { factions.insert(f); startOf[f] = &c; }
+		Check(factions == std::set<std::string>{ "lumiere", "justice", "dzorak", "dragons", "naine", "elfe", "legions_imperiales" },
+			"master : une ville de depart par faction du continent (legion aux enfers)");
+		// Chaque départ est un hameau dédié, dans une case voisine de sa ville de référence
+		// (Palais des Maîtres des Dragons : sans ville au master, son sanctuaire, même case S003_W004).
+		const std::map<std::string, std::string> nearCity = {
+			{ "lumiere", "ville_altenberg" }, { "justice", "ville_sysigie" }, { "dzorak", "leviathan_jungle" },
+			{ "dragons", "poi_sanctuaire_chevaliers_dragons" }, { "naine", "ville_ghrunke_dash" }, { "elfe", "ville_northind" },
+			{ "legions_imperiales", "ville_lhynn" } };
+		bool hamletsNear = true;
+		for (const auto& [faction, cityId] : nearCity)
+		{
+			const tools::world_gen::CityDef* start = startOf.count(faction) ? startOf[faction] : nullptr;
+			int refN = 0, refE = 0;
+			bool found = false;
+			for (const auto& c : m.cities)
+				if (c.id == cityId) { found = tools::world_gen::ParseCellId(c.cell, refN, refE); }
+			for (const auto& p : m.pois)
+				if (!found && p.id == cityId) { found = tools::world_gen::ParseCellId(p.cell, refN, refE); }
+			const bool near = start && found && start->kind == "hameau"
+				&& std::abs(start->n - refN) <= 1 && std::abs(start->e - refE) <= 1 && (start->n != refN || start->e != refE);
+			if (!near) std::fprintf(stderr, "  depart '%s' pas dans un hameau voisin de %s\n", faction.c_str(), cityId.c_str());
+			hamletsNear = hamletsNear && near;
+		}
+		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61)");
+		bool oldStartsCleared = true;
+		for (const auto& c : m.cities)
+			if (c.id == "hameau_marn" || c.id == "ville_whispers_hill" || c.id == "leviathan_jungle" || c.id == "ville_ghrunke_dash")
+				oldStartsCleared = oldStartsCleared && c.startFor.empty();
+		Check(oldStartsCleared, "master : anciens departs par race redevenus des villes normales");
 		bool noTsaroth = true;
 		for (const auto& c : m.cities) noTsaroth = noTsaroth && c.id != "ville_tsaroth";
 		for (const auto& i : m.interactables) noTsaroth = noTsaroth && i.cityId != "ville_tsaroth";
@@ -194,9 +227,9 @@ namespace
 		Check(inGrid && volcanic, "master enfers : cellules dans la grille, biome volcanique");
 		const tools::world_gen::CityDef* citadel = nullptr;
 		for (const auto& c : m.cities)
-			if (std::find(c.startFor.begin(), c.startFor.end(), "demons") != c.startFor.end()) citadel = &c;
+			if (std::find(c.startFor.begin(), c.startFor.end(), "legion") != c.startFor.end()) citadel = &c;
 		Check(citadel && citadel->cell == "N000_E000" && citadel->kind == "camp" && citadel->race == "demons",
-			"master enfers : depart des demons a la Citadelle (centre)");
+			"master enfers : depart de la Legion infernale (demons) a la Citadelle (centre)");
 		bool heralds = false, succube = false;
 		for (const auto& i : m.interactables)
 		{
@@ -261,9 +294,11 @@ namespace
 		// Sorties globales de la carte.
 		{
 			const std::string starts = ReadText(tmp / "world/enfers/start_locations.json");
-			Check(starts.find("\"world\": \"enfers\"") != std::string::npos && starts.find("\"demons\"") != std::string::npos
+			Check(starts.find("\"world\": \"enfers\"") != std::string::npos && starts.find("\"demons\": {") != std::string::npos
+				&& starts.find("\"start_factions\": \"legion\"") != std::string::npos && starts.find("\"legion\": {") != std::string::npos
+				&& starts.find("\"race\": \"demons\"") != std::string::npos
 				&& starts.find("enfers_n000_e000") != std::string::npos && starts.find("\"humains\": {") == std::string::npos,
-				"enfers : start_locations.json (depart des demons, carte enfers)");
+				"enfers : start_locations.json (depart de la faction legion et repli demons, carte enfers)");
 			tools::zone_builder::JsonValue root; std::string e;
 			const bool okJ = tools::zone_builder::ParseJsonDocument(ReadText(tmp / "world/enfers/portals.json"), root, e);
 			const auto* list = okJ ? tools::zone_builder::FindObjectMember(root, "portals") : nullptr;
@@ -302,7 +337,7 @@ namespace
 		GlobalWorld g;
 		g.master.corridorMarginM = 0.0;
 		auto city = [&](const char* id, bool start) {
-			CityDef c; c.id = id; if (start) c.startFor = { "humains" }; g.cities.push_back(c);
+			CityDef c; c.id = id; if (start) c.startFor = { std::string("faction_") + id }; g.cities.push_back(c);
 		};
 		city("A", true); city("B", false); city("C", true); city("D", false); city("E", true);
 		auto road = [&](const char* a, const char* b, std::vector<Vec2> pts) {
@@ -392,8 +427,8 @@ namespace
 			}
 			Check(allResolved, "buildings.bin : types/variantes connus");
 		}
-		// Départ humain (spawn par défaut de la cellule) : dans la cellule, au sec ;
-		// --cells ne réécrit pas les sorties globales.
+		// v1.0.61 : le hameau de Marn n'est plus un départ (départs par faction) : pas
+		// de spawn par défaut dans sa cellule ; --cells ne réécrit pas les sorties globales.
 		{
 			Check(!fs::exists(out / "world/royaumes/start_locations.json"), "--cells : sorties globales non reecrites");
 			tools::zone_builder::JsonValue root; std::string e;
@@ -402,16 +437,8 @@ namespace
 			const auto* world = ok ? tools::zone_builder::FindObjectMember(root, "world") : nullptr;
 			Check(world && world->type == tools::zone_builder::JsonType::Object && tools::zone_builder::FindObjectMember(*world, "dof") != nullptr,
 				"zone.json : reglages world.* importes (dof, brouillard...)");
-			const auto* sp = world ? tools::zone_builder::FindObjectMember(*world, "default_spawn") : nullptr;
-			bool good = sp != nullptr;
-			if (sp)
-			{
-				const double x = tools::zone_builder::FindObjectMember(*sp, "x")->numberValue;
-				const double z = tools::zone_builder::FindObjectMember(*sp, "z")->numberValue;
-				const double y = tools::zone_builder::FindObjectMember(*sp, "y")->numberValue;
-				good = x >= x0 && x < x0 + 10000.0 && z >= z0 && z < z0 + 10000.0 && y > 41.0;
-			}
-			Check(good, "depart humain : dans sa cellule et au sec");
+			Check(world && tools::zone_builder::FindObjectMember(*world, "default_spawn") == nullptr,
+				"hameau de Marn : plus un depart (pas de default_spawn)");
 			// SND.4 — grille des biomes pour les ambiances sonores.
 			const auto* audio = ok ? tools::zone_builder::FindObjectMember(root, "audio") : nullptr;
 			const auto* grid = audio ? tools::zone_builder::FindObjectMember(*audio, "biome_grid") : nullptr;
@@ -480,6 +507,31 @@ namespace
 				if (hA[static_cast<size_t>(j) * n + 0] != hB[static_cast<size_t>(j) * n + (n - 1)]) ++diff;
 			if (diff) std::fprintf(stderr, "  %d echantillons differents sur la frontiere\n", diff);
 			Check(seam && diff == 0, "raccord : colonne frontiere identique entre cellules voisines");
+		}
+		// v1.0.61 : départ de faction (Légions Impériales, hameau d'Eaglewatch, N002_W010,
+		// voisin de Lhynn) : spawn par défaut de la cellule dans la cellule, au sec.
+		tools::world_gen::GenReport r4;
+		o.cells = { "N002_W010" };
+		o.outputRoot = (tmp / "d").string();
+		const bool ok4 = tools::world_gen::RunWorldGen(o, r4, err);
+		if (!ok4) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok4, "generation cellule de depart N002_W010 (Eaglewatch)");
+		if (ok4)
+		{
+			const double sx0 = -105000.0, sz0 = -25000.0; // coin min de N002_W010
+			tools::zone_builder::JsonValue root; std::string e;
+			const bool okZ = tools::zone_builder::ParseJsonDocument(ReadText(tmp / "d" / "zones/cell_n002_w010/zone.json"), root, e);
+			const auto* world = okZ ? tools::zone_builder::FindObjectMember(root, "world") : nullptr;
+			const auto* sp = world ? tools::zone_builder::FindObjectMember(*world, "default_spawn") : nullptr;
+			bool good = sp != nullptr;
+			if (sp)
+			{
+				const double x = tools::zone_builder::FindObjectMember(*sp, "x")->numberValue;
+				const double z = tools::zone_builder::FindObjectMember(*sp, "z")->numberValue;
+				const double y = tools::zone_builder::FindObjectMember(*sp, "y")->numberValue;
+				good = x >= sx0 && x < sx0 + 10000.0 && z >= sz0 && z < sz0 + 10000.0 && y > 41.0;
+			}
+			Check(good, "depart de faction (Eaglewatch) : dans sa cellule et au sec");
 		}
 		fs::remove_all(tmp, ec);
 	}

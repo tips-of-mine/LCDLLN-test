@@ -18,6 +18,7 @@ namespace engine::world
 	void StartLocationTable::Clear()
 	{
 		m_byRace.clear();
+		m_byFaction.clear();
 		m_defaultRace.clear();
 		for (std::vector<cells::CellCoord>& list : m_generatedCells)
 			list.clear();
@@ -49,8 +50,35 @@ namespace engine::world
 			if (!std::isfinite(s.x) || !std::isfinite(s.y) || !std::isfinite(s.z)) continue;
 			m_byRace.emplace(s.race, std::move(s));
 		}
+		// Départs par faction (v1.0.61) : liste « lumiere,justice » puis section "factions".
+		const std::string factionsText = c.GetString("start_factions", "");
+		size_t fb = 0;
+		while (fb < factionsText.size())
+		{
+			size_t fe = factionsText.find(',', fb);
+			if (fe == std::string::npos) fe = factionsText.size();
+			std::string_view token(factionsText.data() + fb, fe - fb);
+			while (!token.empty() && token.front() == ' ') token.remove_prefix(1);
+			while (!token.empty() && token.back() == ' ') token.remove_suffix(1);
+			fb = fe + 1;
+			if (token.empty()) continue;
+			const std::string base = "factions." + std::string(token) + ".";
+			if (!c.Has(base + "x") || !c.Has(base + "z")) continue;
+			StartLocation s;
+			s.faction = std::string(token);
+			s.race = c.GetString(base + "race", "");
+			s.cityId = c.GetString(base + "city", "");
+			s.cityName = c.GetString(base + "city_name", s.cityId);
+			s.x = c.GetDouble(base + "x", 0.0);
+			s.y = c.GetDouble(base + "y", 100.0);
+			s.z = c.GetDouble(base + "z", 0.0);
+			s.yawDeg = c.GetDouble(base + "yaw_deg", 0.0);
+			s.map = map;
+			if (!std::isfinite(s.x) || !std::isfinite(s.y) || !std::isfinite(s.z)) continue;
+			m_byFaction.emplace(s.faction, std::move(s));
+		}
 		m_defaultRace = c.GetString("default_race", "humains");
-		if (m_byRace.empty()) { outError = "start_locations: aucune race"; return false; }
+		if (m_byRace.empty() && m_byFaction.empty()) { outError = "start_locations: aucun depart (ni race ni faction)"; return false; }
 		// Cellules générées : liste « N003_W009,N011_E008 » (identifiants du lore).
 		const std::string cellsText = c.GetString("generated_cells", "");
 		size_t begin = 0;
@@ -98,8 +126,18 @@ namespace engine::world
 				return false;
 			}
 		}
+		for (const auto& [faction, start] : other.m_byFaction)
+		{
+			if (m_byFaction.count(faction) != 0)
+			{
+				outError = "start_locations: faction '" + faction + "' deja dotee d'un depart";
+				return false;
+			}
+		}
 		for (auto& [race, start] : other.m_byRace)
 			m_byRace.emplace(race, std::move(start));
+		for (auto& [faction, start] : other.m_byFaction)
+			m_byFaction.emplace(faction, std::move(start));
 		for (int i = 0; i < cells::kCellMapCount; ++i)
 			for (const cells::CellCoord& cell : other.m_generatedCells[i])
 				m_generatedCells[i].push_back(cell);
@@ -156,10 +194,15 @@ namespace engine::world
 	std::vector<StartLocation> StartLocationTable::All() const
 	{
 		std::vector<StartLocation> out;
-		out.reserve(m_byRace.size());
+		out.reserve(m_byRace.size() + m_byFaction.size());
 		for (const auto& [race, start] : m_byRace)
 		{
 			(void)race;
+			out.push_back(start);
+		}
+		for (const auto& [faction, start] : m_byFaction)
+		{
+			(void)faction;
 			out.push_back(start);
 		}
 		return out;
@@ -170,5 +213,12 @@ namespace engine::world
 		if (auto it = m_byRace.find(std::string(race)); it != m_byRace.end()) return &it->second;
 		if (auto it = m_byRace.find(m_defaultRace); it != m_byRace.end()) return &it->second;
 		return nullptr;
+	}
+
+	const StartLocation* StartLocationTable::ResolveFor(std::string_view faction, std::string_view race) const
+	{
+		if (!faction.empty())
+			if (auto it = m_byFaction.find(std::string(faction)); it != m_byFaction.end()) return &it->second;
+		return Resolve(race);
 	}
 }

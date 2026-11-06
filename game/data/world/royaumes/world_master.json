@@ -14,8 +14,8 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables) : les 4 villes de depart par race du continent (premiere de chaque ligne) et leurs 8 voisines (regions contigues, on marche de l'une a l'autre). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Derniere ligne : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
-  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
   "generated_cells": [
@@ -25,7 +25,14 @@
     "S007_E016", "S006_E015", "S006_E016", "S006_E017", "S007_E015", "S007_E017", "S008_E015", "S008_E016", "S008_E017",
     "S009_E011", "S008_E010", "S008_E011", "S008_E012", "S009_E010", "S009_E012", "S010_E010", "S010_E011", "S010_E012",
     "S006_E008", "S006_E009", "S007_E008", "S007_E009", "S008_E008", "S008_E009", "S009_E009",
-    "S013_E000", "N008_E007", "S005_W011", "S005_E011", "N008_W007"
+    "S013_E000", "N008_E007", "S005_W011", "S005_E011", "N008_W007",
+    "N003_W011", "N002_W011", "N001_W011", "N001_W010", "N001_W009",
+    "N005_W011", "N006_W012", "N006_W011", "N006_W010", "N005_W012", "N005_W010", "N004_W012", "N004_W011",
+    "N009_W010", "N010_W011", "N010_W010", "N010_W009", "N009_W011", "N009_W009", "N008_W011", "N008_W010", "N008_W009",
+    "S004_W004", "S003_W005", "S003_W004", "S003_W003", "S004_W005", "S004_W003", "S005_W005", "S005_W004", "S005_W003",
+    "N009_E013", "N008_E013", "N007_E011", "N007_E012", "N007_E013",
+    "S006_E018", "S007_E018", "S008_E018",
+    "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -252,11 +259,107 @@
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
-      "start_for": [
-        "humains"
-      ],
+      "start_for": [],
       "source": "[INFÉRÉ] INFERE",
       "description": "Hameau agricole aux portes de Lhynn ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus."
+    },
+    {
+      "id": "hameau_eaglewatch",
+      "name": "Eaglewatch",
+      "cell": "N002_W010",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [
+        "legions_imperiales"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Lhynn",
+      "description": "Hameau de garnison des Légions Impériales dans les pâturages au nord de Lhynn : les recrues y prêtent serment avant de rejoindre la capitale."
+    },
+    {
+      "id": "hameau_dawnmere",
+      "name": "Dawnmere",
+      "cell": "N005_W011",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lumiere",
+      "start_for": [
+        "lumiere"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine d'Altenberg",
+      "description": "Hameau des Chevaliers de la Lumière dans la plaine à l'est d'Altenberg : les novices y sont formés avant d'entrer dans la citadelle."
+    },
+    {
+      "id": "hameau_oathford",
+      "name": "Oathford",
+      "cell": "N009_W010",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "justice",
+      "start_for": [
+        "justice"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine d'Aurore",
+      "description": "Hameau des Chevaliers de la Justice sur la rive est du lac d'Aurore, face à l'île de la cité."
+    },
+    {
+      "id": "hameau_wyrmhallow",
+      "name": "Wyrmhallow",
+      "cell": "S004_W004",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "dragons",
+      "start_for": [
+        "dragons"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine du Palais des Maîtres des Dragons",
+      "description": "Hameau montagnard des Chevaliers-Dragons, au sud du Palais des Maîtres des Dragons : les écuyers y apprennent à monter."
+    },
+    {
+      "id": "hameau_grakhul",
+      "name": "Grakhul",
+      "cell": "N008_E012",
+      "kind": "hameau",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "dzorak",
+      "start_for": [
+        "dzorak"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Leviathan",
+      "description": "Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes."
+    },
+    {
+      "id": "hameau_durnhalde",
+      "name": "Durnhalde",
+      "cell": "S007_E017",
+      "kind": "hameau",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [
+        "naine"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Ghrunke Dash",
+      "description": "Hameau nain à flanc de montagne, à l'est de Ghrunke Dash : mines d'apprentissage et forges des jeunes nains."
+    },
+    {
+      "id": "hameau_silverglade",
+      "name": "Silverglade",
+      "cell": "N007_W006",
+      "kind": "hameau",
+      "race": "elfes",
+      "state": "intact",
+      "faction": "elfe",
+      "start_for": [
+        "elfe"
+      ],
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Northind",
+      "description": "Hameau des Hauts Elfes dans la forêt, à l'ouest de Northind : les jeunes elfes y reçoivent leur premier enseignement."
     },
     {
       "id": "ville_lhynn",
@@ -422,9 +525,7 @@
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
-      "start_for": [
-        "elfes"
-      ],
+      "start_for": [],
       "source": "[INFÉRÉ] BD-T1",
       "description": "La Colline aux Murmures, relevee de ses cendres par les elfes sylvains : point de depart des enfants de la foret."
     },
@@ -436,9 +537,7 @@
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
-      "start_for": [
-        "orcs"
-      ],
+      "start_for": [],
       "source": "[INFÉRÉ] INFERE",
       "description": "Kraal fortifie au coeur des Territoires orcques, ou les clans de Dzorak forgent leurs jeunes guerriers."
     },
@@ -462,9 +561,7 @@
       "race": "nains",
       "state": "intact",
       "faction": "naine",
-      "start_for": [
-        "nains"
-      ],
+      "start_for": [],
       "source": "[INFÉRÉ] BD-T3",
       "description": "'Les portes de la ville étaient d'acier et semblaient imprenables.'"
     },

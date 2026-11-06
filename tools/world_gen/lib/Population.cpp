@@ -585,14 +585,16 @@ namespace tools::world_gen
 			}
 
 		// ---- Créatures des quêtes d'accueil autour des villes de départ (hors humains,
-		//      dont le hameau importé a déjà ses spawners historiques).
+		//      dont le hameau importé a déjà ses spawners historiques). v1.0.61 : les
+		//      départs sont par faction ; la faune suit la RACE de la ville de départ
+		//      (hameau dzorak : orcs, hameau nain : nains…), une fois par ville.
 		struct StartFauna { const char* race; uint32_t a, b; };
 		const StartFauna fauna[] = { { "elfes", 120, 121 }, { "orcs", 130, 131 }, { "nains", 140, 141 }, { "demons", 150, 151 } };
 		for (const CityDef& c : w.cities)
-			for (const std::string& race : c.startFor)
+			if (!c.startFor.empty())
 				for (const StartFauna& f : fauna)
 				{
-					if (race != f.race) continue;
+					if (c.race != f.race) continue;
 					Rng qr(Hash(seed, HashString(c.id.c_str()), 31337));
 					int made = 0;
 					for (int attempt = 0; attempt < 80 && made < 6; ++attempt)
@@ -631,15 +633,16 @@ namespace tools::world_gen
 		}
 		w.report.respawnPoints = w.respawns.size() + w.importedRespawnLines.size();
 
-		// ---- Points de départ par race.
+		// ---- Points de départ par faction (v1.0.61) ; la race de la ville sert de
+		//      repli par race (Output.cpp, start_locations.json).
 		for (const SettlementLayout& L : w.layouts)
 		{
 			const CityDef* c = w.FindCity(L.cityId);
 			if (!c) continue;
-			for (const std::string& race : c->startFor)
+			for (const std::string& faction : c->startFor)
 			{
 				StartLocationDef s;
-				s.race = race; s.cityId = c->id;
+				s.faction = faction; s.race = c->race; s.cityId = c->id;
 				// Ville d'ancrage importée : on garde le point d'entrée historique
 				// (ancienne origine (0,0) de feyhin = centre de la ville).
 				s.position = (c->id == w.master.importAnchorCity) ? c->center : L.startSpot;

@@ -29,7 +29,7 @@ namespace engine::client
 		std::string race;        ///< peuple dominant (humains, elfes, orcs, nains, demons, neutre…)
 		std::string state;       ///< intact / ruine
 		std::string description;
-		std::vector<std::string> startFor; ///< races dont c'est la ville de départ
+		std::vector<std::string> startFor; ///< factions de jeu (factions.json) dont c'est la ville de départ (v1.0.61)
 		float x = 0.0f;          ///< position monde (m)
 		float z = 0.0f;
 		float radiusM = 20.0f;   ///< rayon de l'agglomération (m)
@@ -92,8 +92,9 @@ namespace engine::client
 		/// Région la plus PETITE contenant (x, z) (les régions peuvent se
 		/// chevaucher : la plus spécifique gagne) ; nullptr sinon.
 		const PlaceRegion* RegionAt(float x, float z) const;
-		/// Ville de départ de la race \p race (identifiant exact), ou nullptr.
-		const PlaceCity* StartCityFor(std::string_view race) const;
+		/// Ville de départ de la faction de jeu \p faction (identifiant exact de
+		/// game/data/races/factions.json, ex. "lumiere" ; v1.0.61), ou nullptr.
+		const PlaceCity* StartCityFor(std::string_view faction) const;
 
 		/// FIX.11 — côté du monde couvert par la carte (m, `terrain.size_m`).
 		float SizeM() const { return m_sizeM; }

@@ -175,11 +175,18 @@ namespace tools::world_gen
 			if (!kStates.count(d.state)) { err = "master: state inconnu pour '" + d.id + "' : " + d.state; return false; }
 			out.cities.push_back(std::move(d));
 		}
-		// Une seule ville de départ par race.
-		std::set<std::string> startRaces;
+		// Une seule ville de départ par faction (v1.0.61 : start_for porte des
+		// identifiants de faction de jeu, game/data/races/factions.json). Identifiant
+		// non vide, [a-z0-9_] (clé de start_locations.json et de characters.faction_str).
+		std::set<std::string> startFactions;
 		for (const CityDef& c : out.cities)
-			for (const std::string& r : c.startFor)
-				if (!startRaces.insert(r).second) { err = "master: plusieurs villes de depart pour la race '" + r + "'"; return false; }
+			for (const std::string& f : c.startFor)
+			{
+				const bool valid = !f.empty() && std::all_of(f.begin(), f.end(), [](char ch) {
+					return (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_'; });
+				if (!valid) { err = "master: faction de depart invalide pour '" + c.id + "' : '" + f + "'"; return false; }
+				if (!startFactions.insert(f).second) { err = "master: plusieurs villes de depart pour la faction '" + f + "'"; return false; }
+			}
 
 		// --- POI ---
 		if (const JsonValue* ps = FindObjectMember(root, "pois"); ps && ps->type == JsonType::Array)

@@ -19,6 +19,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 namespace engine::server
 {
@@ -85,20 +87,33 @@ namespace engine::server
 		{
 			app.m_gmPlacesLoaded = true;
 			// Villes de départ (toujours présentes sur un shard « Royaumes ») ; la Citadelle
-			// de la Légion est sur la seconde carte (Les Enfers).
+			// de la Légion est sur la seconde carte (Les Enfers). Une ville peut porter un
+			// départ de faction ET un repli de race (v1.0.61) : un seul lieu par ville et
+			// par carte, le détail liste factions puis races.
+			std::vector<gm::GmPlace> starts;
 			for (const engine::world::StartLocation& start : app.m_worldStarts.All())
 			{
+				const std::string who = start.faction.empty() ? "race " + start.race : "faction " + start.faction;
+				auto same = std::find_if(starts.begin(), starts.end(), [&](const gm::GmPlace& q) {
+					return q.map == start.map && q.id == start.cityId; });
+				if (same != starts.end())
+				{
+					same->detail += ", " + who;
+					continue;
+				}
 				gm::GmPlace p;
 				p.map = start.map;
 				p.id = start.cityId;
 				p.name = start.cityName.empty() ? start.cityId : start.cityName;
-				p.detail = "départ des " + start.race;
+				p.detail = "départ : " + who;
 				p.kind = gm::GmPlaceKind::Start;
 				p.x = static_cast<float>(start.x);
 				p.z = static_cast<float>(start.z);
 				if (!p.name.empty())
-					app.m_gmPlaces.Add(std::move(p));
+					starts.push_back(std::move(p));
 			}
+			for (gm::GmPlace& p : starts)
+				app.m_gmPlaces.Add(std::move(p));
 			std::string error;
 			const std::string world = app.m_config.GetString("world.active_zone", "");
 			if (!world.empty() && !app.m_gmPlaces.LoadFromContent(app.m_config, world, error))

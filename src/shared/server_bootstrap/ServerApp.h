@@ -250,8 +250,9 @@ namespace engine::server
 		std::string factionId;
 		std::string classId;
 		/// Monde « Royaumes » — race du personnage (characters.race_str, chargée au Hello
-		/// via LoadSpawnFromDb). Choisit la ville de départ quand la position sauvegardée
-		/// est hors du monde généré. Vide en mode no-DB → race par défaut du monde.
+		/// via LoadSpawnFromDb). Repli du départ (v1.0.61 : la faction `factionId` prime)
+		/// quand la position sauvegardée est hors du monde généré. Vide en mode no-DB →
+		/// race par défaut du monde.
 		std::string raceId;
 		uint32_t experiencePoints = 0;
 		/// Compte propriétaire (résolu au Hello via AdmittedCharacterRegistry). Clé de la
@@ -1556,7 +1557,7 @@ namespace engine::server
 		CellGrid* GetOrCreateZoneGrid(uint32_t zoneId);
 
 		/// Monde « Royaumes » — lit `world.active_zone` ; en monde en cellules, charge
-		/// `world/royaumes/start_locations.json` (départs par race + cellules générées)
+		/// `world/royaumes/start_locations.json` (départs par faction, repli par race, + cellules générées)
 		/// et la marge d'activation des régions. \return false si le monde en cellules
 		/// est demandé mais que ses données générées sont absentes (boot refusé).
 		bool InitCellWorld();
@@ -1889,7 +1890,7 @@ namespace engine::server
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;
 		/// Monde « Royaumes » — vrai si `world.active_zone` = "royaumes".
 		bool m_cellWorld = false;
-		/// Monde « Royaumes » — départs par race + cellules générées (start_locations.json).
+		/// Monde « Royaumes » — départs par faction (repli par race) + cellules générées (start_locations.json).
 		engine::world::StartLocationTable m_worldStarts;
 		/// Monde « Royaumes » — régions (cellules) actives, recalculées chaque seconde.
 		RegionActivity m_regionActivity;

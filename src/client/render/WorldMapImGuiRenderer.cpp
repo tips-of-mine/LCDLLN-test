@@ -449,7 +449,7 @@ namespace engine::render
 
 		// Villes : disque coloré par peuple, liseré doré pour une ville de départ
 		// (épais pour celle de la race du joueur), croix grise pour une ruine.
-		const std::string myRace = in.playerRace ? in.playerRace : "";
+		const std::string myFaction = in.playerFaction ? in.playerFaction : "";
 		for (const engine::client::PlaceCity& c : places.Cities())
 		{
 			if (!discovered(c.x, c.z))
@@ -460,7 +460,7 @@ namespace engine::render
 			const float r = KindRadius(c.kind) * (0.8f + 0.25f * markerZoom);
 			const bool ruin = c.state == "ruine";
 			const bool isStart = !c.startFor.empty();
-			const bool myStart = !myRace.empty() && std::find(c.startFor.begin(), c.startFor.end(), myRace) != c.startFor.end();
+			const bool myStart = !myFaction.empty() && std::find(c.startFor.begin(), c.startFor.end(), myFaction) != c.startFor.end();
 			dl->AddCircleFilled(s, r, ruin ? IM_COL32(120, 112, 104, 235) : RaceColor(c.race, 240));
 			dl->AddCircle(s, r, IM_COL32(20, 16, 12, 255), 0, 1.5f);
 			if (isStart) dl->AddCircle(s, r + 3.0f, IM_COL32(255, 210, 90, 255), 0, myStart ? 3.0f : 1.5f);

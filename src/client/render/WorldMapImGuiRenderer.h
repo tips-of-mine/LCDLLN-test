@@ -41,7 +41,7 @@ namespace engine::render
 		float playerX = 0.0f;       ///< position joueur (m)
 		float playerZ = 0.0f;
 		float playerYaw = 0.0f;     ///< cap (rad) : avant = (sin yaw, cos yaw) en XZ
-		const char* playerRace = "";///< race du personnage (met en évidence sa ville de départ)
+		const char* playerFaction = "";///< faction de jeu du personnage (met en évidence sa ville de départ, v1.0.61)
 		float viewportW = 1280.0f;  ///< taille du framebuffer (px) pour le placement initial
 		float viewportH = 720.0f;
 		/// Carte à découvrir : seules les cases découvertes sont montrées (le reste

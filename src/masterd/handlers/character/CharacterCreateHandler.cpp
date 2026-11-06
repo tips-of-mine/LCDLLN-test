@@ -267,15 +267,8 @@ namespace engine::server
 		double spawnZ     = m_config ? m_config->GetDouble("character_creation.default_spawn.z", 0.0) : 0.0;
 		double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
 		const double spawnPitch = m_config ? m_config->GetDouble("character_creation.default_spawn.pitch_deg", -10.0) : -10.0;
-		// Monde jouable (chantier « Royaumes ») — un nouveau personnage apparaît
-		// dans la ville de départ de SA race (world/<monde>/start_locations.json, généré
-		// par tools/world_gen). Repli : clés character_creation.default_spawn.*.
-		if (const engine::world::StartLocation* start = m_startLocations.Resolve(parsed->raceId))
-		{
-			spawnX = start->x; spawnY = start->y; spawnZ = start->z; spawnYaw = start->yawDeg;
-			LOG_INFO(Net, "[CharacterCreateHandler] Depart race '{}' -> {} ({:.1f}, {:.1f}, {:.1f})",
-				parsed->raceId, start->cityName, spawnX, spawnY, spawnZ);
-		}
+		// Le point de départ (faction, repli race) est résolu plus bas, une fois la
+		// faction du personnage connue.
 
 		// Phase 3.8 — Persistance des identifiants chaîne race/classe choisis par
 		// l'utilisateur (parsed->raceId / parsed->classId, ex. "humains" / "warrior").
@@ -295,7 +288,7 @@ namespace engine::server
 		// le joueur fera son choix au premier login via une UI dediee a venir.
 		auto factionFromRace = [](std::string_view race) -> const char* {
 			if (race == "orcs")               return "dzorak";
-			if (race == "demons")             return "demons";
+			if (race == "demons")             return "legion"; // migration 0072 : demons -> legion
 			if (race == "chevaliers_dragons") return "chevaliers_dragons";
 			// humains, elfes, nains : faction(s) a choisir / pas encore definie -> vide.
 			return "";
@@ -340,6 +333,17 @@ namespace engine::server
 		{
 			factionStr    = factionFromRace(raceIdTruncated);
 			factionSource = "derived";
+		}
+		// Monde jouable (chantier « Royaumes », v1.0.61) — un nouveau personnage apparaît
+		// au départ de SA FACTION (world/<monde>/start_locations.json, généré par
+		// tools/world_gen), à défaut à celui de sa race, puis de la race par défaut.
+		// Repli final : clés character_creation.default_spawn.*.
+		if (const engine::world::StartLocation* start = m_startLocations.ResolveFor(factionStr, raceIdTruncated))
+		{
+			spawnX = start->x; spawnY = start->y; spawnZ = start->z; spawnYaw = start->yawDeg;
+			LOG_INFO(Net, "[CharacterCreateHandler] Depart faction '{}' / race '{}' -> {} ({}) ({:.1f}, {:.1f}, {:.1f})",
+				factionStr, raceIdTruncated, start->cityName,
+				start->faction.empty() ? "repli race" : "faction", spawnX, spawnY, spawnZ);
 		}
 		// #1 serveur — genre du personnage (validé male/female, défaut male).
 		const std::string genderStr = (parsed->gender == "female") ? "female" : "male";

@@ -10595,7 +10595,7 @@ namespace engine::server
 			if (!m_worldStarts.IsGeneratedCell(cells::CellFromPosition(start.x, start.z), start.map))
 			{
 				LOG_ERROR(Net, "[ServerApp] Monde en cellules : depart '{}' ({}, carte {}) hors des cellules generees",
-					start.race, start.cityName, cells::WorldIdOf(start.map));
+					start.faction.empty() ? start.race : start.faction, start.cityName, cells::WorldIdOf(start.map));
 				return false;
 			}
 		}
@@ -10784,8 +10784,9 @@ namespace engine::server
 		// la position est LOCALE à cette zone et n'a aucun sens dans le repère global.
 		const bool legacyFrame = persistedZoneFromFile.has_value() && !cells::IsCellZoneId(*persistedZoneFromFile);
 		// Seconde carte (Les Enfers) — carte du personnage : celle de sa zone persistée ;
-		// sans zone (nouveau personnage), celle du départ de sa race (démons : Enfers).
-		const engine::world::StartLocation* raceStart = m_worldStarts.Resolve(client.raceId);
+		// sans zone (nouveau personnage), celle du départ de sa faction, à défaut de sa
+		// race (v1.0.61 ; Légion infernale : Enfers).
+		const engine::world::StartLocation* raceStart = m_worldStarts.ResolveFor(client.factionId, client.raceId);
 		cells::CellMap map = raceStart != nullptr ? raceStart->map : cells::CellMap::Royaumes;
 		if (persistedZoneFromFile.has_value() && cells::IsCellZoneId(*persistedZoneFromFile))
 		{
@@ -10800,8 +10801,8 @@ namespace engine::server
 			if (start != nullptr)
 			{
 				LOG_INFO(Net,
-					"[ServerApp] Position replacee au depart '{}' (client_id={}, race='{}', carte={}, raison={}, ancienne=({:.1f}, {:.1f}, {:.1f}))",
-					start->cityName, client.clientId, client.raceId, cells::WorldIdOf(start->map),
+					"[ServerApp] Position replacee au depart '{}' (client_id={}, faction='{}', race='{}', carte={}, raison={}, ancienne=({:.1f}, {:.1f}, {:.1f}))",
+					start->cityName, client.clientId, client.factionId, client.raceId, cells::WorldIdOf(start->map),
 					legacyFrame ? "repere_historique" : "hors_monde_genere",
 					client.positionMetersX, client.positionMetersY, client.positionMetersZ);
 				map = start->map;

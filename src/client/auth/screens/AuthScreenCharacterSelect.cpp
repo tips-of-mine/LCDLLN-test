@@ -90,6 +90,8 @@ namespace engine::client
 		// race via Engine::GetRaceMesh(). Vide pour les persos pre-migration
 		// (Engine retombera sur le fallback humains).
 		m_pendingEnterWorld.raceId        = chosen.race_str;
+		// Faction de jeu (CHARACTER_LIST) -> Engine -> carte du monde (départ en évidence).
+		m_pendingEnterWorld.factionId     = chosen.faction_str;
 			// #1 serveur — genre du perso (DB, migration 0067) via CHARACTER_LIST -> Engine.
 			m_pendingEnterWorld.gender        = chosen.gender;
 			// Teinte de peau (DB, migration 0068) via CHARACTER_LIST -> Engine.

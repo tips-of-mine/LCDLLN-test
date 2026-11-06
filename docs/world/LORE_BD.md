@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 14) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 15) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -554,7 +554,60 @@ registre `regle_canon_registre_decisions`).
 - Points incertains : étapes intermédiaires ; la région `via_magna` ne suit pas le tracé
   sur toute sa longueur (inchangée).
 
-## 14. Questions ouvertes
+## 14. Départs par faction (v1.0.61)
+
+**Décision du propriétaire (06/11/2026)** : « Les départs ne sont pas en fonction de la race, mais de
+la faction. » Notes `[DÉCISION] (v1.0.61)` sur les fiches (factions, hameaux, lieux, anciens départs,
+`rule_niveaux_par_faction`) et 26 entrées au registre `regle_canon_registre_decisions`. Les anciens
+départs par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash) redeviennent des villes
+normales ; leurs cellules restent générées. « Pas loin de X » : un **nouveau hameau** dédié à la faction,
+dans une case voisine de X (libre, habitable, hors de l'eau), relié à X par une route (`routes` 000121
+à 000127, type `road`) et doté des services d'un hameau. Noms des hameaux `[GD]`, **à valider** ;
+cellules `[INFÉRÉ]`. Script reproductible : `lore_v1061.py` (appliqué au fichier v1.0.60).
+
+| Faction (lore) | Faction de jeu | Départ | Cellule | Justification |
+|---|---|---|---|---|
+| Chevaliers de la Lumière (`chevaliers_de_la_lumiere`) | `lumiere` | hameau Dawnmere (`hameau_dawnmere`), près d'Altenberg | N005_W011 | Plaine de la Première Province à l'est d'Altenberg (N005_W012) ; ouest et sud sont côte et plage. |
+| Chevaliers de la Justice (`chevaliers_de_la_justice`) | `justice` | hameau Oathford (`hameau_oathford`), près d'Aurore | N009_W010 | Plaine de la Syzygie à l'est de l'île (N009_W011), hors du fleuve ; la route franchit un bras. |
+| Dzorak (`dzorak_orcs`) | `dzorak` | hameau Grakhul (`hameau_grakhul`), près de Leviathan | N008_E012 | Lisière de forêt au sud-est de Leviathan du monde jouable (N009_E011) ; cellule déjà générée. |
+| Chevaliers-Dragons (`faction_dragon_knights`) | `dragons` | hameau Wyrmhallow (`hameau_wyrmhallow`), près du Palais des Maîtres des Dragons | S004_W004 | Montagne au sud du palais (S003_W004) ; nord, est et ouest sont des neiges éternelles. |
+| Nains (`faction_dwarves`) | `naine` | hameau Durnhalde (`hameau_durnhalde`), près de Ghrunke Dash | S007_E017 | Montagne du royaume des nains de l'Est (S007_E016 à l'ouest), hors des cases volcaniques ; cellule déjà générée. |
+| Hauts Elfes (`faction_hauts_elfes`) | `elfe` | hameau Silverglade (`hameau_silverglade`), près de Northind | N007_W006 | Forêt de la région de Northind à l'ouest (N007_W005), hors des cases à rivière et de la case d'Orkh. |
+| Légions Impériales (`faction_legions_imperiales`) | `legions_imperiales` (réservé) | hameau Eaglewatch (`hameau_eaglewatch`), près de Lhynn | N002_W010 | Pâturages des Terres de l'Empereur au nord de Lhynn (N001_W010) ; cellule déjà générée, voisine de Marn. |
+| La Lune Noire (`faction_black_moon`) | `lune_noire` | DANS le palais de la Lune Noire, sur la Lune (`lieu_palais_lune_noire_lunaire`) | hors carte | Lieu existant ; pas de hameau. |
+| Les Archimages (`les_archimages`) | aucune | DANS la pyramide de Methraton (`lieu_plan_methraton`, `zone_flying_pyramid`) | hors carte | Lieu existant ; pas de hameau. |
+| La Légion infernale (`faction_legion_infernale`, **nouvelle**) | `legion` | Citadelle de la Légion (`citadelle_legion`), carte des Enfers | Enfers N000_E000 | Lieu central de la croix des 5 cellules des Enfers ; un démon sort et rentre par n'importe laquelle des 5 portes ([`ENFERS.md`](ENFERS.md) §2-3). |
+| Maison du Serpent (`maison_du_serpent`) | `serpent` | **à définir** `[À VÉRIFIER]` | — | Aucun départ créé. |
+| Hors-La-Loi (`Hors-La-Loi`) | aucune | **aucun** | — | Faction qui se débloque pendant le jeu (statut acquis). |
+
+- **Correspondance lore ↔ jeu** : nouveau champ `game_design.faction_jeu` des factions (identifiant de
+  `game/data/races/factions.json`, aussi `characters.faction_str`) et `game_design.depart` (`type`
+  `hameau` / `lieu` / `ville` / `a_definir` / `aucun`, `id`, `cell`, `pres_de`). Les identifiants du lore
+  sont inchangés.
+- **Faction démon** : le lore n'avait aucune faction démon jouable ; `faction_legion_infernale`
+  (`playable` true, `selectable` true) est créée et alignée sur `legion`. Elle reste distincte des
+  Légions Impériales.
+- **Monde jouable** : `world_master.json`, champ `start_for` (nom inchangé) = identifiants de faction de
+  jeu (avant : races) ; 7 hameaux ajoutés après le Hameau de Marn ; `citadelle_legion` des Enfers :
+  `["legion"]`. Cellules générées : + 47 (chaque hameau et ses voisines hors mer), soit 104 listées et
+  180 avec les corridors (`connect_start_cities`, 117 avant la v1.0.61). `world_master.json` n'a pas de routes : `tools/world_gen` relie les
+  villes lui-même (Kruskal + A*) ; les routes 000121 à 000127 ne sont que dans le lore.
+- **Départs hors carte** (Lune Noire, Archimages) : `start_for` ne vit que sur les villes du master et
+  ces lieux n'ont pas de cellule ; le départ est porté par `game_design.depart` (type `lieu`) dans le
+  lore, sans entrée dans le master. En jeu, tant que leur carte n'existe pas, ces personnages suivent le
+  repli par race. Ces décisions remplacent, pour ces factions, le « non accessible au joueur » de v1.0.56.
+- **Code** : `start_locations.json` gagne `start_factions` et `factions` (prioritaires) ; `races` devient
+  le repli (première ville de départ du master de cette race : humains → Eaglewatch, orcs → Grakhul,
+  nains → Durnhalde, elfes → Silverglade, démons → Citadelle). Le master (création) et le shard
+  (relocalisation) résolvent faction puis race (`StartLocationTable::ResolveFor`). La faune des quêtes
+  d'accueil suit la race de la ville de départ.
+- **Points incertains** : noms des hameaux ; `faction_legions_imperiales` est `playable` mais
+  `selectable` false, absente de `factions.json` (seule `empire_hynn`, l'Empire de Lhynn, non
+  sélectionnable) et rattachée à `region_enfers_t00` ; Archimages et Hors-La-Loi absents de
+  `factions.json` ; les PNJ d'accueil (Iaelith, Rendal…) et les quêtes `<race>_accueil` restent dans les
+  anciennes villes.
+
+## 15. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 
@@ -570,9 +623,9 @@ registre `regle_canon_registre_decisions`).
   une colline à sanctuaire (T12) et un antre souterrain où il est enchaîné (T14).
 - Palais du Maître des Dragons « au-delà des sept régions » (p.29) mais visible depuis le
   pont de la Passe (p.42) : hyperbole ou second palais.
-- Leviathan : N009_E011 dans le monde jouable (ville de départ des orcs, cellules
-  générées) contre N012_E012 dans le lore (v1.0.40) ; déplacer une ville de départ
-  touche aux départs des personnages et aux cellules générées.
+- Leviathan : N009_E011 dans le monde jouable (cellules générées) contre N012_E012 dans
+  le lore (v1.0.40). Ce n'est plus une ville de départ (v1.0.61, section 14) ; le hameau
+  dzorak Grakhul (N008_E012) est placé à côté de la position jouable.
 - Krak de Jhenner : sans cellule.
 - ~~Sysigie (N009_W011) : grand fleuve autour de la cellule~~ : **close** (v1.0.55) — fleuve
   `riv_fleuve_sysigie` à deux bras autour de l'île (section 8.2).

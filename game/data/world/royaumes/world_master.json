@@ -225,6 +225,22 @@
       "e_max": 13,
       "n_min": -17,
       "n_max": -15
+    },
+    {
+      "id": "marche_de_lest",
+      "name": "Marche de l'Est",
+      "e_min": 13,
+      "e_max": 20,
+      "n_min": 4,
+      "n_max": 7
+    },
+    {
+      "id": "marais_maudits",
+      "name": "Marais maudits de Thenhart",
+      "e_min": -5,
+      "e_max": -3,
+      "n_min": 10,
+      "n_max": 11
     }
   ],
   "cities": [
@@ -1480,6 +1496,55 @@
       "cell": "S003_W004",
       "kind": "sanctuaire",
       "description": "Sanctuaire au milieu de montagnes ocre ou le Premier Dragon rompt le pacte (BD-T14)."
+    },
+    {
+      "id": "poi_khurden",
+      "name": "Khurden",
+      "cell": "N011_E017",
+      "kind": "cite",
+      "description": "Cite fortifiee de la pegre : marche aux esclaves, guilde des voleurs du Maitre, rues en pente et canal (BD-A2) [INFERE : lisiere orientale de la foret elfique]."
+    },
+    {
+      "id": "poi_reriah",
+      "name": "Reriah",
+      "cell": "N018_E015",
+      "kind": "cite",
+      "description": "Petite ville fortifiee des Marches du Nord sur l'itineraire du Cirque du Magnifique, avant Almuria (BD-A1) [INFERE]."
+    },
+    {
+      "id": "poi_almuria",
+      "name": "Almuria",
+      "cell": "N018_E017",
+      "kind": "cite",
+      "description": "Grande ville fortifiee aux tours coniques enneigees, etape du Cirque du Magnifique apres Reriah (BD-A1) [INFERE]."
+    },
+    {
+      "id": "poi_chateau_de_la_mort",
+      "name": "Chateau de la Mort",
+      "cell": "N013_E016",
+      "kind": "ruine",
+      "description": "Ruines de la forteresse-mine imperiale encastree dans une falaise ; prise par les orques descendus du plateau en nacelles (BD-A4) [INFERE]."
+    },
+    {
+      "id": "poi_passe_syzygie",
+      "name": "Passe de Syzygie",
+      "cell": "N008_W013",
+      "kind": "defile",
+      "description": "Seul acces a la Syzygie, ferme par la colossale muraille batie par les geants (Portes d'Aurore) (BD-A3, BD-T8, BD-T11) [INFERE]."
+    },
+    {
+      "id": "poi_ruines_thenhart",
+      "name": "Ruines de Thenhart",
+      "cell": "N009_W004",
+      "kind": "ruine",
+      "description": "Ruines du chateau du seigneur Thenhart, sur un rocher au-dessus de la riviere qui file vers les Marais maudits ; incendie par Ghorghor Bey (BD-A1, BD-T11) [INFERE]."
+    },
+    {
+      "id": "poi_elevages_imperiaux",
+      "name": "Elevages imperiaux",
+      "cell": "N002_W008",
+      "kind": "elevage",
+      "description": "Enclos et paturages de l'armee imperiale : behemoths et leviathans de guerre (bestiaire v1.0.58, GD) [INFERE : plaines des Terres de l'Empereur]."
     }
   ],
   "imports": {

@@ -145,7 +145,7 @@ namespace engine::client
 	/// Libellé français lisible d'un type de ville (« capitale » → « Capitale »,
 	/// « grande_ville » → « Grande ville »…) ou d'un genre de POI (« faille »,
 	/// « portail », « foret », « etang », « champ_bataille », « volcan », « gouffre »,
-	/// « temple », « sanctuaire », « port », « cite », « defile », « salle »…).
+	/// « temple », « sanctuaire », « port », « cite », « defile », « salle », « elevage »…).
 	/// Inconnu → le type brut.
 	std::string PlaceKindLabel(std::string_view kind);
 }

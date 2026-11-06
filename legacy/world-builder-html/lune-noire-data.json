@@ -1,9 +1,10 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.59",
+    "version": "1.0.60",
     "notes": [
-      "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 13.",
+      "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
+      "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 12.",
       "v1.0.58 : [GD bestiaire] créatures vues ou citées dans les 24 albums : nouvelles fiches d'espèces (ogre, troll, Krell, géants, titan, Grand Ancien, morts-vivants, démons mineurs, bêtes de guerre…), fiches existantes complétées (habitat, zones de chasse, groupe, butin), butins thématiques et règle regle_bestiaire_echelles. Détail : gd/bestiaire.md.",
       "v1.0.58 : [GD] économie — monnaies (denier, pièce d'argent, couronne ; 1 c = 100 pa = 10 000 d, aligné sur game/data), impôts et péages, primes, productions par région, routes commerciales, corporations et métiers (regles_transverses regle_eco_*) ; grille de prix de référence (game_design.economie.grille_prix) ; notes « [GD] (v1.0.58) Économie » sur les régions, villes et lieux concernés.",
       "v1.0.57 : [CANON] règles « ce qui fait foi » (regles_transverses, catégorie canon) : corpus (Tome 0, Tomes 1-14, L'Empire de la Négation, Methraton 1-3, Arcanes 1-5 ; tomes 15 et suivants exclus), priorité des sources, époque du jeu, étiquettes, registre de 198 décisions du propriétaire (173 notes [DÉCISION], 16 fiches dictées par le propriétaire, 7 décisions de LORE_BD inscrites sur leurs fiches, 2 décisions de corpus et de priorité). Détail : docs/world/LORE_BD.md, section 0.",
@@ -4205,7 +4206,8 @@
         "[DÉCISION] (v1.0.56) Plan de Lhynn retenu pour le monde jouable (Q1) : chenal, deux enceintes, port ; l'ancien palais reste en place (ni palais-ziggourat ni grandes artères, postérieurs à l'avènement).",
         "[DÉCISION] (v1.0.54) Lhynn est au bord de l'océan / de la mer de l'ouest, pas d'un lac : le « lac » des vues T3, T11 p.38 et T14 p.25-33 est la baie en fjord (docs/world/LORE_BD.md §7.2 ; inscrit en v1.0.57).",
         "[DÉCISION] (v1.0.54) « L'hynn » devient « Lhynn » dans le lore, world_master.json et factions.json (identifiants inchangés) (docs/world/LORE_BD.md §7.4 ; inscrit en v1.0.57).",
-        "[GD] (v1.0.58) Économie : frappe de la couronne [GD], Trésor impérial et Chancelier de l'Échiquier [BD-A1 p.54] ; reçoit les impôts des fiefs [BD-T7 p.18] ; port de la mer de l'ouest."
+        "[GD] (v1.0.58) Économie : frappe de la couronne [GD], Trésor impérial et Chancelier de l'Échiquier [BD-A1 p.54] ; reçoit les impôts des fiefs [BD-T7 p.18] ; port de la mer de l'ouest.",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "dimensions_estimees": {
         "hauteur": "colline centrale dominant la baie, élévation marquée",
@@ -4877,7 +4879,8 @@
         "[BD-T2] Page 46 — « L'Oracle était au centre d'une vaste plaine, au cœur d'un tumulus ; ses portes ne s'ouvraient que pour laisser passer ceux qui voulaient le voir... »",
         "[BD-T2] Page 47 — chemin bordé d'« échoppes de faux voyants, magiciens, devins, et de vrais charlatans » ; un devin propose l'avenir pour cinq pièces d'argent.",
         "[BD-T11] p.42 : l'Oracle est « au cœur de l'Empire », près des « lacs du destin » ; [BD-T12] p.30 : colline et sanctuaire à portes éthériques ; [BD-T14] p.12 : antre souterrain où il est enchaîné.",
-        "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain."
+        "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain.",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -5025,22 +5028,6 @@
         {
           "id": "pnj_ville_oracle_camp_ecurie_04",
           "name": "Serane Chenbrume",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_oracle_camp_ecurie_05",
-          "name": "Ralette Pierrepré",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_oracle_camp_ecurie_06",
-          "name": "Maelance Hautchêne",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -6579,7 +6566,8 @@
       "features": [],
       "notes": [
         "[v1.0.54] Les notes BD d'Horkher (T6) portées par cette fiche ont été déplacées vers city_horkher (N006_E014), la vraie Horkher. Harrowdale reste une ville du jeu (renommage figé par generate_city_services.py, RENOMMAGES).",
-        "[GD] (v1.0.58) Économie : cité marchande ; produit bois de chauffe, petit gibier, miel, sel gemme ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : cité marchande ; produit bois de chauffe, petit gibier, miel, sel gemme ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -6990,7 +6978,8 @@
         "[DÉCISION] (v1.0.56) Historique (Q15) : ancienne cité impériale conquise par la Lune Noire, dans la région « Marche de l'Est » (region_marche_est).",
         "[DÉCISION] (v1.0.56) Seigneurs (Q10) : Greldinard jusqu'au T5, Wismerhill du T5 au T11, de nouveau Greldinard après le couronnement (hors époque). À l'époque du jeu : baronnie de Wismerhill, Greldinard seigneur de guerre.",
         "[DÉCISION] (v1.0.56) Intacte et refortifiée à l'époque du jeu (Q2).",
-        "[GD] (v1.0.58) Économie : guildes marchandes sous un Grand Maître [BD-T6] ; élevage des Grands Vers Messagers ; vers de Moork ; paie l'impôt à Lhynn en couronnes [BD-T7 p.18] ; importe grain et bois [GD]."
+        "[GD] (v1.0.58) Économie : guildes marchandes sous un Grand Maître [BD-T6] ; élevage des Grands Vers Messagers ; vers de Moork ; paie l'impôt à Lhynn en couronnes [BD-T7 p.18] ; importe grain et bois [GD].",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "dimensions_estimees": {
         "hauteur": "100m",
@@ -7159,6 +7148,14 @@
           "name": "Varora Hautpré",
           "gender": "female",
           "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moork_ecurie_03",
+          "name": "Laelith Moross",
+          "gender": "male",
+          "race_id": "race_dark_elf",
           "service": "ecurie",
           "metier": "palefrenier"
         },
@@ -8615,7 +8612,8 @@
         "[BD-T14] p.38 : « la haute cité de Magistra » (lecture incertaine) s'abat pendant l'exode. État à décider (game design).",
         "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
         "[DÉCISION] (v1.0.56) Graphie THS « Magestrya » en alias (Q12) ; Magistrya garde sa case N003_W003 (Q18), malgré sa position au sud de Lhynn sur la carte THS.",
-        "[GD] (v1.0.58) Économie : école de magie (apprentissage des sorts), herbes et réactifs des marais [GD]."
+        "[GD] (v1.0.58) Économie : école de magie (apprentissage des sorts), herbes et réactifs des marais [GD].",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "dimensions_estimees": {
         "hauteur": "800-1200m",
@@ -8896,7 +8894,9 @@
         "[BD-T3 pl.41-43] Route pavée en terrasse bordée de murets, pont de pierre en arche sur un ruisseau, château à tour carrée au toit pointu et corps de logis, enceinte à herse (brisée par Ghorghor), forêt d'automne ; bannière blanche et bleue au blason rond rouge.",
         "[v1.0.51] Fusion de lieu_garundel_estate (« Garundel Estate », S002_E007) : routes 000012, 000013 et 000018 repartent du fief (S001_E004).",
         "[v1.0.51] Les références « p.45-46 » ci-dessus suivent la page du PDF (= planches 43-44).",
-        "[GD] (v1.0.58) Économie : fief agricole sur la route du métal nain et la Via Magna [GD]."
+        "[GD] (v1.0.58) Économie : fief agricole sur la route du métal nain et la Via Magna [GD].",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
+        "[v1.0.60] Route 000012 supprimée (remplacée par la Via Magna, route 000120) ; 000013 et 000018 repartent toujours du fief."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -8943,14 +8943,6 @@
         {
           "id": "pnj_ville_garundel_fief_ecurie_03",
           "name": "Roline Valcastel",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_garundel_fief_ecurie_04",
-          "name": "Edia Belmorne",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -10761,7 +10753,8 @@
         "[v1.0.54] Notes BD reprises de la fiche horker (Harrowdale, N004_E009), qui n'est pas Horkher.",
         "[BD-T7] p.18, 30, 38 : « Baron de Moork et d'Horkher » ; les dissidents d'Horkher diminuent ; « NORKHER » sur la carte impériale (lecture incertaine) ; [BD-T8] p.50 : graphie « Horker ».",
         "[DÉCISION] (v1.0.56) Comté rattaché à la Marche de l'Est (Q15) ; graphie THS « Horker » en alias (Q12).",
-        "[GD] (v1.0.58) Économie : cité marchande ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : cité marchande ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -14758,7 +14751,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -17130,7 +17124,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage ; récolte : gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage ; récolte : gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -160007,7 +160002,9 @@
         "[HS] 'Le mieux est de s'écarter, de s'asseoir confortablement et de contempler l'impressionnant spectacle.'",
         "[ÉPOQUE] intemporel : présent à l'époque du jeu.",
         "[DÉCISION] (v1.0.56) Entre dans le monde jouable (Q1, Q18) : route principale Lhynn → Moork héritée de l'Empire tharque [BD-THS p.7], sans reproduire la distance de 8 000 km ; tracé dans la PR de carte.",
-        "[GD] (v1.0.58) Économie : ressources relais et caravansérails ; productions services aux voyageurs, relais de poste impériaux. Détail et sources : regle_eco_productions_regions."
+        "[GD] (v1.0.58) Économie : ressources relais et caravansérails ; productions services aux voyageurs, relais de poste impériaux. Détail et sources : regle_eco_productions_regions.",
+        "[CARTE] (v1.0.60) Tracé : route 000120 (type imperial_road), 34 cellules de N001_W010 à S002_E015 ; les cellules de la région ne sont pas toutes sur le tracé (région inchangée).",
+        "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire."
       ]
     },
     {
@@ -173914,7 +173911,7 @@
         ],
         "source": "[BD-T1] à [BD-T3], [BD-T11], [BD-T14], [BD-THS] ; vides comblés [GD]",
         "notes": [
-          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §11 ; la fiche ne tranche pas.",
+          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §14 ; la fiche ne tranche pas.",
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
         ]
       },
@@ -212224,30 +212221,6 @@
       "notes": []
     },
     {
-      "id": "000011",
-      "type": "road",
-      "from_place": "N000_E000",
-      "from_ville_id": "ville_oracle_camp",
-      "from_lieu_id": "",
-      "to_place": "N001_W010",
-      "to_ville_id": "ville_lhynn",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000012",
-      "type": "road",
-      "from_place": "S001_E004",
-      "from_ville_id": "ville_garundel_fief",
-      "from_lieu_id": "",
-      "to_place": "N000_E000",
-      "to_ville_id": "ville_oracle_camp",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000013",
       "type": "road",
       "from_place": "S001_E004",
@@ -212257,7 +212230,9 @@
       "to_ville_id": "ville_moork",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[v1.0.60] Raccourci direct du fief de Garundel à Moork, hors Via Magna (route 000120, qui monte à Horkher) ; gardé comme branche de l'axe axe_via_magna."
+      ]
     },
     {
       "id": "000017",
@@ -213262,6 +213237,63 @@
       "description": "[BD-T3 pl.24-41] De Ghrunke Dash au fief de Garundel par la forêt des lutins et le marais du village fantôme.",
       "notes": [
         "[INFÉRÉ] v1.0.51"
+      ]
+    },
+    {
+      "id": "000120",
+      "type": "imperial_road",
+      "from_place": "N001_W010",
+      "from_ville_id": "ville_lhynn",
+      "from_lieu_id": "",
+      "to_place": "S002_E015",
+      "to_ville_id": "ville_moork",
+      "to_lieu_id": "",
+      "description": "Via Magna : voie impériale de Lhynn à Moork par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield (34 cellules).",
+      "notes": [
+        "[BD-THS p.5] Carte de l'Empire : la Via Magna part de Lhynn (côte ouest), passe par Magestrya (= Magistrya), file vers l'est en s'infléchissant au sud, remonte jusqu'à Horker puis descend au sud-est jusqu'à Moork.",
+        "[BD-THS p.7] « une route longue de plus de 8 000 kilomètres court de Lhynn à Moork » ; postes impériaux, villes ou caravansérails tous les 30 km sur presque toute sa longueur. Distance non reproduite (décision v1.0.56).",
+        "[BD-THS p.8] Voie impériale héritée du grand Empire tharque, soigneusement entretenue ; des légions y passent.",
+        "[INFÉRÉ] (v1.0.60) Horker de la carte THS = Horkher (city_horkher, N006_E014 ; graphie « Horker » en alias, décision v1.0.56 Q12), et non Harrowdale (horker, N004_E009).",
+        "[INFÉRÉ] (v1.0.60) Étapes absentes de la carte THS : Camp de l'Oracle et fief de Garundel (creux méridional du tracé, comme sur la carte), Harrowdale et Shadehold (montée vers Horkher), Nightfield (descente vers Moork) ; cellules intermédiaires au plus court en évitant mer, lacs, chaînes, montagnes et zones volcaniques.",
+        "[INFÉRÉ] (v1.0.60) Aucun fleuve de l'hydrographie (hydrography.rivers) ni cellule à rivière sur le tracé : pas de pont.",
+        "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
+        "[v1.0.60] Remplace les routes provisoires 000011 (Lhynn → Camp de l'Oracle) et 000012 (fief de Garundel → Camp de l'Oracle), supprimées ; 000013 (fief de Garundel → Moork) gardée en raccourci."
+      ],
+      "waypoints": [
+        "N001_W010",
+        "N000_W010",
+        "S001_W009",
+        "S001_W008",
+        "S001_W007",
+        "N000_W006",
+        "N001_W005",
+        "N002_W004",
+        "N003_W003",
+        "N002_W002",
+        "N001_W001",
+        "N000_E000",
+        "N000_E001",
+        "S001_E002",
+        "S001_E003",
+        "S001_E004",
+        "N000_E005",
+        "N001_E006",
+        "N002_E007",
+        "N003_E008",
+        "N004_E009",
+        "N004_E010",
+        "N003_E011",
+        "N004_E012",
+        "N005_E013",
+        "N006_E014",
+        "N005_E014",
+        "N004_E014",
+        "N003_E014",
+        "N002_E015",
+        "N001_E015",
+        "N000_E015",
+        "S001_E015",
+        "S002_E015"
       ]
     }
   ],
@@ -215479,7 +215511,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §13).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -215487,7 +215519,7 @@
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
-      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §13",
+      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §12, §13",
       "notes": [
         "Une même décision appliquée à plusieurs fiches figure une fois par fiche.",
         "Les décisions v1.0.57 de ce corpus (regle_canon_corpus, regle_canon_priorite_sources) figurent aussi au registre.",
@@ -216899,64 +216931,78 @@
           "collection": "cells",
           "id": "N002_W008",
           "nom": "cell_N002_W008",
-          "decision": "Placement sur la carte jouable des élevages impériaux demandé par le propriétaire ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable des élevages impériaux demandé par le propriétaire ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_almuria",
           "nom": "Almuria",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_chateau_de_la_mort",
           "nom": "Le Château de la Mort (ruines)",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_khurden",
           "nom": "Khurden",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_passe_syzygie",
           "nom": "La Passe de Syzygie et sa muraille",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_reriah",
           "nom": "Rériah",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "lieux",
           "id": "lieu_ruines_thenhart",
           "nom": "Ruines du château de Thenhart",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "regions",
           "id": "marais_maudits_t11",
           "nom": "Marais Maudits (de Thenhart)",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
         },
         {
           "collection": "regions",
           "id": "region_marche_est",
           "nom": "Marche de l'Est",
-          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §12).",
           "version": "1.0.59"
+        },
+        {
+          "collection": "regions",
+          "id": "via_magna",
+          "nom": "Via Magna",
+          "decision": "Tracé de la Via Magna demandé par le propriétaire : route 000120 ; étapes intermédiaires et cellules [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.60"
+        },
+        {
+          "collection": "routes",
+          "id": "000120",
+          "nom": "Via Magna",
+          "decision": "Tracé de la Via Magna demandé par le propriétaire ; étapes intermédiaires et cellules [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.60"
         }
       ]
     },
@@ -220692,18 +220738,22 @@
           "id": "axe_via_magna",
           "nom": "Via Magna (Lhynn → Moork)",
           "routes": [
-            "000011",
-            "000012",
-            "000013"
+            "000120"
           ],
           "branches": [
             "000096",
-            "000050"
+            "000050",
+            "000013"
           ],
           "etapes": [
             "ville_lhynn",
+            "sauken_glude_of_magistrya",
             "ville_oracle_camp",
             "ville_garundel_fief",
+            "horker",
+            "town_0136",
+            "city_horkher",
+            "hamlet_0201",
             "ville_moork"
           ],
           "marchandises": [
@@ -220713,7 +220763,7 @@
             "légions"
           ],
           "dangers": "convois attaqués, légions en marche",
-          "source": "[BD-THS p.7] ; [DÉCISION] (v1.0.56) route principale Lhynn → Moork, tracé dans la PR de carte ; enchaînement des routes existantes [GD] en attendant ce tracé [À VÉRIFIER]."
+          "source": "[BD-THS p.5, p.7] ; [DÉCISION] (v1.0.56) route principale Lhynn → Moork ; tracé v1.0.60 (route 000120, étapes intermédiaires [INFÉRÉ]). Branches : 000096 (Oracle → Harrowdale), 000050 (Harrowdale → Shadehold, doublée par le tracé), 000013 (raccourci Garundel → Moork)."
         },
         {
           "id": "axe_metal_nain",
@@ -221921,7 +221971,7 @@
         "region_chevaliers_dragons": "La Nuée des Dragons"
       },
       "grille": {
-        "_comment": "Services par taille de ville (valeurs [min, max] ; 1 exemplaire = 1 PNJ). Ecurie : 1 par sortie terrestre (routes 'road'), minimum 1. Port et arene : seulement les villes listees. Cimetiere : 1 par ville habitee. Genere et verifie par tools/lore/*_city_services.py.",
+        "_comment": "Services par taille de ville (valeurs [min, max] ; 1 exemplaire = 1 PNJ). Ecurie : 1 par sortie terrestre (routes 'road' et 'imperial_road'), minimum 1. Port et arene : seulement les villes listees. Cimetiere : 1 par ville habitee. Genere et verifie par tools/lore/*_city_services.py.",
         "version": 1,
         "tailles": {
           "hameau": {
@@ -222345,7 +222395,8 @@
         ],
         "ecurie": {
           "route_types": [
-            "road"
+            "road",
+            "imperial_road"
           ],
           "minimum": 1
         },
@@ -228180,6 +228231,11 @@
       "id": "secret_path",
       "label": "Passage secret",
       "description": ""
+    },
+    {
+      "id": "imperial_road",
+      "label": "Voie impériale",
+      "description": "Grande route impériale héritée de l'Empire tharque, entretenue par l'Empire (Via Magna) [BD-THS p.8] ; trait plein rouge dans l'éditeur. Compte comme sortie terrestre pour les écuries."
     }
   ],
   "place_types": [

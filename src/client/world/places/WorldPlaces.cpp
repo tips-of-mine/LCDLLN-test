@@ -248,6 +248,8 @@ namespace engine::client
 		if (kind == "cite") return "Cit\xC3\xA9"; // « Cité » en UTF-8
 		if (kind == "defile") return "D\xC3\xA9" "fil\xC3\xA9"; // « Défilé » en UTF-8
 		if (kind == "salle") return "Salle souterraine";
+		// Lieux des albums hors série (lore v1.0.59).
+		if (kind == "elevage") return "\xC3\x89levage"; // « Élevage » en UTF-8
 		return std::string(kind);
 	}
 }

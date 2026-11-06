@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.58",
+    "version": "1.0.59",
     "notes": [
+      "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 13.",
       "v1.0.58 : [GD bestiaire] créatures vues ou citées dans les 24 albums : nouvelles fiches d'espèces (ogre, troll, Krell, géants, titan, Grand Ancien, morts-vivants, démons mineurs, bêtes de guerre…), fiches existantes complétées (habitat, zones de chasse, groupe, butin), butins thématiques et règle regle_bestiaire_echelles. Détail : gd/bestiaire.md.",
       "v1.0.58 : [GD] économie — monnaies (denier, pièce d'argent, couronne ; 1 c = 100 pa = 10 000 d, aligné sur game/data), impôts et péages, primes, productions par région, routes commerciales, corporations et métiers (regles_transverses regle_eco_*) ; grille de prix de référence (game_design.economie.grille_prix) ; notes « [GD] (v1.0.58) Économie » sur les régions, villes et lieux concernés.",
       "v1.0.57 : [CANON] règles « ce qui fait foi » (regles_transverses, catégorie canon) : corpus (Tome 0, Tomes 1-14, L'Empire de la Négation, Methraton 1-3, Arcanes 1-5 ; tomes 15 et suivants exclus), priorité des sources, époque du jeu, étiquettes, registre de 198 décisions du propriétaire (173 notes [DÉCISION], 16 fiches dictées par le propriétaire, 7 décisions de LORE_BD inscrites sur leurs fiches, 2 décisions de corpus et de priorité). Détail : docs/world/LORE_BD.md, section 0.",
@@ -160142,7 +160143,9 @@
         "[BD-T11] '... après un long vol, j'arrivai au-dessus des ruines de Thenhart. De là, il me fut facile de trouver les marais maudits... où je mis pied à terre.'",
         "[BD-T11] Les Dzoraks surgissent de partout lors de la profanation de la tombe.",
         "[BD-T11] Zone extrêmement dangereuse — même Wismerhill fut surpris par les Dzoraks.",
-        "[BD-A1 p.42-48] « les marais maudits » : arbre titanesque couvert de cadavres (= Arbre aux Ossements [DÉDUCTION]), armes antiques, « vieux cairn cérémoniel », Dvorak ; tombe des siamoises Carole et Caroline."
+        "[BD-A1 p.42-48] « les marais maudits » : arbre titanesque couvert de cadavres (= Arbre aux Ossements [DÉDUCTION]), armes antiques, « vieux cairn cérémoniel », Dvorak ; tombe des siamoises Carole et Caroline.",
+        "[INFÉRÉ] (v1.0.59) Cellules N010_W005, N010_W004, N010_W003, N011_W005, N011_W004 (marais de la grille, zones de chasse des Dvorak du bestiaire v1.0.58) ; la rivière de la cascade (riv_cascade_northind) y entre en N010_W004 depuis les ruines de Thenhart (N009_W004). Monde jouable : région marais_maudits (Hayfen, N011_W004, est au bord du marais).",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -160176,7 +160179,9 @@
         "[BD-THS p.23] Horker, « alors marche de l'Empire ».",
         "[BD-T14] p.29 : un flot de barbares venu des Marches de l'Est, derrière Moork (raid_marches_est_t14).",
         "[DÉCISION] (v1.0.56) Région créée (Q15) ; contenu : baronnie_de_moorks, city_horkher, raid_marches_est_t14. Aucune emprise sur la carte jouable dans cette PR.",
-        "[GD] (v1.0.58) Économie : ressources blé, bétail ; productions laine [GD] ; exporte grain vers Moork ; importe armes. Détail et sources : regle_eco_productions_regions."
+        "[GD] (v1.0.58) Économie : ressources blé, bétail ; productions laine [GD] ; exporte grain vers Moork ; importe armes. Détail et sources : regle_eco_productions_regions.",
+        "[INFÉRÉ] (v1.0.59) Emprise : les 56 cellules sans région de E013 à E020, de S003 à N007, autour de la baronnie de Moork (baronnie_de_moorks, qui en fait partie) : au nord le comté d'Horkher (city_horkher, N006_E014), à l'est les confins jusqu'au Rivage des Géants. Monde jouable : région marche_de_lest (E013 à E020, N004 à N007, au nord de la baronnie, qui garde son nom).",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -180447,7 +180452,9 @@
         "animal_cheval"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rériah (lieu_reriah) placé dans la cellule ; monde jouable : POI poi_reriah."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -180489,7 +180496,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Almuria (lieu_almuria) placé dans la cellule ; monde jouable : POI poi_almuria."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -184777,7 +184786,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Le Château de la Mort (ruines) (lieu_chateau_de_la_mort) placé dans la cellule ; monde jouable : POI poi_chateau_de_la_mort."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -186112,7 +186123,7 @@
     {
       "id": "N011_W005",
       "name": "cell_N011_W005",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "marais_maudits_t11",
       "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
@@ -186125,7 +186136,9 @@
         "creature_dzorak_marais_t11"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -186133,7 +186146,7 @@
     {
       "id": "N011_W004",
       "name": "cell_N011_W004",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "marais_maudits_t11",
       "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
@@ -186149,7 +186162,9 @@
         "creature_dzorak_marais_t11"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -186558,7 +186573,9 @@
         "animal_ane"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Khurden (lieu_khurden) placé dans la cellule ; monde jouable : POI poi_khurden."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -187012,7 +187029,7 @@
     {
       "id": "N010_W005",
       "name": "cell_N010_W005",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "marais_maudits_t11",
       "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
@@ -187025,7 +187042,9 @@
         "creature_dzorak_marais_t11"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -187033,7 +187052,7 @@
     {
       "id": "N010_W004",
       "name": "cell_N010_W004",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "marais_maudits_t11",
       "terrain_type": "swamp_with_river",
       "has_lake": false,
       "lake_count": 0,
@@ -187049,7 +187068,9 @@
         "creature_dzorak_marais_t11"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -187057,7 +187078,7 @@
     {
       "id": "N010_W003",
       "name": "cell_N010_W003",
-      "region_id": "terres_des_gigantomorphes",
+      "region_id": "marais_maudits_t11",
       "terrain_type": "swamp",
       "has_lake": false,
       "lake_count": 0,
@@ -187070,7 +187091,9 @@
         "creature_dzorak_marais_t11"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -187934,7 +187957,9 @@
       ],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Ruines du château de Thenhart (lieu_ruines_thenhart) placé dans la cellule ; monde jouable : POI poi_ruines_thenhart."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -188646,7 +188671,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) La Passe de Syzygie et sa muraille (lieu_passe_syzygie) placé dans la cellule ; monde jouable : POI poi_passe_syzygie."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190026,7 +190053,7 @@
     {
       "id": "N007_E013",
       "name": "cell_N007_E013",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -190037,7 +190064,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190065,7 +190094,7 @@
     {
       "id": "N007_E015",
       "name": "cell_N007_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -190076,14 +190105,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N007_E016",
       "name": "cell_N007_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -190094,14 +190125,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N007_E017",
       "name": "cell_N007_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -190112,14 +190145,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N007_E018",
       "name": "cell_N007_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -190130,14 +190165,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N007_E019",
       "name": "cell_N007_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
@@ -190148,14 +190185,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N007_E020",
       "name": "cell_N007_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain_with_river",
       "has_lake": false,
       "lake_count": 0,
@@ -190166,7 +190205,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190920,7 +190961,7 @@
     {
       "id": "N006_E014",
       "name": "cell_N006_E014",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -190931,14 +190972,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E015",
       "name": "cell_N006_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -190949,14 +190992,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E016",
       "name": "cell_N006_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -190967,14 +191012,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E017",
       "name": "cell_N006_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -190985,14 +191032,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E018",
       "name": "cell_N006_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -191003,14 +191052,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E019",
       "name": "cell_N006_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -191021,14 +191072,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N006_E020",
       "name": "cell_N006_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -191039,7 +191092,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -191759,7 +191814,7 @@
     {
       "id": "N005_E013",
       "name": "cell_N005_E013",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -191770,14 +191825,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E014",
       "name": "cell_N005_E014",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -191788,14 +191845,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E015",
       "name": "cell_N005_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -191806,14 +191865,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E016",
       "name": "cell_N005_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -191824,14 +191885,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E017",
       "name": "cell_N005_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -191842,14 +191905,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E018",
       "name": "cell_N005_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -191860,14 +191925,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E019",
       "name": "cell_N005_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -191878,14 +191945,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N005_E020",
       "name": "cell_N005_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -191896,7 +191965,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -192615,7 +192686,7 @@
     {
       "id": "N004_E013",
       "name": "cell_N004_E013",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -192626,14 +192697,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E014",
       "name": "cell_N004_E014",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -192644,14 +192717,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E015",
       "name": "cell_N004_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -192662,14 +192737,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E016",
       "name": "cell_N004_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -192680,14 +192757,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E017",
       "name": "cell_N004_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -192698,14 +192777,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E018",
       "name": "cell_N004_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -192716,14 +192797,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E019",
       "name": "cell_N004_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "forest_edge",
       "has_lake": false,
       "lake_count": 0,
@@ -192734,14 +192817,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N004_E020",
       "name": "cell_N004_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -192752,7 +192837,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -193472,7 +193559,7 @@
     {
       "id": "N003_E013",
       "name": "cell_N003_E013",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193483,14 +193570,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E014",
       "name": "cell_N003_E014",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193501,14 +193590,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E015",
       "name": "cell_N003_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193519,14 +193610,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E016",
       "name": "cell_N003_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193537,14 +193630,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E017",
       "name": "cell_N003_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193555,14 +193650,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E018",
       "name": "cell_N003_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193573,14 +193670,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E019",
       "name": "cell_N003_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193591,14 +193690,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N003_E020",
       "name": "cell_N003_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -193609,7 +193710,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -193916,7 +194019,9 @@
         "creature_molosse_imperial"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193940,7 +194045,9 @@
         "creature_leviathan_imperial"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193965,7 +194072,10 @@
         "creature_leviathan_imperial"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Élevages impériaux de béhémoths et de léviathans (bestiaire v1.0.58, [GD]) dans les plaines des Terres de l'Empereur ; monde jouable : POI poi_elevages_imperiaux en N002_W008.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194342,7 +194452,7 @@
     {
       "id": "N002_E013",
       "name": "cell_N002_E013",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194353,14 +194463,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E014",
       "name": "cell_N002_E014",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194371,14 +194483,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E015",
       "name": "cell_N002_E015",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194389,14 +194503,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E016",
       "name": "cell_N002_E016",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194407,14 +194523,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E017",
       "name": "cell_N002_E017",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194425,14 +194543,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E018",
       "name": "cell_N002_E018",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194443,14 +194563,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E019",
       "name": "cell_N002_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194461,14 +194583,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N002_E020",
       "name": "cell_N002_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -194479,7 +194603,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -195313,7 +195439,7 @@
     {
       "id": "N001_E019",
       "name": "cell_N001_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -195324,14 +195450,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N001_E020",
       "name": "cell_N001_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -195342,7 +195470,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -196184,7 +196314,7 @@
     {
       "id": "N000_E019",
       "name": "cell_N000_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
@@ -196195,14 +196325,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N000_E020",
       "name": "cell_N000_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -196213,7 +196345,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -197041,7 +197175,7 @@
     {
       "id": "S001_E019",
       "name": "cell_S001_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
@@ -197052,14 +197186,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "S001_E020",
       "name": "cell_S001_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -197070,7 +197206,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -197914,7 +198052,7 @@
     {
       "id": "S002_E019",
       "name": "cell_S002_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
@@ -197925,14 +198063,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "S002_E020",
       "name": "cell_S002_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -197943,7 +198083,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -198775,7 +198917,7 @@
     {
       "id": "S003_E019",
       "name": "cell_S003_E019",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
@@ -198786,14 +198928,16 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "S003_E020",
       "name": "cell_S003_E020",
-      "region_id": "",
+      "region_id": "region_marche_est",
       "terrain_type": "plain",
       "has_lake": false,
       "lake_count": 0,
@@ -198804,7 +198948,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -215333,7 +215479,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index.",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §13).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -215341,7 +215487,7 @@
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
-      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4",
+      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §13",
       "notes": [
         "Une même décision appliquée à plusieurs fiches figure une fois par fiche.",
         "Les décisions v1.0.57 de ce corpus (regle_canon_corpus, regle_canon_priorite_sources) figurent aussi au registre.",
@@ -216748,6 +216894,69 @@
           "nom": "Priorité des sources en cas de contradiction",
           "decision": "En cas de contradiction, l'ordre est : 1) décision du propriétaire [DÉCISION] ; 2) Tomes 0 à 14 ([BD-T00], [BD-T1] à [BD-T14]) ; 3) « L'Empire de la Négation » ([BD-THS], [HS]) ; 4) Arcanes et Methraton ([BD-A1] à [BD-A5], [BD-M1] à [BD-M3]). Le game design [GD] (et [GAMEPLAY], [LORE_ETENDU], [JSON]) comble les vides et ne contredit jamais une source de rang supérieur. [INFÉRÉ], [HYPOTHÈSE] et [À VÉRIFIER] ne font pas foi.",
           "version": "1.0.57"
+        },
+        {
+          "collection": "cells",
+          "id": "N002_W008",
+          "nom": "cell_N002_W008",
+          "decision": "Placement sur la carte jouable des élevages impériaux demandé par le propriétaire ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_almuria",
+          "nom": "Almuria",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_chateau_de_la_mort",
+          "nom": "Le Château de la Mort (ruines)",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_khurden",
+          "nom": "Khurden",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_passe_syzygie",
+          "nom": "La Passe de Syzygie et sa muraille",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_reriah",
+          "nom": "Rériah",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_ruines_thenhart",
+          "nom": "Ruines du château de Thenhart",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "regions",
+          "id": "marais_maudits_t11",
+          "nom": "Marais Maudits (de Thenhart)",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
+        },
+        {
+          "collection": "regions",
+          "id": "region_marche_est",
+          "nom": "Marche de l'Est",
+          "decision": "Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; cellule [INFÉRÉ] (LORE_BD §13).",
+          "version": "1.0.59"
         }
       ]
     },
@@ -226467,7 +226676,7 @@
       "alias": "Portes d'Aurore",
       "type": "passage_poi",
       "importance": "",
-      "cell": "",
+      "cell": "N008_W013",
       "region_id": "syzygie",
       "zone_id": "",
       "faction_control": "chevaliers_de_la_justice",
@@ -226541,7 +226750,9 @@
         "[BD-A3 pl.41] Parsifal et Couette reviennent par la Passe.",
         "[BD-T11] p.4-5 : gorge fermée de portes d'airain ; [BD-T8] p.24-25 : « Portes d'Aurore ».",
         "[ÉPOQUE] avant T1 → T11 ; intacte à l'époque du jeu.",
-        "[DÉCISION] (v1.0.56) La Passe et sa muraille = gorge du T11 et Portes d'Aurore (Q5). Placement : PR de carte à part (Q19)."
+        "[DÉCISION] (v1.0.56) La Passe et sa muraille = gorge du T11 et Portes d'Aurore (Q5). Placement : PR de carte à part (Q19).",
+        "[INFÉRÉ] (v1.0.59) Cellule N008_W013 : plaine de la région syzygie au sud-ouest d'Aurore (ville_sysigie, N009_W011), entre la côte (N008_W014) et la vallée ; la Passe est à l'ouest de la Syzygie et la route d'accès vient du sud le long de la côte ouest puis tourne vers l'est [BD-A3 pl.16, pl.41, orientation [HYPOTHÈSE] nord en haut] ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore [BD-T8 p.24-25]. Hors du cours du fleuve (N008_W011) et de Justfall (N007_W011). La grille n'a pas de chaîne autour de la Syzygie : relief de la gorge à modeler plus tard. Monde jouable : POI poi_passe_syzygie (defile).",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -227364,7 +227575,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "N011_E017",
       "region_id": "",
       "zone_id": "",
       "faction_control": "",
@@ -227439,7 +227650,9 @@
         "[BD-A2 pl.41-45] Décapitation du Surin en place publique ; la garde rafle la caverne de la guilde.",
         "[ÉPOQUE] avant T1 ; intacte à l'époque du jeu.",
         "[DÉCISION] (v1.0.56) Placée près de la lisière orientale de la forêt elfique (Q19) [HYPOTHÈSE : à l'est des montagnes] ; placement effectif dans la PR de carte à part.",
-        "[GD] (v1.0.58) Économie : marché aux esclaves (décor et quêtes de libération, aucun achat par les joueurs) et guilde des voleurs reformée en secret (« les mille mains ») après le démantèlement de celle du Maître [BD-A2 pl.42-44] ; receleur à 40 % de la valeur. Voir regle_eco_corporations_metiers."
+        "[GD] (v1.0.58) Économie : marché aux esclaves (décor et quêtes de libération, aucun achat par les joueurs) et guilde des voleurs reformée en secret (« les mille mains ») après le démantèlement de celle du Maître [BD-A2 pl.42-44] ; receleur à 40 % de la valeur. Voir regle_eco_corporations_metiers.",
+        "[INFÉRÉ] (v1.0.59) Cellule N011_E017 : plaine contre la lisière orientale de la forêt elfique (N011_E016, Q19), adossée à la chaîne de N011_E018 et N012_E017 (rues en pente, [BD-A2 pl.26]) ; sur la carte d'A2 (pl.14), le convoi atteint la cité après une grande forêt de conifères allongée nord-sud, cité à l'est (orientation [HYPOTHÈSE] nord en haut). Aucune ville dans la case (Hillwatch, N010_E016, en diagonale). Monde jouable : POI poi_khurden (cite, ville non bâtie comme Moros). Intacte à l'époque du jeu.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -227448,7 +227661,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "N018_E015",
       "region_id": "region_marches",
       "zone_id": "",
       "faction_control": "",
@@ -227519,7 +227732,9 @@
       "notes": [
         "[BD-A1 p.30] Carte de l'itinéraire du cirque : les villes deviennent « plus importantes » à mesure qu'il s'éloigne des Marches de l'Empire.",
         "[ÉPOQUE] avant T1 ; présente à l'époque du jeu.",
-        "[DÉCISION] (v1.0.56) Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part."
+        "[DÉCISION] (v1.0.56) Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part.",
+        "[INFÉRÉ] (v1.0.59) Cellule N018_E015 : plaine du nord des Marches du Nord (Q19), au pied des forêts et des neiges des Terres des Gigantomorphes (N019_E015, N021_E015) ; sur la carte d'A1 (p.30), Rériah est à l'ouest d'Almuria (flèche de Rériah vers Almuria, orientation [HYPOTHÈSE] nord en haut), dans des montagnes. Runecroft (N018_E016) entre les deux villes. Monde jouable : POI poi_reriah (cite, ville non bâtie). Présente à l'époque du jeu.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -227528,7 +227743,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "",
+      "cell": "N018_E017",
       "region_id": "region_marches",
       "zone_id": "",
       "faction_control": "",
@@ -227599,7 +227814,9 @@
       "notes": [
         "[BD-A1 p.30] Carte de l'itinéraire du cirque : les villes deviennent « plus importantes » à mesure qu'il s'éloigne des Marches de l'Empire.",
         "[ÉPOQUE] avant T1 ; présente à l'époque du jeu.",
-        "[DÉCISION] (v1.0.56) Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part."
+        "[DÉCISION] (v1.0.56) Rattachée aux Marches du Nord (Q19) ; placement effectif dans la PR de carte à part.",
+        "[INFÉRÉ] (v1.0.59) Cellule N018_E017 : plaine du nord des Marches du Nord (Q19), sous les montagnes de N019_E017 et les neiges de N020_E018 (grande ville aux tours coniques enneigées de la carte d'A1 p.30 [HYPOTHÈSE]) ; à l'est de Rériah, terme de la flèche de l'itinéraire. Monde jouable : POI poi_almuria (cite, ville non bâtie). Présente à l'époque du jeu.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -227608,7 +227825,7 @@
       "alias": "",
       "type": "ruins_settlement",
       "importance": "",
-      "cell": "",
+      "cell": "N013_E016",
       "region_id": "territoires_orcques",
       "zone_id": "",
       "faction_control": "",
@@ -227683,7 +227900,9 @@
         "[BD-A4 p.22-29] Assaut orque par le haut grâce à des nacelles ; commandant et prêtre tués ; château ruiné (p.29).",
         "[ÉPOQUE] avant T1 ; en ruine à l'époque du jeu.",
         "[DÉCISION] (v1.0.56) Ruine placée en bordure de l'Orkland (territoires_orcques, Q19) ; placement effectif dans la PR de carte à part.",
-        "[GD] (v1.0.58) Économie : mines de minerai « si précieux pour l'Empire » [BD-A4 p.17], abandonnées depuis la révolte : filons de minerai à exploiter dans les ruines."
+        "[GD] (v1.0.58) Économie : mines de minerai « si précieux pour l'Empire » [BD-A4 p.17], abandonnées depuis la révolte : filons de minerai à exploiter dans les ruines.",
+        "[INFÉRÉ] (v1.0.59) Cellule N013_E016 : chaîne de montagnes (code M) au bord des Territoires orcques (N013_E015 et N012_E015 dans la région territoires_orcques du monde jouable, Q19), même chaîne que le défilé de Mordrek aux falaises rouges (N016_E013) : forteresse encastrée dans une falaise de canyon rouge sous un plateau [BD-A4 p.16-22]. Hoengardt (N014_E016) voisine, sans chevauchement. Monde jouable : POI poi_chateau_de_la_mort (ruine) ; mines abandonnées dans les ruines.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {
@@ -227773,7 +227992,7 @@
       "alias": "",
       "type": "ruins_settlement",
       "importance": "",
-      "cell": "",
+      "cell": "N009_W004",
       "region_id": "marais_maudits_t11",
       "zone_id": "",
       "faction_control": "",
@@ -227846,7 +228065,9 @@
         "[BD-A1 p.35-42] Le Cirque du Magnifique y joue ; le seigneur refuse de payer et jette la troupe aux cachots ; fuite par les remparts dans une rivière.",
         "[BD-A1 p.59, 63-65] « Thenhart » est le nom du seigneur ; Ghorghor prend le château, tue Thenhart et l'incendie.",
         "[BD-T11] « … j'arrivai au-dessus des ruines de Thenhart » (marais_maudits_t11).",
-        "[ÉPOQUE] avant T1 ; en ruine à l'époque du jeu."
+        "[ÉPOQUE] avant T1 ; en ruine à l'époque du jeu.",
+        "[INFÉRÉ] (v1.0.59) Cellule N009_W004 : forêt traversée par la rivière de la cascade (riv_cascade_northind), juste en amont des Marais maudits (N010_W004, marais avec rivière) : château sur un rocher au-dessus d'une rivière dont le courant emporte la troupe vers les marais [BD-A1 p.41-42] ; Wismerhill survole les ruines puis trouve les marais [BD-T11]. Monde jouable : POI poi_ruines_thenhart (ruine). En ruine à l'époque du jeu.",
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
     {

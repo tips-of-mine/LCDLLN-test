@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 12) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 14) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -474,8 +474,8 @@ elfes) **reste tel quel** ; le château en ruine est un POI de la **même case N
 
 ### 10.5 Points ouverts restants
 
-- Tracé de la Via Magna et placement de Khurden, Rériah, Almuria, Château de la Mort, Passe de Syzygie
-  et Marche de l'Est : PR de carte à part (Q18, Q19).
+- Tracé de la Via Magna : PR de carte à part (Q18). Khurden, Rériah, Almuria, Château de la Mort,
+  Passe de Syzygie et Marche de l'Est : placés en v1.0.59 (section 13).
 - Faction `dzorak_orcs` à revoir (Ghorghor demi-ogre, Dvorak créature distincte) (Q9).
 - Lecture « Ogun » du T11 à revérifier (Q14).
 - Okhost / Hokhost : identité `[HYPOTHÈSE]`, fusion éventuelle des deux fiches.
@@ -497,7 +497,39 @@ montrent (références `[BD-…]`), sans contredire une `[DÉCISION]` ni une sou
 
 Les choix `[GD]` les plus structurants restent à valider par le propriétaire (liste dans la PR v1.0.58).
 
-## 12. Questions ouvertes
+## 13. Placements hors série (v1.0.59)
+
+Placement sur la carte des lieux des albums hors série renvoyés à « une PR de carte » (10.3, Q15, Q19 ;
+section 11). **Le placement est demandé par le propriétaire** (note `[DÉCISION] (v1.0.59)` sur chaque
+fiche, 9 entrées au registre `regle_canon_registre_decisions`) ; **toutes les cellules sont `[INFÉRÉ]`**.
+Lore : champ `cell` des lieux, `region_id` et notes des cellules. Monde jouable (`world_master.json`) :
+7 POI et 2 régions ; aucune ville ajoutée (les cités non bâties sont des POI `cite`, comme Moros),
+`TAILLE_VILLES` inchangé ; aucun lieu existant déplacé, aucune case de ville occupée. Époque du jeu
+(après la destruction de Kendrhir, avant le T11) : les lieux détruits dans leur album sont en ruine.
+Script reproductible : `lore_v1059.py` (appliqué au fichier v1.0.58).
+
+| Lieu | Cellule | Monde jouable | Justification |
+|---|---|---|---|
+| Khurden (`lieu_khurden`) | N011_E017 | POI `poi_khurden` (`cite`) | Plaine contre la lisière orientale de la forêt elfique (N011_E016, Q19), adossée à la chaîne de N011_E018 / N012_E017 (« rues en pente », A2 pl.26) ; carte d'A2 pl.14 : la cité est au bout d'une grande forêt de conifères allongée nord-sud, à l'est (nord en haut `[HYPOTHÈSE]`). Intacte. |
+| Rériah (`lieu_reriah`) | N018_E015 | POI `poi_reriah` (`cite`) | Marches du Nord (Q19), au pied des forêts et des neiges du nord (N019_E015, N021_E015) ; carte d'A1 p.30 : Rériah à l'ouest d'Almuria (flèche de l'itinéraire), dans les montagnes. |
+| Almuria (`lieu_almuria`) | N018_E017 | POI `poi_almuria` (`cite`) | Marches du Nord, sous les montagnes de N019_E017 et les neiges de N020_E018 (grande ville aux tours coniques enneigées, A1 p.30 `[HYPOTHÈSE]`), à l'est de Rériah ; Runecroft (N018_E016) entre les deux. |
+| Château de la Mort (`lieu_chateau_de_la_mort`) | N013_E016 | POI `poi_chateau_de_la_mort` (`ruine`) | Chaîne (code `M`) au bord des Territoires orcques (N013_E015, Q19), même chaîne que le défilé de Mordrek aux falaises rouges : forteresse-mine dans une falaise de canyon sous un plateau (A4 p.16-22). **Ruine** (prise par les orques, A4 p.29). |
+| Passe de Syzygie et sa muraille (`lieu_passe_syzygie`) | N008_W013 | POI `poi_passe_syzygie` (`defile`) | Au sud-ouest d'Aurore (N009_W011), entre la côte (N008_W014) et la vallée : Passe à l'ouest de la Syzygie, route venue du sud par la côte puis vers l'est (A3 pl.16, pl.41) ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore (T8 p.24-25). Hors du fleuve (N008_W011) et de Justfall (N007_W011). |
+| Marche de l'Est (`region_marche_est`) | 56 cellules sans région de E013 à E020, S003 à N007 | région `marche_de_lest` (E013-E020, N004-N007) | Extrême est autour de Moork (A5 p.38-44) : comté d'Horkher au nord (N006_E014), confins à l'est de la baronnie. Les cellules de `baronnie_de_moorks` gardent leur région (elle fait partie de la Marche) ; dans le monde jouable, la baronnie garde son rectangle et la Marche couvre la bande au nord (la plus petite région l'emporte, Horkher s'y affiche). |
+| Marais maudits de Thenhart (`marais_maudits_t11`) | N010_W005, N010_W004, N010_W003, N011_W005, N011_W004 | région `marais_maudits` (W005-W003, N010-N011) | Cellules de marais du bestiaire v1.0.58 (Dvorak) ; `region_id` `terres_des_gigantomorphes` remplacé. Hayfen (N011_W004) au bord du marais. |
+| Ruines de Thenhart (`lieu_ruines_thenhart`) | N009_W004 | POI `poi_ruines_thenhart` (`ruine`) | Forêt traversée par la rivière de la cascade (`riv_cascade_northind`), juste en amont du marais (N010_W004) : château sur un rocher au-dessus d'une rivière qui file vers les marais (A1 p.41-42) ; Wismerhill survole les ruines puis trouve les marais (T11). **Ruine**. |
+| Élevages impériaux de béhémoths et léviathans | N002_W008 (pâturages N002_W008 à W010) | POI `poi_elevages_imperiaux` (`elevage`) | Plaines des Terres de l'Empereur du bestiaire v1.0.58 (`[GD]`) ; case commune aux béhémoths et léviathans, hors de Lhynn et du hameau de Marn. |
+
+- Nouveau genre de POI côté client (`PlaceKindLabel`) : `elevage` (« Élevage ») ; `cite`, `ruine` et
+  `defile` existaient.
+- Cellules générées : seule N002_W008 (voisine du hameau de Marn) l'est ; les autres POI sont hors de
+  `generated_cells`.
+- Points incertains : orientation des cartes d'A1, A2 et A3 (nord supposé en haut) ; la grille n'a pas
+  de chaîne autour de la Syzygie (relief de la gorge à modeler) ; Almuria « plus loin des Marches »
+  (A1) alors que Q19 la met dans les Marches du Nord ; Khurden pourrait devenir une vraie ville (fiche
+  `villes`, `TAILLE_VILLES`) si une quête l'exige.
+
+## 14. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

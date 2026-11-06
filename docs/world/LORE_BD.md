@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 14) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 13) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -475,7 +475,7 @@ elfes) **reste tel quel** ; le château en ruine est un POI de la **même case N
 ### 10.5 Points ouverts restants
 
 - Tracé de la Via Magna : PR de carte à part (Q18). Khurden, Rériah, Almuria, Château de la Mort,
-  Passe de Syzygie et Marche de l'Est : placés en v1.0.59 (section 13).
+  Passe de Syzygie et Marche de l'Est : placés en v1.0.59 (section 12).
 - Faction `dzorak_orcs` à revoir (Ghorghor demi-ogre, Dvorak créature distincte) (Q9).
 - Lecture « Ogun » du T11 à revérifier (Q14).
 - Okhost / Hokhost : identité `[HYPOTHÈSE]`, fusion éventuelle des deux fiches.
@@ -497,7 +497,7 @@ montrent (références `[BD-…]`), sans contredire une `[DÉCISION]` ni une sou
 
 Les choix `[GD]` les plus structurants restent à valider par le propriétaire (liste dans la PR v1.0.58).
 
-## 13. Placements hors série (v1.0.59)
+## 12. Placements hors série (v1.0.59)
 
 Placement sur la carte des lieux des albums hors série renvoyés à « une PR de carte » (10.3, Q15, Q19 ;
 section 11). **Le placement est demandé par le propriétaire** (note `[DÉCISION] (v1.0.59)` sur chaque
@@ -529,7 +529,7 @@ Script reproductible : `lore_v1059.py` (appliqué au fichier v1.0.58).
   (A1) alors que Q19 la met dans les Marches du Nord ; Khurden pourrait devenir une vraie ville (fiche
   `villes`, `TAILLE_VILLES`) si une quête l'exige.
 
-## 14. Questions ouvertes
+## 13. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

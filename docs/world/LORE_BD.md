@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 11) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 12) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -482,7 +482,22 @@ elfes) **reste tel quel** ; le château en ruine est un POI de la **même case N
 - L'impératrice du THS (`char_imperatrice_hs`) = Hellaynnea : `[HYPOTHÈSE]` forte, fiches non fusionnées.
 - Page imprimée 037 d'A5 manquante (copie de la page 025) : événements entre la mort de Glurkha et Moork inconnus.
 
-## 11. Questions ouvertes
+## 11. Monde complété en [GD] : bestiaire, religions, magie, économie (v1.0.58)
+
+La BD étant muette sur ces domaines, le lore les complète en `[GD]`, ancré sur ce que les 24 albums
+montrent (références `[BD-…]`), sans contredire une `[DÉCISION]` ni une source de rang supérieur
+(`regle_canon_priorite_sources`). Tout est dans le JSON :
+
+| Domaine | Où dans le JSON | Contenu |
+|---|---|---|
+| Bestiaire | `creatures` (champs `habitat`, `zones_chasse`, `groupe`, `raid_id`), `loots`, `cells`, `regle_bestiaire_echelles` | 28 espèces ajoutées, 58 complétées (niveaux, habitat, butin) |
+| Religions | `lore.religions`, `regle_calendrier_fetes_religieuses` | 10 cultes, 17 fêtes dans le calendrier lunaire, temples des villes rattachés |
+| Magie | `competences`, `lore.magic_system`, `cross_rules.magic_interactions`, `regle_systeme_magie` | 4 sources, 13 écoles, 16 compétences ajoutées, 26 complétées |
+| Économie | `regles_transverses` (catégorie `economie`), `game_design.economie.grille_prix` | monnaies, impôts, primes, productions, routes, métiers, prix |
+
+Les choix `[GD]` les plus structurants restent à valider par le propriétaire (liste dans la PR v1.0.58).
+
+## 12. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

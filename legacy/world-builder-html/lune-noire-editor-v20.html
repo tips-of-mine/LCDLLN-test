@@ -4672,14 +4672,17 @@ var TERRAIN_LABELS = {
 var CARTE_TERRAINS = Object.keys(TERRAIN_LABELS);
 
 // Types de route (repris de LINK_TYPES de l'éditeur v23) : libellé, couleur,
-// icône, et style de trait (tireté pour sentier / passage secret).
+// icône, et style de trait (tireté pour sentier / passage secret) ; plus la voie
+// impériale (imperial_road) ajoutée pour la Via Magna.
 var ROUTE_TYPES = {
   road:        {label:'Route terrestre',  color:'#c9a96e', icon:'🛣️', dash:false},
   sea_route:   {label:'Route maritime',   color:'#4a9ad0', icon:'⛵', dash:true},
   path:        {label:'Sentier',          color:'#a08050', icon:'🥾', dash:true},
   bridge:      {label:'Pont',             color:'#d0a060', icon:'🌉', dash:false},
   trade_route: {label:'Voie commerciale', color:'#d4b040', icon:'💰', dash:false},
-  secret_path: {label:'Passage secret',   color:'#9060c0', icon:'👁️', dash:true}
+  secret_path: {label:'Passage secret',   color:'#9060c0', icon:'👁️', dash:true},
+  // Voie impériale (Via Magna, v1.0.60) : rouge impérial, trait plein, distinct des routes.
+  imperial_road: {label:'Voie impériale', color:'#b8322a', icon:'🦅', dash:false}
 };
 function routeTypeDef(t){ return ROUTE_TYPES[t] || ROUTE_TYPES.road; }
 

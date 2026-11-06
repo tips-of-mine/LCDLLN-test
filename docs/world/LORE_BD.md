@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 13) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 14) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -474,7 +474,7 @@ elfes) **reste tel quel** ; le château en ruine est un POI de la **même case N
 
 ### 10.5 Points ouverts restants
 
-- Tracé de la Via Magna : PR de carte à part (Q18). Khurden, Rériah, Almuria, Château de la Mort,
+- Tracé de la Via Magna : PR de carte à part (Q18), tracé en v1.0.60 (section 13). Khurden, Rériah, Almuria, Château de la Mort,
   Passe de Syzygie et Marche de l'Est : placés en v1.0.59 (section 12).
 - Faction `dzorak_orcs` à revoir (Ghorghor demi-ogre, Dvorak créature distincte) (Q9).
 - Lecture « Ogun » du T11 à revérifier (Q14).
@@ -529,7 +529,32 @@ Script reproductible : `lore_v1059.py` (appliqué au fichier v1.0.58).
   (A1) alors que Q19 la met dans les Marches du Nord ; Khurden pourrait devenir une vraie ville (fiche
   `villes`, `TAILLE_VILLES`) si une quête l'exige.
 
-## 13. Questions ouvertes
+## 13. Via Magna (v1.0.60)
+
+Tracé de la Via Magna renvoyé à une PR de carte (10.3, Q18). **Le tracé est demandé par le
+propriétaire** (note `[DÉCISION] (v1.0.60)` sur la route et la région `via_magna`, 2 entrées au
+registre `regle_canon_registre_decisions`).
+
+- **Route** `000120`, nouveau type `imperial_road` (« Voie impériale », `route_types` ; trait plein
+  rouge `#b8322a` ajouté à `ROUTE_TYPES` de l'éditeur) : 34 cellules contiguës (`waypoints`) de Lhynn
+  (N001_W010) à Moork (S002_E015).
+- **Étapes** : Lhynn, Magistrya (« Magestrya » de la carte), Camp de l'Oracle, fief de Garundel,
+  Harrowdale, Shadehold, Horkher (« Horker » de la carte, Q12), Nightfield, Moork. Sources : carte
+  de l'Empire `[BD-THS p.5]` (Lhynn, Magestrya, Horker, Moork ; creux au sud puis remontée à Horker,
+  descente au sud-est vers Moork) et texte `[BD-THS p.7]` ; les autres étapes et toutes les cellules
+  intermédiaires sont `[INFÉRÉ]` (plus court chemin hors mer, lacs, chaînes, montagnes et volcans).
+  Distance de 8 000 km non reproduite (Q1). Aucun fleuve franchi : pas de pont.
+- **Routes provisoires** (règle économie v1.0.58) : 000011 (Lhynn → Oracle) et 000012 (Garundel →
+  Oracle) supprimées ; 000013 (Garundel → Moork) gardée en raccourci, branche de `axe_via_magna`
+  (routes `000120`, branches 000096, 000050, 000013).
+- **Écuries** : `grille.ecurie.route_types` = `road` + `imperial_road`. Seules les extrémités d'une
+  route comptent : Moork +1 palefrenier, Camp de l'Oracle −2, fief de Garundel −1 (998 PNJ).
+- **Monde jouable** : `world_master.json` n'a pas de routes et `tools/world_gen` trace les siennes
+  (Kruskal + A* entre les villes du master) sans lire les routes du lore : rien à reporter.
+- Points incertains : étapes intermédiaires ; la région `via_magna` ne suit pas le tracé
+  sur toute sa longueur (inchangée).
+
+## 14. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.62",
+    "version": "1.0.63",
     "notes": [
+      "v1.0.63 — Corrections du réseau routier demandées par le propriétaire (suppressions, doublons de la Via Magna, Mossy Rock → Grakhul) et règle du réseau routier.",
       "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
       "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
       "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
@@ -6853,14 +6854,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_horker_ecurie_03",
-          "name": "Ralric Hautcastel",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_horker_temple_01",
           "name": "Welmar Chenmare",
           "gender": "male",
@@ -8675,14 +8668,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_feyhin_lokcthat_ecurie_04",
-          "name": "Rolran Saulbrume",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_feyhin_lokcthat_temple_01",
           "name": "Edelle Marlmorne",
           "gender": "female",
@@ -8969,14 +8954,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_sauken_glude_of_magistrya_ecurie_03",
-          "name": "Maran Hautbrume",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_sauken_glude_of_magistrya_temple_01",
           "name": "Darius Rosslande",
           "gender": "male",
@@ -9114,14 +9091,6 @@
           "id": "pnj_ville_garundel_fief_ecurie_02",
           "name": "Ulan Valchêne",
           "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_garundel_fief_ecurie_03",
-          "name": "Roline Valcastel",
-          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -10010,14 +9979,6 @@
           "id": "pnj_leviathan_jungle_ecurie_01",
           "name": "Zugruk Os-Tordu",
           "gender": "male",
-          "race_id": "race_dzorak",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_leviathan_jungle_ecurie_02",
-          "name": "Gorgha Sang-Brisé",
-          "gender": "female",
           "race_id": "race_dzorak",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -11021,14 +10982,6 @@
           "id": "pnj_city_horkher_ecurie_01",
           "name": "Lorvin Grislande",
           "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_city_horkher_ecurie_02",
-          "name": "Darilde Belgarde",
-          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -14984,14 +14937,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_town_0136_ecurie_02",
-          "name": "Sarith Braise-Rouge",
-          "gender": "female",
-          "race_id": "race_demon",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_town_0136_temple_01",
           "name": "Branais Rochrive",
           "gender": "male",
@@ -17375,14 +17320,6 @@
         {
           "id": "pnj_hamlet_0201_ecurie_03",
           "name": "Izdris Umbrion",
-          "gender": "male",
-          "race_id": "race_dark_elf",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_hamlet_0201_ecurie_04",
-          "name": "Velthas Umbryth",
           "gender": "male",
           "race_id": "race_dark_elf",
           "service": "ecurie",
@@ -20897,6 +20834,14 @@
         {
           "id": "pnj_hameau_grakhul_ecurie_01",
           "name": "Ugash Tibia-Rouge",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_grakhul_ecurie_02",
+          "name": "Gashrok Poing-Rouge",
           "gender": "male",
           "race_id": "race_dzorak",
           "service": "ecurie",
@@ -213762,18 +213707,6 @@
       "notes": []
     },
     {
-      "id": "000018",
-      "type": "road",
-      "from_place": "S001_E004",
-      "from_ville_id": "ville_garundel_fief",
-      "from_lieu_id": "",
-      "to_place": "S008_E010",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_deathtrap_canyon",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000019",
       "type": "road",
       "from_place": "S008_E010",
@@ -213966,18 +213899,6 @@
       "notes": []
     },
     {
-      "id": "000050",
-      "type": "road",
-      "from_place": "N004_E009",
-      "from_ville_id": "horker",
-      "from_lieu_id": "",
-      "to_place": "N003_E011",
-      "to_ville_id": "town_0136",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000052",
       "type": "road",
       "from_place": "N005_W009",
@@ -214058,18 +213979,6 @@
       "to_place": "N004_E001",
       "to_ville_id": "hamlet_0205",
       "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000059",
-      "type": "road",
-      "from_place": "N006_E011",
-      "from_ville_id": "hamlet_0206",
-      "from_lieu_id": "",
-      "to_place": "N012_E012",
-      "to_ville_id": "leviathan_jungle",
-      "to_lieu_id": "lieu_leviathan_jungle",
       "description": "",
       "notes": []
     },
@@ -214398,18 +214307,6 @@
       "notes": []
     },
     {
-      "id": "000093",
-      "type": "road",
-      "from_place": "N002_E015",
-      "from_ville_id": "hamlet_0201",
-      "from_lieu_id": "",
-      "to_place": "N006_E014",
-      "to_ville_id": "city_horkher",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000094",
       "type": "road",
       "from_place": "N008_E007",
@@ -214715,18 +214612,6 @@
       "notes": []
     },
     {
-      "id": "000117",
-      "type": "road",
-      "from_place": "N008_E007",
-      "from_ville_id": "ville_feyhin_lokcthat",
-      "from_lieu_id": "",
-      "to_place": "N003_W003",
-      "to_ville_id": "sauken_glude_of_magistrya",
-      "to_lieu_id": "",
-      "description": "[BD-T2] Panneau « Feyhin Lokcthat » sur la chaussée de Magistrya (p.19).",
-      "notes": []
-    },
-    {
       "id": "000118",
       "type": "road",
       "from_place": "N000_E000",
@@ -215010,6 +214895,20 @@
       "description": "Sentier d'Eaglewatch à « Grotte des contrebandiers ».",
       "notes": [
         "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000135",
+      "type": "road",
+      "from_place": "N006_E011",
+      "from_ville_id": "hamlet_0206",
+      "from_lieu_id": "",
+      "to_place": "N008_E012",
+      "to_ville_id": "hameau_grakhul",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.63) Route demandée par le propriétaire : Mossy Rock → Grakhul."
       ]
     }
   ],
@@ -218908,6 +218807,20 @@
           "nom": "Niveaux des zones selon la faction",
           "decision": "Région de départ de 3×3 cases de niveau débutant (1 à 10) autour de chaque départ de faction ; une PR par départ (LORE_BD §15).",
           "version": "1.0.62"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "[DÉCISION] (v1.0.63) Routes supprimées : 000117 Feyhin Lokcthat → Magistrya, 000018 Garundel → Deathtrap Canyon, 000059 Mossy Rock → Leviathan Jungle ; doublons de la Via Magna supprimés : 000050 Harrowdale → Shadehold, 000093 Nightfield → Horkher ; ajout Mossy Rock → Grakhul.",
+          "version": "1.0.63"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_registre_decisions",
+          "nom": "Réseau routier",
+          "decision": "[DÉCISION] (v1.0.63) Réseau routier : toutes les villes et hameaux sont reliés par des routes ; pas de route qui traverse la carte ; une ville peut être reliée à une ou plusieurs autres, et passer par d'autres villes pour en atteindre une plus lointaine est valable.",
+          "version": "1.0.63"
         }
       ]
     },
@@ -222650,7 +222563,6 @@
           ],
           "branches": [
             "000096",
-            "000050",
             "000013"
           ],
           "etapes": [
@@ -222703,8 +222615,7 @@
             "000116",
             "000114",
             "000003",
-            "000055",
-            "000117"
+            "000055"
           ],
           "etapes": [
             "ville_tbarak",

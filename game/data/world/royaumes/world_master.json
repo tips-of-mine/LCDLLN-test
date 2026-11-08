@@ -316,6 +316,42 @@
       "description": "Hameau des Chevaliers de la Lumière dans la plaine à l'est d'Altenberg : les novices y sont formés avant d'entrer dans la citadelle."
     },
     {
+      "id": "hamlet_brightholm",
+      "name": "Brightholm",
+      "cell": "N005_W010",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lumiere",
+      "start_for": [],
+      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
+      "description": "Commanderie rurale de l'Ordre de la Lumière à l'est de Dawnmere : domaine agricole et haras tenus par des frères convers, qui nourrissent et remontent Altenberg."
+    },
+    {
+      "id": "hamlet_whitesheaf",
+      "name": "Whitesheaf",
+      "cell": "N006_W011",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lumiere",
+      "start_for": [],
+      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
+      "description": "Ferme à blé au nord de Dawnmere : grain des novices et pain d'autel de la cathédrale d'Altenberg."
+    },
+    {
+      "id": "hamlet_lambsfold",
+      "name": "Lambsfold",
+      "cell": "N004_W011",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "lumiere",
+      "start_for": [],
+      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
+      "description": "Bergerie au sud de Dawnmere, au-dessus de la longue plage : laine blanche des habits et capuches de l'Ordre."
+    },
+    {
       "id": "hameau_oathford",
       "name": "Oathford",
       "cell": "N009_W010",
@@ -1694,6 +1730,34 @@
       "cell": "N001_W011",
       "kind": "salle",
       "description": "Grotte marine à l'ouest de Lhynn où débarquent les marchandises qui échappent aux taxes du port [GD v1.0.62, région de départ d'Eaglewatch]."
+    },
+    {
+      "id": "poi_calvaire_des_pelerins",
+      "name": "Calvaire des pèlerins",
+      "cell": "N006_W012",
+      "kind": "sanctuaire",
+      "description": "Haute croix de pierre cerclée au bord de la route du nord : première station des pèlerins d'Altenberg en route pour la Grande Messe d'Aurore [GD v1.0.64, région de départ de Dawnmere]."
+    },
+    {
+      "id": "poi_chapelle_de_l_ermite",
+      "name": "Chapelle de l'ermite",
+      "cell": "N006_W010",
+      "kind": "sanctuaire",
+      "description": "Petite chapelle de pierre d'un ermite de l'Église au bord de la rivière, en forêt ; on y bénit l'eau de la source [GD v1.0.64, région de départ de Dawnmere]."
+    },
+    {
+      "id": "poi_ruines_du_prieure",
+      "name": "Ruines du prieuré",
+      "cell": "N004_W010",
+      "kind": "ruine",
+      "description": "Prieuré abandonné depuis des générations : cloître effondré et crypte envahie d'araignées [GD v1.0.64, région de départ de Dawnmere]."
+    },
+    {
+      "id": "poi_camp_des_naufrageurs",
+      "name": "Camp des naufrageurs",
+      "cell": "N004_W012",
+      "kind": "camp",
+      "description": "Abris de bois flotté sur la longue plage au sud d'Altenberg, d'où de faux feux attirent les navires sur les rochers [GD v1.0.64, région de départ de Dawnmere]."
     }
   ],
   "imports": {

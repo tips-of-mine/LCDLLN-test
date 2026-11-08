@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.62",
+    "version": "1.0.64",
     "notes": [
+      "v1.0.64 : [CARTE] région de départ des Chevaliers de la Lumière autour de Dawnmere (N005_W011) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Commanderie rurale [GD] Brightholm (N005_W010) et fermes [GD] Whitesheaf (N006_W011) et Lambsfold (N004_W011) ; POI [GD] Calvaire des pèlerins (N006_W012), Chapelle de l'ermite (N006_W010), Ruines du prieuré (N004_W010), Camp des naufrageurs (N004_W012) ; routes locales 000135 à 000137 et sentiers 000138 à 000141 ; faune existante de niveau 1 à 10 rattachée aux cases ; trois lieux ajoutés aux lieux de culte de l'Église (lore.religions). Rien dans la case d'Altenberg. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.2.",
       "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
       "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
       "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
@@ -118,7 +119,8 @@
         "[BD-T11] Disparaissent avec Syzygie dans un autre plan — plus présents dans le monde physique post-T11.",
         "[BD-T8] p.34 : Gunthar est abattu par les frères convers sur ordre de l'Archiprêtre (et non « par ses propres soldats »).",
         "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Dawnmere (hameau_dawnmere, N005_W011), près de Altenberg. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Dawnmere (hameau_dawnmere, N005_W011), près de Altenberg. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.64) Région de départ 3×3 autour de Dawnmere (LORE_BD §15.2) : commanderie rurale de Brightholm, fermes Whitesheaf et Lambsfold, Calvaire des pèlerins, Chapelle de l'ermite, Ruines du prieuré, Camp des naufrageurs ; routes locales vers Dawnmere ; faune de niveau 1 à 10. Rien dans la case d'Altenberg."
       ],
       "faction_relations": [
         {
@@ -180,7 +182,24 @@
           "type": "hameau",
           "id": "hameau_dawnmere",
           "cell": "N005_W011",
-          "pres_de": "ville_altenberg"
+          "pres_de": "ville_altenberg",
+          "region": {
+            "cells": [
+              "N006_W012",
+              "N006_W011",
+              "N006_W010",
+              "N005_W012",
+              "N005_W011",
+              "N005_W010",
+              "N004_W012",
+              "N004_W011",
+              "N004_W010"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "region_premiere_province_empire",
@@ -20522,6 +20541,30 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_dawnmere_ecurie_02",
+          "name": "Torance Rochpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_ecurie_03",
+          "name": "Norine Fontcombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_dawnmere_ecurie_04",
+          "name": "Lora Marlrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_dawnmere_cimetiere_01",
           "name": "Welran Mormont",
           "gender": "male",
@@ -21448,6 +21491,407 @@
         {
           "id": "pnj_hamlet_greyhedge_cimetiere_01",
           "name": "Marisse Morpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_brightholm",
+      "name": "Brightholm",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N005_W010",
+      "anchor_tile": "N005_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_lumiere",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ de Dawnmere"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom proposé, à valider par le propriétaire. Commanderie rurale de l'Ordre de la Lumière : domaine agricole et haras qui nourrit et remonte Altenberg, tenu par des frères convers. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[INFÉRÉ] (v1.0.64) Cellule N005_W010 : Plaine de la Première Province à l'est de Dawnmere, sur la route d'Altenberg à Dys (N005_W009) ; case libre.",
+        "[GD] (v1.0.64) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.64) Économie : commanderie (domaine de l'Ordre) : blé, foin, chevaux de remonte pour les chevaliers d'Altenberg ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.64) Ancrage : Frères convers [BD-T8 p.33-35] ; la commanderie rurale (domaine agricole d'un ordre de chevalerie) est [GD], distincte de la Grande et de la Haute Commanderie, salles de la citadelle d'Altenberg [BD-T8]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_brightholm_auberge_01",
+          "name": "Darelle Bruncastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_brightholm_armes_01",
+          "name": "Cedbert Fontgarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_brightholm_armures_01",
+          "name": "Cedelle Sombrecombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_brightholm_ecurie_01",
+          "name": "Eldmond Pierrechêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_brightholm_cimetiere_01",
+          "name": "Duna Pierreombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_whitesheaf",
+      "name": "Whitesheaf",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N006_W011",
+      "anchor_tile": "N006_W011",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_lumiere",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armures",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ de Dawnmere"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom proposé, à valider par le propriétaire. Ferme à blé : elle fournit le grain des novices et le pain d'autel de la cathédrale d'Altenberg. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[INFÉRÉ] (v1.0.64) Cellule N006_W011 : Plaine de la Première Province au nord de Dawnmere, entre la route d'Altenberg à Justfall et la forêt ; case libre.",
+        "[GD] (v1.0.64) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.64) Économie : ferme : blé, orge et volailles pour Dawnmere et Altenberg ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_whitesheaf_auberge_01",
+          "name": "Ralora Hautmare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_whitesheaf_armures_01",
+          "name": "Lorance Grisrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_whitesheaf_forgeron_01",
+          "name": "Uline Clairpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_whitesheaf_ecurie_01",
+          "name": "Varbert Morcombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_whitesheaf_cimetiere_01",
+          "name": "Edane Belmare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_lambsfold",
+      "name": "Lambsfold",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N004_W011",
+      "anchor_tile": "N004_W011",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_lumiere",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ de Dawnmere"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom proposé, à valider par le propriétaire. Bergerie : la laine blanche des habits des novices et des capuches de l'Ordre. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[INFÉRÉ] (v1.0.64) Cellule N004_W011 : Plaine de la Première Province au sud de Dawnmere, au-dessus de la longue plage qui mène à Lhynn ; case libre.",
+        "[GD] (v1.0.64) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.64) Économie : ferme : moutons, bœufs et ânes, laine blanche pour l'Ordre ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.64) Ancrage : Capuches et bannières blanches à croix rouge de l'Ordre [BD-T8 p.31-35] ; la bergerie est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_lambsfold_auberge_01",
+          "name": "Garaude Saulrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_lambsfold_armes_01",
+          "name": "Branran Noircombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_lambsfold_ecurie_01",
+          "name": "Yvwald Grisval",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_lambsfold_cimetiere_01",
+          "name": "Braneline Pierreval",
           "gender": "female",
           "race_id": "race_human",
           "service": "cimetiere",
@@ -157384,7 +157828,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-T00 p.38] Renard porté comme gibier ; renard poursuivi.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W010, N004_W011, N004_W010 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157395,14 +157840,18 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
         "N012_E008",
         "N003_W011",
         "N002_W009",
-        "N001_W009"
+        "N001_W009",
+        "N006_W012",
+        "N006_W010",
+        "N004_W011",
+        "N004_W010"
       ]
     },
     {
@@ -157424,7 +157873,8 @@
         "[BD-M1 p.9, p.35] Chien fauve de Sekh ; deux chiots.",
         "[BD-T4 p.19] Petit chien blanc dans une taverne.",
         "Molosses de guerre : creature_molosse_imperial.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157433,14 +157883,18 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
         "ville_haywick",
         "N003_W010",
         "N002_W010",
-        "N001_W009"
+        "N001_W009",
+        "N006_W011",
+        "N005_W011",
+        "N005_W010",
+        "N004_W011"
       ]
     },
     {
@@ -157954,7 +158408,8 @@
         "[BD-T00 p.34] Horde de lapins.",
         "[BD-T1 p.6] Le lapin rôti que vole Pile-ou-Face.",
         "[BD-A4 p.13] Lièvre roux.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W011, N006_W010 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Autres mammifères",
@@ -157963,7 +158418,7 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -157973,7 +158428,10 @@
         "N003_W011",
         "N003_W010",
         "N003_W009",
-        "N002_W011"
+        "N002_W011",
+        "N006_W012",
+        "N006_W011",
+        "N006_W010"
       ]
     },
     {
@@ -158056,7 +158514,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-A4 p.4, p.16] Bœufs, âne et chevaux blancs.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010, N004_W011 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -158066,11 +158525,13 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E017",
-        "N003_W010"
+        "N003_W010",
+        "N005_W010",
+        "N004_W011"
       ]
     },
     {
@@ -158139,14 +158600,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
       "variantes": [
         "Mouton",
         "mouton domestique"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "N004_W011"
+      ],
+      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg)."
     },
     {
       "id": "animal_cerf",
@@ -158185,7 +158652,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-T00 p.38] Chevreuil poursuivi (rangé ici faute de fiche « chevreuil »)."
+        "[BD-T00 p.38] Chevreuil poursuivi (rangé ici faute de fiche « chevreuil »).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Cervidés",
@@ -158193,11 +158661,12 @@
         "Biche"
       ],
       "bestiaire": true,
-      "habitat": "Forêts des Terres du Nord.",
+      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
-        "N012_E008"
+        "N012_E008",
+        "N006_W010"
       ]
     },
     {
@@ -158262,7 +158731,8 @@
         "[BD-T00 p.39] Cheval bai caparaçonné du chevalier errant.",
         "[BD-A3 pl.19] Chevaux de Parsifal.",
         "[BD-THS p.21] Les chevaux non habitués fuient devant béhémoths et léviathans (rang 3).",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -158271,13 +158741,14 @@
         "cheval sauvage"
       ],
       "bestiaire": true,
-      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N018_E014",
         "N018_E015",
         "N018_E016",
-        "N003_W011"
+        "N003_W011",
+        "N005_W010"
       ]
     },
     {
@@ -158317,7 +158788,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-A4 p.4, p.16] Âne parmi les bêtes domestiques.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -158325,11 +158797,12 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
-        "N001_W009"
+        "N001_W009",
+        "N004_W011"
       ]
     },
     {
@@ -158497,7 +158970,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W012 (LORE_BD §15.2)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Oiseaux marins",
@@ -158507,9 +158981,10 @@
       ],
       "bestiaire": true,
       "zones_chasse": [
-        "N001_W011"
+        "N001_W011",
+        "N004_W012"
       ],
-      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province)."
+      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg)."
     },
     {
       "id": "animal_becasseau",
@@ -158549,7 +159024,8 @@
       "notes": [
         "[BD-T1 p.9-12] Wismerhill et Pile-ou-Face tentent de voler les poules de Ghorghor Bey (Haywick).",
         "[BD-M1 p.14] Poules et coqs survivants d'un village.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N003_W009, N002_W010 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N003_W009, N002_W010 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010 (LORE_BD §15.2)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -158558,13 +159034,16 @@
         "poulet"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
         "N003_W010",
         "N003_W009",
-        "N002_W010"
+        "N002_W010",
+        "N006_W011",
+        "N005_W011",
+        "N005_W010"
       ]
     },
     {
@@ -158582,7 +159061,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-M1 p.14] Coqs survivants d'un village.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011 (LORE_BD §15.2)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -158591,11 +159071,12 @@
         "coq magique"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
-        "N003_W010"
+        "N003_W010",
+        "N006_W011"
       ]
     },
     {
@@ -158810,7 +159291,8 @@
       "notes": [
         "[BD-M1 p.5] Oiseaux noirs autour du crâne volant d'Erypt.",
         "Oiseaux démoniaques : creature_oiseau_noir_kruikna.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -158819,13 +159301,16 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
         "lieu_champ_premiere_bataille_t1",
         "N002_W011",
-        "N002_W009"
+        "N002_W009",
+        "N006_W012",
+        "N004_W012",
+        "N004_W010"
       ]
     },
     {
@@ -159258,7 +159743,8 @@
       "notes": [
         "[BD-A4 p.20] L'araignée « petite sœur ».",
         "Archétype de jeu existant : « Araignée des sous-bois » (game/data/creatures/archetypes.json, id 105).",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -159268,13 +159754,15 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
         "N013_E012",
         "N002_W009",
-        "N001_W011"
+        "N001_W011",
+        "N006_W010",
+        "N004_W010"
       ]
     },
     {
@@ -159357,7 +159845,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1).",
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W012 (LORE_BD §15.2)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Crustacés",
@@ -159368,9 +159857,10 @@
       "bestiaire": true,
       "familier_famille": "familier_crabe",
       "zones_chasse": [
-        "N001_W011"
+        "N001_W011",
+        "N004_W012"
       ],
-      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province)."
+      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg)."
     },
     {
       "id": "animal_ecrevisse",
@@ -174903,6 +175393,24 @@
             "id": "town_fairbrook",
             "nom": "Fairbrook",
             "nature": "Temple de la ville rattaché par défaut à l'Église [GD]."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_calvaire_des_pelerins",
+            "nom": "Calvaire des pèlerins",
+            "nature": "[GD] Calvaire de la route d'Altenberg à Aurore, station du pèlerinage de la Grande Messe (région de départ de Dawnmere)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_chapelle_de_l_ermite",
+            "nom": "Chapelle de l'ermite",
+            "nature": "[GD] Chapelle d'ermite et source d'eau bénite en forêt (région de départ de Dawnmere)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ruines_du_prieure",
+            "nom": "Ruines du prieuré",
+            "nature": "[GD] Prieuré abandonné depuis des générations (région de départ de Dawnmere)."
           }
         ],
         "rites": [
@@ -175021,7 +175529,8 @@
           "[GD] (v1.0.58) Nom « Église du Dieu de Lumière » : la BD dit « l'Église », « Notre Seigneur », « Dieu » ; « de Lumière » est un choix de jeu pour la distinguer de la Lune Noire.",
           "[GD] (v1.0.58) Temples des villes humaines sans autre culte attesté rattachés par défaut à l'Église (liste dans lieux_de_culte) ; les PNJ de service (« prêtre ») ne sont pas modifiés.",
           "[ÉPOQUE] La réunion des deux ordres sous Parsifal (T8), le retrait divin (T10) et le départ de Syzygie (T11) sont l'avenir du monde jouable ou des quêtes de récit.",
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.64) Région de départ de Dawnmere : Calvaire des pèlerins, Chapelle de l'ermite et Ruines du prieuré ajoutés aux lieux de culte ; commanderie rurale de Brightholm (LORE_BD §15.2)."
         ]
       },
       {
@@ -191938,9 +192447,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_corbeau",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Calvaire des pèlerins (lieu_calvaire_des_pelerins) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -191957,9 +192472,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_poule",
+        "animal_coq",
+        "animal_chien",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Ferme Whitesheaf (hamlet_whitesheaf) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -191976,10 +192498,16 @@
       "has_mountain_range": false,
       "river_direction": "nord",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_biche",
+        "animal_araignee",
+        "animal_renard",
+        "animal_lapin"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner).",
+        "[GD] (v1.0.64) Chapelle de l'ermite (lieu_chapelle_de_l_ermite) de la région de départ de Dawnmere (LORE_BD §15.2)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -192844,10 +193372,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_poule"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Dawnmere (hameau_dawnmere, faction Chevaliers de la Lumière)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Dawnmere (hameau_dawnmere, faction Chevaliers de la Lumière).",
+        "[GD] (v1.0.64) Centre de la région de départ 3×3 des Chevaliers de la Lumière (N006_W012, N006_W011, N006_W010, N005_W012, N005_W011, N005_W010, N004_W012, N004_W011, N004_W010) ; niveaux 1 à 10 (LORE_BD §15.2)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -192865,9 +193397,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_cheval",
+        "animal_boeuf",
+        "animal_chien",
+        "animal_poule"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Commanderie Brightholm (hamlet_brightholm) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193701,9 +194240,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_crabe",
+        "animal_mouette",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Camp des naufrageurs (lieu_camp_des_naufrageurs) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193720,9 +194265,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_mouton",
+        "animal_boeuf",
+        "animal_ane",
+        "animal_chien",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Ferme Lambsfold (hamlet_lambsfold) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193739,9 +194292,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.64) Ruines du prieuré (lieu_ruines_du_prieure) de la région de départ de Dawnmere (LORE_BD §15.2)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -215011,6 +215570,104 @@
       "notes": [
         "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
       ]
+    },
+    {
+      "id": "000135",
+      "type": "road",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N005_W010",
+      "to_ville_id": "hamlet_brightholm",
+      "to_lieu_id": "",
+      "description": "Route locale de Dawnmere à Brightholm.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Cases voisines, sans étape intermédiaire ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000136",
+      "type": "road",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N006_W011",
+      "to_ville_id": "hamlet_whitesheaf",
+      "to_lieu_id": "",
+      "description": "Route locale de Dawnmere à Whitesheaf.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Cases voisines, sans étape intermédiaire ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000137",
+      "type": "road",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N004_W011",
+      "to_ville_id": "hamlet_lambsfold",
+      "to_lieu_id": "",
+      "description": "Route locale de Dawnmere à Lambsfold.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Cases voisines, sans étape intermédiaire ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000138",
+      "type": "path",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N006_W012",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_calvaire_des_pelerins",
+      "description": "Sentier de Dawnmere à « Calvaire des pèlerins ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000139",
+      "type": "path",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N006_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_chapelle_de_l_ermite",
+      "description": "Sentier de Dawnmere à « Chapelle de l'ermite ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000140",
+      "type": "path",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N004_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_du_prieure",
+      "description": "Sentier de Dawnmere à « Ruines du prieuré ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000141",
+      "type": "path",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N004_W012",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_des_naufrageurs",
+      "description": "Sentier de Dawnmere à « Camp des naufrageurs ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+      ]
     }
   ],
   "competences": [
@@ -230436,6 +231093,334 @@
         "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Grotte de la côte à l'ouest de Lhynn où des contrebandiers débarquent ce qui échappe aux taxes du port de guerre ; première expédition des recrues. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
         "[GD] (v1.0.62) Ancrage : Port de guerre de Lhynn [BD-T7 p.5-6] et taxes impériales (économie v1.0.58) ; la grotte est [GD].",
         "[INFÉRÉ] (v1.0.62) Cellule N001_W011 : Côte à l'ouest de Lhynn, hors de la case de la capitale ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_calvaire_des_pelerins",
+      "name": "Calvaire des pèlerins",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N006_W012",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "haute croix de pierre cerclée",
+        "bannières rouges à croix blanche",
+        "bancs et abri des pèlerins"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Calvaire au bord de la route du nord : les pèlerins qui vont d'Altenberg à Aurore pour la Grande Messe de la Lumière y font leur première station ; les novices y escortent les fidèles. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[GD] (v1.0.64) Ancrage : Pèlerinage annuel entre les cathédrales d'Altenberg et d'Aurore (fete_eglise_grande_messe_lumiere, [GD] v1.0.58) ; croix cerclée et bannières rouges à croix blanche [BD-T8 p.28-33] [BD-T2 p.34]. Le calvaire est [GD].",
+        "[INFÉRÉ] (v1.0.64) Cellule N006_W012 : Plaine au nord d'Altenberg, entre la citadelle et Justfall (N007_W011), à l'écart de la côte (N006_W013) ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_chapelle_de_l_ermite",
+      "name": "Chapelle de l'ermite",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N006_W010",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "petite chapelle de pierre au bord de la rivière",
+        "croix de pierre dans la forêt",
+        "source où l'on bénit l'eau"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Chapelle d'un ermite de l'Église dans la forêt au nord-est de Dawnmere : on y vient chercher l'eau bénite de la source ; les bêtes de la forêt rôdent autour. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[GD] (v1.0.64) Ancrage : Chapelles et prêtres de chapelle (« mon père ») [BD-A3 pl.19-20] ; croix celtique de pierre en forêt [BD-A3 pl.33]. La chapelle est [GD].",
+        "[INFÉRÉ] (v1.0.64) Cellule N006_W010 : Forêt traversée par une rivière, à l'ouest de la forêt elfique (N006_W009) ; case libre, pas de ferme en forêt."
+      ]
+    },
+    {
+      "id": "lieu_ruines_du_prieure",
+      "name": "Ruines du prieuré",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N004_W010",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cloître effondré",
+        "clocher sans cloche",
+        "crypte envahie d'araignées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Prieuré abandonné depuis des générations, au sud-est de Dawnmere : murs bas, cloître effondré et crypte où nichent araignées et corbeaux ; premiers pas des novices hors du hameau. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[GD] (v1.0.64) Ancrage : Abandonné depuis des générations (aucune destruction de l'époque du jeu) ; le prieuré est [GD].",
+        "[INFÉRÉ] (v1.0.64) Cellule N004_W010 : Plaine de la Première Province au sud-est de Dawnmere, à l'écart des routes ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_naufrageurs",
+      "name": "Camp des naufrageurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_W012",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "feux trompeurs sur la plage",
+        "épaves et ballots échoués",
+        "abris de bois flotté"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Camp de naufrageurs sur la longue plage au sud d'Altenberg : de faux feux y attirent les navires sur les rochers ; la commanderie y envoie ses novices. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[GD] (v1.0.64) Ancrage : Altenberg « sur un rocher battu par les vagues » [BD-T2 p.32-33], reliée à Lhynn par une longue plage (fiche d'Altenberg) et dotée d'un port ; le camp est [GD].",
+        "[INFÉRÉ] (v1.0.64) Cellule N004_W012 : Plage au sud d'Altenberg, hors de la case de la citadelle ; case libre."
       ]
     }
   ],

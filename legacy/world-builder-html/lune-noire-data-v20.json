@@ -214898,7 +214898,7 @@
       ]
     },
     {
-      "id": "000135",
+      "id": "000142",
       "type": "road",
       "from_place": "N006_E011",
       "from_ville_id": "hamlet_0206",
@@ -218812,7 +218812,7 @@
           "collection": "routes",
           "id": "routes",
           "nom": "Réseau routier",
-          "decision": "[DÉCISION] (v1.0.63) Routes supprimées : 000117 Feyhin Lokcthat → Magistrya, 000018 Garundel → Deathtrap Canyon, 000059 Mossy Rock → Leviathan Jungle ; doublons de la Via Magna supprimés : 000050 Harrowdale → Shadehold, 000093 Nightfield → Horkher ; ajout Mossy Rock → Grakhul.",
+          "decision": "[DÉCISION] (v1.0.63) Routes supprimées : 000117 Feyhin Lokcthat → Magistrya, 000018 Garundel → Deathtrap Canyon, 000059 Mossy Rock → Leviathan Jungle ; doublons de la Via Magna supprimés : 000050 Harrowdale → Shadehold, 000093 Nightfield → Horkher ; ajout 000142 Mossy Rock → Grakhul.",
           "version": "1.0.63"
         },
         {

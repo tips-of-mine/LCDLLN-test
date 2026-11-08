@@ -278,6 +278,30 @@
       "description": "Hameau de garnison des Légions Impériales dans les pâturages au nord de Lhynn : les recrues y prêtent serment avant de rejoindre la capitale."
     },
     {
+      "id": "hamlet_ambermead",
+      "name": "Ambermead",
+      "cell": "N003_W010",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[GD] v1.0.62 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Eaglewatch",
+      "description": "Ferme à blé de la Première Province, au nord d'Eaglewatch : grain et fourrage pour la garnison."
+    },
+    {
+      "id": "hamlet_greyhedge",
+      "name": "Greyhedge",
+      "cell": "N001_W009",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[GD] v1.0.62 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Eaglewatch",
+      "description": "Ferme à haies vives à l'est de Lhynn, sur le chemin d'Eaglewatch à la Via Magna."
+    },
+    {
       "id": "hameau_dawnmere",
       "name": "Dawnmere",
       "cell": "N005_W011",
@@ -1642,6 +1666,34 @@
       "cell": "N002_W008",
       "kind": "elevage",
       "description": "Enclos et paturages de l'armee imperiale : behemoths et leviathans de guerre (bestiaire v1.0.58, GD) [INFERE : plaines des Terres de l'Empereur]."
+    },
+    {
+      "id": "poi_camp_manoeuvres_legions",
+      "name": "Camp de manœuvres des Légions",
+      "cell": "N003_W011",
+      "kind": "camp",
+      "description": "Palissade, lices et cibles où les recrues d'Eaglewatch apprennent la marche en ordre, le pilum et le bouclier [GD v1.0.62, région de départ d'Eaglewatch]."
+    },
+    {
+      "id": "poi_autel_des_aigles",
+      "name": "Autel des Aigles",
+      "cell": "N002_W011",
+      "kind": "sanctuaire",
+      "description": "Autel de pierre sous un aigle de bronze : les recrues y jurent fidélité à l'Empereur [GD v1.0.62, région de départ d'Eaglewatch]."
+    },
+    {
+      "id": "poi_ruines_villa_tharque",
+      "name": "Ruines de la villa tharque",
+      "cell": "N002_W009",
+      "kind": "ruine",
+      "description": "Colonnades effondrées d'un domaine de l'ancien Empire tharque, au milieu des pâturages ; caves à vermine [GD v1.0.62, région de départ d'Eaglewatch]."
+    },
+    {
+      "id": "poi_grotte_contrebandiers",
+      "name": "Grotte des contrebandiers",
+      "cell": "N001_W011",
+      "kind": "salle",
+      "description": "Grotte marine à l'ouest de Lhynn où débarquent les marchandises qui échappent aux taxes du port [GD v1.0.62, région de départ d'Eaglewatch]."
     }
   ],
   "imports": {

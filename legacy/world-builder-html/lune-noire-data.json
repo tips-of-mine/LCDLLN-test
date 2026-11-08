@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.61",
+    "version": "1.0.62",
     "notes": [
+      "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
       "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
       "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
       "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 12.",
@@ -1173,7 +1174,8 @@
         "[HS] Deux blasons : ancien (Haghendorf) et nouveau (Wismerhill).",
         "[HS] Corps d'ingénieurs pour les machines de siège attaché à chaque légion.",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Eaglewatch (hameau_eaglewatch, N002_W010), près de Lhynn. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[À VÉRIFIER] (v1.0.61) Faction jouable (playable) mais game_design.selectable false, et absente de game/data/races/factions.json (seule « empire_hynn », L'Empire de Lhynn = faction_empire, non sélectionnable) : identifiant de jeu réservé « legions_imperiales » ; region_id region_enfers_t00 incohérent avec un départ près de Lhynn."
+        "[À VÉRIFIER] (v1.0.61) Faction jouable (playable) mais game_design.selectable false, et absente de game/data/races/factions.json (seule « empire_hynn », L'Empire de Lhynn = faction_empire, non sélectionnable) : identifiant de jeu réservé « legions_imperiales » ; region_id region_enfers_t00 incohérent avec un départ près de Lhynn.",
+        "[GD] (v1.0.62) Région de départ 3×3 autour d'Eaglewatch (LORE_BD §15.1) : fermes Ambermead et Greyhedge, Camp de manœuvres des Légions, Autel des Aigles, Ruines de la villa tharque, Grotte des contrebandiers ; routes locales vers Eaglewatch et la Via Magna ; faune de niveau 1 à 10."
       ],
       "faction_relations": [
         {
@@ -1226,7 +1228,24 @@
           "type": "hameau",
           "id": "hameau_eaglewatch",
           "cell": "N002_W010",
-          "pres_de": "ville_lhynn"
+          "pres_de": "ville_lhynn",
+          "region": {
+            "cells": [
+              "N003_W011",
+              "N003_W010",
+              "N003_W009",
+              "N002_W011",
+              "N002_W010",
+              "N002_W009",
+              "N001_W011",
+              "N001_W010",
+              "N001_W009"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "region_enfers_t00",
@@ -20342,6 +20361,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_eaglewatch_ecurie_02",
+          "name": "Dunaude Pierremare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_eaglewatch_ecurie_03",
+          "name": "Serard Fermont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_eaglewatch_cimetiere_01",
           "name": "Maelora Brungarde",
           "gender": "female",
@@ -20838,7 +20873,7 @@
       "notes": [
         "[DÉCISION] (v1.0.61) Hameau de départ de la faction Dzorak (Orcs) (dzorak_orcs ; faction de jeu « dzorak »), « pas loin de Leviathan Jungle » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
         "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes.",
-        "[INFÉRÉ] (v1.0.61) Cellule N008_E012 : Lisière de forêt au sud-est de Leviathan dans le monde jouable (N009_E011) ; cellule déjà jouable. Le lore place Leviathan en N012_E012 (question ouverte, section 15).",
+        "[INFÉRÉ] (v1.0.61) Cellule N008_E012 : Lisière de forêt au sud-est de Leviathan dans le monde jouable (N009_E011) ; cellule déjà jouable. Le lore place Leviathan en N012_E012 (question ouverte, section 16).",
         "[GD] (v1.0.61) Population : Dzorak ; services d'un hameau (grille game_design.cities_services)."
       ],
       "taille": "hameau",
@@ -21126,6 +21161,295 @@
           "name": "Caelad Celion",
           "gender": "male",
           "race_id": "race_haut_elfe",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_ambermead",
+      "name": "Ambermead",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N003_W010",
+      "anchor_tile": "N003_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_empire",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ d'Eaglewatch"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom proposé, à valider par le propriétaire. Ferme à blé de la Première Province : elle fournit grain et fourrage à la garnison d'Eaglewatch. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[INFÉRÉ] (v1.0.62) Cellule N003_W010 : Plaine de la Première Province, au nord d'Eaglewatch, entre le hameau de Marn (N003_W009) et la côte ; case libre.",
+        "[GD] (v1.0.62) Population : humains, sujets de l'Empire ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.62) Économie : ferme : grain, foin et fourrage pour la garnison d'Eaglewatch et Lhynn ; produit blé et orge, élevage ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_ambermead_auberge_01",
+          "name": "Garaude Brunval",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_ambermead_armes_01",
+          "name": "Cedvin Mormare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_ambermead_armures_01",
+          "name": "Ulwald Ferombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_ambermead_ecurie_01",
+          "name": "Varora Morcombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_ambermead_cimetiere_01",
+          "name": "Lanald Sombrerive",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_greyhedge",
+      "name": "Greyhedge",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N001_W009",
+      "anchor_tile": "N001_W009",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_empire",
+      "region_id": "terres_de_lempereur",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ d'Eaglewatch"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom proposé, à valider par le propriétaire. Ferme à haies vives à l'est de Lhynn, au bord du chemin qui mène d'Eaglewatch à la Via Magna sans traverser la capitale. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[INFÉRÉ] (v1.0.62) Cellule N001_W009 : Plaine des Terres de l'Empereur à l'est de Lhynn (N001_W010), à une case de la Via Magna (N000_W010) ; case libre.",
+        "[GD] (v1.0.62) Population : humains, sujets de l'Empire ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.62) Économie : ferme : légumes, volailles, chèvres et ânes de bât pour les marchés de Lhynn ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_greyhedge_auberge_01",
+          "name": "Sera Marlombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_armes_01",
+          "name": "Halilde Morcombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_armures_01",
+          "name": "Maelora Corbrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_forgeron_01",
+          "name": "Rolus Rochrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_ecurie_01",
+          "name": "Maelise Rochcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_ecurie_02",
+          "name": "Osane Corbgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_cimetiere_01",
+          "name": "Marisse Morpré",
+          "gender": "female",
+          "race_id": "race_human",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -154941,13 +155265,13 @@
         "[HS] Peur qu'ils inspirent > danger réel, mais 30 qui chargent simultanément serait catastrophique.",
         "[HS] Illustration BD couleur page 21 avec soldats de la Lune Noire devant.",
         "[BD-T5 p.36] Léviathans impériaux : pachydermes gris à quatre défenses portant des tours rouges hérissées de piques.",
-        "[BD-T12 p.38, p.40] Le Léviathan : pachyderme gris colossal portant une tour et des mages (avenir du monde jouable)."
+        "[BD-T12 p.38, p.40] Le Léviathan : pachyderme gris colossal portant une tour et des mages (avenir du monde jouable).",
+        "[GD] (v1.0.62) Retiré de la région de départ d'Eaglewatch (N002_W009, N002_W010) : reste dans les enclos des élevages impériaux (N002_W008) (LORE_BD §15.1)."
       ],
       "habitat": "Élevages et armée impériale (Terres de l'Empereur).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "N002_W008",
-        "N002_W009"
+        "N002_W008"
       ]
     },
     {
@@ -156851,14 +157175,13 @@
         "[HS] Illustration sanguine pleine page : béhémoth en bataille avec howdah rudimentaire.",
         "[HS] Tour de combat sur le dos avec soldats impériaux.",
         "[BD-THS p.20-21] Plus petits que les léviathans, plus gros que les éléphants ; dressés par l'Empire, élevages non localisés (rang 3).",
-        "[GD] (v1.0.58) Élevages placés dans les plaines des Terres de l'Empereur (à valider)."
+        "[GD] (v1.0.58) Élevages placés dans les plaines des Terres de l'Empereur (à valider).",
+        "[GD] (v1.0.62) Retiré de la région de départ d'Eaglewatch (N002_W009, N002_W010) : reste dans les enclos des élevages impériaux (N002_W008) (LORE_BD §15.1)."
       ],
       "habitat": "Élevages et camps de l'armée impériale (Terres de l'Empereur).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "N002_W008",
-        "N002_W009",
-        "N002_W010"
+        "N002_W008"
       ]
     },
     {
@@ -157060,7 +157383,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-T00 p.38] Renard porté comme gibier ; renard poursuivi."
+        "[BD-T00 p.38] Renard porté comme gibier ; renard poursuivi.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157071,11 +157395,14 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord.",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
-        "N012_E008"
+        "N012_E008",
+        "N003_W011",
+        "N002_W009",
+        "N001_W009"
       ]
     },
     {
@@ -157096,7 +157423,8 @@
         "[BD-A3 pl.8, pl.36] Chien du village ; chien maigre nourri par Parsifal.",
         "[BD-M1 p.9, p.35] Chien fauve de Sekh ; deux chiots.",
         "[BD-T4 p.19] Petit chien blanc dans une taverne.",
-        "Molosses de guerre : creature_molosse_imperial."
+        "Molosses de guerre : creature_molosse_imperial.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157105,11 +157433,14 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes.",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
-        "ville_haywick"
+        "ville_haywick",
+        "N003_W010",
+        "N002_W010",
+        "N001_W009"
       ]
     },
     {
@@ -157622,7 +157953,8 @@
       "notes": [
         "[BD-T00 p.34] Horde de lapins.",
         "[BD-T1 p.6] Le lapin rôti que vole Pile-ou-Face.",
-        "[BD-A4 p.13] Lièvre roux."
+        "[BD-A4 p.13] Lièvre roux.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Autres mammifères",
@@ -157631,13 +157963,17 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches.",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
         "N012_E008",
         "N018_E014",
-        "N018_E015"
+        "N018_E015",
+        "N003_W011",
+        "N003_W010",
+        "N003_W009",
+        "N002_W011"
       ]
     },
     {
@@ -157719,7 +158055,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-A4 p.4, p.16] Bœufs, âne et chevaux blancs."
+        "[BD-A4 p.4, p.16] Bœufs, âne et chevaux blancs.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -157729,10 +158066,11 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes.",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "N011_E017"
+        "N011_E017",
+        "N003_W010"
       ]
     },
     {
@@ -157749,7 +158087,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-M1 p.14] Chèvres survivantes d'un village."
+        "[BD-M1 p.14] Chèvres survivantes d'un village.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -157758,10 +158097,11 @@
         "chèvre des montagnes"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et collines.",
+      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "ville_haywick"
+        "ville_haywick",
+        "N001_W009"
       ]
     },
     {
@@ -157921,7 +158261,8 @@
         "[BD-T00 p.37] Étalon blanc (companion_etalon_blanc_wis).",
         "[BD-T00 p.39] Cheval bai caparaçonné du chevalier errant.",
         "[BD-A3 pl.19] Chevaux de Parsifal.",
-        "[BD-THS p.21] Les chevaux non habitués fuient devant béhémoths et léviathans (rang 3)."
+        "[BD-THS p.21] Les chevaux non habitués fuient devant béhémoths et léviathans (rang 3).",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -157930,12 +158271,13 @@
         "cheval sauvage"
       ],
       "bestiaire": true,
-      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes.",
+      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N018_E014",
         "N018_E015",
-        "N018_E016"
+        "N018_E016",
+        "N003_W011"
       ]
     },
     {
@@ -157974,7 +158316,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-A4 p.4, p.16] Âne parmi les bêtes domestiques."
+        "[BD-A4 p.4, p.16] Âne parmi les bêtes domestiques.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -157982,10 +158325,11 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes.",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "solitaire",
       "zones_chasse": [
-        "N011_E017"
+        "N011_E017",
+        "N001_W009"
       ]
     },
     {
@@ -158152,14 +158496,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1)."
+      ],
       "categorie": "2. Oiseaux",
       "famille": "Oiseaux marins",
       "variantes": [
         "Mouette",
         "goéland"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "N001_W011"
+      ],
+      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province)."
     },
     {
       "id": "animal_becasseau",
@@ -158198,7 +158548,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-T1 p.9-12] Wismerhill et Pile-ou-Face tentent de voler les poules de Ghorghor Bey (Haywick).",
-        "[BD-M1 p.14] Poules et coqs survivants d'un village."
+        "[BD-M1 p.14] Poules et coqs survivants d'un village.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N003_W009, N002_W010 (LORE_BD §15.1)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -158207,10 +158558,13 @@
         "poulet"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages.",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "ville_haywick"
+        "ville_haywick",
+        "N003_W010",
+        "N003_W009",
+        "N002_W010"
       ]
     },
     {
@@ -158227,7 +158581,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[BD-M1 p.14] Coqs survivants d'un village."
+        "[BD-M1 p.14] Coqs survivants d'un village.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -158236,10 +158591,11 @@
         "coq magique"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages.",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "troupeau",
       "zones_chasse": [
-        "ville_haywick"
+        "ville_haywick",
+        "N003_W010"
       ]
     },
     {
@@ -158453,7 +158809,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-M1 p.5] Oiseaux noirs autour du crâne volant d'Erypt.",
-        "Oiseaux démoniaques : creature_oiseau_noir_kruikna."
+        "Oiseaux démoniaques : creature_oiseau_noir_kruikna.",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -158462,11 +158819,13 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines.",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
-        "lieu_champ_premiere_bataille_t1"
+        "lieu_champ_premiere_bataille_t1",
+        "N002_W011",
+        "N002_W009"
       ]
     },
     {
@@ -158898,7 +159257,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-A4 p.20] L'araignée « petite sœur ».",
-        "Archétype de jeu existant : « Araignée des sous-bois » (game/data/creatures/archetypes.json, id 105)."
+        "Archétype de jeu existant : « Araignée des sous-bois » (game/data/creatures/archetypes.json, id 105).",
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -158908,11 +159268,13 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts.",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
-        "N013_E012"
+        "N013_E012",
+        "N002_W009",
+        "N001_W011"
       ]
     },
     {
@@ -158994,7 +159356,9 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1)."
+      ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Crustacés",
       "variantes": [
@@ -159002,7 +159366,11 @@
         "crabe géant"
       ],
       "bestiaire": true,
-      "familier_famille": "familier_crabe"
+      "familier_famille": "familier_crabe",
+      "zones_chasse": [
+        "N001_W011"
+      ],
+      "habitat": "Région de départ d'Eaglewatch (Terres de l'Empereur, Première Province)."
     },
     {
       "id": "animal_ecrevisse",
@@ -160303,14 +160671,13 @@
         "[BD-A1 p.52, p.58, p.67] Montures cuirassées à corne : monture de Ghorghor ; « rhinocéros cuirassés » dans la colonne impériale (espèce : HY).",
         "[BD-T12 p.21] Monture massive cornue de Ghorghor (lecture incertaine : rhinocéros ?).",
         "Monture de Ghorghor : mount_bete_ghorghor.",
-        "[GD] (v1.0.58) Troupeaux sauvages dans les plaines des Terres de l'Empereur, où l'Empire les capture."
+        "[GD] (v1.0.58) Troupeaux sauvages dans les plaines des Terres de l'Empereur, où l'Empire les capture.",
+        "[GD] (v1.0.62) Retiré de la région de départ d'Eaglewatch (N002_W009, N002_W010) : reste dans les enclos des élevages impériaux (N002_W008) (LORE_BD §15.1)."
       ],
       "bestiaire": true,
       "habitat": "Plaines des Terres de l'Empereur.",
       "zones_chasse": [
-        "N002_W008",
-        "N002_W009",
-        "N002_W010"
+        "N002_W008"
       ],
       "groupe": "troupeau"
     },
@@ -160894,14 +161261,13 @@
       ],
       "notes": [
         "[BD-T13 p.24, p.31] Élémentaux / golems de roche invoqués par les mages impériaux (avenir du monde jouable ; la pratique existe à l'époque du jeu).",
-        "[GD] (v1.0.58) Apparaît avec les mages de bataille impériaux (patrouilles des Terres de l'Empereur, carrières de Lhynn)."
+        "[GD] (v1.0.58) Apparaît avec les mages de bataille impériaux (patrouilles des Terres de l'Empereur, carrières de Lhynn).",
+        "[GD] (v1.0.62) Retiré de la région de départ d'Eaglewatch (N002_W009, N002_W010) : reste dans les enclos des élevages impériaux (N002_W008) (LORE_BD §15.1)."
       ],
       "bestiaire": true,
       "habitat": "Terres de l'Empereur, avec les mages de bataille impériaux.",
       "zones_chasse": [
         "N002_W008",
-        "N002_W009",
-        "N002_W010",
         "ville_lhynn"
       ],
       "groupe": "solitaire"
@@ -175011,7 +175377,7 @@
         ],
         "source": "[BD-T1] à [BD-T3], [BD-T11], [BD-T14], [BD-THS] ; vides comblés [GD]",
         "notes": [
-          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §15 ; la fiche ne tranche pas.",
+          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §16 ; la fiche ne tranche pas.",
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
         ]
       },
@@ -194225,9 +194591,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_renard",
+        "animal_cheval"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Camp de manœuvres des Légions (lieu_camp_manoeuvres_legions) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194244,9 +194616,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_poule",
+        "animal_coq",
+        "animal_boeuf",
+        "animal_chien",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Ferme Ambermead (hamlet_ambermead) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194263,7 +194643,10 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_poule",
+        "animal_lapin"
+      ],
       "visual_elements": [],
       "notes": [],
       "coord_x": null,
@@ -195098,9 +195481,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Autel des Aigles (lieu_autel_des_aigles) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -195118,15 +195506,16 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_rhinoceros_cuirasse",
-        "creature_golem_de_roche",
-        "creature_behemoth",
-        "creature_molosse_imperial"
+        "creature_molosse_imperial",
+        "animal_chien",
+        "animal_poule"
       ],
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008.",
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Eaglewatch (hameau_eaglewatch, faction Les Légions Impériales)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Eaglewatch (hameau_eaglewatch, faction Les Légions Impériales).",
+        "[GD] (v1.0.62) Région de départ d'Eaglewatch (niveaux 1 à 10) : bêtes de guerre des élevages impériaux (creature_rhinoceros_cuirasse, creature_golem_de_roche, creature_behemoth) retirées de la case et gardées dans les enclos de N002_W008 (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Centre de la région de départ 3×3 des Légions Impériales (N003_W011, N003_W010, N003_W009, N002_W011, N002_W010, N002_W009, N001_W011, N001_W010, N001_W009) ; niveaux 1 à 10 (LORE_BD §15.1)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -195145,14 +195534,15 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_rhinoceros_cuirasse",
-        "creature_golem_de_roche",
-        "creature_behemoth",
-        "creature_leviathan_imperial"
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard"
       ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008."
+        "[INFÉRÉ] (v1.0.59) Pâturages des élevages impériaux (bestiaire v1.0.58, [GD]) ; le POI poi_elevages_imperiaux est en N002_W008.",
+        "[GD] (v1.0.62) Ruines de la villa tharque (lieu_ruines_villa_tharque) de la région de départ d'Eaglewatch (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Région de départ d'Eaglewatch (niveaux 1 à 10) : bêtes de guerre des élevages impériaux (creature_rhinoceros_cuirasse, creature_golem_de_roche, creature_behemoth, creature_leviathan_imperial) retirées de la case et gardées dans les enclos de N002_W008 (LORE_BD §15.1)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -195991,9 +196381,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_crabe",
+        "animal_mouette",
+        "animal_araignee"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Grotte des contrebandiers (lieu_grotte_contrebandiers) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -196030,10 +196426,16 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_molosse_imperial"
+        "creature_molosse_imperial",
+        "animal_chevre",
+        "animal_ane",
+        "animal_chien",
+        "animal_renard"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.62) Ferme Greyhedge (hamlet_greyhedge) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -214370,7 +214772,8 @@
         "[INFÉRÉ] (v1.0.60) Étapes absentes de la carte THS : Camp de l'Oracle et fief de Garundel (creux méridional du tracé, comme sur la carte), Harrowdale et Shadehold (montée vers Horkher), Nightfield (descente vers Moork) ; cellules intermédiaires au plus court en évitant mer, lacs, chaînes, montagnes et zones volcaniques.",
         "[INFÉRÉ] (v1.0.60) Aucun fleuve de l'hydrographie (hydrography.rivers) ni cellule à rivière sur le tracé : pas de pont.",
         "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
-        "[v1.0.60] Remplace les routes provisoires 000011 (Lhynn → Camp de l'Oracle) et 000012 (fief de Garundel → Camp de l'Oracle), supprimées ; 000013 (fief de Garundel → Moork) gardée en raccourci."
+        "[v1.0.60] Remplace les routes provisoires 000011 (Lhynn → Camp de l'Oracle) et 000012 (fief de Garundel → Camp de l'Oracle), supprimées ; 000013 (fief de Garundel → Moork) gardée en raccourci.",
+        "[GD] (v1.0.62) Embranchement en N000_W010 : route locale 000130 vers Greyhedge et Eaglewatch (région de départ, LORE_BD §15.1)."
       ],
       "waypoints": [
         "N001_W010",
@@ -214505,6 +214908,108 @@
       "description": "Route de rattachement du hameau de départ Silverglade à Northind.",
       "notes": [
         "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+      ]
+    },
+    {
+      "id": "000128",
+      "type": "road",
+      "from_place": "N003_W010",
+      "from_ville_id": "hamlet_ambermead",
+      "from_lieu_id": "",
+      "to_place": "N002_W010",
+      "to_ville_id": "hameau_eaglewatch",
+      "to_lieu_id": "",
+      "description": "Route locale d'Ambermead à Eaglewatch.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Cases voisines, sans étape intermédiaire ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000129",
+      "type": "road",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N001_W009",
+      "to_ville_id": "hamlet_greyhedge",
+      "to_lieu_id": "",
+      "description": "Route locale d'Eaglewatch à Greyhedge, à l'est de Lhynn (contourne la capitale).",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Cases voisines en diagonale ; avec la route suivante, mène d'Eaglewatch à la Via Magna sans traverser Lhynn ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000130",
+      "type": "road",
+      "from_place": "N001_W009",
+      "from_ville_id": "hamlet_greyhedge",
+      "from_lieu_id": "",
+      "to_place": "N000_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "",
+      "description": "Route locale de Greyhedge à la Via Magna (route 000120), qu'elle rejoint au sud de Lhynn.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Embranchement sur la Via Magna en N000_W010 (première case après Lhynn) ; pas de ville à l'arrivée ; LORE_BD §15.1."
+      ],
+      "waypoints": [
+        "N001_W009",
+        "N000_W010"
+      ]
+    },
+    {
+      "id": "000131",
+      "type": "path",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N003_W011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_manoeuvres_legions",
+      "description": "Sentier d'Eaglewatch à « Camp de manœuvres des Légions ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000132",
+      "type": "path",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N002_W011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_autel_des_aigles",
+      "description": "Sentier d'Eaglewatch à « Autel des Aigles ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000133",
+      "type": "path",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N002_W009",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_villa_tharque",
+      "description": "Sentier d'Eaglewatch à « Ruines de la villa tharque ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
+      ]
+    },
+    {
+      "id": "000134",
+      "type": "path",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N001_W011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_grotte_contrebandiers",
+      "description": "Sentier d'Eaglewatch à « Grotte des contrebandiers ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
       ]
     }
   ],
@@ -216722,7 +217227,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -216730,7 +217235,7 @@
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
-      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §12, §13, §14",
+      "source": "Notes [DÉCISION] du fichier, fiches de source « Hubert », docs/world/LORE_BD.md §7.2, §7.4, §8, §10.3, §10.4, §12, §13, §14, §15",
       "notes": [
         "Une même décision appliquée à plusieurs fiches figure une fois par fiche.",
         "Les décisions v1.0.57 de ce corpus (regle_canon_corpus, regle_canon_priorite_sources) figurent aussi au registre.",
@@ -218396,6 +218901,13 @@
           "nom": "Whispers Hill (La Colline aux Murmures)",
           "decision": "Ancien départ par race redevenu ville normale (LORE_BD §14).",
           "version": "1.0.61"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_niveaux_par_faction",
+          "nom": "Niveaux des zones selon la faction",
+          "decision": "Région de départ de 3×3 cases de niveau débutant (1 à 10) autour de chaque départ de faction ; une PR par départ (LORE_BD §15).",
+          "version": "1.0.62"
         }
       ]
     },
@@ -221022,7 +221534,8 @@
       "training_minimum": "",
       "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": [
-        "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales."
+        "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales.",
+        "[DÉCISION] (v1.0.62) Chaque départ de faction a une région de départ de 3×3 cases (la case du hameau de départ et ses 8 voisines), de niveau débutant (1 à 10) : 2 à 3 fermes ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; une PR de carte par départ. Décision du propriétaire du 06/11/2026 (LORE_BD §15). Première région : Eaglewatch (Légions Impériales, v1.0.62)."
       ]
     },
     {
@@ -229595,6 +230108,334 @@
       "notes": [
         "[BD-A3 pl.22-23] Premier acte de Parsifal adoubé : il anéantit l'archi-liche du « sanctuaire des deux fois nés » ; les morts-vivants tombent en poussière.",
         "[ÉPOQUE] avant T1 ; purifié."
+      ]
+    },
+    {
+      "id": "lieu_camp_manoeuvres_legions",
+      "name": "Camp de manœuvres des Légions",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N003_W011",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "palissade et tentes de toile rouge",
+        "lices, mannequins et cibles de tir",
+        "enseigne à l'aigle"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Terrain d'exercice où les recrues d'Eaglewatch apprennent la marche en ordre, le pilum et le bouclier sous l'œil d'un centurion. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Ancrage : Les légions impériales [BD-THS p.8] et leurs camps militaires (habitat des béhémoths, bestiaire v1.0.58) ; le camp lui-même est [GD].",
+        "[INFÉRÉ] (v1.0.62) Cellule N003_W011 : Plaine de la Première Province au nord-ouest d'Eaglewatch, à l'écart des fermes ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_autel_des_aigles",
+      "name": "Autel des Aigles",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N002_W011",
+      "region_id": "terres_de_lempereur",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "autel de pierre sous un aigle de bronze",
+        "ex-voto et enseignes de légions dissoutes",
+        "vue sur la mer de l'ouest"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Autel en plein air où les recrues jurent fidélité à l'Empereur avant de rejoindre Lhynn ; on y dépose les enseignes des légions tombées. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Ancrage : Serment des recrues : description d'Eaglewatch (v1.0.61) ; l'autel est [GD].",
+        "[INFÉRÉ] (v1.0.62) Cellule N002_W011 : Plaine entre Eaglewatch et la plage (N002_W012) ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_ruines_villa_tharque",
+      "name": "Ruines de la villa tharque",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N002_W009",
+      "region_id": "terres_de_lempereur",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "colonnades effondrées",
+        "mosaïques sous l'herbe",
+        "caves envahies d'araignées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Restes d'un domaine de l'ancien Empire tharque, au milieu des pâturages : murs bas, colonnes renversées et caves où rôdent la vermine et les pilleurs. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Ancrage : Les terres de l'Empire ont appartenu au « grand Empire tharque » dont l'Empire a hérité la Via Magna [BD-THS p.8] ; l'architecture tharque est « pseudo-gréco-romaine » (region_empire_tharque). La villa est [GD]. En ruine depuis des siècles : cohérent avec l'époque du jeu.",
+        "[INFÉRÉ] (v1.0.62) Cellule N002_W009 : Pâturages des Terres de l'Empereur à l'est d'Eaglewatch ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_grotte_contrebandiers",
+      "name": "Grotte des contrebandiers",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N001_W011",
+      "region_id": "terres_de_lempereur",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte marine à marée basse",
+        "caches de ballots",
+        "crabes et mouettes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Grotte de la côte à l'ouest de Lhynn où des contrebandiers débarquent ce qui échappe aux taxes du port de guerre ; première expédition des recrues. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
+        "[GD] (v1.0.62) Ancrage : Port de guerre de Lhynn [BD-T7 p.5-6] et taxes impériales (économie v1.0.58) ; la grotte est [GD].",
+        "[INFÉRÉ] (v1.0.62) Cellule N001_W011 : Côte à l'ouest de Lhynn, hors de la case de la capitale ; case libre."
       ]
     }
   ],

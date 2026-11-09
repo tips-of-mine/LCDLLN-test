@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 15) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 16) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -607,7 +607,54 @@ cellules `[INFÉRÉ]`. Script reproductible : `lore_v1061.py` (appliqué au fich
   `factions.json` ; les PNJ d'accueil (Iaelith, Rendal…) et les quêtes `<race>_accueil` restent dans les
   anciennes villes.
 
-## 15. Questions ouvertes
+## 15. Régions de départ
+
+**Décision du propriétaire (06/11/2026)** : chaque départ de faction a une **région de départ de 3×3
+cases** (la case du hameau de départ et ses 8 voisines), de niveau **débutant** (1 à 10) : 2 à 3 fermes
+ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; **une PR de carte par départ**. Note
+`[DÉCISION] (v1.0.62)` sur `rule_niveaux_par_faction` et une entrée au registre
+`regle_canon_registre_decisions`. Règles de remplissage : rien sur une case qui porte déjà une ville ou un
+lieu (sauf POI à distance raisonnable, comme les Ruines de Wismerhill), terrain respecté, époque du jeu
+(après la destruction de Kendrhir, avant le T11) ; tout ajout est `[GD]` (noms à valider), cellules
+`[INFÉRÉ]` ; chaque ferme ou hameau est relié par une route (`road`) au hameau de départ ou à la route la
+plus proche ; faune prise parmi les espèces existantes de niveau 1 à 10 (`creatures.zones_chasse` et
+`cells.creature_ids`), sans nouvelle espèce. Le monde jouable reçoit les villes (`cities`, `kind`
+`hameau`) et les POI (`pois`) dans `world_master.json` ; routes, sentiers et faune ne sont que dans le
+lore (`tools/world_gen` trace ses routes et peuple les cases lui-même). La région est notée dans
+`game_design.depart.region` de la faction (`cells`, `niveaux`).
+
+### 15.1 Eaglewatch — Légions Impériales (v1.0.62)
+
+Centre N002_W010 (`hameau_eaglewatch`, v1.0.61). Les 9 cases étaient déjà générées. Lhynn (N001_W010,
+capitale, mer à l'ouest) et le hameau de Marn (N003_W009) sont dans la région mais **rien n'y est posé**.
+Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N003_W011 | plaine (Première Province) | POI **Camp de manœuvres des Légions** (`lieu_camp_manoeuvres_legions`, `poi_camp_manoeuvres_legions`, `camp`) : lices et cibles des recrues `[GD]` ; ancrage : légions et camps impériaux `[BD-THS p.8]` | lapin (1-3), renard (2-5), cheval (3-8) |
+| N003_W010 | plaine (Première Province) | Ferme **Ambermead** (`hamlet_ambermead`, `farm_hamlet` / `hameau`) : blé et fourrage de la garnison `[GD]` ; route 000128 vers Eaglewatch | poule, coq (1), bœuf (3-6), chien (2-6), lapin |
+| N003_W009 | plaine | Hameau de Marn (existant, inchangé) | poule, lapin |
+| N002_W011 | plaine | POI **Autel des Aigles** (`lieu_autel_des_aigles`, `poi_autel_des_aigles`, `sanctuaire`) : serment des recrues `[GD]` (description d'Eaglewatch, v1.0.61) | lapin, corbeau (1-4) |
+| N002_W010 | plaine | **Eaglewatch** (hameau de départ) ; routes 000121 (Lhynn), 000128, 000129 ; sentiers 000131 à 000134 vers les 4 POI | chien, poule ; molosse impérial (10-20, existant) |
+| N002_W009 | plaine (pâturages) | POI **Ruines de la villa tharque** (`lieu_ruines_villa_tharque`, `poi_ruines_villa_tharque`, `ruine`) : domaine de l'ancien Empire tharque `[GD]`, ancré sur la Via Magna « héritée du grand Empire tharque » `[BD-THS p.8]` | araignée (3-8), corbeau, renard |
+| N001_W011 | côte | POI **Grotte des contrebandiers** (`lieu_grotte_contrebandiers`, `poi_grotte_contrebandiers`, `salle`) : contrebande du port de guerre de Lhynn `[GD]` (`[BD-T7 p.5-6]`) | crabe, mouette (1), araignée |
+| N001_W010 | plaine | Lhynn (capitale, inchangée) | inchangée |
+| N001_W009 | plaine | Ferme **Greyhedge** (`hamlet_greyhedge`, `farm_hamlet` / `hameau`) : volailles, chèvres et ânes de bât `[GD]` ; route 000129 vers Eaglewatch, route 000130 vers la Via Magna | chèvre (1-3), âne (2-4), chien, renard ; molosse impérial (existant) |
+
+- **Routes** (`routes`) : 000128 Ambermead → Eaglewatch, 000129 Eaglewatch → Greyhedge et 000130
+  Greyhedge → Via Magna (`road`, embranchement sur la route 000120 en N000_W010, première case après
+  Lhynn, sans ville à l'arrivée) : d'Eaglewatch on rejoint la Via Magna sans traverser la capitale.
+  Sentiers 000131 à 000134 (`path`, sans écurie) d'Eaglewatch vers les 4 POI.
+- **Services** : 2 fermes (taille `hameau`) ; écuries d'après les routes `road` : Eaglewatch 3 (au lieu
+  de 1), Ambermead 1, Greyhedge 2 ; 1036 → 1050 PNJ de service.
+- **Faune** : les bêtes de guerre des élevages impériaux (rhinocéros cuirassé, golem de roche,
+  béhémoth, léviathan impérial, niveaux 18 à 55, v1.0.58) sont retirées de N002_W009 et N002_W010 et
+  restent dans les enclos de N002_W008 (`poi_elevages_imperiaux`, hors région).
+- **Points incertains** : noms ; le molosse impérial (10-20) reste sur les routes de Lhynn (N001_W009,
+  N002_W010), au plafond de la tranche ; crabe et mouette ont un niveau par défaut (1-1) ; le camp de
+  manœuvres et l'autel pourraient porter des PNJ ou des quêtes d'accueil des Légions (aucun créé).
+
+## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

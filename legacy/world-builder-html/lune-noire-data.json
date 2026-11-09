@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.67",
+    "version": "1.0.68",
     "notes": [
+      "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Wyrmhallow (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Cragfold (S004_W003, bergers) et Bridlecrag (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Wyrmhallow, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Equiton (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
       "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Leviathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
       "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case d'Aurore ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
       "v1.0.65 — Réseau routier : lot de corrections du propriétaire, routes de plus de 5 cases remplacées par des chaînes de villes, villes isolées reliées, réseau connexe.",
@@ -617,7 +618,8 @@
         "[BD-T8] Un Prince Dragon furieux reproche à Fratus sa débauche au lieu de commander ses troupes : 'Au lieu de te pavaner dans tes orgies...' / 'Tu aurais mieux fait de t'occuper de tes troupes !'",
         "[BD-T7] p.16-17 : avec Fratus, prennent Northind ; [BD-T10] p.9 : neutres, offrent une dizaine de dragons à Haazheel ; [BD-T14] p.23 : consumés par les dragons du Premier Dragon, le pacte étant rompu.",
         "[GD] (v1.0.58) Religion : « Croyances mineures et cultes anciens » (lore.religions, religion_croyances_mineures).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Wyrmhallow (hameau_wyrmhallow, S004_W004), près de Palais des Maîtres des Dragons. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Wyrmhallow (hameau_wyrmhallow, S004_W004), près de Palais des Maîtres des Dragons. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.68) Région de départ 3×3 autour de Wyrmhallow (LORE_BD §15.5) : hameaux Cragfold (bergers) et Bridlecrag (élevage de montures), Nids abandonnés des Crêtes, Cairn des Ailes tombées, Ruines du pont des Gorges, Aire de dressage des écuyers ; routes locales vers Wyrmhallow ; faune de niveau 1 à 10, dragons adultes retirés de S003_W005 et S005_W005. Rien dans les cases du Palais (S003_W004) et d'Equiton (S005_W004)."
       ],
       "faction_relations": [
         {
@@ -638,7 +640,24 @@
           "type": "hameau",
           "id": "hameau_wyrmhallow",
           "cell": "S004_W004",
-          "pres_de": "city_dragon_palace"
+          "pres_de": "city_dragon_palace",
+          "region": {
+            "cells": [
+              "S003_W005",
+              "S003_W004",
+              "S003_W003",
+              "S004_W005",
+              "S004_W004",
+              "S004_W003",
+              "S005_W005",
+              "S005_W004",
+              "S005_W003"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "",
@@ -20866,6 +20885,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_wyrmhallow_ecurie_02",
+          "name": "Isan Morcombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_wyrmhallow_ecurie_03",
+          "name": "Cedane Rochombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_wyrmhallow_cimetiere_01",
           "name": "Marald Belgarde",
           "gender": "male",
@@ -22504,6 +22539,280 @@
           "name": "Drubrok Tibia-Tordu",
           "gender": "male",
           "race_id": "race_dzorak",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_cragfold",
+      "name": "Cragfold",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "S004_W003",
+      "anchor_tile": "S004_W003",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dragon_knights",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau de bergers de la région de départ de Wyrmhallow"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom proposé, à valider par le propriétaire. Hameau de bergers aux bergeries de pierre sèche : chèvres, moutons et bœufs de montagne ; une part des troupeaux monte chaque saison au Palais des Maîtres des Dragons pour nourrir les dragons montés de l'Ordre. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[INFÉRÉ] (v1.0.68) Cellule S004_W003 : Montagne à l'est de Wyrmhallow, hors des neiges éternelles ; case libre.",
+        "[GD] (v1.0.68) Population : humains, croyances mineures et culte du pacte des dragons (religion_croyances_mineures) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.68) Économie : élevage de montagne : chèvres, moutons, bœufs, laine, fromage, viande pour les dragons du Palais ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.68) Ancrage : Royaume de montagnes [BD, faction_dragon_knights] ; vieux dragons et Chevaliers-Dragons alliés [BD-T2] ; dragons montures des Chevaliers [BD-T8 p.43] ; le Royaume Drach importe du grain [GD v1.0.58, regle_eco_productions_regions] ; le hameau et le tribut de bétail sont [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_cragfold_auberge_01",
+          "name": "Falilde Morpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_cragfold_forgeron_01",
+          "name": "Lanold Bruncastel",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_cragfold_ecurie_01",
+          "name": "Garane Corbvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_cragfold_cimetiere_01",
+          "name": "Eldius Rossombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_bridlecrag",
+      "name": "Bridlecrag",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "S004_W005",
+      "anchor_tile": "S004_W005",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dragon_knights",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau de l'élevage de montures de la région de départ de Wyrmhallow"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom proposé, à valider par le propriétaire. Haras de montagne : chevaux au pied sûr, mulets et poneys de bât élevés pour les écuyers, qui apprennent à monter, à seller et à soigner une monture avant d'approcher un dragon ; selliers et bourreliers y taillent les harnais. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[INFÉRÉ] (v1.0.68) Cellule S004_W005 : Montagne à l'ouest de Wyrmhallow, hors des neiges éternelles ; case libre.",
+        "[GD] (v1.0.68) Population : humains, croyances mineures et culte du pacte des dragons (religion_croyances_mineures) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.68) Économie : élevage de montures : chevaux de montagne, mulets, poneys, ânes de bât ; sellerie et harnais ; récolte : herbes, cuir à tanner (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.68) Ancrage : Écuyers qui apprennent à monter (description de Wyrmhallow, v1.0.61) ; « J'ai pas le droit de monter un dragon » [BD-T2] ; aucun commerce de dragons ni d'œufs [GD v1.0.58, city_dragon_palace] : on n'y élève que des montures ordinaires ; le hameau est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_bridlecrag_auberge_01",
+          "name": "Perin Valmont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_bridlecrag_armes_01",
+          "name": "Dunane Ferlac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_bridlecrag_armures_01",
+          "name": "Faleline Boiscastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_bridlecrag_forgeron_01",
+          "name": "Eldmond Clairvigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_bridlecrag_ecurie_01",
+          "name": "Norran Pierrelac",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_bridlecrag_cimetiere_01",
+          "name": "Perais Marlfort",
+          "gender": "male",
+          "race_id": "race_human",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -157463,7 +157772,8 @@
         "[BD-T2 p.29-30] Dragons rouges à bec crochu des Chevaliers Dragons, guetteurs de la Passe (« il ne s'agissait pas d'oiseaux »).",
         "[BD-T4 p.46] « Hauts Drakkhs » réveillés par le Prince Brakkh.",
         "[BD-T8 p.43] Dragons rouges tachetés de noir, montures des Chevaliers Dragons.",
-        "[BD-T10 p.9, p.24] Dragons rouges du camp de la Lune Noire, souffle de feu."
+        "[BD-T10 p.9, p.24] Dragons rouges du camp de la Lune Noire, souffle de feu.",
+        "[GD] (v1.0.68) Retiré de S005_W005 : case de la région de départ de Wyrmhallow, niveaux 1 à 10 (LORE_BD §15.5)."
       ],
       "habitat": "Passe des Dragons et palais des Maîtres des Dragons (Royaume Drach).",
       "groupe": "solitaire",
@@ -157471,7 +157781,6 @@
         "zone_passe_dragons_t2",
         "city_dragon_palace",
         "S003_W004",
-        "S005_W005",
         "S005_W006"
       ]
     },
@@ -158499,7 +158808,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010, N009_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E013, N008_E012, N008_E013, N007_E012 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E013, N008_E012, N008_E013, N007_E012 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004, S004_W003 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -158508,7 +158818,7 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
@@ -158526,7 +158836,10 @@
         "N009_E013",
         "N008_E012",
         "N008_E013",
-        "N007_E012"
+        "N007_E012",
+        "S004_W005",
+        "S004_W004",
+        "S004_W003"
       ]
     },
     {
@@ -159021,14 +159334,23 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S004_W003, S005_W003 (LORE_BD §15.5)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Rongeurs",
       "variantes": [
         "Marmotte"
       ],
       "bestiaire": true,
-      "familier_famille": "familier_rongeur"
+      "familier_famille": "familier_rongeur",
+      "zones_chasse": [
+        "S003_W005",
+        "S003_W003",
+        "S004_W003",
+        "S005_W003"
+      ],
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_lapin",
@@ -159168,7 +159490,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010, N004_W011 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W003 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -159178,7 +159501,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E017",
@@ -159186,7 +159509,8 @@
         "N005_W010",
         "N004_W011",
         "N010_W010",
-        "N007_E012"
+        "N007_E012",
+        "S004_W003"
       ]
     },
     {
@@ -159205,7 +159529,8 @@
       "notes": [
         "[BD-M1 p.14] Chèvres survivantes d'un village.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E012, N007_E012 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E012, N007_E012 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S004_W004, S004_W003, S005_W005 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -159214,13 +159539,17 @@
         "chèvre des montagnes"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
         "N001_W009",
         "N008_E012",
-        "N007_E012"
+        "N007_E012",
+        "S003_W005",
+        "S004_W004",
+        "S004_W003",
+        "S005_W005"
       ]
     },
     {
@@ -159260,7 +159589,8 @@
       "abilities_traits": [],
       "notes": [
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N008_W010 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N008_W010 (LORE_BD §15.3).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W003 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -159271,9 +159601,10 @@
       "bestiaire": true,
       "zones_chasse": [
         "N004_W011",
-        "N008_W010"
+        "N008_W010",
+        "S004_W003"
       ],
-      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore)."
+      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_cerf",
@@ -159401,7 +159732,8 @@
         "[BD-THS p.21] Les chevaux non habitués fuient devant béhémoths et léviathans (rang 3).",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S005_W005 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159410,7 +159742,7 @@
         "cheval sauvage"
       ],
       "bestiaire": true,
-      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N018_E014",
@@ -159418,7 +159750,9 @@
         "N018_E016",
         "N003_W011",
         "N005_W010",
-        "N010_W010"
+        "N010_W010",
+        "S004_W005",
+        "S005_W005"
       ]
     },
     {
@@ -159434,14 +159768,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
       "variantes": [
         "Poney",
         "poney domestique"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "S004_W005"
+      ],
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_ane",
@@ -159461,7 +159801,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N009_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159469,14 +159810,15 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
         "N001_W009",
         "N004_W011",
         "N009_W009",
-        "N007_E012"
+        "N007_E012",
+        "S004_W005"
       ]
     },
     {
@@ -159492,13 +159834,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004 (LORE_BD §15.5)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
       "variantes": [
         "Mulet"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "S004_W005",
+        "S004_W004"
+      ],
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_zebre",
@@ -159814,14 +160163,22 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005 (LORE_BD §15.5)."
+      ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
       "variantes": [
         "Aigle",
         "aigle royal"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "S003_W005",
+        "S003_W003",
+        "S005_W005"
+      ],
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_faucon",
@@ -159945,14 +160302,21 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W003, S005_W003 (LORE_BD §15.5)."
+      ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
       "variantes": [
         "Vautour",
         "condor"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "S003_W003",
+        "S005_W003"
+      ],
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_corbeau",
@@ -159973,7 +160337,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005, S005_W003 (LORE_BD §15.5)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -159982,7 +160347,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -160001,7 +160366,11 @@
         "N009_E013",
         "N008_E011",
         "N007_E011",
-        "N007_E013"
+        "N007_E013",
+        "S003_W005",
+        "S003_W003",
+        "S005_W005",
+        "S005_W003"
       ]
     },
     {
@@ -160437,7 +160806,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4).",
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S005_W003 (LORE_BD §15.5)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -160447,7 +160817,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -160461,7 +160831,8 @@
         "N009_E012",
         "N009_E013",
         "N008_E011",
-        "N007_E013"
+        "N007_E013",
+        "S005_W003"
       ]
     },
     {
@@ -161984,14 +162355,14 @@
         "[BD-A2 pl.9, pl.32] Elfes et dragons, « deux races capables d'une extraordinaire longévité ».",
         "[BD-T2 p.27] Royaume Drach = royaume des Grands Vers.",
         "Les scènes du T14 sont l'avenir du monde jouable : l'espèce existe à l'époque du jeu, pas les événements.",
-        "[GD] (v1.0.58) Boss mondial des sommets enneigés du Royaume Drach, distinct des dragons montés des Chevaliers Dragons."
+        "[GD] (v1.0.58) Boss mondial des sommets enneigés du Royaume Drach, distinct des dragons montés des Chevaliers Dragons.",
+        "[GD] (v1.0.68) Retiré de S003_W005 : case de la région de départ de Wyrmhallow, niveaux 1 à 10 (LORE_BD §15.5)."
       ],
       "bestiaire": true,
       "habitat": "Sommets enneigés du Royaume Drach, au-dessus de la Passe des Dragons.",
       "zones_chasse": [
         "zone_passe_dragons_t2",
         "S002_W005",
-        "S003_W005",
         "S004_W006"
       ],
       "groupe": "unique"
@@ -177549,6 +177920,12 @@
             "id": "zone_jade_temple_soleil_noir",
             "nom": "Temple du Soleil Noir (Jade)",
             "nature": "Temple du Soleil Noir (Jade) : contenu d'extension [GD]."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_cairn_des_ailes_tombees",
+            "nom": "Cairn des Ailes tombées",
+            "nature": "[GD] Cairn des chevaliers et dragons tombés en vol ; serment des écuyers au pacte (région de départ de Wyrmhallow)."
           }
         ],
         "rites": [
@@ -177578,7 +177955,8 @@
         "source": "[BD-A2], [BD-A3], [BD-A5], [BD-T9], [BD-T11], [BD-T14] ; vides comblés [GD]",
         "notes": [
           "[ÉPOQUE] La rupture du pacte et l'extermination des Chevaliers Dragons (T14) sont l'avenir.",
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.68) Région de départ de Wyrmhallow : Cairn des Ailes tombées ajouté aux lieux de culte (LORE_BD §15.5)."
         ]
       }
     ]
@@ -201363,10 +201741,16 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_dragon_grand_ancien"
+        "animal_aigle",
+        "animal_corbeau",
+        "animal_marmotte",
+        "animal_chevre"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Cairn des Ailes tombées (lieu_cairn_des_ailes_tombees) de la région de départ de Wyrmhallow (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Grand Ancien (dragon primordial) retiré : région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -201386,7 +201770,9 @@
         "creature_dragon_fratus_t8"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Région de départ de Wyrmhallow : case du Palais des Maîtres des Dragons et du Sanctuaire, aucun lieu ni aucune faune ajoutés ni retirés (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -201402,9 +201788,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_vautour",
+        "animal_corbeau",
+        "animal_aigle",
+        "animal_marmotte"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Nids abandonnés des Crêtes (lieu_nids_abandonnes_des_cretes) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -202229,9 +202622,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_cheval",
+        "animal_mulet",
+        "animal_poney",
+        "animal_ane",
+        "animal_chien"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Hameau de l'élevage de montures Bridlecrag (hamlet_bridlecrag) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -202247,10 +202648,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_chevre",
+        "animal_mulet"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Wyrmhallow (hameau_wyrmhallow, faction Chevaliers-Dragons)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Wyrmhallow (hameau_wyrmhallow, faction Chevaliers-Dragons).",
+        "[GD] (v1.0.68) Centre de la région de départ 3×3 des Chevaliers-Dragons (S003_W005, S003_W004, S003_W003, S004_W005, S004_W004, S004_W003, S005_W005, S005_W004, S005_W003) ; niveaux 1 à 10 (LORE_BD §15.5)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -202267,9 +202673,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chevre",
+        "animal_mouton",
+        "animal_boeuf",
+        "animal_chien",
+        "animal_marmotte"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Hameau de bergers Cragfold (hamlet_cragfold) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -203097,10 +203511,16 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_dragon_fratus_t8"
+        "animal_cheval",
+        "animal_corbeau",
+        "animal_aigle",
+        "animal_chevre"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Aire de dressage des écuyers (lieu_aire_de_dressage_des_ecuyers) de la région de départ de Wyrmhallow (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Dragon des Princes Dragons (Allié Fratus) retiré : région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -203119,7 +203539,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Région de départ de Wyrmhallow : case d'Equiton, aucun lieu ni aucune faune ajoutés (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -203136,9 +203558,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_vautour",
+        "animal_corbeau",
+        "animal_marmotte"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.68) Ruines du pont des Gorges (lieu_ruines_pont_des_gorges) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -216944,6 +217373,90 @@
       "description": "Sentier de Grakhul à « Ruines du fortin des Marches ».",
       "notes": [
         "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000179",
+      "type": "road",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S004_W003",
+      "to_ville_id": "hamlet_cragfold",
+      "to_lieu_id": "",
+      "description": "Route locale de Wyrmhallow à Cragfold.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000180",
+      "type": "road",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S004_W005",
+      "to_ville_id": "hamlet_bridlecrag",
+      "to_lieu_id": "",
+      "description": "Route locale de Wyrmhallow à Bridlecrag.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000181",
+      "type": "path",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S003_W003",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_nids_abandonnes_des_cretes",
+      "description": "Sentier de Wyrmhallow à « Nids abandonnés des Crêtes ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000182",
+      "type": "path",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S003_W005",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_cairn_des_ailes_tombees",
+      "description": "Sentier de Wyrmhallow à « Cairn des Ailes tombées ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000183",
+      "type": "path",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S005_W003",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_pont_des_gorges",
+      "description": "Sentier de Wyrmhallow à « Ruines du pont des Gorges ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000184",
+      "type": "path",
+      "from_place": "S004_W004",
+      "from_ville_id": "hameau_wyrmhallow",
+      "from_lieu_id": "",
+      "to_place": "S005_W005",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_aire_de_dressage_des_ecuyers",
+      "description": "Sentier de Wyrmhallow à « Aire de dressage des écuyers ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.68) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.5."
       ]
     }
   ],
@@ -233438,6 +233951,334 @@
         "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Ancien fortin impérial de la Marche de l'Est, abandonné depuis la conquête de la Marche par la Lune Noire : araignées et corbeaux y nichent ; les jeunes orques y cherchent du fer de récupération. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
         "[GD] (v1.0.67) Ancrage : Marche de l'Est, terre impériale conquise par la Lune Noire avant le T1 [BD-A5 p.38-44] (region_marche_est) ; abandonné bien avant l'époque du jeu ; le fortin est [GD].",
         "[INFÉRÉ] (v1.0.67) Cellule N007_E013 : Plaine de la Marche de l'Est au sud-est de Grakhul, à l'écart d'Horkher (N006_E014) ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_nids_abandonnes_des_cretes",
+      "name": "Nids abandonnés des Crêtes",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S003_W003",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "aires de branchages et d'os sur les corniches",
+        "coquilles d'œufs brisées sous la neige",
+        "ossements de bétail"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Anciennes aires de ponte sur les crêtes enneigées à l'est du Palais, désertées depuis des générations : les œufs sont gardés dans les sous-sols du Palais ; vautours et corbeaux y fouillent les ossements, les écuyers y cherchent des éclats de coquille. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Ancrage : Œufs de dragons dans les sous-sols du Palais [city_dragon_palace] ; vieux dragons et progéniture [BD-T2] ; aucun commerce d'œufs [GD v1.0.58]. Les nids et leur abandon sont [GD] ; aucun dragon n'y vit.",
+        "[INFÉRÉ] (v1.0.68) Cellule S003_W003 : Neiges éternelles au nord-est de Wyrmhallow et à l'est du Palais (S003_W004), hors de la case du Palais ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_cairn_des_ailes_tombees",
+      "name": "Cairn des Ailes tombées",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S003_W005",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cairn de pierres plates sous la neige",
+        "lances et écailles fichées entre les pierres",
+        "bannières déchirées par le vent"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Cairn des chevaliers et des dragons tombés en vol, à l'ouest du Palais : les écuyers y prêtent serment au pacte qui lie l'Ordre aux vieux dragons avant leur premier vol. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Ancrage : Pacte des Chevaliers-Dragons et des dragons [BD-T2], intact à l'époque du jeu (rompu au T14 [BD-T14 p.21-23]) ; culte du pacte (religion_croyances_mineures). Le cairn est [GD].",
+        "[INFÉRÉ] (v1.0.68) Cellule S003_W005 : Neiges éternelles au nord-ouest de Wyrmhallow et à l'ouest du Palais (S003_W004), hors de la case du Palais ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_ruines_pont_des_gorges",
+      "name": "Ruines du pont des Gorges",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S005_W003",
+      "region_id": "royaume_drach",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "piles de pierre au bord du gouffre",
+        "cordes rompues et planches pourries",
+        "corps de garde effondré"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Ancien pont suspendu et son corps de garde au-dessus d'une gorge, au sud-est de Wyrmhallow, abandonnés depuis des générations au profit du chemin d'Equiton : araignées et vautours y nichent. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Ancrage : Gorges profondes et ponts suspendus du royaume des Chevaliers-Dragons [BD, faction_dragon_knights] ; pont de corde de la Passe des Dragons [BD-T2] (lieu distinct). Le pont et son abandon sont [GD] (aucune destruction de l'époque du jeu).",
+        "[INFÉRÉ] (v1.0.68) Cellule S005_W003 : Montagne du Royaume Drach au sud-est de Wyrmhallow et à l'est d'Equiton (S005_W004), hors de la case d'Equiton ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_aire_de_dressage_des_ecuyers",
+      "name": "Aire de dressage des écuyers",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S005_W005",
+      "region_id": "royaume_drach",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "plateau battu par le vent",
+        "selle de dragon montée sur une poutre pivotante",
+        "piquets et cibles de lance"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Plateau d'entraînement au sud-ouest de Wyrmhallow : les écuyers y apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen ; on n'y voit pas de dragon adulte, seulement les montures de Bridlecrag. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
+        "[GD] (v1.0.68) Ancrage : Écuyers qui apprennent à monter (description de Wyrmhallow, v1.0.61) ; mercenaires sur dragons volants, combat aérien [BD, faction_dragon_knights] ; langue dracchen [BD-T2]. L'aire est [GD].",
+        "[INFÉRÉ] (v1.0.68) Cellule S005_W005 : Montagne du Royaume Drach au sud-ouest de Wyrmhallow, à l'ouest d'Equiton (S005_W004), hors de la case d'Equiton ; case libre."
       ]
     }
   ],

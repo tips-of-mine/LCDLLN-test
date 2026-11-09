@@ -765,6 +765,49 @@ reproductible : `lore_v1067.py` (appliqué au fichier v1.0.66).
   sont les seuls animaux de Grakhul ; le totem, l'arène et l'affût pourraient porter des PNJ ou quêtes
   d'accueil (aucun créé).
 
+### 15.5 Wyrmhallow — Chevaliers-Dragons (v1.0.68)
+
+Centre S004_W004 (`hameau_wyrmhallow`, v1.0.61). Les 9 cases étaient déjà générées. Le Palais des Maîtres
+des Dragons et le Sanctuaire des Chevaliers Dragons (S003_W004, `poi_palais_passe` et
+`poi_sanctuaire_chevaliers_dragons` dans le monde jouable) et Equiton (S005_W004, port du Royaume Drach)
+sont dans la région mais **rien n'y est posé**, faune comprise. Thème : l'élevage et le dressage des
+Chevaliers-Dragons — bergers qui nourrissent les dragons du Palais, haras des montures des écuyers, aire
+de dressage, nids abandonnés (les œufs sont gardés dans les sous-sols du Palais, aucun commerce de dragons
+ni d'œufs, v1.0.58), cairn du pacte ; le cairn est ajouté aux `lieux_de_culte` de
+`religion_croyances_mineures` (culte du pacte). Routes selon la règle du propriétaire v1.0.65 : chaque
+nouveau hameau est relié au voisin le plus proche (ici Wyrmhallow, case voisine orthogonale, sans étape) ;
+routes existantes inchangées (000124 vers le Palais, 000082 Palais → Equiton, 000017). Population
+humaine : `RACE_FACTIONS` de `generate_city_services.py` inchangé. Script reproductible : `lore_v1068.py`
+(appliqué au fichier v1.0.67).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| S003_W003 | neiges éternelles | POI **Nids abandonnés des Crêtes** (`lieu_nids_abandonnes_des_cretes`, `poi_nids_abandonnes_des_cretes`, `ruine`) : aires de ponte désertées depuis des générations, coquilles brisées et ossements `[GD]` ; œufs dans les sous-sols du Palais (`city_dragon_palace`), vieux dragons et progéniture `[BD-T2]` ; aucun dragon n'y vit | vautour (1), corbeau (1-4), aigle (1), marmotte (1) |
+| S003_W004 | neiges éternelles | Palais des Maîtres des Dragons et Sanctuaire des Chevaliers Dragons (inchangés, rien n'est posé) | inchangée |
+| S003_W005 | neiges éternelles | POI **Cairn des Ailes tombées** (`lieu_cairn_des_ailes_tombees`, `poi_cairn_des_ailes_tombees`, `sanctuaire`) : chevaliers et dragons tombés en vol, serment des écuyers au pacte `[GD]` ; pacte `[BD-T2]`, rompu au T14 seulement `[BD-T14 p.21-23]` | aigle, corbeau, marmotte, chèvre (1-3) ; Grand Ancien (66-70) retiré |
+| S004_W003 | montagne | Hameau **Cragfold** (`hamlet_cragfold`, `farm_hamlet` / `hameau`) : bergers, chèvres, moutons et bœufs dont une part monte au Palais pour nourrir les dragons `[GD]` ; route 000179 vers Wyrmhallow | chèvre, mouton (1), bœuf (3-6), chien (2-6), marmotte |
+| S004_W004 | montagne | **Wyrmhallow** (hameau de départ) ; routes 000124 (Palais), 000179, 000180 ; sentiers 000181 à 000184 vers les 4 POI | chien, chèvre, mulet (1) |
+| S004_W005 | montagne | Hameau **Bridlecrag** (`hamlet_bridlecrag`, `farm_hamlet` / `hameau`) : élevage de montures (chevaux de montagne, mulets, poneys) des écuyers, selliers `[GD]` ; écuyers qui apprennent à monter (v1.0.61), « J'ai pas le droit de monter un dragon » `[BD-T2]` ; route 000180 vers Wyrmhallow | cheval (3-8), mulet, poney (1), âne (2-4), chien |
+| S005_W003 | montagne (Royaume Drach) | POI **Ruines du pont des Gorges** (`lieu_ruines_pont_des_gorges`, `poi_ruines_pont_des_gorges`, `ruine`) : pont suspendu et corps de garde abandonnés depuis des générations `[GD]` ; gorges et ponts suspendus du royaume des Chevaliers-Dragons `[BD]` (lieu distinct du pont de la Passe, `[BD-T2]`) | araignée (3-8), vautour, corbeau, marmotte |
+| S005_W004 | plaine (Royaume Drach) | Equiton (ville portuaire, inchangée) | inchangée |
+| S005_W005 | montagne (Royaume Drach) | POI **Aire de dressage des écuyers** (`lieu_aire_de_dressage_des_ecuyers`, `poi_aire_de_dressage_des_ecuyers`, `camp`) : selle de dragon sur poutre pivotante, lance, ordres en dracchen `[GD]` ; combat aérien `[BD]`, langue dracchen `[BD-T2]` | cheval, corbeau, aigle, chèvre ; dragon des Princes Dragons (40-48) retiré |
+
+- **Routes** (`routes`) : 000179 Wyrmhallow → Cragfold, 000180 Wyrmhallow → Bridlecrag (`road`, cases
+  voisines, sans `waypoints`) ; sentiers 000181 à 000184 (`path`, sans écurie) de Wyrmhallow vers les 4 POI.
+- **Services** : 2 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Wyrmhallow 3 (au lieu
+  de 1), Cragfold et Bridlecrag 1 ; 1090 → 1102 PNJ de service, tous humains.
+- **Faune** : bestiaire v1.0.58, pas de dragon adulte en zone débutant : le Grand Ancien
+  (`creature_dragon_grand_ancien`) est retiré de S003_W005 (il reste en S002_W005 et S004_W006, hors
+  région) et le dragon des Princes Dragons (`creature_dragon_fratus_t8`) de S005_W005 (il reste en
+  S005_W006 et au Palais). Espèces existantes de niveau 1 à 10 seulement ; aucun dragonnet du bestiaire
+  n'est dans la tranche (dragonnet-léopard 14-22), aucun n'est créé.
+- **Points incertains** : noms ; les dragons du Palais (40-48) restent dans la case du Palais, au cœur de
+  la région (lieu de la BD, non modifié) ; la note v1.0.61 de Wyrmhallow dit les cases est et ouest en
+  neiges éternelles alors que S004_W003 et S004_W005 sont en montagne (les hameaux suivent le terrain des
+  cellules) ; le tribut de bétail pour les dragons et l'abandon des nids sont inventés ; aigle, vautour,
+  marmotte, mulet, poney et mouton ont un niveau par défaut (1-1) ; l'aire de dressage et le cairn
+  pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

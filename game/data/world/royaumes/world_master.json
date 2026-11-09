@@ -405,6 +405,30 @@
       "description": "Hameau montagnard des Chevaliers-Dragons, au sud du Palais des Maîtres des Dragons : les écuyers y apprennent à monter."
     },
     {
+      "id": "hamlet_cragfold",
+      "name": "Cragfold",
+      "cell": "S004_W003",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "dragons",
+      "start_for": [],
+      "source": "[GD] v1.0.68 (nom à valider) ; cellule [INFÉRÉ], région de départ de Wyrmhallow",
+      "description": "Hameau de bergers à l'est de Wyrmhallow : bergeries de pierre sèche, chèvres, moutons et bœufs de montagne dont une part monte au Palais pour nourrir les dragons de l'Ordre."
+    },
+    {
+      "id": "hamlet_bridlecrag",
+      "name": "Bridlecrag",
+      "cell": "S004_W005",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "dragons",
+      "start_for": [],
+      "source": "[GD] v1.0.68 (nom à valider) ; cellule [INFÉRÉ], région de départ de Wyrmhallow",
+      "description": "Haras de montagne à l'ouest de Wyrmhallow : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
+    },
+    {
       "id": "hameau_grakhul",
       "name": "Grakhul",
       "cell": "N008_E012",
@@ -1870,6 +1894,34 @@
       "cell": "N007_E013",
       "kind": "ruine",
       "description": "Fortin impérial de la Marche de l'Est abandonné depuis la conquête de la Marche par la Lune Noire ; cellier envahi d'araignées [GD v1.0.67, région de départ de Grakhul]."
+    },
+    {
+      "id": "poi_nids_abandonnes_des_cretes",
+      "name": "Nids abandonnés des Crêtes",
+      "cell": "S003_W003",
+      "kind": "ruine",
+      "description": "Anciennes aires de ponte sur les crêtes enneigées à l'est du Palais, désertées depuis des générations : coquilles brisées et ossements, fouillés par les vautours ; aucun dragon n'y vit [GD v1.0.68, région de départ de Wyrmhallow]."
+    },
+    {
+      "id": "poi_cairn_des_ailes_tombees",
+      "name": "Cairn des Ailes tombées",
+      "cell": "S003_W005",
+      "kind": "sanctuaire",
+      "description": "Cairn des chevaliers et des dragons tombés en vol, à l'ouest du Palais : les écuyers y prêtent serment au pacte avant leur premier vol [GD v1.0.68, région de départ de Wyrmhallow]."
+    },
+    {
+      "id": "poi_ruines_pont_des_gorges",
+      "name": "Ruines du pont des Gorges",
+      "cell": "S005_W003",
+      "kind": "ruine",
+      "description": "Ancien pont suspendu et corps de garde au-dessus d'une gorge, abandonnés depuis des générations ; araignées et vautours y nichent [GD v1.0.68, région de départ de Wyrmhallow]."
+    },
+    {
+      "id": "poi_aire_de_dressage_des_ecuyers",
+      "name": "Aire de dressage des écuyers",
+      "cell": "S005_W005",
+      "kind": "camp",
+      "description": "Plateau battu par le vent où les écuyers apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen [GD v1.0.68, région de départ de Wyrmhallow]."
     }
   ],
   "imports": {

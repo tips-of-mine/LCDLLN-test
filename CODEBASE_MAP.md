@@ -2653,7 +2653,7 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 
 ### Seconde carte « Les Enfers » (2026-11)
 
-Petite carte volcanique de 5 cellules en croix, séparée du continent (`game/data/world/enfers/world_master.json`, `lcdlln_world_gen --world enfers`). Doc : **`docs/world/ENFERS.md`**.
+Petite carte de 9 cellules (carré 3×3 : croix volcanique et 4 coins montagneux, v1.0.71), séparée du continent (`game/data/world/enfers/world_master.json`, `lcdlln_world_gen --world enfers`). Doc : **`docs/world/ENFERS.md`**.
 
 | Fichier | Rôle |
 |---|---|

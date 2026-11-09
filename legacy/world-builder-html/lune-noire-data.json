@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.70",
+    "version": "1.0.71",
     "notes": [
+      "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
       "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Silverglade (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Greenbough (N006_W006, cueilleurs et herboristes) et Fernhollow (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Silverglade → Greenbough et 000193 Silverglade → Fernhollow, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
       "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
       "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Wyrmhallow (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Cragfold (S004_W003, bergers) et Bridlecrag (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Wyrmhallow, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Equiton (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
@@ -1477,7 +1478,11 @@
         "[DÉCISION] (v1.0.61) Faction démon jouable, alignée sur la faction de jeu « legion » (game/data/races/factions.json, race demons) : décision du propriétaire du 06/11/2026. Distincte des Légions Impériales (faction_legions_imperiales).",
         "[DÉCISION] (v1.0.61) Départ aux Enfers, à la Citadelle de la Légion (citadelle_legion, cellule N000_E000 de la carte des Enfers, game/data/world/enfers/world_master.json) : lieu central de la croix des 5 cellules ; un démon sort et rentre par n'importe laquelle des 5 portes (docs/world/ENFERS.md §2-3).",
         "[GD] (v1.0.58) Lieu central des démons jouables : la Citadelle de la Légion (lore.religions, religion_enfers_princes_demons).",
-        "[GD] (v1.0.61) Hostile aux humains qui s'aventurent aux Enfers (docs/world/ENFERS.md §4)."
+        "[GD] (v1.0.61) Hostile aux humains qui s'aventurent aux Enfers (docs/world/ENFERS.md §4).",
+        "[DÉCISION] (v1.0.71) Carte des Enfers : les 4 coins (N001_W001, N001_E001, S001_W001, S001_E001) sont ouverts ; la région de départ 3×3 de la Légion infernale = les 9 cellules N001..S001 × W001..E001, toutes générées. Les coins gardent leur relief de chaîne de montagnes (code M, généré et praticable comme les cellules M du continent) ; la couronne extérieure (N002/S002, W002/E002) reste en M, non générée (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8 ; docs/world/ENFERS.md §1).",
+        "[DÉCISION] (v1.0.71) Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8).",
+        "[DÉCISION] (v1.0.71) Région de départ des Enfers sans hameau ni ferme : la Citadelle de la Légion reste la seule ville ; 4 à 6 POI répartis sur les cases, surtout les coins (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8).",
+        "[GD] (v1.0.71) Région de départ 3×3 autour de la Citadelle (LORE_BD §15.8) : Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; faune de niveau 1 à 10 (diablotin errant, chien des cendres, salamandre ; petit démon aux abords des portails) ; aucune route : le réseau routier du lore ne couvre pas les Enfers et tools/world_gen n'y trace aucune route (une seule ville)."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -1489,7 +1494,25 @@
           "type": "ville",
           "id": "citadelle_legion",
           "carte": "enfers",
-          "cell": "N000_E000"
+          "cell": "N000_E000",
+          "region": {
+            "carte": "enfers",
+            "cells": [
+              "N001_W001",
+              "N001_E000",
+              "N001_E001",
+              "N000_W001",
+              "N000_E000",
+              "N000_E001",
+              "S001_W001",
+              "S001_E000",
+              "S001_E001"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "region_enfers_t00",
@@ -156817,7 +156840,8 @@
         "[BD-T8 p.52] Foule de diablotins des Enfers.",
         "[BD-T10 p.14, p.38] Diablotins aux yeux jaunes dans la légion infernale.",
         "[BD-T14 p.7] Petite créature ailée (insecte/diablotin) des Enfers.",
-        "[GD] (v1.0.58) Abords des portes des Enfers."
+        "[GD] (v1.0.58) Abords des portes des Enfers.",
+        "[GD] (v1.0.71) Abords des portails I à IV de la carte des Enfers (S001_E000, N001_E000, N000_W001, N000_E001) : niveau 8-14 gardé, exception « abords des portails » de la décision du 09/11/2026 (LORE_BD §15.8)."
       ],
       "habitat": "Enfers et abords des portes des Enfers.",
       "groupe": "nuée",
@@ -156827,7 +156851,11 @@
         "lieu_portail_enfer_2",
         "lieu_portail_enfer_3",
         "lieu_portail_enfer_4",
-        "lieu_portail_enfer_5"
+        "lieu_portail_enfer_5",
+        "enfers:S001_E000",
+        "enfers:N001_E000",
+        "enfers:N000_W001",
+        "enfers:N000_E001"
       ]
     },
     {
@@ -161336,7 +161364,9 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.71) Salamandre de feu des Enfers (niveau 1) : N001_W001, N001_E000, N000_W001, N000_E001, S001_W001, S001_E000 (LORE_BD §15.8)."
+      ],
       "categorie": "3. Reptiles et dinosaures",
       "famille": "Lézards",
       "variantes": [
@@ -161344,7 +161374,16 @@
         "salamandre de feu"
       ],
       "bestiaire": true,
-      "familier_famille": "familier_lezard"
+      "familier_famille": "familier_lezard",
+      "zones_chasse": [
+        "enfers:N001_W001",
+        "enfers:N001_E000",
+        "enfers:N000_W001",
+        "enfers:N000_E001",
+        "enfers:S001_W001",
+        "enfers:S001_E000"
+      ],
+      "habitat": "Enfers : coulées et pentes chaudes de la région de départ des Enfers."
     },
     {
       "id": "animal_grenouille",
@@ -163658,6 +163697,72 @@
       "variantes": [
         "grand serpent bleu",
         "grand lézard bleu à crête"
+      ]
+    },
+    {
+      "id": "creature_diablotin_errant",
+      "name": "Diablotin errant",
+      "type": "demon",
+      "difficulty": "weak",
+      "level_min": 1,
+      "level_max": 4,
+      "description": "Diablotin rouge sans maître, à peine plus grand qu'un chat, aux ailes atrophiées ; il rôde en petites bandes dans les ruines et les failles des Enfers et harcèle les démons nouveau-nés. [GD]",
+      "region_id": "region_enfers_t00",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Bande : 3 à 5 individus [GD]",
+        "Griffures et crachats de braise [GD]",
+        "Fuit dès qu'un démon adulte approche [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.71) Nom et espèce proposés, à valider par le propriétaire ; région de départ des Enfers, niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Archétype de jeu 150 « Diablotin errant » (niveau 2), faune des quêtes d'accueil autour de la Citadelle (tools/world_gen, Population.cpp) ; parent des diablotins des légions infernales [BD-T00 p.6] [BD-T10 p.14, p.38], sans maître.",
+        "[GD] (v1.0.71) Cases des Enfers : N000_E000, N001_W001, N001_E001, S001_W001, S001_E001 (LORE_BD §15.8)."
+      ],
+      "habitat": "Enfers : ruines, failles et abords de la Citadelle de la Légion (région de départ des Enfers).",
+      "groupe": "nuée",
+      "zones_chasse": [
+        "enfers:N000_E000",
+        "enfers:N001_W001",
+        "enfers:N001_E001",
+        "enfers:S001_W001",
+        "enfers:S001_E001"
+      ]
+    },
+    {
+      "id": "creature_chien_des_cendres",
+      "name": "Chien des cendres",
+      "type": "demon",
+      "difficulty": "weak",
+      "level_min": 2,
+      "level_max": 6,
+      "description": "Chien démoniaque efflanqué au pelage de cendre, aux yeux de braise ; les meutes rôdent sur les pentes et servent à la Légion à éprouver ses recrues. [GD]",
+      "region_id": "region_enfers_t00",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Meute : 2 à 4 individus [GD]",
+        "Morsure brûlante [GD]",
+        "Hurle pour rameuter la meute [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.71) Nom et espèce proposés, à valider par le propriétaire ; région de départ des Enfers, niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Archétype de jeu 151 « Chien des Cendres » (niveau 3), faune des quêtes d'accueil autour de la Citadelle (tools/world_gen, Population.cpp). L'espèce est [GD].",
+        "[GD] (v1.0.71) Cases des Enfers : N000_E000, N001_E000, N001_E001, N000_W001, N000_E001, S001_E000, S001_E001 (LORE_BD §15.8)."
+      ],
+      "habitat": "Enfers : pentes volcaniques et montagneuses, camps de la Légion (région de départ des Enfers).",
+      "groupe": "meute",
+      "zones_chasse": [
+        "enfers:N000_E000",
+        "enfers:N001_E000",
+        "enfers:N001_E001",
+        "enfers:N000_W001",
+        "enfers:N000_E001",
+        "enfers:S001_E000",
+        "enfers:S001_E001"
       ]
     }
   ],
@@ -178137,6 +178242,12 @@
             "id": "region_enfers_t00",
             "nom": "Les Enfers",
             "nature": "Les Enfers des préquelles, hors carte (Q20)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_autel_des_pactes",
+            "nom": "Autel des Pactes",
+            "nature": "[GD] Table de basalte des pactes payés en âmes ou en sang ; serment des jeunes démons à la Légion (région de départ des Enfers)."
           }
         ],
         "rites": [
@@ -178201,7 +178312,8 @@
         "source": "[BD-T00], [BD-T1], [BD-T5], [BD-T9] à [BD-T14], [BD-A4], [BD-A5], [BD-M2] ; docs/world/ENFERS.md ; vides comblés [GD]",
         "notes": [
           "[GD] (v1.0.58) Lieu central des démons jouables : la Citadelle de la Légion de la carte des Enfers (game/data/world/enfers, docs/world/ENFERS.md §2), sans fiche dans ce fichier.",
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.71) Région de départ des Enfers : Autel des Pactes ajouté aux lieux de culte (LORE_BD §15.8)."
         ]
       },
       {
@@ -222392,6 +222504,27 @@
           "nom": "Réseau routier",
           "decision": "[DÉCISION] (v1.0.63) Réseau routier : toutes les villes et hameaux sont reliés par des routes ; pas de route qui traverse la carte ; une ville peut être reliée à une ou plusieurs autres, et passer par d'autres villes pour en atteindre une plus lointaine est valable.",
           "version": "1.0.63"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legion_infernale",
+          "nom": "La Légion infernale",
+          "decision": "Carte des Enfers : les 4 coins (N001_W001, N001_E001, S001_W001, S001_E001) sont ouverts ; la région de départ 3×3 de la Légion infernale = les 9 cellules N001..S001 × W001..E001, toutes générées. Les coins gardent leur relief de chaîne de montagnes (code M, généré et praticable comme les cellules M du continent) ; la couronne extérieure (N002/S002, W002/E002) reste en M, non générée (LORE_BD §15.8).",
+          "version": "1.0.71"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legion_infernale",
+          "nom": "La Légion infernale",
+          "decision": "Région de départ des Enfers sans hameau ni ferme : la Citadelle de la Légion reste la seule ville ; 4 à 6 POI répartis sur les cases, surtout les coins (LORE_BD §15.8).",
+          "version": "1.0.71"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_bestiaire_echelles",
+          "nom": "Bestiaire — échelles de danger et zones de chasse",
+          "decision": "Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé. Règle des échelles corrigée (LORE_BD §15.8).",
+          "version": "1.0.71"
         }
       ]
     },
@@ -225019,7 +225152,8 @@
       "source": "Hubert, revue de la carte du 25/10/2026",
       "notes": [
         "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales.",
-        "[DÉCISION] (v1.0.62) Chaque départ de faction a une région de départ de 3×3 cases (la case du hameau de départ et ses 8 voisines), de niveau débutant (1 à 10) : 2 à 3 fermes ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; une PR de carte par départ. Décision du propriétaire du 06/11/2026 (LORE_BD §15). Première région : Eaglewatch (Légions Impériales, v1.0.62)."
+        "[DÉCISION] (v1.0.62) Chaque départ de faction a une région de départ de 3×3 cases (la case du hameau de départ et ses 8 voisines), de niveau débutant (1 à 10) : 2 à 3 fermes ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; une PR de carte par départ. Décision du propriétaire du 06/11/2026 (LORE_BD §15). Première région : Eaglewatch (Légions Impériales, v1.0.62).",
+        "[DÉCISION] (v1.0.71) Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails, sans hameau (la Citadelle reste la seule ville) ; décision du propriétaire du 09/11/2026 (LORE_BD §15.8)."
       ]
     },
     {
@@ -226637,14 +226771,16 @@
         "cells",
         "rule_niveaux_par_faction"
       ],
-      "mechanique_jeu": "Le niveau d'une zone dépend de la faction (rule_niveaux_par_faction) ; le niveau d'une créature est fixe. Repères [GD] : départ (Terres du Nord, Marches) 1-15 ; forêts et plaines de l'intérieur 10-30 ; Orkland, Baronnie de Moork 18-45 ; Royaume Drach, Terres des Gigantomorphes 30-56 ; nécropoles, marais maudits 40-56 ; Enfers, volcan, boss mondiaux 55-70. Élites : x3 PV ; boss : x10 ; boss mondiaux : x30 (à calibrer sur game_design.stat_model).",
+      "mechanique_jeu": "Le niveau d'une zone dépend de la faction (rule_niveaux_par_faction) ; le niveau d'une créature est fixe. Repères [GD] : départ (Terres du Nord, Marches) 1-15 ; forêts et plaines de l'intérieur 10-30 ; Orkland, Baronnie de Moork 18-45 ; Royaume Drach, Terres des Gigantomorphes 30-56 ; nécropoles, marais maudits 40-56 ; volcan, boss mondiaux 55-70 ; Enfers (départ de la Légion infernale) 1-10, sauf boss et abords des portails. Élites : x3 PV ; boss : x10 ; boss mondiaux : x30 (à calibrer sur game_design.stat_model).",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
       "source": "[GD] (v1.0.58) domaine bestiaire ; CREATURE_DIFFICULTIES et RAID_DIFFICULTIES de lune-noire-editor.html",
       "notes": [
         "[GD] (v1.0.58) Les fiches des T11-T14 et du hors-série décrivent des espèces qui existent à l'époque du jeu ; les événements où on les voit restent l'avenir du monde jouable.",
-        "[GD] (v1.0.58) Démons majeurs et créatures nommées restent dans persons (ex. char_shaadrak, char_xygga, char_drakkahen, char_narankhorhh_m2) ; la fiche d'espèce y renvoie."
+        "[GD] (v1.0.58) Démons majeurs et créatures nommées restent dans persons (ex. char_shaadrak, char_xygga, char_drakkahen, char_narankhorhh_m2) ; la fiche d'espèce y renvoie.",
+        "[DÉCISION] (v1.0.71) Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8). Les espèces de haut niveau dont l'habitat cite les Enfers (succube, nuée infernale, légionnaire infernal, démon volant, crapaud infernal, démon lacérateur, gargouille animée, démon à tête de sanglier) restent aux portes et à la Porte des Enfers du T12 (zones_chasse inchangées), pas dans les cases des Enfers.",
+        "[GD] (v1.0.71) Cases de la carte des Enfers dans zones_chasse : « enfers:<case> » (ex. enfers:N001_W001) ; elles n'ont pas de fiche cells (les identifiants N000_E000… sont ceux du continent), donc pas de creature_ids ({SEC})."
       ]
     }
   ],
@@ -236041,6 +236177,431 @@
         "[GD] (v1.0.70) Ancrage : Colons et forêt elfique [BD-A4 p.4-6] ; les ruines sont [GD] (aucune destruction de l'époque du jeu ; sans rapport avec l'incendie de Northind [BD-T8]).",
         "[INFÉRÉ] (v1.0.70) Cellule N008_W005 : Forêt de la Province de Northind au nord-est de Silverglade, entre Northind (N007_W005) et le village Orkh (N008_W006), hors de leurs cases ; case libre."
       ]
+    },
+    {
+      "id": "lieu_ruines_bastion_des_damnes",
+      "name": "Ruines du Bastion des Damnés",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "bastion de basalte noir éventré",
+        "casemates à demi englouties par une coulée figée",
+        "étendards de plan déchirés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.71) Nom et lieu proposés, à valider par le propriétaire. Bastion d'un maître de plan déchu, éventré et à demi englouti par les coulées depuis des âges ; les diablotins errants nichent dans ses casemates. Région de départ des Enfers (Légion infernale), niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Chaque plan démoniaque a un maître et une catégorie de damnés [BD-A5 p.18] ; architecture gothique sombre, tours et flèches noires (region_enfers_t00). Le bastion et sa chute sont [GD] (aucune destruction de l'époque du jeu).",
+        "[INFÉRÉ] (v1.0.71) Cellule N001_W001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) : Coin nord-ouest de la carte des Enfers, chaîne de montagnes ouverte en v1.0.71 ; case libre, sans portail.",
+        "[GD] (v1.0.71) Région region_enfers_t00 par défaut (seule région des Enfers du lore) ; c'est la carte jouable des Enfers (ENFERS.md), pas les Enfers hors carte des préquelles (Q20)."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N001_W001"
+    },
+    {
+      "id": "lieu_camp_epreuve_des_recrues",
+      "name": "Camp d'épreuve des Recrues",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "arène de rocaille cernée de piques",
+        "fosses aux chiens des cendres",
+        "braseros et étendards de la Légion"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.71) Nom et lieu proposés, à valider par le propriétaire. Arène de rocaille où la Légion éprouve les démons nés à la Citadelle : combats d'essai, chiens des cendres lâchés sur les recrues. Région de départ des Enfers (Légion infernale), niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Les démons naissent à la Citadelle de la Légion (v1.0.61, docs/world/ENFERS.md §2) ; diablotins dans la légion infernale [BD-T10 p.14, p.38]. Le camp est [GD].",
+        "[INFÉRÉ] (v1.0.71) Cellule N001_E001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) : Coin nord-est de la carte des Enfers, chaîne de montagnes ouverte en v1.0.71 ; case libre, sans portail.",
+        "[GD] (v1.0.71) Région region_enfers_t00 par défaut (seule région des Enfers du lore) ; c'est la carte jouable des Enfers (ENFERS.md), pas les Enfers hors carte des préquelles (Q20)."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N001_E001"
+    },
+    {
+      "id": "lieu_autel_des_pactes",
+      "name": "Autel des Pactes",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "table de basalte couverte de sang séché",
+        "chaînes et anneaux scellés dans la roche",
+        "cercle de runes rougeoyantes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.71) Nom et lieu proposés, à valider par le propriétaire. Table de basalte où se scellent les pactes, payés en âmes ou en sang ; les jeunes démons y prêtent serment à la Légion. Région de départ des Enfers (Légion infernale), niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Pactes payés en âmes ou en sang [GD v1.0.58, religion_enfers_princes_demons] ; Lucifer, « Empereur des plans abyssaux » [BD-T9 p.43, 47]. L'autel est [GD].",
+        "[INFÉRÉ] (v1.0.71) Cellule S001_W001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) : Coin sud-ouest de la carte des Enfers, chaîne de montagnes ouverte en v1.0.71 ; case libre, sans portail.",
+        "[GD] (v1.0.71) Région region_enfers_t00 par défaut (seule région des Enfers du lore) ; c'est la carte jouable des Enfers (ENFERS.md), pas les Enfers hors carte des préquelles (Q20)."
+      ],
+      "carte": "enfers",
+      "carte_cell": "S001_W001"
+    },
+    {
+      "id": "lieu_faille_des_cohortes",
+      "name": "Faille des Cohortes",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "crevasse fumante aux lèvres incandescentes",
+        "plaintes des âmes qui montent des profondeurs",
+        "diablotins qui rampent hors de la roche"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.71) Nom et lieu proposés, à valider par le propriétaire. Crevasse fumante par où les cohortes d'âmes damnées descendent vers les Enfers ; des diablotins errants en rampent sans cesse. Région de départ des Enfers (Légion infernale), niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : La mort massive amène « des milliers d'âmes » aux portes infernales [BD-T10 p.34] ; les âmes vont « en cohortes » vers les Enfers [BD-T12 p.38]. La faille est [GD].",
+        "[INFÉRÉ] (v1.0.71) Cellule S001_E001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) : Coin sud-est de la carte des Enfers, chaîne de montagnes ouverte en v1.0.71 ; case libre, sans portail.",
+        "[GD] (v1.0.71) Région region_enfers_t00 par défaut (seule région des Enfers du lore) ; c'est la carte jouable des Enfers (ENFERS.md), pas les Enfers hors carte des préquelles (Q20)."
+      ],
+      "carte": "enfers",
+      "carte_cell": "S001_E001"
+    },
+    {
+      "id": "lieu_poste_garde_portail_1",
+      "name": "Poste de garde du Portail I",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "corps de garde de pierre noire",
+        "brasero d'alerte",
+        "sentinelles tournées vers le cercle de pierres"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.71) Nom et lieu proposés, à valider par le propriétaire. Corps de garde de la Légion à quelques centaines de mètres du Portail I : les sentinelles surveillent ce qui sort du cercle de pierres noires. Région de départ des Enfers (Légion infernale), niveaux 1 à 10 (LORE_BD §15.8).",
+        "[GD] (v1.0.71) Ancrage : Portail I relié à la Porte des enfers I du continent (docs/world/ENFERS.md §3) ; les gardes de la Légion chassent les humains (ENFERS.md §4). Le poste est [GD].",
+        "[INFÉRÉ] (v1.0.71) Cellule S001_E000 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) : Bras sud de la croix, case du Portail I (S001_E000) : POI à distance raisonnable du portail (400 m à l'est, placé par tools/world_gen), comme les Ruines de Wismerhill ; abords du portail.",
+        "[GD] (v1.0.71) Région region_enfers_t00 par défaut (seule région des Enfers du lore) ; c'est la carte jouable des Enfers (ENFERS.md), pas les Enfers hors carte des préquelles (Q20)."
+      ],
+      "carte": "enfers",
+      "carte_cell": "S001_E000"
     }
   ],
   "route_types": [

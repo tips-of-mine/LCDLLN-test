@@ -1,11 +1,11 @@
 {
-  "_comment": "SOURCE DE VERITE de la seconde carte jouable 'enfers' (editable a la main). Petite carte volcanique de 5 cellules de 10 km en croix, SEPAREE du continent (repere global propre, dossiers zones/enfers_*, zone ids 2 000 000+, cf. src/shared/world/WorldCells.h). Tout le contenu de zones/enfers_*, instances/zone_enfers_* et world/enfers/ est DERIVE de ce fichier par tools/world_gen (lcdlln_world_gen --world enfers) : ne jamais editer ces sorties a la main. Voir docs/world/ENFERS.md.",
+  "_comment": "SOURCE DE VERITE de la seconde carte jouable 'enfers' (editable a la main). Petite carte de 9 cellules de 10 km (3x3 : croix volcanique et 4 coins montagneux ouverts en v1.0.71), SEPAREE du continent (repere global propre, dossiers zones/enfers_*, zone ids 2 000 000+, cf. src/shared/world/WorldCells.h). Tout le contenu de zones/enfers_*, instances/zone_enfers_* et world/enfers/ est DERIVE de ce fichier par tools/world_gen (lcdlln_world_gen --world enfers) : ne jamais editer ces sorties a la main. Voir docs/world/ENFERS.md.",
   "schema_version": 1,
   "world_id": "enfers",
   "display_name": "Les Enfers",
   "seed": 20261104,
   "scale": {
-    "_comment": "Meme echelle que le continent : 1 case = 1 cellule moteur de 10 km. grid.rows : rangees N002 -> S002, colonnes W002 -> E002 (une couronne de chaine de montagnes 'M' borde la croix volcanique 'V').",
+    "_comment": "Meme echelle que le continent : 1 case = 1 cellule moteur de 10 km. grid.rows : rangees N002 -> S002, colonnes W002 -> E002 (une couronne de chaine de montagnes 'M' borde le carre 3x3 jouable : croix volcanique 'V' et 4 coins 'M').",
     "cell_size_m": 10000,
     "grid_cols": 5,
     "west_e": -2,
@@ -14,13 +14,14 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Les 5 cellules jouables, en croix : la Citadelle de la Legion au centre (N000_E000) et les 4 bras. Les coins de la grille ne sont pas generes (mur invisible). Pas de corridor : la carte n'a qu'une ville de depart (faction legion, Legion infernale, v1.0.61) (connect_start_cities = false).",
+  "_comment_generated_cells": "Les 9 cellules jouables (region de depart 3x3 de la Legion infernale, niveaux 1 a 10, lore v1.0.71, decision du proprietaire du 09/11/2026) : la Citadelle de la Legion au centre (N000_E000), les 4 bras volcaniques (portails I a IV) et les 4 coins en chaine de montagnes 'M', generes comme les cellules 'M' du continent (S008_E009 a S008_E011). La couronne exterieure (N002/S002, W002/E002) n'est pas generee (mur invisible). Pas de corridor : la carte n'a qu'une ville, la Citadelle (faction legion, v1.0.61), pas de hameau (connect_start_cities = false). Ligne 1 : la croix d'origine ; ligne 2 : les 4 coins.",
   "connect_start_cities": false,
   "generated_cells": [
-    "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001"
+    "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001",
+    "N001_W001", "N001_E001", "S001_W001", "S001_E001"
   ],
   "grid": {
-    "_comment": "Une ligne par rangee de N002 (haut) a S002 (bas), 5 caracteres de W002 a E002. Memes codes que le continent (legende reduite).",
+    "_comment": "Une ligne par rangee de N002 (haut) a S002 (bas), 5 caracteres de W002 a E002. Memes codes que le continent (legende reduite). Les coins 'M' du carre 3x3 sont generes depuis la v1.0.71.",
     "legend": {
       "M": "mountain_range",
       "V": "volcanic_area"
@@ -99,6 +100,41 @@
       "kind": "portail",
       "description": "Un cercle de pierres noires aux portes de la Citadelle ; au-dela, la Porte des enfers V, au nord-ouest du continent.",
       "link": "royaumes:poi_porte_5"
+    },
+    {
+      "id": "poi_ruines_bastion_des_damnes",
+      "name": "Ruines du Bastion des Damnes",
+      "cell": "N001_W001",
+      "kind": "ruine",
+      "description": "Bastion d'un maitre de plan dechu, eventre et a demi englouti par les coulees ; les diablotins errants nichent dans ses casemates [GD v1.0.71, region de depart des Enfers]."
+    },
+    {
+      "id": "poi_camp_epreuve_des_recrues",
+      "name": "Camp d'epreuve des Recrues",
+      "cell": "N001_E001",
+      "kind": "camp",
+      "description": "Arene de rocaille ou la Legion eprouve les demons nes a la Citadelle : combats d'essai, chiens des cendres laches sur les recrues [GD v1.0.71, region de depart des Enfers]."
+    },
+    {
+      "id": "poi_autel_des_pactes",
+      "name": "Autel des Pactes",
+      "cell": "S001_W001",
+      "kind": "sanctuaire",
+      "description": "Table de basalte couverte de sang seche ou se scellent les pactes, payes en ames ou en sang ; les jeunes demons y pretent serment a la Legion [GD v1.0.71, region de depart des Enfers]."
+    },
+    {
+      "id": "poi_faille_des_cohortes",
+      "name": "Faille des Cohortes",
+      "cell": "S001_E001",
+      "kind": "faille",
+      "description": "Crevasse fumante par ou les cohortes d'ames damnees descendent vers les Enfers ; des diablotins errants en rampent sans cesse [GD v1.0.71, region de depart des Enfers]."
+    },
+    {
+      "id": "poi_poste_garde_portail_1",
+      "name": "Poste de garde du Portail I",
+      "cell": "S001_E000",
+      "kind": "camp",
+      "description": "Corps de garde de la Legion a quelques centaines de metres du Portail I : les sentinelles surveillent ce qui sort du cercle de pierres noires [GD v1.0.71, region de depart des Enfers]."
     }
   ],
   "imports": {

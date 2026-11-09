@@ -179,7 +179,10 @@ namespace tools::world_gen
 				c.procedural = type;
 				c.kind = (type == "bucherons" || type == "bandits" || type == "mine") ? "camp" : "hameau";
 				c.state = (type == "ruine") ? "ruine" : ((c.kind == "camp") ? "camp" : "intact");
-				c.race = (type == "bandits") ? "neutre" : (type == "mine" && race != "orcs" && race != "elfes" ? "nains" : race);
+				// Mines : naines, sauf près d'une ville orque, elfe ou démon (v1.0.71 : les
+				// coins montagneux des Enfers, ouverts, ont des mines de la Légion, pas de nains).
+				c.race = (type == "bandits") ? "neutre"
+					: (type == "mine" && race != "orcs" && race != "elfes" && race != "demons" ? "nains" : race);
 				c.radiusM = (type == "ferme") ? 26.0 : (type == "mine" ? 34.0 : (c.kind == "camp" ? 55.0 : 45.0));
 				c.n = w.cell.n; c.e = w.cell.e;
 				bool placed = false;

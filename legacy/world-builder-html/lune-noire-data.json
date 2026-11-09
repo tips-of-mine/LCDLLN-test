@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.64",
+    "version": "1.0.65",
     "notes": [
+      "v1.0.65 — Réseau routier : lot de corrections du propriétaire, routes de plus de 5 cases remplacées par des chaînes de villes, villes isolées reliées, réseau connexe.",
       "v1.0.64 : [CARTE] région de départ des Chevaliers de la Lumière autour de Dawnmere (N005_W011) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Commanderie rurale [GD] Brightholm (N005_W010) et fermes [GD] Whitesheaf (N006_W011) et Lambsfold (N004_W011) ; POI [GD] Calvaire des pèlerins (N006_W012), Chapelle de l'ermite (N006_W010), Ruines du prieuré (N004_W010), Camp des naufrageurs (N004_W012) ; routes locales 000135 à 000137 et sentiers 000138 à 000141 ; faune existante de niveau 1 à 10 rattachée aux cases ; trois lieux ajoutés aux lieux de culte de l'Église (lore.religions). Rien dans la case d'Altenberg. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.2.",
       "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
       "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
@@ -4623,14 +4624,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_lhynn_ecurie_05",
-          "name": "Renance Grispré",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_lhynn_temple_01",
           "name": "Norwald Belbrume",
           "gender": "male",
@@ -4900,14 +4893,6 @@
         {
           "id": "pnj_ville_ghrunke_dash_ecurie_02",
           "name": "Bofhild Bouclier-de-Roc",
-          "gender": "female",
-          "race_id": "race_dwarf",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_ghrunke_dash_ecurie_03",
-          "name": "Korhild Torche-d'Acier",
           "gender": "female",
           "race_id": "race_dwarf",
           "service": "ecurie",
@@ -5193,22 +5178,6 @@
           "id": "pnj_ville_oracle_camp_ecurie_02",
           "name": "Serwald Chenmare",
           "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_oracle_camp_ecurie_03",
-          "name": "Darine Belpré",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_oracle_camp_ecurie_04",
-          "name": "Serane Chenbrume",
-          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -6238,14 +6207,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_kendrhir_vale_ecurie_03",
-          "name": "Mardor Bleumont",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_kendrhir_vale_temple_01",
           "name": "Jorold Hautlac",
           "gender": "male",
@@ -6864,22 +6825,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_horker_ecurie_02",
-          "name": "Gilran Bleuvigne",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_horker_ecurie_03",
-          "name": "Ralric Hautcastel",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_horker_temple_01",
           "name": "Welmar Chenmare",
           "gender": "male",
@@ -7348,14 +7293,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_moork_ecurie_03",
-          "name": "Laelith Moross",
-          "gender": "male",
-          "race_id": "race_dark_elf",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_moork_temple_01",
           "name": "Vexys Fournaise-Froide",
           "gender": "female",
@@ -7523,6 +7460,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_whispers_hill_ecurie_02",
+          "name": "Thallie Aurorin",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_whispers_hill_temple_01",
           "name": "Caelad Veniel",
           "gender": "male",
@@ -7655,6 +7600,14 @@
           "id": "pnj_ville_tbarak_ecurie_01",
           "name": "Edette Rochlande",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_tbarak_ecurie_02",
+          "name": "Welot Hautgarde",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -7969,14 +7922,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_klindor_ecurie_02",
-          "name": "Corus Bleulac",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_klindor_guilde_01",
           "name": "Oselle Bleurive",
           "gender": "female",
@@ -8126,14 +8071,6 @@
         {
           "id": "pnj_ville_hazol_ecurie_01",
           "name": "Ulald Sombrepré",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_hazol_ecurie_02",
-          "name": "Lanbert Mormont",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -8387,6 +8324,30 @@
           "id": "pnj_ville_dunfold_ecurie_02",
           "name": "Lordor Fontlande",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_03",
+          "name": "Berais Bruncombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_04",
+          "name": "Torane Claircombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_dunfold_ecurie_05",
+          "name": "Odoilde Valrade",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -8686,22 +8647,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_feyhin_lokcthat_ecurie_03",
-          "name": "Branais Fontrade",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_feyhin_lokcthat_ecurie_04",
-          "name": "Rolran Saulbrume",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_feyhin_lokcthat_temple_01",
           "name": "Edelle Marlmorne",
           "gender": "female",
@@ -8988,14 +8933,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_sauken_glude_of_magistrya_ecurie_03",
-          "name": "Maran Hautbrume",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_sauken_glude_of_magistrya_temple_01",
           "name": "Darius Rosslande",
           "gender": "male",
@@ -9124,22 +9061,6 @@
         {
           "id": "pnj_ville_garundel_fief_ecurie_01",
           "name": "Eldisse Grispré",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_garundel_fief_ecurie_02",
-          "name": "Ulan Valchêne",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_ville_garundel_fief_ecurie_03",
-          "name": "Roline Valcastel",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -9640,14 +9561,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_northind_ecurie_04",
-          "name": "Marbert Fontpré",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_northind_temple_01",
           "name": "Kelald Marlmare",
           "gender": "male",
@@ -10034,14 +9947,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_leviathan_jungle_ecurie_02",
-          "name": "Gorgha Sang-Brisé",
-          "gender": "female",
-          "race_id": "race_dzorak",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_leviathan_jungle_guilde_01",
           "name": "Urgthar Tibia-Fendu",
           "gender": "male",
@@ -10312,6 +10217,30 @@
           "id": "pnj_highfall_ecurie_01",
           "name": "Dunin Rochpré",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_highfall_ecurie_02",
+          "name": "Garwald Boismorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_highfall_ecurie_03",
+          "name": "Marilde Belrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_highfall_ecurie_04",
+          "name": "Darilde Morvigne",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -11045,14 +10974,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_city_horkher_ecurie_02",
-          "name": "Darilde Belgarde",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_city_horkher_temple_01",
           "name": "Kelus Pierrecombe",
           "gender": "male",
@@ -11700,6 +11621,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_town_0108_ecurie_04",
+          "name": "Joria Corbmare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_town_0108_temple_01",
           "name": "Azviel Fournaise-Froide",
           "gender": "female",
@@ -12023,6 +11952,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_town_0113_ecurie_04",
+          "name": "Edise Hautrade",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0113_ecurie_05",
+          "name": "Osric Hautfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_town_0113_guilde_01",
           "name": "Halia Chenmare",
           "gender": "female",
@@ -12310,6 +12255,22 @@
         {
           "id": "pnj_town_0115_ecurie_02",
           "name": "Dunette Brunlac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0115_ecurie_03",
+          "name": "Renora Belfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0115_ecurie_04",
+          "name": "Kelora Fontlande",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -12638,6 +12599,14 @@
           "id": "pnj_town_0118_ecurie_02",
           "name": "Corric Noirmorne",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0118_ecurie_03",
+          "name": "Serette Corbombre",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -13281,6 +13250,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_town_0123_ecurie_03",
+          "name": "Maelvin Rochbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_town_0123_temple_01",
           "name": "Loran Belpré",
           "gender": "male",
@@ -13637,6 +13614,14 @@
           "id": "pnj_town_0126_ecurie_01",
           "name": "Yvia Saulmare",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0126_ecurie_02",
+          "name": "Hugold Hautchêne",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -14999,14 +14984,6 @@
           "name": "Gilus Boisval",
           "gender": "male",
           "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_town_0136_ecurie_02",
-          "name": "Sarith Braise-Rouge",
-          "gender": "female",
-          "race_id": "race_demon",
           "service": "ecurie",
           "metier": "palefrenier"
         },
@@ -16390,6 +16367,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0172_ecurie_03",
+          "name": "Daria Belrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_0172_port_01",
           "name": "Odowald Fontcombe",
           "gender": "male",
@@ -17110,6 +17095,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0196_ecurie_03",
+          "name": "Dunran Rochmont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_0196_ecurie_04",
+          "name": "Gilelle Noirmont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_0196_cimetiere_01",
           "name": "Ilvndra Vaeara",
           "gender": "female",
@@ -17400,14 +17401,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_hamlet_0201_ecurie_04",
-          "name": "Velthas Umbryth",
-          "gender": "male",
-          "race_id": "race_dark_elf",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_hamlet_0201_cimetiere_01",
           "name": "Velssa Shaelle",
           "gender": "female",
@@ -17552,14 +17545,6 @@
         {
           "id": "pnj_hamlet_0205_ecurie_02",
           "name": "Serette Marlmare",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_hamlet_0205_ecurie_03",
-          "name": "Serora Brunmont",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -18017,6 +18002,14 @@
         {
           "id": "pnj_hamlet_0217_ecurie_03",
           "name": "Rolius Chenombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_0217_ecurie_04",
+          "name": "Jorwald Corbcastel",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -20940,6 +20933,14 @@
         {
           "id": "pnj_hameau_grakhul_ecurie_01",
           "name": "Ugash Tibia-Rouge",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_grakhul_ecurie_02",
+          "name": "Gashrok Poing-Rouge",
           "gender": "male",
           "race_id": "race_dzorak",
           "service": "ecurie",
@@ -214247,18 +214248,6 @@
   ],
   "routes": [
     {
-      "id": "000003",
-      "type": "road",
-      "from_place": "N015_E012",
-      "from_ville_id": "kendrhir_vale",
-      "from_lieu_id": "",
-      "to_place": "N008_E007",
-      "to_ville_id": "ville_feyhin_lokcthat",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000006",
       "type": "road",
       "from_place": "N005_W012",
@@ -214266,18 +214255,6 @@
       "from_lieu_id": "",
       "to_place": "N001_W010",
       "to_ville_id": "ville_lhynn",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000009",
-      "type": "road",
-      "from_place": "N001_W010",
-      "from_ville_id": "ville_lhynn",
-      "from_lieu_id": "",
-      "to_place": "N007_W005",
-      "to_ville_id": "ville_northind",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -214295,20 +214272,6 @@
       "notes": []
     },
     {
-      "id": "000013",
-      "type": "road",
-      "from_place": "S001_E004",
-      "from_ville_id": "ville_garundel_fief",
-      "from_lieu_id": "",
-      "to_place": "S002_E015",
-      "to_ville_id": "ville_moork",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [
-        "[v1.0.60] Raccourci direct du fief de Garundel à Moork, hors Via Magna (route 000120, qui monte à Horkher) ; gardé comme branche de l'axe axe_via_magna."
-      ]
-    },
-    {
       "id": "000017",
       "type": "road",
       "from_place": "S001_W003",
@@ -214317,18 +214280,6 @@
       "to_place": "S003_W004",
       "to_ville_id": "city_dragon_palace",
       "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000018",
-      "type": "road",
-      "from_place": "S001_E004",
-      "from_ville_id": "ville_garundel_fief",
-      "from_lieu_id": "",
-      "to_place": "S008_E010",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_deathtrap_canyon",
       "description": "",
       "notes": []
     },
@@ -214525,18 +214476,6 @@
       "notes": []
     },
     {
-      "id": "000050",
-      "type": "road",
-      "from_place": "N004_E009",
-      "from_ville_id": "horker",
-      "from_lieu_id": "",
-      "to_place": "N003_E011",
-      "to_ville_id": "town_0136",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000052",
       "type": "road",
       "from_place": "N005_W009",
@@ -214605,30 +214544,6 @@
       "to_place": "S008_W010",
       "to_ville_id": "hamlet_0172",
       "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000058",
-      "type": "road",
-      "from_place": "N015_E012",
-      "from_ville_id": "kendrhir_vale",
-      "from_lieu_id": "",
-      "to_place": "N004_E001",
-      "to_ville_id": "hamlet_0205",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000059",
-      "type": "road",
-      "from_place": "N006_E011",
-      "from_ville_id": "hamlet_0206",
-      "from_lieu_id": "",
-      "to_place": "N012_E012",
-      "to_ville_id": "leviathan_jungle",
-      "to_lieu_id": "lieu_leviathan_jungle",
       "description": "",
       "notes": []
     },
@@ -214957,18 +214872,6 @@
       "notes": []
     },
     {
-      "id": "000093",
-      "type": "road",
-      "from_place": "N002_E015",
-      "from_ville_id": "hamlet_0201",
-      "from_lieu_id": "",
-      "to_place": "N006_E014",
-      "to_ville_id": "city_horkher",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000094",
       "type": "road",
       "from_place": "N008_E007",
@@ -214988,18 +214891,6 @@
       "from_lieu_id": "",
       "to_place": "N011_W004",
       "to_ville_id": "hamlet_0153",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000096",
-      "type": "road",
-      "from_place": "N000_E000",
-      "from_ville_id": "ville_oracle_camp",
-      "from_lieu_id": "",
-      "to_place": "N004_E009",
-      "to_ville_id": "horker",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -215214,30 +215105,6 @@
       ]
     },
     {
-      "id": "000112",
-      "type": "road",
-      "from_place": "N018_E010",
-      "from_ville_id": "ville_tbarak",
-      "from_lieu_id": "",
-      "to_place": "N017_E019",
-      "to_ville_id": "ville_klindor",
-      "to_lieu_id": "",
-      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
-      "notes": []
-    },
-    {
-      "id": "000113",
-      "type": "road",
-      "from_place": "N017_E019",
-      "from_ville_id": "ville_klindor",
-      "from_lieu_id": "",
-      "to_place": "N017_E011",
-      "to_ville_id": "ville_hazol",
-      "to_lieu_id": "",
-      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
-      "notes": []
-    },
-    {
       "id": "000114",
       "type": "road",
       "from_place": "N017_E013",
@@ -215247,18 +215114,6 @@
       "to_ville_id": "kendrhir_vale",
       "to_lieu_id": "",
       "description": "[BD-T1] Des Marches à Kendrhir par la Faille de Kashogs (carte p.25).",
-      "notes": []
-    },
-    {
-      "id": "000115",
-      "type": "road",
-      "from_place": "N017_E011",
-      "from_ville_id": "ville_hazol",
-      "from_lieu_id": "",
-      "to_place": "N015_E017",
-      "to_ville_id": "ville_moorgate",
-      "to_lieu_id": "",
-      "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
       "notes": []
     },
     {
@@ -215272,46 +215127,6 @@
       "to_lieu_id": "",
       "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
       "notes": []
-    },
-    {
-      "id": "000117",
-      "type": "road",
-      "from_place": "N008_E007",
-      "from_ville_id": "ville_feyhin_lokcthat",
-      "from_lieu_id": "",
-      "to_place": "N003_W003",
-      "to_ville_id": "sauken_glude_of_magistrya",
-      "to_lieu_id": "",
-      "description": "[BD-T2] Panneau « Feyhin Lokcthat » sur la chaussée de Magistrya (p.19).",
-      "notes": []
-    },
-    {
-      "id": "000118",
-      "type": "road",
-      "from_place": "N000_E000",
-      "from_ville_id": "ville_oracle_camp",
-      "from_lieu_id": "",
-      "to_place": "S007_E016",
-      "to_ville_id": "ville_ghrunke_dash",
-      "to_lieu_id": "",
-      "description": "[BD-T3 pl.13-16] Itinéraire du groupe après l'Oracle : « toujours plus profond dans l'Empire » jusqu'à Ghrunke Dash.",
-      "notes": [
-        "[INFÉRÉ] v1.0.51"
-      ]
-    },
-    {
-      "id": "000119",
-      "type": "road",
-      "from_place": "S007_E016",
-      "from_ville_id": "ville_ghrunke_dash",
-      "from_lieu_id": "",
-      "to_place": "S001_E004",
-      "to_ville_id": "ville_garundel_fief",
-      "to_lieu_id": "",
-      "description": "[BD-T3 pl.24-41] De Ghrunke Dash au fief de Garundel par la forêt des lutins et le marais du village fantôme.",
-      "notes": [
-        "[INFÉRÉ] v1.0.51"
-      ]
     },
     {
       "id": "000120",
@@ -215667,6 +215482,465 @@
       "description": "Sentier de Dawnmere à « Camp des naufrageurs ».",
       "notes": [
         "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+      ]
+    },
+    {
+      "id": "000142",
+      "type": "road",
+      "from_place": "N006_E011",
+      "from_ville_id": "hamlet_0206",
+      "from_lieu_id": "",
+      "to_place": "N008_E012",
+      "to_ville_id": "hameau_grakhul",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.63) Route demandée par le propriétaire : Mossy Rock → Grakhul."
+      ],
+      "waypoints": [
+        "N006_E011",
+        "N007_E011",
+        "N008_E012"
+      ]
+    },
+    {
+      "id": "000143",
+      "type": "road",
+      "from_place": "N015_E012",
+      "from_ville_id": "kendrhir_vale",
+      "from_lieu_id": "",
+      "to_place": "N011_E008",
+      "to_ville_id": "ville_whispers_hill",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir Vale → Arcanefield)."
+      ],
+      "waypoints": [
+        "N015_E012",
+        "N014_E011",
+        "N013_E010",
+        "N012_E009",
+        "N011_E008"
+      ]
+    },
+    {
+      "id": "000144",
+      "type": "road",
+      "from_place": "N011_E008",
+      "from_ville_id": "ville_whispers_hill",
+      "from_lieu_id": "",
+      "to_place": "N010_E005",
+      "to_ville_id": "town_0123",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir Vale → Arcanefield)."
+      ],
+      "waypoints": [
+        "N011_E008",
+        "N010_E007",
+        "N009_E006",
+        "N010_E005"
+      ]
+    },
+    {
+      "id": "000145",
+      "type": "road",
+      "from_place": "N018_E010",
+      "from_ville_id": "ville_tbarak",
+      "from_lieu_id": "",
+      "to_place": "N017_E013",
+      "to_ville_id": "ville_dunfold",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor)."
+      ],
+      "waypoints": [
+        "N018_E010",
+        "N017_E011",
+        "N017_E012",
+        "N017_E013"
+      ]
+    },
+    {
+      "id": "000146",
+      "type": "road",
+      "from_place": "N017_E013",
+      "from_ville_id": "ville_dunfold",
+      "from_lieu_id": "",
+      "to_place": "N018_E018",
+      "to_ville_id": "town_0113",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor)."
+      ],
+      "waypoints": [
+        "N017_E013",
+        "N016_E014",
+        "N015_E015",
+        "N016_E016",
+        "N017_E017",
+        "N018_E018"
+      ]
+    },
+    {
+      "id": "000147",
+      "type": "road",
+      "from_place": "N018_E018",
+      "from_ville_id": "town_0113",
+      "from_lieu_id": "",
+      "to_place": "N017_E019",
+      "to_ville_id": "ville_klindor",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor)."
+      ]
+    },
+    {
+      "id": "000148",
+      "type": "road",
+      "from_place": "S007_E016",
+      "from_ville_id": "ville_ghrunke_dash",
+      "from_lieu_id": "",
+      "to_place": "S002_E011",
+      "to_ville_id": "hamlet_0196",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill))."
+      ],
+      "waypoints": [
+        "S007_E016",
+        "S006_E015",
+        "S005_E014",
+        "S004_E013",
+        "S003_E012",
+        "S002_E011"
+      ]
+    },
+    {
+      "id": "000149",
+      "type": "road",
+      "from_place": "S002_E011",
+      "from_ville_id": "hamlet_0196",
+      "from_lieu_id": "",
+      "to_place": "S003_E006",
+      "to_ville_id": "ville_village_fantome",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill))."
+      ],
+      "waypoints": [
+        "S002_E011",
+        "S003_E010",
+        "S004_E009",
+        "S005_E008",
+        "S004_E007",
+        "S003_E006"
+      ]
+    },
+    {
+      "id": "000150",
+      "type": "road",
+      "from_place": "S003_E006",
+      "from_ville_id": "ville_village_fantome",
+      "from_lieu_id": "",
+      "to_place": "S001_E004",
+      "to_ville_id": "ville_garundel_fief",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill))."
+      ],
+      "waypoints": [
+        "S003_E006",
+        "S002_E005",
+        "S001_E004"
+      ]
+    },
+    {
+      "id": "000151",
+      "type": "road",
+      "from_place": "S011_W006",
+      "from_ville_id": "hishtarland",
+      "from_lieu_id": "",
+      "to_place": "S008_W010",
+      "to_ville_id": "hamlet_0172",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Saltfen)."
+      ],
+      "waypoints": [
+        "S011_W006",
+        "S010_W007",
+        "S009_W008",
+        "S008_W009",
+        "S008_W010"
+      ]
+    },
+    {
+      "id": "000152",
+      "type": "road",
+      "from_place": "S009_E011",
+      "from_ville_id": "ville_tsaroth",
+      "from_lieu_id": "",
+      "to_place": "S009_E010",
+      "to_ville_id": "ville_der_hem_shelsem",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Der Hem Shelbem)."
+      ]
+    },
+    {
+      "id": "000153",
+      "type": "road",
+      "from_place": "N018_E013",
+      "from_ville_id": "ville_haywick",
+      "from_lieu_id": "",
+      "to_place": "N017_E013",
+      "to_ville_id": "ville_dunfold",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Dunfold)."
+      ]
+    },
+    {
+      "id": "000154",
+      "type": "road",
+      "from_place": "N014_E016",
+      "from_ville_id": "ville_hoengardt_t11",
+      "from_lieu_id": "",
+      "to_place": "N015_E017",
+      "to_ville_id": "ville_moorgate",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Moorgate)."
+      ]
+    },
+    {
+      "id": "000155",
+      "type": "road",
+      "from_place": "S006_E004",
+      "from_ville_id": "ville_forteresse_naine_heureux_t11",
+      "from_lieu_id": "",
+      "to_place": "S003_E006",
+      "to_ville_id": "ville_village_fantome",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Le Village Fantôme du Marais)."
+      ],
+      "waypoints": [
+        "S006_E004",
+        "S005_E004",
+        "S004_E005",
+        "S003_E006"
+      ]
+    },
+    {
+      "id": "000156",
+      "type": "road",
+      "from_place": "N020_E011",
+      "from_ville_id": "town_coldhollow",
+      "from_lieu_id": "",
+      "to_place": "N018_E010",
+      "to_ville_id": "ville_tbarak",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Tbarak)."
+      ],
+      "waypoints": [
+        "N020_E011",
+        "N019_E010",
+        "N018_E010"
+      ]
+    },
+    {
+      "id": "000157",
+      "type": "road",
+      "from_place": "N019_E022",
+      "from_ville_id": "hamlet_fernhill",
+      "from_lieu_id": "",
+      "to_place": "N018_E020",
+      "to_ville_id": "highfall",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Highfall)."
+      ],
+      "waypoints": [
+        "N019_E022",
+        "N018_E021",
+        "N018_E020"
+      ]
+    },
+    {
+      "id": "000158",
+      "type": "road",
+      "from_place": "N021_E019",
+      "from_ville_id": "hamlet_draketon",
+      "from_lieu_id": "",
+      "to_place": "N018_E020",
+      "to_ville_id": "highfall",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Highfall)."
+      ],
+      "waypoints": [
+        "N021_E019",
+        "N020_E020",
+        "N019_E021",
+        "N018_E020"
+      ]
+    },
+    {
+      "id": "000159",
+      "type": "road",
+      "from_place": "N016_E023",
+      "from_ville_id": "town_stonebridge",
+      "from_lieu_id": "",
+      "to_place": "N018_E020",
+      "to_ville_id": "highfall",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Highfall)."
+      ],
+      "waypoints": [
+        "N016_E023",
+        "N016_E022",
+        "N017_E021",
+        "N018_E020"
+      ]
+    },
+    {
+      "id": "000160",
+      "type": "road",
+      "from_place": "N006_E023",
+      "from_ville_id": "town_riverfold",
+      "from_lieu_id": "",
+      "to_place": "N005_E020",
+      "to_ville_id": "town_0115",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Ebonvale)."
+      ],
+      "waypoints": [
+        "N006_E023",
+        "N005_E022",
+        "N004_E021",
+        "N005_E020"
+      ]
+    },
+    {
+      "id": "000161",
+      "type": "road",
+      "from_place": "N003_E023",
+      "from_ville_id": "town_greyfield",
+      "from_lieu_id": "",
+      "to_place": "N005_E020",
+      "to_ville_id": "town_0115",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Ebonvale)."
+      ],
+      "waypoints": [
+        "N003_E023",
+        "N003_E022",
+        "N004_E021",
+        "N005_E020"
+      ]
+    },
+    {
+      "id": "000162",
+      "type": "road",
+      "from_place": "S001_E023",
+      "from_ville_id": "hamlet_dustfield",
+      "from_lieu_id": "",
+      "to_place": "N001_E020",
+      "to_ville_id": "town_0126",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Duskmere)."
+      ],
+      "waypoints": [
+        "S001_E023",
+        "S001_E022",
+        "N000_E021",
+        "N001_E020"
+      ]
+    },
+    {
+      "id": "000163",
+      "type": "road",
+      "from_place": "S008_E024",
+      "from_ville_id": "town_ironbrook",
+      "from_lieu_id": "",
+      "to_place": "S011_E020",
+      "to_ville_id": "town_0108",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Darkwater)."
+      ],
+      "waypoints": [
+        "S008_E024",
+        "S009_E023",
+        "S010_E022",
+        "S011_E021",
+        "S011_E020"
+      ]
+    },
+    {
+      "id": "000164",
+      "type": "road",
+      "from_place": "S015_E001",
+      "from_ville_id": "town_fairbrook",
+      "from_lieu_id": "",
+      "to_place": "S013_E003",
+      "to_ville_id": "hamlet_0217",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Claybury)."
+      ],
+      "waypoints": [
+        "S015_E001",
+        "S014_E002",
+        "S013_E003"
+      ]
+    },
+    {
+      "id": "000165",
+      "type": "road",
+      "from_place": "S016_E012",
+      "from_ville_id": "hamlet_thistle_creek",
+      "from_lieu_id": "",
+      "to_place": "S014_E013",
+      "to_ville_id": "town_0118",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Saltwick)."
+      ],
+      "waypoints": [
+        "S016_E012",
+        "S015_E012",
+        "S014_E013"
       ]
     }
   ],
@@ -219565,6 +219839,20 @@
           "nom": "Niveaux des zones selon la faction",
           "decision": "Région de départ de 3×3 cases de niveau débutant (1 à 10) autour de chaque départ de faction ; une PR par départ (LORE_BD §15).",
           "version": "1.0.62"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "[DÉCISION] (v1.0.63) Routes supprimées : 000117 Feyhin Lokcthat → Magistrya, 000018 Garundel → Deathtrap Canyon, 000059 Mossy Rock → Leviathan Jungle ; doublons de la Via Magna supprimés : 000050 Harrowdale → Shadehold, 000093 Nightfield → Horkher ; ajout Mossy Rock → Grakhul.",
+          "version": "1.0.63"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "[DÉCISION] (v1.0.63) Réseau routier : toutes les villes et hameaux sont reliés par des routes ; pas de route qui traverse la carte ; une ville peut être reliée à une ou plusieurs autres, et passer par d'autres villes pour en atteindre une plus lointaine est valable.",
+          "version": "1.0.63"
         }
       ]
     },
@@ -223296,7 +223584,8 @@
       "training_minimum": "",
       "source": "Voir le champ source de chaque axe.",
       "notes": [
-        "[GD] (v1.0.58) Ports d'Altenberg et de Lhynn : destinations maritimes non arrêtées (rule_ports_ouest) ; pas d'axe maritime à l'ouest tant qu'elles ne le sont pas."
+        "[GD] (v1.0.58) Ports d'Altenberg et de Lhynn : destinations maritimes non arrêtées (rule_ports_ouest) ; pas d'axe maritime à l'ouest tant qu'elles ne le sont pas.",
+        "[GD] (v1.0.65) Réseau routier refait (règle du propriétaire) : les axes renvoient aux routes conservées ; les tronçons ajoutés figurent dans la collection routes."
       ],
       "axes": [
         {
@@ -223305,11 +223594,7 @@
           "routes": [
             "000120"
           ],
-          "branches": [
-            "000096",
-            "000050",
-            "000013"
-          ],
+          "branches": [],
           "etapes": [
             "ville_lhynn",
             "sauken_glude_of_magistrya",
@@ -223333,10 +223618,7 @@
         {
           "id": "axe_metal_nain",
           "nom": "Route du métal nain",
-          "routes": [
-            "000118",
-            "000119"
-          ],
+          "routes": [],
           "etapes": [
             "ville_ghrunke_dash",
             "ville_oracle_camp",
@@ -223354,14 +223636,9 @@
           "id": "axe_marches",
           "nom": "Route des Marches",
           "routes": [
-            "000112",
-            "000113",
-            "000115",
             "000116",
             "000114",
-            "000003",
-            "000055",
-            "000117"
+            "000055"
           ],
           "etapes": [
             "ville_tbarak",
@@ -223388,7 +223665,6 @@
           "nom": "Route de la province et de la côte ouest",
           "routes": [
             "000006",
-            "000009",
             "000084",
             "000085",
             "000052",

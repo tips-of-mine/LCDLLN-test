@@ -727,6 +727,44 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
   (`[BD-T10]`) ne sont pas évoqués ; loutre et mouton ont un niveau par défaut (1-1) ; la stèle et les
   lices pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+### 15.4 Grakhul — Dzorak (v1.0.67)
+
+Centre N008_E012 (`hameau_grakhul`, v1.0.61). Les 9 cases étaient déjà générées. Leviathan est en
+N009_E011 dans le monde jouable (`world_master.json`) mais en N012_E012 dans le lore (section 16) :
+**rien n'est posé** dans N009_E011, pas même de la faune. Mossy Rock (N006_E011) et Horkher (N006_E014)
+sont hors région. Thème : les clans Dzorak et les croyances des esprits des orques (`lore.religions`,
+`religion_esprits_orques`, v1.0.58) — kraals, totem chamanique, arène, camp de guerre, chasse ; le totem
+est ajouté aux `lieux_de_culte` de `religion_esprits_orques`. Routes selon la règle du propriétaire
+v1.0.65 : chaque nouveau kraal est relié au voisin le plus proche (ici Grakhul, case voisine, sans étape) ;
+routes existantes inchangées (000125 vers Leviathan Jungle, 000142 Mossy Rock → Grakhul). Les PNJ de
+service des kraals sont Dzorak (`RACE_FACTIONS` de `generate_city_services.py` : `dzorak_orcs`). Script
+reproductible : `lore_v1067.py` (appliqué au fichier v1.0.66).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N009_E011 | forêt | Leviathan du monde jouable (inchangée, rien n'est posé) | inchangée |
+| N009_E012 | forêt | POI **Arène des Jeunes-Sangs** (`lieu_arene_des_jeunes_sangs`, `poi_arene_des_jeunes_sangs`, `camp`) : fosse de combat entre Grakhul et Leviathan, épreuve de l'arène des jeunes guerriers `[GD]` ; épreuve et festin `[BD-A4 p.30-32]`, trône de défenses `[BD-A5 p.12]` | araignée (3-8), corbeau (1-4), renard (2-5), biche (2-6) |
+| N009_E013 | forêt | POI **Camp de guerre du clan Ghazrak** (`lieu_camp_de_guerre_ghazrak`, `poi_camp_de_guerre_ghazrak`, `camp`) : le clan rassemble ses guerriers avant de rejoindre les armées de la Lune Noire `[GD]` ; trophées de têtes `[BD-A4 p.29-30]` | chien (2-6), araignée, corbeau, renard |
+| N008_E011 | forêt | POI **Totem d'Ogunta** (`lieu_totem_d_ogunta`, `poi_totem_d_ogunta`, `sanctuaire`) : cercle de pierres et totem de crânes, osselets, runes de puissance, mémoire de la chamane Ogunta `[GD]` ; `[BD-A4 p.8-15]` | corbeau, araignée, biche, lapin (1-3) |
+| N008_E012 | lisière | **Grakhul** (hameau de départ) ; routes 000125 (Leviathan Jungle), 000142 (Mossy Rock), 000172, 000173 ; sentiers 000174 à 000178 vers les 5 POI | chien, chèvre (1-3) |
+| N008_E013 | lisière | Kraal **Gharzuk** (`hamlet_gharzuk`, `farm_hamlet` / `hameau`) : chasseurs et charbonniers, gibier fumé, peaux, bois des palissades `[GD]` ; route 000173 vers Grakhul | chien, biche, lapin, renard |
+| N007_E011 | lisière | POI **Affût de la Grande Chasse** (`lieu_affut_de_la_grande_chasse`, `poi_affut_de_la_grande_chasse`, `camp`) : camp de chasseurs, départ de la Grande Chasse (`fete_orques_grande_chasse`) `[GD]` ; route 000142 inchangée | biche, lapin, renard, corbeau |
+| N007_E012 | plaine | Kraal **Thokrul** (`hamlet_thokrul`, `farm_hamlet` / `hameau`) : éleveurs, chèvres, bœufs et ânes de bât, peaux tannées `[GD]` ; route 000172 vers Grakhul | chèvre, bœuf (3-6), âne (2-4), chien, lapin |
+| N007_E013 | plaine (Marche de l'Est) | POI **Ruines du fortin des Marches** (`lieu_ruines_fortin_des_marches`, `poi_ruines_fortin_des_marches`, `ruine`) : fortin impérial abandonné depuis la conquête de la Marche de l'Est par la Lune Noire, avant le T1 `[BD-A5 p.38-44]` ; le fortin est `[GD]` | araignée, corbeau, renard, lapin |
+
+- **Routes** (`routes`) : 000172 Grakhul → Thokrul, 000173 Grakhul → Gharzuk (`road`, cases voisines,
+  sans `waypoints`) ; sentiers 000174 à 000178 (`path`, sans écurie) de Grakhul vers les 5 POI.
+- **Services** : 2 kraals (taille `hameau`) ; écuries d'après les routes `road` : Grakhul 4 (au lieu
+  de 2), Thokrul et Gharzuk 1 ; 1077 → 1090 PNJ de service, tous Dzorak dans les kraals.
+- **Faune** : les 8 cases hors Leviathan n'avaient aucune créature ; espèces existantes de niveau 1 à 10
+  seulement. Sanglier (8-15), loup (5-12) et sanglier de guerre (15-25, N007_E014, hors région) dépassent
+  la tranche : la Grande Chasse et le festin de sanglier restent un décor.
+- **Points incertains** : noms ; le clan Ghazrak est inventé (aucun personnage de la BD) ; le totem ne dit
+  rien de l'esprit d'Ogunta lié à l'anneau de Greldinard (Q22) ; Greldinard n'est pas évoqué ; l'arène
+  touche la case de Leviathan, dont la position reste ouverte (section 16) ; la chèvre (1-3) et le chien
+  sont les seuls animaux de Grakhul ; le totem, l'arène et l'affût pourraient porter des PNJ ou quêtes
+  d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.66",
+    "version": "1.0.67",
     "notes": [
+      "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Leviathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
       "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case d'Aurore ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
       "v1.0.65 — Réseau routier : lot de corrections du propriétaire, routes de plus de 5 cases remplacées par des chaînes de villes, villes isolées reliées, réseau connexe.",
       "v1.0.64 : [CARTE] région de départ des Chevaliers de la Lumière autour de Dawnmere (N005_W011) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Commanderie rurale [GD] Brightholm (N005_W010) et fermes [GD] Whitesheaf (N006_W011) et Lambsfold (N004_W011) ; POI [GD] Calvaire des pèlerins (N006_W012), Chapelle de l'ermite (N006_W010), Ruines du prieuré (N004_W010), Camp des naufrageurs (N004_W012) ; routes locales 000135 à 000137 et sentiers 000138 à 000141 ; faune existante de niveau 1 à 10 rattachée aux cases ; trois lieux ajoutés aux lieux de culte de l'Église (lore.religions). Rien dans la case d'Altenberg. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.2.",
@@ -545,7 +546,8 @@
         "[LORE_ETENDU] 'Orc' est le terme générique utilisé par les autres races ; 'Dzorak' est le nom propre de la race.",
         "[DÉCISION] (v1.0.56) Faction à revoir à part (Q9) : Ghorghor est un demi-ogre (A1) et non un Dzorak ; le Dvorak des Marais est une créature ancienne distincte.",
         "[GD] (v1.0.58) Religion : « Les esprits des orques » (lore.religions, religion_esprits_orques).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Grakhul (hameau_grakhul, N008_E012), près de Leviathan Jungle. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Grakhul (hameau_grakhul, N008_E012), près de Leviathan Jungle. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.67) Région de départ 3×3 autour de Grakhul (LORE_BD §15.4) : kraals Thokrul et Gharzuk, Totem d'Ogunta, Arène des Jeunes-Sangs, Camp de guerre du clan Ghazrak, Affût de la Grande Chasse, Ruines du fortin des Marches ; routes locales vers Grakhul ; faune de niveau 1 à 10. Rien dans la case de Leviathan (N009_E011)."
       ],
       "faction_relations": [
         {
@@ -566,7 +568,24 @@
           "type": "hameau",
           "id": "hameau_grakhul",
           "cell": "N008_E012",
-          "pres_de": "leviathan_jungle"
+          "pres_de": "leviathan_jungle",
+          "region": {
+            "cells": [
+              "N009_E011",
+              "N009_E012",
+              "N009_E013",
+              "N008_E011",
+              "N008_E012",
+              "N008_E013",
+              "N007_E011",
+              "N007_E012",
+              "N007_E013"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "territoires_orcques",
@@ -20982,6 +21001,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_grakhul_ecurie_03",
+          "name": "Narub Poing-Brûlant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_grakhul_ecurie_04",
+          "name": "Borrok Tibia-Sanglant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_grakhul_cimetiere_01",
           "name": "Moggha Sang-Noir",
           "gender": "female",
@@ -22186,6 +22221,289 @@
           "name": "Garan Grisrive",
           "gender": "male",
           "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_thokrul",
+      "name": "Thokrul",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N007_E012",
+      "anchor_tile": "N007_E012",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "dzorak_orcs",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Kraal d'éleveurs de la région de départ de Grakhul"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom proposé, à valider par le propriétaire. Kraal d'éleveurs à palissade de pieux : chèvres, bœufs et ânes de bât ; on y tanne les peaux et sèchent la viande pour Grakhul et Leviathan. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[INFÉRÉ] (v1.0.67) Cellule N007_E012 : Plaine au sud de Grakhul, hors de la jungle ; case libre (Mossy Rock est en N006_E011, hors région).",
+        "[GD] (v1.0.67) Population : Dzorak (orques), croyances des esprits des orques (religion_esprits_orques) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.67) Économie : kraal d'élevage : chèvres, bœufs, ânes de bât, peaux tannées, viande séchée ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.67) Ancrage : Orkland et ses marches [BD-A4 p.33] ; exporte peaux, troc [GD v1.0.58, regle_eco_productions_regions] ; le kraal est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_thokrul_auberge_01",
+          "name": "Vrogzka Sang-Rouge",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_thokrul_armes_01",
+          "name": "Kranka Croc-Fendu",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_thokrul_forgeron_01",
+          "name": "Urgzka Poing-Rouge",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_thokrul_ecurie_01",
+          "name": "Hrukmash Poing-Tordu",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_thokrul_cimetiere_01",
+          "name": "Gashnka Os-Brûlant",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_gharzuk",
+      "name": "Gharzuk",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N008_E013",
+      "anchor_tile": "N008_E013",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "dzorak_orcs",
+      "region_id": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest_edge",
+        "Kraal de chasseurs de la région de départ de Grakhul"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom proposé, à valider par le propriétaire. Kraal de chasseurs et de charbonniers : les trappeurs du clan y fument le gibier, y préparent les peaux et coupent le bois des palissades de Grakhul. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[INFÉRÉ] (v1.0.67) Cellule N008_E013 : Lisière à l'est de Grakhul, face à la Marche de l'Est ; case libre.",
+        "[GD] (v1.0.67) Population : Dzorak (orques), croyances des esprits des orques (religion_esprits_orques) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.67) Économie : kraal de chasse : gibier, peaux, bois d'œuvre, charbon de bois ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.67) Ancrage : Ressources de l'Orkland : gibier, bois [GD v1.0.58, regle_eco_productions_regions] ; le kraal est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_gharzuk_auberge_01",
+          "name": "Groksha Croc-Noir",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_gharzuk_potions_01",
+          "name": "Borzag Crâne-Brûlant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hamlet_gharzuk_armes_01",
+          "name": "Narrga Sang-Brûlant",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_gharzuk_armures_01",
+          "name": "Zugzha Poing-Rouge",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_gharzuk_ecurie_01",
+          "name": "Urgzka Os-Tordu",
+          "gender": "female",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_gharzuk_cimetiere_01",
+          "name": "Drubrok Tibia-Tordu",
+          "gender": "male",
+          "race_id": "race_dzorak",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -158122,7 +158440,8 @@
         "[BD-T00 p.38] Renard porté comme gibier ; renard poursuivi.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W010, N004_W011, N004_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N009_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N009_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E013, N007_E011, N007_E013 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -158133,7 +158452,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
@@ -158150,7 +158469,12 @@
         "N009_W009",
         "N008_W011",
         "N008_W010",
-        "N008_W009"
+        "N008_W009",
+        "N009_E012",
+        "N009_E013",
+        "N008_E013",
+        "N007_E011",
+        "N007_E013"
       ]
     },
     {
@@ -158174,7 +158498,8 @@
         "Molosses de guerre : creature_molosse_imperial.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010, N009_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010, N009_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E013, N008_E012, N008_E013, N007_E012 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -158183,7 +158508,7 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
@@ -158197,7 +158522,11 @@
         "N004_W011",
         "N010_W010",
         "N009_W010",
-        "N009_W009"
+        "N009_W009",
+        "N009_E013",
+        "N008_E012",
+        "N008_E013",
+        "N007_E012"
       ]
     },
     {
@@ -158720,7 +159049,8 @@
         "[BD-A4 p.13] Lièvre roux.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W011, N006_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W010, N009_W009, N008_W011, N008_W010 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W010, N009_W009, N008_W011, N008_W010 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E011, N008_E013, N007_E011, N007_E012, N007_E013 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Autres mammifères",
@@ -158729,7 +159059,7 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -158747,7 +159077,12 @@
         "N010_W010",
         "N009_W009",
         "N008_W011",
-        "N008_W010"
+        "N008_W010",
+        "N008_E011",
+        "N008_E013",
+        "N007_E011",
+        "N007_E012",
+        "N007_E013"
       ]
     },
     {
@@ -158832,7 +159167,8 @@
         "[BD-A4 p.4, p.16] Bœufs, âne et chevaux blancs.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010, N004_W011 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -158842,14 +159178,15 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E017",
         "N003_W010",
         "N005_W010",
         "N004_W011",
-        "N010_W010"
+        "N010_W010",
+        "N007_E012"
       ]
     },
     {
@@ -158867,7 +159204,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-M1 p.14] Chèvres survivantes d'un village.",
-        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E012, N007_E012 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -158876,11 +159214,13 @@
         "chèvre des montagnes"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province).",
+      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
-        "N001_W009"
+        "N001_W009",
+        "N008_E012",
+        "N007_E012"
       ]
     },
     {
@@ -158974,7 +159314,8 @@
       "notes": [
         "[BD-T00 p.38] Chevreuil poursuivi (rangé ici faute de fiche « chevreuil »).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N009_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N009_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N008_E011, N008_E013, N007_E011 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Cervidés",
@@ -158982,14 +159323,18 @@
         "Biche"
       ],
       "bestiaire": true,
-      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
         "N012_E008",
         "N006_W010",
         "N010_W009",
-        "N009_W009"
+        "N009_W009",
+        "N009_E012",
+        "N008_E011",
+        "N008_E013",
+        "N007_E011"
       ]
     },
     {
@@ -159115,7 +159460,8 @@
         "[BD-A4 p.4, p.16] Âne parmi les bêtes domestiques.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N009_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N009_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159123,13 +159469,14 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
         "N001_W009",
         "N004_W011",
-        "N009_W009"
+        "N009_W009",
+        "N007_E012"
       ]
     },
     {
@@ -159625,7 +159972,8 @@
         "Oiseaux démoniaques : creature_oiseau_noir_kruikna.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -159634,7 +159982,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -159648,7 +159996,12 @@
         "N010_W009",
         "N008_W011",
         "N008_W010",
-        "N008_W009"
+        "N008_W009",
+        "N009_E012",
+        "N009_E013",
+        "N008_E011",
+        "N007_E011",
+        "N007_E013"
       ]
     },
     {
@@ -160083,7 +160436,8 @@
         "Archétype de jeu existant : « Araignée des sous-bois » (game/data/creatures/archetypes.json, id 105).",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2).",
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3).",
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -160093,7 +160447,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -160103,7 +160457,11 @@
         "N006_W010",
         "N004_W010",
         "N010_W009",
-        "N008_W009"
+        "N008_W009",
+        "N009_E012",
+        "N009_E013",
+        "N008_E011",
+        "N007_E013"
       ]
     },
     {
@@ -176820,6 +177178,12 @@
             "id": "territoires_orcques",
             "nom": "Territoires orcques",
             "nature": "Orkland ; [GD] cercles de pierres et huttes des chamanes à l'écart des villages, comme la tente d'Ogunta [BD-A4 p.10]."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_totem_d_ogunta",
+            "nom": "Totem d'Ogunta",
+            "nature": "[GD] Cercle de pierres et totem de crânes des chamanes de Grakhul : osselets, runes de puissance, mémoire d'Ogunta (région de départ de Grakhul)."
           }
         ],
         "rites": [
@@ -176884,7 +177248,8 @@
         "notes": [
           "[DÉCISION] (v1.0.56) Aucun lien entre Ogunta et « Ogun » / « Ogur » (Q14).",
           "[GD] (v1.0.58) Faction dzorak_orcs à revoir à part (Q9) : la fiche vaut pour les orques de l'Orkland, quel que soit le découpage retenu.",
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.67) Région de départ de Grakhul : Totem d'Ogunta ajouté aux lieux de culte (LORE_BD §15.4)."
         ]
       },
       {
@@ -190616,7 +190981,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Région de départ de Grakhul : case de Leviathan dans le monde jouable, aucun lieu ni aucune faune ajoutés (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190632,9 +190999,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard",
+        "animal_biche"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Arène des Jeunes-Sangs (lieu_arene_des_jeunes_sangs) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190650,9 +191024,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Camp de guerre du clan Ghazrak (lieu_camp_de_guerre_ghazrak) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -191522,9 +191903,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_corbeau",
+        "animal_araignee",
+        "animal_biche",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Totem d'Ogunta (lieu_totem_d_ogunta) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -191540,10 +191928,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_chevre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Grakhul (hameau_grakhul, faction Dzorak (Orcs))."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Grakhul (hameau_grakhul, faction Dzorak (Orcs)).",
+        "[GD] (v1.0.67) Centre de la région de départ 3×3 des Dzorak (N009_E011, N009_E012, N009_E013, N008_E011, N008_E012, N008_E013, N007_E011, N007_E012, N007_E013) ; niveaux 1 à 10 (LORE_BD §15.4)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -191560,9 +191952,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_biche",
+        "animal_lapin",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Kraal de chasseurs Gharzuk (hamlet_gharzuk) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -192406,9 +192805,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_biche",
+        "animal_lapin",
+        "animal_renard",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Affût de la Grande Chasse (lieu_affut_de_la_grande_chasse) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -192424,9 +192830,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chevre",
+        "animal_boeuf",
+        "animal_ane",
+        "animal_chien",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.67) Kraal d'éleveurs Thokrul (hamlet_thokrul) de la région de départ de Grakhul (LORE_BD §15.4)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -192442,10 +192856,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard",
+        "animal_lapin"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[GD] (v1.0.67) Ruines du fortin des Marches (lieu_ruines_fortin_des_marches) de la région de départ de Grakhul (LORE_BD §15.4)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -216427,6 +216847,104 @@
       "notes": [
         "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
       ]
+    },
+    {
+      "id": "000172",
+      "type": "road",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N007_E012",
+      "to_ville_id": "hamlet_thokrul",
+      "to_lieu_id": "",
+      "description": "Route locale de Grakhul à Thokrul.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Voisin le plus proche : Grakhul, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000173",
+      "type": "road",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N008_E013",
+      "to_ville_id": "hamlet_gharzuk",
+      "to_lieu_id": "",
+      "description": "Route locale de Grakhul à Gharzuk.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Voisin le plus proche : Grakhul, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000174",
+      "type": "path",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N008_E011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_totem_d_ogunta",
+      "description": "Sentier de Grakhul à « Totem d'Ogunta ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000175",
+      "type": "path",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N009_E012",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_arene_des_jeunes_sangs",
+      "description": "Sentier de Grakhul à « Arène des Jeunes-Sangs ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000176",
+      "type": "path",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N009_E013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_de_guerre_ghazrak",
+      "description": "Sentier de Grakhul à « Camp de guerre du clan Ghazrak ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000177",
+      "type": "path",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N007_E011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_affut_de_la_grande_chasse",
+      "description": "Sentier de Grakhul à « Affût de la Grande Chasse ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
+    },
+    {
+      "id": "000178",
+      "type": "path",
+      "from_place": "N008_E012",
+      "from_ville_id": "hameau_grakhul",
+      "from_lieu_id": "",
+      "to_place": "N007_E013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_fortin_des_marches",
+      "description": "Sentier de Grakhul à « Ruines du fortin des Marches ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
+      ]
     }
   ],
   "competences": [
@@ -232510,6 +233028,416 @@
         "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Ancienne tour de guet face à la forêt elfique, abandonnée depuis des générations : araignées et corbeaux y nichent ; premiers pas des novices hors du hameau. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[GD] (v1.0.66) Ancrage : Abandonnée depuis des générations (aucune destruction de l'époque du jeu) ; la tour est [GD].",
         "[INFÉRÉ] (v1.0.66) Cellule N008_W009 : Lisière de la Première Province au sud-est d'Oathford, en bordure de la forêt elfique (N008_W008) ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_totem_d_ogunta",
+      "name": "Totem d'Ogunta",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N008_E011",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cercle de pierres levées",
+        "totem de crânes et de défenses",
+        "hutte de chamane à l'écart"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Cercle de pierres et totem de crânes dans la jungle, à l'ouest de Grakhul : les chamanes y jettent les osselets, y tatouent les runes de puissance des jeunes guerriers et y honorent la mémoire de la chamane Ogunta. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[GD] (v1.0.67) Ancrage : Ogunta, chamane des orques [BD-A4 p.8-15] ; osselets [BD-A4 p.9], runes de puissance [BD-A4 p.11], cercles de pierres et huttes de chamanes à l'écart des villages [GD v1.0.58, religion_esprits_orques]. Le totem est [GD] ; il ne dit rien de l'esprit d'Ogunta ni de l'anneau (Q22).",
+        "[INFÉRÉ] (v1.0.67) Cellule N008_E011 : Forêt au sud de Leviathan et à l'ouest de Grakhul, à l'écart du kraal ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_arene_des_jeunes_sangs",
+      "name": "Arène des Jeunes-Sangs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N009_E012",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "fosse de terre battue cerclée de pieux",
+        "gradins de rondins",
+        "trône de défenses du maître d'arène"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Fosse de combat dans une clairière entre Grakhul et Leviathan : les jeunes guerriers y passent l'épreuve de l'arène avant d'être admis dans les rangs du clan ; festins jusqu'à la fin de la nuit. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[GD] (v1.0.67) Ancrage : Épreuve de l'arène et festin « jusqu'à la fin de la nuit » [BD-A4 p.30-32] ; trône de défenses [BD-A5 p.12]. L'arène est [GD].",
+        "[INFÉRÉ] (v1.0.67) Cellule N009_E012 : Forêt au nord de Grakhul, à l'est de Leviathan (N009_E011), hors de la case de Leviathan ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_camp_de_guerre_ghazrak",
+      "name": "Camp de guerre du clan Ghazrak",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N009_E013",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes de peaux et palissade d'épieux",
+        "têtes de trophées empalées",
+        "râteliers de haches et de boucliers"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Camp de guerre où le clan Ghazrak rassemble ses guerriers avant de rejoindre les armées de la Lune Noire ; les recrues de Grakhul y font leurs premières corvées. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[GD] (v1.0.67) Ancrage : Orques alliés de la Lune Noire [BD] ; trophées de têtes et empalement en message [BD-A4 p.29-30]. Le clan et le camp sont [GD] (aucun personnage de la BD).",
+        "[INFÉRÉ] (v1.0.67) Cellule N009_E013 : Forêt au nord-est de Grakhul ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_affut_de_la_grande_chasse",
+      "name": "Affût de la Grande Chasse",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N007_E011",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "séchoirs à peaux",
+        "râteliers d'épieux",
+        "trophées de chasse cloués aux troncs"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Camp de chasseurs à la lisière sud-ouest : on y part pour la Grande Chasse de la Lune de la Chasse et les jeunes y apprennent à pister et à dépecer. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[GD] (v1.0.67) Ancrage : Grande Chasse (fete_orques_grande_chasse, [GD] v1.0.58) ; festin de sanglier [BD-A5 p.12]. L'affût est [GD].",
+        "[INFÉRÉ] (v1.0.67) Cellule N007_E011 : Lisière entre Grakhul et Mossy Rock (N006_E011), hors de la case de Mossy Rock ; case libre (la route 000142 Mossy Rock → Grakhul y passe, inchangée)."
+      ]
+    },
+    {
+      "id": "lieu_ruines_fortin_des_marches",
+      "name": "Ruines du fortin des Marches",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N007_E013",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "enceinte de pierre éboulée",
+        "donjon carré sans toit",
+        "cellier envahi d'araignées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Ancien fortin impérial de la Marche de l'Est, abandonné depuis la conquête de la Marche par la Lune Noire : araignées et corbeaux y nichent ; les jeunes orques y cherchent du fer de récupération. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
+        "[GD] (v1.0.67) Ancrage : Marche de l'Est, terre impériale conquise par la Lune Noire avant le T1 [BD-A5 p.38-44] (region_marche_est) ; abandonné bien avant l'époque du jeu ; le fortin est [GD].",
+        "[INFÉRÉ] (v1.0.67) Cellule N007_E013 : Plaine de la Marche de l'Est au sud-est de Grakhul, à l'écart d'Horkher (N006_E014) ; case libre."
       ]
     }
   ],

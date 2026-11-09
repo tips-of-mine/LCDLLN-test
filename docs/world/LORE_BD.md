@@ -654,6 +654,39 @@ Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
   N002_W010), au plafond de la tranche ; crabe et mouette ont un niveau par défaut (1-1) ; le camp de
   manœuvres et l'autel pourraient porter des PNJ ou des quêtes d'accueil des Légions (aucun créé).
 
+### 15.2 Dawnmere — Chevaliers de la Lumière (v1.0.64)
+
+Centre N005_W011 (`hameau_dawnmere`, v1.0.61). Les 9 cases étaient déjà générées. Altenberg (N005_W012,
+citadelle de l'Ordre, intacte à l'époque du jeu) est dans la région mais **rien n'y est posé** ; Dys
+(N005_W009) et Justfall (N007_W011) sont hors région. Thème : l'Ordre de la Lumière et l'Église du Dieu
+de Lumière (`lore.religions`, v1.0.58) — commanderie, chapelle, pèlerinage ; trois des POI sont ajoutés
+aux `lieux_de_culte` de `religion_eglise_lumiere`. Script reproductible : `lore_v1064.py` (appliqué au
+fichier v1.0.62).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N006_W012 | plaine (Première Province) | POI **Calvaire des pèlerins** (`lieu_calvaire_des_pelerins`, `poi_calvaire_des_pelerins`, `sanctuaire`) : première station du pèlerinage d'Altenberg à Aurore pour la Grande Messe de la Lumière `[GD]` (`fete_eglise_grande_messe_lumiere`) ; croix cerclée, bannières rouges à croix blanche `[BD-T8 p.28-33]` `[BD-T2 p.34]` | lapin (1-3), corbeau (1-4), renard (2-5) |
+| N006_W011 | plaine | Ferme **Whitesheaf** (`hamlet_whitesheaf`, `farm_hamlet` / `hameau`) : grain des novices et pain d'autel d'Altenberg `[GD]` ; route 000136 vers Dawnmere | poule, coq (1), chien (2-6), lapin |
+| N006_W010 | forêt avec rivière | POI **Chapelle de l'ermite** (`lieu_chapelle_de_l_ermite`, `poi_chapelle_de_l_ermite`, `sanctuaire`) : chapelle et source d'eau bénite `[GD]` ; prêtres de chapelle `[BD-A3 pl.19-20]`, croix de pierre en forêt `[BD-A3 pl.33]` | biche (2-6), araignée (3-8), renard, lapin |
+| N005_W012 | plaine | Altenberg (grande ville, inchangée) | inchangée |
+| N005_W011 | plaine | **Dawnmere** (hameau de départ) ; routes 000122 (Altenberg), 000135 à 000137 ; sentiers 000138 à 000141 vers les 4 POI | chien, poule |
+| N005_W010 | plaine | Commanderie rurale **Brightholm** (`hamlet_brightholm`, `farm_hamlet` / `hameau`) : domaine agricole et haras de l'Ordre tenu par des frères convers (`[BD-T8 p.33-35]`) `[GD]` — distincte de la Grande et de la Haute Commanderie, salles de la citadelle `[BD-T8]` ; route 000135 vers Dawnmere | cheval (3-8), bœuf (3-6), chien, poule |
+| N004_W012 | plage | POI **Camp des naufrageurs** (`lieu_camp_des_naufrageurs`, `poi_camp_des_naufrageurs`, `camp`) : faux feux sur la longue plage au sud d'Altenberg `[GD]`, citadelle « sur un rocher battu par les vagues » `[BD-T2 p.32-33]` | crabe, mouette (1), corbeau |
+| N004_W011 | plaine | Ferme **Lambsfold** (`hamlet_lambsfold`, `farm_hamlet` / `hameau`) : bergerie, laine blanche des habits et capuches de l'Ordre (`[BD-T8 p.31-35]`) `[GD]` ; route 000137 vers Dawnmere | mouton (1), bœuf, âne (2-4), chien, renard |
+| N004_W010 | plaine | POI **Ruines du prieuré** (`lieu_ruines_du_prieure`, `poi_ruines_du_prieure`, `ruine`) : prieuré abandonné depuis des générations, crypte à vermine `[GD]` (aucune destruction de l'époque du jeu) | araignée, corbeau, renard |
+
+- **Routes** (`routes`) : 000135 Dawnmere → Brightholm, 000136 Dawnmere → Whitesheaf, 000137 Dawnmere →
+  Lambsfold (`road`, cases voisines) ; sentiers 000138 à 000141 (`path`, sans écurie) de Dawnmere vers les
+  4 POI.
+- **Services** : 3 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Dawnmere 4 (au lieu
+  de 1), Brightholm, Whitesheaf et Lambsfold 1 ; 1050 → 1067 PNJ de service.
+- **Faune** : les 8 cases hors Altenberg n'avaient aucune créature ; espèces existantes de niveau 1 à 10
+  seulement.
+- **Points incertains** : noms ; Fratus Sinister et ses « Fils de la Lumière » (`[BD-T4]`, `[BD-T5]`)
+  ne sont pas évoqués : la région reste neutre sur la direction de l'Ordre ; crabe, mouette et mouton ont
+  un niveau par défaut (1-1) ; Dawnmere porte 4 écuries pour un hameau (règle des routes) ; le calvaire et
+  la chapelle pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

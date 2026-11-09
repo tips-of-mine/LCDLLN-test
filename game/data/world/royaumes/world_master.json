@@ -419,6 +419,30 @@
       "description": "Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes."
     },
     {
+      "id": "hamlet_thokrul",
+      "name": "Thokrul",
+      "cell": "N007_E012",
+      "kind": "hameau",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "dzorak",
+      "start_for": [],
+      "source": "[GD] v1.0.67 (nom à valider) ; cellule [INFÉRÉ], région de départ de Grakhul",
+      "description": "Kraal d'éleveurs à palissade de pieux au sud de Grakhul : chèvres, bœufs et ânes de bât, peaux tannées et viande séchée pour Grakhul et Leviathan."
+    },
+    {
+      "id": "hamlet_gharzuk",
+      "name": "Gharzuk",
+      "cell": "N008_E013",
+      "kind": "hameau",
+      "race": "orcs",
+      "state": "intact",
+      "faction": "dzorak",
+      "start_for": [],
+      "source": "[GD] v1.0.67 (nom à valider) ; cellule [INFÉRÉ], région de départ de Grakhul",
+      "description": "Kraal de chasseurs et de charbonniers à la lisière est de Grakhul : gibier fumé, peaux et bois des palissades."
+    },
+    {
       "id": "hameau_durnhalde",
       "name": "Durnhalde",
       "cell": "S007_E017",
@@ -1811,6 +1835,41 @@
       "cell": "N008_W009",
       "kind": "ruine",
       "description": "Tour de guet éventrée face à la forêt elfique, abandonnée depuis des générations ; cave envahie d'araignées [GD v1.0.66, région de départ d'Oathford]."
+    },
+    {
+      "id": "poi_totem_d_ogunta",
+      "name": "Totem d'Ogunta",
+      "cell": "N008_E011",
+      "kind": "sanctuaire",
+      "description": "Cercle de pierres levées et totem de crânes et de défenses dans la jungle, à l'ouest de Grakhul : les chamanes y jettent les osselets, y tatouent les runes de puissance et y honorent la mémoire de la chamane Ogunta [GD v1.0.67, région de départ de Grakhul]."
+    },
+    {
+      "id": "poi_arene_des_jeunes_sangs",
+      "name": "Arène des Jeunes-Sangs",
+      "cell": "N009_E012",
+      "kind": "camp",
+      "description": "Fosse de combat cerclée de pieux entre Grakhul et Leviathan : les jeunes guerriers y passent l'épreuve de l'arène avant d'entrer dans les rangs du clan [GD v1.0.67, région de départ de Grakhul]."
+    },
+    {
+      "id": "poi_camp_de_guerre_ghazrak",
+      "name": "Camp de guerre du clan Ghazrak",
+      "cell": "N009_E013",
+      "kind": "camp",
+      "description": "Tentes de peaux, palissade d'épieux et têtes de trophées : le clan Ghazrak y rassemble ses guerriers avant de rejoindre les armées de la Lune Noire [GD v1.0.67, région de départ de Grakhul]."
+    },
+    {
+      "id": "poi_affut_de_la_grande_chasse",
+      "name": "Affût de la Grande Chasse",
+      "cell": "N007_E011",
+      "kind": "camp",
+      "description": "Camp de chasseurs à la lisière, séchoirs à peaux et trophées cloués aux troncs : départ de la Grande Chasse, où les jeunes apprennent à pister et à dépecer [GD v1.0.67, région de départ de Grakhul]."
+    },
+    {
+      "id": "poi_ruines_fortin_des_marches",
+      "name": "Ruines du fortin des Marches",
+      "cell": "N007_E013",
+      "kind": "ruine",
+      "description": "Fortin impérial de la Marche de l'Est abandonné depuis la conquête de la Marche par la Lune Noire ; cellier envahi d'araignées [GD v1.0.67, région de départ de Grakhul]."
     }
   ],
   "imports": {

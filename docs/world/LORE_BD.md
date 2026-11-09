@@ -687,6 +687,46 @@ fichier v1.0.62).
   un niveau par défaut (1-1) ; Dawnmere porte 4 écuries pour un hameau (règle des routes) ; le calvaire et
   la chapelle pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+### 15.3 Oathford — Chevaliers de la Justice (v1.0.66)
+
+Centre N009_W010 (`hameau_oathford`, v1.0.61). Les 9 cases étaient déjà générées. Aurore (N009_W011,
+`ville_sysigie`, cité de l'île du lac, intacte à l'époque du jeu) est dans la région mais **rien n'y est
+posé** ; le fleuve de Sysigie passe par le centre de N010_W011 et de N008_W011 (section 8.2, le
+générateur pose les POI au centre de leur case) : **aucun lieu** dans ces deux cases, seulement de la
+faune. La Passe de Syzygie (N008_W013) et Justfall (N007_W011) sont hors région. Thème : l'Ordre de la
+Justice — serments des novices, garnisons, parjures ; la stèle est ajoutée aux `lieux_de_culte` de
+`religion_eglise_lumiere`. Routes selon la règle du propriétaire v1.0.65 : chaque nouvelle ferme ou
+hameau est relié au voisin le plus proche (ici Oathford, case voisine, sans étape) ; routes existantes
+inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.65).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N010_W011 | plaine avec fleuve (Syzygie) | aucun lieu (lit du fleuve) | lapin (1-3), corbeau (1-4), loutre (1), renard (2-5) |
+| N010_W010 | plaine (Syzygie) | Ferme **Tithemead** (`hamlet_tithemead`, `farm_hamlet` / `hameau`) : ferme de la dîme, blé, foin et chevaux de remonte des garnisons d'Aurore `[GD]` ; route 000166 vers Oathford. POI **Lices des novices** (`lieu_lices_des_novices`, `poi_lices_des_novices`, `camp`) à distance de la ferme : exercices des novices `[GD]` | poule, coq (1), chien (2-6), bœuf (3-6), cheval (3-8), lapin |
+| N010_W009 | lisière (Syzygie) | POI **Camp des parjures** (`lieu_camp_des_parjures`, `poi_camp_des_parjures`, `camp`) : écuyers chassés de l'Ordre pour parjure et brigands `[GD]` | renard, araignée (3-8), corbeau, biche (2-6) |
+| N009_W011 | plaine avec fleuve | Aurore (grande ville, inchangée) | inchangée |
+| N009_W010 | plaine | **Oathford** (hameau de départ) ; routes 000123 (Aurore), 000166, 000167 ; sentiers 000168 à 000171 vers les 4 POI | chien, poule |
+| N009_W009 | lisière (Première Province) | Hameau de garnison **Wardholt** (`hamlet_wardholt`, `farm_hamlet` / `hameau`) : palissade, poste de garde de l'Ordre face à la forêt elfique, bûcherons et charbonniers `[GD]` ; route 000167 vers Oathford | chien, âne (2-4), biche, lapin, renard |
+| N008_W011 | plaine avec fleuve (Syzygie) | aucun lieu (lit du fleuve ; route 000021 Aurore → Justfall inchangée) | lapin, corbeau, loutre, renard |
+| N008_W010 | plaine (Première Province) | POI **Stèle des Serments** (`lieu_stele_des_serments`, `poi_stele_des_serments`, `sanctuaire`) : stèle de granit gravée de la devise de l'Ordre, serment des novices devant un frère aîné `[GD]` ; devise et frères aînés `[BD-T4]` | mouton (1), lapin, corbeau, renard |
+| N008_W009 | lisière (Première Province) | POI **Ruines de la tour du guet** (`lieu_ruines_tour_du_guet`, `poi_ruines_tour_du_guet`, `ruine`) : tour abandonnée depuis des générations face à la forêt elfique, cave à vermine `[GD]` (aucune destruction de l'époque du jeu) | araignée, corbeau, renard |
+
+- **Routes** (`routes`) : 000166 Oathford → Tithemead, 000167 Oathford → Wardholt (`road`, cases
+  voisines, sans `waypoints`) ; sentiers 000168 à 000171 (`path`, sans écurie) d'Oathford vers les 4 POI.
+- **Services** : 2 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Oathford 3 (au lieu
+  de 1), Tithemead et Wardholt 1 ; 1067 → 1077 PNJ de service.
+- **Corridor des départs** (`connect_start_cities`) : avec Wardholt, le corridor qui relie les départs
+  passe par N008_W008 (forêt elfique, désormais générée) au lieu de N006_W009 et N006_W008, ce qui aurait
+  retiré Dys (N005_W009) du monde jouable ; ces trois cellules sont ajoutées explicitement à
+  `generated_cells` (dernière ligne) : 180 → 181 cellules générées, aucune perdue.
+- **Faune** : les 8 cases hors Aurore n'avaient aucune créature ; espèces existantes de niveau 1 à 10
+  seulement.
+- **Points incertains** : noms ; « Stèle » plutôt que « Pierre » des Serments (le mot « Pierre » est un
+  nom du monde et ferait refuser des PNJ nains par `validate_city_services.py`) ; les Lices partagent la
+  case de Tithemead (5 cases libres pour 6 lieux) ; Parsifal et l'évacuation de l'Ordre vers Syzygie
+  (`[BD-T10]`) ne sont pas évoqués ; loutre et mouton ont un niveau par défaut (1-1) ; la stèle et les
+  lices pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

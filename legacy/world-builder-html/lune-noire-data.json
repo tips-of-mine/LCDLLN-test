@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.68",
+    "version": "1.0.69",
     "notes": [
+      "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
       "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Wyrmhallow (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Cragfold (S004_W003, bergers) et Bridlecrag (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Wyrmhallow, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Equiton (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
       "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Leviathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
       "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case d'Aurore ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
@@ -737,7 +738,8 @@
         "[BD] L'intérieur est décrit comme un dédale de feu et d'acier.",
         "[BD] Ne s'entendent pas avec les elfes (conflit ancien — modèle v0.1).",
         "[GD] (v1.0.58) Religion : « Le Métal, le Feu et la Lave » (lore.religions, religion_nains).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Durnhalde (hameau_durnhalde, S007_E017), près de Ghrunke Dash. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Durnhalde (hameau_durnhalde, S007_E017), près de Ghrunke Dash. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.69) Région de départ 3×3 autour de Durnhalde (LORE_BD §15.6) : hameaux Eisenkehl (mine de fer) et Kohlbrand (houilleurs et fondeurs), Autel des Ancêtres, Galeries effondrées de la Vieille Veine, Puits des Apprentis, Relais des convois de minerai, Camp des prospecteurs ; routes locales vers le voisin le plus proche ; faune de niveau 1 à 10. Rien dans la case de Ghrunke Dash (S007_E016)."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -749,7 +751,24 @@
           "type": "hameau",
           "id": "hameau_durnhalde",
           "cell": "S007_E017",
-          "pres_de": "ville_ghrunke_dash"
+          "pres_de": "ville_ghrunke_dash",
+          "region": {
+            "cells": [
+              "S006_E016",
+              "S006_E017",
+              "S006_E018",
+              "S007_E016",
+              "S007_E017",
+              "S007_E018",
+              "S008_E016",
+              "S008_E017",
+              "S008_E018"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "royaumes_des_nains_du_sud",
@@ -21179,6 +21198,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_durnhalde_ecurie_02",
+          "name": "Dwalra Front-de-Roc",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_durnhalde_cimetiere_01",
           "name": "Brombur Marteau-de-Roc",
           "gender": "male",
@@ -22813,6 +22840,288 @@
           "name": "Perais Marlfort",
           "gender": "male",
           "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_eisenkehl",
+      "name": "Eisenkehl",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "S008_E018",
+      "anchor_tile": "S008_E018",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dwarves",
+      "region_id": "royaume_des_nains_de_lest",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau minier de la région de départ de Durnhalde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom proposé, à valider par le propriétaire. Hameau minier accroché à une gorge : entrées de mine de fer étayées de poutres, terrils, treuils et wagonnets ; le minerai part à dos de mulet vers les forges de Ghrunke Dash. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[INFÉRÉ] (v1.0.69) Cellule S008_E018 : Montagne du royaume des nains de l'Est au sud-est de Durnhalde, à l'est de Kohlbrand (S008_E017), hors des cases volcaniques ; case libre. La case à l'est de Durnhalde (S007_E018) rendait inaccessible un lieu procédural (mine) et celle au nord (S006_E017) faisait passer le corridor des départs par S005_E017 (géant brun, dragon noir).",
+        "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.69) Économie : mines de fer et de cuivre, minerai brut, étais et outils de mineur ; élevage de mulets de bât et de chèvres ; récolte : minerai, pierre (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.69) Ancrage : Ghrunke Dash « célèbre dans l'Empire pour la qualité de ses métaux » [BD-T3 pl.16] ; forges et acier nain [GD v1.0.58] ; mines d'apprentissage de Durnhalde (v1.0.61) ; le hameau est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_eisenkehl_auberge_01",
+          "name": "Gunddis Hache-d'Acier",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_eisenkehl_potions_01",
+          "name": "Bofgrim Front-d'Étain",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hamlet_eisenkehl_forgeron_01",
+          "name": "Brakok Bouclier-de-Basalte",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_eisenkehl_ecurie_01",
+          "name": "Hurdur Pic-d'Acier",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_eisenkehl_cimetiere_01",
+          "name": "Thurbera Poing-de-Basalte",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_kohlbrand",
+      "name": "Kohlbrand",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "S008_E017",
+      "anchor_tile": "S008_E017",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_dwarves",
+      "region_id": "royaume_des_nains_de_lest",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: mountain",
+        "Hameau de houilleurs de la région de départ de Durnhalde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom proposé, à valider par le propriétaire. Hameau de houilleurs et de fondeurs : puits de charbon, meules de coke et bas fourneaux qui fument jour et nuit ; le charbon et les lingots de fonte partent vers Ghrunke Dash. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[INFÉRÉ] (v1.0.69) Cellule S008_E017 : Montagne du royaume des nains de l'Est au sud de Durnhalde, hors des cases volcaniques ; case libre.",
+        "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.69) Économie : charbon de terre et coke, fonte en lingots ; élevage de mulets, d'ânes et de chèvres ; récolte : charbon, minerai (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.69) Ancrage : Charbon de Ghrunke Dash [BD-T9 p.12] ; forges et acier nain [GD v1.0.58] ; le hameau est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_kohlbrand_auberge_01",
+          "name": "Mordur Front-de-Bronze",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_kohlbrand_potions_01",
+          "name": "Torbur Pic-de-Granit",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hamlet_kohlbrand_forgeron_01",
+          "name": "Thurra Torche-d'Étain",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_kohlbrand_ecurie_01",
+          "name": "Ostgan Marteau-de-Basalte",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_kohlbrand_ecurie_02",
+          "name": "Bofga Enclume-de-Cuivre",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_kohlbrand_cimetiere_01",
+          "name": "Kordis Enclume-de-Bronze",
+          "gender": "female",
+          "race_id": "race_dwarf",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -158809,7 +159118,8 @@
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010, N009_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E013, N008_E012, N008_E013, N007_E012 (LORE_BD §15.4).",
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004, S004_W003 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004, S004_W003 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S007_E017, S008_E017, S008_E018 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -158818,7 +159128,7 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
@@ -158839,7 +159149,10 @@
         "N007_E012",
         "S004_W005",
         "S004_W004",
-        "S004_W003"
+        "S004_W003",
+        "S007_E017",
+        "S008_E017",
+        "S008_E018"
       ]
     },
     {
@@ -159220,7 +159533,9 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018, S007_E017, S008_E017, S008_E018 (LORE_BD §15.6)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Rongeurs",
       "variantes": [
@@ -159229,7 +159544,15 @@
         "rat des profondeurs"
       ],
       "bestiaire": true,
-      "familier_famille": "familier_rongeur"
+      "familier_famille": "familier_rongeur",
+      "zones_chasse": [
+        "S006_E017",
+        "S006_E018",
+        "S007_E017",
+        "S008_E017",
+        "S008_E018"
+      ],
+      "habitat": "Région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_souris",
@@ -159335,7 +159658,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S004_W003, S005_W003 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S004_W003, S005_W003 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Rongeurs",
@@ -159348,9 +159672,12 @@
         "S003_W005",
         "S003_W003",
         "S004_W003",
-        "S005_W003"
+        "S005_W003",
+        "S006_E016",
+        "S006_E018",
+        "S007_E018"
       ],
-      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_lapin",
@@ -159530,7 +159857,8 @@
         "[BD-M1 p.14] Chèvres survivantes d'un village.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E012, N007_E012 (LORE_BD §15.4).",
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S004_W004, S004_W003, S005_W005 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S004_W004, S004_W003, S005_W005 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E017, S008_E017, S008_E018 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -159539,7 +159867,7 @@
         "chèvre des montagnes"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Fermes et collines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
@@ -159549,7 +159877,11 @@
         "S003_W005",
         "S004_W004",
         "S004_W003",
-        "S005_W005"
+        "S005_W005",
+        "S006_E016",
+        "S006_E017",
+        "S008_E017",
+        "S008_E018"
       ]
     },
     {
@@ -159769,7 +160101,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S008_E016 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159779,9 +160112,10 @@
       ],
       "bestiaire": true,
       "zones_chasse": [
-        "S004_W005"
+        "S004_W005",
+        "S008_E016"
       ],
-      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_ane",
@@ -159802,7 +160136,8 @@
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N009_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N007_E012 (LORE_BD §15.4).",
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S008_E016, S008_E017 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159810,7 +160145,7 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
@@ -159818,7 +160153,9 @@
         "N004_W011",
         "N009_W009",
         "N007_E012",
-        "S004_W005"
+        "S004_W005",
+        "S008_E016",
+        "S008_E017"
       ]
     },
     {
@@ -159835,7 +160172,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S004_W005, S004_W004 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S007_E017, S008_E016, S008_E017, S008_E018 (LORE_BD §15.6)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -159845,9 +160183,13 @@
       "bestiaire": true,
       "zones_chasse": [
         "S004_W005",
-        "S004_W004"
+        "S004_W004",
+        "S007_E017",
+        "S008_E016",
+        "S008_E017",
+        "S008_E018"
       ],
-      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_zebre",
@@ -160164,7 +160506,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S007_E018 (LORE_BD §15.6)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -160176,9 +160519,11 @@
       "zones_chasse": [
         "S003_W005",
         "S003_W003",
-        "S005_W005"
+        "S005_W005",
+        "S006_E016",
+        "S007_E018"
       ],
-      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_faucon",
@@ -160303,7 +160648,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W003, S005_W003 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W003, S005_W003 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S007_E018 (LORE_BD §15.6)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -160314,9 +160660,10 @@
       "bestiaire": true,
       "zones_chasse": [
         "S003_W003",
-        "S005_W003"
+        "S005_W003",
+        "S007_E018"
       ],
-      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
     {
       "id": "animal_corbeau",
@@ -160338,7 +160685,8 @@
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4).",
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005, S005_W003 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005, S005_W003 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018, S008_E016 (LORE_BD §15.6)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -160347,7 +160695,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -160370,7 +160718,11 @@
         "S003_W005",
         "S003_W003",
         "S005_W005",
-        "S005_W003"
+        "S005_W003",
+        "S006_E016",
+        "S006_E018",
+        "S007_E018",
+        "S008_E016"
       ]
     },
     {
@@ -160807,7 +161159,8 @@
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4).",
-        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S005_W003 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S005_W003 (LORE_BD §15.5).",
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018 (LORE_BD §15.6)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -160817,7 +161170,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -160832,7 +161185,9 @@
         "N009_E013",
         "N008_E011",
         "N007_E013",
-        "S005_W003"
+        "S005_W003",
+        "S006_E017",
+        "S006_E018"
       ]
     },
     {
@@ -177801,6 +178156,12 @@
             "id": "ville_ghrunke_dash",
             "nom": "Ghrunke Dash",
             "nature": "Temple des nains de Ghrunke Dash ; prêtres nains [GD]."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_autel_des_ancetres",
+            "nom": "Autel des Ancêtres",
+            "nature": "[GD] Niche aux visages des ancêtres des clans ; premier outil forgé déposé en offrande, marteaux frappés au sol (région de départ de Durnhalde)."
           }
         ],
         "rites": [
@@ -177841,7 +178202,8 @@
         ],
         "source": "[BD-T3], [BD-T14 p.39] ; vides comblés [GD]",
         "notes": [
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.69) Région de départ de Durnhalde : Autel des Ancêtres ajouté aux lieux de culte (LORE_BD §15.6)."
         ]
       },
       {
@@ -204788,9 +205150,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_corbeau",
+        "animal_chevre",
+        "animal_marmotte",
+        "animal_aigle"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Autel des Ancêtres (lieu_autel_des_ancetres) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -204806,9 +205175,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_rat",
+        "animal_araignee",
+        "animal_chevre"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Puits des Apprentis (lieu_puits_des_apprentis) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -204825,9 +205200,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_rat",
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_marmotte"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Galeries effondrées de la Vieille Veine (lieu_galeries_effondrees_vieille_veine) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -205648,7 +206030,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Région de départ de Durnhalde : case de Ghrunke Dash, aucun lieu ni aucune faune ajoutés (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205664,10 +206048,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_mulet",
+        "animal_rat"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Durnhalde (hameau_durnhalde, faction Nains)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Durnhalde (hameau_durnhalde, faction Nains).",
+        "[GD] (v1.0.69) Centre de la région de départ 3×3 des Nains (S006_E016, S006_E017, S006_E018, S007_E016, S007_E017, S007_E018, S008_E016, S008_E017, S008_E018) ; niveaux 1 à 10 (LORE_BD §15.6)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -205685,9 +206074,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_vautour",
+        "animal_aigle",
+        "animal_marmotte",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Camp des prospecteurs (lieu_camp_des_prospecteurs) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -206509,9 +206905,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_mulet",
+        "animal_ane",
+        "animal_poney",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Relais des convois de minerai (lieu_relais_des_convois) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -206527,9 +206930,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_mulet",
+        "animal_ane",
+        "animal_chien",
+        "animal_chevre",
+        "animal_rat"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Hameau de houilleurs Kohlbrand (hamlet_kohlbrand) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -206546,9 +206957,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_mulet",
+        "animal_chien",
+        "animal_chevre",
+        "animal_rat"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.69) Hameau minier Eisenkehl (hamlet_eisenkehl) de la région de départ de Durnhalde (LORE_BD §15.6)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -217457,6 +217875,104 @@
       "description": "Sentier de Wyrmhallow à « Aire de dressage des écuyers ».",
       "notes": [
         "[INFÉRÉ] (v1.0.68) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.5."
+      ]
+    },
+    {
+      "id": "000185",
+      "type": "road",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S008_E017",
+      "to_ville_id": "hamlet_kohlbrand",
+      "to_lieu_id": "",
+      "description": "Route locale de Durnhalde à Kohlbrand.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Voisin le plus proche de Kohlbrand : Durnhalde, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000186",
+      "type": "road",
+      "from_place": "S008_E017",
+      "from_ville_id": "hamlet_kohlbrand",
+      "from_lieu_id": "",
+      "to_place": "S008_E018",
+      "to_ville_id": "hamlet_eisenkehl",
+      "to_lieu_id": "",
+      "description": "Route locale de Kohlbrand à Eisenkehl.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Voisin le plus proche d'Eisenkehl : Kohlbrand, case voisine orthogonale (Durnhalde n'est que diagonal), sans étape (règle v1.0.65) ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000187",
+      "type": "path",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S006_E016",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_autel_des_ancetres",
+      "description": "Sentier de Durnhalde à « Autel des Ancêtres ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000188",
+      "type": "path",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S006_E018",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_galeries_effondrees_vieille_veine",
+      "description": "Sentier de Durnhalde à « Galeries effondrées de la Vieille Veine ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000189",
+      "type": "path",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S006_E017",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_puits_des_apprentis",
+      "description": "Sentier de Durnhalde à « Puits des Apprentis ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000190",
+      "type": "path",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S008_E016",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_relais_des_convois",
+      "description": "Sentier de Durnhalde à « Relais des convois de minerai ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
+      ]
+    },
+    {
+      "id": "000191",
+      "type": "path",
+      "from_place": "S007_E017",
+      "from_ville_id": "hameau_durnhalde",
+      "from_lieu_id": "",
+      "to_place": "S007_E018",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_des_prospecteurs",
+      "description": "Sentier de Durnhalde à « Camp des prospecteurs ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
       ]
     }
   ],
@@ -234279,6 +234795,416 @@
         "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Plateau d'entraînement au sud-ouest de Wyrmhallow : les écuyers y apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen ; on n'y voit pas de dragon adulte, seulement les montures de Bridlecrag. Région de départ de Wyrmhallow (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
         "[GD] (v1.0.68) Ancrage : Écuyers qui apprennent à monter (description de Wyrmhallow, v1.0.61) ; mercenaires sur dragons volants, combat aérien [BD, faction_dragon_knights] ; langue dracchen [BD-T2]. L'aire est [GD].",
         "[INFÉRÉ] (v1.0.68) Cellule S005_W005 : Montagne du Royaume Drach au sud-ouest de Wyrmhallow, à l'ouest d'Equiton (S005_W004), hors de la case d'Equiton ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_autel_des_ancetres",
+      "name": "Autel des Ancêtres",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S006_E016",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "niche taillée dans la roche, visages d'ancêtres sculptés",
+        "braises entretenues dans une vasque de fer",
+        "marteaux et premiers outils déposés en offrande"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Niche taillée dans la falaise entre Ghrunke Dash et Durnhalde, aux visages des ancêtres des clans : les jeunes nains y déposent le premier outil qu'ils ont forgé et frappent le sol de leur marteau avant de descendre à la mine. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[GD] (v1.0.69) Ancrage : Rythme des marteaux et origine « du métal, du feu et de la lave » [BD-T14 p.39] ; forge comme prière et marque du clan [GD v1.0.58, religion_nains]. L'autel et le culte des ancêtres sont [GD].",
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E016 : Montagne au nord de Ghrunke Dash (S007_E016) et au nord-ouest de Durnhalde, hors de la case de Ghrunke Dash ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_galeries_effondrees_vieille_veine",
+      "name": "Galeries effondrées de la Vieille Veine",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S006_E018",
+      "region_id": "royaume_des_nains_de_lest",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée de galerie à demi écroulée",
+        "étais brisés et wagonnets renversés",
+        "puits d'aération obstrués"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Anciennes galeries d'une veine de fer épuisée, effondrées et abandonnées depuis des générations : rats et araignées ont envahi les boyaux, les apprentis y récupèrent outils et ferraille. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[GD] (v1.0.69) Ancrage : Tunnels nains [BD-T5] ; les galeries et leur effondrement sont [GD] (aucune destruction de l'époque du jeu).",
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E018 : Montagne du royaume des nains de l'Est au nord-est de Durnhalde ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_puits_des_apprentis",
+      "name": "Puits des Apprentis",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S006_E017",
+      "region_id": "royaume_des_nains_de_lest",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "puits à treuil et cage de descente",
+        "veine de cuivre rouge dans la roche",
+        "niveaux profonds noyés de pénombre"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Mine de cuivre en activité au nord de Durnhalde, où les apprentis descendent pour leur première taille ; les niveaux profonds, délaissés, grouillent de rats et d'araignées. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[GD] (v1.0.69) Ancrage : Mines d'apprentissage de Durnhalde (v1.0.61) ; métaux de Ghrunke Dash [BD-T3 pl.16]. Le puits est [GD].",
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E017 : Montagne du royaume des nains de l'Est au nord de Durnhalde, en diagonale de Ghrunke Dash ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_relais_des_convois",
+      "name": "Relais des convois de minerai",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S008_E016",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "enclos à mulets et chariots bâchés",
+        "balance à minerai et entrepôt de pierre",
+        "feux de camp des convoyeurs"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Halte des convois de minerai et de charbon au sud de Ghrunke Dash : les chariots y sont pesés et regroupés sous l'escorte de mercenaires nains avant d'entrer dans la cité. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[GD] (v1.0.69) Ancrage : Chars blindés et mercenaires nains vendus à Ghrunke Dash [BD-T3 pl.17-18] ; vente à toutes les nations [BD]. Le relais est [GD].",
+        "[INFÉRÉ] (v1.0.69) Cellule S008_E016 : Montagne au sud de Ghrunke Dash (S007_E016) et au sud-ouest de Durnhalde, hors de la case de Ghrunke Dash et à l'est des cases volcaniques ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_prospecteurs",
+      "name": "Camp des prospecteurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S007_E018",
+      "region_id": "royaume_des_nains_de_lest",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes de cuir sous un surplomb",
+        "tranchées d'essai et tas de déblais",
+        "pics, tamis et sacs d'échantillons"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Camp de prospecteurs nains qui sondent les pentes à la recherche de nouvelles veines ; vautours et corbeaux rôdent sur les déblais. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
+        "[GD] (v1.0.69) Ancrage : Paiement en gemmes à Ghrunke Dash [BD-T3] ; le camp est [GD].",
+        "[INFÉRÉ] (v1.0.69) Cellule S007_E018 : Montagne du royaume des nains de l'Est à l'est de Durnhalde ; case libre."
       ]
     }
   ],

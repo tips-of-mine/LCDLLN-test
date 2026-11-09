@@ -481,6 +481,30 @@
       "description": "Hameau nain à flanc de montagne, à l'est de Ghrunke Dash : mines d'apprentissage et forges des jeunes nains."
     },
     {
+      "id": "hamlet_eisenkehl",
+      "name": "Eisenkehl",
+      "cell": "S008_E018",
+      "kind": "hameau",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [],
+      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde",
+      "description": "Hameau minier au sud-est de Durnhalde, à l'est de Kohlbrand : mines de fer étayées, terrils et treuils ; le minerai part à dos de mulet vers les forges de Ghrunke Dash."
+    },
+    {
+      "id": "hamlet_kohlbrand",
+      "name": "Kohlbrand",
+      "cell": "S008_E017",
+      "kind": "hameau",
+      "race": "nains",
+      "state": "intact",
+      "faction": "naine",
+      "start_for": [],
+      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde",
+      "description": "Hameau de houilleurs et de fondeurs au sud de Durnhalde : puits de charbon, meules de coke et bas fourneaux qui fument jour et nuit."
+    },
+    {
       "id": "hameau_silverglade",
       "name": "Silverglade",
       "cell": "N007_W006",
@@ -1922,6 +1946,41 @@
       "cell": "S005_W005",
       "kind": "camp",
       "description": "Plateau battu par le vent où les écuyers apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen [GD v1.0.68, région de départ de Wyrmhallow]."
+    },
+    {
+      "id": "poi_autel_des_ancetres",
+      "name": "Autel des Ancêtres",
+      "cell": "S006_E016",
+      "kind": "sanctuaire",
+      "description": "Niche taillée dans la falaise aux visages des ancêtres des clans : les jeunes nains y déposent leur premier outil forgé et frappent le sol de leur marteau [GD v1.0.69, région de départ de Durnhalde]."
+    },
+    {
+      "id": "poi_galeries_effondrees_vieille_veine",
+      "name": "Galeries effondrées de la Vieille Veine",
+      "cell": "S006_E018",
+      "kind": "ruine",
+      "description": "Galeries d'une veine de fer épuisée, effondrées et abandonnées depuis des générations ; rats et araignées ont envahi les boyaux [GD v1.0.69, région de départ de Durnhalde]."
+    },
+    {
+      "id": "poi_puits_des_apprentis",
+      "name": "Puits des Apprentis",
+      "cell": "S006_E017",
+      "kind": "salle",
+      "description": "Mine de cuivre où les apprentis de Durnhalde descendent pour leur première taille ; les niveaux profonds grouillent de rats et d'araignées [GD v1.0.69, région de départ de Durnhalde]."
+    },
+    {
+      "id": "poi_relais_des_convois",
+      "name": "Relais des convois de minerai",
+      "cell": "S008_E016",
+      "kind": "camp",
+      "description": "Halte où les convois de minerai et de charbon sont pesés et regroupés sous escorte de mercenaires nains avant d'entrer dans Ghrunke Dash [GD v1.0.69, région de départ de Durnhalde]."
+    },
+    {
+      "id": "poi_camp_des_prospecteurs",
+      "name": "Camp des prospecteurs",
+      "cell": "S007_E018",
+      "kind": "camp",
+      "description": "Tentes de prospecteurs nains qui sondent les pentes à la recherche de nouvelles veines ; vautours et corbeaux rôdent sur les déblais [GD v1.0.69, région de départ de Durnhalde]."
     }
   ],
   "imports": {

@@ -808,6 +808,54 @@ humaine : `RACE_FACTIONS` de `generate_city_services.py` inchangé. Script repro
   marmotte, mulet, poney et mouton ont un niveau par défaut (1-1) ; l'aire de dressage et le cairn
   pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+### 15.6 Durnhalde — Nains (v1.0.69)
+
+Centre S007_E017 (`hameau_durnhalde`, v1.0.61). Les 9 cases étaient déjà générées et toutes en montagne
+(aucune case volcanique, aucune rivière). Ghrunke Dash (S007_E016, cité naine, `ville_ghrunke_dash`) est
+dans la région mais **rien n'y est posé**, faune comprise ; le cratère du volcan et le Grand Hall des nains
+(S008_E014) ainsi que les cases volcaniques de l'ouest (S007_E015, S008_E015) sont hors région. Thème : les
+mines et les forges qui font la réputation de Ghrunke Dash (« célèbre dans l'Empire pour la qualité de ses
+métaux » `[BD-T3 pl.16]`, charbon `[BD-T9 p.12]`) — hameau minier, houillère, galeries effondrées, puits des
+apprentis, convois de minerai, prospecteurs, autel des ancêtres ; l'autel est ajouté aux `lieux_de_culte` de
+`religion_nains` (« Le Métal, le Feu et la Lave »). Routes selon la règle du propriétaire v1.0.65 : chaque
+nouveau hameau est relié au voisin le plus proche, sans étape : Kohlbrand à Durnhalde (case voisine
+orthogonale ; Ghrunke Dash n'est que diagonal), Eisenkehl à Kohlbrand (case voisine orthogonale ; Durnhalde
+n'est que diagonal) ; routes existantes inchangées (000126 Durnhalde → Ghrunke Dash, 000148
+Ghrunke Dash → hamlet_0196). Les PNJ de service des hameaux sont nains (`RACE_FACTIONS` de
+`generate_city_services.py` : `faction_dwarves`). Script reproductible : `lore_v1069.py` (appliqué au
+fichier v1.0.68).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| S006_E016 | montagne | POI **Autel des Ancêtres** (`lieu_autel_des_ancetres`, `poi_autel_des_ancetres`, `sanctuaire`) : niche aux visages des ancêtres des clans, premier outil forgé déposé en offrande, marteaux frappés au sol `[GD]` ; rythme des marteaux, « nés du métal, du feu et de la lave » `[BD-T14 p.39]` | corbeau (1-4), chèvre (1-3), marmotte (1), aigle (1) |
+| S006_E017 | montagne (nains de l'Est) | POI **Puits des Apprentis** (`lieu_puits_des_apprentis`, `poi_puits_des_apprentis`, `salle`) : mine de cuivre des apprentis de Durnhalde, niveaux profonds à vermine `[GD]` ; mines d'apprentissage de Durnhalde (v1.0.61) | rat (1), araignée (3-8), chèvre |
+| S006_E018 | montagne (nains de l'Est) | POI **Galeries effondrées de la Vieille Veine** (`lieu_galeries_effondrees_vieille_veine`, `poi_galeries_effondrees_vieille_veine`, `ruine`) : veine de fer épuisée, galeries effondrées depuis des générations `[GD]` (aucune destruction de l'époque du jeu) ; tunnels nains `[BD-T5]` | rat, araignée, corbeau, marmotte |
+| S007_E016 | montagne | Ghrunke Dash (grande ville, inchangée, rien n'est posé) | inchangée |
+| S007_E017 | montagne (nains de l'Est) | **Durnhalde** (hameau de départ) ; routes 000126 (Ghrunke Dash), 000185 (Kohlbrand) ; sentiers 000187 à 000191 vers les 5 POI | chien, mulet, rat |
+| S007_E018 | montagne (nains de l'Est) | POI **Camp des prospecteurs** (`lieu_camp_des_prospecteurs`, `poi_camp_des_prospecteurs`, `camp`) : tentes, tranchées d'essai, recherche de nouvelles veines `[GD]` ; paiement en gemmes `[BD-T3]` | vautour (1), aigle, marmotte, corbeau |
+| S008_E016 | montagne | POI **Relais des convois de minerai** (`lieu_relais_des_convois`, `poi_relais_des_convois`, `camp`) : pesée et regroupement des convois de minerai et de charbon sous escorte avant Ghrunke Dash `[GD]` ; chars blindés et mercenaires nains `[BD-T3 pl.17-18]` | mulet, âne (2-4), poney (1), corbeau |
+| S008_E017 | montagne (nains de l'Est) | Hameau de houilleurs **Kohlbrand** (`hamlet_kohlbrand`, `farm_hamlet` / `hameau`) : puits de charbon, meules de coke, bas fourneaux `[GD]` ; charbon `[BD-T9 p.12]` ; routes 000185 vers Durnhalde et 000186 vers Eisenkehl | mulet, âne, chien, chèvre, rat |
+| S008_E018 | montagne (nains de l'Est) | Hameau minier **Eisenkehl** (`hamlet_eisenkehl`, `farm_hamlet` / `hameau`) : mines de fer étayées, terrils, treuils ; minerai à dos de mulet vers les forges de Ghrunke Dash `[GD]` ; route 000186 vers Kohlbrand (voisin orthogonal ; Durnhalde n'est que diagonal) | mulet (1), chien (2-6), chèvre, rat |
+
+- **Routes** (`routes`) : 000185 Durnhalde → Kohlbrand, 000186 Kohlbrand → Eisenkehl (`road`, cases
+  voisines, sans `waypoints`) ; sentiers 000187 à 000191 (`path`, sans écurie) de Durnhalde vers les 5 POI.
+- **Services** : 2 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Durnhalde 2 (au lieu
+  de 1), Kohlbrand 2, Eisenkehl 1 ; 1102 → 1114 PNJ de service, tous nains dans les nouveaux hameaux.
+- **Placement d'Eisenkehl** (contrôlé par `tools/world_gen`) : au nord (S006_E017), le corridor des
+  départs (`connect_start_cities`) passait le long de S005_E017 (Baronnie de Moorks, géant brun 32-44,
+  dragon noir 45-55), qui devenait jouable au contact de la région ; à l'est (S007_E018), le hameau rendait
+  inaccessible un lieu procédural de la case (avertissement « chemin impossible vers …_mine_0 »). Eisenkehl
+  est donc au sud-est (S008_E018) : corridor inchangé, 181 → 181 cellules générées, aucune ajoutée ni
+  perdue, aucun nouvel avertissement du dry-run.
+- **Faune** : les 8 cases hors Ghrunke Dash n'avaient aucune créature, aucune n'est retirée ; espèces
+  existantes de niveau 1 à 10 seulement. La créature de lave (S008_E014), le géant de feu (S009_E014), les
+  géants bruns et dragons noirs (S005_E015 à S005_E017) restent hors région.
+- **Points incertains** : noms (consonance germanique alignée sur Durnhalde) ; le culte des ancêtres est
+  inventé (la BD ne donne que le rythme des marteaux) ; l'« eau à l'est » de Ghrunke Dash `[BD-T3 pl.16]`
+  n'a pas de rivière dans les cellules ; le Relais et l'Autel touchent la case de Ghrunke Dash, desservis par
+  des sentiers depuis Durnhalde ; mulet, poney, rat, marmotte, aigle et vautour ont un niveau par défaut
+  (1-1) ; l'autel et le puits pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

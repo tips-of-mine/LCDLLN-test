@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -32,7 +32,8 @@
     "S004_W004", "S003_W005", "S003_W004", "S003_W003", "S004_W005", "S004_W003", "S005_W005", "S005_W004", "S005_W003",
     "N009_E013", "N008_E013", "N007_E011", "N007_E012", "N007_E013",
     "S006_E018", "S007_E018", "S008_E018",
-    "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005"
+    "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005",
+    "N005_W009", "N006_W009", "N006_W008"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -364,6 +365,30 @@
       ],
       "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine d'Aurore",
       "description": "Hameau des Chevaliers de la Justice sur la rive est du lac d'Aurore, face à l'île de la cité."
+    },
+    {
+      "id": "hamlet_tithemead",
+      "name": "Tithemead",
+      "cell": "N010_W010",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "justice",
+      "start_for": [],
+      "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
+      "description": "Ferme de la dîme au nord d'Oathford, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons d'Aurore."
+    },
+    {
+      "id": "hamlet_wardholt",
+      "name": "Wardholt",
+      "cell": "N009_W009",
+      "kind": "hameau",
+      "race": "humains",
+      "state": "intact",
+      "faction": "justice",
+      "start_for": [],
+      "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
+      "description": "Hameau de garnison à palissade à l'est d'Oathford, face à la forêt elfique : poste de garde de l'Ordre de la Justice, bûcherons et charbonniers."
     },
     {
       "id": "hameau_wyrmhallow",
@@ -1758,6 +1783,34 @@
       "cell": "N004_W012",
       "kind": "camp",
       "description": "Abris de bois flotté sur la longue plage au sud d'Altenberg, d'où de faux feux attirent les navires sur les rochers [GD v1.0.64, région de départ de Dawnmere]."
+    },
+    {
+      "id": "poi_stele_des_serments",
+      "name": "Stèle des Serments",
+      "cell": "N008_W010",
+      "kind": "sanctuaire",
+      "description": "Stèle de granit gravée de la devise de l'Ordre, au sud d'Oathford : les novices y prêtent serment devant un frère aîné avant d'entrer à Aurore [GD v1.0.66, région de départ d'Oathford]."
+    },
+    {
+      "id": "poi_lices_des_novices",
+      "name": "Lices des novices",
+      "cell": "N010_W010",
+      "kind": "camp",
+      "description": "Lices, quintaines et râteliers d'armes de bois au bord des champs de Tithemead, où les novices s'exercent à la lance et à l'épée [GD v1.0.66, région de départ d'Oathford]."
+    },
+    {
+      "id": "poi_camp_des_parjures",
+      "name": "Camp des parjures",
+      "cell": "N010_W009",
+      "kind": "camp",
+      "description": "Huttes d'écuyers chassés de l'Ordre pour parjure et de brigands à la lisière ; ils rançonnent les charrois de Tithemead [GD v1.0.66, région de départ d'Oathford]."
+    },
+    {
+      "id": "poi_ruines_tour_du_guet",
+      "name": "Ruines de la tour du guet",
+      "cell": "N008_W009",
+      "kind": "ruine",
+      "description": "Tour de guet éventrée face à la forêt elfique, abandonnée depuis des générations ; cave envahie d'araignées [GD v1.0.66, région de départ d'Oathford]."
     }
   ],
   "imports": {

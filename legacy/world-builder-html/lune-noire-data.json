@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.65",
+    "version": "1.0.66",
     "notes": [
+      "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case d'Aurore ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
       "v1.0.65 — Réseau routier : lot de corrections du propriétaire, routes de plus de 5 cases remplacées par des chaînes de villes, villes isolées reliées, réseau connexe.",
       "v1.0.64 : [CARTE] région de départ des Chevaliers de la Lumière autour de Dawnmere (N005_W011) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Commanderie rurale [GD] Brightholm (N005_W010) et fermes [GD] Whitesheaf (N006_W011) et Lambsfold (N004_W011) ; POI [GD] Calvaire des pèlerins (N006_W012), Chapelle de l'ermite (N006_W010), Ruines du prieuré (N004_W010), Camp des naufrageurs (N004_W012) ; routes locales 000135 à 000137 et sentiers 000138 à 000141 ; faune existante de niveau 1 à 10 rattachée aux cases ; trois lieux ajoutés aux lieux de culte de l'Église (lore.religions). Rien dans la case d'Altenberg. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.2.",
       "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
@@ -244,7 +245,8 @@
         "[BD-T11] Dieu vide l'Empire de ses croyants et les projette dans un autre plan d'existence — protégés pour l'éternité.",
         "[BD-T11] La faction Justice n'est plus présente dans le monde physique après T11 — plan d'existence séparé.",
         "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Oathford (hameau_oathford, N009_W010), près de Aurore. « Les départs ne sont pas en fonction de la race, mais de la faction. »"
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Oathford (hameau_oathford, N009_W010), près de Aurore. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.66) Région de départ 3×3 autour d'Oathford (LORE_BD §15.3) : ferme Tithemead, hameau de garnison Wardholt, Stèle des Serments, Lices des novices, Camp des parjures, Ruines de la tour du guet ; routes locales vers Oathford ; faune de niveau 1 à 10. Rien dans la case d'Aurore ni dans le lit du fleuve."
       ],
       "faction_relations": [
         {
@@ -306,7 +308,24 @@
           "type": "hameau",
           "id": "hameau_oathford",
           "cell": "N009_W010",
-          "pres_de": "ville_sysigie"
+          "pres_de": "ville_sysigie",
+          "region": {
+            "cells": [
+              "N010_W011",
+              "N010_W010",
+              "N010_W009",
+              "N009_W011",
+              "N009_W010",
+              "N009_W009",
+              "N008_W011",
+              "N008_W010",
+              "N008_W009"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "syzygie",
@@ -20685,6 +20704,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_oathford_ecurie_02",
+          "name": "Raline Morcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_oathford_ecurie_03",
+          "name": "Ulus Boisrive",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_oathford_cimetiere_01",
           "name": "Odoald Noirfort",
           "gender": "male",
@@ -21894,6 +21929,262 @@
           "id": "pnj_hamlet_lambsfold_cimetiere_01",
           "name": "Braneline Pierreval",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_tithemead",
+      "name": "Tithemead",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N010_W010",
+      "anchor_tile": "N010_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_justice",
+      "region_id": "syzygie",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: plain",
+        "Ferme de la région de départ d'Oathford"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Ferme de la dîme : son blé et son foin, levés pour l'Ordre, nourrissent les garnisons d'Aurore et les novices d'Oathford. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[INFÉRÉ] (v1.0.66) Cellule N010_W010 : Plaine de la Syzygie au nord d'Oathford, sur la rive est du fleuve (N010_W011), hors du lit ; case libre.",
+        "[GD] (v1.0.66) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.66) Économie : ferme : blé, foin, volailles et chevaux de remonte pour la garnison d'Aurore ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.66) Ancrage : Aurore, « lieu de paix et d'harmonie à l'abri des puissantes murailles » [BD-T4 p.39] ; la ferme de la dîme est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_tithemead_auberge_01",
+          "name": "Darric Corbrade",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_tithemead_potions_01",
+          "name": "Darisse Marlrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hamlet_tithemead_armures_01",
+          "name": "Odoette Brunlande",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_tithemead_ecurie_01",
+          "name": "Toria Pierrelande",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_tithemead_cimetiere_01",
+          "name": "Garisse Chenombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_wardholt",
+      "name": "Wardholt",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N009_W009",
+      "anchor_tile": "N009_W009",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "chevaliers_de_la_justice",
+      "region_id": "region_premiere_province_empire",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest_edge",
+        "Hameau de garnison de la région de départ d'Oathford"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Hameau de garnison à palissade : un poste de garde de l'Ordre de la Justice veille sur la lisière, avec des bûcherons et des charbonniers qui fournissent le bois d'Aurore. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[INFÉRÉ] (v1.0.66) Cellule N009_W009 : Lisière à l'est d'Oathford, face à la forêt elfique (N009_W008) ; case libre.",
+        "[GD] (v1.0.66) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.66) Économie : hameau de garnison : bois d'œuvre, charbon de bois, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.66) Ancrage : Chevaliers de Justice et devise de l'Ordre récitée par les novices [BD-T4] ; le poste de garde est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_wardholt_auberge_01",
+          "name": "Torette Rochcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_wardholt_ecurie_01",
+          "name": "Vara Hautcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_wardholt_cimetiere_01",
+          "name": "Garan Grisrive",
+          "gender": "male",
           "race_id": "race_human",
           "service": "cimetiere",
           "metier": "fossoyeur"
@@ -157830,7 +158121,8 @@
       "notes": [
         "[BD-T00 p.38] Renard porté comme gibier ; renard poursuivi.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W010, N004_W011, N004_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W010, N004_W011, N004_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N009_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157841,7 +158133,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
@@ -157852,7 +158144,13 @@
         "N006_W012",
         "N006_W010",
         "N004_W011",
-        "N004_W010"
+        "N004_W010",
+        "N010_W011",
+        "N010_W009",
+        "N009_W009",
+        "N008_W011",
+        "N008_W010",
+        "N008_W009"
       ]
     },
     {
@@ -157875,7 +158173,8 @@
         "[BD-T4 p.19] Petit chien blanc dans une taverne.",
         "Molosses de guerre : creature_molosse_imperial.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N002_W010, N001_W009 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010, N004_W011 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010, N009_W009 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -157884,7 +158183,7 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
@@ -157895,7 +158194,10 @@
         "N006_W011",
         "N005_W011",
         "N005_W010",
-        "N004_W011"
+        "N004_W011",
+        "N010_W010",
+        "N009_W010",
+        "N009_W009"
       ]
     },
     {
@@ -158138,14 +158440,21 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N008_W011 (LORE_BD §15.3)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Mustélidés",
       "variantes": [
         "Loutre",
         "loutre aquatique"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "N010_W011",
+        "N008_W011"
+      ],
+      "habitat": "Région de départ d'Oathford (Syzygie, autour d'Aurore)."
     },
     {
       "id": "animal_belette",
@@ -158410,7 +158719,8 @@
         "[BD-T1 p.6] Le lapin rôti que vole Pile-ou-Face.",
         "[BD-A4 p.13] Lièvre roux.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W011, N006_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W011, N006_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W010, N009_W009, N008_W011, N008_W010 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Autres mammifères",
@@ -158419,7 +158729,7 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -158432,7 +158742,12 @@
         "N002_W011",
         "N006_W012",
         "N006_W011",
-        "N006_W010"
+        "N006_W010",
+        "N010_W011",
+        "N010_W010",
+        "N009_W009",
+        "N008_W011",
+        "N008_W010"
       ]
     },
     {
@@ -158516,7 +158831,8 @@
       "notes": [
         "[BD-A4 p.4, p.16] Bœufs, âne et chevaux blancs.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010, N004_W011 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010, N004_W011 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -158526,13 +158842,14 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E017",
         "N003_W010",
         "N005_W010",
-        "N004_W011"
+        "N004_W011",
+        "N010_W010"
       ]
     },
     {
@@ -158602,7 +158919,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N008_W010 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -158612,9 +158930,10 @@
       ],
       "bestiaire": true,
       "zones_chasse": [
-        "N004_W011"
+        "N004_W011",
+        "N008_W010"
       ],
-      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg)."
+      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore)."
     },
     {
       "id": "animal_cerf",
@@ -158654,7 +158973,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-T00 p.38] Chevreuil poursuivi (rangé ici faute de fiche « chevreuil »).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N009_W009 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Cervidés",
@@ -158662,12 +158982,14 @@
         "Biche"
       ],
       "bestiaire": true,
-      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
         "N012_E008",
-        "N006_W010"
+        "N006_W010",
+        "N010_W009",
+        "N009_W009"
       ]
     },
     {
@@ -158733,7 +159055,8 @@
         "[BD-A3 pl.19] Chevaux de Parsifal.",
         "[BD-THS p.21] Les chevaux non habitués fuient devant béhémoths et léviathans (rang 3).",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N005_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -158742,14 +159065,15 @@
         "cheval sauvage"
       ],
       "bestiaire": true,
-      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N018_E014",
         "N018_E015",
         "N018_E016",
         "N003_W011",
-        "N005_W010"
+        "N005_W010",
+        "N010_W010"
       ]
     },
     {
@@ -158790,7 +159114,8 @@
       "notes": [
         "[BD-A4 p.4, p.16] Âne parmi les bêtes domestiques.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N001_W009 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N004_W011 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N009_W009 (LORE_BD §15.3)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Équidés",
@@ -158798,12 +159123,13 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
         "N001_W009",
-        "N004_W011"
+        "N004_W011",
+        "N009_W009"
       ]
     },
     {
@@ -159026,7 +159352,8 @@
         "[BD-T1 p.9-12] Wismerhill et Pile-ou-Face tentent de voler les poules de Ghorghor Bey (Haywick).",
         "[BD-M1 p.14] Poules et coqs survivants d'un village.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010, N003_W009, N002_W010 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011, N005_W011, N005_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010, N009_W010 (LORE_BD §15.3)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -159035,7 +159362,7 @@
         "poulet"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
@@ -159044,7 +159371,9 @@
         "N002_W010",
         "N006_W011",
         "N005_W011",
-        "N005_W010"
+        "N005_W010",
+        "N010_W010",
+        "N009_W010"
       ]
     },
     {
@@ -159063,7 +159392,8 @@
       "notes": [
         "[BD-M1 p.14] Coqs survivants d'un village.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W010 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W011 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W010 (LORE_BD §15.3)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Gallinacés",
@@ -159072,12 +159402,13 @@
         "coq magique"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
         "N003_W010",
-        "N006_W011"
+        "N006_W011",
+        "N010_W010"
       ]
     },
     {
@@ -159293,7 +159624,8 @@
         "[BD-M1 p.5] Oiseaux noirs autour du crâne volant d'Erypt.",
         "Oiseaux démoniaques : creature_oiseau_noir_kruikna.",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W011, N002_W009 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N004_W012, N004_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -159302,7 +159634,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -159311,7 +159643,12 @@
         "N002_W009",
         "N006_W012",
         "N004_W012",
-        "N004_W010"
+        "N004_W010",
+        "N010_W011",
+        "N010_W009",
+        "N008_W011",
+        "N008_W010",
+        "N008_W009"
       ]
     },
     {
@@ -159745,7 +160082,8 @@
         "[BD-A4 p.20] L'araignée « petite sœur ».",
         "Archétype de jeu existant : « Araignée des sous-bois » (game/data/creatures/archetypes.json, id 105).",
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N002_W009, N001_W011 (LORE_BD §15.1).",
-        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010, N004_W010 (LORE_BD §15.2).",
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -159755,7 +160093,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -159763,7 +160101,9 @@
         "N002_W009",
         "N001_W011",
         "N006_W010",
-        "N004_W010"
+        "N004_W010",
+        "N010_W009",
+        "N008_W009"
       ]
     },
     {
@@ -175412,6 +175752,12 @@
             "id": "lieu_ruines_du_prieure",
             "nom": "Ruines du prieuré",
             "nature": "[GD] Prieuré abandonné depuis des générations (région de départ de Dawnmere)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_stele_des_serments",
+            "nom": "Stèle des Serments",
+            "nature": "[GD] Stèle où les novices de l'Ordre de la Justice prêtent serment (région de départ d'Oathford)."
           }
         ],
         "rites": [
@@ -175531,7 +175877,8 @@
           "[GD] (v1.0.58) Temples des villes humaines sans autre culte attesté rattachés par défaut à l'Église (liste dans lieux_de_culte) ; les PNJ de service (« prêtre ») ne sont pas modifiés.",
           "[ÉPOQUE] La réunion des deux ordres sous Parsifal (T8), le retrait divin (T10) et le départ de Syzygie (T11) sont l'avenir du monde jouable ou des quêtes de récit.",
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
-          "[GD] (v1.0.64) Région de départ de Dawnmere : Calvaire des pèlerins, Chapelle de l'ermite et Ruines du prieuré ajoutés aux lieux de culte ; commanderie rurale de Brightholm (LORE_BD §15.2)."
+          "[GD] (v1.0.64) Région de départ de Dawnmere : Calvaire des pèlerins, Chapelle de l'ermite et Ruines du prieuré ajoutés aux lieux de culte ; commanderie rurale de Brightholm (LORE_BD §15.2).",
+          "[GD] (v1.0.66) Région de départ d'Oathford : Stèle des Serments ajoutée aux lieux de culte (LORE_BD §15.3)."
         ]
       },
       {
@@ -188894,10 +189241,16 @@
       "has_mountain_range": false,
       "river_direction": "nord",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_corbeau",
+        "animal_loutre",
+        "animal_renard"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner).",
+        "[GD] (v1.0.66) Région de départ d'Oathford : case du fleuve de Sysigie, aucun lieu posé (lit au centre de la case) ; faune de niveau 1 à 10 seulement (LORE_BD §15.3)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -188914,9 +189267,19 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_poule",
+        "animal_coq",
+        "animal_chien",
+        "animal_boeuf",
+        "animal_cheval",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Ferme Tithemead (hamlet_tithemead) de la région de départ d'Oathford (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Lices des novices (lieu_lices_des_novices) de la région de départ d'Oathford (LORE_BD §15.3)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -188932,9 +189295,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_renard",
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_biche"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Camp des parjures (lieu_camp_des_parjures) de la région de départ d'Oathford (LORE_BD §15.3)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -189804,10 +190174,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_poule"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Oathford (hameau_oathford, faction Chevaliers de la Justice)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Oathford (hameau_oathford, faction Chevaliers de la Justice).",
+        "[GD] (v1.0.66) Centre de la région de départ 3×3 des Chevaliers de la Justice (N010_W011, N010_W010, N010_W009, N009_W011, N009_W010, N009_W009, N008_W011, N008_W010, N008_W009) ; niveaux 1 à 10 (LORE_BD §15.3)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -189824,9 +190198,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chien",
+        "animal_ane",
+        "animal_biche",
+        "animal_lapin",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Hameau de garnison Wardholt (hamlet_wardholt) de la région de départ d'Oathford (LORE_BD §15.3)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -190682,10 +191064,16 @@
       "has_mountain_range": false,
       "river_direction": "nord",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_corbeau",
+        "animal_loutre",
+        "animal_renard"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner)."
+        "[INFÉRÉ] (v1.0.55) Fleuve de Sysigie (riv_fleuve_sysigie, nom à donner).",
+        "[GD] (v1.0.66) Région de départ d'Oathford : case du fleuve de Sysigie, aucun lieu posé (lit au centre de la case) ; faune de niveau 1 à 10 seulement (LORE_BD §15.3)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -190702,9 +191090,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_mouton",
+        "animal_lapin",
+        "animal_corbeau",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Stèle des Serments (lieu_stele_des_serments) de la région de départ d'Oathford (LORE_BD §15.3)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -190721,9 +191116,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.66) Ruines de la tour du guet (lieu_ruines_tour_du_guet) de la région de départ d'Oathford (LORE_BD §15.3)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -215942,6 +216343,90 @@
         "S015_E012",
         "S014_E013"
       ]
+    },
+    {
+      "id": "000166",
+      "type": "road",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N010_W010",
+      "to_ville_id": "hamlet_tithemead",
+      "to_lieu_id": "",
+      "description": "Route locale d'Oathford à Tithemead.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Voisin le plus proche : Oathford, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.3."
+      ]
+    },
+    {
+      "id": "000167",
+      "type": "road",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N009_W009",
+      "to_ville_id": "hamlet_wardholt",
+      "to_lieu_id": "",
+      "description": "Route locale d'Oathford à Wardholt.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Voisin le plus proche : Oathford, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.3."
+      ]
+    },
+    {
+      "id": "000168",
+      "type": "path",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N008_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_stele_des_serments",
+      "description": "Sentier d'Oathford à « Stèle des Serments ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
+      ]
+    },
+    {
+      "id": "000169",
+      "type": "path",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N010_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_lices_des_novices",
+      "description": "Sentier d'Oathford à « Lices des novices ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
+      ]
+    },
+    {
+      "id": "000170",
+      "type": "path",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N010_W009",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_des_parjures",
+      "description": "Sentier d'Oathford à « Camp des parjures ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
+      ]
+    },
+    {
+      "id": "000171",
+      "type": "path",
+      "from_place": "N009_W010",
+      "from_ville_id": "hameau_oathford",
+      "from_lieu_id": "",
+      "to_place": "N008_W009",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_tour_du_guet",
+      "description": "Sentier d'Oathford à « Ruines de la tour du guet ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
+      ]
     }
   ],
   "competences": [
@@ -231697,6 +232182,334 @@
         "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Camp de naufrageurs sur la longue plage au sud d'Altenberg : de faux feux y attirent les navires sur les rochers ; la commanderie y envoie ses novices. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
         "[GD] (v1.0.64) Ancrage : Altenberg « sur un rocher battu par les vagues » [BD-T2 p.32-33], reliée à Lhynn par une longue plage (fiche d'Altenberg) et dotée d'un port ; le camp est [GD].",
         "[INFÉRÉ] (v1.0.64) Cellule N004_W012 : Plage au sud d'Altenberg, hors de la case de la citadelle ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_stele_des_serments",
+      "name": "Stèle des Serments",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N008_W010",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "stèle de granit gravée de la devise de l'Ordre",
+        "cercle de bannières de l'Ordre de la Justice",
+        "pupitre de pierre des frères aînés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Stèle de granit au sud d'Oathford où les novices prêtent serment à l'Ordre de la Justice devant un frère aîné avant d'être admis à Aurore. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Ancrage : Devise de l'Ordre récitée par les novices, « le Granit, un ordre séculaire et le cœur pur des Chevaliers de Justice » ; les frères aînés valident les décisions [BD-T4]. La stèle est [GD].",
+        "[INFÉRÉ] (v1.0.66) Cellule N008_W010 : Plaine de la Première Province au sud d'Oathford, à l'écart du fleuve (N008_W011) et de Justfall (N007_W011) ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_lices_des_novices",
+      "name": "Lices des novices",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N010_W010",
+      "region_id": "syzygie",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "lices et quintaines",
+        "râteliers d'armes de bois",
+        "tribune des maîtres d'armes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Lices au bord des champs de Tithemead, à bonne distance de la ferme : les novices d'Oathford s'y exercent à la lance et à l'épée sous l'œil des maîtres d'armes. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Ancrage : Novices de l'Ordre de la Justice [BD-T4 p.38-39] ; les lices sont [GD].",
+        "[INFÉRÉ] (v1.0.66) Cellule N010_W010 : Plaine de la Syzygie au nord d'Oathford, dans la case de la ferme Tithemead, hors du plateau de la ferme (POI à distance, comme les Ruines de Wismerhill) ; hors du fleuve (N010_W011)."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_parjures",
+      "name": "Camp des parjures",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N010_W009",
+      "region_id": "syzygie",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "huttes de branchages",
+        "écus effacés cloués aux arbres",
+        "feu de camp caché sous les frondaisons"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Camp d'écuyers chassés de l'Ordre pour parjure et de brigands à la lisière nord-est : ils rançonnent les charrois de Tithemead ; Wardholt y envoie ses novices. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Ancrage : Thème du serment de l'Ordre [BD-T4] ; les parjures sont [GD] (aucun personnage de la BD).",
+        "[INFÉRÉ] (v1.0.66) Cellule N010_W009 : Lisière de la Syzygie au nord-est d'Oathford, entre Tithemead et Wardholt ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_ruines_tour_du_guet",
+      "name": "Ruines de la tour du guet",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N008_W009",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour ronde éventrée",
+        "escalier à vis effondré",
+        "cave envahie d'araignées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Ancienne tour de guet face à la forêt elfique, abandonnée depuis des générations : araignées et corbeaux y nichent ; premiers pas des novices hors du hameau. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Ancrage : Abandonnée depuis des générations (aucune destruction de l'époque du jeu) ; la tour est [GD].",
+        "[INFÉRÉ] (v1.0.66) Cellule N008_W009 : Lisière de la Première Province au sud-est d'Oathford, en bordure de la forêt elfique (N008_W008) ; case libre."
       ]
     }
   ],

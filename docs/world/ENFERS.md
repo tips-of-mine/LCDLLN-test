@@ -40,7 +40,9 @@ par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (gen
 | S001_E000 | `V` | Poste de garde du Portail I (`camp`), à 400 m à l'est du portail |
 
 Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
-(`routes`) ne couvre pas les Enfers. Lore et faune : [`LORE_BD.md`](LORE_BD.md) §15.8.
+(`routes`) ne couvre pas les Enfers. Faune procédurale de la carte (`Population.cpp`, `CreatureFor`) :
+diablotins errants (150) près de la Citadelle, chiens des cendres (151) ensuite, ogres (161, niveau 10)
+au plus loin ; aucun élémentaire de braise (164, niveau 12). Lore et faune : [`LORE_BD.md`](LORE_BD.md) §15.8.
 
 ## 2. La Citadelle de la Légion
 

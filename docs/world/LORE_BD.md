@@ -958,10 +958,12 @@ au fichier v1.0.70).
 - **Générateur** : `Places.cpp` donne les mines procédurales des coins à la Légion (race `demons`) au lieu
   des nains (aucune ville démon sur le continent : sortie des Royaumes inchangée) ; tests `world_gen_tests`,
   `world_places_tests`, `start_locations_tests` passés à 9 cellules. 5 → 9 cellules générées.
-- **Points incertains** : noms ; la population procédurale de `tools/world_gen` reste par biome : les cases
-  `V` portent toujours l'élémentaire de braise (archétype 164, niveau 12) et les coins `M` l'ogre des
-  collines (161, niveau 10) et des légionnaires (241, niveau 12) dans les mines — à ramener sous 10 si la
-  décision 2 doit s'appliquer aussi aux spawners ; le poste de garde est sur la case du Portail I (à
+- **Faune procédurale** : sur la carte des Enfers, `Population.cpp` (`CreatureFor`) ne tire plus par biome
+  mais dans la tranche 1-10 : diablotins (150) près de la Citadelle, puis chiens des cendres (151), et
+  ogres des collines (161, niveau 10) au plus loin ; plus d'élémentaire de braise (164, niveau 12). Les
+  légionnaires (241) des mines des coins sont des PNJ d'ambiance de la Légion (hostiles aux seuls humains).
+  Continent inchangé. Test `world_gen_tests` « faune de niveau 1 a 10 ».
+- **Points incertains** : noms ; le poste de garde est sur la case du Portail I (à
   400 m) ; la région `region_enfers_t00` (Enfers des préquelles, hors carte) sert faute de région du lore
   pour la carte jouable ; le Bastion et l'Autel pourraient porter des quêtes d'accueil (aucune créée).
 

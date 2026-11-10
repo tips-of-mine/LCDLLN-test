@@ -294,6 +294,20 @@ namespace
 			const std::string text = ReadText(tmp / "zones/enfers_n000_e000/spawners.json");
 			Check(text.find("\"archetypeId\": 241") != std::string::npos, "enfers : legionnaires a la Citadelle");
 		}
+		// v1.0.71 : faune de la tranche débutant (1 à 10) dans les 9 cellules, aucun
+		// élémentaire de braise (164, niveau 12) ; diablotins et chiens des cendres présents.
+		{
+			bool noEmber = true, hasImp = false;
+			for (const char* c : { "n000_e000", "n001_e000", "n000_e001", "s001_e000", "n000_w001",
+				"n001_w001", "n001_e001", "s001_w001", "s001_e001" })
+			{
+				const std::string text = ReadText(tmp / ("zones/enfers_" + std::string(c) + "/spawners.json"));
+				noEmber = noEmber && text.find("\"archetypeId\": 164,") == std::string::npos;
+				hasImp = hasImp || text.find("\"archetypeId\": 150,") != std::string::npos
+					|| text.find("\"archetypeId\": 151,") != std::string::npos;
+			}
+			Check(noEmber && hasImp, "enfers : faune de niveau 1 a 10 (pas d'elementaire de braise)");
+		}
 		// Cimetière neutre (toutes factions) à la Citadelle.
 		{
 			const std::string text = ReadText(tmp / "zones/enfers_n000_e000/respawn_points.txt");

@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -43,7 +43,8 @@
     "N023_W014", "N023_W013", "N023_W012", "N023_W011", "N023_W010", "N023_W009", "N022_W015", "N022_W014", "N022_W009",
     "N021_W015", "N021_W012", "N021_W011", "N021_W010", "N021_W009", "N020_W015", "N020_W012", "N020_W009", "N019_W015",
     "N019_W012", "N019_W009", "N018_W015", "N018_W012", "N018_W011", "N018_W010", "N018_W009", "N017_W015", "N017_W014",
-    "N017_W009", "N016_W014", "N016_W013", "N016_W012", "N016_W011", "N016_W010", "N016_W009"
+    "N017_W009", "N016_W014", "N016_W013", "N016_W012", "N016_W011", "N016_W010", "N016_W009",
+    "S004_W006", "S004_W002", "S005_W008", "S006_W004", "S006_W005", "S006_W006", "S006_W007", "S006_W008"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -95,10 +96,10 @@
       "        -_.....M~:::....~~~~~~~...........TTt.,-  ",
       "        --,...M~~~..~~~.~~~~~~~..p........Tt..,-  ",
       "         -,..M..~~..~~~.tttttt......~~~~~.:::.,-  ",
-      "        -_......^^^.~~~.tTTTTTt....~~~~~~.~::.,-  ",
-      "       --_.....^**^^...ptTTTTTTt.~~~~~~~~.~~:.,-  ",
-      "     --__.....^^***^^^^..tT%TTTt.~~~~~~~~.~::_,-  ",
-      "    -,__..tttt^*^^^^^^^^^.tttttt.~~~~~^^^.^^..,-  ",
+      "        -_......^^^.~~~.tTTTTTt....~~~~~~~~::.,-  ",
+      "       --_.....^**^^...ptTTTTTTt.~~~~~~~~~~~:.,-  ",
+      "     --__.....^^***^^^^..tT%TTTt.~~~~~~~~~~::_,-  ",
+      "    -,__..tttt^*^^^^^^^^^.tttttt.~~~~~^^^:^^..,-  ",
       "    -,....tTTT^^^.^^^^^^^^.......~~~^^^^^^^^^^,-  ",
       "    -,....tTTT___,,^^^^^^^........VV^^^^^^^^^^,-  ",
       "     -,...ttt,-----^^^^..........VVVV^^^^^^^^^,-  ",
@@ -425,26 +426,26 @@
     {
       "id": "hamlet_cragfold",
       "name": "Cragfold",
-      "cell": "S004_W003",
+      "cell": "S004_W002",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
       "start_for": [],
-      "source": "[GD] v1.0.68 (nom à valider) ; cellule [INFÉRÉ], région de départ de Wyrmhallow",
+      "source": "[GD] v1.0.68 (nom à valider) ; cellule [DÉCISION] v1.0.76 (S004_W002, déplacée d'une case vers l'est depuis S004_W003 ; hors de la région de départ 3×3 de Wyrmhallow, dont elle reste la bergerie)",
       "description": "Hameau de bergers à l'est de Wyrmhallow : bergeries de pierre sèche, chèvres, moutons et bœufs de montagne dont une part monte au Palais pour nourrir les dragons de l'Ordre."
     },
     {
       "id": "hamlet_bridlecrag",
       "name": "Bridlecrag",
-      "cell": "S004_W005",
+      "cell": "S004_W006",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
       "start_for": [],
-      "source": "[GD] v1.0.68 (nom à valider) ; cellule [INFÉRÉ], région de départ de Wyrmhallow",
-      "description": "Haras de montagne à l'ouest de Wyrmhallow : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
+      "source": "[GD] v1.0.68 (nom à valider) ; cellule [DÉCISION] v1.0.76 (S004_W006, déplacée d'une case vers l'ouest depuis S004_W005 ; hors de la région de départ 3×3 de Wyrmhallow, dont elle reste le haras)",
+      "description": "Haras de montagne à l'ouest de Wyrmhallow, aux confins des neiges éternelles : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
     },
     {
       "id": "hameau_grakhul",
@@ -671,13 +672,13 @@
     {
       "id": "ville_der_hem_shelsem",
       "name": "Der Hem Shelbem",
-      "cell": "S009_E010",
+      "cell": "S010_E010",
       "kind": "ville",
       "race": "humains",
       "state": "ruine",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] HS",
+      "source": "[BD] HS ; cellule [DÉCISION] v1.0.76 (S010_E010, descendue d'une case depuis S009_E010)",
       "description": "Lieu où le Palais Roulant fut aperçu lors de la grande bataille (illustration BD couleur)."
     },
     {

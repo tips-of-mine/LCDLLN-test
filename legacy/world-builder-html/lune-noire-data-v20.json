@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.75",
+    "version": "1.0.76",
     "notes": [
+      "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Orderfen → Hayfen par la terre, 000064 Lhynn → Dustfen, 000073 Dustfen → Clearfen, 000076 Ashwick → Stonehaven, 000074 Der Hem Shelbem → Frosthollow (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Coldport – Frosthollow (000079, en S007_E006) vers la Forteresse Naine d'Heureux ; tronçon Dunfold → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harrowbrook → Equiton (sable), 000225 Brightholm → Ruines du prieuré (remplace 000140), 000201 Greyhedge → Ambermead devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bridlecrag S004_W005 → S004_W006, Cragfold S004_W003 → S004_W002 (hors de la région 3×3 de Wyrmhallow). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
       "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brinehaven (N017_W010, port franc neutre), Duskmoor (N022_W010, Lune Noire), Truceholm (N019_W010, îlot, neutre), Lanternhold (N021_W014, Empire). Ports avec ponton à Hayfen et Orderfen ; ligne maritime du Nord Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222) et navette de Truceholm (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
       "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazelgate (N007_E002, Elfes des bois, neutre), Fellwatch (N009_W001, humains, Empire), Hollowgate (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Greyhedge et Hollowgate (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
       "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Syzygie → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
@@ -625,7 +626,8 @@
         "[BD-T7] p.16-17 : avec Fratus, prennent Northind ; [BD-T10] p.9 : neutres, offrent une dizaine de dragons à Haazheel ; [BD-T14] p.23 : consumés par les dragons du Premier Dragon, le pacte étant rompu.",
         "[GD] (v1.0.58) Religion : « Croyances mineures et cultes anciens » (lore.religions, religion_croyances_mineures).",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Wyrmhallow (hameau_wyrmhallow, S004_W004), près de Palais des Maîtres des Dragons. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[GD] (v1.0.68) Région de départ 3×3 autour de Wyrmhallow (LORE_BD §15.5) : hameaux Cragfold (bergers) et Bridlecrag (élevage de montures), Nids abandonnés des Crêtes, Cairn des Ailes tombées, Ruines du pont des Gorges, Aire de dressage des écuyers ; routes locales vers Wyrmhallow ; faune de niveau 1 à 10, dragons adultes retirés de S003_W005 et S005_W005. Rien dans les cases du Palais (S003_W004) et d'Equiton (S005_W004)."
+        "[GD] (v1.0.68) Région de départ 3×3 autour de Wyrmhallow (LORE_BD §15.5) : hameaux Cragfold (bergers) et Bridlecrag (élevage de montures), Nids abandonnés des Crêtes, Cairn des Ailes tombées, Ruines du pont des Gorges, Aire de dressage des écuyers ; routes locales vers Wyrmhallow ; faune de niveau 1 à 10, dragons adultes retirés de S003_W005 et S005_W005. Rien dans les cases du Palais (S003_W004) et d'Equiton (S005_W004).",
+        "[DÉCISION] (v1.0.76) Bridlecrag (S004_W006) et Cragfold (S004_W002) sont déplacés d'une case vers l'extérieur par le propriétaire (10/11/2026) : ils sortent de la région de départ 3×3 (game_design.depart.region inchangée), dont ils restent le haras et la bergerie ; routes 000179 et 000180 allongées (LORE_BD §16.5)."
       ],
       "faction_relations": [
         {
@@ -8461,14 +8463,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_dunfold_ecurie_05",
-          "name": "Odoilde Valrade",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_dunfold_temple_01",
           "name": "Yvia Saulombre",
           "gender": "female",
@@ -9998,7 +9992,7 @@
       "alias": "Der Hem Shelbem",
       "type": "undead_kingdom",
       "importance": "",
-      "cell": "S009_E010",
+      "cell": "S010_E010",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "",
@@ -10012,7 +10006,8 @@
         "[HS] Cité dans le contexte du Palais Roulant.",
         "[BD-T7] p.43, 47-52 / [BD-T8] p.5-20 (v1.0.54) : province du « Grand Sud », au sud de Moork ; nécropole gardée par des Shedu, horde des « deux fois nés » ; Wismerhill y affronte le prince mort-vivant archimage (pas un Dragon Rouge). Graphie de la BD : « Der Hem Shelbem » (nom du lore conservé, aligné sur world_master.json).",
         "[DÉCISION] (v1.0.54) « Der hem Shelsem » devient « Der Hem Shelbem » dans le lore, world_master.json et factions.json (identifiants inchangés) (docs/world/LORE_BD.md §7.4 ; inscrit en v1.0.57).",
-        "[GD] (v1.0.58) Économie : aucune économie marchande (royaume mort-vivant) [GD]."
+        "[GD] (v1.0.58) Économie : aucune économie marchande (royaume mort-vivant) [GD].",
+        "[DÉCISION] (v1.0.76) Descendue d'une case, de S009_E010 à S010_E010, par le propriétaire (10/11/2026) : la nécropole (lieu_der_hem_shelbem), ses gardiens et ses routes suivent ; route vers Frosthollow (000074) retracée (LORE_BD §16.5)."
       ],
       "taille": "sans_service",
       "service_npcs": []
@@ -21627,14 +21622,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_hamlet_ambermead_ecurie_03",
-          "name": "Reneline Boispré",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_hamlet_ambermead_cimetiere_01",
           "name": "Lanald Sombrerive",
           "gender": "male",
@@ -21786,14 +21773,6 @@
           "id": "pnj_hamlet_greyhedge_ecurie_02",
           "name": "Osane Corbgarde",
           "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_hamlet_greyhedge_ecurie_03",
-          "name": "Norric Noirgarde",
-          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -22782,8 +22761,8 @@
       "alias": "",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "S004_W003",
-      "anchor_tile": "S004_W003",
+      "cell": "S004_W002",
+      "anchor_tile": "S004_W002",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "faction_dragon_knights",
@@ -22797,8 +22776,8 @@
         "cimetiere"
       ],
       "features": [
-        "Terrain: mountain",
-        "Hameau de bergers de la région de départ de Wyrmhallow"
+        "Hameau de bergers de la région de départ de Wyrmhallow",
+        "Terrain: mountain"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -22866,7 +22845,9 @@
         "[INFÉRÉ] (v1.0.68) Cellule S004_W003 : Montagne à l'est de Wyrmhallow, hors des neiges éternelles ; case libre.",
         "[GD] (v1.0.68) Population : humains, croyances mineures et culte du pacte des dragons (religion_croyances_mineures) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.68) Économie : élevage de montagne : chèvres, moutons, bœufs, laine, fromage, viande pour les dragons du Palais ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.68) Ancrage : Royaume de montagnes [BD, faction_dragon_knights] ; vieux dragons et Chevaliers-Dragons alliés [BD-T2] ; dragons montures des Chevaliers [BD-T8 p.43] ; le Royaume Drach importe du grain [GD v1.0.58, regle_eco_productions_regions] ; le hameau et le tribut de bétail sont [GD]."
+        "[GD] (v1.0.68) Ancrage : Royaume de montagnes [BD, faction_dragon_knights] ; vieux dragons et Chevaliers-Dragons alliés [BD-T2] ; dragons montures des Chevaliers [BD-T8 p.43] ; le Royaume Drach importe du grain [GD v1.0.58, regle_eco_productions_regions] ; le hameau et le tribut de bétail sont [GD].",
+        "[DÉCISION] (v1.0.76) Bergerie déplacée d'une case vers l'est, de S004_W003 à S004_W002, par le propriétaire (10/11/2026) ; route 000179 depuis Wyrmhallow allongée (LORE_BD §16.5).",
+        "[INFÉRÉ] (v1.0.76) Cellule S004_W002 : montagne à l'est de Wyrmhallow, hors de la région de départ 3×3, dont la bergerie reste l'annexe ; les troupeaux et les chiens suivent, la marmotte reste en S004_W003."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -22910,8 +22891,8 @@
       "alias": "",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "S004_W005",
-      "anchor_tile": "S004_W005",
+      "cell": "S004_W006",
+      "anchor_tile": "S004_W006",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "faction_dragon_knights",
@@ -22927,8 +22908,8 @@
         "cimetiere"
       ],
       "features": [
-        "Terrain: mountain",
-        "Hameau de l'élevage de montures de la région de départ de Wyrmhallow"
+        "Hameau de l'élevage de montures de la région de départ de Wyrmhallow",
+        "Terrain: snow_mountain"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -22996,7 +22977,9 @@
         "[INFÉRÉ] (v1.0.68) Cellule S004_W005 : Montagne à l'ouest de Wyrmhallow, hors des neiges éternelles ; case libre.",
         "[GD] (v1.0.68) Population : humains, croyances mineures et culte du pacte des dragons (religion_croyances_mineures) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.68) Économie : élevage de montures : chevaux de montagne, mulets, poneys, ânes de bât ; sellerie et harnais ; récolte : herbes, cuir à tanner (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.68) Ancrage : Écuyers qui apprennent à monter (description de Wyrmhallow, v1.0.61) ; « J'ai pas le droit de monter un dragon » [BD-T2] ; aucun commerce de dragons ni d'œufs [GD v1.0.58, city_dragon_palace] : on n'y élève que des montures ordinaires ; le hameau est [GD]."
+        "[GD] (v1.0.68) Ancrage : Écuyers qui apprennent à monter (description de Wyrmhallow, v1.0.61) ; « J'ai pas le droit de monter un dragon » [BD-T2] ; aucun commerce de dragons ni d'œufs [GD v1.0.58, city_dragon_palace] : on n'y élève que des montures ordinaires ; le hameau est [GD].",
+        "[DÉCISION] (v1.0.76) Haras déplacé d'une case vers l'ouest, de S004_W005 à S004_W006, par le propriétaire (10/11/2026) ; route 000180 depuis Wyrmhallow allongée (LORE_BD §16.5).",
+        "[INFÉRÉ] (v1.0.76) Cellule S004_W006 : neiges éternelles à l'ouest de Wyrmhallow, hors de la région de départ 3×3 (centrée sur S004_W004), dont le haras reste l'annexe ; les montures et les chiens suivent le haras."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -159453,8 +159436,8 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010",
-        "lieu_deathtrap_canyon"
+        "lieu_deathtrap_canyon",
+        "S010_E010"
       ]
     },
     {
@@ -159499,7 +159482,7 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010"
+        "S010_E010"
       ]
     },
     {
@@ -160044,7 +160027,7 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010"
+        "S010_E010"
       ]
     },
     {
@@ -161760,12 +161743,12 @@
         "N008_E012",
         "N008_E013",
         "N007_E012",
-        "S004_W005",
         "S004_W004",
-        "S004_W003",
         "S007_E017",
         "S008_E017",
-        "S008_E018"
+        "S008_E018",
+        "S004_W006",
+        "S004_W002"
       ]
     },
     {
@@ -162301,7 +162284,8 @@
         "S005_W003",
         "S006_E016",
         "S006_E018",
-        "S007_E018"
+        "S007_E018",
+        "S004_W005"
       ],
       "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
@@ -162467,7 +162451,7 @@
         "N004_W011",
         "N010_W010",
         "N007_E012",
-        "S004_W003"
+        "S004_W002"
       ]
     },
     {
@@ -162506,12 +162490,12 @@
         "N007_E012",
         "S003_W005",
         "S004_W004",
-        "S004_W003",
         "S005_W005",
         "S006_E016",
         "S006_E017",
         "S008_E017",
-        "S008_E018"
+        "S008_E018",
+        "S004_W002"
       ]
     },
     {
@@ -162564,7 +162548,7 @@
       "zones_chasse": [
         "N004_W011",
         "N008_W010",
-        "S004_W003"
+        "S004_W002"
       ],
       "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
@@ -162718,8 +162702,8 @@
         "N003_W011",
         "N005_W010",
         "N010_W010",
-        "S004_W005",
-        "S005_W005"
+        "S005_W005",
+        "S004_W006"
       ]
     },
     {
@@ -162747,8 +162731,8 @@
       ],
       "bestiaire": true,
       "zones_chasse": [
-        "S004_W005",
-        "S008_E016"
+        "S008_E016",
+        "S004_W006"
       ],
       "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
@@ -162788,9 +162772,9 @@
         "N004_W011",
         "N009_W009",
         "N007_E012",
-        "S004_W005",
         "S008_E016",
-        "S008_E017"
+        "S008_E017",
+        "S004_W006"
       ]
     },
     {
@@ -162817,12 +162801,12 @@
       ],
       "bestiaire": true,
       "zones_chasse": [
-        "S004_W005",
         "S004_W004",
         "S007_E017",
         "S008_E016",
         "S008_E017",
-        "S008_E018"
+        "S008_E018",
+        "S004_W006"
       ],
       "habitat": "Région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
@@ -163372,7 +163356,8 @@
         "S007_E018",
         "S008_E016",
         "N007_W007",
-        "N008_W005"
+        "N008_W005",
+        "S004_W005"
       ]
     },
     {
@@ -165551,11 +165536,11 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010",
         "lieu_deathtrap_canyon",
         "S008_E010",
         "lieu_tertre_des_rois_noyes",
-        "N019_W013"
+        "N019_W013",
+        "S010_E010"
       ],
       "groupe": "meute"
     },
@@ -165592,7 +165577,7 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010"
+        "S010_E010"
       ],
       "groupe": "paire"
     },
@@ -165633,7 +165618,7 @@
       "zones_chasse": [
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
-        "S009_E010"
+        "S010_E010"
       ],
       "groupe": "solitaire"
     },
@@ -165672,7 +165657,7 @@
         "lieu_deathtrap_canyon",
         "S008_E010",
         "S008_E011",
-        "S009_E010"
+        "S010_E010"
       ],
       "groupe": "nuée"
     },
@@ -204059,7 +204044,7 @@
       "id": "S001_E020",
       "name": "cell_S001_E020",
       "region_id": "region_marche_est",
-      "terrain_type": "plain",
+      "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -204070,7 +204055,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.76) Plaine → désert (propriétaire, 10/11/2026) : la bande de plaine qui coupait le désert de l'Est est fermée ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204936,7 +204922,7 @@
       "id": "S002_E020",
       "name": "cell_S002_E020",
       "region_id": "region_marche_est",
-      "terrain_type": "plain",
+      "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -204947,7 +204933,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.76) Plaine → désert (propriétaire, 10/11/2026) : la bande de plaine qui coupait le désert de l'Est est fermée ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205816,7 +205803,7 @@
       "id": "S003_E020",
       "name": "cell_S003_E020",
       "region_id": "region_marche_est",
-      "terrain_type": "plain",
+      "terrain_type": "desert",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -205827,7 +205814,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.76) Plaine → désert (propriétaire, 10/11/2026) : la bande de plaine qui coupait le désert de l'Est est fermée ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206199,10 +206187,17 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_dragon_grand_ancien"
+        "creature_dragon_grand_ancien",
+        "animal_cheval",
+        "animal_mulet",
+        "animal_poney",
+        "animal_ane",
+        "animal_chien"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.76) Haras de Bridlecrag (déplacé depuis S004_W005) : chevaux, mulets, poneys, ânes, chiens ; LORE_BD §16.5."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -206219,15 +206214,14 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "animal_cheval",
-        "animal_mulet",
-        "animal_poney",
-        "animal_ane",
-        "animal_chien"
+        "animal_marmotte",
+        "animal_corbeau"
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.68) Hameau de l'élevage de montures Bridlecrag (hamlet_bridlecrag) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Hameau de l'élevage de montures Bridlecrag (hamlet_bridlecrag) de la région de départ de Wyrmhallow (LORE_BD §15.5).",
+        "[DÉCISION] (v1.0.76) Bridlecrag part en S004_W006 : ses montures et ses chiens le suivent ; LORE_BD §16.5.",
+        "[GD] (v1.0.76) Case de la région de départ laissée libre par Bridlecrag : marmottes et corbeaux, comme les cases voisines S003_W005 et S005_W005 ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206252,7 +206246,8 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.61) Hameau de départ Wyrmhallow (hameau_wyrmhallow, faction Chevaliers-Dragons).",
-        "[GD] (v1.0.68) Centre de la région de départ 3×3 des Chevaliers-Dragons (S003_W005, S003_W004, S003_W003, S004_W005, S004_W004, S004_W003, S005_W005, S005_W004, S005_W003) ; niveaux 1 à 10 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Centre de la région de départ 3×3 des Chevaliers-Dragons (S003_W005, S003_W004, S003_W003, S004_W005, S004_W004, S004_W003, S005_W005, S005_W004, S005_W003) ; niveaux 1 à 10 (LORE_BD §15.5).",
+        "[DÉCISION] (v1.0.76) Les hameaux Bridlecrag (S004_W006) et Cragfold (S004_W002) sont à deux cases de Wyrmhallow, hors de la région 3×3, dont ils restent les annexes ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206270,15 +206265,12 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "animal_chevre",
-        "animal_mouton",
-        "animal_boeuf",
-        "animal_chien",
         "animal_marmotte"
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.68) Hameau de bergers Cragfold (hamlet_cragfold) de la région de départ de Wyrmhallow (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Hameau de bergers Cragfold (hamlet_cragfold) de la région de départ de Wyrmhallow (LORE_BD §15.5).",
+        "[DÉCISION] (v1.0.76) Cragfold part en S004_W002 : ses troupeaux et ses chiens le suivent, la marmotte reste ; LORE_BD §16.5."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206295,9 +206287,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chevre",
+        "animal_mouton",
+        "animal_boeuf",
+        "animal_chien"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.76) Bergerie de Cragfold (déplacée depuis S004_W003) : chèvres, moutons, bœufs, chiens ; LORE_BD §16.5."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -206700,7 +206699,7 @@
       "id": "S004_E020",
       "name": "cell_S004_E020",
       "region_id": "",
-      "terrain_type": "plain",
+      "terrain_type": "arid_land",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -206710,7 +206709,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.76) Plaine → zone rocheuse (propriétaire, 10/11/2026), rendue par arid_land (terres arides) : type existant le plus proche, sol de pierre et de terre sans dunes, plat (la Tour Carrée de la Lune Noire se dresse sur une « plaine de terres désolées ») et continu avec les terres arides de S003_E021 à S003_E023 ; mountain aurait levé un massif ; LORE_BD §16.5."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -210899,17 +210900,11 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [
-        "creature_spectre",
-        "creature_shedu",
-        "creature_momie_royale",
-        "creature_chauve_souris_geante",
-        "creature_dragon_mort_vivant",
-        "creature_deux_fois_ne",
-        "creature_roi_mort_vivant"
-      ],
+      "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.76) Der Hem Shelbem descend en S010_E010 : la nécropole et ses gardiens (morts-vivants, Shedu) suivent ; case de désert entre la nécropole et la passe de Deathtrap Canyon ; LORE_BD §16.5."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -211769,9 +211764,19 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_spectre",
+        "creature_shedu",
+        "creature_momie_royale",
+        "creature_chauve_souris_geante",
+        "creature_dragon_mort_vivant",
+        "creature_deux_fois_ne",
+        "creature_roi_mort_vivant"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.76) Der Hem Shelbem et sa nécropole (déplacées depuis S009_E010) : morts-vivants, Shedu, roi-momie ; LORE_BD §16.5."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -219483,7 +219488,15 @@
       "to_ville_id": "hamlet_0197",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) Tracé réalisé à la demande du propriétaire (10/11/2026) : sort de Lhynn avec la Via Magna (000120) jusqu'à N000_W010, puis descend la plaine côtière vers Dustfen. Tracé : 3 case(s), N001_W010 → N000_W010 → S001_W010 → S002_W011 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "N001_W010",
+        "N000_W010",
+        "S001_W010",
+        "S002_W011"
+      ]
     },
     {
       "id": "000067",
@@ -219567,19 +219580,38 @@
       "to_ville_id": "hamlet_0214",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) Tracé réalisé à la demande du propriétaire (10/11/2026) : la ligne droite frôlait la mer (coin de S002_W013) : la route descend la plaine, passe au Port Franc (S003_W013, qu'elle desservait déjà) et suit la plage jusqu'à Clearfen. Tracé : 4 case(s), S002_W011 → S003_W012 → S003_W013 → S004_W014 → S004_W015 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S002_W011",
+        "S003_W012",
+        "S003_W013",
+        "S004_W014",
+        "S004_W015"
+      ]
     },
     {
       "id": "000074",
       "type": "road",
-      "from_place": "S009_E010",
+      "from_place": "S010_E010",
       "from_ville_id": "ville_der_hem_shelsem",
       "from_lieu_id": "",
       "to_place": "S005_E008",
       "to_ville_id": "hamlet_0193",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) Route réajustée (propriétaire, 10/11/2026) : la ligne droite franchissait la chaîne (S008_E009, S008_E010, Deathtrap Canyon) ; elle passe maintenant le col entre les deux chaînes (S009_E009 → S008_E008), puis remonte la plaine vers Frosthollow. C'est aussi le passage du générateur du monde jouable (cellules S006_E008 à S009_E009). Tracé : 5 case(s), S010_E010 → S009_E009 → S008_E008 → S007_E008 → S006_E008 → S005_E008 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S010_E010",
+        "S009_E009",
+        "S008_E008",
+        "S007_E008",
+        "S006_E008",
+        "S005_E008"
+      ]
     },
     {
       "id": "000076",
@@ -219591,7 +219623,17 @@
       "to_ville_id": "town_0139",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) Tracé réalisé à la demande du propriétaire (10/11/2026) : la ligne droite passait sur la côte (N011_E006, N012_E006) : la route suit la lisière de la forêt, en retrait du rivage. Tracé : 5 case(s), N010_E005 → N010_E006 → N011_E007 → N012_E007 → N013_E007 → N014_E008 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "N010_E005",
+        "N010_E006",
+        "N011_E007",
+        "N012_E007",
+        "N013_E007",
+        "N014_E008"
+      ]
     },
     {
       "id": "000077",
@@ -219627,19 +219669,30 @@
       "to_ville_id": "hamlet_0193",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[INFÉRÉ] (v1.0.76) Même ligne que le tracé droit, explicitée pour porter la jonction S007_E006 de l'embranchement 000155 (Forteresse Naine d'Heureux). Tracé : 4 case(s), S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S009_E004",
+        "S008_E005",
+        "S007_E006",
+        "S006_E007",
+        "S005_E008"
+      ]
     },
     {
       "id": "000080",
       "type": "road",
-      "from_place": "S009_E010",
+      "from_place": "S010_E010",
       "from_ville_id": "ville_der_hem_shelsem",
       "from_lieu_id": "",
       "to_place": "S014_E013",
       "to_ville_id": "town_0118",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[INFÉRÉ] (v1.0.76) Der Hem Shelbem descendue en S010_E010 : extrémité déplacée, tracé droit gardé (hors mer et chaînes) ; LORE_BD §16.5."
+      ]
     },
     {
       "id": "000082",
@@ -219759,7 +219812,16 @@
       "to_ville_id": "hamlet_0153",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) La ligne droite passait par la côte et la mer (N011_W007) : route retracée par la terre, par la forêt et le marais au sud de la côte (propriétaire, 10/11/2026). Tracé : 4 case(s), N011_W008 → N010_W007 → N010_W006 → N010_W005 → N011_W004 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "N011_W008",
+        "N010_W007",
+        "N010_W006",
+        "N010_W005",
+        "N011_W004"
+      ]
     },
     {
       "id": "000097",
@@ -219994,7 +220056,16 @@
       "to_ville_id": "ville_dunfold",
       "to_lieu_id": "",
       "description": "[BD-T1] Itinéraire de la horde de Ghorghor Bey dans les Marches (carte p.25).",
-      "notes": []
+      "notes": [
+        "[INFÉRÉ] (v1.0.76) Même ligne que le tracé droit, explicitée pour porter la jonction N016_E016 de l'embranchement 000146 (Northgate). Tracé : 4 case(s), N015_E017 → N016_E016 → N016_E015 → N017_E014 → N017_E013 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "N015_E017",
+        "N016_E016",
+        "N016_E015",
+        "N017_E014",
+        "N017_E013"
+      ]
     },
     {
       "id": "000120",
@@ -220222,20 +220293,6 @@
       ]
     },
     {
-      "id": "000131",
-      "type": "path",
-      "from_place": "N002_W010",
-      "from_ville_id": "hameau_eaglewatch",
-      "from_lieu_id": "",
-      "to_place": "N003_W011",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_camp_manoeuvres_legions",
-      "description": "Sentier d'Eaglewatch à « Camp de manœuvres des Légions ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
-      ]
-    },
-    {
       "id": "000132",
       "type": "path",
       "from_place": "N002_W010",
@@ -220245,20 +220302,6 @@
       "to_ville_id": "",
       "to_lieu_id": "lieu_autel_des_aigles",
       "description": "Sentier d'Eaglewatch à « Autel des Aigles ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
-      ]
-    },
-    {
-      "id": "000133",
-      "type": "path",
-      "from_place": "N002_W010",
-      "from_ville_id": "hameau_eaglewatch",
-      "from_lieu_id": "",
-      "to_place": "N002_W009",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_ruines_villa_tharque",
-      "description": "Sentier d'Eaglewatch à « Ruines de la villa tharque ».",
       "notes": [
         "[INFÉRÉ] (v1.0.62) Sentier (type path, sans écurie) ; LORE_BD §15.1."
       ]
@@ -220322,57 +220365,31 @@
     {
       "id": "000138",
       "type": "path",
-      "from_place": "N005_W011",
-      "from_ville_id": "hameau_dawnmere",
+      "from_place": "N005_W012",
+      "from_ville_id": "ville_altenberg",
       "from_lieu_id": "",
       "to_place": "N006_W012",
       "to_ville_id": "",
       "to_lieu_id": "lieu_calvaire_des_pelerins",
-      "description": "Sentier de Dawnmere à « Calvaire des pèlerins ».",
+      "description": "Sentier de Altenberg à « Calvaire des pèlerins ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
-      ]
-    },
-    {
-      "id": "000139",
-      "type": "path",
-      "from_place": "N005_W011",
-      "from_ville_id": "hameau_dawnmere",
-      "from_lieu_id": "",
-      "to_place": "N006_W010",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_chapelle_de_l_ermite",
-      "description": "Sentier de Dawnmere à « Chapelle de l'ermite ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
-      ]
-    },
-    {
-      "id": "000140",
-      "type": "path",
-      "from_place": "N005_W011",
-      "from_ville_id": "hameau_dawnmere",
-      "from_lieu_id": "",
-      "to_place": "N004_W010",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_ruines_du_prieure",
-      "description": "Sentier de Dawnmere à « Ruines du prieuré ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2.",
+        "[DÉCISION] (v1.0.76) Sentier raccourci au premier croisement avec une route plus importante (règle du propriétaire, 10/11/2026 ; l'exemple donné est ce sentier pour 000138) : il croisait la route Justfall → Altenberg (000022) ; il s'arrête sur cette route, en Altenberg (sommet du tracé le plus proche du croisement) ; LORE_BD §16.5."
       ]
     },
     {
       "id": "000141",
       "type": "path",
-      "from_place": "N005_W011",
-      "from_ville_id": "hameau_dawnmere",
+      "from_place": "N004_W011",
+      "from_ville_id": "hamlet_lambsfold",
       "from_lieu_id": "",
       "to_place": "N004_W012",
       "to_ville_id": "",
       "to_lieu_id": "lieu_camp_des_naufrageurs",
-      "description": "Sentier de Dawnmere à « Camp des naufrageurs ».",
+      "description": "Sentier de Lambsfold à « Camp des naufrageurs ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2."
+        "[INFÉRÉ] (v1.0.64) Sentier (type path, sans écurie), cases voisines en diagonale ; LORE_BD §15.2.",
+        "[DÉCISION] (v1.0.76) Sentier raccourci au premier croisement avec une route plus importante (règle du propriétaire, 10/11/2026 ; l'exemple donné est ce sentier pour 000138) : il croisait la route Lambsfold → Altenberg (000200) en son milieu ; il s'arrête sur cette route, en Lambsfold (à égalité avec Altenberg : la ferme de la région de départ est retenue) ; LORE_BD §16.5."
       ]
     },
     {
@@ -220458,20 +220475,18 @@
     {
       "id": "000146",
       "type": "road",
-      "from_place": "N017_E013",
-      "from_ville_id": "ville_dunfold",
+      "from_place": "N016_E016",
+      "from_ville_id": "",
       "from_lieu_id": "",
       "to_place": "N018_E018",
       "to_ville_id": "town_0113",
       "to_lieu_id": "",
-      "description": "",
+      "description": "Embranchement de la route Moorgate → Dunfold (000116) vers Northgate.",
       "notes": [
-        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor)."
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor).",
+        "[DÉCISION] (v1.0.76) Tronçon Dunfold → N015_E015 supprimé par le propriétaire (10/11/2026), avec le bout N015_E015 → N016_E016 qui ne menait plus nulle part : la route part maintenant de la route Moorgate → Dunfold (000116) en N016_E016 (jonction sans ville, comme 000130). Tracé : 2 case(s), N016_E016 → N017_E017 → N018_E018 ; LORE_BD §16.5."
       ],
       "waypoints": [
-        "N017_E013",
-        "N016_E014",
-        "N015_E015",
         "N016_E016",
         "N017_E017",
         "N018_E018"
@@ -220524,7 +220539,8 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill))."
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill)).",
+        "[INFÉRÉ] (v1.0.76) Son dernier tronçon (Frosthollow → Village Fantôme) fait partie de la liaison Village Fantôme → Forteresse d'Heureux (000149, 000079, 000155) ; LORE_BD §16.5."
       ],
       "waypoints": [
         "S002_E011",
@@ -220560,12 +220576,13 @@
       "from_place": "S009_E011",
       "from_ville_id": "ville_tsaroth",
       "from_lieu_id": "",
-      "to_place": "S009_E010",
+      "to_place": "S010_E010",
       "to_ville_id": "ville_der_hem_shelsem",
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Der Hem Shelbem)."
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Der Hem Shelbem).",
+        "[INFÉRÉ] (v1.0.76) Der Hem Shelbem descendue en S010_E010 : extrémité déplacée, tracé droit gardé (hors mer et chaînes) ; LORE_BD §16.5."
       ]
     },
     {
@@ -220599,21 +220616,22 @@
     {
       "id": "000155",
       "type": "road",
-      "from_place": "S006_E004",
-      "from_ville_id": "ville_forteresse_naine_heureux_t11",
+      "from_place": "S007_E006",
+      "from_ville_id": "",
       "from_lieu_id": "",
-      "to_place": "S003_E006",
-      "to_ville_id": "ville_village_fantome",
+      "to_place": "S006_E004",
+      "to_ville_id": "ville_forteresse_naine_heureux_t11",
       "to_lieu_id": "",
-      "description": "",
+      "description": "Embranchement de la route Coldport → Frosthollow (000079) vers la Forteresse Naine d'Heureux. Depuis le Village Fantôme du Marais : route 000149 jusqu'à Frosthollow, puis 000079 jusqu'à l'embranchement.",
       "notes": [
-        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Le Village Fantôme du Marais)."
+        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Le Village Fantôme du Marais).",
+        "[DÉCISION] (v1.0.76) La route Village Fantôme → Forteresse d'Heureux passait par la montagne (S005_E004) : la branche vers la forteresse part maintenant de la route Frosthollow – Coldport (000079), en S007_E006 (propriétaire, 10/11/2026). Le village rejoint 000079 à Frosthollow par la route 000149. Tracé : 2 case(s), S007_E006 → S006_E005 → S006_E004 ; LORE_BD §16.5.",
+        "[INFÉRÉ] (v1.0.76) Jonction sans ville ni lieu (from_ville_id et from_lieu_id vides, from_place = case de la route hôte), comme l'embranchement 000130 sur la Via Magna ; LORE_BD §16.5."
       ],
       "waypoints": [
-        "S006_E004",
-        "S005_E004",
-        "S004_E005",
-        "S003_E006"
+        "S007_E006",
+        "S006_E005",
+        "S006_E004"
       ]
     },
     {
@@ -220857,34 +220875,6 @@
       ]
     },
     {
-      "id": "000169",
-      "type": "path",
-      "from_place": "N009_W010",
-      "from_ville_id": "hameau_oathford",
-      "from_lieu_id": "",
-      "to_place": "N010_W010",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_lices_des_novices",
-      "description": "Sentier d'Oathford à « Lices des novices ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
-      ]
-    },
-    {
-      "id": "000170",
-      "type": "path",
-      "from_place": "N009_W010",
-      "from_ville_id": "hameau_oathford",
-      "from_lieu_id": "",
-      "to_place": "N010_W009",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_camp_des_parjures",
-      "description": "Sentier d'Oathford à « Camp des parjures ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.66) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.3."
-      ]
-    },
-    {
       "id": "000171",
       "type": "path",
       "from_place": "N009_W010",
@@ -220941,20 +220931,6 @@
       ]
     },
     {
-      "id": "000175",
-      "type": "path",
-      "from_place": "N008_E012",
-      "from_ville_id": "hameau_grakhul",
-      "from_lieu_id": "",
-      "to_place": "N009_E012",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_arene_des_jeunes_sangs",
-      "description": "Sentier de Grakhul à « Arène des Jeunes-Sangs ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
-      ]
-    },
-    {
       "id": "000176",
       "type": "path",
       "from_place": "N008_E012",
@@ -220964,20 +220940,6 @@
       "to_ville_id": "",
       "to_lieu_id": "lieu_camp_de_guerre_ghazrak",
       "description": "Sentier de Grakhul à « Camp de guerre du clan Ghazrak ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
-      ]
-    },
-    {
-      "id": "000177",
-      "type": "path",
-      "from_place": "N008_E012",
-      "from_ville_id": "hameau_grakhul",
-      "from_lieu_id": "",
-      "to_place": "N007_E011",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_affut_de_la_grande_chasse",
-      "description": "Sentier de Grakhul à « Affût de la Grande Chasse ».",
       "notes": [
         "[INFÉRÉ] (v1.0.67) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.4."
       ]
@@ -221002,12 +220964,18 @@
       "from_place": "S004_W004",
       "from_ville_id": "hameau_wyrmhallow",
       "from_lieu_id": "",
-      "to_place": "S004_W003",
+      "to_place": "S004_W002",
       "to_ville_id": "hamlet_cragfold",
       "to_lieu_id": "",
       "description": "Route locale de Wyrmhallow à Cragfold.",
       "notes": [
-        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5."
+        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5.",
+        "[DÉCISION] (v1.0.76) Cragfold déplacé d'une case : la route locale traverse l'ancienne case du hameau. Tracé : 2 case(s), S004_W004 → S004_W003 → S004_W002 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S004_W004",
+        "S004_W003",
+        "S004_W002"
       ]
     },
     {
@@ -221016,12 +220984,18 @@
       "from_place": "S004_W004",
       "from_ville_id": "hameau_wyrmhallow",
       "from_lieu_id": "",
-      "to_place": "S004_W005",
+      "to_place": "S004_W006",
       "to_ville_id": "hamlet_bridlecrag",
       "to_lieu_id": "",
       "description": "Route locale de Wyrmhallow à Bridlecrag.",
       "notes": [
-        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5."
+        "[INFÉRÉ] (v1.0.68) Voisin le plus proche : Wyrmhallow, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.5.",
+        "[DÉCISION] (v1.0.76) Bridlecrag déplacé d'une case : la route locale traverse l'ancienne case du hameau. Tracé : 2 case(s), S004_W004 → S004_W005 → S004_W006 ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S004_W004",
+        "S004_W005",
+        "S004_W006"
       ]
     },
     {
@@ -221267,26 +221241,6 @@
       ]
     },
     {
-      "id": "000197",
-      "type": "path",
-      "from_place": "N006_W006",
-      "from_ville_id": "hamlet_greenbough",
-      "from_lieu_id": "",
-      "to_place": "N008_W005",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_ruines_du_temple_sylvestre",
-      "description": "Sentier de Silverglade à « Ruines du Temple sylvestre ».",
-      "notes": [
-        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7.",
-        "[DÉCISION] (v1.0.72) Part maintenant de Greenbough, hameau le plus proche (deux cases, à égalité avec Fernhollow, même région : Province de Northind) : Silverglade déplacée en N007_W003 ; LORE_BD §16."
-      ],
-      "waypoints": [
-        "N006_W006",
-        "N007_W006",
-        "N008_W005"
-      ]
-    },
-    {
       "id": "000198",
       "type": "road",
       "from_place": "N010_W010",
@@ -221343,7 +221297,7 @@
     },
     {
       "id": "000201",
-      "type": "road",
+      "type": "path",
       "from_place": "N001_W008",
       "from_ville_id": "hamlet_greyhedge",
       "from_lieu_id": "",
@@ -221353,7 +221307,8 @@
       "description": "",
       "notes": [
         "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Greyhedge → Ambermead.",
-        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N001_W008 → N002_W008 → N003_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N001_W008 → N002_W008 → N003_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.",
+        "[DÉCISION] (v1.0.76) La route devient un sentier (type path, sans écurie) à la demande du propriétaire (10/11/2026) ; LORE_BD §16.5."
       ],
       "waypoints": [
         "N001_W008",
@@ -221673,47 +221628,6 @@
       ]
     },
     {
-      "id": "000218",
-      "type": "path",
-      "from_place": "N021_W014",
-      "from_ville_id": "town_lanternhold",
-      "from_lieu_id": "",
-      "to_place": "N018_W014",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_grottes_des_naufrageurs",
-      "description": "",
-      "notes": [
-        "[DÉCISION] (v1.0.74) Sentier de Lanternhold aux Grottes des Naufrageurs, le long de la côte ouest.",
-        "[INFÉRÉ] (v1.0.74) Tracé : 3 case(s), N021_W014 → N020_W014 → N019_W014 → N018_W014 (forêt de l'île, hors mer) ; LORE_BD §16.3."
-      ],
-      "waypoints": [
-        "N021_W014",
-        "N020_W014",
-        "N019_W014",
-        "N018_W014"
-      ]
-    },
-    {
-      "id": "000219",
-      "type": "path",
-      "from_place": "N022_W010",
-      "from_ville_id": "town_duskmoor",
-      "from_lieu_id": "",
-      "to_place": "N022_W012",
-      "to_ville_id": "",
-      "to_lieu_id": "lieu_taniere_du_jarl",
-      "description": "",
-      "notes": [
-        "[DÉCISION] (v1.0.74) Sentier de Duskmoor à la Tanière du Jarl de Givre, par la falaise nord.",
-        "[INFÉRÉ] (v1.0.74) Tracé : 2 case(s), N022_W010 → N022_W011 → N022_W012 (forêt de l'île, hors mer) ; LORE_BD §16.3."
-      ],
-      "waypoints": [
-        "N022_W010",
-        "N022_W011",
-        "N022_W012"
-      ]
-    },
-    {
       "id": "000220",
       "type": "path",
       "from_place": "N019_W010",
@@ -221796,6 +221710,43 @@
         "N017_W010",
         "N018_W010",
         "N019_W010"
+      ]
+    },
+    {
+      "id": "000224",
+      "type": "path",
+      "from_place": "S006_W008",
+      "from_ville_id": "hamlet_0174",
+      "from_lieu_id": "",
+      "to_place": "S005_W004",
+      "to_ville_id": "ville_equiton",
+      "to_lieu_id": "",
+      "description": "Sentier de Harrowbrook à Equiton, dans le sable de la plage.",
+      "notes": [
+        "[DÉCISION] (v1.0.76) Sentier dans le sable demandé par le propriétaire (10/11/2026) : Harrowbrook → Equiton.",
+        "[INFÉRÉ] (v1.0.76) Tracé : 4 case(s), S006_W008 → S006_W007 → S006_W006 → S006_W005 → S005_W004, le long de la plage (cases beach), puis monte vers Equiton ; type path, sans écurie ; LORE_BD §16.5."
+      ],
+      "waypoints": [
+        "S006_W008",
+        "S006_W007",
+        "S006_W006",
+        "S006_W005",
+        "S005_W004"
+      ]
+    },
+    {
+      "id": "000225",
+      "type": "path",
+      "from_place": "N005_W010",
+      "from_ville_id": "hamlet_brightholm",
+      "from_lieu_id": "",
+      "to_place": "N004_W010",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_du_prieure",
+      "description": "Sentier de Brightholm à « Ruines du prieuré ».",
+      "notes": [
+        "[DÉCISION] (v1.0.76) Remplace le sentier 000140 Dawnmere → Ruines du prieuré (propriétaire, 10/11/2026).",
+        "[INFÉRÉ] (v1.0.76) Sentier (type path, sans écurie), cases voisines (N005_W010 → N004_W010) ; LORE_BD §16.5."
       ]
     }
   ],
@@ -225995,6 +225946,97 @@
           "nom": "Syzygie (nom affiché)",
           "decision": "La cité s'affiche « Syzygie » (nom connu des lecteurs à l'époque du jeu) ; « Cité d'Aurore » et « Aurore » deviennent des alias ; Portes d'Aurore inchangées ; lac et fleuve « de Syzygie ». Annule l'affichage « Aurore » de la v1.0.56 (LORE_BD §16.4).",
           "version": "1.0.75"
+        },
+        {
+          "collection": "routes",
+          "id": "000095",
+          "nom": "Route Orderfen → Hayfen",
+          "decision": "La route Orderfen → Hayfen (000095) passait dans la mer : retracée par la terre, N011_W008 → N010_W007 → N010_W006 → N010_W005 → N011_W004 (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Tracés réalisés (waypoints) : Lhynn → Dustfen (000064), Dustfen → Clearfen (000073), Ashwick → Stonehaven (000076), hors mer et chaînes de montagnes (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000224",
+          "nom": "Sentier Harrowbrook → Equiton",
+          "decision": "Sentier dans le sable entre Harrowbrook et Equiton (000224), le long de la plage S006_W007 à S006_W005 (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000155",
+          "nom": "Route Village Fantôme ↔ Forteresse d'Heureux",
+          "decision": "La route entre le Village Fantôme du Marais et la Forteresse Naine d'Heureux passe par Frosthollow (000149) et la route Frosthollow – Coldport (000079) ; la branche vers la forteresse (000155) part de 000079 en S007_E006 (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_der_hem_shelsem",
+          "nom": "Der Hem Shelbem",
+          "decision": "Der Hem Shelbem descend d'une case, de S009_E010 à S010_E010 ; la nécropole et ses gardiens suivent (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000074",
+          "nom": "Route Der Hem Shelbem → Frosthollow",
+          "decision": "Route réajustée par le col S009_E009 – S008_E008, entre les chaînes, depuis Der Hem Shelbem (S010_E010) (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "cells",
+          "id": "S001_E020",
+          "nom": "Colonne E020 (S001 à S004)",
+          "decision": "S001_E020, S002_E020 et S003_E020 passent en désert ; S004_E020 passe en zone rocheuse, rendue par arid_land (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000146",
+          "nom": "Route Dunfold → Northgate",
+          "decision": "Route entre Dunfold et la case N015_E015 supprimée ; le reste de 000146 part de la route Moorgate → Dunfold (000116) en N016_E016 vers Northgate (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_bridlecrag",
+          "nom": "Bridlecrag",
+          "decision": "Bridlecrag passe de S004_W005 à S004_W006, hors de la région de départ 3×3 de Wyrmhallow, dont il reste le haras (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_cragfold",
+          "nom": "Cragfold",
+          "decision": "Cragfold passe de S004_W003 à S004_W002, hors de la région de départ 3×3 de Wyrmhallow, dont il reste la bergerie (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000225",
+          "nom": "Sentier Brightholm → Ruines du prieuré",
+          "decision": "Le sentier Ruines du prieuré → Dawnmere (000140) est remplacé par un sentier Brightholm → Ruines du prieuré (000225) (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "000201",
+          "nom": "Greyhedge → Ambermead",
+          "decision": "La route Greyhedge → Ambermead (000201) devient un sentier (LORE_BD §16.5).",
+          "version": "1.0.76"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Règles des sentiers : un sentier qui a la même forme qu'une route est supprimé ; un sentier s'arrête au premier croisement avec une route plus importante (exemple : Calvaire des pèlerins → Dawnmere, qui croise Justfall – Altenberg). Appliquées à toute la carte : sentiers 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés, 000138 et 000141 raccourcis (LORE_BD §16.5).",
+          "version": "1.0.76"
         }
       ]
     },
@@ -233345,7 +233387,7 @@
       "alias": "",
       "type": "undead_kingdom",
       "importance": "",
-      "cell": "S009_E010",
+      "cell": "S010_E010",
       "region_id": "",
       "zone_id": "zone_der_hem_shelbem",
       "faction_control": "",
@@ -233418,9 +233460,11 @@
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [
-        "S009_E010"
+        "S010_E010"
       ],
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.76) Nécropole déplacée avec la ville, de S009_E010 à S010_E010 (LORE_BD §16.5)."
+      ]
     },
     {
       "id": "lieu_atmosphere",
@@ -237341,7 +237385,8 @@
       "notes": [
         "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Terrain d'exercice où les recrues d'Eaglewatch apprennent la marche en ordre, le pilum et le bouclier sous l'œil d'un centurion. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
         "[GD] (v1.0.62) Ancrage : Les légions impériales [BD-THS p.8] et leurs camps militaires (habitat des béhémoths, bestiaire v1.0.58) ; le camp lui-même est [GD].",
-        "[INFÉRÉ] (v1.0.62) Cellule N003_W011 : Plaine de la Première Province au nord-ouest d'Eaglewatch, à l'écart des fermes ; case libre."
+        "[INFÉRÉ] (v1.0.62) Cellule N003_W011 : Plaine de la Première Province au nord-ouest d'Eaglewatch, à l'écart des fermes ; case libre.",
+        "[DÉCISION] (v1.0.76) Sentier 000131 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Eaglewatch → Lambsfold, qui passe par la case du camp ; le lieu est desservi par la route 000199 ; LORE_BD §16.5."
       ]
     },
     {
@@ -237505,7 +237550,8 @@
       "notes": [
         "[GD] (v1.0.62) Nom et lieu proposés, à valider par le propriétaire. Restes d'un domaine de l'ancien Empire tharque, au milieu des pâturages : murs bas, colonnes renversées et caves où rôdent la vermine et les pilleurs. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
         "[GD] (v1.0.62) Ancrage : Les terres de l'Empire ont appartenu au « grand Empire tharque » dont l'Empire a hérité la Via Magna [BD-THS p.8] ; l'architecture tharque est « pseudo-gréco-romaine » (region_empire_tharque). La villa est [GD]. En ruine depuis des siècles : cohérent avec l'époque du jeu.",
-        "[INFÉRÉ] (v1.0.62) Cellule N002_W009 : Pâturages des Terres de l'Empereur à l'est d'Eaglewatch ; case libre."
+        "[INFÉRÉ] (v1.0.62) Cellule N002_W009 : Pâturages des Terres de l'Empereur à l'est d'Eaglewatch ; case libre.",
+        "[DÉCISION] (v1.0.76) Sentier 000133 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double les routes 000128 et 000129, qui passent par la case des ruines ; le lieu est desservi par la route 000128 ; LORE_BD §16.5."
       ]
     },
     {
@@ -237751,7 +237797,8 @@
       "notes": [
         "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Chapelle d'un ermite de l'Église dans la forêt au nord-est de Dawnmere : on y vient chercher l'eau bénite de la source ; les bêtes de la forêt rôdent autour. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
         "[GD] (v1.0.64) Ancrage : Chapelles et prêtres de chapelle (« mon père ») [BD-A3 pl.19-20] ; croix celtique de pierre en forêt [BD-A3 pl.33]. La chapelle est [GD].",
-        "[INFÉRÉ] (v1.0.64) Cellule N006_W010 : Forêt traversée par une rivière, à l'ouest de la forêt elfique (N006_W009) ; case libre, pas de ferme en forêt."
+        "[INFÉRÉ] (v1.0.64) Cellule N006_W010 : Forêt traversée par une rivière, à l'ouest de la forêt elfique (N006_W009) ; case libre, pas de ferme en forêt.",
+        "[DÉCISION] (v1.0.76) Sentier 000139 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : la chapelle est sur la route Dys → Justfall, qui passe par sa case ; le lieu est desservi par la route 000052 ; LORE_BD §16.5."
       ]
     },
     {
@@ -237833,7 +237880,8 @@
       "notes": [
         "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Prieuré abandonné depuis des générations, au sud-est de Dawnmere : murs bas, cloître effondré et crypte où nichent araignées et corbeaux ; premiers pas des novices hors du hameau. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
         "[GD] (v1.0.64) Ancrage : Abandonné depuis des générations (aucune destruction de l'époque du jeu) ; le prieuré est [GD].",
-        "[INFÉRÉ] (v1.0.64) Cellule N004_W010 : Plaine de la Première Province au sud-est de Dawnmere, à l'écart des routes ; case libre."
+        "[INFÉRÉ] (v1.0.64) Cellule N004_W010 : Plaine de la Première Province au sud-est de Dawnmere, à l'écart des routes ; case libre.",
+        "[DÉCISION] (v1.0.76) Desservies par un sentier depuis Brightholm (000225) au lieu de Dawnmere (000140, supprimé) ; LORE_BD §16.5."
       ]
     },
     {
@@ -238079,7 +238127,8 @@
       "notes": [
         "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Lices au bord des champs de Tithemead, à bonne distance de la ferme : les novices d'Oathford s'y exercent à la lance et à l'épée sous l'œil des maîtres d'armes. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[GD] (v1.0.66) Ancrage : Novices de l'Ordre de la Justice [BD-T4 p.38-39] ; les lices sont [GD].",
-        "[INFÉRÉ] (v1.0.66) Cellule N010_W010 : Plaine de la Syzygie au nord d'Oathford, dans la case de la ferme Tithemead, hors du plateau de la ferme (POI à distance, comme les Ruines de Wismerhill) ; hors du fleuve (N010_W011)."
+        "[INFÉRÉ] (v1.0.66) Cellule N010_W010 : Plaine de la Syzygie au nord d'Oathford, dans la case de la ferme Tithemead, hors du plateau de la ferme (POI à distance, comme les Ruines de Wismerhill) ; hors du fleuve (N010_W011).",
+        "[DÉCISION] (v1.0.76) Sentier 000169 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Oathford → Tithemead (les lices sont dans la case de Tithemead) ; le lieu est desservi par la route 000166 ; LORE_BD §16.5."
       ]
     },
     {
@@ -238161,7 +238210,8 @@
       "notes": [
         "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Camp d'écuyers chassés de l'Ordre pour parjure et de brigands à la lisière nord-est : ils rançonnent les charrois de Tithemead ; Wardholt y envoie ses novices. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[GD] (v1.0.66) Ancrage : Thème du serment de l'Ordre [BD-T4] ; les parjures sont [GD] (aucun personnage de la BD).",
-        "[INFÉRÉ] (v1.0.66) Cellule N010_W009 : Lisière de la Syzygie au nord-est d'Oathford, entre Tithemead et Wardholt ; case libre."
+        "[INFÉRÉ] (v1.0.66) Cellule N010_W009 : Lisière de la Syzygie au nord-est d'Oathford, entre Tithemead et Wardholt ; case libre.",
+        "[DÉCISION] (v1.0.76) Sentier 000170 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : le camp est sur la route Tithemead → Orderfen, qui passe par sa case ; le lieu est desservi par la route 000198 ; LORE_BD §16.5."
       ]
     },
     {
@@ -238407,7 +238457,8 @@
       "notes": [
         "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Fosse de combat dans une clairière entre Grakhul et Leviathan : les jeunes guerriers y passent l'épreuve de l'arène avant d'être admis dans les rangs du clan ; festins jusqu'à la fin de la nuit. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
         "[GD] (v1.0.67) Ancrage : Épreuve de l'arène et festin « jusqu'à la fin de la nuit » [BD-A4 p.30-32] ; trône de défenses [BD-A5 p.12]. L'arène est [GD].",
-        "[INFÉRÉ] (v1.0.67) Cellule N009_E012 : Forêt au nord de Grakhul, à l'est de Leviathan (N009_E011), hors de la case de Leviathan ; case libre."
+        "[INFÉRÉ] (v1.0.67) Cellule N009_E012 : Forêt au nord de Grakhul, à l'est de Leviathan (N009_E011), hors de la case de Leviathan ; case libre.",
+        "[DÉCISION] (v1.0.76) Sentier 000175 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Grakhul → Leviathan Jungle, qui passe par la case de l'arène ; le lieu est desservi par la route 000125 ; LORE_BD §16.5."
       ]
     },
     {
@@ -238571,7 +238622,8 @@
       "notes": [
         "[GD] (v1.0.67) Nom et lieu proposés, à valider par le propriétaire. Camp de chasseurs à la lisière sud-ouest : on y part pour la Grande Chasse de la Lune de la Chasse et les jeunes y apprennent à pister et à dépecer. Région de départ de Grakhul (Dzorak), niveaux 1 à 10 (LORE_BD §15.4).",
         "[GD] (v1.0.67) Ancrage : Grande Chasse (fete_orques_grande_chasse, [GD] v1.0.58) ; festin de sanglier [BD-A5 p.12]. L'affût est [GD].",
-        "[INFÉRÉ] (v1.0.67) Cellule N007_E011 : Lisière entre Grakhul et Mossy Rock (N006_E011), hors de la case de Mossy Rock ; case libre (la route 000142 Mossy Rock → Grakhul y passe, inchangée)."
+        "[INFÉRÉ] (v1.0.67) Cellule N007_E011 : Lisière entre Grakhul et Mossy Rock (N006_E011), hors de la case de Mossy Rock ; case libre (la route 000142 Mossy Rock → Grakhul y passe, inchangée).",
+        "[DÉCISION] (v1.0.76) Sentier 000177 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Mossy Rock → Grakhul, qui passe par la case de l'affût ; le lieu est desservi par la route 000142 ; LORE_BD §16.5."
       ]
     },
     {
@@ -239719,7 +239771,8 @@
       "notes": [
         "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Ruines d'un temple elfe abandonné depuis des générations, quand la forêt reculait devant les colons : colonnes de pierre blanche mangées par le lierre ; araignées et corbeaux y nichent. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
         "[GD] (v1.0.70) Ancrage : Colons et forêt elfique [BD-A4 p.4-6] ; les ruines sont [GD] (aucune destruction de l'époque du jeu ; sans rapport avec l'incendie de Northind [BD-T8]).",
-        "[INFÉRÉ] (v1.0.70) Cellule N008_W005 : Forêt de la Province de Northind au nord-est de Silverglade, entre Northind (N007_W005) et le village Orkh (N008_W006), hors de leurs cases ; case libre."
+        "[INFÉRÉ] (v1.0.70) Cellule N008_W005 : Forêt de la Province de Northind au nord-est de Silverglade, entre Northind (N007_W005) et le village Orkh (N008_W006), hors de leurs cases ; case libre.",
+        "[DÉCISION] (v1.0.76) Sentier 000197 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Silverglade → Fernhollow, qui passe par la case des ruines ; le lieu est desservi par la route 000193 ; LORE_BD §16.5."
       ]
     },
     {
@@ -240639,7 +240692,8 @@
       "notes": [
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Bande de naufrageurs sans foi ni faction qui pillent les navires de tous les blocs : seule cible commune que la trêve ne protège pas. Raid raid_grottes_des_naufrageurs.",
-        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_grottes_naufrageurs (salle, N018_W014) ; l'intérieur n'est pas modélisé."
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_grottes_naufrageurs (salle, N018_W014) ; l'intérieur n'est pas modélisé.",
+        "[DÉCISION] (v1.0.76) Sentier 000218 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Camp du Cap → Lanternhold jusqu'aux grottes ; le lieu est desservi par la route 000215 ; LORE_BD §16.5."
       ]
     },
     {
@@ -240721,7 +240775,8 @@
       "notes": [
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Les géants de froid de l'extrême nord (LORE_BD §5.1) passent sur l'île par la banquise ; leur jarl s'est taillé une salle dans la falaise. Raid raid_taniere_du_jarl.",
-        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_taniere_du_jarl (salle, N022_W012) ; l'intérieur n'est pas modélisé."
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_taniere_du_jarl (salle, N022_W012) ; l'intérieur n'est pas modélisé.",
+        "[DÉCISION] (v1.0.76) Sentier 000219 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Lanternhold → Duskmoor jusqu'à la tanière ; le lieu est desservi par la route 000216 ; LORE_BD §16.5."
       ]
     },
     {

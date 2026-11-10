@@ -660,6 +660,9 @@ Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
 > **v1.0.73** (section 16.2) : l'entrée nord de la Mine de la Traverse (raid à une équipe, niveaux 10 à
 > 15) s'ouvre au sud de Greyhedge, au pied de la chaîne N000_W008.
 
+> **v1.0.76** (section 16.5) : sentiers 000131 (Camp de manœuvres) et 000133 (Ruines de la villa tharque)
+> supprimés, leurs lieux étant sur les routes 000199 et 000128 ; Greyhedge → Ambermead (000201) devient un sentier.
+
 ### 15.2 Dawnmere — Chevaliers de la Lumière (v1.0.64)
 
 Centre N005_W011 (`hameau_dawnmere`, v1.0.61). Les 9 cases étaient déjà générées. Altenberg (N005_W012,
@@ -692,6 +695,10 @@ fichier v1.0.62).
   ne sont pas évoqués : la région reste neutre sur la direction de l'Ordre ; crabe, mouette et mouton ont
   un niveau par défaut (1-1) ; Dawnmere porte 4 écuries pour un hameau (règle des routes) ; le calvaire et
   la chapelle pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
+> **v1.0.76** (section 16.5) : sentier 000139 (Chapelle de l'ermite, sur la route Dys → Justfall) supprimé ;
+> 000140 remplacé par Brightholm → Ruines du prieuré (000225) ; 000138 (Calvaire des pèlerins) part d'Altenberg et
+> 000141 (Camp des naufrageurs) de Lambsfold : ils croisaient une route avant Dawnmere.
 
 ### 15.3 Oathford — Chevaliers de la Justice (v1.0.66)
 
@@ -736,6 +743,9 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
 > **v1.0.72** (section 16.1) : Wardholt est au fond d'une crevasse en cul-de-sac, avec une mine ; la
 > route Tithemead → Orderfen (000198) remplace la route 000066 Syzygie → Orderfen.
 
+> **v1.0.76** (section 16.5) : sentiers 000169 (Lices des novices) et 000170 (Camp des parjures) supprimés,
+> leurs lieux étant sur les routes 000166 et 000198.
+
 ### 15.4 Grakhul — Dzorak (v1.0.67)
 
 Centre N008_E012 (`hameau_grakhul`, v1.0.61). Les 9 cases étaient déjà générées. Leviathan est en
@@ -773,6 +783,9 @@ reproductible : `lore_v1067.py` (appliqué au fichier v1.0.66).
   touche la case de Leviathan, dont la position reste ouverte (section 17) ; la chèvre (1-3) et le chien
   sont les seuls animaux de Grakhul ; le totem, l'arène et l'affût pourraient porter des PNJ ou quêtes
   d'accueil (aucun créé).
+
+> **v1.0.76** (section 16.5) : sentiers 000175 (Arène des Jeunes-Sangs) et 000177 (Affût de la Grande Chasse)
+> supprimés, leurs lieux étant sur les routes 000125 et 000142.
 
 ### 15.5 Wyrmhallow — Chevaliers-Dragons (v1.0.68)
 
@@ -816,6 +829,11 @@ humaine : `RACE_FACTIONS` de `generate_city_services.py` inchangé. Script repro
   cellules) ; le tribut de bétail pour les dragons et l'abandon des nids sont inventés ; aigle, vautour,
   marmotte, mulet, poney et mouton ont un niveau par défaut (1-1) ; l'aire de dressage et le cairn
   pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
+> **v1.0.76** (section 16.5) : Bridlecrag passe en S004_W006 et Cragfold en S004_W002, hors de la région 3×3
+> (`game_design.depart.region` inchangée), dont ils restent le haras et la bergerie ; routes 000180 et 000179
+> allongées par leur ancienne case. Leurs animaux domestiques les suivent ; S004_W005 garde marmottes et corbeaux,
+> S004_W003 sa marmotte. Le Palais (S003_W004) et Equiton (S005_W004) ne changent pas.
 
 ### 15.6 Durnhalde — Nains (v1.0.69)
 
@@ -919,6 +937,9 @@ Silverglade → Northind, 000077 et 000085 de Northind). Les PNJ de service des 
 
 > **v1.0.72** (section 16.1) : Silverglade est déplacée seule en N007_W003 ; la région 3×3 reste centrée
 > sur N007_W006. Les sentiers 000194 à 000197 partent de Greenbough ou de Fernhollow.
+
+> **v1.0.76** (section 16.5) : sentier 000197 (Ruines du Temple sylvestre) supprimé, le lieu étant sur la route
+> Silverglade → Fernhollow (000193).
 
 ### 15.8 Citadelle de la Légion — Légion infernale, carte des Enfers (v1.0.71)
 
@@ -1310,6 +1331,118 @@ les `zones_chasse`.
   à 300 m de l'eau.
 - Les niveaux des raids et des boss ; la règle de formation des équipes mêlées.
 
+### 16.4 La cité redevient « Syzygie » (v1.0.75)
+
+`[DÉCISION]` du propriétaire (10/11/2026) : `ville_sysigie` s'affiche **« Syzygie »**, le nom sous lequel les
+lecteurs connaissent la cité pendant l'époque du jeu (T1-T11). L'affichage « Aurore » des v1.0.56 à v1.0.74
+(§10 Q5, §7.2) est annulé.
+
+- Nom de fondation « Cité d'Aurore » `[BD-A3 pl.7]` et « Aurore » : alias. Les **Portes d'Aurore** `[BD-T8 p.24-25]`
+  gardent leur nom (nom de la BD).
+- La cité et la principauté (région `syzygie`) portent le même nom, comme dans la BD.
+- Toutes les mentions de la cité passent à « Syzygie » : lore (villes, zone `zone_sysigie`, quêtes, notes),
+  `world_master.json` (`cities`, descriptions de POI), ROYAUMES.md et ce document. Le lac et le fleuve deviennent
+  « lac de Syzygie » et « fleuve de Syzygie ».
+- Identifiant inchangé (`ville_sysigie`) : aucun effet sur les sauvegardes ni sur le code.
+
+### 16.5 Corrections de routes et de terrain (v1.0.76)
+
+**Décisions du propriétaire (10/11/2026, lot 5)**. Chaque fiche touchée porte une note `[DÉCISION] (v1.0.76)` ;
+13 entrées sont ajoutées au registre `regle_canon_registre_decisions`. Scripts reproductibles : `master_v1076.py`
+puis `lore_v1076.py`, appliqués aux fichiers v1.0.75, puis `tools/lore/generate_city_services.py`.
+
+**Tracés**. L'éditeur (`lune-noire-editor.html`) dessine une route par les centres des cases de ses `waypoints`
+(identifiants de cases uniquement, pas de coordonnées de carte), ou en ligne droite entre `from_place` et
+`to_place` sans `waypoints`. « Réaliser la forme » d'une route, c'est donc lui donner des `waypoints` qui évitent
+la mer, la côte, les chaînes et les lacs, par les vallées et les cols. Une **jonction** (route qui part d'une
+autre route) suit la convention de 000130 : `from_place` est une case du tracé de la route hôte, `from_ville_id`
+et `from_lieu_id` sont vides ; la route hôte reçoit des `waypoints` explicites (même ligne qu'avant) pour porter
+cette case.
+
+| # | Demande | Ce qui change |
+|---|---|---|
+| 1 | Orderfen – Hayfen passe dans la mer | 000095 : N011_W008 → N010_W007 → N010_W006 → N010_W005 → N011_W004, par la forêt et le marais au sud de la côte. |
+| 2 | Tracer 000064, 000073, 000076 | **Lhynn → Dustfen** : N001_W010 → N000_W010 (sortie commune avec la Via Magna) → S001_W010 → S002_W011. **Dustfen → Clearfen** : S002_W011 → S003_W012 → S003_W013 (Port Franc, déjà desservi par la ligne droite) → S004_W014 → S004_W015, par la plage. **Ashwick → Stonehaven** : N010_E005 → N010_E006 → N011_E007 → N012_E007 → N013_E007 → N014_E008, par la lisière, en retrait de la côte. |
+| 3 | Sentier dans le sable Harrowbrook – Equiton | **000224** (`path`) : S006_W008 → S006_W007 → S006_W006 → S006_W005 (plage) → S005_W004. |
+| 4 | Village fantôme – forteresse naine, branche sur 000079 | Village Fantôme du Marais (`ville_village_fantome`, S003_E006) et Forteresse Naine d'Heureux (`ville_forteresse_naine_heureux_t11`, S006_E004). L'ancienne 000155 passait par la montagne (S005_E004). **000155** devient l'embranchement de 000079 Coldport → Frosthollow en **S007_E006** : S007_E006 → S006_E005 → S006_E004. Le village rejoint 000079 à Frosthollow par 000149 (déjà tracée). 000079 reçoit ses `waypoints` (S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008). |
+| 5 | Réajuster Frosthollow – Der Hem Shelbem (000074) | La ligne droite franchissait la chaîne (Deathtrap Canyon). Nouveau tracé par le col entre les deux chaînes : S010_E010 → S009_E009 → S008_E008 → S007_E008 → S006_E008 → S005_E008. C'est aussi le passage du générateur. |
+| 6 | Der Hem Shelbem S009_E010 → S010_E010 | Fiche, `cities` du master, lieu `lieu_der_hem_shelbem` (nécropole) et ses 7 espèces (morts-vivants, Shedu, roi-momie : `creature_ids` des cases et `zones_chasse`) ; extrémités de 000019, 000080, 000152 (tracés droits, au sec). |
+| 7 | E020 : désert et zone rocheuse | S001_E020 à S003_E020 : `desert` (`~`). S004_E020 : **`arid_land`** (`:`), voir plus bas. |
+| 8 | Supprimer Dunfold → N015_E015 | 000146 Dunfold → Northgate descendait de Dunfold à N015_E015 puis remontait. Le tronçon Dunfold → N015_E015 est supprimé, ainsi que le bout N015_E015 → N016_E016 qui ne menait plus nulle part. **000146** part de 000116 Moorgate → Dunfold en **N016_E016** : N016_E016 → N017_E017 → N018_E018. 000116 reçoit ses `waypoints`. |
+| 9 | Règles des sentiers | Voir plus bas. |
+| 10 | Bridlecrag S004_W005 → S004_W006, Cragfold S004_W003 → S004_W002 | Fiches et `cities` ; routes 000180 et 000179 allongées par l'ancienne case ; animaux domestiques déplacés (marmottes et corbeaux en S004_W005, la marmotte reste en S004_W003). Les deux hameaux sortent de la région 3×3 de Wyrmhallow (§15.5), qui ne change pas, comme Ambermead et Greyhedge en v1.0.72. |
+| 11 | Ruines du prieuré → Brightholm | 000140 (Dawnmere) supprimé ; **000225** Brightholm → Ruines du prieuré (`path`, cases voisines). |
+| 12 | Greyhedge – Ambermead devient un sentier | 000201 : `type` `path`. |
+
+**Zone rocheuse** (point 7). Le lore n'a pas de type « rocheux » utilisable par le générateur (`cliff` n'a pas de
+code dans la grille du master). `arid_land` (terres arides) est retenu : sol de pierre et de terre sans dunes
+(contrairement au désert), relief plat. La Tour Carrée de la Lune Noire, haute de trente étages, se dresse sur une
+« plaine de terres désolées » ; la case continue aussi les terres arides de S003_E021 à S003_E023. `mountain` aurait
+le plus de roche dans le splat, mais il lève un massif d'environ 250 m sous la tour.
+
+**Règles des sentiers** (point 9, toute la carte). Un sentier qui a la même forme qu'une route est supprimé. Un
+sentier s'arrête au premier croisement avec une route plus importante (`road` ou `imperial_road`). Le contrôle porte
+sur les tracés dessinés par l'éditeur, le sentier étant orienté de son lieu vers sa ville. Si le lieu est déjà sur la
+route (croisement à l'origine), le sentier n'a plus de longueur : il est supprimé. Le lieu reste desservi par la route
+qui passe par sa case. Aucun lieu ni aucune ville ne perd son accès (contrôle dans le script).
+
+| Sentier | Lieu → ville | Règle | Résultat |
+|---|---|---|---|
+| 000131 | Camp de manœuvres des Légions → Eaglewatch | double 000199 | supprimé |
+| 000133 | Ruines de la villa tharque → Eaglewatch | double 000128 et 000129 | supprimé |
+| 000169 | Lices des novices → Oathford | double 000166 (lices dans la case de Tithemead) | supprimé |
+| 000170 | Camp des parjures → Oathford | lieu sur 000198 | supprimé |
+| 000139 | Chapelle de l'ermite → Dawnmere | lieu sur 000052 Dys → Justfall | supprimé |
+| 000175 | Arène des Jeunes-Sangs → Grakhul | double 000125 | supprimé |
+| 000177 | Affût de la Grande Chasse → Grakhul | double 000142 | supprimé |
+| 000197 | Ruines du Temple sylvestre → Greenbough | double 000193, puis le quitte | supprimé |
+| 000218 | Grottes des Naufrageurs → Lanternhold | double 000215 | supprimé |
+| 000219 | Tanière du Jarl de Givre → Duskmoor | double 000216 | supprimé |
+| 000138 | Calvaire des pèlerins → Dawnmere | croise 000022 Justfall → Altenberg | raccourci : **Altenberg** → Calvaire |
+| 000141 | Camp des naufrageurs → Dawnmere | croise 000200 Lambsfold → Altenberg | raccourci : **Lambsfold** → Camp |
+
+Les tracés passent par les centres des cases : la nouvelle extrémité d'un sentier raccourci est le sommet de la route
+hôte le plus proche du croisement. Pour 000022 et 000200, ce sont leurs extrémités. Pour 000141, Lambsfold et
+Altenberg sont à égalité ; la ferme de la région de départ est retenue. Les autres sentiers ne doublent aucune route
+et n'en croisent aucune. Les nouveaux sentiers 000224, 000225 et 000201 non plus.
+
+**Réseau** (`routes/reseau.py --dry` et `reseau_check.py`, `MAXLEN` = 5). Avant : 117 villes et hameaux, 169 routes.
+Après : **160 routes**, aucune anomalie. Une seule composante avec les liaisons maritimes. Sans elles, l'île de la
+Trêve, Truceholm, Deepbrook et Hishtarland restent hors du réseau terrestre, comme en v1.0.75. `reseau.py` ignore
+les jonctions (extrémité sans ville) et voit la Forteresse d'Heureux isolée. `reseau_check.py` (v1.0.76) raccorde
+une jonction aux villes de sa route hôte : la forteresse est dans la composante principale.
+
+**Services** : 1244 → 1241 PNJ de service. Une écurie de moins pour Dunfold (5 → 4 : 000146 n'y arrive plus),
+Ambermead et Greyhedge (3 → 2 : 000201 devient un sentier).
+
+**Monde jouable** (`world_master.json`) : villes déplacées, grille (`~` en S001_E020 à S003_E020, `:` en S004_E020),
+`generated_cells`. S004_W006 et S004_W002 sont ajoutées. Avec Bridlecrag en S004_W006, le corridor des départs passe
+par S004_W007 et non plus par S005_W008 et S006_W004 à S006_W008. Ces six cases sont gardées explicitement : aucune
+n'est perdue. Cellules générées : **245 → 248**. S010_E010 l'était déjà. Test `world_gen_tests` « corrections v1.0.76 »
+(villes déplacées sur cellule générée, au sec, reliées ; codes de la colonne E020).
+
+**Ce qui n'est pas réel en jeu** :
+
+- Les routes et sentiers du lore. `tools/world_gen` ne lit pas la collection `routes` ni les `waypoints` : il trace
+  ses propres routes entre les villes du master (Kruskal, 2 plus proches voisines, A* sur le relief). Le jeu ne peut
+  donc pas suivre ces tracés sans un changement du générateur, par exemple une section de routes imposées dans le
+  master. Il relie déjà Der Hem Shelbem à Frosthollow par le même col. Il relie aussi Bridlecrag à Harrowbrook,
+  Scalebrook et Equiton.
+- Les sentiers et les jonctions n'existent que dans le lore et l'éditeur.
+
+**Points incertains** :
+
+- La lecture du point 4 : la liaison village – forteresse emprunte 000149 et 000079, avec 000155 en embranchement.
+  Pas de route directe du village jusqu'à 000079, qui doublerait 000149.
+- La lecture du point 8 : le bout N015_E015 → N016_E016 est aussi supprimé, et le reste de 000146 est raccroché à
+  000116.
+- `arid_land` pour « zone rocheuse ».
+- Bridlecrag est sur les neiges éternelles (S004_W006). Le Grand Ancien (`creature_dragon_grand_ancien`, 66-70)
+  chasse dans cette case, à côté du haras, hors de la région de départ ; rien n'est retiré.
+- Aucune « Porte du Sud » n'existe dans le lore ni dans le master. Seuls le Palais des Maîtres des Dragons
+  (S003_W004, inchangé, toujours relié par 000124 et 000082) et Equiton ont été vérifiés.
+- La sortie commune de Lhynn avec la Via Magna (N000_W010) pour 000064.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -1341,17 +1474,3 @@ les `zones_chasse`.
 - Noms des fleuves, rivières et lacs : à donner par le propriétaire (fleuve de Sysigie « [à nommer] »).
 - Forteresse naine d'Heureux (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.
-
-### 16.4 La cité redevient « Syzygie » (v1.0.75)
-
-`[DÉCISION]` du propriétaire (10/11/2026) : `ville_sysigie` s'affiche **« Syzygie »**, le nom sous lequel les
-lecteurs connaissent la cité pendant l'époque du jeu (T1-T11). L'affichage « Aurore » des v1.0.56 à v1.0.74
-(§10 Q5, §7.2) est annulé.
-
-- Nom de fondation « Cité d'Aurore » `[BD-A3 pl.7]` et « Aurore » : alias. Les **Portes d'Aurore** `[BD-T8 p.24-25]`
-  gardent leur nom (nom de la BD).
-- La cité et la principauté (région `syzygie`) portent le même nom, comme dans la BD.
-- Toutes les mentions de la cité passent à « Syzygie » : lore (villes, zone `zone_sysigie`, quêtes, notes),
-  `world_master.json` (`cities`, descriptions de POI), ROYAUMES.md et ce document. Le lac et le fleuve deviennent
-  « lac de Syzygie » et « fleuve de Syzygie ».
-- Identifiant inchangé (`ville_sysigie`) : aucun effet sur les sauvegardes ni sur le code.

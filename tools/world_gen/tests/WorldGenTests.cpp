@@ -931,6 +931,44 @@ namespace
 			"villes v1.0.73 : entrees au sec, a l'ecart des villes");
 	}
 
+	/// v1.0.76 : corrections du propriétaire (lot 5). Der Hem Shelbem descendue en
+	/// S010_E010, Bridlecrag (S004_W006) et Cragfold (S004_W002) déplacés hors de la
+	/// région 3×3 de Wyrmhallow : cellules générées, au sec, reliées par le générateur.
+	/// Colonne E020 : désert de S001 à S003, terres arides (zone rocheuse) en S004.
+	void TestCorrectionsV1076()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "corrections v1.0.76 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		auto generated = [&](const std::string& cell) {
+			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
+		};
+		const std::pair<const char*, const char*> moved[] = {
+			{ "ville_der_hem_shelsem", "S010_E010" }, { "hamlet_bridlecrag", "S004_W006" }, { "hamlet_cragfold", "S004_W002" } };
+		for (const auto& [id, cell] : moved)
+		{
+			const CityDef* c = g.FindCity(id);
+			int roads = 0;
+			for (const Road& r : g.roads)
+				if (r.fromId == id || r.toId == id) ++roads;
+			Check(c && c->cell == cell && generated(cell) && MacroHeight(m, c->center.x, c->center.z) > m.scale.seaLevelM + 3.0
+				&& roads >= 1,
+				(std::string("corrections v1.0.76 : ") + id + " en " + cell + ", cellule generee, au sec, reliee").c_str());
+		}
+		// Codes de la grille : rangée N - n, colonne e - W.
+		auto code = [&](int n, int e) { return m.gridRows[static_cast<size_t>(m.scale.northN - n)][static_cast<size_t>(e - m.scale.westE)]; };
+		Check(code(-1, 20) == '~' && code(-2, 20) == '~' && code(-3, 20) == '~' && code(-4, 20) == ':',
+			"corrections v1.0.76 : S001_E020 a S003_E020 en desert, S004_E020 en terres arides (zone rocheuse)");
+	}
+
 	/// v1.0.74 : île du Nord (Île de la Trêve). Terre émergée sur les 20 cases de forêt
 	/// isolées en mer, rivage entièrement dans les cellules générées (forêt + haut-fond),
 	/// îlot central séparé par la baie, quatre villes au sec, ports au bord de l'eau,
@@ -1130,6 +1168,7 @@ int main()
 	TestReliefs();
 	TestVillesV1073();
 	TestIleV1074();
+	TestCorrectionsV1076();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

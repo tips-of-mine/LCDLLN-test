@@ -212,7 +212,18 @@ namespace tools::world_gen
 			case '*': t = { 0.05, 0.0, 0.35, 0.6, 0.0 }; break;
 			case 'V': t = { 0.0, 0.35, 0.65, 0.0, 0.0 }; break;
 			case '%': case '&': t = { 0.45, 0.55, 0.0, 0.0, 0.6 }; break;
-			case ' ': case '-': t = { 0.0, 0.9, 0.1, 0.0, 0.0 }; break;
+			case ' ': case '-':
+				// v1.0.74 : terre émergée sous un code marin (une île de forêt entourée de
+				// haut-fond n'a pas de case de côte) : traitée comme une côte (plage près
+				// de l'eau, prairie littorale au-dessus) au lieu d'un fond nu.
+				if (h >= sea)
+				{
+					const double sand = SmoothStep(sea + 6.0, sea + 1.5, h);
+					t = { 0.85 - 0.75 * sand, 0.15 + 0.75 * sand, 0.0, 0.0, 0.8 * (1.0 - sand) };
+				}
+				else
+					t = { 0.0, 0.9, 0.1, 0.0, 0.0 };
+				break;
 			default: break;
 			}
 			return t;
@@ -295,7 +306,9 @@ namespace tools::world_gen
 			case ':': case 'l': r = 176; g = 158; b = 112; break;
 			case '%': case '&': r = 92; g = 104; b = 74; break;
 			case 'V': r = 92; g = 70; b = 62; break;
-			case '_': case ',':
+			// v1.0.74 : terre émergée sous un code marin (île entourée de haut-fond,
+			// sans case de côte) : couleur de côte, comme dans BaseSplat.
+			case '_': case ',': case ' ': case '-':
 				if (h < sea + 5.0) { r = 214; g = 200; b = 150; } else { r = 132; g = 160; b = 92; }
 				break;
 			default: r = 132; g = 160; b = 92; break;

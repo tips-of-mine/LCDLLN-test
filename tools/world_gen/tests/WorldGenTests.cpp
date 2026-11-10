@@ -931,6 +931,116 @@ namespace
 			"villes v1.0.73 : entrees au sec, a l'ecart des villes");
 	}
 
+	/// v1.0.74 : île du Nord (Île de la Trêve). Terre émergée sur les 20 cases de forêt
+	/// isolées en mer, rivage entièrement dans les cellules générées (forêt + haut-fond),
+	/// îlot central séparé par la baie, quatre villes au sec, ports au bord de l'eau,
+	/// aucune route du générateur entre l'île et le continent ni vers l'îlot.
+	void TestIleV1074()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "ile v1.0.74 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const double sea = m.scale.seaLevelM;
+		auto cellId = [](int n, int e) {
+			char b[16];
+			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
+			return std::string(b);
+		};
+		auto generated = [&](const std::string& cell) {
+			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
+		};
+		bool region = false;
+		for (const RegionDef& r : m.regions)
+			region = region || (r.id == "ile_de_la_treve" && r.eMin == -15 && r.eMax == -9 && r.nMin == 16 && r.nMax == 23);
+		Check(region, "ile v1.0.74 : region ile_de_la_treve (W015-W009, N016-N023)");
+		// Cases de l'île : forêt émergée, haut-fond avec de l'eau, toutes générées.
+		int forest = 0, shallow = 0, forestOk = 0, shallowOk = 0;
+		for (int n = 15; n <= 23; ++n)
+			for (int e = -16; e <= -8; ++e)
+			{
+				const char code = LoreCode(m, n, e);
+				const auto c = engine::world::cells::CellCenter({ n, e });
+				double hi = -1e9, lo = 1e9;
+				for (int dz = -4000; dz <= 4000; dz += 1000)
+					for (int dx = -4000; dx <= 4000; dx += 1000)
+					{
+						const double h = MacroHeight(m, c.x + dx, c.z + dz);
+						hi = std::max(hi, h);
+						lo = std::min(lo, h);
+					}
+				if (code == 'T') { ++forest; forestOk += generated(cellId(n, e)) && hi > sea + 10.0; }
+				if (code == '-') { ++shallow; shallowOk += generated(cellId(n, e)) && lo < sea; }
+			}
+		Check(forest == 20 && forestOk == 20, "ile v1.0.74 : 20 cases de foret generees, terre emergee dans chacune");
+		Check(shallow == 34 && shallowOk == 34, "ile v1.0.74 : 34 cases de haut-fond generees, avec de l'eau");
+		// Le rivage ne sort pas des cellules générées : pas d'île coupée net à un mur.
+		int landOutside = 0;
+		for (double z = -235000.0; z <= -145000.0; z += 250.0)
+			for (double x = -165000.0; x <= -75000.0; x += 250.0)
+				if (MacroHeight(m, x, z) >= sea)
+				{
+					const int e = static_cast<int>(std::lround(x / 10000.0)), n = -static_cast<int>(std::lround(z / 10000.0));
+					if (!generated(cellId(n, e))) ++landOutside;
+				}
+		Check(landOutside == 0, "ile v1.0.74 : toute la terre de l'ile est dans les cellules generees (rivage compris)");
+		// Villes au sec ; îlot séparé de Brinehaven et du bras ouest par la baie.
+		const std::pair<const char*, const char*> towns[] = { { "town_brinehaven", "N017_W010" }, { "town_duskmoor", "N022_W010" },
+			{ "town_truceholm", "N019_W010" }, { "town_lanternhold", "N021_W014" } };
+		for (const auto& [id, cell] : towns)
+		{
+			const CityDef* c = g.FindCity(id);
+			Check(c && c->cell == cell && generated(cell) && c->startFor.empty() && MacroHeight(m, c->center.x, c->center.z) > sea + 3.0,
+				(std::string("ile v1.0.74 : ") + id + " sur cellule generee, au sec").c_str());
+		}
+		auto crossesWater = [&](Vec2 a, Vec2 b) {
+			for (int k = 1; k < 200; ++k)
+			{
+				const Vec2 p = a + (b - a) * (k / 200.0);
+				if (MacroHeight(m, p.x, p.z) < sea) return true;
+			}
+			return false;
+		};
+		const CityDef* brine = g.FindCity("town_brinehaven");
+		const CityDef* truce = g.FindCity("town_truceholm");
+		const auto westArm = engine::world::cells::CellCenter({ 19, -13 });
+		if (brine && truce)
+			Check(crossesWater(brine->center, truce->center) && crossesWater(truce->center, { westArm.x, westArm.z }),
+				"ile v1.0.74 : ilot separe de Brinehaven et du bras ouest par la baie");
+		// Ports : au sec, à moins de 400 m de l'eau.
+		for (const char* id : { "poi_port_brinehaven", "poi_port_truceholm", "poi_port_hayfen", "poi_port_orderfen" })
+		{
+			const PoiDef* p = nullptr;
+			for (const PoiDef& q : g.pois) if (q.id == id) p = &q;
+			bool near = false;
+			if (p)
+				for (int a = 0; a < 32 && !near; ++a)
+					for (double r = 50.0; r <= 400.0 && !near; r += 50.0)
+						near = MacroHeight(m, p->center.x + std::cos(a * 0.19635) * r, p->center.z + std::sin(a * 0.19635) * r) < sea;
+			Check(p && p->kind == "port" && MacroHeight(m, p->center.x, p->center.z) >= sea && near,
+				(std::string("ile v1.0.74 : ") + id + " au sec, au bord de l'eau").c_str());
+		}
+		// Aucune route du générateur ne quitte l'île ni n'atteint l'îlot (liaisons maritimes du lore).
+		auto onIsland = [&](const std::string& id) {
+			const CityDef* c = g.FindCity(id);
+			return c && c->n >= 16 && c->n <= 23 && c->e >= -15 && c->e <= -9;
+		};
+		int bad = 0, island = 0;
+		for (const Road& r : g.roads)
+		{
+			if (onIsland(r.fromId) != onIsland(r.toId) || r.fromId == "town_truceholm" || r.toId == "town_truceholm") ++bad;
+			if (onIsland(r.fromId) && onIsland(r.toId)) ++island;
+		}
+		Check(bad == 0 && island >= 2, "ile v1.0.74 : routes de l'ile entre ses villes, aucune vers le continent ni l'ilot");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1019,6 +1129,7 @@ int main()
 	TestRiverIslandAndSharedPois();
 	TestReliefs();
 	TestVillesV1073();
+	TestIleV1074();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

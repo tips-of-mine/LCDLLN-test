@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.73",
+    "version": "1.0.74",
     "notes": [
+      "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brinehaven (N017_W010, port franc neutre), Duskmoor (N022_W010, Lune Noire), Truceholm (N019_W010, îlot, neutre), Lanternhold (N021_W014, Empire). Ports avec ponton à Hayfen et Orderfen ; ligne maritime du Nord Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222) et navette de Truceholm (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
       "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazelgate (N007_E002, Elfes des bois, neutre), Fellwatch (N009_W001, humains, Empire), Hollowgate (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Greyhedge et Hollowgate (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
       "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Aurore → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
       "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
@@ -15967,12 +15968,14 @@
         "armes",
         "forgeron",
         "ecurie",
+        "port",
         "cimetiere"
       ],
       "features": [
         "Terrain: coast",
         "Région: nord",
-        "Traversée par la rivière de la cascade, qui rejoint la mer juste après"
+        "Traversée par la rivière de la cascade, qui rejoint la mer juste après",
+        "Port avec ponton (nord) : ligne maritime du Nord vers l'Île de la Trêve"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -16036,7 +16039,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : pêche : poisson séché et salé ; produit tourbe et roseaux, pêche de rivière, herbes des marais, poisson ; récolte : herbes (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : pêche : poisson séché et salé ; produit tourbe et roseaux, pêche de rivière, herbes des marais, poisson ; récolte : herbes (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.74) Port avec ponton (POI poi_port_hayfen du monde jouable, côté mer), escale de la ligne maritime du Nord entre Brinehaven (Île de la Trêve) et Orderfen ; LORE_BD §16.3."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -16089,6 +16093,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0153_port_01",
+          "name": "Tibmond Brunfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "port",
+          "metier": "capitaine_de_port"
+        },
+        {
           "id": "pnj_hamlet_0153_cimetiere_01",
           "name": "Lanise Marlmorne",
           "gender": "female",
@@ -16096,7 +16108,16 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
-      ]
+      ],
+      "port": {
+        "ponton_cell": "N011_W004",
+        "vers_cell": "N012_W004",
+        "destinations": [
+          "town_brinehaven"
+        ],
+        "stop_seconds": 30,
+        "statut": "Ligne maritime du Nord (ligne_maritime_du_nord) : Brinehaven ↔ Hayfen ↔ Orderfen, aller-retour [GD v1.0.74]."
+      }
     },
     {
       "id": "hamlet_0154",
@@ -16832,11 +16853,13 @@
         "auberge",
         "potions",
         "ecurie",
+        "port",
         "cimetiere"
       ],
       "features": [
         "Terrain: plain",
-        "Région: nord"
+        "Région: nord",
+        "Port avec ponton (nord) : ligne maritime du Nord vers l'Île de la Trêve"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -16900,7 +16923,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit bois de chauffe, petit gibier, miel, poisson ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit bois de chauffe, petit gibier, miel, poisson ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.74) Port avec ponton (POI poi_port_orderfen du monde jouable, côté mer), escale de la ligne maritime du Nord entre Brinehaven (Île de la Trêve) et Hayfen ; LORE_BD §16.3."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -16937,6 +16961,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0189_port_01",
+          "name": "Eldora Corbgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "port",
+          "metier": "capitaine_de_port"
+        },
+        {
           "id": "pnj_hamlet_0189_cimetiere_01",
           "name": "Cedane Grismorne",
           "gender": "female",
@@ -16944,7 +16976,16 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
-      ]
+      ],
+      "port": {
+        "ponton_cell": "N011_W008",
+        "vers_cell": "N012_W008",
+        "destinations": [
+          "town_brinehaven"
+        ],
+        "stop_seconds": 30,
+        "statut": "Ligne maritime du Nord (ligne_maritime_du_nord) : Brinehaven ↔ Hayfen ↔ Orderfen, aller-retour [GD v1.0.74]."
+      }
     },
     {
       "id": "hamlet_0193",
@@ -24346,6 +24387,807 @@
           "id": "pnj_town_hollowgate_cimetiere_01",
           "name": "Corius Fontlande",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_brinehaven",
+      "name": "Brinehaven",
+      "alias": "Brinehaven",
+      "type": "port_town",
+      "importance": "regional",
+      "cell": "N017_W010",
+      "anchor_tile": "N017_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_neutral",
+      "region_id": "region_ile_de_la_treve",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest",
+        "Port franc de l'Île de la Trêve, départ de la ligne maritime du Nord",
+        "Quais et quartiers séparés pour l'Empire, la Lune Noire et les indépendants",
+        "Ponton à l'est de la ville (navettes de Hayfen, d'Orderfen et de Truceholm)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "pointe boisée",
+        "relief": "collines basses",
+        "implantation": "à la pointe sud-est du fer à cheval, la mer au sud, à l'est et au nord (baie)",
+        "pentes": "douces vers la mer",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "quais, entrepôts, trois quartiers clos (Empire, Lune Noire, indépendants)",
+        "style": "port de bois et de pierre",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "mer",
+        "eau": "haut-fond tout autour",
+        "couleur": "",
+        "elements": "baie de l'île au nord"
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "route vers le Camp du Cap et Lanternhold (ouest) ; ligne maritime du Nord ; navette de Truceholm",
+        "distance_visuelle": "",
+        "dominance_paysage": "fanal du port"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Ville-port en N017_W010, départ de la route maritime vers Hayfen et Orderfen, décidée par le propriétaire (10/11/2026) ; Île de la Trêve, zone commune à toutes les factions, niveaux 45 à 60 (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom, race (humains, avec des marchands de toutes les races), taille (ville) et contrôle (neutre) proposés, à valider. Port franc tenu par les armateurs neutres, garants de la trêve des comptoirs : chaque bloc y a son quai et son quartier, et l'on ne se bat pas dans l'enceinte.",
+        "[GD] (v1.0.74) Description courte : Port franc de l'Île de la Trêve, à la pointe sud-est du fer à cheval : comptoir des armateurs neutres, quais et quartiers séparés pour l'Empire, la Lune Noire et les indépendants ; la Trêve y interdit le combat dans l'enceinte [GD v1.0.74, à valider]."
+      ],
+      "taille": "ville",
+      "port": {
+        "ponton_cell": "N017_W010",
+        "vers_cell": "N017_W009",
+        "destinations": [
+          "hamlet_0153",
+          "hamlet_0189",
+          "town_truceholm"
+        ],
+        "stop_seconds": 30,
+        "statut": "Ligne maritime du Nord (ligne_maritime_du_nord) : Brinehaven ↔ Hayfen ↔ Orderfen, aller-retour [GD v1.0.74]."
+      },
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "bibliotheque",
+        "prison",
+        "port",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_brinehaven_auberge_01",
+          "name": "Zugzag Os-Fendu",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_brinehaven_auberge_02",
+          "name": "Wela Ferbrume",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_brinehaven_potions_01",
+          "name": "Edot Clairmorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_brinehaven_potions_02",
+          "name": "Naeviel Aelaleth",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_brinehaven_armes_01",
+          "name": "Aerriel Aurion",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_brinehaven_armes_02",
+          "name": "Durgrim Torche-de-Pierre",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_brinehaven_armures_01",
+          "name": "Morok Hache-d'Étain",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_brinehaven_armures_02",
+          "name": "Branwald Grisombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_brinehaven_forgeron_01",
+          "name": "Rala Boiscombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_brinehaven_forgeron_02",
+          "name": "Yvisse Clairbrume",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_brinehaven_marche_01",
+          "name": "Dunvin Chenmorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_brinehaven_marche_02",
+          "name": "Norran Noirchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_brinehaven_ecurie_01",
+          "name": "Luasse Lororin",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_brinehaven_temple_01",
+          "name": "Thurbera Cœur-de-Bronze",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_town_brinehaven_banque_01",
+          "name": "Beran Marlpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_town_brinehaven_guilde_01",
+          "name": "Daraude Chenombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_brinehaven_infirmerie_01",
+          "name": "Golli Poing-de-Basalte",
+          "gender": "male",
+          "race_id": "race_dwarf",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_brinehaven_infirmerie_02",
+          "name": "Ithithas Silvessa",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_brinehaven_bibliotheque_01",
+          "name": "Odoais Bleumare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "bibliotheque",
+          "metier": "bibliothecaire"
+        },
+        {
+          "id": "pnj_town_brinehaven_prison_01",
+          "name": "Krazag Ongle-Fendu",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "prison",
+          "metier": "geolier"
+        },
+        {
+          "id": "pnj_town_brinehaven_port_01",
+          "name": "Bofhild Cœur-de-Roc",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "port",
+          "metier": "capitaine_de_port"
+        },
+        {
+          "id": "pnj_town_brinehaven_cimetiere_01",
+          "name": "Nyline Velelle",
+          "gender": "female",
+          "race_id": "race_dark_elf",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_duskmoor",
+      "name": "Duskmoor",
+      "alias": "Duskmoor",
+      "type": "fortress_town",
+      "importance": "local",
+      "cell": "N022_W010",
+      "anchor_tile": "N022_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "lune_noire",
+      "region_id": "region_ile_de_la_treve",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest",
+        "Comptoir fortifié de la Lune Noire au bout du bras nord",
+        "Quartier des Dzoraks et des envoyés de la Légion infernale"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "bout de presqu'île",
+        "relief": "falaises basses",
+        "implantation": "au bout est du bras nord, la baie au sud, la mer au nord et à l'est",
+        "pentes": "moyennes",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "palissade noire, débarcadère, tour de guet",
+        "style": "camp fortifié de la Lune Noire",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "mer",
+        "eau": "haut-fond",
+        "couleur": "",
+        "elements": "débarcadère sur la baie"
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "route vers Lanternhold (ouest) ; sentier vers la Tanière du Jarl de Givre",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Ville en N022_W010, décidée par le propriétaire (10/11/2026) ; Île de la Trêve, zone commune à toutes les factions, niveaux 45 à 60 (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom, race (humains, Elfes noirs, Dzoraks et démons : RACE_FACTIONS « lune_noire » de generate_city_services.py), taille (village) et contrôle (Lune Noire) proposés, à valider. Comptoir du bloc de la Lune Noire (Lune Noire, Dzoraks, Légion infernale, Légions Impériales, Hauts Elfes : game_design.faction_relations) ; sous la trêve, tout voyageur y est reçu.",
+        "[GD] (v1.0.74) Description courte : Comptoir fortifié de la Lune Noire au bout du bras nord, face à la baie : palissade noire, débarcadère et quartier des Dzoraks et des envoyés de la Légion [GD v1.0.74, à valider]."
+      ],
+      "taille": "village",
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "guilde",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_duskmoor_auberge_01",
+          "name": "Rhyith Veliss",
+          "gender": "female",
+          "race_id": "race_dark_elf",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_duskmoor_armes_01",
+          "name": "Perelle Morfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_duskmoor_armures_01",
+          "name": "Jorane Chenrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_duskmoor_forgeron_01",
+          "name": "Izzith Vaeiss",
+          "gender": "female",
+          "race_id": "race_dark_elf",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_duskmoor_marche_01",
+          "name": "Welold Rochcombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_duskmoor_ecurie_01",
+          "name": "Mognak Sang-Brûlant",
+          "gender": "male",
+          "race_id": "race_dzorak",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_duskmoor_guilde_01",
+          "name": "Berwald Griscombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_duskmoor_cimetiere_01",
+          "name": "Varin Marlfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_truceholm",
+      "name": "Truceholm",
+      "alias": "Truceholm",
+      "type": "hamlet",
+      "importance": "local",
+      "cell": "N019_W010",
+      "anchor_tile": "N019_W010",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_neutral",
+      "region_id": "region_ile_de_la_treve",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest",
+        "Îlot central de la baie",
+        "Pierre de la Trêve, où les envoyés jurent la paix des comptoirs",
+        "Ponton de la navette de Brinehaven (sud de l'îlot)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "îlot boisé",
+        "relief": "butte centrale",
+        "implantation": "sur l'îlot, au milieu de la baie",
+        "pentes": "moyennes",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "pierre levée de la Trêve, maisons d'envoyés, ponton",
+        "style": "hameau neutre",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "mer",
+        "eau": "baie (haut-fond) tout autour",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "navette de Brinehaven ; sentier vers le Gouffre de la Baie",
+        "distance_visuelle": "",
+        "dominance_paysage": "Pierre de la Trêve"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Ville sur l'îlot central (N019_W010), décidée par le propriétaire (10/11/2026) ; Île de la Trêve, zone commune à toutes les factions, niveaux 45 à 60 (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom, race (humains), taille (hameau) et contrôle (neutre) proposés, à valider. Les gardiens de la Pierre de la Trêve reçoivent les serments des envoyés de toutes les factions ; c'est aussi là que se forment les équipes mêlées du raid du Dévoreur des Brumes.",
+        "[GD] (v1.0.74) Description courte : Hameau de l'îlot central de la baie, autour de la Pierre de la Trêve où les envoyés de toutes les factions jurent la paix des comptoirs ; ponton de la navette de Brinehaven [GD v1.0.74, à valider]."
+      ],
+      "taille": "hameau",
+      "port": {
+        "ponton_cell": "N019_W010",
+        "vers_cell": "N018_W010",
+        "destinations": [
+          "town_brinehaven"
+        ],
+        "stop_seconds": 30,
+        "statut": "Navette Brinehaven – Truceholm (navette_brinehaven_truceholm) [GD v1.0.74]."
+      },
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "ecurie",
+        "port",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_truceholm_auberge_01",
+          "name": "Perane Grisvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_truceholm_armes_01",
+          "name": "Edia Fontrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_truceholm_armures_01",
+          "name": "Isvin Rochgarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_truceholm_ecurie_01",
+          "name": "Edus Pierremorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_truceholm_port_01",
+          "name": "Yvmond Brunrive",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "port",
+          "metier": "capitaine_de_port"
+        },
+        {
+          "id": "pnj_town_truceholm_cimetiere_01",
+          "name": "Norin Griscombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_lanternhold",
+      "name": "Lanternhold",
+      "alias": "Lanternhold",
+      "type": "fortress_town",
+      "importance": "local",
+      "cell": "N021_W014",
+      "anchor_tile": "N021_W014",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_empire",
+      "region_id": "region_ile_de_la_treve",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest",
+        "Comptoir fortifié de l'Empire sur le bras ouest",
+        "Fanal sur la falaise, chapelle des Chevaliers de la Lumière et de la Justice"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "falaise boisée",
+        "relief": "plateau au-dessus de la mer",
+        "implantation": "sur le bras ouest, la mer à l'ouest, la forêt à l'est",
+        "pentes": "raides vers la mer",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "enceinte de pierre, fanal, chapelle, entrepôts de bois de marine",
+        "style": "impérial",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "mer",
+        "eau": "haut-fond à l'ouest",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "routes vers le Camp du Cap (sud) et Duskmoor (est) ; sentiers vers le Tertre des Rois Noyés et les Grottes des Naufrageurs",
+        "distance_visuelle": "",
+        "dominance_paysage": "fanal"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Ville en N021_W014, décidée par le propriétaire (10/11/2026) ; Île de la Trêve, zone commune à toutes les factions, niveaux 45 à 60 (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom, race (humains), taille (village) et contrôle (Empire) proposés, à valider. Comptoir du bloc de l'Empire (Chevaliers de la Lumière, de la Justice, Maison du Serpent : game_design.faction_relations) ; sous la trêve, tout voyageur y est reçu.",
+        "[GD] (v1.0.74) Description courte : Comptoir fortifié de l'Empire sur le bras ouest : fanal sur la falaise, chapelle des Chevaliers de la Lumière et de la Justice, entrepôts de bois de marine [GD v1.0.74, à valider]."
+      ],
+      "taille": "village",
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "forgeron",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_lanternhold_auberge_01",
+          "name": "Dunora Saulmorne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_lanternhold_potions_01",
+          "name": "Sera Hautchêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_lanternhold_armes_01",
+          "name": "Duna Belombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_lanternhold_forgeron_01",
+          "name": "Gilane Saulmont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_lanternhold_ecurie_01",
+          "name": "Eldelle Corbval",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_lanternhold_ecurie_02",
+          "name": "Wela Boismorne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_lanternhold_temple_01",
+          "name": "Gildor Morombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_town_lanternhold_banque_01",
+          "name": "Dunilde Sombrefort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_town_lanternhold_guilde_01",
+          "name": "Gilance Morcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_lanternhold_infirmerie_01",
+          "name": "Eldin Brunvigne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_lanternhold_cimetiere_01",
+          "name": "Edilde Bleucombe",
+          "gender": "female",
           "race_id": "race_human",
           "service": "cimetiere",
           "metier": "fossoyeur"
@@ -34751,6 +35593,425 @@
         "Ville : Frosthollow (hamlet_0193).",
         "Les PNJ parlent de plus en plus du volcan à mesure que la chaîne avance."
       ]
+    },
+    {
+      "id": "quest_ile_gd_treve_des_brumes",
+      "name": "La Trêve des Brumes",
+      "description": "Les comptoirs de l'île n'ont qu'une loi : la trêve. Escorter jusqu'à Truceholm un envoyé de chaque bloc, de Brinehaven, de Lanternhold et de Duskmoor, pour qu'ils renouvellent le serment devant la Pierre de la Trêve.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "cooperation",
+        "treve"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Recevoir le sceau des armateurs à Brinehaven.",
+        "Accompagner l'envoyé de Lanternhold jusqu'au ponton.",
+        "Accompagner l'envoyé de Duskmoor jusqu'au ponton.",
+        "Protéger la navette contre les naufrageurs.",
+        "Assister au serment devant la Pierre de la Trêve (Truceholm)."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_principale"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 45
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Coopération : ouverte à toutes les factions (for_factions vide) ; groupe mêlé encouragé. Débloque la trêve des comptoirs pour le joueur (rule_treve_des_comptoirs)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_ile_gd_bois_de_marine",
+      "name": "Le Bois de Marine",
+      "description": "L'Empire veut le bois de marine de l'île pour la flotte qui reconstruit Kendrhir. Marquer et abattre les grands chênes du bras ouest et les convoyer à Brinehaven avant que la Lune Noire ne les brûle.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "affrontement",
+        "empire"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Marquer les chênes de marine autour de Lanternhold.",
+        "Escorter les bûcherons au Camp du Cap.",
+        "Défendre le convoi contre les saboteurs de la Lune Noire (JcJ).",
+        "Livrer le bois au quai impérial de Brinehaven."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "chevaliers_de_la_lumiere",
+        "chevaliers_de_la_justice",
+        "maison_du_serpent"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 47
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_coupes_noires",
+      "counter_quest_factions": [
+        "faction_black_moon",
+        "dzorak_orcs",
+        "faction_legion_infernale",
+        "faction_legions_imperiales",
+        "faction_hauts_elfes"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Affrontement : contre-quête quest_ile_gd_coupes_noires (bloc de la Lune Noire)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_coupes_noires",
+      "name": "Les Coupes Noires",
+      "description": "La Lune Noire ne laissera pas l'Empire tirer une flotte de l'île. Saboter les coupes du bras ouest et incendier le convoi de bois de marine avant qu'il n'atteigne Brinehaven, sans rompre la trêve dans les murs.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "affrontement",
+        "lune_noire",
+        "contre_quete"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Recevoir les ordres au comptoir de Duskmoor.",
+        "Repérer les chênes marqués par l'Empire.",
+        "Incendier le convoi entre le Camp du Cap et Brinehaven (JcJ).",
+        "Rentrer à Duskmoor par la route du nord."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "faction_black_moon",
+        "dzorak_orcs",
+        "faction_legion_infernale",
+        "faction_legions_imperiales",
+        "faction_hauts_elfes"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 47
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_bois_de_marine",
+      "counter_quest_factions": [
+        "chevaliers_de_la_lumiere",
+        "chevaliers_de_la_justice",
+        "maison_du_serpent"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_bois_de_marine ; le combat a lieu hors des murs (trêve des comptoirs)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_ambre_des_geants",
+      "name": "L'Ambre des Géants",
+      "description": "Nains et Chevaliers-Dragons ont trouvé, au pied de la falaise nord, des veines d'ambre que les géants de froid gardent. Ouvrir une exploitation sous la protection des Chevaliers-Dragons, malgré les elfes qui tiennent ces bois pour sacrés.",
+      "category": "craft",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "cooperation",
+        "affrontement",
+        "nains",
+        "dragons"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Prospecter l'ambre au pied de la falaise nord.",
+        "Repousser les géants de froid (creature_geant_de_froid).",
+        "Tenir le chantier contre les Hauts Elfes (JcJ).",
+        "Vendre l'ambre aux armateurs de Brinehaven."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "faction_dwarves",
+        "faction_dragon_knights"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 50
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_ambre_elfique",
+      "counter_quest_factions": [
+        "faction_hauts_elfes"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Coopération Nains + Chevaliers-Dragons (alliés), affrontement avec les Hauts Elfes, leurs ennemis (game_design.faction_relations) : contre-quête quest_ile_gd_ambre_elfique."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_ambre_elfique",
+      "name": "Les Larmes des Arbres",
+      "description": "Pour les Hauts Elfes, l'ambre de l'île est la sève des plus vieux arbres. Chasser les prospecteurs nains et leurs protecteurs des Chevaliers-Dragons, et rendre la falaise à la forêt.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "affrontement",
+        "elfes",
+        "contre_quete"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Écouter les arbres de la falaise nord.",
+        "Saboter le chantier des Nains (JcJ).",
+        "Détourner les géants de froid vers les prospecteurs.",
+        "Replanter la clairière ouverte par le chantier."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "faction_hauts_elfes"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 50
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_ambre_des_geants",
+      "counter_quest_factions": [
+        "faction_dwarves",
+        "faction_dragon_knights"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ambre_des_geants."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_ames_des_noyes",
+      "name": "Les Âmes des Noyés",
+      "description": "Les âmes des rois noyés n'ont jamais trouvé le repos : la Légion infernale et la Lune Noire veulent les lier. Ouvrir le Tertre des Rois Noyés et enchaîner les âmes avant que les Ordres ne les libèrent.",
+      "category": "magie",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "cooperation",
+        "affrontement",
+        "legion",
+        "lune_noire"
+      ],
+      "difficulty": 4,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Recevoir le pacte d'un envoyé de la Légion à Duskmoor.",
+        "Ouvrir l'entrée du Tertre des Rois Noyés.",
+        "Enchaîner trois âmes royales.",
+        "Repousser les Chevaliers venus sceller le tertre (JcJ)."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "faction_legion_infernale",
+        "faction_black_moon"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 52
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_repos_des_noyes",
+      "counter_quest_factions": [
+        "chevaliers_de_la_lumiere",
+        "chevaliers_de_la_justice"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Coopération Légion infernale + Lune Noire (alliées, game_design.faction_relations), affrontement avec les Chevaliers de la Lumière et de la Justice : contre-quête quest_ile_gd_repos_des_noyes."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_repos_des_noyes",
+      "name": "Le Repos des Noyés",
+      "description": "Les Chevaliers de la Lumière et de la Justice ont appris qu'un pacte infernal vise les âmes du Tertre des Rois Noyés. Bénir les cryptes et rendre le repos aux rois avant que la Légion ne les enchaîne.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "affrontement",
+        "lumiere",
+        "justice",
+        "contre_quete"
+      ],
+      "difficulty": 4,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Recevoir l'eau bénite à la chapelle de Lanternhold.",
+        "Bénir les trois cryptes du tertre.",
+        "Briser les chaînes infernales.",
+        "Chasser les démonistes du tertre (JcJ)."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "chevaliers_de_la_lumiere",
+        "chevaliers_de_la_justice"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 52
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "quest_ile_gd_ames_des_noyes",
+      "counter_quest_factions": [
+        "faction_legion_infernale",
+        "faction_black_moon"
+      ],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ames_des_noyes."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_ile_gd_chant_du_devoreur",
+      "name": "Le Chant du Dévoreur",
+      "description": "La brume épaissit, les filets remontent déchirés : le Dévoreur des Brumes s'éveille dans le Gouffre de la Baie. Les gardiens de la Pierre de la Trêve appellent toutes les factions, même ennemies, à former les équipes mêlées qui l'affronteront.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "cooperation",
+        "raid"
+      ],
+      "difficulty": 5,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
+      "steps": [
+        "Relever les traces du Dévoreur autour de la baie.",
+        "Rallier un champion d'un autre bloc que le sien.",
+        "Prêter serment à Truceholm, devant la Pierre de la Trêve.",
+        "Ouvrir le Gouffre de la Baie (raid_devoreur_des_brumes)."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_principale"
+      },
+      "min_players": 5,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 55
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Coopération de toutes les factions (for_factions vide) contre le Dévoreur ; quête d'accès du raid multi-équipe raid_devoreur_des_brumes."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
     }
   ],
   "mounts": [
@@ -35979,6 +37240,95 @@
         "[DÉCISION] (v1.0.73) Raid dans une mine entre Greyhedge et la ville de S001_W007, décision du propriétaire du 10/11/2026 (LORE_BD §16.2).",
         "[INFÉRÉ] (v1.0.73) Lecture retenue, à confirmer : la mine est une galerie sous N000_W008 (lieu lieu_mine_de_la_traverse), le raid la traverse d'une entrée à l'autre (poi_mine_traverse_nord côté Greyhedge, poi_mine_traverse_sud côté Hollowgate).",
         "[GD] (v1.0.73) Niveau conseillé 10 à 15 : échelle des départs de la Première Province et des Marches (1-15, regle_bestiaire_echelles). Créatures : animal_rat (rats des profondeurs), animal_araignee (araignées géantes), boss creature_mere_des_galeries (niveau 15). Nom, récompenses et titre à valider."
+      ]
+    },
+    {
+      "id": "raid_tertre_des_rois_noyes",
+      "name": "Le Tertre des Rois Noyés",
+      "description": "Raid simple, à une équipe : descendre dans les cryptes inondées du Tertre des Rois Noyés, sous la forêt du bras ouest, à travers la cour spectrale, jusqu'au trône du Roi noyé.",
+      "min_teams": 1,
+      "min_players_per_team": 5,
+      "min_players_total": 5,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 3,
+      "location_ville_id": "town_lanternhold",
+      "rewards": {
+        "title": "Briseur de Tertre",
+        "reward": "Or, couronne du Roi noyé (fragments), essences spectrales.",
+        "power": "Bénédiction des noyés : respiration sous l'eau 10 min [GD]."
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Lieu lieu_tertre_des_rois_noyes ; boss creature_roi_noye ; niveau conseillé 45 à 50 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+      ]
+    },
+    {
+      "id": "raid_grottes_des_naufrageurs",
+      "name": "Les Grottes des Naufrageurs",
+      "description": "Raid simple, à une équipe : prendre d'assaut les grottes marines de la côte sud-ouest, éteindre les faux fanaux et abattre le capitaine Marée-Rouge, sur la prime des armateurs de Brinehaven.",
+      "min_teams": 1,
+      "min_players_per_team": 5,
+      "min_players_total": 5,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 3,
+      "location_ville_id": "town_brinehaven",
+      "rewards": {
+        "title": "Éteigneur de Fanaux",
+        "reward": "Prime des armateurs, butin des épaves.",
+        "power": "Passage gratuit sur la ligne maritime du Nord [GD]."
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Lieu lieu_grottes_des_naufrageurs ; boss creature_capitaine_maree_rouge ; niveau conseillé 50 à 55 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+      ]
+    },
+    {
+      "id": "raid_taniere_du_jarl",
+      "name": "La Tanière du Jarl de Givre",
+      "description": "Raid simple, à une équipe : gravir la falaise nord, forcer la grande salle des géants de froid et renverser le Jarl de Givre sur son trône de glace.",
+      "min_teams": 1,
+      "min_players_per_team": 5,
+      "min_players_total": 5,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 4,
+      "location_ville_id": "town_duskmoor",
+      "rewards": {
+        "title": "Tueur de Jarl",
+        "reward": "Givre éternel, cuir de gigantomorphe, hache de glace du Jarl.",
+        "power": "Résistance au froid [GD]."
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Lieu lieu_taniere_du_jarl ; boss creature_jarl_de_givre ; niveau conseillé 55 à 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+      ]
+    },
+    {
+      "id": "raid_devoreur_des_brumes",
+      "name": "Le Dévoreur des Brumes",
+      "description": "Raid à plusieurs équipes, factions mêlées : quand le Dévoreur remonte du Gouffre de la Baie, les envoyés de toutes les factions jurent à Truceholm de combattre ensemble ; chaque équipe tient une tentacule, puis toutes descendent dans le gouffre pour l'achever.",
+      "min_teams": 3,
+      "min_players_per_team": 5,
+      "min_players_total": 15,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 5,
+      "location_ville_id": "town_truceholm",
+      "rewards": {
+        "title": "Juré de la Trêve",
+        "reward": "Écailles et encre du Dévoreur (artisanat), or des comptoirs.",
+        "power": "Réputation auprès de toutes les factions de l'île [GD]."
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.74) Raid multi-équipe de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Lieu lieu_gouffre_de_la_baie ; boss creature_devoreur_des_brumes ; niveau conseillé 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
+        "[GD] (v1.0.74) Factions mêlées : ouvert à toutes les factions (for_factions vide) ; les équipes doivent venir d'au moins deux blocs (Empire, Lune Noire, indépendants : game_design.faction_relations) [GD, règle de formation à implémenter]. Quête d'accès quest_ile_gd_chant_du_devoreur."
       ]
     }
   ],
@@ -163770,7 +165120,8 @@
       "notes": [
         "[BD-THS p.29] Géants de froid de l'extrême nord (rang 3).",
         "LORE_BD §5.1 : l'extrême nord des Terres des Gigantomorphes (N019-N023) accueille les géants de froid.",
-        "[GD] (v1.0.58) Sommets enneigés N020-N021."
+        "[GD] (v1.0.58) Sommets enneigés N020-N021.",
+        "[GD] (v1.0.74) Île de la Trêve : géants de froid passés sur l'île par la banquise (bras nord), clan du Jarl de Givre (LORE_BD §16.3)."
       ],
       "bestiaire": true,
       "habitat": "Sommets enneigés de l'extrême nord des Terres des Gigantomorphes.",
@@ -163778,7 +165129,14 @@
         "N021_E015",
         "N021_E016",
         "N020_E018",
-        "N020_E019"
+        "N020_E019",
+        "lieu_taniere_du_jarl",
+        "N021_W013",
+        "N021_W014",
+        "N022_W010",
+        "N022_W011",
+        "N022_W012",
+        "N022_W013"
       ],
       "groupe": "paire"
     },
@@ -164184,7 +165542,8 @@
         "[BD-T4 p.43] Tourbillon de spectres blancs autour de Wismerhill dans la forteresse en ruine.",
         "[BD-T7 p.52] Spectres noirs à longs cheveux armés d'épées dans la tombe du Prince éternel.",
         "[BD-T8 p.12] Guerrier transpercé par un spectre (Der Hem Shelbem).",
-        "[GD] (v1.0.58) Nécropole de Der Hem Shelbem et Deathtrap Canyon."
+        "[GD] (v1.0.58) Nécropole de Der Hem Shelbem et Deathtrap Canyon.",
+        "[GD] (v1.0.74) Île de la Trêve : cour spectrale du Roi noyé (LORE_BD §16.3)."
       ],
       "bestiaire": true,
       "habitat": "Nécropole de Der Hem Shelbem, canyon voisin, nécropoles.",
@@ -164193,7 +165552,9 @@
         "lieu_der_hem_shelbem",
         "S009_E010",
         "lieu_deathtrap_canyon",
-        "S008_E010"
+        "S008_E010",
+        "lieu_tertre_des_rois_noyes",
+        "N019_W013"
       ],
       "groupe": "meute"
     },
@@ -164706,6 +166067,193 @@
         "lieu_mine_de_la_traverse",
         "N000_W008"
       ]
+    },
+    {
+      "id": "creature_loup_des_brumes",
+      "name": "Loup des brumes",
+      "type": "beast",
+      "difficulty": "normal",
+      "level_min": 45,
+      "level_max": 50,
+      "description": "Grand loup gris pâle des forêts de l'Île de la Trêve, qui chasse dans la brume montée de la baie.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Embuscade dans la brume : invisible à plus de 20 m tant qu'il ne bouge pas [GD]",
+        "Hurlement : appelle la meute [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3)."
+      ],
+      "bestiaire": true,
+      "habitat": "Forêts de l'Île de la Trêve.",
+      "groupe": "meute",
+      "zones_chasse": [
+        "N017_W010",
+        "N017_W011",
+        "N017_W012",
+        "N017_W013",
+        "N018_W013",
+        "N018_W014",
+        "N019_W010",
+        "N019_W011",
+        "N019_W013",
+        "N019_W014",
+        "N020_W010",
+        "N020_W011",
+        "N020_W013",
+        "N020_W014",
+        "N021_W013",
+        "N021_W014",
+        "N022_W010",
+        "N022_W011",
+        "N022_W012",
+        "N022_W013"
+      ]
+    },
+    {
+      "id": "creature_naufrageur",
+      "name": "Naufrageur",
+      "type": "humanoid",
+      "difficulty": "normal",
+      "level_min": 46,
+      "level_max": 52,
+      "description": "Pilleur d'épaves sans faction : allume de faux fanaux pour briser les navires sur les récifs, puis achève les survivants.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Croc d'abordage : attire la cible [GD]",
+        "Lanterne aveuglante [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3)."
+      ],
+      "bestiaire": true,
+      "habitat": "Côtes et grottes du sud-ouest de l'Île de la Trêve.",
+      "groupe": "horde",
+      "zones_chasse": [
+        "lieu_grottes_des_naufrageurs",
+        "N018_W014",
+        "N017_W013"
+      ]
+    },
+    {
+      "id": "creature_roi_noye",
+      "name": "Roi noyé",
+      "type": "undead",
+      "difficulty": "boss",
+      "level_min": 50,
+      "level_max": 50,
+      "description": "Dernier roi du peuple de la mer qui tenait l'île : mort noyé avec sa cour, il règne sur ses cryptes.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Marée funèbre : inonde la salle, ralentit le groupe [GD]",
+        "Cour spectrale : invoque des spectres (creature_spectre) [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Boss du raid raid_tertre_des_rois_noyes ; boss = x10 PV (regle_bestiaire_echelles)."
+      ],
+      "habitat": "Tertre des Rois Noyés (Île de la Trêve).",
+      "groupe": "unique",
+      "raid_id": "raid_tertre_des_rois_noyes",
+      "zones_chasse": [
+        "lieu_tertre_des_rois_noyes",
+        "N019_W013"
+      ]
+    },
+    {
+      "id": "creature_capitaine_maree_rouge",
+      "name": "Capitaine Marée-Rouge",
+      "type": "humanoid",
+      "difficulty": "boss",
+      "level_min": 54,
+      "level_max": 54,
+      "description": "Chef des naufrageurs de l'île, ancien corsaire chassé de tous les ports.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Bordée : salve de pistolets à rouet sur trois cibles [GD]",
+        "Faux fanal : retourne les naufrageurs contre le soigneur [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Boss du raid raid_grottes_des_naufrageurs ; boss = x10 PV (regle_bestiaire_echelles)."
+      ],
+      "habitat": "Grottes des Naufrageurs (Île de la Trêve).",
+      "groupe": "unique",
+      "raid_id": "raid_grottes_des_naufrageurs",
+      "zones_chasse": [
+        "lieu_grottes_des_naufrageurs",
+        "N018_W014"
+      ]
+    },
+    {
+      "id": "creature_jarl_de_givre",
+      "name": "Jarl de Givre",
+      "type": "humanoid",
+      "difficulty": "boss",
+      "level_min": 58,
+      "level_max": 58,
+      "description": "Chef des géants de froid passés sur l'île par la banquise ; trône de glace dans la falaise nord.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Banquise : le sol gèle, chutes [GD]",
+        "Hache de glace : frappe en cône [GD]",
+        "Appel du clan : géants de froid (creature_geant_de_froid) [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Boss du raid raid_taniere_du_jarl ; boss = x10 PV (regle_bestiaire_echelles)."
+      ],
+      "habitat": "Tanière du Jarl de Givre (Île de la Trêve).",
+      "groupe": "unique",
+      "raid_id": "raid_taniere_du_jarl",
+      "zones_chasse": [
+        "lieu_taniere_du_jarl",
+        "N022_W012"
+      ]
+    },
+    {
+      "id": "creature_devoreur_des_brumes",
+      "name": "Dévoreur des Brumes",
+      "type": "beast",
+      "difficulty": "world_boss",
+      "level_min": 60,
+      "level_max": 60,
+      "description": "Bête des profondeurs de la baie, à tentacules, dont le souffle fait la brume ; quand il remonte, il brise les navires et les quais de tous les comptoirs.",
+      "region_id": "region_ile_de_la_treve",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Brume : réduit la vue à 10 m [GD]",
+        "Tentacules : une par équipe, à abattre en même temps [GD]",
+        "Lame de fond : renverse les joueurs au bord de l'eau [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.74) Créature de l'Île de la Trêve (niveaux 45 à 60) ; nom à valider ; aucune source BD (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Boss du raid raid_devoreur_des_brumes ; boss mondial à plusieurs groupes = x30 PV (regle_bestiaire_echelles)."
+      ],
+      "habitat": "Gouffre de la Baie, sous la baie de l'Île de la Trêve.",
+      "groupe": "unique",
+      "raid_id": "raid_devoreur_des_brumes",
+      "zones_chasse": [
+        "lieu_gouffre_de_la_baie",
+        "N020_W011"
+      ]
     }
   ],
   "regions": [
@@ -164982,6 +166530,20 @@
         "[ÉPOQUE] intemporel : présent à l'époque du jeu.",
         "[DÉCISION] (v1.0.56) Hishtarland devient un royaume (Q18) ; la ville actuelle en est la capitale, à la même case. Correspond à la région « hishtarland » du monde jouable (world_master.json, inchangée).",
         "[GD] (v1.0.58) Économie : ressources poisson, sel, bois de marine importé ; productions construction navale, fret maritime ; exporte navires, sel ; importe bois, grain. Détail et sources : regle_eco_productions_regions."
+      ]
+    },
+    {
+      "id": "region_ile_de_la_treve",
+      "name": "Île de la Trêve",
+      "description": "Île boisée en fer à cheval au large de la côte nord-ouest (N016-N023, W009-W015), autour d'une baie ouverte à l'est et d'un îlot central. Zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 : une trêve des comptoirs y interdit le combat dans les villes, pas dans les bois.",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Île du Nord, région à part entière décidée par le propriétaire (10/11/2026) : zone commune à TOUTES les factions, y compris la Légion, niveau haut (45 à 60) ; objectifs : quêtes entre factions, 3 raids simples et 1 raid multi-équipe (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom « Île de la Trêve » proposé, à valider. Aucune source BD : l'île n'apparaît dans aucun album ; elle est à l'écart des guerres du continent, ce qui permet sa trêve à l'époque du jeu (après la destruction de Kendrhir, avant le T11).",
+        "[GD] (v1.0.74) Factions concernées : toutes (chevaliers_de_la_lumiere, chevaliers_de_la_justice, faction_black_moon, dzorak_orcs, faction_legion_infernale, faction_dragon_knights, maison_du_serpent, faction_dwarves, faction_hauts_elfes, faction_legions_imperiales, les_archimages, Hors-La-Loi). « La Légion » est lue comme la Légion infernale (faction « legion » de game/data/races/factions.json, départ aux Enfers) ; les Légions Impériales sont aussi admises. On y arrive par la ligne maritime du Nord (Hayfen, Orderfen → Brinehaven).",
+        "[GD] (v1.0.74) Trêve des comptoirs (rule_treve_des_comptoirs) : pas de combat dans l'enceinte des quatre villes ; hors les murs, les factions coopèrent ou s'affrontent (quêtes et contre-quêtes de l'île).",
+        "[GD] (v1.0.74) Villes : Brinehaven (port franc neutre, N017_W010), Truceholm (îlot, N019_W010), Duskmoor (comptoir de la Lune Noire, N022_W010), Lanternhold (comptoir de l'Empire, N021_W014). Raids : raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl (une équipe), raid_devoreur_des_brumes (plusieurs équipes).",
+        "[GD] (v1.0.74) Économie : bois de marine, fourrures, ambre, poisson ; exporte bois et fourrures par Brinehaven ; importe vivres, armes et outils (voir regle_eco_productions_regions).",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : région ile_de_la_treve de world_master.json (W015 à W009, N016 à N023) ; ses 54 cellules (île et haut-fond) sont générées."
       ]
     }
   ],
@@ -180170,8 +181732,8 @@
     {
       "id": "N023_W014",
       "name": "cell_N023_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180182,7 +181744,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -180190,8 +181753,8 @@
     {
       "id": "N023_W013",
       "name": "cell_N023_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180202,7 +181765,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -180210,8 +181774,8 @@
     {
       "id": "N023_W012",
       "name": "cell_N023_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180222,7 +181786,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -180230,8 +181795,8 @@
     {
       "id": "N023_W011",
       "name": "cell_N023_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180242,7 +181807,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -180250,8 +181816,8 @@
     {
       "id": "N023_W010",
       "name": "cell_N023_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180262,7 +181828,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -180270,8 +181837,8 @@
     {
       "id": "N023_W009",
       "name": "cell_N023_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -180282,7 +181849,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181070,8 +182638,8 @@
     {
       "id": "N022_W015",
       "name": "cell_N022_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181082,7 +182650,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181090,8 +182659,8 @@
     {
       "id": "N022_W014",
       "name": "cell_N022_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181102,7 +182671,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181110,8 +182680,8 @@
     {
       "id": "N022_W013",
       "name": "cell_N022_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181119,10 +182689,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181130,8 +182704,8 @@
     {
       "id": "N022_W012",
       "name": "cell_N022_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181139,10 +182713,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes",
+        "creature_jarl_de_givre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181150,8 +182730,8 @@
     {
       "id": "N022_W011",
       "name": "cell_N022_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181159,10 +182739,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181170,8 +182754,8 @@
     {
       "id": "N022_W010",
       "name": "cell_N022_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181179,10 +182763,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Ville Duskmoor (town_duskmoor) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181190,8 +182779,8 @@
     {
       "id": "N022_W009",
       "name": "cell_N022_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -181202,7 +182791,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -181990,8 +183580,8 @@
     {
       "id": "N021_W015",
       "name": "cell_N021_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182002,7 +183592,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182010,8 +183601,8 @@
     {
       "id": "N021_W014",
       "name": "cell_N021_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182019,10 +183610,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Ville Lanternhold (town_lanternhold) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182030,8 +183626,8 @@
     {
       "id": "N021_W013",
       "name": "cell_N021_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182039,10 +183635,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_froid",
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182050,8 +183650,8 @@
     {
       "id": "N021_W012",
       "name": "cell_N021_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182062,7 +183662,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182070,8 +183671,8 @@
     {
       "id": "N021_W011",
       "name": "cell_N021_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182082,7 +183683,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182090,8 +183692,8 @@
     {
       "id": "N021_W010",
       "name": "cell_N021_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182102,7 +183704,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182110,8 +183713,8 @@
     {
       "id": "N021_W009",
       "name": "cell_N021_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182122,7 +183725,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182918,8 +184522,8 @@
     {
       "id": "N020_W015",
       "name": "cell_N020_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182930,7 +184534,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182938,8 +184543,8 @@
     {
       "id": "N020_W014",
       "name": "cell_N020_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182947,10 +184552,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182958,8 +184566,8 @@
     {
       "id": "N020_W013",
       "name": "cell_N020_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182967,10 +184575,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182978,8 +184589,8 @@
     {
       "id": "N020_W012",
       "name": "cell_N020_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182990,7 +184601,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -182998,8 +184610,8 @@
     {
       "id": "N020_W011",
       "name": "cell_N020_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183007,10 +184619,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes",
+        "creature_devoreur_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Gouffre de la Baie (lieu_gouffre_de_la_baie) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183018,8 +184635,8 @@
     {
       "id": "N020_W010",
       "name": "cell_N020_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183027,10 +184644,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183038,8 +184658,8 @@
     {
       "id": "N020_W009",
       "name": "cell_N020_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183050,7 +184670,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183846,8 +185467,8 @@
     {
       "id": "N019_W015",
       "name": "cell_N019_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183858,7 +185479,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183866,8 +185488,8 @@
     {
       "id": "N019_W014",
       "name": "cell_N019_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183875,10 +185497,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183886,8 +185511,8 @@
     {
       "id": "N019_W013",
       "name": "cell_N019_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183895,10 +185520,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_spectre",
+        "creature_loup_des_brumes",
+        "creature_roi_noye"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Tertre des Rois Noyés (lieu_tertre_des_rois_noyes) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183906,8 +185537,8 @@
     {
       "id": "N019_W012",
       "name": "cell_N019_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183918,7 +185549,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183926,8 +185558,8 @@
     {
       "id": "N019_W011",
       "name": "cell_N019_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183935,10 +185567,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183946,8 +185581,8 @@
     {
       "id": "N019_W010",
       "name": "cell_N019_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183955,10 +185590,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Ville Truceholm (town_truceholm) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183966,8 +185605,8 @@
     {
       "id": "N019_W009",
       "name": "cell_N019_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183978,7 +185617,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null
@@ -184762,8 +186402,8 @@
     {
       "id": "N018_W015",
       "name": "cell_N018_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184773,15 +186413,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W014",
       "name": "cell_N018_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184789,17 +186431,24 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes",
+        "creature_naufrageur",
+        "creature_capitaine_maree_rouge"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Grottes des Naufrageurs (lieu_grottes_des_naufrageurs) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W013",
       "name": "cell_N018_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184807,17 +186456,21 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W012",
       "name": "cell_N018_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184827,15 +186480,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W011",
       "name": "cell_N018_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184845,15 +186500,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W010",
       "name": "cell_N018_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184863,15 +186520,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond de la baie de l'île du Nord (Île de la Trêve), ouverte à l'est (W009) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W009",
       "name": "cell_N018_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184881,7 +186540,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -185631,8 +187292,8 @@
     {
       "id": "N017_W015",
       "name": "cell_N017_W015",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185642,15 +187303,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W014",
       "name": "cell_N017_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185660,15 +187323,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W013",
       "name": "cell_N017_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185676,17 +187341,23 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes",
+        "creature_naufrageur"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Camp du Cap (lieu_camp_du_cap) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W012",
       "name": "cell_N017_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185694,17 +187365,21 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W011",
       "name": "cell_N017_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185712,17 +187387,21 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W010",
       "name": "cell_N017_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185730,17 +187409,22 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_des_brumes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.74) Ville Brinehaven (town_brinehaven) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W009",
       "name": "cell_N017_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185750,7 +187434,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -186504,8 +188190,8 @@
     {
       "id": "N016_W014",
       "name": "cell_N016_W014",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186515,15 +188201,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N016_W013",
       "name": "cell_N016_W013",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186533,15 +188221,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N016_W012",
       "name": "cell_N016_W012",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186551,15 +188241,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N016_W011",
       "name": "cell_N016_W011",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186569,15 +188261,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N016_W010",
       "name": "cell_N016_W010",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186587,15 +188281,17 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N016_W009",
       "name": "cell_N016_W009",
-      "region_id": "",
-      "terrain_type": "deep_sea",
+      "region_id": "region_ile_de_la_treve",
+      "terrain_type": "shallow_sea",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186605,7 +188301,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Haut-fond autour de l'île du Nord (Île de la Trêve) ; le rivage de l'île passe dans cette case (monde jouable : cellule générée) ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190952,7 +192650,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Port de Orderfen (ponton), ligne maritime du Nord ; LORE_BD §16.3."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -191039,7 +192739,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée.",
+        "[DÉCISION] (v1.0.74) Port de Hayfen (ponton), ligne maritime du Nord ; LORE_BD §16.3."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -219883,6 +221584,217 @@
         "[DÉCISION] (v1.0.73) Sentier de Hollowgate à l'entrée sud de la Mine de la Traverse.",
         "[INFÉRÉ] (v1.0.73) Tracé : 1 case(s), S001_W007 → N000_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
       ]
+    },
+    {
+      "id": "000214",
+      "type": "road",
+      "from_place": "N017_W010",
+      "from_ville_id": "town_brinehaven",
+      "from_lieu_id": "",
+      "to_place": "N017_W013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_camp_du_cap",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Route de l'île : Brinehaven → Camp du Cap, premier tronçon de la route de Brinehaven à Lanternhold (le Camp du Cap évite une route de six cases).",
+        "[INFÉRÉ] (v1.0.74) Tracé : 3 case(s), N017_W010 → N017_W011 → N017_W012 → N017_W013 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N017_W010",
+        "N017_W011",
+        "N017_W012",
+        "N017_W013"
+      ]
+    },
+    {
+      "id": "000215",
+      "type": "road",
+      "from_place": "N017_W013",
+      "from_ville_id": "",
+      "from_lieu_id": "lieu_camp_du_cap",
+      "to_place": "N021_W014",
+      "to_ville_id": "town_lanternhold",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Route de l'île : Camp du Cap → Lanternhold, par le bras ouest.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 4 case(s), N017_W013 → N018_W014 → N019_W014 → N020_W014 → N021_W014 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N017_W013",
+        "N018_W014",
+        "N019_W014",
+        "N020_W014",
+        "N021_W014"
+      ]
+    },
+    {
+      "id": "000216",
+      "type": "road",
+      "from_place": "N021_W014",
+      "from_ville_id": "town_lanternhold",
+      "from_lieu_id": "",
+      "to_place": "N022_W010",
+      "to_ville_id": "town_duskmoor",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Route de l'île : Lanternhold → Duskmoor, par le bras nord ; passe au pied de la Tanière du Jarl.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 4 case(s), N021_W014 → N022_W013 → N022_W012 → N022_W011 → N022_W010 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N021_W014",
+        "N022_W013",
+        "N022_W012",
+        "N022_W011",
+        "N022_W010"
+      ]
+    },
+    {
+      "id": "000217",
+      "type": "path",
+      "from_place": "N021_W014",
+      "from_ville_id": "town_lanternhold",
+      "from_lieu_id": "",
+      "to_place": "N019_W013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_tertre_des_rois_noyes",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Sentier de Lanternhold au Tertre des Rois Noyés.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 2 case(s), N021_W014 → N020_W013 → N019_W013 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N021_W014",
+        "N020_W013",
+        "N019_W013"
+      ]
+    },
+    {
+      "id": "000218",
+      "type": "path",
+      "from_place": "N021_W014",
+      "from_ville_id": "town_lanternhold",
+      "from_lieu_id": "",
+      "to_place": "N018_W014",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_grottes_des_naufrageurs",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Sentier de Lanternhold aux Grottes des Naufrageurs, le long de la côte ouest.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 3 case(s), N021_W014 → N020_W014 → N019_W014 → N018_W014 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N021_W014",
+        "N020_W014",
+        "N019_W014",
+        "N018_W014"
+      ]
+    },
+    {
+      "id": "000219",
+      "type": "path",
+      "from_place": "N022_W010",
+      "from_ville_id": "town_duskmoor",
+      "from_lieu_id": "",
+      "to_place": "N022_W012",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_taniere_du_jarl",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Sentier de Duskmoor à la Tanière du Jarl de Givre, par la falaise nord.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 2 case(s), N022_W010 → N022_W011 → N022_W012 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ],
+      "waypoints": [
+        "N022_W010",
+        "N022_W011",
+        "N022_W012"
+      ]
+    },
+    {
+      "id": "000220",
+      "type": "path",
+      "from_place": "N019_W010",
+      "from_ville_id": "town_truceholm",
+      "from_lieu_id": "",
+      "to_place": "N020_W011",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_gouffre_de_la_baie",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Sentier de Truceholm au Gouffre de la Baie, sur l'îlot.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 1 case(s), N019_W010 → N020_W011 (forêt de l'île, hors mer) ; LORE_BD §16.3."
+      ]
+    },
+    {
+      "id": "000221",
+      "type": "sea_route",
+      "from_place": "N017_W010",
+      "from_ville_id": "town_brinehaven",
+      "from_lieu_id": "",
+      "to_place": "N011_W004",
+      "to_ville_id": "hamlet_0153",
+      "to_lieu_id": "",
+      "description": "Étape 1 de la ligne maritime du Nord",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Route maritime de la ville-port de l'île (Brinehaven) à Hayfen (demande du propriétaire du 10/11/2026).",
+        "[INFÉRÉ] (v1.0.74) Tracé : 6 case(s), N017_W010 → N016_W009 → N015_W008 → N014_W007 → N013_W006 → N012_W005 → N011_W004 (eau navigable uniquement) ; LORE_BD §16.3."
+      ],
+      "sea_line_id": "ligne_maritime_du_nord",
+      "waypoints": [
+        "N017_W010",
+        "N016_W009",
+        "N015_W008",
+        "N014_W007",
+        "N013_W006",
+        "N012_W005",
+        "N011_W004"
+      ]
+    },
+    {
+      "id": "000222",
+      "type": "sea_route",
+      "from_place": "N011_W004",
+      "from_ville_id": "hamlet_0153",
+      "from_lieu_id": "",
+      "to_place": "N011_W008",
+      "to_ville_id": "hamlet_0189",
+      "to_lieu_id": "",
+      "description": "Étape 2 de la ligne maritime du Nord",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Route maritime de Hayfen à Orderfen, le long de la côte nord (demande du propriétaire du 10/11/2026).",
+        "[INFÉRÉ] (v1.0.74) Tracé : 4 case(s), N011_W004 → N012_W005 → N012_W006 → N012_W007 → N011_W008 (eau navigable uniquement) ; LORE_BD §16.3."
+      ],
+      "sea_line_id": "ligne_maritime_du_nord",
+      "waypoints": [
+        "N011_W004",
+        "N012_W005",
+        "N012_W006",
+        "N012_W007",
+        "N011_W008"
+      ]
+    },
+    {
+      "id": "000223",
+      "type": "sea_route",
+      "from_place": "N017_W010",
+      "from_ville_id": "town_brinehaven",
+      "from_lieu_id": "",
+      "to_place": "N019_W010",
+      "to_ville_id": "town_truceholm",
+      "to_lieu_id": "",
+      "description": "Navette Brinehaven – Truceholm",
+      "notes": [
+        "[DÉCISION] (v1.0.74) Liaison de l'îlot : navette Brinehaven – Truceholm.",
+        "[INFÉRÉ] (v1.0.74) Tracé : 2 case(s), N017_W010 → N018_W010 → N019_W010 (eau navigable uniquement) ; LORE_BD §16.3.",
+        "[GD] (v1.0.74) Navette plutôt que gué : la baie sépare l'îlot de Brinehaven par la case de haut-fond N018_W010 ; dans le générateur, le haut-fond est à 26 m pour une mer à 40 m (environ 14 m d'eau) et le détroit fait 4 à 5 km. Un gué demanderait de changer le terrain fixé par le propriétaire ; la navette suit la convention d'Ashwick – Deepbrook."
+      ],
+      "sea_line_id": "navette_brinehaven_truceholm",
+      "waypoints": [
+        "N017_W010",
+        "N018_W010",
+        "N019_W010"
+      ]
     }
   ],
   "competences": [
@@ -223934,6 +225846,146 @@
           "nom": "Réseau routier",
           "decision": "Villes moyennes reliées au réseau : Hazelgate → Arcanefield (000207), Hazelgate → Ashwick (000208), Fellwatch → Hazelgate (000209), Fellwatch → Hayfen (000210), Hollowgate → Scalebrook (000211), Hollowgate étape de la Via Magna (000120) ; sentiers vers les entrées de la Mine de la Traverse (000212, 000213) (LORE_BD §16.2).",
           "version": "1.0.73"
+        },
+        {
+          "collection": "cells",
+          "id": "N016_W009..N023_W015",
+          "nom": "Île du Nord (terrain)",
+          "decision": "Île du Nord en fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est (W009), îlot central N019-N020 x W010-W011, haut-fond tout autour (34 cases) ; le reste de N015-N023 x W008-W016 reste en mer profonde (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "regions",
+          "id": "region_ile_de_la_treve",
+          "nom": "Île de la Trêve",
+          "decision": "Île du Nord, région à part entière commune à toutes les factions (Légion comprise), niveaux 45 à 60 ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "town_brinehaven",
+          "nom": "Brinehaven",
+          "decision": "Ville-port en N017_W010, départ de la route maritime vers Hayfen et Orderfen de l'Île de la Trêve ; nom, race, taille (ville) et contrôle [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "town_duskmoor",
+          "nom": "Duskmoor",
+          "decision": "Ville en N022_W010 de l'Île de la Trêve ; nom, race, taille (village) et contrôle [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "town_truceholm",
+          "nom": "Truceholm",
+          "decision": "Ville sur l'îlot central (N019_W010) de l'Île de la Trêve ; nom, race, taille (hameau) et contrôle [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "town_lanternhold",
+          "nom": "Lanternhold",
+          "decision": "Ville en N021_W014 de l'Île de la Trêve ; nom, race, taille (village) et contrôle [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_0153",
+          "nom": "Hayfen",
+          "decision": "Port avec ponton, escale de la ligne maritime du Nord vers l'Île de la Trêve (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_0189",
+          "nom": "Orderfen",
+          "decision": "Port avec ponton, escale de la ligne maritime du Nord vers l'Île de la Trêve (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_tertre_des_rois_noyes",
+          "nom": "Tertre des Rois Noyés",
+          "decision": "Lieu de raid de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_grottes_des_naufrageurs",
+          "nom": "Grottes des Naufrageurs",
+          "decision": "Lieu de raid de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_taniere_du_jarl",
+          "nom": "Tanière du Jarl de Givre",
+          "decision": "Lieu de raid de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_gouffre_de_la_baie",
+          "nom": "Gouffre de la Baie",
+          "decision": "Lieu de raid de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_tertre_des_rois_noyes",
+          "nom": "Le Tertre des Rois Noyés",
+          "decision": "Raid simple à une équipe de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_grottes_des_naufrageurs",
+          "nom": "Les Grottes des Naufrageurs",
+          "decision": "Raid simple à une équipe de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_taniere_du_jarl",
+          "nom": "La Tanière du Jarl de Givre",
+          "decision": "Raid simple à une équipe de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_devoreur_des_brumes",
+          "nom": "Le Dévoreur des Brumes",
+          "decision": "Raid multi-équipe (3 équipes, factions mêlées) de l'Île de la Trêve ; nom [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "quests",
+          "id": "quest_ile_gd_*",
+          "nom": "Quêtes de l'Île de la Trêve",
+          "decision": "Quêtes entre factions de l'Île de la Trêve : coopération (quest_ile_gd_treve_des_brumes, quest_ile_gd_chant_du_devoreur) et affrontements en quête/contre-quête (quest_ile_gd_bois_de_marine, quest_ile_gd_coupes_noires, quest_ile_gd_ambre_des_geants, quest_ile_gd_ambre_elfique, quest_ile_gd_ames_des_noyes, quest_ile_gd_repos_des_noyes) ; noms [GD] à valider (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "sea_lines",
+          "id": "ligne_maritime_du_nord",
+          "nom": "Ligne maritime du Nord",
+          "decision": "Route maritime Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222), ports avec ponton à Hayfen et Orderfen (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Île de la Trêve : routes Brinehaven → Camp du Cap (000214), Camp du Cap → Lanternhold (000215), Lanternhold → Duskmoor (000216) ; sentiers vers les raids (000217, 000218, 000219, 000220) ; navette Brinehaven – Truceholm (000223) [GD] (LORE_BD §16.3).",
+          "version": "1.0.74"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_bestiaire_echelles",
+          "nom": "Bestiaire — échelles de danger et zones de chasse",
+          "decision": "Île de la Trêve : tranche 45-60 commune à toutes les factions (LORE_BD §16.3).",
+          "version": "1.0.74"
         }
       ]
     },
@@ -226562,7 +228614,8 @@
       "notes": [
         "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales.",
         "[DÉCISION] (v1.0.62) Chaque départ de faction a une région de départ de 3×3 cases (la case du hameau de départ et ses 8 voisines), de niveau débutant (1 à 10) : 2 à 3 fermes ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; une PR de carte par départ. Décision du propriétaire du 06/11/2026 (LORE_BD §15). Première région : Eaglewatch (Légions Impériales, v1.0.62).",
-        "[DÉCISION] (v1.0.71) Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails, sans hameau (la Citadelle reste la seule ville) ; décision du propriétaire du 09/11/2026 (LORE_BD §15.8)."
+        "[DÉCISION] (v1.0.71) Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails, sans hameau (la Citadelle reste la seule ville) ; décision du propriétaire du 09/11/2026 (LORE_BD §15.8).",
+        "[DÉCISION] (v1.0.74) Île de la Trêve (region_ile_de_la_treve) : même niveau, 45 à 60, pour toutes les factions (zone commune, Légion comprise) ; décision du propriétaire du 10/11/2026 (LORE_BD §16.3)."
       ]
     },
     {
@@ -228184,7 +230237,7 @@
         "cells",
         "rule_niveaux_par_faction"
       ],
-      "mechanique_jeu": "Le niveau d'une zone dépend de la faction (rule_niveaux_par_faction) ; le niveau d'une créature est fixe. Repères [GD] : départ (Terres du Nord, Marches) 1-15 ; forêts et plaines de l'intérieur 10-30 ; Orkland, Baronnie de Moork 18-45 ; Royaume Drach, Terres des Gigantomorphes 30-56 ; nécropoles, marais maudits 40-56 ; volcan, boss mondiaux 55-70 ; Enfers (départ de la Légion infernale) 1-10, sauf boss et abords des portails. Élites : x3 PV ; boss : x10 ; boss mondiaux : x30 (à calibrer sur game_design.stat_model).",
+      "mechanique_jeu": "Le niveau d'une zone dépend de la faction (rule_niveaux_par_faction) ; le niveau d'une créature est fixe. Repères [GD] : départ (Terres du Nord, Marches) 1-15 ; forêts et plaines de l'intérieur 10-30 ; Orkland, Baronnie de Moork 18-45 ; Royaume Drach, Terres des Gigantomorphes 30-56 ; nécropoles, marais maudits 40-56 ; Île de la Trêve (zone commune à toutes les factions) 45-60 ; volcan, boss mondiaux 55-70 ; Enfers (départ de la Légion infernale) 1-10, sauf boss et abords des portails. Élites : x3 PV ; boss : x10 ; boss mondiaux : x30 (à calibrer sur game_design.stat_model).",
       "apparition_window": "",
       "incantations_connues": [],
       "training_minimum": "",
@@ -228193,7 +230246,66 @@
         "[GD] (v1.0.58) Les fiches des T11-T14 et du hors-série décrivent des espèces qui existent à l'époque du jeu ; les événements où on les voit restent l'avenir du monde jouable.",
         "[GD] (v1.0.58) Démons majeurs et créatures nommées restent dans persons (ex. char_shaadrak, char_xygga, char_drakkahen, char_narankhorhh_m2) ; la fiche d'espèce y renvoie.",
         "[DÉCISION] (v1.0.71) Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8). Les espèces de haut niveau dont l'habitat cite les Enfers (succube, nuée infernale, légionnaire infernal, démon volant, crapaud infernal, démon lacérateur, gargouille animée, démon à tête de sanglier) restent aux portes et à la Porte des Enfers du T12 (zones_chasse inchangées), pas dans les cases des Enfers.",
-        "[GD] (v1.0.71) Cases de la carte des Enfers dans zones_chasse : « enfers:<case> » (ex. enfers:N001_W001) ; elles n'ont pas de fiche cells (les identifiants N000_E000… sont ceux du continent), donc pas de creature_ids ({SEC})."
+        "[GD] (v1.0.71) Cases de la carte des Enfers dans zones_chasse : « enfers:<case> » (ex. enfers:N001_W001) ; elles n'ont pas de fiche cells (les identifiants N000_E000… sont ceux du continent), donc pas de creature_ids ({SEC}).",
+        "[DÉCISION] (v1.0.74) L'Île de la Trêve (île du Nord, region_ile_de_la_treve) est une zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 (décision du propriétaire du 10/11/2026 ; LORE_BD §16.3). Espèces : creature_loup_des_brumes et creature_naufrageur [GD], creature_geant_de_froid et creature_spectre (existantes) ; boss des raids creature_roi_noye (50), creature_capitaine_maree_rouge (54), creature_jarl_de_givre (58) et creature_devoreur_des_brumes (boss mondial, 60)."
+      ]
+    },
+    {
+      "id": "rule_ligne_maritime_du_nord",
+      "name": "Ligne maritime du Nord (Brinehaven – Hayfen – Orderfen)",
+      "category": "transport",
+      "description": "Ligne aller-retour Brinehaven (Île de la Trêve) ↔ Hayfen ↔ Orderfen, 2 bateaux en positions opposées. Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville, côté mer ; pause de 30 secondes avant de repartir. Seul accès à l'Île de la Trêve depuis le continent.",
+      "applies_to": [
+        "town_brinehaven",
+        "hamlet_0153",
+        "hamlet_0189"
+      ],
+      "mechanique_jeu": "Ligne aller-retour Brinehaven (Île de la Trêve) ↔ Hayfen ↔ Orderfen, 2 bateaux en positions opposées. Les bateaux ne naviguent que sur l'eau assez profonde, jamais sur la terre ; ponton dans la cellule de chaque ville, côté mer ; pause de 30 secondes avant de repartir. Seul accès à l'Île de la Trêve depuis le continent.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] Propriétaire, file d'attente de la carte du 10/11/2026 (lot 3, v1.0.74)",
+      "notes": [
+        "[GD] (v1.0.74) Ordre des escales et nombre de bateaux proposés, à valider (LORE_BD §16.3)."
+      ]
+    },
+    {
+      "id": "rule_navette_brinehaven_truceholm",
+      "name": "Navette Brinehaven – Truceholm",
+      "category": "transport",
+      "description": "Navette aller-retour Brinehaven ↔ Truceholm (îlot central de la baie de l'Île de la Trêve), 1 bateau ; eau navigable uniquement ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
+      "applies_to": [
+        "town_brinehaven",
+        "town_truceholm"
+      ],
+      "mechanique_jeu": "Navette aller-retour Brinehaven ↔ Truceholm (îlot central de la baie de l'Île de la Trêve), 1 bateau ; eau navigable uniquement ; ponton dans la cellule de chaque ville ; pause de 30 secondes avant de repartir.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[GD] (v1.0.74) Liaison de l'îlot (navette plutôt que gué)",
+      "notes": [
+        "[GD] (v1.0.74) À valider (LORE_BD §16.3)."
+      ]
+    },
+    {
+      "id": "rule_treve_des_comptoirs",
+      "name": "Trêve des comptoirs de l'Île de la Trêve",
+      "category": "combat",
+      "description": "Aucun combat entre joueurs ni entre factions dans l'enceinte de Brinehaven, Truceholm, Duskmoor et Lanternhold ; hors les murs, l'île est une zone de combat ouverte à toutes les factions (quêtes et contre-quêtes de l'île). Les créatures de l'île restent hostiles partout hors des villes.",
+      "applies_to": [
+        "region_ile_de_la_treve",
+        "town_brinehaven",
+        "town_truceholm",
+        "town_duskmoor",
+        "town_lanternhold"
+      ],
+      "mechanique_jeu": "Aucun combat entre joueurs ni entre factions dans l'enceinte de Brinehaven, Truceholm, Duskmoor et Lanternhold ; hors les murs, l'île est une zone de combat ouverte à toutes les factions (quêtes et contre-quêtes de l'île). Les créatures de l'île restent hostiles partout hors des villes.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[GD] (v1.0.74) Île de la Trêve, zone commune à toutes les factions",
+      "notes": [
+        "[GD] (v1.0.74) Règle proposée pour la zone commune, inspirée de la zone neutre de l'Oracle (rule_zone_neutre_oracle) ; à valider (LORE_BD §16.3)."
       ]
     }
   ],
@@ -229317,7 +231429,11 @@
           "hamlet_0172",
           "ville_equiton",
           "town_0137",
-          "hishtarland"
+          "hishtarland",
+          "town_brinehaven",
+          "town_truceholm",
+          "hamlet_0153",
+          "hamlet_0189"
         ],
         "arenes": [
           "ville_feyhin_lokcthat"
@@ -229343,6 +231459,12 @@
             ]
           },
           "city_dragon_palace": {
+            "temple": [
+              1,
+              1
+            ]
+          },
+          "town_lanternhold": {
             "temple": [
               1,
               1
@@ -238264,6 +240386,416 @@
         "[GD] (v1.0.73) Nom proposé, à valider. Ancienne mine de fer impériale qui perçait la chaîne pour raccourcir le chemin de Greyhedge à la Via Magna ; abandonnée quand une couvée d'araignées géantes s'y est installée. Les mineurs de Hollowgate n'exploitent plus que les premières galeries du sud. Raid raid_mine_de_la_traverse.",
         "[INFÉRÉ] (v1.0.73) Monde jouable : POI poi_mine_traverse_nord (N001_W008, décalé de 1,5 km à l'ouest et 3,6 km au sud) et poi_mine_traverse_sud (S001_W007, décalé de 4 km à l'ouest et 4 km au nord), genre « salle » (comme le Puits des Apprentis) ; la galerie elle-même n'est pas modélisée."
       ]
+    },
+    {
+      "id": "lieu_camp_du_cap",
+      "name": "Camp du Cap",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N017_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "relais neutre des bûcherons et des convois",
+        "palissade, abri de convoi, réserve de bois de marine",
+        "carrefour des routes de Brinehaven et de Lanternhold"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "relais sous la trêve",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Relais neutre au coin sud-ouest de l'île : étape de la route de Brinehaven à Lanternhold (la route directe ferait six cases).",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_camp_du_cap (camp, N017_W013) ; l'intérieur n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_tertre_des_rois_noyes",
+      "name": "Tertre des Rois Noyés",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N019_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tertre funéraire sous la forêt du bras ouest",
+        "cryptes des rois d'un peuple de la mer disparu",
+        "salle du trône noyée où veille le Roi noyé"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "cryptes humides, chants sous l'eau",
+        "sentiment": "",
+        "niveau_menace": "raid à une équipe (niveaux 45 à 50)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Tombeau des anciens rois de la mer qui tenaient l'île avant les comptoirs ; leurs spectres en gardent le trésor. Raid raid_tertre_des_rois_noyes.",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_tertre_rois_noyes (ruine, N019_W013) ; l'intérieur n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_grottes_des_naufrageurs",
+      "name": "Grottes des Naufrageurs",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N018_W014",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grottes marines de la côte sud-ouest",
+        "faux fanaux allumés pour briser les navires",
+        "repaire du capitaine Marée-Rouge"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "embruns, feux trompeurs",
+        "sentiment": "",
+        "niveau_menace": "raid à une équipe (niveaux 50 à 55)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Bande de naufrageurs sans foi ni faction qui pillent les navires de tous les blocs : seule cible commune que la trêve ne protège pas. Raid raid_grottes_des_naufrageurs.",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_grottes_naufrageurs (salle, N018_W014) ; l'intérieur n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_taniere_du_jarl",
+      "name": "Tanière du Jarl de Givre",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N022_W012",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grande salle creusée dans la falaise nord",
+        "géants de froid venus par la banquise en hiver",
+        "trône de glace du Jarl de Givre"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "froid mordant, échos",
+        "sentiment": "",
+        "niveau_menace": "raid à une équipe (niveaux 55 à 60)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Les géants de froid de l'extrême nord (LORE_BD §5.1) passent sur l'île par la banquise ; leur jarl s'est taillé une salle dans la falaise. Raid raid_taniere_du_jarl.",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_taniere_du_jarl (salle, N022_W012) ; l'intérieur n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_gouffre_de_la_baie",
+      "name": "Gouffre de la Baie",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N020_W011",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "gouffre de l'îlot qui descend sous la baie",
+        "cavernes inondées sous le haut-fond",
+        "antre du Dévoreur des Brumes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "brume, grondements sous l'eau",
+        "sentiment": "",
+        "niveau_menace": "raid à plusieurs équipes, toutes factions (niveau 60)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
+        "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. La brume qui couvre la baie monte du gouffre où dort le Dévoreur ; quand il remonte, aucun comptoir n'est épargné : c'est le seul ennemi contre lequel toutes les factions s'allient. Raid raid_devoreur_des_brumes.",
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_gouffre_de_la_baie (gouffre, N020_W011) ; l'intérieur n'est pas modélisé."
+      ]
     }
   ],
   "route_types": [
@@ -238632,6 +241164,64 @@
         "shallow_sea"
       ],
       "rule_id": "rule_navette_ashwick_ile"
+    },
+    {
+      "id": "ligne_maritime_du_nord",
+      "name": "Ligne maritime du Nord",
+      "stops": [
+        {
+          "ville_id": "town_brinehaven",
+          "ponton_cell": "N017_W010",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "hamlet_0153",
+          "ponton_cell": "N011_W004",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "hamlet_0189",
+          "ponton_cell": "N011_W008",
+          "stop_seconds": 30
+        }
+      ],
+      "loop": false,
+      "order": "aller-retour",
+      "boats": 2,
+      "boat_spacing": "opposite",
+      "stop_seconds": 30,
+      "navigable_terrains": [
+        "coast",
+        "deep_sea",
+        "shallow_sea"
+      ],
+      "rule_id": "rule_ligne_maritime_du_nord"
+    },
+    {
+      "id": "navette_brinehaven_truceholm",
+      "name": "Navette Brinehaven – Truceholm",
+      "stops": [
+        {
+          "ville_id": "town_brinehaven",
+          "ponton_cell": "N017_W010",
+          "stop_seconds": 30
+        },
+        {
+          "ville_id": "town_truceholm",
+          "ponton_cell": "N019_W010",
+          "stop_seconds": 30
+        }
+      ],
+      "loop": false,
+      "order": "aller-retour",
+      "boats": 1,
+      "stop_seconds": 30,
+      "navigable_terrains": [
+        "coast",
+        "deep_sea",
+        "shallow_sea"
+      ],
+      "rule_id": "rule_navette_brinehaven_truceholm"
     }
   ],
   "scenarios": [

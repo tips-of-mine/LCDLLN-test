@@ -147,7 +147,8 @@ RENOMMAGES = {"horker": "Harrowdale"}
 # de Grakhul, v1.0.67), les Nains (hameaux de la region de depart de
 # Durnhalde, v1.0.69) et les Hauts Elfes (hameaux de la region de depart de
 # Silverglade, v1.0.70), humains par defaut. Liste ponderee. v1.0.73 : Hazelgate,
-# comptoir des Elfes des bois, a aussi des marchands humains.
+# comptoir des Elfes des bois, a aussi des marchands humains. v1.0.74 : Brinehaven, port
+# franc de l'Ile de la Treve, a des marchands de toutes les races.
 RACE_VILLES = {
     "ville_whispers_hill": [("race_human", 1), ("race_haut_elfe", 1)],
     "leviathan_jungle": [("race_dzorak", 1)],
@@ -161,6 +162,11 @@ RACE_VILLES = {
     "hameau_silverglade": [("race_haut_elfe", 1)],
     # v1.0.73 : villes moyennes (Fellwatch et Hollowgate gardent le defaut humain).
     "town_hazelgate": [("race_elfe_des_bois", 3), ("race_human", 1)],
+    # v1.0.74 : Brinehaven, port franc de l'Ile de la Treve (zone commune a toutes
+    # les factions), a des marchands de toutes les races ; Duskmoor (Lune Noire)
+    # suit RACE_FACTIONS, Lanternhold et Truceholm gardent le defaut humain.
+    "town_brinehaven": [("race_human", 4), ("race_dwarf", 1), ("race_haut_elfe", 1), ("race_dzorak", 1),
+                        ("race_dark_elf", 1)],
 }
 RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],

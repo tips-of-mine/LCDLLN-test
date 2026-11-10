@@ -1178,6 +1178,138 @@ mine décalées vers la chaîne, au sec, à l'écart des villes).
 - Le niveau du raid et du boss ; les récompenses.
 - La route 000210 passe par N010_W003, une case du marais maudit autour de Hayfen.
 
+### 16.3 Île du Nord : Île de la Trêve (v1.0.74)
+
+**Décisions du propriétaire (10/11/2026, lot 3)**. Ce qu'il a fixé porte `[DÉCISION] (v1.0.74)` : le terrain,
+la région à part entière commune à toutes les factions (Légion comprise) de niveau 45 à 60, les quatre cases de
+villes, la ville-port de N017_W010, les ports avec ponton de Hayfen et d'Orderfen, la route maritime et les
+objectifs (quêtes entre factions, 3 raids simples, 1 raid multi-équipe). Tout le reste est `[GD]`, à valider :
+noms, races, tailles, contrôle, tracés, quêtes, raids et créatures. 20 entrées sont ajoutées au registre
+`regle_canon_registre_decisions`. Scripts reproductibles : `master_v1074.py` puis `lore_v1074.py`, appliqués
+aux fichiers v1.0.73, puis `tools/lore/generate_city_services.py`.
+
+**Terrain** (liste exacte du propriétaire, `cells` du lore et `grid` du master). Toute la zone N015-N023 ×
+W008-W016 était en `deep_sea` ; les cases non listées y restent.
+
+```
+        W015 W014 W013 W012 W011 W010 W009
+N023     .    -    -    -    -    -    -
+N022     -    -    T    T    T    T    -      T = forest (20 cases)
+N021     -    T    T    -    -    -    -      - = shallow_sea (34 cases)
+N020     -    T    T    -    T    T    -      . = deep_sea
+N019     -    T    T    -    T    T    -
+N018     -    T    T    -    -    -    -
+N017     -    -    T    T    T    T    -
+N016     .    -    -    -    -    -    -
+```
+
+Fer à cheval de forêt autour d'une baie ouverte à l'est (W009), îlot au centre (N019-N020 × W010-W011).
+
+**Générateur** (`tools/world_gen`). Le relief macro interpole les cases et les déforme d'environ une case :
+la forêt émerge (40 à 140 m au-dessus de la mer) et son rivage passe dans les cases de haut-fond (le haut-fond
+est à 26 m, la mer à 40 m). Les 20 cases de forêt **et** les 34 cases de haut-fond sont donc générées : sans
+ces dernières, l'île serait coupée net au bord de ses cases terrestres, sans côte ni plage. Cellules générées :
+191 → 245, aucune perdue. Hishtarland et Deepbrook (îles `o` ou haut-fond) ne sont pas générées et n'offraient
+pas de précédent. Correction de `Output.cpp` : une île de forêt entourée de haut-fond n'a pas de case de côte,
+et le code de couverture déformé y vaut souvent `-` (environ 30 % des terres de l'île). Une terre émergée sous
+un code marin (` ` ou `-`) était un fond nu (splat « terre » à 0,9) ; elle est maintenant traitée comme une côte
+(sable jusqu'à 1,5-6 m au-dessus de l'eau, prairie littorale au-dessus), dans le splat (`BaseSplat`) et dans
+la carte du continent (`TerrainColor`). Cela touche aussi, sur le continent, les rares terres sous un code
+marin en bord de côte. Le rivage à code `T` (environ 40 % du rivage de l'île) reste en forêt jusqu'à l'eau,
+avec la bande de terre mouillée habituelle. Test `world_gen_tests` « ile v1.0.74 ».
+
+**Région** `region_ile_de_la_treve` « Île de la Trêve » `[GD]` (lore) et `ile_de_la_treve` (master, W015-W009 ×
+N016-N023). Zone commune à toutes les factions (« la Légion » lue comme la Légion infernale ; les Légions
+Impériales sont aussi admises), niveau 45 à 60 pour toutes (`regle_bestiaire_echelles`,
+`rule_niveaux_par_faction`). Règle proposée `rule_treve_des_comptoirs` `[GD]` : pas de combat dans l'enceinte des
+quatre villes, combat ouvert hors les murs (sur le modèle de la zone neutre de l'Oracle).
+
+**Villes** `[GD]` (fiches `villes`, `cities` du master, services par `generate_city_services.py`) :
+
+| Ville | Case | Taille, type | Race | Contrôle | Rôle |
+|---|---|---|---|---|---|
+| **Brinehaven** (`town_brinehaven`) | N017_W010 | ville, `port_town` | humains et toutes races (PNJ) | neutre | port franc, départ de la ligne maritime, quartiers par bloc |
+| **Duskmoor** (`town_duskmoor`) | N022_W010 | village, `fortress_town` | humains, Elfes noirs, Dzoraks, démons | Lune Noire | comptoir du bloc de la Lune Noire (Légion comprise) |
+| **Truceholm** (`town_truceholm`) | N019_W010 | hameau, `hamlet` | humains | neutre | îlot, Pierre de la Trêve, raid multi-équipe |
+| **Lanternhold** (`town_lanternhold`) | N021_W014 | village, `fortress_town` | humains | Empire | comptoir du bloc de l'Empire (Lumière, Justice, Serpent) |
+
+Les blocs suivent `game_design.faction_relations`. Services : 1195 → 1244 PNJ (Brinehaven 22, Lanternhold 11,
+Duskmoor 8, Truceholm 6 ; un capitaine de port de plus à Hayfen et Orderfen). Brinehaven a une table de races
+mêlées (`RACE_VILLES`) ; Lanternhold a un temple garanti (`ajustements` de la grille : chapelle des Ordres).
+
+**Ports et liaisons**. Convention des ports existants : service `port` (`grille.ports` : Brinehaven, Truceholm,
+Hayfen, Orderfen), champ `port` de la fiche (`ponton_cell` dans la case de la ville, `vers_cell` côté mer),
+POI `port` au master (décalé au bord de l'eau : `poi_port_brinehaven`, `poi_port_truceholm`,
+`poi_port_hayfen`, `poi_port_orderfen`), ligne `sea_lines` et routes `sea_route` avec `sea_line_id`.
+
+| Route | Type | Tracé |
+|---|---|---|
+| 000214 Brinehaven → Camp du Cap | `road` | N017_W010 → N017_W011 → N017_W012 → N017_W013 |
+| 000215 Camp du Cap → Lanternhold | `road` | N017_W013 → N018_W014 → N019_W014 → N020_W014 → N021_W014 |
+| 000216 Lanternhold → Duskmoor | `road` | N021_W014 → N022_W013 → N022_W012 → N022_W011 → N022_W010 |
+| 000217 Lanternhold → Tertre des Rois Noyés | `path` | N021_W014 → N020_W013 → N019_W013 |
+| 000218 Lanternhold → Grottes des Naufrageurs | `path` | N021_W014 → N020_W014 → N019_W014 → N018_W014 |
+| 000219 Duskmoor → Tanière du Jarl de Givre | `path` | N022_W010 → N022_W011 → N022_W012 |
+| 000220 Truceholm → Gouffre de la Baie | `path` | N019_W010 → N020_W011 |
+| 000221 Brinehaven → Hayfen | `sea_route` (ligne du Nord) | N017_W010 → N016_W009 → N015_W008 → N014_W007 → N013_W006 → N012_W005 → N011_W004 |
+| 000222 Hayfen → Orderfen | `sea_route` (ligne du Nord) | N011_W004 → N012_W005 → N012_W006 → N012_W007 → N011_W008 |
+| 000223 Brinehaven → Truceholm | `sea_route` (navette) | N017_W010 → N018_W010 → N019_W010 |
+
+- Ligne `ligne_maritime_du_nord` (`rule_ligne_maritime_du_nord`) : Brinehaven ↔ Hayfen ↔ Orderfen, aller-retour,
+  2 bateaux en positions opposées, pause de 30 s, eau navigable uniquement (comme la ligne du sud).
+- **Îlot : navette plutôt que gué** (`navette_brinehaven_truceholm`, 1 bateau, comme Ashwick – Deepbrook). La
+  case de haut-fond N018_W010 sépare l'îlot de Brinehaven : dans le générateur, environ 14 m d'eau sur 4 à 5 km.
+  Un gué demanderait de changer le terrain fixé par le propriétaire.
+- Le Camp du Cap (`lieu_camp_du_cap`, N017_W013) est un relais : la route directe Brinehaven → Lanternhold
+  ferait six cases (au-delà de la limite de cinq du contrôle du réseau).
+- Contrôle du réseau (`routes/reseau_check.py`, `--mer` pour compter les liaisons maritimes) : 117 villes et
+  hameaux, 169 routes, aucune anomalie ; une seule composante avec les liaisons maritimes. Sans elles,
+  l'île (Brinehaven, Duskmoor, Lanternhold), Truceholm, Deepbrook et Hishtarland sont hors du réseau terrestre.
+
+**Raids et lieux** (lieux du lore et POI du master, sur la forêt de l'île) :
+
+| Raid | Équipes | Niveau | Lieu, POI | Boss `[GD]` | Ville |
+|---|---|---|---|---|---|
+| `raid_tertre_des_rois_noyes` Le Tertre des Rois Noyés | 1 × 5 | 45-50 | N019_W013, `ruine` | Roi noyé (50) | Lanternhold |
+| `raid_grottes_des_naufrageurs` Les Grottes des Naufrageurs | 1 × 5 | 50-55 | N018_W014, `salle` (côte sud-ouest) | Capitaine Marée-Rouge (54) | Brinehaven |
+| `raid_taniere_du_jarl` La Tanière du Jarl de Givre | 1 × 5 | 55-60 | N022_W012, `salle` (falaise nord) | Jarl de Givre (58) | Duskmoor |
+| `raid_devoreur_des_brumes` Le Dévoreur des Brumes | 3 × 5, factions mêlées | 60 | N020_W011, `gouffre` (îlot) | Dévoreur des Brumes (boss mondial, 60) | Truceholm |
+
+Raid multi-équipe : `for_factions` vide (toutes) ; les équipes doivent venir d'au moins deux blocs (note
+`[GD]`, le schéma n'a pas de champ pour cela). Créatures : réutilisées, `creature_geant_de_froid` (45-55, bras
+nord, cohérent avec §5.1) et `creature_spectre` (40-52, tertre) ; nouvelles `[GD]`, `creature_loup_des_brumes`
+(45-50, toute la forêt), `creature_naufrageur` (46-52) et les quatre boss. Les `creature_ids` des cases suivent
+les `zones_chasse`.
+
+**Quêtes entre factions** `[GD]` (`quests`, `region_id` de l'île) :
+
+| Quête | Factions | Relation | Niveau |
+|---|---|---|---|
+| `quest_ile_gd_treve_des_brumes` La Trêve des Brumes | toutes | coopération (escorte des envoyés à Truceholm) | 45 |
+| `quest_ile_gd_bois_de_marine` / `quest_ile_gd_coupes_noires` | bloc Empire / bloc Lune Noire | affrontement (quête et contre-quête) | 47 |
+| `quest_ile_gd_ambre_des_geants` / `quest_ile_gd_ambre_elfique` | Nains et Chevaliers-Dragons / Hauts Elfes | coopération et affrontement | 50 |
+| `quest_ile_gd_ames_des_noyes` / `quest_ile_gd_repos_des_noyes` | Légion infernale et Lune Noire / Lumière et Justice | coopération et affrontement | 52 |
+| `quest_ile_gd_chant_du_devoreur` Le Chant du Dévoreur | toutes | coopération, accès au raid multi-équipe | 55 |
+
+**Ce qui n'est pas réel en jeu** :
+
+- Les raids, les quêtes, la trêve et la formation d'équipes mêlées : seuls les POI d'entrée existent dans le
+  monde jouable ; ni instance, ni boss, ni récompense côté client ou serveur.
+- Les bateaux : aucune ligne maritime n'est jouée ; les POI `port` ne posent pas de ponton. L'île n'est
+  accessible qu'en lore.
+- Les routes du lore : le générateur relie Brinehaven à Duskmoor et Duskmoor à Lanternhold par la forêt ;
+  Truceholm n'a pas de route (« route impossible » vers Brinehaven, Duskmoor et Lanternhold), comme Orderfen
+  → Brinehaven (la plus courte liaison entre l'île et le continent passe par la mer).
+
+**Points incertains** :
+
+- Les noms (région, villes, lieux, raids, créatures), les tailles et le contrôle des villes.
+- « La Légion » : Légion infernale retenue, Légions Impériales aussi admises.
+- L'ordre des escales et le nombre de bateaux de la ligne du Nord.
+- Le port d'Orderfen : sa case ne touche pas l'eau dans le générateur ; le POI est au bord nord de la case,
+  à 300 m de l'eau.
+- Les niveaux des raids et des boss ; la règle de formation des équipes mêlées.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

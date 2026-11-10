@@ -856,6 +856,58 @@ fichier v1.0.68).
   des sentiers depuis Durnhalde ; mulet, poney, rat, marmotte, aigle et vautour ont un niveau par défaut
   (1-1) ; l'autel et le puits pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+### 15.7 Silverglade — Hauts Elfes (v1.0.70)
+
+Centre N007_W006 (`hameau_silverglade`, v1.0.61). Les 9 cases étaient déjà générées et toutes en forêt.
+Northind (N007_W005, grande ville, `ville_northind`), le village Orkh (N008_W006, monde jouable,
+`ville_orkh`) et la Porte 5 des enfers (N008_W007, `lieu_portail_enfer_5`, château abandonné « à l'écart
+des routes ») sont dans la région mais **rien n'y est posé**, faune comprise ; N006_W005 a une rivière au
+centre de la case (code `R` de la grille, le générateur pose les POI au centre) : **aucun lieu**, seulement
+de la faune. Les Ruines du château de Thenhart (N009_W004) et les marais maudits plus au nord sont hors
+région. Thème : les croyances des peuples des bois (« Mère Nature et les Vents », `religion_peuples_des_bois`,
+v1.0.58) et la garde de la forêt elfique — bosquet sacré, autel des Vents, tour de guet, ruines anciennes ;
+l'autel et le bosquet sont ajoutés aux `lieux_de_culte` de `religion_peuples_des_bois`. Routes selon la
+règle du propriétaire v1.0.65 : chaque nouveau hameau est relié au voisin le plus proche, sans étape :
+Greenbough et Fernhollow à Silverglade (case voisine orthogonale ; Northind n'est que diagonal de
+Greenbough, le village Orkh que diagonal de Fernhollow) ; routes existantes inchangées (000127
+Silverglade → Northind, 000077 et 000085 de Northind). Les PNJ de service des hameaux sont hauts elfes
+(`RACE_FACTIONS` de `generate_city_services.py` : `faction_hauts_elfes`). Script reproductible :
+`lore_v1070.py` (appliqué au fichier v1.0.69).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N006_W007 | forêt (forêt elfique) | POI **Bosquet des Pavanes** (`lieu_bosquet_des_pavanes`, `poi_bosquet_des_pavanes`, `sanctuaire`) : cercle d'arbres centenaires où les jeunes elfes apprennent les pavanes sacrées `[GD]` ; pavanes en l'honneur de Mère Nature `[BD-T14 p.19]` | biche (2-6), lutin (5-10), hibou (1), écureuil (1) |
+| N006_W006 | forêt (Province de Northind) | Hameau de cueilleurs **Greenbough** (`hamlet_greenbough`, `farm_hamlet` / `hameau`) : herboristes, séchoirs à herbes et à champignons `[GD]` ; route 000192 vers Silverglade. POI **Autel des Vents** (`lieu_autel_des_vents`, `poi_autel_des_vents`, `sanctuaire`) à l'écart du hameau : premier message confié aux Vents `[GD]` ; Vents messagers `[BD-T12 p.6, 10]` | lapin (1-3), écureuil, biche, renard (2-5) |
+| N006_W005 | forêt avec rivière (Province de Northind) | aucun lieu (rivière au centre de la case) | biche, loutre (1), renard, lapin |
+| N007_W007 | forêt (forêt elfique) | Hameau de facteurs d'arcs **Fernhollow** (`hamlet_fernhollow`, `farm_hamlet` / `hameau`) : arcs, bois d'if, replantation `[GD]` (`[BD-A4 p.6]`) ; route 000193 vers Silverglade. POI **Tour des Flèches blanches** (`lieu_tour_des_fleches_blanches`, `poi_tour_des_fleches_blanches`, `camp`) à l'écart du hameau : tour de guet de bois vivant `[GD]` ; flèche à empennage blanc `[HS]` | biche, renard, corbeau (1-4), lutin |
+| N007_W006 | forêt (Province de Northind) | **Silverglade** (hameau de départ) ; routes 000127 (Northind), 000192, 000193 ; sentiers 000194 à 000197 vers les 4 POI | lapin, écureuil, renard |
+| N007_W005 | forêt (Province de Northind) | Northind (grande ville, inchangée, rien n'est posé) | inchangée |
+| N008_W007 | forêt (forêt elfique) | Porte 5 des enfers (lieu BD, inchangé, rien n'est posé) | inchangée (démon à tête de sanglier 30-40) |
+| N008_W006 | forêt (Province de Northind) | village Orkh (monde jouable, inchangé, rien n'est posé) | inchangée (aucune) |
+| N008_W005 | forêt (Province de Northind) | POI **Ruines du Temple sylvestre** (`lieu_ruines_du_temple_sylvestre`, `poi_ruines_du_temple_sylvestre`, `ruine`) : temple elfe abandonné depuis des générations, quand la forêt reculait devant les colons `[GD]` (`[BD-A4 p.4-6]` ; aucune destruction de l'époque du jeu, sans rapport avec l'incendie de Northind `[BD-T8]`) | araignée (3-8), corbeau, chouette (1), renard |
+
+- **Routes** (`routes`) : 000192 Silverglade → Greenbough, 000193 Silverglade → Fernhollow (`road`, cases
+  voisines, sans `waypoints`) ; sentiers 000194 à 000197 (`path`, sans écurie) de Silverglade vers les 4 POI.
+- **Services** : 2 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Silverglade 3 (au lieu
+  de 1), Greenbough et Fernhollow 1 ; 1114 → 1127 PNJ de service, tous hauts elfes dans les nouveaux hameaux.
+- **Corridor des départs** (`connect_start_cities`, contrôlé par `tools/world_gen`) : avec Greenbough, le
+  corridor ne passe plus par N006_W004 (forêt de la Province de Northind), qui est ajoutée explicitement à
+  `generated_cells` (dernière ligne) ; avec Fernhollow, il passe par N007_W008 (forêt elfique, sans
+  créature ni lieu), désormais générée. L'ordre des villes compte (Kruskal) : les deux hameaux sont en fin
+  de liste de `cities` (insérés après Silverglade, ils ajoutaient aussi N004_W005). 181 → 182 cellules
+  générées, aucune perdue, aucun nouvel avertissement du dry-run. Aucune case libre de la région ne
+  laissait le corridor inchangé avec deux hameaux.
+- **Faune** : les 5 cases libres et le centre n'avaient aucune créature, aucune n'est retirée ; espèces
+  existantes de niveau 1 à 10 seulement. La fée (12-20) et les lutins de N009_W006 à N009_W008 restent hors
+  région.
+- **Points incertains** : noms (consonance anglaise alignée sur Silverglade) ; le **démon à tête de
+  sanglier (30-40)** reste dans la case de la Porte 5 des enfers (lieu BD non modifié, comme le Palais de
+  Wyrmhallow) : à retirer de N008_W007 si le propriétaire veut la région entièrement débutante (il resterait
+  à la porte, `zones_chasse` `lieu_portail_enfer_5`) ; la Tour est de genre `camp` (aucun genre « tour »
+  côté client) ; l'Autel et la Tour partagent la case d'un hameau (4 cases libres pour 6 lieux) ; le
+  village-ambassade elfe `[HS]` n'est pas placé ; écureuil, loutre, hibou et chouette ont un niveau par
+  défaut (1-1) ; le bosquet et l'autel pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
 ## 16. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

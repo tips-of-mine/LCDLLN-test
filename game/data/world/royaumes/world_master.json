@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -33,7 +33,8 @@
     "N009_E013", "N008_E013", "N007_E011", "N007_E012", "N007_E013",
     "S006_E018", "S007_E018", "S008_E018",
     "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005",
-    "N005_W009", "N006_W009", "N006_W008"
+    "N005_W009", "N006_W009", "N006_W008",
+    "N006_W004"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -1561,6 +1562,30 @@
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52",
       "description": "Hameau des confins du Midi, entre les terres arides et les montagnes."
+    },
+    {
+      "id": "hamlet_greenbough",
+      "name": "Greenbough",
+      "cell": "N006_W006",
+      "kind": "hameau",
+      "race": "elfes",
+      "state": "intact",
+      "faction": "elfe",
+      "start_for": [],
+      "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
+      "description": "Hameau de cueilleurs et d'herboristes au sud de Silverglade : maisons de bois entre les racines, séchoirs à herbes et à champignons ; rien ne s'y cueille sans un chant."
+    },
+    {
+      "id": "hamlet_fernhollow",
+      "name": "Fernhollow",
+      "cell": "N007_W007",
+      "kind": "hameau",
+      "race": "elfes",
+      "state": "intact",
+      "faction": "elfe",
+      "start_for": [],
+      "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
+      "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Silverglade, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
     }
   ],
   "pois": [
@@ -1981,6 +2006,34 @@
       "cell": "S007_E018",
       "kind": "camp",
       "description": "Tentes de prospecteurs nains qui sondent les pentes à la recherche de nouvelles veines ; vautours et corbeaux rôdent sur les déblais [GD v1.0.69, région de départ de Durnhalde]."
+    },
+    {
+      "id": "poi_autel_des_vents",
+      "name": "Autel des Vents",
+      "cell": "N006_W006",
+      "kind": "sanctuaire",
+      "description": "Pierre levée au sommet d'une butte boisée, ornée de la spirale du vent : les jeunes elfes y confient leur premier message aux Vents [GD v1.0.70, région de départ de Silverglade]."
+    },
+    {
+      "id": "poi_bosquet_des_pavanes",
+      "name": "Bosquet des Pavanes",
+      "cell": "N006_W007",
+      "kind": "sanctuaire",
+      "description": "Cercle d'arbres centenaires autour d'une clairière moussue où les jeunes elfes apprennent les pavanes sacrées en l'honneur de Mère Nature ; des lutins y jouent des tours aux danseurs [GD v1.0.70, région de départ de Silverglade]."
+    },
+    {
+      "id": "poi_tour_des_fleches_blanches",
+      "name": "Tour des Flèches blanches",
+      "cell": "N007_W007",
+      "kind": "camp",
+      "description": "Tour de guet de bois vivant à l'écart de Fernhollow : les guetteurs elfes y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds [GD v1.0.70, région de départ de Silverglade]."
+    },
+    {
+      "id": "poi_ruines_du_temple_sylvestre",
+      "name": "Ruines du Temple sylvestre",
+      "cell": "N008_W005",
+      "kind": "ruine",
+      "description": "Colonnes de pierre blanche mangées par le lierre, reste d'un temple elfe abandonné depuis des générations quand la forêt reculait devant les colons ; araignées et corbeaux y nichent [GD v1.0.70, région de départ de Silverglade]."
     }
   ],
   "imports": {

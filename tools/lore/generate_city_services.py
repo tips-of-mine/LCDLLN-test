@@ -144,8 +144,9 @@ RENOMMAGES = {"horker": "Harrowdale"}
 # Race des PNJ : connue pour les villes de depart (world_master.json, anciennes et
 # hameaux de depart par faction v1.0.61), deduite
 # de la faction pour la Lune Noire, les Dzorak (kraals de la region de depart
-# de Grakhul, v1.0.67) et les Nains (hameaux de la region de depart de
-# Durnhalde, v1.0.69), humains par defaut. Liste ponderee.
+# de Grakhul, v1.0.67), les Nains (hameaux de la region de depart de
+# Durnhalde, v1.0.69) et les Hauts Elfes (hameaux de la region de depart de
+# Silverglade, v1.0.70), humains par defaut. Liste ponderee.
 RACE_VILLES = {
     "ville_whispers_hill": [("race_human", 1), ("race_haut_elfe", 1)],
     "leviathan_jungle": [("race_dzorak", 1)],
@@ -162,6 +163,7 @@ RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],
     "dzorak_orcs": [("race_dzorak", 1)],
     "faction_dwarves": [("race_dwarf", 1)],
+    "faction_hauts_elfes": [("race_haut_elfe", 1)],
 }
 
 # Syllabes par race : (debuts, fins masculines, fins feminines, noms de famille).

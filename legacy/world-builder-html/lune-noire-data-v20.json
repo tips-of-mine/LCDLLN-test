@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.69",
+    "version": "1.0.70",
     "notes": [
+      "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Silverglade (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Greenbough (N006_W006, cueilleurs et herboristes) et Fernhollow (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Silverglade → Greenbough et 000193 Silverglade → Fernhollow, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
       "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
       "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Wyrmhallow (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Cragfold (S004_W003, bergers) et Bridlecrag (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Wyrmhallow, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Equiton (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
       "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Leviathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
@@ -984,7 +985,8 @@
       "notes": [
         "[GD] (v1.0.58) Religion : « Mère Nature et les Vents » (lore.religions, religion_peuples_des_bois).",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Silverglade (hameau_silverglade, N007_W006), près de Northind. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[INFÉRÉ] (v1.0.61) Faction de jeu « elfe » (Faction Elfe de factions.json) ; Whispers Hill n'est plus le départ des elfes."
+        "[INFÉRÉ] (v1.0.61) Faction de jeu « elfe » (Faction Elfe de factions.json) ; Whispers Hill n'est plus le départ des elfes.",
+        "[GD] (v1.0.70) Région de départ 3×3 autour de Silverglade (LORE_BD §15.7) : hameaux Greenbough (cueilleurs et herboristes) et Fernhollow (facteurs d'arcs), Autel des Vents, Bosquet des Pavanes, Tour des Flèches blanches, Ruines du Temple sylvestre ; routes locales vers Silverglade ; faune de niveau 1 à 10. Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007)."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -996,7 +998,24 @@
           "type": "hameau",
           "id": "hameau_silverglade",
           "cell": "N007_W006",
-          "pres_de": "ville_northind"
+          "pres_de": "ville_northind",
+          "region": {
+            "cells": [
+              "N006_W007",
+              "N006_W006",
+              "N006_W005",
+              "N007_W007",
+              "N007_W006",
+              "N007_W005",
+              "N008_W007",
+              "N008_W006",
+              "N008_W005"
+            ],
+            "niveaux": [
+              1,
+              10
+            ]
+          }
         }
       },
       "region_id": "foret_elfique",
@@ -21333,6 +21352,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_silverglade_ecurie_02",
+          "name": "Naendil Selandel",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_silverglade_ecurie_03",
+          "name": "Thalnya Fenethil",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_silverglade_cimetiere_01",
           "name": "Caelad Celion",
           "gender": "male",
@@ -23122,6 +23157,289 @@
           "name": "Kordis Enclume-de-Bronze",
           "gender": "female",
           "race_id": "race_dwarf",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_greenbough",
+      "name": "Greenbough",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N006_W006",
+      "anchor_tile": "N006_W006",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_hauts_elfes",
+      "region_id": "region_northind",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "armes",
+        "armures",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest",
+        "Hameau de cueilleurs de la région de départ de Silverglade"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom proposé, à valider par le propriétaire. Hameau de cueilleurs et d'herboristes : maisons de bois bâties entre les racines, séchoirs à herbes, à champignons et à écorces ; rien ne s'y cueille sans un chant à Mère Nature. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[INFÉRÉ] (v1.0.70) Cellule N006_W006 : Forêt de la Province de Northind au sud de Silverglade, hors des cases à rivière (N006_W005) ; case libre.",
+        "[GD] (v1.0.70) Population : hauts elfes, croyances « Mère Nature et les Vents » (religion_peuples_des_bois) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.70) Économie : herbes médicinales, champignons, écorces et résines, soie d'araignée ; récolte : herbes, bois (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (herbes et champignons, soie d'araignée) [GD v1.0.58] ; « rien de ce qui pousse ne se prend sans chant » (religion_peuples_des_bois) ; le hameau est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_greenbough_auberge_01",
+          "name": "Naewyn Selanor",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_armes_01",
+          "name": "Luandil Venion",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_armures_01",
+          "name": "Thallad Celanor",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_ecurie_01",
+          "name": "Faelas Celorin",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_cimetiere_01",
+          "name": "Caelith Selorin",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "hamlet_fernhollow",
+      "name": "Fernhollow",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N007_W007",
+      "anchor_tile": "N007_W007",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_hauts_elfes",
+      "region_id": "foret_elfique",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Terrain: forest",
+        "Hameau de facteurs d'arcs de la région de départ de Silverglade"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom proposé, à valider par le propriétaire. Hameau de facteurs d'arcs et de forestiers au creux d'un vallon de fougères : bois d'if mis à sécher, cordes et empennes ; chaque arbre abattu pour un arc y est replanté. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[INFÉRÉ] (v1.0.70) Cellule N007_W007 : Forêt elfique à l'ouest de Silverglade, hors des cases de la Porte 5 des enfers (N008_W007) et du village Orkh (N008_W006) ; case libre.",
+        "[GD] (v1.0.70) Population : hauts elfes, croyances « Mère Nature et les Vents » (religion_peuples_des_bois) ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.70) Économie : arcs et flèches, bois précieux ; gibier, peaux ; récolte : bois, herbes (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (bois précieux, arcs, gibier) [GD v1.0.58] ; « l'elfe qui abat un arbre en replante un » (religion_peuples_des_bois) ; replantation [BD-A4 p.6] ; le hameau est [GD]."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hamlet_fernhollow_auberge_01",
+          "name": "Mirewyn Celiel",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_potions_01",
+          "name": "Mirerion Aelessa",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_armes_01",
+          "name": "Caerae Aelion",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_forgeron_01",
+          "name": "Lirion Loraleth",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_ecurie_01",
+          "name": "Faethas Silvessa",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_cimetiere_01",
+          "name": "Lirion Venaleth",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -156598,9 +156916,10 @@
       "notes": [
         "[BD-T3 p.26] Présents dans toute la forêt avant le marais maudit.",
         "[BD-T3 p.26] « Une foule de lutins nous mate ! » — fées et lutins ne se livrent à nulle facétie devant un groupe fort.",
-        "[BD-T14 p.27] Petit être des bois / lutin vert accroché à un tronc (avenir du monde jouable)."
+        "[BD-T14 p.27] Petit être des bois / lutin vert accroché à un tronc (avenir du monde jouable).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W007, N007_W007 (LORE_BD §15.7)."
       ],
-      "habitat": "Forêt maudite avant le marais du village fantôme ; forêt elfique.",
+      "habitat": "Forêt maudite avant le marais du village fantôme ; forêt elfique ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "nuée",
       "zones_chasse": [
         "zone_cursed_forest",
@@ -156608,7 +156927,9 @@
         "S002_E006",
         "S002_E004",
         "N009_W008",
-        "N009_W007"
+        "N009_W007",
+        "N006_W007",
+        "N007_W007"
       ]
     },
     {
@@ -159059,7 +159380,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N002_W009, N001_W009 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W010, N004_W011, N004_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N009_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E013, N007_E011, N007_E013 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E013, N007_E011, N007_E013 (LORE_BD §15.4).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W005, N006_W006, N007_W006, N007_W007, N008_W005 (LORE_BD §15.7)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -159070,7 +159392,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
@@ -159092,7 +159414,12 @@
         "N009_E013",
         "N008_E013",
         "N007_E011",
-        "N007_E013"
+        "N007_E013",
+        "N006_W005",
+        "N006_W006",
+        "N007_W006",
+        "N007_W007",
+        "N008_W005"
       ]
     },
     {
@@ -159396,7 +159723,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N008_W011 (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N008_W011 (LORE_BD §15.3).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W005 (LORE_BD §15.7)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Mustélidés",
@@ -159407,9 +159735,10 @@
       "bestiaire": true,
       "zones_chasse": [
         "N010_W011",
-        "N008_W011"
+        "N008_W011",
+        "N006_W005"
       ],
-      "habitat": "Région de départ d'Oathford (Syzygie, autour d'Aurore)."
+      "habitat": "Région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
     },
     {
       "id": "animal_belette",
@@ -159590,7 +159919,9 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W006, N006_W007, N007_W006 (LORE_BD §15.7)."
+      ],
       "categorie": "1. Mammifères",
       "famille": "Rongeurs",
       "variantes": [
@@ -159598,7 +159929,13 @@
         "écureuil terrestre"
       ],
       "bestiaire": true,
-      "familier_famille": "familier_rongeur"
+      "familier_famille": "familier_rongeur",
+      "zones_chasse": [
+        "N006_W006",
+        "N006_W007",
+        "N007_W006"
+      ],
+      "habitat": "Région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
     },
     {
       "id": "animal_castor",
@@ -159699,7 +160036,8 @@
         "[GD] (v1.0.62) Faune de la région de départ d'Eaglewatch (niveaux 1 à 10) : N003_W011, N003_W010, N003_W009, N002_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W012, N006_W011, N006_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W010, N009_W009, N008_W011, N008_W010 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E011, N008_E013, N007_E011, N007_E012, N007_E013 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E011, N008_E013, N007_E011, N007_E012, N007_E013 (LORE_BD §15.4).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W005, N006_W006, N007_W006 (LORE_BD §15.7)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Autres mammifères",
@@ -159708,7 +160046,7 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -159731,7 +160069,10 @@
         "N008_E013",
         "N007_E011",
         "N007_E012",
-        "N007_E013"
+        "N007_E013",
+        "N006_W005",
+        "N006_W006",
+        "N007_W006"
       ]
     },
     {
@@ -159978,7 +160319,8 @@
         "[BD-T00 p.38] Chevreuil poursuivi (rangé ici faute de fiche « chevreuil »).",
         "[GD] (v1.0.64) Faune de la région de départ de Dawnmere (niveaux 1 à 10) : N006_W010 (LORE_BD §15.2).",
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N009_W009 (LORE_BD §15.3).",
-        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N008_E011, N008_E013, N007_E011 (LORE_BD §15.4)."
+        "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N008_E011, N008_E013, N007_E011 (LORE_BD §15.4).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W005, N006_W006, N006_W007, N007_W007 (LORE_BD §15.7)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Cervidés",
@@ -159986,7 +160328,7 @@
         "Biche"
       ],
       "bestiaire": true,
-      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan).",
+      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -159997,7 +160339,11 @@
         "N009_E012",
         "N008_E011",
         "N008_E013",
-        "N007_E011"
+        "N007_E011",
+        "N006_W005",
+        "N006_W006",
+        "N006_W007",
+        "N007_W007"
       ]
     },
     {
@@ -160603,14 +160949,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N006_W007 (LORE_BD §15.7)."
+      ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
       "variantes": [
         "Hibou",
         "hibou nocturne"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "N006_W007"
+      ],
+      "habitat": "Région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
     },
     {
       "id": "animal_chouette",
@@ -160625,14 +160977,20 @@
       "faction_id": "",
       "drops": [],
       "abilities_traits": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N008_W005 (LORE_BD §15.7)."
+      ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
       "variantes": [
         "Chouette",
         "chouette lunaire"
       ],
-      "bestiaire": true
+      "bestiaire": true,
+      "zones_chasse": [
+        "N008_W005"
+      ],
+      "habitat": "Région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
     },
     {
       "id": "animal_vautour",
@@ -160686,7 +161044,8 @@
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W011, N010_W009, N008_W011, N008_W010, N008_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4).",
         "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005, S005_W003 (LORE_BD §15.5).",
-        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018, S008_E016 (LORE_BD §15.6)."
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018, S008_E016 (LORE_BD §15.6).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N007_W007, N008_W005 (LORE_BD §15.7)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -160695,7 +161054,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -160722,7 +161081,9 @@
         "S006_E016",
         "S006_E018",
         "S007_E018",
-        "S008_E016"
+        "S008_E016",
+        "N007_W007",
+        "N008_W005"
       ]
     },
     {
@@ -161160,7 +161521,8 @@
         "[GD] (v1.0.66) Faune de la région de départ d'Oathford (niveaux 1 à 10) : N010_W009, N008_W009 (LORE_BD §15.3).",
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4).",
         "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S005_W003 (LORE_BD §15.5).",
-        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018 (LORE_BD §15.6)."
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018 (LORE_BD §15.6).",
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N008_W005 (LORE_BD §15.7)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -161170,7 +161532,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -161187,7 +161549,8 @@
         "N007_E013",
         "S005_W003",
         "S006_E017",
-        "S006_E018"
+        "S006_E018",
+        "N008_W005"
       ]
     },
     {
@@ -178037,6 +178400,18 @@
             "id": "ville_whispers_hill",
             "nom": "Whispers Hill (La Colline aux Murmures)",
             "nature": "Communauté mixte humains/elfes [BD-T1] ; temple tenu par un prêtre haut elfe [GD]."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_autel_des_vents",
+            "nom": "Autel des Vents",
+            "nature": "[GD] Pierre levée à la spirale du vent ; premier message confié aux Vents (région de départ de Silverglade)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_bosquet_des_pavanes",
+            "nom": "Bosquet des Pavanes",
+            "nature": "[GD] Clairière où les jeunes elfes apprennent les pavanes sacrées (région de départ de Silverglade)."
           }
         ],
         "rites": [
@@ -178103,7 +178478,8 @@
         "source": "[BD-T12], [BD-T14], [BD-A4] ; vides comblés [GD]",
         "notes": [
           "[GD] (v1.0.58) Les elfes ténébreux de la Lune Noire servent le culte de la Lune Noire tout en gardant la magie des Vents.",
-          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
+          "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
+          "[GD] (v1.0.70) Région de départ de Silverglade : Autel des Vents et Bosquet des Pavanes ajoutés aux lieux de culte (LORE_BD §15.7)."
         ]
       },
       {
@@ -192288,7 +192664,8 @@
         "Château fortifié abandonné (abrite le portail des enfers), à l'écart des routes"
       ],
       "notes": [
-        "Présence d'une des cinq portails pour les enfers 5 sur 5, il forme la positionnement d'un pentagramme"
+        "Présence d'une des cinq portails pour les enfers 5 sur 5, il forme la positionnement d'un pentagramme",
+        "[GD] (v1.0.70) Région de départ de Silverglade : case de la Porte 5 des enfers, aucun lieu ni aucune faune ajoutés ni retirés ; le démon à tête de sanglier (30-40) y reste (LORE_BD §15.7)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -192308,7 +192685,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Région de départ de Silverglade : case du village Orkh (monde jouable), aucun lieu ni aucune faune ajoutés (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -192325,9 +192704,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_araignee",
+        "animal_corbeau",
+        "animal_chouette",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Ruines du Temple sylvestre (lieu_ruines_du_temple_sylvestre) de la région de départ de Silverglade (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193189,9 +193575,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_biche",
+        "animal_renard",
+        "animal_corbeau",
+        "creature_lutin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Hameau de facteurs d'arcs Fernhollow (hamlet_fernhollow) de la région de départ de Silverglade (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Tour des Flèches blanches (lieu_tour_des_fleches_blanches) de la région de départ de Silverglade (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193208,10 +193602,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_ecureuil",
+        "animal_renard"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Hameau de départ Silverglade (hameau_silverglade, faction Les Hauts Elfes)."
+        "[INFÉRÉ] (v1.0.61) Hameau de départ Silverglade (hameau_silverglade, faction Les Hauts Elfes).",
+        "[GD] (v1.0.70) Centre de la région de départ 3×3 des Hauts Elfes (N006_W007, N006_W006, N006_W005, N007_W007, N007_W006, N007_W005, N008_W007, N008_W006, N008_W005) ; niveaux 1 à 10 (LORE_BD §15.7)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -193234,7 +193633,9 @@
       ],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Région de départ de Silverglade : case de Northind, aucun lieu ni aucune faune ajoutés (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194125,9 +194526,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_biche",
+        "creature_lutin",
+        "animal_hibou",
+        "animal_ecureuil"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Bosquet des Pavanes (lieu_bosquet_des_pavanes) de la région de départ de Silverglade (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194144,9 +194552,17 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_lapin",
+        "animal_ecureuil",
+        "animal_biche",
+        "animal_renard"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Hameau de cueilleurs Greenbough (hamlet_greenbough) de la région de départ de Silverglade (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Autel des Vents (lieu_autel_des_vents) de la région de départ de Silverglade (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194166,9 +194582,16 @@
         "N005_W005",
         "N007_W005"
       ],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_biche",
+        "animal_loutre",
+        "animal_renard",
+        "animal_lapin"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.70) Région de départ de Silverglade : rivière au centre de la case, aucun lieu, faune de niveau 1 à 10 seulement (LORE_BD §15.7)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -217974,6 +218397,90 @@
       "notes": [
         "[INFÉRÉ] (v1.0.69) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.6."
       ]
+    },
+    {
+      "id": "000192",
+      "type": "road",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N006_W006",
+      "to_ville_id": "hamlet_greenbough",
+      "to_lieu_id": "",
+      "description": "Route locale de Silverglade à Greenbough.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Greenbough : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7."
+      ]
+    },
+    {
+      "id": "000193",
+      "type": "road",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N007_W007",
+      "to_ville_id": "hamlet_fernhollow",
+      "to_lieu_id": "",
+      "description": "Route locale de Silverglade à Fernhollow.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Fernhollow : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7."
+      ]
+    },
+    {
+      "id": "000194",
+      "type": "path",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N006_W006",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_autel_des_vents",
+      "description": "Sentier de Silverglade à « Autel des Vents ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+      ]
+    },
+    {
+      "id": "000195",
+      "type": "path",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N006_W007",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_bosquet_des_pavanes",
+      "description": "Sentier de Silverglade à « Bosquet des Pavanes ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+      ]
+    },
+    {
+      "id": "000196",
+      "type": "path",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N007_W007",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_tour_des_fleches_blanches",
+      "description": "Sentier de Silverglade à « Tour des Flèches blanches ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+      ]
+    },
+    {
+      "id": "000197",
+      "type": "path",
+      "from_place": "N007_W006",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N008_W005",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ruines_du_temple_sylvestre",
+      "description": "Sentier de Silverglade à « Ruines du Temple sylvestre ».",
+      "notes": [
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+      ]
     }
   ],
   "competences": [
@@ -235205,6 +235712,334 @@
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Camp de prospecteurs nains qui sondent les pentes à la recherche de nouvelles veines ; vautours et corbeaux rôdent sur les déblais. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Paiement en gemmes à Ghrunke Dash [BD-T3] ; le camp est [GD].",
         "[INFÉRÉ] (v1.0.69) Cellule S007_E018 : Montagne du royaume des nains de l'Est à l'est de Durnhalde ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_autel_des_vents",
+      "name": "Autel des Vents",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N006_W006",
+      "region_id": "region_northind",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "pierre levée gravée de la spirale du vent",
+        "rubans et plumes noués aux branches",
+        "butte boisée ouverte au vent"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Pierre levée au sommet d'une butte boisée, à l'écart de Greenbough, ornée de la spirale du vent : les jeunes elfes y confient leur premier message aux Vents. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Ancrage : Les Vents, esprits amis et messagers ; « confier un message aux Vents » [BD-T12 p.6, 10] ; spirale du vent [GD v1.0.58, religion_peuples_des_bois]. L'autel est [GD].",
+        "[INFÉRÉ] (v1.0.70) Cellule N006_W006 : Forêt de la Province de Northind au sud de Silverglade ; partage la case de Greenbough (4 cases libres pour 6 lieux), à l'écart du hameau."
+      ]
+    },
+    {
+      "id": "lieu_bosquet_des_pavanes",
+      "name": "Bosquet des Pavanes",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N006_W007",
+      "region_id": "foret_elfique",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cercle d'arbres centenaires",
+        "clairière moussue foulée par les danses",
+        "lucioles et lutins à la nuit tombée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Cercle d'arbres centenaires autour d'une clairière moussue où les jeunes elfes apprennent les pavanes sacrées en l'honneur de Mère Nature ; des lutins y jouent des tours aux danseurs. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Ancrage : Pavanes sacrées en l'honneur de Mère Nature [BD-T14 p.19] ; clairières des pavanes [GD v1.0.58, religion_peuples_des_bois] ; lutins de la forêt elfique (bestiaire). Le bosquet est [GD].",
+        "[INFÉRÉ] (v1.0.70) Cellule N006_W007 : Forêt elfique au sud-ouest de Silverglade ; case libre."
+      ]
+    },
+    {
+      "id": "lieu_tour_des_fleches_blanches",
+      "name": "Tour des Flèches blanches",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N007_W007",
+      "region_id": "foret_elfique",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour de guet de bois vivant",
+        "passerelles entre les cimes",
+        "carquois de flèches à empennage blanc"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Tour de guet elfe de bois vivant, à l'écart de Fernhollow : les guetteurs y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Ancrage : Flèche à empennage blanc plantée aux pieds de l'intrus, « message clair » [HS] (foret_elfique) ; les non-elfes ne vont pas plus loin [HS]. La tour est [GD].",
+        "[INFÉRÉ] (v1.0.70) Cellule N007_W007 : Forêt elfique à l'ouest de Silverglade ; partage la case de Fernhollow (4 cases libres pour 6 lieux), à l'écart du hameau."
+      ]
+    },
+    {
+      "id": "lieu_ruines_du_temple_sylvestre",
+      "name": "Ruines du Temple sylvestre",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N008_W005",
+      "region_id": "region_northind",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "colonnes de pierre blanche mangées par le lierre",
+        "autel fendu par les racines",
+        "toiles d'araignée entre les fûts"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Ruines d'un temple elfe abandonné depuis des générations, quand la forêt reculait devant les colons : colonnes de pierre blanche mangées par le lierre ; araignées et corbeaux y nichent. Région de départ de Silverglade (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
+        "[GD] (v1.0.70) Ancrage : Colons et forêt elfique [BD-A4 p.4-6] ; les ruines sont [GD] (aucune destruction de l'époque du jeu ; sans rapport avec l'incendie de Northind [BD-T8]).",
+        "[INFÉRÉ] (v1.0.70) Cellule N008_W005 : Forêt de la Province de Northind au nord-est de Silverglade, entre Northind (N007_W005) et le village Orkh (N008_W006), hors de leurs cases ; case libre."
       ]
     }
   ],

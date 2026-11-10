@@ -85,7 +85,7 @@ int main()
 	Check(ZoneDirBelongsToWorld("feyhin", "feyhin") && ZoneDirBelongsToWorld("zone_1", "")
 		&& !ZoneDirBelongsToWorld("cell_n003_w009", "feyhin"), "dossiers des zones historiques");
 
-	// Seconde carte : les Enfers (5 cellules en croix, repère propre).
+	// Seconde carte : les Enfers (carré 3×3 de 9 cellules depuis la v1.0.71, repère propre).
 	Check(CellDirName({ 0, 0 }, CellMap::Enfers) == "enfers_n000_e000", "nom dossier enfers");
 	Check(CellDirName({ -1, 0 }, CellMap::Enfers) == "enfers_s001_e000", "nom dossier enfers sud");
 	Check(ParseCellDirName("enfers_n000_w001", CellMap::Enfers) == CellCoord{ 0, -1 }, "parse dossier enfers");

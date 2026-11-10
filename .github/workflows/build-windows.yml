@@ -132,7 +132,7 @@ jobs:
           Copy-RuntimeDlls -IncludeGraphics
           # Monde actif « royaumes » : cellules générées avant l'empaquetage de game/data.
           Invoke-WorldGen -World "royaumes"
-          # Seconde carte « enfers » (5 cellules, départ des démons, portails) : toujours
+          # Seconde carte « enfers » (9 cellules, départ des démons, portails) : toujours
           # livrée avec le continent (docs/world/ENFERS.md).
           Invoke-WorldGen -World "enfers"
           Copy-GameData

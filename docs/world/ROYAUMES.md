@@ -151,8 +151,8 @@ format `src/shared/world/MapFeatures.h`), `start_locations.json`
 (départs par race + `generated_cells`, lus par le master et le shard),
 `quest_poi.json`, `portals.json` (portails reliés à une autre carte, lus par le shard).
 
-La seconde carte se génère de la même façon : `--world enfers` (5 cellules,
-~1 min ; sorties `zones/enfers_*`, `world/enfers/`). La CI génère les deux.
+La seconde carte se génère de la même façon : `--world enfers` (9 cellules,
+~2 min ; sorties `zones/enfers_*`, `world/enfers/`). La CI génère les deux.
 
 ## 5. Pipeline du générateur (`tools/world_gen/lib`)
 

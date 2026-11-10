@@ -111,7 +111,7 @@ int main()
 	{
 		const PlaceCity* citadel = hell.StartCityFor("legion");
 		Check(citadel && citadel->id == "citadelle_legion", "enfers : depart de la Legion infernale a la Citadelle");
-		Check(hell.GeneratedCells().size() == 5u, "enfers : 5 cellules generees");
+		Check(hell.GeneratedCells().size() == 9u, "enfers : 9 cellules generees (carre 3x3, v1.0.71)");
 		Check(hell.StartCityFor("lumiere") == nullptr, "enfers : aucun depart du continent");
 	}
 	else

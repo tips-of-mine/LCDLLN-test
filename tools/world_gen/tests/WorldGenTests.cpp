@@ -16,10 +16,11 @@
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
 //    de pente (digue), pas de digue sur un lit de rivière.
-// 8. Seconde carte « enfers » : master (5 cellules en croix, départ de la Légion infernale,
-//    5 portails appariés aux Portes des enfers du continent), puis génération
-//    complète → dossiers zones/enfers_*, zone ids 2 000 000+, cimetière neutre,
-//    start_locations.json et portals.json de la carte.
+// 8. Seconde carte « enfers » : master (9 cellules 3×3 depuis la v1.0.71 : croix
+//    volcanique et 4 coins montagneux ; départ de la Légion infernale, 5 portails
+//    appariés aux Portes des enfers du continent), puis génération complète →
+//    dossiers zones/enfers_*, zone ids 2 000 000+, cimetière neutre, mines des coins
+//    tenues par la Légion (pas de nains), start_locations.json et portals.json.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -202,8 +203,9 @@ namespace
 		Check(m.cities.size() >= 80, "master : villes du lore integrees (v1.0.52)");
 	}
 
-	/// Seconde carte : master des Enfers (croix de 5 cellules, départ des démons,
-	/// portails appariés aux 5 Portes des enfers du continent).
+	/// Seconde carte : master des Enfers (carré 3×3 de 9 cellules depuis la v1.0.71 :
+	/// croix volcanique et 4 coins montagneux ; départ des démons, portails appariés
+	/// aux 5 Portes des enfers du continent, tous sur la croix).
 	void TestMasterEnfers()
 	{
 		namespace wc = engine::world::cells;
@@ -214,17 +216,21 @@ namespace
 		Check(ok, "master enfers : chargement et validation");
 		if (!ok) return;
 		Check(m.cellMap == wc::CellMap::Enfers && !m.connectStartCities, "master enfers : carte des Enfers, sans corridor");
-		const std::set<std::string> cross(m.generatedCells.begin(), m.generatedCells.end());
-		Check(cross == std::set<std::string>{ "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001" },
-			"master enfers : 5 cellules en croix");
-		bool inGrid = true, volcanic = true;
+		const std::set<std::string> cross{ "N000_E000", "N001_E000", "N000_E001", "S001_E000", "N000_W001" };
+		const std::set<std::string> corners{ "N001_W001", "N001_E001", "S001_W001", "S001_E001" };
+		const std::set<std::string> generated(m.generatedCells.begin(), m.generatedCells.end());
+		std::set<std::string> square(cross);
+		square.insert(corners.begin(), corners.end());
+		Check(generated == square && m.generatedCells.size() == 9u, "master enfers : 9 cellules (carre 3x3)");
+		// Croix volcanique, coins en chaîne de montagnes (v1.0.71), le tout dans la grille.
+		bool inGrid = true, biomes = true;
 		for (const std::string& id : m.generatedCells)
 		{
 			int n = 0, e = 0;
 			inGrid = inGrid && tools::world_gen::ParseCellId(id, n, e) && wc::IsInLoreGrid({ n, e }, wc::CellMap::Enfers);
-			volcanic = volcanic && tools::world_gen::LoreCode(m, n, e) == 'V';
+			biomes = biomes && tools::world_gen::LoreCode(m, n, e) == (cross.count(id) ? 'V' : 'M');
 		}
-		Check(inGrid && volcanic, "master enfers : cellules dans la grille, biome volcanique");
+		Check(inGrid && biomes, "master enfers : cellules dans la grille, croix volcanique et coins montagneux");
 		const tools::world_gen::CityDef* citadel = nullptr;
 		for (const auto& c : m.cities)
 			if (std::find(c.startFor.begin(), c.startFor.end(), "legion") != c.startFor.end()) citadel = &c;
@@ -248,9 +254,15 @@ namespace
 				if ("royaumes:" + q.id == p.link && q.link == "enfers:" + p.id && cross.count(p.cell)) ++paired;
 		}
 		Check(portals == 5 && paired == 5, "master enfers : 5 portails apparies aux portes du continent");
+		// v1.0.71 : la Citadelle reste la seule ville (pas de hameau) ; des POI dans les 4 coins.
+		size_t cornersWithPoi = 0;
+		for (const std::string& c : corners)
+			if (std::any_of(m.pois.begin(), m.pois.end(), [&](const auto& p) { return p.cell == c && p.kind != "portail"; }))
+				++cornersWithPoi;
+		Check(m.cities.size() == 1u && cornersWithPoi == 4u, "master enfers : une seule ville, un POI dans chaque coin");
 	}
 
-	/// Seconde carte : génération complète des Enfers (5 cellules) → dossiers et
+	/// Seconde carte : génération complète des Enfers (9 cellules) → dossiers et
 	/// identifiants propres à la carte, sorties globales sous world/enfers/.
 	void TestGenerationEnfers()
 	{
@@ -267,7 +279,7 @@ namespace
 		std::string err;
 		const bool ok = tools::world_gen::RunWorldGen(o, r, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
-		Check(ok && r.cells == 5, "enfers : generation des 5 cellules");
+		Check(ok && r.cells == 9, "enfers : generation des 9 cellules");
 		if (!ok) return;
 		Check(fs::exists(tmp / "zones/enfers_n000_e000/terrain_height.r16h") && !fs::exists(tmp / "zones/cell_n000_e000"),
 			"enfers : dossiers zones/enfers_* (pas de cell_*)");
@@ -281,6 +293,20 @@ namespace
 				"enfers : spawners avec l'identifiant de zone des Enfers");
 			const std::string text = ReadText(tmp / "zones/enfers_n000_e000/spawners.json");
 			Check(text.find("\"archetypeId\": 241") != std::string::npos, "enfers : legionnaires a la Citadelle");
+		}
+		// v1.0.71 : faune de la tranche débutant (1 à 10) dans les 9 cellules, aucun
+		// élémentaire de braise (164, niveau 12) ; diablotins et chiens des cendres présents.
+		{
+			bool noEmber = true, hasImp = false;
+			for (const char* c : { "n000_e000", "n001_e000", "n000_e001", "s001_e000", "n000_w001",
+				"n001_w001", "n001_e001", "s001_w001", "s001_e001" })
+			{
+				const std::string text = ReadText(tmp / ("zones/enfers_" + std::string(c) + "/spawners.json"));
+				noEmber = noEmber && text.find("\"archetypeId\": 164,") == std::string::npos;
+				hasImp = hasImp || text.find("\"archetypeId\": 150,") != std::string::npos
+					|| text.find("\"archetypeId\": 151,") != std::string::npos;
+			}
+			Check(noEmber && hasImp, "enfers : faune de niveau 1 a 10 (pas d'elementaire de braise)");
 		}
 		// Cimetière neutre (toutes factions) à la Citadelle.
 		{
@@ -312,6 +338,12 @@ namespace
 			Check(linked && r.portals == 5, "enfers : portals.json (5 portails relies, altitude du sol)");
 			Check(fs::exists(tmp / "world/enfers/places.json") && fs::exists(tmp / "world/enfers/world_map.png"),
 				"enfers : places.json et carte du monde");
+			// Coins montagneux (v1.0.71) : générés, mines tenues par la Légion (pas de nains aux Enfers).
+			const std::string places = ReadText(tmp / "world/enfers/places.json");
+			Check(fs::exists(tmp / "zones/enfers_s001_e001/terrain_height.r16h")
+				&& places.find("enfers_n001_w001_mine_") != std::string::npos
+				&& places.find("\"race\": \"nains\"") == std::string::npos,
+				"enfers : coins generes, mines de la Legion (aucun lieu nain)");
 		}
 		fs::remove_all(tmp, ec);
 	}

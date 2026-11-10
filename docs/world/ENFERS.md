@@ -10,8 +10,9 @@ grille du continent.
 | Point | Valeur |
 |---|---|
 | Source | `game/data/world/enfers/world_master.json` (`world_id` `enfers`) |
-| Cellules | 5 cellules de 10 km **en croix** : `N000_E000` (centre), `N001_E000`, `N000_E001`, `S001_E000`, `N000_W001` |
-| Biome | `V` (volcanic_area) ; couronne `M` (mountain_range) dans la grille 5 × 5 (coins non générés) |
+| Cellules | **9 cellules** de 10 km en carré 3 × 3 (v1.0.71) : la croix `N000_E000` (centre), `N001_E000`, `N000_E001`, `S001_E000`, `N000_W001` et les 4 coins `N001_W001`, `N001_E001`, `S001_W001`, `S001_E001` |
+| Biome | croix `V` (volcanic_area) ; coins `M` (mountain_range), générés ; couronne extérieure `M` (N002/S002, W002/E002) non générée (mur invisible) dans la grille 5 × 5 |
+| Niveaux | zone de départ de la Légion infernale, **niveau 1 à 10** ; seuls les boss et les abords des portails peuvent être plus élevés |
 | Dossiers | `zones/enfers_nXXX_eYYY/`, `instances/zone_enfers_*/`, `world/enfers/` |
 | Identifiants | zone ids `2 000 000 + (n+500)·1000 + (e+500)` ; carte `kEnfersMapId` = 999 998 |
 | Code | `src/shared/world/WorldCells.h` : `CellMap::Enfers`, `CellDirName(c, map)`, `CellZoneId(c, map)`, `CellMapOfZoneId`, `MapCell` |
@@ -20,6 +21,28 @@ La carte d'un joueur se déduit de sa **zone** (`character_progress.zone_id`) et
 jamais de sa position (les deux repères se recouvrent : (0, 0) existe sur les
 deux cartes). Aucune migration de base : un nouveau personnage sans zone est
 sur la carte du départ de sa race.
+
+### Région de départ (v1.0.71)
+
+**Décisions du propriétaire (09/11/2026)** : les 4 coins sont ouverts (région de départ 3 × 3 de la
+Légion = les 9 cellules) ; les Enfers sont une zone de niveau 1 à 10 (boss et abords des portails
+exceptés) ; pas de hameau, la Citadelle reste la seule ville. Les coins gardent le code `M` :
+`tools/world_gen` génère les cellules `M` comme sur le continent (S008_E009 à S008_E011) ; pentes
+médianes ≈ 20° contre ≈ 15° sur la croix, 91 % du sol sous 35°. Leurs mines procédurales sont tenues
+par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (genres existants) :
+
+| Case | Biome | POI |
+|---|---|---|
+| N001_W001 | `M` | Ruines du Bastion des Damnés (`ruine`) |
+| N001_E001 | `M` | Camp d'épreuve des Recrues (`camp`) |
+| S001_W001 | `M` | Autel des Pactes (`sanctuaire`) |
+| S001_E001 | `M` | Faille des Cohortes (`faille`) |
+| S001_E000 | `V` | Poste de garde du Portail I (`camp`), à 400 m à l'est du portail |
+
+Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
+(`routes`) ne couvre pas les Enfers. Faune procédurale de la carte (`Population.cpp`, `CreatureFor`) :
+diablotins errants (150) près de la Citadelle, chiens des cendres (151) ensuite, ogres (161, niveau 10)
+au plus loin ; aucun élémentaire de braise (164, niveau 12). Lore et faune : [`LORE_BD.md`](LORE_BD.md) §15.8.
 
 ## 2. La Citadelle de la Légion
 
@@ -92,6 +115,6 @@ La liste est configurable par archétype (toute race, tout PNJ d'ambiance).
 .\lcdlln_world_gen.exe --content game/data --world enfers
 ```
 
-~1 min (5 cellules). La CI génère `royaumes` puis `enfers` avant l'empaquetage
+~2 min (9 cellules). La CI génère `royaumes` puis `enfers` avant l'empaquetage
 et vérifie `world/enfers/start_locations.json` et les deux `portals.json`.
 Déploiement : client, master et shard **en lock-step** (`kProtocolVersion` 20).

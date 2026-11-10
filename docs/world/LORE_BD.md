@@ -576,7 +576,7 @@ cellules `[INFÉRÉ]`. Script reproductible : `lore_v1061.py` (appliqué au fich
 | Légions Impériales (`faction_legions_imperiales`) | `legions_imperiales` (réservé) | hameau Eaglewatch (`hameau_eaglewatch`), près de Lhynn | N002_W010 | Pâturages des Terres de l'Empereur au nord de Lhynn (N001_W010) ; cellule déjà générée, voisine de Marn. |
 | La Lune Noire (`faction_black_moon`) | `lune_noire` | DANS le palais de la Lune Noire, sur la Lune (`lieu_palais_lune_noire_lunaire`) | hors carte | Lieu existant ; pas de hameau. |
 | Les Archimages (`les_archimages`) | aucune | DANS la pyramide de Methraton (`lieu_plan_methraton`, `zone_flying_pyramid`) | hors carte | Lieu existant ; pas de hameau. |
-| La Légion infernale (`faction_legion_infernale`, **nouvelle**) | `legion` | Citadelle de la Légion (`citadelle_legion`), carte des Enfers | Enfers N000_E000 | Lieu central de la croix des 5 cellules des Enfers ; un démon sort et rentre par n'importe laquelle des 5 portes ([`ENFERS.md`](ENFERS.md) §2-3). |
+| La Légion infernale (`faction_legion_infernale`, **nouvelle**) | `legion` | Citadelle de la Légion (`citadelle_legion`), carte des Enfers | Enfers N000_E000 | Lieu central de la croix des 5 cellules des Enfers (9 cellules depuis la v1.0.71, §15.8) ; un démon sort et rentre par n'importe laquelle des 5 portes ([`ENFERS.md`](ENFERS.md) §2-3). |
 | Maison du Serpent (`maison_du_serpent`) | `serpent` | **à définir** `[À VÉRIFIER]` | — | Aucun départ créé. |
 | Hors-La-Loi (`Hors-La-Loi`) | aucune | **aucun** | — | Faction qui se débloque pendant le jeu (statut acquis). |
 
@@ -907,6 +907,65 @@ Silverglade → Northind, 000077 et 000085 de Northind). Les PNJ de service des 
   côté client) ; l'Autel et la Tour partagent la case d'un hameau (4 cases libres pour 6 lieux) ; le
   village-ambassade elfe `[HS]` n'est pas placé ; écureuil, loutre, hibou et chouette ont un niveau par
   défaut (1-1) ; le bosquet et l'autel pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
+
+### 15.8 Citadelle de la Légion — Légion infernale, carte des Enfers (v1.0.71)
+
+Centre N000_E000 de la **carte des Enfers** (`citadelle_legion`, monde jouable seulement : pas de fiche
+`villes`, v1.0.58). **Décisions du propriétaire (09/11/2026)**, notes `[DÉCISION] (v1.0.71)` sur
+`faction_legion_infernale`, `regle_bestiaire_echelles` et `rule_niveaux_par_faction`, 3 entrées au registre :
+
+1. **Coins ouverts** : la région 3×3 = les 9 cellules N001..S001 × W001..E001, toutes générées. Les coins
+   gardent le code `M` (chaîne de montagnes) : `tools/world_gen` génère les cellules `M` comme sur le
+   continent (S008_E009 à S008_E011) ; pentes médianes ≈ 20° (≈ 15° sur la croix), 91 % du sol sous 35°,
+   donc praticable. La couronne N002/S002, W002/E002 reste `M`, non générée ([`ENFERS.md`](ENFERS.md) §1).
+2. **Niveaux** : les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des
+   portails peuvent être plus élevés. `regle_bestiaire_echelles` : « Enfers, volcan, boss mondiaux 55-70 »
+   devient « volcan, boss mondiaux 55-70 ; Enfers (départ de la Légion infernale) 1-10, sauf boss et
+   abords des portails » (autres tranches inchangées).
+3. **Pas de hameau** : la Citadelle reste la seule ville ; services inchangés (1127 PNJ, la Citadelle n'a
+   pas de fiche `villes`).
+
+Le lore n'a pas de fiche `cells` pour les Enfers (N000_E000… sont des cases du continent) : les lieux
+portent `cell` vide, `carte` `enfers` et `carte_cell` ; les créatures citent la case `enfers:<case>` dans
+`zones_chasse` (pas de `creature_ids`). `game_design.depart.region` de la faction : `carte` `enfers`,
+9 `cells`, `niveaux` [1, 10]. Toutes les cases de la croix portent un portail (I à IV sur les bras, V au
+centre) : les POI sont dans les 4 coins, plus un poste de garde à 400 m du Portail I (placement du
+générateur, POI sans ville dans la case), comme les Ruines de Wismerhill. L'Autel est ajouté aux
+`lieux_de_culte` de `religion_enfers_princes_demons`. Script reproductible : `lore_v1071.py` (appliqué
+au fichier v1.0.70).
+
+| Case | Terrain | Contenu | Faune (niveaux) |
+|---|---|---|---|
+| N001_W001 | montagne (`M`, ouverte) | POI **Ruines du Bastion des Damnés** (`lieu_ruines_bastion_des_damnes`, `poi_ruines_bastion_des_damnes`, `ruine`) : bastion d'un maître de plan déchu, englouti par les coulées depuis des âges `[GD]` ; un maître par plan `[BD-A5 p.18]` | diablotin errant (1-4), salamandre (1) |
+| N001_E000 | volcanique | Portail II (inchangé, rien n'est posé) | chien des cendres (2-6), salamandre ; petit démon (8-14, abords du portail) |
+| N001_E001 | montagne (`M`, ouverte) | POI **Camp d'épreuve des Recrues** (`lieu_camp_epreuve_des_recrues`, `poi_camp_epreuve_des_recrues`, `camp`) : arène où la Légion éprouve les démons nés à la Citadelle `[GD]` | chien des cendres, diablotin errant |
+| N000_W001 | volcanique | Portail III (inchangé, rien n'est posé) | chien des cendres, salamandre ; petit démon (abords) |
+| N000_E000 | volcanique | **Citadelle de la Légion** (départ) et Portail V (inchangés) | diablotin errant, chien des cendres |
+| N000_E001 | volcanique | Portail IV (inchangé, rien n'est posé) | chien des cendres, salamandre ; petit démon (abords) |
+| S001_W001 | montagne (`M`, ouverte) | POI **Autel des Pactes** (`lieu_autel_des_pactes`, `poi_autel_des_pactes`, `sanctuaire`) : pactes payés en âmes ou en sang, serment des jeunes démons `[GD]` (religion v1.0.58) | diablotin errant, salamandre |
+| S001_E000 | volcanique | Portail I (inchangé) ; POI **Poste de garde du Portail I** (`lieu_poste_garde_portail_1`, `poi_poste_garde_portail_1`, `camp`) à 400 m à l'est du portail `[GD]` | chien des cendres, salamandre ; petit démon (abords) |
+| S001_E001 | montagne (`M`, ouverte) | POI **Faille des Cohortes** (`lieu_faille_des_cohortes`, `poi_faille_des_cohortes`, `faille`) : crevasse par où descendent les âmes `[GD]` ; « des milliers d'âmes » `[BD-T10 p.34]`, âmes « en cohortes » `[BD-T12 p.38]` | diablotin errant, chien des cendres |
+
+- **Routes** : aucune. Le réseau routier du lore (`routes`) est fait de cases du continent et ne couvre
+  pas les Enfers ; `tools/world_gen` ne relie que les villes du master (une seule aux Enfers : 0 route).
+  Rien n'est forcé.
+- **Faune** : aucune espèce démoniaque existante n'était dans 1-10 ; deux fiches `[GD]` alignées sur les
+  archétypes de jeu déjà posés autour de la Citadelle (faune d'accueil des démons) : **Diablotin errant**
+  (`creature_diablotin_errant`, 1-4, archétype 150) et **Chien des cendres** (`creature_chien_des_cendres`,
+  2-6, archétype 151) ; salamandre (existante, 1). Le petit démon (8-14) est rattaché aux abords des
+  portails I à IV (exception de la décision 2). Les espèces de haut niveau dont l'habitat cite les Enfers
+  restent aux portes du continent et à la Porte du T12 (`zones_chasse` inchangées).
+- **Générateur** : `Places.cpp` donne les mines procédurales des coins à la Légion (race `demons`) au lieu
+  des nains (aucune ville démon sur le continent : sortie des Royaumes inchangée) ; tests `world_gen_tests`,
+  `world_places_tests`, `start_locations_tests` passés à 9 cellules. 5 → 9 cellules générées.
+- **Faune procédurale** : sur la carte des Enfers, `Population.cpp` (`CreatureFor`) ne tire plus par biome
+  mais dans la tranche 1-10 : diablotins (150) près de la Citadelle, puis chiens des cendres (151), et
+  ogres des collines (161, niveau 10) au plus loin ; plus d'élémentaire de braise (164, niveau 12). Les
+  légionnaires (241) des mines des coins sont des PNJ d'ambiance de la Légion (hostiles aux seuls humains).
+  Continent inchangé. Test `world_gen_tests` « faune de niveau 1 a 10 ».
+- **Points incertains** : noms ; le poste de garde est sur la case du Portail I (à
+  400 m) ; la région `region_enfers_t00` (Enfers des préquelles, hors carte) sert faute de région du lore
+  pour la carte jouable ; le Bastion et l'Autel pourraient porter des quêtes d'accueil (aucune créée).
 
 ## 16. Questions ouvertes
 

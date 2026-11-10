@@ -50,18 +50,19 @@ int main()
 	namespace cells = engine::world::cells;
 	const char* royaumes = R"({ "schema_version": 1, "world": "royaumes", "generated_cells": "N003_W009,N000_E000",
 	  "races": { "humains": { "city": "hameau_marn", "x": -90000, "y": 60, "z": -30000 } } })";
-	const char* enfers = R"({ "schema_version": 1, "world": "enfers", "generated_cells": "N000_E000,N001_E000,S001_E000,N000_E001,N000_W001",
+	const char* enfers = R"({ "schema_version": 1, "world": "enfers", "generated_cells": "N000_E000,N001_E000,S001_E000,N000_E001,N000_W001,N001_W001,N001_E001,S001_W001,S001_E001",
 	  "races": { "demons": { "city": "citadelle_legion", "city_name": "Citadelle de la Legion", "x": 10, "y": 200, "z": -20 } } })";
 	Check(t.LoadFromText(royaumes, err) && !t.HasMap(cells::CellMap::Enfers), "royaumes seuls");
 	Check(!t.IsGeneratedCell({ 0, 0 }, cells::CellMap::Enfers), "enfers non charges : aucune cellule jouable");
 	Check(t.MergeFromText(enfers, err), "fusion des enfers");
-	Check(t.Count() == 2 && t.HasMap(cells::CellMap::Enfers) && t.GeneratedCells(cells::CellMap::Enfers).size() == 5
+	Check(t.Count() == 2 && t.HasMap(cells::CellMap::Enfers) && t.GeneratedCells(cells::CellMap::Enfers).size() == 9
 		&& t.GeneratedCells().size() == 2, "cellules par carte");
 	const auto* demon = t.Resolve("demons");
 	Check(demon && demon->map == cells::CellMap::Enfers && demon->cityId == "citadelle_legion", "demons : depart aux enfers");
 	Check(t.Resolve("humains") && t.Resolve("humains")->map == cells::CellMap::Royaumes, "humains : depart aux royaumes");
 	Check(t.IsGeneratedCell({ 1, 0 }, cells::CellMap::Enfers) && !t.IsGeneratedCell({ 1, 0 })
-		&& t.IsGeneratedCell({ 0, 0 }) && !t.IsGeneratedCell({ 1, 1 }, cells::CellMap::Enfers), "appartenance par carte");
+		&& t.IsGeneratedCell({ 0, 0 }) && t.IsGeneratedCell({ 1, 1 }, cells::CellMap::Enfers) && !t.IsGeneratedCell({ 1, 1 }),
+		"appartenance par carte (coin des enfers genere depuis la v1.0.71)");
 	Check(!t.IsGeneratedCell({ 2, 0 }, cells::CellMap::Enfers), "hors grille des enfers");
 	Check(!t.MergeFromText(enfers, err) && t.Count() == 2, "carte deja chargee : fusion refusee");
 	Check(t.Resolve("orcs") && t.Resolve("orcs")->race == "humains", "race par defaut de la table principale");

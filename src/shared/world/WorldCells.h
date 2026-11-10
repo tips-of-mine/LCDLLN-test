@@ -3,7 +3,7 @@
 // Monde en cellules — découpage des cartes continues en CELLULES de 10 km × 10 km.
 //
 // Deux CARTES coexistent (registre \ref CellMap) : le continent « Royaumes » et
-// « Les Enfers » (petite carte volcanique de 5 cellules en croix, docs/world/ENFERS.md).
+// « Les Enfers » (petite carte de 9 cellules en carré 3×3, docs/world/ENFERS.md).
 // Chaque carte a son repère GLOBAL propre (même convention ci-dessous), son préfixe
 // de dossier (`cell_` / `enfers_`), sa plage d'identifiants de zone et son
 // identifiant de carte : deux points de même (x, z) sur deux cartes différentes
@@ -47,7 +47,7 @@ namespace engine::world::cells
 	enum class CellMap : uint8_t
 	{
 		Royaumes = 0, ///< le continent (carte historique, valeur par défaut partout)
-		Enfers = 1,   ///< seconde carte : « Les Enfers » (5 cellules en croix)
+		Enfers = 1,   ///< seconde carte : « Les Enfers » (9 cellules, carré 3×3)
 	};
 	/// Nombre de cartes du registre.
 	inline constexpr int kCellMapCount = 2;
@@ -61,8 +61,9 @@ namespace engine::world::cells
 	inline constexpr int kMinE = -19;
 	inline constexpr int kMaxE = 26;
 
-	/// Bornes de la carte des ENFERS (indices inclus) : croix de 5 cellules centrée
-	/// sur N000_E000, dans un carré −1..1 (les coins ne sont pas générés).
+	/// Bornes de la carte des ENFERS (indices inclus) : carré −1..1 de 9 cellules
+	/// centré sur N000_E000 (croix volcanique et 4 coins montagneux, tous générés
+	/// depuis la v1.0.71).
 	inline constexpr int kEnfersMinN = -1;
 	inline constexpr int kEnfersMaxN = 1;
 	inline constexpr int kEnfersMinE = -1;

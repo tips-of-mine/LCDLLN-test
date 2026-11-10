@@ -102,11 +102,22 @@ namespace tools::world_gen
 
 		/// Famille de créatures selon le biome et la distance à la ville de départ
 		/// la plus proche (≈ niveau de zone). Renvoie 0 si le biome est vide.
-		uint32_t CreatureFor(char code, double distToStart, Rng& rng)
+		/// \param enfers carte des Enfers (v1.0.71 : zone de départ de niveau 1 à 10) :
+		///        faune infernale de la tranche débutant quel que soit le biome
+		///        (diablotins, chiens des cendres, ogres au plus loin), jamais
+		///        d'élémentaire de braise (niveau 12).
+		uint32_t CreatureFor(char code, double distToStart, Rng& rng, bool enfers)
 		{
 			// Paliers de progression (échelle 10 km) : ≈ niveaux 1-3 / 4-7 / 8+.
 			const bool isNear = distToStart < 1500.0;
 			const bool mid = distToStart < 4500.0;
+			if (enfers)
+			{
+				if (code != 'V' && code != 'M') return 0u;
+				if (isNear) return 150u;                         // diablotins errants (2)
+				if (mid) return rng.Chance(0.5) ? 150u : 151u;   // + chiens des cendres (3)
+				return rng.Chance(0.6) ? 151u : 161u;            // ogres (10) au plus loin
+			}
 			switch (code)
 			{
 			case 'T': case 'R': case 'L': case 't':
@@ -571,7 +582,7 @@ namespace tools::world_gen
 				Rng lr(h);
 				if (lr.Chance(0.3)) continue; // respirations : pas un monstre à chaque case
 				const char code = w.biome.At(w.biome.IndexX(p.x), w.biome.IndexZ(p.z));
-				const uint32_t arch = CreatureFor(code, dStart, lr);
+				const uint32_t arch = CreatureFor(code, dStart, lr, w.master.cellMap == engine::world::cells::CellMap::Enfers);
 				if (arch == 0) continue;
 				SpawnerDef s;
 				s.id = "faune_" + std::to_string(i) + "_" + std::to_string(j);

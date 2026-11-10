@@ -305,7 +305,7 @@ reproductible : `lore_t7_14.py` (appliqué au fichier v1.0.53).
 ### 7.5 Points ouverts restants
 
 Traités en v1.0.55 (section 8) : placements, fleuve de Sysigie, Haut Tharque = Meldrim, retour de
-Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 16) : le nom
+Parsifal, Kruikna / Cruik / dragon de Pilou, titre de Greldinard. Reste ouvert (section 17) : le nom
 de la fille de Wismerhill.
 
 ## 8. Placements T7-T14 et fleuve de Sysigie (v1.0.55)
@@ -654,6 +654,9 @@ Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
   N002_W010), au plafond de la tranche ; crabe et mouette ont un niveau par défaut (1-1) ; le camp de
   manœuvres et l'autel pourraient porter des PNJ ou des quêtes d'accueil des Légions (aucun créé).
 
+> **v1.0.72** (section 16) : Ambermead est déplacée en N003_W008 et Greyhedge en N001_W008, hors de la
+> région 3×3 ; routes 000128, 000129 et 000130 retracées.
+
 ### 15.2 Dawnmere — Chevaliers de la Lumière (v1.0.64)
 
 Centre N005_W011 (`hameau_dawnmere`, v1.0.61). Les 9 cases étaient déjà générées. Altenberg (N005_W012,
@@ -727,10 +730,13 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
   (`[BD-T10]`) ne sont pas évoqués ; loutre et mouton ont un niveau par défaut (1-1) ; la stèle et les
   lices pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+> **v1.0.72** (section 16) : Wardholt est au fond d'une crevasse en cul-de-sac, avec une mine ; la
+> route Tithemead → Orderfen (000198) remplace la route 000066 Aurore → Orderfen.
+
 ### 15.4 Grakhul — Dzorak (v1.0.67)
 
 Centre N008_E012 (`hameau_grakhul`, v1.0.61). Les 9 cases étaient déjà générées. Leviathan est en
-N009_E011 dans le monde jouable (`world_master.json`) mais en N012_E012 dans le lore (section 16) :
+N009_E011 dans le monde jouable (`world_master.json`) mais en N012_E012 dans le lore (section 17) :
 **rien n'est posé** dans N009_E011, pas même de la faune. Mossy Rock (N006_E011) et Horkher (N006_E014)
 sont hors région. Thème : les clans Dzorak et les croyances des esprits des orques (`lore.religions`,
 `religion_esprits_orques`, v1.0.58) — kraals, totem chamanique, arène, camp de guerre, chasse ; le totem
@@ -761,7 +767,7 @@ reproductible : `lore_v1067.py` (appliqué au fichier v1.0.66).
   la tranche : la Grande Chasse et le festin de sanglier restent un décor.
 - **Points incertains** : noms ; le clan Ghazrak est inventé (aucun personnage de la BD) ; le totem ne dit
   rien de l'esprit d'Ogunta lié à l'anneau de Greldinard (Q22) ; Greldinard n'est pas évoqué ; l'arène
-  touche la case de Leviathan, dont la position reste ouverte (section 16) ; la chèvre (1-3) et le chien
+  touche la case de Leviathan, dont la position reste ouverte (section 17) ; la chèvre (1-3) et le chien
   sont les seuls animaux de Grakhul ; le totem, l'arène et l'affût pourraient porter des PNJ ou quêtes
   d'accueil (aucun créé).
 
@@ -908,6 +914,9 @@ Silverglade → Northind, 000077 et 000085 de Northind). Les PNJ de service des 
   village-ambassade elfe `[HS]` n'est pas placé ; écureuil, loutre, hibou et chouette ont un niveau par
   défaut (1-1) ; le bosquet et l'autel pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
+> **v1.0.72** (section 16) : Silverglade est déplacée seule en N007_W003 ; la région 3×3 reste centrée
+> sur N007_W006. Les sentiers 000194 à 000197 partent de Greenbough ou de Fernhollow.
+
 ### 15.8 Citadelle de la Légion — Légion infernale, carte des Enfers (v1.0.71)
 
 Centre N000_E000 de la **carte des Enfers** (`citadelle_legion`, monde jouable seulement : pas de fiche
@@ -967,7 +976,110 @@ au fichier v1.0.70).
   400 m) ; la région `region_enfers_t00` (Enfers des préquelles, hors carte) sert faute de région du lore
   pour la carte jouable ; le Bastion et l'Autel pourraient porter des quêtes d'accueil (aucune créée).
 
-## 16. Questions ouvertes
+## 16. Corrections v1.0.72
+
+**Corrections du propriétaire (10/11/2026)**. Chaque fiche touchée porte une note `[DÉCISION] (v1.0.72)` ;
+11 entrées sont ajoutées au registre `regle_canon_registre_decisions`. Les routes ne sont que dans le lore
+(`routes`) : `tools/world_gen` trace ses propres routes entre les villes du master. Les déplacements, les
+reliefs, les cours d'eau et le POI vont dans `world_master.json`. Les nouvelles routes sont numérotées de
+000198 à 000206. Leur tracé (`waypoints`, quand il fait plus d'une case) est le plus court chemin hors mer et
+hors chaînes de montagnes, et il évite les cases des autres villes `[INFÉRÉ]`. Scripts reproductibles :
+`master_v1072.py` puis `lore_v1072.py`, appliqués aux fichiers v1.0.71.
+
+| # | Correction | Ce qui change |
+|---|---|---|
+| 1 | Route 000066 Aurore → Orderfen supprimée | Chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166), **Tithemead → Orderfen (000198)**, par N010_W009. |
+| 2 | Wardholt (`hamlet_wardholt`, N009_W009) au fond d'une crevasse, avec une mine | Fiche : topographie et notes. Lieu **Mine de Wardholt** (`lieu_mine_de_wardholt`, `open_dungeon_poi`) `[GD]`. Monde jouable : relief `crevasse_wardholt` et mine au fond (voir plus bas). La route 000167 depuis Oathford reste la seule. |
+| 3 | Route 000006 Lhynn → Altenberg supprimée | Lhynn → Eaglewatch (000121), **Eaglewatch → Lambsfold (000199)**, **Lambsfold → Altenberg (000200)**. |
+| 4 | Ambermead (`hamlet_ambermead`) de N003_W010 à N003_W008 | **Greyhedge → Ambermead (000201)**, **Ambermead → Dys (000202)**. La route 000128 vers Eaglewatch est gardée, avec un tracé par N002_W009 qui évite la case du hameau de Marn. La basse-cour, les bœufs et les chiens suivent la ferme ; le lapin reste en N003_W010. |
+| 5 | Greyhedge (`hamlet_greyhedge`) de N001_W009 à N001_W008 | 000129 depuis Eaglewatch passe par N002_W009. Les chèvres, les ânes et les chiens suivent la ferme ; le molosse et le renard restent. Voir 000130 ci-dessous. |
+| 6 | Route terrestre 000151 Hishtarland → Saltfen supprimée | La route maritime 000109 est gardée. Hishtarland (île, code `o`) n'est plus desservie que par les lignes 000108 et 000109. |
+| 7 | La route 000085 Dys → Northind passe par Greenbough | **Dys → Greenbough (000203)**, par N005_W008 et N005_W007, et **Greenbough → Northind (000204)**. |
+| 8 | Silverglade (`hameau_silverglade`, départ des Hauts Elfes) seul de N007_W006 à N007_W003 | 000127 vers Northind, 000192 vers Greenbough et 000193 vers Fernhollow sont retracées depuis N007_W003. 000193 passe par N007_W006, la case laissée libre, pour éviter Northind et le village Orkh. Les sentiers partent du hameau le plus proche : 000194 Greenbough → Autel des Vents (même case), 000195 Fernhollow → Bosquet des Pavanes, 000196 Fernhollow → Tour des Flèches blanches (même case), 000197 Greenbough → Ruines du Temple sylvestre. Pour le Bosquet et les Ruines, les deux hameaux sont à égalité : la région du lieu tranche. |
+| 9 | Route Greenbough → Magistrya | **Greenbough → Sauken Glude of Magistrya (000205)**, par N005_W005 et N004_W004. |
+| 10 | Verdansur (`town_0119`, N010_W015) perchée en haut d'une haute colline, deux rivières en partent | Fiche : topographie et hydrographie. Les rivières `riv_verdansur_sud` et `riv_verdansur_nord` existaient : elles naissent maintenant au pied de la colline, pas dans la ville. Monde jouable : relief `colline_verdansur` et deux `river_courses`. |
+| 11 | « Événement » tout à gauche de N010_W016, au niveau des falaises, avec une route depuis Verdansur | POI **Sanctuaire des Brisants** (`poi_sanctuaire_des_brisants`, `sanctuaire`, fiche `lieu_sanctuaire_des_brisants`, `shrine_poi`) `[GD]` : croix de pierre et brasier au-dessus des brisants. Événement **Veillée des Feux des Brisants** (`fete_eglise_feux_des_brisants`, fête de `religion_eglise_lumiere`, 28e jour de la Lune des Feuilles) `[GD]` : les fidèles de Verdansur gardent les feux jusqu'à l'aube contre les naufrageurs. Le lieu est ajouté aux `lieux_de_culte`. **Verdansur → Sanctuaire (000206)**, de type `road` pour la procession. |
+
+- **Route 000130** : elle sert toujours à rejoindre la Via Magna depuis Eaglewatch sans traverser Lhynn,
+  donc elle est gardée. Depuis N001_W008, N000_W008 est une chaîne de montagnes : la route passe par
+  N000_W009 et rejoint la Via Magna en S001_W009 (deuxième case après Lhynn) au lieu de N000_W010.
+- **Silverglade** : `start_for` reste `["elfe"]`. `game_design.depart.cell` de `faction_hauts_elfes` vaut
+  N007_W003, tandis que `game_design.depart.region` reste la région 3×3 centrée sur N007_W006.
+  `region_id` du hameau suit sa case (`foret_elfique`). Test `world_gen_tests` : un départ doit être
+  à 1 case de sa ville de référence, sauf l'elfe, admis à 2 cases de Northind. `start_locations.json`
+  est une sortie du générateur, qui le réécrit à partir du master.
+- **Axe économique** `axe_cote_ouest` : 000006 devient 000121, 000199, 000200 ; 000085 devient 000203,
+  000204.
+- **Renvois** : « Questions ouvertes » devient la section 17. Les deux renvois du lore (« section 16 »,
+  « LORE_BD §16 ») sont corrigés.
+
+**Réseau routier** (contrôle inspiré de `routes/reseau.py` : `MAXLEN` = 5, mer et chaînes de montagnes
+bloquantes, villes traversées comptées comme étapes). Il compte 110 villes et hameaux et 152 routes.
+Aucune route n'est trop longue ni ne traverse la mer ou une chaîne. La composante principale réunit
+108 villes. Deux îles sont hors du réseau terrestre : **Deepbrook** (ligne 000111, comme avant) et
+**Hishtarland**, desservie par les lignes maritimes 000108 et 000109 depuis la suppression de 000151.
+
+**Services** : 1127 → 1137 PNJ de service. Les écuries suivent les routes `road` (au moins 1) :
+
+| Ville | Écuries |
+|---|---|
+| Lhynn | 4 → 3 |
+| Aurore | 4 → 3 |
+| Saltfen | 3 → 2 |
+| Dys | 3 → 4 |
+| Magistrya | 2 → 3 |
+| Verdansur | 2 → 3 |
+| Eaglewatch | 3 → 4 |
+| Ambermead | 1 → 3 |
+| Greyhedge | 2 → 3 |
+| Lambsfold | 1 → 3 |
+| Tithemead | 1 → 2 |
+| Greenbough | 1 → 4 |
+
+**Monde jouable** (`world_master.json`, `tools/world_gen`) :
+
+- **Section `reliefs`** (nouvelle). C'est un relief local ajouté au relief macro (`MacroHeight`), donc une
+  fonction pure de la position : le raccord entre cellules est exact. Il est ancré sur le centre de la case
+  de sa ville, et la ville y est posée, sans recherche de site.
+  - `colline_verdansur` : sommet de 300 m de rayon, 130 m au-dessus du relief, pied à 1,4 km. Les deux
+    cours tracés à la main `riviere_verdansur_sud` (N010_W015 → N009_W015 → N008_W015) et
+    `riviere_verdansur_nord` (N010_W015 → N010_W014 → N011_W014 → N012_W014) remplacent la rivière
+    automatique de ces cases. Ils naissent à 150 m au-delà du pied (`BuildMacroRivers`). Il n'y a pas
+    de méandres sur le flanc, et le nord contourne Trueford.
+  - `crevasse_wardholt` : massif de 1,5 km de rayon relevé de 110 m (contour ondulé, pente douce à
+    l'extérieur), entaillé d'une fente à fond plat de 340 m de large, avec des parois raides de 70 m de
+    large. La fente s'ouvre vers Oathford (N009_W010) et se
+    ferme 260 m derrière le hameau. À 250 m, la grille des routes lisse les parois : le massif est donc
+    fermé aux routes du générateur, qui n'entrent que par l'ouverture. La **mine** est un lieu procédural
+    `mine` (nom « Mine de Wardholt », peuple du hameau), posée au fond de la fente par `Places.cpp`
+    (`<cellule>_crevasse_wardholt_mine`) et reliée par un chemin local.
+- **POI décalé** : nouvelles clés `offset_x_m` / `offset_z_m` des `pois` (au plus 4,3 km). Le Sanctuaire
+  des Brisants est à 3,2 km à l'ouest et 0,7 km au nord du centre de N010_W016, au sec.
+- **Cellules générées** : 182 → 188. Greyhedge (N001_W008) et Silverglade (N007_W003, en forêt sans
+  rivière) sont ajoutées. Avec Silverglade en N007_W003, le corridor des départs passe par N004_W003,
+  N005_W003, N006_W003 et N007_W004. N003_W004, N004_W004, N005_W004 et N005_W005 sont gardées
+  explicitement : aucune cellule n'est perdue. Le corridor ne change pas autour de Wardholt.
+- **Tests** : `world_gen_tests` gagne « reliefs » (sommet, rivières au pied, crevasse fermée, routes par
+  l'ouverture, mine au fond, POI décalé).
+
+**Ce qui n'est pas réel en jeu** :
+
+- N010_W015 (Verdansur) et N010_W016 ne sont pas dans `generated_cells`. La colline, les rivières et le
+  sanctuaire sont générés : carte du monde, `places.json`, et cellules dès qu'elles seront ajoutées. Ils
+  ne sont pas jouables tant que ces cases sont derrière le mur invisible.
+- Le générateur ne modèle pas de falaises : la côte y descend en pente douce.
+- La Veillée des Feux des Brisants n'existe que dans le lore : il n'y a pas de système d'événements de
+  monde côté serveur.
+
+**Points incertains** :
+
+- Les noms (Mine de Wardholt, Sanctuaire des Brisants, Veillée des Feux des Brisants) et l'événement.
+- La hauteur et l'emprise de la colline et de la crevasse.
+- Ambermead et Greyhedge quittent la région 3×3 d'Eaglewatch, dont elles restent les fermes.
+- Hishtarland n'a plus de route terrestre.
+- Les sentiers à égalité de distance.
+
+## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 

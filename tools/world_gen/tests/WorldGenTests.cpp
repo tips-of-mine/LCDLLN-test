@@ -158,12 +158,14 @@ namespace
 				if (c.id == cityId) { found = tools::world_gen::ParseCellId(c.cell, refN, refE); }
 			for (const auto& p : m.pois)
 				if (!found && p.id == cityId) { found = tools::world_gen::ParseCellId(p.cell, refN, refE); }
+			// v1.0.72 : Silverglade (elfe) déplacé par le propriétaire deux cases à l'est de Northind.
+			const int reach = faction == "elfe" ? 2 : 1;
 			const bool near = start && found && start->kind == "hameau"
-				&& std::abs(start->n - refN) <= 1 && std::abs(start->e - refE) <= 1 && (start->n != refN || start->e != refE);
+				&& std::abs(start->n - refN) <= reach && std::abs(start->e - refE) <= reach && (start->n != refN || start->e != refE);
 			if (!near) std::fprintf(stderr, "  depart '%s' pas dans un hameau voisin de %s\n", faction.c_str(), cityId.c_str());
 			hamletsNear = hamletsNear && near;
 		}
-		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61)");
+		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61 ; Silverglade a 2 cases, v1.0.72)");
 		bool oldStartsCleared = true;
 		for (const auto& c : m.cities)
 			if (c.id == "hameau_marn" || c.id == "ville_whispers_hill" || c.id == "leviathan_jungle" || c.id == "ville_ghrunke_dash")
@@ -775,6 +777,93 @@ namespace
 			"POI : deux lieux de la meme case ecartes (temple et Seuil de Lhynn)");
 	}
 
+	/// v1.0.72 : reliefs locaux du master — Verdansur au sommet d'une colline, deux
+	/// rivières qui naissent à son pied ; Wardholt au fond d'une crevasse en
+	/// cul-de-sac (routes par l'ouverture seulement, mine au fond) ; lieu décalé
+	/// contre la côte ouest de sa case.
+	void TestReliefs()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && g.master.reliefs.size() >= 2, "reliefs : section reliefs chargee");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const CityDef* ver = g.FindCity("town_0119");
+		const CityDef* war = g.FindCity("hamlet_wardholt");
+		const ReliefDef* hill = ReliefOfCity(m, "town_0119");
+		const ReliefDef* crev = ReliefOfCity(m, "hamlet_wardholt");
+		Check(ver && war && hill && crev && hill->type == "colline" && crev->type == "crevasse",
+			"reliefs : colline de Verdansur, crevasse de Wardholt");
+		if (!ver || !war || !hill || !crev) return;
+		auto dist = [](Vec2 a, Vec2 b) { return std::hypot(a.x - b.x, a.z - b.z); };
+		// Colline : ville au centre de sa case, au sommet, nettement au-dessus de son pied.
+		Check(dist(ver->center, hill->center) < 1e-6 && dist(war->center, crev->center) < 1e-6,
+			"reliefs : villes ancrees au centre de leur case");
+		const double top = MacroHeight(m, ver->center.x, ver->center.z);
+		bool dominates = true;
+		for (int k = 0; k < 8; ++k)
+		{
+			const double a = k * 0.7853981633974483, r = hill->footRadiusM + 300.0;
+			dominates = dominates && top - MacroHeight(m, ver->center.x + std::cos(a) * r, ver->center.z + std::sin(a) * r) > 80.0;
+		}
+		Check(dominates && ver->plateauY > top - 15.0, "reliefs : Verdansur au sommet (plus de 80 m au-dessus du pied)");
+		// Deux rivières tracées à la main : nées au pied (jamais sur le flanc), jusqu'à la mer.
+		int born = 0;
+		for (const River& r : g.rivers)
+		{
+			if (r.name != "riviere_verdansur_sud" && r.name != "riviere_verdansur_nord") continue;
+			double dmin = 1e18;
+			for (const Vec2& p : r.points) dmin = std::min(dmin, dist(p, ver->center));
+			if (dmin >= hill->footRadiusM && dist(r.points.front(), ver->center) < hill->footRadiusM + 600.0
+				&& r.waterY.back() < m.scale.seaLevelM + 0.5)
+				++born;
+		}
+		Check(born == 2, "reliefs : deux rivieres naissent au pied de la colline et vont a la mer");
+		// Crevasse : fond plat sous la ville et la mine, parois sur les côtés et au fond,
+		// ouverte vers Oathford.
+		const Vec2 c = war->center, d = crev->dir, nrm{ -d.z, d.x };
+		const double off = crev->halfWidthM + crev->wallM + 80.0;
+		const double H = crev->heightM;
+		auto at = [&](Vec2 p) { return ReliefContribution(*crev, p.x, p.z); };
+		Check(at(c) < 1e-9 && at(c - d * (crev->backM - 60.0)) < 1e-9 && at(c + nrm * off) > 0.9 * H && at(c - nrm * off) > 0.9 * H
+			&& at(c - d * (crev->backM + off)) > 0.9 * H && at(c + d * (crev->footRadiusM * 0.6)) < 1e-9
+			&& at(c + d * (crev->footRadiusM * 1.16 + CrevasseOuterSlopeM(*crev) + 50.0)) < 1e-9,
+			"reliefs : Wardholt au fond d'une crevasse en cul-de-sac");
+		// Routes : aucune ne franchit le massif ; celles de Wardholt sortent par l'ouverture.
+		bool walled = true;
+		size_t wardRoads = 0;
+		for (const Road& r : g.roads)
+		{
+			if (r.fromId == war->id || r.toId == war->id) ++wardRoads;
+			for (const Vec2& p : r.points) walled = walled && at(p) < 0.5 * H;
+		}
+		Check(walled && wardRoads >= 1, "reliefs : routes de Wardholt par l'ouverture, massif jamais franchi");
+		// Mine au fond de la crevasse (lieu de la cellule de Wardholt).
+		World w;
+		InitCell(w, g, { war->n, war->e });
+		BuildPlaces(w);
+		const CityDef* mine = nullptr;
+		for (const CityDef& p : w.cities)
+			if (p.procedural == "mine" && p.id == w.cellName + "_" + crev->id + "_mine") mine = &p;
+		Check(mine && mine->name == crev->mine && at(mine->center) < 1e-9
+			&& dist(mine->center, c) > war->radiusM + 6.0 + std::max(46.0, war->radiusM * 0.6) + mine->radiusM,
+			"reliefs : mine au fond de la crevasse, hors du plateau du hameau");
+		// Lieu décalé (Sanctuaire des Brisants) : contre la côte ouest de sa case, au sec.
+		const PoiDef* poi = nullptr;
+		for (const PoiDef& p : g.pois)
+			if (p.id == "poi_sanctuaire_des_brisants") poi = &p;
+		const auto pc = poi ? engine::world::cells::CellCenter({ poi->n, poi->e }) : engine::world::cells::CellPoint{};
+		Check(poi && poi->offsetX < -3000.0 && std::fabs(poi->center.x - (pc.x + poi->offsetX)) < 1e-6
+			&& MacroHeight(m, poi->center.x, poi->center.z) > m.scale.seaLevelM + 3.0,
+			"reliefs : POI decale contre la cote ouest de sa case, au sec");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -861,6 +950,7 @@ int main()
 	TestMapFeatures();
 	TestWaterShores();
 	TestRiverIslandAndSharedPois();
+	TestReliefs();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

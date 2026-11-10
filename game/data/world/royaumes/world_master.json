@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -34,7 +34,8 @@
     "S006_E018", "S007_E018", "S008_E018",
     "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005",
     "N005_W009", "N006_W009", "N006_W008",
-    "N006_W004"
+    "N006_W004",
+    "N001_W008", "N007_W003", "N003_W004", "N004_W004", "N005_W004", "N005_W005"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -282,25 +283,25 @@
     {
       "id": "hamlet_ambermead",
       "name": "Ambermead",
-      "cell": "N003_W010",
+      "cell": "N003_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[GD] v1.0.62 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Eaglewatch",
-      "description": "Ferme à blé de la Première Province, au nord d'Eaglewatch : grain et fourrage pour la garnison."
+      "source": "[GD] v1.0.62 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N003_W008, déplacée depuis N003_W010)",
+      "description": "Ferme à blé de la Première Province, au nord-est d'Eaglewatch, entre Greyhedge et Dys : grain et fourrage pour la garnison."
     },
     {
       "id": "hamlet_greyhedge",
       "name": "Greyhedge",
-      "cell": "N001_W009",
+      "cell": "N001_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[GD] v1.0.62 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Eaglewatch",
+      "source": "[GD] v1.0.62 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N001_W008, déplacée depuis N001_W009)",
       "description": "Ferme à haies vives à l'est de Lhynn, sur le chemin d'Eaglewatch à la Via Magna."
     },
     {
@@ -389,7 +390,7 @@
       "faction": "justice",
       "start_for": [],
       "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
-      "description": "Hameau de garnison à palissade à l'est d'Oathford, face à la forêt elfique : poste de garde de l'Ordre de la Justice, bûcherons et charbonniers."
+      "description": "Hameau de garnison à palissade à l'est d'Oathford, au fond d'une crevasse en cul-de-sac ouverte vers l'ouest (la route s'y arrête) : poste de garde de l'Ordre de la Justice, mineurs, bûcherons et charbonniers ; une mine s'ouvre au fond de la crevasse [DÉCISION v1.0.72]."
     },
     {
       "id": "hameau_wyrmhallow",
@@ -508,7 +509,7 @@
     {
       "id": "hameau_silverglade",
       "name": "Silverglade",
-      "cell": "N007_W006",
+      "cell": "N007_W003",
       "kind": "hameau",
       "race": "elfes",
       "state": "intact",
@@ -516,8 +517,8 @@
       "start_for": [
         "elfe"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Northind",
-      "description": "Hameau des Hauts Elfes dans la forêt, à l'ouest de Northind : les jeunes elfes y reçoivent leur premier enseignement."
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N007_W003, deux cases à l'est de Northind ; région de départ 3×3 inchangée)",
+      "description": "Hameau des Hauts Elfes dans la forêt, à l'est de Northind : les jeunes elfes y reçoivent leur premier enseignement."
     },
     {
       "id": "ville_lhynn",
@@ -1033,7 +1034,7 @@
       "faction": "justice",
       "start_for": [],
       "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Verdansur."
+      "description": "Ville de Verdansur, perchée au sommet d'une haute colline ; deux rivières naissent à son pied, l'une vers le sud, l'autre vers le nord-est [DÉCISION v1.0.72]."
     },
     {
       "id": "town_0120",
@@ -1573,7 +1574,7 @@
       "faction": "elfe",
       "start_for": [],
       "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
-      "description": "Hameau de cueilleurs et d'herboristes au sud de Silverglade : maisons de bois entre les racines, séchoirs à herbes et à champignons ; rien ne s'y cueille sans un chant."
+      "description": "Hameau de cueilleurs et d'herboristes au sud-ouest de Northind : maisons de bois entre les racines, séchoirs à herbes et à champignons ; rien ne s'y cueille sans un chant."
     },
     {
       "id": "hamlet_fernhollow",
@@ -1585,7 +1586,7 @@
       "faction": "elfe",
       "start_for": [],
       "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
-      "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Silverglade, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
+      "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Northind, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
     }
   ],
   "pois": [
@@ -2034,6 +2035,15 @@
       "cell": "N008_W005",
       "kind": "ruine",
       "description": "Colonnes de pierre blanche mangées par le lierre, reste d'un temple elfe abandonné depuis des générations quand la forêt reculait devant les colons ; araignées et corbeaux y nichent [GD v1.0.70, région de départ de Silverglade]."
+    },
+    {
+      "id": "poi_sanctuaire_des_brisants",
+      "name": "Sanctuaire des Brisants",
+      "cell": "N010_W016",
+      "kind": "sanctuaire",
+      "offset_x_m": -3200,
+      "offset_z_m": -700,
+      "description": "Croix de pierre et brasier au bord des falaises de la côte ouest, au-dessus des brisants : chaque année, la Veillée des Feux des Brisants y rassemble les fidèles de Verdansur, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs [GD v1.0.72, événement à valider]."
     }
   ],
   "imports": {
@@ -2046,7 +2056,7 @@
     "spawners": "zones/feyhin/spawners.json",
     "quest_poi": "quests/quest_poi_feyhin.json"
   },
-  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs.",
+  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs.",
   "river_courses": [
     {
       "id": "fleuve_sysigie",
@@ -2055,6 +2065,45 @@
       "width_m": 80,
       "island_city": "ville_sysigie",
       "source": "[INFÉRÉ] v1.0.55 : Sysigie sur une île au milieu d'un grand fleuve (décision du propriétaire) ; source dans la lisière de la forêt occidentale, embouchure sur la côte nord (N012_W011)."
+    },
+    {
+      "id": "riviere_verdansur_sud",
+      "name": "Rivière de Verdansur (bras sud)",
+      "cells": ["N010_W015", "N009_W015", "N008_W015"],
+      "width_m": 28,
+      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Verdansur (reliefs.colline_verdansur), vers le sud ; embouchure sur la côte ouest (N008_W015) ; lore riv_verdansur_sud."
+    },
+    {
+      "id": "riviere_verdansur_nord",
+      "name": "Rivière de Verdansur (bras nord)",
+      "cells": ["N010_W015", "N010_W014", "N011_W014", "N012_W014"],
+      "width_m": 30,
+      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Verdansur, vers l'est puis le nord, contourne Trueford (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
+    }
+  ],
+  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond.",
+  "reliefs": [
+    {
+      "id": "colline_verdansur",
+      "type": "colline",
+      "city": "town_0119",
+      "height_m": 130,
+      "top_radius_m": 300,
+      "foot_radius_m": 1400,
+      "source": "[DÉCISION] v1.0.72 : Verdansur perchée en haut d'une haute colline ; deux rivières partent de son pied (river_courses riviere_verdansur_sud et _nord)."
+    },
+    {
+      "id": "crevasse_wardholt",
+      "type": "crevasse",
+      "city": "hamlet_wardholt",
+      "height_m": 110,
+      "foot_radius_m": 1500,
+      "half_width_m": 170,
+      "wall_m": 70,
+      "back_m": 260,
+      "open_toward": "N009_W010",
+      "mine": "Mine de Wardholt",
+      "source": "[DÉCISION] v1.0.72 : Wardholt est un cul-de-sac au fond d'une crevasse, ce qui explique que la route ne continue pas ; ouverture à l'ouest vers Oathford ; mine au fond (nom [GD] à valider)."
     }
   ],
   "extra_lakes": [

@@ -10,6 +10,7 @@
 #include <zone_builder/JsonDocument.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <set>
@@ -197,6 +198,13 @@ namespace tools::world_gen
 				d.id = GetStr(p, "id"); d.name = GetStr(p, "name", d.id); d.cell = GetStr(p, "cell");
 				d.kind = GetStr(p, "kind", "monolithe"); d.description = GetStr(p, "description");
 				d.link = GetStr(p, "link");
+				// Décalage depuis le centre de la case (v1.0.72) : le lieu et son
+				// aplanissement (100 m) restent à plus de 700 m des bords de la case.
+				d.offsetX = GetNum(p, "offset_x_m", 0.0); d.offsetZ = GetNum(p, "offset_z_m", 0.0);
+				if (std::fabs(d.offsetX) > 4300.0 || std::fabs(d.offsetZ) > 4300.0)
+				{
+					err = "master: offset hors de la case pour POI '" + d.id + "' (|offset| <= 4300 m)"; return false;
+				}
 				if (d.id.empty() || !ids.insert(d.id).second) { err = "master: id de POI vide ou duplique '" + d.id + "'"; return false; }
 				if (!ParseCellId(d.cell, d.n, d.e)) { err = "master: cellule invalide pour POI '" + d.id + "'"; return false; }
 				// Lien de portail « <monde>:<id> » : monde connu, différent du monde courant.
@@ -290,6 +298,55 @@ namespace tools::world_gen
 					}
 				}
 				out.riverCourses.push_back(std::move(d));
+			}
+		}
+
+		// --- reliefs locaux (v1.0.72) : colline sous une ville perchée, crevasse en cul-de-sac ---
+		if (const JsonValue* rl = FindObjectMember(root, "reliefs"); rl && rl->type == JsonType::Array)
+		{
+			std::set<std::string> reliefIds, anchored;
+			for (const JsonValue& v : rl->arrayValue)
+			{
+				ReliefDef d;
+				d.id = GetStr(v, "id"); d.type = GetStr(v, "type"); d.cityId = GetStr(v, "city");
+				d.heightM = GetNum(v, "height_m", 0.0);
+				d.topRadiusM = GetNum(v, "top_radius_m", 0.0);
+				d.footRadiusM = GetNum(v, "foot_radius_m", 0.0);
+				d.halfWidthM = GetNum(v, "half_width_m", 0.0);
+				d.wallM = GetNum(v, "wall_m", 0.0);
+				d.backM = GetNum(v, "back_m", 0.0);
+				d.openToward = GetStr(v, "open_toward");
+				d.mine = GetStr(v, "mine");
+				const auto city = std::find_if(out.cities.begin(), out.cities.end(), [&](const CityDef& c) { return c.id == d.cityId; });
+				if (d.id.empty() || !reliefIds.insert(d.id).second || city == out.cities.end() || !anchored.insert(d.cityId).second)
+				{
+					err = "master: relief invalide '" + d.id + "' (id unique, ville connue, un relief par ville)"; return false;
+				}
+				d.n = city->n; d.e = city->e;
+				const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ d.n, d.e });
+				d.center = { ctr.x, ctr.z };
+				// Tout le relief (pied, parois) reste dans la case : raccord inutile.
+				bool shapeOk = d.heightM > 0.0 && d.heightM <= 400.0;
+				if (d.type == "colline")
+					shapeOk = shapeOk && d.topRadiusM > 0.0 && d.footRadiusM > d.topRadiusM + 100.0 && d.footRadiusM <= 4000.0;
+				else if (d.type == "crevasse")
+				{
+					int on = 0, oe = 0;
+					shapeOk = shapeOk && d.halfWidthM >= 60.0 && d.wallM >= 10.0 && d.backM >= 0.0
+						&& d.footRadiusM > d.backM + d.halfWidthM + d.wallM
+						&& d.footRadiusM * 1.16 + std::max(d.wallM, 0.4 * d.footRadiusM) <= 4000.0
+						&& ParseCellId(d.openToward, on, oe) && (on != d.n || oe != d.e);
+					if (shapeOk)
+					{
+						const engine::world::cells::CellPoint o = engine::world::cells::CellCenter({ on, oe });
+						const double l = std::hypot(o.x - ctr.x, o.z - ctr.z);
+						d.dir = { (o.x - ctr.x) / l, (o.z - ctr.z) / l };
+					}
+				}
+				else
+					shapeOk = false;
+				if (!shapeOk) { err = "master: relief '" + d.id + "' : type ou dimensions invalides"; return false; }
+				out.reliefs.push_back(std::move(d));
 			}
 		}
 

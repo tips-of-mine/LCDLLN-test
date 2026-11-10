@@ -230,6 +230,16 @@ namespace tools::world_gen
 	char MacroBiome(const WorldMaster& m, double x, double z);
 	/// Code du lore de la case (n, e) (' ' = mer hors grille). Terrain.cpp
 	char LoreCode(const WorldMaster& m, int n, int e);
+	/// Élévation (m) apportée en (x, z) par UN relief local (`reliefs` du master,
+	/// v1.0.72) : dôme d'une colline, massif entaillé d'une crevasse. Terrain.cpp
+	double ReliefContribution(const ReliefDef& r, double x, double z);
+	/// Crevasse : largeur (m) de la pente douce extérieure du massif, de part et
+	/// d'autre de `foot_radius_m` (au moins `wall_m`, 40 % du rayon). Terrain.cpp
+	double CrevasseOuterSlopeM(const ReliefDef& r);
+	/// Somme des reliefs locaux du master en (x, z) ; incluse dans MacroHeight. Terrain.cpp
+	double ReliefOffset(const WorldMaster& m, double x, double z);
+	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
+	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
 
 	struct GlobalWorld
 	{

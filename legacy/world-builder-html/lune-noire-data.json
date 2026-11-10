@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.71",
+    "version": "1.0.72",
     "notes": [
+      "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Aurore → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
       "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
       "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Silverglade (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Greenbough (N006_W006, cueilleurs et herboristes) et Fernhollow (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Silverglade → Greenbough et 000193 Silverglade → Fernhollow, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
       "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
@@ -987,7 +988,8 @@
         "[GD] (v1.0.58) Religion : « Mère Nature et les Vents » (lore.religions, religion_peuples_des_bois).",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Silverglade (hameau_silverglade, N007_W006), près de Northind. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
         "[INFÉRÉ] (v1.0.61) Faction de jeu « elfe » (Faction Elfe de factions.json) ; Whispers Hill n'est plus le départ des elfes.",
-        "[GD] (v1.0.70) Région de départ 3×3 autour de Silverglade (LORE_BD §15.7) : hameaux Greenbough (cueilleurs et herboristes) et Fernhollow (facteurs d'arcs), Autel des Vents, Bosquet des Pavanes, Tour des Flèches blanches, Ruines du Temple sylvestre ; routes locales vers Silverglade ; faune de niveau 1 à 10. Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007)."
+        "[GD] (v1.0.70) Région de départ 3×3 autour de Silverglade (LORE_BD §15.7) : hameaux Greenbough (cueilleurs et herboristes) et Fernhollow (facteurs d'arcs), Autel des Vents, Bosquet des Pavanes, Tour des Flèches blanches, Ruines du Temple sylvestre ; routes locales vers Silverglade ; faune de niveau 1 à 10. Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007).",
+        "[DÉCISION] (v1.0.72) Départ : Silverglade passe en N007_W003 ; la région de départ 3×3 reste centrée sur N007_W006 (game_design.depart.region inchangée) ; LORE_BD §16."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -998,7 +1000,7 @@
         "depart": {
           "type": "hameau",
           "id": "hameau_silverglade",
-          "cell": "N007_W006",
+          "cell": "N007_W003",
           "pres_de": "ville_northind",
           "region": {
             "cells": [
@@ -4734,14 +4736,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_lhynn_ecurie_04",
-          "name": "Gilance Morbrume",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_lhynn_temple_01",
           "name": "Norwald Belbrume",
           "gender": "male",
@@ -5988,14 +5982,6 @@
           "metier": "palefrenier"
         },
         {
-          "id": "pnj_ville_sysigie_ecurie_04",
-          "name": "Lanais Chenvigne",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
           "id": "pnj_ville_sysigie_temple_01",
           "name": "Jorric Corbrade",
           "gender": "male",
@@ -6414,7 +6400,8 @@
         "[HS] Netzharine en est la 'première houri' — titre officiel de sa souveraine.",
         "[HS] Sur la carte HS : au sud, sur la côte. Visible en bas de la carte.",
         "[DÉCISION] (v1.0.56) Capitale du royaume d'Hishtarland (Q18, region_hishtarland), même case S011_W006 ; alias « Ishtarland » (Q12).",
-        "[GD] (v1.0.58) Économie : puissance navale : construction navale, fret, sel ; escale de la ligne maritime du sud [GD]."
+        "[GD] (v1.0.58) Économie : puissance navale : construction navale, fret, sel ; escale de la ligne maritime du sud [GD].",
+        "[DÉCISION] (v1.0.72) Plus de route terrestre vers Saltfen (000151 supprimée) : Hishtarland est desservie par les lignes maritimes 000108 (Brookend) et 000109 (Saltfen) ; LORE_BD §16."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -6739,6 +6726,14 @@
           "id": "pnj_dys_ecurie_03",
           "name": "Jorise Morcastel",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_dys_ecurie_04",
+          "name": "Alus Boislande",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -9046,6 +9041,14 @@
           "id": "pnj_sauken_glude_of_magistrya_ecurie_02",
           "name": "Marance Pierremare",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_sauken_glude_of_magistrya_ecurie_03",
+          "name": "Maran Hautbrume",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -12787,7 +12790,7 @@
       "features": [
         "Terrain: plain_with_river",
         "Région: nord",
-        "Source de la rivière de Verdansur, qui se partage en deux bras vers la mer"
+        "Perchée au sommet d'une haute colline ; deux rivières naissent à son pied et vont à la mer"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -12796,10 +12799,10 @@
         "zone_visible": ""
       },
       "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
+        "forme_generale": "haute colline isolée",
+        "relief": "sommet aplani à environ 130 m au-dessus de la plaine de Syzygie",
+        "implantation": "au sommet de la colline",
+        "pentes": "flancs réguliers jusqu'au pied, à environ 1,4 km du centre",
         "gorge": ""
       },
       "elements_principaux": [],
@@ -12809,10 +12812,10 @@
         "etat": ""
       },
       "hydrographie": {
-        "type": "",
-        "eau": "",
+        "type": "sources",
+        "eau": "deux rivières naissent au pied de la colline",
         "couleur": "",
-        "elements": ""
+        "elements": "bras sud vers la côte ouest (N008_W015), bras nord vers la côte nord (N012_W014)"
       },
       "vegetation": {
         "densite": "",
@@ -12851,7 +12854,9 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : ville marché : foire régionale ; produit moulins et maraîchage, pêche de rivière, lin, blé et orge ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : ville marché : foire régionale ; produit moulins et maraîchage, pêche de rivière, lin, blé et orge ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.72) Verdansur est perchée en haut d'une haute colline ; deux rivières en partent (riv_verdansur_sud, riv_verdansur_nord) : elles naissent au pied de la colline, pas dans la ville ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
+        "[INFÉRÉ] (v1.0.72) Monde jouable : relief colline_verdansur (130 m, sommet de 300 m de rayon, pied à 1,4 km) et river_courses riviere_verdansur_sud et riviere_verdansur_nord de world_master.json (tools/world_gen)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -12947,6 +12952,14 @@
           "id": "pnj_town_0119_ecurie_02",
           "name": "Tibeline Hautrive",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0119_ecurie_03",
+          "name": "Darric Belval",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -16480,14 +16493,6 @@
           "id": "pnj_hamlet_0172_ecurie_02",
           "name": "Lorus Pierreval",
           "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_hamlet_0172_ecurie_03",
-          "name": "Daria Belrive",
-          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -20507,6 +20512,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_eaglewatch_ecurie_04",
+          "name": "Cedran Pierremorne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_eaglewatch_cimetiere_01",
           "name": "Maelora Brungarde",
           "gender": "female",
@@ -21059,7 +21072,7 @@
       "notes": [
         "[DÉCISION] (v1.0.61) Hameau de départ de la faction Dzorak (Orcs) (dzorak_orcs ; faction de jeu « dzorak »), « pas loin de Leviathan Jungle » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
         "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes.",
-        "[INFÉRÉ] (v1.0.61) Cellule N008_E012 : Lisière de forêt au sud-est de Leviathan dans le monde jouable (N009_E011) ; cellule déjà jouable. Le lore place Leviathan en N012_E012 (question ouverte, section 16).",
+        "[INFÉRÉ] (v1.0.61) Cellule N008_E012 : Lisière de forêt au sud-est de Leviathan dans le monde jouable (N009_E011) ; cellule déjà jouable. Le lore place Leviathan en N012_E012 (question ouverte, section 17).",
         "[GD] (v1.0.61) Population : Dzorak ; services d'un hameau (grille game_design.cities_services)."
       ],
       "taille": "hameau",
@@ -21263,12 +21276,12 @@
       "alias": "",
       "type": "hamlet",
       "importance": "local",
-      "cell": "N007_W006",
-      "anchor_tile": "N007_W006",
+      "cell": "N007_W003",
+      "anchor_tile": "N007_W003",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "faction_hauts_elfes",
-      "region_id": "region_northind",
+      "region_id": "foret_elfique",
       "housing_count": null,
       "population": null,
       "services": [
@@ -21278,8 +21291,8 @@
         "cimetiere"
       ],
       "features": [
-        "Terrain: forest",
-        "Hameau de départ de la faction Les Hauts Elfes"
+        "Hameau de départ de la faction Les Hauts Elfes",
+        "Terrain: forest"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -21346,7 +21359,9 @@
         "[DÉCISION] (v1.0.61) Hameau de départ de la faction Les Hauts Elfes (faction_hauts_elfes ; faction de jeu « elfe »), « pas loin de Northind » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
         "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Hauts Elfes dans la forêt, à l'ouest de Northind : les jeunes elfes y reçoivent leur premier enseignement.",
         "[INFÉRÉ] (v1.0.61) Cellule N007_W006 : Forêt de la région de Northind à l'ouest de Northind (N007_W005), hors des cases à rivière de l'est et du sud et de la case d'Orkh (N008_W006).",
-        "[GD] (v1.0.61) Population : hauts elfes ; services d'un hameau (grille game_design.cities_services)."
+        "[GD] (v1.0.61) Population : hauts elfes ; services d'un hameau (grille game_design.cities_services).",
+        "[DÉCISION] (v1.0.72) Silverglade, départ des Hauts Elfes, passe seul de N007_W006 à N007_W003 (propriétaire, 10/11/2026). Le reste de la région de départ 3×3 ne bouge pas (Greenbough, Fernhollow, POI, faune, cases N006..N008 × W005..W007) ; routes 000127 (Northind), 000192 (Greenbough) et 000193 (Fernhollow) refaites ; les sentiers 000194 à 000197 partent du hameau le plus proche (LORE_BD §16).",
+        "[INFÉRÉ] (v1.0.72) Cellule N007_W003 : forêt elfique, deux cases à l'est de Northind (N007_W005), sans rivière (code T), case libre ; générée (generated_cells du monde jouable)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -21406,8 +21421,8 @@
       "alias": "",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "N003_W010",
-      "anchor_tile": "N003_W010",
+      "cell": "N003_W008",
+      "anchor_tile": "N003_W008",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "faction_empire",
@@ -21490,7 +21505,9 @@
         "[GD] (v1.0.62) Nom proposé, à valider par le propriétaire. Ferme à blé de la Première Province : elle fournit grain et fourrage à la garnison d'Eaglewatch. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
         "[INFÉRÉ] (v1.0.62) Cellule N003_W010 : Plaine de la Première Province, au nord d'Eaglewatch, entre le hameau de Marn (N003_W009) et la côte ; case libre.",
         "[GD] (v1.0.62) Population : humains, sujets de l'Empire ; services d'un hameau (grille game_design.cities_services).",
-        "[GD] (v1.0.62) Économie : ferme : grain, foin et fourrage pour la garnison d'Eaglewatch et Lhynn ; produit blé et orge, élevage ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.62) Économie : ferme : grain, foin et fourrage pour la garnison d'Eaglewatch et Lhynn ; produit blé et orge, élevage ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.72) Ferme déplacée de N003_W010 à N003_W008 par le propriétaire (10/11/2026) ; routes Greyhedge → Ambermead et Ambermead → Dys ; la route 000128 vers Eaglewatch est gardée, avec un nouveau tracé (LORE_BD §16).",
+        "[INFÉRÉ] (v1.0.72) Cellule N003_W008 : plaine de la Première Province, entre Greyhedge (N001_W008) et Dys (N005_W009), case libre ; hors de la région de départ 3×3 d'Eaglewatch, dont la ferme reste le grenier."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -21527,6 +21544,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_ambermead_ecurie_02",
+          "name": "Odoaude Griscombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_ambermead_ecurie_03",
+          "name": "Reneline Boispré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_ambermead_cimetiere_01",
           "name": "Lanald Sombrerive",
           "gender": "male",
@@ -21542,8 +21575,8 @@
       "alias": "",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "N001_W009",
-      "anchor_tile": "N001_W009",
+      "cell": "N001_W008",
+      "anchor_tile": "N001_W008",
       "coord_x": null,
       "coord_y": null,
       "faction_control": "faction_empire",
@@ -21627,7 +21660,9 @@
         "[GD] (v1.0.62) Nom proposé, à valider par le propriétaire. Ferme à haies vives à l'est de Lhynn, au bord du chemin qui mène d'Eaglewatch à la Via Magna sans traverser la capitale. Région de départ d'Eaglewatch (Légions Impériales), niveaux 1 à 10 (LORE_BD §15.1).",
         "[INFÉRÉ] (v1.0.62) Cellule N001_W009 : Plaine des Terres de l'Empereur à l'est de Lhynn (N001_W010), à une case de la Via Magna (N000_W010) ; case libre.",
         "[GD] (v1.0.62) Population : humains, sujets de l'Empire ; services d'un hameau (grille game_design.cities_services).",
-        "[GD] (v1.0.62) Économie : ferme : légumes, volailles, chèvres et ânes de bât pour les marchés de Lhynn ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.62) Économie : ferme : légumes, volailles, chèvres et ânes de bât pour les marchés de Lhynn ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.72) Ferme déplacée de N001_W009 à N001_W008 par le propriétaire (10/11/2026) ; routes 000129 (Eaglewatch) et 000130 (Via Magna) ajustées, route vers Ambermead ajoutée (LORE_BD §16).",
+        "[INFÉRÉ] (v1.0.72) Cellule N001_W008 : plaine des Terres de l'Empereur, deux cases à l'est de Lhynn, case libre ; hors de la région de départ 3×3 d'Eaglewatch, dont la ferme reste l'annexe."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -21675,6 +21710,14 @@
           "id": "pnj_hamlet_greyhedge_ecurie_02",
           "name": "Osane Corbgarde",
           "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greyhedge_ecurie_03",
+          "name": "Norric Noirgarde",
+          "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -22081,6 +22124,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_lambsfold_ecurie_02",
+          "name": "Branus Sombrecombe",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_lambsfold_ecurie_03",
+          "name": "Varwald Rossgarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_lambsfold_cimetiere_01",
           "name": "Braneline Pierreval",
           "gender": "female",
@@ -22218,6 +22277,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_tithemead_ecurie_02",
+          "name": "Osance Sombremont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_tithemead_cimetiere_01",
           "name": "Garisse Chenombre",
           "gender": "female",
@@ -22248,7 +22315,8 @@
       ],
       "features": [
         "Terrain: forest_edge",
-        "Hameau de garnison de la région de départ d'Oathford"
+        "Hameau de garnison de la région de départ d'Oathford",
+        "Au fond d'une crevasse en cul-de-sac (ouverture à l'ouest) ; mine au fond"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -22257,11 +22325,11 @@
         "zone_visible": ""
       },
       "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
+        "forme_generale": "crevasse en cul-de-sac",
+        "relief": "fond plat d'une crevasse d'environ 340 m de large, parois d'une centaine de mètres",
+        "implantation": "au fond de la crevasse, la mine plus loin, contre la paroi du fond",
+        "pentes": "parois abruptes au nord, au sud et à l'est",
+        "gorge": "seule ouverture à l'ouest, vers Oathford"
       },
       "elements_principaux": [],
       "architecture": {
@@ -22316,7 +22384,10 @@
         "[INFÉRÉ] (v1.0.66) Cellule N009_W009 : Lisière à l'est d'Oathford, face à la forêt elfique (N009_W008) ; case libre.",
         "[GD] (v1.0.66) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.66) Économie : hameau de garnison : bois d'œuvre, charbon de bois, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.66) Ancrage : Chevaliers de Justice et devise de l'Ordre récitée par les novices [BD-T4] ; le poste de garde est [GD]."
+        "[GD] (v1.0.66) Ancrage : Chevaliers de Justice et devise de l'Ordre récitée par les novices [BD-T4] ; le poste de garde est [GD].",
+        "[DÉCISION] (v1.0.72) Wardholt est un cul-de-sac au fond d'une crevasse : c'est ce qui explique que la route (000167, depuis Oathford) ne continue pas. Une mine s'ouvre au fond de la crevasse (lieu_mine_de_wardholt) ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
+        "[INFÉRÉ] (v1.0.72) Monde jouable : relief crevasse_wardholt de world_master.json (tools/world_gen) — massif relevé d'environ 110 m, fente à fond plat ouverte vers N009_W010 ; les routes du générateur n'y entrent que par l'ouverture ; la mine (lieu procédural) est posée au fond.",
+        "[GD] (v1.0.72) Économie : la mine ajoute du minerai de fer (charbonniers du hameau : fonte au bois) aux productions de Wardholt."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -23276,7 +23347,8 @@
         "[INFÉRÉ] (v1.0.70) Cellule N006_W006 : Forêt de la Province de Northind au sud de Silverglade, hors des cases à rivière (N006_W005) ; case libre.",
         "[GD] (v1.0.70) Population : hauts elfes, croyances « Mère Nature et les Vents » (religion_peuples_des_bois) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.70) Économie : herbes médicinales, champignons, écorces et résines, soie d'araignée ; récolte : herbes, bois (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (herbes et champignons, soie d'araignée) [GD v1.0.58] ; « rien de ce qui pousse ne se prend sans chant » (religion_peuples_des_bois) ; le hameau est [GD]."
+        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (herbes et champignons, soie d'araignée) [GD v1.0.58] ; « rien de ce qui pousse ne se prend sans chant » (religion_peuples_des_bois) ; le hameau est [GD].",
+        "[DÉCISION] (v1.0.72) Carrefour : routes vers Silverglade (000192), Dys (000203), Northind (000204) et Magistrya (000205) ; sentiers vers l'Autel des Vents et les Ruines du Temple sylvestre ; LORE_BD §16."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -23307,6 +23379,30 @@
         {
           "id": "pnj_hamlet_greenbough_ecurie_01",
           "name": "Faelas Celorin",
+          "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_ecurie_02",
+          "name": "Luarae Lunaris",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_ecurie_03",
+          "name": "Faerae Aelaris",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_ecurie_04",
+          "name": "Naelad Fenaleth",
           "gender": "male",
           "race_id": "race_haut_elfe",
           "service": "ecurie",
@@ -23414,7 +23510,8 @@
         "[INFÉRÉ] (v1.0.70) Cellule N007_W007 : Forêt elfique à l'ouest de Silverglade, hors des cases de la Porte 5 des enfers (N008_W007) et du village Orkh (N008_W006) ; case libre.",
         "[GD] (v1.0.70) Population : hauts elfes, croyances « Mère Nature et les Vents » (religion_peuples_des_bois) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.70) Économie : arcs et flèches, bois précieux ; gibier, peaux ; récolte : bois, herbes (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (bois précieux, arcs, gibier) [GD v1.0.58] ; « l'elfe qui abat un arbre en replante un » (religion_peuples_des_bois) ; replantation [BD-A4 p.6] ; le hameau est [GD]."
+        "[GD] (v1.0.70) Ancrage : Économie de la forêt elfique (bois précieux, arcs, gibier) [GD v1.0.58] ; « l'elfe qui abat un arbre en replante un » (religion_peuples_des_bois) ; replantation [BD-A4 p.6] ; le hameau est [GD].",
+        "[DÉCISION] (v1.0.72) Sentiers vers le Bosquet des Pavanes et la Tour des Flèches blanches (hameau le plus proche depuis le déplacement de Silverglade) ; LORE_BD §16."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -177310,6 +177407,12 @@
             "id": "lieu_stele_des_serments",
             "nom": "Stèle des Serments",
             "nature": "[GD] Stèle où les novices de l'Ordre de la Justice prêtent serment (région de départ d'Oathford)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_sanctuaire_des_brisants",
+            "nom": "Sanctuaire des Brisants",
+            "nature": "[GD] Croix et brasier des falaises de la côte ouest, lieu de la Veillée des Feux des Brisants (Verdansur)."
           }
         ],
         "rites": [
@@ -177389,6 +177492,21 @@
             "description": "La Nuit de la Lune Noire, les fidèles veillent en prière dans les églises, cierges allumés contre les Ténèbres ; les chevaliers gardent les remparts.",
             "mecanique_jeu": "Temples de l'Église ouverts toute la nuit ; protection [GD] contre les démons mineurs dans l'enceinte sacrée.",
             "source": "[GD] ; opposition Lumière / Ténèbres : [BD-A2 pl.36]"
+          },
+          {
+            "id": "fete_eglise_feux_des_brisants",
+            "nom": "Veillée des Feux des Brisants",
+            "religion_id": "religion_eglise_lumiere",
+            "lune": 11,
+            "lune_nom": "Lune des Feuilles",
+            "saison": "automne",
+            "jour": 28,
+            "jour_semaine": "Jour des Ombres",
+            "duree_jours": 1,
+            "nature": "veillée et événement de monde",
+            "description": "La dernière nuit de la Lune des Feuilles, au plus fort des tempêtes d'automne, les fidèles de Verdansur montent au Sanctuaire des Brisants et allument de grands feux sur les falaises pour guider les navires ; ils prient pour les noyés et gardent les feux jusqu'à l'aube contre les naufrageurs qui veulent les éteindre.",
+            "mecanique_jeu": "Événement de monde [GD] au Sanctuaire des Brisants (lieu_sanctuaire_des_brisants, N010_W016) : de la tombée de la nuit à l'aube, défendre les brasiers contre des vagues de naufrageurs (brigands humains) ; récompense en réputation auprès de l'Ordre de la Justice et de l'Église ; PNJ d'ambiance en procession depuis Verdansur.",
+            "source": "[GD] (v1.0.72) ; à valider par le propriétaire ; naufrageurs et faux feux : lieu_camp_des_naufrageurs (v1.0.64)."
           }
         ],
         "faction_ids": [
@@ -177786,7 +177904,7 @@
         ],
         "source": "[BD-T1] à [BD-T3], [BD-T11], [BD-T14], [BD-THS] ; vides comblés [GD]",
         "notes": [
-          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §16 ; la fiche ne tranche pas.",
+          "[À VÉRIFIER] Forme des lieux de l'Oracle (escaliers, lacs du destin, colline, antre) : point ouvert de LORE_BD §17 ; la fiche ne tranche pas.",
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses."
         ]
       },
@@ -190738,7 +190856,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Sanctuaire des Brisants (lieu_sanctuaire_des_brisants) contre les falaises ouest, lieu de la Veillée des Feux des Brisants ; route depuis Verdansur ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -190760,7 +190880,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "Présence de rivière et de lac allant vers le nord"
+        "Présence de rivière et de lac allant vers le nord",
+        "[DÉCISION] (v1.0.72) Verdansur au sommet d'une haute colline ; deux rivières naissent à son pied (vers N009_W015 et N010_W014) ; LORE_BD §16."
       ],
       "coord_x": null,
       "coord_y": null
@@ -191796,11 +191917,13 @@
         "animal_ane",
         "animal_biche",
         "animal_lapin",
-        "animal_renard"
+        "animal_renard",
+        "animal_rat"
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.66) Hameau de garnison Wardholt (hamlet_wardholt) de la région de départ d'Oathford (LORE_BD §15.3)."
+        "[GD] (v1.0.66) Hameau de garnison Wardholt (hamlet_wardholt) de la région de départ d'Oathford (LORE_BD §15.3).",
+        "[DÉCISION] (v1.0.72) Crevasse en cul-de-sac (ouverte à l'ouest) : Wardholt au fond, mine au fond de la crevasse (lieu_mine_de_wardholt) ; LORE_BD §16."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -193722,7 +193845,8 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.61) Hameau de départ Silverglade (hameau_silverglade, faction Les Hauts Elfes).",
-        "[GD] (v1.0.70) Centre de la région de départ 3×3 des Hauts Elfes (N006_W007, N006_W006, N006_W005, N007_W007, N007_W006, N007_W005, N008_W007, N008_W006, N008_W005) ; niveaux 1 à 10 (LORE_BD §15.7)."
+        "[GD] (v1.0.70) Centre de la région de départ 3×3 des Hauts Elfes (N006_W007, N006_W006, N006_W005, N007_W007, N007_W006, N007_W005, N008_W007, N008_W006, N008_W005) ; niveaux 1 à 10 (LORE_BD §15.7).",
+        "[DÉCISION] (v1.0.72) Silverglade déplacée en N007_W003 ; la case reste le centre de la région de départ 3×3 des Hauts Elfes (faune inchangée) ; LORE_BD §16."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -193788,7 +193912,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Hameau de départ Silverglade (hameau_silverglade, Hauts Elfes), déplacé depuis N007_W006 ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -197273,15 +197399,12 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "animal_poule",
-        "animal_coq",
-        "animal_boeuf",
-        "animal_chien",
         "animal_lapin"
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.62) Ferme Ambermead (hamlet_ambermead) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Ferme Ambermead (hamlet_ambermead) de la région de départ d'Eaglewatch (LORE_BD §15.1).",
+        "[INFÉRÉ] (v1.0.72) Ferme Ambermead déplacée en N003_W008 (avec sa basse-cour, ses bœufs et ses chiens) ; le lapin reste ; LORE_BD §16."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -197321,9 +197444,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_poule",
+        "animal_coq",
+        "animal_boeuf",
+        "animal_chien"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Ferme Ambermead (hamlet_ambermead), déplacée depuis N003_W010 ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -199083,14 +199213,12 @@
       "connects_to": [],
       "creature_ids": [
         "creature_molosse_imperial",
-        "animal_chevre",
-        "animal_ane",
-        "animal_chien",
         "animal_renard"
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.62) Ferme Greyhedge (hamlet_greyhedge) de la région de départ d'Eaglewatch (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Ferme Greyhedge (hamlet_greyhedge) de la région de départ d'Eaglewatch (LORE_BD §15.1).",
+        "[INFÉRÉ] (v1.0.72) Ferme Greyhedge déplacée en N001_W008 (avec chèvres, ânes et chiens) ; molosse impérial et renard restent ; LORE_BD §16."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -199108,9 +199236,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_chevre",
+        "animal_ane",
+        "animal_chien"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Ferme Greyhedge (hamlet_greyhedge), déplacée depuis N001_W009 ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -199937,7 +200071,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.72) L'embranchement 000130 (Greyhedge) rejoint désormais la Via Magna en S001_W009 ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -200829,7 +200965,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.72) Embranchement de la route 000130 (Greyhedge, Eaglewatch) sur la Via Magna ; LORE_BD §16."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -216451,18 +216589,6 @@
   ],
   "routes": [
     {
-      "id": "000006",
-      "type": "road",
-      "from_place": "N005_W012",
-      "from_ville_id": "ville_altenberg",
-      "from_lieu_id": "",
-      "to_place": "N001_W010",
-      "to_ville_id": "ville_lhynn",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000010",
       "type": "road",
       "from_place": "N003_W003",
@@ -216799,18 +216925,6 @@
       "notes": []
     },
     {
-      "id": "000066",
-      "type": "road",
-      "from_place": "N009_W011",
-      "from_ville_id": "ville_sysigie",
-      "from_lieu_id": "",
-      "to_place": "N011_W008",
-      "to_ville_id": "hamlet_0189",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
       "id": "000067",
       "type": "road",
       "from_place": "S002_E015",
@@ -216998,18 +217112,6 @@
       "from_lieu_id": "",
       "to_place": "N005_W009",
       "to_ville_id": "dys",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": []
-    },
-    {
-      "id": "000085",
-      "type": "road",
-      "from_place": "N005_W009",
-      "from_ville_id": "dys",
-      "from_lieu_id": "",
-      "to_place": "N007_W005",
-      "to_ville_id": "ville_northind",
       "to_lieu_id": "",
       "description": "",
       "notes": []
@@ -217248,7 +217350,9 @@
       "to_ville_id": "hamlet_0172",
       "to_lieu_id": "",
       "description": "Étape 3 de la ligne maritime du sud",
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Seule liaison d'Hishtarland avec Saltfen : la route terrestre 000151 est supprimée par le propriétaire, la route maritime est gardée ; LORE_BD §16."
+      ],
       "sea_line_id": "ligne_maritime_sud",
       "waypoints": [
         "S011_W006",
@@ -217400,7 +217504,8 @@
       "to_lieu_id": "",
       "description": "Route de rattachement du hameau de départ Eaglewatch à Lhynn.",
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire.",
+        "[DÉCISION] (v1.0.72) Premier tronçon de la chaîne Lhynn → Altenberg qui remplace la route 000006 (supprimée) ; LORE_BD §16."
       ]
     },
     {
@@ -217428,7 +217533,8 @@
       "to_lieu_id": "",
       "description": "Route de rattachement du hameau de départ Oathford à Aurore.",
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire.",
+        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Aurore → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
       ]
     },
     {
@@ -217476,7 +217582,7 @@
     {
       "id": "000127",
       "type": "road",
-      "from_place": "N007_W006",
+      "from_place": "N007_W003",
       "from_ville_id": "hameau_silverglade",
       "from_lieu_id": "",
       "to_place": "N007_W005",
@@ -217484,13 +217590,19 @@
       "to_lieu_id": "",
       "description": "Route de rattachement du hameau de départ Silverglade à Northind.",
       "notes": [
-        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire."
+        "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire.",
+        "[DÉCISION] (v1.0.72) Tracé refait : Silverglade déplacée en N007_W003 ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N007_W003",
+        "N007_W004",
+        "N007_W005"
       ]
     },
     {
       "id": "000128",
       "type": "road",
-      "from_place": "N003_W010",
+      "from_place": "N003_W008",
       "from_ville_id": "hamlet_ambermead",
       "from_lieu_id": "",
       "to_place": "N002_W010",
@@ -217498,7 +217610,13 @@
       "to_lieu_id": "",
       "description": "Route locale d'Ambermead à Eaglewatch.",
       "notes": [
-        "[INFÉRÉ] (v1.0.62) Cases voisines, sans étape intermédiaire ; LORE_BD §15.1."
+        "[INFÉRÉ] (v1.0.62) Cases voisines, sans étape intermédiaire ; LORE_BD §15.1.",
+        "[DÉCISION] (v1.0.72) Gardée avec un nouveau tracé : Ambermead déplacée en N003_W008 (le tracé évite la case du hameau de Marn) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N003_W008",
+        "N002_W009",
+        "N002_W010"
       ]
     },
     {
@@ -217507,30 +217625,38 @@
       "from_place": "N002_W010",
       "from_ville_id": "hameau_eaglewatch",
       "from_lieu_id": "",
-      "to_place": "N001_W009",
+      "to_place": "N001_W008",
       "to_ville_id": "hamlet_greyhedge",
       "to_lieu_id": "",
       "description": "Route locale d'Eaglewatch à Greyhedge, à l'est de Lhynn (contourne la capitale).",
       "notes": [
-        "[INFÉRÉ] (v1.0.62) Cases voisines en diagonale ; avec la route suivante, mène d'Eaglewatch à la Via Magna sans traverser Lhynn ; LORE_BD §15.1."
+        "[INFÉRÉ] (v1.0.62) Cases voisines en diagonale ; avec la route suivante, mène d'Eaglewatch à la Via Magna sans traverser Lhynn ; LORE_BD §15.1.",
+        "[DÉCISION] (v1.0.72) Tracé refait : Greyhedge déplacée en N001_W008 ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N002_W010",
+        "N002_W009",
+        "N001_W008"
       ]
     },
     {
       "id": "000130",
       "type": "road",
-      "from_place": "N001_W009",
+      "from_place": "N001_W008",
       "from_ville_id": "hamlet_greyhedge",
       "from_lieu_id": "",
-      "to_place": "N000_W010",
+      "to_place": "S001_W009",
       "to_ville_id": "",
       "to_lieu_id": "",
       "description": "Route locale de Greyhedge à la Via Magna (route 000120), qu'elle rejoint au sud de Lhynn.",
       "notes": [
-        "[INFÉRÉ] (v1.0.62) Embranchement sur la Via Magna en N000_W010 (première case après Lhynn) ; pas de ville à l'arrivée ; LORE_BD §15.1."
+        "[INFÉRÉ] (v1.0.62) Embranchement sur la Via Magna en N000_W010 (première case après Lhynn) ; pas de ville à l'arrivée ; LORE_BD §15.1.",
+        "[INFÉRÉ] (v1.0.72) Greyhedge déplacée en N001_W008 : l'embranchement garde son rôle (rejoindre la Via Magna depuis Eaglewatch sans traverser Lhynn) mais rejoint la Via Magna en S001_W009 (route 000120) au lieu de N000_W010, plus en arrière vers Lhynn ; N000_W008 est une chaîne de montagnes ; LORE_BD §16."
       ],
       "waypoints": [
-        "N001_W009",
-        "N000_W010"
+        "N001_W008",
+        "N000_W009",
+        "S001_W009"
       ]
     },
     {
@@ -217867,27 +217993,6 @@
       ]
     },
     {
-      "id": "000151",
-      "type": "road",
-      "from_place": "S011_W006",
-      "from_ville_id": "hishtarland",
-      "from_lieu_id": "",
-      "to_place": "S008_W010",
-      "to_ville_id": "hamlet_0172",
-      "to_lieu_id": "",
-      "description": "",
-      "notes": [
-        "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Saltfen)."
-      ],
-      "waypoints": [
-        "S011_W006",
-        "S010_W007",
-        "S009_W008",
-        "S008_W009",
-        "S008_W010"
-      ]
-    },
-    {
       "id": "000152",
       "type": "road",
       "from_place": "S009_E011",
@@ -218157,7 +218262,8 @@
       "to_lieu_id": "",
       "description": "Route locale d'Oathford à Tithemead.",
       "notes": [
-        "[INFÉRÉ] (v1.0.66) Voisin le plus proche : Oathford, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.3."
+        "[INFÉRÉ] (v1.0.66) Voisin le plus proche : Oathford, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.3.",
+        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Aurore → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
       ]
     },
     {
@@ -218513,7 +218619,7 @@
     {
       "id": "000192",
       "type": "road",
-      "from_place": "N007_W006",
+      "from_place": "N007_W003",
       "from_ville_id": "hameau_silverglade",
       "from_lieu_id": "",
       "to_place": "N006_W006",
@@ -218521,13 +218627,20 @@
       "to_lieu_id": "",
       "description": "Route locale de Silverglade à Greenbough.",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Greenbough : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Greenbough : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Tracé refait : Silverglade déplacée en N007_W003 ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N007_W003",
+        "N007_W004",
+        "N006_W005",
+        "N006_W006"
       ]
     },
     {
       "id": "000193",
       "type": "road",
-      "from_place": "N007_W006",
+      "from_place": "N007_W003",
       "from_ville_id": "hameau_silverglade",
       "from_lieu_id": "",
       "to_place": "N007_W007",
@@ -218535,63 +218648,247 @@
       "to_lieu_id": "",
       "description": "Route locale de Silverglade à Fernhollow.",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Fernhollow : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Voisin le plus proche de Fernhollow : Silverglade, case voisine orthogonale, sans étape (règle v1.0.65) ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Tracé refait : Silverglade déplacée en N007_W003 ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N007_W003",
+        "N007_W004",
+        "N008_W005",
+        "N007_W006",
+        "N007_W007"
       ]
     },
     {
       "id": "000194",
       "type": "path",
-      "from_place": "N007_W006",
-      "from_ville_id": "hameau_silverglade",
+      "from_place": "N006_W006",
+      "from_ville_id": "hamlet_greenbough",
       "from_lieu_id": "",
       "to_place": "N006_W006",
       "to_ville_id": "",
       "to_lieu_id": "lieu_autel_des_vents",
       "description": "Sentier de Silverglade à « Autel des Vents ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Part maintenant de Greenbough, hameau le plus proche (même case) : Silverglade déplacée en N007_W003 ; LORE_BD §16."
       ]
     },
     {
       "id": "000195",
       "type": "path",
-      "from_place": "N007_W006",
-      "from_ville_id": "hameau_silverglade",
+      "from_place": "N007_W007",
+      "from_ville_id": "hamlet_fernhollow",
       "from_lieu_id": "",
       "to_place": "N006_W007",
       "to_ville_id": "",
       "to_lieu_id": "lieu_bosquet_des_pavanes",
       "description": "Sentier de Silverglade à « Bosquet des Pavanes ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Part maintenant de Fernhollow, hameau le plus proche (case voisine, à égalité avec Greenbough, même région : forêt elfique) : Silverglade déplacée en N007_W003 ; LORE_BD §16."
       ]
     },
     {
       "id": "000196",
       "type": "path",
-      "from_place": "N007_W006",
-      "from_ville_id": "hameau_silverglade",
+      "from_place": "N007_W007",
+      "from_ville_id": "hamlet_fernhollow",
       "from_lieu_id": "",
       "to_place": "N007_W007",
       "to_ville_id": "",
       "to_lieu_id": "lieu_tour_des_fleches_blanches",
       "description": "Sentier de Silverglade à « Tour des Flèches blanches ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Part maintenant de Fernhollow, hameau le plus proche (même case) : Silverglade déplacée en N007_W003 ; LORE_BD §16."
       ]
     },
     {
       "id": "000197",
       "type": "path",
-      "from_place": "N007_W006",
-      "from_ville_id": "hameau_silverglade",
+      "from_place": "N006_W006",
+      "from_ville_id": "hamlet_greenbough",
       "from_lieu_id": "",
       "to_place": "N008_W005",
       "to_ville_id": "",
       "to_lieu_id": "lieu_ruines_du_temple_sylvestre",
       "description": "Sentier de Silverglade à « Ruines du Temple sylvestre ».",
       "notes": [
-        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7."
+        "[INFÉRÉ] (v1.0.70) Sentier (type path, sans écurie), case voisine, sans étape ; LORE_BD §15.7.",
+        "[DÉCISION] (v1.0.72) Part maintenant de Greenbough, hameau le plus proche (deux cases, à égalité avec Fernhollow, même région : Province de Northind) : Silverglade déplacée en N007_W003 ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N006_W006",
+        "N007_W006",
+        "N008_W005"
+      ]
+    },
+    {
+      "id": "000198",
+      "type": "road",
+      "from_place": "N010_W010",
+      "from_ville_id": "hamlet_tithemead",
+      "from_lieu_id": "",
+      "to_place": "N011_W008",
+      "to_ville_id": "hamlet_0189",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Remplace la route 000066 Aurore → Orderfen, supprimée par le propriétaire : chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166), Tithemead → Orderfen.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N010_W010 → N010_W009 → N011_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N010_W010",
+        "N010_W009",
+        "N011_W008"
+      ]
+    },
+    {
+      "id": "000199",
+      "type": "road",
+      "from_place": "N002_W010",
+      "from_ville_id": "hameau_eaglewatch",
+      "from_lieu_id": "",
+      "to_place": "N004_W011",
+      "to_ville_id": "hamlet_lambsfold",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Remplace avec la route suivante la route 000006 Lhynn → Altenberg, supprimée par le propriétaire : chaîne Lhynn → Eaglewatch (000121), Eaglewatch → Lambsfold, Lambsfold → Altenberg.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N002_W010 → N003_W011 → N004_W011 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N002_W010",
+        "N003_W011",
+        "N004_W011"
+      ]
+    },
+    {
+      "id": "000200",
+      "type": "road",
+      "from_place": "N004_W011",
+      "from_ville_id": "hamlet_lambsfold",
+      "from_lieu_id": "",
+      "to_place": "N005_W012",
+      "to_ville_id": "ville_altenberg",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Dernier tronçon de la chaîne Lhynn → Eaglewatch (000121) → Lambsfold → Altenberg qui remplace la route 000006 (supprimée).",
+        "[INFÉRÉ] (v1.0.72) Tracé : 1 case(s), N004_W011 → N005_W012 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ]
+    },
+    {
+      "id": "000201",
+      "type": "road",
+      "from_place": "N001_W008",
+      "from_ville_id": "hamlet_greyhedge",
+      "from_lieu_id": "",
+      "to_place": "N003_W008",
+      "to_ville_id": "hamlet_ambermead",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Greyhedge → Ambermead.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N001_W008 → N002_W008 → N003_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N001_W008",
+        "N002_W008",
+        "N003_W008"
+      ]
+    },
+    {
+      "id": "000202",
+      "type": "road",
+      "from_place": "N003_W008",
+      "from_ville_id": "hamlet_ambermead",
+      "from_lieu_id": "",
+      "to_place": "N005_W009",
+      "to_ville_id": "dys",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Ambermead → Dys.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N003_W008 → N004_W008 → N005_W009 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N003_W008",
+        "N004_W008",
+        "N005_W009"
+      ]
+    },
+    {
+      "id": "000203",
+      "type": "road",
+      "from_place": "N005_W009",
+      "from_ville_id": "dys",
+      "from_lieu_id": "",
+      "to_place": "N006_W006",
+      "to_ville_id": "hamlet_greenbough",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) La route 000085 Dys → Northind passe par Greenbough : remplacée par Dys → Greenbough et Greenbough → Northind.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 3 case(s), N005_W009 → N005_W008 → N005_W007 → N006_W006 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N005_W009",
+        "N005_W008",
+        "N005_W007",
+        "N006_W006"
+      ]
+    },
+    {
+      "id": "000204",
+      "type": "road",
+      "from_place": "N006_W006",
+      "from_ville_id": "hamlet_greenbough",
+      "from_lieu_id": "",
+      "to_place": "N007_W005",
+      "to_ville_id": "ville_northind",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Second tronçon de l'ancienne route 000085 Dys → Northind, qui passe par Greenbough.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 1 case(s), N006_W006 → N007_W005 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ]
+    },
+    {
+      "id": "000205",
+      "type": "road",
+      "from_place": "N006_W006",
+      "from_ville_id": "hamlet_greenbough",
+      "from_lieu_id": "",
+      "to_place": "N003_W003",
+      "to_ville_id": "sauken_glude_of_magistrya",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Greenbough → Sauken Glude of Magistrya.",
+        "[INFÉRÉ] (v1.0.72) Tracé : 3 case(s), N006_W006 → N005_W005 → N004_W004 → N003_W003 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ],
+      "waypoints": [
+        "N006_W006",
+        "N005_W005",
+        "N004_W004",
+        "N003_W003"
+      ]
+    },
+    {
+      "id": "000206",
+      "type": "road",
+      "from_place": "N010_W015",
+      "from_ville_id": "town_0119",
+      "from_lieu_id": "",
+      "to_place": "N010_W016",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_sanctuaire_des_brisants",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Verdansur → lieu de l'événement contre les falaises de N010_W016 (route et non sentier : procession de la Veillée des Feux des Brisants).",
+        "[INFÉRÉ] (v1.0.72) Tracé : 1 case(s), N010_W015 → N010_W016 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
       ]
     }
   ],
@@ -222525,6 +222822,83 @@
           "nom": "Bestiaire — échelles de danger et zones de chasse",
           "decision": "Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé. Règle des échelles corrigée (LORE_BD §15.8).",
           "version": "1.0.71"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Route 000066 Aurore → Orderfen supprimée ; remplacée par la chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166) et Tithemead → Orderfen (000198) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_wardholt",
+          "nom": "Wardholt",
+          "decision": "Wardholt est un cul-de-sac au fond d'une crevasse, ce qui explique que la route ne continue pas ; une mine s'ouvre au fond de la crevasse (lieu_mine_de_wardholt) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Route 000006 Lhynn → Altenberg supprimée ; remplacée par Lhynn → Eaglewatch (000121), Eaglewatch → Lambsfold (000199) et Lambsfold → Altenberg (000200) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_greyhedge",
+          "nom": "Greyhedge",
+          "decision": "Greyhedge passe de N001_W009 à N001_W008 ; routes 000129 (Eaglewatch) et 000130 (Via Magna) ajustées (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_ambermead",
+          "nom": "Ambermead",
+          "decision": "Ambermead passe de N003_W010 à N003_W008 ; routes Greyhedge → Ambermead (000201) et Ambermead → Dys (000202) ; la route 000128 Ambermead → Eaglewatch est gardée avec son nouveau tracé (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Route terrestre 000151 Hishtarland → Saltfen supprimée ; la route maritime 000109 est gardée (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "La route 000085 Dys → Northind passe par Greenbough : remplacée par Dys → Greenbough (000203) et Greenbough → Northind (000204) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_silverglade",
+          "nom": "Silverglade",
+          "decision": "Silverglade, départ des Hauts Elfes, passe seul de N007_W006 à N007_W003 ; la région de départ (Greenbough, Fernhollow, POI, faune) ne bouge pas ; routes 000127, 000192 et 000193 refaites ; sentiers 000194 à 000197 depuis Greenbough ou Fernhollow (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Route Greenbough → Sauken Glude of Magistrya (000205) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "town_0119",
+          "nom": "Verdansur",
+          "decision": "Verdansur est perchée en haut d'une haute colline ; deux rivières partent de son pied (riv_verdansur_sud, riv_verdansur_nord) (LORE_BD §16).",
+          "version": "1.0.72"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_sanctuaire_des_brisants",
+          "nom": "Sanctuaire des Brisants",
+          "decision": "Un « événement » tout à gauche de N010_W016, au niveau des falaises : Sanctuaire des Brisants (sanctuaire) et Veillée des Feux des Brisants (fete_eglise_feux_des_brisants) ; route depuis Verdansur (000206) ; nom et événement [GD] à valider (LORE_BD §16).",
+          "version": "1.0.72"
         }
       ]
     },
@@ -226258,7 +226632,8 @@
       "source": "Voir le champ source de chaque axe.",
       "notes": [
         "[GD] (v1.0.58) Ports d'Altenberg et de Lhynn : destinations maritimes non arrêtées (rule_ports_ouest) ; pas d'axe maritime à l'ouest tant qu'elles ne le sont pas.",
-        "[GD] (v1.0.65) Réseau routier refait (règle du propriétaire) : les axes renvoient aux routes conservées ; les tronçons ajoutés figurent dans la collection routes."
+        "[GD] (v1.0.65) Réseau routier refait (règle du propriétaire) : les axes renvoient aux routes conservées ; les tronçons ajoutés figurent dans la collection routes.",
+        "[DÉCISION] (v1.0.72) axe_cote_ouest : 000006 (Lhynn → Altenberg) devient Lhynn → Eaglewatch → Lambsfold → Altenberg (000121, 000199, 000200) et 000085 (Dys → Northind) devient Dys → Greenbough → Northind (000203, 000204) ; LORE_BD §16."
       ],
       "axes": [
         {
@@ -226337,9 +226712,12 @@
           "id": "axe_cote_ouest",
           "nom": "Route de la province et de la côte ouest",
           "routes": [
-            "000006",
+            "000121",
+            "000199",
+            "000200",
             "000084",
-            "000085",
+            "000203",
+            "000204",
             "000052",
             "000022",
             "000021",
@@ -236602,6 +236980,170 @@
       ],
       "carte": "enfers",
       "carte_cell": "S001_E000"
+    },
+    {
+      "id": "lieu_mine_de_wardholt",
+      "name": "Mine de Wardholt",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N009_W009",
+      "region_id": "region_premiere_province_empire",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée de galerie étayée dans la paroi du fond de la crevasse",
+        "treuil et wagonnets de minerai de fer",
+        "galeries anciennes à vermine"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "galerie de mine",
+        "relief": "",
+        "implantation": "paroi du fond de la crevasse de Wardholt",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) Mine de Wardholt, au fond de la crevasse du hameau (décision du propriétaire du 10/11/2026, LORE_BD §16).",
+        "[GD] (v1.0.72) Nom proposé, à valider par le propriétaire. Mine de fer exploitée par les gens du hameau ; les galeries anciennes abritent rats et araignées. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10.",
+        "[INFÉRÉ] (v1.0.72) Cellule N009_W009 (case de Wardholt) ; monde jouable : mine procédurale posée au fond de la fente par tools/world_gen (relief crevasse_wardholt, champ mine), pas de POI au master."
+      ]
+    },
+    {
+      "id": "lieu_sanctuaire_des_brisants",
+      "name": "Sanctuaire des Brisants",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N010_W016",
+      "region_id": "syzygie",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "croix de pierre et brasier au bord des falaises",
+        "brisants et épaves au pied des falaises",
+        "ex-voto des familles de marins"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "sommet de falaise",
+        "relief": "",
+        "implantation": "bord ouest de la case, face à la mer",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.72) « Événement » demandé par le propriétaire (10/11/2026) tout à gauche de N010_W016, au niveau des falaises, avec une route depuis Verdansur (LORE_BD §16).",
+        "[GD] (v1.0.72) Nom et événement proposés, à valider par le propriétaire. Croix de pierre et brasier au bord des falaises, au-dessus des brisants où se brisent les navires des tempêtes d'automne ; chaque année, la Veillée des Feux des Brisants (fete_eglise_feux_des_brisants) y rassemble les fidèles de Verdansur, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs et leurs faux feux.",
+        "[INFÉRÉ] (v1.0.72) Cellule N010_W016 : plaine de Syzygie, contre la côte ouest (N010_W017) ; monde jouable : POI poi_sanctuaire_des_brisants (sanctuaire), décalé de 3,2 km vers l'ouest depuis le centre de la case. Le générateur ne modèle pas de falaise (côte en pente douce)."
+      ]
     }
   ],
   "route_types": [
@@ -237188,7 +237730,7 @@
         "source": {
           "ville_id": "town_0119",
           "cell": "N010_W015",
-          "notes": "La source d'eau d'origine est dans la ville de Verdansur."
+          "notes": "Au pied de la colline de Verdansur (la ville est au sommet)."
         },
         "cells": [
           "N010_W015",
@@ -237196,7 +237738,9 @@
           "N008_W015"
         ],
         "notes": [
-          "Se jette dans la mer (N008_W015)."
+          "Se jette dans la mer (N008_W015).",
+          "[DÉCISION] (v1.0.72) Naît au pied de la colline de Verdansur ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
+          "Monde jouable : river_courses.riviere_verdansur_sud de world_master.json (tools/world_gen)."
         ]
       },
       {
@@ -237207,7 +237751,7 @@
         "source": {
           "ville_id": "town_0119",
           "cell": "N010_W015",
-          "notes": "La source d'eau d'origine est dans la ville de Verdansur."
+          "notes": "Au pied de la colline de Verdansur (la ville est au sommet)."
         },
         "cells": [
           "N010_W015",
@@ -237217,7 +237761,9 @@
         ],
         "notes": [
           "Passe par la cellule de Trueford (N011_W014).",
-          "Se jette dans la mer (N012_W014)."
+          "Se jette dans la mer (N012_W014).",
+          "[DÉCISION] (v1.0.72) Naît au pied de la colline de Verdansur ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
+          "Monde jouable : river_courses.riviere_verdansur_nord de world_master.json (tools/world_gen)."
         ]
       },
       {

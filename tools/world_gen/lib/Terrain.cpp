@@ -211,6 +211,52 @@ namespace tools::world_gen
 		return m.gridRows[static_cast<size_t>(row)][static_cast<size_t>(col)];
 	}
 
+	double CrevasseOuterSlopeM(const ReliefDef& r)
+	{
+		return std::max(r.wallM, 0.4 * r.footRadiusM);
+	}
+
+	double ReliefContribution(const ReliefDef& r, double x, double z)
+	{
+		const double dx = x - r.center.x, dz = z - r.center.z;
+		if (r.type == "colline")
+		{
+			if (std::fabs(dx) > r.footRadiusM || std::fabs(dz) > r.footRadiusM) return 0.0;
+			// Plateau sommital plat, puis flanc en S jusqu'au pied (pente max ≈ 1,5 × moyenne).
+			return r.heightM * (1.0 - SmoothStep(r.topRadiusM, r.footRadiusM, std::hypot(dx, dz)));
+		}
+		// Crevasse : massif (bord extérieur en pente douce, contour ondulé) moins une
+		// fente à fond plat aux parois raides — segment de `back_m` derrière la ville
+		// jusqu'au-delà du massif, du côté de l'ouverture ; bout arrondi au fond (cul-de-sac).
+		const double outer = CrevasseOuterSlopeM(r);
+		const double reach = r.footRadiusM * 1.16 + outer;
+		if (std::fabs(dx) > reach || std::fabs(dz) > reach) return 0.0;
+		const double ang = std::atan2(dz, dx);
+		const double lobe = 1.0 + 0.10 * std::sin(3.0 * ang + 0.7) + 0.06 * std::sin(5.0 * ang + 2.1);
+		const double massif = 1.0 - SmoothStep(r.footRadiusM - outer, r.footRadiusM + outer, std::hypot(dx, dz) / lobe);
+		if (massif <= 0.0) return 0.0;
+		const double along = dx * r.dir.x + dz * r.dir.z;            // > 0 : vers l'ouverture
+		const double across = std::fabs(-dx * r.dir.z + dz * r.dir.x);
+		const double a = Clamp(along, -r.backM, reach + 100.0);
+		const double s = std::hypot(along - a, across);              // distance à l'axe de la fente
+		const double wall = SmoothStep(r.halfWidthM, r.halfWidthM + r.wallM, s);
+		return r.heightM * massif * wall;
+	}
+
+	double ReliefOffset(const WorldMaster& m, double x, double z)
+	{
+		double h = 0.0;
+		for (const ReliefDef& r : m.reliefs) h += ReliefContribution(r, x, z);
+		return h;
+	}
+
+	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId)
+	{
+		for (const ReliefDef& r : m.reliefs)
+			if (r.cityId == cityId) return &r;
+		return nullptr;
+	}
+
 	char MacroBiome(const WorldMaster& m, double x, double z)
 	{
 		const uint64_t seed = m.seed;
@@ -276,6 +322,8 @@ namespace tools::world_gen
 			h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
 		if (acc.dune > 0.01)
 			h += std::sin((x * 0.8 + z * 0.6) / 60.0 + Fbm(x, z, 900.0, 2, seed + 41) * 3.0) * 4.0 * acc.dune;
+		// Reliefs locaux posés à la main (v1.0.72) : colline de Verdansur, crevasse de Wardholt.
+		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z);
 		return Clamp(h, 1.0, m.scale.heightScaleM - 2.0);
 	}
 
@@ -441,7 +489,10 @@ namespace tools::world_gen
 			// Ville de départ : ancrée au centre de sa case (point d'arrivée au boot,
 			// repère des cellules), tant qu'il est au sec ; son plateau aplanit le
 			// relief. Le site n'est cherché ailleurs que si le centre est dans l'eau.
-			const double searchR = (!c.startFor.empty() && MacroHeight(m, ctr.x, ctr.z) >= sea + 6.0) ? 0.0 : 3500.0;
+			// Ville ancrée sur un relief local (v1.0.72 : sommet de colline, fond de
+			// crevasse) : toujours au centre de sa case, là où le relief est dessiné.
+			const bool anchored = ReliefOfCity(m, c.id) != nullptr;
+			const double searchR = (anchored || (!c.startFor.empty() && MacroHeight(m, ctr.x, ctr.z) >= sea + 6.0)) ? 0.0 : 3500.0;
 			for (double dz = -searchR; dz <= searchR; dz += 250.0)
 				for (double dx = -searchR; dx <= searchR; dx += 250.0)
 				{
@@ -461,7 +512,8 @@ namespace tools::world_gen
 					const double score = std::atan(worst / R) * 57.29577951308232 + std::hypot(dx, dz) / 400.0;
 					if (score < bestScore) { bestScore = score; best = p; }
 				}
-			if (bestScore > 1e17) g.Warn("aucun site sec pour " + c.id + " : centre de case retenu");
+			if (bestScore > 1e17 && !anchored) g.Warn("aucun site sec pour " + c.id + " : centre de case retenu");
+			if (anchored && MacroHeight(m, ctr.x, ctr.z) < sea + 6.0) g.Warn("relief de " + c.id + " : centre de case dans l'eau");
 			c.center = best;
 			c.plateauY = std::max(MeanMacroHeight(m, c.center, c.radiusM + 6.0, 12.0), sea + 5.0);
 		}
@@ -469,7 +521,7 @@ namespace tools::world_gen
 		for (PoiDef& p : g.pois)
 		{
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ p.n, p.e });
-			p.center = { ctr.x, ctr.z };
+			p.center = { ctr.x + p.offsetX, ctr.z + p.offsetZ }; // décalage v1.0.72 (0 par défaut)
 			// Hors du plateau (et de son raccord) d'une ville de la même case.
 			for (const CityDef& c : g.cities)
 			{
@@ -778,6 +830,22 @@ namespace tools::world_gen
 		// puis descente vers la mer depuis la dernière case (case d'embouchure,
 		// côtière : une cuvette intérieure sous le niveau de la mer arrêterait la
 		// descente avant la côte).
+		// Distance minimale (m) entre un cours tracé à la main et la ville \p c : rayon
+		// urbain + 400 m, ou pied de la colline + 150 m pour une ville perchée (v1.0.72 :
+		// les rivières de Verdansur naissent au pied de sa colline).
+		auto riverClearance = [&](const CityDef& c) {
+			const ReliefDef* r = ReliefOfCity(m, c.id);
+			return (r && r->type == "colline") ? std::max(c.radiusM + 400.0, r->footRadiusM + 150.0) : c.radiusM + 400.0;
+		};
+		// Atténuation des méandres sur une colline (0 au pied, 1 à 1,5 km au-delà) :
+		// le lit ne remonte pas le flanc.
+		auto hillCalm = [&](Vec2 p) {
+			double w = 1.0;
+			for (const ReliefDef& r : m.reliefs)
+				if (r.type == "colline")
+					w *= SmoothStep(r.footRadiusM + 150.0, r.footRadiusM + 1650.0, std::hypot(p.x - r.center.x, p.z - r.center.z));
+			return w;
+		};
 		for (const RiverCourseDef& rc : m.riverCourses)
 		{
 			const CityDef* island = rc.islandCity.empty() ? nullptr : g.FindCity(rc.islandCity);
@@ -798,9 +866,17 @@ namespace tools::world_gen
 					for (const CityDef& c : g.cities)
 					{
 						if (island && c.id == island->id) continue;
-						const double need = c.radiusM + 400.0;
+						const double need = riverClearance(c);
 						const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
-						if (d < need && d > 1e-6) p = c.center + (p - c.center) * (need / d);
+						if (d >= need) continue;
+						if (d > 1e-6) p = c.center + (p - c.center) * (need / d);
+						else
+						{
+							// Source au centre même d'une ville (ville perchée) : vers l'aval du cours.
+							const Vec2 v = way[k + 1] - way[k];
+							const double l = std::hypot(v.x, v.z);
+							if (l > 1e-6) p = c.center + v * (need / l);
+						}
 					}
 					path.push_back(p);
 				}
@@ -813,7 +889,7 @@ namespace tools::world_gen
 			const double ri = island ? island->radiusM + 6.0 + std::max(46.0, island->radiusM * 0.6) + half + 40.0 : 0.0;
 			const double split = 2.5 * ri; // demi-longueur de la zone des deux bras (m)
 			River main = finish(std::move(path), rc.id, rc.widthM * 0.6, rc.widthM * 0.4, 700.0, [&](Vec2 p) {
-				return island ? SmoothStep(split, split + 1500.0, std::hypot(p.x - island->center.x, p.z - island->center.z)) : 1.0;
+				return hillCalm(p) * (island ? SmoothStep(split, split + 1500.0, std::hypot(p.x - island->center.x, p.z - island->center.z)) : 1.0);
 			});
 			if (!island)
 			{

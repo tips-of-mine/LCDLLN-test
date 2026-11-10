@@ -132,6 +132,30 @@ namespace tools::world_gen
 		const WorldMaster& m = w.master;
 		const double sea = m.scale.seaLevelM;
 		const char code = LoreCode(m, w.cell.n, w.cell.e);
+		// Mine au fond d'une crevasse (v1.0.72, reliefs du master) : posée AVANT les
+		// lieux tirés au sort (qui s'en écartent), à `back_m` − 60 m derrière la ville,
+		// dans l'axe de la fente ; peuple de la ville ancrée, reliée par un chemin local.
+		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type != "crevasse" || r.mine.empty() || r.n != w.cell.n || r.e != w.cell.e) continue;
+			const auto host = std::find_if(w.cities.begin(), w.cities.end(), [&](const CityDef& c) { return c.id == r.cityId; });
+			if (host == w.cities.end()) continue;
+			CityDef c;
+			c.procedural = "mine";
+			c.kind = "camp";
+			c.state = "camp";
+			c.race = host->race;
+			c.radiusM = 34.0;
+			c.n = w.cell.n; c.e = w.cell.e;
+			c.center = host->center - r.dir * std::max(0.0, r.backM - 60.0);
+			c.id = w.cellName + "_" + r.id + "_mine";
+			c.name = r.mine;
+			c.faction = host->faction;
+			c.description = "Mine au fond de la crevasse de " + host->name + " (" + r.id + ").";
+			c.source = "[GD] master reliefs";
+			w.cities.push_back(std::move(c));
+			++w.report.proceduralPlaces;
+		}
 		const std::vector<PlaceQuota> quotas = QuotasFor(code);
 		if (quotas.empty()) { BuildPonds(w); return; }
 		Rng rng(Hash(m.seed, static_cast<uint64_t>(w.cell.n + 1000), static_cast<uint64_t>(w.cell.e + 1000), 8080));

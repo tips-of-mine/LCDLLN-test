@@ -164,8 +164,14 @@ voisines raccord au mètre près :
    interpolé à position déformée (domain warp) ; à l'intérieur d'une case :
    pays plats / vallonnés (≈ 7 km), chaînons de collines, vallons, plancher
    souple au-dessus de la mer. Bruit de **gradient** (pas de terrasses).
+   **Reliefs locaux** (`reliefs` du master, v1.0.72) ajoutés à `MacroHeight`,
+   ancrés sur le centre de la case d'une ville : `colline` (ville perchée, ex.
+   Verdansur : plateau sommital, flanc jusqu'au pied) et `crevasse` (cul-de-sac,
+   ex. Wardholt : massif entaillé d'une fente à fond plat ouverte vers une case
+   voisine, fermé aux routes, mine au fond si `mine` est renseigné).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
-   emplacement plat et sec de la case) ; lacs du lore (codes `L` forêt avec lac,
+   emplacement plat et sec de la case ; centre de la case pour une ville de
+   départ ou ancrée sur un relief) ; lacs du lore (codes `L` forêt avec lac,
    `l` aride avec lac, `p` plaine avec lac depuis le lore v1.0.52) et lacs manuels.
 3. **Rivières** : descente sur la grille grossière remplie (priority-flood),
    méandres, profil de surface non croissant. **Cours tracés à la main**
@@ -174,8 +180,10 @@ voisines raccord au mètre près :
    contourne les autres villes, prend de grands méandres (~7 km) puis descend
    vers la mer ; elle remplace la rivière automatique de sa composante.
    `island_city` : le lit se divise en deux bras qui entourent la ville (île
-   fluviale de Sysigie). POI : plusieurs POI d'une même case sont écartés d'un
-   quart de tour autour de la ville de la case.
+   fluviale de Sysigie). Un cours qui part de la case d'une ville perchée sur une
+   `colline` naît au pied de la colline (sans méandre sur le flanc). POI : au centre
+   de leur case, ou décalés (`offset_x_m`, `offset_z_m`, v1.0.72) ; plusieurs POI
+   d'une même case sont écartés d'un quart de tour autour de la ville de la case.
 4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
    simplification RDP (plus d'escalier), méandres ±110 m, lissage ; profil en
    long **global** (pente ≤ 16 %) → chaque cellule aplanit sa portion au même profil.
@@ -234,7 +242,7 @@ Décision du propriétaire : les départs sont **par faction**, plus par race. `
 | `dragons` | Wyrmhallow, près du Palais des Maîtres des Dragons | `cell_s004_w004` |
 | `dzorak` | Grakhul, près de Leviathan | `cell_n008_e012` |
 | `naine` | Durnhalde, près de Ghrunke Dash | `cell_s007_e017` |
-| `elfe` | Silverglade, près de Northind | `cell_n007_w006` |
+| `elfe` | Silverglade, près de Northind (deux cases à l'est depuis la v1.0.72) | `cell_n007_w003` |
 | `legion` | Citadelle de la Légion — **seconde carte « Les Enfers »** (`docs/world/ENFERS.md`) | `enfers_n000_e000` |
 
 `lune_noire` (palais lunaire), Archimages (pyramide de Methraton) : départs hors carte,

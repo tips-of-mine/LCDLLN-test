@@ -289,6 +289,17 @@ namespace tools::world_gen
 				for (int i = std::max(0, cg.cost.IndexX(l.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(l.center.x + R)); ++i)
 					if (std::hypot(cg.cost.WorldX(i) - l.center.x, cg.cost.WorldZ(j) - l.center.z) < R) cg.cost.At(i, j) = 1e30f;
 		}
+		// Crevasse (v1.0.72) : à 250 m, la grille lisse ses parois ; le massif qui
+		// l'entoure est donc fermé explicitement aux routes, qui n'entrent et ne
+		// sortent que par l'ouverture de la fente (cul-de-sac).
+		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type != "crevasse") continue;
+			const double R = r.footRadiusM * 1.16 + CrevasseOuterSlopeM(r);
+			for (int j = std::max(0, cg.cost.IndexZ(r.center.z - R)); j <= std::min(cg.cost.height - 1, cg.cost.IndexZ(r.center.z + R)); ++j)
+				for (int i = std::max(0, cg.cost.IndexX(r.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(r.center.x + R)); ++i)
+					if (ReliefContribution(r, cg.cost.WorldX(i), cg.cost.WorldZ(j)) > 0.35 * r.heightM) cg.cost.At(i, j) = 1e30f;
+		}
 		// Franchir une rivière coûte (gué) : on évite de la longer dedans.
 		for (const River& r : g.rivers)
 			for (size_t k = 0; k < r.points.size(); k += 20)

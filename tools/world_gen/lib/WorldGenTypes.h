@@ -88,6 +88,42 @@ namespace tools::world_gen
 		/// Altitude du sol au centre (m), relevée sur la heightmap de la cellule
 		/// pendant la génération (sortie portals.json). 0 tant que non calculée.
 		double y = 0.0;
+		/// Décalage (m, repère global : X est, Z sud) du lieu depuis le centre de sa
+		/// case (clés `offset_x_m`, `offset_z_m`, v1.0.72), ex. un lieu contre la côte
+		/// ouest de la case. 0 = centre de la case (règle historique).
+		double offsetX = 0.0, offsetZ = 0.0;
+	};
+
+	/// Relief local posé à la main (section `reliefs`, v1.0.72), ancré sur le
+	/// centre de la case de la ville `city`, où la ville est alors posée (pas de
+	/// recherche de site). Ajouté à MacroHeight : fonction pure de la position,
+	/// raccord exact entre cellules voisines.
+	///  - `colline` : dôme sous une ville perchée — plateau sommital de rayon
+	///    `top_radius_m` à `height_m` au-dessus du relief, pente douce jusqu'au pied
+	///    (`foot_radius_m`). Les cours d'eau tracés à la main qui partent de la case
+	///    naissent au pied (Terrain.cpp, BuildMacroRivers).
+	///  - `crevasse` : cul-de-sac — massif de rayon `foot_radius_m` (contour ondulé,
+	///    bord extérieur en pente douce) relevé de `height_m`, entaillé d'une fente à
+	///    fond plat (demi-largeur `half_width_m`, parois raides de `wall_m`) qui va de
+	///    `back_m` derrière la ville jusqu'au-delà du massif, vers la case `open_toward`. Les routes ne franchissent pas les
+	///    parois (Roads.cpp) ; `mine` (nom) pose une mine au fond (Places.cpp).
+	struct ReliefDef
+	{
+		std::string id;
+		std::string type;          ///< colline|crevasse
+		std::string cityId;        ///< ville ancrée (posée au centre de sa case)
+		double heightM = 0.0;      ///< hauteur du sommet / des parois au-dessus du relief (m)
+		double topRadiusM = 0.0;   ///< colline : rayon du plateau sommital (m)
+		double footRadiusM = 0.0;  ///< colline : rayon du pied ; crevasse : rayon du massif (m)
+		double halfWidthM = 0.0;   ///< crevasse : demi-largeur du fond de la fente (m)
+		double wallM = 0.0;        ///< crevasse : largeur horizontale des parois (m)
+		double backM = 0.0;        ///< crevasse : longueur du fond derrière la ville (m)
+		std::string openToward;    ///< crevasse : case vers laquelle la fente s'ouvre
+		std::string mine;          ///< crevasse : nom de la mine posée au fond (vide = aucune)
+		// --- résolu au chargement ---
+		int  n = 0, e = 0;         ///< case de la ville
+		Vec2 center;               ///< centre de la case (= centre de la ville)
+		Vec2 dir{ 1.0, 0.0 };      ///< crevasse : direction unitaire de l'ouverture
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).
@@ -157,6 +193,7 @@ namespace tools::world_gen
 		std::vector<InteractableDef> interactables;
 		std::vector<ExtraLakeDef> extraLakes;
 		std::vector<RiverCourseDef> riverCourses;
+		std::vector<ReliefDef> reliefs;         ///< reliefs locaux (v1.0.72)
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;
 		// Imports du contenu existant (chemins relatifs au content root).

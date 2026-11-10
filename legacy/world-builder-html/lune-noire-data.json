@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.72",
+    "version": "1.0.73",
     "notes": [
+      "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazelgate (N007_E002, Elfes des bois, neutre), Fellwatch (N009_W001, humains, Empire), Hollowgate (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Greyhedge et Hollowgate (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
       "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Aurore → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
       "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
       "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Silverglade (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Greenbough (N006_W006, cueilleurs et herboristes) et Fernhollow (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Silverglade → Greenbough et 000193 Silverglade → Fernhollow, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
@@ -13389,6 +13390,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_town_0123_ecurie_04",
+          "name": "Torard Grisrive",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_town_0123_temple_01",
           "name": "Loran Belpré",
           "gender": "male",
@@ -16072,6 +16081,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0153_ecurie_03",
+          "name": "Cedine Claircastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_0153_cimetiere_01",
           "name": "Lanise Marlmorne",
           "gender": "female",
@@ -17674,6 +17691,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0205_ecurie_03",
+          "name": "Serora Brunmont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_0205_cimetiere_01",
           "name": "Tibald Noirgarde",
           "gender": "male",
@@ -18433,6 +18458,14 @@
         {
           "id": "pnj_hamlet_0157_ecurie_02",
           "name": "Rolia Brunvigne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_0157_ecurie_03",
+          "name": "Rala Brunrade",
           "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
@@ -21662,7 +21695,8 @@
         "[GD] (v1.0.62) Population : humains, sujets de l'Empire ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.62) Économie : ferme : légumes, volailles, chèvres et ânes de bât pour les marchés de Lhynn ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[DÉCISION] (v1.0.72) Ferme déplacée de N001_W009 à N001_W008 par le propriétaire (10/11/2026) ; routes 000129 (Eaglewatch) et 000130 (Via Magna) ajustées, route vers Ambermead ajoutée (LORE_BD §16).",
-        "[INFÉRÉ] (v1.0.72) Cellule N001_W008 : plaine des Terres de l'Empereur, deux cases à l'est de Lhynn, case libre ; hors de la région de départ 3×3 d'Eaglewatch, dont la ferme reste l'annexe."
+        "[INFÉRÉ] (v1.0.72) Cellule N001_W008 : plaine des Terres de l'Empereur, deux cases à l'est de Lhynn, case libre ; hors de la région de départ 3×3 d'Eaglewatch, dont la ferme reste l'annexe.",
+        "[DÉCISION] (v1.0.73) L'entrée nord de la Mine de la Traverse (lieu_mine_de_la_traverse, raid raid_mine_de_la_traverse) s'ouvre au sud de la ferme, au pied de la chaîne ; LORE_BD §16.2."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -23560,6 +23594,759 @@
           "name": "Lirion Venaleth",
           "gender": "male",
           "race_id": "race_haut_elfe",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_hazelgate",
+      "name": "Hazelgate",
+      "alias": "Hazelgate",
+      "type": "market_town",
+      "importance": "regional",
+      "cell": "N007_E002",
+      "anchor_tile": "N007_E002",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_neutral",
+      "region_id": "foret_elfique",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest_edge",
+        "Comptoir des Elfes des bois à la lisière de la forêt elfique",
+        "Marché aux herbes, aux arcs et à la soie d'araignée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "lisière en pente douce",
+        "relief": "vallonnements bas entre forêt et plaine",
+        "implantation": "à la lisière, la forêt à l'ouest et à l'est, les plaines au nord et au sud",
+        "pentes": "faibles",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "halles de bois et passerelles entre les premiers arbres",
+        "style": "elfique de lisière (bois vivant, toits de mousse)",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "puits et sources",
+        "eau": "pas de rivière dans la case",
+        "couleur": "",
+        "elements": "lac du Mont des Neuf Pics (N007_E005) et rivière (N009_E005) à trois cases"
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "routes vers Arcanefield (sud), Ashwick (nord-est) et Fellwatch (nord-ouest)",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne décidée par le propriétaire (10/11/2026) en N007_E001 ou N007_E002 ; services complets d'une ville (taille « ville », grille game_design.cities_services) (LORE_BD §16.2).",
+        "[GD] (v1.0.73) Nom, race (Elfes des bois, race_elfe_des_bois) et faction (neutre) proposés, à valider par le propriétaire. Les Elfes des bois peuplent la lisière de la forêt elfique (strate de lisière, régions.foret_elfique [HS]) : Hazelgate est leur comptoir, où les humains commercent sans entrer dans la forêt (la forêt reste fermée aux non-elfes) ; une partie des marchands et des aubergistes sont humains.",
+        "[GD] (v1.0.73) Description courte : Comptoir des Elfes des bois à la lisière de la forêt elfique, face aux plaines d'Arcanefield : marché aux herbes, aux arcs et à la soie d'araignée où les humains commercent sans entrer dans la forêt [GD v1.0.73, à valider].",
+        "[INFÉRÉ] (v1.0.73) Cellule N007_E002 retenue contre N007_E001 : relief plus doux (écart type 18 m contre 21 m, pente moyenne 12 m contre 14 m par 250 m sur la case, relief macro de tools/world_gen) ; eau plus proche (lac N007_E005 et rivière N009_E005 à trois cases, quatre pour N007_E001) ; liaisons courtes vers Arcanefield et Ashwick (trois cases chacune, contre trois et quatre). Les deux cases sont des lisières sans rivière, libres.",
+        "[GD] (v1.0.73) Économie : comptoir de lisière : herbes et champignons, arcs, soie d'araignée, bois précieux (sans abattage en forêt elfique) contre métal, sel et outils des plaines (voir regle_eco_productions_regions)."
+      ],
+      "taille": "ville",
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "bibliotheque",
+        "ecole_magie",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_hazelgate_auberge_01",
+          "name": "Nyrin Écorce-Fine",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_hazelgate_potions_01",
+          "name": "Rhaleth Fougère-de-Rosée",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_hazelgate_armes_01",
+          "name": "Arvia Sorbier-Sombre",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_hazelgate_armures_01",
+          "name": "Daewen Fougère-Vive",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_hazelgate_forgeron_01",
+          "name": "Varald Chenfort",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_hazelgate_marche_01",
+          "name": "Wywen Bruyère-Claire",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_hazelgate_ecurie_01",
+          "name": "Daeleth Coudrier-Haute",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_hazelgate_ecurie_02",
+          "name": "Ardor Sorbier-Verte",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_hazelgate_ecurie_03",
+          "name": "Brisha Écorce-Vive",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_hazelgate_temple_01",
+          "name": "Halwen Écorce-Claire",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_town_hazelgate_banque_01",
+          "name": "Taeorn Coudrier-d'Ambre",
+          "gender": "male",
+          "race_id": "race_elfe_des_bois",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_town_hazelgate_guilde_01",
+          "name": "Gwynwyn Feuille-Claire",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_hazelgate_infirmerie_01",
+          "name": "Halrie Feuille-Verte",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_hazelgate_infirmerie_02",
+          "name": "Nyvia Coudrier-de-Rosée",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_hazelgate_bibliotheque_01",
+          "name": "Maevia Ronce-Haute",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "bibliotheque",
+          "metier": "bibliothecaire"
+        },
+        {
+          "id": "pnj_town_hazelgate_ecole_magie_01",
+          "name": "Taesha Saule-Vive",
+          "gender": "female",
+          "race_id": "race_elfe_des_bois",
+          "service": "ecole_magie",
+          "metier": "maitre_de_magie"
+        },
+        {
+          "id": "pnj_town_hazelgate_cimetiere_01",
+          "name": "Cedine Boislande",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_fellwatch",
+      "name": "Fellwatch",
+      "alias": "Fellwatch",
+      "type": "border_town",
+      "importance": "regional",
+      "cell": "N009_W001",
+      "anchor_tile": "N009_W001",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_empire",
+      "region_id": "terres_des_gigantomorphes",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: forest_edge",
+        "Ville de bûcherons et de guet face aux Terres des Gigantomorphes",
+        "Palissade de troncs, scieries, tour de guet"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "lisière près de la côte nord",
+        "relief": "terrain ondulé",
+        "implantation": "à la lisière, la forêt elfique au sud et à l'ouest, la côte au nord",
+        "pentes": "faibles",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "palissade de troncs, scieries, tour de guet",
+        "style": "colonial impérial en bois",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "puits",
+        "eau": "pas de rivière dans la case",
+        "couleur": "",
+        "elements": "rivière de la forêt elfique à une case à l'ouest (N009_W002), côte nord à une case"
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "routes vers Hazelgate (sud-est) et Hayfen (nord-ouest)",
+        "distance_visuelle": "",
+        "dominance_paysage": "tour de guet au-dessus de la lisière"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne décidée par le propriétaire (10/11/2026) en N009_W001, Terres des Gigantomorphes, lisière de forêt ; services complets d'une ville (LORE_BD §16.2).",
+        "[GD] (v1.0.73) Nom, race (humains) et faction (Empire) proposés, à valider par le propriétaire. Les Terres des Gigantomorphes sont celles d'où l'expansion impériale repousse les géants vers le nord et l'est, et les géants y restent le danger des marches de l'Empire [HS] : Fellwatch est une ville de colons impériaux qui abat le bois de la lisière (ressource de la région, bois pour la reconstruction de Kendrhir, regions.terres_des_gigantomorphes) et guette les géants. Elle ne coupe rien côté forêt elfique, dont les elfes rasent les villages de colons qui s'y risquent [BD-A4 p.4-6].",
+        "[GD] (v1.0.73) Description courte : Ville de bûcherons et de guet à la lisière, dans les Terres des Gigantomorphes : palissade de troncs, scieries et tour de guet tournée vers les géants du nord ; le bois part vers la côte et la reconstruction de Kendrhir, jamais pris côté forêt elfique [GD v1.0.73, à valider].",
+        "[INFÉRÉ] (v1.0.73) Cellule N009_W001 : lisière (forest_edge) des Terres des Gigantomorphes, sans rivière, libre ; voisine de la forêt elfique (N009_W002, N008_W001) et de la côte nord (N010_W001).",
+        "[GD] (v1.0.73) Économie : ville frontière : bois d'œuvre et planches, charbon de bois, gibier ; exporte du bois par la côte (Hayfen) ; importe vivres, outils et main-d'œuvre (voir regle_eco_productions_regions)."
+      ],
+      "taille": "ville",
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "bibliotheque",
+        "prison",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_fellwatch_auberge_01",
+          "name": "Isius Grisombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_fellwatch_potions_01",
+          "name": "Eldan Rochbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_fellwatch_potions_02",
+          "name": "Noria Saulcombe",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_fellwatch_armes_01",
+          "name": "Dareline Noirombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_fellwatch_armures_01",
+          "name": "Sera Noirgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_fellwatch_armures_02",
+          "name": "Lorance Sombremont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_fellwatch_forgeron_01",
+          "name": "Coran Marlval",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_fellwatch_forgeron_02",
+          "name": "Cedran Chenval",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_fellwatch_marche_01",
+          "name": "Odoais Brunmare",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_fellwatch_marche_02",
+          "name": "Osilde Clairgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_fellwatch_ecurie_01",
+          "name": "Alric Pierremont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_fellwatch_ecurie_02",
+          "name": "Kelin Boislac",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_fellwatch_temple_01",
+          "name": "Joraude Fontmont",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_town_fellwatch_banque_01",
+          "name": "Odoette Belfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_town_fellwatch_guilde_01",
+          "name": "Lanran Corblac",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_fellwatch_infirmerie_01",
+          "name": "Alette Hautgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_fellwatch_bibliotheque_01",
+          "name": "Ulmond Marlombre",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "bibliotheque",
+          "metier": "bibliothecaire"
+        },
+        {
+          "id": "pnj_town_fellwatch_prison_01",
+          "name": "Lanmond Noircastel",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "prison",
+          "metier": "geolier"
+        },
+        {
+          "id": "pnj_town_fellwatch_cimetiere_01",
+          "name": "Falance Fontgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "town_hollowgate",
+      "name": "Hollowgate",
+      "alias": "Hollowgate",
+      "type": "mining_town",
+      "importance": "regional",
+      "cell": "S001_W007",
+      "anchor_tile": "S001_W007",
+      "coord_x": null,
+      "coord_y": null,
+      "faction_control": "faction_empire",
+      "region_id": "terres_de_lempereur",
+      "housing_count": null,
+      "population": null,
+      "features": [
+        "Terrain: plain",
+        "Ville minière et relais de la Via Magna",
+        "Entrée sud de la Mine de la Traverse au nord-ouest"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "plaine",
+        "relief": "plaine vallonnée",
+        "implantation": "sur la Via Magna, la chaîne au nord-ouest",
+        "pentes": "faibles",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "forges, entrepôts de minerai, auberges de rouliers",
+        "style": "impérial",
+        "etat": "intact"
+      },
+      "hydrographie": {
+        "type": "puits",
+        "eau": "pas de rivière dans la case",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "Via Magna (000120) ; route vers Scalebrook ; sentier vers l'entrée sud de la mine",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne décidée par le propriétaire (10/11/2026) en S001_W007 (plaine) ; services complets d'une ville ; une entrée de la mine du raid entre Greyhedge et elle (LORE_BD §16.2).",
+        "[GD] (v1.0.73) Nom, race (humains) et faction (Empire) proposés, à valider par le propriétaire. Ville minière des Terres de l'Empereur : les mineurs de la Mine de la Traverse et les rouliers de la Via Magna, entre Lhynn et l'Oracle.",
+        "[GD] (v1.0.73) Description courte : Ville minière et relais de la Via Magna dans la plaine, au pied sud-est de la chaîne qui la sépare de Greyhedge : l'entrée sud de la Mine de la Traverse s'ouvre au nord-ouest ; forges, entrepôts de minerai et auberges de rouliers [GD v1.0.73, à valider].",
+        "[INFÉRÉ] (v1.0.73) Cellule S001_W007 : plaine, libre, traversée par la Via Magna (route 000120, entre S001_W008 et N000_W006), dont Hollowgate devient une étape ; à côté de Moros (N000_W007) et au pied sud-est de la chaîne N000_W008.",
+        "[GD] (v1.0.73) Économie : ville minière : minerai de fer, fonte et outils, relais de rouliers ; importe vivres et bois (voir regle_eco_productions_regions)."
+      ],
+      "taille": "ville",
+      "services": [
+        "auberge",
+        "potions",
+        "armes",
+        "armures",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "temple",
+        "banque",
+        "guilde",
+        "infirmerie",
+        "bibliotheque",
+        "ecole_magie",
+        "cimetiere"
+      ],
+      "service_npcs": [
+        {
+          "id": "pnj_town_hollowgate_auberge_01",
+          "name": "Darelle Sombrerive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_hollowgate_auberge_02",
+          "name": "Berance Rosslac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_town_hollowgate_potions_01",
+          "name": "Gilance Belpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_town_hollowgate_armes_01",
+          "name": "Yvot Bleupré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_hollowgate_armes_02",
+          "name": "Hugora Saulombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armes",
+          "metier": "marchand_armes"
+        },
+        {
+          "id": "pnj_town_hollowgate_armures_01",
+          "name": "Ulise Fontlac",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_town_hollowgate_forgeron_01",
+          "name": "Halance Valcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_town_hollowgate_marche_01",
+          "name": "Isus Fergarde",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_hollowgate_marche_02",
+          "name": "Tibine Marlombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_town_hollowgate_ecurie_01",
+          "name": "Sermond Boiscastel",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_hollowgate_temple_01",
+          "name": "Darran Boislande",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "temple",
+          "metier": "pretre"
+        },
+        {
+          "id": "pnj_town_hollowgate_banque_01",
+          "name": "Lorald Clairchêne",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "banque",
+          "metier": "banquier"
+        },
+        {
+          "id": "pnj_town_hollowgate_guilde_01",
+          "name": "Torine Morgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_town_hollowgate_infirmerie_01",
+          "name": "Isora Marlmare",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_hollowgate_infirmerie_02",
+          "name": "Yvais Noirval",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_town_hollowgate_bibliotheque_01",
+          "name": "Branvin Grispré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "bibliotheque",
+          "metier": "bibliothecaire"
+        },
+        {
+          "id": "pnj_town_hollowgate_ecole_magie_01",
+          "name": "Ulran Corbpré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecole_magie",
+          "metier": "maitre_de_magie"
+        },
+        {
+          "id": "pnj_town_hollowgate_cimetiere_01",
+          "name": "Corius Fontlande",
+          "gender": "male",
+          "race_id": "race_human",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -35169,6 +35956,29 @@
       "notes": [
         "Entrée par le cratère (S008_E014).",
         "Accès : voir règle rule_volcan_acces."
+      ]
+    },
+    {
+      "id": "raid_mine_de_la_traverse",
+      "name": "La Mine de la Traverse",
+      "description": "Raid simple, à une équipe : traverser de part en part la Mine de la Traverse, galerie abandonnée creusée sous la chaîne qui sépare Greyhedge de Hollowgate, envahie par les rats des profondeurs et les araignées géantes, jusqu'au nid de la Mère des galeries ; on entre par une bouche et on ressort par l'autre.",
+      "min_teams": 1,
+      "min_players_per_team": 5,
+      "min_players_total": 5,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "difficulty": 2,
+      "location_ville_id": "town_hollowgate",
+      "rewards": {
+        "title": "Passe-Galerie",
+        "reward": "Or, minerai de fer et soie de la Mère des galeries (artisanat).",
+        "power": "Passage souterrain entre Greyhedge et Hollowgate ouvert au groupe une fois le raid terminé [GD]."
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.73) Raid dans une mine entre Greyhedge et la ville de S001_W007, décision du propriétaire du 10/11/2026 (LORE_BD §16.2).",
+        "[INFÉRÉ] (v1.0.73) Lecture retenue, à confirmer : la mine est une galerie sous N000_W008 (lieu lieu_mine_de_la_traverse), le raid la traverse d'une entrée à l'autre (poi_mine_traverse_nord côté Greyhedge, poi_mine_traverse_sud côté Hollowgate).",
+        "[GD] (v1.0.73) Niveau conseillé 10 à 15 : échelle des départs de la Première Province et des Marches (1-15, regle_bestiaire_echelles). Créatures : animal_rat (rats des profondeurs), animal_araignee (araignées géantes), boss creature_mere_des_galeries (niveau 15). Nom, récompenses et titre à valider."
       ]
     }
   ],
@@ -159988,7 +160798,8 @@
       "drops": [],
       "abilities_traits": [],
       "notes": [
-        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018, S007_E017, S008_E017, S008_E018 (LORE_BD §15.6)."
+        "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018, S007_E017, S008_E017, S008_E018 (LORE_BD §15.6).",
+        "[GD] (v1.0.73) Mine de la Traverse (N000_W008, raid raid_mine_de_la_traverse) : variante « rat des profondeurs » (LORE_BD §16.2)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Rongeurs",
@@ -160004,7 +160815,9 @@
         "S006_E018",
         "S007_E017",
         "S008_E017",
-        "S008_E018"
+        "S008_E018",
+        "lieu_mine_de_la_traverse",
+        "N000_W008"
       ],
       "habitat": "Région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash)."
     },
@@ -161658,7 +162471,8 @@
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E013 (LORE_BD §15.4).",
         "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S005_W003 (LORE_BD §15.5).",
         "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E017, S006_E018 (LORE_BD §15.6).",
-        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N008_W005 (LORE_BD §15.7)."
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N008_W005 (LORE_BD §15.7).",
+        "[GD] (v1.0.73) Mine de la Traverse (N000_W008, raid raid_mine_de_la_traverse) : variante « araignée géante » (LORE_BD §16.2)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Arachnides",
@@ -161686,7 +162500,9 @@
         "S005_W003",
         "S006_E017",
         "S006_E018",
-        "N008_W005"
+        "N008_W005",
+        "lieu_mine_de_la_traverse",
+        "N000_W008"
       ]
     },
     {
@@ -163860,6 +164676,35 @@
         "enfers:N000_E001",
         "enfers:S001_E000",
         "enfers:S001_E001"
+      ]
+    },
+    {
+      "id": "creature_mere_des_galeries",
+      "name": "Mère des galeries",
+      "type": "beast",
+      "difficulty": "boss",
+      "level_min": 15,
+      "level_max": 15,
+      "description": "Araignée géante, grosse comme un chariot, qui a fait son nid au cœur de la Mine de la Traverse : la couvée qui a chassé les mineurs sort de ses œufs.",
+      "region_id": "terres_de_lempereur",
+      "ville_id": "",
+      "faction_id": "",
+      "drops": [],
+      "abilities_traits": [
+        "Toile collante : immobilise une cible 4 s [GD]",
+        "Appel de la couvée : fait éclore des araignées (animal_araignee) [GD]",
+        "Morsure venimeuse : dégâts sur la durée [GD]"
+      ],
+      "notes": [
+        "[GD] (v1.0.73) Boss du raid raid_mine_de_la_traverse (une équipe), au cœur de la Mine de la Traverse ; nom à valider ; aucune source BD.",
+        "[GD] (v1.0.73) Niveau 15 : haut de l'échelle des départs de la Première Province et des Marches (1-15, regle_bestiaire_echelles) ; boss = x10 PV (LORE_BD §16.2)."
+      ],
+      "habitat": "Mine de la Traverse, sous la chaîne entre Greyhedge et Hollowgate.",
+      "groupe": "unique",
+      "raid_id": "raid_mine_de_la_traverse",
+      "zones_chasse": [
+        "lieu_mine_de_la_traverse",
+        "N000_W008"
       ]
     }
   ],
@@ -192095,7 +192940,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne Fellwatch (town_fellwatch) ; LORE_BD §16.2."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -194008,7 +194855,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne Hazelgate (town_hazelgate) ; LORE_BD §16.2."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -199243,7 +200092,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.72) Ferme Greyhedge (hamlet_greyhedge), déplacée depuis N001_W009 ; LORE_BD §16."
+        "[DÉCISION] (v1.0.72) Ferme Greyhedge (hamlet_greyhedge), déplacée depuis N001_W009 ; LORE_BD §16.",
+        "[DÉCISION] (v1.0.73) Entrée nord de la Mine de la Traverse (lieu_mine_de_la_traverse), au sud de Greyhedge, au pied de la chaîne ; LORE_BD §16.2."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -200109,10 +200959,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_rat",
+        "animal_araignee",
+        "creature_mere_des_galeries"
+      ],
       "visual_elements": [],
       "notes": [
-        "Continuité de la cellule R180C130"
+        "Continuité de la cellule R180C130",
+        "[DÉCISION] (v1.0.73) Mine de la Traverse (lieu_mine_de_la_traverse) creusée sous la chaîne, entre Greyhedge (N001_W008) et Hollowgate (S001_W007) ; raid raid_mine_de_la_traverse ; LORE_BD §16.2."
       ],
       "coord_x": null,
       "coord_y": null
@@ -201003,7 +201858,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Ville moyenne Hollowgate (town_hollowgate) ; LORE_BD §16.2.",
+        "[DÉCISION] (v1.0.73) Entrée sud de la Mine de la Traverse (lieu_mine_de_la_traverse), au nord-ouest de Hollowgate ; LORE_BD §16.2."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -217454,7 +218312,8 @@
         "[INFÉRÉ] (v1.0.60) Aucun fleuve de l'hydrographie (hydrography.rivers) ni cellule à rivière sur le tracé : pas de pont.",
         "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
         "[v1.0.60] Remplace les routes provisoires 000011 (Lhynn → Camp de l'Oracle) et 000012 (fief de Garundel → Camp de l'Oracle), supprimées ; 000013 (fief de Garundel → Moork) gardée en raccourci.",
-        "[GD] (v1.0.62) Embranchement en N000_W010 : route locale 000130 vers Greyhedge et Eaglewatch (région de départ, LORE_BD §15.1)."
+        "[GD] (v1.0.62) Embranchement en N000_W010 : route locale 000130 vers Greyhedge et Eaglewatch (région de départ, LORE_BD §15.1).",
+        "[DÉCISION] (v1.0.73) Traverse Hollowgate (town_hollowgate, S001_W007), nouvelle étape entre Lhynn et l'Oracle ; LORE_BD §16.2."
       ],
       "waypoints": [
         "N001_W010",
@@ -218889,6 +219748,140 @@
       "notes": [
         "[DÉCISION] (v1.0.72) Route demandée par le propriétaire : Verdansur → lieu de l'événement contre les falaises de N010_W016 (route et non sentier : procession de la Veillée des Feux des Brisants).",
         "[INFÉRÉ] (v1.0.72) Tracé : 1 case(s), N010_W015 → N010_W016 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
+      ]
+    },
+    {
+      "id": "000207",
+      "type": "road",
+      "from_place": "N007_E002",
+      "from_ville_id": "town_hazelgate",
+      "from_lieu_id": "",
+      "to_place": "N004_E001",
+      "to_ville_id": "hamlet_0205",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Relie la ville moyenne Hazelgate au réseau : vers Arcanefield.",
+        "[INFÉRÉ] (v1.0.73) Tracé : 3 case(s), N007_E002 → N006_E002 → N005_E002 → N004_E001 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ],
+      "waypoints": [
+        "N007_E002",
+        "N006_E002",
+        "N005_E002",
+        "N004_E001"
+      ]
+    },
+    {
+      "id": "000208",
+      "type": "road",
+      "from_place": "N007_E002",
+      "from_ville_id": "town_hazelgate",
+      "from_lieu_id": "",
+      "to_place": "N010_E005",
+      "to_ville_id": "town_0123",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Relie Hazelgate à Ashwick, marché des elfes de la côte nord.",
+        "[INFÉRÉ] (v1.0.73) Tracé : 3 case(s), N007_E002 → N008_E003 → N009_E004 → N010_E005 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ],
+      "waypoints": [
+        "N007_E002",
+        "N008_E003",
+        "N009_E004",
+        "N010_E005"
+      ]
+    },
+    {
+      "id": "000209",
+      "type": "road",
+      "from_place": "N009_W001",
+      "from_ville_id": "town_fellwatch",
+      "from_lieu_id": "",
+      "to_place": "N007_E002",
+      "to_ville_id": "town_hazelgate",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Relie la ville moyenne Fellwatch au réseau : vers Hazelgate (par les plaines des Gigantomorphes, hors forêt elfique).",
+        "[INFÉRÉ] (v1.0.73) Tracé : 3 case(s), N009_W001 → N009_E000 → N008_E001 → N007_E002 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ],
+      "waypoints": [
+        "N009_W001",
+        "N009_E000",
+        "N008_E001",
+        "N007_E002"
+      ]
+    },
+    {
+      "id": "000210",
+      "type": "road",
+      "from_place": "N009_W001",
+      "from_ville_id": "town_fellwatch",
+      "from_lieu_id": "",
+      "to_place": "N011_W004",
+      "to_ville_id": "hamlet_0153",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Relie Fellwatch à Hayfen (côte nord), d'où partent les routes de Northind et d'Orderfen ; par la côte, hors forêt elfique.",
+        "[INFÉRÉ] (v1.0.73) Tracé : 3 case(s), N009_W001 → N010_W002 → N010_W003 → N011_W004 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ],
+      "waypoints": [
+        "N009_W001",
+        "N010_W002",
+        "N010_W003",
+        "N011_W004"
+      ]
+    },
+    {
+      "id": "000211",
+      "type": "road",
+      "from_place": "S001_W007",
+      "from_ville_id": "town_hollowgate",
+      "from_lieu_id": "",
+      "to_place": "S003_W008",
+      "to_ville_id": "hamlet_0157",
+      "to_lieu_id": "",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Relie la ville moyenne Hollowgate à Scalebrook ; Hollowgate est aussi une étape de la Via Magna (000120).",
+        "[INFÉRÉ] (v1.0.73) Tracé : 2 case(s), S001_W007 → S002_W007 → S003_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ],
+      "waypoints": [
+        "S001_W007",
+        "S002_W007",
+        "S003_W008"
+      ]
+    },
+    {
+      "id": "000212",
+      "type": "path",
+      "from_place": "N001_W008",
+      "from_ville_id": "hamlet_greyhedge",
+      "from_lieu_id": "",
+      "to_place": "N000_W008",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_mine_de_la_traverse",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Sentier de Greyhedge à l'entrée nord de la Mine de la Traverse.",
+        "[INFÉRÉ] (v1.0.73) Tracé : 1 case(s), N001_W008 → N000_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
+      ]
+    },
+    {
+      "id": "000213",
+      "type": "path",
+      "from_place": "S001_W007",
+      "from_ville_id": "town_hollowgate",
+      "from_lieu_id": "",
+      "to_place": "N000_W008",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_mine_de_la_traverse",
+      "description": "",
+      "notes": [
+        "[DÉCISION] (v1.0.73) Sentier de Hollowgate à l'entrée sud de la Mine de la Traverse.",
+        "[INFÉRÉ] (v1.0.73) Tracé : 1 case(s), S001_W007 → N000_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16.2."
       ]
     }
   ],
@@ -222899,6 +223892,48 @@
           "nom": "Sanctuaire des Brisants",
           "decision": "Un « événement » tout à gauche de N010_W016, au niveau des falaises : Sanctuaire des Brisants (sanctuaire) et Veillée des Feux des Brisants (fete_eglise_feux_des_brisants) ; route depuis Verdansur (000206) ; nom et événement [GD] à valider (LORE_BD §16).",
           "version": "1.0.72"
+        },
+        {
+          "collection": "villes",
+          "id": "town_hazelgate",
+          "nom": "Hazelgate",
+          "decision": "Ville moyenne Hazelgate en N007_E002 (services complets d'une ville) ; nom, race et faction [GD] à valider (LORE_BD §16.2).",
+          "version": "1.0.73"
+        },
+        {
+          "collection": "villes",
+          "id": "town_fellwatch",
+          "nom": "Fellwatch",
+          "decision": "Ville moyenne Fellwatch en N009_W001 (services complets d'une ville) ; nom, race et faction [GD] à valider (LORE_BD §16.2).",
+          "version": "1.0.73"
+        },
+        {
+          "collection": "villes",
+          "id": "town_hollowgate",
+          "nom": "Hollowgate",
+          "decision": "Ville moyenne Hollowgate en S001_W007 (services complets d'une ville) ; nom, race et faction [GD] à valider (LORE_BD §16.2).",
+          "version": "1.0.73"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_mine_de_la_traverse",
+          "nom": "Mine de la Traverse",
+          "decision": "Mine-galerie sous N000_W008 (chaîne) avec une entrée côté Greyhedge et une côté Hollowgate (lecture retenue de la demande, à confirmer) ; nom [GD] à valider (LORE_BD §16.2).",
+          "version": "1.0.73"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_mine_de_la_traverse",
+          "nom": "La Mine de la Traverse",
+          "decision": "Raid simple à une équipe dans la mine entre Greyhedge et Hollowgate, qu'il traverse ; boss creature_mere_des_galeries [GD] (LORE_BD §16.2).",
+          "version": "1.0.73"
+        },
+        {
+          "collection": "routes",
+          "id": "routes",
+          "nom": "Réseau routier",
+          "decision": "Villes moyennes reliées au réseau : Hazelgate → Arcanefield (000207), Hazelgate → Ashwick (000208), Fellwatch → Hazelgate (000209), Fellwatch → Hayfen (000210), Hollowgate → Scalebrook (000211), Hollowgate étape de la Via Magna (000120) ; sentiers vers les entrées de la Mine de la Traverse (000212, 000213) (LORE_BD §16.2).",
+          "version": "1.0.73"
         }
       ]
     },
@@ -237143,6 +238178,91 @@
         "[DÉCISION] (v1.0.72) « Événement » demandé par le propriétaire (10/11/2026) tout à gauche de N010_W016, au niveau des falaises, avec une route depuis Verdansur (LORE_BD §16).",
         "[GD] (v1.0.72) Nom et événement proposés, à valider par le propriétaire. Croix de pierre et brasier au bord des falaises, au-dessus des brisants où se brisent les navires des tempêtes d'automne ; chaque année, la Veillée des Feux des Brisants (fete_eglise_feux_des_brisants) y rassemble les fidèles de Verdansur, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs et leurs faux feux.",
         "[INFÉRÉ] (v1.0.72) Cellule N010_W016 : plaine de Syzygie, contre la côte ouest (N010_W017) ; monde jouable : POI poi_sanctuaire_des_brisants (sanctuaire), décalé de 3,2 km vers l'ouest depuis le centre de la case. Le générateur ne modèle pas de falaise (côte en pente douce)."
+      ]
+    },
+    {
+      "id": "lieu_mine_de_la_traverse",
+      "name": "Mine de la Traverse",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N000_W008",
+      "region_id": "terres_de_lempereur",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "galerie de mine creusée de part en part sous la chaîne N000_W008",
+        "entrée nord au pied de la chaîne, au sud de Greyhedge (N001_W008)",
+        "entrée sud au pied sud-est de la chaîne, au nord-ouest de Hollowgate (S001_W007)",
+        "puits effondrés, nids de rats et toiles d'araignées géantes",
+        "nid de la Mère des galeries au cœur de la galerie"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "galerie de mine traversante",
+        "relief": "sous une chaîne de montagnes",
+        "implantation": "de N001_W008 (entrée nord) à S001_W007 (entrée sud)",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "obscurité, étais pourris, toiles",
+        "sentiment": "",
+        "niveau_menace": "raid à une équipe (niveaux 10 à 15)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.73) Raid dans une mine entre Greyhedge (N001_W008) et la nouvelle ville de S001_W007 (Hollowgate), décision du propriétaire du 10/11/2026 (LORE_BD §16.2).",
+        "[INFÉRÉ] (v1.0.73) Lecture retenue de la demande, à confirmer par le propriétaire : une mine-galerie creusée sous N000_W008 (chaîne de montagnes), avec une entrée côté Greyhedge et une côté Hollowgate, que le raid traverse de part en part. Les deux villes ne sont pas voisines (N000_W008 entre elles) : la galerie fait environ 14 km.",
+        "[GD] (v1.0.73) Nom proposé, à valider. Ancienne mine de fer impériale qui perçait la chaîne pour raccourcir le chemin de Greyhedge à la Via Magna ; abandonnée quand une couvée d'araignées géantes s'y est installée. Les mineurs de Hollowgate n'exploitent plus que les premières galeries du sud. Raid raid_mine_de_la_traverse.",
+        "[INFÉRÉ] (v1.0.73) Monde jouable : POI poi_mine_traverse_nord (N001_W008, décalé de 1,5 km à l'ouest et 3,6 km au sud) et poi_mine_traverse_sud (S001_W007, décalé de 4 km à l'ouest et 4 km au nord), genre « salle » (comme le Puits des Apprentis) ; la galerie elle-même n'est pas modélisée."
       ]
     }
   ],

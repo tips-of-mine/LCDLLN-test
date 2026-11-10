@@ -654,8 +654,11 @@ Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
   N002_W010), au plafond de la tranche ; crabe et mouette ont un niveau par défaut (1-1) ; le camp de
   manœuvres et l'autel pourraient porter des PNJ ou des quêtes d'accueil des Légions (aucun créé).
 
-> **v1.0.72** (section 16) : Ambermead est déplacée en N003_W008 et Greyhedge en N001_W008, hors de la
+> **v1.0.72** (section 16.1) : Ambermead est déplacée en N003_W008 et Greyhedge en N001_W008, hors de la
 > région 3×3 ; routes 000128, 000129 et 000130 retracées.
+>
+> **v1.0.73** (section 16.2) : l'entrée nord de la Mine de la Traverse (raid à une équipe, niveaux 10 à
+> 15) s'ouvre au sud de Greyhedge, au pied de la chaîne N000_W008.
 
 ### 15.2 Dawnmere — Chevaliers de la Lumière (v1.0.64)
 
@@ -730,7 +733,7 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
   (`[BD-T10]`) ne sont pas évoqués ; loutre et mouton ont un niveau par défaut (1-1) ; la stèle et les
   lices pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
-> **v1.0.72** (section 16) : Wardholt est au fond d'une crevasse en cul-de-sac, avec une mine ; la
+> **v1.0.72** (section 16.1) : Wardholt est au fond d'une crevasse en cul-de-sac, avec une mine ; la
 > route Tithemead → Orderfen (000198) remplace la route 000066 Aurore → Orderfen.
 
 ### 15.4 Grakhul — Dzorak (v1.0.67)
@@ -914,7 +917,7 @@ Silverglade → Northind, 000077 et 000085 de Northind). Les PNJ de service des 
   village-ambassade elfe `[HS]` n'est pas placé ; écureuil, loutre, hibou et chouette ont un niveau par
   défaut (1-1) ; le bosquet et l'autel pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
-> **v1.0.72** (section 16) : Silverglade est déplacée seule en N007_W003 ; la région 3×3 reste centrée
+> **v1.0.72** (section 16.1) : Silverglade est déplacée seule en N007_W003 ; la région 3×3 reste centrée
 > sur N007_W006. Les sentiers 000194 à 000197 partent de Greenbough ou de Fernhollow.
 
 ### 15.8 Citadelle de la Légion — Légion infernale, carte des Enfers (v1.0.71)
@@ -976,7 +979,9 @@ au fichier v1.0.70).
   400 m) ; la région `region_enfers_t00` (Enfers des préquelles, hors carte) sert faute de région du lore
   pour la carte jouable ; le Bastion et l'Autel pourraient porter des quêtes d'accueil (aucune créée).
 
-## 16. Corrections v1.0.72
+## 16. Corrections et ajouts du propriétaire
+
+### 16.1 Corrections v1.0.72
 
 **Corrections du propriétaire (10/11/2026)**. Chaque fiche touchée porte une note `[DÉCISION] (v1.0.72)` ;
 11 entrées sont ajoutées au registre `regle_canon_registre_decisions`. Les routes ne sont que dans le lore
@@ -1078,6 +1083,100 @@ Aucune route n'est trop longue ni ne traverse la mer ou une chaîne. La composan
 - Ambermead et Greyhedge quittent la région 3×3 d'Eaglewatch, dont elles restent les fermes.
 - Hishtarland n'a plus de route terrestre.
 - Les sentiers à égalité de distance.
+
+### 16.2 Villes moyennes et raid de la mine (v1.0.73)
+
+**Décisions du propriétaire (10/11/2026)**. Chaque fiche touchée porte une note `[DÉCISION] (v1.0.73)`.
+6 entrées sont ajoutées au registre `regle_canon_registre_decisions` : 3 villes, la mine, le raid, et une
+entrée pour les routes. Noms, races et factions sont `[GD]` et restent à valider. Scripts reproductibles :
+`master_v1073.py` puis `lore_v1073.py`, appliqués aux fichiers v1.0.72, puis
+`tools/lore/generate_city_services.py`.
+
+**Trois villes moyennes**. Elles ont la taille « ville » de la grille `game_design.cities_services`
+(services complets, comme Justfall). Chacune a une fiche `villes`, une entrée `cities` (`kind` « ville »)
+dans `world_master.json` et une cellule générée. Le site choisi par le générateur est sec : pas de
+rivière à moins de 300 m.
+
+| Ville | Case | Race, faction `[GD]` | Type | Pourquoi |
+|---|---|---|---|---|
+| **Hazelgate** (`town_hazelgate`) | N007_E002 | Elfes des bois (`race_elfe_des_bois`, avec quelques marchands humains), neutre | `market_town` | Comptoir de lisière : la lisière de la forêt elfique est la strate des Elfes des bois `[HS]`. Les humains y commercent sans entrer dans la forêt. |
+| **Fellwatch** (`town_fellwatch`) | N009_W001 | Humains, Empire (`faction_empire`, `empire_hynn` au master) | `border_town` | Terres des Gigantomorphes : l'Empire en repousse les géants et ceux-ci restent le danger des marches `[HS]`. Ville de colons, de bûcherons (le bois de la région va à la reconstruction de Kendrhir) et de guet face aux géants. Elle ne coupe rien côté forêt elfique, dont les elfes rasent les villages de colons `[BD-A4]`. |
+| **Hollowgate** (`town_hollowgate`) | S001_W007 | Humains, Empire | `mining_town` | Plaine des Terres de l'Empereur traversée par la Via Magna (000120), dont elle devient une étape. Ville des mineurs de la Mine de la Traverse et des rouliers. |
+
+- **N007_E002 plutôt que N007_E001** `[INFÉRÉ]`. Ce sont deux lisières sans rivière, libres. Sur le relief
+  macro du générateur, N007_E002 est plus douce (écart type 18 m contre 21 m, pente moyenne 12 m contre
+  14 m par 250 m). Elle est aussi plus près de l'eau : le lac N007_E005 (Mont des Neuf Pics) et la
+  rivière N009_E005 sont à trois cases (quatre pour N007_E001). Enfin, Arcanefield et Ashwick sont toutes deux à
+  trois cases (Ashwick est à quatre cases de N007_E001).
+- `mining_town` et `border_town` n'ont pas de taille par défaut dans la grille : le champ `taille` vaut
+  « ville » dans les trois fiches.
+- PNJ de Hazelgate : `RACE_VILLES` de `generate_city_services.py` (3 Elfes des bois pour 1 humain) et
+  syllabes `NOMS` de `race_elfe_des_bois` (nouvelles).
+
+**Raid de la mine**. Lecture retenue de la demande, **à confirmer** : Greyhedge (N001_W008) et Hollowgate
+(S001_W007) ne sont pas voisines. La mine est donc une galerie d'environ 14 km creusée sous N000_W008
+(chaîne de montagnes), avec une entrée côté Greyhedge et une entrée côté Hollowgate. Le raid la traverse
+d'une entrée à l'autre.
+
+- Lieu **Mine de la Traverse** (`lieu_mine_de_la_traverse`, `open_dungeon_poi`, N000_W008) `[GD]` :
+  ancienne mine de fer impériale qui perçait la chaîne, abandonnée quand une couvée d'araignées géantes
+  s'y est installée.
+- Raid **La Mine de la Traverse** (`raid_mine_de_la_traverse`) : `min_teams` 1, `min_players_per_team` 5,
+  `difficulty` 2, `location_ville_id` Hollowgate, toutes factions. Titre « Passe-Galerie » `[GD]`.
+- Niveau conseillé 10 à 15 : c'est l'échelle des départs de la Première Province et des Marches (1-15,
+  `regle_bestiaire_echelles`). Les créatures existantes sont réutilisées : `animal_rat` (variante « rat des
+  profondeurs ») et `animal_araignee` (« araignée géante »). Le boss est nouveau : **Mère des galeries**
+  (`creature_mere_des_galeries`, `boss`, niveau 15, `raid_id`) `[GD]`. Les trois sont dans les
+  `creature_ids` de N000_W008.
+- Monde jouable : deux POI de genre `salle` (comme le Puits des Apprentis). `poi_mine_traverse_nord` est en
+  N001_W008, décalé de 1,5 km à l'ouest et 3,6 km au sud, au pied de la chaîne, à 4,4 km de Greyhedge.
+  `poi_mine_traverse_sud` est en S001_W007, décalé de 4 km à l'ouest et 4 km au nord, à 5,8 km de
+  Hollowgate. Le générateur ne sait poser une mine à une ville qu'au fond d'une crevasse (`reliefs`,
+  v1.0.72) : la mécanique n'est pas branchée, pour ne pas mettre Greyhedge ni Hollowgate dans une
+  crevasse.
+
+**Routes** (000207 à 000213) :
+
+| Route | Type | Tracé |
+|---|---|---|
+| 000207 Hazelgate → Arcanefield | `road` | N007_E002 → N006_E002 → N005_E002 → N004_E001 |
+| 000208 Hazelgate → Ashwick | `road` | N007_E002 → N008_E003 → N009_E004 → N010_E005 |
+| 000209 Fellwatch → Hazelgate | `road` | N009_W001 → N009_E000 → N008_E001 → N007_E002 (hors forêt elfique) |
+| 000210 Fellwatch → Hayfen | `road` | N009_W001 → N010_W002 → N010_W003 → N011_W004 (par la côte, hors forêt elfique) |
+| 000211 Hollowgate → Scalebrook | `road` | S001_W007 → S002_W007 → S003_W008 |
+| 000212 Greyhedge → Mine de la Traverse | `path` | N001_W008 → N000_W008 |
+| 000213 Hollowgate → Mine de la Traverse | `path` | S001_W007 → N000_W008 |
+
+Hollowgate est aussi une étape de la Via Magna (000120). Le contrôle du réseau (`routes/reseau.py`,
+`MAXLEN` = 5, en lecture seule) compte 113 villes et hameaux et 159 routes. Aucune route n'est trop
+longue ni ne traverse la mer ou une chaîne. La composante principale réunit 111 villes, dont les trois
+nouvelles. Seules Deepbrook et Hishtarland restent hors du réseau terrestre, desservies par leurs lignes
+maritimes, comme en v1.0.72.
+
+**Services** : 1137 → 1195 PNJ de service. Hazelgate en compte 17, Fellwatch 19 et Hollowgate 18. Une
+écurie de plus pour Arcanefield, Ashwick, Hayfen et Scalebrook (une route `road` de plus chacune).
+
+**Cellules générées** : 188 → 191 (N007_E002, N009_W001, S001_W007). Le corridor des départs ne change pas
+et aucune cellule n'est perdue. L'entrée nord est dans N001_W008, déjà générée. Test `world_gen_tests` :
+« villes v1.0.73 » (villes moyennes sur cellule générée, au sec, reliées par le générateur ; entrées de la
+mine décalées vers la chaîne, au sec, à l'écart des villes).
+
+**Ce qui n'est pas réel en jeu** :
+
+- La galerie et le raid : le monde jouable n'a que les deux POI d'entrée. Il n'y a ni instance, ni
+  souterrain, ni boss, ni récompense côté client ou serveur. Le passage souterrain ouvert après le raid
+  n'existe que dans le lore.
+- Les routes du lore : `tools/world_gen` trace ses propres routes entre les villes du master. Par exemple,
+  il relie Fellwatch à Silverglade et Hollowgate à Greyhedge, par la surface.
+- Le générateur ne peut pas relier Fellwatch à Deepbrook (île). L'avertissement « route impossible » vers
+  Deepbrook vient maintenant de Fellwatch au lieu de Whispers Hill ; celui d'Ashwick reste.
+
+**Points incertains** :
+
+- La lecture « galerie sous N000_W008 » et la longueur de la galerie.
+- Les noms, races et factions des trois villes ; Elfes des bois neutres plutôt que Hauts Elfes.
+- Le niveau du raid et du boss ; les récompenses.
+- La route 000210 passe par N010_W003, une case du marais maudit autour de Hayfen.
 
 ## 17. Questions ouvertes
 

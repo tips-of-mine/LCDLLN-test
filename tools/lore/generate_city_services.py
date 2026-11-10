@@ -146,7 +146,8 @@ RENOMMAGES = {"horker": "Harrowdale"}
 # de la faction pour la Lune Noire, les Dzorak (kraals de la region de depart
 # de Grakhul, v1.0.67), les Nains (hameaux de la region de depart de
 # Durnhalde, v1.0.69) et les Hauts Elfes (hameaux de la region de depart de
-# Silverglade, v1.0.70), humains par defaut. Liste ponderee.
+# Silverglade, v1.0.70), humains par defaut. Liste ponderee. v1.0.73 : Hazelgate,
+# comptoir des Elfes des bois, a aussi des marchands humains.
 RACE_VILLES = {
     "ville_whispers_hill": [("race_human", 1), ("race_haut_elfe", 1)],
     "leviathan_jungle": [("race_dzorak", 1)],
@@ -158,6 +159,8 @@ RACE_VILLES = {
     "hameau_grakhul": [("race_dzorak", 1)],
     "hameau_durnhalde": [("race_dwarf", 1)],
     "hameau_silverglade": [("race_haut_elfe", 1)],
+    # v1.0.73 : villes moyennes (Fellwatch et Hollowgate gardent le defaut humain).
+    "town_hazelgate": [("race_elfe_des_bois", 3), ("race_human", 1)],
 }
 RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],
@@ -187,6 +190,15 @@ NOMS = {
         ["wyn", "riel", "lith", "ndra", "viel", "nya", "lie", "sse", "rae"],
         (["Silv", "Aur", "Lun", "Ven", "Cel", "Fen", "Lor", "Ael", "Sel"],
          ["anor", "ethil", "aris", "iel", "ion", "andel", "orin", "essa", "aleth"])),
+    "race_elfe_des_bois": (
+        ["Ar", "Bri", "Cae", "Dae", "Fel", "Gwyn", "Hal", "Ily", "Lae", "Mae", "Ny", "Rha",
+         "Sy", "Tae", "Wy"],
+        ["dor", "rin", "wen", "thil", "las", "nor", "vyn", "dal", "orn"],
+        ["wyn", "lia", "rie", "sha", "nna", "leth", "via", "ra"],
+        (["Feuille", "Mousse", "Ronce", "Écorce", "Fougère", "Saule", "Sorbier", "Bruyère",
+          "Coudrier"],
+         ["-Vive", "-Claire", "-Douce", "-d'Ambre", "-de-Rosée", "-Verte", "-Haute", "-Sombre",
+          "-Fine"])),
     "race_dark_elf": (
         ["Ael", "Vae", "Syl", "Ny", "Xal", "Ith", "Zhe", "Myr", "Lae", "Ilv", "Rhy",
          "Shae", "Vel", "Qua", "Iz"],

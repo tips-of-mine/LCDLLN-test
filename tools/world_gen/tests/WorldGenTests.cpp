@@ -864,6 +864,73 @@ namespace
 			"reliefs : POI decale contre la cote ouest de sa case, au sec");
 	}
 
+	/// v1.0.73 : trois villes moyennes (Hazelgate, Fellwatch, Hollowgate) sur des
+	/// cellules générées, sites secs et reliés au réseau ; deux entrées de la Mine
+	/// de la Traverse (galerie sous la chaîne N000_W008), décalées vers la chaîne,
+	/// au sec et à l'écart des villes.
+	void TestVillesV1073()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "villes v1.0.73 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		auto dist = [](Vec2 a, Vec2 b) { return std::hypot(a.x - b.x, a.z - b.z); };
+		auto generated = [&](const std::string& cell) {
+			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
+		};
+		// Distance (m) du point à la rivière macro la plus proche.
+		auto riverDist = [&](Vec2 p) {
+			double best = 1e18;
+			for (const River& r : g.rivers)
+				for (const Vec2& q : r.points) best = std::min(best, dist(p, q));
+			return best;
+		};
+		const std::pair<const char*, const char*> towns[] = {
+			{ "town_hazelgate", "N007_E002" }, { "town_fellwatch", "N009_W001" }, { "town_hollowgate", "S001_W007" } };
+		for (const auto& [id, cell] : towns)
+		{
+			const CityDef* c = g.FindCity(id);
+			int roads = 0;
+			for (const Road& r : g.roads)
+				if (r.fromId == id || r.toId == id) ++roads;
+			Check(c && c->kind == "ville" && c->cell == cell && generated(cell) && c->startFor.empty()
+				&& MacroHeight(m, c->center.x, c->center.z) > m.scale.seaLevelM + 3.0
+				&& riverDist(c->center) > c->radiusM + 200.0 && roads >= 1,
+				(std::string("villes v1.0.73 : ") + id + " ville moyenne sur cellule generee, au sec, reliee").c_str());
+		}
+		// Entrées de la mine : nord dans la case de Greyhedge (sud de la case), sud dans
+		// celle de Hollowgate (coin nord-ouest), toutes deux vers la chaîne N000_W008.
+		const CityDef* grey = g.FindCity("hamlet_greyhedge");
+		const CityDef* hollow = g.FindCity("town_hollowgate");
+		const PoiDef* north = nullptr;
+		const PoiDef* south = nullptr;
+		for (const PoiDef& p : g.pois)
+		{
+			if (p.id == "poi_mine_traverse_nord") north = &p;
+			if (p.id == "poi_mine_traverse_sud") south = &p;
+		}
+		Check(grey && hollow && north && south && north->cell == grey->cell && south->cell == hollow->cell
+			&& north->kind == "salle" && south->kind == "salle",
+			"villes v1.0.73 : deux entrees de la Mine de la Traverse (salle) dans les cases de Greyhedge et Hollowgate");
+		if (!grey || !hollow || !north || !south) return;
+		const auto chain = engine::world::cells::CellCenter({ 0, -8 });
+		const Vec2 chainCenter{ chain.x, chain.z };
+		Check(dist(north->center, chainCenter) < dist(grey->center, chainCenter) - 2000.0
+			&& dist(south->center, chainCenter) < dist(hollow->center, chainCenter) - 2000.0,
+			"villes v1.0.73 : entrees decalees vers la chaine N000_W008");
+		Check(MacroHeight(m, north->center.x, north->center.z) > m.scale.seaLevelM + 3.0
+			&& MacroHeight(m, south->center.x, south->center.z) > m.scale.seaLevelM + 3.0
+			&& dist(north->center, grey->center) > 2000.0 && dist(south->center, hollow->center) > 2000.0,
+			"villes v1.0.73 : entrees au sec, a l'ecart des villes");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -951,6 +1018,7 @@ int main()
 	TestWaterShores();
 	TestRiverIslandAndSharedPois();
 	TestReliefs();
+	TestVillesV1073();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

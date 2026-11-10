@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -35,7 +35,8 @@
     "N007_W006", "N008_W006", "N008_W005", "N007_W007", "N007_W005", "N006_W007", "N006_W006", "N006_W005",
     "N005_W009", "N006_W009", "N006_W008",
     "N006_W004",
-    "N001_W008", "N007_W003", "N003_W004", "N004_W004", "N005_W004", "N005_W005"
+    "N001_W008", "N007_W003", "N003_W004", "N004_W004", "N005_W004", "N005_W005",
+    "N007_E002", "N009_W001", "S001_W007"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -1587,6 +1588,42 @@
       "start_for": [],
       "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
       "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Northind, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
+    },
+    {
+      "id": "town_hazelgate",
+      "name": "Hazelgate",
+      "cell": "N007_E002",
+      "kind": "ville",
+      "race": "elfes",
+      "state": "intact",
+      "faction": "neutre",
+      "start_for": [],
+      "source": "[DÉCISION] v1.0.73 (ville moyenne) ; nom, race (Elfes des bois) et faction [GD] à valider ; cellule N007_E002 retenue contre N007_E001 (relief plus doux, lac et rivière à 3 cases, 3 cases d'Arcanefield et d'Ashwick)",
+      "description": "Comptoir des Elfes des bois à la lisière de la forêt elfique, face aux plaines d'Arcanefield : marché aux herbes, aux arcs et à la soie d'araignée où les humains commercent sans entrer dans la forêt [GD v1.0.73, à valider]."
+    },
+    {
+      "id": "town_fellwatch",
+      "name": "Fellwatch",
+      "cell": "N009_W001",
+      "kind": "ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[DÉCISION] v1.0.73 (ville moyenne, N009_W001) ; nom, race et faction [GD] à valider",
+      "description": "Ville de bûcherons et de guet à la lisière, dans les Terres des Gigantomorphes : palissade de troncs, scieries et tour de guet tournée vers les géants du nord ; le bois part vers la côte et la reconstruction de Kendrhir, jamais pris côté forêt elfique [GD v1.0.73, à valider]."
+    },
+    {
+      "id": "town_hollowgate",
+      "name": "Hollowgate",
+      "cell": "S001_W007",
+      "kind": "ville",
+      "race": "humains",
+      "state": "intact",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[DÉCISION] v1.0.73 (ville moyenne, S001_W007) ; nom, race et faction [GD] à valider",
+      "description": "Ville minière et relais de la Via Magna dans la plaine, au pied sud-est de la chaîne qui la sépare de Greyhedge : l'entrée sud de la Mine de la Traverse s'ouvre au nord-ouest ; forges, entrepôts de minerai et auberges de rouliers [GD v1.0.73, à valider]."
     }
   ],
   "pois": [
@@ -2044,6 +2081,24 @@
       "offset_x_m": -3200,
       "offset_z_m": -700,
       "description": "Croix de pierre et brasier au bord des falaises de la côte ouest, au-dessus des brisants : chaque année, la Veillée des Feux des Brisants y rassemble les fidèles de Verdansur, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs [GD v1.0.72, événement à valider]."
+    },
+    {
+      "id": "poi_mine_traverse_nord",
+      "name": "Mine de la Traverse (entrée nord)",
+      "cell": "N001_W008",
+      "kind": "salle",
+      "offset_x_m": -1500,
+      "offset_z_m": 3600,
+      "description": "Entrée nord de la Mine de la Traverse, galerie creusée sous la chaîne entre Greyhedge et Hollowgate : porche étayé au pied des montagnes, au sud de la ferme ; le raid la traverse de part en part [GD v1.0.73, lecture retenue de la demande du propriétaire]."
+    },
+    {
+      "id": "poi_mine_traverse_sud",
+      "name": "Mine de la Traverse (entrée sud)",
+      "cell": "S001_W007",
+      "kind": "salle",
+      "offset_x_m": -4000,
+      "offset_z_m": -4000,
+      "description": "Entrée sud de la Mine de la Traverse, au pied sud-est de la chaîne, au nord-ouest de Hollowgate : carreau de mine, treuils et terrils ; la galerie ressort sous Greyhedge [GD v1.0.73, lecture retenue de la demande du propriétaire]."
     }
   ],
   "imports": {

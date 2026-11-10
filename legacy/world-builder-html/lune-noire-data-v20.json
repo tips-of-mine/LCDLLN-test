@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.76",
+    "version": "1.0.77",
     "notes": [
+      "v1.0.77 : [CARTE] relief et temples de l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026). Nom « Île de la Trêve » gardé et visible : name des 20 cellules terrestres, affiché par l'éditeur. Relief : 7 pics et crêtes boisés en mountain (N022_W012, N021_W013, N020_W014, N019_W013, N018_W013, N017_W012, N020_W011), falaises et vallées encaissées ; monde jouable : 11 massifs (reliefs du master), grille en forêt, côte inchangée. Peuple [GD] : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), 5 PNJ et 5 dialogues. 11 temples de style inca [GD] (3 grands, 5 moyens, 3 oratoires) avec leurs POI ; les 4 raids et les 8 quêtes de la v1.0.74 s'y rattachent ; 4 quêtes [GD] ; sentiers 000226, 000227. Détail : docs/world/LORE_BD.md, section 16.6.",
       "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Orderfen → Hayfen par la terre, 000064 Lhynn → Dustfen, 000073 Dustfen → Clearfen, 000076 Ashwick → Stonehaven, 000074 Der Hem Shelbem → Frosthollow (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Coldport – Frosthollow (000079, en S007_E006) vers la Forteresse Naine d'Heureux ; tronçon Dunfold → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harrowbrook → Equiton (sable), 000225 Brightholm → Ruines du prieuré (remplace 000140), 000201 Greyhedge → Ambermead devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bridlecrag S004_W005 → S004_W006, Cragfold S004_W003 → S004_W002 (hors de la région 3×3 de Wyrmhallow). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
       "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brinehaven (N017_W010, port franc neutre), Duskmoor (N022_W010, Lune Noire), Truceholm (N019_W010, îlot, neutre), Lanternhold (N021_W014, Empire). Ports avec ponton à Hayfen et Orderfen ; ligne maritime du Nord Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222) et navette de Truceholm (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
       "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazelgate (N007_E002, Elfes des bois, neutre), Fellwatch (N009_W001, humains, Empire), Hollowgate (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Greyhedge et Hollowgate (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
@@ -1524,6 +1525,39 @@
       "region_id": "region_enfers_t00",
       "region_ids": [
         "region_enfers_t00"
+      ]
+    },
+    {
+      "id": "faction_huacani",
+      "name": "Les Huacani, gardiens des terrasses",
+      "type": "ancient_peoples",
+      "alignment": "neutre",
+      "playable": false,
+      "visual_identity": null,
+      "leadership": null,
+      "territory": null,
+      "military_structure": null,
+      "politics": null,
+      "notes": [
+        "[DÉCISION] (v1.0.77) Les temples de l'île sont habités par un peuple vivant de l'île (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Faction locale non jouable proposée, à valider : les Huacani (race race_huacani), culte religion_huacani_soleil. Gouvernés par le Fils du Soleil (char_ile_gd_ataw_kantu) depuis le Grand Sanctuaire du Soleil ; environ 1 000 âmes réparties dans onze temples et leurs terrasses.",
+        "[GD] (v1.0.77) Trêve : les Huacani sont les plus anciens garants de la paix de l'île. La Pierre de la Trêve de Truceholm est une de leurs pierres d'alliance ; ils ont accepté les quatre comptoirs sur la côte à condition qu'on ne se batte ni dans les villes ni dans les temples (rule_treve_des_comptoirs).",
+        "[GD] (v1.0.77) Relations : neutres avec les deux blocs et les indépendants (game_design.faction_relations n'est pas modifié, faction non jouable) ; ils commercent l'or, la laine et les vivres des terrasses contre le fer et le sel. Alliés des neutres de Brinehaven et Truceholm ; ennemis des naufrageurs et des hors-la-loi, des géants de froid qui ont pris la salle basse du Temple du Givre, et du Dévoreur des Brumes qu'ils gardent endormi. Ils se méfient de la Légion infernale et de la Lune Noire, qui convoitent les âmes de leurs ancêtres et l'argent de leur Temple de la Lune."
+      ],
+      "faction_relations": [
+        {
+          "faction_id": "faction_neutral",
+          "relation": "allied"
+        },
+        {
+          "faction_id": "Hors-La-Loi",
+          "relation": "enemy"
+        }
+      ],
+      "ville_relations": [],
+      "region_id": "region_ile_de_la_treve",
+      "region_ids": [
+        "region_ile_de_la_treve"
       ]
     }
   ],
@@ -4117,6 +4151,42 @@
         "[BD-THS p.33-35] Trois strates dans la forêt elfique : Elfes des Bois (lisière), Elfes sylvains (profondeur), Hauts Elfes (cœur) ; l'Empereur les appelle « les asperges ».",
         "[BD-A2 pl.4] « le petit elfe des bois » (Pile-ou-Face enfant) ; « Un elfe ! Ça vaut cher un elfe » (pl.13).",
         "[DÉCISION] (v1.0.56) Sous-race de Pile-ou-Face (Q21) ; PNJ seulement."
+      ]
+    },
+    {
+      "id": "race_huacani",
+      "name": "Huacani (humains des terrasses)",
+      "playable": false,
+      "npc": true,
+      "companion": false,
+      "genders": [
+        "masculine",
+        "feminine"
+      ],
+      "origins": {
+        "summary": "Rameau humain de l'Île de la Trêve, descendant du peuple de la mer qui tenait l'île avant les comptoirs. Quand la mer a englouti les cités basses et leurs rois, les survivants sont montés sur les crêtes et y ont bâti leurs temples en terrasses.",
+        "homeland_notes": [
+          "Île de la Trêve (region_ile_de_la_treve) : les crêtes et les temples du bras ouest, du bras nord, du bras sud et de l'îlot."
+        ]
+      },
+      "faction_affiliations": [
+        {
+          "faction_id": "faction_huacani",
+          "status": "member",
+          "notes": [
+            "Seul peuple natif de l'île."
+          ]
+        }
+      ],
+      "abilities_traits": [
+        "Grimpeurs et coureurs des crêtes, souffle des hauteurs",
+        "Bâtisseurs de pierre taillée sans mortier, de terrasses et de canaux",
+        "Mémoire tenue par des cordes à nœuds (cordes-mémoires), sans écriture"
+      ],
+      "class_access": [],
+      "notes": [
+        "[GD] (v1.0.77) Peuple proposé pour le lot 6 du propriétaire (temples de style inca HABITÉS par un peuple vivant de l'île) ; nom et fiche à valider. Aucune source BD. PNJ seulement, comme race_elfe_des_bois (LORE_BD §16.6).",
+        "[GD] (v1.0.77) Teint cuivré, ponchos tissés à motifs en gradins, parures de plumes et d'or ; outils de bronze, ils achètent le fer aux comptoirs."
       ]
     }
   ],
@@ -35587,7 +35657,8 @@
         "[GD]",
         "ile_de_la_treve",
         "cooperation",
-        "treve"
+        "treve",
+        "temples"
       ],
       "difficulty": 3,
       "repeatable": false,
@@ -35597,7 +35668,7 @@
         "Accompagner l'envoyé de Lanternhold jusqu'au ponton.",
         "Accompagner l'envoyé de Duskmoor jusqu'au ponton.",
         "Protéger la navette contre les naufrageurs.",
-        "Assister au serment devant la Pierre de la Trêve (Truceholm)."
+        "Assister au serment devant la Pierre de la Trêve (Truceholm), pierre d'alliance des Huacani, en présence du Gardien de la Brume."
       ],
       "source_lore": [],
       "rewards": {
@@ -35620,7 +35691,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Coopération : ouverte à toutes les factions (for_factions vide) ; groupe mêlé encouragé. Débloque la trêve des comptoirs pour le joueur (rule_treve_des_comptoirs)."
+        "[GD] (v1.0.74) Coopération : ouverte à toutes les factions (for_factions vide) ; groupe mêlé encouragé. Débloque la trêve des comptoirs pour le joueur (rule_treve_des_comptoirs).",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Assister au serment devant la Pierre de la Trêve (Truceholm) ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": false
@@ -35634,13 +35706,14 @@
         "[GD]",
         "ile_de_la_treve",
         "affrontement",
-        "empire"
+        "empire",
+        "temples"
       ],
       "difficulty": 3,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
-        "Marquer les chênes de marine autour de Lanternhold.",
+        "Obtenir au Temple des Cimes le droit de couper les chênes de marine autour de Lanternhold, loin des temples.",
         "Escorter les bûcherons au Camp du Cap.",
         "Défendre le convoi contre les saboteurs de la Lune Noire (JcJ).",
         "Livrer le bois au quai impérial de Brinehaven."
@@ -35676,7 +35749,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Affrontement : contre-quête quest_ile_gd_coupes_noires (bloc de la Lune Noire)."
+        "[GD] (v1.0.74) Affrontement : contre-quête quest_ile_gd_coupes_noires (bloc de la Lune Noire).",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Obtenir au Temple des Cimes le droit de couper les chênes de marine autour de Lanternhold ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35691,14 +35765,15 @@
         "ile_de_la_treve",
         "affrontement",
         "lune_noire",
-        "contre_quete"
+        "contre_quete",
+        "temples"
       ],
       "difficulty": 3,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
         "Recevoir les ordres au comptoir de Duskmoor.",
-        "Repérer les chênes marqués par l'Empire.",
+        "Repérer les chênes marqués par l'Empire et les dénoncer aux prêtres du Temple des Cimes.",
         "Incendier le convoi entre le Camp du Cap et Brinehaven (JcJ).",
         "Rentrer à Duskmoor par la route du nord."
       ],
@@ -35733,7 +35808,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_bois_de_marine ; le combat a lieu hors des murs (trêve des comptoirs)."
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_bois_de_marine ; le combat a lieu hors des murs (trêve des comptoirs).",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Repérer les chênes marqués par l'Empire et les dénoncer aux prêtres du Temple des Cimes ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35749,13 +35825,14 @@
         "cooperation",
         "affrontement",
         "nains",
-        "dragons"
+        "dragons",
+        "temples"
       ],
       "difficulty": 3,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
-        "Prospecter l'ambre au pied de la falaise nord.",
+        "Prospecter l'ambre au pied de la falaise nord, sous le Temple du Givre, avec l'accord de ses gardiens.",
         "Repousser les géants de froid (creature_geant_de_froid).",
         "Tenir le chantier contre les Hauts Elfes (JcJ).",
         "Vendre l'ambre aux armateurs de Brinehaven."
@@ -35786,7 +35863,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Coopération Nains + Chevaliers-Dragons (alliés), affrontement avec les Hauts Elfes, leurs ennemis (game_design.faction_relations) : contre-quête quest_ile_gd_ambre_elfique."
+        "[GD] (v1.0.74) Coopération Nains + Chevaliers-Dragons (alliés), affrontement avec les Hauts Elfes, leurs ennemis (game_design.faction_relations) : contre-quête quest_ile_gd_ambre_elfique.",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Prospecter l'ambre au pied de la falaise nord ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35801,13 +35879,14 @@
         "ile_de_la_treve",
         "affrontement",
         "elfes",
-        "contre_quete"
+        "contre_quete",
+        "temples"
       ],
       "difficulty": 3,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
-        "Écouter les arbres de la falaise nord.",
+        "Écouter les arbres de la falaise nord, autour du Temple du Givre.",
         "Saboter le chantier des Nains (JcJ).",
         "Détourner les géants de froid vers les prospecteurs.",
         "Replanter la clairière ouverte par le chantier."
@@ -35838,7 +35917,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ambre_des_geants."
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ambre_des_geants.",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Écouter les arbres de la falaise nord ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35854,14 +35934,15 @@
         "cooperation",
         "affrontement",
         "legion",
-        "lune_noire"
+        "lune_noire",
+        "temples"
       ],
       "difficulty": 4,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
         "Recevoir le pacte d'un envoyé de la Légion à Duskmoor.",
-        "Ouvrir l'entrée du Tertre des Rois Noyés.",
+        "Forcer la Porte des Noyés du Temple des Ancêtres Noyés, l'entrée du Tertre des Rois Noyés (hors du temple : la paix des sanctuaires y interdit le combat).",
         "Enchaîner trois âmes royales.",
         "Repousser les Chevaliers venus sceller le tertre (JcJ)."
       ],
@@ -35892,7 +35973,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Coopération Légion infernale + Lune Noire (alliées, game_design.faction_relations), affrontement avec les Chevaliers de la Lumière et de la Justice : contre-quête quest_ile_gd_repos_des_noyes."
+        "[GD] (v1.0.74) Coopération Légion infernale + Lune Noire (alliées, game_design.faction_relations), affrontement avec les Chevaliers de la Lumière et de la Justice : contre-quête quest_ile_gd_repos_des_noyes.",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Forcer la Porte des Noyés du Temple des Ancêtres Noyés ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35908,14 +35990,15 @@
         "affrontement",
         "lumiere",
         "justice",
-        "contre_quete"
+        "contre_quete",
+        "temples"
       ],
       "difficulty": 4,
       "repeatable": false,
       "type": "[GD] Quête de l'Île de la Trêve (v1.0.74)",
       "steps": [
         "Recevoir l'eau bénite à la chapelle de Lanternhold.",
-        "Bénir les trois cryptes du tertre.",
+        "Bénir les trois cryptes du tertre, avec la gardienne des cordes-mémoires du Temple des Ancêtres Noyés.",
         "Briser les chaînes infernales.",
         "Chasser les démonistes du tertre (JcJ)."
       ],
@@ -35946,7 +36029,8 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ames_des_noyes."
+        "[GD] (v1.0.74) Contre-quête de quest_ile_gd_ames_des_noyes.",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Bénir les trois cryptes du tertre ; LORE_BD §16.6."
       ],
       "quest_kind": "group",
       "has_counter_quest": true
@@ -35960,7 +36044,8 @@
         "[GD]",
         "ile_de_la_treve",
         "cooperation",
-        "raid"
+        "raid",
+        "temples"
       ],
       "difficulty": 5,
       "repeatable": false,
@@ -35969,7 +36054,7 @@
         "Relever les traces du Dévoreur autour de la baie.",
         "Rallier un champion d'un autre bloc que le sien.",
         "Prêter serment à Truceholm, devant la Pierre de la Trêve.",
-        "Ouvrir le Gouffre de la Baie (raid_devoreur_des_brumes)."
+        "Ouvrir la Porte du Gouffre au Temple de la Brume (raid_devoreur_des_brumes)."
       ],
       "source_lore": [],
       "rewards": {
@@ -35992,7 +36077,198 @@
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.74) Quête entre factions de l'Île de la Trêve (objectif du propriétaire du 10/11/2026) ; nom et étapes à valider (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Coopération de toutes les factions (for_factions vide) contre le Dévoreur ; quête d'accès du raid multi-équipe raid_devoreur_des_brumes."
+        "[GD] (v1.0.74) Coopération de toutes les factions (for_factions vide) contre le Dévoreur ; quête d'accès du raid multi-équipe raid_devoreur_des_brumes.",
+        "[DÉCISION] (v1.0.77) Quête rattachée aux temples de l'île (demande du propriétaire du 10/11/2026) : Ouvrir la Porte du Gouffre au Temple de la Brume (raid_devoreur_des_brumes) ; LORE_BD §16.6."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_ile_gd_coureur_des_cretes",
+      "name": "Le Coureur des Crêtes",
+      "description": "Tamaru, coureur des crêtes huacani, porte des cordes-mémoires entre les temples. Le suivre de l'Oratoire du Col au Temple des Cimes, au Grand Sanctuaire du Soleil et à l'Autel des Sources, pour gagner le droit de passage des terrasses.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "huacani",
+        "temples",
+        "cooperation"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.77)",
+      "steps": [
+        "Poser une pierre sur le cairn de l'Oratoire du Col et rencontrer Tamaru.",
+        "Porter la première corde au Temple des Cimes.",
+        "Porter la deuxième corde au Grand Sanctuaire du Soleil et saluer le Fils du Soleil.",
+        "Porter la dernière corde à l'Autel des Sources.",
+        "Recevoir le droit de passage des terrasses."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 45
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.77) Quête du peuple des temples (Huacani) de l'Île de la Trêve, ouverte à toutes les factions ; nom et étapes à valider (LORE_BD §16.6).",
+        "[GD] (v1.0.77) Introduction aux Huacani et à leurs temples ; réputation auprès de faction_huacani."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_ile_gd_terrasses_affamees",
+      "name": "Les Terrasses Affamées",
+      "description": "Les naufrageurs des grottes pillent les greniers du Temple des Terrasses et ont brisé ses canaux. Réparer les canaux avec des outils de fer achetés à Brinehaven et reprendre le grain volé.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "huacani",
+        "temples",
+        "cooperation"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.77)",
+      "steps": [
+        "Écouter les cultivateurs du Temple des Terrasses.",
+        "Acheter des outils de fer à Brinehaven.",
+        "Réparer trois canaux des terrasses.",
+        "Reprendre le grain volé aux naufrageurs, sous le Temple de la Mère des Eaux."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 48
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.77) Quête du peuple des temples (Huacani) de l'Île de la Trêve, ouverte à toutes les factions ; nom et étapes à valider (LORE_BD §16.6).",
+        "[GD] (v1.0.77) Coopération de toutes les factions ; prépare le raid raid_grottes_des_naufrageurs."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_ile_gd_fil_des_ancetres",
+      "name": "Le Fil des Ancêtres",
+      "description": "Sami Qori a perdu des cordes-mémoires dans les cryptes hautes du Tertre des Rois Noyés. Les rapporter au Temple des Ancêtres Noyés pour apprendre qui étaient les rois de la mer, puis choisir entre lier leurs âmes et leur rendre le repos.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "huacani",
+        "temples",
+        "cooperation"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.77)",
+      "steps": [
+        "Rencontrer Sami Qori au Temple des Ancêtres Noyés.",
+        "Franchir la Porte des Noyés et fouiller les cryptes hautes du tertre.",
+        "Rapporter les cordes-mémoires.",
+        "Écouter l'histoire des rois de la mer, ancêtres des Huacani."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 50
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.77) Quête du peuple des temples (Huacani) de l'Île de la Trêve, ouverte à toutes les factions ; nom et étapes à valider (LORE_BD §16.6).",
+        "[GD] (v1.0.77) Ouvre les quêtes quest_ile_gd_ames_des_noyes et quest_ile_gd_repos_des_noyes ; les Huacani préfèrent le repos de leurs ancêtres."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_ile_gd_renegat_de_la_brume",
+      "name": "Le Renégat de la Brume",
+      "description": "Amaru, prêtre chassé du Temple de la Brume, veut réveiller le Dévoreur. Le traquer du Temple de la Lune d'Argent jusqu'au bord du Gouffre de la Baie et briser ses chants avant qu'il n'ouvre la Porte du Gouffre.",
+      "category": "faction",
+      "tags": [
+        "[GD]",
+        "ile_de_la_treve",
+        "huacani",
+        "temples",
+        "cooperation",
+        "raid"
+      ],
+      "difficulty": 4,
+      "repeatable": false,
+      "type": "[GD] Quête de l'Île de la Trêve (v1.0.77)",
+      "steps": [
+        "Recevoir la mission de Willak Rumi au Temple de la Brume.",
+        "Interroger les prêtresses du Temple de la Lune d'Argent.",
+        "Suivre la piste d'Amaru sur l'îlot.",
+        "Vaincre Amaru au bord du gouffre (hors du temple)."
+      ],
+      "source_lore": [],
+      "rewards": {
+        "xp_weight": "quete_principale"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 54
+        }
+      ],
+      "region_id": "region_ile_de_la_treve",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.77) Quête du peuple des temples (Huacani) de l'Île de la Trêve, ouverte à toutes les factions ; nom et étapes à valider (LORE_BD §16.6).",
+        "[GD] (v1.0.77) Précède quest_ile_gd_chant_du_devoreur ; Amaru (char_ile_gd_amaru) est un PNJ ennemi."
       ],
       "quest_kind": "group",
       "has_counter_quest": false
@@ -37229,7 +37505,7 @@
     {
       "id": "raid_tertre_des_rois_noyes",
       "name": "Le Tertre des Rois Noyés",
-      "description": "Raid simple, à une équipe : descendre dans les cryptes inondées du Tertre des Rois Noyés, sous la forêt du bras ouest, à travers la cour spectrale, jusqu'au trône du Roi noyé.",
+      "description": "Raid simple, à une équipe : du Temple des Ancêtres Noyés, au sommet de la crête du bras ouest, franchir la Porte des Noyés et descendre dans les cryptes inondées du Tertre des Rois Noyés, à travers la cour spectrale, jusqu'au trône du Roi noyé. Les gardiens huacani ouvrent la porte à qui promet de rendre le repos à leurs ancêtres.",
       "min_teams": 1,
       "min_players_per_team": 5,
       "min_players_total": 5,
@@ -37245,13 +37521,14 @@
       },
       "notes": [
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Lieu lieu_tertre_des_rois_noyes ; boss creature_roi_noye ; niveau conseillé 45 à 50 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+        "[GD] (v1.0.74) Lieu lieu_tertre_des_rois_noyes ; boss creature_roi_noye ; niveau conseillé 45 à 50 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
+        "[DÉCISION] (v1.0.77) Raid rattaché au Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres), temple de style inca habité par les Huacani (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_lanternhold) ; LORE_BD §16.6."
       ]
     },
     {
       "id": "raid_grottes_des_naufrageurs",
       "name": "Les Grottes des Naufrageurs",
-      "description": "Raid simple, à une équipe : prendre d'assaut les grottes marines de la côte sud-ouest, éteindre les faux fanaux et abattre le capitaine Marée-Rouge, sur la prime des armateurs de Brinehaven.",
+      "description": "Raid simple, à une équipe : depuis le Temple de la Mère des Eaux, au sommet de la falaise sud-ouest, descendre l'escalier taillé jusqu'aux grottes marines, reprendre le feu sacré volé, éteindre les faux fanaux et abattre le capitaine Marée-Rouge, sur la prime des armateurs de Brinehaven et des gardiennes du temple.",
       "min_teams": 1,
       "min_players_per_team": 5,
       "min_players_total": 5,
@@ -37267,13 +37544,14 @@
       },
       "notes": [
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Lieu lieu_grottes_des_naufrageurs ; boss creature_capitaine_maree_rouge ; niveau conseillé 50 à 55 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+        "[GD] (v1.0.74) Lieu lieu_grottes_des_naufrageurs ; boss creature_capitaine_maree_rouge ; niveau conseillé 50 à 55 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
+        "[DÉCISION] (v1.0.77) Raid rattaché au Temple de la Mère des Eaux (lieu_ile_gd_temple_mere_des_eaux), temple de style inca habité par les Huacani (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_brinehaven) ; LORE_BD §16.6."
       ]
     },
     {
       "id": "raid_taniere_du_jarl",
       "name": "La Tanière du Jarl de Givre",
-      "description": "Raid simple, à une équipe : gravir la falaise nord, forcer la grande salle des géants de froid et renverser le Jarl de Givre sur son trône de glace.",
+      "description": "Raid simple, à une équipe : gravir les terrasses du Temple du Givre, au sommet de la falaise nord, descendre dans sa salle basse prise par les géants de froid et renverser le Jarl de Givre sur son trône de glace.",
       "min_teams": 1,
       "min_players_per_team": 5,
       "min_players_total": 5,
@@ -37289,13 +37567,14 @@
       },
       "notes": [
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
-        "[GD] (v1.0.74) Lieu lieu_taniere_du_jarl ; boss creature_jarl_de_givre ; niveau conseillé 55 à 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider."
+        "[GD] (v1.0.74) Lieu lieu_taniere_du_jarl ; boss creature_jarl_de_givre ; niveau conseillé 55 à 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
+        "[DÉCISION] (v1.0.77) Raid rattaché au Temple du Givre (lieu_ile_gd_temple_du_givre), temple de style inca habité par les Huacani (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_duskmoor) ; LORE_BD §16.6."
       ]
     },
     {
       "id": "raid_devoreur_des_brumes",
       "name": "Le Dévoreur des Brumes",
-      "description": "Raid à plusieurs équipes, factions mêlées : quand le Dévoreur remonte du Gouffre de la Baie, les envoyés de toutes les factions jurent à Truceholm de combattre ensemble ; chaque équipe tient une tentacule, puis toutes descendent dans le gouffre pour l'achever.",
+      "description": "Raid à plusieurs équipes, factions mêlées : quand le Dévoreur remonte du Gouffre de la Baie, les envoyés de toutes les factions jurent à Truceholm de combattre ensemble ; le Gardien de la Brume ouvre la Porte du Gouffre du Temple de la Brume ; chaque équipe tient une tentacule, puis toutes descendent dans le gouffre pour l'achever.",
       "min_teams": 3,
       "min_players_per_team": 5,
       "min_players_total": 15,
@@ -37312,7 +37591,8 @@
       "notes": [
         "[DÉCISION] (v1.0.74) Raid multi-équipe de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Lieu lieu_gouffre_de_la_baie ; boss creature_devoreur_des_brumes ; niveau conseillé 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
-        "[GD] (v1.0.74) Factions mêlées : ouvert à toutes les factions (for_factions vide) ; les équipes doivent venir d'au moins deux blocs (Empire, Lune Noire, indépendants : game_design.faction_relations) [GD, règle de formation à implémenter]. Quête d'accès quest_ile_gd_chant_du_devoreur."
+        "[GD] (v1.0.74) Factions mêlées : ouvert à toutes les factions (for_factions vide) ; les équipes doivent venir d'au moins deux blocs (Empire, Lune Noire, indépendants : game_design.faction_relations) [GD, règle de formation à implémenter]. Quête d'accès quest_ile_gd_chant_du_devoreur.",
+        "[DÉCISION] (v1.0.77) Raid rattaché au Temple de la Brume (lieu_ile_gd_temple_de_la_brume), temple de style inca habité par les Huacani (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_truceholm) ; LORE_BD §16.6."
       ]
     }
   ],
@@ -159014,6 +159294,146 @@
         "[BD-M2 p.26] Révèle que Sekh a tué l'archimage et que l'ankh est « une puissante relique qui sort de l'Oblivion », l'Oblivion étant un « sort divin ».",
         "[ÉPOQUE] avant T1."
       ]
+    },
+    {
+      "id": "char_ile_gd_ataw_kantu",
+      "name": "Ataw Kantu",
+      "importance": "secondary",
+      "alive": true,
+      "tomes": [],
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "class_id": "",
+      "role": "seigneur_huacani",
+      "visual": "Homme d'âge mûr, coiffe de plumes et disque d'or sur la poitrine, manteau tissé de gradins.",
+      "personality": "Solennel, patient, fier de son peuple ; ne cède jamais sur la paix des temples.",
+      "description": "Fils du Soleil et Seigneur des Terrasses, chef des Huacani au Grand Sanctuaire du Soleil. A juré la trêve avec les armateurs de Brinehaven quand les comptoirs se sont installés sur la côte.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Le soleil monte sur nos crêtes avant de monter sur vos comptoirs. Souvenez-vous-en.",
+      "source": "[GD] (v1.0.77)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [
+        "dial_ile_gd_ataw_kantu"
+      ],
+      "notes": [
+        "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Grand Sanctuaire du Soleil (lieu_ile_gd_grand_sanctuaire_soleil) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "char_ile_gd_willak_rumi",
+      "name": "Willak Rumi",
+      "importance": "secondary",
+      "alive": true,
+      "tomes": [],
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "class_id": "",
+      "role": "gardien_de_la_brume",
+      "visual": "Vieillard maigre aux yeux voilés, robe grise brodée de spirales de brume, bâton de bronze.",
+      "personality": "Grave, inquiet, parle par images ; craint chaque nuit de brume.",
+      "description": "Gardien de la Brume, grand prêtre du Temple de la Brume. Ses rites tiennent le Dévoreur endormi sous la baie ; il appelle toutes les factions quand le monstre s'éveille.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "La brume est son souffle. Tant que nos feux brûlent, il rêve.",
+      "source": "[GD] (v1.0.77)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [
+        "dial_ile_gd_willak_rumi"
+      ],
+      "notes": [
+        "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Temple de la Brume (lieu_ile_gd_temple_de_la_brume) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "char_ile_gd_sami_qori",
+      "name": "Sami Qori",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [],
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "class_id": "",
+      "role": "gardienne_des_cordes",
+      "visual": "Femme d'âge moyen, mains couvertes de cordelettes nouées, parures d'or aux oreilles.",
+      "personality": "Méticuleuse, chaleureuse, rancunière envers ceux qui troublent les morts.",
+      "description": "Gardienne des cordes-mémoires au Temple des Ancêtres Noyés : elle lit dans les nœuds l'histoire des rois de la mer.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Chaque nœud est un nom. Celui qui défait la corde tue une seconde fois.",
+      "source": "[GD] (v1.0.77)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [
+        "dial_ile_gd_sami_qori"
+      ],
+      "notes": [
+        "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "char_ile_gd_tamaru",
+      "name": "Tamaru",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [],
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "class_id": "",
+      "role": "coureur_des_cretes",
+      "visual": "Jeune homme sec et rapide, pieds nus, conque à la ceinture, cordes-mémoires en bandoulière.",
+      "personality": "Rieur, curieux des étrangers, infatigable.",
+      "description": "Coureur des crêtes : il porte les messages entre les temples et les comptoirs ; premier Huacani que rencontrent les joueurs, à l'Oratoire du Col.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "D'un sommet à l'autre avant que l'ombre ait bougé : c'est ça, courir les crêtes !",
+      "source": "[GD] (v1.0.77)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [
+        "dial_ile_gd_tamaru"
+      ],
+      "notes": [
+        "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Oratoire du Col (lieu_ile_gd_oratoire_du_col) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "char_ile_gd_amaru",
+      "name": "Amaru le Renégat",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [],
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "class_id": "",
+      "role": "pretre_renegat",
+      "visual": "Homme au visage peint de cendre, robe de prêtre déchirée, collier d'écailles grises.",
+      "personality": "Exalté, rancunier, persuadé que le Dévoreur est un dieu.",
+      "description": "Prêtre chassé du Temple de la Brume : il veut réveiller le Dévoreur des Brumes pour noyer les comptoirs. Caché un temps au Temple de la Lune d'Argent.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Vos feux l'endorment ; mes chants le réveilleront. La mer reprendra tout.",
+      "source": "[GD] (v1.0.77)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [
+        "dial_ile_gd_amaru"
+      ],
+      "notes": [
+        "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Temple de la Lune d'Argent (lieu_ile_gd_temple_de_la_lune) ; LORE_BD §16.6."
+      ]
     }
   ],
   "creatures": [
@@ -166529,7 +166949,10 @@
         "[GD] (v1.0.74) Trêve des comptoirs (rule_treve_des_comptoirs) : pas de combat dans l'enceinte des quatre villes ; hors les murs, les factions coopèrent ou s'affrontent (quêtes et contre-quêtes de l'île).",
         "[GD] (v1.0.74) Villes : Brinehaven (port franc neutre, N017_W010), Truceholm (îlot, N019_W010), Duskmoor (comptoir de la Lune Noire, N022_W010), Lanternhold (comptoir de l'Empire, N021_W014). Raids : raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl (une équipe), raid_devoreur_des_brumes (plusieurs équipes).",
         "[GD] (v1.0.74) Économie : bois de marine, fourrures, ambre, poisson ; exporte bois et fourrures par Brinehaven ; importe vivres, armes et outils (voir regle_eco_productions_regions).",
-        "[INFÉRÉ] (v1.0.74) Monde jouable : région ile_de_la_treve de world_master.json (W015 à W009, N016 à N023) ; ses 54 cellules (île et haut-fond) sont générées."
+        "[INFÉRÉ] (v1.0.74) Monde jouable : région ile_de_la_treve de world_master.json (W015 à W009, N016 à N023) ; ses 54 cellules (île et haut-fond) sont générées.",
+        "[DÉCISION] (v1.0.77) Nom « Île de la Trêve » gardé et rendu visible (name des 20 cellules terrestres, carte de l'éditeur) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Relief au dénivelé important : pics et crêtes boisés (jusqu'à environ 550 m) au cœur des branches, falaises sur la mer, vallées encaissées ; côte inchangée ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Peuple natif : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), qui habitent onze temples de style inca (lieu_ile_gd_grand_sanctuaire_soleil, lieu_ile_gd_temple_des_ancetres, lieu_ile_gd_temple_de_la_brume, lieu_ile_gd_temple_du_givre, lieu_ile_gd_temple_mere_des_eaux, lieu_ile_gd_temple_de_la_lune, lieu_ile_gd_temple_des_cimes, lieu_ile_gd_temple_des_terrasses, lieu_ile_gd_oratoire_du_col, lieu_ile_gd_autel_des_sources, lieu_ile_gd_oratoire_de_l_aube) ; LORE_BD §16.6."
       ]
     }
   ],
@@ -177908,6 +178331,131 @@
         }
       ],
       "notes": []
+    },
+    {
+      "id": "dial_ile_gd_ataw_kantu",
+      "name": "Ataw Kantu (Grand Sanctuaire du Soleil)",
+      "npc_name": "Ataw Kantu",
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "location_ville_id": "",
+      "lines": [
+        {
+          "speaker": "char_ile_gd_ataw_kantu",
+          "text": "Étranger, tu marches sur les terrasses de mes ancêtres. Ici, nul ne tire l'épée."
+        },
+        {
+          "speaker": "char_ile_gd_ataw_kantu",
+          "text": "Les comptoirs ont juré la trêve devant notre pierre. Tant qu'ils la tiennent, nos greniers leur sont ouverts."
+        },
+        {
+          "speaker": "char_ile_gd_ataw_kantu",
+          "text": "Va voir Tamaru au col : un coureur des crêtes t'apprendra les chemins de nos temples."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.77) Dialogue proposé, à valider ; lieu lieu_ile_gd_grand_sanctuaire_soleil (temple, pas de ville) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "dial_ile_gd_willak_rumi",
+      "name": "Willak Rumi (Temple de la Brume)",
+      "npc_name": "Willak Rumi",
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "location_ville_id": "",
+      "lines": [
+        {
+          "speaker": "char_ile_gd_willak_rumi",
+          "text": "Sens-tu le froid qui monte de la baie ? Le Dévoreur se retourne dans son sommeil."
+        },
+        {
+          "speaker": "char_ile_gd_willak_rumi",
+          "text": "Un des nôtres, Amaru, a renié la Brume. S'il chante au bord du gouffre, nos feux ne suffiront plus."
+        },
+        {
+          "speaker": "char_ile_gd_willak_rumi",
+          "text": "Quand la Porte du Gouffre s'ouvrira, il faudra que vos factions oublient leurs haines."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.77) Dialogue proposé, à valider ; lieu lieu_ile_gd_temple_de_la_brume (temple, pas de ville) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "dial_ile_gd_sami_qori",
+      "name": "Sami Qori (Temple des Ancêtres Noyés)",
+      "npc_name": "Sami Qori",
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "location_ville_id": "",
+      "lines": [
+        {
+          "speaker": "char_ile_gd_sami_qori",
+          "text": "Ces nœuds racontent les rois de la mer. Ils étaient nos pères."
+        },
+        {
+          "speaker": "char_ile_gd_sami_qori",
+          "text": "Leurs âmes errent dans le Tertre, sous ce temple. Certains étrangers veulent les enchaîner, d'autres les bénir."
+        },
+        {
+          "speaker": "char_ile_gd_sami_qori",
+          "text": "Rapporte-moi les cordes perdues dans les cryptes hautes, et je te dirai qui ils étaient."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.77) Dialogue proposé, à valider ; lieu lieu_ile_gd_temple_des_ancetres (temple, pas de ville) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "dial_ile_gd_tamaru",
+      "name": "Tamaru (Oratoire du Col)",
+      "npc_name": "Tamaru",
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "location_ville_id": "",
+      "lines": [
+        {
+          "speaker": "char_ile_gd_tamaru",
+          "text": "Hé ! Tu viens des comptoirs ? Pose une pierre sur le cairn, c'est la coutume."
+        },
+        {
+          "speaker": "char_ile_gd_tamaru",
+          "text": "J'ai trois messages à porter : au Temple des Cimes, au Grand Sanctuaire et à l'Autel des Sources. Tu me suis ?"
+        },
+        {
+          "speaker": "char_ile_gd_tamaru",
+          "text": "Ne coupe pas les arbres près des temples : le Fils du Soleil ne le pardonne pas."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.77) Dialogue proposé, à valider ; lieu lieu_ile_gd_oratoire_du_col (temple, pas de ville) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "dial_ile_gd_amaru",
+      "name": "Amaru le Renégat (Temple de la Lune d'Argent)",
+      "npc_name": "Amaru le Renégat",
+      "faction_id": "faction_huacani",
+      "race_id": "race_huacani",
+      "location_ville_id": "",
+      "lines": [
+        {
+          "speaker": "char_ile_gd_amaru",
+          "text": "Encore un chien des comptoirs ! Votre trêve est une chaîne."
+        },
+        {
+          "speaker": "char_ile_gd_amaru",
+          "text": "La brume se lève : écoute-le respirer sous la baie."
+        },
+        {
+          "speaker": "char_ile_gd_amaru",
+          "text": "Tue-moi, et un autre chantera à ma place."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.77) Dialogue proposé, à valider ; lieu lieu_ile_gd_temple_de_la_lune (temple, pas de ville) ; LORE_BD §16.6."
+      ]
     }
   ],
   "cross_rules": {
@@ -181320,6 +181868,180 @@
           "[GD] (v1.0.58) Fiche créée par le domaine GD « religions » ; fêtes placées dans regle_canon_calendrier ; index : regle_calendrier_fetes_religieuses.",
           "[GD] (v1.0.68) Région de départ de Wyrmhallow : Cairn des Ailes tombées ajouté aux lieux de culte (LORE_BD §15.5)."
         ]
+      },
+      {
+        "id": "religion_huacani_soleil",
+        "name": "Le Soleil des Cimes",
+        "alias": [
+          "culte huacani",
+          "culte des terrasses"
+        ],
+        "type": "culte",
+        "statut_epoque": "Actif à l'époque du jeu sur l'Île de la Trêve, seul culte natif de l'île.",
+        "description": "Culte des Huacani : le Soleil des Cimes, sa sœur la Lune d'Argent, la Mère des Eaux et les esprits des sommets. Les temples sont bâtis au plus haut, là où le soleil se lève en premier, depuis que la mer a englouti les rois de la côte ; les prêtres de la Brume gardent endormi le Dévoreur.",
+        "doctrine": [
+          "[GD] Le Soleil des Cimes a sauvé ceux qui sont montés vers lui quand la mer a pris les cités basses.",
+          "[GD] Les morts veillent sur les vivants depuis les tours funéraires ; un ancêtre sans repos devient un noyé.",
+          "[GD] La Brume est l'haleine du Dévoreur : tant que les rites sont tenus, il dort sous la baie.",
+          "[GD] Nul sang ne coule dans un temple : la paix des sanctuaires est le modèle de la trêve des comptoirs."
+        ],
+        "divinites": [
+          {
+            "nom": "Le Soleil des Cimes",
+            "person_id": "",
+            "role": "Dieu du soleil et des sommets, père du Fils du Soleil.",
+            "source": "[GD]"
+          },
+          {
+            "nom": "La Lune d'Argent",
+            "person_id": "",
+            "role": "Sœur du Soleil, déesse des nuits et des marées.",
+            "source": "[GD]"
+          },
+          {
+            "nom": "La Mère des Eaux",
+            "person_id": "",
+            "role": "Mer nourricière et dangereuse, mère des noyés.",
+            "source": "[GD]"
+          },
+          {
+            "nom": "Les esprits des sommets",
+            "person_id": "",
+            "role": "Esprits de chaque pic de l'île.",
+            "source": "[GD]"
+          }
+        ],
+        "clerge": [
+          {
+            "rang": 1,
+            "titre": "Fils du Soleil",
+            "description": "[GD] Seigneur des Terrasses, chef du culte et du peuple.",
+            "person_ids": [
+              "char_ile_gd_ataw_kantu"
+            ]
+          },
+          {
+            "rang": 2,
+            "titre": "Gardien de la Brume",
+            "description": "[GD] Grand prêtre du Temple de la Brume, maître des rites qui tiennent le Dévoreur endormi.",
+            "person_ids": [
+              "char_ile_gd_willak_rumi"
+            ]
+          },
+          {
+            "rang": 3,
+            "titre": "Gardiennes des cordes-mémoires",
+            "description": "[GD] Tisseuses et mémoire du peuple.",
+            "person_ids": [
+              "char_ile_gd_sami_qori"
+            ]
+          },
+          {
+            "rang": 4,
+            "titre": "Coureurs des crêtes et gardiens des oratoires",
+            "description": "[GD] Messagers entre les temples et les comptoirs.",
+            "person_ids": [
+              "char_ile_gd_tamaru"
+            ]
+          }
+        ],
+        "lieux_de_culte": [
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_grand_sanctuaire_soleil",
+            "nom": "Grand Sanctuaire du Soleil",
+            "nature": "[GD] Grand sanctuaire à degrés : Siège du Fils du Soleil et du conseil des Huacani ; culte du Soleil des Cimes ; trésor d'or du peuple."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_des_ancetres",
+            "nom": "Temple des Ancêtres Noyés",
+            "nature": "[GD] Grand sanctuaire à degrés : Culte des ancêtres : les rois de la mer dont descendent les Huacani. Sa terrasse basse ouvre sur le chemin des cryptes du Tertre des Rois Noyés (lieu_tertre_des_rois_noyes), 800 m plus bas sur le flanc."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_de_la_brume",
+            "nom": "Temple de la Brume",
+            "nature": "[GD] Grand sanctuaire à degrés : Bâti au bord du Gouffre de la Baie (lieu_gouffre_de_la_baie) pour le sceller : ses rites gardent endormi le Dévoreur des Brumes. La Porte du Gouffre, scellée, s'ouvre pour le raid."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_du_givre",
+            "nom": "Temple du Givre",
+            "nature": "[GD] Temple moyen : Temple des esprits des sommets du nord. Les géants de froid ont pris sa salle basse creusée dans la falaise, devenue la Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; les Huacani tiennent encore le sommet."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_mere_des_eaux",
+            "nom": "Temple de la Mère des Eaux",
+            "nature": "[GD] Temple moyen : Temple de la mer : son fanal sacré guidait les navires. Les naufrageurs des grottes au pied de la falaise (lieu_grottes_des_naufrageurs) volent son feu pour allumer leurs faux fanaux."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_de_la_lune",
+            "nom": "Temple de la Lune d'Argent",
+            "nature": "[GD] Temple moyen : Temple de la Lune d'Argent, sœur du Soleil ; murs plaqués d'argent. Convoité par la Lune Noire, qui y voit un culte rival ; refuge d'Amaru le Renégat avant sa fuite."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_des_cimes",
+            "nom": "Temple des Cimes",
+            "nature": "[GD] Temple moyen : Observatoire et temple des esprits des sommets : la Pierre-qui-attache-le-Soleil y marque les solstices."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_temple_des_terrasses",
+            "nom": "Temple des Terrasses",
+            "nature": "[GD] Temple moyen : Grenier du peuple : temple des moissons, greniers de pierre et marché avec les marchands de Brinehaven."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_oratoire_du_col",
+            "nom": "Oratoire du Col",
+            "nature": "[GD] Autel ou petit oratoire en terrasses : Oratoire des voyageurs : chacun pose une pierre sur le cairn des passants ; relais des coureurs des crêtes."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_autel_des_sources",
+            "nom": "Autel des Sources",
+            "nature": "[GD] Autel ou petit oratoire en terrasses : Fontaines sacrées : l'eau des crêtes coule de bassin en bassin par des canaux de pierre ; on y purifie les offrandes."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_ile_gd_oratoire_de_l_aube",
+            "nom": "Oratoire de l'Aube",
+            "nature": "[GD] Autel ou petit oratoire en terrasses : Autel tourné vers le levant : au solstice, le premier soleil passe dans la porte trapézoïdale ; premier temple que voient les voyageurs de Brinehaven."
+          }
+        ],
+        "rites": [
+          "[GD] Offrande d'or et de grain au lever du soleil, sur la plus haute terrasse.",
+          "[GD] Nouage des cordes-mémoires à chaque naissance et à chaque mort.",
+          "[GD] Veille de la Brume : chants et feux au bord du Gouffre de la Baie, chaque nuit de brume."
+        ],
+        "symboles": [
+          "[GD] Disque d'or rayonnant, gradins, porte trapézoïdale, corde à nœuds."
+        ],
+        "fetes": [],
+        "faction_ids": [
+          "faction_huacani"
+        ],
+        "race_ids": [
+          "race_huacani"
+        ],
+        "class_ids": [],
+        "person_ids": [
+          "char_ile_gd_ataw_kantu",
+          "char_ile_gd_willak_rumi",
+          "char_ile_gd_sami_qori",
+          "char_ile_gd_tamaru"
+        ],
+        "regles_liees": [
+          "rule_treve_des_comptoirs"
+        ],
+        "source": "[GD] (v1.0.77) aucune source BD ; style inca demandé par le propriétaire",
+        "notes": [
+          "[GD] (v1.0.77) Culte proposé pour le peuple des temples de l'Île de la Trêve, à valider ; convention v1.0.58 (lore.religions). Fêtes à placer dans le calendrier (regle_canon_calendrier) si le culte est retenu (LORE_BD §16.6)."
+        ]
       }
     ]
   },
@@ -182666,7 +183388,7 @@
     },
     {
       "id": "N022_W013",
-      "name": "cell_N022_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -182680,19 +183402,25 @@
         "creature_geant_de_froid",
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Col boisé entre les crêtes du bras ouest et du bras nord",
+        "Oratoire du Col et son cairn des passants"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Oratoire du Col (lieu_ile_gd_oratoire_du_col), autel ou petit oratoire en terrasses habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N022_W012",
-      "name": "cell_N022_W012",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -182705,18 +183433,24 @@
         "creature_loup_des_brumes",
         "creature_jarl_de_givre"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Crête boisée de conifères culminant vers 550 m au-dessus de la mer, au bord de la falaise nord",
+        "Falaise nord tombant dans la mer ; Temple du Givre au sommet, Tanière du Jarl dans la paroi"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n022_w012 (section reliefs, 500 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple du Givre (lieu_ile_gd_temple_du_givre), temple moyen habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N022_W011",
-      "name": "cell_N022_W011",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -182730,17 +183464,21 @@
         "creature_geant_de_froid",
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Forêt du bras nord entre deux crêtes, falaises (environ 250 m) sur la mer au nord"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : forêt à falaises sur la mer (dénivelé important demandé par le propriétaire le 10/11/2026). Monde jouable : massif côtier massif_n022_w011 (240 m) dans la section reliefs du master ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N022_W010",
-      "name": "cell_N022_W010",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -182754,11 +183492,15 @@
         "creature_geant_de_froid",
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Bout boisé et bas du bras nord (Duskmoor)"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Ville Duskmoor (town_duskmoor) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Ville Duskmoor (town_duskmoor) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -183587,7 +184329,7 @@
     },
     {
       "id": "N021_W014",
-      "name": "cell_N021_W014",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -183601,20 +184343,24 @@
         "creature_geant_de_froid",
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Plateau côtier boisé au pied des pics du bras ouest (Lanternhold)"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Ville Lanternhold (town_lanternhold) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Ville Lanternhold (town_lanternhold) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N021_W013",
-      "name": "cell_N021_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -183626,10 +184372,16 @@
         "creature_geant_de_froid",
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Pic boisé (environ 500 m) au cœur du bras ouest, au-dessus de Lanternhold",
+        "Ravins encaissés vers la baie ; Temple des Cimes et sa pierre solaire au sommet"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n021_w013 (section reliefs, 480 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple des Cimes (lieu_ile_gd_temple_des_cimes), temple moyen habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -184529,9 +185281,9 @@
     },
     {
       "id": "N020_W014",
-      "name": "cell_N020_W014",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184542,17 +185294,23 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Plus haut sommet de l'île (environ 550 m), forêt de conifères jusqu'aux crêtes",
+        "Falaises sur la mer à l'ouest ; Grand Sanctuaire du Soleil et ses terrasses de culture au sommet"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n020_w014 (section reliefs, 550 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Grand Sanctuaire du Soleil (lieu_ile_gd_grand_sanctuaire_soleil), grand sanctuaire à degrés habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N020_W013",
-      "name": "cell_N020_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -184565,10 +185323,14 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Vallée boisée encaissée entre les pics du bras ouest (sentier du Tertre)"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -184596,9 +185358,9 @@
     },
     {
       "id": "N020_W011",
-      "name": "cell_N020_W011",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -184610,18 +185372,24 @@
         "creature_loup_des_brumes",
         "creature_devoreur_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Butte boisée de l'îlot (environ 370 m), à pic sur la baie à l'ouest",
+        "Temple de la Brume au bord du Gouffre de la Baie"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Gouffre de la Baie (lieu_gouffre_de_la_baie) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Gouffre de la Baie (lieu_gouffre_de_la_baie) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n020_w011 (section reliefs, 380 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple de la Brume (lieu_ile_gd_temple_de_la_brume), grand sanctuaire à degrés habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N020_W010",
-      "name": "cell_N020_W010",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -184634,10 +185402,14 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Forêt de l'îlot, versant est"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -185474,7 +186246,7 @@
     },
     {
       "id": "N019_W014",
-      "name": "cell_N019_W014",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -185487,19 +186259,25 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Vallée boisée encaissée du bras ouest, falaises (environ 300 m) sur la mer à l'ouest",
+        "Autel des Sources et ses bassins en terrasses"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : forêt à falaises sur la mer (dénivelé important demandé par le propriétaire le 10/11/2026). Monde jouable : massif côtier massif_n019_w014 (260 m) dans la section reliefs du master ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Autel des Sources (lieu_ile_gd_autel_des_sources), autel ou petit oratoire en terrasses habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N019_W013",
-      "name": "cell_N019_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -185512,11 +186290,17 @@
         "creature_loup_des_brumes",
         "creature_roi_noye"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Crête boisée (environ 520 m) au milieu du bras ouest, flancs en terrasses",
+        "Temple des Ancêtres Noyés au sommet ; Tertre des Rois Noyés sur le flanc, 800 m plus bas"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Tertre des Rois Noyés (lieu_tertre_des_rois_noyes) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Tertre des Rois Noyés (lieu_tertre_des_rois_noyes) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n019_w013 (section reliefs, 520 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres), grand sanctuaire à degrés habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -185544,7 +186328,7 @@
     },
     {
       "id": "N019_W011",
-      "name": "cell_N019_W011",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -185557,17 +186341,21 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Forêt de l'îlot, versant sud, face à Brinehaven"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N019_W010",
-      "name": "cell_N019_W010",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -185580,11 +186368,15 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Îlot boisé, butte centrale (Truceholm)"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Ville Truceholm (town_truceholm) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Ville Truceholm (town_truceholm) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -186408,7 +187200,7 @@
     },
     {
       "id": "N018_W014",
-      "name": "cell_N018_W014",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -186423,19 +187215,25 @@
         "creature_naufrageur",
         "creature_capitaine_maree_rouge"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Côte sud-ouest à falaises (environ 270 m), grottes marines au pied",
+        "Temple de la Mère des Eaux au sommet de la falaise"
+      ],
       "notes": [
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Grottes des Naufrageurs (lieu_grottes_des_naufrageurs) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Grottes des Naufrageurs (lieu_grottes_des_naufrageurs) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : forêt à falaises sur la mer (dénivelé important demandé par le propriétaire le 10/11/2026). Monde jouable : massif côtier massif_n018_w014 (280 m) dans la section reliefs du master ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple de la Mère des Eaux (lieu_ile_gd_temple_mere_des_eaux), temple moyen habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N018_W013",
-      "name": "cell_N018_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -186446,9 +187244,15 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Pic boisé (environ 490 m) au sud du bras ouest",
+        "Temple de la Lune d'Argent au sommet ; vallon vers le Camp du Cap"
+      ],
       "notes": [
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n018_w013 (section reliefs, 480 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple de la Lune d'Argent (lieu_ile_gd_temple_de_la_lune), temple moyen habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -187318,7 +188122,7 @@
     },
     {
       "id": "N017_W013",
-      "name": "cell_N017_W013",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -187332,19 +188136,23 @@
         "creature_loup_des_brumes",
         "creature_naufrageur"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Vallon boisé au coin sud-ouest de l'île (Camp du Cap)"
+      ],
       "notes": [
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Camp du Cap (lieu_camp_du_cap) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Camp du Cap (lieu_camp_du_cap) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W012",
-      "name": "cell_N017_W012",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
-      "terrain_type": "forest",
+      "terrain_type": "mountain",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -187355,16 +188163,22 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Crête boisée (environ 470 m) du bras sud, falaises sur la mer au sud",
+        "Temple des Terrasses et ses gradins de culture au sommet ; la route de Brinehaven passe sur le flanc nord"
+      ],
       "notes": [
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n017_w012 (section reliefs, 480 m) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Temple des Terrasses (lieu_ile_gd_temple_des_terrasses), temple moyen habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W011",
-      "name": "cell_N017_W011",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -187377,16 +188191,22 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Forêt du bras sud, falaises (environ 300 m) sur la mer au sud",
+        "Oratoire de l'Aube tourné vers le levant"
+      ],
       "notes": [
-        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : forêt à falaises sur la mer (dénivelé important demandé par le propriétaire le 10/11/2026). Monde jouable : massif côtier massif_n017_w011 (240 m) dans la section reliefs du master ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Oratoire de l'Aube (lieu_ile_gd_oratoire_de_l_aube), autel ou petit oratoire en terrasses habité par les Huacani ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
     },
     {
       "id": "N017_W010",
-      "name": "cell_N017_W010",
+      "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "terrain_type": "forest",
       "has_lake": false,
@@ -187399,10 +188219,14 @@
       "creature_ids": [
         "creature_loup_des_brumes"
       ],
-      "visual_elements": [],
+      "visual_elements": [
+        "Pointe boisée et basse du bras sud (Brinehaven)"
+      ],
       "notes": [
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.74) Ville Brinehaven (town_brinehaven) ; LORE_BD §16.3."
+        "[DÉCISION] (v1.0.74) Ville Brinehaven (town_brinehaven) ; LORE_BD §16.3.",
+        "[DÉCISION] (v1.0.77) Relief : vallée ou plateau boisé entre les pics de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain inchangé (forest) ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6."
       ],
       "coord_x": null,
       "coord_y": null
@@ -221748,6 +222572,34 @@
         "[DÉCISION] (v1.0.76) Remplace le sentier 000140 Dawnmere → Ruines du prieuré (propriétaire, 10/11/2026).",
         "[INFÉRÉ] (v1.0.76) Sentier (type path, sans écurie), cases voisines (N005_W010 → N004_W010) ; LORE_BD §16.5."
       ]
+    },
+    {
+      "id": "000226",
+      "type": "path",
+      "from_place": "N021_W014",
+      "from_ville_id": "town_lanternhold",
+      "from_lieu_id": "",
+      "to_place": "N021_W013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ile_gd_temple_des_cimes",
+      "description": "Sentier Lanternhold → Temple des Cimes",
+      "notes": [
+        "[GD] (v1.0.77) Sentier vers un temple sans route (règle de la v1.0.76 : il part de la route la plus proche, ne double aucune route) ; tracé : N021_W014 → N021_W013 ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "000227",
+      "type": "path",
+      "from_place": "N017_W013",
+      "from_ville_id": "",
+      "from_lieu_id": "lieu_camp_du_cap",
+      "to_place": "N018_W013",
+      "to_ville_id": "",
+      "to_lieu_id": "lieu_ile_gd_temple_de_la_lune",
+      "description": "Sentier Camp du Cap → Temple de la Lune d'Argent",
+      "notes": [
+        "[GD] (v1.0.77) Sentier vers un temple sans route (règle de la v1.0.76 : il part de la route la plus proche, ne double aucune route) ; tracé : N017_W013 → N018_W013 ; LORE_BD §16.6."
+      ]
     }
   ],
   "competences": [
@@ -226037,6 +226889,48 @@
           "nom": "Réseau routier",
           "decision": "Règles des sentiers : un sentier qui a la même forme qu'une route est supprimé ; un sentier s'arrête au premier croisement avec une route plus importante (exemple : Calvaire des pèlerins → Dawnmere, qui croise Justfall – Altenberg). Appliquées à toute la carte : sentiers 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés, 000138 et 000141 raccourcis (LORE_BD §16.5).",
           "version": "1.0.76"
+        },
+        {
+          "collection": "cells",
+          "id": "N017_W010..N022_W014",
+          "nom": "Île de la Trêve (nom des cellules)",
+          "decision": "Le nom « Île de la Trêve » est gardé et rendu visible : name des 20 cellules terrestres de l'île, affiché sur la carte de l'éditeur (LORE_BD §16.6).",
+          "version": "1.0.77"
+        },
+        {
+          "collection": "cells",
+          "id": "N022_W012,N021_W013,N020_W014,N019_W013,N018_W013,N017_W012,N020_W011",
+          "nom": "Île de la Trêve (relief)",
+          "decision": "Dénivelé important sur toute l'île : 7 pics et crêtes boisés au cœur des branches du fer à cheval (terrain mountain), falaises sur la mer, vallées encaissées ; côte et forme inchangées ; monde jouable : 11 massifs (reliefs du master), grille en forêt (LORE_BD §16.6).",
+          "version": "1.0.77"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_huacani",
+          "nom": "Les Huacani, gardiens des terrasses",
+          "decision": "Les temples de l'île sont habités par un peuple vivant de l'île : faction locale non jouable ; nom, race (race_huacani) et culte (religion_huacani_soleil) [GD] à valider (LORE_BD §16.6).",
+          "version": "1.0.77"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_ile_gd_grand_sanctuaire_soleil, lieu_ile_gd_temple_des_ancetres, lieu_ile_gd_temple_de_la_brume, lieu_ile_gd_temple_du_givre, lieu_ile_gd_temple_mere_des_eaux, lieu_ile_gd_temple_de_la_lune, lieu_ile_gd_temple_des_cimes, lieu_ile_gd_temple_des_terrasses, lieu_ile_gd_oratoire_du_col, lieu_ile_gd_autel_des_sources, lieu_ile_gd_oratoire_de_l_aube",
+          "nom": "Temples de l'Île de la Trêve",
+          "decision": "Nombreux temples de style inca de tailles différentes (3 grands sanctuaires, 5 temples moyens, 3 oratoires), habités par un peuple vivant de l'île, pour les quêtes et les raids ; noms et peuple [GD] à valider (LORE_BD §16.6).",
+          "version": "1.0.77"
+        },
+        {
+          "collection": "quests",
+          "id": "quest_ile_gd_coureur_des_cretes, quest_ile_gd_terrasses_affamees, quest_ile_gd_fil_des_ancetres, quest_ile_gd_renegat_de_la_brume",
+          "nom": "Quêtes des Huacani",
+          "decision": "Quêtes du peuple des temples, ouvertes à toutes les factions ; raids et quêtes de la v1.0.74 rattachés aux temples (Temple des Ancêtres Noyés, de la Mère des Eaux, du Givre, de la Brume) ; noms [GD] à valider (LORE_BD §16.6).",
+          "version": "1.0.77"
+        },
+        {
+          "collection": "routes",
+          "id": "000226, 000227",
+          "nom": "Sentiers des temples",
+          "decision": "Sentiers vers les deux temples sans route (Temple des Cimes depuis Lanternhold, Temple de la Lune d'Argent depuis le Camp du Cap) ; les neuf autres temples sont sur une route ou un sentier existant (LORE_BD §16.6).",
+          "version": "1.0.77"
         }
       ]
     },
@@ -230348,7 +231242,8 @@
         "town_brinehaven",
         "town_truceholm",
         "town_duskmoor",
-        "town_lanternhold"
+        "town_lanternhold",
+        "faction_huacani"
       ],
       "mechanique_jeu": "Aucun combat entre joueurs ni entre factions dans l'enceinte de Brinehaven, Truceholm, Duskmoor et Lanternhold ; hors les murs, l'île est une zone de combat ouverte à toutes les factions (quêtes et contre-quêtes de l'île). Les créatures de l'île restent hostiles partout hors des villes.",
       "apparition_window": "",
@@ -230356,7 +231251,8 @@
       "training_minimum": "",
       "source": "[GD] (v1.0.74) Île de la Trêve, zone commune à toutes les factions",
       "notes": [
-        "[GD] (v1.0.74) Règle proposée pour la zone commune, inspirée de la zone neutre de l'Oracle (rule_zone_neutre_oracle) ; à valider (LORE_BD §16.3)."
+        "[GD] (v1.0.74) Règle proposée pour la zone commune, inspirée de la zone neutre de l'Oracle (rule_zone_neutre_oracle) ; à valider (LORE_BD §16.3).",
+        "[GD] (v1.0.77) La trêve vaut aussi dans les onze temples des Huacani (paix des sanctuaires, modèle de la trêve des comptoirs) ; le combat des raids a lieu dans les cryptes, salles et grottes rattachées, hors des temples ; LORE_BD §16.6."
       ]
     }
   ],
@@ -240544,7 +241440,8 @@
       "features": [
         "tertre funéraire sous la forêt du bras ouest",
         "cryptes des rois d'un peuple de la mer disparu",
-        "salle du trône noyée où veille le Roi noyé"
+        "salle du trône noyée où veille le Roi noyé",
+        "Rattaché au Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres) : cryptes des ancêtres des Huacani, sous la terrasse basse du temple (sentier 800 m plus bas)"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -240600,7 +241497,7 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
+        "route_principale": "par le Temple des Ancêtres Noyés",
         "distance_visuelle": "",
         "dominance_paysage": ""
       },
@@ -240610,7 +241507,8 @@
       "notes": [
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Tombeau des anciens rois de la mer qui tenaient l'île avant les comptoirs ; leurs spectres en gardent le trésor. Raid raid_tertre_des_rois_noyes.",
-        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_tertre_rois_noyes (ruine, N019_W013) ; l'intérieur n'est pas modélisé."
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_tertre_rois_noyes (ruine, N019_W013) ; l'intérieur n'est pas modélisé.",
+        "[GD] (v1.0.77) Rattaché au Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres, temple de style inca habité par les Huacani) : cryptes des ancêtres des Huacani, sous la terrasse basse du temple (sentier 800 m plus bas) ; le raid part du temple (LORE_BD §16.6)."
       ]
     },
     {
@@ -240626,7 +241524,8 @@
       "features": [
         "grottes marines de la côte sud-ouest",
         "faux fanaux allumés pour briser les navires",
-        "repaire du capitaine Marée-Rouge"
+        "repaire du capitaine Marée-Rouge",
+        "Rattaché au Temple de la Mère des Eaux (lieu_ile_gd_temple_mere_des_eaux) : grottes marines au pied de la falaise du temple ; les naufrageurs y volent son feu sacré"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -240682,7 +241581,7 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
+        "route_principale": "par le Temple de la Mère des Eaux",
         "distance_visuelle": "",
         "dominance_paysage": ""
       },
@@ -240693,7 +241592,8 @@
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Bande de naufrageurs sans foi ni faction qui pillent les navires de tous les blocs : seule cible commune que la trêve ne protège pas. Raid raid_grottes_des_naufrageurs.",
         "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_grottes_naufrageurs (salle, N018_W014) ; l'intérieur n'est pas modélisé.",
-        "[DÉCISION] (v1.0.76) Sentier 000218 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Camp du Cap → Lanternhold jusqu'aux grottes ; le lieu est desservi par la route 000215 ; LORE_BD §16.5."
+        "[DÉCISION] (v1.0.76) Sentier 000218 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Camp du Cap → Lanternhold jusqu'aux grottes ; le lieu est desservi par la route 000215 ; LORE_BD §16.5.",
+        "[GD] (v1.0.77) Rattaché au Temple de la Mère des Eaux (lieu_ile_gd_temple_mere_des_eaux, temple de style inca habité par les Huacani) : grottes marines au pied de la falaise du temple ; les naufrageurs y volent son feu sacré ; le raid part du temple (LORE_BD §16.6)."
       ]
     },
     {
@@ -240709,7 +241609,8 @@
       "features": [
         "grande salle creusée dans la falaise nord",
         "géants de froid venus par la banquise en hiver",
-        "trône de glace du Jarl de Givre"
+        "trône de glace du Jarl de Givre",
+        "Rattaché au Temple du Givre (lieu_ile_gd_temple_du_givre) : salle basse du temple, creusée dans la falaise nord, prise par les géants de froid"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -240765,7 +241666,7 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
+        "route_principale": "par le Temple du Givre",
         "distance_visuelle": "",
         "dominance_paysage": ""
       },
@@ -240776,7 +241677,8 @@
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. Les géants de froid de l'extrême nord (LORE_BD §5.1) passent sur l'île par la banquise ; leur jarl s'est taillé une salle dans la falaise. Raid raid_taniere_du_jarl.",
         "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_taniere_du_jarl (salle, N022_W012) ; l'intérieur n'est pas modélisé.",
-        "[DÉCISION] (v1.0.76) Sentier 000219 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Lanternhold → Duskmoor jusqu'à la tanière ; le lieu est desservi par la route 000216 ; LORE_BD §16.5."
+        "[DÉCISION] (v1.0.76) Sentier 000219 supprimé (règle du propriétaire : un sentier qui double une route ou s'arrête au premier croisement avec une route plus importante) : double la route Lanternhold → Duskmoor jusqu'à la tanière ; le lieu est desservi par la route 000216 ; LORE_BD §16.5.",
+        "[GD] (v1.0.77) Rattaché au Temple du Givre (lieu_ile_gd_temple_du_givre, temple de style inca habité par les Huacani) : salle basse du temple, creusée dans la falaise nord, prise par les géants de froid ; le raid part du temple (LORE_BD §16.6)."
       ]
     },
     {
@@ -240792,7 +241694,8 @@
       "features": [
         "gouffre de l'îlot qui descend sous la baie",
         "cavernes inondées sous le haut-fond",
-        "antre du Dévoreur des Brumes"
+        "antre du Dévoreur des Brumes",
+        "Rattaché au Temple de la Brume (lieu_ile_gd_temple_de_la_brume) : gouffre scellé par le temple, ouvert par la Porte du Gouffre"
       ],
       "dimensions_estimees": {
         "hauteur": "",
@@ -240848,7 +241751,7 @@
       },
       "niveau_occupation": "",
       "acces": {
-        "route_principale": "",
+        "route_principale": "par le Temple de la Brume",
         "distance_visuelle": "",
         "dominance_paysage": ""
       },
@@ -240858,7 +241761,964 @@
       "notes": [
         "[DÉCISION] (v1.0.74) Lieu de l'Île de la Trêve (objectifs du propriétaire du 10/11/2026 : 3 raids simples, 1 raid multi-équipe, quêtes entre factions) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom proposé, à valider ; aucune source BD. La brume qui couvre la baie monte du gouffre où dort le Dévoreur ; quand il remonte, aucun comptoir n'est épargné : c'est le seul ennemi contre lequel toutes les factions s'allient. Raid raid_devoreur_des_brumes.",
-        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_gouffre_de_la_baie (gouffre, N020_W011) ; l'intérieur n'est pas modélisé."
+        "[INFÉRÉ] (v1.0.74) Monde jouable : POI poi_gouffre_de_la_baie (gouffre, N020_W011) ; l'intérieur n'est pas modélisé.",
+        "[GD] (v1.0.77) Rattaché au Temple de la Brume (lieu_ile_gd_temple_de_la_brume, temple de style inca habité par les Huacani) : gouffre scellé par le temple, ouvert par la Porte du Gouffre ; le raid part du temple (LORE_BD §16.6)."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_grand_sanctuaire_soleil",
+      "name": "Grand Sanctuaire du Soleil",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "grand sanctuaire à degrés",
+      "cell": "N020_W014",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Grand sanctuaire à degrés de style inca",
+        "Siège du Fils du Soleil et du conseil des Huacani ; culte du Soleil des Cimes ; trésor d'or du peuple."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "32 m (pyramide à neuf degrés)",
+        "largeur": "90 m de côté à la base ; enceinte et terrasses sur 400 m",
+        "diametre": "",
+        "zone_visible": "toute la côte ouest, Lanternhold"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "pyramide à neuf degrés et escalier central",
+        "Temple d'Or : salle aux murs plaqués d'or",
+        "place des fêtes",
+        "greniers de pierre",
+        "terrasses de culture et canaux sur tout le flanc est"
+      ],
+      "architecture": {
+        "presence": "pyramide à neuf degrés et escalier central, Temple d'Or : salle aux murs plaqués d'or",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "solennelle, lumière dorée au lever du soleil",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 400 Huacani : prêtres, tisseuses, gardes et cultivateurs des terrasses",
+      "acces": {
+        "route_principale": "passage de 000215",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (grand sanctuaire à degrés) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 400 Huacani : prêtres, tisseuses, gardes et cultivateurs des terrasses.",
+        "[GD] (v1.0.77) Liens : char_ile_gd_ataw_kantu ; quest_ile_gd_coureur_des_cretes.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_grand_sanctuaire_soleil (temple, N020_W014) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_des_ancetres",
+      "name": "Temple des Ancêtres Noyés",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "grand sanctuaire à degrés",
+      "cell": "N019_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Grand sanctuaire à degrés de style inca",
+        "Culte des ancêtres : les rois de la mer dont descendent les Huacani. Sa terrasse basse ouvre sur le chemin des cryptes du Tertre des Rois Noyés (lieu_tertre_des_rois_noyes), 800 m plus bas sur le flanc.",
+        "Entrée du raid raid_tertre_des_rois_noyes (Le Tertre des Rois Noyés)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "24 m (pyramide funéraire à sept degrés)",
+        "largeur": "70 m de côté ; tours funéraires sur les terrasses",
+        "diametre": "",
+        "zone_visible": "le bras ouest et la baie"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "pyramide funéraire à sept degrés",
+        "tours funéraires de pierre (tombeaux des lignées)",
+        "terrasse basse et Porte des Noyés vers le Tertre",
+        "salle des cordes-mémoires"
+      ],
+      "architecture": {
+        "presence": "pyramide funéraire à sept degrés, tours funéraires de pierre (tombeaux des lignées)",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "recueillie, encens et chants des morts",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 40 gardiens des morts et la gardienne des cordes-mémoires",
+      "acces": {
+        "route_principale": "passage de 000217",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (grand sanctuaire à degrés) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 40 gardiens des morts et la gardienne des cordes-mémoires.",
+        "[GD] (v1.0.77) Liens : raid_tertre_des_rois_noyes ; quest_ile_gd_fil_des_ancetres, quest_ile_gd_ames_des_noyes, quest_ile_gd_repos_des_noyes.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_des_ancetres (temple, N019_W013) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_de_la_brume",
+      "name": "Temple de la Brume",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "grand sanctuaire à degrés",
+      "cell": "N020_W011",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Grand sanctuaire à degrés de style inca",
+        "Bâti au bord du Gouffre de la Baie (lieu_gouffre_de_la_baie) pour le sceller : ses rites gardent endormi le Dévoreur des Brumes. La Porte du Gouffre, scellée, s'ouvre pour le raid.",
+        "Entrée du raid raid_devoreur_des_brumes (Le Dévoreur des Brumes)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "20 m (pyramide à cinq degrés)",
+        "largeur": "60 m de côté",
+        "diametre": "",
+        "zone_visible": "toute la baie, Truceholm et Brinehaven"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "pyramide à cinq degrés au bord du gouffre",
+        "Porte du Gouffre (porte trapézoïdale scellée de bronze)",
+        "terrasse des feux de veille",
+        "escalier taillé qui descend dans le gouffre"
+      ],
+      "architecture": {
+        "presence": "pyramide à cinq degrés au bord du gouffre, Porte du Gouffre (porte trapézoïdale scellée de bronze)",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "brume permanente, feux de veille, grondements sous la roche",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 60 prêtres et prêtresses de la Brume",
+      "acces": {
+        "route_principale": "passage de 000220",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (grand sanctuaire à degrés) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 60 prêtres et prêtresses de la Brume.",
+        "[GD] (v1.0.77) Liens : raid_devoreur_des_brumes ; quest_ile_gd_chant_du_devoreur, quest_ile_gd_renegat_de_la_brume.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_de_la_brume (temple, N020_W011) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_du_givre",
+      "name": "Temple du Givre",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "temple moyen",
+      "cell": "N022_W012",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Temple moyen de style inca",
+        "Temple des esprits des sommets du nord. Les géants de froid ont pris sa salle basse creusée dans la falaise, devenue la Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; les Huacani tiennent encore le sommet.",
+        "Entrée du raid raid_taniere_du_jarl (La Tanière du Jarl de Givre)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "14 m (quatre terrasses)",
+        "largeur": "45 m ; terrasses taillées dans la falaise nord",
+        "diametre": "",
+        "zone_visible": "la mer du nord, Duskmoor"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "quatre terrasses au bord de la falaise",
+        "escalier taillé vers la salle basse",
+        "autel de pierre givré",
+        "salle basse (Tanière du Jarl)"
+      ],
+      "architecture": {
+        "presence": "quatre terrasses au bord de la falaise, escalier taillé vers la salle basse",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité ; salle basse prise par les géants"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "vent glacé, assiégée",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 25 Huacani retranchés sur les terrasses hautes",
+      "acces": {
+        "route_principale": "passage de 000216",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (temple moyen) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 25 Huacani retranchés sur les terrasses hautes.",
+        "[GD] (v1.0.77) Liens : raid_taniere_du_jarl ; quest_ile_gd_ambre_des_geants, quest_ile_gd_ambre_elfique.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_du_givre (temple, N022_W012) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_mere_des_eaux",
+      "name": "Temple de la Mère des Eaux",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "temple moyen",
+      "cell": "N018_W014",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Temple moyen de style inca",
+        "Temple de la mer : son fanal sacré guidait les navires. Les naufrageurs des grottes au pied de la falaise (lieu_grottes_des_naufrageurs) volent son feu pour allumer leurs faux fanaux.",
+        "Entrée du raid raid_grottes_des_naufrageurs (Les Grottes des Naufrageurs)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "12 m (trois degrés)",
+        "largeur": "40 m ; au sommet de la falaise sud-ouest",
+        "diametre": "",
+        "zone_visible": "la mer au sud-ouest, la route maritime"
+      },
+      "topographie": {
+        "forme_generale": "terrasse",
+        "relief": "flanc ou col boisé",
+        "implantation": "sur une terrasse",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "temple à trois degrés au bord de la falaise",
+        "fanal sacré (vasque de bronze)",
+        "escalier taillé vers les grottes marines"
+      ],
+      "architecture": {
+        "presence": "temple à trois degrés au bord de la falaise, fanal sacré (vasque de bronze)",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "forêt de l'île",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "embruns, feu sacré face à la mer",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 20 gardiennes du fanal sacré",
+      "acces": {
+        "route_principale": "passage de 000215",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (temple moyen) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 20 gardiennes du fanal sacré.",
+        "[GD] (v1.0.77) Liens : raid_grottes_des_naufrageurs ; quest_ile_gd_terrasses_affamees.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_mere_des_eaux (temple, N018_W014) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_de_la_lune",
+      "name": "Temple de la Lune d'Argent",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "temple moyen",
+      "cell": "N018_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Temple moyen de style inca",
+        "Temple de la Lune d'Argent, sœur du Soleil ; murs plaqués d'argent. Convoité par la Lune Noire, qui y voit un culte rival ; refuge d'Amaru le Renégat avant sa fuite."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "15 m (quatre degrés)",
+        "largeur": "45 m",
+        "diametre": "",
+        "zone_visible": "le sud du bras ouest, le Camp du Cap"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "temple à quatre degrés",
+        "salle aux murs plaqués d'argent",
+        "bassin d'observation des marées",
+        "niches trapézoïdales"
+      ],
+      "architecture": {
+        "presence": "temple à quatre degrés, salle aux murs plaqués d'argent",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques d'argent",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "argentée, silencieuse la nuit",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 30 prêtresses de la Lune",
+      "acces": {
+        "route_principale": "sentier 000227 (Camp du Cap → Temple de la Lune d'Argent)",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (temple moyen) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 30 prêtresses de la Lune.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_renegat_de_la_brume.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_de_la_lune (temple, N018_W013) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_des_cimes",
+      "name": "Temple des Cimes",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "temple moyen",
+      "cell": "N021_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Temple moyen de style inca",
+        "Observatoire et temple des esprits des sommets : la Pierre-qui-attache-le-Soleil y marque les solstices."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "10 m (trois degrés)",
+        "largeur": "35 m",
+        "diametre": "",
+        "zone_visible": "toute l'île depuis le sommet"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "temple à trois degrés",
+        "Pierre-qui-attache-le-Soleil (rocher taillé, gnomon)",
+        "fenêtres trapézoïdales alignées sur les solstices"
+      ],
+      "architecture": {
+        "presence": "temple à trois degrés, Pierre-qui-attache-le-Soleil (rocher taillé, gnomon)",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "venteuse, ciel immense",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 15 astronomes-prêtres",
+      "acces": {
+        "route_principale": "sentier 000226 (Lanternhold → Temple des Cimes)",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (temple moyen) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 15 astronomes-prêtres.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_coureur_des_cretes ; quest_ile_gd_bois_de_marine, quest_ile_gd_coupes_noires.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_des_cimes (temple, N021_W013) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_temple_des_terrasses",
+      "name": "Temple des Terrasses",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "temple moyen",
+      "cell": "N017_W012",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Temple moyen de style inca",
+        "Grenier du peuple : temple des moissons, greniers de pierre et marché avec les marchands de Brinehaven."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "9 m (trois degrés)",
+        "largeur": "35 m ; quarante gradins de culture sur le flanc",
+        "diametre": "",
+        "zone_visible": "le bras sud, la route de Brinehaven"
+      },
+      "topographie": {
+        "forme_generale": "sommet",
+        "relief": "pic ou crête boisée",
+        "implantation": "au plus haut de la case, en terrasses",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "temple à trois degrés",
+        "quarante terrasses de culture et leurs canaux",
+        "greniers de pierre",
+        "place du marché"
+      ],
+      "architecture": {
+        "presence": "temple à trois degrés, quarante terrasses de culture et leurs canaux",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "conifères des crêtes",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "travailleuse, terrasses vertes",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : environ 80 cultivateurs et leurs familles",
+      "acces": {
+        "route_principale": "passage de 000214",
+        "distance_visuelle": "",
+        "dominance_paysage": "temple au sommet"
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (temple moyen) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : environ 80 cultivateurs et leurs familles.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_terrasses_affamees.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_temple_des_terrasses (temple, N017_W012) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_oratoire_du_col",
+      "name": "Oratoire du Col",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "autel ou petit oratoire en terrasses",
+      "cell": "N022_W013",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Autel ou petit oratoire en terrasses de style inca",
+        "Oratoire des voyageurs : chacun pose une pierre sur le cairn des passants ; relais des coureurs des crêtes."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "3 m (autel à deux terrasses)",
+        "largeur": "12 m",
+        "diametre": "",
+        "zone_visible": "le col entre le bras ouest et le bras nord"
+      },
+      "topographie": {
+        "forme_generale": "terrasse",
+        "relief": "flanc ou col boisé",
+        "implantation": "sur une terrasse",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "autel à deux terrasses",
+        "cairn des passants",
+        "abri de pierre des coureurs"
+      ],
+      "architecture": {
+        "presence": "autel à deux terrasses, cairn des passants",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "forêt de l'île",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "lieu de passage, vent du col",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : 2 gardiens et les coureurs des crêtes de passage",
+      "acces": {
+        "route_principale": "passage de 000216",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (autel ou petit oratoire en terrasses) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : 2 gardiens et les coureurs des crêtes de passage.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_coureur_des_cretes.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_oratoire_du_col (sanctuaire, N022_W013) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_autel_des_sources",
+      "name": "Autel des Sources",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "autel ou petit oratoire en terrasses",
+      "cell": "N019_W014",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Autel ou petit oratoire en terrasses de style inca",
+        "Fontaines sacrées : l'eau des crêtes coule de bassin en bassin par des canaux de pierre ; on y purifie les offrandes."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "4 m",
+        "largeur": "20 m ; trois bassins en terrasses",
+        "diametre": "",
+        "zone_visible": "la vallée"
+      },
+      "topographie": {
+        "forme_generale": "terrasse",
+        "relief": "flanc ou col boisé",
+        "implantation": "sur une terrasse",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "trois bassins en terrasses",
+        "canaux et fontaines de pierre taillée",
+        "petit autel"
+      ],
+      "architecture": {
+        "presence": "trois bassins en terrasses, canaux et fontaines de pierre taillée",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "forêt de l'île",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "fraîche, bruit de l'eau",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : 3 gardiennes des eaux",
+      "acces": {
+        "route_principale": "passage de 000215",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (autel ou petit oratoire en terrasses) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : 3 gardiennes des eaux.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_coureur_des_cretes.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_autel_des_sources (sanctuaire, N019_W014) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
+      ]
+    },
+    {
+      "id": "lieu_ile_gd_oratoire_de_l_aube",
+      "name": "Oratoire de l'Aube",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "autel ou petit oratoire en terrasses",
+      "cell": "N017_W011",
+      "region_id": "region_ile_de_la_treve",
+      "zone_id": "",
+      "faction_control": "faction_huacani",
+      "features": [
+        "Autel ou petit oratoire en terrasses de style inca",
+        "Autel tourné vers le levant : au solstice, le premier soleil passe dans la porte trapézoïdale ; premier temple que voient les voyageurs de Brinehaven."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "5 m",
+        "largeur": "15 m",
+        "diametre": "",
+        "zone_visible": "la mer à l'est et Brinehaven"
+      },
+      "topographie": {
+        "forme_generale": "terrasse",
+        "relief": "flanc ou col boisé",
+        "implantation": "sur une terrasse",
+        "pentes": "fortes, aménagées en gradins",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "autel en terrasse",
+        "porte trapézoïdale orientée vers le lever du soleil"
+      ],
+      "architecture": {
+        "presence": "autel en terrasse, porte trapézoïdale orientée vers le lever du soleil",
+        "style": "inca : pierre taillée assemblée sans mortier (appareil polygonal), portes et niches trapézoïdales, terrasses, escaliers taillés, plaques et ornements d'or",
+        "etat": "habité et entretenu"
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "forêt dense autour, terrasses dégagées",
+        "type": "forêt de l'île",
+        "repartition": "",
+        "couleur": "",
+        "champs": "terrasses de culture",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "calme, aube dorée",
+        "sentiment": "",
+        "niveau_menace": "sanctuaire sous la trêve (pas de combat dans le temple)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": "architecture inca (terrasses, pierre polygonale, portes trapézoïdales)"
+      },
+      "niveau_occupation": "habité : 2 gardiens",
+      "acces": {
+        "route_principale": "passage de 000214",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.77) Temple de style inca de l'Île de la Trêve, habité par un peuple vivant de l'île, pour les quêtes et les raids (demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
+        "[GD] (v1.0.77) Nom, taille (autel ou petit oratoire en terrasses) et fonction proposés, à valider ; aucune source BD. Habité par les Huacani (faction_huacani, race race_huacani, culte religion_huacani_soleil) : 2 gardiens.",
+        "[GD] (v1.0.77) Liens : quest_ile_gd_coureur_des_cretes.",
+        "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_oratoire_de_l_aube (sanctuaire, N017_W011) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
       ]
     }
   ],

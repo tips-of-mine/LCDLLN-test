@@ -168,7 +168,13 @@ voisines raccord au mètre près :
    ancrés sur le centre de la case d'une ville : `colline` (ville perchée, ex.
    Verdansur : plateau sommital, flanc jusqu'au pied) et `crevasse` (cul-de-sac,
    ex. Wardholt : massif entaillé d'une fente à fond plat ouverte vers une case
-   voisine, fermé aux routes, mine au fond si `mine` est renseigné).
+   voisine, fermé aux routes, mine au fond si `mine` est renseigné). Depuis la
+   v1.0.77, `massif` est ancré sur une case (`cell`, décalage `offset_x_m` /
+   `offset_z_m`) et non sur une ville : dôme lobé de rayon `foot_radius_m`
+   (≤ 7 km) haut de `height_m` (≤ 600 m), découpé par un bruit en crêtes ; il ne
+   s'applique qu'aux terres déjà émergées, ce qui garde la côte et pose des
+   falaises au rivage ; le code de la case (forêt…) ne change pas (pics et
+   crêtes boisés de l'Île de la Trêve, LORE_BD §16.6).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief) ; lacs du lore (codes `L` forêt avec lac,

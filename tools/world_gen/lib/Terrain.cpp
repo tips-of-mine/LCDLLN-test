@@ -219,6 +219,19 @@ namespace tools::world_gen
 	double ReliefContribution(const ReliefDef& r, double x, double z)
 	{
 		const double dx = x - r.center.x, dz = z - r.center.z;
+		if (r.type == "massif")
+		{
+			// Dôme au contour lobé (pied entre 0,76 et 1,24 × foot_radius_m), découpé par
+			// un bruit en crêtes de 1,6 km : les crêtes gardent 100 % de la hauteur, les
+			// ravins 35 % (vallées encaissées entre les pics).
+			const double reach = r.footRadiusM * 1.25;
+			if (std::fabs(dx) > reach || std::fabs(dz) > reach) return 0.0;
+			const double ang = std::atan2(dz, dx);
+			const double lobe = 1.0 + 0.16 * std::sin(3.0 * ang + r.phase) + 0.08 * std::sin(5.0 * ang + 2.0 * r.phase);
+			const double s = 1.0 - SmoothStep(0.0, r.footRadiusM, std::hypot(dx, dz) / lobe);
+			if (s <= 0.0) return 0.0;
+			return r.heightM * s * (0.35 + 0.65 * Ridged(x, z, 1600.0, 4, r.noiseSeed));
+		}
 		if (r.type == "colline")
 		{
 			if (std::fabs(dx) > r.footRadiusM || std::fabs(dz) > r.footRadiusM) return 0.0;
@@ -243,10 +256,14 @@ namespace tools::world_gen
 		return r.heightM * massif * wall;
 	}
 
-	double ReliefOffset(const WorldMaster& m, double x, double z)
+	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH)
 	{
-		double h = 0.0;
-		for (const ReliefDef& r : m.reliefs) h += ReliefContribution(r, x, z);
+		double h = 0.0, massif = 0.0;
+		for (const ReliefDef& r : m.reliefs)
+			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
+		// Massifs (v1.0.77) : seulement sur les terres émergées (0,5 à 3 m au-dessus de
+		// la mer pour le fondu) ; la côte ne bouge pas et le relief y monte en falaise.
+		if (massif > 0.0) h += massif * SmoothStep(m.scale.seaLevelM + 0.5, m.scale.seaLevelM + 3.0, baseH);
 		return h;
 	}
 
@@ -322,8 +339,9 @@ namespace tools::world_gen
 			h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
 		if (acc.dune > 0.01)
 			h += std::sin((x * 0.8 + z * 0.6) / 60.0 + Fbm(x, z, 900.0, 2, seed + 41) * 3.0) * 4.0 * acc.dune;
-		// Reliefs locaux posés à la main (v1.0.72) : colline de Verdansur, crevasse de Wardholt.
-		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z);
+		// Reliefs locaux posés à la main (v1.0.72) : colline de Verdansur, crevasse de Wardholt ;
+		// massifs de l'Île de la Trêve (v1.0.77).
+		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z, h);
 		return Clamp(h, 1.0, m.scale.heightScaleM - 2.0);
 	}
 

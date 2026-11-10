@@ -301,7 +301,8 @@ namespace tools::world_gen
 			}
 		}
 
-		// --- reliefs locaux (v1.0.72) : colline sous une ville perchée, crevasse en cul-de-sac ---
+		// --- reliefs locaux (v1.0.72) : colline sous une ville perchée, crevasse en cul-de-sac ;
+		//     massif sans ville (v1.0.77) ancré sur une case ---
 		if (const JsonValue* rl = FindObjectMember(root, "reliefs"); rl && rl->type == JsonType::Array)
 		{
 			std::set<std::string> reliefIds, anchored;
@@ -317,6 +318,30 @@ namespace tools::world_gen
 				d.backM = GetNum(v, "back_m", 0.0);
 				d.openToward = GetStr(v, "open_toward");
 				d.mine = GetStr(v, "mine");
+				// Massif (v1.0.77) : ancré sur une case (`cell`), sans ville ; jusqu'à
+				// 600 m de haut et 7 km de rayon (il déborde sur les cases voisines :
+				// MacroHeight est une fonction de la position, le raccord reste exact).
+				if (d.type == "massif")
+				{
+					d.cell = GetStr(v, "cell");
+					d.offsetXM = GetNum(v, "offset_x_m", 0.0);
+					d.offsetZM = GetNum(v, "offset_z_m", 0.0);
+					if (d.id.empty() || !reliefIds.insert(d.id).second || !d.cityId.empty() || !ParseCellId(d.cell, d.n, d.e))
+					{
+						err = "master: relief invalide '" + d.id + "' (id unique, massif : case valide, pas de ville)"; return false;
+					}
+					const engine::world::cells::CellPoint c0 = engine::world::cells::CellCenter({ d.n, d.e });
+					d.center = { c0.x + d.offsetXM, c0.z + d.offsetZM };
+					d.noiseSeed = HashString(d.id.c_str());
+					d.phase = static_cast<double>(d.noiseSeed % 6283ull) / 1000.0;
+					if (!(d.heightM > 0.0 && d.heightM <= 600.0 && d.footRadiusM >= 1500.0 && d.footRadiusM <= 7000.0
+						&& std::fabs(d.offsetXM) <= 4000.0 && std::fabs(d.offsetZM) <= 4000.0))
+					{
+						err = "master: relief '" + d.id + "' : dimensions invalides"; return false;
+					}
+					out.reliefs.push_back(std::move(d));
+					continue;
+				}
 				const auto city = std::find_if(out.cities.begin(), out.cities.end(), [&](const CityDef& c) { return c.id == d.cityId; });
 				if (d.id.empty() || !reliefIds.insert(d.id).second || city == out.cities.end() || !anchored.insert(d.cityId).second)
 				{

@@ -107,11 +107,20 @@ namespace tools::world_gen
 	///    fond plat (demi-largeur `half_width_m`, parois raides de `wall_m`) qui va de
 	///    `back_m` derrière la ville jusqu'au-delà du massif, vers la case `open_toward`. Les routes ne franchissent pas les
 	///    parois (Roads.cpp) ; `mine` (nom) pose une mine au fond (Places.cpp).
+	///  - `massif` (v1.0.77) : relief de crêtes et de pics SANS ville, ancré sur le
+	///    centre de la case `cell` décalé de (`offset_x_m`, `offset_z_m`) : dôme de
+	///    rayon `foot_radius_m` (contour lobé) haut de `height_m`, découpé par un bruit
+	///    en crêtes (crêtes, pics, ravins). Il ne s'applique qu'aux terres déjà
+	///    émergées (MacroHeight) : la côte ne bouge pas et le relief monte d'un coup au
+	///    rivage (falaises). Le code de la case (forêt…) ne change pas.
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse
-		std::string cityId;        ///< ville ancrée (posée au centre de sa case)
+		std::string type;          ///< colline|crevasse|massif
+		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
+		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
+		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
+		double offsetZM = 0.0;     ///< massif : décalage du centre vers le sud (m)
 		double heightM = 0.0;      ///< hauteur du sommet / des parois au-dessus du relief (m)
 		double topRadiusM = 0.0;   ///< colline : rayon du plateau sommital (m)
 		double footRadiusM = 0.0;  ///< colline : rayon du pied ; crevasse : rayon du massif (m)
@@ -121,9 +130,11 @@ namespace tools::world_gen
 		std::string openToward;    ///< crevasse : case vers laquelle la fente s'ouvre
 		std::string mine;          ///< crevasse : nom de la mine posée au fond (vide = aucune)
 		// --- résolu au chargement ---
-		int  n = 0, e = 0;         ///< case de la ville
-		Vec2 center;               ///< centre de la case (= centre de la ville)
+		int  n = 0, e = 0;         ///< case de la ville (massif : case `cell`)
+		Vec2 center;               ///< centre de la case (= centre de la ville ; massif : centre décalé)
 		Vec2 dir{ 1.0, 0.0 };      ///< crevasse : direction unitaire de l'ouverture
+		uint64_t noiseSeed = 0;    ///< massif : graine du bruit en crêtes (dérivée de l'id)
+		double phase = 0.0;        ///< massif : phase des lobes du contour (rad)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

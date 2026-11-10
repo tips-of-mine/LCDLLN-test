@@ -231,13 +231,16 @@ namespace tools::world_gen
 	/// Code du lore de la case (n, e) (' ' = mer hors grille). Terrain.cpp
 	char LoreCode(const WorldMaster& m, int n, int e);
 	/// Élévation (m) apportée en (x, z) par UN relief local (`reliefs` du master,
-	/// v1.0.72) : dôme d'une colline, massif entaillé d'une crevasse. Terrain.cpp
+	/// v1.0.72) : dôme d'une colline, massif entaillé d'une crevasse ; massif de
+	/// crêtes sans ville (v1.0.77), avant le masque des terres émergées. Terrain.cpp
 	double ReliefContribution(const ReliefDef& r, double x, double z);
 	/// Crevasse : largeur (m) de la pente douce extérieure du massif, de part et
 	/// d'autre de `foot_radius_m` (au moins `wall_m`, 40 % du rayon). Terrain.cpp
 	double CrevasseOuterSlopeM(const ReliefDef& r);
-	/// Somme des reliefs locaux du master en (x, z) ; incluse dans MacroHeight. Terrain.cpp
-	double ReliefOffset(const WorldMaster& m, double x, double z);
+	/// Somme des reliefs locaux du master en (x, z) ; incluse dans MacroHeight.
+	/// \param baseH altitude (m) du relief sans les reliefs locaux : les massifs
+	///        (v1.0.77) ne s'appliquent que là où elle dépasse la mer (côte inchangée). Terrain.cpp
+	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH);
 	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
 

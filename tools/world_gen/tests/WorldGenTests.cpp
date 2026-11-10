@@ -1079,6 +1079,92 @@ namespace
 		Check(bad == 0 && island >= 2, "ile v1.0.74 : routes de l'ile entre ses villes, aucune vers le continent ni l'ilot");
 	}
 
+	/// v1.0.77 : relief de l'Île de la Trêve (lot 6). 11 massifs sans ville (section
+	/// reliefs, type massif) sur des cases restées en forêt : côte inchangée (mêmes
+	/// terres émergées qu'en v1.0.76), pics de plus de 400 m sur les 7 cases de montagne
+	/// du lore, falaises sur la mer ; les quatre villes restent au sec sur un site plat
+	/// et reliées ; 11 temples (POI temple / sanctuaire) au sec, ceux des sommets en hauteur.
+	void TestReliefIleV1077()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "relief v1.0.77 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const double sea = m.scale.seaLevelM;
+		int massifs = 0, forestCode = 0;
+		for (const ReliefDef& r : m.reliefs)
+			if (r.type == "massif")
+			{
+				++massifs;
+				forestCode += r.cityId.empty() && r.n >= 17 && r.n <= 22 && r.e >= -14 && r.e <= -10 && LoreCode(m, r.n, r.e) == 'T';
+			}
+		Check(massifs == 11 && forestCode == 11, "relief v1.0.77 : 11 massifs sur des cases de l'ile restees en foret (T)");
+		// Côte inchangée : mêmes terres émergées avec et sans les massifs.
+		WorldMaster flat = m;
+		flat.reliefs.erase(std::remove_if(flat.reliefs.begin(), flat.reliefs.end(), [](const ReliefDef& r) { return r.type == "massif"; }),
+			flat.reliefs.end());
+		int coastDiff = 0, cliffs = 0;
+		double top = 0.0;
+		for (double z = -235000.0; z <= -155000.0; z += 250.0)
+			for (double x = -160000.0; x <= -80000.0; x += 250.0)
+			{
+				const double h = MacroHeight(m, x, z);
+				if ((h >= sea) != (MacroHeight(flat, x, z) >= sea)) ++coastDiff;
+				top = std::max(top, h - sea);
+				// Falaise : plus de 100 m au-dessus de la mer à moins de 500 m de l'eau.
+				if (h > sea + 100.0)
+					for (int a = 0; a < 8; ++a)
+						if (MacroHeight(m, x + std::cos(a * 0.785) * 500.0, z + std::sin(a * 0.785) * 500.0) < sea) { ++cliffs; break; }
+			}
+		Check(coastDiff == 0, "relief v1.0.77 : cote inchangee (memes terres emergees qu'en v1.0.76)");
+		Check(top > 500.0 && cliffs >= 20, "relief v1.0.77 : sommets de plus de 500 m, falaises sur la mer");
+		for (auto [n, e] : { std::pair{ 22, -12 }, { 21, -13 }, { 20, -14 }, { 19, -13 }, { 18, -13 }, { 17, -12 }, { 20, -11 } })
+		{
+			const auto c = engine::world::cells::CellCenter({ n, e });
+			double hi = 0.0;
+			for (int dz = -4750; dz <= 4750; dz += 250)
+				for (int dx = -4750; dx <= 4750; dx += 250) hi = std::max(hi, MacroHeight(m, c.x + dx, c.z + dz) - sea);
+			Check(hi > 350.0, ("relief v1.0.77 : pic de plus de 350 m en N0" + std::to_string(n) + "_W0" + std::to_string(-e)).c_str());
+		}
+		// Villes : au sec, site plat (écart < 25 m au bord du plateau), reliées sauf l'îlot.
+		for (const char* id : { "town_brinehaven", "town_duskmoor", "town_truceholm", "town_lanternhold" })
+		{
+			const CityDef* c = g.FindCity(id);
+			if (!c) { Check(false, (std::string("relief v1.0.77 : ") + id + " introuvable").c_str()); continue; }
+			const double h0 = MacroHeight(m, c->center.x, c->center.z);
+			double worst = 0.0;
+			for (int k = 0; k < 16; ++k)
+			{
+				const double a = k * 0.3927, R = c->radiusM + 60.0;
+				worst = std::max(worst, std::fabs(MacroHeight(m, c->center.x + std::cos(a) * R, c->center.z + std::sin(a) * R) - h0));
+			}
+			int roads = 0;
+			for (const Road& r : g.roads)
+				if (r.fromId == id || r.toId == id) ++roads;
+			Check(h0 > sea + 5.0 && worst < 25.0 && (roads >= 1 || std::string(id) == "town_truceholm"),
+				(std::string("relief v1.0.77 : ") + id + " au sec, site plat, reliee").c_str());
+		}
+		// Temples : 8 temples et 3 sanctuaires sur l'île, au sec ; les sommets au-dessus de 250 m.
+		int temples = 0, shrines = 0, dry = 0, high = 0;
+		for (const PoiDef& p : g.pois)
+		{
+			if (p.id.rfind("poi_ile_", 0) != 0) continue;
+			temples += p.kind == "temple";
+			shrines += p.kind == "sanctuaire";
+			const double h = MacroHeight(m, p.center.x, p.center.z) - sea;
+			dry += h > 5.0;
+			high += p.kind == "temple" && h > 250.0;
+		}
+		Check(temples == 8 && shrines == 3 && dry == 11 && high >= 7, "relief v1.0.77 : 11 temples de l'ile au sec, 7 au moins sur les sommets");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1169,6 +1255,7 @@ int main()
 	TestVillesV1073();
 	TestIleV1074();
 	TestCorrectionsV1076();
+	TestReliefIleV1077();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

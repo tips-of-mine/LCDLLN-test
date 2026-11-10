@@ -1443,6 +1443,129 @@ n'est perdue. Cellules générées : **245 → 248**. S010_E010 l'était déjà.
   (S003_W004, inchangé, toujours relié par 000124 et 000082) et Equiton ont été vérifiés.
 - La sortie commune de Lhynn avec la Via Magna (N000_W010) pour 000064.
 
+### 16.6 Île de la Trêve : relief et temples (v1.0.77)
+
+**Décisions du propriétaire (10/11/2026, lot 6)**, notées `[DÉCISION] (v1.0.77)` : le nom « Île de la Trêve » est gardé
+et rendu visible ; l'île reçoit un dénivelé important (crêtes, falaises, vallées encaissées) ; de nombreux temples de style
+inca, de tailles différentes, servent aux quêtes et aux raids ; ils sont **habités** par un peuple vivant de l'île ; les
+raids et quêtes de la v1.0.74 s'y rattachent. Tout le reste est `[GD]`, à valider : peuple, faction, culte, noms, tailles,
+PNJ, dialogues, quêtes, hauteurs. 6 entrées sont ajoutées au registre `regle_canon_registre_decisions`. Scripts
+reproductibles : `master_v1077.py` puis `lore_v1077.py`, appliqués aux fichiers v1.0.76.
+
+**Nom visible**. Les cellules du lore portaient toutes le nom technique `cell_<id>` et l'éditeur n'affichait aucun nom de
+cellule (seulement l'identifiant de région au survol). Les 20 cellules terrestres de l'île ont `name` = « Île de la
+Trêve ». L'éditeur (`lune-noire-editor.html` et sa copie `-v20`) écrit maintenant chaque nom propre de cellule une seule
+fois sur la carte, au-dessus des cellules qui le portent, et l'affiche au survol et dans le titre de la fiche de cellule ;
+le survol donne aussi le nom de la région. Il liste en outre tous les lieux d'une case (temple et entrée de raid) au lieu
+du premier seulement. En jeu, la région du master garde son nom sans accents (« Ile de la Treve », convention du master).
+
+**Relief**. Lore : 7 cases passent en `mountain` (pics et crêtes boisés au cœur des branches du fer à cheval) ; les 13
+autres restent en `forest` (vallées, cols, plateaux des villes) ; `visual_elements` renseignés sur les 20 cases.
+
+```
+        W014 W013 W012 W011 W010
+N022          T    ^    T*   D        ^ = mountain (pic ou crête boisée)
+N021     L    ^                       T = forest ; T* = forest à falaises (massif côtier)
+N020     ^    T         ^    T        D, L, B, t = Duskmoor, Lanternhold, Brinehaven, Truceholm
+N019     T*   ^         T    t
+N018     T*   ^
+N017          T    ^    T*   B
+```
+
+Générateur : la grille `^` avait été essayée. Elle déplaçait la côte de 2 à 4 km vers le large (la montagne, interpolée
+avec le haut-fond, émerge dans les cases de mer : la baie se refermait) et retirait la forêt des sommets. La grille du
+master **reste donc en `T`** et le relief vient d'un nouveau type de relief local du générateur, `massif` (section
+`reliefs`, `tools/world_gen`) : ancré sur une case (`cell`, décalage `offset_x_m` / `offset_z_m`) et non sur une ville,
+dôme lobé (rayon `foot_radius_m` ≤ 7 km, hauteur `height_m` ≤ 600 m) découpé par un bruit en crêtes (pics, crêtes,
+ravins) ; il ne s'ajoute qu'aux terres déjà émergées, si bien que la côte ne bouge pas et que le relief monte d'un coup
+au rivage (falaises). C'est le seul écart volontaire entre `terrain_type` du lore et la grille du master (noté dans les
+cases et dans `_comment_reliefs`).
+
+| Massif | Case | Hauteur, rayon | Décalage | Rôle |
+|---|---|---|---|---|
+| `massif_n020_w014` | N020_W014 | 550 m, 6,5 km | 2,5 km à l'ouest | plus haut sommet, falaises ouest |
+| `massif_n019_w013` | N019_W013 | 520 m, 6,5 km | 1 km à l'ouest | crête du bras ouest |
+| `massif_n022_w012` | N022_W012 | 500 m, 6,5 km | 2,5 km au nord | crête et falaise nord |
+| `massif_n021_w013` | N021_W013 | 480 m, 6,5 km | 1,5 km au nord | pic au-dessus de Lanternhold |
+| `massif_n018_w013` | N018_W013 | 480 m, 6,5 km | 1 km O, 2 km S | pic sud du bras ouest |
+| `massif_n017_w012` | N017_W012 | 480 m, 6,5 km | 2,5 km au sud | crête du bras sud, falaises sud |
+| `massif_n020_w011` | N020_W011 | 380 m, 5 km | 1,5 km à l'ouest | butte de l'îlot |
+| `massif_n019_w014`, `_n022_w011`, `_n017_w011`, `_n018_w014` | côtes O, N, S, SO | 240 à 280 m, 4,5 km | 2,5 à 3 km vers la mer | falaises côtières |
+
+Sonde du relief macro : sommets de 470 à 570 m au-dessus de la mer sur les 7 cases de montagne (moyenne 140 à 180 m),
+10 à 13 % de pentes au-delà de 25° ; vallées et cols entre 30 et 80 m en moyenne. Les sites des quatre villes ne changent
+pas (même position, au sec, écart de 10 m au bord du plateau) ; les routes du générateur non plus (Brinehaven –
+Duskmoor, Duskmoor – Lanternhold ; Truceholm sur l'îlot reste sans route, comme en v1.0.74). Avertissements du
+générateur identiques à la v1.0.76. Test `world_gen_tests` « relief v1.0.77 » : côte inchangée (mêmes terres émergées
+avec et sans massifs), sommets, falaises, villes, temples. Rendu de la carte du générateur : `ile_relief_v1077.png`.
+
+**Peuple** `[GD]` : les **Huacani**, rameau humain descendant du peuple de la mer dont les rois reposent dans le Tertre des
+Rois Noyés ; quand la mer a pris les cités basses, ils sont montés sur les crêtes. Fiches : race `race_huacani` (PNJ
+seulement, comme `race_elfe_des_bois`), faction non jouable `faction_huacani` (environ 1 000 âmes), culte
+`religion_huacani_soleil` « Le Soleil des Cimes » (`lore.religions`, convention v1.0.58 : Soleil des Cimes, Lune
+d'Argent, Mère des Eaux, esprits des sommets ; les prêtres de la Brume gardent le Dévoreur endormi ; fêtes à placer dans
+le calendrier). **Trêve** : les Huacani en sont les plus anciens garants ; la Pierre de la Trêve de Truceholm est une de
+leurs pierres d'alliance ; ils ont accepté les comptoirs à condition qu'on ne se batte ni dans les villes ni dans les
+temples (note ajoutée à `rule_treve_des_comptoirs`). Neutres envers les deux blocs (`game_design.faction_relations`
+inchangé), alliés des neutres, ennemis des hors-la-loi, des naufrageurs, des géants de froid et du Dévoreur ; méfiants
+envers la Légion infernale et la Lune Noire.
+
+PNJ (`persons`, un dialogue chacun) : Ataw Kantu, Fils du Soleil (Grand Sanctuaire) ; Willak Rumi, Gardien de la Brume
+(Temple de la Brume) ; Sami Qori, gardienne des cordes-mémoires (Temple des Ancêtres Noyés) ; Tamaru, coureur des crêtes
+(Oratoire du Col) ; Amaru le Renégat, prêtre qui veut réveiller le Dévoreur (ennemi).
+
+**Temples** `[GD]` (fiches `lieux` `shrine_poi`, `faction_control` = `faction_huacani`, POI au sommet ou sur la terrasse,
+décalés dans la case ; architecture : pierre taillée sans mortier, terrasses, escaliers taillés, portes trapézoïdales,
+or ou argent) :
+
+| Temple | Taille | Case | POI (hauteur) | Habitants | Rattachement |
+|---|---|---|---|---|---|
+| Grand Sanctuaire du Soleil | grand, 9 degrés, 32 m, 90 m | N020_W014 | `temple` (553 m) | ~400 | siège du Fils du Soleil |
+| Temple des Ancêtres Noyés | grand, 7 degrés, 24 m, 70 m | N019_W013 | `temple` (524 m) | ~40 | raid du Tertre, 3 quêtes |
+| Temple de la Brume | grand, 5 degrés, 20 m, 60 m | N020_W011 | `temple` (374 m) | ~60 | raid du Dévoreur, 2 quêtes |
+| Temple du Givre | moyen, 4 terrasses, 14 m | N022_W012 | `temple` (548 m) | ~25 | raid du Jarl, 2 quêtes |
+| Temple de la Mère des Eaux | moyen, 3 degrés, 12 m | N018_W014 | `temple` (268 m) | ~20 | raid des Naufrageurs |
+| Temple de la Lune d'Argent | moyen, 4 degrés, 15 m | N018_W013 | `temple` (486 m) | ~30 | quête du Renégat |
+| Temple des Cimes | moyen, 3 degrés, 10 m | N021_W013 | `temple` (507 m) | ~15 | quêtes du bois de marine |
+| Temple des Terrasses | moyen, 3 degrés, 9 m | N017_W012 | `temple` (473 m) | ~80 | quête des terrasses |
+| Oratoire du Col | petit, 2 terrasses, 3 m | N022_W013 | `sanctuaire` (38 m) | 2 | coureur des crêtes |
+| Autel des Sources | petit, 3 bassins, 4 m | N019_W014 | `sanctuaire` (150 m) | 3 | coureur des crêtes |
+| Oratoire de l'Aube | petit, 5 m | N017_W011 | `sanctuaire` (320 m) | 2 | coureur des crêtes |
+
+**Raids et quêtes rattachés**. Les quatre lieux de raid de la v1.0.74 sont gardés et rattachés au temple de leur case :
+le Tertre des Rois Noyés s'ouvre sous la terrasse basse du Temple des Ancêtres Noyés (800 m plus bas sur le flanc) ; les
+Grottes des Naufrageurs sont au pied de la falaise du Temple de la Mère des Eaux, dont les naufrageurs volent le feu
+sacré ; la Tanière du Jarl est la salle basse du Temple du Givre, prise par les géants ; le Gouffre de la Baie est scellé
+par le Temple de la Brume (Porte du Gouffre). Descriptions et notes des quatre raids mises à jour ; leur ville de départ
+(`location_ville_id`) ne change pas, le schéma n'ayant pas de champ de lieu. Les 8 quêtes de la v1.0.74 ont une étape
+réécrite pour passer par un temple. Nouvelles quêtes `[GD]`, toutes factions : `quest_ile_gd_coureur_des_cretes` (45),
+`quest_ile_gd_terrasses_affamees` (48), `quest_ile_gd_fil_des_ancetres` (50, ouvre le choix Âmes / Repos des noyés),
+`quest_ile_gd_renegat_de_la_brume` (54, précède le Chant du Dévoreur).
+
+**Réseau**. Neuf temples sont dans une case traversée par une route ou un sentier (000214, 000215, 000216, 000217,
+000220). Deux sentiers sont ajoutés, chacun partant de la route la plus proche sans en doubler aucune : **000226**
+Lanternhold → Temple des Cimes (N021_W014 → N021_W013) et **000227** Camp du Cap → Temple de la Lune d'Argent
+(N017_W013 → N018_W013). Contrôle (`reseau_check.py --mer`) : 117 villes et hameaux, 162 routes, une composante, aucune
+anomalie ; `reseau.py --dry` donne les mêmes propositions qu'en v1.0.76.
+
+**Services** : inchangés (1241 PNJ, aucune ville ajoutée). Cellules générées : inchangées (248).
+
+**Ce qui n'est pas réel en jeu** :
+
+- Les temples : aucun modèle 3D de temple inca n'existe. Les 11 POI (`temple`, `sanctuaire`, genres existants) ne sont
+  que des repères (nom sur la carte et le radar) ; ni édifice, ni terrasse, ni escalier ne sont posés.
+- Les Huacani, leurs PNJ, dialogues et quêtes, la paix des sanctuaires : lore seulement (aucun PNJ placé, aucun spawner).
+- Les sentiers du lore et les liens raid – temple : seuls les POI d'entrée existent, comme en v1.0.74.
+- Le relief est réel (heightmaps des cellules après régénération) ; la forêt y reste celle du code `T` (conifères
+  au-dessus de 300 m, pas d'arbre au-delà de 34° de pente).
+
+**Points incertains** :
+
+- Les noms (peuple, culte, temples, PNJ, quêtes), les tailles et le nombre d'habitants.
+- Le peuple : rameau humain (nouvelle fiche de race PNJ) plutôt que race existante.
+- Les hauteurs des massifs et la part des cases en `mountain` ; l'écart lore `mountain` / grille `T`.
+- Le rattachement des raids : lieux de raid gardés à côté des temples plutôt que fusionnés avec eux.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

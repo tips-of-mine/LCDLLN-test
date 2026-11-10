@@ -4975,16 +4975,22 @@ function drawCarte() {
   });
 
   // Lieux remarquables (couche optionnelle) : marqueur cerclé d'or, coin bas-gauche.
+  // Plusieurs lieux dans la case (v1.0.77, ex. temple et entrée de raid) : un nom par
+  // ligne sous le marqueur du premier.
   if (fl.lieux) Object.keys(_carteGeo.lieuByCell).forEach(function(cellId){
     var ctr=carteCellCenter(cellId); if(!ctr) return;
-    var l=_carteGeo.lieuByCell[cellId][0], d=placeTypeDef(l.type);
+    var ls=_carteGeo.lieuByCell[cellId], l=ls[0], d=placeTypeDef(l.type);
     var r=Math.max(3,px*0.2), lx=ctr.x-px*0.18, ly=ctr.y+px*0.18;
     ctx.fillStyle=d.color||'#c9a96e'; ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(1,px*0.06);
     drawCartePlaceShape(ctx, d.shape||'diamond', lx, ly, r);
     if (px>=26) {
-      ctx.font='italic '+Math.floor(px*0.22)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+      var fsz=Math.floor(px*0.22);
+      ctx.font='italic '+fsz+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillStyle='#f0d890'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
-      ctx.strokeText(l.name||'', lx, ly+r+1); ctx.fillText(l.name||'', lx, ly+r+1);
+      ls.forEach(function(li, k){
+        var ty=ly+r+1+k*(fsz+2);
+        ctx.strokeText(li.name||'', lx, ty); ctx.fillText(li.name||'', lx, ty);
+      });
     }
   });
 
@@ -5006,6 +5012,9 @@ function drawCarte() {
       ctx.strokeText(nm, ctr.x, ctr.y+r+1); ctx.fillText(nm, ctr.x, ctr.y+r+1);
     }
   });
+
+  // Noms de cellules (v1.0.77) : un nom par groupe de cellules qui le portent.
+  if (px >= 6) drawCarteCellNames(ctx, px);
 
   // Surbrillance de la cellule de départ de route
   if (st.mode==='route' && st.routeFrom) {
@@ -5124,6 +5133,33 @@ function drawCarteWater(ctx, c, x, y, px) {
   }
 }
 
+// Nom propre d'une cellule (champ name du lore), ou '' pour le nom technique
+// par défaut « cell_<id> » que portent la plupart des cellules (v1.0.77).
+function carteCellName(c) {
+  var n=(c&&c.name)||'';
+  return (n && n!=='cell_'+c.id) ? n : '';
+}
+// Écrit sur la carte, une seule fois, chaque nom propre de cellule (ex. « Île de la
+// Trêve », v1.0.77), centré en largeur sur les cellules qui le portent et posé au-dessus
+// de leur rangée la plus au nord (comme le nom d'une région, sans masquer les villes et
+// les lieux) ; taille selon le zoom (px = côté d'une cellule en pixels). Dessin seul.
+function drawCarteCellNames(ctx, px) {
+  var groups={};
+  (db.cells||[]).forEach(function(c){
+    var n=carteCellName(c); if(!n) return;
+    var ctr=carteCellCenter(c.id); if(!ctr) return;
+    var g=groups[n]||(groups[n]={x0:ctr.x,x1:ctr.x,y0:ctr.y});
+    g.x0=Math.min(g.x0,ctr.x); g.x1=Math.max(g.x1,ctr.x); g.y0=Math.min(g.y0,ctr.y);
+  });
+  Object.keys(groups).forEach(function(n){
+    var g=groups[n], fs=Math.max(11, Math.min(36, Math.floor(px*0.45)));
+    var x=(g.x0+g.x1)/2, y=Math.max(fs*0.6, g.y0-px*0.8);
+    ctx.font='italic bold '+fs+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.lineWidth=Math.max(3, fs*0.18); ctx.strokeStyle='rgba(20,16,8,0.85)'; ctx.fillStyle='#f3dc9a';
+    ctx.strokeText(n, x, y); ctx.fillText(n, x, y);
+  });
+}
+
 // Convertit un événement souris en cellule (ou null hors grille).
 function carteEventToCell(e) {
   var canvas=document.getElementById('carteCanvas'); if(!canvas||!_carteGeo) return null;
@@ -5139,7 +5175,9 @@ function carteOnHover(e) {
   if(!c){ s.innerHTML='&nbsp;'; return; }
   var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name+(v.type?' ('+placeTypeLabel(v.type)+')':'');});
   var ls=(_carteGeo.lieuByCell[c.id]||[]).map(function(l){return l.name;});
-  s.textContent = c.id+' — '+terrainLabel(c.terrain_type)+(c.region_id?' ['+c.region_id+']':'')
+  var rg=c.region_id?(db.regions||[]).find(function(x){return x.id===c.region_id;}):null;
+  s.textContent = c.id+(carteCellName(c)?' « '+carteCellName(c)+' »':'')+' — '+terrainLabel(c.terrain_type)
+    +(c.region_id?' ['+(rg&&rg.name?rg.name:c.region_id)+']':'')
     +(vs.length?' • 🏙️ '+vs.join(', '):'')
     +(ls.length?' • ✴️ '+ls.join(', '):'')
     +((c.points_of_interest&&c.points_of_interest.length)?' • '+c.points_of_interest.length+' POI':'');
@@ -5192,7 +5230,7 @@ function openCellEditor(cellId) {
   var cx=curVille&&curVille.coord_x!=null?curVille.coord_x:'';
   var cy=curVille&&curVille.coord_y!=null?curVille.coord_y:'';
 
-  document.getElementById('modalTitle').textContent='Cellule '+cellId;
+  document.getElementById('modalTitle').textContent='Cellule '+cellId+(carteCellName(c)?' — '+carteCellName(c):'');
   document.getElementById('modalBody').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Terrain par défaut</label><select class="form-select" id="cell_terrain">'+terrainOpts+'</select></div>'+

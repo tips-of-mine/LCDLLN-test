@@ -238,7 +238,7 @@ Décision du propriétaire : les départs sont **par faction**, plus par race. `
 |---|---|---|
 | `legions_imperiales` (réservé, absent de `factions.json`) | Eaglewatch, près de Lhynn | `cell_n002_w010` |
 | `lumiere` | Dawnmere, près d'Altenberg | `cell_n005_w011` |
-| `justice` | Oathford, près d'Aurore | `cell_n009_w010` |
+| `justice` | Oathford, près de Syzygie | `cell_n009_w010` |
 | `dragons` | Wyrmhallow, près du Palais des Maîtres des Dragons | `cell_s004_w004` |
 | `dzorak` | Grakhul, près de Leviathan | `cell_n008_e012` |
 | `naine` | Durnhalde, près de Ghrunke Dash | `cell_s007_e017` |

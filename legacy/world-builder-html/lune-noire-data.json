@@ -1,21 +1,21 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.74",
+    "version": "1.0.75",
     "notes": [
       "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brinehaven (N017_W010, port franc neutre), Duskmoor (N022_W010, Lune Noire), Truceholm (N019_W010, îlot, neutre), Lanternhold (N021_W014, Empire). Ports avec ponton à Hayfen et Orderfen ; ligne maritime du Nord Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222) et navette de Truceholm (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
       "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazelgate (N007_E002, Elfes des bois, neutre), Fellwatch (N009_W001, humains, Empire), Hollowgate (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Greyhedge et Hollowgate (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
-      "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Aurore → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
+      "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Syzygie → Orderfen, 000006 Lhynn → Altenberg, 000151 Hishtarland → Saltfen (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Tithemead → Orderfen, 000199 Eaglewatch → Lambsfold, 000200 Lambsfold → Altenberg, 000201 Greyhedge → Ambermead, 000202 Ambermead → Dys, 000203 Dys → Greenbough, 000204 Greenbough → Northind, 000205 Greenbough → Magistrya, 000206 Verdansur → Sanctuaire des Brisants. Déplacements : Ambermead N003_W010 → N003_W008, Greyhedge N001_W009 → N001_W008, Silverglade (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Wardholt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Verdansur au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
       "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
       "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Silverglade (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Greenbough (N006_W006, cueilleurs et herboristes) et Fernhollow (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Silverglade → Greenbough et 000193 Silverglade → Fernhollow, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
       "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
       "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Wyrmhallow (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Cragfold (S004_W003, bergers) et Bridlecrag (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Wyrmhallow, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Equiton (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
       "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Leviathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
-      "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case d'Aurore ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
+      "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Oathford (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Tithemead (N010_W010) et hameau de garnison [GD] Wardholt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Oathford, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case de Syzygie ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
       "v1.0.65 — Réseau routier : lot de corrections du propriétaire, routes de plus de 5 cases remplacées par des chaînes de villes, villes isolées reliées, réseau connexe.",
       "v1.0.64 : [CARTE] région de départ des Chevaliers de la Lumière autour de Dawnmere (N005_W011) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Commanderie rurale [GD] Brightholm (N005_W010) et fermes [GD] Whitesheaf (N006_W011) et Lambsfold (N004_W011) ; POI [GD] Calvaire des pèlerins (N006_W012), Chapelle de l'ermite (N006_W010), Ruines du prieuré (N004_W010), Camp des naufrageurs (N004_W012) ; routes locales 000135 à 000137 et sentiers 000138 à 000141 ; faune existante de niveau 1 à 10 rattachée aux cases ; trois lieux ajoutés aux lieux de culte de l'Église (lore.religions). Rien dans la case d'Altenberg. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.2.",
       "v1.0.62 : [CARTE] région de départ des Légions Impériales autour d'Eaglewatch (N002_W010) : 3×3 cases de niveau débutant (décision du propriétaire du 06/11/2026, inscrite sur rule_niveaux_par_faction et au registre). Fermes [GD] Ambermead (N003_W010) et Greyhedge (N001_W009) ; POI [GD] Camp de manœuvres des Légions (N003_W011), Autel des Aigles (N002_W011), Ruines de la villa tharque (N002_W009), Grotte des contrebandiers (N001_W011) ; routes locales 000128, 000129 et 000130 (embranchement sur la Via Magna en N000_W010, sans traverser Lhynn) et sentiers 000131 à 000134 ; faune existante de niveau 1 à 10 rattachée aux cases, bêtes de guerre des élevages gardées en N002_W008. Rien dans la case de Lhynn ni dans celle du hameau de Marn. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.1.",
-      "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Aurore), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
+      "v1.0.61 : [CARTE] départs par FACTION et non plus par race (décision du propriétaire du 06/11/2026) : 7 hameaux de départ [GD] (noms à valider), cellules [INFÉRÉ] voisines de leur ville et routes de rattachement 000121 à 000127 : Eaglewatch (Légions Impériales, près de Lhynn), Dawnmere (Lumière, Altenberg), Oathford (Justice, Syzygie), Wyrmhallow (Chevaliers-Dragons, Palais des Maîtres des Dragons), Grakhul (Dzorak, Leviathan), Durnhalde (Nains, Ghrunke Dash), Silverglade (Hauts Elfes, Northind) ; Lune Noire dans son palais lunaire, Archimages dans la pyramide de Methraton, Légion infernale (nouvelle faction démon jouable, « legion ») à la Citadelle de la Légion des Enfers ; Maison du Serpent à définir, Hors-La-Loi sans départ. Champ game_design.faction_jeu (correspondance avec game/data/races/factions.json) et game_design.depart sur les factions. Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales. Registre des décisions (+26). Détail : docs/world/LORE_BD.md, section 14.",
       "v1.0.60 : [CARTE] tracé de la Via Magna : route 000120 de type imperial_road (« Voie impériale », nouveau type), 34 cellules de Lhynn (N001_W010) à Moork (S002_E015) par Magistrya, le Camp de l'Oracle, le fief de Garundel, Harrowdale, Shadehold, Horkher et Nightfield [BD-THS p.5, p.7] ; étapes intermédiaires et cellules [INFÉRÉ] ; aucun fleuve franchi. Routes provisoires 000011 et 000012 supprimées, 000013 gardée en raccourci ; axe_via_magna repointé ; les voies impériales comptent comme sorties terrestres (écuries). Tracé demandé par le propriétaire. Détail : docs/world/LORE_BD.md, section 13.",
       "v1.0.59 : [CARTE] placements des lieux des albums hors série : Khurden (N011_E017), Rériah (N018_E015), Almuria (N018_E017), ruines du Château de la Mort (N013_E016), Passe de Syzygie (N008_W013), ruines de Thenhart (N009_W004) [INFÉRÉ] ; Marais maudits de Thenhart sur les 5 cellules de marais du bestiaire (N010_W003 à N011_W005) ; Marche de l'Est : 56 cellules autour de Moork ; élevages impériaux de béhémoths et léviathans (N002_W008) ; placement demandé par le propriétaire, cellules inférées. Monde jouable : 7 POI et 2 régions. Détail : docs/world/LORE_BD.md, section 12.",
       "v1.0.58 : [GD bestiaire] créatures vues ou citées dans les 24 albums : nouvelles fiches d'espèces (ogre, troll, Krell, géants, titan, Grand Ancien, morts-vivants, démons mineurs, bêtes de guerre…), fiches existantes complétées (habitat, zones de chasse, groupe, butin), butins thématiques et règle regle_bestiaire_echelles. Détail : gd/bestiaire.md.",
@@ -253,8 +253,8 @@
         "[BD-T11] Dieu vide l'Empire de ses croyants et les projette dans un autre plan d'existence — protégés pour l'éternité.",
         "[BD-T11] La faction Justice n'est plus présente dans le monde physique après T11 — plan d'existence séparé.",
         "[GD] (v1.0.58) Religion : « L'Église du Dieu de Lumière » (lore.religions, religion_eglise_lumiere).",
-        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Oathford (hameau_oathford, N009_W010), près de Aurore. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[GD] (v1.0.66) Région de départ 3×3 autour d'Oathford (LORE_BD §15.3) : ferme Tithemead, hameau de garnison Wardholt, Stèle des Serments, Lices des novices, Camp des parjures, Ruines de la tour du guet ; routes locales vers Oathford ; faune de niveau 1 à 10. Rien dans la case d'Aurore ni dans le lit du fleuve."
+        "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Oathford (hameau_oathford, N009_W010), près de Syzygie. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
+        "[GD] (v1.0.66) Région de départ 3×3 autour d'Oathford (LORE_BD §15.3) : ferme Tithemead, hameau de garnison Wardholt, Stèle des Serments, Lices des novices, Camp des parjures, Ruines de la tour du guet ; routes locales vers Oathford ; faune de niveau 1 à 10. Rien dans la case de Syzygie ni dans le lit du fleuve."
       ],
       "faction_relations": [
         {
@@ -5740,8 +5740,8 @@
     },
     {
       "id": "ville_sysigie",
-      "name": "Aurore",
-      "alias": "Sysigie, Syzygie, Syzigie, Cité d'Aurore",
+      "name": "Syzygie",
+      "alias": "Cité d'Aurore, Aurore, Sysigie, Syzigie",
       "type": "major_city",
       "importance": "haut lieu mystique",
       "cell": "N009_W011",
@@ -5771,7 +5771,7 @@
       "features": [
         "cité d'Aurore, capitale de la principauté de Syzygie",
         "ville principale des Chevaliers de la Justice",
-        "île du lac d'Aurore, traversé par un grand fleuve",
+        "île du lac de Syzygie, traversé par un grand fleuve",
         "brouillard fréquent sur le lac et le fleuve (« cité dans les nuages »)",
         "cathédrale bâtie par les géants",
         "accès par la Passe et sa muraille (Portes d'Aurore)"
@@ -5809,9 +5809,10 @@
         "[BD-A3 pl.49-50] Parsifal couronné « PRINCE PARSIFAL DE SYZYGIE » ; les géants reviennent bâtir gratuitement la cathédrale.",
         "[BD-THS p.5] « SYZYGIE » posé sur une péninsule montagneuse : schéma, sans effet sur la grille.",
         "[ÉPOQUE] fondation et cathédrale avant T1 ; projetée dans un autre plan au T11 ; intacte à l'époque du jeu.",
-        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac d'Aurore, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
+        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac de Syzygie, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
         "[DÉCISION] (v1.0.54) La cité de Sysigie (affichée « Aurore » depuis la v1.0.56) est sur une île au milieu d'un grand fleuve ; le brouillard fréquent sur le fleuve produit la « cité dans les nuages » (T4, T10) (docs/world/LORE_BD.md §7.2 ; inscrit en v1.0.57).",
-        "[GD] (v1.0.58) Économie : grande place marchande ; produit moulins et maraîchage, pêche de rivière, lin, blé et orge ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : grande place marchande ; produit moulins et maraîchage, pêche de rivière, lin, blé et orge ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.75) Nom affiché « Syzygie » (décision du propriétaire du 10/11/2026) : c'est le nom sous lequel les lecteurs connaissent la cité à l'époque du jeu (T1-T11). Remplace l'affichage « Aurore » des v1.0.56 à v1.0.74 ; « Cité d'Aurore » [BD-A3 pl.7] reste le nom de fondation (alias) et les « Portes d'Aurore » [BD-T8] gardent leur nom. Identifiant inchangé (ville_sysigie)."
       ],
       "dimensions_estimees": {
         "hauteur": "500m",
@@ -5822,7 +5823,7 @@
       "topographie": {
         "forme_generale": "cité insulaire fortifiée",
         "relief": "rocher de l'île dominant le fleuve ; la principauté est bordée de hautes montagnes (T11)",
-        "implantation": "sur une île du lac d'Aurore, que traverse un très grand fleuve",
+        "implantation": "sur une île du lac de Syzygie, que traverse un très grand fleuve",
         "pentes": "",
         "gorge": ""
       },
@@ -5834,7 +5835,7 @@
       },
       "hydrographie": {
         "type": "lacustre et fluviale",
-        "eau": "lac de montagne d'Aurore, traversé par un très grand fleuve",
+        "eau": "lac de montagne de Syzygie, traversé par un très grand fleuve",
         "couleur": "",
         "elements": "brouillard très fréquent sur le fleuve : la cité semble flotter sur les nuages"
       },
@@ -20858,9 +20859,9 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Chevaliers de la Justice (chevaliers_de_la_justice ; faction de jeu « justice »), « pas loin de Aurore » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
-        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Chevaliers de la Justice sur la rive est du lac d'Aurore, face à l'île de la cité.",
-        "[INFÉRÉ] (v1.0.61) Cellule N009_W010 : Plaine de la Syzygie à l'est d'Aurore (N009_W011), hors du fleuve (N008_W011, N010_W011) ; la route franchit un bras pour gagner l'île.",
+        "[DÉCISION] (v1.0.61) Hameau de départ de la faction Chevaliers de la Justice (chevaliers_de_la_justice ; faction de jeu « justice »), « pas loin de Syzygie » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
+        "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau des Chevaliers de la Justice sur la rive est du lac de Syzygie, face à l'île de la cité.",
+        "[INFÉRÉ] (v1.0.61) Cellule N009_W010 : Plaine de la Syzygie à l'est de Syzygie (N009_W011), hors du fleuve (N008_W011, N010_W011) ; la route franchit un bras pour gagner l'île.",
         "[GD] (v1.0.61) Population : humains ; services d'un hameau (grille game_design.cities_services)."
       ],
       "taille": "hameau",
@@ -22311,11 +22312,11 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Ferme de la dîme : son blé et son foin, levés pour l'Ordre, nourrissent les garnisons d'Aurore et les novices d'Oathford. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Ferme de la dîme : son blé et son foin, levés pour l'Ordre, nourrissent les garnisons de Syzygie et les novices d'Oathford. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[INFÉRÉ] (v1.0.66) Cellule N010_W010 : Plaine de la Syzygie au nord d'Oathford, sur la rive est du fleuve (N010_W011), hors du lit ; case libre.",
         "[GD] (v1.0.66) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
-        "[GD] (v1.0.66) Économie : ferme : blé, foin, volailles et chevaux de remonte pour la garnison d'Aurore ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.66) Ancrage : Aurore, « lieu de paix et d'harmonie à l'abri des puissantes murailles » [BD-T4 p.39] ; la ferme de la dîme est [GD]."
+        "[GD] (v1.0.66) Économie : ferme : blé, foin, volailles et chevaux de remonte pour la garnison de Syzygie ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.66) Ancrage : Syzygie, « lieu de paix et d'harmonie à l'abri des puissantes murailles » [BD-T4 p.39] ; la ferme de la dîme est [GD]."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -22455,7 +22456,7 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Hameau de garnison à palissade : un poste de garde de l'Ordre de la Justice veille sur la lisière, avec des bûcherons et des charbonniers qui fournissent le bois d'Aurore. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Nom proposé, à valider par le propriétaire. Hameau de garnison à palissade : un poste de garde de l'Ordre de la Justice veille sur la lisière, avec des bûcherons et des charbonniers qui fournissent le bois de Syzygie. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[INFÉRÉ] (v1.0.66) Cellule N009_W009 : Lisière à l'est d'Oathford, face à la forêt elfique (N009_W008) ; case libre.",
         "[GD] (v1.0.66) Population : humains, fidèles de l'Église du Dieu de Lumière (religion_eglise_lumiere) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.66) Économie : hameau de garnison : bois d'œuvre, charbon de bois, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
@@ -40361,7 +40362,7 @@
       "year": "",
       "month": "",
       "type": "event",
-      "description": "Le maître de la Lune Noire fait posséder Willhem par un démon-sanglier ; Parsifal l'exorcise et son père meurt sur l'épée sainte. Parsifal est couronné prince de Syzygie et les géants bâtissent la cathédrale d'Aurore.",
+      "description": "Le maître de la Lune Noire fait posséder Willhem par un démon-sanglier ; Parsifal l'exorcise et son père meurt sur l'épée sainte. Parsifal est couronné prince de Syzygie et les géants bâtissent la cathédrale de Syzygie.",
       "factions": [
         "chevaliers_de_la_justice",
         "faction_black_moon"
@@ -158230,9 +158231,9 @@
       "dialogue_ids": [],
       "notes": [
         "[BD-A3 pl.1-6] Tue un titan orque pendant que sa dame accouche de Parsifal.",
-        "[BD-A3 pl.7-19] Fonde Aurore, soumet les géants, ferme la Passe, reste indépendant de l'Ordre, de l'Empereur et de la Lune Noire.",
+        "[BD-A3 pl.7-19] Fonde Syzygie, soumet les géants, ferme la Passe, reste indépendant de l'Ordre, de l'Empereur et de la Lune Noire.",
         "[BD-A3 pl.25-31] Ordonne d'empoisonner les géants ; chasse son fils : « un prince n'est pas un paladin ».",
-        "[BD-A3 pl.38-47] Possédé par un démon-sanglier, tyran ; meurt sur l'épée sainte de Parsifal lors de l'exorcisme ; enterré dans l'église d'Aurore (pl.49).",
+        "[BD-A3 pl.38-47] Possédé par un démon-sanglier, tyran ; meurt sur l'épée sainte de Parsifal lors de l'exorcisme ; enterré dans l'église de Syzygie (pl.49).",
         "[ÉPOQUE] avant T1.",
         "[DÉCISION] (v1.0.56) Mort avant le T1 : absent du monde jouable, sauf souvenir ou tombe (Q2)."
       ]
@@ -158282,7 +158283,7 @@
       "role": "",
       "visual": "",
       "personality": "",
-      "description": "Amie d'enfance de Parsifal à Aurore.",
+      "description": "Amie d'enfance de Parsifal à Syzygie.",
       "arc": "",
       "abilities": [],
       "special_items": [],
@@ -158312,7 +158313,7 @@
       "role": "chef",
       "visual": "",
       "personality": "",
-      "description": "Chef des géants soumis par Willhem, sauvés par Parsifal, bâtisseurs de la muraille et de la cathédrale d'Aurore.",
+      "description": "Chef des géants soumis par Willhem, sauvés par Parsifal, bâtisseurs de la muraille et de la cathédrale de Syzygie.",
       "arc": "",
       "abilities": [],
       "special_items": [],
@@ -161677,7 +161678,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_renard",
-      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
+      "habitat": "Lisières des Terres du Nord ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E008",
@@ -161740,7 +161741,7 @@
         "chien de chasse"
       ],
       "bestiaire": true,
-      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
+      "habitat": "Villages et fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "meute",
       "zones_chasse": [
         "ville_whispers_hill",
@@ -162023,7 +162024,7 @@
         "N008_W011",
         "N006_W005"
       ],
-      "habitat": "Région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
+      "habitat": "Région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind)."
     },
     {
       "id": "animal_belette",
@@ -162334,7 +162335,7 @@
         "lièvre"
       ],
       "bestiaire": true,
-      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
+      "habitat": "Clairières et prés du nord et des Marches ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -162457,7 +162458,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_boeuf",
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E017",
@@ -162565,7 +162566,7 @@
         "N008_W010",
         "S004_W003"
       ],
-      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
+      "habitat": "Région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons)."
     },
     {
       "id": "animal_cerf",
@@ -162616,7 +162617,7 @@
         "Biche"
       ],
       "bestiaire": true,
-      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
+      "habitat": "Forêts des Terres du Nord ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N011_E008",
@@ -162708,7 +162709,7 @@
         "cheval sauvage"
       ],
       "bestiaire": true,
-      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
+      "habitat": "Plaines des Marches (hardes sauvages) ; écuries des villes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons).",
       "groupe": "troupeau",
       "zones_chasse": [
         "N018_E014",
@@ -162779,7 +162780,7 @@
         "Âne"
       ],
       "bestiaire": true,
-      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
+      "habitat": "Fermes ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash).",
       "groupe": "solitaire",
       "zones_chasse": [
         "N011_E017",
@@ -163034,7 +163035,7 @@
         "poulet"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
@@ -163074,7 +163075,7 @@
         "coq magique"
       ],
       "bestiaire": true,
-      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore).",
+      "habitat": "Fermes et villages ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie).",
       "groupe": "troupeau",
       "zones_chasse": [
         "ville_haywick",
@@ -163342,7 +163343,7 @@
         "corbeau noir"
       ],
       "bestiaire": true,
-      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
+      "habitat": "Champs de bataille et ruines ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "nuée",
       "zones_chasse": [
         "lieu_ruines_wismerhill",
@@ -163832,7 +163833,7 @@
       ],
       "bestiaire": true,
       "familier_famille": "familier_araignee",
-      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour d'Aurore) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
+      "habitat": "Sous-bois de l'Orkland et des forêts ; région de départ d'Eaglewatch (Terres de l'Empereur, Première Province) ; région de départ de Dawnmere (Première Province, autour d'Altenberg) ; région de départ d'Oathford (Syzygie, autour de Syzygie) ; région de départ de Grakhul (Orkland, autour de Leviathan) ; région de départ de Wyrmhallow (montagnes du Palais des Maîtres des Dragons) ; région de départ de Durnhalde (montagnes des nains autour de Ghrunke Dash) ; région de départ de Silverglade (forêts des Hauts Elfes à l'ouest de Northind).",
       "groupe": "meute",
       "zones_chasse": [
         "N014_E013",
@@ -166497,12 +166498,12 @@
     {
       "id": "syzygie",
       "name": "Syzygie",
-      "description": "Principauté indépendante de la « Grande Vallée », bordée de hautes montagnes, fondée par Willhem de Syzygie et gouvernée par le prince Parsifal ; capitale : la cité d'Aurore (ville_sysigie), sur une île du lac d'Aurore. Seul accès : la Passe, fermée par une muraille (Portes d'Aurore).",
+      "description": "Principauté indépendante de la « Grande Vallée », bordée de hautes montagnes, fondée par Willhem de Syzygie et gouvernée par le prince Parsifal ; capitale : la cité de Syzygie (ville_sysigie, fondée sous le nom de « Cité d'Aurore »), sur une île du lac de Syzygie. Seul accès : la Passe, fermée par une muraille (Portes d'Aurore).",
       "notes": [
         "[BD-A3 pl.7-11] « Région barbare du bout du monde » pacifiée par les chevaliers de Willhem (orques dispersés de la Grande Vallée, géants au nord-est).",
         "[BD-A3 pl.18-19] Courtisée par l'Ordre, l'Empereur (« duché héréditaire et pairie ») et la Lune Noire ; Willhem reste indépendant.",
         "[BD-T10] p.8, 11 : « principauté de Syzygie ».",
-        "[DÉCISION] (v1.0.56) Syzygie = principauté (Q5) ; sa cité est Aurore (ville_sysigie).",
+        "[DÉCISION] (v1.0.56) Syzygie = principauté (Q5) ; sa cité est Syzygie (ville_sysigie).",
         "[GD] (v1.0.58) Économie : ressources blé, lin, pêche de fleuve, poisson de mer ; productions grain et farine, toile de lin [GD] ; exporte grain, toile ; importe métaux, armes. Détail et sources : regle_eco_productions_regions."
       ]
     },
@@ -178239,7 +178240,7 @@
     },
     {
       "id": "zone_sysigie",
-      "name": "Aurore (Syzygie)",
+      "name": "Syzygie",
       "type": "city_order_justice",
       "tome": "t4",
       "faction": "chevaliers_de_la_justice",
@@ -178256,7 +178257,8 @@
         "[BD-T4] La salle du Conseil a des frères aînés qui valident/orientent les décisions de Parsifal ('Bien mon fils!').",
         "[BD-T4] pl.36-37 : cité au-dessus des nuages, statues d'anges colossales, montagnes au loin.",
         "[v1.0.54] Décision : île au milieu d'un grand fleuve ; la « mer de nuages » de la BD est le brouillard fréquent du fleuve (biome corrigé, ancien : « montagne au-dessus d'une mer de nuages »).",
-        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie / Syzygie."
+        "[DÉCISION] (v1.0.56) Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie / Syzygie.",
+        "[DÉCISION] (v1.0.75) Nom affiché « Syzygie » (décision du propriétaire du 10/11/2026) : c'est le nom sous lequel les lecteurs connaissent la cité à l'époque du jeu (T1-T11). Remplace l'affichage « Aurore » des v1.0.56 à v1.0.74 ; « Cité d'Aurore » [BD-A3 pl.7] reste le nom de fondation (alias) et les « Portes d'Aurore » [BD-T8] gardent leur nom. Identifiant inchangé (ville_sysigie)."
       ]
     },
     {
@@ -179532,7 +179534,7 @@
           "la Foi"
         ],
         "type": "religion",
-        "statut_epoque": "Religion dominante des humains de l'Empire à l'époque du jeu. Deux ordres guerriers la servent : l'Ordre de la Lumière (Altenberg) et l'Ordre de la Justice (Aurore). Le retrait divin (T10), le bris des Tables de la Loi et le départ de Syzygie dans un autre plan (T11) sont l'avenir du monde jouable : à l'époque du jeu, Dieu agit encore par ses anges.",
+        "statut_epoque": "Religion dominante des humains de l'Empire à l'époque du jeu. Deux ordres guerriers la servent : l'Ordre de la Lumière (Altenberg) et l'Ordre de la Justice (Syzygie). Le retrait divin (T10), le bris des Tables de la Loi et le départ de Syzygie dans un autre plan (T11) sont l'avenir du monde jouable : à l'époque du jeu, Dieu agit encore par ses anges.",
         "description": "Monothéisme des humains : un Dieu unique, « Notre Seigneur », adoré dans des églises, des chapelles et des cathédrales, servi par un clergé hiérarchisé et par deux ordres de chevaliers. Les Ordres de la Lumière et de la Justice « servent le même Dieu », mais « pas de la même manière » [BD-T8 p.29]. Un pacte ancien lie Dieu et l'Empire : les Tables de cristal gardées par des anges dans une crypte sous le trône de Lhynn [BD-T11 p.9-12].",
         "doctrine": [
           "Un seul Dieu, « Notre Seigneur », « le Seigneur », « le Grand Dieu » ; vocabulaire chrétien : Église, messe, Amen, Alléluia, action de grâce, contrition, excommunication [BD-T8 p.26, 33, 35, 37] [BD-T11 p.3, 42].",
@@ -179608,8 +179610,8 @@
           {
             "collection": "villes",
             "id": "ville_sysigie",
-            "nom": "Aurore",
-            "nature": "Aurore, cité sainte de l'Ordre de la Justice : tour-cathédrale bâtie gratuitement par les géants [BD-A3 pl.50], statues d'anges et vitraux [BD-T9 p.39-40] ; cité où se replient les croyants [BD-T10 p.8]."
+            "nom": "Syzygie",
+            "nature": "Syzygie, cité sainte de l'Ordre de la Justice : tour-cathédrale bâtie gratuitement par les géants [BD-A3 pl.50], statues d'anges et vitraux [BD-T9 p.39-40] ; cité où se replient les croyants [BD-T10 p.8]."
           },
           {
             "collection": "villes",
@@ -179795,7 +179797,7 @@
             "collection": "lieux",
             "id": "lieu_calvaire_des_pelerins",
             "nom": "Calvaire des pèlerins",
-            "nature": "[GD] Calvaire de la route d'Altenberg à Aurore, station du pèlerinage de la Grande Messe (région de départ de Dawnmere)."
+            "nature": "[GD] Calvaire de la route d'Altenberg à Syzygie, station du pèlerinage de la Grande Messe (région de départ de Dawnmere)."
           },
           {
             "collection": "lieux",
@@ -179866,8 +179868,8 @@
             "jour_semaine": "Jour du Feu",
             "duree_jours": 1,
             "nature": "fête majeure",
-            "description": "Au cœur de la Lune du Soleil, grande messe commune dans les cathédrales d'Altenberg et d'Aurore, cloches et bannières ; les chevaliers renouvellent leurs vœux.",
-            "mecanique_jeu": "Événement de ville à Altenberg et Aurore (messe, cloches) ; quête annuelle de pèlerinage entre les deux cathédrales.",
+            "description": "Au cœur de la Lune du Soleil, grande messe commune dans les cathédrales d'Altenberg et de Syzygie, cloches et bannières ; les chevaliers renouvellent leurs vœux.",
+            "mecanique_jeu": "Événement de ville à Altenberg et Syzygie (messe, cloches) ; quête annuelle de pèlerinage entre les deux cathédrales.",
             "source": "[GD] ; grande messe : [BD-T8 p.36-40]"
           },
           {
@@ -181231,7 +181233,7 @@
         "description": "Ce que la BD laisse entrevoir hors des grands cultes : le dieu des géants, la statuaire tharque, le pacte des Chevaliers Dragons, les jurons polythéistes et l'Empire du Jade (extension de jeu).",
         "doctrine": [
           "Zhooorn, invoqué par le géant Ghrukkkkh (« Merci Zhooorn ! ») : dieu des géants [BD-A2 pl.1-2] [DÉDUCTION].",
-          "Les géants tiennent à la parole donnée et bâtissent la cathédrale d'Aurore gratuitement [BD-A3 pl.50].",
+          "Les géants tiennent à la parole donnée et bâtissent la cathédrale de Syzygie gratuitement [BD-A3 pl.50].",
           "Empire tharque : statuaire de bronze d'un dieu barbu au trident [BD-T14 p.38-40].",
           "Chevaliers Dragons : pacte avec les dragons « jusqu'à la fin des temps » ; les dragons sont les « premières créatures du monde », Grands Rêveurs et Grands Anciens [BD-T14 p.20-23].",
           "Jurons polythéistes : « Par tous les dieux ! » (homme porcin) [BD-T9 p.36] ; « Dieux tout-puissants » [BD-T11 p.27].",
@@ -220091,10 +220093,10 @@
       "to_place": "N009_W011",
       "to_ville_id": "ville_sysigie",
       "to_lieu_id": "",
-      "description": "Route de rattachement du hameau de départ Oathford à Aurore.",
+      "description": "Route de rattachement du hameau de départ Oathford à Syzygie.",
       "notes": [
         "[INFÉRÉ] (v1.0.61) Cases voisines, sans étape intermédiaire.",
-        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Aurore → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
+        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Syzygie → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
       ]
     },
     {
@@ -220823,7 +220825,7 @@
       "description": "Route locale d'Oathford à Tithemead.",
       "notes": [
         "[INFÉRÉ] (v1.0.66) Voisin le plus proche : Oathford, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.3.",
-        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Aurore → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
+        "[DÉCISION] (v1.0.72) Tronçon de la chaîne Syzygie → Orderfen qui remplace la route 000066 (supprimée) ; LORE_BD §16."
       ]
     },
     {
@@ -221295,7 +221297,7 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[DÉCISION] (v1.0.72) Remplace la route 000066 Aurore → Orderfen, supprimée par le propriétaire : chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166), Tithemead → Orderfen.",
+        "[DÉCISION] (v1.0.72) Remplace la route 000066 Syzygie → Orderfen, supprimée par le propriétaire : chaîne Syzygie → Oathford (000123), Oathford → Tithemead (000166), Tithemead → Orderfen.",
         "[INFÉRÉ] (v1.0.72) Tracé : 2 case(s), N010_W010 → N010_W009 → N011_W008 (hors mer et chaînes de montagnes, en évitant les cases des autres villes) ; LORE_BD §16."
       ],
       "waypoints": [
@@ -223837,7 +223839,7 @@
       "id": "regle_canon_epoque_jeu",
       "name": "Époque du jeu",
       "category": "canon",
-      "description": "Moment du jeu : après la destruction de Kendrhir Vale par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Aurore (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
+      "description": "Moment du jeu : après la destruction de Kendrhir Vale par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Syzygie (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
       "applies_to": [
         "regle_epoque_hors_serie",
         "ville_altenberg",
@@ -224268,7 +224270,7 @@
         {
           "collection": "villes",
           "id": "ville_sysigie",
-          "nom": "Aurore",
+          "nom": "Syzygie",
           "decision": "Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
           "version": "1.0.54"
         },
@@ -224486,7 +224488,7 @@
           "collection": "hydrography.rivers",
           "id": "riv_fleuve_sysigie",
           "nom": "[à nommer]",
-          "decision": "Le fleuve traverse le lac d'Aurore, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55.",
+          "decision": "Le fleuve traverse le lac de Syzygie, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55.",
           "version": "1.0.56"
         },
         {
@@ -225235,7 +225237,7 @@
           "collection": "regions",
           "id": "syzygie",
           "nom": "Syzygie",
-          "decision": "Syzygie = principauté (Q5) ; sa cité est Aurore (ville_sysigie).",
+          "decision": "Syzygie = principauté (Q5) ; sa cité est Syzygie (ville_sysigie).",
           "version": "1.0.56"
         },
         {
@@ -225367,8 +225369,8 @@
         {
           "collection": "villes",
           "id": "ville_sysigie",
-          "nom": "Aurore",
-          "decision": "Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac d'Aurore, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
+          "nom": "Syzygie",
+          "decision": "Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie, Syzygie. Syzygie est la principauté (région syzygie). Le grand fleuve (riv_fleuve_sysigie) traverse le lac de Syzygie, l'île est dans le lac et le brouillard est conservé ; accès par la Passe et sa muraille (= gorge du T11 et Portes d'Aurore).",
           "version": "1.0.56"
         },
         {
@@ -225381,7 +225383,7 @@
         {
           "collection": "zones",
           "id": "zone_sysigie",
-          "nom": "Aurore (Syzygie)",
+          "nom": "Syzygie (Syzygie)",
           "decision": "Nom affiché « Aurore » (Q5), identifiant inchangé ; alias Sysigie / Syzygie.",
           "version": "1.0.56"
         },
@@ -225515,7 +225517,7 @@
           "collection": "factions",
           "id": "chevaliers_de_la_justice",
           "nom": "Chevaliers de la Justice",
-          "decision": "Départ au hameau Oathford près de Aurore (LORE_BD §14).",
+          "decision": "Départ au hameau Oathford près de Syzygie (LORE_BD §14).",
           "version": "1.0.61"
         },
         {
@@ -225648,7 +225650,7 @@
           "collection": "villes",
           "id": "hameau_oathford",
           "nom": "Oathford",
-          "decision": "Hameau de départ de la faction Chevaliers de la Justice près de Aurore ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
+          "decision": "Hameau de départ de la faction Chevaliers de la Justice près de Syzygie ; nom [GD] à valider, cellule [INFÉRÉ] (LORE_BD §14).",
           "version": "1.0.61"
         },
         {
@@ -225732,7 +225734,7 @@
           "collection": "routes",
           "id": "routes",
           "nom": "Réseau routier",
-          "decision": "Route 000066 Aurore → Orderfen supprimée ; remplacée par la chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166) et Tithemead → Orderfen (000198) (LORE_BD §16).",
+          "decision": "Route 000066 Syzygie → Orderfen supprimée ; remplacée par la chaîne Syzygie → Oathford (000123), Oathford → Tithemead (000166) et Tithemead → Orderfen (000198) (LORE_BD §16).",
           "version": "1.0.72"
         },
         {
@@ -225986,6 +225988,13 @@
           "nom": "Bestiaire — échelles de danger et zones de chasse",
           "decision": "Île de la Trêve : tranche 45-60 commune à toutes les factions (LORE_BD §16.3).",
           "version": "1.0.74"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_sysigie",
+          "nom": "Syzygie (nom affiché)",
+          "decision": "La cité s'affiche « Syzygie » (nom connu des lecteurs à l'époque du jeu) ; « Cité d'Aurore » et « Aurore » deviennent des alias ; Portes d'Aurore inchangées ; lac et fleuve « de Syzygie ». Annule l'affichage « Aurore » de la v1.0.56 (LORE_BD §16.4).",
+          "version": "1.0.75"
         }
       ]
     },
@@ -228657,7 +228666,7 @@
       "id": "regle_epoque_hors_serie",
       "name": "Albums hors série — époque et présence dans le monde jouable",
       "category": "chronologie",
-      "description": "Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) précèdent le T1 : on retient l'état de fin d'album, puis l'évolution connue des T1-T10. Lieux détruits dans l'album : ruines (château de Wismerhill, Thenhart, Château de la Mort, village de Ghorghor, village de Sekh). Lieux debout en fin d'album : intacts (Aurore, Khurden, Moork refortifiée). PNJ morts : absents, sauf souvenir ou tombe. PNJ vivants sans suite connue (Cirque du Magnifique, dragonne, Couette, Phocrathus, Hermann) : présents seulement si une quête les utilise. « L'Empire de la Négation » se place après T11 : seuls la Via Magna, Hishtarland et le plan de Lhynn entrent dans le monde jouable.",
+      "description": "Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) précèdent le T1 : on retient l'état de fin d'album, puis l'évolution connue des T1-T10. Lieux détruits dans l'album : ruines (château de Wismerhill, Thenhart, Château de la Mort, village de Ghorghor, village de Sekh). Lieux debout en fin d'album : intacts (Syzygie, Khurden, Moork refortifiée). PNJ morts : absents, sauf souvenir ou tombe. PNJ vivants sans suite connue (Cirque du Magnifique, dragonne, Couette, Phocrathus, Hermann) : présents seulement si une quête les utilise. « L'Empire de la Négation » se place après T11 : seuls la Via Magna, Hishtarland et le plan de Lhynn entrent dans le monde jouable.",
       "applies_to": [
         "lieu_ruines_wismerhill",
         "lieu_ruines_thenhart",
@@ -229290,7 +229299,7 @@
             "hamlet_0148",
             "hamlet_0189"
           ],
-          "source": "[GD] (Grande Vallée fertile, plaines irriguées par le fleuve d'Aurore et les rivières de Verdansur).",
+          "source": "[GD] (Grande Vallée fertile, plaines irriguées par le fleuve de Syzygie et les rivières de Verdansur).",
           "terrains_principaux": [
             {
               "terrain": "plain",
@@ -230220,7 +230229,7 @@
         "LIMITES : les démons obéissent à moitié (rule_demons_obeissent_a_moitie) et se nourrissent de la haine ; un paladin ne peut être possédé [BD-A3 pl.48] ; les sphères de négation s'annulent [BD-T10 p.51-52] ; le bâton de prière repousse les démons mineurs [BD-THS p.46] ; l'épée sainte ne se laisse brandir qu'après l'adoubement [BD-A3 pl.11, 22].",
         "[GD] ÉCOLES ET CODES (champ school des compétences) — Vents (inné) : elfique_instinctive, elfique_protection, elfique_elementale, elfique_offensive_ponctuelle, « Magie des Vents » ; Sylvestre elfique (inné) : elfique_sylvestre ; Psychisme (inné, appris) : psychique_apprise, psychique_menthat ; Chamanisme orque (inné, esprits) : chamanique ; Arcanes savantes (arcanique) : arcane_savante, divination_politique (astrologie) ; Forge runique naine (arcanique) : artisanat ; Verbe draconique (arcanique) : linguistique_arcanique ; Foi de l'Église (divin) : divine_eglise ; Prêtrise de la Lune Noire (divin) : priestly_dark, « Magie de la Lune Noire » ; Démonologie (démoniaque) : demonique, demonique_avance, demonique_sociale ; Nécromancie (démoniaque ou arcanique) : necromancie ; Négation (PNJ) : negation_cosmique, negation_combat, negation_telepathique, negation_leadership ; Démiurgie (PNJ) : demiurgique ; Artefacts : artefact_passif, artefact_arme, martial_special. Hors magie : passif_racial, combat_hybrid, social_commandement, subterfuge_politique.",
         "[GD] RATTACHEMENT DES CLASSES (école principale / secondaires possibles) — class_mage : Arcanes / Vents (elfe ténébreux), Sylvestre (elfe) ; Archimage : Arcanes (et Flamme draconique) / Verbe draconique ; class_shaman : Chamanisme ; class_black_moon_priest : Prêtrise de la Lune Noire / Nécromancie, Démonologie ; menthats : Psychisme / Prêtrise de la Lune Noire ; Inquisiteur, Paladin, class_priest_grace, class_priest_judgment, class_justice_holy_champion : Foi de l'Église (exclusive) ; Démoniste, Tourmenteur, Sorcier de sang : Démonologie / Nécromancie ; Brise-roc : Forge runique ; Dragonnier, Gardien d'écailles, class_dragon_rider : Verbe draconique ; class_warrior, class_archer, Pisteur, Assassin, class_thief : aucune école principale, artefacts seulement (talent inné de race possible).",
-        "[GD] ÉPOQUE (moment du jeu) — Kendrhir, cité des Grands Mages, est en reconstruction : pas d'école, savoir en fragments (loot_fragment_connaissance_magique_t1) ; l'Erypt et l'Île des Mages sont hors carte (passé, quêtes de mémoire) ; Hizin est mort : le psychisme passe par les Menthats ; les arcanes s'enseignent dans les villes à service ecole_magie (Lhynn, Moork, Altenberg, Aurore, Magistrya…) ; Moork a son grand mage du palais, Selinporf [BD-T6 p.30].",
+        "[GD] ÉPOQUE (moment du jeu) — Kendrhir, cité des Grands Mages, est en reconstruction : pas d'école, savoir en fragments (loot_fragment_connaissance_magique_t1) ; l'Erypt et l'Île des Mages sont hors carte (passé, quêtes de mémoire) ; Hizin est mort : le psychisme passe par les Menthats ; les arcanes s'enseignent dans les villes à service ecole_magie (Lhynn, Moork, Altenberg, Syzygie, Magistrya…) ; Moork a son grand mage du palais, Selinporf [BD-T6 p.30].",
         "[BD-T6 p.30 ; BD-T8 p.48 ; BD-A5 p.32] Des mages servent la Lune Noire (Selinporf, instructeurs de Wismerhill ; « clergé d'Haazheel : mages, Menthats, prêtres zélés ») : la note [BD] de class_black_moon_priest « pas de mage chez la Lune Noire » s'entend de l'offre de classes jouables de la faction ([GD], à valider).",
         "[GD] Le fichier de jeu game/data (spells par profil, class_skills) ne porte pas d'école : la correspondance passe par le profil de classe (lanceur, healer, sacre…) et la jauge specific_gauge de classes."
       ]
@@ -235854,7 +235863,7 @@
         "[BD-T11] p.4-5 : gorge fermée de portes d'airain ; [BD-T8] p.24-25 : « Portes d'Aurore ».",
         "[ÉPOQUE] avant T1 → T11 ; intacte à l'époque du jeu.",
         "[DÉCISION] (v1.0.56) La Passe et sa muraille = gorge du T11 et Portes d'Aurore (Q5). Placement : PR de carte à part (Q19).",
-        "[INFÉRÉ] (v1.0.59) Cellule N008_W013 : plaine de la région syzygie au sud-ouest d'Aurore (ville_sysigie, N009_W011), entre la côte (N008_W014) et la vallée ; la Passe est à l'ouest de la Syzygie et la route d'accès vient du sud le long de la côte ouest puis tourne vers l'est [BD-A3 pl.16, pl.41, orientation [HYPOTHÈSE] nord en haut] ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore [BD-T8 p.24-25]. Hors du cours du fleuve (N008_W011) et de Justfall (N007_W011). La grille n'a pas de chaîne autour de la Syzygie : relief de la gorge à modeler plus tard. Monde jouable : POI poi_passe_syzygie (defile).",
+        "[INFÉRÉ] (v1.0.59) Cellule N008_W013 : plaine de la région syzygie au sud-ouest de Syzygie (ville_sysigie, N009_W011), entre la côte (N008_W014) et la vallée ; la Passe est à l'ouest de la Syzygie et la route d'accès vient du sud le long de la côte ouest puis tourne vers l'est [BD-A3 pl.16, pl.41, orientation [HYPOTHÈSE] nord en haut] ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore [BD-T8 p.24-25]. Hors du cours du fleuve (N008_W011) et de Justfall (N007_W011). La grille n'a pas de chaîne autour de la Syzygie : relief de la gorge à modeler plus tard. Monde jouable : POI poi_passe_syzygie (defile).",
         "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
       ]
     },
@@ -237658,8 +237667,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Calvaire au bord de la route du nord : les pèlerins qui vont d'Altenberg à Aurore pour la Grande Messe de la Lumière y font leur première station ; les novices y escortent les fidèles. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
-        "[GD] (v1.0.64) Ancrage : Pèlerinage annuel entre les cathédrales d'Altenberg et d'Aurore (fete_eglise_grande_messe_lumiere, [GD] v1.0.58) ; croix cerclée et bannières rouges à croix blanche [BD-T8 p.28-33] [BD-T2 p.34]. Le calvaire est [GD].",
+        "[GD] (v1.0.64) Nom et lieu proposés, à valider par le propriétaire. Calvaire au bord de la route du nord : les pèlerins qui vont d'Altenberg à Syzygie pour la Grande Messe de la Lumière y font leur première station ; les novices y escortent les fidèles. Région de départ de Dawnmere (Chevaliers de la Lumière), niveaux 1 à 10 (LORE_BD §15.2).",
+        "[GD] (v1.0.64) Ancrage : Pèlerinage annuel entre les cathédrales d'Altenberg et de Syzygie (fete_eglise_grande_messe_lumiere, [GD] v1.0.58) ; croix cerclée et bannières rouges à croix blanche [BD-T8 p.28-33] [BD-T2 p.34]. Le calvaire est [GD].",
         "[INFÉRÉ] (v1.0.64) Cellule N006_W012 : Plaine au nord d'Altenberg, entre la citadelle et Justfall (N007_W011), à l'écart de la côte (N006_W013) ; case libre."
       ]
     },
@@ -237986,7 +237995,7 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Stèle de granit au sud d'Oathford où les novices prêtent serment à l'Ordre de la Justice devant un frère aîné avant d'être admis à Aurore. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
+        "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Stèle de granit au sud d'Oathford où les novices prêtent serment à l'Ordre de la Justice devant un frère aîné avant d'être admis à Syzygie. Région de départ d'Oathford (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[GD] (v1.0.66) Ancrage : Devise de l'Ordre récitée par les novices, « le Granit, un ordre séculaire et le cœur pur des Chevaliers de Justice » ; les frères aînés valident les décisions [BD-T4]. La stèle est [GD].",
         "[INFÉRÉ] (v1.0.66) Cellule N008_W010 : Plaine de la Première Province au sud d'Oathford, à l'écart du fleuve (N008_W011) et de Justfall (N007_W011) ; case libre."
       ]
@@ -241615,7 +241624,7 @@
           "[DÉCISION] (v1.0.55) Grand fleuve qui entoure Sysigie (décision du propriétaire) ; nom provisoire « [à nommer] » : le propriétaire nommera les fleuves, rivières et lacs.",
           "[INFÉRÉ] (v1.0.55) Tracé : source en N006_W010, vers le nord par N007_W010 (confluent de la rivière de N007_W011), N008_W011, l'île de Sysigie (N009_W011), N010_W011, N011_W011 ; se jette dans la mer en N012_W011. Large d'environ 50 m à la source et 80 m à l'embouchure ; bras de l'île d'environ 40 m.",
           "Monde jouable : river_courses.fleuve_sysigie de world_master.json (tools/world_gen).",
-          "[DÉCISION] (v1.0.56) Le fleuve traverse le lac d'Aurore, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55."
+          "[DÉCISION] (v1.0.56) Le fleuve traverse le lac de Syzygie, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55."
         ]
       }
     ],

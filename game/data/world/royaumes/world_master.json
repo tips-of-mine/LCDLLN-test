@@ -381,8 +381,8 @@
       "start_for": [
         "justice"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine d'Aurore",
-      "description": "Hameau des Chevaliers de la Justice sur la rive est du lac d'Aurore, face à l'île de la cité."
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Syzygie",
+      "description": "Hameau des Chevaliers de la Justice sur la rive est du lac de Syzygie, face à l'île de la cité."
     },
     {
       "id": "hamlet_tithemead",
@@ -394,7 +394,7 @@
       "faction": "justice",
       "start_for": [],
       "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
-      "description": "Ferme de la dîme au nord d'Oathford, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons d'Aurore."
+      "description": "Ferme de la dîme au nord d'Oathford, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons de Syzygie."
     },
     {
       "id": "hamlet_wardholt",
@@ -562,7 +562,7 @@
     },
     {
       "id": "ville_sysigie",
-      "name": "Aurore",
+      "name": "Syzygie",
       "cell": "N009_W011",
       "kind": "grande_ville",
       "race": "humains",
@@ -570,7 +570,7 @@
       "faction": "justice",
       "start_for": [],
       "source": "[BD] BD-T4",
-      "description": "Cité d'Aurore (alias Sysigie, Syzygie), capitale de la principauté de Syzygie ; pages 38-39 (BD-T4) — Parsifal y arrive au lever du jour."
+      "description": "Syzygie (alias Cité d'Aurore, Sysigie), capitale de la principauté de Syzygie ; pages 38-39 (BD-T4) — Parsifal y arrive au lever du jour."
     },
     {
       "id": "dys",
@@ -1959,7 +1959,7 @@
       "name": "Calvaire des pèlerins",
       "cell": "N006_W012",
       "kind": "sanctuaire",
-      "description": "Haute croix de pierre cerclée au bord de la route du nord : première station des pèlerins d'Altenberg en route pour la Grande Messe d'Aurore [GD v1.0.64, région de départ de Dawnmere]."
+      "description": "Haute croix de pierre cerclée au bord de la route du nord : première station des pèlerins d'Altenberg en route pour la Grande Messe de Syzygie [GD v1.0.64, région de départ de Dawnmere]."
     },
     {
       "id": "poi_chapelle_de_l_ermite",
@@ -1987,7 +1987,7 @@
       "name": "Stèle des Serments",
       "cell": "N008_W010",
       "kind": "sanctuaire",
-      "description": "Stèle de granit gravée de la devise de l'Ordre, au sud d'Oathford : les novices y prêtent serment devant un frère aîné avant d'entrer à Aurore [GD v1.0.66, région de départ d'Oathford]."
+      "description": "Stèle de granit gravée de la devise de l'Ordre, au sud d'Oathford : les novices y prêtent serment devant un frère aîné avant d'entrer à Syzygie [GD v1.0.66, région de départ d'Oathford]."
     },
     {
       "id": "poi_lices_des_novices",

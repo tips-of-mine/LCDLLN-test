@@ -337,9 +337,9 @@ Placements des lieux des tomes 7 à 14 dans le lore (`cell`) et dans le monde jo
 ### 8.2 Fleuve de Sysigie
 
 **Décision du propriétaire** : Sysigie (N009_W011) est une île au milieu d'un grand fleuve.
-**Mise à jour v1.0.56** (section 10, Q5) : la cité s'affiche « **Aurore** » (alias Sysigie, Syzygie ;
+**Mise à jour v1.0.56** (section 10, Q5 ; **annulée en v1.0.75**, voir §16.4) : la cité s'affichait « **Aurore** » (alias Sysigie, Syzygie ;
 identifiant `ville_sysigie` inchangé), capitale de la principauté de Syzygie ; le grand fleuve traverse
-le **lac d'Aurore**, au milieu duquel se trouve l'île. Tracé et grille ci-dessous inchangés.
+le **lac de Syzygie**, au milieu duquel se trouve l'île. Tracé et grille ci-dessous inchangés.
 Tracé [INFÉRÉ], nom provisoire « [à nommer] » (le propriétaire nommera fleuves, rivières et lacs) :
 
 - source dans la lisière de la forêt occidentale (N006_W010), vers le nord par N007_W010
@@ -420,7 +420,7 @@ Frise relative (Q3) : A4 → A5 → M2/M3 → A3, puis T00, A1 et A2, qui conver
 - **Frise (16)** : `tl_hs_*`, de la chute de Methraton au règne de Wismerhill Ier ; règle
   `regle_epoque_hors_serie` (Q1-Q3) ; 8 albums ajoutés à `tomes_config`.
 - **Fiches existantes complétées** : Wismerhill, Pazuzu, Ghorghor, Pile-ou-Face, Greldinard, Haazheel,
-  Methraton, le Serpent, Parsifal, Haghendorf, Feidreiva, Urmarcht, Okhost, Moork, Lhynn, Aurore, etc.
+  Methraton, le Serpent, Parsifal, Haghendorf, Feidreiva, Urmarcht, Okhost, Moork, Lhynn, Syzygie, etc.
 
 ### 10.3 Décisions du propriétaire (05/11/2026)
 
@@ -430,7 +430,7 @@ Frise relative (Q3) : A4 → A5 → M2/M3 → A3, puis T00, A1 et A2, qui conver
 | 2 | Préquelles | État de fin d'album puis évolution des T1-T10 : lieux détruits en ruines, lieux debout intacts, PNJ morts absents (souvenir, tombe), PNJ vivants sans suite seulement si une quête les utilise (`regle_epoque_hors_serie`). |
 | 3 | Frise | A4 → A5 → M2/M3 → A3, puis T00, A1, A2 au seuil du T1 ; positions M2, M3, A3 `[HYPOTHÈSE]` ; seule durée chiffrée : 3000 ans. |
 | 4 | Methraton, archimages, Erypt | Methraton caché dans son plan, accessible par son temple de Lhynn ; archimages libérés avant le T9 (`tl_hs_liberation_archimages`) ; panthéon d'Erypt = culte lointain, sans dieu incarné. |
-| 5 | Sysigie | Syzygie = principauté (région `syzygie`) ; `ville_sysigie` affichée **« Aurore »** (alias Sysigie, Syzygie) dans le lore et `world_master.json` ; le fleuve traverse le lac d'Aurore, île dans le lac, brouillard conservé ; Passe et muraille = gorge du T11 et Portes d'Aurore ; carte THS = schéma. |
+| 5 | Sysigie | Syzygie = principauté (région `syzygie`) ; `ville_sysigie` affichée **« Aurore »** (alias Sysigie, Syzygie) dans le lore et `world_master.json` ; le fleuve traverse le lac de Syzygie, île dans le lac, brouillard conservé ; Passe et muraille = gorge du T11 et Portes d'Aurore ; carte THS = schéma. |
 | 6 | Père de Wismerhill | Pazuzu : `char_wismerhill_father` **fusionné** dans `char_pazuzu` (forme elfique ; vivant ; 12 références repointées : quête, dialogues, règles) ; le vieux seigneur du T00 est le père légal. |
 | 7 | Nom de Wismerhill | Vient de la colline (T00) ; Pile-ou-Face le redonne au T1 sans le savoir (clin d'œil des Vents) ; événement T1 conservé. |
 | 8 | Anneau de Ghorghor | Décision T3 conservée : l'anneau d'A1 (`loot_anneau_regeneration`) est historique, perdu ou brisé avant le T3 ; distinct de l'anneau du T11. |
@@ -514,7 +514,7 @@ Script reproductible : `lore_v1059.py` (appliqué au fichier v1.0.58).
 | Rériah (`lieu_reriah`) | N018_E015 | POI `poi_reriah` (`cite`) | Marches du Nord (Q19), au pied des forêts et des neiges du nord (N019_E015, N021_E015) ; carte d'A1 p.30 : Rériah à l'ouest d'Almuria (flèche de l'itinéraire), dans les montagnes. |
 | Almuria (`lieu_almuria`) | N018_E017 | POI `poi_almuria` (`cite`) | Marches du Nord, sous les montagnes de N019_E017 et les neiges de N020_E018 (grande ville aux tours coniques enneigées, A1 p.30 `[HYPOTHÈSE]`), à l'est de Rériah ; Runecroft (N018_E016) entre les deux. |
 | Château de la Mort (`lieu_chateau_de_la_mort`) | N013_E016 | POI `poi_chateau_de_la_mort` (`ruine`) | Chaîne (code `M`) au bord des Territoires orcques (N013_E015, Q19), même chaîne que le défilé de Mordrek aux falaises rouges : forteresse-mine dans une falaise de canyon sous un plateau (A4 p.16-22). **Ruine** (prise par les orques, A4 p.29). |
-| Passe de Syzygie et sa muraille (`lieu_passe_syzygie`) | N008_W013 | POI `poi_passe_syzygie` (`defile`) | Au sud-ouest d'Aurore (N009_W011), entre la côte (N008_W014) et la vallée : Passe à l'ouest de la Syzygie, route venue du sud par la côte puis vers l'est (A3 pl.16, pl.41) ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore (T8 p.24-25). Hors du fleuve (N008_W011) et de Justfall (N007_W011). |
+| Passe de Syzygie et sa muraille (`lieu_passe_syzygie`) | N008_W013 | POI `poi_passe_syzygie` (`defile`) | Au sud-ouest de Syzygie (N009_W011), entre la côte (N008_W014) et la vallée : Passe à l'ouest de la Syzygie, route venue du sud par la côte puis vers l'est (A3 pl.16, pl.41) ; Parsifal part vers Altenberg (N005_W012) par les Portes d'Aurore (T8 p.24-25). Hors du fleuve (N008_W011) et de Justfall (N007_W011). |
 | Marche de l'Est (`region_marche_est`) | 56 cellules sans région de E013 à E020, S003 à N007 | région `marche_de_lest` (E013-E020, N004-N007) | Extrême est autour de Moork (A5 p.38-44) : comté d'Horkher au nord (N006_E014), confins à l'est de la baronnie. Les cellules de `baronnie_de_moorks` gardent leur région (elle fait partie de la Marche) ; dans le monde jouable, la baronnie garde son rectangle et la Marche couvre la bande au nord (la plus petite région l'emporte, Horkher s'y affiche). |
 | Marais maudits de Thenhart (`marais_maudits_t11`) | N010_W005, N010_W004, N010_W003, N011_W005, N011_W004 | région `marais_maudits` (W005-W003, N010-N011) | Cellules de marais du bestiaire v1.0.58 (Dvorak) ; `region_id` `terres_des_gigantomorphes` remplacé. Hayfen (N011_W004) au bord du marais. |
 | Ruines de Thenhart (`lieu_ruines_thenhart`) | N009_W004 | POI `poi_ruines_thenhart` (`ruine`) | Forêt traversée par la rivière de la cascade (`riv_cascade_northind`), juste en amont du marais (N010_W004) : château sur un rocher au-dessus d'une rivière qui file vers les marais (A1 p.41-42) ; Wismerhill survole les ruines puis trouve les marais (T11). **Ruine**. |
@@ -568,7 +568,7 @@ cellules `[INFÉRÉ]`. Script reproductible : `lore_v1061.py` (appliqué au fich
 | Faction (lore) | Faction de jeu | Départ | Cellule | Justification |
 |---|---|---|---|---|
 | Chevaliers de la Lumière (`chevaliers_de_la_lumiere`) | `lumiere` | hameau Dawnmere (`hameau_dawnmere`), près d'Altenberg | N005_W011 | Plaine de la Première Province à l'est d'Altenberg (N005_W012) ; ouest et sud sont côte et plage. |
-| Chevaliers de la Justice (`chevaliers_de_la_justice`) | `justice` | hameau Oathford (`hameau_oathford`), près d'Aurore | N009_W010 | Plaine de la Syzygie à l'est de l'île (N009_W011), hors du fleuve ; la route franchit un bras. |
+| Chevaliers de la Justice (`chevaliers_de_la_justice`) | `justice` | hameau Oathford (`hameau_oathford`), près de Syzygie | N009_W010 | Plaine de la Syzygie à l'est de l'île (N009_W011), hors du fleuve ; la route franchit un bras. |
 | Dzorak (`dzorak_orcs`) | `dzorak` | hameau Grakhul (`hameau_grakhul`), près de Leviathan | N008_E012 | Lisière de forêt au sud-est de Leviathan du monde jouable (N009_E011) ; cellule déjà générée. |
 | Chevaliers-Dragons (`faction_dragon_knights`) | `dragons` | hameau Wyrmhallow (`hameau_wyrmhallow`), près du Palais des Maîtres des Dragons | S004_W004 | Montagne au sud du palais (S003_W004) ; nord, est et ouest sont des neiges éternelles. |
 | Nains (`faction_dwarves`) | `naine` | hameau Durnhalde (`hameau_durnhalde`), près de Ghrunke Dash | S007_E017 | Montagne du royaume des nains de l'Est (S007_E016 à l'ouest), hors des cases volcaniques ; cellule déjà générée. |
@@ -671,7 +671,7 @@ fichier v1.0.62).
 
 | Case | Terrain | Contenu | Faune (niveaux) |
 |---|---|---|---|
-| N006_W012 | plaine (Première Province) | POI **Calvaire des pèlerins** (`lieu_calvaire_des_pelerins`, `poi_calvaire_des_pelerins`, `sanctuaire`) : première station du pèlerinage d'Altenberg à Aurore pour la Grande Messe de la Lumière `[GD]` (`fete_eglise_grande_messe_lumiere`) ; croix cerclée, bannières rouges à croix blanche `[BD-T8 p.28-33]` `[BD-T2 p.34]` | lapin (1-3), corbeau (1-4), renard (2-5) |
+| N006_W012 | plaine (Première Province) | POI **Calvaire des pèlerins** (`lieu_calvaire_des_pelerins`, `poi_calvaire_des_pelerins`, `sanctuaire`) : première station du pèlerinage d'Altenberg à Syzygie pour la Grande Messe de la Lumière `[GD]` (`fete_eglise_grande_messe_lumiere`) ; croix cerclée, bannières rouges à croix blanche `[BD-T8 p.28-33]` `[BD-T2 p.34]` | lapin (1-3), corbeau (1-4), renard (2-5) |
 | N006_W011 | plaine | Ferme **Whitesheaf** (`hamlet_whitesheaf`, `farm_hamlet` / `hameau`) : grain des novices et pain d'autel d'Altenberg `[GD]` ; route 000136 vers Dawnmere | poule, coq (1), chien (2-6), lapin |
 | N006_W010 | forêt avec rivière | POI **Chapelle de l'ermite** (`lieu_chapelle_de_l_ermite`, `poi_chapelle_de_l_ermite`, `sanctuaire`) : chapelle et source d'eau bénite `[GD]` ; prêtres de chapelle `[BD-A3 pl.19-20]`, croix de pierre en forêt `[BD-A3 pl.33]` | biche (2-6), araignée (3-8), renard, lapin |
 | N005_W012 | plaine | Altenberg (grande ville, inchangée) | inchangée |
@@ -695,7 +695,7 @@ fichier v1.0.62).
 
 ### 15.3 Oathford — Chevaliers de la Justice (v1.0.66)
 
-Centre N009_W010 (`hameau_oathford`, v1.0.61). Les 9 cases étaient déjà générées. Aurore (N009_W011,
+Centre N009_W010 (`hameau_oathford`, v1.0.61). Les 9 cases étaient déjà générées. Syzygie (N009_W011,
 `ville_sysigie`, cité de l'île du lac, intacte à l'époque du jeu) est dans la région mais **rien n'y est
 posé** ; le fleuve de Sysigie passe par le centre de N010_W011 et de N008_W011 (section 8.2, le
 générateur pose les POI au centre de leur case) : **aucun lieu** dans ces deux cases, seulement de la
@@ -708,12 +708,12 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
 | Case | Terrain | Contenu | Faune (niveaux) |
 |---|---|---|---|
 | N010_W011 | plaine avec fleuve (Syzygie) | aucun lieu (lit du fleuve) | lapin (1-3), corbeau (1-4), loutre (1), renard (2-5) |
-| N010_W010 | plaine (Syzygie) | Ferme **Tithemead** (`hamlet_tithemead`, `farm_hamlet` / `hameau`) : ferme de la dîme, blé, foin et chevaux de remonte des garnisons d'Aurore `[GD]` ; route 000166 vers Oathford. POI **Lices des novices** (`lieu_lices_des_novices`, `poi_lices_des_novices`, `camp`) à distance de la ferme : exercices des novices `[GD]` | poule, coq (1), chien (2-6), bœuf (3-6), cheval (3-8), lapin |
+| N010_W010 | plaine (Syzygie) | Ferme **Tithemead** (`hamlet_tithemead`, `farm_hamlet` / `hameau`) : ferme de la dîme, blé, foin et chevaux de remonte des garnisons de Syzygie `[GD]` ; route 000166 vers Oathford. POI **Lices des novices** (`lieu_lices_des_novices`, `poi_lices_des_novices`, `camp`) à distance de la ferme : exercices des novices `[GD]` | poule, coq (1), chien (2-6), bœuf (3-6), cheval (3-8), lapin |
 | N010_W009 | lisière (Syzygie) | POI **Camp des parjures** (`lieu_camp_des_parjures`, `poi_camp_des_parjures`, `camp`) : écuyers chassés de l'Ordre pour parjure et brigands `[GD]` | renard, araignée (3-8), corbeau, biche (2-6) |
-| N009_W011 | plaine avec fleuve | Aurore (grande ville, inchangée) | inchangée |
-| N009_W010 | plaine | **Oathford** (hameau de départ) ; routes 000123 (Aurore), 000166, 000167 ; sentiers 000168 à 000171 vers les 4 POI | chien, poule |
+| N009_W011 | plaine avec fleuve | Syzygie (grande ville, inchangée) | inchangée |
+| N009_W010 | plaine | **Oathford** (hameau de départ) ; routes 000123 (Syzygie), 000166, 000167 ; sentiers 000168 à 000171 vers les 4 POI | chien, poule |
 | N009_W009 | lisière (Première Province) | Hameau de garnison **Wardholt** (`hamlet_wardholt`, `farm_hamlet` / `hameau`) : palissade, poste de garde de l'Ordre face à la forêt elfique, bûcherons et charbonniers `[GD]` ; route 000167 vers Oathford | chien, âne (2-4), biche, lapin, renard |
-| N008_W011 | plaine avec fleuve (Syzygie) | aucun lieu (lit du fleuve ; route 000021 Aurore → Justfall inchangée) | lapin, corbeau, loutre, renard |
+| N008_W011 | plaine avec fleuve (Syzygie) | aucun lieu (lit du fleuve ; route 000021 Syzygie → Justfall inchangée) | lapin, corbeau, loutre, renard |
 | N008_W010 | plaine (Première Province) | POI **Stèle des Serments** (`lieu_stele_des_serments`, `poi_stele_des_serments`, `sanctuaire`) : stèle de granit gravée de la devise de l'Ordre, serment des novices devant un frère aîné `[GD]` ; devise et frères aînés `[BD-T4]` | mouton (1), lapin, corbeau, renard |
 | N008_W009 | lisière (Première Province) | POI **Ruines de la tour du guet** (`lieu_ruines_tour_du_guet`, `poi_ruines_tour_du_guet`, `ruine`) : tour abandonnée depuis des générations face à la forêt elfique, cave à vermine `[GD]` (aucune destruction de l'époque du jeu) | araignée, corbeau, renard |
 
@@ -725,7 +725,7 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
   passe par N008_W008 (forêt elfique, désormais générée) au lieu de N006_W009 et N006_W008, ce qui aurait
   retiré Dys (N005_W009) du monde jouable ; ces trois cellules sont ajoutées explicitement à
   `generated_cells` (dernière ligne) : 180 → 181 cellules générées, aucune perdue.
-- **Faune** : les 8 cases hors Aurore n'avaient aucune créature ; espèces existantes de niveau 1 à 10
+- **Faune** : les 8 cases hors Syzygie n'avaient aucune créature ; espèces existantes de niveau 1 à 10
   seulement.
 - **Points incertains** : noms ; « Stèle » plutôt que « Pierre » des Serments (le mot « Pierre » est un
   nom du monde et ferait refuser des PNJ nains par `validate_city_services.py`) ; les Lices partagent la
@@ -734,7 +734,7 @@ inchangées. Script reproductible : `lore_v1066.py` (appliqué au fichier v1.0.6
   lices pourraient porter des PNJ ou quêtes d'accueil (aucun créé).
 
 > **v1.0.72** (section 16.1) : Wardholt est au fond d'une crevasse en cul-de-sac, avec une mine ; la
-> route Tithemead → Orderfen (000198) remplace la route 000066 Aurore → Orderfen.
+> route Tithemead → Orderfen (000198) remplace la route 000066 Syzygie → Orderfen.
 
 ### 15.4 Grakhul — Dzorak (v1.0.67)
 
@@ -993,7 +993,7 @@ hors chaînes de montagnes, et il évite les cases des autres villes `[INFÉRÉ]
 
 | # | Correction | Ce qui change |
 |---|---|---|
-| 1 | Route 000066 Aurore → Orderfen supprimée | Chaîne Aurore → Oathford (000123), Oathford → Tithemead (000166), **Tithemead → Orderfen (000198)**, par N010_W009. |
+| 1 | Route 000066 Syzygie → Orderfen supprimée | Chaîne Syzygie → Oathford (000123), Oathford → Tithemead (000166), **Tithemead → Orderfen (000198)**, par N010_W009. |
 | 2 | Wardholt (`hamlet_wardholt`, N009_W009) au fond d'une crevasse, avec une mine | Fiche : topographie et notes. Lieu **Mine de Wardholt** (`lieu_mine_de_wardholt`, `open_dungeon_poi`) `[GD]`. Monde jouable : relief `crevasse_wardholt` et mine au fond (voir plus bas). La route 000167 depuis Oathford reste la seule. |
 | 3 | Route 000006 Lhynn → Altenberg supprimée | Lhynn → Eaglewatch (000121), **Eaglewatch → Lambsfold (000199)**, **Lambsfold → Altenberg (000200)**. |
 | 4 | Ambermead (`hamlet_ambermead`) de N003_W010 à N003_W008 | **Greyhedge → Ambermead (000201)**, **Ambermead → Dys (000202)**. La route 000128 vers Eaglewatch est gardée, avec un tracé par N002_W009 qui évite la case du hameau de Marn. La basse-cour, les bœufs et les chiens suivent la ferme ; le lapin reste en N003_W010. |
@@ -1029,7 +1029,7 @@ Aucune route n'est trop longue ni ne traverse la mer ou une chaîne. La composan
 | Ville | Écuries |
 |---|---|
 | Lhynn | 4 → 3 |
-| Aurore | 4 → 3 |
+| Syzygie | 4 → 3 |
 | Saltfen | 3 → 2 |
 | Dys | 3 → 4 |
 | Magistrya | 2 → 3 |
@@ -1341,3 +1341,17 @@ les `zones_chasse`.
 - Noms des fleuves, rivières et lacs : à donner par le propriétaire (fleuve de Sysigie « [à nommer] »).
 - Forteresse naine d'Heureux (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.
+
+### 16.4 La cité redevient « Syzygie » (v1.0.75)
+
+`[DÉCISION]` du propriétaire (10/11/2026) : `ville_sysigie` s'affiche **« Syzygie »**, le nom sous lequel les
+lecteurs connaissent la cité pendant l'époque du jeu (T1-T11). L'affichage « Aurore » des v1.0.56 à v1.0.74
+(§10 Q5, §7.2) est annulé.
+
+- Nom de fondation « Cité d'Aurore » `[BD-A3 pl.7]` et « Aurore » : alias. Les **Portes d'Aurore** `[BD-T8 p.24-25]`
+  gardent leur nom (nom de la BD).
+- La cité et la principauté (région `syzygie`) portent le même nom, comme dans la BD.
+- Toutes les mentions de la cité passent à « Syzygie » : lore (villes, zone `zone_sysigie`, quêtes, notes),
+  `world_master.json` (`cities`, descriptions de POI), ROYAUMES.md et ce document. Le lac et le fleuve deviennent
+  « lac de Syzygie » et « fleuve de Syzygie ».
+- Identifiant inchangé (`ville_sysigie`) : aucun effet sur les sauvegardes ni sur le code.

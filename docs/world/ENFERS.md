@@ -39,6 +39,15 @@ par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (gen
 | S001_E001 | `M` | Faille des Cohortes (`faille`) |
 | S001_E000 | `V` | Poste de garde du Portail I (`camp`), à 400 m à l'est du portail |
 
+**v1.0.81** (lieux des tomes 15-22, §6) : 7 POI de haut niveau sur les bras de la croix, placés par décalage
+(`offset_x_m` / `offset_z_m`) loin des portails ; la case de la Citadelle n'en reçoit aucun.
+
+| Case | POI (genre, décalage depuis le centre) |
+|---|---|
+| N001_E000 | Palais de Lucifer (`temple`, 0 / −3 250 m), Nef des Âmes (`salle`, −2 000 / −3 250 m), Plateau du Rituel (`sanctuaire`, +2 750 / −2 250 m) |
+| N000_W001 | Mer de lave (`volcan`, −2 750 / −1 250 m), Seuil des Plans (`faille`, −2 750 / +2 250 m) |
+| N000_E001 | Canyon des Falaises rouges (`defile`, +2 500 / −2 000 m, viaduc compris), Plateaux suspendus des Légions (`camp`, +2 500 / +2 500 m) |
+
 Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
 (`routes`) ne couvre pas les Enfers. Faune procédurale de la carte (`Population.cpp`, `CreatureFor`) :
 diablotins errants (150) près de la Citadelle, chiens des cendres (151) ensuite, ogres (161, niveau 10)
@@ -118,3 +127,32 @@ La liste est configurable par archétype (toute race, tout PNJ d'ambiance).
 ~2 min (9 cellules). La CI génère `royaumes` puis `enfers` avant l'empaquetage
 et vérifie `world/enfers/start_locations.json` et les deux `portals.json`.
 Déploiement : client, master et shard **en lock-step** (`kProtocolVersion` 20).
+
+## 6. Lieux et hiérarchie des tomes 15-22 (v1.0.81)
+
+**Décisions du propriétaire (11/11/2026)** : à l'époque du jeu (entre le T1 et le T11), **Lucifer** est le maître
+des Enfers ; les tomes 16 à 22, où il a disparu et où Belzébuth règne, sont postérieurs et ne s'appliquent pas. Les
+tomes 15 à 22 sont une référence visuelle et technique, sauf les Enfers et les dragons de Xygga, intégrés au lore.
+Détail et sources : [`LORE_BD.md`](LORE_BD.md) §16.10.
+
+**Hiérarchie** (`regle_hierarchie_enfers`) : Lucifer (nom secret lu « Nerheneïm », T15 p.31) ; princes : Belzébuth,
+Roi des Mouches (grand prince, non jouable, utilisable dans les histoires), Pazuzu (cieux des Enfers), Proserpine et
+Helle (archidémonesses), Quetebah, Bellatrux, maîtres des plans ; en dessous : la mère de Wismerhill, la démone
+conseillère de Belzébuth, les ducs des abysses, les démons de cour, la garde rouge, Sorrow, Bourzigutt ; puis les
+légions. Les démons restent hostiles aux humains (§4).
+
+**Sur la carte** (§1, v1.0.81) : le palais de Lucifer (nef gothique rouge, piliers de crânes, sol vert au
+pentagramme, Grand Trône doré sur une pyramide de visages hurlants, bain de sang aux défenses d'ivoire), la nef des
+âmes et le plateau du rituel au nord ; la mer de lave et le Seuil des Plans à l'ouest ; le canyon des falaises
+rouges (fleuves et cascades de lave, viaduc aux gueules qui vomissent la lave, pyramides inversées flottantes) et les
+plateaux suspendus des légions à l'est. Le pentacle étoilé de seuil est rattaché aux 5 portes (lore, sans POI).
+Contenu de haut niveau (55-70, palais 66-70) dans la zone de départ 1-10, permis si les chemins sont balisés.
+
+**Hors carte** (`regle_plans_infernaux`) : les plans du Jardin des Supplices, des eaux sombres, du feu, de la
+maladie, des insectes et le plan prison s'atteignent par le **Seuil des Plans** (N000_W001). Ce n'est pas un
+portail apparié : aucun transfert de carte n'existe encore (instances à créer).
+
+**Ce qui est réel en jeu** : les 7 POI (repère, nom, aplanissement de 40 m), générés avec les 9 cellules sans
+avertissement. **Lore seulement** : pas de lave, de palais, de viaduc ni de plateau suspendu modélisés ; pas de PNJ ni
+de boss pour Lucifer et les princes ; plans sans instance.
+

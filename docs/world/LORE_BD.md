@@ -1695,9 +1695,105 @@ Lot 9 du propriétaire (11/11/2026). Le tracé en jeu de la route 000083 Syzygie
 **Ce qui n'est pas réel en jeu** : la rivière nord de Verdansur continue au nord de Trueford vers N012_W014, non générée
 (mur invisible au bord nord de N011_W014). Aucune route n'y mène ; rien n'est ajouté.
 
+### 16.10 Enfers et dragons de Xygga d'après les tomes 15-22 (v1.0.81)
+
+Lot 10 du propriétaire (11/11/2026). Sources : notes de lecture des tomes 15 à 22 (section 7 Enfers, section 9
+dragons). Pages : T16 et T19 en pages du PDF (T16 : planches 4-5 de l'album = p.7, planches 6-7 = p.8), autres tomes
+en pages lues. Chaque fiche issue de ces tomes porte sa source `[BD-T15 p.N]` à `[BD-T22 p.N]`. Script reproductible :
+`lore_v1081.py` (appliqué au fichier v1.0.80) et `master_v1081.py` (insertion des POI dans les deux masters).
+
+**Décisions inscrites au registre** (`regle_canon_registre_decisions`, 13 entrées v1.0.81, note `[DÉCISION] (v1.0.81)`
+sur chaque fiche) :
+
+| # | Décision du propriétaire | Fiches |
+|---|---|---|
+| 1 | À l'époque du jeu (T1-T11), **Lucifer est maître des Enfers** ; les T16-T22 (Lucifer disparu, Belzébuth régent puis maître) sont postérieurs et ne s'appliquent pas. | `char_lucifer_prince_tenebres` |
+| 2 | Hiérarchie : Lucifer ; princes Belzébuth, Pazuzu, Proserpine et Helle (archidémonesses), Quetebah, Bellatrux ; dessous la mère de Wismerhill, la conseillère de Belzébuth, les ducs des abysses, les démons de cour, la garde rouge, Sorrow, Bourzigutt. | `regle_hierarchie_enfers` |
+| 3 | Tous les personnages relevés sont retenus ; pas de noms inventés, désignation descriptive. | `regle_hierarchie_enfers` |
+| 4 | Belzébuth, Roi des Mouches : grand prince **non jouable**, utilisable dans les histoires (T16 p.12). | `char_belzebuth` |
+| 5 | Pazuzu règne sur les cieux des Enfers (T22 p.5) : fiche existante complétée, pas dupliquée. | `char_pazuzu` |
+| 6 | Sorrow, « fille des Enfers » à six bras, est incluse. | `char_sorrow` |
+| 7 | Crâne est un archimage de Methraton, pas un démon : fiche de PNJ à part, hors hiérarchie. | `char_archimage_crane` |
+| 8 | Palais de Lucifer et mers de lave sur la carte des Enfers ; ce qui n'y tient pas devient des plans accessibles par portail depuis un lieu de la carte. | `regle_plans_infernaux` |
+| 9 | Les dragons vivent dans le monde des Royaumes, chacun caché dans une grotte difficile à trouver ; **un dans un volcan** (Xygga). | `regle_dragons_de_xygga` |
+| 10 | Xygga a **10 enfants** (premiers-nés). | `regle_dragons_de_xygga` |
+| 11 | **Pas de noms** pour les dragons pour l'instant. | `regle_dragons_de_xygga` |
+| 12 | **Genre de Xygga non tranché** : ne pas l'affirmer (le T16 emploie le masculin, la Nuée des Dragons dit « Père de tous les Drakkhs »). | `char_xygga` |
+| 13 | Tomes 15-22 = **référence visuelle et technique**, sauf Enfers et dragons intégrés (rang 2 bis dans `regle_canon_priorite_sources`, étiquettes dans `regle_canon_etiquettes`, libellés de `tomes_config`). | `regle_canon_corpus` |
+
+**Personnages** (17 fiches `persons` ajoutées, faction `faction_legion_infernale`, race `race_demon` sauf Crâne) :
+
+| Rang | Fiche | Source |
+|---|---|---|
+| Maître | `char_lucifer_prince_tenebres` (complétée : nom secret « Nerheneïm », apparence du T15 à la place de l'ancien visuel « enchaîné » sans appui, trône, rang) | `[BD-T15 p.15, 24-25, 31]`, `[BD-T16 p.12-16]` |
+| Princes | `char_belzebuth` (graphie « Belfébut » au T17) ; `char_pazuzu` (complétée) ; `char_proserpine` ; `char_helle` (distincte d'Hellaynnea) ; `char_quetebah` ; `char_bellatrux` | T16-T22 ; T22 p.5 ; T21 p.8 ; T19-T21 ; T22 p.20 ; T22 p.22 |
+| Maîtres des plans | `char_fleur_du_mal` (Jardin des Supplices) ; le prince-pieuvre violet, le démon de flammes à tête de crâne, le prince vert pustuleux, le prince insectoïde violet (`char_maitre_plan_*`) | T18 p.16-18 ; T21 p.36 |
+| Dessous | mère de Wismerhill (`char_princesse_elfique_t00`, complétée : avatar démoniaque, âme aux Enfers, sans nom) ; `char_demone_conseillere_belzebuth` ; `char_ducs_des_abysses` ; `char_demons_de_cour_enfers` (dont les conseillers de Lucifer du T15) ; `char_garde_rouge_enfers` ; `char_sorrow` (lié à `loot_sorrow`) ; `char_bourzigutt` (cité) | T22 p.4-6 ; T16 p.12-16 ; T15, T16, T20, T22 ; T18 p.18, T22 p.3-4 ; T19 PDF p.16-18 ; T15 p.26 |
+| Hors hiérarchie | `char_archimage_crane` (« L'archimage de Methraton, maître des démons ») | T16 p.10-11, T22 p.16, 22 |
+
+Les événements postérieurs au T14 (régence, guerre infernale, captures par Methraton) sont notés `[ÉPOQUE]` sur
+chaque fiche. Deux champs `name` évitent des mots déjà portés par des noms de famille de PNJ de service
+(`validate_city_services.py` refuse tout PNJ dont un mot reprend un nom des fiches) : la garde rouge s'appelle « La
+garde du palais des Enfers » (« garde rouge » dans la description) et Crâne « L'archimage de Methraton, maître des
+démons » (nom en description) ; de même, les grottes portent un nom de lieu sans couleur. `religion_enfers_princes_demons`
+reçoit les princes (divinités, clergé de rang 1) et le palais (lieux de culte).
+
+**Enfers : lieux** (15 fiches `lieux`, `carte` `enfers`, `region_enfers_t00`) :
+
+| Case | Lieu (POI) | Source |
+|---|---|---|
+| N001_E000 | **Palais de Lucifer** (`poi_enfers_palais_de_lucifer`, `temple`) : nef gothique rouge à voûtes, piliers de crânes, sol vert au pentagramme, Grand Trône doré ogival sur une pyramide de visages hurlants et de damnés, bain de sang aux défenses d'ivoire ; 66-70 | T15 p.24, T16 p.12-15, T20 p.13-14 et p.30, T21 p.8, 42 |
+| N001_E000 | Nef des Âmes (`poi_enfers_nef_des_ames`, `salle`) | T15 p.15 |
+| N001_E000 | Plateau du Rituel (`poi_enfers_plateau_du_rituel`, `sanctuaire`) | T15 p.24, T17 p.16 |
+| N000_W001 | **Mer de lave** (`poi_enfers_mer_de_lave`, `volcan`) : lave, basalte, fleuves et cascades de lave | T16 p.16, T17 p.16, T22 p.22 |
+| N000_W001 | Seuil des Plans (`poi_enfers_seuil_des_plans`, `faille`) `[GD]`, accès aux plans | — |
+| N000_E001 | Canyon des Falaises rouges (`poi_enfers_canyon_des_falaises_rouges`, `defile`) et Viaduc des Gueules de lave (même repère) | T16 p.16 |
+| N000_E001 | Plateaux suspendus des Légions (`poi_enfers_plateaux_des_legions`, `camp`), pyramides inversées flottantes | T16 p.16, T20 p.30-33, T21 p.6-17 |
+| N000_E000 | Pentacle étoilé de seuil : lié aux 5 Portes (pentagramme centré sur la Citadelle) ; sans POI | T20 p.14-21 |
+| hors carte | Plans du Jardin des Supplices, des eaux sombres, du feu, de la maladie, des insectes, plan prison | T18 p.16-18, T21 p.36, T22 p.8-16 |
+
+Les 4 coins et la case de la Citadelle ne changent pas ; la région de départ reste 1-10, les lieux puissants sont du
+contenu balisé de plus haut niveau (décision v1.0.78). Test `world_gen_tests` « lieux v1.0.81 ».
+
+**Dragons de Xygga** (`regle_dragons_de_xygga`) : 11 fiches `creatures` (`world_boss`, `unique`), 11 `lieux`
+(`entree_cachee`), 11 POI `salle` du master des Royaumes, créature ajoutée aux `creature_ids` de chaque case.
+Niveaux `[GD]` : premiers-nés **66-70**, comme le Grand Ancien (« une des créatures les plus puissantes de l'univers »,
+T16 p.6) ; Xygga **70**, plafond actuel des boss mondiaux, au-dessus du Grand Ancien dont il est le premier ; endormi
+(statufié au cœur du volcan jusqu'au T14) : rencontre narrative, combat à décider. Cases choisies sans ville, sans route
+à moins de 4 km du centre, sans POI ni lieu, hors régions de départ ; grottes à plus de 1,5 km de toute route (test).
+
+| Dragon (souffle) | Case | Milieu | Grotte (entrée) | En jeu |
+|---|---|---|---|---|
+| Xygga, Grand Dragon rouge (non montré ; feu `[GD]`) | S008_E012 | volcan (`V`) | Grotte du volcan endormi : fissure dans une coulée figée | **réelle** (cellule générée) |
+| doré enflammé (feu jaune-orange) | N002_E004 | désert | Grotte de la falaise de grès : faille | lore seul |
+| rouge à cornes (non montré) | S005_E001 | montagne (nains du sud) | Grotte de la vire : paroi | lore seul |
+| jaune-vert épineux, tête de tricératops (jet vert acide) | N011_W005 | marais maudits | Grotte des racines du marais : sous-bois | lore seul |
+| petit rouge épineux (non montré) | S007_E021 | montagne (nains de l'est) | Grotte de la crevasse de l'est | lore seul |
+| blanc à cornes noires (non montré) | S006_W001 | montagne (Royaume Drach) | Grotte du surplomb : falaise | lore seul |
+| noir aux ailes brunes (non montré) | N010_E012 | forêt | Grotte des ronces : sous-bois | **réelle** (cellule générée) |
+| hydre (non montré) | N013_E017 | marais (Marches) | Grotte de la cascade du marais | lore seul |
+| dragon de glace (givre blanc) | N021_E016 | montagne enneigée du grand nord | Grotte du glacier : crevasse | lore seul |
+| dragon bleu (rayon bleu-cyan) | N008_W015 | côte (Syzygie) | Grotte marine de la côte ouest : falaise, marée basse | lore seul |
+| oriental doré-orangé (flammes orange) | N006_E007 | forêt à rivière | Grotte derrière la cascade | lore seul |
+
+Aucun dragon existant n'est déplacé ni modifié (Grand Ancien en S004_W006, Kruikna, « Cruik », dragon bleu de Pilou,
+dragons noirs de Moork) ; le dragon bleu est noté distinct du dragon bleu de Pilou.
+
+**Ce qui est réel en jeu** : les 7 POI des Enfers et les 11 POI de grottes (repère, nom, aplanissement de 40 m)
+dans les cellules générées ; pour les grottes, seulement S008_E012 et N010_E012. Génération complète des Enfers sans
+avertissement. **Lore seulement** : pas de lave, de palais ni de grotte modélisés, aucun PNJ ni boss (Lucifer, princes,
+dragons) côté jeu, plans sans instance ni portail ; les 9 autres grottes sont dans des cellules non générées.
+
+**Services** : inchangés (1241 PNJ). Aucun identifiant supprimé (57 ajoutés).
+
+**Points incertains** : combat contre Xygga endormi ; noms des dragons (à donner) ; Seuil des Plans (nom, et
+instances des plans) ; la démone conseillère de Belzébuth du T16 est-elle celle des T17-T18 ; « 666 légions de
+666 666 démons » (T20) ne sont pas des effectifs de l'époque du jeu.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
+- Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

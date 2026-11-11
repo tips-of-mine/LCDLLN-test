@@ -21,6 +21,10 @@
 //    appariés aux Portes des enfers du continent), puis génération complète →
 //    dossiers zones/enfers_*, zone ids 2 000 000+, cimetière neutre, mines des coins
 //    tenues par la Légion (pas de nains), start_locations.json et portals.json.
+// 9. v1.0.81 : lieux des Enfers des tomes 15-22 sur les bras de la croix (pas
+//    sur la case de la Citadelle, toujours 5 portails) et 11 grottes de dragons
+//    de Xygga dans le monde des Royaumes (Xygga en case volcanique, au sec, hors
+//    des cases à ville, loin des routes).
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -1233,6 +1237,94 @@ namespace
 		Check(found, "cellules v1.0.78 : Sanctuaire des Brisants dans les lieux de N010_W016");
 	}
 
+	/// v1.0.81 (lore, tomes 15-22) : lieux des Enfers et grottes des dragons de Xygga.
+	/// Enfers : 7 POI de haut niveau sur les bras de la croix (palais de Lucifer,
+	/// nef des âmes, plateau du rituel au nord ; mer de lave et Seuil des Plans à
+	/// l'ouest ; canyon et plateaux des légions à l'est), aucun sur la case de la
+	/// Citadelle hors du Portail V, aucun portail de plus (Seuil = « faille »).
+	/// Royaumes : 11 grottes « salle » (Xygga dans une case volcanique 'V' et ses
+	/// 10 premiers-nés), hors des cases à ville, au sec et à l'écart des routes.
+	void TestLieuxV1081()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld hell;
+		std::string err;
+		const bool okE = LoadWorldMaster(LCDLLN_CONTENT_DIR, "enfers", hell.master, err);
+		if (!okE) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(okE, "lieux v1.0.81 : master enfers charge");
+		if (!okE) return;
+		BuildMacroTerrain(hell);
+		const std::set<std::string> generatedE(hell.master.generatedCells.begin(), hell.master.generatedCells.end());
+		auto findE = [&](const char* id) -> const PoiDef* {
+			for (const PoiDef& p : hell.pois)
+				if (p.id == id) return &p;
+			return nullptr;
+		};
+		struct Want { const char* id; const char* cell; const char* kind; };
+		const Want wantE[] = {
+			{ "poi_enfers_palais_de_lucifer", "N001_E000", "temple" }, { "poi_enfers_nef_des_ames", "N001_E000", "salle" },
+			{ "poi_enfers_plateau_du_rituel", "N001_E000", "sanctuaire" }, { "poi_enfers_mer_de_lave", "N000_W001", "volcan" },
+			{ "poi_enfers_seuil_des_plans", "N000_W001", "faille" }, { "poi_enfers_canyon_des_falaises_rouges", "N000_E001", "defile" },
+			{ "poi_enfers_plateaux_des_legions", "N000_E001", "camp" } };
+		bool allE = true;
+		for (const Want& w : wantE)
+		{
+			const PoiDef* p = findE(w.id);
+			allE = allE && p && p->cell == w.cell && p->kind == w.kind && generatedE.count(p->cell)
+				&& (std::fabs(p->offsetX) > 1.0 || std::fabs(p->offsetZ) > 1.0);
+		}
+		Check(allE, "lieux v1.0.81 : 7 lieux des Enfers sur les bras de la croix, dans des cellules generees");
+		bool citadelFree = true;
+		int portals = 0;
+		for (const PoiDef& p : hell.pois)
+		{
+			portals += p.kind == "portail";
+			if (p.cell == "N000_E000" && p.kind != "portail") citadelFree = false;
+		}
+		Check(citadelFree && portals == 5 && hell.master.cities.size() == 1u,
+			"lieux v1.0.81 : case de la Citadelle sans nouveau lieu, 5 portails, une seule ville");
+		// Lieux de la même case à plus de 300 m les uns des autres et des portails.
+		bool spaced = true;
+		for (size_t i = 0; i < hell.pois.size(); ++i)
+			for (size_t j = i + 1; j < hell.pois.size(); ++j)
+				if (hell.pois[i].cell == hell.pois[j].cell
+					&& std::hypot(hell.pois[i].center.x - hell.pois[j].center.x, hell.pois[i].center.z - hell.pois[j].center.z) < 300.0)
+					spaced = false;
+		Check(spaced, "lieux v1.0.81 : lieux des Enfers espaces (300 m)");
+
+		GlobalWorld g;
+		const bool okR = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(okR, "lieux v1.0.81 : master royaumes charge");
+		if (!okR) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const double sea = g.master.scale.seaLevelM;
+		int caves = 0, dry = 0, farFromRoads = 0, noCity = 0;
+		bool xyggaInVolcano = false;
+		std::set<std::string> caveCells;
+		for (const PoiDef& p : g.pois)
+		{
+			if (p.id != "poi_grotte_xygga" && p.id.rfind("poi_grotte_premier_ne_", 0) != 0) continue;
+			++caves;
+			caveCells.insert(p.cell);
+			if (p.kind != "salle") continue;
+			dry += MacroHeight(g.master, p.center.x, p.center.z) > sea + 5.0;
+			bool city = false;
+			for (const CityDef& c : g.cities) city = city || c.cell == p.cell;
+			noCity += !city;
+			double dmin = 1e18;
+			for (const Road& r : g.roads)
+				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
+			farFromRoads += dmin > 1500.0;
+			if (p.id == "poi_grotte_xygga") xyggaInVolcano = LoreCode(g.master, p.n, p.e) == 'V';
+		}
+		Check(caves == 11 && caveCells.size() == 11u, "lieux v1.0.81 : 11 grottes de dragons dans 11 cases distinctes");
+		Check(xyggaInVolcano, "lieux v1.0.81 : la grotte de Xygga est dans une case volcanique");
+		Check(dry == 11 && noCity == 11 && farFromRoads == 11,
+			"lieux v1.0.81 : grottes au sec, hors des cases a ville, a plus de 1,5 km des routes");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1325,6 +1417,7 @@ int main()
 	TestCorrectionsV1076();
 	TestReliefIleV1077();
 	TestCellulesV1078();
+	TestLieuxV1081();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

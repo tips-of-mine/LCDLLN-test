@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.80",
+    "version": "1.0.81",
     "notes": [
+      "v1.0.81 : [CANON] Enfers et dragons de Xygga d'après les tomes 15-22 (lot 10 du propriétaire, décisions du 11/11/2026). Lucifer est le maître des Enfers à l'époque du jeu (les T16-T22 où il a disparu sont postérieurs) ; hiérarchie regle_hierarchie_enfers : 17 fiches persons ajoutées (Belzébuth, Proserpine, Helle, Quetebah, Bellatrux, maîtres des plans, cour, garde rouge, Sorrow, Bourzigutt, archimage Crâne hors hiérarchie), Lucifer, Pazuzu et la mère de Wismerhill complétés. Carte des Enfers : 7 POI (palais de Lucifer, nef des âmes, plateau du rituel, mer de lave, Seuil des Plans, canyon des falaises rouges, plateaux des légions) et 15 lieux dont 6 plans hors carte (regle_plans_infernaux). Dragons : Xygga (70, endormi dans un volcan, S008_E012) et ses 10 premiers-nés sans nom (66-70), chacun dans une grotte cachée du monde des Royaumes (11 POI « salle », 11 lieux, 11 fiches creatures, regle_dragons_de_xygga) ; genre de Xygga ouvert. Tomes 15-22 : référence visuelle et technique, sauf Enfers et dragons (regle_canon_corpus). Registre : 13 entrées. Détail : docs/world/LORE_BD.md, section 16.10 ; docs/world/ENFERS.md §6.",
       "v1.0.80 : [CARTE] route Syzygie – Verdansur et Trueford jouables (lot 9 du propriétaire, 11/11/2026). Monde jouable : N009_W012 (plaine à la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, rivière nord de Verdansur) ajoutées à generated_cells de world_master.json : le tracé en jeu de la route 000083 Syzygie → Verdansur est entièrement dans des cases générées, et Trueford et la route 000024 Verdansur → Trueford deviennent accessibles. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). Détail : docs/world/LORE_BD.md, section 16.9.",
       "v1.0.79 : [CARTE] raccordement de Verdansur au monde jouable (lot 8 du propriétaire, 11/11/2026). Monde jouable : N010_W012, N010_W013 et N010_W014 (plaines de la région de Syzygie, rivière nord de Verdansur en N010_W014) ajoutées à generated_cells de world_master.json ; avec N010_W015 et N010_W016 (v1.0.78), elles forment une rangée continue jusqu'à N010_W011, déjà générée : Verdansur et le Sanctuaire des Brisants sont accessibles à pied. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). La route 000083 Syzygie → Verdansur existe ; dans le jeu, son tracé passe aussi par N009_W012, N011_W013 et N011_W014, non générées. Détail : docs/world/LORE_BD.md, section 16.8.",
       "v1.0.78 : [CARTE] cellules de Verdansur et des Brisants, décisions du propriétaire du 11/11/2026 (lot 7). Monde jouable : N010_W015 (Verdansur sur sa colline, source des deux rivières) et N010_W016 (Sanctuaire des Brisants) ajoutées à generated_cells de world_master.json ; elles restaient hors de la génération depuis la v1.0.72. Décisions inscrites au registre : contenu de plus haut niveau permis dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (exemple : Bridlecrag et le Grand Ancien partagent S004_W006 et restent en place) ; nom « lac / fleuve de Syzygie » conservé (riv_fleuve_sysigie nommé « Fleuve de Syzygie ») ; niveau d'une zone relatif à la faction (principe, détail par faction plus tard). Détail : docs/world/LORE_BD.md, section 16.7.",
@@ -1124,7 +1125,8 @@
         "[BD-T14] 'Jamais le monde n'avait connu plus puissante armée.' (narration BD).",
         "[BD-T14] Le défilé dure plusieurs heures -- tous les dragons du monde y participent.",
         "[BD-T14] Wismerhill accorde gracieusement le passage à Xygga: 'C'est un honneur que de vous accorder cette faveur, Seigneur Xygga.'",
-        "[BD-T14] p.36 : Pilou (Pile-ou-Face) retrouve sa famille adoptive de dragons (« MAMAN ! BÉBÉ ! ») et part avec eux."
+        "[BD-T14] p.36 : Pilou (Pile-ou-Face) retrouve sa famille adoptive de dragons (« MAMAN ! BÉBÉ ! ») et part avec eux.",
+        "[DÉCISION] (v1.0.81) Le titre « Père de tous les Drakkhs » ne tranche pas le genre de Xygga, laissé ouvert par le propriétaire (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10) ; les 10 premiers-nés de Xygga : regle_dragons_de_xygga."
       ],
       "faction_relations": [
         {
@@ -1492,7 +1494,8 @@
         "[DÉCISION] (v1.0.71) Carte des Enfers : les 4 coins (N001_W001, N001_E001, S001_W001, S001_E001) sont ouverts ; la région de départ 3×3 de la Légion infernale = les 9 cellules N001..S001 × W001..E001, toutes générées. Les coins gardent leur relief de chaîne de montagnes (code M, généré et praticable comme les cellules M du continent) ; la couronne extérieure (N002/S002, W002/E002) reste en M, non générée (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8 ; docs/world/ENFERS.md §1).",
         "[DÉCISION] (v1.0.71) Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8).",
         "[DÉCISION] (v1.0.71) Région de départ des Enfers sans hameau ni ferme : la Citadelle de la Légion reste la seule ville ; 4 à 6 POI répartis sur les cases, surtout les coins (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8).",
-        "[GD] (v1.0.71) Région de départ 3×3 autour de la Citadelle (LORE_BD §15.8) : Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; faune de niveau 1 à 10 (diablotin errant, chien des cendres, salamandre ; petit démon aux abords des portails) ; aucune route : le réseau routier du lore ne couvre pas les Enfers et tools/world_gen n'y trace aucune route (une seule ville)."
+        "[GD] (v1.0.71) Région de départ 3×3 autour de la Citadelle (LORE_BD §15.8) : Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; faune de niveau 1 à 10 (diablotin errant, chien des cendres, salamandre ; petit démon aux abords des portails) ; aucune route : le réseau routier du lore ne couvre pas les Enfers et tools/world_gen n'y trace aucune route (une seule ville).",
+        "[DÉCISION] (v1.0.81) Lieux de haut niveau ajoutés à la carte des Enfers sans toucher la région de départ 1-10 : palais de Lucifer, nef des âmes, plateau du rituel (N001_E000), mer de lave, Seuil des Plans (N000_W001), canyon des falaises rouges, plateaux suspendus des légions (N000_E001), chemins balisés ; la Légion sert Lucifer (regle_hierarchie_enfers) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -156106,13 +156109,19 @@
         "t11",
         "t12",
         "t13",
-        "t14"
+        "t14",
+        "t15",
+        "t16",
+        "t19",
+        "t20",
+        "t21",
+        "t22"
       ],
       "faction_id": "faction_demons",
       "race_id": "",
       "class_id": "",
       "role": "cosmic_antagonist",
-      "visual": "Entité cosmique enchaînée dans les profondeurs de l'enfer. Visage déformé, yeux incandescents jaune-orange, traits inhumains. Chaînes dorées massives. Aura de feu sombre. Taille gigantesque. Incarnation de la ténèbre absolue.",
+      "visual": "Longs cheveux noirs bouclés à pointe frontale en V, yeux verts lumineux, sourcils et rides marqués, crocs, barbiche, grandes boucles d'oreilles en disque d'or ; robe ou manteau noir à haut col rouge brodé d'or, médaillon, ongles noirs en griffes ; robe violette sur son trône [BD-T15 p.15, 24-25]. Médaillon pentacle doré marqué 6-6-6 [BD-T20 p.41-42].",
       "personality": "Froid, calculateur, patient sur des ères entières. Parle en termes de 'grand dessein'. Désigne son fils comme son instrument. Attend que les Seuils s'ouvrent.",
       "description": "Le Prince des Ténèbres — Lucifer nommé explicitement dans le texte narratif (T9 page 43). Père démoniaque de Haazheel Thorn. Règne sur les Enfers ; son fils Haazheel agit en son nom sur le monde matériel jusqu'à l'ouverture du seuil permanent (T11), qui lui permet de venir en ce monde.",
       "arc": "Rencontre Haazheel dans une Bulle de Négation (T9). Lui confie la Gemme des Sombres Splendeurs pour ouvrir les Seuils Infernaux. Prépare ses légions démoniaques en attente d'ouverture des portails.",
@@ -156125,7 +156134,7 @@
       "special_items": [],
       "special_rule": "",
       "quote": "C'EST POUR CELA QUE JE T'AI CONÇU APRÈS TOUT, VOICI LA GEMME DES SOMBRES SPLENDEURS.",
-      "source": "[BD-T9] Pages 3-5, 43",
+      "source": "[BD-T9] Pages 3-5, 43 ; [BD-T15 p.15, 24-25, 31] ; [BD-T16 p.12-16]",
       "ville_ids": [],
       "zone_ids": [],
       "dialogue_ids": [],
@@ -156147,7 +156156,16 @@
         "[BD-T11] p.35 : Haazheel rend compte au Sombre Prince (« Voilà, mon père, c'est fait, un seuil permanent est ouvert ») ; le Prince lui remet un sceptre de commande infernal et annonce qu'il va « se balader sur ce monde ».",
         "[BD-T11] (v1.0.54) L'ancienne description « prisonnier des profondeurs abyssales (chaînes) » n'a pas d'appui : l'être enchaîné de la série est l'Oracle (T14 p.12).",
         "[BD-T12] p.7 : « Haazheel Thorn est le fils de Lucifer » (le père de Wismerhill) ; p.46-48 : Lucifer apparaît à la Porte des Enfers, escorté de trois êtres ailés, et frappe de rayons de mort le cercle des mages et paladins ; la Porte est scellée.",
-        "[BD-T14] p.7 : l'âme d'Haazheel, venue avouer son échec, est avalée par Lucifer (« DÉLICIEUX ! »)."
+        "[BD-T14] p.7 : l'âme d'Haazheel, venue avouer son échec, est avalée par Lucifer (« DÉLICIEUX ! »).",
+        "[v1.0.81] Ancien visuel (« entité cosmique enchaînée… chaînes dorées massives ») remplacé par l'apparence lue au T15 ; il n'avait pas d'appui (voir la note [BD-T11] v1.0.54).",
+        "[DÉCISION] (v1.0.81) À l'époque du jeu (entre le T1 et le T11), Lucifer est le maître des Enfers ; les tomes 16 à 22, où il a disparu ou est prisonnier et où Belzébuth règne, sont postérieurs et ne s'appliquent pas (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[DÉCISION] (v1.0.81) Hiérarchie des Enfers à l'époque du jeu : regle_hierarchie_enfers (Lucifer ; princes Belzébuth, Pazuzu, Proserpine, Helle, Quetebah, Bellatrux et maîtres des plans ; dessous la mère de Wismerhill, la conseillère de Belzébuth, ducs des abysses, démons de cour, garde rouge, Sorrow, Bourzigutt).",
+        "[BD-T15 p.31] Nom secret : « NERHENEÏM », crié par Methraton avec « LUX ! CIFER ! » (lecture de la graphie : Nerheneïm).",
+        "[BD-T15 p.15] Mange les âmes « comme des fruits » dans la nef des âmes (lieu_nef_des_ames).",
+        "[BD-T15 p.24] Trône au haut dossier surmonté d'un crâne cyclope couronné de pointes, posé sur une pyramide de damnés hurlants ; plateau du rituel au pentagramme (lieu_plateau_du_rituel).",
+        "[BD-T16 p.14] Grand Trône des Enfers : dossier gothique ogival doré, pentacle inversé ; celui qui s'y assoit devient maître des Enfers. Palais : lieu_palais_de_lucifer (carte des Enfers, N001_E000).",
+        "[BD-T19 PDF p.13] Helle l'appelle « Lulu ».",
+        "[ÉPOQUE] Après le T14 (hors époque) : disparaît avec 666 légions par un tube interdimensionnel (T16), vaincu par Methraton et emprisonné sur un plan vide (T15 p.31-34, T20 p.41-42, T22 p.41)."
       ]
     },
     {
@@ -156877,7 +156895,8 @@
         "t09",
         "t11",
         "t12",
-        "t14"
+        "t14",
+        "t22"
       ],
       "faction_id": "faction_nuees",
       "race_id": "race_demon",
@@ -156928,7 +156947,9 @@
         "[BD-T00 p.10-16] Se change en prince aux longs cheveux noirs, armure noire et or, cape violette ; fait surgir démons et cortège (« BAMF »), demande l'hospitalité au vieux seigneur.",
         "[BD-T00 p.26-27, 36, 44] Fait découvrir l'enfant au vieux seigneur, emporte l'âme de la princesse ; « Son père c'est moi ! » ; « Ton vrai poupa est fier de toi !! ».",
         "[ÉPOQUE] avant T1 → T14 (vivant).",
-        "[DÉCISION] (v1.0.56) Père de Wismerhill (Q6) : le « prince elfe ténébreux » de l'Oracle est la forme elfique de Pazuzu ; il n'est pas mort au T4 (imposture d'Urmarcht). Le vieux seigneur du T00 est le père légal (char_vieux_seigneur_t00)."
+        "[DÉCISION] (v1.0.56) Père de Wismerhill (Q6) : le « prince elfe ténébreux » de l'Oracle est la forme elfique de Pazuzu ; il n'est pas mort au T4 (imposture d'Urmarcht). Le vieux seigneur du T00 est le père légal (char_vieux_seigneur_t00).",
+        "[BD-T22 p.5-6] « Ton père règne sur les cieux des Enfers » (la mère de Wismerhill à son fils).",
+        "[DÉCISION] (v1.0.81) Prince des Enfers sous Lucifer à l'époque du jeu : il règne sur les cieux des Enfers (T22 p.5), en plus des vents et des tempêtes ; la fiche existante est complétée, pas dupliquée (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ]
     },
     {
@@ -156937,7 +156958,8 @@
       "importance": "major",
       "alive": false,
       "tomes": [
-        "t00"
+        "t00",
+        "t22"
       ],
       "faction_id": "faction_hauts_elfes",
       "race_id": "race_haut_elfe",
@@ -156963,7 +156985,9 @@
       "dialogue_ids": [],
       "notes": [
         "Mère de Wismerhill — sang d'or pur des Hauts Elfes transmis à son fils",
-        "Les Esprits du Vent parlent d'elle à Wismerhill enfant : 'Ta mère était... très belle... et elle t'adorait...'"
+        "Les Esprits du Vent parlent d'elle à Wismerhill enfant : 'Ta mère était... très belle... et elle t'adorait...'",
+        "[BD-T22 p.4-6, 19, 33] Aux Enfers, son âme vit sous un avatar démoniaque : peau bleue, cornes, immenses ailes bleu-noir d'os et de plumes, robe blanche tachée de sang, « âme toujours aussi pure » ; « Pazuzu l'aimait vraiment, il a donné à son âme la possibilité de choisir » ; « ton père règne sur les cieux des Enfers et j'ai choisi de le suivre ». Jardin-paradis, château de cristal flottant, gardes ailés bleu-noir en armure argent et or. Nom non donné.",
+        "[DÉCISION] (v1.0.81) Retenue dans la hiérarchie des Enfers sous les princes, aux côtés de Pazuzu ; morte dans le monde (alive inchangé), son âme est aux Enfers depuis le T00 (dial_t00_mort_mere). Sa régence « en son absence » (T22) est hors époque. Pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ]
     },
     {
@@ -157499,17 +157523,22 @@
       "importance": "secondary",
       "alive": true,
       "tomes": [
-        "t14"
+        "t14",
+        "t16"
       ],
       "faction_id": "",
       "race_id": "",
       "class_id": "",
       "role": "npc_majeur",
-      "visual": "",
+      "visual": "Le plus grand des dragons : écailles rouge sombre à rouge vif en rangées épaisses, yeux vert-jaune à pupille fendue, crête de longues cornes rouges, collerette d'écailles, immenses ailes rouges membraneuses aux griffes blanches, long cou ; parle en bulles rouges [BD-T16 p.4-9].",
       "personality": "Ancien et sage. Sait ce qui se passe. S'incline devant les faits. Respectueux envers Wismerhill tout en étant conscient de sa propre grandeur.",
-      "description": "",
+      "description": "Le Grand Dragon rouge, « le Premier » (« Ô Premier… », T16 p.5), premier Grand Rêveur : ses premiers-nés sont « les Enfants, les rêves de Xygga » [BD-T16 p.7]. À l'époque du jeu, Xygga dort statufié dans une caverne au cœur d'un volcan (lieu_grotte_xygga, S008_E012) ; il ne se réveille qu'au T14.",
       "arc": "",
-      "abilities": [],
+      "abilities": [
+        "Rêve des races : ses rêves engendrent des êtres ; il peut cesser de « rêver » une race [BD-T16 p.19]",
+        "Commande les premiers-nés (« Enfants ! Massacrez ces cloportes ! ») [BD-T16 p.7]",
+        "Patient et rusé [BD-T16 p.9]"
+      ],
       "special_items": [],
       "special_rule": "",
       "quote": "",
@@ -157523,7 +157552,13 @@
         "[BD-T14] Xygga 'amorça une espèce de sourire' quand Wismerhill lui accorda le passage.",
         "[BD-T14] Le défilé des dragons qu'il mène 'dura plusieurs heures'.",
         "[BD-T14] Rôle dans Opus II : probable présence sur Terra Secunda comme entité ancienne.",
-        "[BD-T14] p.20-34 : le Premier Dragon, statufié dans la caverne du cœur du monde, se réveille, consume les Chevaliers Dragons (« Soufflez, mes fils ! », p.23) et se nomme à Lhynn (p.34)."
+        "[BD-T14] p.20-34 : le Premier Dragon, statufié dans la caverne du cœur du monde, se réveille, consume les Chevaliers Dragons (« Soufflez, mes fils ! », p.23) et se nomme à Lhynn (p.34).",
+        "[BD-T16 p.7] « Les Premiers-nés, les Enfants, les rêves de Xygga sortirent eux aussi de la caverne et vinrent se placer devant lui. » ; « Les plus puissants dragons, les premiers des grandes lignées ».",
+        "[BD-T16 p.4-9] Pages du PDF (planches 4-5 de l'album = p.7, planches 6-7 = p.8).",
+        "[DÉCISION] (v1.0.81) Genre de Xygga NON TRANCHÉ : le T16 emploie le masculin (« devant lui », p.7) et la Nuée des Dragons le titre « Père de tous les Drakkhs », mais le propriétaire laisse la question ouverte ; ne pas affirmer de genre dans les textes de jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[DÉCISION] (v1.0.81) Xygga et ses 10 premiers-nés vivent dans le monde des Royaumes, chacun caché dans une grotte difficile à trouver ; Xygga dort dans un volcan (S008_E012, cellule générée). Règle : regle_dragons_de_xygga.",
+        "[GD] (v1.0.81) Niveau 70 (fiche creature_xygga), sommet de l'échelle des boss mondiaux (55-70) : au-dessus du Grand Ancien (66-70), puisqu'il est le premier d'entre eux. Endormi à l'époque du jeu : rencontre surtout narrative ; un combat reste à décider.",
+        "[ÉPOQUE] T16 (Terra Secunda) : massacre des ophidiens et pacte avec l'Empereur Ophidien, hors époque."
       ]
     },
     {
@@ -159436,6 +159471,547 @@
       ],
       "notes": [
         "[GD] (v1.0.77) PNJ principal des Huacani (peuple des temples de l'Île de la Trêve), à valider ; aucune source BD. Lieu : Temple de la Lune d'Argent (lieu_ile_gd_temple_de_la_lune) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "char_belzebuth",
+      "name": "Belzébuth, Seigneur des Mouches",
+      "importance": "major",
+      "alive": true,
+      "tomes": [
+        "t16",
+        "t17",
+        "t18",
+        "t19",
+        "t20",
+        "t21",
+        "t22"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Démon énorme et obèse à la chair rose pâle, grandes cornes dorées annelées de bélier, diadème à gemme rouge, yeux rouges à facettes d'insecte, groin, crocs, moustache et barbiche noires ; grandes ailes squelettiques griffues à membrane bleu sombre, longue queue noire écailleuse ; collier à rubis et pointes, ceinture dorée à rubis, bagues ; toujours entouré de mouches [BD-T16 p.13-16]. En guerre : armure bleu-acier à quatre défenses d'ivoire, plastron de chair aux visages hurlants, ceinture à gros œil rouge, masse à tête de crânes [BD-T20 p.30-36].",
+      "personality": "Colérique et brutal : il écrase d'un poing le démon qui le contredit [BD-T16 p.14]. Rusé, rancunier, avide d'âmes ; appelle sa conseillère « ma chérie » [BD-T16 p.14-15].",
+      "description": "Grand prince des Enfers, « Seigneur des mouches, prince des enfers le plus craint après Lucifer » [BD-T16 p.13]. À l'époque du jeu, il sert Lucifer, maître des Enfers. Non jouable ; utilisable dans les histoires.",
+      "arc": "À l'époque du jeu : premier des princes sous Lucifer. Après le T14 (hors époque) : régent puis maître des Enfers quand Lucifer disparaît (T16-T18), lance la guerre infernale (T20), capturé par Methraton puis ressuscité par sa relique-mouche (T22).",
+      "abilities": [
+        "Forme de nuée : se forme ou se défait en essaim de mouches (BBBZZZ) [BD-T16 p.13, BD-T18 p.18]",
+        "Mouches éclaireuses : envoie une mouche, « infime partie de lui-même », explorer d'autres mondes [BD-T18 p.17]",
+        "Invocation : fait surgir un démon d'un bain de sang [BD-T20 p.13]",
+        "Masse géante à tête de crânes, force colossale [BD-T20 p.34-36]"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Je veux qu'on me ramène les coupables !",
+      "source": "[BD-T16 p.12-16] ; [BD-T17 p.16] ; [BD-T18 p.16-18] ; [BD-T20 p.13-14, 30-41] ; [BD-T22 p.41-44]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grand prince des Enfers, sous Lucifer à l'époque du jeu ; personnage NON jouable, utilisable dans les histoires (T16 p.12) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16 p.13] « Seigneur des mouches, prince des enfers le plus craint après Lucifer ».",
+        "[BD-T17 p.16] Graphie « Belfébut » dans ce tome (même personnage).",
+        "[BD-T19 PDF p.25] Le prince démon sur le trône, appelé « gros tas » par Helle, est très probablement lui (bouche d'où sort une mouche, yeux à facettes) ; nom non écrit dans ce tome.",
+        "[BD-T20 p.13-14] Bain de sang aux défenses d'ivoire : réattribué au palais de Lucifer à l'époque du jeu (lieu_palais_de_lucifer).",
+        "[BD-T22 p.42-44] Emblème : une mouche dorée.",
+        "[BD-T16 p.12-16] Les Enfers comptent « 666 plans », des « princes démons » et des « ducs des abysses ».",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_proserpine",
+      "name": "Proserpine (archidémonesse)",
+      "importance": "secondary",
+      "alive": true,
+      "tomes": [
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Peau violette écailleuse, yeux verts fendus de reptile, chevelure de serpents ou de tentacules violets, longs ongles, motifs bleus en losange sur le visage, crocs ; robe de tentacules [BD-T21 p.8].",
+      "personality": "Orgueilleuse et expéditive : tue d'un sort le prince qui l'insulte, se fait traiter de « vieille peau » [BD-T21 p.8].",
+      "description": "Archidémonesse, princesse des Enfers sous Lucifer à l'époque du jeu.",
+      "arc": "Après le T14 (hors époque) : s'assoit sur le trône vide des Enfers (« C'est moi, Proserpine… », « c'est moi qui règne ! »), est foudroyée par Methraton puis réapparaît dans une cage de cristal (T21 p.8, 16, 34).",
+      "abilities": [
+        "Sort mortel : tue d'un sort un prince démon [BD-T21 p.8]"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "C'est moi qui règne !",
+      "source": "[BD-T21 p.8-9, 16, 34]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Archidémonesse, princesse des Enfers sous Lucifer à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_helle",
+      "name": "Helle (archidémonesse)",
+      "importance": "secondary",
+      "alive": true,
+      "tomes": [
+        "t19",
+        "t20",
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Peau rose, oreilles pointues, longs cheveux noirs, yeux rouges, crocs ; couronne ajourée rouge et noire hérissée de cornes et d'épines ; armure noire minimale à arêtes rouges épineuses, cuissardes épineuses ; queue rose fine à pointe de flèche ; fouet de lumière scintillante, lance [BD-T19 PDF p.3, 13, 24 ; BD-T20 p.9, 13-15].",
+      "personality": "Calculatrice et indépendante, ne reste jamais où le danger guette (« Il est hors de question que je reste dans le coin, moi ! », T20 p.15) ; insolente envers les princes.",
+      "description": "Archidémonesse, « la terrible princesse infernale Helle » [BD-T19 PDF p.13] ; princesse des Enfers sous Lucifer à l'époque du jeu. À ne pas confondre avec Hellaynnea (char_succubus).",
+      "arc": "Après le T14 (hors époque) : se cache après la chute de Lucifer, arme la secte des Masques de cuir, vend à Belzébuth la position du monde des humains et enfouit le pentacle étoilé de seuil (T19-T21).",
+      "abilities": [
+        "Indétectabilité : « l'un de ses pouvoirs majeurs » [BD-T19 PDF p.13]",
+        "Son sang rend indétectables ceux qui le reçoivent [BD-T20 p.9-10]",
+        "Passe d'un plan à l'autre [BD-T20 p.14-15]"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "On n'est pas là pour ça, ô Prince !",
+      "source": "[BD-T19 PDF p.3, 13, 24-25] ; [BD-T20 p.9-10, 13-15] ; [BD-T21 p.35]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Archidémonesse, princesse des Enfers sous Lucifer à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T19 PDF p.13] « Venue combattre sur ce plan avec Lucifer » ; elle appelle Lucifer « Lulu ».",
+        "[DÉDUCTION] Distincte d'Hellaynnea, la succube fille de Wismerhill (char_succubus) : nom, apparence et rôle différents.",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_quetebah",
+      "name": "Quetebah",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t22"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Démon vert et squelettique, cerveau à nu hérissé de pointes, yeux jaunes [BD-T22 p.20].",
+      "personality": "",
+      "description": "Prince démon des Enfers, sous Lucifer à l'époque du jeu.",
+      "arc": "Après le T14 (hors époque) : « pêché » par Methraton dans un cube (T22 p.20).",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T22 p.20]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Prince démon sous Lucifer à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_bellatrux",
+      "name": "Bellatrux",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t22"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Démon rouge ailé [BD-T22 p.22].",
+      "personality": "",
+      "description": "Prince démon des Enfers, sous Lucifer à l'époque du jeu.",
+      "arc": "Après le T14 (hors époque) : capturé par Methraton (« ils t'ont eu, Bellatrux ! », T22 p.22).",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T22 p.22]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Prince démon sous Lucifer à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_demone_conseillere_belzebuth",
+      "name": "La démone conseillère de Belzébuth",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t16",
+        "t17",
+        "t18"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "demon_de_cour",
+      "visual": "Peau rouge, crâne allongé à cornes noires, armure bleu-noir, ailes, queue [BD-T16 p.12, 14-15].",
+      "personality": "Habile et prudente : c'est elle qui explique les nouvelles fâcheuses à son prince.",
+      "description": "Démone de la cour de Belzébuth, sa conseillère ; il l'appelle « ma chérie » [BD-T16 p.14-15]. Sans nom : désignation descriptive.",
+      "arc": "Après le T14 (hors époque) : explique à Belzébuth la disparition de Lucifer (T16).",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T16 p.12, 14-15]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Retenue dans la hiérarchie des Enfers, sous les princes ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[HYPOTHÈSE] La démone rouge aux cornes torsadées et à la langue couverte de mouches qui sert « Belfébut » [BD-T17 p.16] et la démone rouge ailée de sa garde rapprochée [BD-T18 p.18] pourraient être la même ; non confirmé.",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_ducs_des_abysses",
+      "name": "Les ducs des abysses",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t16"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "groupe_demons",
+      "visual": "Assemblée de démons nobles : démons rouges à cornes et collerettes Renaissance (l'un porte un monocle), trois démones (une grosse, une à coiffe noire, une à crête), princes à longues cornes noires en armures dorées, vertes ou bleues [BD-T16 p.16].",
+      "personality": "",
+      "description": "Noblesse infernale sous les princes démons : les Enfers ont des « princes démons » et des « ducs des abysses » [BD-T16 p.16]. Aucun n'est nommé : désignation descriptive.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T16 p.16]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Retenus dans la hiérarchie des Enfers, sous les princes ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_demons_de_cour_enfers",
+      "name": "Les démons de cour des Enfers",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t15",
+        "t16",
+        "t20",
+        "t22"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "groupe_demons",
+      "visual": "Cour de Lucifer [BD-T15 p.15, 24] : un grand démon rouge massif aux cornes bouclées de bélier, troisième œil au front et col-couronne doré en ailes ; une démone rouge ailée à coiffe monumentale de crânes et de rayons dorés ; un grand démon rouge à ailes de chauve-souris, serviteur du rituel, à la hampe à lame flamboyante. Autres démons de cour : démon rouge à cornes, femme-démon en armure bleu-noir au trident, gros démon ailé orange, démone rose [BD-T16 p.12-14] ; diablesses rouges à queue fléchée qui servent au bain et au trône [BD-T20 p.13, 30] ; diablotin rouge au long nez, démone mauve pâle au col noir et rouge [BD-T22 p.42-43].",
+      "personality": "",
+      "description": "Conseillers, serviteurs et courtisans du palais de Lucifer. Aucun n'est nommé : désignation descriptive. À l'époque du jeu, ils servent Lucifer.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Heu, Sire ! Les âmes…",
+      "source": "[BD-T15 p.15, 24, 27-29] ; [BD-T16 p.12-14] ; [BD-T20 p.13, 30] ; [BD-T22 p.42-43]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Retenus dans la hiérarchie des Enfers, sous les princes ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T15 p.15] Le grand démon au col doré (« Il n'y a plus de monde derrière, plus de vivants, plus rien… ») et la démone à la coiffe de crânes (« Heu, Sire ! Les âmes… ») sont les plus proches conseillers de Lucifer ; rang exact non précisé.",
+        "[BD-T15 p.27-29] Un démon ailé brun-doré aux cornes de bélier tient tête à Lucifer (« Mauvais perdant, va ! ») puis s'éclipse ; identité non donnée.",
+        "[BD-T20 p.30] Un démon messager rouge-brun ailé, à genoux : « Tout est prêt, Sire ! »."
+      ]
+    },
+    {
+      "id": "char_garde_rouge_enfers",
+      "name": "La garde du palais des Enfers",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t18",
+        "t22"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "groupe_demons",
+      "visual": "Colosses démons rouges musculeux à cornes noires, épaulières bleu-acier à grosses pointes, ceinture à boucle-crâne, pagne noir, bracelets à clous, l'un à casque noir à défenses [BD-T18 p.18] ; grands démons rouges cornus ailés armés de lances et de tridents, porteurs des captifs [BD-T22 p.3-4].",
+      "personality": "",
+      "description": "La « garde rouge » du palais (désignation du propriétaire). Aucun garde n'est nommé : désignation descriptive. À l'époque du jeu, elle garde le palais de Lucifer.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T18 p.18] ; [BD-T22 p.3-4]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Retenue dans la hiérarchie des Enfers, sous les princes ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Hostile à tout humain, comme les PNJ de la Citadelle (docs/world/ENFERS.md §4)."
+      ]
+    },
+    {
+      "id": "char_sorrow",
+      "name": "Sorrow (fille des Enfers)",
+      "importance": "secondary",
+      "alive": true,
+      "tomes": [
+        "t19"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "demon_lie",
+      "visual": "Épée longue à garde en étoile à pointes et visage de femme pâle au pommeau ; vraie forme : spectre féminin drapé de linceuls blancs et de bandelettes, visage blafard aux yeux noirs et rouges qui saignent, crocs, six bras à griffes rouges ; hurlement, éclair de lumière et odeur de soufre [BD-T19 PDF p.1, 17-18].",
+      "personality": "Pleure lorsqu'elle dévore [HS].",
+      "description": "« Monstrueuse fille des Enfers », « la terrible démonesse » [BD-T19 PDF p.17] : démone femelle piégée dans la forme d'une épée (loot_sorrow). Vaincue, elle sert son vainqueur 666 jours en se gorgeant de l'âme de ses victimes [BD-T19 PDF p.16, 18].",
+      "arc": "",
+      "abilities": [
+        "Forme d'épée qui dévore l'âme des adversaires [HS]",
+        "Vraie forme à six bras [BD-T19 PDF p.17-18]",
+        "Filles de Sorrow : copies d'épées qu'elle donne [BD-T19 PDF p.18]"
+      ],
+      "special_items": [
+        "loot_sorrow"
+      ],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T19 PDF p.1, 16-18] ; [HS] (loot_sorrow)",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Incluse dans le lore des Enfers sur décision du propriétaire, sous les princes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Voir loot_sorrow et loot_fille_sorrow (l'épée et ses copies).",
+        "[ÉPOQUE] Les tomes 16 à 22 se passent après le T14 (Terra Secunda) : ce qui y arrive à ce personnage (disparition de Lucifer, régence, guerre infernale, captures par Methraton) est hors époque et ne s'applique pas au jeu ; restent l'apparence, le rang et les pouvoirs (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_bourzigutt",
+      "name": "Bourzigutt",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t15"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "demon_invoque",
+      "visual": "Non montré.",
+      "personality": "",
+      "description": "Démon habituellement invoqué par le sorcier d'Histmendia [BD-T15 p.26]. Cité seulement.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T15 p.26]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Retenu dans le lore des Enfers (cité), sous les princes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ]
+    },
+    {
+      "id": "char_archimage_crane",
+      "name": "L'archimage de Methraton, maître des démons",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t16",
+        "t22"
+      ],
+      "faction_id": "",
+      "race_id": "",
+      "class_id": "",
+      "role": "pnj_archimage",
+      "visual": "Peau sombre, haute coiffe dorée cylindrique de style égyptien, robe blanche, bâton à tête de démon dorée, aura de fumée jaune [BD-T16 p.10-11].",
+      "personality": "",
+      "description": "Crâne (graphie du T22 ; « Crane » au T16), « archimage de Methraton, maître des démons » [BD-T16 p.10-11] : un des archimages de Methraton, pas un démon. Il commande les démons au service de l'Empire (T16) et garde le plan prison des démons vaincus (T22 p.16).",
+      "arc": "Après le T14 (hors époque) : commande les démons de l'Empire de Terra Secunda (T16) ; garde le plan prison (T22).",
+      "abilities": [
+        "Commandement des démons [BD-T16 p.10-11]"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T16 p.10-11] ; [BD-T22 p.16, 22]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Fiche de PNJ à part : Crâne est un archimage (humain) de Methraton, pas un démon ; il n'entre pas dans la hiérarchie des Enfers (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16] Graphie « Crane » ; [BD-T22] graphie « Crâne » (« Crâne, tu te chargeras d'eux », p.16 ; « Oh non, Crâne ! », p.22).",
+        "[ÉPOQUE] N'apparaît qu'après le T14 : absent du monde jouable à l'époque du jeu, sauf décision contraire.",
+        "[v1.0.81] Champ name sans le mot « Crâne » : il est déjà porté par des noms de famille de PNJ de service (ex. « Crâne-Tordu »), que tools/lore/validate_city_services.py refuserait ; le nom figure dans la description."
+      ]
+    },
+    {
+      "id": "char_fleur_du_mal",
+      "name": "La Fleur du Mal",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t18"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Fermée : bulbe rouge sombre et noir à nervures, en bouton épineux ; racines-tentacules roses couvertes d'épines jaunes ; ouverte : immenses pétales rose et magenta déchiquetés, étamines jaunes [BD-T18 p.16-17].",
+      "personality": "Affamée : « Elle est fatiguée et elle a faim ! » [BD-T18 p.18].",
+      "description": "« Prince Démon immobile » du plan du Jardin des Supplices [BD-T18 p.16] ; ses racines s'étendent sous tout le plan et la nourrissent des souffrances des damnés.",
+      "arc": "",
+      "abilities": [
+        "Ses pétales ouvrent sur des milliers de mondes où le mal peut germer [BD-T18 p.17]"
+      ],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T18 p.16-18]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Princes et maîtres de plans retenus ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Maître du plan lieu_plan_jardin_des_supplices."
+      ]
+    },
+    {
+      "id": "char_maitre_plan_eaux_sombres",
+      "name": "Le prince-pieuvre violet, maître du plan des eaux sombres",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Masse de tentacules violets, yeux blancs, visage de type Cthulhu [BD-T21 p.36].",
+      "personality": "",
+      "description": "Prince démon, maître d'un plan infernal : « chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances » [BD-T21 p.36]. Sans nom : désignation descriptive.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "J'espère que tu nages bien, vermisseau !",
+      "source": "[BD-T21 p.36]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Princes et maîtres de plans retenus ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Maître du plan lieu_plan_eaux_sombres."
+      ]
+    },
+    {
+      "id": "char_maitre_plan_du_feu",
+      "name": "Le démon de flammes, maître du plan du feu",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Silhouette de flammes à tête de crâne cornu [BD-T21 p.36].",
+      "personality": "",
+      "description": "Prince démon, maître d'un plan infernal : « chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances » [BD-T21 p.36]. Sans nom : désignation descriptive.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "Je vais m'occuper de toi avec zèle.",
+      "source": "[BD-T21 p.36]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Princes et maîtres de plans retenus ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Maître du plan lieu_plan_du_feu."
+      ]
+    },
+    {
+      "id": "char_maitre_plan_maladie",
+      "name": "Le prince vert pustuleux, maître de l'enfer de la maladie",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Prince vert couvert de pustules, cornes, tentacules [BD-T21 p.36].",
+      "personality": "",
+      "description": "Prince démon, maître d'un plan infernal : « chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances » [BD-T21 p.36]. Sans nom : désignation descriptive.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "On va bien s'amuser tous les deux.",
+      "source": "[BD-T21 p.36]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Princes et maîtres de plans retenus ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Maître du plan lieu_plan_maladie."
+      ]
+    },
+    {
+      "id": "char_maitre_plan_insectes",
+      "name": "Le prince insectoïde violet, maître du plan des insectes",
+      "importance": "minor",
+      "alive": true,
+      "tomes": [
+        "t21"
+      ],
+      "faction_id": "faction_legion_infernale",
+      "race_id": "race_demon",
+      "class_id": "",
+      "role": "prince_demon",
+      "visual": "Insecte violet à antennes, yeux rouges, plusieurs bras ; parle en clics [BD-T21 p.36].",
+      "personality": "",
+      "description": "Prince démon, maître d'un plan infernal : « chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances » [BD-T21 p.36]. Sans nom : désignation descriptive.",
+      "arc": "",
+      "abilities": [],
+      "special_items": [],
+      "special_rule": "",
+      "quote": "",
+      "source": "[BD-T21 p.36]",
+      "ville_ids": [],
+      "zone_ids": [],
+      "dialogue_ids": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Princes et maîtres de plans retenus ; pas de nom inventé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "Maître du plan lieu_plan_insectes."
       ]
     }
   ],
@@ -165793,7 +166369,8 @@
         "[BD-T2 p.27] Royaume Drach = royaume des Grands Vers.",
         "Les scènes du T14 sont l'avenir du monde jouable : l'espèce existe à l'époque du jeu, pas les événements.",
         "[GD] (v1.0.58) Boss mondial des sommets enneigés du Royaume Drach, distinct des dragons montés des Chevaliers Dragons.",
-        "[GD] (v1.0.68) Retiré de S003_W005 : case de la région de départ de Wyrmhallow, niveaux 1 à 10 (LORE_BD §15.5)."
+        "[GD] (v1.0.68) Retiré de S003_W005 : case de la région de départ de Wyrmhallow, niveaux 1 à 10 (LORE_BD §15.5).",
+        "[GD] (v1.0.81) Distinct des premiers-nés de Xygga (creature_premier_ne_*, 66-70) et de creature_xygga (70) : le Grand Ancien reste en S004_W006 et dans ses zones de chasse, aucune grotte de premier-né n'y est posée."
       ],
       "bestiaire": true,
       "habitat": "Sommets enneigés du Royaume Drach, au-dessus de la Passe des Dragons.",
@@ -166663,6 +167240,492 @@
         "lieu_gouffre_de_la_baie",
         "N020_W011"
       ]
+    },
+    {
+      "id": "creature_xygga",
+      "name": "Xygga, le Grand Dragon rouge (endormi)",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 70,
+      "level_max": 70,
+      "description": "Xygga, « le Premier », premier Grand Rêveur et parent des premiers-nés [BD-T16 p.4-9] ; à l'époque du jeu, statufié dans la caverne du cœur d'un volcan, d'où il ne s'éveille qu'au T14 [BD-T14 p.20-34]. Fiche de combat de char_xygga.",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle de feu des origines [GD] (non montré au T16 ; au T14 p.23, ce sont ses « fils » qui soufflent)",
+        "Rêve des races : peut cesser de « rêver » une race [BD-T16 p.19]",
+        "Boss mondial endormi : rencontre narrative ; combat à décider [GD]"
+      ],
+      "notes": [
+        "Personnage : char_xygga. Genre non tranché ([DÉCISION] v1.0.81).",
+        "[GD] (v1.0.81) Niveau 70 : le plafond actuel des boss mondiaux (55-70), au-dessus du Grand Ancien (66-70) dont il est le premier.",
+        "[DÉCISION] (v1.0.81) Caché dans une grotte, dans un volcan (S008_E012, cellule générée) : lieu_grotte_xygga, poi_grotte_xygga (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+      ],
+      "bestiaire": true,
+      "habitat": "Caverne du cœur d'un volcan, sous une coulée figée (S008_E012).",
+      "zones_chasse": [
+        "S008_E012"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_dore_enflamme",
+      "name": "Premier-né de Xygga — le dragon doré enflammé",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : corps fait de flammes ou enveloppé de feu, silhouette serpentine, gueule ouverte ; en tête de la charge [BD-T16 p.7-8]. Souffle : feu jaune-orange : fleuve de flammes large qui rase le sol [BD-T16 p.8]. Sans nom : désignation descriptive.",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : feu jaune-orange : fleuve de flammes large qui rase le sol [BD-T16 p.8]",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_dore_enflamme, N002_E004) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte de la falaise de grès » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (désert, N002_E004) : faille étroite dans une falaise de grès, au cœur du désert.",
+      "zones_chasse": [
+        "N002_E004"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_rouge_a_cornes",
+      "name": "Premier-né de Xygga — le dragon rouge à cornes",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : tête rouge garnie de pointes, cornes noires recourbées vers l'arrière, long cou annelé, grandes ailes rose-rouge à spirales [BD-T16 p.7]. Souffle : non montré. Sans nom : désignation descriptive.",
+      "region_id": "royaumes_des_nains_du_sud",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : non montré",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_rouge_a_cornes, S005_E001) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte de la vire » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (montagne, S005_E001) : bouche d'ombre dans une paroi, accessible par une seule vire.",
+      "zones_chasse": [
+        "S005_E001"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_triceratops",
+      "name": "Premier-né de Xygga — le dragon jaune-vert épineux à tête de tricératops",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : massif, quadrupède, bas sur pattes ; collerette osseuse, corne nasale, bec ; grosses épines blanches sur le dos, petites ailes jaune-vert [BD-T16 p.7]. Souffle : jet vert acide qui s'évase en nuage jaune (acide ou poison, non nommé) [BD-T16 p.8]. Sans nom : désignation descriptive.",
+      "region_id": "marais_maudits_t11",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : jet vert acide qui s'évase en nuage jaune (acide ou poison, non nommé) [BD-T16 p.8]",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_triceratops, N011_W005) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte des racines du marais » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (marais, N011_W005) : entrée noyée sous les racines d'un sous-bois du marais.",
+      "zones_chasse": [
+        "N011_W005"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_petit_rouge_epineux",
+      "name": "Premier-né de Xygga — le petit dragon rouge épineux",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : petit dragon rouge cornu et épineux, à l'extrême droite de la double page, peu visible [BD-T16 p.7]. Souffle : non montré. Sans nom : désignation descriptive.",
+      "region_id": "royaume_des_nains_de_lest",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : non montré",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_petit_rouge_epineux, S007_E021) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte de la crevasse de l'est » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (montagne, S007_E021) : crevasse étroite entre deux arêtes, prise pour une simple fente.",
+      "zones_chasse": [
+        "S007_E021"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_blanc_cornes_noires",
+      "name": "Premier-né de Xygga — le dragon blanc à cornes noires",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : écailles blanc-gris comme de l'os, ailes à membrane brun rosé, tête blanche à bec bleu-noir et cornes enroulées de bélier (violet sombre à la lecture), collerette d'écailles brunes, yeux verts ; c'est très probablement lui qui appelle Xygga « Ô Premier » [BD-T16 p.5, p.7]. Souffle : non montré. Sans nom : désignation descriptive.",
+      "region_id": "royaume_drach",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : non montré",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_blanc_cornes_noires, S006_W001) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte du surplomb » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (montagne (Royaume Drach), S006_W001) : cavité sous un surplomb de falaise, cachée par les éboulis.",
+      "zones_chasse": [
+        "S006_W001"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_noir_ailes_brunes",
+      "name": "Premier-né de Xygga — le dragon noir aux ailes brunes",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : écailles sombres, noir bleuté, ailes brunes, en partie caché derrière Xygga [BD-T16 p.7]. Souffle : non montré. Sans nom : désignation descriptive.",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : non montré",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_noir_ailes_brunes, N010_E012) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte des ronces » : réelle en jeu (cellule générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (forêt, N010_E012) : entrée basse sous un fourré de ronces et de racines (sous-bois), au flanc d'une colline.",
+      "zones_chasse": [
+        "N010_E012"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_hydre",
+      "name": "Premier-né de Xygga — l'hydre",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : plusieurs longs cous sur un même corps, têtes de couleurs différentes (blanche à bec rouge, verte, jaune, bleue, rouge), corps couvert de pointes blanches [BD-T16 p.7]. Souffle : non montré (peut-être un par tête, non dit). Sans nom : désignation descriptive.",
+      "region_id": "region_marches",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : non montré (peut-être un par tête, non dit)",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_hydre, N013_E017) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte de la cascade du marais » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (marais, N013_E017) : grotte derrière une cascade qui tombe d'une colline au bord du marais.",
+      "zones_chasse": [
+        "N013_E017"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_glace",
+      "name": "Premier-né de Xygga — le dragon de glace",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : couvert de pics de cristal translucides, ailes bleu pâle [BD-T16 p.7]. Souffle : givre blanc : nuage poudreux, large et compact [BD-T16 p.8]. Sans nom : désignation descriptive.",
+      "region_id": "terres_des_gigantomorphes",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : givre blanc : nuage poudreux, large et compact [BD-T16 p.8]",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_glace, N021_E016) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte du glacier » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (montagne enneigée du grand nord, N021_E016) : crevasse de glacier au pied d'une falaise, refermée chaque hiver par le givre.",
+      "zones_chasse": [
+        "N021_E016"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_bleu",
+      "name": "Premier-né de Xygga — le dragon bleu",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : massif, écailles bleu vif, crocs blancs [BD-T16 p.7]. Souffle : rayon bleu-cyan fin et rectiligne (énergie, eau ou foudre : non précisé) [BD-T16 p.8]. Sans nom : désignation descriptive.",
+      "region_id": "syzygie",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : rayon bleu-cyan fin et rectiligne (énergie, eau ou foudre : non précisé) [BD-T16 p.8]",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_bleu, N008_W015) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte marine de la côte ouest » : lore seulement (cellule non générée).",
+        "[DÉDUCTION] Distinct du dragon bleu de Pilou (companion_dragon_bleu_pilou_t11), de Kruikna et de « Cruik » (LORE_BD §17, close v1.0.55)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (côte, N008_W015) : grotte marine au pied d'une falaise basse, dont l'entrée n'émerge qu'à marée basse.",
+      "zones_chasse": [
+        "N008_W015"
+      ],
+      "groupe": "unique"
+    },
+    {
+      "id": "creature_premier_ne_oriental",
+      "name": "Premier-né de Xygga — le dragon oriental doré-orangé",
+      "type": "dragon",
+      "difficulty": "world_boss",
+      "level_min": 66,
+      "level_max": 70,
+      "description": "Un des dix premiers-nés de Xygga, « les Enfants, les rêves de Xygga », premiers des grandes lignées de dragons [BD-T16 p.7]. Apparence : corps de serpent ondulant sans ailes visibles, ventre annelé d'or, longues moustaches, queue terminée en flamme ; le plus long [BD-T16 p.7]. Souffle : flammes orange : panache en cône qui devient un rideau de flammes [BD-T16 p.8]. Sans nom : désignation descriptive.",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [
+        {
+          "loot_id": "loot_ecaille_grand_ancien",
+          "nom": "Écaille de Grand Ancien",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_coeur_dragon_sauvage",
+          "nom": "Cœur de dragon sauvage",
+          "taux": "100%"
+        },
+        {
+          "loot_id": "loot_dent_dragon",
+          "nom": "Dent de dragon",
+          "taux": "100%"
+        }
+      ],
+      "abilities_traits": [
+        "Souffle : flammes orange : panache en cône qui devient un rideau de flammes [BD-T16 p.8]",
+        "Boss mondial : plusieurs groupes requis ; ne réapparaît qu'une fois par lune [GD]"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_oriental, N006_E007) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
+        "Grotte « Grotte derrière la cascade » : lore seulement (cellule non générée)."
+      ],
+      "bestiaire": true,
+      "habitat": "Grotte cachée (forêt à rivière, N006_E007) : grotte cachée derrière une cascade de la rivière forestière.",
+      "zones_chasse": [
+        "N006_E007"
+      ],
+      "groupe": "unique"
     }
   ],
   "regions": [
@@ -166868,7 +167931,8 @@
       "description": "Plan démoniaque gouverné par Lucifer. Ciel rouge/orange, flammes permanentes, architecture gothique sombre avec tours et flèches noires. Peuplé de démons. Lieu du Pari Cosmique du Jeu Cruel.",
       "notes": [
         "[BD-T00 p.6] Salle de l'échiquier du pari de Lucifer et de Pazuzu ; [BD-A5 p.29] trône de Lucifer, où Greldinard est foudroyé (« Casse-toi, fils ! »).",
-        "[DÉCISION] (v1.0.56) Hors carte du monde des Royaumes et non accessible au joueur à l'époque du jeu par les albums hors série (Q20) ; la carte des Enfers jouable (ENFERS.md) n'est pas modifiée."
+        "[DÉCISION] (v1.0.56) Hors carte du monde des Royaumes et non accessible au joueur à l'époque du jeu par les albums hors série (Q20) ; la carte des Enfers jouable (ENFERS.md) n'est pas modifiée.",
+        "[DÉCISION] (v1.0.81) Hiérarchie (regle_hierarchie_enfers) et lieux des tomes 15-22 : le palais de Lucifer, la mer de lave, le canyon et les plateaux des légions sont sur la carte jouable des Enfers ; les plans par le Seuil des Plans (regle_plans_infernaux). Les Enfers hors carte des préquelles restent inchangés (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ]
     },
     {
@@ -181200,7 +182264,8 @@
           "Chaque plan démoniaque a un maître et une catégorie de damnés [BD-A5 p.18] ; les diables mineurs ignorent un être « à moitié démon » [BD-A5 p.29].",
           "La mort massive amène « des milliers d'âmes » aux portes infernales [BD-T10 p.34] ; les âmes vont « en cohortes » vers les Enfers [BD-T12 p.38].",
           "Les démons se régénèrent [BD-T10 p.46].",
-          "[GD] Les démonistes et sorciers de sang ne prient pas : ils négocient ; tout pacte se paie en âmes ou en sang."
+          "[GD] Les démonistes et sorciers de sang ne prient pas : ils négocient ; tout pacte se paie en âmes ou en sang.",
+          "Hiérarchie à l'époque du jeu : Lucifer, puis les princes (Belzébuth, Pazuzu, Proserpine, Helle, Quetebah, Bellatrux, maîtres des plans), puis la cour et les légions ([DÉCISION] v1.0.81, regle_hierarchie_enfers)."
         ],
         "divinites": [
           {
@@ -181244,6 +182309,42 @@
             "person_id": "char_narankhorhh_m2",
             "role": "Démon au service d'Haazheel dans les préquelles.",
             "source": "[BD-M2]"
+          },
+          {
+            "nom": "Belzébuth, Seigneur des Mouches",
+            "person_id": "char_belzebuth",
+            "role": "Grand prince des Enfers sous Lucifer ; non jouable.",
+            "source": "[BD-T16 p.13]"
+          },
+          {
+            "nom": "Proserpine",
+            "person_id": "char_proserpine",
+            "role": "Archidémonesse, princesse des Enfers.",
+            "source": "[BD-T21 p.8]"
+          },
+          {
+            "nom": "Helle",
+            "person_id": "char_helle",
+            "role": "Archidémonesse, princesse des Enfers ; indétectable.",
+            "source": "[BD-T19 PDF p.13]"
+          },
+          {
+            "nom": "Quetebah",
+            "person_id": "char_quetebah",
+            "role": "Prince démon.",
+            "source": "[BD-T22 p.20]"
+          },
+          {
+            "nom": "Bellatrux",
+            "person_id": "char_bellatrux",
+            "role": "Prince démon.",
+            "source": "[BD-T22 p.22]"
+          },
+          {
+            "nom": "La Fleur du Mal",
+            "person_id": "char_fleur_du_mal",
+            "role": "Prince démon immobile du Jardin des Supplices.",
+            "source": "[BD-T18 p.16]"
           }
         ],
         "clerge": [
@@ -181253,7 +182354,17 @@
             "description": "Maîtres des plans ; pas de clergé au sens propre [GD].",
             "person_ids": [
               "char_lucifer_prince_tenebres",
-              "char_pazuzu"
+              "char_pazuzu",
+              "char_belzebuth",
+              "char_proserpine",
+              "char_helle",
+              "char_quetebah",
+              "char_bellatrux",
+              "char_fleur_du_mal",
+              "char_maitre_plan_eaux_sombres",
+              "char_maitre_plan_du_feu",
+              "char_maitre_plan_maladie",
+              "char_maitre_plan_insectes"
             ]
           },
           {
@@ -181311,6 +182422,12 @@
             "id": "lieu_autel_des_pactes",
             "nom": "Autel des Pactes",
             "nature": "[GD] Table de basalte des pactes payés en âmes ou en sang ; serment des jeunes démons à la Légion (région de départ des Enfers)."
+          },
+          {
+            "collection": "lieux",
+            "id": "lieu_palais_de_lucifer",
+            "nom": "Palais de Lucifer",
+            "nature": "Palais et Grand Trône des Enfers (carte des Enfers, N001_E000)."
           }
         ],
         "rites": [
@@ -182137,35 +183254,35 @@
     },
     {
       "id": "t15",
-      "label": "Tome 15 Terra Secunda 1/2 (hors corpus)"
+      "label": "Tome 15 Terra Secunda 1/2 (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t16",
-      "label": "Tome 16 Terra Secunda 2/2 (hors corpus)"
+      "label": "Tome 16 Terra Secunda 2/2 (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t17",
-      "label": "Tome 17 Guerres Ophidiennes (hors corpus)"
+      "label": "Tome 17 Guerres Ophidiennes (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t18",
-      "label": "Tome 18 Le Trône d'Opale (hors corpus)"
+      "label": "Tome 18 Le Trône d'Opale (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t19",
-      "label": "Tome 19 Une semaine ordinaire (hors corpus)"
+      "label": "Tome 19 Une semaine ordinaire (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t20",
-      "label": "Tome 20 Une porte sur l'Enfer (hors corpus)"
+      "label": "Tome 20 Une porte sur l'Enfer (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t21",
-      "label": "Tome 21 Sic Transit Gloria Mundi (hors corpus)"
+      "label": "Tome 21 Sic Transit Gloria Mundi (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "t22",
-      "label": "Tome 22 La Forteresse d'Opale (hors corpus)"
+      "label": "Tome 22 La Forteresse d'Opale (référence ; Enfers et dragons au corpus, v1.0.81)"
     },
     {
       "id": "tome_13",
@@ -184972,11 +186089,13 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_geant_de_froid"
+        "creature_geant_de_froid",
+        "creature_premier_ne_glace"
       ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon de glace, 66-70), POI poi_grotte_premier_ne_glace ; LORE_BD §16.10."
       ],
       "coord_x": null,
       "coord_y": null
@@ -192193,9 +193312,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_hydre"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (l'hydre, 66-70), POI poi_grotte_premier_ne_hydre ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -193527,11 +194650,13 @@
       "river_direction": "",
       "connects_to": [],
       "creature_ids": [
-        "creature_dzorak_marais_t11"
+        "creature_dzorak_marais_t11",
+        "creature_premier_ne_triceratops"
       ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée."
+        "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée.",
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon jaune-vert épineux à tête de tricératops, 66-70), POI poi_grotte_premier_ne_triceratops ; LORE_BD §16.10."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -194807,9 +195932,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_noir_ailes_brunes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon noir aux ailes brunes, 66-70), POI poi_grotte_premier_ne_noir_ailes_brunes ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -196096,9 +197225,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_bleu"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon bleu, 66-70), POI poi_grotte_premier_ne_bleu ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -198428,11 +199561,14 @@
         "N005_E008",
         "N007_E007"
       ],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_oriental"
+      ],
       "visual_elements": [],
       "notes": [
         "La rivière vient de R140C280",
-        "La rivière va vers R120C270"
+        "La rivière va vers R120C270",
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon oriental doré-orangé, 66-70), POI poi_grotte_premier_ne_oriental ; LORE_BD §16.10."
       ],
       "coord_x": null,
       "coord_y": null
@@ -201956,9 +203092,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_dore_enflamme"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon doré enflammé, 66-70), POI poi_grotte_premier_ne_dore_enflamme ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208078,9 +209218,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_rouge_a_cornes"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon rouge à cornes, 66-70), POI poi_grotte_premier_ne_rouge_a_cornes ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -208909,9 +210053,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_blanc_cornes_noires"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon blanc à cornes noires, 66-70), POI poi_grotte_premier_ne_blanc_cornes_noires ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -210213,10 +211361,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_premier_ne_petit_rouge_epineux"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le petit dragon rouge épineux, 66-70), POI poi_grotte_premier_ne_petit_rouge_epineux ; LORE_BD §16.10."
       ],
       "coord_x": null,
       "coord_y": null
@@ -210898,11 +212049,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_xygga"
+      ],
       "visual_elements": [
         "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
       ],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Grotte du volcan endormi : Xygga (70), POI poi_grotte_xygga ; LORE_BD §16.10."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -224617,7 +225772,7 @@
       "id": "regle_canon_corpus",
       "name": "Corpus de référence du lore",
       "category": "canon",
-      "description": "Font foi pour le lore, et eux seuls : Tome 0 « En un jeu cruel », Tomes 1 à 14 (de « Le Signe des Ténèbres » à « La Fin des Temps »), le hors-série « L'Empire de la Négation », Methraton 1 à 3 et Arcanes de la Lune Noire 1 à 5. Les tomes postérieurs au 14, et tout autre album, sont EXCLUS : le jeu ne couvre pas ce monde (décision du propriétaire).",
+      "description": "Font foi pour le lore, et eux seuls : Tome 0 « En un jeu cruel », Tomes 1 à 14 (de « Le Signe des Ténèbres » à « La Fin des Temps »), le hors-série « L'Empire de la Négation », Methraton 1 à 3 et Arcanes de la Lune Noire 1 à 5. Les tomes postérieurs au 14, et tout autre album, sont EXCLUS : le jeu ne couvre pas ce monde (décision du propriétaire). Exception (v1.0.81) : les tomes 15 à 22 servent de référence visuelle et technique, et font foi pour les Enfers et les dragons de Xygga, réattribués à l'époque du jeu (Lucifer maître des Enfers).",
       "applies_to": [
         "tomes_config",
         "regle_canon_priorite_sources",
@@ -224631,7 +225786,8 @@
       "notes": [
         "Identifiants retenus de tomes_config : t00, t01 à t14, t_hs_empire, t_hs_methraton1 à 3, t_hs_arcanes1 à 5 (tome_13 et T14 sont des doublons sans libellé de t13 et t14).",
         "Exclus, encore présents dans le fichier sans faire foi : t15, t16, t17, t18, t19, t20, t21, t22 dans tomes_config, les mêmes dans la liste tomes de char_wismerhill, et les mentions de l'Opus II (Tomes 15-21) et du Trône d'Opale dans regle_opus_i_clos_t14.",
-        "[DÉCISION] (v1.0.57) Hors corpus : t15 (Tome 15 Terra Secunda 1/2), t16 (Tome 16 Terra Secunda 2/2), t17 (Tome 17 Guerres Ophidiennes), t18 (Tome 18 Le Trône d'Opale), t19 (Tome 19 Une semaine ordinaire), t20 (Tome 20 Une porte sur l'Enfer), t21 (Tome 21 Sic Transit Gloria Mundi), t22 (Tome 22 La Forteresse d'Opale) restent dans tomes_config pour la traçabilité des sources mais ne font pas foi ; toute note qui ne s'appuie que sur eux (ex. char_wismerhill) est hors du monde jouable."
+        "[DÉCISION] (v1.0.57) Hors corpus : t15 (Tome 15 Terra Secunda 1/2), t16 (Tome 16 Terra Secunda 2/2), t17 (Tome 17 Guerres Ophidiennes), t18 (Tome 18 Le Trône d'Opale), t19 (Tome 19 Une semaine ordinaire), t20 (Tome 20 Une porte sur l'Enfer), t21 (Tome 21 Sic Transit Gloria Mundi), t22 (Tome 22 La Forteresse d'Opale) restent dans tomes_config pour la traçabilité des sources mais ne font pas foi ; toute note qui ne s'appuie que sur eux (ex. char_wismerhill) est hors du monde jouable.",
+        "[DÉCISION] (v1.0.81) Tomes 15 à 22 = référence visuelle et technique ; seuls les Enfers et les dragons de Xygga en sont intégrés au lore (regle_hierarchie_enfers, regle_plans_infernaux, regle_dragons_de_xygga). Les événements de ces tomes (Terra Secunda, disparition de Lucifer, guerre infernale) restent hors époque (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ]
     },
     {
@@ -224651,7 +225807,8 @@
       "source": "[DÉCISION] du propriétaire (v1.0.57)",
       "notes": [
         "[DÉDUCTION] (indices de la BD cités) est retenue au rang de l'album qui la fonde, tant qu'aucune lecture directe ne la contredit.",
-        "Une source de rang inférieur peut compléter une source de rang supérieur (détail, nom, lieu) sans la contredire."
+        "Une source de rang inférieur peut compléter une source de rang supérieur (détail, nom, lieu) sans la contredire.",
+        "[DÉCISION] (v1.0.81) Tomes 15 à 22 ([BD-T15] à [BD-T22]) : rang 2 bis, après les tomes 0 à 14, pour les Enfers et les dragons de Xygga seulement ; ailleurs, référence visuelle et technique sans valeur de fait (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
       ]
     },
     {
@@ -224825,14 +225982,15 @@
         "[ÉPOQUE] : Place d'une fiche des albums hors série dans le temps (avant T1, seuil du T1, après T11…) : voir regle_epoque_hors_serie. (122 occurrences)",
         "[v1.0.xx] : Trace d'une modification faite dans cette version (fusion, correction) : la note dit la source qui la justifie. (38 occurrences)",
         "[CANON], [CARTE], [VILLES], [RÈGLES], [RENDU], [SCÉNARIO], [CARTE+SCÉNARIO], [BESTIAIRE], [INTÉGRATION], [TOME 1] : Thème d'une note de version (meta.notes) : pas une source. (27 occurrences)",
-        "Crochets qui ne sont pas des étiquettes : intitulés d'étapes de quêtes ([PROLOGUE], [ORIGINE], [RENCONTRE], [NOM], [HORDE], [CAMPAGNE], [FEIDREIVA], [FAILLE], [KENDRHIR], [HIVER], [PSYCHIQUE], [ARMÉE], [BATAILLE], [CAPTURE], [VENGEANCE], [FUITE], [MATIN], [MIDI], [APRÈS-MIDI], [SOIR]) ; locuteur d'une réplique ([Desdémone], [Haghendorf, BD-T4 p.2]) ; onomatopée ([BOOM]) ; gabarit d'incantation ([Nom]) ; nom provisoire (« [à nommer] »)."
+        "Crochets qui ne sont pas des étiquettes : intitulés d'étapes de quêtes ([PROLOGUE], [ORIGINE], [RENCONTRE], [NOM], [HORDE], [CAMPAGNE], [FEIDREIVA], [FAILLE], [KENDRHIR], [HIVER], [PSYCHIQUE], [ARMÉE], [BATAILLE], [CAPTURE], [VENGEANCE], [FUITE], [MATIN], [MIDI], [APRÈS-MIDI], [SOIR]) ; locuteur d'une réplique ([Desdémone], [Haghendorf, BD-T4 p.2]) ; onomatopée ([BOOM]) ; gabarit d'incantation ([Nom]) ; nom provisoire (« [à nommer] »).",
+        "[BD-T15 p.N] à [BD-T22 p.N] (v1.0.81) : Fait lu dans les tomes 15 à 22 (notes de lecture ; T16 et T19 : page du PDF, T16 planches 4-5 = p.7, planches 6-7 = p.8). Fait foi pour les Enfers et les dragons de Xygga seulement (regle_canon_corpus)."
       ]
     },
     {
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -227024,6 +228182,97 @@
           "nom": "Route Syzygie – Verdansur (N011_W014)",
           "decision": "Case générée dans le monde jouable : Trueford (route 000024) ; la route 000083 Syzygie → Verdansur la traverse (LORE_BD §16.9).",
           "version": "1.0.80"
+        },
+        {
+          "collection": "persons",
+          "id": "char_archimage_crane",
+          "nom": "Crâne, archimage",
+          "decision": "Crâne n'est pas un démon : fiche de PNJ à part (archimage de Methraton), hors hiérarchie des Enfers (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "persons",
+          "id": "char_belzebuth",
+          "nom": "Belzébuth non jouable",
+          "decision": "Grand prince, Roi des Mouches, non jouable, utilisable dans les histoires (T16 p.12) (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "persons",
+          "id": "char_lucifer_prince_tenebres",
+          "nom": "Lucifer maître des Enfers",
+          "decision": "À l'époque du jeu (T1-T11), Lucifer est le maître des Enfers ; les tomes 16-22 (Lucifer disparu, Belzébuth régnant) sont postérieurs et ne s'appliquent pas (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "persons",
+          "id": "char_pazuzu",
+          "nom": "Pazuzu, cieux des Enfers",
+          "decision": "Pazuzu, prince sous Lucifer, règne sur les cieux des Enfers ; fiche existante complétée (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "persons",
+          "id": "char_sorrow",
+          "nom": "Sorrow incluse",
+          "decision": "Sorrow, « fille des Enfers » à six bras, est incluse dans le lore des Enfers (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "persons",
+          "id": "char_xygga",
+          "nom": "Genre de Xygga ouvert",
+          "decision": "Le genre de Xygga n'est pas tranché : ne pas l'affirmer (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_corpus",
+          "nom": "Tomes 15-22 : référence",
+          "decision": "Les tomes 15 à 22 sont une référence visuelle et technique ; seuls les Enfers et les dragons de Xygga en sont intégrés au lore (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_dragons_de_xygga",
+          "nom": "Dragons cachés en grotte",
+          "decision": "Xygga et ses premiers-nés vivent dans le monde des Royaumes, chacun caché dans une grotte difficile à trouver, loin des villes et des routes ; Xygga dort dans un volcan (S008_E012) (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_dragons_de_xygga",
+          "nom": "Dix enfants de Xygga",
+          "decision": "Xygga a 10 premiers-nés : doré enflammé, rouge à cornes, jaune-vert épineux à tête de tricératops, petit rouge épineux, blanc à cornes noires, noir aux ailes brunes, hydre, dragon de glace, dragon bleu, dragon oriental doré-orangé (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_dragons_de_xygga",
+          "nom": "Pas de noms pour les dragons",
+          "decision": "Les premiers-nés n'ont pas de nom pour l'instant : désignation descriptive (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_hierarchie_enfers",
+          "nom": "Hiérarchie des Enfers",
+          "decision": "Lucifer ; princes Belzébuth (grand prince), Pazuzu (cieux des Enfers), Proserpine et Helle (archidémonesses), Quetebah, Bellatrux ; dessous la mère de Wismerhill, la conseillère de Belzébuth, les ducs des abysses, les démons de cour, la garde rouge, Sorrow, Bourzigutt (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_hierarchie_enfers",
+          "nom": "Personnages des tomes 15-22 retenus",
+          "decision": "Tous les personnages des Enfers relevés sont retenus ; pas de noms inventés pour les non-nommés, désignation descriptive (LORE_BD §16.10).",
+          "version": "1.0.81"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_plans_infernaux",
+          "nom": "Palais, mers de lave et plans",
+          "decision": "Palais de Lucifer et mers de lave placés sur la carte des Enfers ; les plans qui n'y tiennent pas sont accessibles par le Seuil des Plans (LORE_BD §16.10).",
+          "version": "1.0.81"
         }
       ]
     },
@@ -231349,6 +232598,107 @@
       "notes": [
         "[GD] (v1.0.74) Règle proposée pour la zone commune, inspirée de la zone neutre de l'Oracle (rule_zone_neutre_oracle) ; à valider (LORE_BD §16.3).",
         "[GD] (v1.0.77) La trêve vaut aussi dans les onze temples des Huacani (paix des sanctuaires, modèle de la trêve des comptoirs) ; le combat des raids a lieu dans les cryptes, salles et grottes rattachées, hors des temples ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "regle_dragons_de_xygga",
+      "name": "Les dragons de Xygga",
+      "category": "lore_monde",
+      "description": "Xygga, le Grand Dragon rouge, « le Premier », et ses dix premiers-nés, « les Enfants, les rêves de Xygga » [BD-T16 p.4-9], vivent dans le monde des Royaumes à l'époque du jeu. Chacun est caché dans une grotte difficile à trouver (entrée dissimulée : cascade, crevasse, sous-bois, falaise, grotte marine), dispersée sur la carte dans une case accordée à son élément ou à son milieu, loin des villes et des routes ; aucune route n'y mène. Xygga dort statufié dans un volcan. Les premiers-nés n'ont pas de nom : désignation descriptive. Le genre de Xygga n'est pas tranché.",
+      "applies_to": [
+        "char_xygga",
+        "creature_xygga",
+        "creature_premier_ne_dore_enflamme",
+        "creature_premier_ne_rouge_a_cornes",
+        "creature_premier_ne_triceratops",
+        "creature_premier_ne_petit_rouge_epineux",
+        "creature_premier_ne_blanc_cornes_noires",
+        "creature_premier_ne_noir_ailes_brunes",
+        "creature_premier_ne_hydre",
+        "creature_premier_ne_glace",
+        "creature_premier_ne_bleu",
+        "creature_premier_ne_oriental",
+        "faction_nuee_dragons"
+      ],
+      "mechanique_jeu": "Niveaux [GD] : premiers-nés 66-70 (boss mondiaux, comme le Grand Ancien), Xygga 70. Les grottes sont des POI « salle » du master des Royaumes ; seules S008_E012 (Xygga) et N010_E012 (dragon noir) sont des cellules générées.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] du propriétaire (v1.0.81), 11/11/2026 ; [BD-T16 p.4-9]",
+      "notes": [
+        "[DÉCISION] (v1.0.81) Dragons cachés en grotte, un dans un volcan (Xygga) ; 10 enfants ; genre de Xygga ouvert ; pas de noms pour l'instant (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16 p.8] Cinq souffles seulement sont visibles : feu jaune-orange (doré enflammé), jet vert acide (jaune-vert épineux), givre blanc (dragon de glace), rayon bleu-cyan (dragon bleu), flammes orange (oriental) ; les autres ne sont pas montrés.",
+        "[BD-T16 p.7] La double page montre au moins onze dragons autour de Xygga ; le propriétaire en retient dix.",
+        "[GD] (v1.0.81) Le contenu de haut niveau reste permis en zone de plus bas niveau si les chemins sont balisés (rule_niveaux_par_faction, v1.0.78) ; les grottes, elles, n'ont aucun chemin.",
+        "Aucun dragon existant n'est déplacé ni modifié : Grand Ancien (S004_W006), Kruikna, « Cruik », dragon bleu de Pilou, dragons noirs de Moork, dragon rouge du retour à Horkher."
+      ]
+    },
+    {
+      "id": "regle_hierarchie_enfers",
+      "name": "Hiérarchie des Enfers à l'époque du jeu",
+      "category": "cosmique_demonique",
+      "description": "À l'époque du jeu (entre le T1 et le T11), Lucifer (nom secret lu « Nerheneïm », T15 p.31) est le maître des Enfers. Sous lui, les princes : Belzébuth, Roi des Mouches, grand prince (non jouable, utilisable dans les histoires) ; Pazuzu, qui règne sur les cieux des Enfers ; Proserpine et Helle, archidémonesses ; Quetebah ; Bellatrux ; et les maîtres des plans (la Fleur du Mal, le prince-pieuvre violet, le démon de flammes à tête de crâne, le prince vert pustuleux, le prince insectoïde violet). En dessous : la mère de Wismerhill (sans nom), la démone conseillère de Belzébuth, les ducs des abysses, les démons de cour, la garde rouge, Sorrow « fille des Enfers » et Bourzigutt (cité). Puis les légions. Les démons sont hostiles à tous les humains.",
+      "applies_to": [
+        "char_lucifer_prince_tenebres",
+        "char_belzebuth",
+        "char_pazuzu",
+        "char_proserpine",
+        "char_helle",
+        "char_quetebah",
+        "char_bellatrux",
+        "char_fleur_du_mal",
+        "char_maitre_plan_eaux_sombres",
+        "char_maitre_plan_du_feu",
+        "char_maitre_plan_maladie",
+        "char_maitre_plan_insectes",
+        "char_princesse_elfique_t00",
+        "char_demone_conseillere_belzebuth",
+        "char_ducs_des_abysses",
+        "char_demons_de_cour_enfers",
+        "char_garde_rouge_enfers",
+        "char_sorrow",
+        "char_bourzigutt",
+        "faction_legion_infernale",
+        "religion_enfers_princes_demons",
+        "region_enfers_t00"
+      ],
+      "mechanique_jeu": "Les tomes 16 à 22, où Lucifer a disparu et où Belzébuth, Proserpine ou le prince velu règnent, sont postérieurs au T14 : ni la régence, ni la guerre infernale, ni les captures par Methraton ne s'appliquent au jeu. Les personnages non nommés gardent une désignation descriptive. Crâne, archimage de Methraton, n'est pas un démon : il est hors de cette hiérarchie (char_archimage_crane).",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] du propriétaire (v1.0.81), 11/11/2026 ; [BD-T15] à [BD-T22], section 7 des notes de lecture",
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lucifer maître des Enfers à l'époque du jeu ; hiérarchie ci-dessus ; tous les personnages des tomes 15-22 relevés sont retenus ; pas de noms inventés pour les non-nommés (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[DÉCISION] (v1.0.81) Belzébuth : grand prince, non jouable, utilisable dans les histoires (T16 p.12).",
+        "[DÉCISION] (v1.0.81) Sorrow, « fille des Enfers » à six bras, est incluse sur décision du propriétaire.",
+        "Autres démons déjà au lore, hors de cette liste : Urmarcht (char_urmarcht), la Faucheuse (char_la_faucheuse_t5), Hellaynnea (char_succubus), le Prince Oghin (char_prince_oghin_t12, T12), Narankhorhh (char_narankhorhh_m2).",
+        "[BD-T16 p.16, BD-T20 p.31] « 666 plans », « 666 légions de 666 666 démons » (effectifs du T20, hors époque)."
+      ]
+    },
+    {
+      "id": "regle_plans_infernaux",
+      "name": "Plans infernaux et carte des Enfers",
+      "category": "cosmique_demonique",
+      "description": "Les Enfers comptent 666 plans, chacun tenu par un prince qui y tourmente une catégorie de damnés. La carte jouable des Enfers (9 cases) porte le palais de Lucifer, la nef des âmes, le plateau du rituel (N001_E000), la mer de lave et le Seuil des Plans (N000_W001), le canyon des falaises rouges avec son viaduc et les plateaux suspendus des légions (N000_E001). Les plans qui n'y tiennent pas (Jardin des Supplices, eaux sombres, feu, maladie, insectes, plan prison) s'atteignent par le Seuil des Plans.",
+      "applies_to": [
+        "lieu_seuil_des_plans",
+        "lieu_plan_jardin_des_supplices",
+        "lieu_plan_eaux_sombres",
+        "lieu_plan_du_feu",
+        "lieu_plan_maladie",
+        "lieu_plan_insectes",
+        "lieu_plan_prison",
+        "lieu_palais_de_lucifer",
+        "lieu_mer_de_lave"
+      ],
+      "mechanique_jeu": "La croix et les coins restent la région de départ 1-10 de la Légion ; palais (66-70), abords de la mer de lave et du canyon, plateaux des légions et plans (55-70) sont du contenu de haut niveau permis s'il est balisé (rule_niveaux_par_faction). Aucun hameau ajouté : la Citadelle reste la seule ville.",
+      "apparition_window": "",
+      "incantations_connues": [],
+      "training_minimum": "",
+      "source": "[DÉCISION] du propriétaire (v1.0.81) ; [BD-T15] à [BD-T22] ; [GD] pour le seuil",
+      "notes": [
+        "[DÉCISION] (v1.0.81) Palais de Lucifer et mers de lave placés sur la carte des Enfers (demande explicite) ; les plans sont accessibles par portail depuis un lieu de la carte (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Le Seuil des Plans est un POI « faille » sans lien : aucun transfert de carte n'existe vers les plans (instances à créer)."
       ]
     }
   ],
@@ -242816,6 +244166,2317 @@
         "[GD] (v1.0.77) Liens : quest_ile_gd_coureur_des_cretes.",
         "[INFÉRÉ] (v1.0.77) Monde jouable : POI poi_ile_oratoire_de_l_aube (sanctuaire, N017_W011) ; aucun modèle 3D de temple inca n'existe, le POI n'est qu'un repère (genre existant) ; l'édifice n'est pas modélisé."
       ]
+    },
+    {
+      "id": "lieu_grotte_xygga",
+      "name": "Grotte du volcan endormi",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S008_E012",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "fissure dans une coulée figée au flanc du volcan, cachée par les fumerolles",
+        "longue descente brûlante vers la caverne du cœur",
+        "Xygga statufié, endormi depuis des millénaires"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "Xygga (creature_xygga, char_xygga)"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "noir de basalte",
+        "rouge sombre",
+        "orange incandescent"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S008_E012"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Xygga dort dans un volcan, caché dans une grotte difficile à trouver ; pas de route, au mieux un sentier non balisé (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T14 p.20-34] Le Premier Dragon, statufié dans la caverne du cœur du monde, se réveille au T14 (tl_t14_10).",
+        "[INFÉRÉ] (v1.0.81) Cellule S008_E012 : zone volcanique sans ville, sans route ni POI, à deux cases du Cratère du volcan (S008_E014) ; POI poi_grotte_xygga à 3,25 km à l'est et 2 km au nord du centre, sur le flanc (≈ 355 m).",
+        "Niveau 70 ; réelle en jeu : POI de la cellule générée (repère et aplanissement de 40 m, aucun modèle de grotte ni de dragon)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_dore_enflamme",
+      "name": "Grotte de la falaise de grès",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N002_E004",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "faille étroite dans une falaise de grès, au cœur du désert",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon doré enflammé"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_dore_enflamme"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E004"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N002_E004 (désert) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_dore_enflamme.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_rouge_a_cornes",
+      "name": "Grotte de la vire",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S005_E001",
+      "region_id": "royaumes_des_nains_du_sud",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "bouche d'ombre dans une paroi, accessible par une seule vire",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon rouge à cornes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_rouge_a_cornes"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S005_E001"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule S005_E001 (montagne) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_rouge_a_cornes.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_triceratops",
+      "name": "Grotte des racines du marais",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N011_W005",
+      "region_id": "marais_maudits_t11",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée noyée sous les racines d'un sous-bois du marais",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon jaune-vert épineux à tête de tricératops"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_triceratops"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N011_W005"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N011_W005 (marais) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_triceratops.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_petit_rouge_epineux",
+      "name": "Grotte de la crevasse de l'est",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S007_E021",
+      "region_id": "royaume_des_nains_de_lest",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "crevasse étroite entre deux arêtes, prise pour une simple fente",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le petit dragon rouge épineux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_petit_rouge_epineux"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S007_E021"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule S007_E021 (montagne) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_petit_rouge_epineux.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_blanc_cornes_noires",
+      "name": "Grotte du surplomb",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S006_W001",
+      "region_id": "royaume_drach",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cavité sous un surplomb de falaise, cachée par les éboulis",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon blanc à cornes noires"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_blanc_cornes_noires"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S006_W001"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule S006_W001 (montagne (Royaume Drach)) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_blanc_cornes_noires.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_noir_ailes_brunes",
+      "name": "Grotte des ronces",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N010_E012",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée basse sous un fourré de ronces et de racines (sous-bois), au flanc d'une colline",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon noir aux ailes brunes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_noir_ailes_brunes"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N010_E012"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N010_E012 (forêt) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_noir_ailes_brunes.",
+        "Niveau 66-70 ; réelle en jeu : POI de la cellule générée (repère et aplanissement de 40 m, aucun modèle de grotte ni de dragon)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_hydre",
+      "name": "Grotte de la cascade du marais",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N013_E017",
+      "region_id": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte derrière une cascade qui tombe d'une colline au bord du marais",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : l'hydre"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_hydre"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N013_E017"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N013_E017 (marais) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_hydre.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_glace",
+      "name": "Grotte du glacier",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N021_E016",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "crevasse de glacier au pied d'une falaise, refermée chaque hiver par le givre",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon de glace"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_glace"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N021_E016"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N021_E016 (montagne enneigée du grand nord) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_glace.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_bleu",
+      "name": "Grotte marine de la côte ouest",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N008_W015",
+      "region_id": "syzygie",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte marine au pied d'une falaise basse, dont l'entrée n'émerge qu'à marée basse",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon bleu"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_bleu"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N008_W015"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N008_W015 (côte) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_bleu.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_grotte_premier_ne_oriental",
+      "name": "Grotte derrière la cascade",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N006_E007",
+      "region_id": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte cachée derrière une cascade de la rivière forestière",
+        "aucun chemin balisé ; au mieux une sente de bête",
+        "antre : le dragon oriental doré-orangé"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "creature_premier_ne_oriental"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N006_E007"
+      ],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[INFÉRÉ] (v1.0.81) Cellule N006_E007 (forêt à rivière) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_oriental.",
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+      ],
+      "entree_cachee": true
+    },
+    {
+      "id": "lieu_palais_de_lucifer",
+      "name": "Palais de Lucifer",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "nef gothique rouge à voûtes ogivales, piliers sculptés de crânes et de figures, pentacles dans les arcs",
+        "hautes verrières jaune-orange, murs de flammes derrière les colonnes, braseros et chaudron noir",
+        "sol vert au grand pentagramme blanc dans des cercles dorés",
+        "large escalier vert-gris aux rampes hérissées de pointes",
+        "Grand Trône des Enfers : dossier ogival doré à pentacle inversé, accoudoirs en aigles dorés, montants en colonnes de crânes, posé sur une pyramide à degrés de visages hurlants et un amas de damnés",
+        "bain de sang circulaire cerné de grandes défenses d'ivoire, lotus roses, vasques dorées en crâne à fumée verte, statues-colonnes de cadavres"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_lucifer_prince_tenebres",
+        "char_garde_rouge_enfers",
+        "char_demons_de_cour_enfers",
+        "lieu_nef_des_ames"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "rouge sang",
+        "vert du sol",
+        "or",
+        "jaune-orange des verrières"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "extrême (66-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16 p.12-15] Salle du trône du palais (cathédrale rouge, sol vert au pentagramme, escalier, Grand Trône : qui s'y assoit devient maître des Enfers).",
+        "[BD-T15 p.24] Trône de Lucifer sur une pyramide de damnés hurlants, démones aux marches, diablotins volants.",
+        "[BD-T20 p.30] Trône sur une pyramide à degrés dont les marches sont des visages humains hurlants ; [BD-T21 p.8, 16-17, 42] trône à colonnes de crânes et rondel au pentagramme, êtres aux ailes d'ange agenouillés.",
+        "[BD-T20 p.13-14] Bain de sang aux défenses d'ivoire (bain de Belzébuth au T20, réattribué au palais de Lucifer).",
+        "[GD] (v1.0.81) Contenu de très haut niveau (66-70) dans la zone de départ 1-10 : permis si les chemins sont balisés (rule_niveaux_par_faction, v1.0.78). Lucifer n'est pas un adversaire : « intouchable, seulement scellable » (race_demon).",
+        "[GD] (v1.0.81) 3,25 km au nord du Portail II, sur le bras nord de la croix.",
+        "[INFÉRÉ] (v1.0.81) Cellule N001_E000 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_palais_de_lucifer."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N001_E000"
+    },
+    {
+      "id": "lieu_nef_des_ames",
+      "name": "Nef des Âmes",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "nef gothique rouge sang à arcs ogivaux, colonnes sculptées de démons géants accroupis, niches à crânes",
+        "plateforme ronde posée sur un amas de corps tordus",
+        "flots d'âmes en bulles vert-jaune à visages hurlants ; la salle vire au bleu acier quand le flot se tarit"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_lucifer_prince_tenebres",
+        "char_demons_de_cour_enfers"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "rouge sang",
+        "vert-jaune",
+        "bleu acier"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T15 p.15] Salle du flot d'âmes : Lucifer y mange les âmes « comme des fruits ».",
+        "[GD] (v1.0.81) Salle du palais de Lucifer, 2 km à l'ouest du palais ; les âmes y arrivent par la Faille des Cohortes (S001_E001).",
+        "[INFÉRÉ] (v1.0.81) Cellule N001_E000 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_nef_des_ames."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N001_E000"
+    },
+    {
+      "id": "lieu_plateau_du_rituel",
+      "name": "Plateau du Rituel",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "disque de roche orange suspendu, bordé de pics noirs dentelés",
+        "pentagramme rouge tracé en corde de chair",
+        "anneau de flammes jaunes et vertes autour du maître",
+        "ciel vert-jaune à soleil blanc"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_lucifer_prince_tenebres"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "orange",
+        "rouge",
+        "noir",
+        "vert-jaune"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T15 p.24] Plateau du rituel de Lucifer, pour « augmenter ses pouvoirs de détection ».",
+        "[BD-T17 p.16] Plate-forme de roche noire au pentagramme cerclé où sont attachées des âmes (version du T17, sur la lave).",
+        "[INFÉRÉ] (v1.0.81) Cellule N001_E000 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_plateau_du_rituel."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N001_E000"
+    },
+    {
+      "id": "lieu_mer_de_lave",
+      "name": "Mer de lave",
+      "alias": "",
+      "type": "volcano_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "mer de lave jaune, orange et ocre veinée de sombre, jaillissements rouges",
+        "îlots et blocs de basalte noir en colonnes hexagonales",
+        "fleuves et cascades de lave",
+        "volcans qui crachent de la lave à l'horizon"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "jaune",
+        "orange",
+        "ocre",
+        "noir de basalte"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T17 p.16] Plaine de lave et basalte ; [BD-T16 p.16] fleuves et cascades de lave ; [BD-T21 p.6] volcans ; [BD-T22 p.22] paysage de lave où paressent démons et démones.",
+        "[GD] (v1.0.81) Abords de haut niveau, balisés ; le générateur n'a pas de lave : en jeu, seul le repère existe (sol volcanique).",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_W001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_mer_de_lave."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_W001"
+    },
+    {
+      "id": "lieu_seuil_des_plans",
+      "name": "Seuil des Plans",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "faille cerclée de runes au bord de la mer de lave",
+        "passage vers les plans infernaux des princes, hors de la carte"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "lieu_plan_jardin_des_supplices",
+        "lieu_plan_eaux_sombres",
+        "lieu_plan_du_feu",
+        "lieu_plan_maladie",
+        "lieu_plan_insectes",
+        "lieu_plan_prison"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée (plans 55-70)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Les éléments qui ne tiennent pas sur la petite carte des Enfers sont des plans accessibles par portail depuis un lieu de la carte (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[GD] (v1.0.81) Nom et lieu proposés, à valider : un seul seuil mène aux plans (lieu_plan_jardin_des_supplices, lieu_plan_eaux_sombres, lieu_plan_du_feu, lieu_plan_maladie, lieu_plan_insectes, lieu_plan_prison) ; pas de portail en jeu (le POI est une « faille », pas un « portail » apparié).",
+        "[BD-T16 p.16, BD-T17 p.16] Les Enfers ont « 666 plans » ; [BD-A5 p.18] chaque plan démoniaque a un maître et une catégorie de damnés.",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_W001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_seuil_des_plans."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_W001"
+    },
+    {
+      "id": "lieu_canyon_des_falaises_rouges",
+      "name": "Canyon des Falaises rouges",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "canyon de falaises rouges striées",
+        "fleuves et cascades de lave jaune-orange",
+        "viaduc à arches qui le franchit (lieu_viaduc_des_gueules_de_lave)",
+        "pyramides inversées flottantes au-dessus"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "rouge strié",
+        "jaune-orange"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16 p.16] Paysage des 666 plans : canyon, lave, viaduc, pyramides inversées, nuée de petits cristaux triangulaires, amphithéâtre aux murs en mosaïque de triangles rouges.",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_E001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_canyon_des_falaises_rouges."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_E001"
+    },
+    {
+      "id": "lieu_viaduc_des_gueules_de_lave",
+      "name": "Viaduc des Gueules de lave",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "grand viaduc à arches et tour centrale",
+        "chaque arche porte un visage sculpté qui vomit de la lave"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "rouge",
+        "orange"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T16 p.16] Viaduc aux visages vomissant la lave.",
+        "[GD] (v1.0.81) Sur le Canyon des Falaises rouges (même repère poi_enfers_canyon_des_falaises_rouges).",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_E001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; pas de POI propre."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_E001"
+    },
+    {
+      "id": "lieu_plateaux_suspendus_des_legions",
+      "name": "Plateaux suspendus des Légions",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "immenses dalles rectangulaires gris-beige suspendues dans le vide, étagées à perte de vue",
+        "légions alignées en carrés sous bannières rouges à runes noires",
+        "pyramides inversées flottantes qui portent des cortèges de démons",
+        "ciel jaune-orange en flammes ondulantes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "faction_legion_infernale"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "gris-beige",
+        "rouge",
+        "jaune-orange"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T20 p.30-31, 33] Plaines suspendues des légions ; [BD-T21 p.6, 10, 16-17] dalles flottantes surmontées de flèches et de tours rouges ; [BD-T16 p.16] pyramides inversées.",
+        "[GD] (v1.0.81) Camp des légions de Lucifer, contenu élevé et balisé ; en jeu, repère au sol seulement (pas de plateau suspendu modélisé).",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_E001 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; POI poi_enfers_plateaux_des_legions."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_E001"
+    },
+    {
+      "id": "lieu_pentacle_etoile_de_seuil",
+      "name": "Pentacle étoilé de seuil",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "disque vert de jade gravé d'entrelacs et d'un pentacle, gemme rouge au centre",
+        "balise : « comme un phare » pour les puissances infernales"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "lieu_portail_enfer_1",
+        "lieu_portail_enfer_2",
+        "lieu_portail_enfer_3",
+        "lieu_portail_enfer_4",
+        "lieu_portail_enfer_5"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "vert jade",
+        "rouge"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T20 p.14-15, 17, 20-21] Pentacle étoilé de seuil, ancre de seuil démoniaque ou « l'Étoile » : enfoui dans le monde des humains, il le rend visible aux Enfers ; seul un démon innocent peut le voir (p.17).",
+        "[GD] (v1.0.81) Lié aux portes : les 5 Portes des enfers forment le pentagramme dont la Citadelle est le centre (race_demon) ; chaque Porte est une ancre de seuil de ce type. Aucun POI propre (la case de la Citadelle reste réservée au départ).",
+        "[INFÉRÉ] (v1.0.81) Cellule N000_E000 de la carte des Enfers (carte « enfers », champ carte_cell ; cell vide : hors carte du continent) ; pas de POI propre."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_E000"
+    },
+    {
+      "id": "lieu_plan_jardin_des_supplices",
+      "name": "Plan du Jardin des Supplices",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "jardin d'agrément : pelouse vert vif, haies, allées dallées, ifs taillés, conifères en flèche, ciel bleu clair",
+        "colonnades, kiosques et fontaines de pierre blanche ; vasques à mascarons d'où sortent des plantes carnivores roses",
+        "damnés ligotés dans les rosiers, palissades d'os, pendus",
+        "au centre, la Fleur du Mal dans un bassin rond"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_fleur_du_mal"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [
+        "vert vif",
+        "rouge des roses",
+        "blanc",
+        "rose et magenta"
+      ],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T18 p.16-18] « Plan infernal très particulier » où « l'horreur et la beauté se mêlaient inextricablement ».",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
+    },
+    {
+      "id": "lieu_plan_eaux_sombres",
+      "name": "Plan des eaux sombres",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "eau vert-turquoise traversée de rayons",
+        "damnés qui se noient, remontent et se renoient sans fin",
+        "colonnes de tentacules violets"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_maitre_plan_eaux_sombres"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T21 p.36] « Chaque plan était différent, chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances. »",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
+    },
+    {
+      "id": "lieu_plan_du_feu",
+      "name": "Plan du feu",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "« mer de flammes » qui monte et recouvre tout",
+        "falaises noires, pics, lave, mains brûlantes qui émergent",
+        "damnés qui s'entretuent pour être les derniers consumés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_maitre_plan_du_feu"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T21 p.36] « Chaque plan était différent, chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances. »",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
+    },
+    {
+      "id": "lieu_plan_maladie",
+      "name": "Plan de la maladie",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "terrain jaune-ocre",
+        "damnés couverts de pustules, crachant le sang",
+        "tas de chairs pourries"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_maitre_plan_maladie"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T21 p.36] « Chaque plan était différent, chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances. »",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
+    },
+    {
+      "id": "lieu_plan_insectes",
+      "name": "Plan des insectes",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "ciel violet",
+        "nuées de fourmis et d'insectes noirs qui dévorent les damnés jusqu'aux os"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [
+        "char_maitre_plan_insectes"
+      ],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T21 p.36] « Chaque plan était différent, chaque prince infligeait à ses âmes damnées des tourments éternels et répétitifs afin de se repaître de leurs souffrances. »",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
+    },
+    {
+      "id": "lieu_plan_prison",
+      "name": "Plan prison",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "",
+      "region_id": "region_enfers_t00",
+      "zone_id": "",
+      "faction_control": "faction_legion_infernale",
+      "features": [
+        "disque de terre flottant dans l'espace étoilé",
+        "démons vaincus enfermés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "très élevée"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.81) Lieux des Enfers des tomes 15-22 placés sur la carte des Enfers ou en plans accessibles par portail ; réattribués à Lucifer, maître des Enfers à l'époque du jeu (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[BD-T22 p.8-9, 16] Plan prison des démons vaincus, gardé par l'archimage Crâne (char_archimage_crane).",
+        "[ÉPOQUE] L'usage par Methraton (démons des batailles des T20-T21) et la garde de Crâne sont postérieurs au T14.",
+        "[GD] (v1.0.81) À l'époque du jeu : plan-geôle des Enfers où les princes jettent leurs ennemis ; à valider.",
+        "[GD] (v1.0.81) Plan hors carte, accessible par le Seuil des Plans (lieu_seuil_des_plans, N000_W001) ; contenu de haut niveau (55-70), instance à créer."
+      ],
+      "carte": "enfers",
+      "carte_cell": ""
     }
   ],
   "route_types": [

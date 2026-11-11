@@ -1652,14 +1652,48 @@ Le propriétaire valide l'ajout des trois cases qui les séparaient du reste du 
 - Le tracé de la route Syzygie → Verdansur du générateur passe aussi par N009_W012 (environ 2 km en sortant de
   Syzygie) et par N011_W013 – N011_W014 (environ 12 km, jusqu'à 5,5 km au nord de la rangée), non générées : sur ces
   tronçons, la route est derrière le mur invisible et le joueur doit couper à travers la plaine de la rangée N010.
-  Trueford (N011_W014) et la route 000024 restent hors du monde jouable.
+  Trueford (N011_W014) et la route 000024 restent hors du monde jouable (jusqu'à la v1.0.80, §16.9).
 - Depuis Syzygie, la route part vers l'ouest et entre dans N009_W012 avant la rangée N010 : le joueur la quitte
   en N009_W011 et rejoint N010_W012 à travers champs par la rive ouest du fleuve (N010_W011).
 
 **Points incertains** :
 
 - Générer aussi N009_W012, N011_W013 et N011_W014 (route continue et Trueford jouable), ou retracer la route dans la
-  rangée N010 : à décider par le propriétaire.
+  rangée N010 : à décider par le propriétaire. Décidé en v1.0.80 : les trois cases sont générées (§16.9).
+
+### 16.9 Route Syzygie – Verdansur et Trueford jouables (v1.0.80)
+
+Lot 9 du propriétaire (11/11/2026). Le tracé en jeu de la route 000083 Syzygie → Verdansur sortait de la rangée N010
+(§16.8). Le propriétaire valide l'ajout des trois cases qu'il traverse ; Trueford devient accessible.
+
+| Case | Terrain (grille et fiche) | Contenu |
+|---|---|---|
+| N009_W012 | `plain` | Plaine à la sortie ouest de Syzygie (N009_W011) ; la route 000083 y passe sur environ 2 km. |
+| N011_W013 | `plain` | Plaine ; la route 000083 la traverse. |
+| N011_W014 | `plain_with_river` | Trueford (`hamlet_0148`), rivière nord de Verdansur (`riviere_verdansur_nord`, vers N012_W014) ; routes 000083 et 000024. |
+
+- `generated_cells` : nouvelle dernière ligne `"N009_W012", "N011_W013", "N011_W014"` (commentaire du master mis à jour).
+- Cellules générées : **253 → 256** (sonde : liste master + corridors, avant / après). Aucune cellule perdue, corridor
+  inchangé.
+- Fiches de cellules : terrain cohérent avec la grille du master (région `syzygie`), aucune modification de game design.
+  Une note `[DÉCISION]` par case et une entrée au registre (`regle_canon_registre_decisions`, 3 entrées v1.0.80).
+- Génération des 21 cases N009–N011 × W016–W010 (`--cells`) sans erreur, aucun avertissement sur les trois nouvelles
+  cases (487, 341 et 494 spawners).
+- Test `world_gen_tests` « cellules v1.0.78 » étendu : les trois cases sont générées, Trueford est en N011_W014, et
+  chaque point des routes Syzygie → Verdansur et Verdansur → Trueford est dans une cellule générée.
+
+**Ce qui est réel en jeu** :
+
+- Route 000083 Syzygie → Verdansur : tracé du générateur N009_W011 → N009_W012 → N010_W012 → N010_W013 → N011_W013 →
+  N011_W014 → N010_W014 → N010_W015, entièrement dans des cases générées. Il passe par Trueford et emprunte ensuite le
+  tracé de Verdansur → Trueford.
+- Route 000024 Verdansur → Trueford : N010_W015 → N010_W014 → N011_W014, entièrement dans des cases générées ; elle ne
+  sort vers aucune case non générée. Trueford n'a pas d'autre route au lore.
+- Le générateur trace aussi une liaison Syzygie → Trueford (maillage des villes proches, sans route au lore), qui suit
+  000083 de Syzygie à Trueford, dans les mêmes cases.
+
+**Ce qui n'est pas réel en jeu** : la rivière nord de Verdansur continue au nord de Trueford vers N012_W014, non générée
+(mur invisible au bord nord de N011_W014). Aucune route n'y mène ; rien n'est ajouté.
 
 ## 17. Questions ouvertes
 

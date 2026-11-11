@@ -1172,6 +1172,10 @@ namespace
 	/// v1.0.79 : N010_W012 à N010_W014 sont aussi générées ; les 5 cases forment
 	/// une rangée continue jusqu'à N010_W011 (déjà générée), Verdansur est donc
 	/// accessible à pied depuis le reste du monde jouable.
+	/// v1.0.80 : N009_W012, N011_W013 et N011_W014 sont aussi générées : le tracé
+	/// de la route Syzygie → Verdansur (lore 000083) et celui de Verdansur →
+	/// Trueford (lore 000024) sont entièrement dans des cellules générées, et
+	/// Trueford (N011_W014) est accessible.
 	void TestCellulesV1078()
 	{
 		using namespace tools::world_gen;
@@ -1196,6 +1200,30 @@ namespace
 		BuildMacroRoads(g);
 		const CityDef* ver = g.FindCity("town_0119");
 		Check(ver && ver->cell == "N010_W015", "cellules v1.0.78 : Verdansur en N010_W015");
+		// v1.0.80 : cases de la route Syzygie → Verdansur et de Trueford.
+		Check(generated("N009_W012") && generated("N011_W013") && generated("N011_W014"),
+			"cellules v1.0.80 : N009_W012, N011_W013 et N011_W014 generees");
+		const CityDef* tru = g.FindCity("hamlet_0148");
+		Check(tru && tru->cell == "N011_W014", "cellules v1.0.80 : Trueford en N011_W014");
+		// Chaque point des routes Syzygie → Verdansur et Verdansur → Trueford est
+		// dans une cellule générée (pas de tronçon derrière le mur invisible).
+		auto cellOf = [](const Vec2& p) {
+			const int e = static_cast<int>(std::lround(p.x / 10000.0)), n = -static_cast<int>(std::lround(p.z / 10000.0));
+			char b[32];
+			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
+			return std::string(b);
+		};
+		int routes = 0, outside = 0;
+		for (const Road& r : g.roads)
+		{
+			const bool syzVer = (r.fromId == "ville_sysigie" && r.toId == "town_0119") || (r.fromId == "town_0119" && r.toId == "ville_sysigie");
+			const bool verTru = (r.fromId == "town_0119" && r.toId == "hamlet_0148") || (r.fromId == "hamlet_0148" && r.toId == "town_0119");
+			if (!syzVer && !verTru) continue;
+			++routes;
+			for (const Vec2& p : r.points)
+				outside += !generated(cellOf(p));
+		}
+		Check(routes == 2 && outside == 0, "cellules v1.0.80 : routes Syzygie - Verdansur et Verdansur - Trueford dans les cellules generees");
 		// Lieu décalé : présent dans les lieux de sa cellule (N010_W016).
 		World w;
 		InitCell(w, g, { 10, -16 });

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.79",
+    "version": "1.0.80",
     "notes": [
+      "v1.0.80 : [CARTE] route Syzygie – Verdansur et Trueford jouables (lot 9 du propriétaire, 11/11/2026). Monde jouable : N009_W012 (plaine à la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, rivière nord de Verdansur) ajoutées à generated_cells de world_master.json : le tracé en jeu de la route 000083 Syzygie → Verdansur est entièrement dans des cases générées, et Trueford et la route 000024 Verdansur → Trueford deviennent accessibles. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). Détail : docs/world/LORE_BD.md, section 16.9.",
       "v1.0.79 : [CARTE] raccordement de Verdansur au monde jouable (lot 8 du propriétaire, 11/11/2026). Monde jouable : N010_W012, N010_W013 et N010_W014 (plaines de la région de Syzygie, rivière nord de Verdansur en N010_W014) ajoutées à generated_cells de world_master.json ; avec N010_W015 et N010_W016 (v1.0.78), elles forment une rangée continue jusqu'à N010_W011, déjà générée : Verdansur et le Sanctuaire des Brisants sont accessibles à pied. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). La route 000083 Syzygie → Verdansur existe ; dans le jeu, son tracé passe aussi par N009_W012, N011_W013 et N011_W014, non générées. Détail : docs/world/LORE_BD.md, section 16.8.",
       "v1.0.78 : [CARTE] cellules de Verdansur et des Brisants, décisions du propriétaire du 11/11/2026 (lot 7). Monde jouable : N010_W015 (Verdansur sur sa colline, source des deux rivières) et N010_W016 (Sanctuaire des Brisants) ajoutées à generated_cells de world_master.json ; elles restaient hors de la génération depuis la v1.0.72. Décisions inscrites au registre : contenu de plus haut niveau permis dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (exemple : Bridlecrag et le Grand Ancien partagent S004_W006 et restent en place) ; nom « lac / fleuve de Syzygie » conservé (riv_fleuve_sysigie nommé « Fleuve de Syzygie ») ; niveau d'une zone relatif à la faction (principe, détail par faction plus tard). Détail : docs/world/LORE_BD.md, section 16.7.",
       "v1.0.77 : [CARTE] relief et temples de l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026). Nom « Île de la Trêve » gardé et visible : name des 20 cellules terrestres, affiché par l'éditeur. Relief : 7 pics et crêtes boisés en mountain (N022_W012, N021_W013, N020_W014, N019_W013, N018_W013, N017_W012, N020_W011), falaises et vallées encaissées ; monde jouable : 11 massifs (reliefs du master), grille en forêt, côte inchangée. Peuple [GD] : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), 5 PNJ et 5 dialogues. 11 temples de style inca [GD] (3 grands, 5 moyens, 3 oratoires) avec leurs POI ; les 4 raids et les 8 quêtes de la v1.0.74 s'y rattachent ; 4 quêtes [GD] ; sentiers 000226, 000227. Détail : docs/world/LORE_BD.md, section 16.6.",
@@ -193353,7 +193354,9 @@
       ],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.80) Case générée (monde jouable) : Trueford (route 000024) ; la route 000083 Syzygie → Verdansur la traverse ; décision du propriétaire du 11/11/2026 (LORE_BD §16.9)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -193371,7 +193374,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.80) Case générée (monde jouable) : la route 000083 Syzygie → Verdansur la traverse ; décision du propriétaire du 11/11/2026 (LORE_BD §16.9)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -195216,7 +195221,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.80) Case générée (monde jouable) : la route 000083 Syzygie → Verdansur la traverse en sortant de Syzygie ; décision du propriétaire du 11/11/2026 (LORE_BD §16.9)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -226996,6 +227003,27 @@
           "nom": "Raccordement de Verdansur (N010_W014)",
           "decision": "Case générée dans le monde jouable pour relier à pied Verdansur et le Sanctuaire des Brisants à N010_W011 (LORE_BD §16.8).",
           "version": "1.0.79"
+        },
+        {
+          "collection": "cells",
+          "id": "N009_W012",
+          "nom": "Route Syzygie – Verdansur (N009_W012)",
+          "decision": "Case générée dans le monde jouable : la route 000083 Syzygie → Verdansur la traverse en sortant de Syzygie (LORE_BD §16.9).",
+          "version": "1.0.80"
+        },
+        {
+          "collection": "cells",
+          "id": "N011_W013",
+          "nom": "Route Syzygie – Verdansur (N011_W013)",
+          "decision": "Case générée dans le monde jouable : la route 000083 Syzygie → Verdansur la traverse (LORE_BD §16.9).",
+          "version": "1.0.80"
+        },
+        {
+          "collection": "cells",
+          "id": "N011_W014",
+          "nom": "Route Syzygie – Verdansur (N011_W014)",
+          "decision": "Case générée dans le monde jouable : Trueford (route 000024) ; la route 000083 Syzygie → Verdansur la traverse (LORE_BD §16.9).",
+          "version": "1.0.80"
         }
       ]
     },

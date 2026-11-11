@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.78",
+    "version": "1.0.79",
     "notes": [
+      "v1.0.79 : [CARTE] raccordement de Verdansur au monde jouable (lot 8 du propriétaire, 11/11/2026). Monde jouable : N010_W012, N010_W013 et N010_W014 (plaines de la région de Syzygie, rivière nord de Verdansur en N010_W014) ajoutées à generated_cells de world_master.json ; avec N010_W015 et N010_W016 (v1.0.78), elles forment une rangée continue jusqu'à N010_W011, déjà générée : Verdansur et le Sanctuaire des Brisants sont accessibles à pied. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). La route 000083 Syzygie → Verdansur existe ; dans le jeu, son tracé passe aussi par N009_W012, N011_W013 et N011_W014, non générées. Détail : docs/world/LORE_BD.md, section 16.8.",
       "v1.0.78 : [CARTE] cellules de Verdansur et des Brisants, décisions du propriétaire du 11/11/2026 (lot 7). Monde jouable : N010_W015 (Verdansur sur sa colline, source des deux rivières) et N010_W016 (Sanctuaire des Brisants) ajoutées à generated_cells de world_master.json ; elles restaient hors de la génération depuis la v1.0.72. Décisions inscrites au registre : contenu de plus haut niveau permis dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (exemple : Bridlecrag et le Grand Ancien partagent S004_W006 et restent en place) ; nom « lac / fleuve de Syzygie » conservé (riv_fleuve_sysigie nommé « Fleuve de Syzygie ») ; niveau d'une zone relatif à la faction (principe, détail par faction plus tard). Détail : docs/world/LORE_BD.md, section 16.7.",
       "v1.0.77 : [CARTE] relief et temples de l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026). Nom « Île de la Trêve » gardé et visible : name des 20 cellules terrestres, affiché par l'éditeur. Relief : 7 pics et crêtes boisés en mountain (N022_W012, N021_W013, N020_W014, N019_W013, N018_W013, N017_W012, N020_W011), falaises et vallées encaissées ; monde jouable : 11 massifs (reliefs du master), grille en forêt, côte inchangée. Peuple [GD] : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), 5 PNJ et 5 dialogues. 11 temples de style inca [GD] (3 grands, 5 moyens, 3 oratoires) avec leurs POI ; les 4 raids et les 8 quêtes de la v1.0.74 s'y rattachent ; 4 quêtes [GD] ; sentiers 000226, 000227. Détail : docs/world/LORE_BD.md, section 16.6.",
       "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Orderfen → Hayfen par la terre, 000064 Lhynn → Dustfen, 000073 Dustfen → Clearfen, 000076 Ashwick → Stonehaven, 000074 Der Hem Shelbem → Frosthollow (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Coldport – Frosthollow (000079, en S007_E006) vers la Forteresse Naine d'Heureux ; tronçon Dunfold → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harrowbrook → Equiton (sable), 000225 Brightholm → Ruines du prieuré (remplace 000140), 000201 Greyhedge → Ambermead devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bridlecrag S004_W005 → S004_W006, Cragfold S004_W003 → S004_W002 (hors de la région 3×3 de Wyrmhallow). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
@@ -194261,7 +194262,9 @@
       ],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.79) Case générée (monde jouable) : relie Verdansur (N010_W015) à N010_W011 ; décision du propriétaire du 11/11/2026 (LORE_BD §16.8)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -194279,7 +194282,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.79) Case générée (monde jouable) : relie Verdansur (N010_W015) à N010_W011 ; décision du propriétaire du 11/11/2026 (LORE_BD §16.8)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -194297,7 +194302,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.79) Case générée (monde jouable) : relie Verdansur (N010_W015) à N010_W011 ; décision du propriétaire du 11/11/2026 (LORE_BD §16.8)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -226968,6 +226975,27 @@
           "nom": "Niveaux des zones selon la faction",
           "decision": "Le niveau d'une zone est relatif à la faction : une zone de faible niveau pour une faction ne l'est pas forcément pour les autres. Principe seulement, détail par faction à définir ; à partir du niveau 20 du joueur, beaucoup de choses changent (LORE_BD §16.7).",
           "version": "1.0.78"
+        },
+        {
+          "collection": "cells",
+          "id": "N010_W012",
+          "nom": "Raccordement de Verdansur (N010_W012)",
+          "decision": "Case générée dans le monde jouable pour relier à pied Verdansur et le Sanctuaire des Brisants à N010_W011 (LORE_BD §16.8).",
+          "version": "1.0.79"
+        },
+        {
+          "collection": "cells",
+          "id": "N010_W013",
+          "nom": "Raccordement de Verdansur (N010_W013)",
+          "decision": "Case générée dans le monde jouable pour relier à pied Verdansur et le Sanctuaire des Brisants à N010_W011 (LORE_BD §16.8).",
+          "version": "1.0.79"
+        },
+        {
+          "collection": "cells",
+          "id": "N010_W014",
+          "nom": "Raccordement de Verdansur (N010_W014)",
+          "decision": "Case générée dans le monde jouable pour relier à pied Verdansur et le Sanctuaire des Brisants à N010_W011 (LORE_BD §16.8).",
+          "version": "1.0.79"
         }
       ]
     },

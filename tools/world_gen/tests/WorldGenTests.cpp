@@ -1169,6 +1169,9 @@ namespace
 	/// (N010_W016), dont le relief, les rivières et le POI existaient depuis la
 	/// v1.0.72, sont générées : listées dans generated_cells, la ville et le lieu
 	/// décalé sont bien rattachés à leur cellule.
+	/// v1.0.79 : N010_W012 à N010_W014 sont aussi générées ; les 5 cases forment
+	/// une rangée continue jusqu'à N010_W011 (déjà générée), Verdansur est donc
+	/// accessible à pied depuis le reste du monde jouable.
 	void TestCellulesV1078()
 	{
 		using namespace tools::world_gen;
@@ -1183,6 +1186,11 @@ namespace
 			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
 		};
 		Check(generated("N010_W015") && generated("N010_W016"), "cellules v1.0.78 : N010_W015 et N010_W016 generees");
+		// v1.0.79 : raccordement par N010_W012..N010_W014 à N010_W011 (déjà générée).
+		bool row = true;
+		for (const char* c : { "N010_W011", "N010_W012", "N010_W013", "N010_W014", "N010_W015", "N010_W016" })
+			row = row && generated(c);
+		Check(row, "cellules v1.0.79 : rangee N010_W011 a N010_W016 generee (Verdansur relie a pied)");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);

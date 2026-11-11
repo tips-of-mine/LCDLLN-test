@@ -1615,8 +1615,51 @@ aucune créature et aucune case ne changent.
 
 **Points incertains** :
 
-- Raccorder Verdansur au réseau jouable (cases N010_W012 à N010_W014, ou corridor vers Syzygie) : à décider.
+- Raccorder Verdansur au réseau jouable (cases N010_W012 à N010_W014, ou corridor vers Syzygie) : fait en v1.0.79 (§16.8).
 - La forme du balisage (panneaux, avertissements de PNJ, couleur du nom de zone) et le seuil d'avertissement.
+
+### 16.8 Raccordement de Verdansur au monde jouable (v1.0.79)
+
+Lot 8 du propriétaire (11/11/2026). Les cases N010_W015 et N010_W016 (v1.0.78, §16.7) étaient générées mais isolées.
+Le propriétaire valide l'ajout des trois cases qui les séparaient du reste du monde jouable.
+
+| Case | Terrain (grille et fiche) | Contenu |
+|---|---|---|
+| N010_W012 | `plain` | Plaine de la région de Syzygie ; touche N010_W011 (déjà générée, rive ouest du fleuve de Syzygie). |
+| N010_W013 | `plain` | Plaine ; la route Syzygie → Verdansur la traverse. |
+| N010_W014 | `plain_with_river` | Rivière nord de Verdansur (`riviere_verdansur_nord`, vers N011_W014) ; routes vers Syzygie et Trueford. |
+
+- `generated_cells` : nouvelle dernière ligne `"N010_W012", "N010_W013", "N010_W014"` (commentaire du master mis à jour).
+  Les cases N010_W011 à N010_W016 forment une rangée continue : Verdansur et le Sanctuaire des Brisants sont
+  accessibles à pied depuis Syzygie (par la rive ouest de N010_W011).
+- Cellules générées : **250 → 253** (sonde : liste master + corridors, avant / après). Aucune cellule perdue, corridor
+  inchangé.
+- Fiches de cellules : terrain cohérent avec la grille du master, aucune modification de game design. Une note
+  `[DÉCISION]` par case et une entrée au registre (`regle_canon_registre_decisions`, 3 entrées v1.0.79).
+- Génération des cinq cases (`--cells N010_W012,...,N010_W016`) sans erreur : 40 lieux procéduraux, 777 bâtiments,
+  2405 spawners.
+- Test `world_gen_tests` « cellules v1.0.78 » étendu : rangée N010_W011 à N010_W016 générée.
+- Rendu de preview : le sommet de la colline (191 m) sortait blanc en v1.0.78 parce que l'outil de rendu (hors dépôt)
+  normalisait la couleur entre l'altitude minimale et maximale de l'image. Il utilise désormais une rampe en altitude
+  absolue (neige au-dessus de 520-600 m, comme le jeu). Le jeu n'est pas concerné : le splat (`Output.cpp`) ne met de
+  neige qu'à partir de 520 m, et le canal neige des cinq cases est à 0.
+
+**Route lore.** La route 000083 Syzygie → Verdansur existe dans le lore, ainsi que 000024 Verdansur → Trueford
+(N011_W014). Le générateur trace bien les deux.
+
+**Ce qui n'est pas réel en jeu** :
+
+- Le tracé de la route Syzygie → Verdansur du générateur passe aussi par N009_W012 (environ 2 km en sortant de
+  Syzygie) et par N011_W013 – N011_W014 (environ 12 km, jusqu'à 5,5 km au nord de la rangée), non générées : sur ces
+  tronçons, la route est derrière le mur invisible et le joueur doit couper à travers la plaine de la rangée N010.
+  Trueford (N011_W014) et la route 000024 restent hors du monde jouable.
+- Depuis Syzygie, la route part vers l'ouest et entre dans N009_W012 avant la rangée N010 : le joueur la quitte
+  en N009_W011 et rejoint N010_W012 à travers champs par la rive ouest du fleuve (N010_W011).
+
+**Points incertains** :
+
+- Générer aussi N009_W012, N011_W013 et N011_W014 (route continue et Trueford jouable), ou retracer la route dans la
+  rangée N010 : à décider par le propriétaire.
 
 ## 17. Questions ouvertes
 

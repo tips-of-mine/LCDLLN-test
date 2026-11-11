@@ -25,6 +25,9 @@
 //    sur la case de la Citadelle, toujours 5 portails) et 11 grottes de dragons
 //    de Xygga dans le monde des Royaumes (Xygga en case volcanique, au sec, hors
 //    des cases à ville, loin des routes).
+// 10. v1.0.82 : entrée cachée des Ophidiens dans la jungle de Leviathan (N010_E010,
+//    cellule générée) : salle au sec, hors case à ville, loin des routes et à plus de
+//    15 km de toute grotte de dragon.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -1325,6 +1328,51 @@ namespace
 			"lieux v1.0.81 : grottes au sec, hors des cases a ville, a plus de 1,5 km des routes");
 	}
 
+	/// v1.0.82 (lore, tomes 15-22) : entrée cachée des Ophidiens, peuple ennemi souterrain.
+	/// Une seule des trois entrées est dans une cellule générée (Puits des Lianes, N010_E010,
+	/// jungle de Leviathan) : POI « salle » au sec, en forêt, hors des cases à ville, à plus de
+	/// 1,5 km des routes (aucun chemin n'y mène) et à plus de 15 km de toute grotte de dragon
+	/// (pas de conflit avec les dragons de Xygga, v1.0.81).
+	void TestLieuxV1082()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lieux v1.0.82 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const std::set<std::string> generated(g.master.generatedCells.begin(), g.master.generatedCells.end());
+		int entrees = 0;
+		const PoiDef* puits = nullptr;
+		for (const PoiDef& p : g.pois)
+			if (p.id.rfind("poi_ophidiens_", 0) == 0)
+			{
+				++entrees;
+				if (p.id == "poi_ophidiens_puits_des_lianes") puits = &p;
+			}
+		Check(entrees == 1 && puits && puits->cell == "N010_E010" && puits->kind == "salle" && generated.count(puits->cell),
+			"lieux v1.0.82 : une entree ophidienne (Puits des Lianes, salle) en N010_E010 generee");
+		if (!puits) return;
+		const char code = LoreCode(g.master, puits->n, puits->e);
+		bool city = false;
+		for (const CityDef& c : g.cities) city = city || c.cell == puits->cell;
+		double droad = 1e18;
+		for (const Road& r : g.roads)
+			for (const Vec2& q : r.points) droad = std::min(droad, std::hypot(q.x - puits->center.x, q.z - puits->center.z));
+		double dcave = 1e18;
+		for (const PoiDef& p : g.pois)
+			if (p.id == "poi_grotte_xygga" || p.id.rfind("poi_grotte_premier_ne_", 0) == 0)
+				dcave = std::min(dcave, std::hypot(p.center.x - puits->center.x, p.center.z - puits->center.z));
+		Check((code == 'T' || code == 't' || code == 'R') && MacroHeight(g.master, puits->center.x, puits->center.z) > g.master.scale.seaLevelM + 5.0,
+			"lieux v1.0.82 : Puits des Lianes au sec, en foret");
+		Check(!city && droad > 1500.0 && dcave > 15000.0,
+			"lieux v1.0.82 : Puits des Lianes hors case a ville, a plus de 1,5 km des routes et 15 km des grottes de dragons");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1418,6 +1466,7 @@ int main()
 	TestReliefIleV1077();
 	TestCellulesV1078();
 	TestLieuxV1081();
+	TestLieuxV1082();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

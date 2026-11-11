@@ -12,7 +12,7 @@ ainsi que les décisions de placement reportées dans le monde jouable
 Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie `canon`, ids dans
 `meta.canon`, v1.0.57) : `regle_canon_corpus`, `regle_canon_priorite_sources`, `regle_canon_epoque_jeu`,
 `regle_canon_calendrier`, `regle_canon_etiquettes`, `regle_canon_registre_decisions` (index de toutes les décisions du propriétaire).
-- **Corpus** : Tome 0, Tomes 1 à 14, « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5 ; les tomes 15 et suivants sont exclus.
+- **Corpus** : Tome 0, Tomes 1 à 14, « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5 ; les tomes 15 et suivants sont exclus (exceptions : Enfers et dragons de Xygga en v1.0.81, peuples lointains et Ophidiens en v1.0.82 ; 16.10, 16.11).
 - **Priorité** : [DÉCISION] > Tomes 0-14 > L'Empire de la Négation > Arcanes et Methraton ; [GD] comble les vides sans contredire ; [INFÉRÉ], [À VÉRIFIER] ne font pas foi.
 - **Moment du jeu** : après la destruction de Kendrhir Vale (T1, en reconstruction) et avant les destructions du T11 (donc aussi du T14) ; année unique, monde figé ; préquelles = passé ; THS limité à la section 10.3 (Q1).
 - **Calendrier** : ère de l'Oblivion (an 0 = effacement de Methraton) ; année lunaire de 13 lunes de 28 jours + la Nuit de la Lune Noire ; noms [GD] à valider, année de jeu à fixer.
@@ -1790,10 +1790,116 @@ dragons) côté jeu, plans sans instance ni portail ; les 9 autres grottes sont 
 instances des plans) ; la démone conseillère de Belzébuth du T16 est-elle celle des T17-T18 ; « 666 légions de
 666 666 démons » (T20) ne sont pas des effectifs de l'époque du jeu.
 
+### 16.11 Les douze peuples lointains et les Ophidiens d'après les tomes 15-22 (v1.0.82)
+
+Lot 11 du propriétaire (11/11/2026). Sources : notes de lecture des tomes 15 à 22, sections 2 (« les 12 peuples ») et
+passages sur les Ophidiens ; pages comme en 16.10 (T16 et T19 en pages du PDF). Chaque fiche porte ses sources
+`[BD-T15 p.N]` à `[BD-T22 p.N]`. Scripts reproductibles : `lore_v1082.py` et `peuples_data.py` (appliqués au fichier
+v1.0.81), `master_v1082.py` (POI du master des Royaumes).
+
+**Décisions inscrites au registre** (`regle_canon_registre_decisions`, 12 entrées v1.0.82, note `[DÉCISION] (v1.0.82)`
+sur chaque fiche) :
+
+| # | Décision du propriétaire | Fiches |
+|---|---|---|
+| 1 | **Option b** : les 12 civilisations humaines des T15-T22 existent dès maintenant comme **peuples lointains**, hors carte ; territoires non générés (ouverts plus tard) ; comptoirs, marchands, ambassadeurs, mercenaires et PNJ dans les grandes villes dès maintenant. | `regle_peuples_lointains` |
+| 2 | **Placement par climat** : Nordiques au grand nord ; Égyptiens, Arabes et peuple turc ou persan dans les déserts du sud ; Aztèques et Amérindiens à l'ouest au-delà de l'océan ; Chinois, Mongols et Japonais à l'est ; Africains, peuple pâle et peuple sombre placés de façon cohérente. | `regle_peuples_lointains` |
+| 3 | **Noms de la BD gardés** : Tsin, Empire Minghol, Azteca, Haaghen (alias Bjorn, T16), les Nordiques, Murata ; noms inventés dans le style de la BD pour les autres (ni français ni anglais), lieux en français. | `regle_peuples_lointains`, `char_murata` |
+| 4 | **Indépendants à l'époque du jeu** : pas d'empereur Wismerhill, de gemmes au front, de religion de l'Unique, de Grand Conseil ni de légions de 12 000 (post-T14) : **référence visuelle future** ; apparences, cultures, architectures gardées en fiches. | `regle_peuples_lointains` |
+| 5 | **Ophidiens = peuple ennemi souterrain**, hostile à tous : hommes-serpents télépathes (bulles vertes, « sss »), Empereur, Impératrice pondeuse, Prince Serpent, frères inférieurs (serpents espions), montures sauriennes, cités souterraines, écloserie. | `regle_ophidiens` |
+| 6 | **Pas d'Ophidia Prime en surface** (elle est sur Terra Secunda) ; entrées cachées de haut niveau, balisées, en marais, jungle et montagne. | `regle_ophidiens` |
+| 7 | Tomes 15-22 : peuples et Ophidiens intégrés au lore, en plus des Enfers et des dragons (`regle_canon_priorite_sources`, `regle_canon_etiquettes`, libellés de `tomes_config` mis à jour). | `regle_canon_corpus` |
+| 8-11 | Quatre comptoirs dans des ports existants (ci-dessous). | `town_brinehaven`, `ville_altenberg`, `hishtarland`, `town_riverfold` |
+
+**Peuples lointains** (12 fiches `factions`, type `peuple_lointain`, non jouables, `fiche_peuple` : statut du nom,
+apparence, culture, architecture, territoire, climat, relations, sources ; 12 `lieux` hors carte, sans cellule). La BD
+compte douze civilisations dont celle de Wismerhill (l'Empire, post-T14) ; le peuple turc ou persan, montré aux T16,
+T17 et T18, complète les douze du propriétaire. Directions sur la carte de synthèse (flèches depuis le bord de la
+grille) :
+
+| Fiche | Peuple (nom) | Dirigeant | Direction | Comptoir | PNJ dans nos villes `[GD]` |
+|---|---|---|---|---|---|
+| `faction_nordiques` | **Les Nordiques** (BD, T17 p.15) | Haaghen (BD, `char_haaghen`) | nord | Brinehaven | Sigvhard Ulfrekk (ambassadeur, Lhynn) ; Rhagnvild Skaeldar (marchande, Brinehaven) ; Bjarnulf Haddrek (mercenaire, Feyhin Lokcthat) |
+| `faction_vharnoct` | **Les Vharnoctes** `[GD]`, peuple sombre gothique | Nhecthyra `[GD]` | nord-nord-est | Brinehaven | Dhraegor Nokhtvael (envoyé, Moork) ; Ysmhera Vhaul (alchimiste, Sauken Glude) |
+| `faction_empire_minghol` | **L'Empire Minghol** (BD, T15 p.36) | Ogtaïr Khaan `[GD]` | nord-est | Riverfold | Ghaldaï Mönkhur (ambassadeur, Lhynn) ; Temughar Oïrdan (maquignon, Syzygie) ; Khulaïn Sorghat (archère, Feyhin Lokcthat) |
+| `faction_akhazumi` | **L'archipel d'Akhazumi** `[GD]`, japonais | Ryodhaï `[GD]` | est-nord-est | Riverfold | Tokhimaru Seïdan (rônin, Feyhin Lokcthat) ; Okhiyu Shiranhe (marchande, Riverfold) |
+| `faction_empire_tsin` | **L'Empire de Tsin** (BD, T17 p.7, T19 PDF 31) | Tsin (BD, `char_tsin`) | est | Riverfold | Tshao Yunkhai (mandarin ambassadeur, Lhynn) ; Pheng Lhaosu (marchand, Riverfold) |
+| `faction_kharzhad` | **Le Kharzhad** `[GD]`, turc ou persan | Ouzmerhid `[GD]` | sud-est | Riverfold | Ozhmeran Tchavhul (marchand, Lhynn) ; Faryzhad Ilkhaner (astrologue, Sauken Glude) |
+| `faction_sheydhar` | **Les émirats du Sheydhar** `[GD]`, arabe | Rashkhal `[GD]` | sud-sud-est | Hishtarland | Zhaïd Al-Mourhan (caravanier, Moork) ; Qasrim Bhen-Haddar (mercenaire, Feyhin Lokcthat) ; Leïmara Sabhaït (épicière, Hishtarland) |
+| `faction_nebkhara` | **Le royaume de Nebkhara** `[GD]`, égyptien | Tahmesyr `[GD]` | sud | Hishtarland | Haremkhet Sobhaïr (prêtre ambassadeur, Lhynn) ; Senmhoret Djhaïs (scribe-mage, Sauken Glude) ; Peribhes Khaïmut (marchand, Hishtarland) |
+| `faction_nkhaloa` | **Le royaume de Nkhaloa** `[GD]`, africain | Oyombhé `[GD]` | sud-sud-ouest | Hishtarland | Obhangu Ndheri (marchand, Hishtarland) ; Kwesenda Mbhoro (lancière, Feyhin Lokcthat) |
+| `faction_azteca` | **Azteca** (BD, T16 PDF 37-39) | l'Azteca (BD, `char_azteca`) | ouest-sud-ouest | Altenberg | Ixtlamhoc Tecuhal (prêtre ambassadeur, Lhynn) ; Citlalhua Yaotzin (marchande, Altenberg) |
+| `faction_tahokhan` | **Les nations tahokhanes** `[GD]`, amérindien | Ahkenhwa `[GD]` | ouest-nord-ouest | Altenberg | Ohsakhe Tawendra (éclaireur, Altenberg) ; Mahtenha Kwisoh (marchande, Altenberg) |
+| `faction_saelvhyr` | **Le Saelvhyr** `[GD]`, peuple pâle d'allure elfique | Elvhaïr `[GD]` | nord-ouest | Brinehaven | Ysilvaë Caerhaïn (envoyée, Northind) ; Thaelor Vhyssenn (armateur, Brinehaven) |
+
+- **Dirigeants** : seuls les trois nommés par la BD ont une fiche `persons` (`char_haaghen`, `char_tsin`, `char_azteca`) ;
+  les autres sont dans `leadership` de leur faction. Haaghen est distinct de l'Empereur Haaghendorf. Murata (`char_murata`,
+  `companion_murata_t2`) vient de l'archipel d'Akhazumi (« son bateau a coulé », T2) ; aucun PNJ ne le remplace.
+- **PNJ** : 28 fiches `persons` (`char_pl_*`, rôles `ambassadeur_peuple_lointain`, `marchand_peuple_lointain`,
+  `mercenaire_peuple_lointain`, `erudit_peuple_lointain`) rattachées à leur ville par `ville_ids`, dans 10 villes : Lhynn (6),
+  Feyhin Lokcthat (5, arène), Hishtarland (3), Altenberg (3), Sauken Glude (3), Brinehaven (2), Riverfold (2), Moork (2),
+  Syzygie (1), Northind (1). **Ce ne sont pas des PNJ de service** : `generate_city_services.py` ne gère que les métiers de
+  la grille (un exemplaire de service = un PNJ) ; ajouter ces PNJ à `service_npcs` fausserait les comptes de la grille.
+  Leurs noms entrent dans les noms interdits aux futurs PNJ de service (`noms_interdits` lit `persons`) ; aucun mot ne
+  recoupe un PNJ de service existant, ni un nom du lore, du master ou de `noms_proposition.md`.
+- **Comptoirs** (ports existants, `features` et note de la ville) : **Brinehaven** (nord : Nordiques, Vharnoctes,
+  Saelvhyr ; port franc, quai des indépendants), **Altenberg** (ouest : Azteca, Tahokhans ; statut du port mis à jour,
+  destination régulière toujours à décider), **Hishtarland** (sud : Sheydhar, Nebkhara, Nkhaloa ; royaume indépendant
+  du sud), **Riverfold** (est : Tsin, Minghol, Akhazumi, Kharzhad). Riverfold était `port_town` sans port : ajouté à
+  `grille.ports` et champ `port` (ponton vers N006_E024) ; un capitaine de port créé. Aucune ligne maritime vers les
+  terres lointaines.
+- **Distinctions** : l'Empire du Jade (extension, est-sud-est, par les terres) et Tsin (plus loin, au-delà de la mer
+  orientale) sont deux empires rivaux, game design du Jade inchangé ; Azteca n'est pas les Huacani (Île de la Trêve) ;
+  les Tharques tiennent la mer de l'ouest, sur la route d'Azteca ; le Nebkhara se dit héritier de l'Erypt, qui reste le
+  passé (M1-M3). Notes `[GD]` ajoutées sur `region_empire_jade`, `faction_huacani`, `empire_tharque`, `lieu_erypt`.
+- **Référence visuelle future** (note `[ÉPOQUE]` sur chaque fiche) : couronne des douze rois, gemmes et opales au front,
+  l'Unique et son clergé, Grand Conseil, légions de 12 000 (1 000 par civilisation), Cité des Opales, Garde d'Opale.
+
+**Ophidiens** (`regle_ophidiens`) : `faction_ophidiens` (ennemie de toutes les factions et des douze peuples),
+`race_ophidien`, 3 fiches `persons` sans nom (`char_empereur_ophidien`, `char_imperatrice_ophidienne`,
+`char_prince_serpent`), 10 fiches `creatures`, 5 `lieux`. Niveaux `[GD]`, sous les dragons de Xygga (66-70) :
+
+| Créature | Niveaux | Source |
+|---|---|---|
+| Guerrier ophidien, archer ophidien | 55-60 | T16 PDF 4-6, 44 ; T17 p.5, 15, 24-29 |
+| Naja ophidien (sans jambes), saurien de guerre | 58-62 | T16 PDF 4-9 ; T17 p.5 |
+| Seigneur au capuchon doré (quatre bras pour certains) | 60-63 | T15 p.36 ; T17 p.5, 15, 24-25 |
+| Sauropode harnaché | 60-64 | T15 p.36 ; T17 p.24 ; T18 p.4, 6 |
+| Frère inférieur (serpent espion) | 50-54 | T16 PDF 20 ; T20 p.11 |
+| Prince Serpent (boss) | 64-66 | T16 PDF 4-9, 18 |
+| Impératrice pondeuse, Empereur (« Grand Ophidien ») (boss de raid) | 66-67, 67-68 | T17 p.8, 20 ; T18 p.4-10 ; T20 p.11 |
+
+| Lieu | Case | Milieu | En jeu |
+|---|---|---|---|
+| Puits des Lianes (`lieu_ophidiens_puits_des_lianes`, POI `poi_ophidiens_puits_des_lianes`, salle, à 2,3 km à l'ouest et 2,5 km au nord du centre) | N010_E010 | jungle de Leviathan | **réel** (cellule générée) |
+| Bouche des Roseaux (`lieu_ophidiens_bouche_des_roseaux`) | N010_W003 | Marais maudits de Thenhart | lore seul |
+| Faille des Mues (`lieu_ophidiens_faille_des_mues`), entrée principale | S011_E015 | montagnes du sud-est | lore seul |
+| La Cité-Nid (capitale souterraine) et l'Écloserie | souterrain, sans cellule | — | lore seul |
+
+Cases choisies sans ville ni lieu, hors des régions de départ, hors des cases des grottes de Xygga et à deux cases au
+moins de chacune (pas de conflit avec les dragons, lot 10) ; abords balisés (têtes sur des piques, ossements, T17 p.5),
+aucune route n'y mène ; le Puits des Lianes est à plus de 1,5 km des routes et à plus de 15 km de toute grotte (test).
+N010_E010 touche en diagonale la région de départ de Grakhul (1-10) : contenu de plus haut niveau en zone basse, permis
+s'il est bien balisé (décision v1.0.78). Les créatures sont ajoutées aux `creature_ids` des trois cases. Distincts de la
+Maison du Serpent, du Serpent de Methraton et des serpents marins du Jade. Hors époque : Ophidia Prime, pacte de Xygga,
+guerres contre l'empire de Wismerhill.
+
+**Ce qui est réel en jeu** : le POI du Puits des Lianes (repère, nom, aplanissement) dans la cellule générée N010_E010.
+**Lore seulement** : les 12 peuples, leurs terres, dirigeants et 28 PNJ (aucun PNJ placé ni spawner), les comptoirs
+(fiches de villes ; Brinehaven et Altenberg sont générées mais rien n'y est ajouté côté jeu), les deux autres entrées,
+la Cité-Nid, l'écloserie, les créatures et boss ophidiens (aucun spawner). Test `world_gen_tests` « lieux v1.0.82 ».
+
+**Services** : 1242 PNJ (+1, capitaine de port de Riverfold). Aucun identifiant supprimé (77 ajoutés).
+
+**Points incertains** : noms `[GD]` des peuples et dirigeants ; directions exactes ; le peuple turc ou persan peut
+être deux peuples (vieillard au bonnet pourpre du T15, barbu au turban rouge du T18) ; instances de la Cité-Nid et de
+l'écloserie ; butin ophidien ; destinations maritimes régulières des comptoirs.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
+- Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

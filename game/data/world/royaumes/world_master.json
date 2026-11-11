@@ -2438,6 +2438,15 @@
       "offset_x_m": 2250,
       "offset_z_m": -1500,
       "description": "Grotte cachée derrière une cascade de la rivière forestière : l'antre du premier-né de Xygga oriental, serpent doré-orangé sans ailes. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
+    },
+    {
+      "id": "poi_ophidiens_puits_des_lianes",
+      "name": "Puits des Lianes",
+      "cell": "N010_E010",
+      "kind": "salle",
+      "offset_x_m": -2250,
+      "offset_z_m": -2500,
+      "description": "Puits naturel à demi comblé de racines et de lianes, au cœur de la jungle de Leviathan : il descend vers la cité ophidienne de la jungle. Têtes plantées sur des piques et ossements rongés en balisent les abords. Aucun chemin. Niveaux 55-62, contenu de haut niveau en zone plus basse, balisé [BD-T17 p.5 ; GD v1.0.82]."
     }
   ],
   "imports": {

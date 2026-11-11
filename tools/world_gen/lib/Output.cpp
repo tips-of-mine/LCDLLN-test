@@ -229,8 +229,57 @@ namespace tools::world_gen
 			return t;
 		}
 
+		/// v1.0.83 — splat des Enfers (T15-22 : falaises rouges striées, basalte, cendre,
+		/// lave). Le client n'a que 4 couches à couleur fixe (herbe, terre rouge-brun,
+		/// roche gris-brun, neige) : aucune herbe, aucune neige, aucun masque d'herbe ;
+		/// sol de terre rouge-brun (plaines, cendres, lave, chemins) et roche (pentes,
+		/// crêtes, coins montagneux, hauts sommets cendreux).
+		SplatTexel InfernalSplat(const World& w, Vec2 p)
+		{
+			const double h = w.HeightAt(p);
+			const double slope = w.SlopeDegAt(p);
+			const double n = Fbm(p.x, p.z, 26.0, 3, w.master.seed + 501);
+			// Fondu des frontières de biome sur ~120 m (même échantillonnage que ComputeSplat).
+			double dirt = 0.0, rock = 0.0;
+			const double off[5][2] = { { 0, 0 }, { 60, 0 }, { -60, 0 }, { 0, 60 }, { 0, -60 } };
+			for (const auto& o : off)
+			{
+				const char c = MacroBiome(w.master, p.x + o[0], p.z + o[1]);
+				// Croix volcanique : plaines de terre rouge et dalles rocheuses ; coins `M` : roche.
+				if (c == 'V') { dirt += 0.6 * 0.2; rock += 0.4 * 0.2; }
+				else { dirt += 0.3 * 0.2; rock += 0.7 * 0.2; }
+			}
+			// Taches (affleurements rocheux dans la terre, et inversement).
+			const double patch = Clamp(n * 0.9, -0.25, 0.25);
+			dirt = std::max(0.0, dirt + patch);
+			rock = std::max(0.0, rock - patch);
+			// Pentes fortes et hauts sommets (cendre grise au lieu de neige) : roche.
+			const double rockK = std::max(SmoothStep(26.0, 40.0, slope + n * 4.0), SmoothStep(480.0, 580.0, h + n * 25.0));
+			rock = std::max(rock, rockK);
+			// Lave (mers et fleuves) : terre, la couche la plus chaude disponible.
+			const double lava = InfernalLavaAt(w.master, p.x, p.z);
+			dirt = Lerp(dirt, 1.0, lava); rock *= 1.0 - lava;
+			// Chemins et emprise urbaine (Citadelle, mines, camps) : terre battue.
+			const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+			if (w.roadDist.InBounds(ri, rj))
+			{
+				const double k = SmoothStep(2.2, -0.8, w.roadDist.At(ri, rj));
+				rock *= 1 - k; dirt = Lerp(dirt, 1.0, k);
+			}
+			const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
+			if (w.urban.InBounds(ui, uj))
+			{
+				const uint8_t u = w.urban.At(ui, uj);
+				if (u == 2) { dirt = 0.95; rock = 0.05; }
+				else if (u == 1) dirt += 0.35;
+			}
+			return { 0.0, dirt, rock, 0.0, 0.0 };
+		}
+
 		SplatTexel ComputeSplat(const World& w, Vec2 p)
 		{
+			// v1.0.83 : les Enfers ont leur propre palette (les Royaumes ne passent pas ici).
+			if (IsInfernalMap(w.master)) return InfernalSplat(w, p);
 			const double h = w.HeightAt(p);
 			const double slope = w.SlopeDegAt(p);
 			const double sea = w.master.scale.seaLevelM;
@@ -319,6 +368,27 @@ namespace tools::world_gen
 			r = Lerp(r, 238, snow); g = Lerp(g, 240, snow); b = Lerp(b, 245, snow);
 		}
 
+		/// v1.0.83 — couleur de terrain des Enfers (carte du monde), sans ombrage ni
+		/// lave : roche rouge striée par l'altitude (T16 p16), coulées et dalles de
+		/// basalte noir (T17 p16), cendre grise sur les hauts sommets (au lieu de la
+		/// neige), coins montagneux plus sombres.
+		/// \param code code de biome du lore (MacroBiome), \param h altitude (m)
+		void InfernalTerrainColor(char code, double h, double x, double z, uint64_t seed, double& r, double& g, double& b)
+		{
+			if (code == 'V') { r = 150; g = 62; b = 40; }   // roche rouge
+			else { r = 112; g = 48; b = 38; }               // chaîne : rouge sombre
+			// Strates (falaises rouges striées) : bandes d'altitude de ~45 m.
+			const double strata = 0.9 + 0.1 * std::sin(h / 7.0 + 2.0 * Fbm(x, z, 1200.0, 2, seed + 9103));
+			r *= strata; g *= strata; b *= strata;
+			// Basalte noir : coulées figées à l'échelle du kilomètre, plus en altitude.
+			const double basalt = SmoothStep(0.05, 0.3, Fbm(x, z, 1400.0, 3, seed + 9104) + (code == 'V' ? 0.0 : 0.12)
+				+ SmoothStep(300.0, 500.0, h) * 0.15);
+			r = Lerp(r, 44, basalt); g = Lerp(g, 36, basalt); b = Lerp(b, 38, basalt);
+			// Cendre grise sur les sommets.
+			const double ash = SmoothStep(470.0, 590.0, h);
+			r = Lerp(r, 128, ash); g = Lerp(g, 122, ash); b = Lerp(b, 118, ash);
+		}
+
 		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
 		/// lacs, routes, villes, cellules générées. Rendu parallèle par rangée.
 		std::vector<uint8_t> RenderContinentMap(const GlobalWorld& g, int N, double originX, double originZ, double sizeM,
@@ -327,6 +397,7 @@ namespace tools::world_gen
 			std::vector<uint8_t> rgb(static_cast<size_t>(N) * N * 3);
 			const double sea = g.master.scale.seaLevelM;
 			const double px = sizeM / N;
+			const bool infernal = IsInfernalMap(g.master); // v1.0.83 : palette des Enfers
 			ParallelRows(N, [&](int j) {
 				for (int i = 0; i < N; ++i)
 				{
@@ -335,13 +406,27 @@ namespace tools::world_gen
 					const bool outside = p.x < g.minX || p.x > g.maxX || p.z < g.minZ || p.z > g.maxZ;
 					const double h = outside ? 6.0 : SampleBilinear(g.coarse, p.x, p.z);
 					double r, gg, b;
-					TerrainColor(MacroBiome(g.master, p.x, p.z), h, sea, r, gg, b);
+					const char code = MacroBiome(g.master, p.x, p.z);
+					if (!infernal) TerrainColor(code, h, sea, r, gg, b);
+					else if (outside || h < sea) { r = 30; gg = 18; b = 18; } // v1.0.83 : abîme hors de la carte des Enfers
+					else InfernalTerrainColor(code, h, p.x, p.z, g.master.seed, r, gg, b);
 					if (h >= sea)
 					{
 						const double hx = SampleBilinear(g.coarse, p.x + px, p.z) - SampleBilinear(g.coarse, p.x - px, p.z);
 						const double hz = SampleBilinear(g.coarse, p.x, p.z + px) - SampleBilinear(g.coarse, p.x, p.z - px);
 						const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * px) * 2.5, 0.55, 1.35);
 						r *= shade; gg *= shade; b *= shade;
+					}
+					// v1.0.83 : lave jaune-orange NON ombrée (lumineuse), cœur jaune, bord orange-rouge.
+					if (infernal && !outside)
+					{
+						const double lava = InfernalLavaAt(g.master, p.x, p.z);
+						if (lava > 0.0)
+						{
+							const double core = SmoothStep(0.35, 1.0, lava);
+							const double lr = Lerp(222, 255, core), lg = Lerp(84, 186, core), lb = Lerp(22, 48, core);
+							r = Lerp(r, lr, lava); gg = Lerp(gg, lg, lava); b = Lerp(b, lb, lava);
+						}
 					}
 					uint8_t* o = &rgb[(static_cast<size_t>(j) * N + i) * 3];
 					o[0] = static_cast<uint8_t>(Clamp(r, 0, 255));

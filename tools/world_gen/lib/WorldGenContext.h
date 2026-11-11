@@ -230,6 +230,18 @@ namespace tools::world_gen
 	char MacroBiome(const WorldMaster& m, double x, double z);
 	/// Code du lore de la case (n, e) (' ' = mer hors grille). Terrain.cpp
 	char LoreCode(const WorldMaster& m, int n, int e);
+	/// v1.0.83 : la carte du master est-elle les Enfers ? Le générateur y applique
+	/// la palette infernale (splat sans herbe ni neige, pas de broussailles ni de
+	/// conifères, carte du monde en roche rouge, basalte, cendre et lave) ; les
+	/// Royaumes gardent la palette historique, octet pour octet.
+	inline bool IsInfernalMap(const WorldMaster& m) { return m.cellMap == engine::world::cells::CellMap::Enfers; }
+	/// v1.0.83 : présence de lave en (x, z), dans [0, 1] (0 hors des Enfers) :
+	/// mers de lave autour des lieux `volcan` (≈ 1,7 km de rayon, bord bruité) et
+	/// fleuves de lave sinueux (≈ 80-120 m de large) dans le biome volcanique `V`,
+	/// écartés des villes et des lieux (≈ 0,9 km). Fonction PURE du master et de la
+	/// position (raccord exact entre cellules). Pas de matériau émissif côté client :
+	/// la lave n'est qu'une couleur (carte du monde) et un sol de terre (splat). Terrain.cpp
+	double InfernalLavaAt(const WorldMaster& m, double x, double z);
 	/// Élévation (m) apportée en (x, z) par UN relief local (`reliefs` du master,
 	/// v1.0.72) : dôme d'une colline, massif entaillé d'une crevasse ; massif de
 	/// crêtes sans ville (v1.0.77), avant le masque des terres émergées. Terrain.cpp

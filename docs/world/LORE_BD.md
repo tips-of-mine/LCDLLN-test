@@ -1895,6 +1895,41 @@ la Cité-Nid, l'écloserie, les créatures et boss ophidiens (aucun spawner). Te
 être deux peuples (vieillard au bonnet pourpre du T15, barbu au turban rouge du T18) ; instances de la Cité-Nid et de
 l'écloserie ; butin ophidien ; destinations maritimes régulières des comptoirs.
 
+### 16.12 Palette infernale du générateur pour les Enfers (v1.0.83)
+
+Lot 12 du propriétaire (11/11/2026). Défaut corrigé : la carte générée des Enfers sortait verte (herbe, forêts,
+neige sur les sommets des coins), alors que les Enfers de la BD sont roche rouge, basalte, cendre et lave. Sources
+visuelles (notes de lecture des tomes 15-22, section 7) : canyon de falaises rouges striées, fleuves et cascades de
+lave jaune-orange `[BD-T16 p.16]` ; plaine de lave jaune-orange, îlots de basalte noir à colonnes `[BD-T17 p.16]` ;
+ciel de feu jaune-orange `[BD-T20 p.30-31]`, `[BD-T21 p.6]` ; « mer de flammes », falaises noires et lave
+`[BD-T21 p.36]` ; paysage de lave `[BD-T22 p.22]`.
+
+**Décision inscrite au registre** (`regle_canon_registre_decisions`, 1 entrée v1.0.83, note `[DÉCISION] (v1.0.83)` sur
+`region_enfers_t00`) : palette des Enfers d'après les T15-22, sans herbe, forêt ni neige.
+
+| Sortie de `tools/world_gen` (carte `enfers` seulement) | Avant (v1.0.82) | Après (v1.0.83) |
+|---|---|---|
+| Splat `terrain_splat.slap` (4 couches à couleur fixe côté client) | herbe, terre, roche, neige | **terre rouge-brun** (plaines, lave, chemins) et **roche** (pentes, coins `M`, hauts sommets) ; herbe et neige à 0 |
+| Masque d'herbe `terrain_grass.grms`, densité forestière `terrain_forest.frms` | herbe sur les plaines | **vides** |
+| Décor `scatter.bin` | conifères des coins, broussailles, fleurs, herbes hautes | **arbres morts** (calcinés) et rochers seulement |
+| Carte du monde `world_map.png` | vert, brun, neige blanche | **roche rouge striée** par l'altitude, **basalte noir**, **cendre grise** au sommet, **lave jaune-orange** non ombrée ; abîme sombre hors carte |
+
+**Lave** (`InfernalLavaAt`, fonction pure de la position) : mer de lave d'environ 1,7 km de rayon autour de chaque
+lieu `volcan` (la Mer de lave de N000_W001) ; fleuves de lave sinueux de 80 à 120 m dans la croix volcanique `V`,
+tenus à 0,55-0,95 km des villes et des lieux (Citadelle, portails, palais restent praticables). **Limite** : le client
+n'a ni couche ni matériau de lave (4 couches fixes herbe, terre, roche, neige ; aucune couleur par zone) : en jeu, la
+lave est un sol de terre rouge-brun, sans lueur ni dégâts ; le basalte noir et la cendre grise ne sont visibles que
+sur la carte du monde. Une couche émissive de lave (shader, 5e canal ou palette par zone) reste à faire côté client,
+non faite ici.
+
+**Monde des Royaumes inchangé** : toutes les branches sont gardées par `IsInfernalMap` (carte `enfers`). Preuve : les
+34 fichiers générés de trois cellules des Royaumes (N003_W009 forêt, N021_E015 sommets enneigés, S006_E013
+volcanique) sont identiques octet pour octet avant et après, et la carte du continent rendue par le même code aussi.
+Test `world_gen_tests` « palette v1.0.83 » (Enfers : aucun canal herbe ou neige, masques vides, décor sans plante
+verte, lave sur la carte, aucun pixel vert ; Royaumes : herbe et masque d'herbe présents, pas de lave).
+
+**Services** : 1242 PNJ (inchangé). Aucun identifiant ajouté ni supprimé.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

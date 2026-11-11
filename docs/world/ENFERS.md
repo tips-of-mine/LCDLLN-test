@@ -48,6 +48,12 @@ par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (gen
 | N000_W001 | Mer de lave (`volcan`, −2 750 / −1 250 m), Seuil des Plans (`faille`, −2 750 / +2 250 m) |
 | N000_E001 | Canyon des Falaises rouges (`defile`, +2 500 / −2 000 m, viaduc compris), Plateaux suspendus des Légions (`camp`, +2 500 / +2 500 m) |
 
+**Palette (v1.0.83)** : le générateur applique aux Enfers une palette infernale (T15-22) : ni herbe, ni forêt,
+ni broussaille, ni neige ; sol de terre rouge-brun et de roche (splat), arbres morts et rochers ; sur la carte du
+monde, roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave autour de la Mer de lave de
+N000_W001, fleuves de lave dans la croix). La lave n'est pas émissive en jeu (pas de couche dédiée côté client).
+Détail : [`LORE_BD.md`](LORE_BD.md) §16.12.
+
 Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
 (`routes`) ne couvre pas les Enfers. Faune procédurale de la carte (`Population.cpp`, `CreatureFor`) :
 diablotins errants (150) près de la Citadelle, chiens des cendres (151) ensuite, ogres (161, niveau 10)

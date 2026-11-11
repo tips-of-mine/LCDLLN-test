@@ -28,6 +28,9 @@
 // 10. v1.0.82 : entrée cachée des Ophidiens dans la jungle de Leviathan (N010_E010,
 //    cellule générée) : salle au sec, hors case à ville, loin des routes et à plus de
 //    15 km de toute grotte de dragon.
+// 11. v1.0.83 : palette infernale des Enfers (aucune herbe, neige, forêt ni
+//    broussaille ; lave jaune-orange sur la carte du monde) ; la cellule des
+//    Royaumes N003_W009 garde herbe, masque d'herbe et forêt (palette historique).
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -271,6 +274,79 @@ namespace
 		Check(m.cities.size() == 1u && cornersWithPoi == 4u, "master enfers : une seule ville, un POI dans chaque coin");
 	}
 
+	/// v1.0.83 — palette infernale (T15-22) des 9 cellules générées dans \p out :
+	/// splat sans canal herbe (R) ni neige (A), masque d'herbe et densité forestière
+	/// nuls, décor sans broussaille, fleur, herbe ni arbre vivant ; carte du monde
+	/// avec de la lave jaune-orange (mer de lave de N000_W001) et sans vert.
+	void TestPaletteEnfersV1083(const std::filesystem::path& out)
+	{
+		bool noGrassSnow = true, noGrassMask = true, noForest = true, noGreenProps = true, rockAndDirt = true;
+		for (const char* c : { "n000_e000", "n001_e000", "n000_e001", "s001_e000", "n000_w001",
+			"n001_w001", "n001_e001", "s001_w001", "s001_e001" })
+		{
+			const std::string cell = std::string("enfers_") + c;
+			const std::vector<uint8_t> splat = ReadBytes(out / "zones" / cell / "terrain_splat.slap");
+			uint64_t dirt = 0, rock = 0;
+			noGrassSnow = noGrassSnow && splat.size() > 12;
+			for (size_t k = 12; k + 3 < splat.size(); k += 4)
+			{
+				if (splat[k] != 0 || splat[k + 3] != 0) { noGrassSnow = false; break; }
+				dirt += splat[k + 1]; rock += splat[k + 2];
+			}
+			rockAndDirt = rockAndDirt && dirt > 0 && rock > 0;
+			const std::vector<uint8_t> grass = ReadBytes(out / "zones" / cell / "terrain_grass.grms");
+			noGrassMask = noGrassMask && grass.size() > 12
+				&& std::all_of(grass.begin() + 12, grass.end(), [](uint8_t v) { return v == 0; });
+			engine::world::instances::ForestMask fm; std::string e;
+			noForest = noForest && engine::world::instances::LoadForestMask(ReadBytes(out / "zones" / cell / "terrain_forest.frms"), fm, e)
+				&& std::all_of(fm.density.begin(), fm.density.end(), [](uint8_t v) { return v == 0; });
+			engine::world::instances::ScatterFile sf;
+			const bool okS = engine::world::instances::LoadScatterBin(ReadBytes(out / "instances" / ("zone_" + cell) / "scatter.bin"), sf, e);
+			noGreenProps = noGreenProps && okS;
+			for (const std::string& m : sf.meshPaths)
+				for (const char* green : { "Bush_", "Fern_", "Flower_", "Grass_", "Clover_", "Mushroom_", "Plant_1", "Pine_", "CommonTree_", "TwistedTree_" })
+					if (m.find(green) != std::string::npos) noGreenProps = false;
+		}
+		Check(noGrassSnow && rockAndDirt, "palette v1.0.83 : splat des Enfers sans herbe ni neige (terre et roche)");
+		Check(noGrassMask && noForest, "palette v1.0.83 : Enfers sans masque d'herbe ni foret");
+		Check(noGreenProps, "palette v1.0.83 : decor des Enfers sans broussaille, herbe ni arbre vivant");
+		// Carte du monde : lave jaune-orange dans la mer de lave, aucun pixel vert dans le carré 3×3.
+		{
+			tools::zone_builder::JsonValue root; std::string e;
+			const bool okJ = tools::zone_builder::ParseJsonDocument(ReadText(out / "world/enfers/places.json"), root, e);
+			const auto* t = okJ ? tools::zone_builder::FindObjectMember(root, "terrain") : nullptr;
+			const std::vector<uint8_t> png = ReadBytes(out / "world/enfers/world_map.png");
+			int w = 0, h = 0, n = 0;
+			unsigned char* px = png.empty() ? nullptr : stbi_load_from_memory(png.data(), static_cast<int>(png.size()), &w, &h, &n, 3);
+			size_t lavaPx = 0, green = 0;
+			bool merDeLave = false;
+			if (px && t)
+			{
+				const double ox = tools::zone_builder::FindObjectMember(*t, "origin_x")->numberValue;
+				const double oz = tools::zone_builder::FindObjectMember(*t, "origin_z")->numberValue;
+				const double size = tools::zone_builder::FindObjectMember(*t, "size_m")->numberValue;
+				auto at = [&](double x, double z) {
+					const int i = std::clamp(static_cast<int>((x - ox) / size * w), 0, w - 1);
+					const int j = std::clamp(static_cast<int>((z - oz) / size * h), 0, h - 1);
+					return px + (static_cast<size_t>(j) * w + i) * 3;
+				};
+				for (double z = -14950.0; z < 15000.0; z += 100.0)
+					for (double x = -14950.0; x < 15000.0; x += 100.0)
+					{
+						const unsigned char* c = at(x, z);
+						if (c[0] > 200 && c[1] > 70 && c[2] < 90) ++lavaPx;
+						if (c[1] > c[0]) ++green;
+					}
+				// Mer de lave : N000_W001, décalage (−2 750, −1 250) depuis le centre de la case.
+				const unsigned char* c = at(-12750.0, -1250.0);
+				merDeLave = c[0] > 200 && c[1] > 70 && c[2] < 90;
+			}
+			if (px) stbi_image_free(px);
+			Check(merDeLave && lavaPx > 300, "palette v1.0.83 : carte des Enfers avec mer et fleuves de lave jaune-orange");
+			Check(px && green == 0, "palette v1.0.83 : carte des Enfers sans vert (ni herbe ni foret)");
+		}
+	}
+
 	/// Seconde carte : génération complète des Enfers (9 cellules) → dossiers et
 	/// identifiants propres à la carte, sorties globales sous world/enfers/.
 	void TestGenerationEnfers()
@@ -354,6 +430,7 @@ namespace
 				&& places.find("\"race\": \"nains\"") == std::string::npos,
 				"enfers : coins generes, mines de la Legion (aucun lieu nain)");
 		}
+		TestPaletteEnfersV1083(tmp);
 		fs::remove_all(tmp, ec);
 	}
 
@@ -431,6 +508,22 @@ namespace
 				identical = false;
 			}
 		Check(identical, "determinisme : sorties identiques octet pour octet");
+		// v1.0.83 : la palette infernale ne touche pas les Royaumes (herbe, masque
+		// d'herbe et neige possibles, pas de lave).
+		{
+			tools::world_gen::WorldMaster rm; std::string e;
+			const bool okM = tools::world_gen::LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", rm, e);
+			bool noLava = okM && !tools::world_gen::IsInfernalMap(rm);
+			for (double z = -35000.0; noLava && z < -25000.0; z += 250.0)
+				for (double x = -95000.0; x < -85000.0; x += 250.0)
+					if (tools::world_gen::InfernalLavaAt(rm, x, z) != 0.0) { noLava = false; break; }
+			const std::vector<uint8_t> splat = ReadBytes(tmp / "a" / "zones/cell_n003_w009/terrain_splat.slap");
+			const std::vector<uint8_t> grass = ReadBytes(tmp / "a" / "zones/cell_n003_w009/terrain_grass.grms");
+			uint64_t g = 0, gm = 0;
+			for (size_t k = 12; k + 3 < splat.size(); k += 4) g += splat[k];
+			for (size_t k = 12; k < grass.size(); ++k) gm += grass[k];
+			Check(noLava && g > 0 && gm > 0, "palette v1.0.83 : Royaumes inchanges (herbe et masque d'herbe, sans lave)");
+		}
 
 		const fs::path out = tmp / "a";
 		const std::string cell = "cell_n003_w009";

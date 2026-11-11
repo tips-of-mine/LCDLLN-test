@@ -287,6 +287,44 @@ namespace tools::world_gen
 		return LoreCode(m, bn, be);
 	}
 
+	double InfernalLavaAt(const WorldMaster& m, double x, double z)
+	{
+		if (!IsInfernalMap(m)) return 0.0;
+		const uint64_t seed = m.seed;
+		double lava = 0.0;
+		// Distance au lieu (hors mers de lave) ou à la ville la plus proche : les
+		// fleuves s'en écartent (portails, Citadelle, palais restent praticables).
+		double clear = 1e18;
+		for (const PoiDef& p : m.pois)
+		{
+			const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ p.n, p.e });
+			const double d = std::hypot(x - (c.x + p.offsetX), z - (c.z + p.offsetZ));
+			if (p.kind == "volcan")
+			{
+				// Mer de lave (T17 p16, T21 p36, T22 p22) : disque au bord ondulé.
+				const double r = 1700.0 * (1.0 + 0.28 * Fbm(x, z, 650.0, 2, seed + 9101));
+				lava = std::max(lava, SmoothStep(r, r - 160.0, d));
+			}
+			else
+				clear = std::min(clear, d);
+		}
+		for (const CityDef& c : m.cities)
+		{
+			const engine::world::cells::CellPoint cc = engine::world::cells::CellCenter({ c.n, c.e });
+			clear = std::min(clear, std::hypot(x - cc.x, z - cc.z));
+		}
+		// Fleuves de lave (T16 p16 : canyon de falaises rouges, fleuves et cascades
+		// de lave jaune-orange) : lignes de niveau d'un bruit à grande échelle, dans
+		// la croix volcanique seulement.
+		if (MacroBiome(m, x, z) == 'V')
+		{
+			const double ridge = std::fabs(Fbm(x, z, 3800.0, 2, seed + 9102));
+			const double river = SmoothStep(0.032, 0.012, ridge) * SmoothStep(550.0, 950.0, clear);
+			lava = std::max(lava, river);
+		}
+		return Clamp(lava, 0.0, 1.0);
+	}
+
 	double MacroHeight(const WorldMaster& m, double x, double z)
 	{
 		const uint64_t seed = m.seed;

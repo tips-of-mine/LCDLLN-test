@@ -1090,7 +1090,7 @@ Aucune route n'est trop longue ni ne traverse la mer ou une chaîne. La composan
 
 **Ce qui n'est pas réel en jeu** :
 
-- N010_W015 (Verdansur) et N010_W016 ne sont pas dans `generated_cells`. La colline, les rivières et le
+- N010_W015 (Verdansur) et N010_W016 ne sont pas dans `generated_cells` (ajoutées en v1.0.78, §16.7). La colline, les rivières et le
   sanctuaire sont générés : carte du monde, `places.json`, et cellules dès qu'elles seront ajoutées. Ils
   ne sont pas jouables tant que ces cases sont derrière le mur invisible.
 - Le générateur ne modèle pas de falaises : la côte y descend en pente douce.
@@ -1566,6 +1566,58 @@ anomalie ; `reseau.py --dry` donne les mêmes propositions qu'en v1.0.76.
 - Les hauteurs des massifs et la part des cases en `mountain` ; l'écart lore `mountain` / grille `T`.
 - Le rattachement des raids : lieux de raid gardés à côté des temples plutôt que fusionnés avec eux.
 
+### 16.7 Cellules de Verdansur et des Brisants, décisions du 11/11 (v1.0.78)
+
+Lot 7 du propriétaire (11/11/2026).
+
+**Cellules N010_W015 et N010_W016.** Verdansur (`town_0119`, colline de 130 m d'où partent les deux rivières) et le
+Sanctuaire des Brisants (`poi_sanctuaire_des_brisants`, à 3,2 km à l'ouest du centre de N010_W016, contre les
+falaises) existent depuis la v1.0.72 (§16.1, points 10 et 11). Leurs cases n'étaient pas générées pour une seule
+raison : elles ne figuraient pas dans `generated_cells` de `world_master.json`. Ce ne sont pas des cases de départ, et
+le corridor des départs (`connect_start_cities`) ne passe pas par là : la cellule générée la plus proche est
+N010_W011 (Syzygie). Le relief (`colline_verdansur`), les deux cours `riviere_verdansur_sud` / `riviere_verdansur_nord`
+et le POI décalé étaient déjà calculés par le générateur (carte du monde, `places.json`), mais aucune heightmap de
+ces deux cases n'était produite.
+
+- `generated_cells` : nouvelle dernière ligne `"N010_W015", "N010_W016"` (commentaire du master mis à jour).
+- Cellules générées : **248 → 250** (sonde : liste master + corridors, avant / après). Aucune cellule perdue, corridor
+  inchangé.
+- Génération des deux cases seules (`--cells N010_W015,N010_W016`) sans erreur : 16 lieux procéduraux,
+  385 bâtiments, 952 spawners. Rendu : sommet de la colline sous Verdansur (191 m), rivière sud qui part du pied de
+  la colline, cours nord-est vers N010_W014, mer au bord ouest de N010_W016, sanctuaire au sec à moins de 2 km du rivage.
+- Test `world_gen_tests` « cellules v1.0.78 » (cases dans `generated_cells`, Verdansur en N010_W015, sanctuaire
+  dans les lieux de N010_W016).
+
+**Décisions inscrites au registre** (`regle_canon_registre_decisions`, 5 entrées v1.0.78, une par fiche) :
+
+| # | Décision du propriétaire | Fiches |
+|---|---|---|
+| 1 | Du contenu (quêtes, raids, monstres) de plus haut niveau peut exister dans une zone de niveau inférieur. Les chemins doivent être bien balisés pour faire comprendre au joueur de faible niveau qu'il entre dans une zone où les adversaires sont plus forts. But : obliger à visiter tout le monde. Exemple : Bridlecrag (départ 1-10) partage sa case S004_W006 avec le Grand Ancien (66-70) ; les deux restent en place. | `rule_niveaux_par_faction`, `regle_bestiaire_echelles`, cellule `S004_W006` |
+| 2 | Le nom « lac / fleuve de Syzygie » est conservé. `riv_fleuve_sysigie` (nom provisoire « [à nommer] » depuis la v1.0.55) devient « Fleuve de Syzygie », dans le lore et dans `river_courses` du master (champ `name`, non utilisé par le générateur). | `riv_fleuve_sysigie` |
+| 3 | Le niveau d'une zone est relatif à la faction : une zone de faible niveau pour une faction ne l'est pas forcément pour les autres. Principe seulement : le détail par faction sera défini plus tard ; à partir du niveau 20 du joueur, beaucoup de choses changent. | `rule_niveaux_par_faction` |
+
+La décision 1 assouplit la règle « pas de dragon adulte en zone débutant » appliquée en v1.0.68 (§15.5) et le point incertain de la v1.0.76 (§16.5) : le
+Grand Ancien reste en S004_W006, déjà dans ses `zones_chasse` et les `creature_ids` de la case. Aucun niveau,
+aucune créature et aucune case ne changent.
+
+**Services** : inchangés (1241 PNJ). Aucun identifiant supprimé du lore.
+
+**Ce qui n'est pas réel en jeu** :
+
+- Les deux cases sont générées mais isolées : quatre cases non générées (N010_W012 à N010_W014) les séparent des
+  autres cellules jouables. On n'y arrive pas à pied tant que le corridor n'est pas étendu.
+- La route 000206 Verdansur → Sanctuaire n'existe que dans le lore : le générateur ne relie pas les POI par des routes.
+  Le sanctuaire n'est qu'un repère (aucun modèle de croix ni de brasier), et la côte descend en pente douce (pas de
+  falaise modélisée).
+- La Veillée des Feux des Brisants : lore seulement (pas de système d'événements de monde côté serveur).
+- Le balisage des chemins vers les zones plus fortes (décision 1) et les niveaux par faction (décision 3) : règles
+  du lore, sans mécanisme en jeu.
+
+**Points incertains** :
+
+- Raccorder Verdansur au réseau jouable (cases N010_W012 à N010_W014, ou corridor vers Syzygie) : à décider.
+- La forme du balisage (panneaux, avertissements de PNJ, couleur du nom de zone) et le seuil d'avertissement.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -1594,6 +1646,7 @@ anomalie ; `reseau.py --dry` donne les mêmes propositions qu'en v1.0.76.
 - ~~Retour de Parsifal au T12~~ : **close** (v1.0.55) — caché dans une cité, plus montré.
 - ~~Kruikna, « Cruik », dragon bleu de Pilou~~ : **close** (v1.0.55) — trois dragons différents.
 - ~~Greldinard appelé « Baron » (T10-T13)~~ : **close** (v1.0.55) — appellation de la BD, sans fief.
-- Noms des fleuves, rivières et lacs : à donner par le propriétaire (fleuve de Sysigie « [à nommer] »).
+- Noms des fleuves, rivières et lacs : à donner par le propriétaire. Le fleuve et le lac de Syzygie sont nommés
+  (v1.0.78, §16.7).
 - Forteresse naine d'Heureux (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.

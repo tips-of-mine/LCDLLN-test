@@ -1165,6 +1165,38 @@ namespace
 		Check(temples == 8 && shrines == 3 && dry == 11 && high >= 7, "relief v1.0.77 : 11 temples de l'ile au sec, 7 au moins sur les sommets");
 	}
 
+	/// v1.0.78 : les cases de Verdansur (N010_W015) et du Sanctuaire des Brisants
+	/// (N010_W016), dont le relief, les rivières et le POI existaient depuis la
+	/// v1.0.72, sont générées : listées dans generated_cells, la ville et le lieu
+	/// décalé sont bien rattachés à leur cellule.
+	void TestCellulesV1078()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "cellules v1.0.78 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		auto generated = [&](const std::string& cell) {
+			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
+		};
+		Check(generated("N010_W015") && generated("N010_W016"), "cellules v1.0.78 : N010_W015 et N010_W016 generees");
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const CityDef* ver = g.FindCity("town_0119");
+		Check(ver && ver->cell == "N010_W015", "cellules v1.0.78 : Verdansur en N010_W015");
+		// Lieu décalé : présent dans les lieux de sa cellule (N010_W016).
+		World w;
+		InitCell(w, g, { 10, -16 });
+		bool found = false;
+		for (const PoiDef& p : w.pois)
+			found = found || p.id == "poi_sanctuaire_des_brisants";
+		Check(found, "cellules v1.0.78 : Sanctuaire des Brisants dans les lieux de N010_W016");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1256,6 +1288,7 @@ int main()
 	TestIleV1074();
 	TestCorrectionsV1076();
 	TestReliefIleV1077();
+	TestCellulesV1078();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

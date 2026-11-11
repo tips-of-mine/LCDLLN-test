@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.77",
+    "version": "1.0.78",
     "notes": [
+      "v1.0.78 : [CARTE] cellules de Verdansur et des Brisants, décisions du propriétaire du 11/11/2026 (lot 7). Monde jouable : N010_W015 (Verdansur sur sa colline, source des deux rivières) et N010_W016 (Sanctuaire des Brisants) ajoutées à generated_cells de world_master.json ; elles restaient hors de la génération depuis la v1.0.72. Décisions inscrites au registre : contenu de plus haut niveau permis dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (exemple : Bridlecrag et le Grand Ancien partagent S004_W006 et restent en place) ; nom « lac / fleuve de Syzygie » conservé (riv_fleuve_sysigie nommé « Fleuve de Syzygie ») ; niveau d'une zone relatif à la faction (principe, détail par faction plus tard). Détail : docs/world/LORE_BD.md, section 16.7.",
       "v1.0.77 : [CARTE] relief et temples de l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026). Nom « Île de la Trêve » gardé et visible : name des 20 cellules terrestres, affiché par l'éditeur. Relief : 7 pics et crêtes boisés en mountain (N022_W012, N021_W013, N020_W014, N019_W013, N018_W013, N017_W012, N020_W011), falaises et vallées encaissées ; monde jouable : 11 massifs (reliefs du master), grille en forêt, côte inchangée. Peuple [GD] : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), 5 PNJ et 5 dialogues. 11 temples de style inca [GD] (3 grands, 5 moyens, 3 oratoires) avec leurs POI ; les 4 raids et les 8 quêtes de la v1.0.74 s'y rattachent ; 4 quêtes [GD] ; sentiers 000226, 000227. Détail : docs/world/LORE_BD.md, section 16.6.",
       "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Orderfen → Hayfen par la terre, 000064 Lhynn → Dustfen, 000073 Dustfen → Clearfen, 000076 Ashwick → Stonehaven, 000074 Der Hem Shelbem → Frosthollow (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Coldport – Frosthollow (000079, en S007_E006) vers la Forteresse Naine d'Heureux ; tronçon Dunfold → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harrowbrook → Equiton (sable), 000225 Brightholm → Ruines du prieuré (remplace 000140), 000201 Greyhedge → Ambermead devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bridlecrag S004_W005 → S004_W006, Cragfold S004_W003 → S004_W002 (hors de la région 3×3 de Wyrmhallow). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
       "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brinehaven (N017_W010, port franc neutre), Duskmoor (N022_W010, Lune Noire), Truceholm (N019_W010, îlot, neutre), Lanternhold (N021_W014, Empire). Ports avec ponton à Hayfen et Orderfen ; ligne maritime du Nord Brinehaven ↔ Hayfen ↔ Orderfen (000221, 000222) et navette de Truceholm (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
@@ -207020,7 +207021,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.76) Haras de Bridlecrag (déplacé depuis S004_W005) : chevaux, mulets, poneys, ânes, chiens ; LORE_BD §16.5."
+        "[DÉCISION] (v1.0.76) Haras de Bridlecrag (déplacé depuis S004_W005) : chevaux, mulets, poneys, ânes, chiens ; LORE_BD §16.5.",
+        "[DÉCISION] (v1.0.78) Le haras de Bridlecrag (départ, niveaux 1 à 10) et le Grand Ancien (66-70) partagent la case et restent en place : du contenu de plus haut niveau peut exister dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -226931,6 +226933,41 @@
           "nom": "Sentiers des temples",
           "decision": "Sentiers vers les deux temples sans route (Temple des Cimes depuis Lanternhold, Temple de la Lune d'Argent depuis le Camp du Cap) ; les neuf autres temples sont sur une route ou un sentier existant (LORE_BD §16.6).",
           "version": "1.0.77"
+        },
+        {
+          "collection": "cells",
+          "id": "S004_W006",
+          "nom": "Bridlecrag et le Grand Ancien",
+          "decision": "Le haras de Bridlecrag (départ 1-10) et le Grand Ancien (66-70) partagent la case et restent en place (LORE_BD §16.7).",
+          "version": "1.0.78"
+        },
+        {
+          "collection": "hydrography.rivers",
+          "id": "riv_fleuve_sysigie",
+          "nom": "Fleuve de Syzygie",
+          "decision": "Le nom « lac / fleuve de Syzygie » est conservé ; le fleuve est nommé « Fleuve de Syzygie » (LORE_BD §16.7).",
+          "version": "1.0.78"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_bestiaire_echelles",
+          "nom": "Bestiaire — échelles de danger et zones de chasse",
+          "decision": "Une créature de plus haut niveau peut vivre dans une zone de niveau inférieur si les chemins avertissent le joueur ; le Grand Ancien (66-70) reste en S004_W006 (LORE_BD §16.7).",
+          "version": "1.0.78"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_niveaux_par_faction",
+          "nom": "Niveaux des zones selon la faction",
+          "decision": "Du contenu de plus haut niveau (quêtes, raids, monstres) peut exister dans une zone de niveau inférieur ; chemins bien balisés pour prévenir le joueur de faible niveau ; but : obliger à visiter tout le monde. Exemple : Bridlecrag (1-10) et le Grand Ancien (66-70) en S004_W006 (LORE_BD §16.7).",
+          "version": "1.0.78"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "rule_niveaux_par_faction",
+          "nom": "Niveaux des zones selon la faction",
+          "decision": "Le niveau d'une zone est relatif à la faction : une zone de faible niveau pour une faction ne l'est pas forcément pour les autres. Principe seulement, détail par faction à définir ; à partir du niveau 20 du joueur, beaucoup de choses changent (LORE_BD §16.7).",
+          "version": "1.0.78"
         }
       ]
     },
@@ -229560,7 +229597,9 @@
         "[DÉCISION] (v1.0.61) « Les départs ne sont pas en fonction de la race, mais de la faction. » Chaque faction jouable a son départ (game_design.depart des factions) : un hameau dédié près de sa ville de référence, un lieu existant (Lune Noire, Archimages, Légion infernale), ou aucun (Hors-La-Loi, Maison du Serpent à définir). Hameau de Marn, Whispers Hill, Leviathan et Ghrunke Dash redeviennent des villes normales.",
         "[DÉCISION] (v1.0.62) Chaque départ de faction a une région de départ de 3×3 cases (la case du hameau de départ et ses 8 voisines), de niveau débutant (1 à 10) : 2 à 3 fermes ou hameaux, 4 à 6 POI, routes locales, créatures de bas niveau ; une PR de carte par départ. Décision du propriétaire du 06/11/2026 (LORE_BD §15). Première région : Eaglewatch (Légions Impériales, v1.0.62).",
         "[DÉCISION] (v1.0.71) Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails, sans hameau (la Citadelle reste la seule ville) ; décision du propriétaire du 09/11/2026 (LORE_BD §15.8).",
-        "[DÉCISION] (v1.0.74) Île de la Trêve (region_ile_de_la_treve) : même niveau, 45 à 60, pour toutes les factions (zone commune, Légion comprise) ; décision du propriétaire du 10/11/2026 (LORE_BD §16.3)."
+        "[DÉCISION] (v1.0.74) Île de la Trêve (region_ile_de_la_treve) : même niveau, 45 à 60, pour toutes les factions (zone commune, Légion comprise) ; décision du propriétaire du 10/11/2026 (LORE_BD §16.3).",
+        "[DÉCISION] (v1.0.78) Du contenu de plus haut niveau (quêtes, raids, monstres) peut exister dans une zone de niveau inférieur. Les chemins qui y mènent doivent être bien balisés pour faire comprendre au joueur de faible niveau qu'il entre dans une zone où les adversaires sont plus forts. But : obliger à visiter tout le monde. Exemple : Bridlecrag (départ, niveaux 1 à 10) partage sa case S004_W006 avec le Grand Ancien (66-70) ; les deux restent en place. Décision du propriétaire du 11/11/2026 (LORE_BD §16.7).",
+        "[DÉCISION] (v1.0.78) Le niveau d'une zone est relatif à la faction : une zone de faible niveau pour une faction ne l'est pas forcément pour les autres. Principe seulement : le détail par faction sera défini plus tard ; à partir du niveau 20 du joueur, beaucoup de choses changent. Décision du propriétaire du 11/11/2026 (LORE_BD §16.7)."
       ]
     },
     {
@@ -231192,7 +231231,8 @@
         "[GD] (v1.0.58) Démons majeurs et créatures nommées restent dans persons (ex. char_shaadrak, char_xygga, char_drakkahen, char_narankhorhh_m2) ; la fiche d'espèce y renvoie.",
         "[DÉCISION] (v1.0.71) Les Enfers sont une zone de départ de niveau 1 à 10 ; seuls les boss et les abords des portails peuvent garder un niveau plus élevé (décision du propriétaire du 09/11/2026 ; LORE_BD §15.8). Les espèces de haut niveau dont l'habitat cite les Enfers (succube, nuée infernale, légionnaire infernal, démon volant, crapaud infernal, démon lacérateur, gargouille animée, démon à tête de sanglier) restent aux portes et à la Porte des Enfers du T12 (zones_chasse inchangées), pas dans les cases des Enfers.",
         "[GD] (v1.0.71) Cases de la carte des Enfers dans zones_chasse : « enfers:<case> » (ex. enfers:N001_W001) ; elles n'ont pas de fiche cells (les identifiants N000_E000… sont ceux du continent), donc pas de creature_ids ({SEC}).",
-        "[DÉCISION] (v1.0.74) L'Île de la Trêve (île du Nord, region_ile_de_la_treve) est une zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 (décision du propriétaire du 10/11/2026 ; LORE_BD §16.3). Espèces : creature_loup_des_brumes et creature_naufrageur [GD], creature_geant_de_froid et creature_spectre (existantes) ; boss des raids creature_roi_noye (50), creature_capitaine_maree_rouge (54), creature_jarl_de_givre (58) et creature_devoreur_des_brumes (boss mondial, 60)."
+        "[DÉCISION] (v1.0.74) L'Île de la Trêve (île du Nord, region_ile_de_la_treve) est une zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 (décision du propriétaire du 10/11/2026 ; LORE_BD §16.3). Espèces : creature_loup_des_brumes et creature_naufrageur [GD], creature_geant_de_froid et creature_spectre (existantes) ; boss des raids creature_roi_noye (50), creature_capitaine_maree_rouge (54), creature_jarl_de_givre (58) et creature_devoreur_des_brumes (boss mondial, 60).",
+        "[DÉCISION] (v1.0.78) Une créature de plus haut niveau peut vivre dans une zone de niveau inférieur, à condition que les chemins qui y mènent avertissent le joueur (balisage) : voir rule_niveaux_par_faction. Le Grand Ancien (creature_dragon_grand_ancien, 66-70) reste en S004_W006, case du haras de Bridlecrag (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7)."
       ]
     },
     {
@@ -243508,7 +243548,7 @@
       },
       {
         "id": "riv_fleuve_sysigie",
-        "name": "[à nommer]",
+        "name": "Fleuve de Syzygie",
         "from": "source_n006_w010",
         "to": "mer",
         "source": {
@@ -243539,7 +243579,8 @@
           "[DÉCISION] (v1.0.55) Grand fleuve qui entoure Sysigie (décision du propriétaire) ; nom provisoire « [à nommer] » : le propriétaire nommera les fleuves, rivières et lacs.",
           "[INFÉRÉ] (v1.0.55) Tracé : source en N006_W010, vers le nord par N007_W010 (confluent de la rivière de N007_W011), N008_W011, l'île de Sysigie (N009_W011), N010_W011, N011_W011 ; se jette dans la mer en N012_W011. Large d'environ 50 m à la source et 80 m à l'embouchure ; bras de l'île d'environ 40 m.",
           "Monde jouable : river_courses.fleuve_sysigie de world_master.json (tools/world_gen).",
-          "[DÉCISION] (v1.0.56) Le fleuve traverse le lac de Syzygie, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55."
+          "[DÉCISION] (v1.0.56) Le fleuve traverse le lac de Syzygie, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55.",
+          "[DÉCISION] (v1.0.78) Le nom « lac / fleuve de Syzygie » est conservé : le fleuve s'appelle « Fleuve de Syzygie » et le lac qu'il traverse « lac de Syzygie » (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7)."
         ]
       }
     ],

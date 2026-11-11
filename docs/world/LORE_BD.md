@@ -1930,6 +1930,17 @@ verte, lave sur la carte, aucun pixel vert ; Royaumes : herbe et masque d'herbe 
 
 **Services** : 1242 PNJ (inchangé). Aucun identifiant ajouté ni supprimé.
 
+### 16.13 Route Frosthollow – Der Hem Shelbem par le Deathtrap Canyon (v1.0.84)
+
+**Décision du propriétaire (11/11/2026)** : la route 000074 passe **obligatoirement** par la cellule S008_E010.
+Elle franchit la chaîne de montagnes par le **Deathtrap Canyon**, gorge qui sert de passage.
+
+Nouveau tracé : S010_E010 (Der Hem Shelbem) → S009_E010 → **S008_E010** → S007_E009 → S006_E008 → S005_E008
+(Frosthollow). Il remplace le passage par le col S009_E009 → S008_E008 décidé en v1.0.76 (§16.5).
+
+**En jeu** : rien ne change pour l'instant. Le générateur ne lit pas les tracés du lore ; il continue de calculer
+son propre passage. Toutes les cellules du nouveau tracé sont déjà générées.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

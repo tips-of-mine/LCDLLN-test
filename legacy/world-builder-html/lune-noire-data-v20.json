@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.83",
+    "version": "1.0.84",
     "notes": [
       "v1.0.83 : [CANON] Palette infernale de la carte des Enfers (lot 12) : le générateur (tools/world_gen) ne produit plus d'herbe, de forêt, de broussailles ni de neige aux Enfers ; sol de terre rouge-brun et de roche, arbres morts et rochers seulement ; carte du monde en roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave de N000_W001, fleuves de lave dans la croix). Sources : [BD-T16 p.16] ; [BD-T17 p.16] ; [BD-T20 p.30-31] ; [BD-T21 p.6, 36] ; [BD-T22 p.22]. Lave non émissive (pas de couche dédiée côté client). Monde des Royaumes inchangé. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.12.",
       "v1.0.82 : [CANON] Les douze peuples lointains et les Ophidiens d'après les tomes 15-22 (lot 11 du propriétaire, décisions du 11/11/2026). Peuples (regle_peuples_lointains) : 12 factions non jouables, indépendantes à l'époque du jeu, sur des terres hors carte placées par climat (Nordiques, Vharnoctes, Empire Minghol, Akhazumi, Empire de Tsin, Kharzhad, Sheydhar, Nebkhara, Nkhaloa, Azteca, nations tahokhanes, Saelvhyr) ; noms de la BD gardés (Nordiques, Haaghen, Tsin, Empire Minghol, Azteca, Murata), autres noms [GD] à valider ; 12 lieux hors carte ; 3 dirigeants nommés par la BD (Haaghen, Tsin, l'Azteca) et 28 PNJ [GD] dans 10 villes ; comptoirs à Brinehaven, Altenberg, Hishtarland et Riverfold (port ajouté à grille.ports). Ophidiens (regle_ophidiens) : peuple ennemi souterrain hostile à tous, race_ophidien, Empereur, Impératrice pondeuse et Prince Serpent, 10 créatures (55-68), Cité-Nid et écloserie souterraines, 3 entrées cachées (N010_E010 jungle, POI réel ; N010_W003 marais et S011_E015 montagne, lore seul). Gemmes, Unique, Grand Conseil, légions et Ophidia Prime restent post-T14. Registre : 12 entrées. Détail : docs/world/LORE_BD.md, section 16.11.",
@@ -224358,13 +224358,14 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[DÉCISION] (v1.0.76) Route réajustée (propriétaire, 10/11/2026) : la ligne droite franchissait la chaîne (S008_E009, S008_E010, Deathtrap Canyon) ; elle passe maintenant le col entre les deux chaînes (S009_E009 → S008_E008), puis remonte la plaine vers Frosthollow. C'est aussi le passage du générateur du monde jouable (cellules S006_E008 à S009_E009). Tracé : 5 case(s), S010_E010 → S009_E009 → S008_E008 → S007_E008 → S006_E008 → S005_E008 ; LORE_BD §16.5."
+        "[DÉCISION] (v1.0.76) Route réajustée (propriétaire, 10/11/2026) : la ligne droite franchissait la chaîne (S008_E009, S008_E010, Deathtrap Canyon) ; elle passe maintenant le col entre les deux chaînes (S009_E009 → S008_E008), puis remonte la plaine vers Frosthollow. C'est aussi le passage du générateur du monde jouable (cellules S006_E008 à S009_E009). Tracé : 5 case(s), S010_E010 → S009_E009 → S008_E008 → S007_E008 → S006_E008 → S005_E008 ; LORE_BD §16.5.",
+        "[DÉCISION] (v1.0.84) Tracé imposé (propriétaire, 11/11/2026) : la route passe OBLIGATOIREMENT par S008_E010. Elle franchit la chaîne par le Deathtrap Canyon, gorge qui sert de passage. Tracé : S010_E010 → S009_E010 → S008_E010 → S007_E009 → S006_E008 → S005_E008 ; remplace le passage par le col S009_E009 → S008_E008 de la v1.0.76 ; LORE_BD §16.13."
       ],
       "waypoints": [
         "S010_E010",
-        "S009_E009",
-        "S008_E008",
-        "S007_E008",
+        "S009_E010",
+        "S008_E010",
+        "S007_E009",
         "S006_E008",
         "S005_E008"
       ]
@@ -231127,6 +231128,13 @@
           "nom": "Les Enfers",
           "decision": "Palette des Enfers d'après les T15-22 : roche rouge striée, basalte noir, cendre, lave jaune-orange ; ni herbe, ni forêt, ni neige (générateur tools/world_gen, LORE_BD §16.12).",
           "version": "1.0.83"
+        },
+        {
+          "collection": "routes",
+          "id": "000074",
+          "nom": "Frosthollow – Der Hem Shelbem",
+          "decision": "La route passe obligatoirement par S008_E010 (Deathtrap Canyon) : S010_E010 → S009_E010 → S008_E010 → S007_E009 → S006_E008 → S005_E008 (propriétaire, 11/11/2026 ; LORE_BD §16.13).",
+          "version": "1.0.84"
         }
       ]
     },

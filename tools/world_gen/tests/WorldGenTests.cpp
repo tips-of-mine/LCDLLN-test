@@ -1640,6 +1640,80 @@ namespace
 		Check(tsarothVide, "lieux v1.0.86 : Tsaroth (S009_E011) reste sans POI ni ville");
 	}
 
+	/// v1.0.87 (lore, lot 15) : un lieu [GD] (POI réel) sur chaque case jouable vide des Terres des
+	/// Gigantomorphes (6 cases autour de l'enclave de Whispers Hill) et de la Via Magna (5). La Marche
+	/// de l'Est n'a aucune case jouable vide (quêtes seulement). Jouable = `generated_cells` du master
+	/// + corridors des départs (AddStartCorridors). Chaque POI est seul sur sa case (aucune ville, aucun
+	/// autre POI), au sec, dans la boîte `regions` de sa région quand la case y est (les cases de la
+	/// lisière sud des Gigantomorphes, N004_E010, S002_E003 et S002_E004 sont rattachées par le lore,
+	/// hors de la boîte du master). L'enclave de Whispers Hill garde ses POI (aucun ajout en N011_E008
+	/// ni N012_E008) et le Puits des Lianes (entrée ophidienne de N010_E010) reste à plus de 10 km du
+	/// Cercle de pierres des géants.
+	void TestLieuxV1087()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lieux v1.0.87 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = g.master.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		struct Expected { const char* poi; const char* cell; const char* region; };
+		static const Expected kLieux[] = {
+			{ "poi_coupe_des_bucherons", "N010_E007", nullptr },
+			{ "poi_poste_avance_abandonne", "N010_E008", nullptr },
+			{ "poi_carriere_des_geants", "N011_E007", nullptr },
+			{ "poi_cercle_pierres_des_geants", "N011_E009", nullptr },
+			{ "poi_camp_des_trappeurs", "N012_E007", nullptr },
+			{ "poi_taniere_des_trolls", "N012_E009", nullptr },
+			{ "poi_poste_relais_imperial", "N004_E010", nullptr },
+			{ "poi_camp_des_detrousseurs", "N004_W003", "via_magna" },
+			{ "poi_caravane_ensablee", "N004_W004", "via_magna" },
+			{ "poi_bivouac_de_la_legion", "S002_E003", nullptr },
+			{ "poi_sanctuaire_profane", "S002_E004", nullptr },
+		};
+		auto find = [&](const char* id) -> const PoiDef* {
+			for (const PoiDef& p : g.pois)
+				if (p.id == id) return &p;
+			return nullptr;
+		};
+		auto inRegion = [&](const PoiDef& p, const char* region) {
+			if (!region) return true;
+			for (const auto& r : g.master.regions)
+				if (r.id == region) return p.e >= r.eMin && p.e <= r.eMax && p.n >= r.nMin && p.n <= r.nMax;
+			return false;
+		};
+		int valid = 0;
+		for (const Expected& x : kLieux)
+		{
+			const PoiDef* p = find(x.poi);
+			bool alone = true;
+			for (const CityDef& c : g.cities)
+				if (p && c.n == p->n && c.e == p->e) alone = false;
+			for (const PoiDef& q : g.pois)
+				if (p && &q != p && q.cell == p->cell) alone = false;
+			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone && inRegion(*p, x.region)
+				&& MacroHeight(g.master, p->center.x, p->center.z) > g.master.scale.seaLevelM + 5.0;
+			if (!good) std::fprintf(stderr, "  lieu v1.0.87 invalide : %s\n", x.poi);
+			valid += good;
+		}
+		Check(valid == 11, "lieux v1.0.87 : 11 lieux au sec, seuls sur leur case jouable");
+		int enclave = 0;
+		for (const PoiDef& p : g.pois)
+			if (p.cell == "N011_E008" || p.cell == "N012_E008") ++enclave;
+		Check(enclave == 5, "lieux v1.0.87 : enclave de Whispers Hill inchangee (5 POI)");
+		const PoiDef* cercle = find("poi_cercle_pierres_des_geants");
+		const PoiDef* puits = find("poi_ophidiens_puits_des_lianes");
+		Check(cercle && puits && std::hypot(cercle->center.x - puits->center.x, cercle->center.z - puits->center.z) > 10000.0,
+			"lieux v1.0.87 : Cercle de pierres des geants a plus de 10 km du Puits des Lianes");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1736,6 +1810,7 @@ int main()
 	TestLieuxV1082();
 	TestLieuxV1085();
 	TestLieuxV1086();
+	TestLieuxV1087();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

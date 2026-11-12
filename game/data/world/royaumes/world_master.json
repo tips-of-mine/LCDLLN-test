@@ -2816,6 +2816,105 @@
       "offset_x_m": 2500,
       "offset_z_m": 500,
       "description": "Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20. [GD v1.0.86, lieu_tour_guet_garundel]."
+    },
+    {
+      "id": "poi_coupe_des_bucherons",
+      "name": "Coupe des bûcherons",
+      "cell": "N010_E007",
+      "kind": "camp",
+      "offset_x_m": 2000,
+      "offset_z_m": 2500,
+      "description": "Coupe de bois d'œuvre près de la route de Feyhin Lokcthat à Whispers Hill : on y abat les grands arbres de la lisière pour la reconstruction de Kendrhir (économie v1.0.58) ; les ogres rôdent autour des cabanes. Niveaux 28-32. [GD v1.0.87, lieu_coupe_des_bucherons]."
+    },
+    {
+      "id": "poi_poste_avance_abandonne",
+      "name": "Poste avancé abandonné",
+      "cell": "N010_E008",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": 1500,
+      "description": "Poste avancé de l'Empire bâti quand les géants furent repoussés vers le nord [HS], puis abandonné : la forêt l'a repris et des bêtes y gîtent. Niveaux 30-34. [GD v1.0.87, lieu_poste_avance_abandonne]."
+    },
+    {
+      "id": "poi_carriere_des_geants",
+      "name": "Carrière des géants",
+      "cell": "N011_E007",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": -3500,
+      "description": "Ancienne carrière où les géants taillaient des blocs démesurés avant d'être repoussés vers le nord [HS] ; des tailleurs de pierre d'Ashwick y extraient la pierre de la reconstruction de Kendrhir (économie v1.0.58). Niveaux 28-32. [GD v1.0.87, lieu_carriere_des_geants]."
+    },
+    {
+      "id": "poi_cercle_pierres_des_geants",
+      "name": "Cercle de pierres des géants",
+      "cell": "N011_E009",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": -2500,
+      "description": "Cercle de pierres levées laissé par les géants dans la forêt à l'est de Whispers Hill ; une bande d'ogres en a fait son camp. Niveaux 32-36. [GD v1.0.87, lieu_cercle_pierres_des_geants]."
+    },
+    {
+      "id": "poi_camp_des_trappeurs",
+      "name": "Camp des trappeurs",
+      "cell": "N012_E007",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": -1000,
+      "description": "Camp de trappeurs de Stonehaven en lisière de forêt : peaux et gibier partent par le port (économie v1.0.58) ; loups et trolls rôdent. Niveaux 28-32. [GD v1.0.87, lieu_camp_des_trappeurs]."
+    },
+    {
+      "id": "poi_taniere_des_trolls",
+      "name": "Tanière des trolls",
+      "cell": "N012_E009",
+      "kind": "salle",
+      "offset_x_m": -2500,
+      "offset_z_m": 1000,
+      "description": "Tanière de trolls des forêts profondes au nord-est de Whispers Hill ; le feu les tient à distance [BD-A1 p.60]. Niveaux 32-36. [GD v1.0.87, lieu_taniere_des_trolls]."
+    },
+    {
+      "id": "poi_poste_relais_imperial",
+      "name": "Poste de relais impérial",
+      "cell": "N004_E010",
+      "kind": "camp",
+      "offset_x_m": -500,
+      "offset_z_m": 1000,
+      "description": "Poste de relais sur la Via Magna entre Harrowdale et Shadehold : postes impériaux tous les 30 km [HS] ; des dragonnets-léopards y chassent les chevaux. Niveaux 18-24. [GD v1.0.87, lieu_poste_relais_imperial]."
+    },
+    {
+      "id": "poi_camp_des_detrousseurs",
+      "name": "Camp des détrousseurs",
+      "cell": "N004_W003",
+      "kind": "camp",
+      "offset_x_m": 500,
+      "offset_z_m": 1500,
+      "description": "Camp de détrousseurs au-dessus de la piste de Silverglade à Sauken Glude : la sécurité des voyageurs n'est pas garantie [HS]. Niveaux 14-20. [GD v1.0.87, lieu_camp_des_detrousseurs]."
+    },
+    {
+      "id": "poi_caravane_ensablee",
+      "name": "Caravane ensablée",
+      "cell": "N004_W004",
+      "kind": "ruine",
+      "offset_x_m": -1500,
+      "offset_z_m": 1000,
+      "description": "Caravane pillée puis ensablée dans le désert au nord de Sauken Glude ; les détrousseurs y cachent une part de leur butin. Niveaux 14-18. [GD v1.0.87, lieu_caravane_ensablee]."
+    },
+    {
+      "id": "poi_bivouac_de_la_legion",
+      "name": "Bivouac de la légion",
+      "cell": "S002_E003",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": -2000,
+      "description": "Bivouac d'une légion impériale en marche, à l'écart de la Via Magna au sud du fief de Garundel : il n'est pas rare de voir des légions passer [HS]. Niveaux 16-22. [GD v1.0.87, lieu_bivouac_de_la_legion]."
+    },
+    {
+      "id": "poi_sanctuaire_profane",
+      "name": "Sanctuaire profané",
+      "cell": "S002_E004",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 500,
+      "description": "Vieux sanctuaire de bord de route, profané, à l'orée de la forêt maudite ; renards infernaux et mantes géantes en sortent. Niveaux 16-22. [GD v1.0.87, lieu_sanctuaire_profane]."
     }
   ],
   "imports": {

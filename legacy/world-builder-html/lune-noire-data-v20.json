@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.86",
+    "version": "1.0.87",
     "notes": [
+      "v1.0.87 : [GD] Lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est (lot 15 du propriétaire, 12/11/2026). Chaque case jouable vide reçoit un lieu [GD] avec POI réel : 6 sur la lisière sud des Terres des Gigantomorphes (autour de l'enclave de Whispers Hill, inchangée), 5 sur la Via Magna (11 lieux) ; la Marche de l'Est n'a aucune case jouable vide (aucun lieu). 10 quêtes [GD] (4 Gigantomorphes, 3 Via Magna, 3 Marche de l'Est). Repères proposés : lisière sud des Gigantomorphes 28-36, gradient de la Via Magna, Marche de l'Est 15-28. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.16.",
       "v1.0.86 : [GD] Lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle (lot 14, priorité 2 validée par le propriétaire le 12/11/2026). Chaque case générée vide des trois régions reçoit un lieu [GD] avec POI réel : 11 en Baronnie de Moork, 15 dans les Terres désolées, 10 dans le Désert de l'Oracle (36 lieux, dont 4 balises : Borne des Monts de Moork, Stèle des Deux Fois Nés, Cairn des Coulées, Cairn des Caravaniers). 14 quêtes [GD] relient les lieux (5 Moork, 5 Tsaroth, 4 Oracle). Fiches de région ajoutées : terres_desolees (20-40 proposé), desert_central (10-25 proposé). Tsaroth reste sans service, sans camp de la Légion ; Moork reste intacte. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.15.",
       "v1.0.85 : [CANON] Balisage des zones dangereuses et ancrages manquants (lot 13, corrections validées par le propriétaire le 12/11/2026). Rien n'est déplacé : 10 cases de contenu nettement plus fort que leur zone sont balisées (repères sur le passage, PNJ avertisseurs aux villes voisines, légendes sans révéler les grottes des dragons, enceintes gardées pour les dragons et golems de l'Empire et les dragons des Chevaliers-Dragons) ; 5 lieux de balisage [GD] avec POI réels (Cairn des Os noircis N010_E012, Stèle des Flèches blanches N008_W007, trois Bornes des Géants). Whispers Hill : N011_E008 et N012_E008 passent aux Terres du Nord (region_terres_nord_t00, 1-15), enclave dans les Terres des Gigantomorphes. Abysses conservées sous la mer (accès par la ligne maritime du sud). 7 raids et 19 quêtes rattachés à une case. Registre : 5 entrées. Détail : docs/world/LORE_BD.md, section 16.14.",
       "v1.0.83 : [CANON] Palette infernale de la carte des Enfers (lot 12) : le générateur (tools/world_gen) ne produit plus d'herbe, de forêt, de broussailles ni de neige aux Enfers ; sol de terre rouge-brun et de roche, arbres morts et rochers seulement ; carte du monde en roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave de N000_W001, fleuves de lave dans la croix). Sources : [BD-T16 p.16] ; [BD-T17 p.16] ; [BD-T20 p.30-31] ; [BD-T21 p.6, 36] ; [BD-T22 p.22]. Lave non émissive (pas de couche dédiée côté client). Monde des Royaumes inchangé. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.12.",
@@ -38497,6 +38498,502 @@
       "notes": [
         "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
         "[GD] (v1.0.86) Niveau 10 et plus ; cases : S001_E004, S001_E002, S001_E003, N000_E002. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_gigantomorphes_gd_bois_de_la_reconstruction",
+      "name": "Le Bois de la reconstruction",
+      "description": "Les bûcherons de la coupe, au bord de la route de Feyhin Lokcthat, abattent le bois de la reconstruction de Kendrhir. Des ogres pillent leurs chariots et emportent leurs outils jusqu'au vieux poste avancé.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_des_gigantomorphes",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres des Gigantomorphes, v1.0.87)",
+      "steps": [
+        "À Ashwick, prendre le contrat du marchand de bois.",
+        "À la Coupe des bûcherons, repousser les ogres qui attaquent les chariots.",
+        "Suivre leurs traces jusqu'au Poste avancé abandonné et reprendre les outils volés.",
+        "Escorter le premier chariot de grumes jusqu'à Ashwick."
+      ],
+      "source_lore": [
+        "town_0123",
+        "lieu_coupe_des_bucherons",
+        "lieu_poste_avance_abandonne",
+        "creature_ogre"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 28
+        }
+      ],
+      "region_id": "terres_des_gigantomorphes",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 28 et plus ; cases : N010_E005, N010_E007, N010_E008. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_gigantomorphes_gd_pierre_des_geants",
+      "name": "La Pierre des géants",
+      "description": "Les tailleurs de pierre d'Ashwick ont trouvé des signes gravés sur les blocs de la carrière des géants. Un érudit veut les comparer à ceux du cercle de pierres de la forêt, où campent des ogres.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "terres_des_gigantomorphes",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres des Gigantomorphes, v1.0.87)",
+      "steps": [
+        "À Ashwick, recevoir de l'érudit ses feuilles et son fusain.",
+        "Relever les signes gravés sur les blocs de la Carrière des géants.",
+        "Gagner le Cercle de pierres des géants et en chasser les ogres.",
+        "Relever les signes des pierres levées et rapporter les relevés à Ashwick."
+      ],
+      "source_lore": [
+        "town_0123",
+        "lieu_carriere_des_geants",
+        "lieu_cercle_pierres_des_geants",
+        "creature_ogre"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 30
+        }
+      ],
+      "region_id": "terres_des_gigantomorphes",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 30 et plus ; cases : N010_E005, N011_E007, N011_E009. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_gigantomorphes_gd_taniere_des_trolls",
+      "name": "La Tanière des trolls",
+      "description": "Les trappeurs de Stonehaven perdent leurs prises et l'un des leurs a disparu dans la forêt profonde. Les traces mènent à une tanière de trolls ; à Stonehaven, on conseille le feu.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_des_gigantomorphes",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres des Gigantomorphes, v1.0.87)",
+      "steps": [
+        "À Stonehaven, apprendre la disparition d'un trappeur et se munir de torches.",
+        "Au Camp des trappeurs, relever les traces des trolls.",
+        "Entrer dans la Tanière des trolls et la nettoyer par le feu.",
+        "Ramener le trappeur, ou ce qu'il en reste, à Stonehaven."
+      ],
+      "source_lore": [
+        "town_0139",
+        "lieu_camp_des_trappeurs",
+        "lieu_taniere_des_trolls",
+        "creature_troll"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 32
+        }
+      ],
+      "region_id": "terres_des_gigantomorphes",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 32 et plus ; cases : N014_E008, N012_E007, N012_E009. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_gigantomorphes_gd_au_dela_des_bornes",
+      "name": "Au-delà des Bornes",
+      "description": "À Whispers Hill, une mère attend un fils parti travailler à la carrière des géants, au-delà des Bornes. Première sortie hors de la colline : les adversaires sont bien plus forts dehors.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_des_gigantomorphes",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres des Gigantomorphes, v1.0.87)",
+      "steps": [
+        "À Whispers Hill, écouter la mère inquiète.",
+        "Passer la Borne des Géants du nord : au-delà, la lisière des Terres des Gigantomorphes (28-36).",
+        "Au Camp des trappeurs, apprendre que le fils a pris la route d'Ashwick.",
+        "Le retrouver à la Carrière des géants et rapporter de ses nouvelles à Whispers Hill."
+      ],
+      "source_lore": [
+        "ville_whispers_hill",
+        "lieu_balise_borne_geants_nord",
+        "lieu_camp_des_trappeurs",
+        "lieu_carriere_des_geants"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 28
+        }
+      ],
+      "region_id": "terres_des_gigantomorphes",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 28 et plus ; cases : N011_E008, N012_E008, N012_E007, N011_E007. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_via_magna_gd_courrier_imperial",
+      "name": "Le Courrier impérial",
+      "description": "Le courrier impérial de Harrowdale doit atteindre Shadehold, mais le poste de relais n'a plus de chevaux : les dragonnets-léopards les ont tués ou dispersés.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "via_magna",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Via Magna, v1.0.87)",
+      "steps": [
+        "À Harrowdale, recevoir le pli scellé du maître de poste.",
+        "Au Poste de relais impérial, chasser les dragonnets-léopards de la lisière.",
+        "Rassembler les chevaux dispersés et en prendre un frais.",
+        "Remettre le pli à Shadehold avant la nuit."
+      ],
+      "source_lore": [
+        "horker",
+        "lieu_poste_relais_imperial",
+        "town_0136",
+        "creature_dragonnet_leopard"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 18 et plus ; cases : N004_E009, N004_E010, N003_E011. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_via_magna_gd_detrousseurs",
+      "name": "Les Détrousseurs de la piste",
+      "description": "Les voyageurs de Silverglade arrivent dépouillés à Sauken Glude. La garde de la ville-tour paie qui démantèlera le camp des détrousseurs et retrouvera leur cache.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "via_magna",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Via Magna, v1.0.87)",
+      "steps": [
+        "À Sauken Glude, prendre le contrat de la garde.",
+        "Attaquer le Camp des détrousseurs au-dessus de la piste.",
+        "Fouiller la Caravane ensablée, nid de serpents, où ils cachent leur butin.",
+        "Rapporter le butin à la garde de Sauken Glude."
+      ],
+      "source_lore": [
+        "sauken_glude_of_magistrya",
+        "lieu_camp_des_detrousseurs",
+        "lieu_caravane_ensablee",
+        "animal_serpent"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 14
+        }
+      ],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 14 et plus ; cases : N003_W003, N004_W003, N004_W004. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_via_magna_gd_legion_en_marche",
+      "name": "La Légion en marche",
+      "description": "Une légion bivouaque au sud du fief de Garundel. Ses éclaireurs partis vers le sanctuaire profané de la forêt maudite ne sont pas revenus.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "via_magna",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Via Magna, v1.0.87)",
+      "steps": [
+        "Au fief de Garundel, apprendre qu'une légion cherche des guides.",
+        "Au Bivouac de la légion, recevoir l'ordre du centurion.",
+        "Retrouver les éclaireurs au Sanctuaire profané et repousser renards infernaux et mantes.",
+        "Ramener les survivants au Bivouac de la légion."
+      ],
+      "source_lore": [
+        "ville_garundel_fief",
+        "lieu_bivouac_de_la_legion",
+        "lieu_sanctuaire_profane",
+        "creature_renard_infernal"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 16
+        }
+      ],
+      "region_id": "via_magna",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 16 et plus ; cases : S001_E004, S002_E003, S002_E004. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_grain_de_la_marche",
+      "name": "Le Grain de la Marche",
+      "description": "La Marche de l'Est vend son grain à Moork. Escorter les chariots de Nightfield jusqu'à Moork par la Via Magna.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.87)",
+      "steps": [
+        "À Nightfield, aider à charger les sacs de grain.",
+        "Escorter les chariots sur la Via Magna vers le sud.",
+        "Repousser les pillards qui guettent les convois.",
+        "Livrer le grain aux marchands de Moork."
+      ],
+      "source_lore": [
+        "hamlet_0201",
+        "ville_moork"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 18 et plus ; cases : N002_E015, S002_E015. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_laine_d_horkher",
+      "name": "La Laine d'Horkher",
+      "description": "Un marchand de laine d'Horkher attend des balles de laine à Harrowdale. Les porter par la Via Magna et faire étape au poste de relais.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.87)",
+      "steps": [
+        "À Horkher, prendre les balles de laine du marchand.",
+        "Faire étape au Poste de relais impérial et faire viser le laissez-passer.",
+        "Livrer la laine au marchand de Harrowdale."
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_poste_relais_imperial",
+        "horker"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 18 et plus ; cases : N006_E014, N004_E010, N004_E009. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_registre_du_fortin",
+      "name": "Le Registre du fortin",
+      "description": "Un intendant du comté d'Horkher cherche le registre des terres que tenait l'ancien fortin impérial de la Marche, abandonné depuis la conquête par la Lune Noire.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "campagne"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.87)",
+      "steps": [
+        "À Horkher, écouter l'intendant du comté.",
+        "Fouiller les Ruines du fortin des Marches et leur cellier envahi d'araignées.",
+        "Rapporter le registre des terres à Horkher."
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_ruines_fortin_des_marches"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 15
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
+        "[GD] (v1.0.87) Niveau 15 et plus ; cases : N006_E014, N007_E013. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
       ],
       "quest_kind": "solo",
       "has_counter_quest": false
@@ -163394,7 +163891,8 @@
       ],
       "notes": [
         "[BD-T3 p.31] Renards rouges démoniaques au village fantôme (« Tu as vu ce ridicule petit lézard ! »).",
-        "[GD] (v1.0.58) Doublon probable de creature_renard_demoniaque_village (même scène) : fiche générique de l'espèce, à fusionner si le propriétaire le souhaite."
+        "[GD] (v1.0.58) Doublon probable de creature_renard_demoniaque_village (même scène) : fiche générique de l'espèce, à fusionner si le propriétaire le souhaite.",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_sanctuaire_profane (LORE_BD §16.16)."
       ],
       "habitat": "Forêt maudite et marais du village fantôme.",
       "groupe": "paire",
@@ -163403,7 +163901,8 @@
         "S002_E005",
         "S002_E006",
         "S002_E004",
-        "S003_E006"
+        "S003_E006",
+        "lieu_sanctuaire_profane"
       ]
     },
     {
@@ -163504,7 +164003,8 @@
         "Frappe de pattes avant"
       ],
       "notes": [
-        "[BD-T3 p.26-27] Monture d'Iaun Reith — traverse le marais sans difficulté."
+        "[BD-T3 p.26-27] Monture d'Iaun Reith — traverse le marais sans difficulté.",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_sanctuaire_profane (LORE_BD §16.16)."
       ],
       "habitat": "Forêt maudite et marais du village fantôme.",
       "groupe": "solitaire",
@@ -163513,7 +164013,8 @@
         "S002_E005",
         "S002_E006",
         "S002_E004",
-        "S003_E006"
+        "S003_E006",
+        "lieu_sanctuaire_profane"
       ]
     },
     {
@@ -165850,7 +166351,8 @@
       "abilities_traits": [],
       "notes": [
         "[BD-T00 p.37] Meute de loups noirs.",
-        "Variante locale : creature_loup_t00 ; loups dressés : creature_loup_geant_de_guerre."
+        "Variante locale : creature_loup_t00 ; loups dressés : creature_loup_geant_de_guerre.",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_camp_des_trappeurs (LORE_BD §16.16)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -165868,7 +166370,9 @@
         "N012_E008",
         "N016_E015",
         "N016_E019",
-        "N016_E020"
+        "N016_E020",
+        "N012_E007",
+        "lieu_camp_des_trappeurs"
       ]
     },
     {
@@ -167774,7 +168278,8 @@
         "[BD-M1 p.47] Serpents verts de la fosse.",
         "[BD-M2 p.13] Pot de serpents : jarre brisée libérant des serpents mortels.",
         "Grande espèce bleue : creature_serpent_geant_bleu.",
-        "[GD] (v1.0.86) Rattachée aux lieux lieu_oasis_palmes_noires (LORE_BD §16.15)."
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_oasis_palmes_noires (LORE_BD §16.15).",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_caravane_ensablee (LORE_BD §16.16)."
       ],
       "categorie": "3. Reptiles et dinosaures",
       "famille": "Serpents",
@@ -167791,7 +168296,9 @@
         "N001_W005",
         "N000_W004",
         "N001_W002",
-        "lieu_oasis_palmes_noires"
+        "lieu_oasis_palmes_noires",
+        "N004_W004",
+        "lieu_caravane_ensablee"
       ]
     },
     {
@@ -169096,7 +169603,8 @@
         "[BD-T10 p.22, p.32] Trolls et ogres (chauves, crocs, boucles) lancés sur la Garde impériale par Goristroy, décimés par l'artillerie.",
         "[BD-T11 p.40, p.44] Ogres et géants manutentionnaires ; ogres de l'assaut du Sud (avenir du monde jouable).",
         "[BD-A1] Ghorghor est un demi-ogre (race_half_ogre) : les ogres sont le peuple de son père.",
-        "[GD] (v1.0.58) Hostile en Orkland et dans les Marches ; présent en troupes alliées dans les armées de la Lune Noire."
+        "[GD] (v1.0.58) Hostile en Orkland et dans les Marches ; présent en troupes alliées dans les armées de la Lune Noire.",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_coupe_des_bucherons, lieu_cercle_pierres_des_geants (LORE_BD §16.16)."
       ],
       "bestiaire": true,
       "habitat": "Forêts et plaines de l'Orkland ; bandes errantes dans les Territoires des Marches.",
@@ -169106,7 +169614,11 @@
         "N012_E011",
         "N011_E017",
         "N009_E016",
-        "N018_E016"
+        "N018_E016",
+        "N010_E007",
+        "lieu_coupe_des_bucherons",
+        "N011_E009",
+        "lieu_cercle_pierres_des_geants"
       ],
       "groupe": "horde"
     },
@@ -169147,7 +169659,8 @@
         "[BD-T10 p.22, p.32] Trolls à peau gris-noir, yeux rouges, bracelets à pointes, lancés sur la Garde impériale.",
         "[BD-THS p.30] Quelques dizaines par bataille, stupides, opiniâtres (rang 3).",
         "[GD] (v1.0.58) Trois variantes de modèle : troll des forêts, troll de guerre, troll rouge des collines ; même fiche de combat.",
-        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N016_E019, N016_E020 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14)."
+        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N016_E019, N016_E020 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_taniere_des_trolls (LORE_BD §16.16)."
       ],
       "bestiaire": true,
       "habitat": "Forêts profondes de l'Orkland et des Marches ; trolls de guerre dans les camps de la Lune Noire.",
@@ -169156,7 +169669,9 @@
         "N011_E010",
         "N010_E009",
         "N016_E019",
-        "N016_E020"
+        "N016_E020",
+        "N012_E009",
+        "lieu_taniere_des_trolls"
       ],
       "groupe": "solitaire",
       "variantes": [
@@ -169724,7 +170239,8 @@
         "[BD-T11 p.22] Félin ailé tacheté (petit dragon-léopard).",
         "[À VÉRIFIER] [BD-T10 p.6] Petite créature dorée-écailleuse à longue queue rayée ; [BD-T7 p.20] créature écailleuse jaune tachetée de noir : même espèce ?",
         "[DÉCISION] (v1.0.55) Kruikna, « Cruik » et le dragon bleu de Pilou sont trois dragons distincts : ce dragonnet n'est aucun d'eux.",
-        "[GD] (v1.0.58) Lisières des forêts de la Via Magna."
+        "[GD] (v1.0.58) Lisières des forêts de la Via Magna.",
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_poste_relais_imperial (LORE_BD §16.16)."
       ],
       "bestiaire": true,
       "habitat": "Forêts et lisières de la Via Magna.",
@@ -169732,7 +170248,8 @@
         "N009_E008",
         "N008_E008",
         "N006_E008",
-        "N004_E010"
+        "N004_E010",
+        "lieu_poste_relais_imperial"
       ],
       "groupe": "solitaire"
     },
@@ -171317,7 +171834,8 @@
         "[HS] Types : Titans, Géants des montagnes, Géants de feu (volcanique), Géants de froid (extrême nord).",
         "[HS] Seuls les Orques ET les Géants représentent un réel danger pour les marches de l'Empire.",
         "[GD] (v1.0.58) Économie : ressources bois, blé, poisson, gibier ; productions bois et pierre pour la reconstruction de Kendrhir [GD], pêche ; exporte bois, poisson salé ; importe outils, vivres, main-d'œuvre. Détail et sources : regle_eco_productions_regions.",
-        "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : N011_E008 et N012_E008 (Whispers Hill et la Forêt de la Rencontre) forment l'enclave des Terres du Nord (region_terres_nord_t00, 1-15) ; les Bornes des Géants en balisent les sorties."
+        "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : N011_E008 et N012_E008 (Whispers Hill et la Forêt de la Rencontre) forment l'enclave des Terres du Nord (region_terres_nord_t00, 1-15) ; les Bornes des Géants en balisent les sorties.",
+        "[GD] (v1.0.87) Lisière sud (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : les 6 cases jouables qui entourent l'enclave de Whispers Hill reçoivent un lieu [GD] (coupe des bûcherons, poste avancé abandonné, carrière des géants, cercle de pierres des géants, camp des trappeurs, tanière des trolls) et 4 quêtes partent d'Ashwick, de Stonehaven et de Whispers Hill. Gradient proposé dans le repère 30-56, à valider : lisière sud (autour de Whispers Hill, routes d'Ashwick et de Stonehaven) 28-36 ; chaîne de Mordrek et centre 35-50 ; extrême nord 45-56. Les géants eux-mêmes restent au nord, d'où l'Empire les a repoussés [HS] : la lisière n'en garde que les traces."
       ]
     },
     {
@@ -171396,7 +171914,8 @@
         "[DÉCISION] (v1.0.56) Entre dans le monde jouable (Q1, Q18) : route principale Lhynn → Moork héritée de l'Empire tharque [BD-THS p.7], sans reproduire la distance de 8 000 km ; tracé dans la PR de carte.",
         "[GD] (v1.0.58) Économie : ressources relais et caravansérails ; productions services aux voyageurs, relais de poste impériaux. Détail et sources : regle_eco_productions_regions.",
         "[CARTE] (v1.0.60) Tracé : route 000120 (type imperial_road), 34 cellules de N001_W010 à S002_E015 ; les cellules de la région ne sont pas toutes sur le tracé (région inchangée).",
-        "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire."
+        "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
+        "[GD] (v1.0.87) Relais et dangers de la route (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : les 5 cases jouables vides reçoivent un lieu [GD] (poste de relais impérial, camp des détrousseurs, caravane ensablée, bivouac de la légion, sanctuaire profané) et 3 quêtes partent de Harrowdale, de Sauken Glude et du fief de Garundel. Gradient proposé dans le repère 10-30, à valider : désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, tronçon Harrowdale – Shadehold vers Moork 18-26."
       ]
     },
     {
@@ -171574,7 +172093,8 @@
         "[DÉCISION] (v1.0.56) Région créée (Q15) ; contenu : baronnie_de_moorks, city_horkher, raid_marches_est_t14. Aucune emprise sur la carte jouable dans cette PR.",
         "[GD] (v1.0.58) Économie : ressources blé, bétail ; productions laine [GD] ; exporte grain vers Moork ; importe armes. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.59) Emprise : les 56 cellules sans région de E013 à E020, de S003 à N007, autour de la baronnie de Moork (baronnie_de_moorks, qui en fait partie) : au nord le comté d'Horkher (city_horkher, N006_E014), à l'est les confins jusqu'au Rivage des Géants. Monde jouable : région marche_de_lest (E013 à E020, N004 à N007, au nord de la baronnie, qui garde son nom).",
-        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ].",
+        "[GD] (v1.0.87) lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16 : aucune case jouable vide (seule N007_E013 est générée, dans la région de départ de Grakhul, et porte déjà les Ruines du fortin des Marches) : aucun lieu ajouté. 3 quêtes [GD] relient les villes de la Marche à la Via Magna, à Moork et au fortin. Repère de niveau proposé, à valider : 15-28 hors de la baronnie (entre la région de départ de Grakhul, 1-10, et l'Orkland et la baronnie, 18-45). Ouvrir des cases de la Marche au jeu (generated_cells ou corridor par la Via Magna) reste à décider."
       ]
     },
     {
@@ -197594,9 +198114,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_loup"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Camp des trappeurs (lieu_camp_des_trappeurs, POI poi_camp_des_trappeurs, camp, 28-32) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -197644,9 +198168,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_troll"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Tanière des trolls (lieu_taniere_des_trolls, POI poi_taniere_des_trolls, salle, 32-36) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -198504,7 +199032,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Carrière des géants (lieu_carriere_des_geants, POI poi_carriere_des_geants, camp, 28-32) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -198551,9 +199081,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_ogre"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Cercle de pierres des géants (lieu_cercle_pierres_des_geants, POI poi_cercle_pierres_des_geants, sanctuaire, 32-36) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -199457,9 +199991,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_ogre"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Coupe des bûcherons (lieu_coupe_des_bucherons, POI poi_coupe_des_bucherons, camp, 28-32) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -199478,7 +200016,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Poste avancé abandonné (lieu_poste_avance_abandonne, POI poi_poste_avance_abandonne, ruine, 30-34) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -204783,9 +205323,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_serpent"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Caravane ensablée (lieu_caravane_ensablee, POI poi_caravane_ensablee, ruine, 14-18) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -204803,7 +205347,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Camp des détrousseurs (lieu_camp_des_detrousseurs, POI poi_camp_des_detrousseurs, camp, 14-20) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205039,7 +205585,9 @@
         "creature_dragonnet_leopard"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Poste de relais impérial (lieu_poste_relais_imperial, POI poi_poste_relais_imperial, camp, 18-24) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -210244,7 +210792,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Bivouac de la légion (lieu_bivouac_de_la_legion, POI poi_bivouac_de_la_legion, camp, 16-22) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -210267,7 +210817,9 @@
         "creature_mante_geante"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.87) Sanctuaire profané (lieu_sanctuaire_profane, POI poi_sanctuaire_profane, sanctuaire, 16-22) : première occupation de cette case jouable vide (LORE_BD §16.16)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -229733,7 +230285,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -232170,6 +232722,27 @@
           "nom": "Désert de l'Oracle",
           "decision": "Fiche de région ajoutée (repère proposé 10-25). Lieux [GD] des cases générées vides — Campement des pèlerins (N000_E001), Cairn des Caravaniers (N000_E002), Menhirs de la plaine de l'Oracle (N000_W001), Échoppes des faux devins (N001_W001), Oasis des Palmes noires (N001_W002), Relais des caravanes (N002_W002), Repaire des pillards du désert (N002_W003), Tour effondrée des mages (N003_W004), Puits des Pèlerins (S001_E002), Tour de guet de Garundel (S001_E003) ; 4 quêtes [GD] (quest_oracle_gd_faux_devins, quest_oracle_gd_caravane, quest_oracle_gd_menhirs, quest_oracle_gd_puits_des_pelerins). L'Oracle (extérieur, lieu du T2) ne change pas ; grotte du premier-né balisée par le Cairn des Caravaniers (LORE_BD §16.15).",
           "version": "1.0.86"
+        },
+        {
+          "collection": "regions",
+          "id": "terres_des_gigantomorphes",
+          "nom": "Terres des Gigantomorphes",
+          "decision": "Lisière sud, hors enclave de Whispers Hill : chaque case jouable vide reçoit un lieu [GD] — Coupe des bûcherons (N010_E007), Poste avancé abandonné (N010_E008), Carrière des géants (N011_E007), Cercle de pierres des géants (N011_E009), Camp des trappeurs (N012_E007), Tanière des trolls (N012_E009) ; 4 quêtes [GD] (quest_gigantomorphes_gd_bois_de_la_reconstruction, quest_gigantomorphes_gd_pierre_des_geants, quest_gigantomorphes_gd_taniere_des_trolls, quest_gigantomorphes_gd_au_dela_des_bornes). Gradient proposé 28-36 sur la lisière ; les géants restent au nord (LORE_BD §16.16).",
+          "version": "1.0.87"
+        },
+        {
+          "collection": "regions",
+          "id": "via_magna",
+          "nom": "Via Magna",
+          "decision": "Chaque case jouable vide reçoit un lieu [GD] — Poste de relais impérial (N004_E010), Camp des détrousseurs (N004_W003), Caravane ensablée (N004_W004), Bivouac de la légion (S002_E003), Sanctuaire profané (S002_E004) ; 3 quêtes [GD] (quest_via_magna_gd_courrier_imperial, quest_via_magna_gd_detrousseurs, quest_via_magna_gd_legion_en_marche). Gradient proposé dans le repère 10-30 (LORE_BD §16.16).",
+          "version": "1.0.87"
+        },
+        {
+          "collection": "regions",
+          "id": "region_marche_est",
+          "nom": "Marche de l'Est",
+          "decision": "Aucune case jouable vide (N007_E013 porte déjà les Ruines du fortin des Marches) : aucun lieu ajouté ; 3 quêtes [GD] (quest_marche_est_gd_grain_de_la_marche, quest_marche_est_gd_laine_d_horkher, quest_marche_est_gd_registre_du_fortin) ; repère proposé 15-28 hors baronnie (LORE_BD §16.16).",
+          "version": "1.0.87"
         }
       ]
     },
@@ -236438,7 +237011,8 @@
         "[DÉCISION] (v1.0.74) L'Île de la Trêve (île du Nord, region_ile_de_la_treve) est une zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 (décision du propriétaire du 10/11/2026 ; LORE_BD §16.3). Espèces : creature_loup_des_brumes et creature_naufrageur [GD], creature_geant_de_froid et creature_spectre (existantes) ; boss des raids creature_roi_noye (50), creature_capitaine_maree_rouge (54), creature_jarl_de_givre (58) et creature_devoreur_des_brumes (boss mondial, 60).",
         "[DÉCISION] (v1.0.78) Une créature de plus haut niveau peut vivre dans une zone de niveau inférieur, à condition que les chemins qui y mènent avertissent le joueur (balisage) : voir rule_niveaux_par_faction. Le Grand Ancien (creature_dragon_grand_ancien, 66-70) reste en S004_W006, case du haras de Bridlecrag (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7).",
         "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : les « Terres du Nord » du repère 1-15 sont region_terres_nord_t00 : cases N011_E008 et N012_E008, enclave dans les Terres des Gigantomorphes (30-56), sorties balisées.",
-        "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés)."
+        "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés).",
+        "[GD] (v1.0.87) Repères proposés, à valider (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : Terres des Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ; Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrowdale – Shadehold 18-26) ; Marche de l'Est (hors baronnie) 15-28."
       ]
     },
     {
@@ -255437,6 +256011,930 @@
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20.",
         "[GD] (v1.0.86) Niveau : 14-20 (Désert de l'Oracle).",
         "Réel en jeu : POI poi_tour_guet_garundel (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_coupe_des_bucherons",
+      "name": "Coupe des bûcherons",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N010_E007",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "clairière de souches fraîches",
+        "troncs empilés et chariots à grumes",
+        "cabanes de bûcherons derrière une palissade"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N010_E007"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Coupe de bois d'œuvre près de la route de Feyhin Lokcthat à Whispers Hill : on y abat les grands arbres de la lisière pour la reconstruction de Kendrhir (économie v1.0.58) ; les ogres rôdent autour des cabanes. Niveaux 28-32.",
+        "[GD] (v1.0.87) Niveau : 28-32 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_coupe_des_bucherons (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_poste_avance_abandonne",
+      "name": "Poste avancé abandonné",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N010_E008",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour de bois sur un socle de pierre",
+        "palissade à demi abattue",
+        "grands ossements dans le fossé"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "30-34"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N010_E008"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Poste avancé de l'Empire bâti quand les géants furent repoussés vers le nord [HS], puis abandonné : la forêt l'a repris et des bêtes y gîtent. Niveaux 30-34.",
+        "[GD] (v1.0.87) Niveau : 30-34 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_poste_avance_abandonne (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_carriere_des_geants",
+      "name": "Carrière des géants",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N011_E007",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "front de taille aux blocs démesurés",
+        "outils et coins de géants abandonnés",
+        "tailleurs de pierre et leurs baraques"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N011_E007"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Ancienne carrière où les géants taillaient des blocs démesurés avant d'être repoussés vers le nord [HS] ; des tailleurs de pierre d'Ashwick y extraient la pierre de la reconstruction de Kendrhir (économie v1.0.58). Niveaux 28-32.",
+        "[GD] (v1.0.87) Niveau : 28-32 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_carriere_des_geants (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_cercle_pierres_des_geants",
+      "name": "Cercle de pierres des géants",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N011_E009",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cercle de pierres levées trois fois plus hautes qu'un homme",
+        "foyer central noirci",
+        "os de bœufs sauvages entassés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "32-36"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N011_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Cercle de pierres levées laissé par les géants dans la forêt à l'est de Whispers Hill ; une bande d'ogres en a fait son camp. Niveaux 32-36.",
+        "[GD] (v1.0.87) Niveau : 32-36 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_cercle_pierres_des_geants (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_trappeurs",
+      "name": "Camp des trappeurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N012_E007",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "abri de rondins et séchoirs à peaux",
+        "pièges et collets pendus",
+        "chemin vers la route de Stonehaven"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N012_E007"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Camp de trappeurs de Stonehaven en lisière de forêt : peaux et gibier partent par le port (économie v1.0.58) ; loups et trolls rôdent. Niveaux 28-32.",
+        "[GD] (v1.0.87) Niveau : 28-32 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_camp_des_trappeurs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_taniere_des_trolls",
+      "name": "Tanière des trolls",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N012_E009",
+      "region_id": "terres_des_gigantomorphes",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée basse sous des racines géantes",
+        "ossements rongés et puanteur",
+        "cavernes humides au fond de la forêt"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "32-36"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N012_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Tanière de trolls des forêts profondes au nord-est de Whispers Hill ; le feu les tient à distance [BD-A1 p.60]. Niveaux 32-36.",
+        "[GD] (v1.0.87) Niveau : 32-36 (Terres des Gigantomorphes).",
+        "Réel en jeu : POI poi_taniere_des_trolls (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_poste_relais_imperial",
+      "name": "Poste de relais impérial",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_E010",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "écurie de chevaux de poste",
+        "mur d'enceinte et borne milliaire",
+        "soldats impériaux de garde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E010"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Poste de relais sur la Via Magna entre Harrowdale et Shadehold : postes impériaux tous les 30 km [HS] ; des dragonnets-léopards y chassent les chevaux. Niveaux 18-24.",
+        "[GD] (v1.0.87) Niveau : 18-24 (Via Magna).",
+        "Réel en jeu : POI poi_poste_relais_imperial (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_detrousseurs",
+      "name": "Camp des détrousseurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_W003",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes basses cachées derrière une dune",
+        "guetteur sur un rocher",
+        "ballots volés aux voyageurs"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_W003"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Camp de détrousseurs au-dessus de la piste de Silverglade à Sauken Glude : la sécurité des voyageurs n'est pas garantie [HS]. Niveaux 14-20.",
+        "[GD] (v1.0.87) Niveau : 14-20 (Via Magna).",
+        "Réel en jeu : POI poi_camp_des_detrousseurs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_caravane_ensablee",
+      "name": "Caravane ensablée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N004_W004",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chariots à demi enfouis dans le sable",
+        "squelettes de bêtes de trait",
+        "serpents dans les épaves"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_W004"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Caravane pillée puis ensablée dans le désert au nord de Sauken Glude ; les détrousseurs y cachent une part de leur butin. Niveaux 14-18.",
+        "[GD] (v1.0.87) Niveau : 14-18 (Via Magna).",
+        "Réel en jeu : POI poi_caravane_ensablee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_bivouac_de_la_legion",
+      "name": "Bivouac de la légion",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S002_E003",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "rangées de tentes carrées",
+        "fossé et palissade de campagne",
+        "aigles et étendards de légion"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S002_E003"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Bivouac d'une légion impériale en marche, à l'écart de la Via Magna au sud du fief de Garundel : il n'est pas rare de voir des légions passer [HS]. Niveaux 16-22.",
+        "[GD] (v1.0.87) Niveau : 16-22 (Via Magna).",
+        "Réel en jeu : POI poi_bivouac_de_la_legion (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_sanctuaire_profane",
+      "name": "Sanctuaire profané",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S002_E004",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "autel de pierre renversé",
+        "statue décapitée",
+        "traces de renards infernaux et de mantes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S002_E004"
+      ],
+      "notes": [
+        "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Vieux sanctuaire de bord de route, profané, à l'orée de la forêt maudite ; renards infernaux et mantes géantes en sortent. Niveaux 16-22.",
+        "[GD] (v1.0.87) Niveau : 16-22 (Via Magna).",
+        "Réel en jeu : POI poi_sanctuaire_profane (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     }
   ],

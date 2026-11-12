@@ -2174,6 +2174,93 @@ dressées du T5 p.30 ; quêtes ouvertes à toutes les factions alors que la baro
 (contre-quêtes à définir) ; le Krak de Jhenner, la citadelle impériale et la Passe de Heniak `[BD-T5]` restent sans
 case (non placés ici).
 
+### 16.16 Lieux et quêtes des Gigantomorphes, de la Via Magna et de la Marche de l'Est (v1.0.87)
+
+Lot 15 du propriétaire (12/11/2026), même méthode que le lot 14 (§16.15). Cible : les cases **jouables**
+(`generated_cells` du master **et** corridors des départs, `AddStartCorridors`) **vides** (ni ville, ni lieu, ni
+quête) de trois régions. Chaque case reçoit un lieu `[GD]` avec un POI réel dans `pois` du master ; aucune nouvelle
+ville ni nouveau hameau, aucun identifiant supprimé, aucune ville renommée. Scripts reproductibles : `data_v1087.py`,
+`lore_v1087.py` (appliqué au fichier v1.0.86), `quests_v1087.py`, `master_v1087.py`.
+
+**Périmètre réel.** Terres des Gigantomorphes : 6 cases jouables vides, toutes autour de l'enclave de Whispers Hill
+(N011_E008 et N012_E008, Terres du Nord 1-15, §16.14), qui n'est pas touchée. Via Magna : 5 cases. **Marche de
+l'Est : aucune** — sa seule case générée, N007_E013 (région de départ de Grakhul), porte déjà les Ruines du fortin des
+Marches ; aucun lieu n'y est ajouté, seulement 3 quêtes (lore seulement). Ouvrir des cases de la Marche au jeu
+(`generated_cells`, ou corridor le long de la Via Magna par Horkher) reste à décider.
+
+**Repères de niveau `[GD]` proposés, à valider** (niveau relatif à la faction, `rule_niveaux_par_faction`) :
+Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ;
+Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrowdale – Shadehold
+18-26) ; Marche de l'Est hors baronnie 15-28. Aucun contenu ajouté ne dépasse sa zone : pas de nouvelle balise ; les
+Bornes des Géants (v1.0.85) restent les sorties balisées de l'enclave (1-15 → 28-36).
+
+**Terres des Gigantomorphes** (6 cases ; les géants eux-mêmes restent au nord, d'où l'Empire les a repoussés `[HS]` :
+la lisière n'en garde que les traces)
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N010_E007 | **Coupe des bûcherons** (`lieu_coupe_des_bucherons`, `poi_coupe_des_bucherons`, `camp`) | 28-32 |
+| N010_E008 | **Poste avancé abandonné** (`lieu_poste_avance_abandonne`, `poi_poste_avance_abandonne`, `ruine`) | 30-34 |
+| N011_E007 | **Carrière des géants** (`lieu_carriere_des_geants`, `poi_carriere_des_geants`, `camp`) | 28-32 |
+| N011_E009 | **Cercle de pierres des géants** (`lieu_cercle_pierres_des_geants`, `poi_cercle_pierres_des_geants`, `sanctuaire`) | 32-36 |
+| N012_E007 | **Camp des trappeurs** (`lieu_camp_des_trappeurs`, `poi_camp_des_trappeurs`, `camp`) | 28-32 |
+| N012_E009 | **Tanière des trolls** (`lieu_taniere_des_trolls`, `poi_taniere_des_trolls`, `salle`) | 32-36 |
+
+- `quest_gigantomorphes_gd_bois_de_la_reconstruction` « Le Bois de la reconstruction » (niveau 28+) : town_0123 → lieu_coupe_des_bucherons → lieu_poste_avance_abandonne
+- `quest_gigantomorphes_gd_pierre_des_geants` « La Pierre des géants » (niveau 30+) : town_0123 → lieu_carriere_des_geants → lieu_cercle_pierres_des_geants
+- `quest_gigantomorphes_gd_taniere_des_trolls` « La Tanière des trolls » (niveau 32+) : town_0139 → lieu_camp_des_trappeurs → lieu_taniere_des_trolls
+- `quest_gigantomorphes_gd_au_dela_des_bornes` « Au-delà des Bornes » (niveau 28+) : ville_whispers_hill → lieu_balise_borne_geants_nord → lieu_camp_des_trappeurs → lieu_carriere_des_geants
+
+**Via Magna** (5 cases ; postes impériaux tous les 30 km, insécurité des voyageurs, légions en marche `[HS]`)
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N004_E010 | **Poste de relais impérial** (`lieu_poste_relais_imperial`, `poi_poste_relais_imperial`, `camp`) | 18-24 |
+| N004_W003 | **Camp des détrousseurs** (`lieu_camp_des_detrousseurs`, `poi_camp_des_detrousseurs`, `camp`) | 14-20 |
+| N004_W004 | **Caravane ensablée** (`lieu_caravane_ensablee`, `poi_caravane_ensablee`, `ruine`) | 14-18 |
+| S002_E003 | **Bivouac de la légion** (`lieu_bivouac_de_la_legion`, `poi_bivouac_de_la_legion`, `camp`) | 16-22 |
+| S002_E004 | **Sanctuaire profané** (`lieu_sanctuaire_profane`, `poi_sanctuaire_profane`, `sanctuaire`) | 16-22 |
+
+- `quest_via_magna_gd_courrier_imperial` « Le Courrier impérial » (niveau 18+) : horker → lieu_poste_relais_imperial → town_0136
+- `quest_via_magna_gd_detrousseurs` « Les Détrousseurs de la piste » (niveau 14+) : sauken_glude_of_magistrya → lieu_camp_des_detrousseurs → lieu_caravane_ensablee
+- `quest_via_magna_gd_legion_en_marche` « La Légion en marche » (niveau 16+) : ville_garundel_fief → lieu_bivouac_de_la_legion → lieu_sanctuaire_profane
+
+**Marche de l'Est** (aucune case jouable vide ; quêtes en lore seulement, villes non générées)
+
+- `quest_marche_est_gd_grain_de_la_marche` « Le Grain de la Marche » (niveau 18+) : hamlet_0201 → ville_moork
+- `quest_marche_est_gd_laine_d_horkher` « La Laine d'Horkher » (niveau 18+) : city_horkher → lieu_poste_relais_imperial → horker
+- `quest_marche_est_gd_registre_du_fortin` « Le Registre du fortin » (niveau 15+) : city_horkher → lieu_ruines_fortin_des_marches
+
+**Sources des lieux.** Inventés `[GD]` sauf : géants repoussés vers le nord par l'expansion impériale `[HS]` (poste
+avancé, carrière, cercle de pierres) ; bois et pierre pour la reconstruction de Kendrhir, peaux et gibier de
+Stonehaven (économie v1.0.58) ; trolls et feu `[BD-A1 p.60]` ; postes impériaux, insécurité et légions de la Via
+Magna `[HS]` ; grain vers Moork et laine de la Marche (économie v1.0.58). Placements `[INFÉRÉ]` (aucune case dans la
+BD). Aucun nom propre inventé. Les noms ont été vérifiés contre les noms des PNJ de service (aucun mot repris).
+
+**Règles respectées** : l'enclave de Whispers Hill garde ses 5 POI ; l'entrée ophidienne du Puits des Lianes
+(N010_E010) n'est ni citée ni désignée (Cercle de pierres des géants placé au nord de N011_E009, à plus de 10 km) ;
+aucune grotte de dragon dans les cases traitées ni à côté.
+
+**Faune** : aucune créature créée ; espèces existantes rattachées (`zones_chasse`, `creature_ids`) : ogre (Coupe des
+bûcherons, Cercle de pierres), troll (Tanière), loup (Camp des trappeurs), dragonnet-léopard (Poste de relais),
+serpent (Caravane ensablée), renard infernal et mante géante (Sanctuaire profané). Détrousseurs et pillards : PNJ
+hostiles génériques, sans fiche.
+
+**Registre** (`regle_canon_registre_decisions`) : 3 entrées v1.0.87, une par région (`regions` :
+`terres_des_gigantomorphes`, `via_magna`, `region_marche_est`).
+
+**Ce qui est réel en jeu** : les 11 POI (bannière de nom à l'approche, aplanissement) dans des cellules générées.
+**Lore seulement** : quêtes (aucun système de quête de monde ne lit ces fiches), PNJ donneurs et adversaires,
+intérieurs (tanière), repères de niveau (aucun niveau de zone côté jeu), toute la Marche de l'Est.
+
+**Contrôles** : test `world_gen_tests` « lieux v1.0.87 » (11 lieux au sec, seuls sur leur case jouable, sans autre POI
+ni ville ; boîte de région vérifiée pour N004_W003 et N004_W004, les autres cases étant rattachées par le lore hors
+des boîtes du master ; enclave de Whispers Hill inchangée ; Cercle de pierres à plus de 10 km du Puits des Lianes).
+Cellules générées : 256 (inchangé). **Services** : 1242 PNJ (inchangé).
+
+**Points incertains** : tous les noms `[GD]` ; repères de niveau proposés ; quêtes ouvertes à toutes les factions ;
+la Marche de l'Est reste hors du monde jouable ; la quête « Au-delà des Bornes » (28+) part de l'enclave 1-15.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2181,6 +2268,7 @@ case (non placés ici).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
+- Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

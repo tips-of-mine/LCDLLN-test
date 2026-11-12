@@ -8,7 +8,10 @@
 #   au générateur (à relancer après toute modification de la grille) ;
 # - sync_positions.py --check (v1.0.95) : les positions posées à la main dans
 #   l'éditeur (position_x_m / position_z_m des villes et lieux) sont recopiées
-#   dans game/data/world/royaumes/world_master.json (clé position).
+#   dans game/data/world/royaumes/world_master.json (clé position) ;
+# - check_references.py (v1.0.103) : références vers des identifiants inexistants,
+#   en mode rapport (non bloquant tant qu'il reste des orphelines à trancher ;
+#   passer à --strict quand la liste est vide).
 #
 # Ne lance que du Python standard, ~10 s. Indépendant des builds.
 name: Lore — services des villes
@@ -52,3 +55,6 @@ jobs:
 
       - name: Positions manuelles recopiées au master
         run: python tools/lore/sync_positions.py --check
+
+      - name: Références orphelines (rapport, non bloquant)
+        run: python tools/lore/check_references.py

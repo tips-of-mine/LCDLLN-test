@@ -67,13 +67,23 @@ NIVEAUX = {
     "desert_central": (10, 25), "foret_des_lutins": (14, 24), "val_de_southport": (18, 28),
     "desert_des_sels": (24, 36), "confins_du_midi": (22, 34), "region_enfers_t00": (1, 10),
 }
+# v1.0.103 (lot 28, LORE_BD §16.32) : niveaux [GD] des régions et provinces qui n'en avaient pas
+# (absentes de la table v1.0.99 : le calque en diffère sur leurs cases seulement).
+NIVEAUX_V1103 = {
+    "royaumes_des_nains_du_sud": (10, 30), "region_hishtarland": (25, 40),
+    "region_premiere_province_empire": (10, 22), "region_northind": (12, 24),
+    "region_grande_plaine_bataille_t10": (45, 55),
+}
+NIVEAUX.update(NIVEAUX_V1103)
+# Raids sans niveau en v1.0.103 : contenu d'extension (Empire du Jade).
+RAIDS_NULS = {"raid_invocation_methraton_t7", "raid_bataille_necropolis_jade_t7"}
 RAIDS = {"raid_mine_de_la_traverse": (10, 15), "raid_tertre_des_rois_noyes": (45, 50),
          "raid_grottes_des_naufrageurs": (50, 55), "raid_taniere_du_jarl": (55, 60),
          "raid_devoreur_des_brumes": (60, 60)}
 MINES = {"lieu_mine_de_wardholt", "lieu_mine_de_la_traverse", "lieu_mine_de_soufre_abandonnee",
          "lieu_galerie_naine_abandonnee", "lieu_mine_de_fer_abandonnee", "lieu_puits_de_mine_inonde",
          "lieu_puits_des_apprentis", "lieu_galeries_effondrees_vieille_veine"}
-QUETES_AVANT = 72  # quêtes ancrées par source_lore seul (v1.0.99, LORE_BD §16.28)
+QUETES_AVANT = 90  # quêtes ancrées par source_lore seul (72 en v1.0.99, LORE_BD §16.28 ; 90 en v1.0.103, §16.32)
 
 
 class Echec(Exception):
@@ -141,14 +151,31 @@ def donnees(original):
     """Contrôles sur le fichier (champs ajoutés, valeurs, mines). Renvoie un résumé."""
     for rg in original["regions"]:
         verifier("niveau_ref" in rg and "niveau_par_faction" in rg, f"région {rg['id']} sans champ de niveau")
-        verifier(rg["niveau_par_faction"] == {}, f"région {rg['id']} : niveau_par_faction non vide")
+        # v1.0.103 : rempli pour toutes les factions jouables là où la région a un niveau de
+        # référence et une case (régions du hors-série, Île de la Trêve, provinces), vide ailleurs.
+        jouables = {f["id"] for f in original["factions"] if f.get("playable")}
+        npf = rg["niveau_par_faction"]
+        if npf:
+            verifier(set(npf) == jouables, f"région {rg['id']} : niveau_par_faction incomplet")
+            for f_, n_ in npf.items():
+                verifier(1 <= n_["min"] <= n_["max"] <= 70 and n_["min"] >= rg["niveau_ref"]["min"],
+                         f"région {rg['id']} : niveau de {f_} {n_}")
+        else:
+            verifier(rg.get("type") == "region" and rg["id"] != "region_ile_de_la_treve",
+                     f"région {rg['id']} : niveau_par_faction vide")
         att = NIVEAUX.get(rg["id"])
         verifier(rg["niveau_ref"] == ({"min": att[0], "max": att[1]} if att else None),
                  f"région {rg['id']} : niveau_ref {rg['niveau_ref']} au lieu de {att}")
     for r in original["raids"]:
         att = RAIDS.get(r["id"])
-        verifier("niveau_ref" in r and r["niveau_ref"] == ({"min": att[0], "max": att[1]} if att else None),
-                 f"raid {r['id']} : niveau_ref {r.get('niveau_ref')}")
+        verifier("niveau_ref" in r, f"raid {r['id']} sans niveau_ref")
+        if att:
+            verifier(r["niveau_ref"] == {"min": att[0], "max": att[1]}, f"raid {r['id']} : niveau_ref {r.get('niveau_ref')}")
+        elif r["id"] in RAIDS_NULS:
+            verifier(r["niveau_ref"] is None, f"raid {r['id']} : niveau_ref {r.get('niveau_ref')} (extension)")
+        else:  # v1.0.103 : niveau [GD] proposé
+            n_ = r["niveau_ref"]
+            verifier(n_ and 1 <= n_["min"] <= n_["max"] <= 70, f"raid {r['id']} : niveau_ref {n_}")
     ids = {k: {x["id"] for x in original[k]} for k in ("villes", "lieux", "persons")}
     cells = {c["id"] for c in original["cells"]}
     remplies = 0
@@ -189,7 +216,7 @@ def donnees(original):
 def niveaux(page, original, cap):
     """Calque Niveaux (champ des fiches, secours, faction) et formulaires de région et de raid."""
     page.evaluate("() => { showSection('carte'); window._carteState.filters.niveaux = true; drawCarte(); }")
-    r = page.evaluate("""() => {
+    r = page.evaluate(("""() => {
       const L1 = carteBuildLayers(), a = {};
       Object.keys(L1.niveau).forEach(k => { const n = L1.niveau[k]; a[k] = n ? n.min + '-' + n.max : null; });
       // Secours : fiches sans champ niveau_ref (fichier v1.0.99) → table CARTE_NIVEAUX_REF.
@@ -198,18 +225,21 @@ def niveaux(page, original, cap):
       Object.keys(L2.niveau).forEach(k => { const n = L2.niveau[k]; b[k] = n ? n.min + '-' + n.max : null; });
       db.regions.forEach((r, i) => { r.niveau_ref = sv[i]; });
       const diff = Object.keys(a).filter(k => a[k] !== b[k]).concat(Object.keys(b).filter(k => !(k in a)));
-      return { secours: L1.niveauSecours, secours2: L2.niveauSecours, diff, nul: Object.values(a).filter(v => v === null).length,
+      const nouv = new Set(%s);
+      const diffHors = diff.filter(k => { const c = db.cells.find(x => x.id === k); return !c || !(nouv.has(c.region_id) || nouv.has(c.province)); });
+      return { secours: L1.niveauSecours, secours2: L2.niveauSecours, diff: diffHors, ndiff: diff.length, nul: Object.values(a).filter(v => v === null).length,
                rens: Object.values(a).filter(v => v).length, src: (L1.niveau['N006_W013'] || {}).src || '' };
-    }""")
+    }""") % json.dumps(sorted(NIVEAUX_V1103)))
     verifier(r["secours"] == 0, f"{r['secours']} fiche(s) lues dans la table de secours")
     verifier(r["secours2"] > 0 and not r["diff"], f"calque différent de la table v1.0.99 : {r['diff'][:5]}")
-    verifier(r["nul"] == 72, f"cases sans niveau : {r['nul']} (72 attendues)")
-    print(f"   calque Niveaux : {r['rens']} cases lues dans niveau_ref, {r['nul']} non renseignées ; identique à la table v1.0.99 (secours vérifié)")
+    verifier(r["nul"] == 0, f"cases sans niveau : {r['nul']} (0 attendue depuis la v1.0.103)")
+    print(f"   calque Niveaux : {r['rens']} cases lues dans niveau_ref, {r['nul']} non renseignées ; identique à la table v1.0.99 "
+          f"hors des {r['ndiff']} cases des régions renseignées en v1.0.103 (secours vérifié)")
 
-    # Formulaire de région : Hishtarland (sans niveau) → 30-40, refus, retour.
+    # Formulaire de région : Hishtarland (25-40 depuis la v1.0.103) → 30-40, refus, retour.
     i = idx(original, "regions", "region_hishtarland")
     page.evaluate(f"() => openRegionForm({i})")
-    verifier(page.input_value("#rg_nmin") == "" and page.input_value("#rg_nmax") == "", "Hishtarland : niveau affiché")
+    verifier(page.input_value("#rg_nmin") == "25" and page.input_value("#rg_nmax") == "40", "Hishtarland : 25-40 non affiché")
     tf.ecrire_champ(page, "#rg_nmin", "40")
     tf.ecrire_champ(page, "#rg_nmax", "30")
     refus = tf.enregistrer(page)
@@ -227,40 +257,49 @@ def niveaux(page, original, cap):
     n = page.evaluate(f"() => {{ const n = carteBuildLayers().niveau['{cell}']; return n ? n.min + '-' + n.max : null; }}")
     verifier(n == "30-40", f"calque : {cell} {n} au lieu de 30-40")
     page.evaluate(f"() => openRegionForm({i})")
-    tf.ecrire_champ(page, "#rg_nmin", "")
-    tf.ecrire_champ(page, "#rg_nmax", "")
+    tf.ecrire_champ(page, "#rg_nmin", "25")
+    tf.ecrire_champ(page, "#rg_nmax", "40")
     tf.enregistrer(page)
-    identique(page, original, "Hishtarland remis sans niveau")
+    identique(page, original, "Hishtarland remis à 25-40")
 
     # Niveaux par faction : Val de Suthvarn, faction Légions impériales (ou la première jouable).
     j = idx(original, "regions", "val_de_southport")
     fac = next(f["id"] for f in original["factions"] if f.get("playable"))
     page.evaluate(f"() => openRegionForm({j})")
     verifier(page.input_value("#rg_nmin") == "18" and page.input_value("#rg_nmax") == "28", "Val de Suthvarn : 18-28 non affiché")
+    # v1.0.103 : la ligne de la faction existe déjà (18-28) ; on la modifie.
+    cles = list(original["regions"][j]["niveau_par_faction"])
+    verifier(fac in cles, f"Val de Suthvarn : pas de ligne {fac}")
     page.select_option("#rgNpfSel", fac)
-    page.click("button:has-text('+ Faction')")
-    page.fill(".rg-npf-min", "5")
-    page.fill(".rg-npf-max", "9")
+    page.click("button:has-text('+ Faction')")  # refusée : faction déjà présente
+    verifier(page.locator(".rg-npf-min").count() == len(cles), "faction ajoutée deux fois")
+    page.locator(".rg-npf-min").nth(cles.index(fac)).fill("5")
+    page.locator(".rg-npf-max").nth(cles.index(fac)).fill("9")
     if cap:
         page.evaluate("() => document.getElementById('modalBody').scrollTop = 0")
         page.locator(".modal").first.screenshot(path=str(cap.with_name(cap.stem + "_region.png")))
     verifier(not tf.enregistrer(page), "niveau par faction refusé")
     d = seulement(page, original, [f"regions[{j}].niveau_par_faction"], "niveau par faction")
-    verifier(page.evaluate(f"() => JSON.stringify(db.regions[{j}].niveau_par_faction)") == json.dumps({fac: {"min": 5, "max": 9}}, separators=(",", ":")),
+    verifier(page.evaluate(f"() => JSON.stringify(db.regions[{j}].niveau_par_faction['{fac}'])") == json.dumps({"min": 5, "max": 9}, separators=(",", ":")),
              "niveau_par_faction mal écrit")
     vcell = next(c["id"] for c in original["cells"] if c.get("province") == "val_de_southport")
     page.evaluate("() => { renderCarte(document.getElementById('sectionContent')); }")
     page.select_option("#carteNiveauFaction", fac)
     n1 = page.evaluate(f"() => {{ const n = _carteGeo.layers.niveau['{vcell}']; return n ? n.min + '-' + n.max : null; }}")
+    # v1.0.103 : le carré de départ de la faction choisie garde 1-10 malgré niveau_par_faction.
+    dep = next(f for f in original["factions"] if f["id"] == fac)["game_design"]["depart"]["cell"]
+    nd = page.evaluate(f"() => {{ const n = _carteGeo.layers.niveau['{dep}']; return n ? n.min + '-' + n.max : null; }}")
+    verifier(nd == "1-10", f"départ de {fac} ({dep}) : {nd} au lieu de 1-10")
     page.select_option("#carteNiveauFaction", "")
     n0 = page.evaluate(f"() => {{ const n = _carteGeo.layers.niveau['{vcell}']; return n ? n.min + '-' + n.max : null; }}")
     verifier(n1 == "5-9" and n0 == "18-28", f"sélecteur de faction : {n1} / {n0}")
     page.evaluate(f"() => openRegionForm({j})")
-    page.click("#rgNpfList .note-del-btn")
+    page.locator(".rg-npf-min").nth(cles.index(fac)).fill("18")
+    page.locator(".rg-npf-max").nth(cles.index(fac)).fill("28")
     tf.enregistrer(page)
-    identique(page, original, "niveau par faction retiré")
+    identique(page, original, "niveau par faction remis à 18-28")
     print(f"   formulaire de région : niveau 30-40 (Hishtarland), refus min > max et fourchette incomplète ; "
-          f"niveau par faction {fac} 5-9 (calque : {n1} avec la faction, {n0} en référence) ; retour à l'identique ({len(d)} chemin(s))")
+          f"niveau par faction {fac} 5-9 (calque : {n1} avec la faction, {n0} en référence, départ {nd}) ; retour à l'identique ({len(d)} chemin(s))")
 
     # Formulaire de raid.
     k = idx(original, "raids", "raid_mine_de_la_traverse")

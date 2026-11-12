@@ -3463,6 +3463,252 @@ propriétaire (12/11/2026) :
 - **Forêt des Lutins** : S001_E005 à S001_E007 ne touchaient la province qu'en diagonale → **S001_E008** (forêt) entre
   dans la province, désormais d'un seul tenant.
 
+### 16.32 Niveaux, niveaux par faction, ancrages et fiches complétés (v1.0.103)
+
+Lot 28 du propriétaire (12/11/2026) : compléter les données manquantes du lore, en autonomie. Tout ce qui est
+proposé ici est **`[GD]` à valider** (note sur chaque fiche) ; les rattachements déduits sont `[INFÉRÉ]`. Aucun
+identifiant supprimé ; terrain, cases, villes et PNJ de service inchangés (1242). `meta.version` 1.0.103, registre :
+6 entrées (une par point). Script reproductible hors dépôt : `apply.py` (appliqué au fichier v1.0.102).
+
+**1. Harrodh** (`horker`, N004_E009). La case est dans la **Via Magna** (cœur de la région, pas dans les îlots
+passés aux Territoires orques en v1.0.101 : ceux-ci concernaient Shezhold et Horkher). La Via Magna est une route
+impériale : « postes impériaux, villes ou caravansérails tous les 30 km », « il n'est pas rare de voir des légions
+passer » `[HS]` ; Harrodh porte le maître de poste du courrier impérial (`quest_via_magna_gd_courrier_imperial`,
+v1.0.87). **Décision `[GD]` : Harrodh reste à l'Empire** — `empire_hynn` au master (inchangé ; seule la `source` cite
+la décision) et désormais `faction_control = faction_empire` au lore (vide avant). La valeur du master venait d'une
+confusion avec Horkher ; elle est gardée parce qu'elle est cohérente avec la région. Les PNJ de service ne changent
+pas (`faction_empire` n'est pas une clé de race du générateur de services). Voisins à l'est (Shezhold, Nakhtvar, péage
+de N004_E012) : Lune Noire — Harrodh est la dernière cité impériale du tronçon vers Moork.
+
+**2. Niveaux de référence** (`niveau_ref`) des régions et provinces qui n'en avaient pas :
+
+| Région / province | Niveau | Raison |
+|---|---|---|
+| Royaumes des nains du sud (`royaumes_des_nains_du_sud`) | 10-30 | cœur du royaume hors départ de Drakhenhal : même repère que l'autre royaume nain (Nains de l'est 10-30) ; voisins Val de Suthvarn 18-28, Confins 22-34, Tsaroth 20-40 ; la nécropole de Der Hem Shelbem (40-56) et les coulées du volcan (55-70) restent des zones fortes balisées (v1.0.86) |
+| Royaume d'Hishtarland (`region_hishtarland`) | 25-40 | royaume naval indépendant du sud-ouest, après le Val de Suthvarn (18-28) et avant le Royaume Drach (30-56) ; le raid de l'île d'Hishtarland ouvre les Abysses de la baie, dont les raids prennent ce repère (case de mer sans région) |
+| 1ère Province de l'Empire (`region_premiere_province_empire`) | 10-22 | province du cœur de l'Empire (Altenberg, Dis) autour du départ de Dawnmere (1-10), comme la côte sud de Lhynn (12-22, v1.0.90) ; plus bas que le haut du repère de sa région (10-30) |
+| Province de Northind (`region_northind`) | 12-24 | province frontalière brûlée au T8, voisine du départ de Syllaërin (1-10) et de la Forêt elfique (10-30) : début du repère de sa région |
+| La Grande Plaine (`region_grande_plaine_bataille_t10`) | 45-55 | champ de la Grande Bataille du T10, sans case (hors de la carte du continent) : contenu de fin de campagne, sous le volcan (55-70) |
+| Empire du Jade (`region_empire_jade`) | null | contenu d'extension |
+| Empire Tharque (`region_empire_tharque`) | null | contenu d'extension |
+| Terra Secunda (`region_terra_secunda`) | null | contenu d'extension |
+| Les Enfers (`region_enfers_t00`) | 1-10 (confirmé) | décision du propriétaire du 09/11/2026 (v1.0.71, §15.8) : « Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails » |
+
+Toutes les cases terrestres ont maintenant un niveau (calque de l'éditeur : 0 case hachurée au lieu de 72).
+
+**Raids** : 31 niveaux proposés, 2 à `null` (Empire du Jade, extension) ; les 5 niveaux de la v1.0.100 sont gardés.
+Règle `[GD]` : (a) boss connu (créature dont `raid_id` est le raid, ou boss qui le cite) → `[niveau max − 5, niveau max]` ;
+(b) sinon zone du raid (province, sinon région de sa case ; raid sans case : zone de son nom) : `L = min + (max − min) × f`,
+f = 0,25 / 0,5 / 0,75 / 1 pour les difficultés 2 / 3 (et « normal » ou vide) / 4 / 5, au moins `min + 5`, +5 pour
+3 équipes ou plus, fourchette `[L − 5, L]` ; (c) planchers des raids de fin d'histoire, contenu fort balisé
+(décision v1.0.78) : Héroïque 45, Légendaire 50, Mythique 55, Apocalyptique 60. Contrôle : la règle (b) redonne la
+Mine de la Traverse (10-15). Abysses (case de mer sans région) : zone d'Hishtarland, région d'accès (le raid de
+l'île les débloque).
+
+| Raid | Niveau | Base |
+|---|---|---|
+| `raid_succube_marais` | 17-22 | zone Forêt des Lutins 14-24, difficulté 4, 2 équipe(s) |
+| `raid_demons_village_fantome` | 17-22 | zone Forêt des Lutins 14-24, difficulté 4, 2 équipe(s) |
+| `raid_bataille_oracle` | 15-20 | zone Via Magna 10-30, difficulté 3, 2 équipe(s) |
+| `raid_garundel` | 10-15 | zone Via Magna 10-30, difficulté 2, 2 équipe(s) |
+| `raid_bataille_dis_t4` | 11-16 | zone 1ère Province de l'Empire 10-22, difficulté 'normal', 2 équipe(s) |
+| `raid_bataille_tsaroth_t5` | 45-50 | zone Baronnie de Moorks 18-45, difficulté 5, 3 équipe(s) |
+| `raid_assaut_horkher_t6` | 33-38 | zone Territoires orcques 18-45, difficulté 4, 2 équipe(s) |
+| `raid_pillage_marches_t1` | 1-6 | zone Territoires des Marches 1-15, difficulté 2, 1 équipe(s) |
+| `raid_sac_kendrhir_t1` | 38-43 | zone Terres des Gigantomorphes 30-56, difficulté 3, 1 équipe(s) |
+| `raid_grande_bataille_kendrhir_t1` | 51-56 | zone Terres des Gigantomorphes 30-56, difficulté 5, 2 équipe(s) |
+| `raid_grande_marche_lune_noire_t9` | 45-50 | zone Baronnie de Moorks 18-45, difficulté 5, 3 équipe(s) |
+| `raid_plaine_altenberg_t4` | 11-16 | zone 1ère Province de l'Empire 10-22, difficulté 3, 2 équipe(s) |
+| `raid_campagne_vassaux_t4` | 10-15 | zone Via Magna 10-30, difficulté 2, 1 équipe(s) |
+| `raid_invocation_methraton_t7` | null | extension (Empire du Jade) |
+| `raid_bataille_necropolis_jade_t7` | null | extension (Empire du Jade) |
+| `raid_bataille_der_hem_shelbem_t8` | 50-55 | zone Royaumes des nains du sud 10-30, difficulté 'Légendaire', 2 équipe(s) ; plancher 50 des raids « Légendaire » (contenu fort balisé, décision v1.0.78) |
+| `raid_siege_northind_t8` | 45-50 | zone Province de Northind 12-24, difficulté 'Héroïque', 2 équipe(s) ; plancher 45 des raids « Héroïque » (contenu fort balisé, décision v1.0.78) |
+| `raid_t00_armee_ghorghor` | 3-8 | zone Terres du Nord — Château en Ruine 1-15, difficulté '', 2 équipe(s) |
+| `raid_grande_bataille_plaine_t10` | 55-60 | zone La Grande Plaine 45-55, difficulté 'Mythique', 2 équipe(s) ; plancher 55 des raids « Mythique » (contenu fort balisé, décision v1.0.78) (raid sans case : zone déduite du nom ou de la région) |
+| `raid_assaut_palais_lhynn_t10` | 50-55 | zone Terres de l'empereur 10-30, difficulté 'Légendaire', 2 équipe(s) ; plancher 50 des raids « Légendaire » (contenu fort balisé, décision v1.0.78) |
+| `raid_bataille_finale_lhynn_t11` | 50-55 | zone Terres de l'empereur 10-30, difficulté 'Légendaire', 2 équipe(s) ; plancher 50 des raids « Légendaire » (contenu fort balisé, décision v1.0.78) |
+| `raid_dzoraks_marais_maudits_t11` | 50-55 | boss creature_dzorak_marais_t11 (raid_id ou boss qui cite le raid) niveau 55 |
+| `raid_t12_01_porte_des_enfers` | 65-70 | boss creature_hecatoncheire_t12 (raid_id ou boss qui cite le raid) niveau 70 |
+| `raid_t13_bataille_finale_moork` | 60-65 | zone Terres de l'empereur 10-30, difficulté 'Apocalyptique', 2 équipe(s) ; plancher 60 des raids « Apocalyptique » (contenu fort balisé, décision v1.0.78) |
+| `raid_mordrek_t14` | 50-55 | boss creature_gigantomorphe (raid_id ou boss qui cite le raid) niveau 55 |
+| `raid_marches_est_t14` | 17-22 | zone Marche de l'Est 15-28, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) |
+| `raid_orques_greldinard_t14` | 27-32 | zone Territoires orcques 18-45, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) |
+| `raid_t01_gd_defense_kendrhir` | 38-43 | zone Terres des Gigantomorphes 30-56, difficulté 3, 1 équipe(s) |
+| `raid_t01_gd_contre_grande_bataille` | 51-56 | zone Terres des Gigantomorphes 30-56, difficulté 5, 2 équipe(s) |
+| `raid_ile_hishtarland` | 28-33 | zone Royaume d'Hishtarland 25-40, difficulté 3, 1 équipe(s) |
+| `raid_abysses_temple_englouti` | 40-45 | zone Royaume d'Hishtarland 25-40, difficulté 5, 3 équipe(s) |
+| `raid_abysses_antre` | 35-40 | zone Royaume d'Hishtarland 25-40, difficulté 5, 2 équipe(s) |
+| `raid_coeur_du_volcan` | 61-66 | boss creature_lave_volcan (raid_id ou boss qui cite le raid) niveau 66 |
+
+**3. Niveaux par faction.** Règle `[GD]` (note de `rule_niveaux_par_faction` et `mechanique_jeu`) :
+
+1. Île de la Trêve : même niveau pour toutes les factions (décision v1.0.74).
+2. Région ou province qui contient le départ de la faction : niveau de référence (le carré 3×3 du départ reste 1-10).
+3. Sans faction maîtresse, maître allié, neutre ou relation inconnue : niveau de référence.
+4. Maître **ennemi** : territoire « de faction » : min = max(référence min + 5, **20**), max = min(70, max(référence max + 5,
+   min + 5)) — on n'y entre pas avant le niveau 20 (« à partir du niveau 20 du joueur beaucoup de choses changent », v1.0.78).
+
+Relations : blocs de `game_design.faction_relations` (Empire : Lumière, Justice, Serpent, avec l'Empire de Hynn ; Lune
+Noire : Lune Noire, Dzorak, Légions impériales, Hauts Elfes ; Nains et Chevaliers-Dragons alliés entre eux, neutres avec
+les blocs, ennemis des Elfes ; Elfes neutres avec l'Empire) ; Hors-La-Loi (statut acquis) ennemis de tous ; Archimages
+et Légion infernale, absents de la matrice : neutres. Aucune alliance inventée. Maître d'une région : faction dont
+`region_id` / `region_ids` la cite, sinon faction qui tient ses villes, sinon aucun ; une province prend le maître de sa
+région sauf faction propre. Champ rempli pour 24 fiches (11 régions du hors-série, Île de la Trêve, 12 provinces) × 12
+factions jouables ; vide pour les 5 régions sans case. Valeurs **différentes de la référence** (territoire ennemi) :
+
+| Région / province | Référence | Maître | Factions en territoire ennemi (niveau) |
+|---|---|---|---|
+| Terres des Gigantomorphes | 30-56 | aucun (terres sauvages des géants) | — |
+| Forêt elfique | 10-30 | Les Hauts Elfes (region_ids des Hauts Elfes) | Chevaliers-Dragons, Nains, Hors-La-Loi (20-35) |
+| Territoires orcques | 18-45 | Dzorak (Orcs) (region_ids des Dzorak) | Chevaliers de la Lumière, Chevaliers de la Justice, Maison du Serpent, Hors-La-Loi (23-50) |
+| Royaume des nains de l'est | 10-30 | Nains (region_ids des Nains) | Les Hauts Elfes, Hors-La-Loi (20-35) |
+| Baronnie de Moorks | 18-45 | La Lune Noire (toutes ses villes à la Lune Noire (Moork)) | Chevaliers de la Lumière, Chevaliers de la Justice, Maison du Serpent, Hors-La-Loi (23-50) |
+| Via Magna | 10-30 | aucun (route commune (postes impériaux, villes neutres et de la Lune Noire)) | — |
+| Royaumes des nains du sud | 10-30 | Nains (region_ids des Nains) | Les Hauts Elfes, Hors-La-Loi (20-35) |
+| Royaume Drach | 30-56 | Chevaliers-Dragons (les Chevaliers-Dragons en interdisent l'accès [BD-T2]) | Les Hauts Elfes, Hors-La-Loi (35-61) |
+| Terres de l'empereur | 10-30 | L'Empire de Lhynn (region_ids de faction_empire) | La Lune Noire, Dzorak (Orcs), Hors-La-Loi (20-35) |
+| Territoires des Marches | 1-15 | aucun (seigneurs locaux des Marches, aucune faction jouable [BD-T1]) | — |
+| 1ère Province de l'Empire | 10-22 | Chevaliers de la Lumière (region_id des Chevaliers de la Lumière) | La Lune Noire, Dzorak (Orcs), Les Légions Impériales, Hors-La-Loi (20-27) |
+| Province de Northind | 12-24 | L'Empire de Lhynn (province impériale (région parente)) | La Lune Noire, Dzorak (Orcs), Les Légions Impériales, Hors-La-Loi (20-29) |
+| Terres du Nord — Château en Ruine | 1-15 | aucun (aucune faction) | — |
+| Marais Maudits (de Thenhart) | 40-56 | aucun (aucune faction) | — |
+| Syzygie | 10-30 | Chevaliers de la Justice (region_ids des Chevaliers de la Justice) | La Lune Noire, Dzorak (Orcs), Les Légions Impériales, Hors-La-Loi (20-35) |
+| Marche de l'Est | 15-28 | La Lune Noire (province de la Baronnie (région parente)) | Chevaliers de la Lumière, Chevaliers de la Justice, Maison du Serpent, Hors-La-Loi (20-33) |
+| Royaume d'Hishtarland | 25-40 | aucun (royaume indépendant hors factions jouables) | — |
+| Île de la Trêve | 45-60 | aucun (zone commune (décision v1.0.74)) | — |
+| Terres désolées de Tsaroth | 20-40 | Nains (province naine (région parente)) | Les Hauts Elfes, Hors-La-Loi (25-45) |
+| Désert de l'Oracle | 10-25 | aucun (Oracle neutre) | — |
+| Forêt des Lutins | 14-24 | aucun (aucune faction) | — |
+| Val de Suthvarn | 18-28 | Nains (province naine (région parente)) | Les Hauts Elfes, Hors-La-Loi (23-33) |
+| Désert des Sels | 24-36 | Nains (province naine (région parente)) | Les Hauts Elfes, Hors-La-Loi (29-41) |
+| Confins du Midi | 22-34 | Nains (province naine (région parente)) | Les Hauts Elfes, Hors-La-Loi (27-39) |
+
+Éditeur (les deux copies) : avec une faction choisie dans le calque Niveaux, **le carré de départ de cette faction garde
+1-10** avant sa valeur `niveau_par_faction` (sinon il aurait pris la référence de la région qui le contient) ;
+`carteBuildLayers` (commentaire mis à jour) et la légende du calque. `test_editor_fiches.py` adapté aux données v1.0.103
+(niveaux ajoutés, valeurs par faction, 0 case sans niveau, départ à 1-10 avec la faction choisie).
+
+**4. Ancrages.** Quêtes plaçables (calque de l'éditeur) : **117 → 133 / 192**. Règle v1.0.85 / v1.0.100 : le nom, la
+description ou les étapes citent un seul lieu situé (nom exact en mots entiers, ou nom sans sa parenthèse finale,
+ex. « Camp de l'Oracle ») ; l'identifiant est ajouté à `source_lore` avec une note `[INFÉRÉ] (v1.0.103)`. Ancrées :
+
+| Quête | Lieu | Case |
+|---|---|---|
+| `quest_village_fantome` (Le Village Fantôme du Marais) | `ville_village_fantome` | S003_E006 |
+| `quest_apprentissage_hizin` (L'Apprentissage Psychique d'Hizin) | `kendrhir_vale` | N015_E012 |
+| `quest_consultation_oracle_t3` (La Question de l'Oracle) | `ville_oracle_camp` | N000_E000 |
+| `quest_bataille_oracle_camp_t3` (La Bataille du Camp de l'Oracle) | `ville_oracle_camp` | N000_E000 |
+| `quest_der_hem_shelbem_t8` (La Vallée des Morts) | `ville_der_hem_shelsem` | S010_E010 |
+| `quest_tresor_necropole_t8` (Le Trésor de Der Hem Shelbem) | `ville_der_hem_shelsem` | S010_E010 |
+| `quest_prise_altenberg_t8` (La Prise d'Altenberg — Le Glaive de Justice) | `ville_altenberg` | N005_W012 |
+| `quest_priere_archange_t8` (La Prière de l'Archange Gabriel) | `ville_altenberg` | N005_W012 |
+| `quest_northind_en_flammes_t8` (Northind en Flammes) | `ville_northind` | N007_W005 |
+| `quest_entrainement_magie_t8` (L'Apprenti Magicien de Moork) | `ville_moork` | S002_E015 |
+| `quest_t13_01_victoire_etrange` (Une Victoire Etrange) | `ville_lhynn` | N001_W010 |
+| `quest_t13_02_mobilisation_haazheel` (La Rage de la Lune Noire) | `ville_moork` | S002_E015 |
+| `quest_resurrection_masse_t14` (La Résurrection de Masse) | `ville_lhynn` | N001_W010 |
+| `quest_exode_vents_t14` (Les Vents Passent) | `ville_lhynn` | N001_W010 |
+| `quest_volcan_1_ville_der_hem_shelsem` (Le Souffle du volcan — Der Hem Shelbem) | `ville_der_hem_shelsem` | S010_E010 |
+| `quest_ile_gd_fil_des_ancetres` (Le Fil des Ancêtres) | `lieu_tertre_des_rois_noyes` | N019_W013 |
+
+Écartées malgré une citation unique : `quest_traversee_armee_haazheel_t3` (Lhynn n'est que la destination de l'armée) ; `quest_conseil_guerre_imperial_t8` (Northind n'est que le but de la marche décidée au conseil) ; `quest_cles_northind_t8` (les clefs sont remises à l'Empereur, pas forcément à Northind).
+Deux quêtes déjà plaçables par leurs étapes le deviennent aussi par `source_lore` grâce aux corrections d'identifiants
+(point 6 : Horkher, fief de Garundel) : 90 quêtes ancrées sans les étapes situées (72 avant).
+
+Raids placés : **23 → 32 / 38** : `location_ville_id` ajouté (Der Hem Shelbem, Northind, Lhynn ×3 dont
+`raid_t13_bataille_finale_moork`, nommé « Bataille Finale de Lhynn » ; `lieu_abysses_baie` ×2, rattachement v1.0.85 qui
+n'était qu'en note), identifiant orphelin `ville_horkher` → `city_horkher` (Assaut d'Horkher), note de la case de
+Tbarak pour la Campagne des Marches (départ de la horde ; `location_ville_id` garde la région). Restent sans case :
+`raid_invocation_methraton_t7`, `raid_bataille_necropolis_jade_t7`, `raid_grande_bataille_plaine_t10`, `raid_t12_01_porte_des_enfers`, `raid_marches_est_t14`, `raid_orques_greldinard_t14` (Jade : extension ; Grande Plaine : sans case ; Porte du T12,
+Marche de l'Est et Greldinard : lieu non situé, décision v1.0.85).
+
+**Quêtes encore non plaçables (59)**, à situer à la main (formulaire « Étapes situées ») :
+
+- sans région ni lieu identifiable (lieu non nommé, mobile ou multiple, tomes 9-14 sans lieu) (39) : `quest_pacte_dzorak`, `quest_pyramide_volante`, `quest_teleporation_demoniaque`, `quest_loyaute_ghorghor`, `quest_iaun_reith`, `quest_rencontre_urmarcht_t3`, `quest_neuf_femmes_avant_transformation_t9`, `quest_rituel_seigneur_negation_t9`, `quest_grande_coalition_t9`, `quest_prince_hors_vivant_t8`, `quest_rituel_puissance_t8`, `quest_conseil_guerre_imperial_t8`, `quest_cles_northind_t8`, `quest_fratus_vassal_t8`, `quest_recrutement_chevaliers_dragons_t9`, `quest_dragons_princes_reponse_t10`, `quest_rituel_gemme_negation_t10`, `quest_preparation_grande_bataille_t10`, `quest_cadeaux_compagnons_t11`, `quest_dejouer_complot_tharque_t11`, `quest_t12_01_le_pere_retrouve`, `quest_t12_02_vengeance_urmacht`, `quest_t12_03_pretre_indesirable`, `quest_t12_04_oracle_assiege`, `quest_t12_05_fermer_la_porte`, `quest_t12_06_pyramide_archimages`, `quest_t12_07_conseil_imperial`, `quest_t13_03_anneaux_negation`, `quest_t13_04_consultation_oracle`, `quest_t13_05_invocation_methraton`, `quest_t13_06_seigneurs_negation_reunion`, `quest_t13_07_derniere_nuit`, `quest_secret_divinite_t14`, `quest_liberer_oracle_t14`, `quest_exode_preparer_t14`, `quest_exode_dernier_passage_t14`, `quest_exode_dragons_t14`, `quest_sept_epees_empereur`, `quest_audience_oracle_hs`.
+- zone_cursed_forest (1) : `quest_foret_lutins_t3`.
+- zone_marches (1) : `quest_traversee_armee_haazheel_t3`.
+- Territoires des Marches (6) : `quest_apprendre_a_chasser_t1`, `quest_t01_gd_defendre_cite_marches`, `quest_t01_gd_eclaireur_marches`, `quest_t01_gd_voie_psychique`, `quest_t01_gd_deux_lames`, `quest_t01_gd_consulter_oracle`.
+- Empire du Jade (6) : `quest_voyage_empire_jade_t7`, `quest_invocation_methraton_t7`, `quest_politique_jade_t7`, `quest_revelations_vents_t7`, `quest_rituel_soleil_noir_t7`, `quest_alliance_finale_jade_t7`.
+- Les Enfers (1) : `quest_t00_jeu_cruel_intro`.
+- Terres du Nord — Château en Ruine (5) : `quest_t00_gd_traque_origines`, `quest_t00_gd_butin_maigre`, `quest_t00_gd_apprendre_chasse`, `quest_t00_gd_joute_errante`, `quest_t00_gd_echo_invocation`.
+
+**5. Fiches sans nom.** 147 dialogues, 9 événements de chronologie et 3 règles transverses reçoivent un nom descriptif
+en français, écrit d'après leurs répliques, leurs notes et leur identifiant (ex. « Dialogue — L'Oracle et Wismerhill :
+« Qui est mon père ? » (T3) », « Fratus brûle Northind et s'enfuit (T8) », « Prophétie de l'Oracle : les deux joueurs
+perdront ») ; identifiants et contenu inchangés. Les 32 dialogues `dial_t10_NN`, vides et cités nulle part, sont
+nommés « Dialogue du tome 10 n° NN (vide, à écrire) » ; 45 autres dialogues sans réplique (T6, T8, T9, T13) sont
+nommés d'après leur identifiant et leurs notes. Plus aucune fiche sans nom : toutes sont enregistrables dans l'éditeur.
+
+**6. Références orphelines.** `tools/lore/check_references.py` (Python standard, documenté) : 160 champs de référence
+(table `REFERENCES`), identifiants connus = `id` des fiches de premier niveau, de `lore`, de `hydrography` et des
+compétences des arbres ; valeurs de forme identifiant seulement ; cases des Enfers `enfers:<case>` acceptées. Exclus :
+champs d'énumération (`type`, `category`, `tags`), `faction_control` (texte libre et clés du générateur de services :
+`lune_noire`, `empire_humain`), registre des décisions. Sortie : une ligne par orpheline avec une suggestion difflib ;
+`--strict` sort en erreur s'il en reste. Ajouté au workflow `.github/workflows/lore-city-services.yml` en **rapport non
+bloquant** (il en reste).
+
+Avant : 177 références orphelines. **Corrigées : 88** (ancien identifiant ou faute, une seule cible
+possible ; note `[INFÉRÉ] (v1.0.103)` sur la fiche quand elle a des notes) :
+
+| Ancien | Corrigé | Nombre |
+|---|---|---:|
+| `ville_horkher` | `city_horkher` | 10 |
+| `faction_tharque` | `empire_tharque` | 10 |
+| `faction_garde_noire` | `la_garde_noire` | 9 |
+| `race_dragon_knight` | `chevaliers-dragons` | 8 |
+| `companion_succubus_t3` | `hellavnnea_la_succube` | 8 |
+| `zone_dis` | `dys` | 4 |
+| `companion_hellavnnea` | `hellavnnea_la_succube` | 3 |
+| `race_humain` | `race_human` | 3 |
+| `ville_dis` | `dys` | 3 |
+| `item_nepher` | `loot_nepher` | 2 |
+| `item_bepher` | `loot_bepher` | 2 |
+| `zone_garundel_fief` | `ville_garundel_fief` | 2 |
+| `dragon_adult` | `dragon` | 2 |
+| `race_giant` | `geants` | 2 |
+| `faction_maison_taureau` | `maison_du_taureau` | 2 |
+| `faction_maison_serpent` | `maison_du_serpent` | 2 |
+| `faction_maison_oiseaux` | `maison_des_oiseaux_blancs` | 2 |
+| `faction_archimages` | `les_archimages` | 2 |
+| `item_wismerhill_sword_forged` | `loot_epee_wismerhill_forgee` | 1 |
+| `item_regeneration_ring` | `loot_anneau_regeneration` | 1 |
+| `zone_garundel_fief` | `zone_garundel_castle_base` | 1 |
+| `dragon_juvenile` | `dragon` | 1 |
+| `class_assassin` | `Assassin` | 1 |
+| `region_baronnie_moork` | `baronnie_de_moorks` | 1 |
+| `ville_ghrunkedash` | `ville_ghrunke_dash` | 1 |
+| `classe_guerrier` | `class_warrior` | 1 |
+| `classe_mage` | `class_mage` | 1 |
+| `classe_archimage` | `Archimage` | 1 |
+| `race_nain` | `race_dwarf` | 1 |
+| `char_lucifer` | `char_lucifer_prince_tenebres` | 1 |
+
+`zone_garundel_fief` n'est corrigé que là où la cible est sûre : `ville_ids` et `source_lore` → `ville_garundel_fief`,
+`region_id` de la quête de l'automne au château → `zone_garundel_castle_base` (« base de Wismerhill, automne T3 »).
+
+**Restent 89 références (36 identifiants), à trancher** : pas de fiche correspondante ou plusieurs cibles
+possibles : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` ×4, `zone_garundel_fief` ×3, `class_artisan` ×3, `class_bard` ×2, `monde_entier` ×2, `forest_poi`, `quest_brule_le_passe_t4`, `quest_premier_jour_baron_t6`, `exploit_mort_haghendorf_t11`, `class_succube`, `loot_poussiere_feerie`, `loot_bille_de_ruse`, `loot_antenne_mante`, `loot_ecaille_dragon_jeune`, `loot_sang_de_dragon`, `loot_oeil_renard_infernal`, `loot_carapace_insecte_oracle`, `loot_ecaille_demon_majeur`, `loot_armure_cramoisie_demoniaque`, `serpent_mystique`, `citadelle_legion`, `race_orc`, `classe_samourai`, `classe_seigneur_des_tenebres`, `classe_necromancien`, `classe_alchimiste`, `creature_dragon_adult`, `class_noble`, `faction_gods`, `race_half_demon`, `class_pretre`, `race_elfe`, `quest_fermer_porte_enfers_hs`.
+Principales : `faction_demons` (30 : démons, Lucifer, succubes — créer une faction des démons ou rattacher à la Légion
+infernale / aux Nuées ?), `race_menthat` (11 : les Menthats sont une classe `menthats`, pas une race), `race_half_dark_elf`
+(6 : Wismerhill ; race `demi-demon_elfique` ?), types de lieu `battlefield_poi` / `forest_poi` absents de `place_types`,
+classes inexistantes (artisan, barde, succube, noble, samouraï…), 9 butins de créatures sans fiche, `citadelle_legion`
+(départ de la Légion infernale : la Citadelle n'a pas de fiche ville).
+
+**Contrôles** : `generate_city_services.py --check`, `validate_city_services.py` (121 villes, 1242 PNJ), `sync_positions.py
+--check`, `check_references.py` (rapport) ; les deux JSON identiques, format `json.dumps(indent=2, ensure_ascii=False)`
+sans retour à la ligne final ; `test_editor_roundtrip.py`, `test_editor_forms.py --rapide`, `test_editor_layers.py`,
+`test_editor_fiches.py` (les deux copies de l'éditeur) ; master : `world_gen_tests`, `world_places_tests`,
+`start_locations_tests` (seule la `source` d'Harrodh change, aucune génération).
+
+**Ce qui n'est pas réel en jeu** : niveaux de zone, niveaux par faction et niveaux de raid sont des données du lore et
+de l'éditeur ; aucun code du jeu ni du serveur ne les lit.
+
+**Points à valider** : faction d'Harrodh ; tous les niveaux `[GD]` (en particulier Hishtarland 25-40, Grande Plaine
+45-55, raids de Kendrhir 38-56 dans les Gigantomorphes alors que l'histoire du T1 est un début, planchers des raids
+Légendaires à Lhynn) ; décalage +5 / seuil 20 des territoires ennemis ; Marches sans maître ; Hishtarland et Via Magna
+sans maître ; les orphelines restantes.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3508,3 +3754,4 @@ propriétaire (12/11/2026) :
   (v1.0.78, §16.7).
 - Forteresse naine d'Heusgly (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.
+- Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, 59 quêtes et 6 raids sans case, 89 références orphelines à trancher (16.32).

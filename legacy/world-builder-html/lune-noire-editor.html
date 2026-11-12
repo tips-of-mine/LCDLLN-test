@@ -7263,12 +7263,14 @@ function carteBuildLayers() {
   // Niveaux (v1.0.100) : valeur de la faction choisie (niveau_par_faction de la province, puis
   // de la région) > région de départ d'une faction (game_design.depart.region, carte du
   // continent) > niveau_ref de la province > niveau_ref de la région (table de secours si
-  // la fiche n'a pas le champ).
+  // la fiche n'a pas le champ). v1.0.103 : le carré de départ de la faction choisie garde son
+  // niveau de départ (1-10) avant sa valeur niveau_par_faction (remplie pour toutes les
+  // régions, elle vaut la référence de la région qui contient le départ).
   var depart={};
   (db.factions||[]).forEach(function(f){
     var d=f.game_design&&f.game_design.depart, r=d&&d.region;
     if (!r || r.carte || !Array.isArray(r.cells) || !Array.isArray(r.niveaux) || r.niveaux.length<2) return;
-    r.cells.forEach(function(id){ depart[id]={ min:r.niveaux[0], max:r.niveaux[1], src:'Région de départ : '+(f.name||f.id) }; });
+    r.cells.forEach(function(id){ depart[id]={ min:r.niveaux[0], max:r.niveaux[1], src:'Région de départ : '+(f.name||f.id), fac:f.id }; });
   });
   var regName={}, regNiv={}, facNiv={}, fac=window._carteState.niveauFaction||'';
   var facRec=fac ? (db.factions||[]).find(function(f){ return f.id===fac; }) : null;
@@ -7283,7 +7285,8 @@ function carteBuildLayers() {
   });
   L.niveauFactionRegions=Object.keys(facNiv).length;
   cells.forEach(function(c){
-    var n=(c.province && facNiv[c.province]) || (c.region_id && facNiv[c.region_id]) || depart[c.id] || null;
+    var dp=depart[c.id];
+    var n=(fac && dp && dp.fac===fac ? dp : null) || (c.province && facNiv[c.province]) || (c.region_id && facNiv[c.region_id]) || dp || null;
     if (!n && c.province && regNiv[c.province]) n=regNiv[c.province];
     if (!n && c.region_id && regNiv[c.region_id]) n=regNiv[c.region_id];
     if (n) L.niveau[c.id]=n; else if (c.region_id) L.niveau[c.id]=null; // null = région sans repère
@@ -7692,7 +7695,7 @@ function carteLayersLegendHTML() {
   if (fl.niveaux) {
     var nRens=0, nNon=0; Object.keys(L.niveau).forEach(function(k){ if (L.niveau[k]) nRens++; else nNon++; });
     h+=row('Niveaux de référence', '<span style="display:inline-flex;align-items:center;gap:0.3rem">1<span style="display:inline-block;width:160px;height:11px;border-radius:2px;background:linear-gradient(90deg,'+CARTE_NIVEAU_STOPS.map(function(s){ return s[1]+' '+Math.round((s[0]-1)/69*100)+'%'; }).join(',')+')"></span>70</span>'
-      +'<span>couleur = milieu de la fourchette, étiquette « min-max » à partir du zoom ×3</span><span>'+sw('repeating-linear-gradient(45deg,#666 0 2px,transparent 2px 5px)','border:1px solid #888')+' non renseigné ('+nNon+' cases)</span><span style="opacity:.7">'+nRens+' cases ; priorité : '+(L.niveauFaction?'niveau de la faction (niveau_par_faction, '+L.niveauFactionRegions+' fiche'+(L.niveauFactionRegions>1?'s':'')+') &gt; ':'')+'région de départ &gt; province &gt; région (champ niveau_ref des fiches'+(L.niveauSecours?' ; '+L.niveauSecours+' fiche(s) sans champ : table de secours':'')+')</span>');
+      +'<span>couleur = milieu de la fourchette, étiquette « min-max » à partir du zoom ×3</span><span>'+sw('repeating-linear-gradient(45deg,#666 0 2px,transparent 2px 5px)','border:1px solid #888')+' non renseigné ('+nNon+' cases)</span><span style="opacity:.7">'+nRens+' cases ; priorité : '+(L.niveauFaction?'départ de la faction &gt; niveau de la faction (niveau_par_faction, '+L.niveauFactionRegions+' fiche'+(L.niveauFactionRegions>1?'s':'')+') &gt; ':'')+'région de départ &gt; province &gt; région (champ niveau_ref des fiches'+(L.niveauSecours?' ; '+L.niveauSecours+' fiche(s) sans champ : table de secours':'')+')</span>');
   }
   if (fl.densite) h+=row('Densité', CARTE_DENSITE_STEPS.map(function(s){ return '<span>'+sw(s[1])+' '+s[2]+'</span>'; }).join('')+'<span style="opacity:.7">villes + lieux + quêtes par case (max '+L.densMax+')</span>');
   if (fl.jouables) h+=row('Cases jouables', window._carteJouables ? '<span>'+sw('rgba(0,229,255,0.35)','border:2px solid #00e5ff')+' '+window._carteJouables.count+' cases générées ('+esc(window._carteJouables.source)+')</span><span style="opacity:.7">corridors des départs (AddStartCorridors) non inclus</span>'

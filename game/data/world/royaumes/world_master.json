@@ -645,7 +645,7 @@
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[GD] fiche lore horker (notes BD-T6 déplacées vers city_horkher en v1.0.54) ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore) ; description [DÉCISION] v1.0.94",
+      "source": "[GD] fiche lore horker (notes BD-T6 déplacées vers city_horkher en v1.0.54) ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore) ; description [DÉCISION] v1.0.94 ; faction empire_hynn [GD] v1.0.103 (Via Magna impériale [HS], faction_empire au lore)",
       "description": "Cité marchande de la Via Magna (étape de la route 000120) : bois de chauffe, petit gibier, miel et sel gemme ; à ne pas confondre avec Horkher, le comté de George d'Horkher au nord de Moork."
     },
     {

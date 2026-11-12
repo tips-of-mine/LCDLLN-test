@@ -2677,6 +2677,97 @@ jouables dans la boîte du Royaume des nains de l'est (14 + 7). Génération de 
 N009 et les forêts N006-N007 × E017-E018) ; quêtes ouvertes à toutes les factions ; Voidmark, ville de la Lune
 Noire au cœur du royaume nain, comme suite du départ nain.
 
+### 16.21 Régions du hors-série et provinces (v1.0.92)
+
+Lot 20, décisions du propriétaire (12/11/2026) : les **régions de référence** sont celles de la carte p.4 du hors-série
+« L'Empire de la Négation » `[HS]` ; une région peut être découpée en **provinces** ; les régions du lore qui ne sont pas
+des régions HS deviennent des provinces de leur région HS (identifiant, nom, notes et niveaux inchangés). Attribution
+des cases : celle de la proposition (recalage affine sur 8 repères, RMS 1,7 case ; centre de la case dans le polygone
+HS ; hors cadre, région HS parente de la région actuelle ; repères et cases de la Via Magna forcés), avec trois
+décisions : la zone non nommée Altenberg – Dys (38 cases) va aux Terres de l'Empereur ; le **sud sans frontière HS**
+(157 cases) va à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (distance
+de grille à la case la plus proche de chaque région) ; la Forêt elfique et le Royaume des Nains de l'Est suivent le
+hors-série. **La grille ne bouge pas** (terrain, forêts, montagnes, `generated_cells`) ; aucune case ouverte ou fermée,
+aucun identifiant supprimé, aucune ville renommée. Scripts reproductibles (hors dépôt) : `assign_v1092.py`,
+`lore_v1092.py` (appliqué au fichier v1.0.91), `carte_v1092.py` (rendu), `test_editeur_v1092.py` (Playwright).
+
+**Modèle de données** (une seule collection, compatible avec l'éditeur et avec toutes les références `region_id`
+existantes des villes, lieux, quêtes, créatures et factions) :
+
+- `regions[].type` : `"region_hs"` (11 régions du hors-série, plus `nom_hs` = nom de la carte HS ; les noms du lore
+  ne changent pas), `"province"` (12, plus `parent_region`), `"region"` (Île de la Trêve, hors HS, et les 5 régions
+  sans case : Empire du Jade, Empire Tharque, Les Enfers, La Grande Plaine, Terra Secunda).
+- `cells[].region_id` = région HS (ou Île de la Trêve) ; `cells[].province` = province, vide pour le cœur de la
+  région. Une province n'est portée que par des cases de sa région parente.
+- `villes[]` et `lieux[]` : `region_id` et `province` de leur case (sans case : une ancienne région devenue province
+  passe en `province` et sa région parente en `region_id`).
+- Quêtes, créatures, raids, factions : `region_id` inchangé (une province reste une fiche de `regions`).
+- Rien n'est perdu : quand l'ancienne région d'une case, d'une ville ou d'un lieu n'est conservée ni en région ni en
+  province, une note `[DÉCISION] (v1.0.92)` la rappelle (196 cases, 8 villes, 70 lieux) ; les 157 cases du sud portent
+  une note `[INFÉRÉ] (v1.0.92)`.
+
+| Région HS | Cases | Cœur | Provinces (cases) |
+|---|---:|---:|---|
+| Terres des Gigantomorphes | 232 | 225 | Terres du Nord — Château en Ruine (2) ; Marais Maudits de Thenhart (5) |
+| Royaume des Nains de l'Est | 216 | 204 | Désert des Sels (12) |
+| Terres de l'Empereur Wismerhill Ier | 149 | 118 | 1ère Province de l'Empire (27) ; Province de Northind (4) |
+| Territoires orques | 148 | 92 | Territoires des Marches (56) |
+| Via Magna | 140 | 106 | Forêt des Lutins (34) ; Désert de l'Oracle (0 : aucune case au lore, boîte du master) |
+| Royaume des Nains du Sud | 127 | 58 | Val de Southport (42) ; Confins du Midi (21) ; Terres désolées de Tsaroth (6) |
+| Baronnie de Moork | 80 | 62 | Marche de l'Est (18) |
+| Royaume Drach | 50 | 50 | — |
+| Forêt elfique | 40 | 40 | — |
+| Syzygie | 37 | 37 | — |
+| Hishtarland | 20 | 20 | — |
+| Île de la Trêve (hors HS) | 20 | 20 | — |
+
+Total : 1259 cases terrestres. Le sud sans frontière se répartit en Nains de l'Est 56, Nains du Sud 56, Drach 28,
+Baronnie 17. Provinces du sud, à la majorité de leurs cases : Confins du Midi (Nains du Sud 21, Drach 15, Nains de
+l'Est 12), Terres désolées (Nains du Sud 6), Désert des Sels (égalité 12/12 entre Nains du Sud et Nains de l'Est,
+départagée par la case de Saltwick : Nains de l'Est). Marche de l'Est : Baronnie selon la hiérarchie de la proposition ;
+ses autres cases suivent le hors-série (Nains de l'Est 20, Orques 19, Via Magna 4). Cases d'anciennes provinces hors de
+leur région parente : Val de Southport 17 (Drach 11, Hishtarland 6), Confins 27, Désert des Sels 12, Northind 5
+(Gigantomorphes 2, Forêt elfique 3).
+
+**Villes qui changent de région HS** (ancienne région de la ville ou de sa case) : Sauken Glude of Magistrya (Via
+Magna → Terres de l'Empereur), Fernhollow (Forêt elfique → Terres de l'Empereur), Orderfen (Syzygie →
+Gigantomorphes), Deepbrook (Forêt elfique → Gigantomorphes), Northfen (Forêt elfique → Orques, province Territoires des
+Marches), Horkher (Marche de l'Est → Via Magna), Rivercross (Marche de l'Est → Orques), Ebonvale et Duskmere (Marche de
+l'Est → Nains de l'Est), Equiton (Drach → Nains du Sud), Millford (Drach → Hishtarland), Thistle Creek (Confins du
+Midi → Nains de l'Est). 22 villes sans région en reçoivent une (dont Tsaroth → Baronnie de Moork, Der Hem Shelbem →
+Nains du Sud, Ghrunke Dash et Clearwater → Nains de l'Est, Harrowbrook et Saltfen → Drach, Hishtarland → Hishtarland).
+Lieux : 70 changent de région HS (surtout Marche de l'Est et côte orientale vers les Nains de l'Est et les Orques).
+
+**Niveaux de référence** : inchangés, portés par les notes des provinces (v1.0.86 – v1.0.91) ; une note v1.0.92 sur
+chaque région HS liste ses provinces et ses cases.
+
+**Master inchangé.** Les `regions` de `world_master.json` restent des boîtes rectangulaires servant d'étiquettes (la plus
+petite boîte contenant le joueur, nom au centre de la carte, annuaire MJ) : les régions HS sont irrégulières (voir
+§16.19), les y reporter demanderait des dizaines de boîtes ou un changement de format (liste de cases par région), à
+décider. Aucun code C++ ni serveur ne lit les régions du lore.
+
+**Éditeur legacy** (`lune-noire-editor.html` et sa copie `-v20`) : l'export conservait seulement `id`, `name`,
+`description`, `notes` des régions ; il garde maintenant tous les champs (`type`, `parent_region`, `nom_hs`). Formulaire
+de région : type et région parente (obligatoire pour une province), champs non édités conservés. Carte : le survol
+affiche « Région › Province » ; l'éditeur de cellule a une liste « Province » (refusée si elle n'appartient pas à la
+région choisie) et la liste « Région » n'offre plus les provinces. Cartes de régions : badge « Province de … » ou
+« Région du hors-série » avec la liste des provinces ; compte de cellules par province. Testé avec Playwright
+(chargement du JSON, export, survol et édition de N005_W012 Altenberg : Terres de l'empereur › 1ère Province de
+l'Empire, aucune erreur JavaScript).
+
+**Registre** (`regle_canon_registre_decisions`) : 5 entrées v1.0.92 (régions de référence HS, provinces, zone
+Altenberg – Dys, sud sans frontière, Forêt elfique et Nains de l'Est selon le HS).
+
+**Contrôles** : 1259 cases terrestres, toutes avec une région HS ; 12 provinces, toutes avec une région parente HS ;
+aucune case, ville ou lieu avec une province d'une autre région ; aucun identifiant supprimé (régions 29, villes 121,
+lieux 294, cellules 1932) ; terrain inchangé. **Services** : 1242 PNJ (inchangé).
+
+**Points à valider** : Marche de l'Est éclatée (18 cases seulement restent dans la province) ; tracé des régions au
+sud (Tsaroth à la Baronnie, Der Hem Shelbem aux Nains du Sud, Harrowbrook et Saltfen au Drach, alors que leurs
+provinces ou voisins sont ailleurs) ; Hishtarland exclu des candidats du sud ; Désert des Sels coupé en deux ;
+cœur des Nains de l'Est très étendu au sud-est ; noms du lore différents des noms HS (« Territoires orcques »,
+« Baronnie de Moorks », « Royaumes des nains du sud ») : `nom_hs` ajouté, renommage à décider ; boîtes du master.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

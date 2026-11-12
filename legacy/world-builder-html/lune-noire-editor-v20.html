@@ -1496,6 +1496,14 @@ function factionColor(id) { return id ? hashColor(id, 60, 45) : '#4a6fa5'; }
 function classColor(id)   { return id ? hashColor(id, 55, 42) : '#4a6fa5'; }
 function raceColor(id)    { return id ? hashColor(id, 50, 40) : '#a06040'; }
 function regionColor(id)  { return id ? hashColor(id, 52, 44) : '#708090'; }
+// Libellé « Région › Province » d'une cellule (v1.0.92) : region_id = région du hors-série,
+// province = subdivision facultative (fiche de db.regions avec type "province" et parent_region).
+function regionProvinceLabel(c) {
+  if (!c || !c.region_id) return '';
+  var rg=(db.regions||[]).find(function(x){return x.id===c.region_id;});
+  var pv=c.province?(db.regions||[]).find(function(x){return x.id===c.province;}):null;
+  return (rg&&rg.name?rg.name:c.region_id)+(c.province?' › '+(pv&&pv.name?pv.name:c.province):'');
+}
 
 var ALIGNMENT_MAP = {
   order_human:            { label:'Ordre Humain',        color:'#6090d0' },
@@ -1801,7 +1809,8 @@ function buildExportSchema() {
     persons:(db.persons||[]).map(function(p){return{id:p.id||'',name:p.name||'',importance:p.importance||'secondary',alive:p.alive!==false,tomes:p.tomes&&p.tomes.length?p.tomes:(p.tome?[p.tome]:[]),faction_id:p.faction_id||'',race_id:p.race_id||'',class_id:p.class_id||'',role:p.role||'',visual:p.visual||'',personality:p.personality||'',description:p.description||'',arc:p.arc||'',abilities:p.abilities||[],special_items:p.special_items||[],special_rule:p.special_rule||'',quote:p.quote||'',source:p.source||'',ville_ids:p.ville_ids||[],zone_ids:p.zone_ids||[],dialogue_ids:p.dialogue_ids||[],notes:p.notes||[]};}),
     // Object.assign conserve les champs du bestiaire (categorie, famille, variantes, familier_famille…).
     creatures: (db.creatures||[]).map(function(cr){return Object.assign({}, cr, {id:cr.id||'',name:cr.name||'',type:cr.type||'',difficulty:cr.difficulty||'',level_min:cr.level_min||1,level_max:cr.level_max||1,description:cr.description||'',region_id:cr.region_id||'',ville_id:cr.ville_id||'',faction_id:cr.faction_id||'',drops:cr.drops||[],abilities_traits:cr.abilities_traits||[],notes:cr.notes||[]});}),
-    regions: (db.regions||[]).map(function(rg){return{id:rg.id||'',name:rg.name||'',description:rg.description||'',notes:rg.notes||[]};}),
+    // Object.assign conserve les champs de hiérarchie (v1.0.92) : type ("region_hs", "region", "province"), parent_region, nom_hs.
+    regions: (db.regions||[]).map(function(rg){return Object.assign({}, rg, {id:rg.id||'',name:rg.name||'',description:rg.description||'',notes:rg.notes||[]});}),
     loots: (db.loots||[]).map(function(l){return{id:l.id||'',name:l.name||'',type:l.type||'',rarity:l.rarity||'',description:l.description||'',min_level:l.min_level||0,eligible_races:l.eligible_races||[],eligible_classes:l.eligible_classes||[],source_monsters:l.source_monsters||[],source_villes:l.source_villes||[],source_quests:l.source_quests||[],source_raids:l.source_raids||[],notes:l.notes||[]};}),
     dialogues: (db.dialogues||[]).map(function(d){return{id:d.id||'',name:d.name||'',npc_name:d.npc_name||'',faction_id:d.faction_id||'',race_id:d.race_id||'',location_ville_id:d.location_ville_id||'',lines:d.lines||[],notes:d.notes||[]};}),
     cross_rules: {
@@ -4573,7 +4582,8 @@ function renderRegions(el) {
     // Taille estimée par région : recalculée à chaque rendu à partir de db.cells,
     // donc à jour dès qu'on revient sur l'onglet après une édition dans la Carte.
     var cellCountByRegion = {}, totalMapped = 0;
-    (db.cells||[]).forEach(function(c){ if(c.region_id){ cellCountByRegion[c.region_id]=(cellCountByRegion[c.region_id]||0)+1; totalMapped++; } });
+    (db.cells||[]).forEach(function(c){ if(c.region_id){ cellCountByRegion[c.region_id]=(cellCountByRegion[c.region_id]||0)+1; totalMapped++; }
+      if(c.province){ cellCountByRegion[c.province]=(cellCountByRegion[c.province]||0)+1; } });
     var areaPerCell = CARTE_CELL_SIDE_KM*CARTE_CELL_SIDE_KM;
     grid.innerHTML = list.map(function(rg) {
     var gi = db.regions.indexOf(rg);
@@ -4582,6 +4592,12 @@ function renderRegions(el) {
     card += '<div class="card-header"><div><div class="card-title">🗺️ '+esc(rg.name)+'</div><div class="card-id">'+esc(rg.id)+'</div></div>';
     card += '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openRegionForm('+gi+')">✎</button>';
     card += '<button class="btn btn-danger" onclick="deleteRegion('+gi+')">✕</button></div></div>';
+    // Hiérarchie (v1.0.92) : province → région parente ; région du hors-série → ses provinces.
+    if(rg.type==='province'){ var prg=(db.regions||[]).find(function(x){return x.id===rg.parent_region;});
+      card += '<div style="margin-top:0.3rem">'+badge('Province de '+esc(prg?prg.name:(rg.parent_region||'?')), regionColor(rg.parent_region))+'</div>'; }
+    else if(rg.type==='region_hs'){ var provs=(db.regions||[]).filter(function(x){return x.type==='province'&&x.parent_region===rg.id;});
+      card += '<div style="margin-top:0.3rem">'+badge('Région du hors-série'+(rg.nom_hs&&rg.nom_hs!==rg.name?' « '+esc(rg.nom_hs)+' »':''), col)
+        +(provs.length?' <span style="font-size:0.72rem;color:var(--text-dim)">Provinces : '+provs.map(function(x){return esc(x.name);}).join(', ')+'</span>':'')+'</div>'; }
     if(rg.description) card += '<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;font-style:italic">'+esc(rg.description.substring(0,120))+(rg.description.length>120?'…':'')+'</div>';
     // Taille estimée d'après le nombre de cellules rattachées à la région.
     var nCells = cellCountByRegion[rg.id]||0;
@@ -4618,6 +4634,11 @@ function openRegionForm(idx) {
     '<div class="form-group"><label class="form-label">Identifiant (ID)*</label><input class="form-input" id="rg_id" value="'+esc(rg.id)+'" placeholder="region_nord"></div>'+
     '<div class="form-group"><label class="form-label">Nom*</label><input class="form-input" id="rg_name" value="'+esc(rg.name)+'" oninput="autoGenId(this,\'rg_id\')" placeholder="Nom de la région"></div></div>'+
 
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
+    '<div class="form-group"><label class="form-label">Type</label><select class="form-select" id="rg_type">'+
+    [['','—'],['region_hs','Région du hors-série'],['region','Région (hors hors-série)'],['province','Province']].map(function(t){return '<option value="'+t[0]+'"'+((rg.type||'')===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label class="form-label">Région parente (province)</label><select class="form-select" id="rg_parent"><option value="">—</option>'+
+    (db.regions||[]).filter(function(x){return x.id!==rg.id&&x.type!=='province';}).map(function(x){return '<option value="'+esc(x.id)+'"'+(rg.parent_region===x.id?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></div></div>'+
     '<div class="form-group"><label class="form-label">Description</label>'+
     '<textarea class="form-textarea" id="rg_desc" style="height:70px" placeholder="Décrivez la région…">'+esc(rg.description||'')+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Notes</label>'+
@@ -4631,10 +4652,16 @@ function openRegionForm(idx) {
   document.getElementById('noteInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addCurrentNote();e.preventDefault();}});
   openModal();
 }
+// Enregistre la fiche de région ; conserve les champs non édités (nom_hs…) et gère la
+// hiérarchie v1.0.92 : parent_region n'est gardé que pour type = "province".
 function saveRegion(idx) {
-  var obj = {id:document.getElementById('rg_id').value.trim(), name:document.getElementById('rg_name').value.trim(),
+  var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.regions[idx])) : {};
+  var obj = Object.assign(base, {id:document.getElementById('rg_id').value.trim(), name:document.getElementById('rg_name').value.trim(),
     description:document.getElementById('rg_desc').value.trim(),
-    notes:window._currentNotes.slice()};
+    notes:window._currentNotes.slice()});
+  var ty=document.getElementById('rg_type').value, par=document.getElementById('rg_parent').value;
+  if(ty) obj.type=ty; else delete obj.type;
+  if(ty==='province'){ if(!par){toast('Une province doit avoir une région parente');return;} obj.parent_region=par; } else delete obj.parent_region;
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if(idx!==undefined) db.regions[idx]=obj; else db.regions.push(obj);
   closeModal(); showSection('regions'); toast(idx!==undefined?'Région modifiée':'Région ajoutée');
@@ -5177,7 +5204,7 @@ function carteOnHover(e) {
   var ls=(_carteGeo.lieuByCell[c.id]||[]).map(function(l){return l.name;});
   var rg=c.region_id?(db.regions||[]).find(function(x){return x.id===c.region_id;}):null;
   s.textContent = c.id+(carteCellName(c)?' « '+carteCellName(c)+' »':'')+' — '+terrainLabel(c.terrain_type)
-    +(c.region_id?' ['+(rg&&rg.name?rg.name:c.region_id)+']':'')
+    +(c.region_id?' ['+regionProvinceLabel(c)+']':'')
     +(vs.length?' • 🏙️ '+vs.join(', '):'')
     +(ls.length?' • ✴️ '+ls.join(', '):'')
     +((c.points_of_interest&&c.points_of_interest.length)?' • '+c.points_of_interest.length+' POI':'');
@@ -5226,7 +5253,9 @@ function openCellEditor(cellId) {
   var terrainOpts=CARTE_TERRAINS.map(function(t){return '<option value="'+t+'"'+(c.terrain_type===t?' selected':'')+'>'+esc(terrainLabel(t))+'</option>';}).join('');
   if(c.terrain_type && CARTE_TERRAINS.indexOf(c.terrain_type)===-1) terrainOpts+='<option value="'+esc(c.terrain_type)+'" selected>'+esc(c.terrain_type)+'</option>';
   var villeOpts='<option value="">— Aucune ville —</option>'+(db.villes||[]).map(function(v){return '<option value="'+esc(v.id)+'"'+(curVille&&curVille.id===v.id?' selected':'')+'>'+esc(v.name)+'</option>';}).join('');
-  var rgOpts='<option value="">— Aucune région —</option>'+(db.regions||[]).map(function(rg){return '<option value="'+esc(rg.id)+'"'+(c.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';}).join('');
+  var rgOpts='<option value="">— Aucune région —</option>'+(db.regions||[]).filter(function(rg){return rg.type!=='province';}).map(function(rg){return '<option value="'+esc(rg.id)+'"'+(c.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';}).join('');
+  // Provinces (v1.0.92) : fiches de type "province" ; le libellé rappelle la région parente.
+  var pvOpts='<option value="">— Aucune (cœur de la région) —</option>'+(db.regions||[]).filter(function(rg){return rg.type==='province';}).map(function(rg){var par=(db.regions||[]).find(function(x){return x.id===rg.parent_region;});return '<option value="'+esc(rg.id)+'"'+(c.province===rg.id?' selected':'')+'>'+esc(rg.name)+(par?' ('+esc(par.name)+')':'')+'</option>';}).join('');
   var cx=curVille&&curVille.coord_x!=null?curVille.coord_x:'';
   var cy=curVille&&curVille.coord_y!=null?curVille.coord_y:'';
 
@@ -5235,6 +5264,7 @@ function openCellEditor(cellId) {
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Terrain par défaut</label><select class="form-select" id="cell_terrain">'+terrainOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Région</label><select class="form-select" id="cell_region">'+rgOpts+'</select></div></div>'+
+    '<div class="form-group"><label class="form-label">Province</label><select class="form-select" id="cell_province">'+pvOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Reliefs</label><div style="display:flex;gap:1rem;flex-wrap:wrap">'+
     '<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.82rem"><input type="checkbox" id="cell_river"'+(c.has_river?' checked':'')+' style="accent-color:var(--accent-gold)"> Rivière</label>'+
     '<label style="display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.82rem"><input type="checkbox" id="cell_lake"'+(c.has_lake?' checked':'')+' style="accent-color:var(--accent-gold)"> Lac</label>'+
@@ -5280,6 +5310,11 @@ function saveCellEdit() {
   var c=(db.cells||[]).find(function(x){return x.id===cellId;}); if(!c) return;
   c.terrain_type=document.getElementById('cell_terrain').value;
   c.region_id=document.getElementById('cell_region').value;
+  // Province : doit appartenir à la région choisie, sinon elle est vidée (avec avertissement).
+  var pvId=document.getElementById('cell_province').value;
+  var pvRg=pvId?(db.regions||[]).find(function(x){return x.id===pvId;}):null;
+  if(pvRg && pvRg.parent_region!==c.region_id){ toast('Province ignorée : elle n\'appartient pas à la région choisie'); pvId=''; }
+  c.province=pvId;
   c.has_river=document.getElementById('cell_river').checked;
   c.has_lake=document.getElementById('cell_lake').checked;
   c.has_mountain_range=document.getElementById('cell_mountain').checked;

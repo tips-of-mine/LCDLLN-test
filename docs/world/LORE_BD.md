@@ -3081,6 +3081,84 @@ l'étape n'est pas ajoutée, le test se lance à la main après toute modificati
 **Données** : aucune fiche modifiée ; `meta.version` 1.0.96, registre : 1 entrée. **Services** : 121 villes,
 1242 PNJ inchangés.
 
+### 16.26 Tracé des routes à la souris et routes qui suivent les villes (v1.0.97)
+
+Demande du propriétaire (12/11/2026) : tracer et modifier les routes dans la carte de l'éditeur ; validé : quand
+une ville change de case, ses routes la suivent. Outil seulement : **aucune route, ville ni ligne maritime n'est
+modifiée** dans ce lot (`meta.version` 1.0.97, registre : 1 entrée).
+
+**Mode « 〰 Tracer »** (bouton ou touche **R**, `lune-noire-editor.html` et sa copie identique `-v20`) :
+
+- **Créer** une route, un sentier ou une route maritime (`road`, `path`, `sea_route` de `route_types`, choisis dans
+  la barre du mode) : clic sur une ville ou un lieu (départ), clics sur les cases du chemin, clic sur la ville ou le
+  lieu d'arrivée. Les cases entre deux clics éloignés sont ajoutées (pas en diagonale puis en ligne droite) : les
+  `waypoints` restent continus (8 voisines), comme les 59 tracés du lore. Format écrit : celui des routes existantes
+  (`id` numérique suivant, `from_/to_place`, `from_/to_ville_id`, `from_/to_lieu_id`, `description`, `notes`,
+  `waypoints`).
+- **Modifier** : clic sur une route pour la sélectionner (noir, poignées blanches ; extrémités carrées) ; glisser un
+  point le déplace (le tracé est recousu) ; glisser un segment insère un point ; **Alt+clic** ou clic droit sur un
+  point le supprime (pas les extrémités). Une extrémité glissée sur une autre case reprend la ville ou le lieu de
+  cette case (sinon jonction). Le type de la route sélectionnée se change dans la barre.
+- **Embranchement** : **Maj+clic** sur une route part du point de cette route le plus proche ; la nouvelle route
+  est une jonction au format du lore (comme 000155 qui part de 000079 en S007_E006 : `from_place` = case de la route
+  hôte, `from_ville_id` et `from_lieu_id` vides), description « Embranchement de la route … en … ». Un point de la
+  route hôte glissé ailleurs emmène les embranchements qui partaient de son ancienne case (si plus aucune route n'y
+  passe).
+- **Supprimer** : bouton « 🗑 Supprimer la route » de la barre (ou ✕ de la liste), confirmation dans une boîte
+  modale HTML (`confirmDelete`), pas de `confirm()` natif ; les embranchements qui en partent sont signalés et gardés.
+- **Annuler** : Ctrl+Z ou « ↶ Annuler », pile **commune** avec le mode Déplacer (100 actions ; chaque action
+  sauvegarde routes, lignes maritimes et fiches touchées et les restaure en place). Pendant un tracé, Ctrl+Z et
+  Retour arrière retirent le dernier point ; Échap abandonne ; Entrée ou double-clic termine sur la dernière case.
+
+**Routes qui suivent une ville déplacée** (mode « ✥ Déplacer », quand la fiche change de **case**) :
+
+- chaque route, sentier ou route maritime qui cite la ville (`from_/to_ville_id`, ou le lieu si l'extrémité n'a pas
+  de ville) et dont l'extrémité était sur l'ancienne case passe sur la nouvelle : `from_place` / `to_place` et
+  premier / dernier waypoint ; si la nouvelle case ne touche pas le point voisin, des cases de raccord sont insérées
+  (une seule pour un déplacement d'une case) ; si le tracé passait déjà par la nouvelle case, la boucle est coupée ;
+- **ponton** : chaque arrêt de la ville dans `db.sea_lines` (`stops[].ponton_cell`) et `port.ponton_cell` passent sur
+  la case navigable la plus proche de la nouvelle position de la ville (centre de case + position manuelle ;
+  `navigable_terrains` de la ligne, sinon côte, mer peu profonde, mer profonde) ; `port.vers_cell` est décalé
+  d'autant ; les routes maritimes de la ville partent ou arrivent à ce ponton (premier / dernier waypoint) ;
+- une extrémité qui citait la ville sans être sur son ancienne case n'est pas touchée (message) ; un déplacement dans
+  la même case ne change ni routes ni ponton. Le message donne le nombre de routes suivies et le nouveau ponton.
+
+Exemple du test : Brenhaval (N017_W010, deux lignes maritimes et un port) glissée en N017_W011 → route 000214
+`N017_W011, N017_W012, N017_W013` (boucle coupée) ; pontons N016_W011 (mer peu profonde, la plus proche) ; route
+maritime 000221 `N016_W011, N016_W010 (raccord), N016_W009, …` ; 000223 `N016_W011, N017_W010 (raccord), N018_W010,
+N019_W010`.
+
+**Notice : tracer une route.**
+
+1. Charger `lune-noire-data.json`, section **Carte**, zoomer (×4 ou plus) ; cliquer **〰 Tracer** (ou touche **R**).
+2. Choisir le type dans la barre (Route terrestre, Sentier, Route maritime).
+3. Cliquer la ville ou le lieu de départ, puis les cases du chemin (les cases entre deux clics sont ajoutées), puis
+   la ville ou le lieu d'arrivée : la route est créée et sélectionnée. Pour un **embranchement**, commencer par
+   **Maj+clic** sur la route existante.
+4. Retoucher : glisser un point, glisser un segment (nouveau point), Alt+clic ou clic droit (retirer un point) ;
+   **🗑 Supprimer la route** puis « Supprimer » dans la boîte ; **Ctrl+Z** pour revenir en arrière.
+5. **Exporter** le JSON et remplacer les deux copies (`lune-noire-data.json` et `-v20.json`) ; relancer les contrôles
+   du lore (`generate_city_services.py --check`, `validate_city_services.py`, `sync_positions.py`). Le générateur
+   (`tools/world_gen`) ne lit pas les routes du lore : il trace ses propres routes entre les villes du master par
+   recherche de chemin ; une route tracée ici reste une donnée du lore (tracé de référence).
+
+**Fonctions** ajoutées ou modifiées documentées (rôle, paramètres, effets de bord), règle de CLAUDE.md :
+`cartePushUndo`, `carteUndo`, `carteFollowPlace`, `carteRouteSetEnd`, `carteNearestNavigableCell`,
+`carteNormalizeWaypoints`, `carteTrace*`, `drawCarteTrace`, `carteApplyPlacement`, `carteSetMode`, `deleteRoute`…
+
+**Test** `tools/lore/test_editor_routes.py` (Playwright, ~10 s ; `--captures <chemin>` écrit un GIF et un PNG) :
+sentier Thrival → Lhantarn par deux clics (raccord N021_W012), point glissé, point inséré, point supprimé, tracé
+continu ; embranchement depuis la route vers Duzhmoroth (jonction aux ids vides) ; suppression par la boîte HTML
+puis Ctrl+Z ; Brenhaval déplacée (routes, routes maritimes, pontons suivis ; export intermédiaire : seuls `routes`,
+`sea_lines` et Brenhaval changent) ; 6 Ctrl+Z, puis export identique à l'original (test d'aller-retour de §16.25) ;
+aucune erreur console. Les deux copies de l'éditeur passent les deux tests.
+
+**Limites** : les cases de raccord vont en ligne droite sans regarder le terrain (une route maritime peut couper une
+pointe de terre, une route traverser la mer) : à retoucher avec le mode Tracer ; un ponton suit la ville vers la case
+navigable la plus proche, pas forcément la plus logique ; le mode n'édite pas `description` ni `notes` d'une route
+(formulaires existants à reprendre) ; routes du lore non lues par le générateur ; l'ancien mode « Créer une
+route » (deux clics, ligne droite) est gardé.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3095,7 +3173,7 @@ l'étape n'est pas ajoutée, le test se lance à la main après toute modificati
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
-- Placement manuel (v1.0.95) : routes du lore à reprendre (16.24) ; export des arbres de compétences de l'éditeur corrigé en v1.0.96 (16.25).
+- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur à décider.
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

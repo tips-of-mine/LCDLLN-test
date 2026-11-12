@@ -5026,11 +5026,12 @@ var CARTE_CELL_SIDE_KM = 10;
 var CARTE_TIER_MIN_ZOOM = { major:1, town:1, hamlet:1, poi:1 };
 // selectedRouteId : identifiant de la route sélectionnée dans la liste (surlignée en
 // noir sur la carte), ou null.
-// moveUndo (v1.0.95) : pile des déplacements de villes/lieux à la souris (le plus récent
-// en dernier), dépilée par Ctrl+Z ou le bouton « Annuler ».
-window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null, selectedRouteId:null, moveUndo:[],
+// undoStack (v1.0.97, ex-moveUndo v1.0.95) : pile d'annulation commune aux modes
+// « Déplacer » et « Tracer » (le plus récent en dernier), dépilée par Ctrl+Z ou le
+// bouton « Annuler » ; voir cartePushUndo / carteUndo.
+window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null, selectedRouteId:null, undoStack:[],
   filters:{ villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true } };
-if (!window._carteState.moveUndo) window._carteState.moveUndo = [];
+if (!window._carteState.undoStack) window._carteState.undoStack = [];
 if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
 if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
 if (window._carteState.filters.lieux === undefined) window._carteState.filters.lieux = true;
@@ -5100,7 +5101,10 @@ var _carteHits = [];
 /// (v1.0.95, comme les routes du générateur qui vont au centre réel de la ville).
 /// \param ids identifiants de cases (waypoints ou [from_place, to_place]).  \param px côté d'une case (pixels).
 /// \return tableau de {x,y} (cases inconnues ignorées). Pas d'effet de bord.
-function carteRoutePoints(r, ids, px) {
+function carteRoutePoints(r, ids, px) { return carteRoutePointsRaw(r, ids, px).filter(Boolean); }
+/// Comme carteRoutePoints, mais une case inconnue donne null à son index (v1.0.97 :
+/// l'index d'un point sert au mode « Tracer »). Pas d'effet de bord.
+function carteRoutePointsRaw(r, ids, px) {
   function endRec(vid, lid, cell) {
     var v=vid&&(db.villes||[]).find(function(x){ return x.id===vid; });
     if (v && v.cell===cell && (placeHasPosition(v) || (window._carteDrag && window._carteDrag.rec===v))) return { rec:v, kind:'villes' };
@@ -5112,7 +5116,7 @@ function carteRoutePoints(r, ids, px) {
     var e = i===0 ? endRec(r.from_ville_id, r.from_lieu_id, id) : (i===ids.length-1 ? endRec(r.to_ville_id, r.to_lieu_id, id) : null);
     return e ? cartePlacePixel(e.rec, e.kind, px) : carteCellCenter(id);
   });
-  return pts.filter(Boolean);
+  return pts;
 }
 /// Indique si une fiche ville / lieu a une position posée à la main (les deux champs
 /// position_x_m et position_z_m sont des nombres). Pas d'effet de bord.
@@ -5179,51 +5183,33 @@ function cartePixelToPlacement(x, y) {
     xm:clampM((x-(col+0.5)*px)/px*CARTE_CELL_M), zm:clampM((y-(row+0.5)*px)/px*CARTE_CELL_M) };
 }
 /// Applique un déplacement à une fiche (fin d'un glisser-déposer) et l'empile pour
-/// l'annulation. Si la case change : case de la fiche (et anchor_tile d'une ville),
-/// région et province reprises de la nouvelle case, ponton du port suivi s'il était
-/// dans l'ancienne case ; les routes qui citent la fiche ne sont PAS retracées
-/// (avertissement).
+/// l'annulation commune (cartePushUndo : fiche, routes et lignes maritimes). Si la
+/// case change : case de la fiche (et anchor_tile d'une ville), région et province
+/// reprises de la nouvelle case ; v1.0.97 : routes, sentiers, routes maritimes et
+/// ponton suivent (carteFollowPlace).
 /// \param kind 'villes' ou 'lieux'.  \param t placement de cartePixelToPlacement.
-/// Effet de bord : modifie la fiche de db, window._carteState.moveUndo, la carte et
-/// le bouton « Annuler » ; message (toast).
+/// Effet de bord : modifie la fiche, db.routes, db.sea_lines, la pile d'annulation,
+/// la carte et les boutons ; message (toast).
 function carteApplyPlacement(kind, rec, t) {
-  var st=window._carteState;
-  st.moveUndo.push({ kind:kind, id:rec.id, hadAnchor:Object.prototype.hasOwnProperty.call(rec,'anchor_tile'),
-    before:JSON.parse(JSON.stringify({ cell:rec.cell, anchor_tile:rec.anchor_tile, region_id:rec.region_id, province:rec.province,
-      position_x_m:(rec.position_x_m===undefined?null:rec.position_x_m), position_z_m:(rec.position_z_m===undefined?null:rec.position_z_m), port:rec.port||null })) });
-  if (st.moveUndo.length>100) st.moveUndo.shift();
+  cartePushUndo('déplacement de '+(rec.name||rec.id), [{ kind:kind, rec:rec }]);
   var oldCell=rec.cell, msg=rec.name+' → '+t.cell+' : X '+carteFmtM(t.xm)+', Z '+carteFmtM(t.zm);
   rec.position_x_m=t.xm; rec.position_z_m=t.zm;
   if (t.cell!==oldCell) {
     rec.cell=t.cell;
     if (kind==='villes' && Object.prototype.hasOwnProperty.call(rec,'anchor_tile')) rec.anchor_tile=t.cell;
     rec.region_id=t.cellRec.region_id||''; rec.province=t.cellRec.province||'';
-    if (kind==='villes' && rec.port && rec.port.ponton_cell===oldCell) rec.port.ponton_cell=t.cell;
-    var nr=(db.routes||[]).filter(function(r){ return kind==='villes' ? (r.from_ville_id===rec.id||r.to_ville_id===rec.id) : (r.from_lieu_id===rec.id||r.to_lieu_id===rec.id); }).length;
-    msg+=' (nouvelle case : région '+(rec.region_id||'—')+(rec.province?' › '+rec.province:'')+')'+(nr?' — '+nr+' route(s) à reprendre':'');
+    var f=carteFollowPlace(kind, rec, oldCell);
+    msg+=' (nouvelle case : région '+(rec.region_id||'—')+(rec.province?' › '+rec.province:'')+')'
+      +(f.routes?' — '+f.routes+' route(s) suivie(s)':'')+(f.ponton?' — ponton → '+f.ponton:'')
+      +(f.skipped?' — '+f.skipped+' extrémité(s) hors de l\'ancienne case non suivie(s)':'');
   }
-  carteComputeGeo(); drawCarte(); carteRefreshMoveTools();
+  carteAfterEdit();
   toast(msg);
 }
-/// Annule le dernier déplacement de la pile (case, région, province, position, port
-/// et anchor_tile reviennent à l'état d'avant). \return true si un déplacement a été annulé.
-/// Effet de bord : modifie la fiche de db, la pile, la carte et le bouton « Annuler ».
-function carteUndoMove() {
-  var st=window._carteState, u=st.moveUndo.pop(); if(!u) { toast('Rien à annuler'); return false; }
-  var rec=(db[u.kind]||[]).find(function(x){ return x.id===u.id; });
-  if (rec) {
-    ['cell','region_id','province','position_x_m','position_z_m'].forEach(function(k){ rec[k]=u.before[k]; });
-    if (u.hadAnchor) rec.anchor_tile=u.before.anchor_tile; else delete rec.anchor_tile;
-    if (u.before.port) rec.port=u.before.port; else delete rec.port;
-  }
-  carteComputeGeo(); drawCarte(); carteRefreshMoveTools();
-  toast(rec ? 'Déplacement annulé : '+rec.name+' ('+rec.cell+', '+placePositionLabel(rec)+')' : 'Déplacement annulé (fiche introuvable)');
-  return true;
-}
-/// Met à jour le bouton « Annuler » (nombre de déplacements annulables) et le texte
+/// Met à jour le bouton « Annuler » (nombre d'actions annulables) et le texte
 /// d'aide de la carte. Effet de bord : DOM seulement.
 function carteRefreshMoveTools() {
-  var b=document.getElementById('carteUndoBtn'), n=window._carteState.moveUndo.length;
+  var b=document.getElementById('carteUndoBtn'), n=window._carteState.undoStack.length;
   if (b) { b.disabled=!n; b.textContent='↶ Annuler'+(n?' ('+n+')':''); }
   var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
 }
@@ -5272,6 +5258,594 @@ function carteOnMouseUp(e) {
   carteApplyPlacement(dr.kind, dr.rec, t);
 }
 
+// ─────────────────────────────────────────────
+// Annulation commune (v1.0.97) : modes « Déplacer » et « Tracer »
+// ─────────────────────────────────────────────
+// Chaque action annulable empile l'état d'AVANT : copie de db.routes, de db.sea_lines
+// et des fiches touchées. Ctrl+Z (ou « ↶ Annuler ») restaure le dernier état, en place
+// (mêmes objets, même ordre des clés), ce qui rend un export identique à l'original
+// une fois tout annulé.
+
+/// Copie profonde d'une valeur JSON (undefined reste undefined). Pas d'effet de bord.
+function carteClone(v) { return v===undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+
+/// Empile l'état courant pour l'annulation commune (Ctrl+Z, bouton « Annuler »).
+/// \param label libellé affiché à l'annulation (ex. « déplacement de Dys »).
+/// \param recs fiches à sauvegarder aussi : [{ kind:'villes'|'lieux', rec }].
+/// Effet de bord : window._carteState.undoStack (100 états au plus, les plus anciens
+/// sont oubliés). À appeler AVANT toute modification.
+function cartePushUndo(label, recs) {
+  var st=window._carteState;
+  st.undoStack.push({ label:label, hadRoutes:Array.isArray(db.routes), routes:carteClone(db.routes||[]),
+    sea_lines:carteClone(db.sea_lines),
+    recs:(recs||[]).map(function(x){ return { kind:x.kind, id:x.rec.id, data:carteClone(x.rec) }; }) });
+  if (st.undoStack.length>100) st.undoStack.shift();
+}
+
+/// Remplace en place le contenu d'un objet par une copie sauvegardée (l'ordre des
+/// clés de la copie est repris). \param target objet de db.  \param snap copie.
+/// Effet de bord : modifie target.
+function carteRestoreInPlace(target, snap) {
+  Object.keys(target).forEach(function(k){ delete target[k]; });
+  Object.keys(snap).forEach(function(k){ target[k]=snap[k]; });
+}
+
+/// Remplace en place le contenu d'un tableau. Effet de bord : modifie arr.
+function carteRestoreArray(arr, snap) { arr.length=0; snap.forEach(function(x){ arr.push(x); }); }
+
+/// Annule la dernière action de la carte (déplacement d'une ville / d'un lieu,
+/// création, modification ou suppression d'une route). Pendant un tracé en cours
+/// (mode « Tracer »), retire d'abord le dernier point cliqué du tracé.
+/// \return true si quelque chose a été annulé.
+/// Effet de bord : restaure db.routes, db.sea_lines et les fiches sauvegardées ;
+/// redessine la carte, la liste des routes et les boutons.
+function carteUndo() {
+  var st=window._carteState;
+  if (window._carteTrace.draft) { carteTraceRemoveLastPoint(); return true; }
+  var u=st.undoStack.pop(); if(!u) { toast('Rien à annuler'); return false; }
+  if (u.hadRoutes) { if (!Array.isArray(db.routes)) db.routes=[]; carteRestoreArray(db.routes, u.routes); }
+  else delete db.routes;
+  if (u.sea_lines===undefined) delete db.sea_lines;
+  else if (Array.isArray(db.sea_lines) && Array.isArray(u.sea_lines)) carteRestoreArray(db.sea_lines, u.sea_lines);
+  else db.sea_lines=u.sea_lines;
+  var names=[];
+  u.recs.forEach(function(x){
+    var rec=(db[x.kind]||[]).find(function(r){ return r.id===x.id; });
+    if (rec) { carteRestoreInPlace(rec, x.data); names.push(rec.name+' ('+rec.cell+', '+placePositionLabel(rec)+')'); }
+  });
+  if (st.selectedRouteId && !(db.routes||[]).some(function(r){ return r.id===st.selectedRouteId; })) st.selectedRouteId=null;
+  carteAfterEdit();
+  toast('Annulé : '+u.label+(names.length?' — '+names.join(', '):''));
+  return true;
+}
+/// Ancien nom (v1.0.95) de carteUndo, gardé pour les appels existants.
+function carteUndoMove() { return carteUndo(); }
+
+/// Redessine tout ce qui dépend des routes et des fiches après une modification :
+/// géométrie, carte, liste et nombre de routes, boutons « Annuler » et barre du
+/// mode « Tracer ». Effet de bord : DOM et _carteGeo seulement.
+function carteAfterEdit() {
+  carteComputeGeo(); drawCarte();
+  var list=document.getElementById('carteRoutesList'); if(list) list.innerHTML=carteRoutesListHTML();
+  var cnt=document.getElementById('carteRoutesCount'); if(cnt) cnt.textContent='Routes ('+(db.routes||[]).length+')';
+  carteRefreshMoveTools(); carteTraceRefreshBar();
+}
+
+// ─────────────────────────────────────────────
+// Géométrie des cases pour les tracés (v1.0.97)
+// ─────────────────────────────────────────────
+/// Identifiant de la case (lat, lon) : celui de db.cells s'il existe, sinon construit
+/// au format N000_E000 / S001_W002. Pas d'effet de bord.
+function carteCellIdAt(lat, lon) {
+  var c=_carteGeo && _carteGeo.byKey[lat+','+lon]; if (c) return c.id;
+  function pad(n){ return String(Math.abs(n)).padStart(3,'0'); }
+  return (lat<0?'S':'N')+pad(lat)+'_'+(lon<0?'W':'E')+pad(lon);
+}
+/// Vrai si deux cases se touchent (côté ou coin : 8 voisines) ou sont la même.
+function carteCellsAdjacent(a, b) {
+  var p=parseCellCoord(a), q=parseCellCoord(b);
+  return !!p && !!q && Math.max(Math.abs(p.lat-q.lat), Math.abs(p.lon-q.lon))<=1;
+}
+/// Cases de raccord entre a et b, extrémités exclues : pas en diagonale vers b puis
+/// en ligne droite (tracé continu à 8 voisines, le plus court). [] si a et b se touchent.
+function carteLineCells(a, b) {
+  var p=parseCellCoord(a), q=parseCellCoord(b), out=[]; if(!p||!q) return out;
+  var lat=p.lat, lon=p.lon;
+  for (var guard=0; guard<500; guard++) {
+    lat+=Math.sign(q.lat-lat); lon+=Math.sign(q.lon-lon);
+    if (lat===q.lat && lon===q.lon) break;
+    out.push(carteCellIdAt(lat, lon));
+  }
+  return out;
+}
+/// Rend une liste de cases continue : raccords insérés entre deux cases qui ne se
+/// touchent pas, doublons consécutifs retirés. \return nouveau tableau.
+function carteNormalizeWaypoints(w) {
+  var out=[];
+  (w||[]).forEach(function(c){
+    if (!c) return;
+    if (out.length) { var last=out[out.length-1]; if (last===c) return; out=out.concat(carteLineCells(last, c)); }
+    out.push(c);
+  });
+  return out;
+}
+/// Cases d'une route dans l'ordre du tracé : waypoints s'il y en a au moins deux,
+/// sinon [from_place, to_place] (ligne droite). Pas d'effet de bord.
+function carteRouteIds(r) { return (r.waypoints && r.waypoints.length>=2) ? r.waypoints : [r.from_place, r.to_place]; }
+/// Ville (la plus importante) ou, à défaut, lieu de la case. \return {kind, rec} ou null.
+function cartePlaceOnCell(cellId) {
+  var geo=_carteGeo||carteComputeGeo();
+  var vs=geo.villeByCell[cellId]; if (vs && vs.length) return { kind:'villes', rec:vs[0] };
+  var ls=geo.lieuByCell[cellId]; if (ls && ls.length) return { kind:'lieux', rec:ls[0] };
+  return null;
+}
+/// Prochain identifiant de route libre (numérique sur 6 chiffres, comme saveRoute).
+function carteNextRouteId() {
+  var maxN=0; (db.routes||[]).forEach(function(r){ var n=parseInt(r.id,10); if(!isNaN(n)&&n>maxN) maxN=n; });
+  return String(maxN+1).padStart(6,'0');
+}
+/// Routes qui passent par une case (waypoints ou extrémités), sauf `exceptId`.
+/// \return tableau d'identifiants. Pas d'effet de bord.
+function carteRoutesThrough(cellId, exceptId) {
+  return (db.routes||[]).filter(function(r){ return r.id!==exceptId && carteRouteIds(r).indexOf(cellId)!==-1; })
+    .map(function(r){ return r.id; });
+}
+
+// ─────────────────────────────────────────────
+// Routes qui suivent une ville / un lieu déplacé (v1.0.97)
+// ─────────────────────────────────────────────
+// Terrains où peut se trouver un ponton quand la ligne maritime n'en donne pas.
+var CARTE_PORT_TERRAINS = ['coast', 'shallow_sea', 'deep_sea'];
+
+/// Case navigable (terrain parmi `terrains`) la plus proche de la position d'une
+/// fiche (centre de sa case + position manuelle) : distance au bord de la case
+/// (0 si la fiche est dedans), puis au centre en cas d'égalité.
+/// \param terrains liste de terrain_type admis.  \return id de case ou null.
+function carteNearestNavigableCell(rec, terrains) {
+  var p=parseCellCoord(rec.cell); if(!p) return null;
+  var x=p.lon+(placeHasPosition(rec)?rec.position_x_m/CARTE_CELL_M:0);
+  var y=p.lat-(placeHasPosition(rec)?rec.position_z_m/CARTE_CELL_M:0);
+  var best=null, bestD=Infinity;
+  (db.cells||[]).forEach(function(c){
+    if (terrains.indexOf(c.terrain_type)===-1) return;
+    var q=parseCellCoord(c.id); if(!q) return;
+    var dx=Math.max(0, Math.abs(x-q.lon)-0.5), dy=Math.max(0, Math.abs(y-q.lat)-0.5);
+    var d=Math.sqrt(dx*dx+dy*dy)+Math.sqrt((x-q.lon)*(x-q.lon)+(y-q.lat)*(y-q.lat))*1e-3;
+    if (d<bestD) { bestD=d; best=c.id; }
+  });
+  return best;
+}
+
+/// Place l'extrémité `end` d'une route sur la case `cell` : from_/to_place et
+/// premier / dernier waypoint ; si la case ne touche pas le point voisin du tracé,
+/// des cases de raccord sont insérées (une seule pour un déplacement d'une case) ;
+/// si le tracé repassait déjà par la nouvelle case, la boucle est coupée.
+/// \param end 'from' ou 'to'.  Effet de bord : modifie la route.
+function carteRouteSetEnd(r, end, cell) {
+  r[end+'_place']=cell;
+  if (!(Array.isArray(r.waypoints) && r.waypoints.length)) return;
+  var w=r.waypoints.slice();
+  if (end==='from') { w[0]=cell; var j=w.lastIndexOf(cell); if (j>0) w=w.slice(j); }
+  else { w[w.length-1]=cell; var k=w.indexOf(cell); if (k>=0 && k<w.length-1) w=w.slice(0, k+1); }
+  w=carteNormalizeWaypoints(w);
+  if (w.length<2) w=[r.from_place, r.to_place];
+  r.waypoints=w;
+}
+
+/// Fait suivre à une ville / un lieu qui change de case ses routes, sentiers et
+/// routes maritimes, et (ville) son ponton.
+/// - Ponton : chaque arrêt de db.sea_lines de la ville (stops[].ponton_cell) et
+///   ville.port.ponton_cell passent sur la case navigable la plus proche de la
+///   nouvelle position (navigable_terrains de la ligne, sinon CARTE_PORT_TERRAINS) ;
+///   port.vers_cell est décalé d'autant.
+/// - Routes : une extrémité qui cite la fiche (from_/to_ville_id, ou lieu sans
+///   ville) et qui était sur l'ancienne case passe sur la nouvelle ; pour une route
+///   maritime, une extrémité sur l'ancien ponton passe sur le nouveau.
+/// \param oldCell case avant le déplacement.  \return { routes, skipped, ponton }.
+/// Effet de bord : modifie db.routes, db.sea_lines et rec.port (l'appelant a empilé
+/// l'annulation).
+function carteFollowPlace(kind, rec, oldCell) {
+  var res={ routes:0, skipped:0, ponton:null }, idKey=kind==='villes'?'ville_id':'lieu_id';
+  var pontonMap={}, anyPonton=null;
+  if (kind==='villes') {
+    (db.sea_lines||[]).forEach(function(line){
+      (line.stops||[]).forEach(function(s){
+        if (!s || s.ville_id!==rec.id || !s.ponton_cell) return;
+        var np=carteNearestNavigableCell(rec, line.navigable_terrains||CARTE_PORT_TERRAINS); if(!np) return;
+        pontonMap[line.id+'|'+s.ponton_cell]=np; anyPonton=np;
+        if (np!==s.ponton_cell) { s.ponton_cell=np; res.ponton=np; }
+      });
+    });
+    if (rec.port && rec.port.ponton_cell) {
+      var np2=carteNearestNavigableCell(rec, CARTE_PORT_TERRAINS);
+      if (np2 && np2!==rec.port.ponton_cell) {
+        var a=parseCellCoord(rec.port.ponton_cell), b=parseCellCoord(np2), v=parseCellCoord(rec.port.vers_cell||'');
+        if (a && b && v) rec.port.vers_cell=carteCellIdAt(v.lat+b.lat-a.lat, v.lon+b.lon-a.lon);
+        pontonMap['port|'+rec.port.ponton_cell]=np2;
+        rec.port.ponton_cell=np2; res.ponton=res.ponton||np2;
+      }
+      anyPonton=anyPonton||np2;
+    }
+  }
+  (db.routes||[]).forEach(function(r){
+    var moved=false;
+    ['from','to'].forEach(function(end){
+      if (r[end+'_'+idKey]!==rec.id) return;
+      if (kind==='lieux' && r[end+'_ville_id']) return; // la ville de l'extrémité prime
+      var cur=r[end+'_place'], target=null;
+      if (r.type==='sea_route' && kind==='villes') {
+        target=pontonMap[(r.sea_line_id||'')+'|'+cur] || pontonMap['port|'+cur] || (cur===oldCell ? (anyPonton||rec.cell) : null);
+      } else if (cur===oldCell) target=rec.cell;
+      if (!target) { res.skipped++; return; }
+      if (target!==cur || (r.waypoints && r.waypoints.length && r.waypoints[end==='from'?0:r.waypoints.length-1]!==target)) {
+        carteRouteSetEnd(r, end, target); moved=true;
+      }
+    });
+    if (moved) res.routes++;
+  });
+  return res;
+}
+
+// ─────────────────────────────────────────────
+// Mode « Tracer » (v1.0.97) : routes, sentiers et routes maritimes à la souris
+// ─────────────────────────────────────────────
+// Types proposés par la barre du mode (référentiel route_types / ROUTE_TYPES).
+var CARTE_TRACE_TYPES = ['road', 'path', 'sea_route'];
+// État du mode : type choisi ; draft = tracé en cours { cells, marks, from:{kind,rec}|null,
+// branchOf:{routeId, cell}|null } ; drag = point de route glissé ; press = clic en attente.
+window._carteTrace = window._carteTrace || { type:'road', draft:null, drag:null, press:null, hover:null };
+
+/// Points pixel des cases d'une route (comme carteRoutePoints) SANS retirer les cases
+/// inconnues (null à leur place), pour garder l'index des waypoints. \param px côté d'une case.
+function carteRouteHandlePoints(r, px) {
+  var ids=carteRouteIds(r), all=carteRoutePointsRaw(r, ids, px);
+  return all;
+}
+
+/// Route, point (poignée) ou segment sous un point pixel du canvas.
+/// \param pt {x,y} canvas.  \param selOnly true : seulement la route sélectionnée
+/// (poignées et segments) ; false : toutes les routes visibles (segments).
+/// \return { route, handle (index ou -1), seg (index du segment ou -1) } ou null.
+function carteHitRoute(pt, selOnly) {
+  var st=window._carteState, px=BASE_CELL_SIZE*st.zoom, best=null, bestD=Infinity;
+  var tolH=Math.max(7, px*0.22), tolS=Math.max(5, px*0.16);
+  var sel=st.selectedRouteId ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
+  var list=selOnly ? (sel?[sel]:[]) : (st.filters.routes ? (db.routes||[]) : (sel?[sel]:[]));
+  list.forEach(function(r){
+    var pts=carteRouteHandlePoints(r, px);
+    if (r===sel) pts.forEach(function(p, i){
+      if (!p) return; var d=Math.hypot(pt.x-p.x, pt.y-p.y);
+      if (d<=tolH && d-1000<bestD) { bestD=d-1000; best={ route:r, handle:i, seg:-1 }; }
+    });
+    for (var i=0;i<pts.length-1;i++) {
+      var a=pts[i], b=pts[i+1]; if(!a||!b) continue;
+      var vx=b.x-a.x, vy=b.y-a.y, l2=vx*vx+vy*vy, t=l2?Math.max(0,Math.min(1,((pt.x-a.x)*vx+(pt.y-a.y)*vy)/l2)):0;
+      var d2=Math.hypot(pt.x-(a.x+t*vx), pt.y-(a.y+t*vy)) - (r===sel?0.5:0);
+      if (d2<=tolS && d2<bestD) { bestD=d2; best={ route:r, handle:-1, seg:i }; }
+    }
+  });
+  return best;
+}
+
+/// Résumé d'une route pour les messages : « 000221 (Route maritime, Brenhaval → Haevrin) ».
+function carteRouteLabel(r) {
+  function nm(vid, lid, cell){
+    var v=vid&&(db.villes||[]).find(function(x){return x.id===vid;}); if(v) return v.name;
+    var l=lid&&(db.lieux||[]).find(function(x){return x.id===lid;}); return l?l.name:(cell||'?');
+  }
+  return r.id+' ('+routeTypeDef(r.type).label+', '+nm(r.from_ville_id,r.from_lieu_id,r.from_place)+' → '+nm(r.to_ville_id,r.to_lieu_id,r.to_place)+')';
+}
+
+/// Barre d'outils du mode « Tracer » (type de route, tracé en cours, route
+/// sélectionnée et sa suppression). \return HTML.
+function carteTraceBarHTML() {
+  var st=window._carteState, tr=window._carteTrace;
+  if (st.mode!=='trace') return '';
+  var sel=st.selectedRouteId ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
+  var cur=(sel && !tr.draft) ? sel.type : tr.type;
+  var opts=CARTE_TRACE_TYPES.concat(CARTE_TRACE_TYPES.indexOf(cur)===-1&&cur?[cur]:[]).map(function(k){
+    var d=routeTypeDef(k); return '<option value="'+esc(k)+'"'+(k===cur?' selected':'')+'>'+d.icon+' '+esc(d.label)+'</option>'; }).join('');
+  var h='<span style="font-size:0.72rem;color:var(--text-dim)">Type</span> <select class="form-select" id="carteTraceType" style="max-width:190px;padding:0.15rem 0.3rem;font-size:0.78rem" onchange="carteTraceSetType(this.value)">'+opts+'</select>';
+  if (tr.draft) {
+    var n=carteNormalizeWaypoints(tr.draft.cells).length;
+    h+=' <span style="font-size:0.75rem;color:#c9a84c">Tracé en cours : '+n+' case(s)'+(tr.draft.branchOf?' — embranchement de '+esc(tr.draft.branchOf.routeId)+' en '+esc(tr.draft.branchOf.cell):'')+'</span>';
+    h+=' <button class="btn btn-gold btn-sm" id="carteTraceFinishBtn" onclick="carteTraceFinish(null)">✔ Terminer (Entrée)</button>';
+    h+=' <button class="btn btn-ghost btn-sm" onclick="carteTraceCancel()">✖ Abandonner (Échap)</button>';
+  } else if (sel) {
+    h+=' <span style="font-size:0.75rem;color:var(--text-secondary)">Sélection : '+esc(carteRouteLabel(sel))+'</span>';
+    h+=' <button class="btn btn-danger btn-sm" id="carteTraceDeleteBtn" onclick="carteTraceDeleteSelected()">🗑 Supprimer la route</button>';
+  }
+  return h;
+}
+/// Met à jour la barre du mode « Tracer » (#carteTraceBar). Effet de bord : DOM.
+function carteTraceRefreshBar() {
+  var b=document.getElementById('carteTraceBar'); if(!b) return;
+  b.innerHTML=carteTraceBarHTML(); b.style.display=window._carteState.mode==='trace'?'flex':'none';
+  var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
+}
+
+/// Choix du type dans la barre : type des prochains tracés ; s'il y a une route
+/// sélectionnée (et pas de tracé en cours), change aussi son type (annulable).
+/// \param t identifiant de type (road, path, sea_route…). Effet de bord : db.routes.
+function carteTraceSetType(t) {
+  var st=window._carteState, tr=window._carteTrace; tr.type=t;
+  var sel=(!tr.draft && st.selectedRouteId) ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
+  if (sel && sel.type!==t) {
+    cartePushUndo('type de la route '+sel.id, []);
+    sel.type=t; carteAfterEdit(); toast('Route '+sel.id+' : '+routeTypeDef(t).label);
+  } else carteTraceRefreshBar();
+}
+
+/// Commence un tracé depuis une case. \param from {kind, rec} (ville / lieu de
+/// départ) ou null.  \param branchOf {routeId, cell} pour un embranchement, sinon null.
+/// Effet de bord : window._carteTrace.draft, désélectionne la route, redessine.
+function carteTraceStart(cell, from, branchOf) {
+  window._carteTrace.draft={ cells:[cell], marks:[1], from:from, branchOf:branchOf };
+  window._carteState.selectedRouteId=null;
+  drawCarte(); carteTraceRefreshBar();
+  var list=document.getElementById('carteRoutesList'); if(list) list.innerHTML=carteRoutesListHTML();
+}
+/// Ajoute une case cliquée au tracé en cours (avec les cases de raccord si elle ne
+/// touche pas la précédente). \return false si c'est déjà la dernière case.
+/// Effet de bord : window._carteTrace.draft, redessin.
+function carteTraceAddCell(cell) {
+  var d=window._carteTrace.draft; if(!d) return false;
+  var last=d.cells[d.cells.length-1]; if (cell===last) return false;
+  d.cells=d.cells.concat(carteLineCells(last, cell), [cell]); d.marks.push(d.cells.length);
+  drawCarte(); carteTraceRefreshBar(); return true;
+}
+/// Retire du tracé en cours le dernier point cliqué (et ses cases de raccord) ;
+/// abandonne le tracé s'il ne reste que le départ. Effet de bord : draft, redessin.
+function carteTraceRemoveLastPoint() {
+  var d=window._carteTrace.draft; if(!d) return;
+  if (d.marks.length<=1) { carteTraceCancel(); return; }
+  d.marks.pop(); d.cells=d.cells.slice(0, d.marks[d.marks.length-1]);
+  drawCarte(); carteTraceRefreshBar();
+}
+/// Abandonne le tracé en cours (rien n'est écrit). Effet de bord : draft, redessin.
+function carteTraceCancel() {
+  if (!window._carteTrace.draft) return;
+  window._carteTrace.draft=null; drawCarte(); carteTraceRefreshBar(); toast('Tracé abandonné');
+}
+/// Termine le tracé en cours et crée la route (id suivant, type de la barre,
+/// waypoints continus). Arrivée : `endPlace` si donné (clic sur un marqueur), sinon
+/// la ville ou le lieu de la dernière case, sinon jonction (ids vides, format des
+/// embranchements du lore : ex. 000155 qui part de 000079 en S007_E006).
+/// \param endPlace {kind, rec} ou null.
+/// Effet de bord : ajoute la route à db.routes (annulable), la sélectionne, redessine.
+function carteTraceFinish(endPlace) {
+  var tr=window._carteTrace, d=tr.draft, st=window._carteState; if(!d) return;
+  var cells=carteNormalizeWaypoints(d.cells);
+  if (cells.length<2) { toast('Tracé trop court : cliquez au moins une autre case'); return; }
+  var last=cells[cells.length-1], end=endPlace||cartePlaceOnCell(last);
+  var from=d.from;
+  if (from && from.rec.cell!==cells[0]) from=null;
+  var newId=carteNextRouteId();
+  var desc=d.branchOf ? 'Embranchement de la route '+d.branchOf.routeId+' en '+d.branchOf.cell+'.' : '';
+  cartePushUndo('création de la route '+newId, []);
+  if (!Array.isArray(db.routes)) db.routes=[];
+  var r={ id:newId, type:tr.type,
+    from_place:cells[0], from_ville_id:(from&&from.kind==='villes')?from.rec.id:'', from_lieu_id:(from&&from.kind==='lieux')?from.rec.id:'',
+    to_place:last, to_ville_id:(end&&end.kind==='villes')?end.rec.id:'', to_lieu_id:(end&&end.kind==='lieux')?end.rec.id:'',
+    description:desc, notes:[], waypoints:cells };
+  db.routes.push(r);
+  tr.draft=null; st.selectedRouteId=r.id;
+  carteAfterEdit();
+  var j=end ? '' : (carteRoutesThrough(last, r.id).length ? ' (arrivée en jonction sur '+carteRoutesThrough(last, r.id).join(', ')+')' : ' (arrivée sans ville ni lieu)');
+  toast('Route créée : '+carteRouteLabel(r)+', '+cells.length+' cases'+j);
+}
+
+/// Supprime la route sélectionnée après confirmation dans une boîte modale HTML
+/// (confirmDelete, pas de confirm() natif). Annulable par Ctrl+Z.
+/// Effet de bord : db.routes, sélection, redessin.
+function carteTraceDeleteSelected() {
+  var st=window._carteState;
+  var r=st.selectedRouteId ? (db.routes||[]).find(function(x){ return x.id===st.selectedRouteId; }) : null;
+  if (!r) { toast('Aucune route sélectionnée'); return; }
+  var br=(db.routes||[]).filter(function(x){ return x.id!==r.id && !x.from_ville_id && !x.from_lieu_id && carteRouteIds(r).indexOf(x.from_place)!==-1; });
+  confirmDelete('Supprimer la route '+esc(carteRouteLabel(r))+' ?'+(br.length?' <br><small>'+br.length+' embranchement(s) en partent ('+esc(br.map(function(x){return x.id;}).join(', '))+') : ils sont gardés.</small>':'')+' <br><small>Ctrl+Z pour annuler.</small>', function(){
+    cartePushUndo('suppression de la route '+r.id, []);
+    var i=db.routes.indexOf(r); if (i>=0) db.routes.splice(i,1);
+    st.selectedRouteId=null; carteAfterEdit(); toast('Route '+r.id+' supprimée (Ctrl+Z pour annuler)');
+  });
+}
+
+/// Appui souris sur le canvas en mode « Tracer ». Sur une poignée de la route
+/// sélectionnée : début du glisser d'un point ; sur un de ses segments : insertion
+/// d'un point (glisser pour le placer) ; ailleurs : clic traité au relâchement.
+/// Effet de bord : window._carteTrace.drag / press.
+function carteTraceOnMouseDown(e) {
+  if (window._carteState.mode!=='trace' || e.button!==0) return;
+  var pt=carteEventPoint(e), tr=window._carteTrace; e.preventDefault();
+  if (!tr.draft && !e.shiftKey && !e.altKey) {
+    var h=carteHitRoute(pt, true);
+    if (h) { tr.drag={ routeId:h.route.id, idx:h.handle>=0?h.handle:null, seg:h.handle>=0?-1:h.seg, x0:pt.x, y0:pt.y, x:pt.x, y:pt.y, moved:false, before:carteClone(h.route), pushed:false }; return; }
+  }
+  tr.press={ x0:pt.x, y0:pt.y };
+}
+
+/// Glisser d'un point de route (mode « Tracer ») : au premier mouvement, empile
+/// l'annulation (et insère le point si l'appui était sur un segment) ; ensuite le
+/// point suit la souris de case en case. Effet de bord : la route, redessin.
+function carteTraceDragMove(e) {
+  var g=window._carteTrace.drag, pt=carteEventPoint(e); if(!g||!pt) return;
+  g.x=pt.x; g.y=pt.y;
+  if (!g.moved && Math.abs(pt.x-g.x0)+Math.abs(pt.y-g.y0)<=3) return;
+  var r=(db.routes||[]).find(function(x){ return x.id===g.routeId; }); if(!r) return;
+  var t=cartePixelToPlacement(pt.x, pt.y);
+  if (!g.moved) {
+    g.moved=true; cartePushUndo('modification du tracé de la route '+r.id, []); g.pushed=true;
+    if (g.idx===null) { r.waypoints=carteRouteIds(r).slice(); r.waypoints.splice(g.seg+1, 0, t?t.cell:r.waypoints[g.seg]); g.idx=g.seg+1; }
+  }
+  if (t) carteTraceSetPoint(r, g.idx, t.cell);
+  drawCarte();
+  carteShowTip(e, '<b>Route '+esc(r.id)+'</b><br>'+(t?'→ '+esc(t.cell):'hors de la carte'));
+}
+/// Met la case `cell` à l'index `idx` du tracé (waypoints, ou from/to d'une route
+/// en ligne droite) sans normaliser (aperçu pendant le glisser). Effet de bord : la route.
+function carteTraceSetPoint(r, idx, cell) {
+  if (r.waypoints && r.waypoints.length>=2) {
+    r.waypoints[idx]=cell;
+    if (idx===0) r.from_place=cell; else if (idx===r.waypoints.length-1) r.to_place=cell;
+  } else { if (idx===0) r.from_place=cell; else r.to_place=cell; }
+}
+
+/// Fin du glisser d'un point (ou clic sur un segment) en mode « Tracer » : tracé
+/// rendu continu ; extrémité déplacée → ville / lieu de la nouvelle case (sinon
+/// jonction) ; point intérieur déplacé → les embranchements qui partaient de son
+/// ancienne case le suivent. Relâché hors de la carte : rien n'est changé.
+/// \return true si le relâchement a été traité ici. Effet de bord : la route, db.routes.
+function carteTraceDragEnd(e) {
+  var tr=window._carteTrace, g=tr.drag; if(!g) return false;
+  tr.drag=null; carteShowTip(e, '');
+  var r=(db.routes||[]).find(function(x){ return x.id===g.routeId; }); if(!r) return true;
+  var st=window._carteState;
+  if (!g.moved) {
+    if (g.idx!==null) { tr.press={ x0:g.x0, y0:g.y0 }; return false; } // clic simple sur une poignée : clic ordinaire
+    var t0=cartePixelToPlacement(g.x, g.y); if(!t0) return true;
+    cartePushUndo('ajout d\'un point à la route '+r.id, []);
+    var w0=carteRouteIds(r).slice(); w0.splice(g.seg+1, 0, t0.cell); w0=carteNormalizeWaypoints(w0);
+    if (JSON.stringify(w0)===JSON.stringify(carteRouteIds(r))) { st.undoStack.pop(); toast('Point déjà sur la route : glissez le segment pour placer le nouveau point'); return true; }
+    r.waypoints=w0; carteAfterEdit(); toast('Point ajouté en '+t0.cell+' (route '+r.id+')'); return true;
+  }
+  var t=cartePixelToPlacement(g.x, g.y);
+  if (!t) { carteRestoreInPlace(r, g.before); if (g.pushed) st.undoStack.pop(); carteAfterEdit(); toast('Hors de la carte : point non déplacé'); return true; }
+  var oldIds=carteRouteIds(g.before), n=carteRouteIds(r).length, idx=g.idx;
+  carteTraceSetPoint(r, idx, t.cell);
+  var follow=0;
+  if (idx===0 || idx===n-1) {
+    var end=idx===0?'from':'to', pl=cartePlaceOnCell(t.cell);
+    r[end+'_ville_id']=(pl&&pl.kind==='villes')?pl.rec.id:''; r[end+'_lieu_id']=(pl&&pl.kind==='lieux')?pl.rec.id:'';
+  }
+  if (r.waypoints && r.waypoints.length>=2) {
+    r.waypoints=carteNormalizeWaypoints(r.waypoints);
+    r.from_place=r.waypoints[0]; r.to_place=r.waypoints[r.waypoints.length-1];
+  }
+  // Embranchements (jonctions sans ville ni lieu) partis de l'ancienne case du point
+  // glissé, si le tracé l'a quittée et qu'aucune autre route n'y passe.
+  var newIds=carteRouteIds(r), movedFrom=(g.seg===-1) ? oldIds[idx] : null;
+  (movedFrom ? [movedFrom] : []).forEach(function(c){
+    if (newIds.indexOf(c)!==-1) return;
+    (db.routes||[]).forEach(function(b){
+      if (b===r) return;
+      ['from','to'].forEach(function(end){
+        if (b[end+'_place']===c && !b[end+'_ville_id'] && !b[end+'_lieu_id'] && carteRoutesThrough(c, b.id).length===0) { carteRouteSetEnd(b, end, t.cell); follow++; }
+      });
+    });
+  });
+  if (jsonDeepEqual(r, g.before) && !follow) { if (g.pushed) st.undoStack.pop(); carteAfterEdit(); return true; }
+  carteAfterEdit();
+  toast('Route '+r.id+' : point '+(idx===0?'de départ':idx===n-1?'d\'arrivée':idx)+' → '+t.cell+(follow?' — '+follow+' embranchement(s) suivi(s)':''));
+  return true;
+}
+
+/// Clic (appui + relâchement sans glisser) en mode « Tracer ».
+/// - Tracé en cours : marqueur de ville / lieu → arrivée et création ; autre case →
+///   point ajouté (cases de raccord comprises).
+/// - Sinon : Maj+clic sur une route → embranchement depuis le point de cette route
+///   le plus proche ; clic sur une ville / un lieu → départ d'un nouveau tracé ; clic
+///   sur une route → sélection ; ailleurs → désélection.
+/// - Alt+clic sur un point de la route sélectionnée : suppression du point.
+/// Effet de bord : tracé en cours, sélection, db.routes (via les fonctions appelées).
+function carteTraceClick(e) {
+  var st=window._carteState, tr=window._carteTrace, pt=carteEventPoint(e); if(!pt) return;
+  var t=cartePixelToPlacement(pt.x, pt.y), hit=carteHitPlace(e);
+  if (e.altKey) { var hd=carteHitRoute(pt, true); if (hd && hd.handle>=0) carteTraceDeletePoint(hd.route, hd.handle); return; }
+  if (tr.draft) {
+    if (hit && !(tr.draft.cells.length===1 && hit.rec.cell===tr.draft.cells[0])) {
+      carteTraceAddCell(hit.rec.cell); carteTraceFinish({ kind:hit.kind, rec:hit.rec }); return;
+    }
+    if (!t) { toast('Hors de la carte'); return; }
+    carteTraceAddCell(t.cell); return;
+  }
+  if (e.shiftKey) {
+    var hb=carteHitRoute(pt, false); if (!hb) { toast('Maj+clic sur une route pour en partir en embranchement'); return; }
+    var px=BASE_CELL_SIZE*st.zoom, pts=carteRouteHandlePoints(hb.route, px), ids=carteRouteIds(hb.route), bi=-1, bd=Infinity;
+    pts.forEach(function(p, i){ if(!p) return; var d=Math.hypot(pt.x-p.x, pt.y-p.y); if (d<bd) { bd=d; bi=i; } });
+    var jc=(hb.route.waypoints && hb.route.waypoints.length>=2) ? ids[bi] : (t?t.cell:ids[bi]);
+    carteTraceStart(jc, null, { routeId:hb.route.id, cell:jc });
+    toast('Embranchement de la route '+hb.route.id+' en '+jc+' : cliquez les cases suivantes'); return;
+  }
+  if (hit) { carteTraceStart(hit.rec.cell, { kind:hit.kind, rec:hit.rec }, null); toast('Départ : '+(hit.rec.name||hit.rec.id)+' — cliquez les cases du tracé, puis la ville ou le lieu d\'arrivée'); return; }
+  var hr=carteHitRoute(pt, false);
+  if (hr) { st.selectedRouteId=hr.route.id; carteAfterEdit(); return; }
+  var pl=t?cartePlaceOnCell(t.cell):null;
+  if (pl) { carteTraceStart(t.cell, pl, null); toast('Départ : '+(pl.rec.name||pl.rec.id)); return; }
+  if (st.selectedRouteId) { st.selectedRouteId=null; carteAfterEdit(); }
+}
+
+/// Supprime le point `idx` (intérieur) d'une route ; le tracé reste continu (une
+/// case de raccord peut le remplacer). Les extrémités ne se suppriment pas.
+/// Effet de bord : la route (annulable), redessin.
+function carteTraceDeletePoint(r, idx) {
+  var ids=carteRouteIds(r);
+  if (!(r.waypoints && r.waypoints.length>=2) || idx<=0 || idx>=ids.length-1) { toast('Une extrémité ne se supprime pas : glissez-la ou supprimez la route'); return; }
+  var w=ids.slice(); w.splice(idx,1); w=carteNormalizeWaypoints(w);
+  if (JSON.stringify(w)===JSON.stringify(ids)) { toast('Point nécessaire à la continuité du tracé'); return; }
+  cartePushUndo('suppression d\'un point de la route '+r.id, []);
+  var gone=ids[idx]; r.waypoints=w; carteAfterEdit(); toast('Point '+gone+' retiré de la route '+r.id);
+}
+
+/// Relâchement de la souris (écouté sur window) en mode « Tracer » : fin d'un
+/// glisser de point, sinon clic si l'appui et le relâchement sont au même endroit
+/// sur le canvas (le 2e clic d'un double-clic est ignoré : le double-clic termine).
+/// Effet de bord : voir carteTraceDragEnd et carteTraceClick.
+function carteTraceOnMouseUp(e) {
+  var tr=window._carteTrace;
+  if (window._carteState.mode!=='trace') { tr.drag=null; tr.press=null; return; }
+  if (tr.drag && carteTraceDragEnd(e)) return;
+  var p=tr.press; tr.press=null; if(!p) return;
+  var pt=carteEventPoint(e); if(!pt || e.target.id!=='carteCanvas') return;
+  if (Math.abs(pt.x-p.x0)+Math.abs(pt.y-p.y0)>4 || e.detail>=2) return;
+  carteTraceClick(e);
+}
+
+/// Survol en mode « Tracer » : info-bulle de la route ou du point sous la souris,
+/// case visée pendant un tracé (la carte n'est redessinée que si elle change).
+/// Effet de bord : #carteTip, window._carteTrace.hover, redessin.
+function carteTraceHover(e) {
+  var tr=window._carteTrace, pt=carteEventPoint(e); if(!pt) return;
+  if (tr.draft) {
+    var t=cartePixelToPlacement(pt.x, pt.y), hp=carteHitPlace(e);
+    carteShowTip(e, hp ? '<b>'+esc(hp.rec.name||hp.rec.id)+'</b><br>clic : arrivée de la route' : (t ? esc(t.cell)+' — clic : ajouter ce point' : ''));
+    var nh=t?t.cell:null; if (nh!==tr.hover) { tr.hover=nh; drawCarte(); } return;
+  }
+  var h=carteHitRoute(pt, true) || carteHitRoute(pt, false), hp2=carteHitPlace(e);
+  if (hp2 && !(h && h.handle>=0)) { carteShowTip(e, carteTipHTML(hp2.kind, hp2.rec)+'<br><span style="opacity:.75">clic : départ d\'une route</span>'); return; }
+  if (!h) { carteShowTip(e, ''); return; }
+  var isSel=h.route.id===window._carteState.selectedRouteId;
+  carteShowTip(e, '<b>'+esc(carteRouteLabel(h.route))+'</b><br><span style="opacity:.75">'+
+    (isSel ? (h.handle>=0 ? 'glisser : déplacer ce point ('+esc(carteRouteIds(h.route)[h.handle]||'')+') · Alt+clic : le supprimer' : 'glisser : insérer un point') + ' · Maj+clic : embranchement'
+           : 'clic : sélectionner · Maj+clic : embranchement')+'</span>');
+}
+
+/// Dessine, en mode « Tracer », le tracé en cours (doré, tireté, avec la case
+/// survolée) et les poignées de la route sélectionnée (extrémités carrées).
+/// \param ctx contexte 2D du canvas.  \param px côté d'une case (pixels).
+/// Effet de bord : dessin seulement.
+function drawCarteTrace(ctx, px) {
+  var st=window._carteState, tr=window._carteTrace;
+  if (st.mode!=='trace') return;
+  if (tr.draft) {
+    var cells=carteNormalizeWaypoints(tr.draft.cells);
+    var pts=carteRoutePointsRaw({ from_ville_id:tr.draft.from&&tr.draft.from.kind==='villes'?tr.draft.from.rec.id:'', from_lieu_id:tr.draft.from&&tr.draft.from.kind==='lieux'?tr.draft.from.rec.id:'' }, cells, px).filter(Boolean);
+    if (tr.hover && tr.hover!==cells[cells.length-1]) { var hc=carteCellCenter(tr.hover); if(hc) pts.push(hc); }
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(3, px*0.16); ctx.setLineDash([Math.max(5,px*0.3), Math.max(4,px*0.2)]);
+    ctx.beginPath(); pts.forEach(function(p, i){ if(i) ctx.lineTo(p.x,p.y); else ctx.moveTo(p.x,p.y); }); ctx.stroke(); ctx.setLineDash([]);
+    cells.forEach(function(c){ var p=carteCellCenter(c); if(!p) return; ctx.fillStyle='#ffd700'; ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(2.5,px*0.08),0,Math.PI*2); ctx.fill(); ctx.stroke(); });
+  }
+  var sel=st.selectedRouteId ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
+  if (sel && !tr.draft) {
+    var hp=carteRouteHandlePoints(sel, px), drg=tr.drag;
+    hp.forEach(function(p, i){
+      if (!p) return; var endp=(i===0||i===hp.length-1), r=Math.max(4, px*0.13);
+      ctx.fillStyle=(drg&&drg.moved&&drg.idx===i)?'#ffd700':(endp?'#f0e6cc':'#ffffff'); ctx.strokeStyle='#000'; ctx.lineWidth=2;
+      ctx.beginPath(); if (endp) ctx.rect(p.x-r, p.y-r, 2*r, 2*r); else ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    });
+  }
+}
+
 // Rend la section « Carte » : barre d'outils (mode, zoom), légende, et un canvas
 // interactif. Clic sur une cellule = édition (mode Sélection) ou point d'une
 // nouvelle route (mode Route). Voir openCellEditor / openRouteForm.
@@ -5292,7 +5866,9 @@ function renderCarte(el) {
   h += '<button class="btn btn-sm '+(st.mode==='route'?'btn-gold':'btn-ghost')+'" onclick="carteSetMode(\'route\')">🛣️ Créer une route</button>';
   // Placement manuel (v1.0.95) : mode « Déplacer » (touche D) et annulation (Ctrl+Z).
   h += '<button class="btn btn-sm '+(st.mode==='move'?'btn-gold':'btn-ghost')+'" id="carteMoveBtn" title="Glisser-déposer des villes et des lieux (touche D)" onclick="carteToggleMoveMode()">✥ Déplacer</button>';
-  h += '<button class="btn btn-ghost btn-sm" id="carteUndoBtn" title="Annuler le dernier déplacement (Ctrl+Z)" onclick="carteUndoMove()"'+(st.moveUndo.length?'':' disabled')+'>↶ Annuler'+(st.moveUndo.length?' ('+st.moveUndo.length+')':'')+'</button>';
+  // Tracé des routes (v1.0.97) : mode « Tracer » (touche R), annulation commune.
+  h += '<button class="btn btn-sm '+(st.mode==='trace'?'btn-gold':'btn-ghost')+'" id="carteTraceBtn" title="Tracer, modifier, brancher ou supprimer des routes (touche R)" onclick="carteToggleTraceMode()">〰 Tracer</button>';
+  h += '<button class="btn btn-ghost btn-sm" id="carteUndoBtn" title="Annuler la dernière action de la carte (Ctrl+Z)" onclick="carteUndo()"'+(st.undoStack.length?'':' disabled')+'>↶ Annuler'+(st.undoStack.length?' ('+st.undoStack.length+')':'')+'</button>';
   // Zoom
   h += '<span style="display:inline-flex;gap:0.25rem;align-items:center;margin-left:0.5rem">';
   h += '<button class="btn btn-ghost btn-sm" onclick="carteZoomBy(-1)">−</button>';
@@ -5303,6 +5879,8 @@ function renderCarte(el) {
 
   // Bandeau d'aide / état du mode
   h += '<div id="carteHint" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem">'+carteHintText()+'</div>';
+  // Barre du mode « Tracer » (v1.0.97) : type, tracé en cours, route sélectionnée.
+  h += '<div id="carteTraceBar" style="display:'+(st.mode==='trace'?'flex':'none')+';gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem;padding:0.35rem 0.6rem;background:var(--bg-deep);border:1px solid #c9a84c80;border-radius:4px">'+carteTraceBarHTML()+'</div>';
 
   // Légende terrains + routes + POI
   var terrainCounts={}; cells.forEach(function(c){ var t=c.terrain_type||''; terrainCounts[t]=(terrainCounts[t]||0)+1; });
@@ -5347,12 +5925,12 @@ function renderCarte(el) {
 
   // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin)
   h += '<div id="carteScroll" style="overflow:auto;height:76vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10;resize:vertical">';
-  h += '<canvas id="carteCanvas" style="display:block;cursor:'+(st.mode==='move'?'grab':'pointer')+'"></canvas></div>';
+  h += '<canvas id="carteCanvas" style="display:block;cursor:'+(st.mode==='move'?'grab':st.mode==='trace'?'crosshair':'pointer')+'"></canvas></div>';
   h += '<div id="carteTip" style="position:fixed;display:none;pointer-events:none;z-index:60;max-width:340px;padding:0.3rem 0.5rem;font-size:0.74rem;line-height:1.35;background:#15151c;color:#f0e6cc;border:1px solid #c9a84c;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>';
   h += '<div id="carteStatus" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;font-family:monospace">&nbsp;</div>';
 
   // Liste des routes
-  h += '<div style="margin-top:1rem"><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.4rem">Routes ('+(db.routes||[]).length+')</div>';
+  h += '<div style="margin-top:1rem"><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.4rem"><span id="carteRoutesCount">Routes ('+(db.routes||[]).length+')</span></div>';
   h += '<div id="carteRoutesList"></div></div>';
 
   el.innerHTML = h;
@@ -5363,18 +5941,37 @@ function renderCarte(el) {
   canvas.addEventListener('click', carteOnClick);
   canvas.addEventListener('mousemove', carteOnHover);
   canvas.addEventListener('mousedown', carteOnMouseDown);
+  // Mode « Tracer » (v1.0.97) : appui, double-clic (terminer), clic droit (supprimer un point).
+  canvas.addEventListener('mousedown', carteTraceOnMouseDown);
+  canvas.addEventListener('dblclick', function(e){ if (window._carteState.mode==='trace' && window._carteTrace.draft) { e.preventDefault(); if (carteNormalizeWaypoints(window._carteTrace.draft.cells).length<2) carteTraceCancel(); else carteTraceFinish(null); } });
+  canvas.addEventListener('contextmenu', function(e){
+    if (window._carteState.mode!=='trace') return; e.preventDefault();
+    var h=carteHitRoute(carteEventPoint(e), true); if (h && h.handle>=0) carteTraceDeletePoint(h.route, h.handle);
+  });
   canvas.addEventListener('mouseleave', function(e){ if(!window._carteDrag) carteShowTip(e, ''); });
 }
 // Relâchement du glisser-déposer de la carte, même hors du canvas (v1.0.95).
 window.addEventListener('mouseup', carteOnMouseUp);
-// Raccourcis de la carte (v1.0.95) : D = mode « Déplacer », Ctrl+Z = annuler le dernier
-// déplacement ; inactifs hors de la section Carte, dans un champ de saisie ou une fenêtre.
+// Relâchement en mode « Tracer » (v1.0.97) : fin d'un glisser de point ou clic.
+window.addEventListener('mouseup', carteTraceOnMouseUp);
+// Raccourcis de la carte : D = mode « Déplacer » (v1.0.95), R = mode « Tracer »
+// (v1.0.97), Ctrl+Z = annuler la dernière action (commune aux deux modes) ; en mode
+// « Tracer » : Entrée = terminer le tracé, Échap = l'abandonner (ou désélectionner),
+// Retour arrière = retirer le dernier point. Inactifs hors de la section Carte, dans un
+// champ de saisie ou une fenêtre.
 document.addEventListener('keydown', function(e) {
   if (currentSection!=='carte' || _gsearchOpen) return;
   var ov=document.getElementById('modalOverlay'); if (ov && !ov.classList.contains('hidden')) return;
   var t=e.target, tag=t&&t.tagName; if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable)) return;
-  if ((e.ctrlKey||e.metaKey) && !e.shiftKey && !e.altKey && (e.key==='z'||e.key==='Z')) { e.preventDefault(); carteUndoMove(); }
-  else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key==='d'||e.key==='D')) { e.preventDefault(); carteToggleMoveMode(); }
+  var plain=!e.ctrlKey && !e.metaKey && !e.altKey, tr=window._carteTrace;
+  if ((e.ctrlKey||e.metaKey) && !e.shiftKey && !e.altKey && (e.key==='z'||e.key==='Z')) { e.preventDefault(); carteUndo(); }
+  else if (plain && (e.key==='d'||e.key==='D')) { e.preventDefault(); carteToggleMoveMode(); }
+  else if (plain && (e.key==='r'||e.key==='R')) { e.preventDefault(); carteToggleTraceMode(); }
+  else if (window._carteState.mode==='trace' && plain && e.key==='Enter' && tr.draft) { e.preventDefault(); carteTraceFinish(null); }
+  else if (window._carteState.mode==='trace' && plain && e.key==='Backspace' && tr.draft) { e.preventDefault(); carteTraceRemoveLastPoint(); }
+  else if (window._carteState.mode==='trace' && plain && e.key==='Escape') {
+    if (tr.draft) carteTraceCancel(); else if (window._carteState.selectedRouteId) { window._carteState.selectedRouteId=null; carteAfterEdit(); }
+  }
 });
 
 function carteHintText() {
@@ -5382,7 +5979,12 @@ function carteHintText() {
   if (st.mode==='move') {
     return '✥ Mode déplacement : glissez une ville ou un lieu, dans sa case ou vers une autre case (la case, la région et la province de la fiche suivent). '
       + 'Clic simple : ouvre la fiche (Position X/Z en mètres). Ctrl+Z ou « Annuler » : dernier déplacement'
-      + (st.moveUndo.length ? ' ('+st.moveUndo.length+' annulable'+(st.moveUndo.length>1?'s':'')+')' : '') + '. Touche D : quitter le mode.';
+      + (st.undoStack.length ? ' ('+st.undoStack.length+' annulable'+(st.undoStack.length>1?'s':'')+')' : '') + '. Les routes, sentiers, routes maritimes et le ponton suivent une ville qui change de case. Touche D : quitter le mode.';
+  }
+  if (st.mode==='trace') {
+    if (window._carteTrace.draft) return '〰 Tracé en cours : cliquez les cases du chemin (les cases entre deux clics sont ajoutées), puis la ville ou le lieu d\'arrivée, ou Entrée / double-clic pour finir sur la dernière case. Retour arrière : dernier point ; Échap : abandonner.';
+    return '〰 Mode tracé : clic sur une ville ou un lieu = départ d\'une route ; clic sur une route = sélection, puis glisser un point pour le déplacer, glisser un segment pour insérer un point, Alt+clic ou clic droit pour supprimer un point ; Maj+clic sur une route = embranchement ; Ctrl+Z : annuler'
+      + (st.undoStack.length ? ' ('+st.undoStack.length+')' : '') + '. Touche R : quitter le mode.';
   }
   if (st.mode==='route') {
     return st.routeFrom
@@ -5580,6 +6182,8 @@ function drawCarte() {
       });
     }
   }
+  // Mode « Tracer » (v1.0.97) : tracé en cours et poignées de la route sélectionnée.
+  drawCarteTrace(ctx, px);
 }
 
 // Dessine l'hydrographie décrite par db.hydrography : un lac couvrant plusieurs
@@ -5715,6 +6319,9 @@ function carteEventToCell(e) {
 /// glisser-déposer (v1.0.95), suivi de la souris avec la case et la position visées.
 /// Effet de bord : DOM (#carteStatus, #carteTip), window._carteDrag, redessin.
 function carteOnHover(e) {
+  // v1.0.97 : mode « Tracer » (glisser d'un point, info-bulles des routes).
+  if (window._carteTrace.drag) { carteTraceDragMove(e); return; }
+  if (window._carteState.mode==='trace') { carteTraceHover(e); carteHoverStatus(e); return; }
   var dr=window._carteDrag;
   if (dr) {
     var pt=carteEventPoint(e);
@@ -5729,6 +6336,11 @@ function carteOnHover(e) {
   }
   var hit=carteHitPlace(e);
   carteShowTip(e, hit ? carteTipHTML(hit.kind, hit.rec) : '');
+  carteHoverStatus(e);
+}
+/// Barre d'état sous la carte : case survolée, terrain, région, villes, lieux, POI
+/// (extrait de carteOnHover en v1.0.97). Effet de bord : DOM (#carteStatus).
+function carteHoverStatus(e) {
   var c=carteEventToCell(e); var s=document.getElementById('carteStatus'); if(!s) return;
   if(!c){ s.innerHTML='&nbsp;'; return; }
   var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name+(v.type?' ('+placeTypeLabel(v.type)+')':'');});
@@ -5743,7 +6355,7 @@ function carteOnHover(e) {
 function carteOnClick(e) {
   var c=carteEventToCell(e); if(!c) return;
   var st=window._carteState;
-  if (st.mode==='move') return; // v1.0.95 : géré par carteOnMouseDown / carteOnMouseUp
+  if (st.mode==='move' || st.mode==='trace') return; // v1.0.95 / v1.0.97 : gérés par mousedown / mouseup
   if (st.mode==='route') {
     if(!st.routeFrom){ st.routeFrom=c.id; document.getElementById('carteHint').innerHTML=carteHintText(); drawCarte(); }
     else { var from=st.routeFrom; st.routeFrom=null; openRouteForm(from, c.id); }
@@ -5751,7 +6363,11 @@ function carteOnClick(e) {
     openCellEditor(c.id);
   }
 }
-function carteSetMode(m) { window._carteState.mode=m; window._carteState.routeFrom=null; showSection('carte'); }
+/// Change le mode de la carte ('select', 'route', 'move', 'trace') et re-rend la
+/// section. v1.0.97 : un tracé en cours est abandonné. Effet de bord : état, DOM.
+function carteSetMode(m) { window._carteState.mode=m; window._carteState.routeFrom=null; window._carteTrace.draft=null; window._carteTrace.drag=null; showSection('carte'); }
+/// Active / désactive le mode « Tracer » (v1.0.97). Effet de bord : voir carteSetMode.
+function carteToggleTraceMode() { carteSetMode(window._carteState.mode==='trace' ? 'select' : 'trace'); }
 // Active/désactive une couche d'affichage. La couche « régions » modifie aussi
 // la légende → re-rendu complet ; les autres se contentent d'un redraw canvas.
 function carteToggleFilter(key, on) {
@@ -5931,11 +6547,15 @@ function carteToggleRouteSelection(id) {
   var list=document.getElementById('carteRoutesList'); if(list) list.innerHTML=carteRoutesListHTML();
   var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
 }
+/// Supprime une route depuis la liste de la carte, après confirmation (boîte modale
+/// HTML). v1.0.97 : annulable par Ctrl+Z (pile commune). \param idx index dans db.routes.
+/// Effet de bord : db.routes, sélection, re-rendu de la section.
 function deleteRoute(idx) {
   confirmDelete('Supprimer cette route ?', function(){
     // La route supprimée ne doit pas rester « sélectionnée ».
     var r=db.routes[idx]; if(r && window._carteState.selectedRouteId===r.id) window._carteState.selectedRouteId=null;
-    db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée');
+    cartePushUndo('suppression de la route '+(r?r.id:''), []);
+    db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée (Ctrl+Z sur la carte pour annuler)');
   });
 }
 

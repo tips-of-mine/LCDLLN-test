@@ -10,7 +10,7 @@
 //    plus de départ à Marn, spawners en coordonnées globales DANS la cellule).
 // 5. Génération de la cellule voisine (ouest) : la colonne de frontière de la
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture) ; puis d'une
-//    cellule de départ de faction (Eaglewatch) : spawn par défaut au sec.
+//    cellule de départ de faction (Haeldorf) : spawn par défaut au sec.
 // 6. État « reconstruction » (Kendrhir Vale) : maisons, ruines et chantiers
 //    mêlés, auberge en service, étais autour des chantiers.
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
@@ -168,14 +168,14 @@ namespace
 				if (c.id == cityId) { found = tools::world_gen::ParseCellId(c.cell, refN, refE); }
 			for (const auto& p : m.pois)
 				if (!found && p.id == cityId) { found = tools::world_gen::ParseCellId(p.cell, refN, refE); }
-			// v1.0.72 : Silverglade (elfe) déplacé par le propriétaire deux cases à l'est de Northind.
+			// v1.0.72 : Syllaërin (elfe) déplacé par le propriétaire deux cases à l'est de Northind.
 			const int reach = faction == "elfe" ? 2 : 1;
 			const bool near = start && found && start->kind == "hameau"
 				&& std::abs(start->n - refN) <= reach && std::abs(start->e - refE) <= reach && (start->n != refN || start->e != refE);
 			if (!near) std::fprintf(stderr, "  depart '%s' pas dans un hameau voisin de %s\n", faction.c_str(), cityId.c_str());
 			hamletsNear = hamletsNear && near;
 		}
-		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61 ; Silverglade a 2 cases, v1.0.72)");
+		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61 ; Syllaërin a 2 cases, v1.0.72)");
 		bool oldStartsCleared = true;
 		for (const auto& c : m.cities)
 			if (c.id == "hameau_marn" || c.id == "ville_whispers_hill" || c.id == "leviathan_jungle" || c.id == "ville_ghrunke_dash")
@@ -642,14 +642,14 @@ namespace
 			if (diff) std::fprintf(stderr, "  %d echantillons differents sur la frontiere\n", diff);
 			Check(seam && diff == 0, "raccord : colonne frontiere identique entre cellules voisines");
 		}
-		// v1.0.61 : départ de faction (Légions Impériales, hameau d'Eaglewatch, N002_W010,
+		// v1.0.61 : départ de faction (Légions Impériales, hameau de Haeldorf, N002_W010,
 		// voisin de Lhynn) : spawn par défaut de la cellule dans la cellule, au sec.
 		tools::world_gen::GenReport r4;
 		o.cells = { "N002_W010" };
 		o.outputRoot = (tmp / "d").string();
 		const bool ok4 = tools::world_gen::RunWorldGen(o, r4, err);
 		if (!ok4) std::fprintf(stderr, "  %s\n", err.c_str());
-		Check(ok4, "generation cellule de depart N002_W010 (Eaglewatch)");
+		Check(ok4, "generation cellule de depart N002_W010 (Haeldorf)");
 		if (ok4)
 		{
 			const double sx0 = -105000.0, sz0 = -25000.0; // coin min de N002_W010
@@ -665,7 +665,7 @@ namespace
 				const double y = tools::zone_builder::FindObjectMember(*sp, "y")->numberValue;
 				good = x >= sx0 && x < sx0 + 10000.0 && z >= sz0 && z < sz0 + 10000.0 && y > 41.0;
 			}
-			Check(good, "depart de faction (Eaglewatch) : dans sa cellule et au sec");
+			Check(good, "depart de faction (Haeldorf) : dans sa cellule et au sec");
 		}
 		fs::remove_all(tmp, ec);
 	}
@@ -877,8 +877,8 @@ namespace
 			"POI : deux lieux de la meme case ecartes (temple et Seuil de Lhynn)");
 	}
 
-	/// v1.0.72 : reliefs locaux du master — Verdansur au sommet d'une colline, deux
-	/// rivières qui naissent à son pied ; Wardholt au fond d'une crevasse en
+	/// v1.0.72 : reliefs locaux du master — Vaerdhun au sommet d'une colline, deux
+	/// rivières qui naissent à son pied ; Vharholdt au fond d'une crevasse en
 	/// cul-de-sac (routes par l'ouverture seulement, mine au fond) ; lieu décalé
 	/// contre la côte ouest de sa case.
 	void TestReliefs()
@@ -899,7 +899,7 @@ namespace
 		const ReliefDef* hill = ReliefOfCity(m, "town_0119");
 		const ReliefDef* crev = ReliefOfCity(m, "hamlet_wardholt");
 		Check(ver && war && hill && crev && hill->type == "colline" && crev->type == "crevasse",
-			"reliefs : colline de Verdansur, crevasse de Wardholt");
+			"reliefs : colline de Vaerdhun, crevasse de Vharholdt");
 		if (!ver || !war || !hill || !crev) return;
 		auto dist = [](Vec2 a, Vec2 b) { return std::hypot(a.x - b.x, a.z - b.z); };
 		// Colline : ville au centre de sa case, au sommet, nettement au-dessus de son pied.
@@ -912,7 +912,7 @@ namespace
 			const double a = k * 0.7853981633974483, r = hill->footRadiusM + 300.0;
 			dominates = dominates && top - MacroHeight(m, ver->center.x + std::cos(a) * r, ver->center.z + std::sin(a) * r) > 80.0;
 		}
-		Check(dominates && ver->plateauY > top - 15.0, "reliefs : Verdansur au sommet (plus de 80 m au-dessus du pied)");
+		Check(dominates && ver->plateauY > top - 15.0, "reliefs : Vaerdhun au sommet (plus de 80 m au-dessus du pied)");
 		// Deux rivières tracées à la main : nées au pied (jamais sur le flanc), jusqu'à la mer.
 		int born = 0;
 		for (const River& r : g.rivers)
@@ -926,7 +926,7 @@ namespace
 		}
 		Check(born == 2, "reliefs : deux rivieres naissent au pied de la colline et vont a la mer");
 		// Crevasse : fond plat sous la ville et la mine, parois sur les côtés et au fond,
-		// ouverte vers Oathford.
+		// ouverte vers Ordhrann.
 		const Vec2 c = war->center, d = crev->dir, nrm{ -d.z, d.x };
 		const double off = crev->halfWidthM + crev->wallM + 80.0;
 		const double H = crev->heightM;
@@ -934,8 +934,8 @@ namespace
 		Check(at(c) < 1e-9 && at(c - d * (crev->backM - 60.0)) < 1e-9 && at(c + nrm * off) > 0.9 * H && at(c - nrm * off) > 0.9 * H
 			&& at(c - d * (crev->backM + off)) > 0.9 * H && at(c + d * (crev->footRadiusM * 0.6)) < 1e-9
 			&& at(c + d * (crev->footRadiusM * 1.16 + CrevasseOuterSlopeM(*crev) + 50.0)) < 1e-9,
-			"reliefs : Wardholt au fond d'une crevasse en cul-de-sac");
-		// Routes : aucune ne franchit le massif ; celles de Wardholt sortent par l'ouverture.
+			"reliefs : Vharholdt au fond d'une crevasse en cul-de-sac");
+		// Routes : aucune ne franchit le massif ; celles de Vharholdt sortent par l'ouverture.
 		bool walled = true;
 		size_t wardRoads = 0;
 		for (const Road& r : g.roads)
@@ -943,8 +943,8 @@ namespace
 			if (r.fromId == war->id || r.toId == war->id) ++wardRoads;
 			for (const Vec2& p : r.points) walled = walled && at(p) < 0.5 * H;
 		}
-		Check(walled && wardRoads >= 1, "reliefs : routes de Wardholt par l'ouverture, massif jamais franchi");
-		// Mine au fond de la crevasse (lieu de la cellule de Wardholt).
+		Check(walled && wardRoads >= 1, "reliefs : routes de Vharholdt par l'ouverture, massif jamais franchi");
+		// Mine au fond de la crevasse (lieu de la cellule de Vharholdt).
 		World w;
 		InitCell(w, g, { war->n, war->e });
 		BuildPlaces(w);
@@ -964,7 +964,7 @@ namespace
 			"reliefs : POI decale contre la cote ouest de sa case, au sec");
 	}
 
-	/// v1.0.73 : trois villes moyennes (Hazelgate, Fellwatch, Hollowgate) sur des
+	/// v1.0.73 : trois villes moyennes (Hazhaëlin, Fhelvakt, Kholvard) sur des
 	/// cellules générées, sites secs et reliés au réseau ; deux entrées de la Mine
 	/// de la Traverse (galerie sous la chaîne N000_W008), décalées vers la chaîne,
 	/// au sec et à l'écart des villes.
@@ -1005,8 +1005,8 @@ namespace
 				&& riverDist(c->center) > c->radiusM + 200.0 && roads >= 1,
 				(std::string("villes v1.0.73 : ") + id + " ville moyenne sur cellule generee, au sec, reliee").c_str());
 		}
-		// Entrées de la mine : nord dans la case de Greyhedge (sud de la case), sud dans
-		// celle de Hollowgate (coin nord-ouest), toutes deux vers la chaîne N000_W008.
+		// Entrées de la mine : nord dans la case de Gredhaim (sud de la case), sud dans
+		// celle de Kholvard (coin nord-ouest), toutes deux vers la chaîne N000_W008.
 		const CityDef* grey = g.FindCity("hamlet_greyhedge");
 		const CityDef* hollow = g.FindCity("town_hollowgate");
 		const PoiDef* north = nullptr;
@@ -1018,7 +1018,7 @@ namespace
 		}
 		Check(grey && hollow && north && south && north->cell == grey->cell && south->cell == hollow->cell
 			&& north->kind == "salle" && south->kind == "salle",
-			"villes v1.0.73 : deux entrees de la Mine de la Traverse (salle) dans les cases de Greyhedge et Hollowgate");
+			"villes v1.0.73 : deux entrees de la Mine de la Traverse (salle) dans les cases de Gredhaim et Kholvard");
 		if (!grey || !hollow || !north || !south) return;
 		const auto chain = engine::world::cells::CellCenter({ 0, -8 });
 		const Vec2 chainCenter{ chain.x, chain.z };
@@ -1032,8 +1032,8 @@ namespace
 	}
 
 	/// v1.0.76 : corrections du propriétaire (lot 5). Der Hem Shelbem descendue en
-	/// S010_E010, Bridlecrag (S004_W006) et Cragfold (S004_W002) déplacés hors de la
-	/// région 3×3 de Wyrmhallow : cellules générées, au sec, reliées par le générateur.
+	/// S010_E010, Bhridrak (S004_W006) et Krakhol (S004_W002) déplacés hors de la
+	/// région 3×3 de Drakhenhal : cellules générées, au sec, reliées par le générateur.
 	/// Colonne E020 : désert de S001 à S003, terres arides (zone rocheuse) en S004.
 	void TestCorrectionsV1076()
 	{
@@ -1129,7 +1129,7 @@ namespace
 					if (!generated(cellId(n, e))) ++landOutside;
 				}
 		Check(landOutside == 0, "ile v1.0.74 : toute la terre de l'ile est dans les cellules generees (rivage compris)");
-		// Villes au sec ; îlot séparé de Brinehaven et du bras ouest par la baie.
+		// Villes au sec ; îlot séparé de Brenhaval et du bras ouest par la baie.
 		const std::pair<const char*, const char*> towns[] = { { "town_brinehaven", "N017_W010" }, { "town_duskmoor", "N022_W010" },
 			{ "town_truceholm", "N019_W010" }, { "town_lanternhold", "N021_W014" } };
 		for (const auto& [id, cell] : towns)
@@ -1151,7 +1151,7 @@ namespace
 		const auto westArm = engine::world::cells::CellCenter({ 19, -13 });
 		if (brine && truce)
 			Check(crossesWater(brine->center, truce->center) && crossesWater(truce->center, { westArm.x, westArm.z }),
-				"ile v1.0.74 : ilot separe de Brinehaven et du bras ouest par la baie");
+				"ile v1.0.74 : ilot separe de Brenhaval et du bras ouest par la baie");
 		// Ports : au sec, à moins de 400 m de l'eau.
 		for (const char* id : { "poi_port_brinehaven", "poi_port_truceholm", "poi_port_hayfen", "poi_port_orderfen" })
 		{
@@ -1265,17 +1265,17 @@ namespace
 		Check(temples == 8 && shrines == 3 && dry == 11 && high >= 7, "relief v1.0.77 : 11 temples de l'ile au sec, 7 au moins sur les sommets");
 	}
 
-	/// v1.0.78 : les cases de Verdansur (N010_W015) et du Sanctuaire des Brisants
+	/// v1.0.78 : les cases de Vaerdhun (N010_W015) et du Sanctuaire des Brisants
 	/// (N010_W016), dont le relief, les rivières et le POI existaient depuis la
 	/// v1.0.72, sont générées : listées dans generated_cells, la ville et le lieu
 	/// décalé sont bien rattachés à leur cellule.
 	/// v1.0.79 : N010_W012 à N010_W014 sont aussi générées ; les 5 cases forment
-	/// une rangée continue jusqu'à N010_W011 (déjà générée), Verdansur est donc
+	/// une rangée continue jusqu'à N010_W011 (déjà générée), Vaerdhun est donc
 	/// accessible à pied depuis le reste du monde jouable.
 	/// v1.0.80 : N009_W012, N011_W013 et N011_W014 sont aussi générées : le tracé
-	/// de la route Syzygie → Verdansur (lore 000083) et celui de Verdansur →
-	/// Trueford (lore 000024) sont entièrement dans des cellules générées, et
-	/// Trueford (N011_W014) est accessible.
+	/// de la route Syzygie → Vaerdhun (lore 000083) et celui de Vaerdhun →
+	/// Treuvhal (lore 000024) sont entièrement dans des cellules générées, et
+	/// Treuvhal (N011_W014) est accessible.
 	void TestCellulesV1078()
 	{
 		using namespace tools::world_gen;
@@ -1294,18 +1294,18 @@ namespace
 		bool row = true;
 		for (const char* c : { "N010_W011", "N010_W012", "N010_W013", "N010_W014", "N010_W015", "N010_W016" })
 			row = row && generated(c);
-		Check(row, "cellules v1.0.79 : rangee N010_W011 a N010_W016 generee (Verdansur relie a pied)");
+		Check(row, "cellules v1.0.79 : rangee N010_W011 a N010_W016 generee (Vaerdhun relie a pied)");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
 		const CityDef* ver = g.FindCity("town_0119");
-		Check(ver && ver->cell == "N010_W015", "cellules v1.0.78 : Verdansur en N010_W015");
-		// v1.0.80 : cases de la route Syzygie → Verdansur et de Trueford.
+		Check(ver && ver->cell == "N010_W015", "cellules v1.0.78 : Vaerdhun en N010_W015");
+		// v1.0.80 : cases de la route Syzygie → Vaerdhun et de Treuvhal.
 		Check(generated("N009_W012") && generated("N011_W013") && generated("N011_W014"),
 			"cellules v1.0.80 : N009_W012, N011_W013 et N011_W014 generees");
 		const CityDef* tru = g.FindCity("hamlet_0148");
-		Check(tru && tru->cell == "N011_W014", "cellules v1.0.80 : Trueford en N011_W014");
-		// Chaque point des routes Syzygie → Verdansur et Verdansur → Trueford est
+		Check(tru && tru->cell == "N011_W014", "cellules v1.0.80 : Treuvhal en N011_W014");
+		// Chaque point des routes Syzygie → Vaerdhun et Vaerdhun → Treuvhal est
 		// dans une cellule générée (pas de tronçon derrière le mur invisible).
 		auto cellOf = [](const Vec2& p) {
 			const int e = static_cast<int>(std::lround(p.x / 10000.0)), n = -static_cast<int>(std::lround(p.z / 10000.0));
@@ -1323,7 +1323,7 @@ namespace
 			for (const Vec2& p : r.points)
 				outside += !generated(cellOf(p));
 		}
-		Check(routes == 2 && outside == 0, "cellules v1.0.80 : routes Syzygie - Verdansur et Verdansur - Trueford dans les cellules generees");
+		Check(routes == 2 && outside == 0, "cellules v1.0.80 : routes Syzygie - Vaerdhun et Vaerdhun - Treuvhal dans les cellules generees");
 		// Lieu décalé : présent dans les lieux de sa cellule (N010_W016).
 		World w;
 		InitCell(w, g, { 10, -16 });
@@ -1715,7 +1715,7 @@ namespace
 	}
 
 	/// v1.0.88 (lot 16) : ouverture de la Marche de l'Est. 45 cases ajoutées à `generated_cells`
-	/// (cases des villes Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere, routes qui les relient
+	/// (cases des villes Horkher, Nykhfeld, Vlakmorh, Ebhrazul et Dhazkmer, routes qui les relient
 	/// entre elles et au monde déjà jouable, marge d'une case autour des villes, trous intérieurs).
 	/// Vérifie : les 45 cases sont générées et terrestres ; chacune touche (4-voisinage) une case jouable
 	/// et toutes sont atteintes à pied depuis le départ de Grakhul (N008_E012) sans quitter les cases
@@ -1807,7 +1807,7 @@ namespace
 			const CityDef* c = g.FindCity(v.id);
 			villes += (c && c->cell == v.cell && playable.count(c->cell)) ? 1 : 0;
 		}
-		Check(villes == 5, "cellules et lieux v1.0.88 : Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere jouables");
+		Check(villes == 5, "cellules et lieux v1.0.88 : Horkher, Nykhfeld, Vlakmorh, Ebhrazul et Dhazkmer jouables");
 		// Routes du générateur entre les villes de la Marche et vers Moork, Thokrul, Gharzuk.
 		const std::set<std::string> marche{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126" };
 		const std::set<std::string> ends{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126", "ville_moork", "hamlet_thokrul", "hamlet_gharzuk" };
@@ -1877,7 +1877,7 @@ namespace
 	/// (E015-E024 × S016-S004) sont les 14 déjà générées (départ 3×3 de Durnhalde, Ghrunke Dash, Monts de
 	/// Moork, coulées de l'ouest), et chacune porte une ville ou un POI. Le lot n'ouvre aucune case et
 	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. v1.0.91 : la route Eisenkehl -
-	/// Voidmark ajoute 7 cases jouables dans la boîte (21 au total), chacune avec une ville ou un POI. Il vérifie aussi que les
+	/// Vozmarkh ajoute 7 cases jouables dans la boîte (21 au total), chacune avec une ville ou un POI. Il vérifie aussi que les
 	/// 5 lieux du départ que relient les quêtes sont dans leur case.
 	void TestLieuxV1089()
 	{
@@ -1917,7 +1917,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 21, "lieux v1.0.89 : 21 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Voidmark, v1.0.91)");
+		Check(inBox == 21, "lieux v1.0.89 : 21 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -1932,15 +1932,15 @@ namespace
 		Check(found == 5, "lieux v1.0.89 : les 5 lieux des quetes du depart de Durnhalde dans leurs cases jouables");
 	}
 
-	/// v1.0.91 (lot 19) : ouverture de la route Eisenkehl - Voidmark (suite du départ nain) et des 4 routes
-	/// de la Marche de l'Est coupées au mur invisible (Ebonvale - Rivercross, Ebonvale - Riverfold, Ebonvale -
-	/// Greyfield, Duskmere - Dustfield). 57 cases ajoutées à `generated_cells` (tracés du lore et du
+	/// v1.0.91 (lot 19) : ouverture de la route Eisenkehl - Vozmarkh (suite du départ nain) et des 4 routes
+	/// de la Marche de l'Est coupées au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul -
+	/// Grhavelt, Dhazkmer - Dhuzvelt). 57 cases ajoutées à `generated_cells` (tracés du lore et du
 	/// générateur, villes d'arrivée, marge d'une case, trous intérieurs).
 	/// Vérifie : les 57 cases sont générées et terrestres ; chacune touche (4-voisinage) une case jouable ;
-	/// les 7 cases de Voidmark sont atteintes à pied depuis Durnhalde (S007_E017) et les 50 de la Marche
-	/// depuis Grakhul (N008_E012) sans quitter les cases jouables ; Voidmark, Rivercross, Riverfold,
-	/// Greyfield et Dustfield sont jouables ; chaque point des routes du générateur entre ces villes et
-	/// Eisenkehl, Ebonvale, Duskmere (et entre Riverfold, Greyfield et Dustfield) est dans une case jouable,
+	/// les 7 cases de Vozmarkh sont atteintes à pied depuis Durnhalde (S007_E017) et les 50 de la Marche
+	/// depuis Grakhul (N008_E012) sans quitter les cases jouables ; Vozmarkh, Rhivkhar, Ryvaldh,
+	/// Grhavelt et Dhuzvelt sont jouables ; chaque point des routes du générateur entre ces villes et
+	/// Eisenkehl, Ebhrazul, Dhazkmer (et entre Ryvaldh, Grhavelt et Dhuzvelt) est dans une case jouable,
 	/// de même que chaque case des 5 tracés du lore ; un POI [GD] par case vide (52, au sec, seuls sur leur
 	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées.
 	void TestCellulesLieuxV1091()
@@ -2029,7 +2029,7 @@ namespace
 			parse(c, n, e);
 			reached += (n < -3 ? fromDurnhalde.count(c) : fromGrakhul.count(c)) ? 1 : 0;
 		}
-		Check(touching == 57 && reached == 57, "cellules et lieux v1.0.91 : aucune case isolee, Voidmark relie a Durnhalde et la Marche a Grakhul");
+		Check(touching == 57 && reached == 57, "cellules et lieux v1.0.91 : aucune case isolee, Vozmarkh relie a Durnhalde et la Marche a Grakhul");
 		// Villes d'arrivée jouables.
 		struct Ville { const char* id; const char* cell; };
 		static const Ville kVilles[] = { { "town_0125", "S009_E020" }, { "town_0132", "N008_E018" }, { "town_riverfold", "N006_E023" },
@@ -2040,7 +2040,7 @@ namespace
 			const CityDef* c = g.FindCity(v.id);
 			villes += (c && c->cell == v.cell && playable.count(c->cell)) ? 1 : 0;
 		}
-		Check(villes == 5, "cellules et lieux v1.0.91 : Voidmark, Rivercross, Riverfold, Greyfield et Dustfield jouables");
+		Check(villes == 5, "cellules et lieux v1.0.91 : Vozmarkh, Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt jouables");
 		// Routes du générateur entre les villes concernées.
 		static const std::pair<const char*, const char*> kPairs[] = {
 			{ "hamlet_eisenkehl", "town_0125" }, { "town_0115", "town_0132" }, { "town_0115", "town_riverfold" },
@@ -2061,13 +2061,13 @@ namespace
 			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
 		}
 		Check(routes == 7 && outside == 0, "cellules et lieux v1.0.91 : 7 routes du generateur entierement dans des cases jouables");
-		// Tracés du lore (waypoints, ou ligne droite pour Eisenkehl - Voidmark), case par case.
+		// Tracés du lore (waypoints, ou ligne droite pour Eisenkehl - Vozmarkh), case par case.
 		static const char* kLoreCells[] = {
-			"S008_E018", "S008_E019", "S009_E020",                 // Eisenkehl - Voidmark
-			"N008_E018", "N007_E019", "N006_E019", "N005_E020",    // Ebonvale - Rivercross (000104)
-			"N006_E023", "N005_E022", "N004_E021",                 // Ebonvale - Riverfold (000160)
-			"N003_E023", "N003_E022",                              // Ebonvale - Greyfield (000161)
-			"S001_E023", "S001_E022", "N000_E021", "N001_E020",    // Duskmere - Dustfield (000162)
+			"S008_E018", "S008_E019", "S009_E020",                 // Eisenkehl - Vozmarkh
+			"N008_E018", "N007_E019", "N006_E019", "N005_E020",    // Ebhrazul - Rhivkhar (000104)
+			"N006_E023", "N005_E022", "N004_E021",                 // Ebhrazul - Ryvaldh (000160)
+			"N003_E023", "N003_E022",                              // Ebhrazul - Grhavelt (000161)
+			"S001_E023", "S001_E022", "N000_E021", "N001_E020",    // Dhazkmer - Dhuzvelt (000162)
 		};
 		int lore = 0;
 		for (const char* c : kLoreCells) lore += playable.count(c) ? 1 : 0;

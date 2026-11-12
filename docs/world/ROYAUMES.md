@@ -166,8 +166,8 @@ voisines raccord au mètre près :
    souple au-dessus de la mer. Bruit de **gradient** (pas de terrasses).
    **Reliefs locaux** (`reliefs` du master, v1.0.72) ajoutés à `MacroHeight`,
    ancrés sur le centre de la case d'une ville : `colline` (ville perchée, ex.
-   Verdansur : plateau sommital, flanc jusqu'au pied) et `crevasse` (cul-de-sac,
-   ex. Wardholt : massif entaillé d'une fente à fond plat ouverte vers une case
+   Vaerdhun : plateau sommital, flanc jusqu'au pied) et `crevasse` (cul-de-sac,
+   ex. Vharholdt : massif entaillé d'une fente à fond plat ouverte vers une case
    voisine, fermé aux routes, mine au fond si `mine` est renseigné). Depuis la
    v1.0.77, `massif` est ancré sur une case (`cell`, décalage `offset_x_m` /
    `offset_z_m`) et non sur une ville : dôme lobé de rayon `foot_radius_m`
@@ -242,24 +242,24 @@ Décision du propriétaire : les départs sont **par faction**, plus par race. `
 
 | Faction de jeu | Ville de départ | Cellule |
 |---|---|---|
-| `legions_imperiales` (réservé, absent de `factions.json`) | Eaglewatch, près de Lhynn | `cell_n002_w010` |
-| `lumiere` | Dawnmere, près d'Altenberg | `cell_n005_w011` |
-| `justice` | Oathford, près de Syzygie | `cell_n009_w010` |
-| `dragons` | Wyrmhallow, près du Palais des Maîtres des Dragons | `cell_s004_w004` |
-| `dzorak` | Grakhul, près de Leviathan | `cell_n008_e012` |
+| `legions_imperiales` (réservé, absent de `factions.json`) | Haeldorf, près de Lhynn | `cell_n002_w010` |
+| `lumiere` | Orhendal, près d'Altenberg | `cell_n005_w011` |
+| `justice` | Ordhrann, près de Syzygie | `cell_n009_w010` |
+| `dragons` | Drakhenhal, près du Palais des Maîtres des Dragons | `cell_s004_w004` |
+| `dzorak` | Grakhul, près de Ghulvathan | `cell_n008_e012` |
 | `naine` | Durnhalde, près de Ghrunke Dash | `cell_s007_e017` |
-| `elfe` | Silverglade, près de Northind (deux cases à l'est depuis la v1.0.72) | `cell_n007_w003` |
+| `elfe` | Syllaërin, près de Northind (deux cases à l'est depuis la v1.0.72) | `cell_n007_w003` |
 | `legion` | Citadelle de la Légion — **seconde carte « Les Enfers »** (`docs/world/ENFERS.md`) | `enfers_n000_e000` |
 
 `lune_noire` (palais lunaire), Archimages (pyramide de Methraton) : départs hors carte,
 portés par le lore seulement ; `serpent` : à définir ; Hors-La-Loi : aucun départ.
 Une faction sans départ suit le **repli par race** de `start_locations.json` (section
-`races` : première ville de départ du master de la race, humains → Eaglewatch) puis
+`races` : première ville de départ du master de la race, humains → Haeldorf) puis
 `default_race`. Format : `start_factions` (liste) + `factions` (prioritaires) + `races`.
 Le master (création) et le shard (relocalisation hors monde) appellent
 `StartLocationTable::ResolveFor(faction, race)`.
 
-Le Hameau de Marn (ancien contenu feyhin, translaté), Whispers Hill, Leviathan et
+Le Hameau de Marn (ancien contenu feyhin, translaté), Whispers Hill, Ghulvathan et
 Ghrunke Dash ne sont plus des départs ; leurs cellules restent générées.
 
 Le camp de la Légion de la Faille de Tsaroth (`ville_tsaroth`, `S009_E011`) a été

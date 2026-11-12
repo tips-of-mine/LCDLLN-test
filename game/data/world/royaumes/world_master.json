@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Verdansur sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Verdansur en N010_W014), qui relient a pied Verdansur et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, riviere nord de Verdansur), traversees par la route Syzygie - Verdansur du generateur : la route est entierement dans des cellules generees et Trueford (route Verdansur - Trueford) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nightfield N002_E015, Blackmoor N004_E018, Ebonvale N005_E020, Duskmere N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shadehold a Moork par Horkher et Nightfield), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Eisenkehl - Voidmark (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebonvale - Rivercross, Ebonvale - Riverfold, Ebonvale - Greyfield, Duskmere - Dustfield) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Voidmark S009_E020, Rivercross N008_E018, Riverfold N006_E023, Greyfield N003_E023, Dustfield S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Eisenkehl - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -300,7 +300,7 @@
     },
     {
       "id": "hameau_eaglewatch",
-      "name": "Eaglewatch",
+      "name": "Haeldorf",
       "cell": "N002_W010",
       "kind": "hameau",
       "race": "humains",
@@ -309,36 +309,36 @@
       "start_for": [
         "legions_imperiales"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Lhynn",
+      "source": "[GD] v1.0.61 (nom [DÉCISION] v1.0.93, ancien nom Eaglewatch) ; cellule [INFÉRÉ] voisine de Lhynn",
       "description": "Hameau de garnison des Légions Impériales dans les pâturages au nord de Lhynn : les recrues y prêtent serment avant de rejoindre la capitale."
     },
     {
       "id": "hamlet_ambermead",
-      "name": "Ambermead",
+      "name": "Ombhral",
       "cell": "N003_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[GD] v1.0.62 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N003_W008, déplacée depuis N003_W010)",
-      "description": "Ferme à blé de la Première Province, au nord-est d'Eaglewatch, entre Greyhedge et Dys : grain et fourrage pour la garnison."
+      "source": "[GD] v1.0.62 (nom [DÉCISION] v1.0.93, ancien nom Ambermead) ; cellule [DÉCISION] v1.0.72 (N003_W008, déplacée depuis N003_W010)",
+      "description": "Ferme à blé de la Première Province, au nord-est de Haeldorf, entre Gredhaim et Dys : grain et fourrage pour la garnison."
     },
     {
       "id": "hamlet_greyhedge",
-      "name": "Greyhedge",
+      "name": "Gredhaim",
       "cell": "N001_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[GD] v1.0.62 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N001_W008, déplacée depuis N001_W009)",
-      "description": "Ferme à haies vives à l'est de Lhynn, sur le chemin d'Eaglewatch à la Via Magna."
+      "source": "[GD] v1.0.62 (nom [DÉCISION] v1.0.93, ancien nom Greyhedge) ; cellule [DÉCISION] v1.0.72 (N001_W008, déplacée depuis N001_W009)",
+      "description": "Ferme à haies vives à l'est de Lhynn, sur le chemin de Haeldorf à la Via Magna."
     },
     {
       "id": "hameau_dawnmere",
-      "name": "Dawnmere",
+      "name": "Orhendal",
       "cell": "N005_W011",
       "kind": "hameau",
       "race": "humains",
@@ -347,48 +347,48 @@
       "start_for": [
         "lumiere"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine d'Altenberg",
+      "source": "[GD] v1.0.61 (nom [DÉCISION] v1.0.93, ancien nom Dawnmere) ; cellule [INFÉRÉ] voisine d'Altenberg",
       "description": "Hameau des Chevaliers de la Lumière dans la plaine à l'est d'Altenberg : les novices y sont formés avant d'entrer dans la citadelle."
     },
     {
       "id": "hamlet_brightholm",
-      "name": "Brightholm",
+      "name": "Lhumbrecht",
       "cell": "N005_W010",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
       "start_for": [],
-      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
-      "description": "Commanderie rurale de l'Ordre de la Lumière à l'est de Dawnmere : domaine agricole et haras tenus par des frères convers, qui nourrissent et remontent Altenberg."
+      "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Brightholm) ; cellule [INFÉRÉ], région de départ d'Orhendal",
+      "description": "Commanderie rurale de l'Ordre de la Lumière à l'est d'Orhendal : domaine agricole et haras tenus par des frères convers, qui nourrissent et remontent Altenberg."
     },
     {
       "id": "hamlet_whitesheaf",
-      "name": "Whitesheaf",
+      "name": "Ysselhaim",
       "cell": "N006_W011",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
       "start_for": [],
-      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
-      "description": "Ferme à blé au nord de Dawnmere : grain des novices et pain d'autel de la cathédrale d'Altenberg."
+      "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Whitesheaf) ; cellule [INFÉRÉ], région de départ d'Orhendal",
+      "description": "Ferme à blé au nord d'Orhendal : grain des novices et pain d'autel de la cathédrale d'Altenberg."
     },
     {
       "id": "hamlet_lambsfold",
-      "name": "Lambsfold",
+      "name": "Lammerhin",
       "cell": "N004_W011",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "lumiere",
       "start_for": [],
-      "source": "[GD] v1.0.64 (nom à valider) ; cellule [INFÉRÉ], région de départ de Dawnmere",
-      "description": "Bergerie au sud de Dawnmere, au-dessus de la longue plage : laine blanche des habits et capuches de l'Ordre."
+      "source": "[GD] v1.0.64 (nom [DÉCISION] v1.0.93, ancien nom Lambsfold) ; cellule [INFÉRÉ], région de départ d'Orhendal",
+      "description": "Bergerie au sud d'Orhendal, au-dessus de la longue plage : laine blanche des habits et capuches de l'Ordre."
     },
     {
       "id": "hameau_oathford",
-      "name": "Oathford",
+      "name": "Ordhrann",
       "cell": "N009_W010",
       "kind": "hameau",
       "race": "humains",
@@ -397,36 +397,36 @@
       "start_for": [
         "justice"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Syzygie",
+      "source": "[GD] v1.0.61 (nom [DÉCISION] v1.0.93, ancien nom Oathford) ; cellule [INFÉRÉ] voisine de Syzygie",
       "description": "Hameau des Chevaliers de la Justice sur la rive est du lac de Syzygie, face à l'île de la cité."
     },
     {
       "id": "hamlet_tithemead",
-      "name": "Tithemead",
+      "name": "Thydmar",
       "cell": "N010_W010",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
-      "description": "Ferme de la dîme au nord d'Oathford, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons de Syzygie."
+      "source": "[GD] v1.0.66 (nom [DÉCISION] v1.0.93, ancien nom Tithemead) ; cellule [INFÉRÉ], région de départ d'Ordhrann",
+      "description": "Ferme de la dîme au nord d'Ordhrann, sur la rive est du fleuve : blé, foin et chevaux de remonte pour les garnisons de Syzygie."
     },
     {
       "id": "hamlet_wardholt",
-      "name": "Wardholt",
+      "name": "Vharholdt",
       "cell": "N009_W009",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[GD] v1.0.66 (nom à valider) ; cellule [INFÉRÉ], région de départ d'Oathford",
-      "description": "Hameau de garnison à palissade à l'est d'Oathford, au fond d'une crevasse en cul-de-sac ouverte vers l'ouest (la route s'y arrête) : poste de garde de l'Ordre de la Justice, mineurs, bûcherons et charbonniers ; une mine s'ouvre au fond de la crevasse [DÉCISION v1.0.72]."
+      "source": "[GD] v1.0.66 (nom [DÉCISION] v1.0.93, ancien nom Wardholt) ; cellule [INFÉRÉ], région de départ d'Ordhrann",
+      "description": "Hameau de garnison à palissade à l'est d'Ordhrann, au fond d'une crevasse en cul-de-sac ouverte vers l'ouest (la route s'y arrête) : poste de garde de l'Ordre de la Justice, mineurs, bûcherons et charbonniers ; une mine s'ouvre au fond de la crevasse [DÉCISION v1.0.72]."
     },
     {
       "id": "hameau_wyrmhallow",
-      "name": "Wyrmhallow",
+      "name": "Drakhenhal",
       "cell": "S004_W004",
       "kind": "hameau",
       "race": "humains",
@@ -435,32 +435,32 @@
       "start_for": [
         "dragons"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine du Palais des Maîtres des Dragons",
+      "source": "[GD] v1.0.61 (nom [DÉCISION] v1.0.93, ancien nom Wyrmhallow) ; cellule [INFÉRÉ] voisine du Palais des Maîtres des Dragons",
       "description": "Hameau montagnard des Chevaliers-Dragons, au sud du Palais des Maîtres des Dragons : les écuyers y apprennent à monter."
     },
     {
       "id": "hamlet_cragfold",
-      "name": "Cragfold",
+      "name": "Krakhol",
       "cell": "S004_W002",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
       "start_for": [],
-      "source": "[GD] v1.0.68 (nom à valider) ; cellule [DÉCISION] v1.0.76 (S004_W002, déplacée d'une case vers l'est depuis S004_W003 ; hors de la région de départ 3×3 de Wyrmhallow, dont elle reste la bergerie)",
-      "description": "Hameau de bergers à l'est de Wyrmhallow : bergeries de pierre sèche, chèvres, moutons et bœufs de montagne dont une part monte au Palais pour nourrir les dragons de l'Ordre."
+      "source": "[GD] v1.0.68 (nom [DÉCISION] v1.0.93, ancien nom Cragfold) ; cellule [DÉCISION] v1.0.76 (S004_W002, déplacée d'une case vers l'est depuis S004_W003 ; hors de la région de départ 3×3 de Drakhenhal, dont elle reste la bergerie)",
+      "description": "Hameau de bergers à l'est de Drakhenhal : bergeries de pierre sèche, chèvres, moutons et bœufs de montagne dont une part monte au Palais pour nourrir les dragons de l'Ordre."
     },
     {
       "id": "hamlet_bridlecrag",
-      "name": "Bridlecrag",
+      "name": "Bhridrak",
       "cell": "S004_W006",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "dragons",
       "start_for": [],
-      "source": "[GD] v1.0.68 (nom à valider) ; cellule [DÉCISION] v1.0.76 (S004_W006, déplacée d'une case vers l'ouest depuis S004_W005 ; hors de la région de départ 3×3 de Wyrmhallow, dont elle reste le haras)",
-      "description": "Haras de montagne à l'ouest de Wyrmhallow, aux confins des neiges éternelles : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
+      "source": "[GD] v1.0.68 (nom [DÉCISION] v1.0.93, ancien nom Bridlecrag) ; cellule [DÉCISION] v1.0.76 (S004_W006, déplacée d'une case vers l'ouest depuis S004_W005 ; hors de la région de départ 3×3 de Drakhenhal, dont elle reste le haras)",
+      "description": "Haras de montagne à l'ouest de Drakhenhal, aux confins des neiges éternelles : chevaux au pied sûr, mulets et poneys des écuyers, selliers et bourreliers."
     },
     {
       "id": "hameau_grakhul",
@@ -473,8 +473,8 @@
       "start_for": [
         "dzorak"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Leviathan",
-      "description": "Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Leviathan : les jeunes guerriers y font leurs premières armes."
+      "source": "[GD] v1.0.61 (nom à valider) ; cellule [INFÉRÉ] voisine de Ghulvathan",
+      "description": "Kraal avancé des Dzorak à la lisière de la jungle, au sud-est de Ghulvathan : les jeunes guerriers y font leurs premières armes."
     },
     {
       "id": "hamlet_thokrul",
@@ -486,7 +486,7 @@
       "faction": "dzorak",
       "start_for": [],
       "source": "[GD] v1.0.67 (nom à valider) ; cellule [INFÉRÉ], région de départ de Grakhul",
-      "description": "Kraal d'éleveurs à palissade de pieux au sud de Grakhul : chèvres, bœufs et ânes de bât, peaux tannées et viande séchée pour Grakhul et Leviathan."
+      "description": "Kraal d'éleveurs à palissade de pieux au sud de Grakhul : chèvres, bœufs et ânes de bât, peaux tannées et viande séchée pour Grakhul et Ghulvathan."
     },
     {
       "id": "hamlet_gharzuk",
@@ -540,7 +540,7 @@
     },
     {
       "id": "hameau_silverglade",
-      "name": "Silverglade",
+      "name": "Syllaërin",
       "cell": "N007_W003",
       "kind": "hameau",
       "race": "elfes",
@@ -549,7 +549,7 @@
       "start_for": [
         "elfe"
       ],
-      "source": "[GD] v1.0.61 (nom à valider) ; cellule [DÉCISION] v1.0.72 (N007_W003, deux cases à l'est de Northind ; région de départ 3×3 inchangée)",
+      "source": "[GD] v1.0.61 (nom [DÉCISION] v1.0.93, ancien nom Silverglade) ; cellule [DÉCISION] v1.0.72 (N007_W003, deux cases à l'est de Northind ; région de départ 3×3 inchangée)",
       "description": "Hameau des Hauts Elfes dans la forêt, à l'est de Northind : les jeunes elfes y reçoivent leur premier enseignement."
     },
     {
@@ -638,14 +638,14 @@
     },
     {
       "id": "horker",
-      "name": "Horker",
+      "name": "Harrodh",
       "cell": "N004_E009",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[BD] BD-T6",
+      "source": "[BD] BD-T6 ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore)",
       "description": "Comté dirigé par George d'Horkher, situé près de Moork (carte visible page 37 : Horkher au nord, Moork au sud, route directe)."
     },
     {
@@ -722,14 +722,14 @@
     },
     {
       "id": "leviathan_jungle",
-      "name": "Leviathan",
+      "name": "Ghulvathan",
       "cell": "N009_E011",
       "kind": "ville",
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
       "start_for": [],
-      "source": "[INFÉRÉ] INFERE",
+      "source": "[INFÉRÉ] INFERE ; nom [DÉCISION] v1.0.93 (ancien nom Leviathan Jungle, Leviathan)",
       "description": "Kraal fortifie au coeur des Territoires orcques, ou les clans de Dzorak forgent leurs jeunes guerriers."
     },
     {
@@ -794,50 +794,50 @@
     },
     {
       "id": "ville_moorgate",
-      "name": "Moorgate",
+      "name": "Mhorgad",
       "cell": "N015_E017",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T1",
+      "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Moorgate)",
       "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (est des Marches) ; nom repris des lieux non utilisés."
     },
     {
       "id": "ville_dunfold",
-      "name": "Dunfold",
+      "name": "Dhunfal",
       "cell": "N017_E013",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T1",
+      "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Dunfold)",
       "description": "Carte page 19 (p.25 BD) — cité sans nom de l'itinéraire de Ghorghor Bey (sud des Marches) ; nom repris des lieux non utilisés."
     },
     {
       "id": "ville_haywick",
-      "name": "Haywick",
+      "name": "Hayvekh",
       "cell": "N018_E013",
       "kind": "hameau",
       "race": "humains",
       "state": "ruine",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T1",
+      "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Haywick)",
       "description": "Village pris par la horde de Ghorghor Bey (le poulailler, la cour et le cachot du T1), laisse en cendres."
     },
     {
       "id": "ville_ashcroft",
-      "name": "Ashcroft",
+      "name": "Askhrof",
       "cell": "N017_E012",
       "kind": "forteresse",
       "race": "humains",
       "state": "ruine",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T1",
+      "source": "[INFÉRÉ] BD-T1 ; nom [DÉCISION] v1.0.93 (ancien nom Ashcroft)",
       "description": "Citadelle du seigneur local vaincu a la premiere bataille de Wismerhill, incendiee par la horde."
     },
     {
@@ -890,74 +890,74 @@
     },
     {
       "id": "crossroads",
-      "name": "Crossroads",
+      "name": "Khrozrad",
       "cell": "S013_E020",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] DATA",
-      "description": "Crossroads"
+      "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Crossroads)",
+      "description": "Khrozrad"
     },
     {
       "id": "highfall",
-      "name": "Highfall",
+      "name": "Hagfhal",
       "cell": "N018_E020",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] DATA",
-      "description": "Highfall"
+      "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Highfall)",
+      "description": "Hagfhal"
     },
     {
       "id": "farwatch",
-      "name": "Farwatch",
+      "name": "Farvhenn",
       "cell": "N011_E020",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] DATA",
-      "description": "Farwatch"
+      "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Farwatch)",
+      "description": "Farvhenn"
     },
     {
       "id": "shadowfen",
-      "name": "Shadowfen",
+      "name": "Shaddrek",
       "cell": "S011_E018",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] DATA",
-      "description": "Shadowfen"
+      "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Shadowfen)",
+      "description": "Shaddrek"
     },
     {
       "id": "clearwater",
-      "name": "Clearwater",
+      "name": "Klehrwath",
       "cell": "S014_E015",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] DATA",
-      "description": "Clearwater"
+      "source": "[BD] DATA ; nom [DÉCISION] v1.0.93 (ancien nom Clearwater)",
+      "description": "Klehrwath"
     },
     {
       "id": "ville_equiton",
-      "name": "Equiton",
+      "name": "Ekvhitorn",
       "cell": "S005_W004",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Equiton)",
       "description": "Port de la baie et tête de la ligne maritime du sud."
     },
     {
@@ -974,734 +974,734 @@
     },
     {
       "id": "town_0108",
-      "name": "Darkwater",
+      "name": "Mhordaal",
       "cell": "S011_E020",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Darkwater."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Darkwater)",
+      "description": "Village de Mhordaal."
     },
     {
       "id": "town_0112",
-      "name": "Westmoor",
+      "name": "Vestmhor",
       "cell": "N014_E018",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Westmoor."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Westmoor)",
+      "description": "Village de Vestmhor."
     },
     {
       "id": "town_0113",
-      "name": "Northgate",
+      "name": "Nhorgast",
       "cell": "N018_E018",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Northgate."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northgate)",
+      "description": "Village de Nhorgast."
     },
     {
       "id": "town_0114",
-      "name": "Southport",
+      "name": "Suthvarn",
       "cell": "S014_E006",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Southport."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Southport)",
+      "description": "Village de Suthvarn."
     },
     {
       "id": "town_0115",
-      "name": "Ebonvale",
+      "name": "Ebhrazul",
       "cell": "N005_E020",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village d'Ebonvale."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ebonvale)",
+      "description": "Village d'Ebhrazul."
     },
     {
       "id": "town_0117",
-      "name": "Greyhaven",
+      "name": "Grhaevan",
       "cell": "N016_E018",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Greyhaven."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greyhaven)",
+      "description": "Village de Grhaevan."
     },
     {
       "id": "town_0118",
-      "name": "Saltwick",
+      "name": "Saelvik",
       "cell": "S014_E013",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Saltwick."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Saltwick)",
+      "description": "Village de Saelvik."
     },
     {
       "id": "town_0119",
-      "name": "Verdansur",
+      "name": "Vaerdhun",
       "cell": "N010_W015",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Verdansur, perchée au sommet d'une haute colline ; deux rivières naissent à son pied, l'une vers le sud, l'autre vers le nord-est [DÉCISION v1.0.72]."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Verdansur)",
+      "description": "Ville de Vaerdhun, perchée au sommet d'une haute colline ; deux rivières naissent à son pied, l'une vers le sud, l'autre vers le nord-est [DÉCISION v1.0.72]."
     },
     {
       "id": "town_0120",
-      "name": "Coldport",
+      "name": "Kholdvar",
       "cell": "S009_E004",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Coldport."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Coldport)",
+      "description": "Village de Kholdvar."
     },
     {
       "id": "town_0123",
-      "name": "Ashwick",
+      "name": "Askhvir",
       "cell": "N010_E005",
       "kind": "ville",
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville d'Ashwick."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ashwick)",
+      "description": "Ville d'Askhvir."
     },
     {
       "id": "town_0125",
-      "name": "Voidmark",
+      "name": "Vozmarkh",
       "cell": "S009_E020",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Voidmark."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Voidmark)",
+      "description": "Village de Vozmarkh."
     },
     {
       "id": "town_0126",
-      "name": "Duskmere",
+      "name": "Dhazkmer",
       "cell": "N001_E020",
       "kind": "village",
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Duskmere."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Duskmere)",
+      "description": "Village de Dhazkmer."
     },
     {
       "id": "town_0127",
-      "name": "Nightward",
+      "name": "Nakhtvar",
       "cell": "N001_E011",
       "kind": "village",
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Nightward."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Nightward)",
+      "description": "Village de Nakhtvar."
     },
     {
       "id": "town_0129",
-      "name": "Justfall",
+      "name": "Iustarn",
       "cell": "N007_W011",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Justfall."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Justfall)",
+      "description": "Ville d'Iustarn."
     },
     {
       "id": "town_0131",
-      "name": "Blackmoor",
+      "name": "Vlakmorh",
       "cell": "N004_E018",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Blackmoor."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Blackmoor)",
+      "description": "Village de Vlakmorh."
     },
     {
       "id": "town_0132",
-      "name": "Rivercross",
+      "name": "Rhivkhar",
       "cell": "N008_E018",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Rivercross."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Rivercross)",
+      "description": "Village de Rhivkhar."
     },
     {
       "id": "town_0133",
-      "name": "Hillwatch",
+      "name": "Hilvakh",
       "cell": "N010_E016",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Hillwatch."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Hillwatch)",
+      "description": "Village de Hilvakh."
     },
     {
       "id": "town_0134",
-      "name": "Deepmoor",
+      "name": "Dhemorr",
       "cell": "N014_E017",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Deepmoor."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Deepmoor)",
+      "description": "Village de Dhemorr."
     },
     {
       "id": "town_0135",
-      "name": "Runecroft",
+      "name": "Runhkar",
       "cell": "N018_E016",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Runecroft."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Runecroft)",
+      "description": "Village de Runhkar."
     },
     {
       "id": "town_0136",
-      "name": "Shadehold",
+      "name": "Shezhold",
       "cell": "N003_E011",
       "kind": "village",
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Village de Shadehold."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Shadehold)",
+      "description": "Village de Shezhold."
     },
     {
       "id": "town_0137",
-      "name": "Brookend",
+      "name": "Brokhendt",
       "cell": "S008_W002",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Brookend."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Brookend)",
+      "description": "Ville de Brokhendt."
     },
     {
       "id": "town_0139",
-      "name": "Stonehaven",
+      "name": "Stohnvar",
       "cell": "N014_E008",
       "kind": "ville",
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Stonehaven."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Stonehaven)",
+      "description": "Ville de Stohnvar."
     },
     {
       "id": "hamlet_0146",
-      "name": "Millend",
+      "name": "Mhillenz",
       "cell": "S003_E003",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Millend."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Millend)",
+      "description": "Hameau de Mhillenz."
     },
     {
       "id": "hamlet_0148",
-      "name": "Trueford",
+      "name": "Treuvhal",
       "cell": "N011_W014",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Trueford."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Trueford)",
+      "description": "Hameau de Treuvhal."
     },
     {
       "id": "hamlet_0153",
-      "name": "Hayfen",
+      "name": "Haevrin",
       "cell": "N011_W004",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Hayfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Hayfen)",
+      "description": "Hameau de Haevrin."
     },
     {
       "id": "hamlet_0154",
-      "name": "Greypool",
+      "name": "Ghrepol",
       "cell": "S008_W013",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Greypool."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greypool)",
+      "description": "Hameau de Ghrepol."
     },
     {
       "id": "hamlet_0166",
-      "name": "Northfen",
+      "name": "Nhorvaël",
       "cell": "N018_E009",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Northfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northfen)",
+      "description": "Hameau de Nhorvaël."
     },
     {
       "id": "hamlet_0172",
-      "name": "Saltfen",
+      "name": "Zaltheim",
       "cell": "S008_W010",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Saltfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Saltfen)",
+      "description": "Hameau de Zaltheim."
     },
     {
       "id": "hamlet_0174",
-      "name": "Harrowbrook",
+      "name": "Harndrecht",
       "cell": "S006_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Harrowbrook."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Harrowbrook)",
+      "description": "Hameau de Harndrecht."
     },
     {
       "id": "hamlet_0175",
-      "name": "Ashhollow",
+      "name": "Aeskhol",
       "cell": "S006_W014",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau d'Ashhollow."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ashhollow)",
+      "description": "Hameau d'Aeskhol."
     },
     {
       "id": "hamlet_0189",
-      "name": "Orderfen",
+      "name": "Ostrevan",
       "cell": "N011_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "justice",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau d'Orderfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Orderfen)",
+      "description": "Hameau d'Ostrevan."
     },
     {
       "id": "hamlet_0193",
-      "name": "Frosthollow",
+      "name": "Frhozhol",
       "cell": "S005_E008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Frosthollow."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Frosthollow)",
+      "description": "Hameau de Frhozhol."
     },
     {
       "id": "hamlet_0196",
-      "name": "Grimfen",
+      "name": "Ghrimfeth",
       "cell": "S002_E011",
       "kind": "hameau",
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Grimfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Grimfen)",
+      "description": "Hameau de Ghrimfeth."
     },
     {
       "id": "hamlet_0197",
-      "name": "Dustfen",
+      "name": "Dhuzmar",
       "cell": "S002_W011",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Dustfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Dustfen)",
+      "description": "Hameau de Dhuzmar."
     },
     {
       "id": "hamlet_0201",
-      "name": "Nightfield",
+      "name": "Nykhfeld",
       "cell": "N002_E015",
       "kind": "hameau",
       "race": "orcs",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Nightfield."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Nightfield)",
+      "description": "Hameau de Nykhfeld."
     },
     {
       "id": "hamlet_0205",
-      "name": "Arcanefield",
+      "name": "Arkhanyra",
       "cell": "N004_E001",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau d'Arcanefield."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Arcanefield)",
+      "description": "Hameau d'Arkhanyra."
     },
     {
       "id": "hamlet_0206",
-      "name": "Mossy Rock",
+      "name": "Mhozrak",
       "cell": "N006_E011",
       "kind": "hameau",
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Mossy Rock."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Mossy Rock)",
+      "description": "Hameau de Mhozrak."
     },
     {
       "id": "hamlet_0214",
-      "name": "Clearfen",
+      "name": "Klaerhin",
       "cell": "S004_W015",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Clearfen."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Clearfen)",
+      "description": "Hameau de Klaerhin."
     },
     {
       "id": "hamlet_0217",
-      "name": "Claybury",
+      "name": "Khlaybur",
       "cell": "S013_E003",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Claybury."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Claybury)",
+      "description": "Hameau de Khlaybur."
     },
     {
       "id": "hamlet_0218",
-      "name": "Millford",
+      "name": "Melvhord",
       "cell": "S011_W002",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Millford."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Millford)",
+      "description": "Hameau de Melvhord."
     },
     {
       "id": "hamlet_0157",
-      "name": "Scalebrook",
+      "name": "Skhaldrach",
       "cell": "S003_W008",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Hameau de Scalebrook."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Scalebrook)",
+      "description": "Hameau de Skhaldrach."
     },
     {
       "id": "town_ile_ashwick",
-      "name": "Deepbrook",
+      "name": "Dyprokh",
       "cell": "N012_E002",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville de Deepbrook."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Deepbrook)",
+      "description": "Ville de Dyprokh."
     },
     {
       "id": "town_coldhollow",
-      "name": "Coldhollow",
+      "name": "Khaldhol",
       "cell": "N020_E011",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Coldhollow)",
       "description": "Village de bûcherons au pied des monts de l'extrême nord."
     },
     {
       "id": "hamlet_fernhill",
-      "name": "Fernhill",
+      "name": "Vernhild",
       "cell": "N019_E022",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Fernhill)",
       "description": "Hameau de bergers sur les collines du nord-est."
     },
     {
       "id": "hamlet_draketon",
-      "name": "Draketon",
+      "name": "Dhraegtun",
       "cell": "N021_E019",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Draketon)",
       "description": "Hameau fortifié au pied des sommets enneigés, face aux Géants de froid."
     },
     {
       "id": "town_stonebridge",
-      "name": "Stonebridge",
+      "name": "Shtenbrak",
       "cell": "N016_E023",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Stonebridge)",
       "description": "Village côtier du nord-est."
     },
     {
       "id": "town_riverfold",
-      "name": "Riverfold",
+      "name": "Ryvaldh",
       "cell": "N006_E023",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Ville portuaire à l'embouchure de la rivière de Rivercross, sur la côte orientale."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Riverfold)",
+      "description": "Ville portuaire à l'embouchure de la rivière de Rhivkhar, sur la côte orientale."
     },
     {
       "id": "town_greyfield",
-      "name": "Greyfield",
+      "name": "Grhavelt",
       "cell": "N003_E023",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Greyfield)",
       "description": "Village de la côte orientale, en lisière de forêt."
     },
     {
       "id": "hamlet_dustfield",
-      "name": "Dustfield",
+      "name": "Dhuzvelt",
       "cell": "S001_E023",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Dustfield)",
       "description": "Hameau des terres arides de la côte orientale."
     },
     {
       "id": "town_ironbrook",
-      "name": "Ironbrook",
+      "name": "Ghrondak",
       "cell": "S008_E024",
       "kind": "village",
       "race": "nains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Ironbrook)",
       "description": "Village minier nain sur la côte des montagnes de l'est."
     },
     {
       "id": "town_fairbrook",
-      "name": "Fairbrook",
+      "name": "Faervosk",
       "cell": "S015_E001",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Fairbrook)",
       "description": "Village agricole des confins du Midi."
     },
     {
       "id": "hamlet_thistle_creek",
-      "name": "Thistle Creek",
+      "name": "Thysskar",
       "cell": "S016_E012",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Thistle Creek)",
       "description": "Hameau des confins du Midi, entre les terres arides et les montagnes."
     },
     {
       "id": "hamlet_greenbough",
-      "name": "Greenbough",
+      "name": "Ghwenaëth",
       "cell": "N006_W006",
       "kind": "hameau",
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
       "start_for": [],
-      "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
+      "source": "[GD] v1.0.70 (nom [DÉCISION] v1.0.93, ancien nom Greenbough) ; cellule [INFÉRÉ], région de départ de Syllaërin",
       "description": "Hameau de cueilleurs et d'herboristes au sud-ouest de Northind : maisons de bois entre les racines, séchoirs à herbes et à champignons ; rien ne s'y cueille sans un chant."
     },
     {
       "id": "hamlet_fernhollow",
-      "name": "Fernhollow",
+      "name": "Faernilh",
       "cell": "N007_W007",
       "kind": "hameau",
       "race": "elfes",
       "state": "intact",
       "faction": "elfe",
       "start_for": [],
-      "source": "[GD] v1.0.70 (nom à valider) ; cellule [INFÉRÉ], région de départ de Silverglade",
+      "source": "[GD] v1.0.70 (nom [DÉCISION] v1.0.93, ancien nom Fernhollow) ; cellule [INFÉRÉ], région de départ de Syllaërin",
       "description": "Hameau de facteurs d'arcs et de forestiers à l'ouest de Northind, au creux d'un vallon de fougères : chaque arbre abattu pour un arc y est replanté."
     },
     {
       "id": "town_hazelgate",
-      "name": "Hazelgate",
+      "name": "Hazhaëlin",
       "cell": "N007_E002",
       "kind": "ville",
       "race": "elfes",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.73 (ville moyenne) ; nom, race (Elfes des bois) et faction [GD] à valider ; cellule N007_E002 retenue contre N007_E001 (relief plus doux, lac et rivière à 3 cases, 3 cases d'Arcanefield et d'Ashwick)",
-      "description": "Comptoir des Elfes des bois à la lisière de la forêt elfique, face aux plaines d'Arcanefield : marché aux herbes, aux arcs et à la soie d'araignée où les humains commercent sans entrer dans la forêt [GD v1.0.73, à valider]."
+      "source": "[DÉCISION] v1.0.73 (ville moyenne) ; nom, race (Elfes des bois) et faction [GD] à valider ; cellule N007_E002 retenue contre N007_E001 (relief plus doux, lac et rivière à 3 cases, 3 cases d'Arkhanyra et d'Askhvir) ; nom [DÉCISION] v1.0.93 (ancien nom Hazelgate)",
+      "description": "Comptoir des Elfes des bois à la lisière de la forêt elfique, face aux plaines d'Arkhanyra : marché aux herbes, aux arcs et à la soie d'araignée où les humains commercent sans entrer dans la forêt [GD v1.0.73, à valider]."
     },
     {
       "id": "town_fellwatch",
-      "name": "Fellwatch",
+      "name": "Fhelvakt",
       "cell": "N009_W001",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.73 (ville moyenne, N009_W001) ; nom, race et faction [GD] à valider",
+      "source": "[DÉCISION] v1.0.73 (ville moyenne, N009_W001) ; nom, race et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Fellwatch)",
       "description": "Ville de bûcherons et de guet à la lisière, dans les Terres des Gigantomorphes : palissade de troncs, scieries et tour de guet tournée vers les géants du nord ; le bois part vers la côte et la reconstruction de Kendrhir, jamais pris côté forêt elfique [GD v1.0.73, à valider]."
     },
     {
       "id": "town_hollowgate",
-      "name": "Hollowgate",
+      "name": "Kholvard",
       "cell": "S001_W007",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.73 (ville moyenne, S001_W007) ; nom, race et faction [GD] à valider",
-      "description": "Ville minière et relais de la Via Magna dans la plaine, au pied sud-est de la chaîne qui la sépare de Greyhedge : l'entrée sud de la Mine de la Traverse s'ouvre au nord-ouest ; forges, entrepôts de minerai et auberges de rouliers [GD v1.0.73, à valider]."
+      "source": "[DÉCISION] v1.0.73 (ville moyenne, S001_W007) ; nom, race et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Hollowgate)",
+      "description": "Ville minière et relais de la Via Magna dans la plaine, au pied sud-est de la chaîne qui la sépare de Gredhaim : l'entrée sud de la Mine de la Traverse s'ouvre au nord-ouest ; forges, entrepôts de minerai et auberges de rouliers [GD v1.0.73, à valider]."
     },
     {
       "id": "town_brinehaven",
-      "name": "Brinehaven",
+      "name": "Brenhaval",
       "cell": "N017_W010",
       "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N017_W010) ; nom, race, taille et faction [GD] à valider ; port, départ de la ligne maritime du Nord",
+      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N017_W010) ; nom, race, taille et faction [GD] à valider ; port, départ de la ligne maritime du Nord ; nom [DÉCISION] v1.0.93 (ancien nom Brinehaven)",
       "description": "Port franc de l'Île de la Trêve, à la pointe sud-est du fer à cheval : comptoir des armateurs neutres, quais et quartiers séparés pour l'Empire, la Lune Noire et les indépendants ; la Trêve y interdit le combat dans l'enceinte [GD v1.0.74, à valider]."
     },
     {
       "id": "town_duskmoor",
-      "name": "Duskmoor",
+      "name": "Duzhmoroth",
       "cell": "N022_W010",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "lune_noire",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N022_W010) ; nom, race, taille et faction [GD] à valider",
+      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N022_W010) ; nom, race, taille et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Duskmoor)",
       "description": "Comptoir fortifié de la Lune Noire au bout du bras nord, face à la baie : palissade noire, débarcadère et quartier des Dzoraks et des envoyés de la Légion [GD v1.0.74, à valider]."
     },
     {
       "id": "town_truceholm",
-      "name": "Truceholm",
+      "name": "Thrival",
       "cell": "N019_W010",
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N019_W010) ; nom, race, taille et faction [GD] à valider ; îlot central relié par navette",
-      "description": "Hameau de l'îlot central de la baie, autour de la Pierre de la Trêve où les envoyés de toutes les factions jurent la paix des comptoirs ; ponton de la navette de Brinehaven [GD v1.0.74, à valider]."
+      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N019_W010) ; nom, race, taille et faction [GD] à valider ; îlot central relié par navette ; nom [DÉCISION] v1.0.93 (ancien nom Truceholm)",
+      "description": "Hameau de l'îlot central de la baie, autour de la Pierre de la Trêve où les envoyés de toutes les factions jurent la paix des comptoirs ; ponton de la navette de Brenhaval [GD v1.0.74, à valider]."
     },
     {
       "id": "town_lanternhold",
-      "name": "Lanternhold",
+      "name": "Lhantarn",
       "cell": "N021_W014",
       "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N021_W014) ; nom, race, taille et faction [GD] à valider",
+      "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N021_W014) ; nom, race, taille et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Lanternhold)",
       "description": "Comptoir fortifié de l'Empire sur le bras ouest : fanal sur la falaise, chapelle des Chevaliers de la Lumière et de la Justice, entrepôts de bois de marine [GD v1.0.74, à valider]."
     }
   ],
@@ -1947,84 +1947,84 @@
       "name": "Camp de manœuvres des Légions",
       "cell": "N003_W011",
       "kind": "camp",
-      "description": "Palissade, lices et cibles où les recrues d'Eaglewatch apprennent la marche en ordre, le pilum et le bouclier [GD v1.0.62, région de départ d'Eaglewatch]."
+      "description": "Palissade, lices et cibles où les recrues de Haeldorf apprennent la marche en ordre, le pilum et le bouclier [GD v1.0.62, région de départ de Haeldorf]."
     },
     {
       "id": "poi_autel_des_aigles",
       "name": "Autel des Aigles",
       "cell": "N002_W011",
       "kind": "sanctuaire",
-      "description": "Autel de pierre sous un aigle de bronze : les recrues y jurent fidélité à l'Empereur [GD v1.0.62, région de départ d'Eaglewatch]."
+      "description": "Autel de pierre sous un aigle de bronze : les recrues y jurent fidélité à l'Empereur [GD v1.0.62, région de départ de Haeldorf]."
     },
     {
       "id": "poi_ruines_villa_tharque",
       "name": "Ruines de la villa tharque",
       "cell": "N002_W009",
       "kind": "ruine",
-      "description": "Colonnades effondrées d'un domaine de l'ancien Empire tharque, au milieu des pâturages ; caves à vermine [GD v1.0.62, région de départ d'Eaglewatch]."
+      "description": "Colonnades effondrées d'un domaine de l'ancien Empire tharque, au milieu des pâturages ; caves à vermine [GD v1.0.62, région de départ de Haeldorf]."
     },
     {
       "id": "poi_grotte_contrebandiers",
       "name": "Grotte des contrebandiers",
       "cell": "N001_W011",
       "kind": "salle",
-      "description": "Grotte marine à l'ouest de Lhynn où débarquent les marchandises qui échappent aux taxes du port [GD v1.0.62, région de départ d'Eaglewatch]."
+      "description": "Grotte marine à l'ouest de Lhynn où débarquent les marchandises qui échappent aux taxes du port [GD v1.0.62, région de départ de Haeldorf]."
     },
     {
       "id": "poi_calvaire_des_pelerins",
       "name": "Calvaire des pèlerins",
       "cell": "N006_W012",
       "kind": "sanctuaire",
-      "description": "Haute croix de pierre cerclée au bord de la route du nord : première station des pèlerins d'Altenberg en route pour la Grande Messe de Syzygie [GD v1.0.64, région de départ de Dawnmere]."
+      "description": "Haute croix de pierre cerclée au bord de la route du nord : première station des pèlerins d'Altenberg en route pour la Grande Messe de Syzygie [GD v1.0.64, région de départ d'Orhendal]."
     },
     {
       "id": "poi_chapelle_de_l_ermite",
       "name": "Chapelle de l'ermite",
       "cell": "N006_W010",
       "kind": "sanctuaire",
-      "description": "Petite chapelle de pierre d'un ermite de l'Église au bord de la rivière, en forêt ; on y bénit l'eau de la source [GD v1.0.64, région de départ de Dawnmere]."
+      "description": "Petite chapelle de pierre d'un ermite de l'Église au bord de la rivière, en forêt ; on y bénit l'eau de la source [GD v1.0.64, région de départ d'Orhendal]."
     },
     {
       "id": "poi_ruines_du_prieure",
       "name": "Ruines du prieuré",
       "cell": "N004_W010",
       "kind": "ruine",
-      "description": "Prieuré abandonné depuis des générations : cloître effondré et crypte envahie d'araignées [GD v1.0.64, région de départ de Dawnmere]."
+      "description": "Prieuré abandonné depuis des générations : cloître effondré et crypte envahie d'araignées [GD v1.0.64, région de départ d'Orhendal]."
     },
     {
       "id": "poi_camp_des_naufrageurs",
       "name": "Camp des naufrageurs",
       "cell": "N004_W012",
       "kind": "camp",
-      "description": "Abris de bois flotté sur la longue plage au sud d'Altenberg, d'où de faux feux attirent les navires sur les rochers [GD v1.0.64, région de départ de Dawnmere]."
+      "description": "Abris de bois flotté sur la longue plage au sud d'Altenberg, d'où de faux feux attirent les navires sur les rochers [GD v1.0.64, région de départ d'Orhendal]."
     },
     {
       "id": "poi_stele_des_serments",
       "name": "Stèle des Serments",
       "cell": "N008_W010",
       "kind": "sanctuaire",
-      "description": "Stèle de granit gravée de la devise de l'Ordre, au sud d'Oathford : les novices y prêtent serment devant un frère aîné avant d'entrer à Syzygie [GD v1.0.66, région de départ d'Oathford]."
+      "description": "Stèle de granit gravée de la devise de l'Ordre, au sud d'Ordhrann : les novices y prêtent serment devant un frère aîné avant d'entrer à Syzygie [GD v1.0.66, région de départ d'Ordhrann]."
     },
     {
       "id": "poi_lices_des_novices",
       "name": "Lices des novices",
       "cell": "N010_W010",
       "kind": "camp",
-      "description": "Lices, quintaines et râteliers d'armes de bois au bord des champs de Tithemead, où les novices s'exercent à la lance et à l'épée [GD v1.0.66, région de départ d'Oathford]."
+      "description": "Lices, quintaines et râteliers d'armes de bois au bord des champs de Thydmar, où les novices s'exercent à la lance et à l'épée [GD v1.0.66, région de départ d'Ordhrann]."
     },
     {
       "id": "poi_camp_des_parjures",
       "name": "Camp des parjures",
       "cell": "N010_W009",
       "kind": "camp",
-      "description": "Huttes d'écuyers chassés de l'Ordre pour parjure et de brigands à la lisière ; ils rançonnent les charrois de Tithemead [GD v1.0.66, région de départ d'Oathford]."
+      "description": "Huttes d'écuyers chassés de l'Ordre pour parjure et de brigands à la lisière ; ils rançonnent les charrois de Thydmar [GD v1.0.66, région de départ d'Ordhrann]."
     },
     {
       "id": "poi_ruines_tour_du_guet",
       "name": "Ruines de la tour du guet",
       "cell": "N008_W009",
       "kind": "ruine",
-      "description": "Tour de guet éventrée face à la forêt elfique, abandonnée depuis des générations ; cave envahie d'araignées [GD v1.0.66, région de départ d'Oathford]."
+      "description": "Tour de guet éventrée face à la forêt elfique, abandonnée depuis des générations ; cave envahie d'araignées [GD v1.0.66, région de départ d'Ordhrann]."
     },
     {
       "id": "poi_totem_d_ogunta",
@@ -2038,7 +2038,7 @@
       "name": "Arène des Jeunes-Sangs",
       "cell": "N009_E012",
       "kind": "camp",
-      "description": "Fosse de combat cerclée de pieux entre Grakhul et Leviathan : les jeunes guerriers y passent l'épreuve de l'arène avant d'entrer dans les rangs du clan [GD v1.0.67, région de départ de Grakhul]."
+      "description": "Fosse de combat cerclée de pieux entre Grakhul et Ghulvathan : les jeunes guerriers y passent l'épreuve de l'arène avant d'entrer dans les rangs du clan [GD v1.0.67, région de départ de Grakhul]."
     },
     {
       "id": "poi_camp_de_guerre_ghazrak",
@@ -2066,28 +2066,28 @@
       "name": "Nids abandonnés des Crêtes",
       "cell": "S003_W003",
       "kind": "ruine",
-      "description": "Anciennes aires de ponte sur les crêtes enneigées à l'est du Palais, désertées depuis des générations : coquilles brisées et ossements, fouillés par les vautours ; aucun dragon n'y vit [GD v1.0.68, région de départ de Wyrmhallow]."
+      "description": "Anciennes aires de ponte sur les crêtes enneigées à l'est du Palais, désertées depuis des générations : coquilles brisées et ossements, fouillés par les vautours ; aucun dragon n'y vit [GD v1.0.68, région de départ de Drakhenhal]."
     },
     {
       "id": "poi_cairn_des_ailes_tombees",
       "name": "Cairn des Ailes tombées",
       "cell": "S003_W005",
       "kind": "sanctuaire",
-      "description": "Cairn des chevaliers et des dragons tombés en vol, à l'ouest du Palais : les écuyers y prêtent serment au pacte avant leur premier vol [GD v1.0.68, région de départ de Wyrmhallow]."
+      "description": "Cairn des chevaliers et des dragons tombés en vol, à l'ouest du Palais : les écuyers y prêtent serment au pacte avant leur premier vol [GD v1.0.68, région de départ de Drakhenhal]."
     },
     {
       "id": "poi_ruines_pont_des_gorges",
       "name": "Ruines du pont des Gorges",
       "cell": "S005_W003",
       "kind": "ruine",
-      "description": "Ancien pont suspendu et corps de garde au-dessus d'une gorge, abandonnés depuis des générations ; araignées et vautours y nichent [GD v1.0.68, région de départ de Wyrmhallow]."
+      "description": "Ancien pont suspendu et corps de garde au-dessus d'une gorge, abandonnés depuis des générations ; araignées et vautours y nichent [GD v1.0.68, région de départ de Drakhenhal]."
     },
     {
       "id": "poi_aire_de_dressage_des_ecuyers",
       "name": "Aire de dressage des écuyers",
       "cell": "S005_W005",
       "kind": "camp",
-      "description": "Plateau battu par le vent où les écuyers apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen [GD v1.0.68, région de départ de Wyrmhallow]."
+      "description": "Plateau battu par le vent où les écuyers apprennent l'assiette sur une selle de dragon montée sur poutre pivotante, la lance et les ordres en langue dracchen [GD v1.0.68, région de départ de Drakhenhal]."
     },
     {
       "id": "poi_autel_des_ancetres",
@@ -2129,28 +2129,28 @@
       "name": "Autel des Vents",
       "cell": "N006_W006",
       "kind": "sanctuaire",
-      "description": "Pierre levée au sommet d'une butte boisée, ornée de la spirale du vent : les jeunes elfes y confient leur premier message aux Vents [GD v1.0.70, région de départ de Silverglade]."
+      "description": "Pierre levée au sommet d'une butte boisée, ornée de la spirale du vent : les jeunes elfes y confient leur premier message aux Vents [GD v1.0.70, région de départ de Syllaërin]."
     },
     {
       "id": "poi_bosquet_des_pavanes",
       "name": "Bosquet des Pavanes",
       "cell": "N006_W007",
       "kind": "sanctuaire",
-      "description": "Cercle d'arbres centenaires autour d'une clairière moussue où les jeunes elfes apprennent les pavanes sacrées en l'honneur de Mère Nature ; des lutins y jouent des tours aux danseurs [GD v1.0.70, région de départ de Silverglade]."
+      "description": "Cercle d'arbres centenaires autour d'une clairière moussue où les jeunes elfes apprennent les pavanes sacrées en l'honneur de Mère Nature ; des lutins y jouent des tours aux danseurs [GD v1.0.70, région de départ de Syllaërin]."
     },
     {
       "id": "poi_tour_des_fleches_blanches",
       "name": "Tour des Flèches blanches",
       "cell": "N007_W007",
       "kind": "camp",
-      "description": "Tour de guet de bois vivant à l'écart de Fernhollow : les guetteurs elfes y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds [GD v1.0.70, région de départ de Silverglade]."
+      "description": "Tour de guet de bois vivant à l'écart de Faernilh : les guetteurs elfes y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds [GD v1.0.70, région de départ de Syllaërin]."
     },
     {
       "id": "poi_ruines_du_temple_sylvestre",
       "name": "Ruines du Temple sylvestre",
       "cell": "N008_W005",
       "kind": "ruine",
-      "description": "Colonnes de pierre blanche mangées par le lierre, reste d'un temple elfe abandonné depuis des générations quand la forêt reculait devant les colons ; araignées et corbeaux y nichent [GD v1.0.70, région de départ de Silverglade]."
+      "description": "Colonnes de pierre blanche mangées par le lierre, reste d'un temple elfe abandonné depuis des générations quand la forêt reculait devant les colons ; araignées et corbeaux y nichent [GD v1.0.70, région de départ de Syllaërin]."
     },
     {
       "id": "poi_sanctuaire_des_brisants",
@@ -2159,7 +2159,7 @@
       "kind": "sanctuaire",
       "offset_x_m": -3200,
       "offset_z_m": -700,
-      "description": "Croix de pierre et brasier au bord des falaises de la côte ouest, au-dessus des brisants : chaque année, la Veillée des Feux des Brisants y rassemble les fidèles de Verdansur, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs [GD v1.0.72, événement à valider]."
+      "description": "Croix de pierre et brasier au bord des falaises de la côte ouest, au-dessus des brisants : chaque année, la Veillée des Feux des Brisants y rassemble les fidèles de Vaerdhun, qui gardent les feux allumés jusqu'à l'aube contre les naufrageurs [GD v1.0.72, événement à valider]."
     },
     {
       "id": "poi_mine_traverse_nord",
@@ -2168,7 +2168,7 @@
       "kind": "salle",
       "offset_x_m": -1500,
       "offset_z_m": 3600,
-      "description": "Entrée nord de la Mine de la Traverse, galerie creusée sous la chaîne entre Greyhedge et Hollowgate : porche étayé au pied des montagnes, au sud de la ferme ; le raid la traverse de part en part [GD v1.0.73, lecture retenue de la demande du propriétaire]."
+      "description": "Entrée nord de la Mine de la Traverse, galerie creusée sous la chaîne entre Gredhaim et Kholvard : porche étayé au pied des montagnes, au sud de la ferme ; le raid la traverse de part en part [GD v1.0.73, lecture retenue de la demande du propriétaire]."
     },
     {
       "id": "poi_mine_traverse_sud",
@@ -2177,50 +2177,50 @@
       "kind": "salle",
       "offset_x_m": -4000,
       "offset_z_m": -4000,
-      "description": "Entrée sud de la Mine de la Traverse, au pied sud-est de la chaîne, au nord-ouest de Hollowgate : carreau de mine, treuils et terrils ; la galerie ressort sous Greyhedge [GD v1.0.73, lecture retenue de la demande du propriétaire]."
+      "description": "Entrée sud de la Mine de la Traverse, au pied sud-est de la chaîne, au nord-ouest de Kholvard : carreau de mine, treuils et terrils ; la galerie ressort sous Gredhaim [GD v1.0.73, lecture retenue de la demande du propriétaire]."
     },
     {
       "id": "poi_port_brinehaven",
-      "name": "Port de Brinehaven",
+      "name": "Port de Brenhaval",
       "cell": "N017_W010",
       "kind": "port",
       "offset_x_m": 1800,
       "offset_z_m": -500,
-      "description": "Quais et ponton de Brinehaven, côté est, au bord de l'eau : départ de la ligne maritime du Nord (Hayfen, Orderfen) et de la navette de Truceholm. [GD v1.0.74, à valider]"
+      "description": "Quais et ponton de Brenhaval, côté est, au bord de l'eau : départ de la ligne maritime du Nord (Haevrin, Ostrevan) et de la navette de Thrival. [GD v1.0.74, à valider]"
     },
     {
       "id": "poi_port_truceholm",
-      "name": "Ponton de Truceholm",
+      "name": "Ponton de Thrival",
       "cell": "N019_W010",
       "kind": "port",
       "offset_x_m": 500,
       "offset_z_m": 3500,
-      "description": "Ponton de la navette de Brinehaven, au sud de l'îlot. [GD v1.0.74, à valider]"
+      "description": "Ponton de la navette de Brenhaval, au sud de l'îlot. [GD v1.0.74, à valider]"
     },
     {
       "id": "poi_port_hayfen",
-      "name": "Port de Hayfen",
+      "name": "Port de Haevrin",
       "cell": "N011_W004",
       "kind": "port",
       "offset_x_m": 1000,
       "offset_z_m": -1500,
-      "description": "Ponton de Hayfen au nord-est du hameau, au bord de l'eau, escale de la ligne maritime du Nord vers l'Île de la Trêve. [GD v1.0.74, à valider]"
+      "description": "Ponton de Haevrin au nord-est du hameau, au bord de l'eau, escale de la ligne maritime du Nord vers l'Île de la Trêve. [GD v1.0.74, à valider]"
     },
     {
       "id": "poi_port_orderfen",
-      "name": "Port d'Orderfen",
+      "name": "Port d'Ostrevan",
       "cell": "N011_W008",
       "kind": "port",
       "offset_x_m": 2500,
       "offset_z_m": -4300,
-      "description": "Ponton d'Orderfen au bord nord de sa case, au bout d'une jetée vers la côte nord, terminus de la ligne maritime du Nord. [GD v1.0.74, à valider]"
+      "description": "Ponton d'Ostrevan au bord nord de sa case, au bout d'une jetée vers la côte nord, terminus de la ligne maritime du Nord. [GD v1.0.74, à valider]"
     },
     {
       "id": "poi_camp_du_cap",
       "name": "Camp du Cap",
       "cell": "N017_W013",
       "kind": "camp",
-      "description": "Relais neutre des bûcherons et des convois au coin sud-ouest de l'île, entre Brinehaven et Lanternhold. [GD v1.0.74, à valider]"
+      "description": "Relais neutre des bûcherons et des convois au coin sud-ouest de l'île, entre Brenhaval et Lhantarn. [GD v1.0.74, à valider]"
     },
     {
       "id": "poi_tertre_rois_noyes",
@@ -2262,7 +2262,7 @@
       "kind": "temple",
       "offset_x_m": -2000,
       "offset_z_m": 250,
-      "description": "Grand sanctuaire à neuf degrés au plus haut sommet de l'île, Temple d'Or et terrasses de culture : siège du Fils du Soleil. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Grand sanctuaire à neuf degrés au plus haut sommet de l'île, Temple d'Or et terrasses de culture : siège du Fils du Soleil. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_des_ancetres",
@@ -2271,7 +2271,7 @@
       "kind": "temple",
       "offset_x_m": -750,
       "offset_z_m": -250,
-      "description": "Pyramide funéraire à sept degrés et tours funéraires au sommet de la crête ; la Porte des Noyés mène au Tertre des Rois Noyés (raid). [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Pyramide funéraire à sept degrés et tours funéraires au sommet de la crête ; la Porte des Noyés mène au Tertre des Rois Noyés (raid). [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_de_la_brume",
@@ -2279,7 +2279,7 @@
       "cell": "N020_W011",
       "kind": "temple",
       "offset_x_m": -2000,
-      "description": "Pyramide à cinq degrés au bord du Gouffre de la Baie ; ses prêtres gardent le Dévoreur endormi (raid multi-équipe). [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Pyramide à cinq degrés au bord du Gouffre de la Baie ; ses prêtres gardent le Dévoreur endormi (raid multi-équipe). [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_du_givre",
@@ -2288,7 +2288,7 @@
       "kind": "temple",
       "offset_x_m": 250,
       "offset_z_m": -2500,
-      "description": "Temple en quatre terrasses au sommet de la falaise nord ; sa salle basse est la Tanière du Jarl de Givre (raid). [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Temple en quatre terrasses au sommet de la falaise nord ; sa salle basse est la Tanière du Jarl de Givre (raid). [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_mere_des_eaux",
@@ -2297,7 +2297,7 @@
       "kind": "temple",
       "offset_x_m": -2000,
       "offset_z_m": 2500,
-      "description": "Temple à trois degrés et fanal sacré au sommet de la falaise sud-ouest, au-dessus des Grottes des Naufrageurs (raid). [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Temple à trois degrés et fanal sacré au sommet de la falaise sud-ouest, au-dessus des Grottes des Naufrageurs (raid). [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_de_la_lune",
@@ -2306,7 +2306,7 @@
       "kind": "temple",
       "offset_x_m": -1750,
       "offset_z_m": 1000,
-      "description": "Temple à quatre degrés aux murs plaqués d'argent, au sommet du pic sud du bras ouest. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Temple à quatre degrés aux murs plaqués d'argent, au sommet du pic sud du bras ouest. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_des_cimes",
@@ -2315,7 +2315,7 @@
       "kind": "temple",
       "offset_x_m": 250,
       "offset_z_m": -2000,
-      "description": "Observatoire à trois degrés et Pierre-qui-attache-le-Soleil, au sommet du pic au-dessus de Lanternhold. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Observatoire à trois degrés et Pierre-qui-attache-le-Soleil, au sommet du pic au-dessus de Lhantarn. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_temple_des_terrasses",
@@ -2324,7 +2324,7 @@
       "kind": "temple",
       "offset_x_m": -250,
       "offset_z_m": 3000,
-      "description": "Temple des moissons, greniers et quarante terrasses de culture sur la crête du bras sud. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Temple des moissons, greniers et quarante terrasses de culture sur la crête du bras sud. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_oratoire_du_col",
@@ -2332,7 +2332,7 @@
       "cell": "N022_W013",
       "kind": "sanctuaire",
       "offset_z_m": 1250,
-      "description": "Autel à deux terrasses et cairn des passants, au col entre le bras ouest et le bras nord. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Autel à deux terrasses et cairn des passants, au col entre le bras ouest et le bras nord. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_autel_des_sources",
@@ -2341,7 +2341,7 @@
       "kind": "sanctuaire",
       "offset_x_m": -1500,
       "offset_z_m": -250,
-      "description": "Fontaines sacrées : trois bassins en terrasses et canaux de pierre, dans la vallée du bras ouest. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Fontaines sacrées : trois bassins en terrasses et canaux de pierre, dans la vallée du bras ouest. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_ile_oratoire_de_l_aube",
@@ -2350,7 +2350,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 250,
       "offset_z_m": 2500,
-      "description": "Autel et porte trapézoïdale tournés vers le lever du soleil, au-dessus de la falaise sud. [GD v1.0.77, à valider] Temple de style inca des Huacani, peuple de l'île ; aucun modèle 3D : repère seulement."
+      "description": "Autel et porte trapézoïdale tournés vers le lever du soleil, au-dessus de la falaise sud. [GD v1.0.77, à valider] Temple de style inca des Hwakhari, peuple de l'île ; aucun modèle 3D : repère seulement."
     },
     {
       "id": "poi_grotte_xygga",
@@ -2485,7 +2485,7 @@
       "kind": "monolithe",
       "offset_x_m": -4150,
       "offset_z_m": -4150,
-      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route de Stonehaven : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_nord]."
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route de Stohnvar : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_nord]."
     },
     {
       "id": "poi_balise_borne_geants_ouest",
@@ -2494,7 +2494,7 @@
       "kind": "monolithe",
       "offset_x_m": -4100,
       "offset_z_m": -2050,
-      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route d'Ashwick : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_ouest]."
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route d'Askhvir : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_ouest]."
     },
     {
       "id": "poi_balise_borne_geants_sud",
@@ -2503,16 +2503,16 @@
       "kind": "monolithe",
       "offset_x_m": -1350,
       "offset_z_m": 4300,
-      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord des routes de Feyhin Lokcthat et de Leviathan : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_sud]."
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord des routes de Feyhin Lokcthat et de Ghulvathan : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_sud]."
     },
     {
       "id": "poi_tour_guet_route_shadehold",
-      "name": "Tour de guet de la route de Shadehold",
+      "name": "Tour de guet de la route de Shezhold",
       "cell": "N002_E011",
       "kind": "camp",
       "offset_x_m": 1100,
       "offset_z_m": 2900,
-      "description": "Tour de guet orque au bord de la route Nightward – Shadehold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24. [GD v1.0.86, lieu_tour_guet_route_shadehold]."
+      "description": "Tour de guet orque au bord de la route Nakhtvar – Shezhold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24. [GD v1.0.86, lieu_tour_guet_route_shadehold]."
     },
     {
       "id": "poi_ferme_fortifiee_pillee",
@@ -2530,7 +2530,7 @@
       "kind": "camp",
       "offset_x_m": 1500,
       "offset_z_m": -500,
-      "description": "Camp d'un clan orque qui refuse l'autorité de Greldinard sur les clans de la baronnie [HS] et pille les fermes de la route de Grimfen. Niveaux 20-24. [GD v1.0.86, lieu_camp_clans_insoumis]."
+      "description": "Camp d'un clan orque qui refuse l'autorité de Greldinard sur les clans de la baronnie [HS] et pille les fermes de la route de Ghrimfeth. Niveaux 20-24. [GD v1.0.86, lieu_camp_clans_insoumis]."
     },
     {
       "id": "poi_tertre_chefs_de_clan",
@@ -2548,7 +2548,7 @@
       "kind": "camp",
       "offset_x_m": 300,
       "offset_z_m": 1300,
-      "description": "Puits et halte des convois de sel entre les salines et Grimfen, sur la route de Moork : dernier point d'eau avant le désert. Niveaux 22-28. [GD v1.0.86, lieu_puits_piste_du_sel]."
+      "description": "Puits et halte des convois de sel entre les salines et Ghrimfeth, sur la route de Moork : dernier point d'eau avant le désert. Niveaux 22-28. [GD v1.0.86, lieu_puits_piste_du_sel]."
     },
     {
       "id": "poi_salines_baronnie",
@@ -2557,7 +2557,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 1500,
-      "description": "Salines du désert de la baronnie, exploitées pour Moork (ressource sel, économie v1.0.58) ; les convois partent vers Moork et Grimfen. Niveaux 22-30. [GD v1.0.86, lieu_salines_baronnie]."
+      "description": "Salines du désert de la baronnie, exploitées pour Moork (ressource sel, économie v1.0.58) ; les convois partent vers Moork et Ghrimfeth. Niveaux 22-30. [GD v1.0.86, lieu_salines_baronnie]."
     },
     {
       "id": "poi_fosses_aux_vers",
@@ -2611,7 +2611,7 @@
       "kind": "ruine",
       "offset_x_m": 2500,
       "offset_z_m": -500,
-      "description": "Tour de guet impériale effondrée sur une butte au sud de Frosthollow : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24. [GD v1.0.86, lieu_tour_guet_effondree]."
+      "description": "Tour de guet impériale effondrée sur une butte au sud de Frhozhol : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24. [GD v1.0.86, lieu_tour_guet_effondree]."
     },
     {
       "id": "poi_puits_de_la_lisiere",
@@ -2620,7 +2620,7 @@
       "kind": "camp",
       "offset_x_m": -3000,
       "offset_z_m": 1500,
-      "description": "Dernier puits sûr sur la route de Frosthollow à Der Hem Shelbem, où voyageurs et convois font halte avant les terres désolées. Niveaux 20-26. [GD v1.0.86, lieu_puits_de_la_lisiere]."
+      "description": "Dernier puits sûr sur la route de Frhozhol à Der Hem Shelbem, où voyageurs et convois font halte avant les terres désolées. Niveaux 20-26. [GD v1.0.86, lieu_puits_de_la_lisiere]."
     },
     {
       "id": "poi_ferme_fortifiee_abandonnee",
@@ -2854,7 +2854,7 @@
       "kind": "camp",
       "offset_x_m": 1500,
       "offset_z_m": -3500,
-      "description": "Ancienne carrière où les géants taillaient des blocs démesurés avant d'être repoussés vers le nord [HS] ; des tailleurs de pierre d'Ashwick y extraient la pierre de la reconstruction de Kendrhir (économie v1.0.58). Niveaux 28-32. [GD v1.0.87, lieu_carriere_des_geants]."
+      "description": "Ancienne carrière où les géants taillaient des blocs démesurés avant d'être repoussés vers le nord [HS] ; des tailleurs de pierre d'Askhvir y extraient la pierre de la reconstruction de Kendrhir (économie v1.0.58). Niveaux 28-32. [GD v1.0.87, lieu_carriere_des_geants]."
     },
     {
       "id": "poi_cercle_pierres_des_geants",
@@ -2872,7 +2872,7 @@
       "kind": "camp",
       "offset_x_m": 1500,
       "offset_z_m": -1000,
-      "description": "Camp de trappeurs de Stonehaven en lisière de forêt : peaux et gibier partent par le port (économie v1.0.58) ; loups et trolls rôdent. Niveaux 28-32. [GD v1.0.87, lieu_camp_des_trappeurs]."
+      "description": "Camp de trappeurs de Stohnvar en lisière de forêt : peaux et gibier partent par le port (économie v1.0.58) ; loups et trolls rôdent. Niveaux 28-32. [GD v1.0.87, lieu_camp_des_trappeurs]."
     },
     {
       "id": "poi_taniere_des_trolls",
@@ -2890,7 +2890,7 @@
       "kind": "camp",
       "offset_x_m": -500,
       "offset_z_m": 1000,
-      "description": "Poste de relais sur la Via Magna entre Harrowdale et Shadehold : postes impériaux tous les 30 km [HS] ; des dragonnets-léopards y chassent les chevaux. Niveaux 18-24. [GD v1.0.87, lieu_poste_relais_imperial]."
+      "description": "Poste de relais sur la Via Magna entre Harrodh et Shezhold : postes impériaux tous les 30 km [HS] ; des dragonnets-léopards y chassent les chevaux. Niveaux 18-24. [GD v1.0.87, lieu_poste_relais_imperial]."
     },
     {
       "id": "poi_camp_des_detrousseurs",
@@ -2899,7 +2899,7 @@
       "kind": "camp",
       "offset_x_m": 500,
       "offset_z_m": 1500,
-      "description": "Camp de détrousseurs au-dessus de la piste de Silverglade à Sauken Glude : la sécurité des voyageurs n'est pas garantie [HS]. Niveaux 14-20. [GD v1.0.87, lieu_camp_des_detrousseurs]."
+      "description": "Camp de détrousseurs au-dessus de la piste de Syllaërin à Sauken Glude : la sécurité des voyageurs n'est pas garantie [HS]. Niveaux 14-20. [GD v1.0.87, lieu_camp_des_detrousseurs]."
     },
     {
       "id": "poi_caravane_ensablee",
@@ -3025,7 +3025,7 @@
       "kind": "camp",
       "offset_x_m": -2500,
       "offset_z_m": 2000,
-      "description": "Poste de garde de la Lune Noire sur la Via Magna entre Horkher et Nightfield : on y contrôle les laissez-passer et on y enferme les suspects. Niveaux 20-24. [GD v1.0.88, lieu_poste_de_garde_lune_noire]."
+      "description": "Poste de garde de la Lune Noire sur la Via Magna entre Horkher et Nykhfeld : on y contrôle les laissez-passer et on y enferme les suspects. Niveaux 20-24. [GD v1.0.88, lieu_poste_de_garde_lune_noire]."
     },
     {
       "id": "poi_chapelle_imperiale_desaffectee",
@@ -3043,7 +3043,7 @@
       "kind": "ruine",
       "offset_x_m": 1500,
       "offset_z_m": -2500,
-      "description": "Grange brûlée par des pillards sur les terres de Nightfield ; les survivants ont fui vers Horkher et la friche gagne les champs. Niveaux 20-24. [GD v1.0.88, lieu_grange_incendiee]."
+      "description": "Grange brûlée par des pillards sur les terres de Nykhfeld ; les survivants ont fui vers Horkher et la friche gagne les champs. Niveaux 20-24. [GD v1.0.88, lieu_grange_incendiee]."
     },
     {
       "id": "poi_bivouac_des_colporteurs",
@@ -3052,7 +3052,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": -2500,
-      "description": "Halte des colporteurs entre Nightward et Nightfield : on y échange nouvelles et marchandises, et on y paie des escortes pour traverser la Marche. Niveaux 20-24. [GD v1.0.88, lieu_bivouac_des_colporteurs]."
+      "description": "Halte des colporteurs entre Nakhtvar et Nykhfeld : on y échange nouvelles et marchandises, et on y paie des escortes pour traverser la Marche. Niveaux 20-24. [GD v1.0.88, lieu_bivouac_des_colporteurs]."
     },
     {
       "id": "poi_enclos_a_betail",
@@ -3070,7 +3070,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Pêcheurs installés près de l'étang de la plaine, qui vendent leur poisson séché à Nightward et à Moork ; des bêtes du désert descendent y boire. Niveaux 20-24. [GD v1.0.88, lieu_campement_des_pecheurs]."
+      "description": "Pêcheurs installés près de l'étang de la plaine, qui vendent leur poisson séché à Nakhtvar et à Moork ; des bêtes du désert descendent y boire. Niveaux 20-24. [GD v1.0.88, lieu_campement_des_pecheurs]."
     },
     {
       "id": "poi_relais_de_la_route_de_moork",
@@ -3079,7 +3079,7 @@
       "kind": "camp",
       "offset_x_m": 2000,
       "offset_z_m": 0,
-      "description": "Relais fortifié sur la route qui descend de Nightfield à Moork, où les convois de grain font halte sous la garde de la Lune Noire. Niveaux 22-26. [GD v1.0.88, lieu_relais_de_la_route_de_moork]."
+      "description": "Relais fortifié sur la route qui descend de Nykhfeld à Moork, où les convois de grain font halte sous la garde de la Lune Noire. Niveaux 22-26. [GD v1.0.88, lieu_relais_de_la_route_de_moork]."
     },
     {
       "id": "poi_tour_a_signaux_de_la_baronnie",
@@ -3106,7 +3106,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 1000,
       "offset_z_m": -2000,
-      "description": "Croix de carrefour impériale renversée et couverte des signes de la Lune Noire sur la route de Nightfield à Blackmoor ; des fidèles de la Lune Noire s'y retrouvent la nuit. Niveaux 22-26. [GD v1.0.88, lieu_croix_de_carrefour_profanee]."
+      "description": "Croix de carrefour impériale renversée et couverte des signes de la Lune Noire sur la route de Nykhfeld à Vlakmorh ; des fidèles de la Lune Noire s'y retrouvent la nuit. Niveaux 22-26. [GD v1.0.88, lieu_croix_de_carrefour_profanee]."
     },
     {
       "id": "poi_haras_de_la_lune_noire",
@@ -3124,7 +3124,7 @@
       "kind": "camp",
       "offset_x_m": 500,
       "offset_z_m": -2500,
-      "description": "Camp de paysans chassés de leurs terres par la Lune Noire, qui survivent de chasse et de rapines ; les patrouilles de Blackmoor les harcèlent. Niveaux 22-26. [GD v1.0.88, lieu_camp_des_refugies]."
+      "description": "Camp de paysans chassés de leurs terres par la Lune Noire, qui survivent de chasse et de rapines ; les patrouilles de Vlakmorh les harcèlent. Niveaux 22-26. [GD v1.0.88, lieu_camp_des_refugies]."
     },
     {
       "id": "poi_tumulus_de_la_plaine",
@@ -3169,7 +3169,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Autel caché dans la forêt où les fidèles de la Lune Noire de Blackmoor célèbrent leurs rites ; les intrus n'en reviennent pas. Niveaux 24-28. [GD v1.0.88, lieu_autel_sylvestre_lune_noire]."
+      "description": "Autel caché dans la forêt où les fidèles de la Lune Noire de Vlakmorh célèbrent leurs rites ; les intrus n'en reviennent pas. Niveaux 24-28. [GD v1.0.88, lieu_autel_sylvestre_lune_noire]."
     },
     {
       "id": "poi_repaire_des_trolls_de_la_foret",
@@ -3178,7 +3178,7 @@
       "kind": "salle",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Repaire d'une bande de trolls au plus profond de la forêt de la Marche ; ils descendent parfois jusqu'aux fermes de Blackmoor. Le feu les repousse. Niveaux 26-28. [GD v1.0.88, lieu_repaire_des_trolls_de_la_foret]."
+      "description": "Repaire d'une bande de trolls au plus profond de la forêt de la Marche ; ils descendent parfois jusqu'aux fermes de Vlakmorh. Le feu les repousse. Niveaux 26-28. [GD v1.0.88, lieu_repaire_des_trolls_de_la_foret]."
     },
     {
       "id": "poi_camp_de_la_patrouille_noire",
@@ -3187,7 +3187,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": -2500,
-      "description": "Camp d'une patrouille de la Lune Noire qui tient la route de Blackmoor à Ebonvale et pourchasse réfugiés et déserteurs. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_la_patrouille_noire]."
+      "description": "Camp d'une patrouille de la Lune Noire qui tient la route de Vlakmorh à Ebhrazul et pourchasse réfugiés et déserteurs. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_la_patrouille_noire]."
     },
     {
       "id": "poi_ermitage_en_ruine",
@@ -3214,7 +3214,7 @@
       "kind": "camp",
       "offset_x_m": 2000,
       "offset_z_m": -1500,
-      "description": "Poste-frontière de la Lune Noire au nord d'Ebonvale, sur la route de Rivercross : on n'y passe pas sans laissez-passer. Niveaux 24-28. [GD v1.0.88, lieu_poste_frontiere_du_nord]."
+      "description": "Poste-frontière de la Lune Noire au nord d'Ebhrazul, sur la route de Rhivkhar : on n'y passe pas sans laissez-passer. Niveaux 24-28. [GD v1.0.88, lieu_poste_frontiere_du_nord]."
     },
     {
       "id": "poi_domaine_seigneurial_confisque",
@@ -3232,7 +3232,7 @@
       "kind": "gouffre",
       "offset_x_m": 2000,
       "offset_z_m": 2000,
-      "description": "Fosse où un ogre jette les restes de ses proies, près de la route de Blackmoor à Duskmere. Niveaux 24-28. [GD v1.0.88, lieu_fosse_aux_ossements]."
+      "description": "Fosse où un ogre jette les restes de ses proies, près de la route de Vlakmorh à Dhazkmer. Niveaux 24-28. [GD v1.0.88, lieu_fosse_aux_ossements]."
     },
     {
       "id": "poi_camp_de_chasse_orque",
@@ -3241,7 +3241,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Camp de chasse des orcs de Duskmere, qui battent la plaine jusqu'à la forêt ; ils n'aiment pas les étrangers. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_chasse_orque]."
+      "description": "Camp de chasse des orcs de Dhazkmer, qui battent la plaine jusqu'à la forêt ; ils n'aiment pas les étrangers. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_chasse_orque]."
     },
     {
       "id": "poi_menhir_du_carrefour",
@@ -3250,7 +3250,7 @@
       "kind": "monolithe",
       "offset_x_m": 2000,
       "offset_z_m": -500,
-      "description": "Menhir au bord de la route de Duskmere, où les orcs de la Marche déposent des offrandes avant la chasse. Niveaux 24-28. [GD v1.0.88, lieu_menhir_du_carrefour]."
+      "description": "Menhir au bord de la route de Dhazkmer, où les orcs de la Marche déposent des offrandes avant la chasse. Niveaux 24-28. [GD v1.0.88, lieu_menhir_du_carrefour]."
     },
     {
       "id": "poi_arene_de_lutte_des_orcs",
@@ -3259,7 +3259,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": -3000,
-      "description": "Arène de terre battue où les orcs de Duskmere règlent leurs querelles et éprouvent leurs jeunes guerriers. Niveaux 24-28. [GD v1.0.88, lieu_arene_de_lutte_des_orcs]."
+      "description": "Arène de terre battue où les orcs de Dhazkmer règlent leurs querelles et éprouvent leurs jeunes guerriers. Niveaux 24-28. [GD v1.0.88, lieu_arene_de_lutte_des_orcs]."
     },
     {
       "id": "poi_enclos_des_sangliers_de_guerre",
@@ -3268,7 +3268,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 2500,
-      "description": "Enclos où les orcs de Duskmere dressent les sangliers de guerre de leurs montures. Niveaux 24-28. [GD v1.0.88, lieu_enclos_des_sangliers_de_guerre]."
+      "description": "Enclos où les orcs de Dhazkmer dressent les sangliers de guerre de leurs montures. Niveaux 24-28. [GD v1.0.88, lieu_enclos_des_sangliers_de_guerre]."
     },
     {
       "id": "poi_tour_ensablee",
@@ -3286,7 +3286,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Camp de nomades venus du désert de la baronnie, qui commercent avec Duskmere et guident les voyageurs dans les sables. Niveaux 26-28. [GD v1.0.88, lieu_camp_des_nomades]."
+      "description": "Camp de nomades venus du désert de la baronnie, qui commercent avec Dhazkmer et guident les voyageurs dans les sables. Niveaux 26-28. [GD v1.0.88, lieu_camp_des_nomades]."
     },
     {
       "id": "poi_halte_des_muletiers_du_col",
@@ -3295,7 +3295,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Halte des muletiers nains qui font passer le minerai d'Eisenkehl par le col vers Voidmark ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13. [GD v1.0.91, lieu_halte_des_muletiers_du_col]."
+      "description": "Halte des muletiers nains qui font passer le minerai d'Eisenkehl par le col vers Vozmarkh ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13. [GD v1.0.91, lieu_halte_des_muletiers_du_col]."
     },
     {
       "id": "poi_borne_frontiere_renversee",
@@ -3304,7 +3304,7 @@
       "kind": "monolithe",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Borne qui marquait la limite des terres des clans nains et de Voidmark ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Eisenkehl jurent de la relever. Niveaux 12-15. [GD v1.0.91, lieu_borne_frontiere_renversee]."
+      "description": "Borne qui marquait la limite des terres des clans nains et de Vozmarkh ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Eisenkehl jurent de la relever. Niveaux 12-15. [GD v1.0.91, lieu_borne_frontiere_renversee]."
     },
     {
       "id": "poi_carriere_des_forcats",
@@ -3313,7 +3313,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Carrière où Voidmark fait extraire sa pierre de taille (économie v1.0.58) par des forçats sous la garde de la Lune Noire ; des serpents nichent dans les blocs abandonnés. Niveaux 14-18. [GD v1.0.91, lieu_carriere_des_forcats]."
+      "description": "Carrière où Vozmarkh fait extraire sa pierre de taille (économie v1.0.58) par des forçats sous la garde de la Lune Noire ; des serpents nichent dans les blocs abandonnés. Niveaux 14-18. [GD v1.0.91, lieu_carriere_des_forcats]."
     },
     {
       "id": "poi_ferme_des_chevriers_nains",
@@ -3322,7 +3322,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Voidmark ; elle paie tribut à la Lune Noire et cache des fugitifs d'Eisenkehl. Niveaux 15-18. [GD v1.0.91, lieu_ferme_des_chevriers_nains]."
+      "description": "Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Vozmarkh ; elle paie tribut à la Lune Noire et cache des fugitifs d'Eisenkehl. Niveaux 15-18. [GD v1.0.91, lieu_ferme_des_chevriers_nains]."
     },
     {
       "id": "poi_corps_de_garde_de_la_route_du_sud",
@@ -3331,7 +3331,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Corps de garde de la Lune Noire sur la route qui descend de Voidmark vers Darkwater : on y fouille les convois nains et on y lève l'octroi. Niveaux 16-20. [GD v1.0.91, lieu_corps_de_garde_de_la_route_du_sud]."
+      "description": "Corps de garde de la Lune Noire sur la route qui descend de Vozmarkh vers Mhordaal : on y fouille les convois nains et on y lève l'octroi. Niveaux 16-20. [GD v1.0.91, lieu_corps_de_garde_de_la_route_du_sud]."
     },
     {
       "id": "poi_puits_de_mine_inonde",
@@ -3340,7 +3340,7 @@
       "kind": "salle",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Ancien puits de mine de Voidmark noyé par une source ; les galeries hautes servent de repaire à des pillards et à des bêtes. Niveaux 17-20. [GD v1.0.91, lieu_puits_de_mine_inonde]."
+      "description": "Ancien puits de mine de Vozmarkh noyé par une source ; les galeries hautes servent de repaire à des pillards et à des bêtes. Niveaux 17-20. [GD v1.0.91, lieu_puits_de_mine_inonde]."
     },
     {
       "id": "poi_cairn_des_voyageurs",
@@ -3349,7 +3349,7 @@
       "kind": "monolithe",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Cairn où les voyageurs qui quittent Rivercross vers le nord ajoutent une pierre pour un retour sans encombre. Niveaux 22-24. [GD v1.0.91, lieu_cairn_des_voyageurs]."
+      "description": "Cairn où les voyageurs qui quittent Rhivkhar vers le nord ajoutent une pierre pour un retour sans encombre. Niveaux 22-24. [GD v1.0.91, lieu_cairn_des_voyageurs]."
     },
     {
       "id": "poi_ferme_abandonnee_du_nord",
@@ -3358,7 +3358,7 @@
       "kind": "ruine",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Ferme du nord de Rivercross abandonnée après les razzias venues de la frontière ; des maraudeurs y passent la nuit. Niveaux 22-26. [GD v1.0.91, lieu_ferme_abandonnee_du_nord]."
+      "description": "Ferme du nord de Rhivkhar abandonnée après les razzias venues de la frontière ; des maraudeurs y passent la nuit. Niveaux 22-26. [GD v1.0.91, lieu_ferme_abandonnee_du_nord]."
     },
     {
       "id": "poi_camp_des_chasseurs_de_loups",
@@ -3367,7 +3367,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Camp de chasseurs payés par Rivercross pour chaque tête de loup géant de guerre échappé des camps orques. Niveaux 22-26. [GD v1.0.91, lieu_camp_des_chasseurs_de_loups]."
+      "description": "Camp de chasseurs payés par Rhivkhar pour chaque tête de loup géant de guerre échappé des camps orques. Niveaux 22-26. [GD v1.0.91, lieu_camp_des_chasseurs_de_loups]."
     },
     {
       "id": "poi_chantier_de_flottage",
@@ -3376,7 +3376,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Chantier où les bûcherons de Rivercross font glisser les troncs de la forêt vers la rivière pour les mener en aval (bois d'œuvre, économie v1.0.58). Niveaux 22-26. [GD v1.0.91, lieu_chantier_de_flottage]."
+      "description": "Chantier où les bûcherons de Rhivkhar font glisser les troncs de la forêt vers la rivière pour les mener en aval (bois d'œuvre, économie v1.0.58). Niveaux 22-26. [GD v1.0.91, lieu_chantier_de_flottage]."
     },
     {
       "id": "poi_relais_de_la_route_du_nord",
@@ -3385,7 +3385,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 1500,
-      "description": "Relais sur la route d'Ebonvale à Rivercross, où les patrouilles de la Lune Noire contrôlent voyageurs et marchands. Niveaux 22-26. [GD v1.0.91, lieu_relais_de_la_route_du_nord]."
+      "description": "Relais sur la route d'Ebhrazul à Rhivkhar, où les patrouilles de la Lune Noire contrôlent voyageurs et marchands. Niveaux 22-26. [GD v1.0.91, lieu_relais_de_la_route_du_nord]."
     },
     {
       "id": "poi_chene_aux_pendus",
@@ -3403,7 +3403,7 @@
       "kind": "salle",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Repaire d'un ogre qui chasse dans la forêt au sud de Rivercross et enlève le bétail des fermes. Niveaux 25-28. [GD v1.0.91, lieu_repaire_de_l_ogre_de_la_foret]."
+      "description": "Repaire d'un ogre qui chasse dans la forêt au sud de Rhivkhar et enlève le bétail des fermes. Niveaux 25-28. [GD v1.0.91, lieu_repaire_de_l_ogre_de_la_foret]."
     },
     {
       "id": "poi_bac_du_passeur",
@@ -3412,7 +3412,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Bac qui fait passer la rivière aux voyageurs entre Ebonvale et Rivercross ; le passeur vend ses nouvelles aussi cher que la traversée. Niveaux 22-26. [GD v1.0.91, lieu_bac_du_passeur]."
+      "description": "Bac qui fait passer la rivière aux voyageurs entre Ebhrazul et Rhivkhar ; le passeur vend ses nouvelles aussi cher que la traversée. Niveaux 22-26. [GD v1.0.91, lieu_bac_du_passeur]."
     },
     {
       "id": "poi_moulin_a_eau_de_la_riviere",
@@ -3421,7 +3421,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 1500,
-      "description": "Moulin à eau sur la rivière de Rivercross (moulins, économie v1.0.58) ; le meunier moud pour Ebonvale et paie la dîme à la Lune Noire. Niveaux 24-28. [GD v1.0.91, lieu_moulin_a_eau_de_la_riviere]."
+      "description": "Moulin à eau sur la rivière de Rhivkhar (moulins, économie v1.0.58) ; le meunier moud pour Ebhrazul et paie la dîme à la Lune Noire. Niveaux 24-28. [GD v1.0.91, lieu_moulin_a_eau_de_la_riviere]."
     },
     {
       "id": "poi_pavillon_de_chasse_imperial",
@@ -3457,7 +3457,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 3000,
-      "description": "Pâturages qui nourrissent Riverfold ; les bergers y repoussent loups et voleurs de bétail. Niveaux 24-28. [GD v1.0.91, lieu_paturages_de_la_cote]."
+      "description": "Pâturages qui nourrissent Ryvaldh ; les bergers y repoussent loups et voleurs de bétail. Niveaux 24-28. [GD v1.0.91, lieu_paturages_de_la_cote]."
     },
     {
       "id": "poi_tour_de_guet_cotiere",
@@ -3466,7 +3466,7 @@
       "kind": "ruine",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Tour qui guettait les navires au nord de Riverfold, abandonnée ; des pillards l'utilisent pour repérer les jonques du levant. Niveaux 26-30. [GD v1.0.91, lieu_tour_de_guet_cotiere]."
+      "description": "Tour qui guettait les navires au nord de Ryvaldh, abandonnée ; des pillards l'utilisent pour repérer les jonques du levant. Niveaux 26-30. [GD v1.0.91, lieu_tour_de_guet_cotiere]."
     },
     {
       "id": "poi_epave_echouee",
@@ -3475,16 +3475,16 @@
       "kind": "ruine",
       "offset_x_m": -3000,
       "offset_z_m": 3000,
-      "description": "Épave d'un navire de commerce venu du levant (v1.0.82), drossé à la côte au nord de Riverfold ; naufrageurs et charognards se disputent sa cargaison. Niveaux 26-30. [GD v1.0.91, lieu_epave_echouee]."
+      "description": "Épave d'un navire de commerce venu du levant (v1.0.82), drossé à la côte au nord de Ryvaldh ; naufrageurs et charognards se disputent sa cargaison. Niveaux 26-30. [GD v1.0.91, lieu_epave_echouee]."
     },
     {
       "id": "poi_relais_de_la_route_de_riverfold",
-      "name": "Relais de la route de Riverfold",
+      "name": "Relais de la route de Ryvaldh",
       "cell": "N006_E021",
       "kind": "camp",
       "offset_x_m": 1500,
       "offset_z_m": 0,
-      "description": "Relais sur la route qui mène d'Ebonvale au port de Riverfold ; les charretiers y attendent les convois du levant. Niveaux 24-28. [GD v1.0.91, lieu_relais_de_la_route_de_riverfold]."
+      "description": "Relais sur la route qui mène d'Ebhrazul au port de Ryvaldh ; les charretiers y attendent les convois du levant. Niveaux 24-28. [GD v1.0.91, lieu_relais_de_la_route_de_riverfold]."
     },
     {
       "id": "poi_caravanserail_des_marchands",
@@ -3502,7 +3502,7 @@
       "kind": "camp",
       "offset_x_m": 1500,
       "offset_z_m": 3000,
-      "description": "Marais salants au sud de Riverfold : le sel part avec le poisson salé ; des contrebandiers y cachent leurs barques. Niveaux 26-30. [GD v1.0.91, lieu_marais_salants]."
+      "description": "Marais salants au sud de Ryvaldh : le sel part avec le poisson salé ; des contrebandiers y cachent leurs barques. Niveaux 26-30. [GD v1.0.91, lieu_marais_salants]."
     },
     {
       "id": "poi_ferme_des_colons",
@@ -3520,7 +3520,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 0,
       "offset_z_m": -3000,
-      "description": "Oratoire au bord de la route de Riverfold où marins et charretiers laissent des ex-voto ; on le dit hanté depuis qu'un convoi y a été massacré. Niveaux 24-28. [GD v1.0.91, lieu_oratoire_des_voyageurs]."
+      "description": "Oratoire au bord de la route de Ryvaldh où marins et charretiers laissent des ex-voto ; on le dit hanté depuis qu'un convoi y a été massacré. Niveaux 24-28. [GD v1.0.91, lieu_oratoire_des_voyageurs]."
     },
     {
       "id": "poi_chemin_de_halage",
@@ -3529,7 +3529,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Chemin de halage où l'on remonte à la corde les barges de Riverfold ; les haleurs se louent aussi comme gros bras. Niveaux 26-30. [GD v1.0.91, lieu_chemin_de_halage]."
+      "description": "Chemin de halage où l'on remonte à la corde les barges de Ryvaldh ; les haleurs se louent aussi comme gros bras. Niveaux 26-30. [GD v1.0.91, lieu_chemin_de_halage]."
     },
     {
       "id": "poi_cimetiere_des_marins",
@@ -3538,7 +3538,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Cimetière des marins noyés au large de Riverfold ; les nuits de tempête, des noyés en remontent. Niveaux 26-30. [GD v1.0.91, lieu_cimetiere_des_marins]."
+      "description": "Cimetière des marins noyés au large de Ryvaldh ; les nuits de tempête, des noyés en remontent. Niveaux 26-30. [GD v1.0.91, lieu_cimetiere_des_marins]."
     },
     {
       "id": "poi_gibet_du_carrefour",
@@ -3547,7 +3547,7 @@
       "kind": "ruine",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Gibet dressé au carrefour des routes de Riverfold et de Greyfield, où la Lune Noire expose les brigands pris sur la route. Niveaux 24-28. [GD v1.0.91, lieu_gibet_du_carrefour]."
+      "description": "Gibet dressé au carrefour des routes de Ryvaldh et de Grhavelt, où la Lune Noire expose les brigands pris sur la route. Niveaux 24-28. [GD v1.0.91, lieu_gibet_du_carrefour]."
     },
     {
       "id": "poi_prairie_des_chevaux_sauvages",
@@ -3574,7 +3574,7 @@
       "kind": "camp",
       "offset_x_m": -3000,
       "offset_z_m": 0,
-      "description": "Pêcherie de la côte orientale qui fournit le poisson salé de Greyfield et de Riverfold ; des créatures de la mer y montent les nuits de brume. Niveaux 26-30. [GD v1.0.91, lieu_pecherie_de_la_cote]."
+      "description": "Pêcherie de la côte orientale qui fournit le poisson salé de Grhavelt et de Ryvaldh ; des créatures de la mer y montent les nuits de brume. Niveaux 26-30. [GD v1.0.91, lieu_pecherie_de_la_cote]."
     },
     {
       "id": "poi_hutte_de_la_rebouteuse",
@@ -3592,7 +3592,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Repaire de brigands sur la route d'Ebonvale à Greyfield, qui coupent le chemin d'un arbre abattu pour détrousser les voyageurs. Niveaux 24-28. [GD v1.0.91, lieu_repaire_des_coupe_jarrets]."
+      "description": "Repaire de brigands sur la route d'Ebhrazul à Grhavelt, qui coupent le chemin d'un arbre abattu pour détrousser les voyageurs. Niveaux 24-28. [GD v1.0.91, lieu_repaire_des_coupe_jarrets]."
     },
     {
       "id": "poi_dolmen_de_la_cote",
@@ -3601,7 +3601,7 @@
       "kind": "monolithe",
       "offset_x_m": -1500,
       "offset_z_m": 0,
-      "description": "Dolmen très ancien au-dessus de la mer, plus vieux que l'Empire ; les pêcheurs de Greyfield y laissent des offrandes avant les grandes sorties. Niveaux 26-30. [GD v1.0.91, lieu_dolmen_de_la_cote]."
+      "description": "Dolmen très ancien au-dessus de la mer, plus vieux que l'Empire ; les pêcheurs de Grhavelt y laissent des offrandes avant les grandes sorties. Niveaux 26-30. [GD v1.0.91, lieu_dolmen_de_la_cote]."
     },
     {
       "id": "poi_ossuaire_du_geant",
@@ -3619,7 +3619,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Rucher d'un apiculteur de Greyfield en pleine forêt ; le miel et la cire partent vers Riverfold, et les ours ne laissent pas le rucher en paix. Niveaux 26-30. [GD v1.0.91, lieu_rucher_de_la_foret]."
+      "description": "Rucher d'un apiculteur de Grhavelt en pleine forêt ; le miel et la cire partent vers Ryvaldh, et les ours ne laissent pas le rucher en paix. Niveaux 26-30. [GD v1.0.91, lieu_rucher_de_la_foret]."
     },
     {
       "id": "poi_menhirs_des_geants",
@@ -3646,7 +3646,7 @@
       "kind": "sanctuaire",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Source à laquelle les gens de Duskmere et de la côte prêtent des vertus de guérison ; des orcs viennent y boire et ne tolèrent personne. Niveaux 24-28. [GD v1.0.91, lieu_source_sacree_de_la_foret]."
+      "description": "Source à laquelle les gens de Dhazkmer et de la côte prêtent des vertus de guérison ; des orcs viennent y boire et ne tolèrent personne. Niveaux 24-28. [GD v1.0.91, lieu_source_sacree_de_la_foret]."
     },
     {
       "id": "poi_fosse_a_loups",
@@ -3664,7 +3664,7 @@
       "kind": "elevage",
       "offset_x_m": -3000,
       "offset_z_m": 0,
-      "description": "Ferme fortifiée entre Greyfield et Dustfield, qui rentre son bétail derrière ses murs chaque nuit à cause des pillards. Niveaux 26-30. [GD v1.0.91, lieu_ferme_fortifiee_de_la_cote]."
+      "description": "Ferme fortifiée entre Grhavelt et Dhuzvelt, qui rentre son bétail derrière ses murs chaque nuit à cause des pillards. Niveaux 26-30. [GD v1.0.91, lieu_ferme_fortifiee_de_la_cote]."
     },
     {
       "id": "poi_anse_des_naufrageurs",
@@ -3682,7 +3682,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Puits sur la piste de Duskmere à Dustfield, seul point d'eau sûr des terres arides ; on s'y bat parfois pour l'eau. Niveaux 24-28. [GD v1.0.91, lieu_puits_de_la_piste]."
+      "description": "Puits sur la piste de Dhazkmer à Dhuzvelt, seul point d'eau sûr des terres arides ; on s'y bat parfois pour l'eau. Niveaux 24-28. [GD v1.0.91, lieu_puits_de_la_piste]."
     },
     {
       "id": "poi_bergerie_des_chevriers",
@@ -3691,7 +3691,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Bergerie des chevriers de Dustfield (chèvres, économie v1.0.58), sur la piste qui monte vers Duskmere ; les orcs y prélèvent leur part. Niveaux 25-29. [GD v1.0.91, lieu_bergerie_des_chevriers]."
+      "description": "Bergerie des chevriers de Dhuzvelt (chèvres, économie v1.0.58), sur la piste qui monte vers Dhazkmer ; les orcs y prélèvent leur part. Niveaux 25-29. [GD v1.0.91, lieu_bergerie_des_chevriers]."
     },
     {
       "id": "poi_rocher_des_vautours",
@@ -3709,7 +3709,7 @@
       "kind": "ruine",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Fortin impérial qui gardait la côte au nord de Dustfield, abandonné ; des contrebandiers y entreposent leurs marchandises. Niveaux 26-30. [GD v1.0.91, lieu_fortin_cotier_abandonne]."
+      "description": "Fortin impérial qui gardait la côte au nord de Dhuzvelt, abandonné ; des contrebandiers y entreposent leurs marchandises. Niveaux 26-30. [GD v1.0.91, lieu_fortin_cotier_abandonne]."
     },
     {
       "id": "poi_carriere_de_la_plaine_aride",
@@ -3718,7 +3718,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Carrière de pierre de Dustfield (économie v1.0.58) ; ses carriers travaillent sous la menace des pillards du désert. Niveaux 26-30. [GD v1.0.91, lieu_carriere_de_la_plaine_aride]."
+      "description": "Carrière de pierre de Dhuzvelt (économie v1.0.58) ; ses carriers travaillent sous la menace des pillards du désert. Niveaux 26-30. [GD v1.0.91, lieu_carriere_de_la_plaine_aride]."
     },
     {
       "id": "poi_tour_a_feu_de_la_cote",
@@ -3727,7 +3727,7 @@
       "kind": "ruine",
       "offset_x_m": -1500,
       "offset_z_m": 0,
-      "description": "Tour à feu qui guidait les navires vers la côte de Dustfield, éteinte depuis des années ; on dit que les naufrageurs l'ont fait taire. Niveaux 26-30. [GD v1.0.91, lieu_tour_a_feu_de_la_cote]."
+      "description": "Tour à feu qui guidait les navires vers la côte de Dhuzvelt, éteinte depuis des années ; on dit que les naufrageurs l'ont fait taire. Niveaux 26-30. [GD v1.0.91, lieu_tour_a_feu_de_la_cote]."
     },
     {
       "id": "poi_tombeau_des_sables",
@@ -3745,7 +3745,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": -3000,
-      "description": "Campement des pillards qui descendent du désert pour razzier Dustfield et la piste de Duskmere. Niveaux 27-30. [GD v1.0.91, lieu_campement_des_pillards_du_desert]."
+      "description": "Campement des pillards qui descendent du désert pour razzier Dhuzvelt et la piste de Dhazkmer. Niveaux 27-30. [GD v1.0.91, lieu_campement_des_pillards_du_desert]."
     },
     {
       "id": "poi_crique_des_contrebandiers",
@@ -3779,17 +3779,17 @@
     },
     {
       "id": "riviere_verdansur_sud",
-      "name": "Rivière de Verdansur (bras sud)",
+      "name": "Rivière de Vaerdhun (bras sud)",
       "cells": ["N010_W015", "N009_W015", "N008_W015"],
       "width_m": 28,
-      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Verdansur (reliefs.colline_verdansur), vers le sud ; embouchure sur la côte ouest (N008_W015) ; lore riv_verdansur_sud."
+      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun (reliefs.colline_verdansur), vers le sud ; embouchure sur la côte ouest (N008_W015) ; lore riv_verdansur_sud."
     },
     {
       "id": "riviere_verdansur_nord",
-      "name": "Rivière de Verdansur (bras nord)",
+      "name": "Rivière de Vaerdhun (bras nord)",
       "cells": ["N010_W015", "N010_W014", "N011_W014", "N012_W014"],
       "width_m": 30,
-      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Verdansur, vers l'est puis le nord, contourne Trueford (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
+      "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun, vers l'est puis le nord, contourne Treuvhal (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
     }
   ],
   "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain).",
@@ -3801,7 +3801,7 @@
       "height_m": 130,
       "top_radius_m": 300,
       "foot_radius_m": 1400,
-      "source": "[DÉCISION] v1.0.72 : Verdansur perchée en haut d'une haute colline ; deux rivières partent de son pied (river_courses riviere_verdansur_sud et _nord)."
+      "source": "[DÉCISION] v1.0.72 : Vaerdhun perchée en haut d'une haute colline ; deux rivières partent de son pied (river_courses riviere_verdansur_sud et _nord)."
     },
     {
       "id": "crevasse_wardholt",
@@ -3813,8 +3813,8 @@
       "wall_m": 70,
       "back_m": 260,
       "open_toward": "N009_W010",
-      "mine": "Mine de Wardholt",
-      "source": "[DÉCISION] v1.0.72 : Wardholt est un cul-de-sac au fond d'une crevasse, ce qui explique que la route ne continue pas ; ouverture à l'ouest vers Oathford ; mine au fond (nom [GD] à valider)."
+      "mine": "Mine de Vharholdt",
+      "source": "[DÉCISION] v1.0.72 : Vharholdt est un cul-de-sac au fond d'une crevasse, ce qui explique que la route ne continue pas ; ouverture à l'ouest vers Ordhrann ; mine au fond (nom [GD] à valider)."
     },
     {
       "id": "massif_n022_w012",
@@ -3832,7 +3832,7 @@
       "height_m": 480,
       "foot_radius_m": 6500,
       "offset_z_m": -1500,
-      "source": "[DÉCISION] v1.0.77 : dénivelé important sur l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026), côte inchangée ; pic du bras ouest au-dessus de Lanternhold (Temple des Cimes) ; la case reste en forêt (T) : pic ou crête boisée [GD v1.0.77, hauteurs à valider]."
+      "source": "[DÉCISION] v1.0.77 : dénivelé important sur l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026), côte inchangée ; pic du bras ouest au-dessus de Lhantarn (Temple des Cimes) ; la case reste en forêt (T) : pic ou crête boisée [GD v1.0.77, hauteurs à valider]."
     },
     {
       "id": "massif_n020_w014",

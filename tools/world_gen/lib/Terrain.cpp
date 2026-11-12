@@ -377,7 +377,7 @@ namespace tools::world_gen
 			h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
 		if (acc.dune > 0.01)
 			h += std::sin((x * 0.8 + z * 0.6) / 60.0 + Fbm(x, z, 900.0, 2, seed + 41) * 3.0) * 4.0 * acc.dune;
-		// Reliefs locaux posés à la main (v1.0.72) : colline de Verdansur, crevasse de Wardholt ;
+		// Reliefs locaux posés à la main (v1.0.72) : colline de Vaerdhun, crevasse de Vharholdt ;
 		// massifs de l'Île de la Trêve (v1.0.77).
 		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z, h);
 		return Clamp(h, 1.0, m.scale.heightScaleM - 2.0);
@@ -888,7 +888,7 @@ namespace tools::world_gen
 		// descente avant la côte).
 		// Distance minimale (m) entre un cours tracé à la main et la ville \p c : rayon
 		// urbain + 400 m, ou pied de la colline + 150 m pour une ville perchée (v1.0.72 :
-		// les rivières de Verdansur naissent au pied de sa colline).
+		// les rivières de Vaerdhun naissent au pied de sa colline).
 		auto riverClearance = [&](const CityDef& c) {
 			const ReliefDef* r = ReliefOfCity(m, c.id);
 			return (r && r->type == "colline") ? std::max(c.radiusM + 400.0, r->footRadiusM + 150.0) : c.radiusM + 400.0;

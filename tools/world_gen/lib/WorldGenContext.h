@@ -367,6 +367,8 @@ namespace tools::world_gen
 
 	// Couche macro (une fois).
 	/// Grille grossière, sites des villes/POI, lacs. Terrain.cpp
+	/// Une ville ou un POI à position manuelle (`position` du master, v1.0.95) est
+	/// posé exactement à cette position ; les autres gardent la règle historique.
 	void BuildMacroTerrain(GlobalWorld& g);
 	/// Rivières (descente sur la grille grossière remplie). Terrain.cpp
 	void BuildMacroRivers(GlobalWorld& g);

@@ -1728,8 +1728,18 @@ function buildExportSchema() {
         id: v.id||"", name: v.name||"", cell: v.cell||"",
         coord_x: (v.coord_x!==null && v.coord_x!==undefined) ? v.coord_x : null,
         coord_y: (v.coord_y!==null && v.coord_y!==undefined) ? v.coord_y : null,
+        // Position manuelle (v1.0.95) : nombre (m depuis le centre de la case) ou null.
+        position_x_m: (typeof v.position_x_m==='number') ? v.position_x_m : null,
+        position_z_m: (typeof v.position_z_m==='number') ? v.position_z_m : null,
         faction_control: v.faction_control||"", region_id: v.region_id||"",
         notes: v.notes||[]
+      });
+    }),
+    // Lieux : tous les champs conservés ; position manuelle (v1.0.95) normalisée (nombre ou null).
+    lieux: (db.lieux||[]).map(function(l) {
+      return Object.assign({}, l, {
+        position_x_m: (typeof l.position_x_m==='number') ? l.position_x_m : null,
+        position_z_m: (typeof l.position_z_m==='number') ? l.position_z_m : null
       });
     }),
     exploits: (db.exploits||[]).map(function(ex) {
@@ -3156,6 +3166,33 @@ function collectRichFields(prefix, base) {
 // ─────────────────────────────────────────────
 // Lieux spéciaux repris de carte_export.json (failles, portails, canyons…) :
 // ni villes ni zones de jeu, ils peuvent pointer vers une zone (zone_id).
+/// Champs « Position X / Z » d'un formulaire (v1.0.95) : HTML de deux saisies en mètres
+/// depuis le centre de la case (X est, Z sud), vides = position automatique.
+/// \param prefix préfixe des identifiants (ex. 'v' → #v_px, #v_pz).  \param rec fiche éditée.
+function positionInputsHTML(prefix, rec) {
+  function val(k){ return (rec && typeof rec[k]==='number') ? rec[k] : ''; }
+  return '<div class="form-group"><label class="form-label">Position X (m, est)</label>'+
+    '<input class="form-input" id="'+prefix+'_px" type="number" step="1" min="-'+CARTE_POS_MAX_M+'" max="'+CARTE_POS_MAX_M+'" value="'+val('position_x_m')+'" placeholder="auto"></div>'+
+    '<div class="form-group"><label class="form-label">Position Z (m, sud)</label>'+
+    '<input class="form-input" id="'+prefix+'_pz" type="number" step="1" min="-'+CARTE_POS_MAX_M+'" max="'+CARTE_POS_MAX_M+'" value="'+val('position_z_m')+'" placeholder="auto"></div>';
+}
+/// Aide sous les champs Position (HTML fixe ; fonction, car CARTE_POS_MAX_M est défini
+/// plus loin dans le script).
+function positionHintHTML() { return '<div style="font-size:0.66rem;color:var(--text-dim);margin:-0.4rem 0 0.75rem">Position dans la case : mètres depuis le centre de la case de 10 km (X vers l\'est, Z vers le sud, au plus ±'+CARTE_POS_MAX_M+' m). Vide = automatique (centre / site choisi par le générateur). Aussi réglable à la souris : Carte › ✥ Déplacer.</div>'; }
+/// Lit et valide deux champs Position (ids idX, idZ) : les deux vides → null/null ;
+/// un seul rempli, valeur non numérique ou hors de ±CARTE_POS_MAX_M → erreur.
+/// \return { ok:true, x, z } (nombres arrondis au mètre ou null) ou { ok:false, msg }.
+function readPositionInputs(idX, idZ) {
+  var ex=document.getElementById(idX), ez=document.getElementById(idZ);
+  var sx=ex?ex.value.trim():'', sz=ez?ez.value.trim():'';
+  if (sx==='' && sz==='') return { ok:true, x:null, z:null };
+  if (sx==='' || sz==='') return { ok:false, msg:'Position : renseignez X et Z, ou laissez les deux vides (automatique)' };
+  var x=Math.round(parseFloat(sx)), z=Math.round(parseFloat(sz));
+  if (!isFinite(x) || !isFinite(z)) return { ok:false, msg:'Position : nombres attendus (mètres)' };
+  if (Math.abs(x)>CARTE_POS_MAX_M || Math.abs(z)>CARTE_POS_MAX_M) return { ok:false, msg:'Position : au plus ±'+CARTE_POS_MAX_M+' m depuis le centre de la case' };
+  return { ok:true, x:x||0, z:z||0 };
+}
+
 function renderLieux(el) {
   var h = '<div class="panel-header"><div class="panel-title">✴️ Lieux remarquables</div>';
   h += '<div style="display:flex;gap:0.75rem;align-items:center">';
@@ -3181,7 +3218,7 @@ function renderLieux(el) {
     if(row) card+='<div style="display:flex;gap:0.3rem;margin-top:0.3rem;flex-wrap:wrap">'+row+'</div>';
     if(l.region_id){var rg=(db.regions||[]).find(function(x){return x.id===l.region_id;});card+='<div style="font-size:0.72rem;color:'+(rg&&rg.color||'#708090')+';margin-top:0.2rem">🗺️ '+esc(rg?rg.name:l.region_id)+'</div>';}
     if(l.zone_id){var zn=(db.zones||[]).find(function(x){return x.id===l.zone_id;});card+='<div style="font-size:0.72rem;margin-top:0.2rem;cursor:pointer;color:'+(zn?'#7ec98e':'#c05060')+'" onclick="showSection(\'zones\')" title="Zone liée">📍 '+esc(zn?zn.name:l.zone_id+' (zone introuvable)')+'</div>';}
-    if(l.cell) card+='<div style="margin-top:0.35rem"><span style="font-family:monospace;font-size:0.78rem;background:var(--bg-deep);border:1px solid #c9a96e50;border-radius:2px;padding:0.1rem 0.45rem;color:#c9a96e">📍 '+esc(l.cell)+'</span></div>';
+    if(l.cell) card+='<div style="margin-top:0.35rem"><span style="font-family:monospace;font-size:0.78rem;background:var(--bg-deep);border:1px solid #c9a96e50;border-radius:2px;padding:0.1rem 0.45rem;color:#c9a96e">📍 '+esc(l.cell)+'</span>'+(placeHasPosition(l)?' <span style="font-size:0.74rem;color:var(--text-dim)">📐 '+esc(placePositionLabel(l))+'</span>':'')+'</div>';
     if(l.features&&l.features.length){card+='<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.2rem">';l.features.slice(0,4).forEach(function(f){card+='<span style="font-size:0.7rem;background:var(--bg-deep);border:1px solid #c9a96e30;border-radius:2px;padding:0.05rem 0.35rem;color:var(--text-dim)">'+esc(f)+'</span>';});if(l.features.length>4)card+='<span style="font-size:0.7rem;color:var(--text-dim)">+'+(l.features.length-4)+'</span>';card+='</div>';}
     card+=notesBadgesHTML(l.notes);
     return card+'</div>';
@@ -3189,7 +3226,7 @@ function renderLieux(el) {
 }
 function openLieuForm(idx) {
   var isEdit=idx!==undefined;
-  var l=isEdit?JSON.parse(JSON.stringify(db.lieux[idx])):{id:'',name:'',alias:'',type:'',importance:'',cell:'',region_id:'',zone_id:'',faction_control:'',features:[],notes:[]};
+  var l=isEdit?JSON.parse(JSON.stringify(db.lieux[idx])):{id:'',name:'',alias:'',type:'',importance:'',cell:'',position_x_m:null,position_z_m:null,region_id:'',zone_id:'',faction_control:'',features:[],notes:[]};
   window._currentNotes=toArr(l.notes).slice();
   window._currentFeatures=toArr(l.features).slice();
   var rgOpts='<option value="">Sans région</option>';(db.regions||[]).forEach(function(rg){rgOpts+='<option value="'+esc(rg.id)+'"'+(l.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';});
@@ -3210,6 +3247,7 @@ function openLieuForm(idx) {
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Cellule (N/S###_E/W###)</label><input class="form-input" id="l_cell" value="'+esc(l.cell||'')+'" placeholder="N000_E000" style="font-family:monospace"></div>'+
     '<div class="form-group"><label class="form-label">Faction de référence</label><select class="form-select" id="l_faction">'+facOpts+'</select></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">'+positionInputsHTML('l', l)+'</div>'+positionHintHTML()+
     '<div class="form-group"><label class="form-label">Importance</label><input class="form-input" id="l_importance" value="'+esc(l.importance||'')+'"></div>'+
     '<div class="form-group"><label class="form-label">Caractéristiques (features)</label>'+
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="featureInput" placeholder="Ajouter une caractéristique...">'+
@@ -3230,11 +3268,13 @@ function saveLieu(idx) {
   if(!db.lieux) db.lieux=[];
   var cell=document.getElementById('l_cell').value.trim().toUpperCase();
   if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
+  var lpos=readPositionInputs('l_px','l_pz'); if(!lpos.ok){toast(lpos.msg);return;}
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.lieux[idx])):{};
   var obj=Object.assign(base, collectRichFields('l', base), {
     id:document.getElementById('l_id').value.trim(), name:document.getElementById('l_name').value.trim(),
     alias:document.getElementById('l_alias').value.trim(), type:document.getElementById('l_type').value,
     importance:document.getElementById('l_importance').value.trim(), cell:cell,
+    position_x_m:lpos.x, position_z_m:lpos.z,
     region_id:document.getElementById('l_region').value, zone_id:document.getElementById('l_zone').value,
     faction_control:document.getElementById('l_faction').value,
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
@@ -3284,11 +3324,12 @@ function renderVilles(el) {
     if(v.region_id){var vrg=(db.regions||[]).find(function(x){return x.id===v.region_id;});if(vrg)card+='<div style="font-size:0.72rem;color:'+(vrg.color||'#708090')+';margin-top:0.2rem">🗺️ '+esc(vrg.name)+'</div>';}
     var SVCL={auberge:'🛏️',potions:'🧪',armes:'⚔️',armures:'🛡️',forgeron:'🔨',marche:'🛒',ecurie:'🐴',temple:'⛪',banque:'🏦',guilde:'⚜️',infirmerie:'💊',bibliotheque:'📚',prison:'⛓️',port:'⚓',arene:'🗡️',ecole_magie:'🔮',cimetiere:'🪦'};
     if(v.services&&v.services.length){card+='<div style="margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:0.2rem">';v.services.slice(0,6).forEach(function(sid){card+='<span style="font-size:0.72rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;padding:0.05rem 0.3rem;color:var(--text-secondary)">'+(SVCL[sid]||'•')+'</span>';});if(v.services.length>6)card+='<span style="font-size:0.72rem;color:var(--text-dim)">+' +(v.services.length-6)+'</span>';card+='</div>';}
-    if(v.cell||v.coord_x!==null) {
+    // Case et position manuelle (v1.0.95) ; coord_x / coord_y (grille héritée v18, non lus) non affichés.
+    if(v.cell||placeHasPosition(v)) {
       card+='<div style="display:flex;gap:0.75rem;margin-top:0.35rem;flex-wrap:wrap">';
       if(v.cell) card+='<span style="font-family:monospace;font-size:0.78rem;background:var(--bg-deep);border:1px solid #e8a44a50;border-radius:2px;padding:0.1rem 0.45rem;color:#e8a44a">📍 ' + esc(v.cell) + '</span>';
-      if(v.coord_x!==null&&v.coord_x!==undefined&&v.coord_y!==null&&v.coord_y!==undefined)
-        card+='<span style="font-size:0.78rem;color:var(--text-dim)">X:' + esc(v.coord_x) + '  Y:' + esc(v.coord_y) + '</span>';
+      if(placeHasPosition(v))
+        card+='<span style="font-size:0.78rem;color:var(--text-dim)">📐 ' + esc(placePositionLabel(v)) + '</span>';
       card+='</div>';
     }
     var linked=(db.factions||[]).filter(function(f){ return f.ville_relations&&f.ville_relations.find(function(r){return r.ville_id===v.id;}); });
@@ -3345,7 +3386,7 @@ function villeFactionStanceHTML(v) {
 
 function openVilleForm(idx) {
   var isEdit=idx!==undefined;
-  var v=isEdit?JSON.parse(JSON.stringify(db.villes[idx])):{id:'',name:'',alias:'',type:'',cell:'',coord_x:null,coord_y:null,importance:'',faction_control:'',region_id:'',housing_count:null,population:null,services:[],features:[],notes:[]};
+  var v=isEdit?JSON.parse(JSON.stringify(db.villes[idx])):{id:'',name:'',alias:'',type:'',cell:'',coord_x:null,coord_y:null,position_x_m:null,position_z_m:null,importance:'',faction_control:'',region_id:'',housing_count:null,population:null,services:[],features:[],notes:[]};
   window._currentNotes=toArr(v.notes).slice();
   window._currentFeatures=(v.features||[]).slice();
 
@@ -3417,10 +3458,7 @@ function openVilleForm(idx) {
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">'+
     '<div class="form-group"><label class="form-label">Cellule (N/S###_E/W###)</label>'+
     '<input class="form-input" id="v_cell" value="'+esc(v.cell||v.anchor_tile||'')+'" placeholder="N000_E000" style="font-family:monospace"></div>'+
-    '<div class="form-group"><label class="form-label">Coordonnée X</label>'+
-    '<input class="form-input" id="v_cx" type="number" value="'+(v.coord_x!=null?v.coord_x:'')+'" placeholder="0"></div>'+
-    '<div class="form-group"><label class="form-label">Coordonnée Y</label>'+
-    '<input class="form-input" id="v_cy" type="number" value="'+(v.coord_y!=null?v.coord_y:'')+'" placeholder="0"></div></div>'+
+    positionInputsHTML('v', v)+'</div>'+positionHintHTML()+
     '<div class="form-group"><label class="form-label">Importance</label>'+
     '<input class="form-input" id="v_importance" value="'+esc(v.importance||'')+'" placeholder="Ex : capitale impériale"></div>'+
     '<div class="form-group"><label class="form-label">Caractéristiques (features)</label>'+
@@ -3462,16 +3500,18 @@ function renderFeaturesList(){
   if(!arr.length){el.innerHTML='<div style="padding:0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune caractéristique</div>';return;}
   el.innerHTML=arr.map(function(f,i){return '<div class="note-edit-item"><span>'+esc(f)+'</span><button class="note-del-btn" onclick="window._currentFeatures.splice('+i+',1);renderFeaturesList()">\u2715</button></div>';}).join('');
 }
+// Enregistre le formulaire de ville. v1.0.95 : Position X/Z (m) lue et validée par
+// readPositionInputs ; coord_x / coord_y (grille héritée v18) conservés tels quels.
 function saveVille(idx) {
-  var cx=document.getElementById('v_cx').value, cy=document.getElementById('v_cy').value;
   var cell=document.getElementById('v_cell').value.trim().toUpperCase();
   if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
+  var vpos=readPositionInputs('v_px','v_pz'); if(!vpos.ok){toast(vpos.msg);return;}
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.villes[idx])):{};
   var obj=Object.assign(base, collectRichFields('v', base), {
     id:document.getElementById('v_id').value.trim(), name:document.getElementById('v_name').value.trim(),
     alias:document.getElementById('v_alias').value.trim(), type:document.getElementById('v_type').value,
     cell:cell, anchor_tile:cell,
-    coord_x:cx!==''?parseFloat(cx):null, coord_y:cy!==''?parseFloat(cy):null,
+    position_x_m:vpos.x, position_z_m:vpos.z,
     importance:document.getElementById('v_importance').value.trim(),
     faction_control:document.getElementById('v_faction_control').value.trim(),
     region_id:(document.getElementById('v_region')||{value:''}).value,
@@ -3530,6 +3570,9 @@ function _mapImportedVille(src) {
   return {
     id:src.id||'', name:src.name||'', alias:src.alias||'', type:src.type||'',
     cell:cell, anchor_tile:cell, coord_x:cx, coord_y:cy,
+    // Position manuelle (v1.0.95, m depuis le centre de la case) : null si absente.
+    position_x_m:(typeof src.position_x_m==='number'?src.position_x_m:null),
+    position_z_m:(typeof src.position_z_m==='number'?src.position_z_m:null),
     importance:src.importance||'', footprint_tiles:src.footprint_tiles||[],
     dimensions_estimees:src.dimensions_estimees||{hauteur:'',largeur:'',diametre:'',zone_visible:''},
     topographie:src.topographie||{forme_generale:'',relief:'',implantation:'',pentes:'',gorge:''},
@@ -4755,8 +4798,11 @@ var CARTE_CELL_SIDE_KM = 10;
 var CARTE_TIER_MIN_ZOOM = { major:1, town:1, hamlet:1, poi:1 };
 // selectedRouteId : identifiant de la route sélectionnée dans la liste (surlignée en
 // noir sur la carte), ou null.
-window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null, selectedRouteId:null,
+// moveUndo (v1.0.95) : pile des déplacements de villes/lieux à la souris (le plus récent
+// en dernier), dépilée par Ctrl+Z ou le bouton « Annuler ».
+window._carteState = window._carteState || { zoom:2, mode:'select', routeFrom:null, selectedRouteId:null, moveUndo:[],
   filters:{ villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true } };
+if (!window._carteState.moveUndo) window._carteState.moveUndo = [];
 if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
 if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
 if (window._carteState.filters.lieux === undefined) window._carteState.filters.lieux = true;
@@ -4806,6 +4852,198 @@ function carteCellCenter(cellId) {
   return { x:(p.lon-_carteGeo.minLon+0.5)*px, y:(_carteGeo.maxLat-p.lat+0.5)*px };
 }
 
+// ── Placement manuel des villes et des lieux (v1.0.95, « tu places, le jeu suit ») ──
+// Champs des fiches villes / lieux : position_x_m, position_z_m = décalage en MÈTRES
+// depuis le CENTRE de la case de 10 km, X vers l'est, Z vers le sud (repère du master
+// et de tools/world_gen ; le sud est vers le bas de la carte). null = position
+// automatique (centre de la case / site choisi par le générateur). Recopiés dans
+// world_master.json (clé position) par tools/lore/sync_positions.py.
+var CARTE_CELL_M = 10000;      // côté d'une case du lore (m)
+var CARTE_POS_MAX_M = 4300;    // écart max. depuis le centre, par axe (m) : limite du générateur
+// Glisser-déposer en cours (null sinon) : { kind:'villes'|'lieux', rec, dx, dy, x, y, x0, y0, moved }.
+window._carteDrag = null;
+// Marqueurs dessinés au dernier drawCarte (ordre de dessin) : { kind, rec, x, y, r } ;
+// sert au repérage sous la souris (le dernier dessiné est au-dessus).
+var _carteHits = [];
+
+/// Points pixel du tracé d'une route : centres des cases listées (ids), sauf aux deux
+/// extrémités, qui rejoignent la ville / le lieu d'extrémité (from_/to_ville_id, sinon
+/// from_/to_lieu_id) à sa position manuelle quand il est dans la case d'extrémité
+/// (v1.0.95, comme les routes du générateur qui vont au centre réel de la ville).
+/// \param ids identifiants de cases (waypoints ou [from_place, to_place]).  \param px côté d'une case (pixels).
+/// \return tableau de {x,y} (cases inconnues ignorées). Pas d'effet de bord.
+function carteRoutePoints(r, ids, px) {
+  function endRec(vid, lid, cell) {
+    var v=vid&&(db.villes||[]).find(function(x){ return x.id===vid; });
+    if (v && v.cell===cell && (placeHasPosition(v) || (window._carteDrag && window._carteDrag.rec===v))) return { rec:v, kind:'villes' };
+    var l=lid&&(db.lieux||[]).find(function(x){ return x.id===lid; });
+    if (l && l.cell===cell && cartePlaceIsFree(l)) return { rec:l, kind:'lieux' };
+    return null;
+  }
+  var pts=ids.map(function(id, i){
+    var e = i===0 ? endRec(r.from_ville_id, r.from_lieu_id, id) : (i===ids.length-1 ? endRec(r.to_ville_id, r.to_lieu_id, id) : null);
+    return e ? cartePlacePixel(e.rec, e.kind, px) : carteCellCenter(id);
+  });
+  return pts.filter(Boolean);
+}
+/// Indique si une fiche ville / lieu a une position posée à la main (les deux champs
+/// position_x_m et position_z_m sont des nombres). Pas d'effet de bord.
+function placeHasPosition(rec) {
+  return !!rec && typeof rec.position_x_m==='number' && typeof rec.position_z_m==='number'
+    && isFinite(rec.position_x_m) && isFinite(rec.position_z_m);
+}
+/// Écrit une distance en mètres signée pour l'affichage (« +1235 m », « −300 m », « 0 m »).
+/// \param v mètres (nombre).
+function carteFmtM(v) { var r=Math.round(v); return (r>0?'+':r<0?'−':'')+Math.abs(r)+' m'; }
+/// Texte de position d'une fiche : « X +1235 m (est) · Z −2100 m (sud) » ou « automatique
+/// (centre de la case) » si elle n'a pas de position manuelle. Pas d'effet de bord.
+function placePositionLabel(rec) {
+  return placeHasPosition(rec) ? 'X '+carteFmtM(rec.position_x_m)+' (est) · Z '+carteFmtM(rec.position_z_m)+' (sud)'
+    : 'automatique (centre de la case)';
+}
+/// Point pixel où dessiner une fiche sur le canvas courant : position manuelle si
+/// posée, sinon règle historique (ville au centre de sa case, lieu au coin bas-gauche
+/// du centre) ; pendant un glisser-déposer, la fiche déplacée suit la souris.
+/// \param kind 'villes' ou 'lieux'.  \param px côté d'une case en pixels (zoom courant).
+/// \return {x,y} ou null si la fiche n'a pas de case valide. Pas d'effet de bord.
+function cartePlacePixel(rec, kind, px) {
+  var dr=window._carteDrag;
+  if (dr && dr.rec===rec && dr.moved) return { x:dr.x, y:dr.y };
+  var ctr=carteCellCenter(rec.cell); if(!ctr) return null;
+  if (placeHasPosition(rec)) return { x:ctr.x+rec.position_x_m/CARTE_CELL_M*px, y:ctr.y+rec.position_z_m/CARTE_CELL_M*px };
+  return kind==='lieux' ? { x:ctr.x-px*0.18, y:ctr.y+px*0.18 } : ctr;
+}
+/// Vrai si la fiche est dessinée seule (position manuelle ou glisser-déposer en cours)
+/// plutôt qu'au marqueur commun des lieux de sa case. Pas d'effet de bord.
+function cartePlaceIsFree(rec) {
+  var dr=window._carteDrag;
+  return placeHasPosition(rec) || !!(dr && dr.rec===rec && dr.moved);
+}
+/// Coordonnées pixel (repère du canvas) d'un événement souris.
+function carteEventPoint(e) {
+  var canvas=document.getElementById('carteCanvas'); if(!canvas) return null;
+  var rect=canvas.getBoundingClientRect();
+  return { x:e.clientX-rect.left, y:e.clientY-rect.top };
+}
+/// Marqueur de ville ou de lieu sous la souris (le plus haut dessiné), d'après
+/// _carteHits du dernier drawCarte ; tolérance de 6 px autour des petits marqueurs.
+/// \return { kind, rec, x, y, r } ou null. Pas d'effet de bord.
+function carteHitPlace(e) {
+  var pt=carteEventPoint(e); if(!pt) return null;
+  for (var i=_carteHits.length-1; i>=0; i--) {
+    var h=_carteHits[i], dx=pt.x-h.x, dy=pt.y-h.y, r=Math.max(h.r+2, 6);
+    if (dx*dx+dy*dy <= r*r) return h;
+  }
+  return null;
+}
+/// Convertit un point pixel du canvas en placement : case sous le point et décalage
+/// (m, arrondi au mètre) depuis son centre, ramené à ±CARTE_POS_MAX_M par axe (le
+/// générateur refuse au-delà : le plateau de la ville doit rester dans la case).
+/// \return { cell, cellRec, xm, zm } ou null hors de la grille ou sur une case absente.
+function cartePixelToPlacement(x, y) {
+  if (!_carteGeo) return null;
+  var px=BASE_CELL_SIZE*window._carteState.zoom;
+  var col=Math.floor(x/px), row=Math.floor(y/px);
+  if (col<0||row<0||col>=_carteGeo.cols||row>=_carteGeo.rows) return null;
+  var c=_carteGeo.byKey[(_carteGeo.maxLat-row)+','+(_carteGeo.minLon+col)]; if(!c) return null;
+  function clampM(v){ v=Math.round(v); return Math.max(-CARTE_POS_MAX_M, Math.min(CARTE_POS_MAX_M, v)) || 0; }
+  return { cell:c.id, cellRec:c,
+    xm:clampM((x-(col+0.5)*px)/px*CARTE_CELL_M), zm:clampM((y-(row+0.5)*px)/px*CARTE_CELL_M) };
+}
+/// Applique un déplacement à une fiche (fin d'un glisser-déposer) et l'empile pour
+/// l'annulation. Si la case change : case de la fiche (et anchor_tile d'une ville),
+/// région et province reprises de la nouvelle case, ponton du port suivi s'il était
+/// dans l'ancienne case ; les routes qui citent la fiche ne sont PAS retracées
+/// (avertissement).
+/// \param kind 'villes' ou 'lieux'.  \param t placement de cartePixelToPlacement.
+/// Effet de bord : modifie la fiche de db, window._carteState.moveUndo, la carte et
+/// le bouton « Annuler » ; message (toast).
+function carteApplyPlacement(kind, rec, t) {
+  var st=window._carteState;
+  st.moveUndo.push({ kind:kind, id:rec.id, hadAnchor:Object.prototype.hasOwnProperty.call(rec,'anchor_tile'),
+    before:JSON.parse(JSON.stringify({ cell:rec.cell, anchor_tile:rec.anchor_tile, region_id:rec.region_id, province:rec.province,
+      position_x_m:(rec.position_x_m===undefined?null:rec.position_x_m), position_z_m:(rec.position_z_m===undefined?null:rec.position_z_m), port:rec.port||null })) });
+  if (st.moveUndo.length>100) st.moveUndo.shift();
+  var oldCell=rec.cell, msg=rec.name+' → '+t.cell+' : X '+carteFmtM(t.xm)+', Z '+carteFmtM(t.zm);
+  rec.position_x_m=t.xm; rec.position_z_m=t.zm;
+  if (t.cell!==oldCell) {
+    rec.cell=t.cell;
+    if (kind==='villes' && Object.prototype.hasOwnProperty.call(rec,'anchor_tile')) rec.anchor_tile=t.cell;
+    rec.region_id=t.cellRec.region_id||''; rec.province=t.cellRec.province||'';
+    if (kind==='villes' && rec.port && rec.port.ponton_cell===oldCell) rec.port.ponton_cell=t.cell;
+    var nr=(db.routes||[]).filter(function(r){ return kind==='villes' ? (r.from_ville_id===rec.id||r.to_ville_id===rec.id) : (r.from_lieu_id===rec.id||r.to_lieu_id===rec.id); }).length;
+    msg+=' (nouvelle case : région '+(rec.region_id||'—')+(rec.province?' › '+rec.province:'')+')'+(nr?' — '+nr+' route(s) à reprendre':'');
+  }
+  carteComputeGeo(); drawCarte(); carteRefreshMoveTools();
+  toast(msg);
+}
+/// Annule le dernier déplacement de la pile (case, région, province, position, port
+/// et anchor_tile reviennent à l'état d'avant). \return true si un déplacement a été annulé.
+/// Effet de bord : modifie la fiche de db, la pile, la carte et le bouton « Annuler ».
+function carteUndoMove() {
+  var st=window._carteState, u=st.moveUndo.pop(); if(!u) { toast('Rien à annuler'); return false; }
+  var rec=(db[u.kind]||[]).find(function(x){ return x.id===u.id; });
+  if (rec) {
+    ['cell','region_id','province','position_x_m','position_z_m'].forEach(function(k){ rec[k]=u.before[k]; });
+    if (u.hadAnchor) rec.anchor_tile=u.before.anchor_tile; else delete rec.anchor_tile;
+    if (u.before.port) rec.port=u.before.port; else delete rec.port;
+  }
+  carteComputeGeo(); drawCarte(); carteRefreshMoveTools();
+  toast(rec ? 'Déplacement annulé : '+rec.name+' ('+rec.cell+', '+placePositionLabel(rec)+')' : 'Déplacement annulé (fiche introuvable)');
+  return true;
+}
+/// Met à jour le bouton « Annuler » (nombre de déplacements annulables) et le texte
+/// d'aide de la carte. Effet de bord : DOM seulement.
+function carteRefreshMoveTools() {
+  var b=document.getElementById('carteUndoBtn'), n=window._carteState.moveUndo.length;
+  if (b) { b.disabled=!n; b.textContent='↶ Annuler'+(n?' ('+n+')':''); }
+  var hint=document.getElementById('carteHint'); if(hint) hint.innerHTML=carteHintText();
+}
+/// Active / désactive le mode « Déplacer » (glisser-déposer des villes et des lieux).
+/// Effet de bord : change window._carteState.mode et re-rend la section Carte.
+function carteToggleMoveMode() { carteSetMode(window._carteState.mode==='move' ? 'select' : 'move'); }
+/// Affiche l'info-bulle de la carte près de la souris (html déjà échappé) ; html vide
+/// = la masque. Effet de bord : DOM (#carteTip) seulement.
+function carteShowTip(e, html) {
+  var tip=document.getElementById('carteTip'); if(!tip) return;
+  if (!html) { tip.style.display='none'; return; }
+  tip.innerHTML=html; tip.style.display='block';
+  tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
+}
+/// Contenu de l'info-bulle d'une fiche : nom, type, case et position (m).
+function carteTipHTML(kind, rec) {
+  return '<b>'+esc(rec.name||rec.id)+'</b> <span style="opacity:.7">('+esc(kind==='villes'?placeTypeLabel(rec.type):'lieu')+')</span><br>'
+    +esc(rec.cell||'—')+' — '+esc(placePositionLabel(rec));
+}
+/// Début d'un glisser-déposer (mode « Déplacer », bouton gauche sur un marqueur).
+/// Effet de bord : window._carteDrag, curseur du canvas.
+function carteOnMouseDown(e) {
+  if (window._carteState.mode!=='move' || e.button!==0) return;
+  var h=carteHitPlace(e); if(!h) return;
+  var pt=carteEventPoint(e);
+  e.preventDefault();
+  window._carteDrag={ kind:h.kind, rec:h.rec, dx:h.x-pt.x, dy:h.y-pt.y, x:h.x, y:h.y, x0:pt.x, y0:pt.y, moved:false };
+  e.target.style.cursor='grabbing';
+}
+/// Fin d'un glisser-déposer (écoutée sur window : le relâchement peut avoir lieu hors
+/// du canvas). Déplacement de plus de 3 px : carteApplyPlacement sur la case sous la
+/// souris (refusé hors carte) ; simple clic : ouvre la fiche (champs Position X/Z).
+/// Effet de bord : db (via carteApplyPlacement), window._carteDrag, carte.
+function carteOnMouseUp(e) {
+  var dr=window._carteDrag; if(!dr) return;
+  window._carteDrag=null;
+  var cv=document.getElementById('carteCanvas'); if(cv) cv.style.cursor='grab';
+  carteShowTip(e, '');
+  if (!dr.moved) {
+    var idx=(db[dr.kind]||[]).indexOf(dr.rec);
+    if (idx>=0) { if (dr.kind==='villes') openVilleForm(idx); else openLieuForm(idx); }
+    drawCarte(); return;
+  }
+  var t=cartePixelToPlacement(dr.x, dr.y);
+  if (!t) { drawCarte(); toast('Hors de la carte : déplacement refusé'); return; }
+  carteApplyPlacement(dr.kind, dr.rec, t);
+}
+
 // Rend la section « Carte » : barre d'outils (mode, zoom), légende, et un canvas
 // interactif. Clic sur une cellule = édition (mode Sélection) ou point d'une
 // nouvelle route (mode Route). Voir openCellEditor / openRouteForm.
@@ -4824,6 +5062,9 @@ function renderCarte(el) {
   // Modes
   h += '<button class="btn btn-sm '+(st.mode==='select'?'btn-gold':'btn-ghost')+'" onclick="carteSetMode(\'select\')">✎ Sélection</button>';
   h += '<button class="btn btn-sm '+(st.mode==='route'?'btn-gold':'btn-ghost')+'" onclick="carteSetMode(\'route\')">🛣️ Créer une route</button>';
+  // Placement manuel (v1.0.95) : mode « Déplacer » (touche D) et annulation (Ctrl+Z).
+  h += '<button class="btn btn-sm '+(st.mode==='move'?'btn-gold':'btn-ghost')+'" id="carteMoveBtn" title="Glisser-déposer des villes et des lieux (touche D)" onclick="carteToggleMoveMode()">✥ Déplacer</button>';
+  h += '<button class="btn btn-ghost btn-sm" id="carteUndoBtn" title="Annuler le dernier déplacement (Ctrl+Z)" onclick="carteUndoMove()"'+(st.moveUndo.length?'':' disabled')+'>↶ Annuler'+(st.moveUndo.length?' ('+st.moveUndo.length+')':'')+'</button>';
   // Zoom
   h += '<span style="display:inline-flex;gap:0.25rem;align-items:center;margin-left:0.5rem">';
   h += '<button class="btn btn-ghost btn-sm" onclick="carteZoomBy(-1)">−</button>';
@@ -4878,7 +5119,8 @@ function renderCarte(el) {
 
   // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin)
   h += '<div id="carteScroll" style="overflow:auto;height:76vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10;resize:vertical">';
-  h += '<canvas id="carteCanvas" style="display:block;cursor:pointer"></canvas></div>';
+  h += '<canvas id="carteCanvas" style="display:block;cursor:'+(st.mode==='move'?'grab':'pointer')+'"></canvas></div>';
+  h += '<div id="carteTip" style="position:fixed;display:none;pointer-events:none;z-index:60;max-width:340px;padding:0.3rem 0.5rem;font-size:0.74rem;line-height:1.35;background:#15151c;color:#f0e6cc;border:1px solid #c9a84c;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>';
   h += '<div id="carteStatus" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;font-family:monospace">&nbsp;</div>';
 
   // Liste des routes
@@ -4892,10 +5134,28 @@ function renderCarte(el) {
   drawCarte();
   canvas.addEventListener('click', carteOnClick);
   canvas.addEventListener('mousemove', carteOnHover);
+  canvas.addEventListener('mousedown', carteOnMouseDown);
+  canvas.addEventListener('mouseleave', function(e){ if(!window._carteDrag) carteShowTip(e, ''); });
 }
+// Relâchement du glisser-déposer de la carte, même hors du canvas (v1.0.95).
+window.addEventListener('mouseup', carteOnMouseUp);
+// Raccourcis de la carte (v1.0.95) : D = mode « Déplacer », Ctrl+Z = annuler le dernier
+// déplacement ; inactifs hors de la section Carte, dans un champ de saisie ou une fenêtre.
+document.addEventListener('keydown', function(e) {
+  if (currentSection!=='carte' || _gsearchOpen) return;
+  var ov=document.getElementById('modalOverlay'); if (ov && !ov.classList.contains('hidden')) return;
+  var t=e.target, tag=t&&t.tagName; if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable)) return;
+  if ((e.ctrlKey||e.metaKey) && !e.shiftKey && !e.altKey && (e.key==='z'||e.key==='Z')) { e.preventDefault(); carteUndoMove(); }
+  else if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key==='d'||e.key==='D')) { e.preventDefault(); carteToggleMoveMode(); }
+});
 
 function carteHintText() {
   var st = window._carteState;
+  if (st.mode==='move') {
+    return '✥ Mode déplacement : glissez une ville ou un lieu, dans sa case ou vers une autre case (la case, la région et la province de la fiche suivent). '
+      + 'Clic simple : ouvre la fiche (Position X/Z en mètres). Ctrl+Z ou « Annuler » : dernier déplacement'
+      + (st.moveUndo.length ? ' ('+st.moveUndo.length+' annulable'+(st.moveUndo.length>1?'s':'')+')' : '') + '. Touche D : quitter le mode.';
+  }
   if (st.mode==='route') {
     return st.routeFrom
       ? '🛣️ Route : départ « '+st.routeFrom+' » choisi — cliquez la cellule d\'arrivée.'
@@ -4965,7 +5225,7 @@ function drawCarte() {
   if (fl.routes) (db.routes||[]).forEach(function(r){
     if (st.selectedRouteId && r.id===st.selectedRouteId) return;
     var ids=(r.waypoints&&r.waypoints.length>=2)?r.waypoints:[r.from_place,r.to_place];
-    var pts=ids.map(carteCellCenter).filter(Boolean);
+    var pts=carteRoutePoints(r, ids, px);
     if(pts.length<2) return;
     var d=routeTypeDef(r.type);
     ctx.strokeStyle=d.color; ctx.lineWidth=Math.max(2,px*0.14); ctx.lineCap='round'; ctx.lineJoin='round';
@@ -5004,41 +5264,66 @@ function drawCarte() {
   // Lieux remarquables (couche optionnelle) : marqueur cerclé d'or, coin bas-gauche.
   // Plusieurs lieux dans la case (v1.0.77, ex. temple et entrée de raid) : un nom par
   // ligne sous le marqueur du premier.
+  // v1.0.95 : un lieu à position manuelle (ou en cours de glisser-déposer) est dessiné
+  // seul, à sa position, avec son nom ; les autres gardent le marqueur commun.
+  // _carteHits : marqueurs repérables sous la souris (mode « Déplacer », info-bulle).
+  _carteHits = [];
   if (fl.lieux) Object.keys(_carteGeo.lieuByCell).forEach(function(cellId){
     var ctr=carteCellCenter(cellId); if(!ctr) return;
-    var ls=_carteGeo.lieuByCell[cellId], l=ls[0], d=placeTypeDef(l.type);
-    var r=Math.max(3,px*0.2), lx=ctr.x-px*0.18, ly=ctr.y+px*0.18;
-    ctx.fillStyle=d.color||'#c9a96e'; ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(1,px*0.06);
-    drawCartePlaceShape(ctx, d.shape||'diamond', lx, ly, r);
-    if (px>=26) {
-      var fsz=Math.floor(px*0.22);
+    var all=_carteGeo.lieuByCell[cellId], r=Math.max(3,px*0.2), fsz=Math.floor(px*0.22);
+    function label(names, x, y){
+      if (px<26) return;
       ctx.font='italic '+fsz+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillStyle='#f0d890'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
-      ls.forEach(function(li, k){
-        var ty=ly+r+1+k*(fsz+2);
-        ctx.strokeText(li.name||'', lx, ty); ctx.fillText(li.name||'', lx, ty);
-      });
+      names.forEach(function(nm, k){ var ty=y+r+1+k*(fsz+2); ctx.strokeText(nm, x, ty); ctx.fillText(nm, x, ty); });
     }
+    var ls=all.filter(function(li){ return !cartePlaceIsFree(li); });
+    if (ls.length) {
+      var l=ls[0], d=placeTypeDef(l.type), p=cartePlacePixel(l, 'lieux', px);
+      ctx.fillStyle=d.color||'#c9a96e'; ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(1,px*0.06);
+      drawCartePlaceShape(ctx, d.shape||'diamond', p.x, p.y, r);
+      label(ls.map(function(li){ return li.name||''; }), p.x, p.y);
+      _carteHits.push({ kind:'lieux', rec:l, x:p.x, y:p.y, r:r });
+    }
+    all.filter(cartePlaceIsFree).forEach(function(li){
+      var d=placeTypeDef(li.type), p=cartePlacePixel(li, 'lieux', px); if(!p) return;
+      ctx.fillStyle=d.color||'#c9a96e'; ctx.strokeStyle='#ffd700'; ctx.lineWidth=Math.max(1,px*0.06);
+      drawCartePlaceShape(ctx, d.shape||'diamond', p.x, p.y, r);
+      label([li.name||''], p.x, p.y);
+      _carteHits.push({ kind:'lieux', rec:li, x:p.x, y:p.y, r:r });
+    });
   });
 
   // Villes (couche optionnelle) : couleur/forme du type, taille selon le palier.
   // Les hameaux n'apparaissent qu'à partir d'un certain zoom (CARTE_TIER_MIN_ZOOM) :
   // les villes du lore sont grandes, les hameaux ne servent qu'en vue rapprochée.
   var TIER_RADIUS={major:0.3, town:0.22, hamlet:0.14, poi:0.18};
+  // v1.0.95 : chaque ville est dessinée à sa position (manuelle, sinon centre de la case) ;
+  // dans une case à plusieurs villes, la plus importante est dessinée en dernier (dessus).
   if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
-    var ctr=carteCellCenter(cellId); if(!ctr) return;
-    var v0=_carteGeo.villeByCell[cellId][0], d=placeTypeDef(v0.type), tier=d.tier||'town';
-    if (st.zoom < (CARTE_TIER_MIN_ZOOM[tier]||1)) return;
-    var r=Math.max(tier==='hamlet'?2:3, px*(TIER_RADIUS[tier]||0.22));
-    ctx.fillStyle=d.color||'#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
-    drawCartePlaceShape(ctx, d.shape||'circle', ctr.x, ctr.y, r);
-    if (px>=(tier==='major'?16:tier==='town'?26:36)) {
-      var nm=v0.name||'';
-      ctx.font='bold '+Math.floor(px*0.26)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-      ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
-      ctx.strokeText(nm, ctr.x, ctr.y+r+1); ctx.fillText(nm, ctr.x, ctr.y+r+1);
-    }
+    _carteGeo.villeByCell[cellId].slice().reverse().forEach(function(v0){
+      var ctr=cartePlacePixel(v0, 'villes', px); if(!ctr) return;
+      var d=placeTypeDef(v0.type), tier=d.tier||'town';
+      if (st.zoom < (CARTE_TIER_MIN_ZOOM[tier]||1)) return;
+      var r=Math.max(tier==='hamlet'?2:3, px*(TIER_RADIUS[tier]||0.22));
+      ctx.fillStyle=d.color||'#ffd700'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=Math.max(1,px*0.05);
+      drawCartePlaceShape(ctx, d.shape||'circle', ctr.x, ctr.y, r);
+      if (px>=(tier==='major'?16:tier==='town'?26:36)) {
+        var nm=v0.name||'';
+        ctx.font='bold '+Math.floor(px*0.26)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
+        ctx.strokeText(nm, ctr.x, ctr.y+r+1); ctx.fillText(nm, ctr.x, ctr.y+r+1);
+      }
+      _carteHits.push({ kind:'villes', rec:v0, x:ctr.x, y:ctr.y, r:r });
+    });
   });
+  // Fiche en cours de glisser-déposer : anneau doré et repère de la case visée.
+  var dr=window._carteDrag;
+  if (dr && dr.moved) {
+    var tgt=cartePixelToPlacement(dr.x, dr.y), tc=tgt?carteCellCenter(tgt.cell):null;
+    if (tc) { ctx.strokeStyle='#c9a84c'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.strokeRect(tc.x-px/2+1,tc.y-px/2+1,px-2,px-2); ctx.setLineDash([]); }
+    ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(dr.x, dr.y, Math.max(8, px*0.3), 0, Math.PI*2); ctx.stroke();
+  }
 
   // Noms de cellules (v1.0.77) : un nom par groupe de cellules qui le portent.
   if (px >= 6) drawCarteCellNames(ctx, px);
@@ -5055,7 +5340,7 @@ function drawCarte() {
   var sel = st.selectedRouteId ? (db.routes||[]).find(function(r){ return r.id===st.selectedRouteId; }) : null;
   if (sel) {
     var sIds=(sel.waypoints&&sel.waypoints.length>=2)?sel.waypoints:[sel.from_place,sel.to_place];
-    var sPts=sIds.map(carteCellCenter).filter(Boolean);
+    var sPts=carteRoutePoints(sel, sIds, px);
     if (sPts.length>=2) {
       var w=Math.max(3,px*0.2);
       ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
@@ -5197,7 +5482,25 @@ function carteEventToCell(e) {
   var lon=_carteGeo.minLon+col, lat=_carteGeo.maxLat-row;
   return _carteGeo.byKey[lat+','+lon]||null;
 }
+/// Survol de la carte : barre d'état (case, région, villes, lieux), info-bulle de la
+/// ville / du lieu sous la souris (nom, case, position en m) et, pendant un
+/// glisser-déposer (v1.0.95), suivi de la souris avec la case et la position visées.
+/// Effet de bord : DOM (#carteStatus, #carteTip), window._carteDrag, redessin.
 function carteOnHover(e) {
+  var dr=window._carteDrag;
+  if (dr) {
+    var pt=carteEventPoint(e);
+    dr.x=pt.x+dr.dx; dr.y=pt.y+dr.dy;
+    if (!dr.moved && Math.abs(pt.x-dr.x0)+Math.abs(pt.y-dr.y0)>3) dr.moved=true;
+    if (dr.moved) {
+      drawCarte();
+      var t=cartePixelToPlacement(dr.x, dr.y);
+      carteShowTip(e, '<b>'+esc(dr.rec.name||dr.rec.id)+'</b><br>'+(t ? '→ '+esc(t.cell)+' — X '+carteFmtM(t.xm)+' (est) · Z '+carteFmtM(t.zm)+' (sud)' : 'hors de la carte'));
+    }
+    return;
+  }
+  var hit=carteHitPlace(e);
+  carteShowTip(e, hit ? carteTipHTML(hit.kind, hit.rec) : '');
   var c=carteEventToCell(e); var s=document.getElementById('carteStatus'); if(!s) return;
   if(!c){ s.innerHTML='&nbsp;'; return; }
   var vs=(_carteGeo.villeByCell[c.id]||[]).map(function(v){return v.name+(v.type?' ('+placeTypeLabel(v.type)+')':'');});
@@ -5212,6 +5515,7 @@ function carteOnHover(e) {
 function carteOnClick(e) {
   var c=carteEventToCell(e); if(!c) return;
   var st=window._carteState;
+  if (st.mode==='move') return; // v1.0.95 : géré par carteOnMouseDown / carteOnMouseUp
   if (st.mode==='route') {
     if(!st.routeFrom){ st.routeFrom=c.id; document.getElementById('carteHint').innerHTML=carteHintText(); drawCarte(); }
     else { var from=st.routeFrom; st.routeFrom=null; openRouteForm(from, c.id); }
@@ -5256,8 +5560,9 @@ function openCellEditor(cellId) {
   var rgOpts='<option value="">— Aucune région —</option>'+(db.regions||[]).filter(function(rg){return rg.type!=='province';}).map(function(rg){return '<option value="'+esc(rg.id)+'"'+(c.region_id===rg.id?' selected':'')+'>'+esc(rg.name)+'</option>';}).join('');
   // Provinces (v1.0.92) : fiches de type "province" ; le libellé rappelle la région parente.
   var pvOpts='<option value="">— Aucune (cœur de la région) —</option>'+(db.regions||[]).filter(function(rg){return rg.type==='province';}).map(function(rg){var par=(db.regions||[]).find(function(x){return x.id===rg.parent_region;});return '<option value="'+esc(rg.id)+'"'+(c.province===rg.id?' selected':'')+'>'+esc(rg.name)+(par?' ('+esc(par.name)+')':'')+'</option>';}).join('');
-  var cx=curVille&&curVille.coord_x!=null?curVille.coord_x:'';
-  var cy=curVille&&curVille.coord_y!=null?curVille.coord_y:'';
+  // Position manuelle de la ville (v1.0.95, m depuis le centre de la case) ; vide = automatique.
+  var cx=placeHasPosition(curVille)?curVille.position_x_m:'';
+  var cy=placeHasPosition(curVille)?curVille.position_z_m:'';
 
   document.getElementById('modalTitle').textContent='Cellule '+cellId+(carteCellName(c)?' — '+carteCellName(c):'');
   document.getElementById('modalBody').innerHTML=
@@ -5274,9 +5579,9 @@ function openCellEditor(cellId) {
     '<label class="form-label">Ville sur cette cellule</label>'+
     '<select class="form-select" id="cell_ville">'+villeOpts+'</select>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem">'+
-    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position X</label><input class="form-input" id="cell_ville_x" type="number" value="'+cx+'" placeholder="coord. X"></div>'+
-    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position Y</label><input class="form-input" id="cell_ville_y" type="number" value="'+cy+'" placeholder="coord. Y"></div></div>'+
-    '<div style="font-size:0.66rem;color:var(--text-dim);margin-top:0.3rem">La ville choisie sera rattachée à cette cellule (ville.cell). X/Y = position fine optionnelle.</div></div>'+
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position X (m, vers l\'est)</label><input class="form-input" id="cell_ville_x" type="number" step="1" value="'+cx+'" placeholder="auto"></div>'+
+    '<div><label style="font-size:0.7rem;color:var(--text-dim)">Position Z (m, vers le sud)</label><input class="form-input" id="cell_ville_y" type="number" step="1" value="'+cy+'" placeholder="auto"></div></div>'+
+    '<div style="font-size:0.66rem;color:var(--text-dim);margin-top:0.3rem">La ville choisie sera rattachée à cette cellule (ville.cell). Position = mètres depuis le centre de la case (±'+CARTE_POS_MAX_M+' m) ; vide = automatique.</div></div>'+
     '<div class="form-group"><label class="form-label">Points importants</label>'+
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">'+
     '<input type="text" id="poi_name" placeholder="Nom du point…" style="flex:1">'+
@@ -5305,9 +5610,12 @@ function renderCartePoiList() {
       '<button class="note-del-btn" onclick="window._cartePoi.splice('+i+',1);renderCartePoiList()">✕</button></div>';
   }).join('');
 }
+// Enregistre l'éditeur de cellule. v1.0.95 : la Position X/Z de la ville rattachée est
+// sa position manuelle (m), validée par readPositionInputs avant toute modification.
 function saveCellEdit() {
   var cellId=window._carteEditCellId;
   var c=(db.cells||[]).find(function(x){return x.id===cellId;}); if(!c) return;
+  var cpos=readPositionInputs('cell_ville_x','cell_ville_y'); if(!cpos.ok){toast(cpos.msg);return;}
   c.terrain_type=document.getElementById('cell_terrain').value;
   c.region_id=document.getElementById('cell_region').value;
   // Province : doit appartenir à la région choisie, sinon elle est vidée (avec avertissement).
@@ -5326,8 +5634,7 @@ function saveCellEdit() {
   if(chosenId){
     var v=(db.villes||[]).find(function(x){return x.id===chosenId;});
     if(v){ v.cell=cellId;
-      var vx=document.getElementById('cell_ville_x').value, vy=document.getElementById('cell_ville_y').value;
-      v.coord_x = vx!==''?parseFloat(vx):null; v.coord_y = vy!==''?parseFloat(vy):null;
+      v.position_x_m = cpos.x; v.position_z_m = cpos.z;
     }
   }
   closeModal(); showSection('carte'); toast('Cellule '+cellId+' enregistrée');

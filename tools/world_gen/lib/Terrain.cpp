@@ -298,7 +298,10 @@ namespace tools::world_gen
 		for (const PoiDef& p : m.pois)
 		{
 			const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ p.n, p.e });
-			const double d = std::hypot(x - (c.x + p.offsetX), z - (c.z + p.offsetZ));
+			// Position manuelle (v1.0.95) prioritaire sur le décalage v1.0.72.
+			const double px = c.x + (p.hasPosition ? p.positionXM : p.offsetX);
+			const double pz = c.z + (p.hasPosition ? p.positionZM : p.offsetZ);
+			const double d = std::hypot(x - px, z - pz);
 			if (p.kind == "volcan")
 			{
 				// Mer de lave (T17 p16, T21 p36, T22 p22) : disque au bord ondulé.
@@ -311,7 +314,10 @@ namespace tools::world_gen
 		for (const CityDef& c : m.cities)
 		{
 			const engine::world::cells::CellPoint cc = engine::world::cells::CellCenter({ c.n, c.e });
-			clear = std::min(clear, std::hypot(x - cc.x, z - cc.z));
+			// Ville posée à la main (v1.0.95) : distance à sa position ; sinon au centre de case.
+			const double cx = cc.x + (c.hasPosition ? c.positionXM : 0.0);
+			const double cz = cc.z + (c.hasPosition ? c.positionZM : 0.0);
+			clear = std::min(clear, std::hypot(x - cx, z - cz));
 		}
 		// Fleuves de lave (T16 p16 : canyon de falaises rouges, fleuves et cascades
 		// de lave jaune-orange) : lignes de niveau d'un bruit à grande échelle, dans
@@ -540,6 +546,17 @@ namespace tools::world_gen
 		{
 			c.radiusM = CityRadius(c.kind, c.procedural);
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ c.n, c.e });
+			// Position posée à la main (v1.0.95, « tu places, le jeu suit ») : la ville est
+			// posée exactement là, sans recherche de site ; son plateau (même calcul que
+			// ci-dessous) aplanit le relief autour et le relève au-dessus de la mer.
+			if (c.hasPosition)
+			{
+				c.center = { ctr.x + c.positionXM, ctr.z + c.positionZM };
+				if (MacroHeight(m, c.center.x, c.center.z) < sea + 6.0)
+					g.Warn("position manuelle de " + c.id + " dans l'eau : plateau releve au-dessus de la mer");
+				c.plateauY = std::max(MeanMacroHeight(m, c.center, c.radiusM + 6.0, 12.0), sea + 5.0);
+				continue;
+			}
 			Vec2 best{ ctr.x, ctr.z };
 			double bestScore = 1e18;
 			// Ville de départ : ancrée au centre de sa case (point d'arrivée au boot,
@@ -577,6 +594,13 @@ namespace tools::world_gen
 		for (PoiDef& p : g.pois)
 		{
 			const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ p.n, p.e });
+			// Position posée à la main (v1.0.95) : exactement là, jamais écartée de la
+			// ville de la case ni des autres POI (les POI automatiques s'écartent d'elle).
+			if (p.hasPosition)
+			{
+				p.center = { ctr.x + p.positionXM, ctr.z + p.positionZM };
+				continue;
+			}
 			p.center = { ctr.x + p.offsetX, ctr.z + p.offsetZ }; // décalage v1.0.72 (0 par défaut)
 			// Hors du plateau (et de son raccord) d'une ville de la même case.
 			for (const CityDef& c : g.cities)

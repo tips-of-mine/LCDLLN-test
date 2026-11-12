@@ -2197,6 +2197,125 @@ namespace
 		CarveLake(flat, Grid<float>{}, Grid<uint8_t>{}, lake, 39.0);
 		Check(std::fabs(SampleBilinear(flat, 500.0, 500.0) - 39.0) < 1e-9, "EAU.5 : fond du lac jamais sous la mer");
 	}
+
+	/// v1.0.95 : placement manuel des villes et des lieux (« tu places, le jeu suit »).
+	///  1. Master du dépôt (aucune position) : sites identiques à ceux du générateur
+	///     v1.0.94, relevés avant la modification (ville cherchée, ville ancrée sur un
+	///     relief, hameau de départ, POI écartés, POI décalé).
+	///  2. Master temporaire où Altenberg et le temple de Methraton ont une `position` :
+	///     posés exactement là (tolérance 1 m), plateau aplani autour ; toutes les
+	///     autres villes et les POI des autres cases sont inchangés.
+	///  3. Positions refusées : hors de la case (> 4300 m), ville ancrée sur un relief.
+	/// Effet de bord : écrit puis efface un dossier temporaire (master modifié).
+	void TestPlacementManuelV1095()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		auto near = [](Vec2 a, double x, double z, double tol) { return std::fabs(a.x - x) <= tol && std::fabs(a.z - z) <= tol; };
+
+		// 1. Sans position : comportement inchangé.
+		GlobalWorld g0;
+		std::string err;
+		const bool ok0 = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
+		if (!ok0) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok0, "placement v1.0.95 : master charge");
+		if (!ok0) return;
+		bool none = true;
+		for (const CityDef& c : g0.master.cities) none = none && !c.hasPosition;
+		for (const PoiDef& p : g0.master.pois) none = none && !p.hasPosition;
+		Check(none, "placement v1.0.95 : aucune position manuelle dans le master (aucune ville deplacee)");
+		BuildMacroTerrain(g0);
+		const CityDef* lhynn = g0.FindCity("ville_lhynn");
+		const CityDef* alt0 = g0.FindCity("ville_altenberg");
+		const CityDef* ver = g0.FindCity("town_0119");
+		const CityDef* orh = g0.FindCity("hameau_dawnmere");
+		Check(lhynn && near(lhynn->center, -99750.0, -10250.0, 1e-4) && std::fabs(lhynn->plateauY - 55.419153) < 1e-4,
+			"placement v1.0.95 : sans position, Lhynn au site choisi en v1.0.94");
+		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 63.038415) < 1e-4,
+			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94");
+		Check(ver && near(ver->center, -150000.0, -100000.0, 1e-4), "placement v1.0.95 : Vaerdhun (colline) au centre de sa case");
+		Check(orh && near(orh->center, -110000.0, -50000.0, 1e-4), "placement v1.0.95 : Orhendal (depart) au centre de sa case");
+		const PoiDef* temple0 = nullptr;
+		bool poisRef = true;
+		for (const PoiDef& p : g0.pois)
+		{
+			if (p.id == "poi_temple_methraton") { temple0 = &p; poisRef = poisRef && near(p.center, -100099.310750, -9900.689250, 1e-4); }
+			if (p.id == "poi_seuil_lhynn") poisRef = poisRef && near(p.center, -100099.310750, -10599.310750, 1e-4);
+			if (p.id == "poi_sanctuaire_des_brisants") poisRef = poisRef && near(p.center, -163200.0, -100700.0, 1e-4);
+		}
+		Check(temple0 && poisRef, "placement v1.0.95 : sans position, POI ecartes ou decales comme en v1.0.94");
+
+		// 2. Master temporaire avec deux positions manuelles.
+		const std::string text = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "world/royaumes/world_master.json");
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_placement_v1095";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		// Écrit `content` comme master royaumes sous tmp/<sub> et le charge dans \p gw.
+		auto loadWith = [&](const std::string& sub, const std::string& content, GlobalWorld& gw, std::string& e) {
+			const fs::path dir = tmp / sub / "world" / "royaumes";
+			fs::create_directories(dir, ec);
+			{ std::ofstream f(dir / "world_master.json", std::ios::binary); f << content; }
+			return LoadWorldMaster((tmp / sub).string(), "royaumes", gw.master, e);
+		};
+		// Insère `"position": {…}` juste après l'identifiant de l'entrée \p id.
+		auto withPosition = [](std::string t, const std::string& id, const std::string& pos) {
+			const std::string key = "\"id\": \"" + id + "\",";
+			const size_t at = t.find(key);
+			if (at != std::string::npos) t.insert(at + key.size(), " \"position\": " + pos + ",");
+			return t;
+		};
+		std::string moved = withPosition(text, "ville_altenberg", "{ \"x_m\": 1234.5, \"z_m\": -2100 }");
+		moved = withPosition(moved, "poi_temple_methraton", "{ \"x_m\": -3000, \"z_m\": 2500 }");
+		moved = withPosition(moved, "ville_lhynn", "null");
+		GlobalWorld g;
+		const bool ok = loadWith("a", moved, g, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "placement v1.0.95 : master avec positions charge (position null admise)");
+		if (ok)
+		{
+			BuildMacroTerrain(g);
+			const CityDef* alt = g.FindCity("ville_altenberg");
+			Check(alt && alt->hasPosition && near(alt->center, -120000.0 + 1234.5, -50000.0 - 2100.0, 1.0),
+				"placement v1.0.95 : Altenberg posee a sa position manuelle (1 m)");
+			const CityDef* lh = g.FindCity("ville_lhynn");
+			Check(lh && !lh->hasPosition && near(lh->center, -99750.0, -10250.0, 1e-4), "placement v1.0.95 : position null = site automatique");
+			const PoiDef* temple = nullptr;
+			for (const PoiDef& p : g.pois) if (p.id == "poi_temple_methraton") temple = &p;
+			Check(temple && near(temple->center, -100000.0 - 3000.0, -10000.0 + 2500.0, 1.0),
+				"placement v1.0.95 : temple de Methraton pose a sa position manuelle (1 m)");
+			// Autres villes et POI des autres cases : exactement comme sans position.
+			bool same = g.cities.size() == g0.cities.size() && g.pois.size() == g0.pois.size();
+			for (size_t k = 0; same && k < g.cities.size(); ++k)
+				if (g.cities[k].id != "ville_altenberg")
+					same = near(g.cities[k].center, g0.cities[k].center.x, g0.cities[k].center.z, 0.0) && g.cities[k].plateauY == g0.cities[k].plateauY;
+			for (size_t k = 0; same && k < g.pois.size(); ++k)
+				if (g.pois[k].cell != "N005_W012" && g.pois[k].cell != "N001_W010")
+					same = near(g.pois[k].center, g0.pois[k].center.x, g0.pois[k].center.z, 0.0);
+			Check(same, "placement v1.0.95 : autres villes et POI des autres cases inchanges");
+			// Cellule d'Altenberg : plateau aplani autour de la position manuelle.
+			if (alt)
+			{
+				World w;
+				InitCell(w, g, { alt->n, alt->e });
+				BuildPlaces(w);
+				BuildCellTerrain(w);
+				FlattenSettlements(w);
+				const double h = w.HeightAt(alt->center);
+				const int i = w.urban.IndexX(alt->center.x), j = w.urban.IndexZ(alt->center.z);
+				Check(std::fabs(h - alt->plateauY) < 0.5 && w.urban.InBounds(i, j) && w.urban.At(i, j) == 1,
+					"placement v1.0.95 : plateau urbain aplani a la position manuelle");
+			}
+		}
+
+		// 3. Positions refusées.
+		GlobalWorld gBad;
+		std::string e1, e2;
+		const bool out = loadWith("b", withPosition(text, "ville_altenberg", "{ \"x_m\": 4400, \"z_m\": 0 }"), gBad, e1);
+		Check(!out && e1.find("hors de la case") != std::string::npos, "placement v1.0.95 : position hors de la case refusee (> 4300 m)");
+		const bool relief = loadWith("c", withPosition(text, "town_0119", "{ \"x_m\": 500, \"z_m\": 500 }"), gBad, e2);
+		Check(!relief && e2.find("relief") != std::string::npos, "placement v1.0.95 : ville ancree sur un relief non deplacable");
+		fs::remove_all(tmp, ec);
+	}
 }
 
 int main()
@@ -2225,6 +2344,7 @@ int main()
 	TestCellulesLieuxV1088();
 	TestLieuxV1089();
 	TestCellulesLieuxV1091();
+	TestPlacementManuelV1095();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

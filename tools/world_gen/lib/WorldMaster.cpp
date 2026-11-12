@@ -48,6 +48,36 @@ namespace tools::world_gen
 					if (e.type == JsonType::String) out.push_back(e.stringValue);
 			return out;
 		}
+
+		/// Écart maximal (m, par axe) d'une position manuelle depuis le centre de la
+		/// case (v1.0.95) : comme les POI décalés (v1.0.72), le plateau aplani reste à
+		/// distance du bord (le plus grand, celui d'une capitale, fait ~300 m de rayon).
+		constexpr double kMaxPositionM = 4300.0;
+
+		/// Lit la position posée à la main (v1.0.95) d'une ville ou d'un POI : clé
+		/// `position` = `{ "x_m": <est>, "z_m": <sud> }`, en mètres depuis le centre
+		/// de la case. Absente ou null : \p has = false (comportement historique).
+		/// \param what  libellé de l'entrée pour le message d'erreur (« ville 'id' »).
+		/// \return false + \p err si la clé est mal formée ou hors de la case.
+		bool ReadManualPosition(const JsonValue& o, const std::string& what, bool& has, double& x, double& z, std::string& err)
+		{
+			has = false; x = 0.0; z = 0.0;
+			const JsonValue* v = FindObjectMember(o, "position");
+			if (!v || v->type == JsonType::Null) return true;
+			const JsonValue* jx = v->type == JsonType::Object ? FindObjectMember(*v, "x_m") : nullptr;
+			const JsonValue* jz = v->type == JsonType::Object ? FindObjectMember(*v, "z_m") : nullptr;
+			if (!jx || !jz || jx->type != JsonType::Number || jz->type != JsonType::Number)
+			{
+				err = "master: position invalide pour " + what + " (attendu { \"x_m\": nombre, \"z_m\": nombre })"; return false;
+			}
+			x = jx->numberValue; z = jz->numberValue;
+			if (!std::isfinite(x) || !std::isfinite(z) || std::fabs(x) > kMaxPositionM || std::fabs(z) > kMaxPositionM)
+			{
+				err = "master: position hors de la case pour " + what + " (|x_m|, |z_m| <= 4300 m depuis le centre)"; return false;
+			}
+			has = true;
+			return true;
+		}
 	}
 
 	/// Décode "N003_W009" → (n=3, e=-9). Renvoie false si le format est invalide.
@@ -174,6 +204,7 @@ namespace tools::world_gen
 			if (!kKinds.count(d.kind)) { err = "master: kind inconnu pour '" + d.id + "' : " + d.kind; return false; }
 			if (!kRaces.count(d.race)) { err = "master: race inconnue pour '" + d.id + "' : " + d.race; return false; }
 			if (!kStates.count(d.state)) { err = "master: state inconnu pour '" + d.id + "' : " + d.state; return false; }
+			if (!ReadManualPosition(c, "ville '" + d.id + "'", d.hasPosition, d.positionXM, d.positionZM, err)) return false;
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des
@@ -207,6 +238,7 @@ namespace tools::world_gen
 				}
 				if (d.id.empty() || !ids.insert(d.id).second) { err = "master: id de POI vide ou duplique '" + d.id + "'"; return false; }
 				if (!ParseCellId(d.cell, d.n, d.e)) { err = "master: cellule invalide pour POI '" + d.id + "'"; return false; }
+				if (!ReadManualPosition(p, "POI '" + d.id + "'", d.hasPosition, d.positionXM, d.positionZM, err)) return false;
 				// Lien de portail « <monde>:<id> » : monde connu, différent du monde courant.
 				if (!d.link.empty())
 				{
@@ -346,6 +378,12 @@ namespace tools::world_gen
 				if (d.id.empty() || !reliefIds.insert(d.id).second || city == out.cities.end() || !anchored.insert(d.cityId).second)
 				{
 					err = "master: relief invalide '" + d.id + "' (id unique, ville connue, un relief par ville)"; return false;
+				}
+				// Le relief est dessiné au centre de la case de sa ville : une ville perchée
+				// ou au fond d'une crevasse ne peut pas être déplacée à la main (v1.0.95).
+				if (city->hasPosition)
+				{
+					err = "master: ville '" + d.cityId + "' ancree sur le relief '" + d.id + "' : position manuelle interdite"; return false;
 				}
 				d.n = city->n; d.e = city->e;
 				const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ d.n, d.e });

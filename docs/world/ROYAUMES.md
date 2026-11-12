@@ -177,7 +177,10 @@ voisines raccord au mètre près :
    crêtes boisés de l'Île de la Trêve, LORE_BD §16.6).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
-   départ ou ancrée sur un relief) ; lacs du lore (codes `L` forêt avec lac,
+   départ ou ancrée sur un relief ; **position manuelle** `position`
+   `{ "x_m", "z_m" }` depuis la v1.0.95 : mètres depuis le centre de la case,
+   X est, Z sud, au plus 4300 m, ville posée exactement là et plateau aplani
+   autour, recopiée du lore par `tools/lore/sync_positions.py`, LORE_BD §16.24) ; lacs du lore (codes `L` forêt avec lac,
    `l` aride avec lac, `p` plaine avec lac depuis le lore v1.0.52) et lacs manuels.
 3. **Rivières** : descente sur la grille grossière remplie (priority-flood),
    méandres, profil de surface non croissant. **Cours tracés à la main**
@@ -190,6 +193,8 @@ voisines raccord au mètre près :
    `colline` naît au pied de la colline (sans méandre sur le flanc). POI : au centre
    de leur case, ou décalés (`offset_x_m`, `offset_z_m`, v1.0.72) ; plusieurs POI
    d'une même case sont écartés d'un quart de tour autour de la ville de la case.
+   Un POI à `position` manuelle (v1.0.95, même format que les villes) est posé
+   exactement là, sans écartement ; ses `offset_*` sont alors ignorés.
 4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
    simplification RDP (plus d'escalier), méandres ±110 m, lissage ; profil en
    long **global** (pente ≤ 16 %) → chaque cellule aplanit sa portion au même profil.

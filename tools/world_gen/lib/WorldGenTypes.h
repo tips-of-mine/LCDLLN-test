@@ -70,6 +70,15 @@ namespace tools::world_gen
 		/// Lieu PROCÉDURAL (enrichissement de cellule) : vide pour une ville du
 		/// lore, sinon ferme|bucherons|bandits|ruine|mine|hameau.
 		std::string procedural;
+		/// Position posée à la main (v1.0.95, clé `position` du master :
+		/// `{ "x_m": …, "z_m": … }`, recopiée du lore par tools/lore/sync_positions.py) :
+		/// décalage en MÈTRES depuis le CENTRE de la case (X vers l'est, Z vers le sud),
+		/// |x|, |z| ≤ 4300 m. true : la ville est posée exactement là (aucune recherche
+		/// de site, plateau aplani autour) ; false (clé absente ou null) : site choisi
+		/// par le générateur comme avant (centre pour une ville de départ ou ancrée).
+		bool   hasPosition = false;
+		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
+		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -92,6 +101,13 @@ namespace tools::world_gen
 		/// case (clés `offset_x_m`, `offset_z_m`, v1.0.72), ex. un lieu contre la côte
 		/// ouest de la case. 0 = centre de la case (règle historique).
 		double offsetX = 0.0, offsetZ = 0.0;
+		/// Position posée à la main (v1.0.95, clé `position` : `x_m`, `z_m`, mètres
+		/// depuis le centre de la case, X est, Z sud, |x|, |z| ≤ 4300 m). true : le
+		/// lieu est posé exactement là — ni écarté de la ville de la case ni des autres
+		/// POI — et `offset_x_m` / `offset_z_m` sont ignorés ; false : règle historique.
+		bool   hasPosition = false;
+		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
+		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
 	};
 
 	/// Relief local posé à la main (section `reliefs`, v1.0.72), ancré sur le

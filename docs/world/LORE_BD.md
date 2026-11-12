@@ -2941,6 +2941,94 @@ ajouté ni supprimé (lore hors registre, master, `carte_export.json`) ; service
 (`generate_city_services.py`, `validate_city_services.py`, `--check`) ; `world_gen_tests`, `world_places_tests`,
 `start_locations_tests` verts.
 
+### 16.24 Placement manuel des villes et des lieux (v1.0.95)
+
+`[DÉCISION]` du propriétaire (10/11 puis 12/11/2026, lot 23) : « Les villes, petites villes et hameaux ne sont pas
+obligatoirement au milieu des cellules ; je veux les placer moi-même dans l'éditeur, et le jeu doit suivre ces
+positions » (« tu places, le jeu suit »). Ce lot livre l'**outil** : **aucune ville ni aucun lieu n'est déplacé**
+(toutes les positions sont à `null`), le monde généré est identique.
+
+**Unité et format** (les mêmes du lore au générateur) : **mètres depuis le centre de la case** de 10 km, **X vers
+l'est, Z vers le sud** (repère global du master ; le sud est vers le bas de la carte de l'éditeur), au plus
+**±4300 m** par axe (le plateau aplani d'une capitale, ~300 m de rayon, reste dans la case : le générateur ne
+traite une ville que dans la cellule de sa case). Choix : c'est déjà l'unité des décalages de POI (`offset_x_m`,
+v1.0.72) et des massifs, aucune conversion côté jeu ; `null` = comportement actuel (centre de la case ou site
+choisi par le générateur), `0, 0` = exactement au centre. Arrondi au mètre dans l'éditeur.
+
+| Étape | Où | Champ |
+|---|---|---|
+| Lore (source) | `lune-noire-data.json`, fiches `villes` et `lieux` | `position_x_m`, `position_z_m` (`null` par défaut, ajoutés aux 121 villes et 294 lieux) |
+| Master | `world_master.json`, `cities` et `pois` | `"position": { "x_m": …, "z_m": … }` (absente = automatique) |
+| Générateur | `tools/world_gen` (`WorldMaster.cpp`, `Terrain.cpp`) | ville / POI posé exactement là, plateau aplani autour |
+
+Les anciens `coord_x` / `coord_y` des villes (coordonnées de grille héritées de la v18, 7 villes renseignées, lus
+par aucun outil) ne sont **pas** réutilisés : ils restent tels quels, l'éditeur ne les affiche plus.
+
+**Chaîne lore → master → générateur** : aucun script ne recopiait les villes du lore vers le master (les deux sont
+tenus à la main par les PR). Nouveau script `tools/lore/sync_positions.py` (`--check` : nouvelle étape du workflow `lore-city-services.yml`, déclenché aussi par `world_master.json`) :
+le lore est la source ; une position du lore est écrite dans `position` du master (avec la case de la fiche si elle a
+changé), une position `null` retire `position`. Correspondance : ville = même identifiant (116 villes) ; lieu
+`lieu_x` = POI `poi_x`, sinon même nom dans la même case, sinon une petite table (portes des Enfers, lieux du T1,
+temple de Methraton) : 232 POI. 47 fiches sans entrée au master (5 villes, 42 lieux) : une position posée y est
+signalée et ignorée. Refus : position hors de la case, ville ancrée sur un relief (`reliefs` : Vaerdhun, Vharholdt),
+deux fiches pour la même entrée. Édition chirurgicale du master (une ligne `position` après `cell`), contrôle
+qu'aucune autre clé ne change. Le générateur refuse aussi ces cas (`position` hors ±4300 m, ville d'un relief).
+
+**Générateur** : ville à position → centre = centre de la case + position, sans recherche de site (même pour une
+ville de départ), plateau calculé comme avant (relevé au-dessus de la mer, avertissement si la position est dans
+l'eau) ; routes, bâtiments, PNJ, départs (`start_locations.json`) suivent le centre. POI à position → posé exactement
+là, ni écarté de la ville de sa case ni des autres POI (`offset_*` ignorés) ; les POI automatiques s'écartent de lui.
+Lave des Enfers : distance comptée depuis la position.
+
+**Éditeur** (`lune-noire-editor.html` et sa copie identique `-v20`) :
+
+- Carte : chaque ville et chaque lieu à position est dessiné à sa position (un lieu à position a son propre
+  marqueur et son nom ; les autres gardent le marqueur commun de la case) ; les routes rejoignent la ville ou le lieu
+  d'extrémité à sa position ; info-bulle au survol (nom, type, case, position).
+- Mode **« ✥ Déplacer »** (bouton ou touche **D**) : glisser-déposer d'une ville ou d'un lieu, dans sa case ou vers
+  une autre case ; la case visée est encadrée et l'info-bulle donne la case et la position. Vers une autre case : case
+  de la fiche (et `anchor_tile`), région et province reprises de la nouvelle case, ponton du port suivi s'il était
+  dans l'ancienne case ; les routes qui citent la fiche ne sont pas retracées (le message en donne le nombre). Hors
+  carte : refusé. Position ramenée à ±4300 m. Clic simple : ouvre la fiche.
+- **Annuler** (bouton ou **Ctrl+Z**) : dernier déplacement, puis les précédents (pile de 100), case, région,
+  province, position, port compris.
+- Formulaires ville, lieu et éditeur de cellule : champs « Position X (m, est) » et « Position Z (m, sud) », vides =
+  automatique ; refus d'un seul champ rempli ou d'une valeur au-delà de ±4300 m. Cartes des villes et des lieux :
+  « 📐 X … · Z … ». Import JSON de villes : positions gardées. Export : positions gardées (nombre ou `null`), aucun
+  autre champ touché.
+- Fonctions ajoutées ou modifiées documentées (rôle, paramètres, effets de bord), règle de CLAUDE.md.
+
+**Notice : déplacer une ville ou un lieu.**
+
+1. Ouvrir l'éditeur, charger `lune-noire-data.json`, section **Carte** ; zoomer (×4 ou plus conseillé).
+2. Cliquer **✥ Déplacer** (ou touche **D**) ; le curseur devient une main.
+3. Glisser la ville ou le lieu à sa place (dans sa case ou une autre) ; **Ctrl+Z** ou **↶ Annuler** si besoin. Pour
+   une valeur exacte : clic simple sur le marqueur, champs Position X / Z (mètres depuis le centre de la case).
+4. **Exporter** le JSON et le remplacer dans le dépôt (les deux copies `lune-noire-data.json` et `-v20.json`), puis
+   lancer `python3 tools/lore/sync_positions.py` (recopie au master) et régénérer le monde (CI). Dans une case à
+   plusieurs lieux sans position, le marqueur commun déplace le premier ; recommencer pour le suivant.
+
+**Preuve « monde inchangé »** : générateur avant et après (même master, `--cells N003_W009,N001_W010,N010_W016` :
+hameau de départ, Lhynn à site cherché, Sanctuaire des Brisants décalé) : les 34 fichiers écrits sont identiques
+octet pour octet (sha256) ; empreinte des centres et plateaux de toutes les villes, de tous les POI et lacs du
+continent identique. `world_gen_tests` le vérifie aussi sur des sites relevés avant la modification.
+
+**Tests** : `world_gen_tests` (`TestPlacementManuelV1095` : sans position, sites v1.0.94 de Lhynn, Altenberg,
+Vaerdhun, Orhendal et de trois POI ; master temporaire où Altenberg et le temple de Methraton ont une position :
+posés à 1 m près, plateau urbain aplani, autres villes et POI inchangés, `null` admis ; refus au-delà de 4300 m et
+pour une ville de relief), `world_places_tests`, `start_locations_tests` verts. `sync_positions.py` testé sur une
+copie (écriture, `--check`, retour à `null`, refus d'une ville de relief). Éditeur testé avec Playwright (Dys glissée
+dans sa case puis vers N005_W008, région et province suivies, valeurs dans le formulaire et l'export, Calvaire des
+pèlerins glissé puis annulé au bouton, deux Ctrl+Z : export final identique à l'export initial ; aucune erreur
+JavaScript). **Registre** : 1 entrée v1.0.95. **Services** : 121 villes, 1242 PNJ inchangés.
+
+**Limites** : routes du lore (cases) et services non retouchés par un déplacement ; une ville déplacée dans une
+autre case garde ses routes du lore vers l'ancienne case (à reprendre) ; le master n'est mis à jour que par
+`sync_positions.py` (une ville sans position dont la case change dans le lore n'est pas recopiée) ; villes de relief
+non déplaçables ; lieux des Enfers (`carte`) hors de cette carte. Constat hors lot : l'export de l'éditeur perdait
+déjà, avant la v1.0.95, `alternance` / `rule` de 12 arbres de compétences et convertit au chargement quelques
+chaînes en listes (`game_design`, `hydrography`, `regles_transverses`) : à corriger dans un lot dédié.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2955,6 +3043,7 @@ ajouté ni supprimé (lore hors registre, master, `carte_export.json`) ; service
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
+- Placement manuel (v1.0.95) : routes du lore et export des arbres de compétences de l'éditeur (`alternance`, `rule` perdus) à reprendre (16.24).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

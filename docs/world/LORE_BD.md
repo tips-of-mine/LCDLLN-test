@@ -3455,6 +3455,14 @@ N003_E011 (Shezhold), N004_E012, N005_E013, N005_E014, N004_E014 et N006_E014 (H
 Les villes (Horkher, Shezhold) et les lieux de ces cases suivent leur case. Aucune case n'est ouverte ni fermée ;
 le terrain et la carte du jeu ne changent pas.
 
+### 16.31 Derniers îlots de régions et de provinces (v1.0.102)
+
+Recherche automatique des îlots (régions ou provinces coupées du reste) après le §16.30 ; deux cas, tranchés par le
+propriétaire (12/11/2026) :
+- **S009_W008** : case de côte séparée du reste d'Hishtarland par la mer → **Royaume Drach**.
+- **Forêt des Lutins** : S001_E005 à S001_E007 ne touchaient la province qu'en diagonale → **S001_E008** (forêt) entre
+  dans la province, désormais d'un seul tenant.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

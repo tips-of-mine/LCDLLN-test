@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.101",
+    "version": "1.0.102",
     "notes": [
       "v1.0.100 : Éditeur et lore : fiches complètes. Champ niveau_ref {min, max} sur les régions et provinces (21 renseignées d'après les repères déjà inscrits, 8 à null) et sur les raids (5 renseignés d'après leur niveau conseillé, 33 à null) ; champ niveau_par_faction {faction: {min, max}} sur les régions, vide partout (détail par faction à définir) ; champ etapes_struct (étapes ordonnées avec case, ville, lieu ou PNJ) sur les quêtes, texte des étapes conservé, pré-rempli pour 121 quêtes (étapes qui citent exactement une ville, un lieu ou un PNJ) ; type de lieu mine_poi, 8 mines reclassées. Éditeur : calque Niveaux lu dans les fiches (sélecteur de faction), formulaires de région, de raid et de quête (éditeur d'étapes), champs manquants des formulaires de faction, de race et de PNJ, suppression avec compte des références. Test Playwright tools/lore/test_editor_fiches.py. Registre : 6 entrées (LORE_BD §16.29).",
       "v1.0.99 : Éditeur : calques de la carte. Panneau « Calques » groupé (Fond, Lieux, Réseau, Contenu, Secret), état mémorisé dans le navigateur (localStorage, préférences d'affichage seulement) : régions du hors-série (fond et noms), provinces (contour pointillé et nom), niveaux de référence par case (départ > province > région, d'après les repères des notes ; légende en dégradé), densité (villes + lieux + quêtes ancrées), cases jouables (generated_cells lues dans world_master.json par « Charger la carte du jeu »), quêtes ancrées (nombre par case, tracé des étapes au survol), raids (niveau du boss ou de la zone), balises de danger, peuples lointains (flèches de direction et comptoirs), sous-filtres des lieux par type et des villes par taille ; calques secrets désactivés à chaque ouverture : grottes des dragons de Xygga, entrées ophidiennes (cachées du calque des lieux). Info-bulles au survol. Test Playwright tools/lore/test_editor_layers.py. Aucune donnée modifiée. Registre : 1 entrée (LORE_BD §16.28).",
@@ -215308,7 +215308,7 @@
       "id": "S001_E008",
       "name": "cell_S001_E008",
       "region_id": "via_magna",
-      "province": "",
+      "province": "foret_des_lutins",
       "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
@@ -215319,7 +215319,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.102) Ajoutée à la province Forêt des Lutins (propriétaire, 12/11/2026) pour relier S001_E005 à S001_E007 au reste de la province."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -222808,7 +222810,7 @@
     {
       "id": "S009_W008",
       "name": "cell_S009_W008",
-      "region_id": "region_hishtarland",
+      "region_id": "royaume_drach",
       "province": "",
       "terrain_type": "coast",
       "has_lake": false,
@@ -222820,7 +222822,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.102) Rattachée au Royaume Drach (propriétaire, 12/11/2026) : case de côte séparée du reste d'Hishtarland par la mer, sa seule voisine de terre est drach."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -239816,6 +239820,13 @@
           "nom": "Îlots de la Via Magna",
           "decision": "Les cases N003_E011, N004_E012, N005_E013, N005_E014, N004_E014 et N006_E014 (Horkher) passent de la Via Magna aux Territoires orques, région qui les entoure (propriétaire, 12/11/2026 ; LORE_BD §16.30).",
           "version": "1.0.101"
+        },
+        {
+          "collection": "cells",
+          "id": "S009_W008,S001_E008",
+          "nom": "Îlots résiduels",
+          "decision": "S009_W008 passe d'Hishtarland au Royaume Drach ; S001_E008 entre dans la province Forêt des Lutins, qui devient d'un seul tenant (propriétaire, 12/11/2026 ; LORE_BD §16.31).",
+          "version": "1.0.102"
         }
       ]
     },

@@ -3446,6 +3446,15 @@ pour octet, aucune erreur console. Les deux copies passent ce test, `test_editor
 une case explicite l'emporte sur la ville ou le lieu de la même étape ; références orphelines signalées, pas nettoyées ;
 Playwright hors CI.
 
+### 16.30 Îlots de la Via Magna rattachés aux Territoires orques (v1.0.101)
+
+**Décision du propriétaire (12/11/2026)** : six cases qui ne formaient que des îlots de la Via Magna au milieu des
+Territoires orques (cases de route forcées en Via Magna au v1.0.92, §16.21) passent aux **Territoires orques** :
+N003_E011 (Shezhold), N004_E012, N005_E013, N005_E014, N004_E014 et N006_E014 (Horkher).
+
+Les villes (Horkher, Shezhold) et les lieux de ces cases suivent leur case. Aucune case n'est ouverte ni fermée ;
+le terrain et la carte du jeu ne changent pas.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

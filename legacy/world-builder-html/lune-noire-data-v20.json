@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.100",
+    "version": "1.0.101",
     "notes": [
       "v1.0.100 : Éditeur et lore : fiches complètes. Champ niveau_ref {min, max} sur les régions et provinces (21 renseignées d'après les repères déjà inscrits, 8 à null) et sur les raids (5 renseignés d'après leur niveau conseillé, 33 à null) ; champ niveau_par_faction {faction: {min, max}} sur les régions, vide partout (détail par faction à définir) ; champ etapes_struct (étapes ordonnées avec case, ville, lieu ou PNJ) sur les quêtes, texte des étapes conservé, pré-rempli pour 121 quêtes (étapes qui citent exactement une ville, un lieu ou un PNJ) ; type de lieu mine_poi, 8 mines reclassées. Éditeur : calque Niveaux lu dans les fiches (sélecteur de faction), formulaires de région, de raid et de quête (éditeur d'étapes), champs manquants des formulaires de faction, de race et de PNJ, suppression avec compte des références. Test Playwright tools/lore/test_editor_fiches.py. Registre : 6 entrées (LORE_BD §16.29).",
       "v1.0.99 : Éditeur : calques de la carte. Panneau « Calques » groupé (Fond, Lieux, Réseau, Contenu, Secret), état mémorisé dans le navigateur (localStorage, préférences d'affichage seulement) : régions du hors-série (fond et noms), provinces (contour pointillé et nom), niveaux de référence par case (départ > province > région, d'après les repères des notes ; légende en dégradé), densité (villes + lieux + quêtes ancrées), cases jouables (generated_cells lues dans world_master.json par « Charger la carte du jeu »), quêtes ancrées (nombre par case, tracé des étapes au survol), raids (niveau du boss ou de la zone), balises de danger, peuples lointains (flèches de direction et comptoirs), sous-filtres des lieux par type et des villes par taille ; calques secrets désactivés à chaque ouverture : grottes des dragons de Xygga, entrées ophidiennes (cachées du calque des lieux). Info-bulles au survol. Test Playwright tools/lore/test_editor_layers.py. Aucune donnée modifiée. Registre : 1 entrée (LORE_BD §16.28).",
@@ -12549,7 +12549,7 @@
       "position_x_m": null,
       "position_z_m": null,
       "faction_control": "",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "housing_count": null,
       "population": null,
@@ -16765,7 +16765,7 @@
       "position_x_m": null,
       "position_z_m": null,
       "faction_control": "lune_noire",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "housing_count": null,
       "population": null,
@@ -208563,7 +208563,7 @@
     {
       "id": "N006_E014",
       "name": "cell_N006_E014",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -208578,7 +208578,8 @@
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
         "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore.",
-        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209512,7 +209513,7 @@
     {
       "id": "N005_E013",
       "name": "cell_N005_E013",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -209528,7 +209529,8 @@
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
         "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
         "[GD] (v1.0.88) Relais incendié de la Via Magna (lieu_relais_incendie_via_magna, POI poi_relais_incendie_via_magna, ruine, 15-18) : première occupation de cette case jouable vide (LORE_BD §16.17).",
-        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209536,7 +209538,7 @@
     {
       "id": "N005_E014",
       "name": "cell_N005_E014",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -209552,7 +209554,8 @@
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
         "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
         "[GD] (v1.0.88) Moulin à vent pillé (lieu_moulin_a_vent_pille, POI poi_moulin_a_vent_pille, ruine, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.17).",
-        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -210489,7 +210492,7 @@
     {
       "id": "N004_E012",
       "name": "cell_N004_E012",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -210504,7 +210507,8 @@
       "notes": [
         "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
         "[GD] (v1.0.88) Barrage de péage de la Lune Noire (lieu_barrage_de_peage_lune_noire, POI poi_barrage_de_peage_lune_noire, camp, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.17).",
-        "[INFÉRÉ] (v1.0.90) Rattachée à la région « Via Magna » (via_magna) ; la case n'avait aucune région (LORE_BD §16.19)."
+        "[INFÉRÉ] (v1.0.90) Rattachée à la région « Via Magna » (via_magna) ; la case n'avait aucune région (LORE_BD §16.19).",
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -210539,7 +210543,7 @@
     {
       "id": "N004_E014",
       "name": "cell_N004_E014",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -210557,7 +210561,8 @@
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
         "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
         "[GD] (v1.0.88) Grenier à blé réquisitionné (lieu_grenier_a_ble_requisitionne, POI poi_grenier_a_ble_requisitionne, camp, 18-22) : première occupation de cette case jouable vide (LORE_BD §16.17).",
-        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Via Magna (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -211465,7 +211470,7 @@
     {
       "id": "N003_E011",
       "name": "cell_N003_E011",
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "terrain_type": "plain",
       "has_lake": false,
@@ -211477,7 +211482,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.101) Rattachée aux Territoires orques (propriétaire, 12/11/2026) : ne formait qu'un îlot de la Via Magna au milieu des Territoires orques (case de route forcée en v1.0.92)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -239802,6 +239809,13 @@
           "nom": "Suppression avec compte des références",
           "decision": "Avant de supprimer une fiche, l'éditeur affiche dans sa boîte HTML le nombre de références à son identifiant ailleurs dans le fichier (par collection) ; Annuler ne change rien. Les références ne sont pas nettoyées (LORE_BD §16.29).",
           "version": "1.0.100"
+        },
+        {
+          "collection": "cells",
+          "id": "N003_E011,N004_E012,N005_E013,N005_E014,N004_E014,N006_E014",
+          "nom": "Îlots de la Via Magna",
+          "decision": "Les cases N003_E011, N004_E012, N005_E013, N005_E014, N004_E014 et N006_E014 (Horkher) passent de la Via Magna aux Territoires orques, région qui les entoure (propriétaire, 12/11/2026 ; LORE_BD §16.30).",
+          "version": "1.0.101"
         }
       ]
     },
@@ -264653,7 +264667,7 @@
       "cell": "N004_E012",
       "position_x_m": null,
       "position_z_m": null,
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "zone_id": "",
       "faction_control": "",
@@ -264740,7 +264754,7 @@
       "cell": "N005_E013",
       "position_x_m": null,
       "position_z_m": null,
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "zone_id": "",
       "faction_control": "",
@@ -265091,7 +265105,7 @@
       "cell": "N005_E014",
       "position_x_m": null,
       "position_z_m": null,
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "zone_id": "",
       "faction_control": "",
@@ -265443,7 +265457,7 @@
       "cell": "N004_E014",
       "position_x_m": null,
       "position_z_m": null,
-      "region_id": "via_magna",
+      "region_id": "territoires_orcques",
       "province": "",
       "zone_id": "",
       "faction_control": "",

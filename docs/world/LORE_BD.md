@@ -3159,6 +3159,90 @@ navigable la plus proche, pas forcément la plus logique ; le mode n'édite pas 
 (formulaires existants à reprendre) ; routes du lore non lues par le générateur ; l'ancien mode « Créer une
 route » (deux clics, ligne droite) est gardé.
 
+### 16.27 Vérification complète de la sauvegarde de l'éditeur (v1.0.98)
+
+Demande du propriétaire (12/11/2026) : « Assure-toi que l'export (sauvegarde) AU COMPLET fonctionne correctement. »
+Outil seulement : **aucune donnée de lore modifiée** (`meta.version` 1.0.98, registre : 1 entrée).
+
+**Chemins d'écriture de l'éditeur** (`lune-noire-editor.html` et sa copie identique `-v20`) : 28 fonctions
+d'enregistrement (`saveFaction`, `saveClass`, `saveCompanion`, `saveRace`, `savePlaceTypes`, `saveLieu`, `saveVille`,
+`saveExploit`, `saveQuestV2`, `saveMount`, `saveRaid`, `saveRegion`, `saveCellEdit`, `saveWeapon`, `saveServerCommand`,
+`saveLoot`, `saveDialogue`, `saveCreature`, `saveTimelineEvent`, `saveSkillTree`, `saveRule`, `saveMeta`, `savePersonV2`,
+`saveZone`, `saveLoreEditor`, `saveCompetence`, `saveRegle`, `saveRoute` ; `saveQuest` et `savePerson` renvoient aux
+versions V2) ; 21 suppressions (`delete*`, boîte de confirmation HTML) et `deleteRule` ; éditions en ligne (libellé et
+couleur des tomes, branches et compétences de l'arbre dans sa modale, types de lieux) ; carte : modes Déplacer et Tracer
+(pile Ctrl+Z commune), ancien mode « Créer une route » ; import de villes (JSON collé, `confirmVilleImport`), fusion de
+deux fiches (`executeMerge`), import d'un ancien JSON « BD » (`importV05`) ; `scaffoldAllSkillTrees`. Une seule sortie :
+« Exporter JSON » (`exportJSON`) ; ni export partiel, ni CSV, ni sauvegarde automatique ou `localStorage`.
+
+**Bugs trouvés et corrigés** (test `tools/lore/test_editor_forms.py`, avant → après) :
+
+- **Formulaires** : « Enregistrer » sans rien modifier faisait 2 866 différences à l'export sur les 2 274 fiches des
+  21 formulaires de fiches, enregistrées une à une : valeur absente des listes déroulantes remplacée par la première
+  option ou vidée (type des compagnons, exploits, butins, zones ; rareté des butins ; faction des villes et lieux ; catégorie des règles ; école des compétences ;
+  difficulté des créatures ; type, `ref_type`, `ref_id` de la chronologie ; faction, race des PNJ et dialogues…), champs
+  non affichés supprimés (quêtes : `counter_quest_*`, `estimated_duration`, `rewards.*` ; raids : `rewards.*`), types
+  changés (difficulté des raids 5 → "normal", `prerequisite` liste → chaîne), champs vides ajoutés, tomes réordonnés,
+  `anchor_tile` réécrit sur la case, `familiar_families[].creature_ids` réordonné, `meta.canon` perdu.
+  **Correction générale** : à l'ouverture d'un formulaire (`openModal`, `renderMeta`), l'éditeur calcule ce que le
+  formulaire non modifié enregistrerait (« base » : la fonction d'enregistrement est appelée en mode capture et
+  s'arrête à `formCapture`, avant toute écriture) ; à l'enregistrement, seule la différence base → saisie est appliquée
+  à la fiche d'origine (`formMerge`, ou `formApply` pour un objet modifié en place : lore, meta, cellule), avec la
+  fusion à trois voies de l'export (`mergeExportValue`). Un champ non touché garde valeur, type et place ; un champ vidé
+  par l'utilisateur l'est vraiment. Liste blanche `FORM_CAPTURE_SAVES` : une fonction d'enregistrement non prévue n'est
+  jamais appelée à l'ouverture. Création : champs vides qu'aucune fiche de la collection ne porte retirés (`formNew`).
+- **Personnage** : le champ « Personnalité » écrasait aussi `description` ; il n'écrit plus que `personality` (à la
+  création, `description` = personnalité comme avant).
+- **Ville / lieu** : une case nouvelle (ou une création) donne sa `province` à la fiche, comme le mode Déplacer.
+- **Export** : (1) la base de l'export partageait des objets avec `db` (`lore`) : une modification en place n'était jamais
+  exportée (copie profonde) ; (2) un champ que la normalisation ne liste pas (couleur d'un tome, `region_id` d'un exploit…)
+  n'était pas exporté : la fiche normalisée garde désormais tous les champs de la fiche ; (3) un champ absent du fichier
+  n'est pas ajouté vide ; (4) une fiche dont l'identifiant est renommé reste appariée à son original.
+- **Format du fichier** : l'export écrivait `1` au lieu de `1.0` (1 861 flottants entiers) et mettait en tête les clés
+  numériques (`materiaux_butin` : 6001…6006 avant `_comment`). Il est maintenant **identique octet pour octet** au
+  fichier du dépôt quand rien n'a changé : `json.dumps(indent=2, ensure_ascii=False)` (`pyJsonStringify`), UTF-8,
+  caractères accentués non échappés, sans retour à la ligne final ; le fichier chargé est relu par `pyJsonParse` qui garde
+  l'écriture des flottants et l'ordre des clés. Le fichier exporté remplace directement `lune-noire-data.json` et `-v20`.
+- **Carte, Ctrl+Z** : annuler un déplacement restaurait toute la fiche (et toutes les routes) dans l'état d'avant, donc
+  défaisait aussi une édition faite ensuite par un formulaire (nom de la ville déplacée). L'état « après » de chaque
+  action est figé (`carteSealUndo`) et l'annulation ne défait que ce que l'action a changé (`carteUndoMerge`).
+- **Import de villes** : une mise à jour remplaçait la fiche entière (services, port, région, `anchor_tile` perdus) ;
+  seuls les champs non vides de l'import sont appliqués, notes réunies.
+
+**Test** `tools/lore/test_editor_forms.py` (Playwright, ~4 min ; `--rapide` : 3 fiches par formulaire, ~1,5 min) :
+format octet pour octet ; **toutes** les fiches de chaque formulaire enregistrées sans modification (2 274 fiches,
+23 arbres, 20 règles de `cross_rules`, 371 cellules dont toutes celles avec ville, points importants ou province, types
+de lieux, lore, meta) : `db` et export inchangés, base capturée pour chaque fiche ; un champ modifié (nom ; branche d'un
+arbre, libellé et couleur d'un tome, région d'un exploit, rivière d'une cellule, texte d'une règle, ère du lore, source
+des métadonnées) sur la fiche la plus riche, la plus pauvre et la première : seul ce chemin change, puis export identique
+une fois la valeur remise ; création d'une fiche par formulaire puis suppression ; suppression de la fiche la plus citée
+de chaque collection ; séquence mixte (Tracer, Déplacer Brenhaval, renommage par le formulaire, rivière d'une cellule,
+2 Ctrl+Z : seuls le nom et la cellule changent) dont le fichier passe `validate_city_services.py`,
+`generate_city_services.py --check` et `sync_positions.py --check` ; import partiel d'une ville ; aucune erreur console.
+Les deux copies de l'éditeur passent ce test, `test_editor_roundtrip.py` et `test_editor_routes.py`.
+
+```
+python3 tools/lore/test_editor_forms.py            # code de sortie 0 = OK
+python3 tools/lore/test_editor_forms.py --rapide
+python3 tools/lore/test_editor_forms.py --editeur legacy/world-builder-html/lune-noire-editor-v20.html \
+        --donnees legacy/world-builder-html/lune-noire-data-v20.json
+```
+
+**Limites** : 147 dialogues, 9 événements de chronologie et 3 règles transverses ont un nom vide dans les données :
+l'éditeur refuse de les enregistrer tant qu'un nom n'est pas saisi (rien n'est perdu) ; les suppressions laissent les
+références orphelines (ex. 1 172 citations de `race_human`, 239 de `faction_black_moon`) : l'éditeur ne les signale ni ne
+les nettoie ; une ville créée n'a ni `taille` ni `service_npcs` tant que `generate_city_services.py` n'est pas relancé
+(sans `--check`) ; une région créée sans type choisi n'a pas de `type` ; dans un champ liste modifié (cases à cocher), une
+valeur inconnue des cases (ex. type de monture hors liste) n'est pas reprise ; fusion de deux fiches (`executeMerge`) et
+import BD non testés en détail (actions volontaires qui réécrivent la fiche) ; l'écriture exacte des flottants suppose
+un navigateur récent (Chrome, Edge ou Firefox actuels) ; Playwright n'est pas dans la CI (test à lancer à la main).
+
+**Fonctions** ajoutées ou modifiées documentées (règle de CLAUDE.md) : `formCaptureBase`, `formCapture`, `formMerge`,
+`formApply`, `formNew`, `pyJsonParse`, `pyJsonStringify`, `pyNumberText`, `PyJsonNum`, `_objKeys`, `_keepKeyOrder`,
+`placeCellProvince`, `carteSealUndo`, `carteUndoMerge`, `mergeExportValue`, `buildExportSchemaBrut`,
+`rememberExportSource`, `exportJSON`, `openModal`, `closeModal`, `toast`, `renderMeta`, toutes les fonctions `save*`
+ci-dessus, `confirmVilleImport`, `carteUndo`, `carteAfterEdit`, `deleteRoute`.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3173,7 +3257,7 @@ route » (deux clics, ligne droite) est gardé.
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
-- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur à décider.
+- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur à décider ; sauvegarde complète vérifiée en v1.0.98 (16.27) : références orphelines laissées par les suppressions et noms vides de 159 fiches à traiter.
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

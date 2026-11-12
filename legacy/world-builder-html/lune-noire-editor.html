@@ -1665,7 +1665,8 @@ function villeRelationsHTML(ville_relations) {
 /// `db` sur lequel les collections connues sont réécrites champ par champ.
 /// Cette normalisation peut perdre des champs non listés (ex. `alternance` et
 /// `rule` des arbres de compétences) ou changer des types : elle n'est donc plus
-/// exportée telle quelle, voir buildExportSchema() (v1.0.96).
+/// exportée telle quelle, voir buildExportSchema() (v1.0.96). v1.0.98 : les champs
+/// d'une fiche absents de la liste sont gardés (fusion avec la fiche de db).
 /// \return nouvel objet (db n'est pas modifié).
 function buildExportSchemaBrut() {
   // On part d'un clone complet de db pour ne JAMAIS perdre les champs/collections
@@ -1852,6 +1853,18 @@ function buildExportSchemaBrut() {
     weapons: (db.weapons||[]).map(function(w){return{id:w.id||'',name:w.name||'',type:w.type||'',hands:w.hands||'one',dual_wield:!!w.dual_wield,eligible_races:w.eligible_races||[],eligible_factions:w.eligible_factions||[],eligible_classes:w.eligible_classes||[],notes:w.notes||[]};}),
     server_commands: (db.server_commands||[]).map(function(c){return{id:c.id||'',name:c.name||'',rbac_level:c.rbac_level||'player',description:c.description||'',notes:c.notes||[]};})
   };
+  // v1.0.98 : une fiche normalisée garde aussi les champs de db que la liste
+  // ci-dessus ne nomme pas (couleur d'un tome, region_id d'un exploit…) ; sinon une
+  // modification de ces champs restait invisible à l'export (même valeur absente
+  // dans la base et dans l'état courant).
+  Object.keys(_schema).forEach(function(k) {
+    var src = db[k], arr = _schema[k];
+    if (!Array.isArray(src) || !Array.isArray(arr) || src.length !== arr.length) return;
+    _schema[k] = arr.map(function(m, i) {
+      var r = src[i];
+      return (_isPlainObj(r) && _isPlainObj(m)) ? Object.assign({}, r, m) : m;
+    });
+  });
   return Object.assign(_out, _schema);
 }
 
@@ -1885,8 +1898,9 @@ function jsonDeepEqual(a, b) {
   return true;
 }
 
-/// Vrai pour un objet JSON « simple » (ni tableau, ni null).
-function _isPlainObj(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
+/// Vrai pour un objet JSON « simple » (ni tableau, ni null, ni nombre du fichier
+/// d'origine gardé sous sa forme écrite, PyJsonNum, v1.0.98).
+function _isPlainObj(v) { return v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof PyJsonNum); }
 
 /// Clé d'identité commune à tous les éléments de plusieurs tableaux ('id' ou
 /// 'class_id'), uniquement si chaque élément est un objet avec une valeur
@@ -1921,37 +1935,52 @@ function _exportArrayKey(arrs) {
 /// l'utilisateur, une clé absente des deux a été perdue par la normalisation et
 /// revient d'orig) ; tableau modifié → éléments appariés par 'id' / 'class_id',
 /// sinon par index (même longueur), sinon par égalité avec base.
+/// v1.0.98 : l'ordre des clés d'origine est gardé même pour les clés numériques
+/// (_objKeys, que JavaScript replacerait en tête) ; un élément dont l'identifiant
+/// a été changé (absent de base) est apparié à l'élément de base de même rang
+/// dont l'identifiant a disparu (renommage dans un formulaire) ; une clé absente
+/// d'orig n'est pas ajoutée si sa valeur est vide (isEmptyFormValue).
 /// Aucun effet de bord (orig, base et cur ne sont pas modifiés).
 function mergeExportValue(orig, base, cur) {
   if (jsonDeepEqual(base, cur)) return orig;
   if (orig === undefined) return cur;
   if (_isPlainObj(cur) && _isPlainObj(orig)) {
     var b = _isPlainObj(base) ? base : {};
-    var out = {};
-    Object.keys(orig).forEach(function(k) {
-      var has = Object.prototype.hasOwnProperty;
+    var out = {}, ord = [];
+    var has = Object.prototype.hasOwnProperty;
+    _objKeys(orig).forEach(function(k) {
       if (has.call(cur, k)) {
         var v = mergeExportValue(orig[k], b[k], cur[k]);
-        if (v !== undefined) out[k] = v;
+        if (v !== undefined) { out[k] = v; ord.push(k); }
       } else if (!has.call(b, k)) {
-        out[k] = orig[k];
+        out[k] = orig[k]; ord.push(k);
       }
     });
     Object.keys(cur).forEach(function(k) {
-      if (Object.prototype.hasOwnProperty.call(orig, k)) return;
+      if (has.call(orig, k)) return;
+      // v1.0.98 : un champ absent du fichier n'est pas ajouté vide (ex. région
+      // choisie puis effacée dans un formulaire).
+      if (isEmptyFormValue(cur[k])) return;
       var v = mergeExportValue(undefined, b[k], cur[k]);
-      if (v !== undefined) out[k] = v;
+      if (v !== undefined) { out[k] = v; ord.push(k); }
     });
+    _keepKeyOrder(out, ord);
     return out;
   }
   if (Array.isArray(cur) && Array.isArray(orig) && Array.isArray(base) && base.length === orig.length) {
     var key = _exportArrayKey([orig, base, cur]);
     if (key) {
-      var oBy = {}, bBy = {};
+      var oBy = {}, bBy = {}, cBy = {};
       orig.forEach(function(x){ oBy[x[key]] = x; });
       base.forEach(function(x){ bBy[x[key]] = x; });
-      return cur.map(function(x) {
-        var v = mergeExportValue(oBy[x[key]], bBy[x[key]], x);
+      cur.forEach(function(x){ cBy[x[key]] = x; });
+      return cur.map(function(x, i) {
+        var o = oBy[x[key]], bb = bBy[x[key]];
+        // Identifiant renommé : même rang dans base, ancien identifiant disparu.
+        if (bb === undefined && i < base.length && !Object.prototype.hasOwnProperty.call(cBy, base[i][key])) {
+          bb = base[i]; o = oBy[bb[key]];
+        }
+        var v = mergeExportValue(o, bb, x);
         return v === undefined ? x : v;
       });
     }
@@ -1978,8 +2007,14 @@ function mergeExportValue(orig, base, cur) {
 ///        copie indépendante de `db`).
 /// Effet de bord : remplace _exportSource et _exportBase. Doit être appelée
 /// après sanitizeDb() et l'ajout des collections par défaut.
+/// v1.0.98 : le fichier est relu par pyJsonParse (nombres flottants entiers et
+/// ordre des clés numériques gardés) pour que l'export soit identique octet pour
+/// octet au fichier du dépôt quand rien n'a changé ; la base est une copie
+/// profonde (buildExportSchemaBrut reprend certains objets de db par référence,
+/// ex. db.lore : une modification en place les changeait aussi dans la base et
+/// n'était donc jamais exportée).
 function rememberExportSource(texte) {
-  try { _exportSource = JSON.parse(texte); _exportBase = buildExportSchemaBrut(); }
+  try { _exportSource = pyJsonParse(texte); _exportBase = JSON.parse(JSON.stringify(buildExportSchemaBrut())); }
   catch (e) { _exportSource = null; _exportBase = null; }
 }
 
@@ -1987,13 +2022,246 @@ function rememberExportSource(texte) {
 /// Sans fichier chargé (ou import d'un ancien format BD), renvoie la
 /// normalisation brute ; sinon fusionne la normalisation courante avec le
 /// fichier d'origine (mergeExportValue) : un export sans modification restitue
-/// le fichier à l'identique (aux nombres flottants entiers près, ex. 1.0 → 1).
+/// le fichier à l'identique (v1.0.98 : y compris les flottants entiers, ex. 1.0).
 /// Aucun champ d'horodatage n'est ajouté.
 function buildExportSchema() {
   var cur = buildExportSchemaBrut();
   if (!_exportSource || !_exportBase) return cur;
   var out = mergeExportValue(_exportSource, _exportBase, cur);
   return out === undefined ? cur : out;
+}
+
+// ─────────────────────────────────────────────
+// Format du fichier exporté (v1.0.98) : celui du dépôt, json.dumps(indent=2,
+// ensure_ascii=False) de Python, sans retour à la ligne final.
+// ─────────────────────────────────────────────
+/// Nombre lu dans le fichier d'origine sous une forme que JavaScript ne
+/// réécrirait pas à l'identique (flottant entier « 1.0 », exposant).
+/// \param text écriture d'origine (ex. "1.0") ; \param value valeur numérique.
+/// Seul _exportSource en contient : l'export le réécrit tel quel (pyJsonStringify).
+function PyJsonNum(text, value) { this.text = text; this.value = value; }
+PyJsonNum.prototype.toJSON = function() { return this.value; };
+
+/// Ordre d'origine des clés des objets dont une clé est numérique (« 6001 ») :
+/// JavaScript met ces clés en tête, Python garde l'ordre du fichier.
+var _pyKeyOrder = (typeof WeakMap === 'function') ? new WeakMap() : null;
+var _PY_INT_KEY = /^(0|[1-9][0-9]*)$/;
+
+/// Clés d'un objet dans l'ordre d'écriture (ordre d'origine gardé pour les clés
+/// numériques, sinon Object.keys). Pas d'effet de bord.
+function _objKeys(o) {
+  var ord = _pyKeyOrder && _pyKeyOrder.get(o);
+  if (!ord) return Object.keys(o);
+  var has = Object.prototype.hasOwnProperty;
+  var out = ord.filter(function(k){ return has.call(o, k); });
+  Object.keys(o).forEach(function(k){ if (ord.indexOf(k) === -1) out.push(k); });
+  return out;
+}
+
+/// Mémorise l'ordre d'écriture `keys` de l'objet `o` s'il contient une clé
+/// numérique (sinon l'ordre de JavaScript est déjà le bon). Effet de bord : _pyKeyOrder.
+function _keepKeyOrder(o, keys) {
+  if (!_pyKeyOrder) return;
+  for (var i = 0; i < keys.length; i++) if (_PY_INT_KEY.test(keys[i])) { _pyKeyOrder.set(o, keys.slice()); return; }
+}
+
+/// Lit un texte JSON comme JSON.parse, en gardant : l'écriture des nombres
+/// flottants entiers ou à exposant (PyJsonNum) et l'ordre des clés numériques
+/// (_keepKeyOrder). Utilisé pour le fichier d'origine de l'export seulement.
+/// \param text contenu du fichier. Lève une SyntaxError si le JSON est invalide.
+function pyJsonParse(text) {
+  var i = 0, n = text.length;
+  var reNum = /-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/y;
+  function ws() { var c; while (i < n && ((c = text.charCodeAt(i)) === 32 || c === 10 || c === 13 || c === 9)) i++; }
+  function fail() { throw new SyntaxError('JSON invalide à la position ' + i); }
+  function str() {
+    var j = i + 1, esc = false;
+    for (;;) {
+      if (j >= n) fail();
+      var c = text.charCodeAt(j);
+      if (c === 34) break;
+      if (c === 92) { esc = true; j += 2; continue; }
+      j++;
+    }
+    var s = esc ? JSON.parse(text.slice(i, j + 1)) : text.slice(i + 1, j);
+    i = j + 1; return s;
+  }
+  function val() {
+    ws(); var c = text.charCodeAt(i);
+    if (c === 123) {
+      i++; var o = {}, keys = [], numKey = false; ws();
+      if (text.charCodeAt(i) === 125) { i++; return o; }
+      for (;;) {
+        ws(); if (text.charCodeAt(i) !== 34) fail();
+        var k = str(); ws(); if (text.charCodeAt(i) !== 58) fail(); i++;
+        o[k] = val(); keys.push(k); if (_PY_INT_KEY.test(k)) numKey = true;
+        ws(); c = text.charCodeAt(i++);
+        if (c === 44) continue; if (c === 125) break; fail();
+      }
+      if (numKey) _keepKeyOrder(o, keys);
+      return o;
+    }
+    if (c === 91) {
+      i++; var a = []; ws();
+      if (text.charCodeAt(i) === 93) { i++; return a; }
+      for (;;) { a.push(val()); ws(); c = text.charCodeAt(i++); if (c === 44) continue; if (c === 93) break; fail(); }
+      return a;
+    }
+    if (c === 34) return str();
+    if (text.startsWith('true', i))  { i += 4; return true; }
+    if (text.startsWith('false', i)) { i += 5; return false; }
+    if (text.startsWith('null', i))  { i += 4; return null; }
+    reNum.lastIndex = i; var m = reNum.exec(text); if (!m) fail();
+    i += m[0].length; var v = Number(m[0]);
+    return (/[.eE]/.test(m[0]) && pyNumberText(v) !== m[0]) ? new PyJsonNum(m[0], v) : v;
+  }
+  var r = val(); ws(); if (i !== n) fail();
+  return r;
+}
+
+/// Écriture Python (repr) d'un nombre JavaScript : entier sans décimale (comme un
+/// int Python lu du fichier ou saisi), flottant au format repr de Python
+/// (notation scientifique si l'exposant est < -4 ou >= 16, « e-05 »).
+/// \param x nombre ; non fini → "null" (comme JSON.stringify). Pas d'effet de bord.
+function pyNumberText(x) {
+  if (!isFinite(x)) return 'null';
+  if (Number.isInteger(x)) return Math.abs(x) < 1e21 ? x.toFixed(0).replace(/^-0$/, '0') : BigInt(x).toString();
+  var s = x.toExponential(), p = s.split('e'), neg = p[0].charAt(0) === '-';
+  var digits = p[0].replace('-', '').replace('.', ''), e = parseInt(p[1], 10), out;
+  if (e < -4 || e >= 16) {
+    out = digits.charAt(0) + (digits.length > 1 ? '.' + digits.slice(1) : '') + 'e' + (e < 0 ? '-' : '+') + (Math.abs(e) < 10 ? '0' : '') + Math.abs(e);
+  } else if (e >= 0) {
+    var ip = digits.slice(0, e + 1); while (ip.length < e + 1) ip += '0';
+    out = ip + '.' + (digits.slice(e + 1) || '0');
+  } else {
+    out = '0.' + new Array(-e).join('0') + digits;
+  }
+  return (neg ? '-' : '') + out;
+}
+
+/// Sérialise une valeur comme json.dumps(v, indent=2, ensure_ascii=False) de
+/// Python (format des fichiers de données du dépôt) : indentation de 2 espaces,
+/// « ": " », caractères non ASCII écrits tels quels, [] et {} vides sur une ligne,
+/// nombres d'origine réécrits à l'identique (PyJsonNum), ordre des clés gardé
+/// (_objKeys), aucun retour à la ligne final. Pas d'effet de bord.
+function pyJsonStringify(v) {
+  var parts = [];
+  function rec(x, pad) {
+    if (x instanceof PyJsonNum) { parts.push(x.text); return; }
+    if (x === null || x === undefined || typeof x === 'function') { parts.push('null'); return; }
+    if (typeof x === 'number') { parts.push(pyNumberText(x)); return; }
+    if (typeof x === 'boolean') { parts.push(x ? 'true' : 'false'); return; }
+    if (typeof x === 'string') { parts.push(JSON.stringify(x)); return; }
+    if (typeof x.toJSON === 'function' && !Array.isArray(x)) { rec(x.toJSON(), pad); return; }
+    var sub = pad + '  ';
+    if (Array.isArray(x)) {
+      if (!x.length) { parts.push('[]'); return; }
+      parts.push('[\n');
+      for (var i = 0; i < x.length; i++) { if (i) parts.push(',\n'); parts.push(sub); rec(x[i], sub); }
+      parts.push('\n' + pad + ']'); return;
+    }
+    var keys = _objKeys(x).filter(function(k){ return x[k] !== undefined && typeof x[k] !== 'function'; });
+    if (!keys.length) { parts.push('{}'); return; }
+    parts.push('{\n');
+    keys.forEach(function(k, j) { if (j) parts.push(',\n'); parts.push(sub + JSON.stringify(k) + ': '); rec(x[k], sub); });
+    parts.push('\n' + pad + '}');
+  }
+  rec(v, '');
+  return parts.join('');
+}
+
+// ─────────────────────────────────────────────
+// Formulaires : enregistrement sans perte (v1.0.98)
+// ─────────────────────────────────────────────
+// Un formulaire reconstruit la fiche à partir de ses champs : une valeur absente
+// des listes déroulantes (type, rareté, faction…), un champ non affiché ou une
+// valeur par défaut remplaçait la donnée d'origine dès « Enregistrer », même sans
+// modification. À l'ouverture, l'éditeur calcule ce que le formulaire non modifié
+// enregistrerait (« base », capture) ; à l'enregistrement, seule la différence
+// entre la base et la saisie est appliquée à la fiche (mergeExportValue) : un champ
+// non touché garde sa valeur, son type et sa place ; un champ vidé ou retiré par
+// l'utilisateur l'est vraiment.
+var FORM_CAPTURE_STOP = { formCapture: true }; // arrêt de la capture (exception)
+var _formCapture = false;  // vrai pendant la capture : aucune donnée n'est modifiée
+var _formBase = null;      // { prev: fiche d'origine (référence), obj: sortie du formulaire non modifié }
+/// Fonctions d'enregistrement qui savent être capturées (formCapture appelé avant
+/// toute modification de db). Une fonction absente de cette liste n'est jamais
+/// appelée à l'ouverture (ex. saveRoute, création seule).
+var FORM_CAPTURE_SAVES = ['saveFaction','saveClass','saveCompanion','saveRace','savePlaceTypes',
+  'saveLieu','saveVille','saveExploit','saveQuest','saveQuestV2','saveMount','saveRaid','saveRegion',
+  'saveCellEdit','saveWeapon','saveServerCommand','saveLoot','saveDialogue','saveCreature',
+  'saveTimelineEvent','saveSkillTree','saveRule','saveMeta','savePerson','savePersonV2','saveZone',
+  'saveLoreEditor','saveCompetence','saveRegle'];
+
+/// Calcule la base du formulaire qui vient d'être affiché : appelle sa fonction
+/// d'enregistrement en mode capture (arrêtée par formCapture avant toute écriture).
+/// \param btn bouton « Enregistrer » du formulaire (onclick="saveX(…)") ; null :
+///        cherché dans #modalFooter. Sans bouton reconnu, _formBase reste null.
+/// Effet de bord : remplace _formBase ; aucun toast ni modification de db.
+/// Doit être appelée juste après la construction du formulaire (openModal, renderMeta).
+function formCaptureBase(btn) {
+  _formBase = null;
+  btn = btn || document.querySelector('#modalFooter button[onclick^="save"]');
+  if (!btn || typeof btn.onclick !== 'function') return;
+  var m = /^\s*(save[A-Za-z0-9_]*)\s*\(/.exec(btn.getAttribute('onclick') || '');
+  if (!m || FORM_CAPTURE_SAVES.indexOf(m[1]) === -1) return;
+  _formCapture = true;
+  try { btn.onclick.call(btn); }
+  catch (e) { if (e !== FORM_CAPTURE_STOP && window.console) console.warn('Capture du formulaire impossible :', e); }
+  finally { _formCapture = false; }
+}
+
+/// Point de capture d'une fonction d'enregistrement : en mode capture, mémorise la
+/// sortie du formulaire et interrompt l'enregistrement ; sinon ne fait rien.
+/// \param obj fiche construite par le formulaire ; \param prev fiche d'origine
+///        (référence dans db, null pour une création).
+/// À appeler après la construction de obj et AVANT toute modification de db.
+function formCapture(obj, prev) {
+  if (!_formCapture) return;
+  _formBase = { prev: prev || null, obj: JSON.parse(JSON.stringify(obj)) };
+  throw FORM_CAPTURE_STOP;
+}
+
+/// Fiche à enregistrer : la fiche d'origine à laquelle on applique seulement ce
+/// que l'utilisateur a changé depuis l'ouverture du formulaire (mergeExportValue
+/// entre prev, la base capturée et obj). Création (prev null) : obj ; capture
+/// impossible : prev complété par obj (champs absents du formulaire gardés).
+/// \param prev fiche d'origine (référence dans db).
+/// Effet de bord : consomme _formBase. Pas de modification de db.
+function formMerge(prev, obj) {
+  var fb = _formBase; _formBase = null;
+  if (!prev) return obj;
+  // Sans base (capture impossible) : au moins garder les champs que le formulaire ne produit pas.
+  if (!fb || fb.prev !== prev) return (_isPlainObj(prev) && _isPlainObj(obj)) ? Object.assign({}, prev, obj) : obj;
+  var m = mergeExportValue(prev, fb.obj, JSON.parse(JSON.stringify(obj)));
+  return m === undefined ? obj : m;
+}
+
+/// Fiche créée par un formulaire, avant ajout à sa collection : retire les champs
+/// vides qu'aucune fiche existante de la collection ne porte (ex. region_id vide
+/// d'un exploit), pour une structure cohérente avec les fiches existantes.
+/// \param arr collection cible (db.X) ; \param obj fiche construite (modifiée en place).
+/// Pas d'autre effet de bord ; renvoie obj.
+function formNew(arr, obj) {
+  if (!_isPlainObj(obj) || !Array.isArray(arr) || !arr.length) return obj;
+  Object.keys(obj).forEach(function(k) {
+    if (isEmptyFormValue(obj[k]) && !arr.some(function(r){ return r && Object.prototype.hasOwnProperty.call(r, k); })) delete obj[k];
+  });
+  return obj;
+}
+
+/// Variante de formMerge pour un objet modifié en place (lore, meta, cellule) :
+/// chaque champ de obj n'est écrit dans target que s'il a changé depuis la base.
+/// \param target objet de db modifié en place ; \param obj champs du formulaire.
+/// Effet de bord : modifie target, consomme _formBase.
+function formApply(target, obj) {
+  var fb = _formBase; _formBase = null;
+  var cur = JSON.parse(JSON.stringify(obj));
+  var ok = !!(fb && fb.prev === target);
+  Object.keys(cur).forEach(function(k) {
+    var v = ok ? mergeExportValue(target[k], fb.obj[k], cur[k]) : cur[k];
+    if (v === undefined) delete target[k]; else target[k] = v;
+  });
 }
 
 
@@ -2132,10 +2400,14 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
   e.target.value = '';
 });
 
+/// Télécharge lune-noire-data.json. v1.0.98 : au format du dépôt (pyJsonStringify :
+/// json.dumps(indent=2, ensure_ascii=False), UTF-8, sans retour à la ligne final),
+/// remplaçable tel quel dans legacy/world-builder-html/.
+/// Effet de bord : téléchargement, toast ; db n'est pas modifié.
 function exportJSON() {
   var out = buildExportSchema();
-  var json = JSON.stringify(out, null, 2);
-  var blob = new Blob([json], { type: 'application/json' });
+  var json = pyJsonStringify(out);
+  var blob = new Blob([json], { type: 'application/json;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
@@ -2551,6 +2823,13 @@ function renderVilleRelationsList() {
   _refreshVilleRelSel();
 }
 
+/// Enregistre le formulaire de faction (création ou modification).
+/// \param idx index dans db.factions, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.factions, ferme la modale, re-rendu de la section.
 function saveFaction(idx) {
   // Préserve les champs riches (visual_identity, leadership, territory, politics,
   // game_design…) absents de ce formulaire.
@@ -2568,10 +2847,11 @@ function saveFaction(idx) {
     faction_relations: window._currentFactionRelations.slice(),
     ville_relations:   window._currentVilleRelations.slice()
   });
+  formCapture(obj, idx!==undefined ? db.factions[idx] : null); // v1.0.98 : base du formulaire (capture)
   if (!obj.id || !obj.name) { toast('ID et Nom obligatoires'); return; }
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.factions,idx);if(dupW.length){toast(dupW[0]);return;}
   var prev = currentSection;
-  if (idx !== undefined) db.factions[idx] = obj; else db.factions.push(obj);
+  if (idx !== undefined) db.factions[idx] = formMerge(db.factions[idx], obj); else db.factions.push(formNew(db.factions, obj));
   closeModal();
   showSection('factions');
   if (prev === 'races') showSection('races');
@@ -2784,6 +3064,13 @@ function renderLevelTitlesList() {
       '<button class="note-del-btn" onclick="window._currentLevelTitles.splice(' + i + ',1);renderLevelTitlesList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de classe (création ou modification).
+/// \param idx index dans db.classes, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.classes, ferme la modale, re-rendu de la section.
 function saveClass(idx) {
   // On part de l'objet existant (édition) pour préserver les champs riches non
   // gérés par ce formulaire (game_design, weapons_by_faction, sous_classes…).
@@ -2796,8 +3083,9 @@ function saveClass(idx) {
     notes:window._currentNotes.slice(),
     faction_affiliations:window._currentClassFactions.slice(),
     variants:window._currentVariants.slice(), level_titles:window._currentLevelTitles.slice() });
+  formCapture(obj, idx!==undefined ? db.classes[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
-  if(idx!==undefined) db.classes[idx]=obj; else db.classes.push(obj);
+  if(idx!==undefined) db.classes[idx]=formMerge(db.classes[idx], obj); else db.classes.push(formNew(db.classes, obj));
   closeModal(); showSection('classes'); toast(idx!==undefined?'Classe modifiée':'Classe ajoutée');
 }
 function deleteClass(idx) {
@@ -2858,13 +3146,21 @@ function renderInvocableByList() {
       '<button class="note-del-btn" onclick="window._currentInvocableBy.splice(' + i + ',1);renderInvocableByList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de compagnon (création ou modification).
+/// \param idx index dans db.companions, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.companions, ferme la modale, re-rendu de la section.
 function saveCompanion(idx) {
   var obj = { id:document.getElementById('item_id').value.trim(), name:document.getElementById('item_name').value.trim(),
     type:document.getElementById('item_type').value, notes:window._currentNotes.slice(),
     variants:window._currentVariants.slice(), level_titles:window._currentLevelTitles.slice(),
     invocable_by:window._currentInvocableBy.slice() };
+  formCapture(obj, idx!==undefined ? db.companions[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
-  if(idx!==undefined) db.companions[idx]=obj; else db.companions.push(obj);
+  if(idx!==undefined) db.companions[idx]=formMerge(db.companions[idx], obj); else db.companions.push(formNew(db.companions, obj));
   closeModal(); showSection('companions'); toast(idx!==undefined?'Compagnon modifié':'Compagnon ajouté');
 }
 function deleteCompanion(idx) {
@@ -3037,6 +3333,13 @@ function renderSimpleList(listId,arr,arrKey) {
       '<button class="note-del-btn" onclick="window.' + arrKey + '.splice(' + i + ',1);renderSimpleList(\'' + listId + '\',window.' + arrKey + ',\'' + arrKey + '\')">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de race (création ou modification).
+/// \param idx index dans db.races, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.races, ferme la modale, re-rendu de la section.
 function saveRace(idx) {
   var obj = {
     id:r_id.value.trim(), name:r_name.value.trim(),
@@ -3056,8 +3359,9 @@ function saveRace(idx) {
   obj.companion  = document.getElementById('r_companion').checked;
   obj.genders = Array.from(document.querySelectorAll('input[name="r_gender"]:checked')).map(function(cb){return cb.value;});
   obj.origins    = {summary:document.getElementById('r_summary').value.trim(), homeland_notes:window._currentHomelands.slice()};
+  formCapture(obj, idx!==undefined ? db.races[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
-  if(idx!==undefined) db.races[idx]=obj; else db.races.push(obj);
+  if(idx!==undefined) db.races[idx]=formMerge(db.races[idx], obj); else db.races.push(formNew(db.races, obj));
   closeModal(); showSection('races'); toast(idx!==undefined?'Race modifiée':'Race ajoutée');
 }
 function deleteRace(idx) {
@@ -3255,8 +3559,13 @@ function addPlaceType() {
   document.getElementById('pt_new_id').value=''; document.getElementById('pt_new_label').value='';
   renderPlaceTypesList();
 }
+/// Enregistre l'éditeur des types de lieux (copie de travail window._ptWork).
+/// v1.0.98 : seuls les types et champs modifiés sont appliqués (formMerge).
+/// Effet de bord : remplace db.place_types, ferme la modale, re-rendu.
 function savePlaceTypes() {
-  db.place_types = window._ptWork.slice();
+  var work = window._ptWork.slice();
+  formCapture(work, db.place_types);
+  db.place_types = formMerge(db.place_types, work);
   closeModal(); showSection(currentSection||'villes'); toast('Types de lieux enregistrés');
 }
 
@@ -3467,10 +3776,19 @@ function dropNewEmptyFields(obj, before) {
   return obj;
 }
 
+/// Province d'une case (champ `province` de db.cells), '' si aucune ou case inconnue.
+/// \param cell identifiant de case (« N017_W010 »). Pas d'effet de bord.
+function placeCellProvince(cell) {
+  var c=cell?(db.cells||[]).find(function(x){ return x.id===cell; }):null;
+  return (c&&c.province)||'';
+}
+
 /// Enregistre le formulaire de lieu (création ou modification).
 /// \param idx index dans db.lieux, undefined pour une création.
 /// Effet de bord : remplace ou ajoute la fiche dans db.lieux, ferme la modale.
 /// v1.0.96 : les champs vides absents de la fiche d'origine ne sont pas ajoutés.
+/// v1.0.98 : seuls les champs modifiés sont appliqués (formCapture / formMerge) ;
+/// une nouvelle case donne sa province à la fiche ; création nettoyée (formNew).
 function saveLieu(idx) {
   if(!db.lieux) db.lieux=[];
   var cell=document.getElementById('l_cell').value.trim().toUpperCase();
@@ -3486,10 +3804,13 @@ function saveLieu(idx) {
     faction_control:document.getElementById('l_faction').value,
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
   });
+  // v1.0.98 : nouvelle case (ou création) → province de la case, comme le mode Déplacer.
+  if(idx===undefined || cell!==(db.lieux[idx].cell||'')) obj.province=placeCellProvince(cell);
   dropNewEmptyFields(obj, idx!==undefined ? db.lieux[idx] : null);
+  formCapture(obj, idx!==undefined ? db.lieux[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dup=checkDuplicateOnSave(obj.id,obj.name,db.lieux,idx);if(dup.length){toast(dup[0]);return;}
-  if(idx!==undefined) db.lieux[idx]=obj; else db.lieux.push(obj);
+  if(idx!==undefined) db.lieux[idx]=formMerge(db.lieux[idx], obj); else db.lieux.push(formNew(db.lieux, obj));
   closeModal(); showSection('lieux'); toast(idx!==undefined?'Lieu modifié':'Lieu ajouté');
 }
 function deleteLieu(idx) {
@@ -3718,6 +4039,9 @@ function renderFeaturesList(){
 /// recalé sur la case que si elle change, les services hors de la liste du
 /// formulaire (ex. `cimetiere`) sont conservés dans leur ordre, et les champs
 /// vides absents de la fiche d'origine ne sont pas ajoutés.
+/// v1.0.98 : seuls les champs modifiés sont appliqués (formCapture / formMerge : une
+/// faction ou un type absents des listes ne sont plus vidés, `anchor_tile` différent
+/// de la case n'est plus réécrit) ; une nouvelle case donne sa province à la fiche.
 function saveVille(idx) {
   var cell=document.getElementById('v_cell').value.trim().toUpperCase();
   if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
@@ -3746,6 +4070,8 @@ function saveVille(idx) {
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
   });
   if(cellChanged || Object.prototype.hasOwnProperty.call(before,'anchor_tile')) obj.anchor_tile=cell;
+  // v1.0.98 : nouvelle case (ou création) → province de la case, comme le mode Déplacer.
+  if(cellChanged) obj.province=placeCellProvince(cell);
   // Port : conservé (destinations, durée d'arrêt…) et recalé sur la cellule de la ville.
   if(document.getElementById('v_port_on').checked){
     var vers=document.getElementById('v_port_vers').value.trim().toUpperCase();
@@ -3754,9 +4080,10 @@ function saveVille(idx) {
     obj.port=Object.assign({destinations:[],stop_seconds:30}, oldPort, {ponton_cell:(cellChanged||!oldPort.ponton_cell)?cell:oldPort.ponton_cell, vers_cell:vers, statut:document.getElementById('v_port_statut').value.trim()});
   } else delete obj.port;
   dropNewEmptyFields(obj, before);
+  formCapture(obj, idx!==undefined ? db.villes[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupWV=checkDuplicateOnSave(obj.id,obj.name,db.villes,idx);if(dupWV.length){toast(dupWV[0]);return;}
-  if(idx!==undefined) db.villes[idx]=obj; else db.villes.push(obj);
+  if(idx!==undefined) db.villes[idx]=formMerge(db.villes[idx], obj); else db.villes.push(formNew(db.villes, obj));
   closeModal(); showSection('villes'); toast(idx!==undefined?'Ville modifiée':'Ville ajoutée');
 }
 // ─────────────────────────────────────────────
@@ -3905,16 +4232,27 @@ function previewVilleImport() {
   if(toCreate.length||toUpdate.length) document.getElementById('btnConfirmImport').style.display='';
 }
 
+/// Applique l'import de villes analysé par previewVilleImport (window._pendingVilleImport).
+/// Création : fiche complète (_mapImportedVille). Mise à jour (v1.0.98) : la fiche
+/// existante est gardée et seuls les champs non vides de l'import la remplacent
+/// (avant : la fiche était remplacée en entier, services, port, anchor_tile ou
+/// région perdus) ; les notes sont réunies (existantes d'abord).
+/// Effet de bord : db.villes, ferme la modale, re-rendu.
 function confirmVilleImport() {
   var p=window._pendingVilleImport; if(!p) return;
   var created=0, updated=0;
   p.toCreate.forEach(function(item){ db.villes.push(_mapImportedVille(item.src)); created++; });
   p.toUpdate.forEach(function(item){
-    var mapped=_mapImportedVille(item.src);
-    var mn=mapped.notes.slice();
-    (db.villes[item.ei].notes||[]).forEach(function(n){if(mn.indexOf(n)===-1) mn.push(n);});
-    mapped.notes=mn;
-    db.villes[item.ei]=mapped; updated++;
+    var mapped=_mapImportedVille(item.src), old=db.villes[item.ei];
+    var rec=Object.assign({}, old);
+    Object.keys(mapped).forEach(function(k){
+      if(k==='notes' || k==='id' || isEmptyFormValue(mapped[k])) return;
+      if(!jsonDeepEqual(old[k], mapped[k])) rec[k]=mapped[k];
+    });
+    var mn=toArr(old.notes).slice();
+    toArr(mapped.notes).forEach(function(n){if(mn.indexOf(n)===-1) mn.push(n);});
+    if(!jsonDeepEqual(mn, old.notes)) rec.notes=mn;
+    db.villes[item.ei]=rec; updated++;
   });
   window._pendingVilleImport=null;
   closeModal(); showSection('villes');
@@ -4050,6 +4388,13 @@ function renderEligList(type) {
       '<button class="note-del-btn" onclick="window.' + winMap[type] + '.splice(' + i + ',1);renderEligList(\'' + type + '\')">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire d'exploit (création ou modification).
+/// \param idx index dans db.exploits, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.exploits, ferme la modale, re-rendu de la section.
 function saveExploit(idx) {
   var obj={
     id:document.getElementById('ex_id').value.trim(), name:document.getElementById('ex_name').value.trim(),
@@ -4062,8 +4407,9 @@ function saveExploit(idx) {
     rewards:{title:document.getElementById('ex_rew_title').value.trim(),reward:document.getElementById('ex_rew_reward').value.trim(),power:document.getElementById('ex_rew_power').value.trim()},
     notes:window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.exploits[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.exploits[idx]=obj; else db.exploits.push(obj);
+  if(idx!==undefined) db.exploits[idx]=formMerge(db.exploits[idx], obj); else db.exploits.push(formNew(db.exploits, obj));
   closeModal(); showSection('exploits'); toast(idx!==undefined?'Exploit modifié':'Exploit ajouté');
 }
 function deleteExploit(idx) {
@@ -4216,6 +4562,13 @@ function renderReqClassList() {
       '<button class="note-del-btn" onclick="window._currentRequiredClasses.splice('+i+',1);renderReqClassList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de quête (ancienne version, remplacée par saveQuestV2) (création ou modification).
+/// \param idx index dans db.quests, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.quests, ferme la modale, re-rendu de la section.
 function saveQuest(idx) {
   var mp=document.getElementById('qt_min_players').value;
   // Préserve les champs riches non gérés ici (category, tags, difficulty, type,
@@ -4232,8 +4585,9 @@ function saveQuest(idx) {
     for_factions:window._currentQuestFactions.slice(), for_races:window._currentQuestRaces.slice(),
     region_id:(document.getElementById('qt_region')||{value:''}).value,
     for_classes:window._currentQuestClasses.slice(), unlock_conditions:(window.qtConditions||[]).slice(), notes:window._currentNotes.slice()});
+  formCapture(obj, idx!==undefined ? db.quests[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.quests[idx]=obj; else db.quests.push(obj);
+  if(idx!==undefined) db.quests[idx]=formMerge(db.quests[idx], obj); else db.quests.push(formNew(db.quests, obj));
   closeModal(); showSection('quests'); toast(idx!==undefined?'Quête modifiée':'Quête ajoutée');
 }
 function deleteQuest(idx) {
@@ -4486,6 +4840,13 @@ function renderAcqList(){
       '<button class="note-del-btn" onclick="window._currentAcquisition.splice('+i+',1);renderAcqList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de monture (création ou modification).
+/// \param idx index dans db.mounts, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.mounts, ferme la modale, re-rendu de la section.
 function saveMount(idx){
   var ml=document.getElementById('mt_min_level').value;
   var obj={id:document.getElementById('mt_id').value.trim(), name:document.getElementById('mt_name').value.trim(),
@@ -4496,8 +4857,9 @@ function saveMount(idx){
     eligible_classes:window._currentMountClasses.slice(), eligible_factions:window._currentMountFactions.slice(),
     acquisition:window._currentAcquisition.slice(),
     description:document.getElementById('mt_desc').value.trim(), notes:window._currentNotes.slice()};
+  formCapture(obj, idx!==undefined ? db.mounts[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.mounts[idx]=obj; else db.mounts.push(obj);
+  if(idx!==undefined) db.mounts[idx]=formMerge(db.mounts[idx], obj); else db.mounts.push(formNew(db.mounts, obj));
   closeModal(); showSection('mounts'); toast(idx!==undefined?'Monture modifi\u00e9e':'Monture ajout\u00e9e');
 }
 function deleteMount(idx){
@@ -4808,6 +5170,13 @@ function renderRaidTargetList(type){
   if(!arr.length){el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucun</div>';return;}
   el.innerHTML=arr.map(function(id,i){var item=dbMap[type].find(function(x){return x.id===id;});return '<div class="note-edit-item"><span style="color:'+colMap[type]+'">'+esc(item?item.name:id)+'</span><button class="note-del-btn" onclick="window.'+winMap[type]+'.splice('+i+',1);renderRaidTargetList(\''+type+'\')">✕</button></div>';}).join('');
 }
+/// Enregistre le formulaire de raid (création ou modification).
+/// \param idx index dans db.raids, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.raids, ferme la modale, re-rendu de la section.
 function saveRaid(idx){
   var obj={id:document.getElementById('rd_id').value.trim(), name:document.getElementById('rd_name').value.trim(),
     description:document.getElementById('rd_desc').value.trim(),
@@ -4822,8 +5191,9 @@ function saveRaid(idx){
     rewards:{title:document.getElementById('rd_rew_title').value.trim(),reward:document.getElementById('rd_rew_reward').value.trim(),power:document.getElementById('rd_rew_power').value.trim()},
     unlock_conditions:(window.rdConditions||[]).slice(),
     notes:window._currentNotes.slice()};
+  formCapture(obj, idx!==undefined ? db.raids[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.raids[idx]=obj; else db.raids.push(obj);
+  if(idx!==undefined) db.raids[idx]=formMerge(db.raids[idx], obj); else db.raids.push(formNew(db.raids, obj));
   closeModal(); showSection('raids'); toast(idx!==undefined?'Raid modifi\u00e9':'Raid ajout\u00e9');
 }
 function deleteRaid(idx){
@@ -4925,6 +5295,13 @@ function openRegionForm(idx) {
 }
 // Enregistre la fiche de région ; conserve les champs non édités (nom_hs…) et gère la
 // hiérarchie v1.0.92 : parent_region n'est gardé que pour type = "province".
+/// Enregistre le formulaire de région (création ou modification).
+/// \param idx index dans db.regions, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.regions, ferme la modale, re-rendu de la section.
 function saveRegion(idx) {
   var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.regions[idx])) : {};
   var obj = Object.assign(base, {id:document.getElementById('rg_id').value.trim(), name:document.getElementById('rg_name').value.trim(),
@@ -4933,8 +5310,9 @@ function saveRegion(idx) {
   var ty=document.getElementById('rg_type').value, par=document.getElementById('rg_parent').value;
   if(ty) obj.type=ty; else delete obj.type;
   if(ty==='province'){ if(!par){toast('Une province doit avoir une région parente');return;} obj.parent_region=par; } else delete obj.parent_region;
+  formCapture(obj, idx!==undefined ? db.regions[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.regions[idx]=obj; else db.regions.push(obj);
+  if(idx!==undefined) db.regions[idx]=formMerge(db.regions[idx], obj); else db.regions.push(formNew(db.regions, obj));
   closeModal(); showSection('regions'); toast(idx!==undefined?'Région modifiée':'Région ajoutée');
 }
 function deleteRegion(idx) {
@@ -5282,6 +5660,49 @@ function cartePushUndo(label, recs) {
   if (st.undoStack.length>100) st.undoStack.shift();
 }
 
+/// Mémorise l'état « après » de la dernière action empilée (routes, lignes
+/// maritimes, fiches sauvegardées), s'il ne l'est pas déjà (v1.0.98). Appelée à la
+/// fin de chaque action de la carte (carteAfterEdit, deleteRoute) : carteUndo ne
+/// défait ensuite que ce que l'action a changé, pas une modification faite depuis
+/// par un formulaire (nom d'une ville déplacée…). Effet de bord : la pile.
+function carteSealUndo() {
+  var st=window._carteState, u=st && st.undoStack[st.undoStack.length-1];
+  if (!u || u.after) return;
+  u.after = { routes:carteClone(db.routes||[]), sea_lines:carteClone(db.sea_lines),
+    recs:u.recs.map(function(x){ return carteClone((db[x.kind]||[]).find(function(r){ return r.id===x.id; })); }) };
+}
+
+/// État à restaurer par l'annulation (v1.0.98) : l'état d'avant l'action auquel on
+/// réapplique ce qui a changé depuis la fin de l'action (fusion à trois voies).
+/// \param before copie d'avant l'action ; \param after copie de fin d'action
+///        (undefined : restauration complète de before, comportement v1.0.97) ;
+/// \param cur valeur actuelle. Tableau d'objets à identifiant (routes, lignes) :
+/// éléments créés par l'action retirés, supprimés par l'action rétablis, créés
+/// depuis gardés, modifiés des deux côtés fusionnés champ par champ.
+/// Pas d'effet de bord (renvoie une nouvelle valeur).
+function carteUndoMerge(before, after, cur) {
+  if (after === undefined) return before;
+  if (Array.isArray(before) && Array.isArray(after) && Array.isArray(cur)) {
+    var key=_exportArrayKey([before, after, cur]);
+    if (key) {
+      var bBy={}, aBy={}, cBy={}, out=[];
+      before.forEach(function(x){ bBy[x[key]]=x; });
+      after.forEach(function(x){ aBy[x[key]]=x; });
+      cur.forEach(function(x){ cBy[x[key]]=x; });
+      before.forEach(function(b){
+        var id=b[key];
+        if (!aBy[id]) { out.push(b); return; }        // supprimé par l'action : rétabli
+        if (!cBy[id]) return;                         // supprimé depuis : reste supprimé
+        var m=mergeExportValue(b, aBy[id], cBy[id]); out.push(m===undefined?b:m);
+      });
+      cur.forEach(function(c){ if (!bBy[c[key]] && !aBy[c[key]]) out.push(c); }); // créé depuis : gardé
+      return out;
+    }
+  }
+  var m=mergeExportValue(before, after, cur);
+  return m===undefined ? before : m;
+}
+
 /// Remplace en place le contenu d'un objet par une copie sauvegardée (l'ordre des
 /// clés de la copie est repris). \param target objet de db.  \param snap copie.
 /// Effet de bord : modifie target.
@@ -5298,20 +5719,25 @@ function carteRestoreArray(arr, snap) { arr.length=0; snap.forEach(function(x){ 
 /// (mode « Tracer »), retire d'abord le dernier point cliqué du tracé.
 /// \return true si quelque chose a été annulé.
 /// Effet de bord : restaure db.routes, db.sea_lines et les fiches sauvegardées ;
-/// redessine la carte, la liste des routes et les boutons.
+/// redessine la carte, la liste des routes et les boutons. v1.0.98 : seules les
+/// modifications de l'action annulée sont défaites (carteUndoMerge) ; une édition
+/// faite ensuite par un formulaire (nom, description…) est gardée.
 function carteUndo() {
   var st=window._carteState;
   if (window._carteTrace.draft) { carteTraceRemoveLastPoint(); return true; }
   var u=st.undoStack.pop(); if(!u) { toast('Rien à annuler'); return false; }
-  if (u.hadRoutes) { if (!Array.isArray(db.routes)) db.routes=[]; carteRestoreArray(db.routes, u.routes); }
+  var af=u.after; // v1.0.98 : ne défaire que ce que l'action a changé (carteUndoMerge)
+  var routes=carteUndoMerge(u.routes, af&&af.routes, carteClone(db.routes||[]));
+  if (u.hadRoutes || (af && routes.length)) { if (!Array.isArray(db.routes)) db.routes=[]; carteRestoreArray(db.routes, routes); }
   else delete db.routes;
-  if (u.sea_lines===undefined) delete db.sea_lines;
-  else if (Array.isArray(db.sea_lines) && Array.isArray(u.sea_lines)) carteRestoreArray(db.sea_lines, u.sea_lines);
-  else db.sea_lines=u.sea_lines;
+  var sl=carteUndoMerge(u.sea_lines, af&&af.sea_lines, carteClone(db.sea_lines));
+  if (sl===undefined) delete db.sea_lines;
+  else if (Array.isArray(db.sea_lines) && Array.isArray(sl)) carteRestoreArray(db.sea_lines, sl);
+  else db.sea_lines=sl;
   var names=[];
-  u.recs.forEach(function(x){
+  u.recs.forEach(function(x, i){
     var rec=(db[x.kind]||[]).find(function(r){ return r.id===x.id; });
-    if (rec) { carteRestoreInPlace(rec, x.data); names.push(rec.name+' ('+rec.cell+', '+placePositionLabel(rec)+')'); }
+    if (rec) { carteRestoreInPlace(rec, carteUndoMerge(x.data, af&&af.recs[i]||undefined, carteClone(rec))); names.push(rec.name+' ('+rec.cell+', '+placePositionLabel(rec)+')'); }
   });
   if (st.selectedRouteId && !(db.routes||[]).some(function(r){ return r.id===st.selectedRouteId; })) st.selectedRouteId=null;
   carteAfterEdit();
@@ -5323,8 +5749,10 @@ function carteUndoMove() { return carteUndo(); }
 
 /// Redessine tout ce qui dépend des routes et des fiches après une modification :
 /// géométrie, carte, liste et nombre de routes, boutons « Annuler » et barre du
-/// mode « Tracer ». Effet de bord : DOM et _carteGeo seulement.
+/// mode « Tracer ». Effet de bord : DOM et _carteGeo ; v1.0.98 : fige l'état
+/// « après » de la dernière action empilée (carteSealUndo), aucune donnée modifiée.
 function carteAfterEdit() {
+  carteSealUndo(); // v1.0.98 : fin de l'action empilée (état « après »)
   carteComputeGeo(); drawCarte();
   var list=document.getElementById('carteRoutesList'); if(list) list.innerHTML=carteRoutesListHTML();
   var cnt=document.getElementById('carteRoutesCount'); if(cnt) cnt.textContent='Routes ('+(db.routes||[]).length+')';
@@ -6454,31 +6882,53 @@ function renderCartePoiList() {
       '<button class="note-del-btn" onclick="window._cartePoi.splice('+i+',1);renderCartePoiList()">✕</button></div>';
   }).join('');
 }
-// Enregistre l'éditeur de cellule. v1.0.95 : la Position X/Z de la ville rattachée est
-// sa position manuelle (m), validée par readPositionInputs avant toute modification.
+/// Enregistre l'éditeur de cellule (terrain, région, province, reliefs, points
+/// importants) et la ville rattachée à la cellule avec sa position manuelle (m).
+/// v1.0.95 : la Position X/Z est validée par readPositionInputs avant toute
+/// modification. v1.0.98 : la cellule est modifiée en place et seulement pour les
+/// champs changés depuis l'ouverture (formApply : une province, une région ou un
+/// terrain absents des listes ne sont plus vidés ni ajoutés) ; la ville n'est
+/// touchée que si la ville choisie ou sa position a changé.
+/// Effet de bord : db.cells (fiche), db.villes (cell, position_x_m / _z_m),
+/// ferme la modale, re-rendu de la carte.
 function saveCellEdit() {
   var cellId=window._carteEditCellId;
   var c=(db.cells||[]).find(function(x){return x.id===cellId;}); if(!c) return;
-  var cpos=readPositionInputs('cell_ville_x','cell_ville_y'); if(!cpos.ok){toast(cpos.msg);return;}
-  c.terrain_type=document.getElementById('cell_terrain').value;
-  c.region_id=document.getElementById('cell_region').value;
+  var cpos=readPositionInputs('cell_ville_x','cell_ville_y');
+  var region=document.getElementById('cell_region').value;
   // Province : doit appartenir à la région choisie, sinon elle est vidée (avec avertissement).
   var pvId=document.getElementById('cell_province').value;
   var pvRg=pvId?(db.regions||[]).find(function(x){return x.id===pvId;}):null;
-  if(pvRg && pvRg.parent_region!==c.region_id){ toast('Province ignorée : elle n\'appartient pas à la région choisie'); pvId=''; }
-  c.province=pvId;
-  c.has_river=document.getElementById('cell_river').checked;
-  c.has_lake=document.getElementById('cell_lake').checked;
-  c.has_mountain_range=document.getElementById('cell_mountain').checked;
-  c.points_of_interest=(window._cartePoi||[]).slice();
-  // Ville : rattache la ville choisie à cette cellule ; détache toute autre
-  // ville précédemment sur cette cellule.
+  var pvBad=!!(pvRg && pvRg.parent_region!==region);
+  if(pvBad) pvId='';
+  var obj={
+    terrain_type:document.getElementById('cell_terrain').value,
+    region_id:region, province:pvId,
+    has_river:document.getElementById('cell_river').checked,
+    has_lake:document.getElementById('cell_lake').checked,
+    has_mountain_range:document.getElementById('cell_mountain').checked,
+    points_of_interest:(window._cartePoi||[]).slice()
+  };
   var chosenId=document.getElementById('cell_ville').value;
-  (db.villes||[]).forEach(function(v){ if(v.cell===cellId && v.id!==chosenId) v.cell=''; });
-  if(chosenId){
-    var v=(db.villes||[]).find(function(x){return x.id===chosenId;});
-    if(v){ v.cell=cellId;
-      v.position_x_m = cpos.x; v.position_z_m = cpos.z;
+  var villeSel={ville:chosenId, x:cpos.ok?cpos.x:null, z:cpos.ok?cpos.z:null};
+  formCapture({cell:obj, ville:villeSel}, c);
+  if(!cpos.ok){toast(cpos.msg);return;}
+  if(pvBad) toast('Province ignorée : elle n\'appartient pas à la région choisie');
+  var fb=_formBase;
+  var villeSame=!!(fb && fb.prev===c && jsonDeepEqual(fb.obj.ville, villeSel));
+  _formBase=(fb && fb.prev===c)?{prev:c, obj:fb.obj.cell}:null;
+  formApply(c, obj);
+  // Ville : rattache la ville choisie à cette cellule ; détache toute autre
+  // ville précédemment sur cette cellule (seulement si le choix ou la position a changé).
+  if(!villeSame){
+    (db.villes||[]).forEach(function(v){ if(v.cell===cellId && v.id!==chosenId) v.cell=''; });
+    if(chosenId){
+      var v=(db.villes||[]).find(function(x){return x.id===chosenId;});
+      if(v){ v.cell=cellId;
+        // Position vide = automatique : null, sans ajouter les champs à une fiche qui ne les a pas.
+        if(cpos.x!==null || Object.prototype.hasOwnProperty.call(v,'position_x_m')) v.position_x_m = cpos.x;
+        if(cpos.z!==null || Object.prototype.hasOwnProperty.call(v,'position_z_m')) v.position_z_m = cpos.z;
+      }
     }
   }
   closeModal(); showSection('carte'); toast('Cellule '+cellId+' enregistrée');
@@ -6549,13 +6999,14 @@ function carteToggleRouteSelection(id) {
 }
 /// Supprime une route depuis la liste de la carte, après confirmation (boîte modale
 /// HTML). v1.0.97 : annulable par Ctrl+Z (pile commune). \param idx index dans db.routes.
-/// Effet de bord : db.routes, sélection, re-rendu de la section.
+/// Effet de bord : db.routes, sélection, re-rendu de la section ; v1.0.98 : état
+/// « après » de l'annulation figé (carteSealUndo).
 function deleteRoute(idx) {
   confirmDelete('Supprimer cette route ?', function(){
     // La route supprimée ne doit pas rester « sélectionnée ».
     var r=db.routes[idx]; if(r && window._carteState.selectedRouteId===r.id) window._carteState.selectedRouteId=null;
     cartePushUndo('suppression de la route '+(r?r.id:''), []);
-    db.routes.splice(idx,1); showSection('carte'); toast('Route supprimée (Ctrl+Z sur la carte pour annuler)');
+    db.routes.splice(idx,1); carteSealUndo(); showSection('carte'); toast('Route supprimée (Ctrl+Z sur la carte pour annuler)');
   });
 }
 
@@ -6675,6 +7126,13 @@ function renderWeaponTargetList(type) {
       '<button class="note-del-btn" onclick="window.'+winMap[type]+'.splice('+i+',1);renderWeaponTargetList(\''+type+'\')">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire d'arme (création ou modification).
+/// \param idx index dans db.weapons, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.weapons, ferme la modale, re-rendu de la section.
 function saveWeapon(idx) {
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.weapons[idx])):{};
   var hands=document.getElementById('wp_hands').value;
@@ -6684,9 +7142,10 @@ function saveWeapon(idx) {
     hands:hands, dual_wield:(hands==='one' && document.getElementById('wp_dual').checked),
     eligible_races:window._wpRaces.slice(), eligible_factions:window._wpFactions.slice(), eligible_classes:window._wpClasses.slice(),
     notes:window._currentNotes.slice()});
+  formCapture(obj, idx!==undefined ? db.weapons[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){ toast('ID et Nom obligatoires'); return; }
   if(!db.weapons) db.weapons=[];
-  if(idx!==undefined) db.weapons[idx]=obj; else db.weapons.push(obj);
+  if(idx!==undefined) db.weapons[idx]=formMerge(db.weapons[idx], obj); else db.weapons.push(formNew(db.weapons, obj));
   closeModal(); showSection('weapons'); toast(idx!==undefined?'Arme modifiée':'Arme ajoutée');
 }
 function deleteWeapon(idx) {
@@ -6753,6 +7212,13 @@ function openServerCommandForm(idx) {
   document.getElementById('noteInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){addCurrentNote();e.preventDefault();} });
   openModal();
 }
+/// Enregistre le formulaire de commande serveur (création ou modification).
+/// \param idx index dans db.server_commands, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.server_commands, ferme la modale, re-rendu de la section.
 function saveServerCommand(idx) {
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.server_commands[idx])):{};
   var obj=Object.assign(base,{
@@ -6760,9 +7226,10 @@ function saveServerCommand(idx) {
     rbac_level:document.getElementById('cmd_rbac').value,
     description:document.getElementById('cmd_desc').value.trim(),
     notes:window._currentNotes.slice()});
+  formCapture(obj, idx!==undefined ? db.server_commands[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){ toast('ID et Commande obligatoires'); return; }
   if(!db.server_commands) db.server_commands=[];
-  if(idx!==undefined) db.server_commands[idx]=obj; else db.server_commands.push(obj);
+  if(idx!==undefined) db.server_commands[idx]=formMerge(db.server_commands[idx], obj); else db.server_commands.push(formNew(db.server_commands, obj));
   closeModal(); showSection('server_commands'); toast(idx!==undefined?'Commande modifiée':'Commande ajoutée');
 }
 function deleteServerCommand(idx) {
@@ -6941,6 +7408,13 @@ function renderLootEligList(type) {
   }).join('');
 }
 
+/// Enregistre le formulaire de butin (création ou modification).
+/// \param idx index dans db.loots, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.loots, ferme la modale, re-rendu de la section.
 function saveLoot(idx) {
   var obj = {id:document.getElementById('lt_id').value.trim(), name:document.getElementById('lt_name').value.trim(),
     type:document.getElementById('lt_type').value, rarity:document.getElementById('lt_rarity').value,
@@ -6950,8 +7424,9 @@ function saveLoot(idx) {
     source_monsters:window._lootMonsters.slice(), source_villes:window._lootVilles.slice(),
     source_quests:window._lootQuests.slice(), source_raids:window._lootRaids.slice(),
     notes:window._currentNotes.slice()};
+  formCapture(obj, idx!==undefined ? db.loots[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.loots[idx]=obj; else db.loots.push(obj);
+  if(idx!==undefined) db.loots[idx]=formMerge(db.loots[idx], obj); else db.loots.push(formNew(db.loots, obj));
   closeModal(); showSection('loots'); toast(idx!==undefined?'Loot modifié':'Loot ajouté');
 }
 function deleteLoot(idx) {
@@ -7062,14 +7537,22 @@ function renderDialogueLines() {
       '<button class="note-del-btn" onclick="window._currentLines.splice('+i+',1);renderDialogueLines()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de dialogue (création ou modification).
+/// \param idx index dans db.dialogues, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.dialogues, ferme la modale, re-rendu de la section.
 function saveDialogue(idx) {
   var obj = {id:document.getElementById('dl_id').value.trim(), name:document.getElementById('dl_name').value.trim(),
     npc_name:document.getElementById('dl_npc').value.trim(),
     faction_id:document.getElementById('dl_faction').value, race_id:document.getElementById('dl_race').value,
     location_ville_id:document.getElementById('dl_ville').value,
     lines:window._currentLines.slice(), notes:window._currentNotes.slice()};
+  formCapture(obj, idx!==undefined ? db.dialogues[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Titre obligatoires');return;}
-  if(idx!==undefined) db.dialogues[idx]=obj; else db.dialogues.push(obj);
+  if(idx!==undefined) db.dialogues[idx]=formMerge(db.dialogues[idx], obj); else db.dialogues.push(formNew(db.dialogues, obj));
   closeModal(); showSection('dialogues'); toast(idx!==undefined?'Dialogue modifié':'Dialogue ajouté');
 }
 function deleteDialogue(idx) {
@@ -7248,6 +7731,15 @@ function renderCreatureTraitsList(){
       '<button class="note-del-btn" onclick="window._creatureTraits.splice('+i+',1);renderCreatureTraitsList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de créature (création ou modification).
+/// \param idx index dans db.creatures, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Les familles de familiers (creature_ids) ne sont mises à jour que si l'identifiant
+/// ou la famille change (l'ordre des listes est gardé sinon).
+/// Effet de bord : db.creatures, ferme la modale, re-rendu de la section.
 function saveCreature(idx){
   // Conserve les champs non édités ici (bestiaire, futurs champs) puis superpose le formulaire.
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.creatures[idx])):{};
@@ -7265,16 +7757,24 @@ function saveCreature(idx){
     drops:window._creatureDrops.slice(),
     abilities_traits:window._creatureTraits.slice(),
     notes:window._currentNotes.slice()});
+  formCapture(obj, idx!==undefined ? db.creatures[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  // v1.0.98 : seuls les champs modifiés sont appliqués à la fiche d'origine.
+  var prevCr=(idx!==undefined)?db.creatures[idx]:null;
+  if(prevCr) obj=formMerge(prevCr, obj);
   // Famille de familier : tenir à jour la liste creature_ids de chaque famille
-  // (ancien et nouvel identifiant retirés, puis ajout dans la famille choisie).
-  var oldId=(idx!==undefined)?db.creatures[idx].id:null;
-  (db.familiar_families||[]).forEach(function(f){
-    f.creature_ids=(f.creature_ids||[]).filter(function(x){ return x!==obj.id && x!==oldId; });
-    if(f.id===obj.familier_famille) f.creature_ids.push(obj.id);
-  });
-  if(!obj.familier_famille) delete obj.familier_famille;
-  if(idx!==undefined)db.creatures[idx]=obj;else db.creatures.push(obj);
+  // (ancien et nouvel identifiant retirés, puis ajout dans la famille choisie),
+  // seulement si l'identifiant ou la famille a changé (sinon l'ordre est gardé).
+  var oldId=prevCr?prevCr.id:null;
+  var oldFam=prevCr?(prevCr.familier_famille||''):null;
+  if(!prevCr || oldId!==obj.id || oldFam!==(obj.familier_famille||'')){
+    (db.familiar_families||[]).forEach(function(f){
+      f.creature_ids=(f.creature_ids||[]).filter(function(x){ return x!==obj.id && x!==oldId; });
+      if(f.id===obj.familier_famille) f.creature_ids.push(obj.id);
+    });
+  }
+  if(!obj.familier_famille && !(prevCr && Object.prototype.hasOwnProperty.call(prevCr,'familier_famille'))) delete obj.familier_famille;
+  if(idx!==undefined)db.creatures[idx]=obj;else db.creatures.push(formNew(db.creatures, obj));
   closeModal();showSection('creatures');toast(idx!==undefined?'Créature modifiée':'Créature ajoutée');
 }
 function deleteCreature(idx){
@@ -7791,6 +8291,13 @@ function renderTimelineFactionsList() {
       '<button class="note-del-btn" onclick="window._timelineFactions.splice('+i+',1);renderTimelineFactionsList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire d'événement de chronologie (création ou modification).
+/// \param idx index dans db.timeline, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.timeline, ferme la modale, re-rendu de la section.
 function saveTimelineEvent(idx) {
   var refType = document.getElementById('tl_ref_type').value;
   var refId = refType==='quest' ? (document.getElementById('tl_quest_sel').value||'') :
@@ -7807,8 +8314,9 @@ function saveTimelineEvent(idx) {
     ref_type:refType, ref_id:refId,
     notes:window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.timeline[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
-  if(idx!==undefined) db.timeline[idx]=obj; else db.timeline.push(obj);
+  if(idx!==undefined) db.timeline[idx]=formMerge(db.timeline[idx], obj); else db.timeline.push(formNew(db.timeline, obj));
   closeModal(); showSection('timeline'); toast(idx!==undefined?'Événement modifié':'Événement ajouté');
 }
 function deleteTimelineEvent(idx) {
@@ -8197,11 +8705,16 @@ function editSkillInline(si) {
     'openSkillTreeEditor(window._editTree.class_id);})()">💾 OK</button>';
 }
 
+/// Enregistre l'arbre de compétences en cours d'édition (window._editTree).
+/// v1.0.98 : sur un arbre existant de la même classe, seuls les champs modifiés
+/// sont appliqués (formMerge) ; la base est capturée à l'ouverture.
+/// Effet de bord : remplace ou ajoute l'arbre dans db.skill_trees, ferme la modale.
 function saveSkillTree() {
   var tree = window._editTree;
-  if (!tree.class_id) { toast('Choisissez une classe'); return; }
   var existing = (db.skill_trees||[]).findIndex(function(t){return t.class_id===tree.class_id;});
-  if (existing >= 0) db.skill_trees[existing] = tree;
+  formCapture(tree, existing >= 0 ? db.skill_trees[existing] : null);
+  if (!tree.class_id) { toast('Choisissez une classe'); return; }
+  if (existing >= 0) db.skill_trees[existing] = tree = formMerge(db.skill_trees[existing], tree);
   else { if(!db.skill_trees) db.skill_trees=[]; db.skill_trees.push(tree); }
   closeModal(); showSection('skill_trees'); toast('Arbre sauvegardé — '+tree.skills.length+' compétence'+(tree.skills.length!==1?'s':''));
 }
@@ -8266,16 +8779,25 @@ function openRuleForm(editCat, editIdx) {
   openModal();
 }
 
+/// Enregistre une règle de db.cross_rules (création, modification, changement de
+/// catégorie). Contexte d'édition : window._editRuleCat / _editRuleIdx.
+/// v1.0.98 : en modification, seuls les champs changés sont appliqués à la règle
+/// d'origine (champs inconnus du formulaire gardés, formMerge).
+/// Effet de bord : db.cross_rules, ferme la modale, re-rendu.
 function saveRule() {
   var cat = document.getElementById('rule_cat').value;
   var text = document.getElementById('rule_text').value.trim();
-  if(!text){toast('La règle est obligatoire');return;}
   var checked = Array.from(document.querySelectorAll('#ruleFactionChecks input:checked')).map(function(inp){return inp.value;});
   var obj = {rule:text, applies_to:checked};
+  var ec = window._editRuleCat, ei = window._editRuleIdx;
+  var isEdit = ec !== null && ec !== undefined && ei !== null && ei !== undefined;
+  var prevRule = isEdit && db.cross_rules && db.cross_rules[ec] ? db.cross_rules[ec][ei] : null;
+  formCapture(obj, prevRule);
+  if(!text){toast('La règle est obligatoire');return;}
+  if(prevRule) obj = formMerge(prevRule, obj);
   if(!db.cross_rules) db.cross_rules = {};
   if(!db.cross_rules[cat]) db.cross_rules[cat] = [];
-  var ec = window._editRuleCat, ei = window._editRuleIdx;
-  if(ec !== null && ec !== undefined && ei !== null && ei !== undefined) {
+  if(isEdit) {
     if(ec !== cat) { db.cross_rules[ec].splice(ei,1); db.cross_rules[cat].push(obj); }
     else db.cross_rules[cat][ei] = obj;
   } else {
@@ -8293,6 +8815,10 @@ function deleteRule(cat,idx) {
 // ─────────────────────────────────────────────
 // Métadonnées
 // ─────────────────────────────────────────────
+/// Section « Métadonnées » : formulaire source, version, notes de db.meta.
+/// \param el conteneur de la section. v1.0.98 : capture la base du formulaire
+/// (formCaptureBase) pour que saveMeta n'écrive que les champs modifiés.
+/// Effet de bord : DOM, window._metaNotes, _formBase.
 function renderMeta(el) {
   window._metaNotes=(db.meta&&db.meta.notes)?db.meta.notes.slice():[];
   el.innerHTML=
@@ -8305,8 +8831,9 @@ function renderMeta(el) {
     '<input type="text" id="metaNoteInput" placeholder="Ajouter une note méta…">' +
     '<button class="btn btn-primary btn-sm" onclick="addMetaNote()">+</button></div>' +
     '<div class="notes-list-edit" id="metaNotesList"></div></div></div>' +
-    '<button class="btn btn-gold" onclick="saveMeta()" style="margin-top:0.5rem">💾 Enregistrer les métadonnées</button>';
+    '<button class="btn btn-gold" id="metaSaveBtn" onclick="saveMeta()" style="margin-top:0.5rem">💾 Enregistrer les métadonnées</button>';
   renderMetaNotesList();
+  formCaptureBase(document.getElementById('metaSaveBtn')); // v1.0.98 : base des métadonnées
   document.getElementById('metaNoteInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addMetaNote();e.preventDefault();}});
 }
 function addMetaNote(){ var i=document.getElementById('metaNoteInput'),v=i.value.trim(); if(!v) return; window._metaNotes.push(v); renderMetaNotesList(); i.value=''; }
@@ -8319,8 +8846,16 @@ function renderMetaNotesList() {
       '<button class="note-del-btn" onclick="window._metaNotes.splice(' + i + ',1);renderMetaNotesList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre les métadonnées (source, version, notes) de la section Métadonnées.
+/// v1.0.98 : modifie db.meta en place, champ par champ, et seulement les champs
+/// changés depuis l'affichage (formApply) : `canon` et tout autre champ sont gardés.
+/// Effet de bord : db.meta ; la base est recapturée pour un second enregistrement.
 function saveMeta() {
-  db.meta={source:document.getElementById('meta_source').value.trim(), version:document.getElementById('meta_version').value.trim(), notes:window._metaNotes.slice()};
+  if(!db.meta) db.meta={};
+  var obj={source:document.getElementById('meta_source').value.trim(), version:document.getElementById('meta_version').value.trim(), notes:window._metaNotes.slice()};
+  formCapture(obj, db.meta);
+  formApply(db.meta, obj);
+  formCaptureBase(document.getElementById('metaSaveBtn'));
   toast('Métadonnées sauvegardées');
 }
 
@@ -8344,7 +8879,10 @@ function renderNotesList() {
 // ─────────────────────────────────────────────
 // Modal
 // ─────────────────────────────────────────────
-function openModal(){ document.getElementById('modalOverlay').classList.remove('hidden'); }
+/// Affiche la modale de formulaire. v1.0.98 : calcule aussi la base du formulaire
+/// (formCaptureBase) pour que « Enregistrer » n'applique que les champs modifiés.
+/// Effet de bord : _formBase. Doit être appelée une fois le formulaire construit.
+function openModal(){ document.getElementById('modalOverlay').classList.remove('hidden'); formCaptureBase(null); }
 function confirmDelete(message, onConfirm) {
   // Custom confirmation modal — replaces native confirm() which is blocked in sandboxed iframes
   var overlay = document.createElement('div');
@@ -8364,8 +8902,11 @@ function confirmDelete(message, onConfirm) {
   setTimeout(function(){ overlay.querySelector('#confirmYes').focus(); }, 50);
 }
 
+/// Ferme la modale de formulaire et vide les listes de travail (window._current…).
+/// Effet de bord : DOM, listes de travail ; v1.0.98 : oublie la base du formulaire (_formBase).
 function closeModal() {
   document.getElementById('modalOverlay').classList.add('hidden');
+  _formBase = null; // v1.0.98 : base du formulaire fermé
   window._currentNotes=[];          window._currentVariants=[];
   window._currentLevelTitles=[];    window._currentFactionRelations=[];
   window._currentVilleRelations=[];  window._currentTraits=[];
@@ -8395,7 +8936,11 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){ if
 // ─────────────────────────────────────────────
 // Toast
 // ─────────────────────────────────────────────
+/// Affiche un message temporaire (2,6 s). \param msg texte.
+/// v1.0.98 : aucun message pendant la capture d'un formulaire (_formCapture).
+/// Effet de bord : DOM.
 function toast(msg) {
+  if (_formCapture) return; // v1.0.98 : silencieux pendant la capture d'un formulaire
   var el=document.createElement('div'); el.className='toast'; el.textContent=msg;
   document.body.appendChild(el);
   setTimeout(function(){ if(el.parentNode) el.remove(); }, 2600);
@@ -8571,6 +9116,13 @@ function renderPersonDialoguesList() {
       '<button class="note-del-btn" onclick="window._personDialogues.splice('+i+',1);renderPersonDialoguesList()">✕</button></div>';
   }).join('');
 }
+/// Enregistre le formulaire de personnage (ancienne version, remplacée par savePersonV2) (création ou modification).
+/// \param idx index dans db.persons, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.persons, ferme la modale, re-rendu de la section.
 function savePerson(idx) {
   var obj = {
     id:document.getElementById('pers_id').value.trim(),
@@ -8585,11 +9137,12 @@ function savePerson(idx) {
     dialogue_ids:window._personDialogues.slice(),
     notes:window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.persons[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.persons||[],idx);
   if(dupW.length){toast(dupW[0]);return;}
   if(!db.persons) db.persons=[];
-  if(idx!==undefined) db.persons[idx]=obj; else db.persons.push(obj);
+  if(idx!==undefined) db.persons[idx]=formMerge(db.persons[idx], obj); else db.persons.push(formNew(db.persons, obj));
   closeModal(); showSection('persons'); toast(idx!==undefined?'PNJ modifié':'PNJ ajouté');
 }
 function deletePerson(idx) {
@@ -9021,6 +9574,13 @@ function openZoneForm(idx) {
   openModal();
 }
 
+/// Enregistre le formulaire de zone (création ou modification).
+/// \param idx index dans db.zones, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.zones, ferme la modale, re-rendu de la section.
 function saveZone(idx) {
   var loreRaw = document.getElementById('z_lore').value.trim();
   var loreVal = loreRaw;
@@ -9039,9 +9599,10 @@ function saveZone(idx) {
     source: document.getElementById('z_source').value.trim(),
     notes: window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.zones[idx] : null); // v1.0.98 : base du formulaire (capture)
   if (!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if (!db.zones) db.zones=[];
-  if (idx!==undefined) db.zones[idx]=obj; else db.zones.push(obj);
+  if (idx!==undefined) db.zones[idx]=formMerge(db.zones[idx], obj); else db.zones.push(formNew(db.zones, obj));
   closeModal(); showSection('zones'); toast(idx!==undefined?'Zone modifiée':'Zone ajoutée');
 }
 function deleteZone(idx) {
@@ -9200,12 +9761,20 @@ function openLoreEditor() {
   openModal();
 }
 
+/// Enregistre l'éditeur du lore (nom du monde, ère, conflit, notes de carte).
+/// v1.0.98 : db.lore est modifié en place et seulement pour les champs changés
+/// depuis l'ouverture (formApply) ; les autres champs du lore ne sont pas touchés.
+/// Effet de bord : db.lore, ferme la modale, re-rendu.
 function saveLoreEditor() {
+  var obj = {
+    world_name: document.getElementById('lore_world').value.trim(),
+    era: document.getElementById('lore_era').value.trim(),
+    central_conflict: document.getElementById('lore_conflict').value.trim(),
+    world_map_notes: document.getElementById('lore_map').value.split('\n').map(function(l){return l.trim();}).filter(Boolean)
+  };
+  formCapture(obj, db.lore || null);
   if (!db.lore) db.lore = {};
-  db.lore.world_name = document.getElementById('lore_world').value.trim();
-  db.lore.era = document.getElementById('lore_era').value.trim();
-  db.lore.central_conflict = document.getElementById('lore_conflict').value.trim();
-  db.lore.world_map_notes = document.getElementById('lore_map').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  formApply(db.lore, obj);
   closeModal(); showSection('lore'); toast('Lore mis à jour');
 }
 
@@ -9427,6 +9996,13 @@ function openQuestForm(idx) {
   openModal();
 }
 
+/// Enregistre le formulaire de quête (création ou modification).
+/// \param idx index dans db.quests, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.quests, ferme la modale, re-rendu de la section.
 function saveQuestV2(idx) {
   var mp = document.getElementById('qt_min_players').value;
   var tagsRaw = document.getElementById('qt_tags').value;
@@ -9450,9 +10026,10 @@ function saveQuestV2(idx) {
     source_lore: window._questSourceLore||[],
     notes: window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.quests[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Titre obligatoires');return;}
   if(!db.quests) db.quests=[];
-  if(idx!==undefined) db.quests[idx]=obj; else db.quests.push(obj);
+  if(idx!==undefined) db.quests[idx]=formMerge(db.quests[idx], obj); else db.quests.push(formNew(db.quests, obj));
   closeModal(); showSection('quests'); toast(idx!==undefined?'Quête modifiée':'Quête ajoutée');
 }
 // Override saveQuest to use v2
@@ -9706,6 +10283,14 @@ function renderPersonZonesList() {
   }).join('');
 }
 
+/// Enregistre le formulaire de personnage (création ou modification).
+/// \param idx index dans db.persons, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Le champ « Personnalité » n'écrit plus `description` d'une fiche existante.
+/// Effet de bord : db.persons, ferme la modale, re-rendu de la section.
 function savePersonV2(idx) {
   var abilRaw = document.getElementById('pers_abilities').value;
   var itemRaw = document.getElementById('pers_items').value;
@@ -9721,7 +10306,6 @@ function savePersonV2(idx) {
     role: document.getElementById('pers_role').value.trim(),
     visual: document.getElementById('pers_visual').value.trim(),
     personality: document.getElementById('pers_desc').value.trim(),
-    description: document.getElementById('pers_desc').value.trim(),
     arc: document.getElementById('pers_arc').value.trim(),
     abilities: abilRaw ? abilRaw.split('\n').map(function(l){return l.trim();}).filter(Boolean) : [],
     special_items: itemRaw ? itemRaw.split('\n').map(function(l){return l.trim();}).filter(Boolean) : [],
@@ -9733,11 +10317,15 @@ function savePersonV2(idx) {
     dialogue_ids: window._personDialogues.slice(),
     notes: window._currentNotes.slice()
   };
+  // v1.0.98 : le champ « Personnalité » n'écrit plus `description` d'une fiche
+  // existante (il l'écrasait) ; à la création, description = personnalité.
+  if(idx===undefined){ var o2={}; Object.keys(obj).forEach(function(k){ o2[k]=obj[k]; if(k==='personality') o2.description=obj.personality; }); obj=o2; }
+  formCapture(obj, idx!==undefined ? db.persons[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.persons||[],idx);
   if(dupW.length){toast(dupW[0]);return;}
   if(!db.persons) db.persons=[];
-  if(idx!==undefined) db.persons[idx]=obj; else db.persons.push(obj);
+  if(idx!==undefined) db.persons[idx]=formMerge(db.persons[idx], obj); else db.persons.push(formNew(db.persons, obj));
   closeModal(); showSection('persons'); toast(idx!==undefined?'Personnage modifié':'Personnage ajouté');
 }
 function savePerson(idx) { savePersonV2(idx); }
@@ -10148,6 +10736,13 @@ function parseProgressionText(txt) {
   });
 }
 
+/// Enregistre le formulaire de compétence (création ou modification).
+/// \param idx index dans db.competences, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.competences, ferme la modale, re-rendu de la section.
 function saveCompetence(idx) {
   var progRaw = document.getElementById('comp_prog').value.trim();
   var effRaw  = document.getElementById('comp_effects').value.trim();
@@ -10166,9 +10761,10 @@ function saveCompetence(idx) {
     source:      document.getElementById('comp_source').value.trim(),
     notes:       window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.competences[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if(!db.competences) db.competences=[];
-  if(idx!==undefined) db.competences[idx]=obj; else db.competences.push(obj);
+  if(idx!==undefined) db.competences[idx]=formMerge(db.competences[idx], obj); else db.competences.push(formNew(db.competences, obj));
   closeModal(); showSection('competences'); toast(idx!==undefined?'Compétence modifiée':'Compétence ajoutée');
 }
 function deleteCompetence(idx) {
@@ -10367,6 +10963,13 @@ function openRegleForm(idx) {
   openModal();
 }
 
+/// Enregistre le formulaire de règle transverse (création ou modification).
+/// \param idx index dans db.regles_transverses, undefined pour une création.
+/// v1.0.98 : seuls les champs modifiés depuis l'ouverture sont appliqués à la fiche
+/// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
+/// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
+/// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// Effet de bord : db.regles_transverses, ferme la modale, re-rendu de la section.
 function saveRegle(idx) {
   var inclRaw = document.getElementById('regle_incants').value.trim();
   var applRaw = document.getElementById('regle_applies').value.trim();
@@ -10383,11 +10986,12 @@ function saveRegle(idx) {
     source:      document.getElementById('regle_source').value.trim(),
     notes:       window._currentNotes.slice()
   };
+  formCapture(obj, idx!==undefined ? db.regles_transverses[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   if(!db.regles_transverses) db.regles_transverses=[];
   // Conserve les champs que le formulaire ne gère pas (registre des règles canon…).
   if(idx!==undefined) obj = Object.assign({}, db.regles_transverses[idx], obj);
-  if(idx!==undefined) db.regles_transverses[idx]=obj; else db.regles_transverses.push(obj);
+  if(idx!==undefined) db.regles_transverses[idx]=formMerge(db.regles_transverses[idx], obj); else db.regles_transverses.push(formNew(db.regles_transverses, obj));
   closeModal(); showSection('regles_transverses'); toast(idx!==undefined?'Règle modifiée':'Règle ajoutée');
 }
 function deleteRegle(idx) {

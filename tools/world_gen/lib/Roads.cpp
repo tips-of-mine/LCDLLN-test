@@ -369,6 +369,8 @@ namespace tools::world_gen
 			std::vector<Vec2> raw = AStar(cg, from, to, false, allowed);
 			if (raw.size() >= 2) return raw;
 			const Grid<float>& gr = cg.cost;
+			// Nœud franchissable (coût fini) de la grille 250 m le plus proche de \p p,
+			// cherché à moins de 1 500 m ; \p p lui-même si aucun.
 			auto nearestOpen = [&](Vec2 p) {
 				const int ci = gr.IndexX(p.x), cj = gr.IndexZ(p.z);
 				const int r = static_cast<int>(std::ceil(1500.0 / gr.step));
@@ -597,6 +599,7 @@ namespace tools::world_gen
 						const wc::CellCoord ca = wc::CellFromPosition(pts[i].p.x, pts[i].p.z);
 						const wc::CellCoord cb = wc::CellFromPosition(pts[i + 1].p.x, pts[i + 1].p.z);
 						if (std::abs(ca.n - cb.n) != 1 || std::abs(ca.e - cb.e) != 1) continue;
+						// Vrai si la case \p c est jouable (generated_cells + corridors de départ).
 						auto isPlayable = [&](wc::CellCoord c) { return playable.count(wc::LoreCellId(c)) > 0; };
 						if (!isPlayable(ca) || !isPlayable(cb) || (isPlayable({ ca.n, cb.e }) && isPlayable({ cb.n, ca.e }))) continue;
 						const wc::CellPoint ma = wc::CellMinCorner(ca), mb = wc::CellMinCorner(cb);
@@ -616,6 +619,12 @@ namespace tools::world_gen
 				bool any = false;
 				size_t pieceStart = 0;
 				std::vector<std::vector<Vec2>> segs;
+				// Ferme le tronçon en cours (ancres pieceStart → \p endIdx, index dans pts) :
+				// assemble les segments A* en une Road (id du lore, extrémités, type, largeur),
+				// la naturalise par ses ancres (coins diagonaux ramenés dans les cases reliées),
+				// calcule son profil en long (pente ≤ 16 %, sentier ≤ 18 %) et la marque sur la
+				// grille des routes déjà tracées. Sans segment : ne fait rien.
+				// Effet de bord : pieces, pieceFrom / pieceTo, snaps, cg.onRoad, any ; segs vidé.
 				auto finish = [&](size_t endIdx) {
 					if (segs.empty()) return;
 					const Anchor& A = pts[pieceStart];

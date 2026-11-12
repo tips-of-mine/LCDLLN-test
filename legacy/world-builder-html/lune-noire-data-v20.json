@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.107",
+    "version": "1.0.108",
     "notes": [
+      "v1.0.108 : Documentation complète de la branche carte v1.0.72 → v1.0.107 (lot 31 du propriétaire, 12/11/2026) : guide de l'éditeur (docs/world/EDITEUR_LORE.md), outils du lore et CI (docs/world/OUTILS_LORE.md), état du monde (docs/world/ROYAUMES.md §11, docs/world/ENFERS.md §7), table des matières de LORE_BD.md §16, synthèse par version et points ouverts (docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md), index docs/world/README.md. Aucune fiche de lore modifiée.",
       "v1.0.107 : [DÉCISION] Le gouffre caché de Deathtrap Canyon et sa ville (lot 32 du propriétaire, 12/11/2026) : Gouffre des Revenus [GD] en S008_E010, fosse latérale à l'est de la gorge de la route 000074, sans route ni sentier, secrète (calque secret de l'éditeur, hors de la carte du jeu) ; au fond, Thurvhal [GD], village des Ghaurdes [GD] (peuple oublié neutre) avec un cimetière neutre, point de réapparition des morts du canyon ; galerie de la Fente vers une entrée cachée ; torches ; 2 PNJ et 3 quêtes [GD] (LORE_BD §16.36).",
       "v1.0.106 : [DÉCISION] Routes manquantes après le passage aux routes du lore (lot 30b du propriétaire, 12/11/2026) : 11 routes [GD] créées (dont Orkh et Marn, jusque-là sans route au lore) et 4 tracés corrigés ; 000017 tracée par la Passe des Dragons ; 3 Bornes des Géants et la Stèle des Deux Fois Nés replacées au bord des routes du lore ; 68 cases ouvertes (passages des routes du lore entre deux zones jouables et trous intérieurs) avec 64 lieux [GD]. La Via Magna est jouable de Lhynn à Moork. Registre : 4 entrées. Détail : docs/world/LORE_BD.md, section 16.35.",
       "v1.0.105 : [DÉCISION] Le générateur du jeu suit les tracés des routes du lore (lot 30 du propriétaire, 12/11/2026) : les 154 routes terrestres (road, imperial_road, path ; les 8 routes maritimes ne sont pas tracées) sont recopiées dans le master (clé lore_roads, script tools/lore/sync_routes.py) et tracées case par case par tools/world_gen (153 ; 000017 vers la case enclavée du Palais des Maîtres des Dragons ne l'est pas) ; les routes calculées par le générateur ne restent que là où elles relient les villes de départ sans équivalent au lore (13 sur 157). La Via Magna est tracée en jeu de Shezhold à Moork par Horkher et Nykhfeld. Cellules jouables inchangées (413). Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.34.",
@@ -242907,6 +242908,13 @@
           "nom": "Gouffre caché de Deathtrap Canyon et sa ville",
           "decision": "Un gouffre caché, distinct de la gorge de la route 000074, sans route ni sentier et absent de la carte publique, abrite au fond Thurvhal, village d'un peuple oublié neutre (les Ghaurdes) ; son cimetière neutre est le point de réapparition des morts du canyon, seule façon de le découvrir ; une galerie taillée remonte vers une entrée cachée ; fond sombre éclairé de torches (LORE_BD §16.36).",
           "version": "1.0.107"
+        },
+        {
+          "collection": "documentation",
+          "id": "docs/world (README, EDITEUR_LORE, OUTILS_LORE, CHANGELOG_CARTE_v1.0.72-v1.0.108)",
+          "nom": "Documentation complète de la branche",
+          "decision": "Demande du propriétaire (12/11/2026) : « Pense comme toujours à bien documenter la partie document. » La branche carte v1.0.72 → v1.0.107 est documentée pour un mappeur ou un contributeur sans contexte : guide de l'éditeur, outils du lore et CI, état du monde, table des matières de LORE_BD §16, synthèse par version avec impact jeu et liste consolidée des points ouverts. Aucune donnée de jeu modifiée en v1.0.108 (docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md).",
+          "version": "1.0.108"
         }
       ]
     },

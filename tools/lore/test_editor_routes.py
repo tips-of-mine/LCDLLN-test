@@ -114,6 +114,7 @@ def continu(page, cases):
 class Captures:
     """Images de la séquence (zone carte + barre d'outils), assemblées en GIF."""
 
+    # page : page Playwright ; actif : False = aucune capture (prendre() ne fait rien).
     def __init__(self, page, actif):
         self.page, self.actif, self.images = page, actif, []
 

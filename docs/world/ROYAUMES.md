@@ -10,6 +10,12 @@
 >
 > Les placements tirés des albums (villes, lieux, POI, états) et les corrections du
 > lore qui les accompagnent sont tracés dans [`LORE_BD.md`](LORE_BD.md).
+>
+> **Voir aussi** : index [`README.md`](README.md) ; contenu du monde au v1.0.108 (régions,
+> niveaux, peuples, cases jouables, routes, secrets) : [§11](#11-contenu-du-monde-après-la-branche-carte-v1072--v10108) ;
+> éditeur : [`EDITEUR_LORE.md`](EDITEUR_LORE.md) ; scripts et CI : [`OUTILS_LORE.md`](OUTILS_LORE.md) ;
+> seconde carte : [`ENFERS.md`](ENFERS.md) ; synthèse de la branche :
+> [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md).
 
 ## 0. Avancement (une PR par étape)
 
@@ -106,7 +112,8 @@ plus — `connect_start_cities: true` — les cellules traversées par les route
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
 routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
-suivant la route. Le bundle Docker ne garde des cellules que les `.json` / `.txt`
+suivant la route. **Depuis la v1.0.106 : 412 cellules listées dans `generated_cells`, 481 cellules
+jouables avec les corridors** (détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
 données de rendu restent dans le paquet client. En local (Windows) :
 
@@ -403,3 +410,221 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   sans route (île) reste isolée (avertissement du générateur).
 - Ajouter des cellules jouables : les ajouter à `generated_cells` de
   `world_master.json` ; la CI les génère au prochain build.
+
+## 11. Contenu du monde après la branche carte (v1.0.72 → v1.0.108)
+
+Synthèse de l'état du monde au lore **v1.0.108** ; l'historique, les motifs et les preuves de
+chaque lot sont dans [`LORE_BD.md`](LORE_BD.md) §16 (table des matières en tête de la section),
+le résumé par version dans [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md).
+
+**Réel en jeu ou lore seulement ?** Le générateur ne lit que le master
+(`game/data/world/royaumes/world_master.json`) : grille, `generated_cells`, `cities`, `pois`,
+`reliefs`, `river_courses`, `lore_roads`, `regions` (boîtes). Tout le reste (niveaux, quêtes,
+raids, PNJ nommés, créatures, factions, peuples) est une **donnée de conception** du lore
+(`legacy/world-builder-html/lune-noire-data.json`), sans effet en jeu tant qu'un système ne la lit pas.
+
+### 11.1 Régions du hors-série et provinces (v1.0.92 – v1.0.102)
+
+`[DÉCISION]` v1.0.92 : les **régions de référence** sont celles de la carte p.4 du hors-série
+« L'Empire de la Négation » (`type: region_hs`) ; une région peut être découpée en **provinces**
+(`type: province`, `parent_region`) ; les anciennes régions du lore qui ne sont pas des régions
+HS sont devenues des provinces (identifiant, nom, notes et niveaux inchangés). Case → région :
+`cells[].region_id` ; case → province : `cells[].province`. Îlots corrigés en v1.0.101 – v1.0.102.
+
+| Région HS (`region_id`) | Nom au lore (nom HS) | Cases | Niveau de réf. |
+|---|---|---:|---|
+| `terres_des_gigantomorphes` | Terres des Gigantomorphes | 249 | 30-56 |
+| `royaume_des_nains_de_lest` | Royaume des nains de l'est (Royaume des Nains de l'Est) | 217 | 10-30 |
+| `territoires_orcques` | Territoires orcques (Territoires orques) | 154 | 18-45 |
+| `terres_de_lempereur` | Terres de l'empereur (Terres de l'Empereur Wismerhill Ier) | 149 | 10-30 |
+| `via_magna` | Via Magna | 134 | 10-30 |
+| `royaumes_des_nains_du_sud` | Royaumes des nains du sud (Royaume des Nains du Sud) | 127 | 10-30 |
+| `baronnie_de_moorks` | Baronnie de Moorks (Baronnie de Moork) | 80 | 18-45 |
+| `region_ile_de_la_treve` | Île de la Trêve (région propre, hors HS, §11.3) | 54 | 45-60 |
+| `royaume_drach` | Royaume Drach | 51 | 30-56 |
+| `foret_elfique` | Forêt elfique | 40 | 10-30 |
+| `syzygie` | Syzygie | 37 | 10-30 |
+| `region_hishtarland` | Royaume d'Hishtarland (Hishtarland) | 19 | 25-40 |
+
+| Province | Région parente | Cases | Niveau de réf. |
+|---|---|---:|---|
+| `region_marches` Territoires des Marches | Territoires orcques | 56 | 1-15 |
+| `val_de_southport` Val de Suthvarn | Royaumes des nains du sud | 42 | 18-28 |
+| `foret_des_lutins` Forêt des Lutins | Via Magna | 35 | 14-24 |
+| `region_premiere_province_empire` 1ère Province de l'Empire | Terres de l'empereur | 27 | 10-22 |
+| `confins_du_midi` Confins du Midi | Royaumes des nains du sud | 21 | 22-34 |
+| `region_marche_est` Marche de l'Est | Baronnie de Moorks | 18 | 15-28 |
+| `desert_des_sels` Désert des Sels | Royaume des nains de l'est | 12 | 24-36 |
+| `terres_desolees` Terres désolées de Tsaroth | Royaumes des nains du sud | 6 | 20-40 |
+| `marais_maudits_t11` Marais Maudits (de Thenhart) | Terres des Gigantomorphes | 5 | 40-56 |
+| `region_northind` Province de Northind | Terres de l'empereur | 4 | 12-24 |
+| `region_terres_nord_t00` Terres du Nord — Château en Ruine | Terres des Gigantomorphes | 2 | 1-15 |
+| `desert_central` Désert de l'Oracle | Via Magna | 0 (étendue portée par la boîte du master) | 10-25 |
+
+Régions **sans case** sur le continent : Les Enfers (`region_enfers_t00`, 1-10, seconde carte),
+La Grande Plaine (45-55, champ de bataille du T10), Empire du Jade, Empire Tharque, Terra Secunda
+(contenu d'extension, sans niveau). Les **boîtes `regions` du master** (rectangles utilisés par le
+générateur et les tests) n'ont pas été recalées sur ces régions : point ouvert.
+
+### 11.2 Niveaux de référence et niveaux par faction (v1.0.100, v1.0.103)
+
+| Donnée | Où | Règle |
+|---|---|---|
+| Niveau de référence d'une zone | `regions[].niveau_ref` `{min, max}` | valeurs ci-dessus (`[GD]` à valider sauf les décisions citées) ; toutes les cases terrestres ont un niveau. |
+| Carré de départ d'une faction | `game_design.depart.region` | **1-10** (les 3 × 3 cases autour de la ville de départ). |
+| Niveau par faction | `regions[].niveau_par_faction` `{faction: {min, max}}` | rempli pour 24 fiches × 12 factions jouables (`[GD]`, `rule_niveaux_par_faction`). |
+| Niveau conseillé d'un raid | `raids[].niveau_ref` | 36 raids renseignés, 2 à `null` (Empire du Jade). |
+
+Règle `[GD]` des niveaux par faction (v1.0.103) : (1) Île de la Trêve, même niveau pour toutes ;
+(2) région ou province qui contient le départ de la faction : niveau de référence ; (3) sans
+maître, maître allié, neutre ou relation inconnue : référence ; (4) maître **ennemi** :
+min = max(réf. min + 5, **20**), max = min(70, max(réf. max + 5, min + 5)). Relations : blocs
+de `game_design.faction_relations`.
+
+Règle `[GD]` des niveaux de raid : boss connu → `[niveau max − 5, niveau max]` ; sinon zone du
+raid selon la difficulté (f = 0,25 / 0,5 / 0,75 / 1), +5 à partir de 3 équipes ; planchers des
+raids de fin d'histoire : Héroïque 45, Légendaire 50, Mythique 55, Apocalyptique 60.
+
+**Aucun code du jeu ni du serveur ne lit ces niveaux** ; le calque « Niveaux » de l'éditeur les
+affiche ([`EDITEUR_LORE.md`](EDITEUR_LORE.md) §5). Les zones nettement plus fortes que leur
+voisinage sont **balisées** (notes « Balisage du danger », lieux-balises ; v1.0.85).
+
+### 11.3 Île de la Trêve (v1.0.74, v1.0.77)
+
+| Point | Valeur |
+|---|---|
+| Emprise | N016-N023 × W009-W015 : fer à cheval de forêt (20 cases `T`) autour d'une baie ouverte à l'est, îlot central ; 34 cases de haut-fond générées pour la côte (54 cases jouables) |
+| Région | `region_ile_de_la_treve`, commune à **toutes les factions** (Légion comprise), **niveau 45-60** pour toutes |
+| Villes `[GD]` | Brenhaval (`town_brinehaven`, N017_W010, port franc, neutre), Duzhmoroth (`town_duskmoor`, N022_W010, Lune Noire), Lhantarn (`town_lanternhold`, N021_W014, Empire), Thrival (`town_truceholm`, N019_W010, îlot) |
+| Liaisons | routes du lore 000214 à 000220 ; lignes maritimes (lore seulement) Brenhaval ↔ Haevrin ↔ Ostrevan et navette Brenhaval ↔ Thrival |
+| Relief | 11 `massif` du master (crêtes, falaises, vallées encaissées) ; pas de route dans la baie (5 cases de haut-fond) |
+| Contenu `[GD]` | Hwakhari (peuple vivant des temples incas, 11 POI temple / sanctuaire) ; 3 raids simples (45-60) et 1 raid multi-équipe (Dévoreur des Brumes, 60) ; quêtes entre factions |
+| En jeu | relief, villes, POI, routes ; temples sans modèle 3D, raids sans instance, bateaux non joués |
+
+### 11.4 Peuples lointains (v1.0.82)
+
+Douze peuples **hors carte** (`factions`, `type: peuple_lointain`, noms `[GD]`), placés par
+climat ; chacun a une **direction** (flèche du calque « Peuples lointains ») et un **comptoir**
+sur le continent. Aucun n'est jouable ni présent en jeu (lore seulement).
+
+| Peuple | Direction | Comptoir |
+|---|---|---|
+| Les Nordiques (`faction_nordiques`) | nord | Comptoir du Nord, Brenhaval (N017_W010) |
+| Les Vharnoctes (`faction_vharnoct`) | nord-nord-est | Comptoir du Nord, Brenhaval |
+| Le Saelvhyr (`faction_saelvhyr`) | nord-ouest | Comptoir du Nord, Brenhaval |
+| L'Empire Minghol (`faction_empire_minghol`) | nord-est | Comptoir de l'Est, Ryvaldh (N006_E023) |
+| L'archipel d'Akhazumi (`faction_akhazumi`) | est-nord-est | Comptoir de l'Est, Ryvaldh |
+| L'Empire de Tsin (`faction_empire_tsin`) | est | Comptoir de l'Est, Ryvaldh |
+| Le Kharzhad (`faction_kharzhad`) | sud-est | Comptoir de l'Est, Ryvaldh |
+| Les émirats du Sheydhar (`faction_sheydhar`) | sud-sud-est | Comptoir du Sud, Hishtarland (S011_W006) |
+| Le royaume de Nebkhara (`faction_nebkhara`) | sud | Comptoir du Sud, Hishtarland |
+| Le royaume de Nkhaloa (`faction_nkhaloa`) | sud-sud-ouest | Comptoir du Sud, Hishtarland |
+| Azteca (`faction_azteca`) | ouest-sud-ouest | Comptoir de l'Ouest, Altenberg (N005_W012) |
+| Les nations tahokhanes (`faction_tahokhan`) | ouest-nord-ouest | Comptoir de l'Ouest, Altenberg |
+
+### 11.5 Ophidiens (v1.0.82)
+
+> **Secret joueurs** : les cases des entrées ci-dessous sont une donnée de conception ; ne pas
+> les publier (calque 🔒 « Entrées ophidiennes » de l'éditeur, désactivé à chaque ouverture).
+
+`faction_ophidiens` : **peuple ennemi souterrain**, hostile à toutes les factions et aux douze
+peuples (hommes-serpents télépathes, Empereur, Impératrice pondeuse, Prince Serpent, montures
+sauriennes, cités souterraines, écloserie ; `regle_ophidiens`). Pas d'Ophidia Prime en surface
+(elle est sur Terra Secunda). Créatures 55-62, boss de raid 66-68 (lore seulement, aucun spawner).
+
+| Entrée cachée (`entree_cachee`) | Case | Milieu | En jeu |
+|---|---|---|---|
+| Puits des Lianes (`lieu_ophidiens_puits_des_lianes`) | N010_E010 | jungle de Leviathan | POI réel (cellule générée) |
+| Bouche des Roseaux (`lieu_ophidiens_bouche_des_roseaux`) | N010_W003 | Marais maudits de Thenhart | lore seul (case fermée) |
+| Faille des Mues (`lieu_ophidiens_faille_des_mues`), entrée principale | S011_E015 | montagnes du sud-est | lore seul (case fermée) |
+
+### 11.6 Dragons cachés de Xygga (v1.0.81)
+
+> **Secret joueurs** : cette sous-section donne les cases exactes des grottes. Doc de conception
+> interne ; ne pas la recopier dans un document destiné aux joueurs ni la montrer en partage
+> d'écran (calque 🔒 « Dragons et grottes de Xygga » de l'éditeur).
+
+`regle_dragons_de_xygga` : les dragons vivent dans le monde des Royaumes, chacun caché dans une
+grotte difficile à trouver ; Xygga dans un volcan, **10 premiers-nés** ; **pas de noms** pour
+l'instant ; genre de Xygga non tranché. Niveaux `[GD]` : premiers-nés 66-70, Xygga 70 (endormi :
+rencontre narrative, combat à décider). Grottes à plus de 1,5 km de toute route ; les cases
+sensibles et leurs 8 voisines ne sont jamais ouvertes par les lots d'ouverture de cases.
+
+| Dragon | Case | Grotte (`entree_cachee`) | En jeu |
+|---|---|---|---|
+| Xygga, Grand Dragon rouge | S008_E012 | Grotte du volcan endormi | POI réel |
+| doré enflammé | N002_E004 | Grotte de la falaise de grès | lore seul |
+| rouge à cornes | S005_E001 | Grotte de la vire | lore seul |
+| jaune-vert épineux (tête de tricératops) | N011_W005 | Grotte des racines du marais | lore seul |
+| petit rouge épineux | S007_E021 | Grotte de la crevasse de l'est | lore seul |
+| blanc à cornes noires | S006_W001 | Grotte du surplomb | lore seul |
+| noir aux ailes brunes | N010_E012 | Grotte des ronces | POI réel |
+| hydre | N013_E017 | Grotte de la cascade du marais | lore seul |
+| dragon de glace | N021_E016 | Grotte du glacier | lore seul |
+| dragon bleu (distinct de celui de Pilou) | N008_W015 | Grotte marine de la côte ouest | lore seul |
+| oriental doré-orangé | N006_E007 | Grotte derrière la cascade | lore seul |
+
+« POI réel » : repère, nom et aplanissement dans une cellule générée ; aucune grotte, aucun
+dragon modélisé. L'Entrée des Abysses (S008_W005, cachée, sans dragon ni Ophidien) est un lieu
+ordinaire du lore.
+
+### 11.7 Cases jouables
+
+| Version | `generated_cells` (master) | Cellules jouables (master + corridors) |
+|---|---:|---:|
+| v1.0.71 (avant la branche) | — | 191 |
+| v1.0.74 (Île de la Trêve) | — | 245 |
+| v1.0.104 (routes de Vozmarkh et de Rhivkhar) | — | 413 |
+| v1.0.106 (passages des routes du lore) | 412 | **481** |
+
+- Une cellule est jouable si elle est dans `generated_cells` **ou** dans un corridor des villes
+  de départ (`AddStartCorridors`, calculé sur le réseau du générateur, inchangé par les routes du
+  lore). Ailleurs : **mur invisible** (serveur et client).
+- Méthode des lots d'ouverture (v1.0.88, v1.0.91, v1.0.104, v1.0.106) : cases du tracé des routes
+  à ouvrir, case de la ville d'arrivée, une case de marge (terre) autour de chaque ville devenue
+  jouable, puis **trous intérieurs** (case bordée sur au moins 3 côtés par des cases jouables) ;
+  jamais une case de grotte de dragon, d'entrée ophidienne ni leurs 8 voisines ; chaque case vide
+  reçoit un lieu `[GD]` avec un POI réel.
+- Ajouter une case : l'inscrire dans `generated_cells` (nouvelle ligne en fin de liste) ; la CI la
+  génère au build suivant ([§4](#4-générer-le-monde)).
+
+### 11.8 Routes : le générateur suit le lore (v1.0.105, v1.0.106)
+
+- **Source** : collection `routes` du lore (tracée dans l'éditeur, mode 〰 Tracer), recopiée par
+  `tools/lore/sync_routes.py` dans `lore_roads` du master : **165 routes terrestres** (`road`,
+  `imperial_road` — la Via Magna —, `path`) ; les 8 routes maritimes ne sont pas tracées.
+- **Tracé en jeu** (§5, étape 4) : chaque route passe par chaque case de ses `waypoints`, coupée
+  aux villes traversées ; A* entre deux cases ; pas en diagonale par le coin commun quand une
+  voisine n'est pas jouable ; embranchements raccordés à leur route hôte.
+- **Réseau du générateur** : toujours calculé pour les corridors de départ ; **10 de ses routes**
+  sont gardées en jeu (corridors sans équivalent au lore).
+- **Garanties v1.0.106** : chaque ville et hameau jouable est relié à pied aux 7 départs (sauf
+  les 4 villes de l'Île de la Trêve, réseau propre) ; aucune route du lore ne sort des cellules
+  jouables pour y revenir ; 43 routes mènent à une zone fermée et s'arrêtent au mur invisible ;
+  la Via Magna est jouable de Lhynn à Moork.
+- **Encore coupées** : Farvhenn – Vestmhor (000106), Shaddrek – Klehrwath (000071). Sans route :
+  la baie de l'Île de la Trêve, Hishtarland et Dyprokh (îles).
+
+### 11.9 Gouffre des Revenus et Thurvhal (v1.0.107)
+
+> **Secret joueurs** : le gouffre ne se découvre qu'en mourant dans le canyon.
+
+| Point | Valeur |
+|---|---|
+| Lieu | Deathtrap Canyon, case **S008_E010** ; gouffre à 2,3 km à l'est de la gorge que suit la route 000074, sans route ni sentier |
+| Master | relief `gouffre_des_revenus` (`type: gouffre`) ancré sur `ville_thurvhal` (`secret: true`, position 2300 m est, 200 m nord) : fond plat ≈ 410 m (85 m sous le point le plus bas du pourtour, ≈ 146 m sous le terrain environnant), rayon du fond 380 m, parois 45 m, galerie de la Fente (pente ≈ 15 %) vers une entrée cachée par des éboulis |
+| Lore `[GD]` | Gouffre des Revenus (`gouffre_poi`), Fente des Revenus, village de Thurvhal, peuple oublié neutre des **Ghaurdes** (`faction_ghaurdes`), PNJ Mhaldra et Kerreth, 3 quêtes (30-38) |
+| Réapparition | le cimetière neutre de Thurvhal (`respawn_points.txt` de `cell_s008_e010`) est le plus proche pour 85,6 % de S008_E010 et 54,7 % de S008_E011 : un joueur mort dans le canyon se réveille au fond. Aucune modification du shard (règle « cimetière le plus proche en X, Z »). |
+| Secret | ville absente de `places.json` `cities`, de la carte et de `map_features.bin` ; recopiée dans `secret_cities` (non lu par le client) |
+| À faire côté client | lumière des 36 torches (`world.point_lights` du zone.json), fond sombre (`world.ambiance_zones`), mécanisme de « lieu découvert », bannière et radar de la ville secrète |
+
+### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
+
+| Relief | Type | Ancrage | Effet |
+|---|---|---|---|
+| `colline_verdansur` | `colline` | Vaerdhun (`town_0119`, N010_W015) | colline de 130 m d'où partent deux rivières |
+| `crevasse_wardholt` | `crevasse` | Vharholdt (`hamlet_wardholt`) | fente en cul-de-sac, mine au fond, fermée aux routes |
+| `massif_n0xx_w0xx` (×11) | `massif` | cases de l'Île de la Trêve | crêtes boisées, falaises au rivage |
+| `gouffre_des_revenus` | `gouffre` | Thurvhal (S008_E010) | §11.9 |
+
+Une ville ancrée sur un relief ne peut pas recevoir de position manuelle, sauf un gouffre.

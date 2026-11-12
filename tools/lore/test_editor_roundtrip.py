@@ -52,6 +52,7 @@ def diff_profond(a, b, chemin="", limite=50):
     """
     out: list[str] = []
 
+    # Parcours récursif parallèle de x (original) et y (export) ; ajoute chaque différence de chemin p à out.
     def rec(x, y, p):
         if len(out) >= limite:
             return
@@ -105,6 +106,7 @@ def ouvrir_editeur(navigateur, editeur: Path, taille=(1500, 950)):
     page.route("**/fonts.gstatic.com/**", lambda r: r.abort())
     erreurs: list[str] = []
 
+    # Garde les erreurs console de la page (hors polices Google bloquées).
     def console(msg):
         if msg.type == "error" and "fonts.g" not in msg.text and "ERR_FAILED" not in msg.text:
             erreurs.append(msg.text)

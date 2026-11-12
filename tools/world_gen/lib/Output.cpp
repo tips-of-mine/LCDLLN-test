@@ -276,6 +276,10 @@ namespace tools::world_gen
 			return { 0.0, dirt, rock, 0.0, 0.0 };
 		}
 
+		/// Mélange des 4 couches du sol (herbe, terre, roche, neige) au point global \p p
+		/// de la cellule : biome fondu aux frontières, pente, altitude, eau, routes et
+		/// emprise urbaine. Aux Enfers (v1.0.83), délègue à InfernalSplat (ni herbe ni
+		/// neige). Fonction pure (lecture seule de \p w), appelée en parallèle par rangée.
 		SplatTexel ComputeSplat(const World& w, Vec2 p)
 		{
 			// v1.0.83 : les Enfers ont leur propre palette (les Royaumes ne passent pas ici).

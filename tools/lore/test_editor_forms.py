@@ -110,6 +110,7 @@ JS_OUTILS = """() => {
 class Rapport:
     """Accumule les lignes du tableau final et l'état global."""
 
+    # Rapport vide, état global « tout passe ».
     def __init__(self):
         self.ok = True
         self.lignes: list[tuple[str, str, str]] = []
@@ -288,6 +289,7 @@ def test_un_champ(page, original, rap):
     i = next(k for k, t in enumerate(original["skill_trees"]) if t.get("branches"))
     b0 = original["skill_trees"][i]["branches"][0]["name"]
 
+    # Écrit v comme nom de la première branche de l'arbre i, par sa modale, puis enregistre.
     def arbre(v):
         page.evaluate(f"() => openSkillTreeEditor(db.skill_trees[{i}].class_id)")
         ecrire_champ(page, "#st_editor_body input[onchange*='branches[0].name']", v)
@@ -298,6 +300,7 @@ def test_un_champ(page, original, rap):
     # Types de lieux : libellé du premier type.
     l0 = original["place_types"][0]["label"]
 
+    # Écrit v comme libellé du premier type de lieu, par l'éditeur des types, puis enregistre.
     def types(v):
         page.evaluate("() => openPlaceTypesEditor()")
         ecrire_champ(page, "#ptList > div:first-child input.form-input", v)
@@ -309,6 +312,7 @@ def test_un_champ(page, original, rap):
     cat = next(c for c in ("mounts_and_mobility", "war_and_access", "magic_interactions") if original["cross_rules"].get(c))
     r0 = original["cross_rules"][cat][0]["rule"]
 
+    # Écrit v comme texte de la première règle de la catégorie cat, par son formulaire, puis enregistre.
     def regle(v):
         page.evaluate(f"() => openRuleForm('{cat}', 0)")
         ecrire_champ(page, "#rule_text", v)
@@ -319,6 +323,7 @@ def test_un_champ(page, original, rap):
     # Lore : ère.
     era = original["lore"]["era"]
 
+    # Écrit v comme ère du lore, par l'éditeur du lore, puis enregistre.
     def lore(v):
         page.evaluate("() => openLoreEditor()")
         ecrire_champ(page, "#lore_era", v)
@@ -328,6 +333,7 @@ def test_un_champ(page, original, rap):
     # Métadonnées : source.
     src = original["meta"]["source"]
 
+    # Écrit v comme source des métadonnées, puis enregistre (saveMeta).
     def meta(v):
         page.evaluate("() => showSection('meta')")
         ecrire_champ(page, "#meta_source", v)
@@ -337,6 +343,7 @@ def test_un_champ(page, original, rap):
     # Cellule : case à cocher « Rivière » d'une cellule avec ville.
     ci = page.evaluate("() => { const v = new Set(db.villes.map(x => x.cell)); return db.cells.findIndex(c => v.has(c.id)); }")
 
+    # Inverse la case « Rivière » de la cellule ci par son éditeur, puis enregistre.
     def riviere():
         page.evaluate(f"() => {{ openCellEditor(db.cells[{ci}].id); const c = document.getElementById('cell_river'); c.checked = !c.checked; }}")
         enregistrer(page)
@@ -345,6 +352,7 @@ def test_un_champ(page, original, rap):
     # Exploit : région choisie (champ du formulaire absent des fiches du lore).
     rg = original["regions"][0]["id"]
 
+    # Choisit la région v (vide = aucune) dans le formulaire du premier exploit, puis enregistre.
     def region(v):
         page.evaluate("() => openExploitForm(0)")
         page.select_option("#ex_region", v)
@@ -410,6 +418,7 @@ def references(original, coll, rid):
     """Chemins (hors de la fiche elle-même) dont la valeur chaîne vaut ``rid``."""
     out = []
 
+    # Parcours récursif : ajoute à out le chemin p de chaque valeur chaîne égale à rid.
     def rec(x, p):
         if isinstance(x, dict):
             for k, v in x.items():

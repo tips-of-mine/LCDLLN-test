@@ -125,6 +125,7 @@ def references(original, coll, rid):
     """Nombre de valeurs chaîne égales à ``rid`` hors de la fiche elle-même."""
     n = 0
 
+    # Parcours récursif : compte les valeurs chaîne égales à rid.
     def rec(x):
         nonlocal n
         if isinstance(x, dict):

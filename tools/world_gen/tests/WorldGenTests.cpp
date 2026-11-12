@@ -146,6 +146,7 @@ namespace
 		stbi_image_free(px);
 	}
 
+	// Chargement du master du dépôt et contrôles de sa validation (cellules, reliefs, positions, routes du lore…).
 	void TestMaster()
 	{
 		tools::world_gen::WorldMaster m;
@@ -334,6 +335,7 @@ namespace
 				const double ox = tools::zone_builder::FindObjectMember(*t, "origin_x")->numberValue;
 				const double oz = tools::zone_builder::FindObjectMember(*t, "origin_z")->numberValue;
 				const double size = tools::zone_builder::FindObjectMember(*t, "size_m")->numberValue;
+				// Pixel RGB de la carte du monde sous le point global (x, z) (indices bornés à l'image).
 				auto at = [&](double x, double z) {
 					const int i = std::clamp(static_cast<int>((x - ox) / size * w), 0, w - 1);
 					const int j = std::clamp(static_cast<int>((z - oz) / size * h), 0, h - 1);
@@ -488,6 +490,7 @@ namespace
 		Check(warned, "liaison : ville de depart isolee signalee");
 	}
 
+	// Génération de quelques cellules dans un dossier temporaire et invariants des sorties (déterminisme, raccords, fichiers).
 	void TestGenerationAndInvariants()
 	{
 		namespace fs = std::filesystem;
@@ -910,6 +913,7 @@ namespace
 		Check(ver && war && hill && crev && hill->type == "colline" && crev->type == "crevasse",
 			"reliefs : colline de Vaerdhun, crevasse de Vharholdt");
 		if (!ver || !war || !hill || !crev) return;
+		// Distance horizontale (m) entre deux points.
 		auto dist = [](Vec2 a, Vec2 b) { return std::hypot(a.x - b.x, a.z - b.z); };
 		// Colline : ville au centre de sa case, au sommet, nettement au-dessus de son pied.
 		Check(dist(ver->center, hill->center) < 1e-6 && dist(war->center, crev->center) < 1e-6,
@@ -939,6 +943,7 @@ namespace
 		const Vec2 c = war->center, d = crev->dir, nrm{ -d.z, d.x };
 		const double off = crev->halfWidthM + crev->wallM + 80.0;
 		const double H = crev->heightM;
+		// Élévation (m) apportée par la crevasse testée au point p.
 		auto at = [&](Vec2 p) { return ReliefContribution(*crev, p.x, p.z); };
 		Check(at(c) < 1e-9 && at(c - d * (crev->backM - 60.0)) < 1e-9 && at(c + nrm * off) > 0.9 * H && at(c - nrm * off) > 0.9 * H
 			&& at(c - d * (crev->backM + off)) > 0.9 * H && at(c + d * (crev->footRadiusM * 0.6)) < 1e-9
@@ -990,7 +995,9 @@ namespace
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
+		// Distance horizontale (m) entre deux points.
 		auto dist = [](Vec2 a, Vec2 b) { return std::hypot(a.x - b.x, a.z - b.z); };
+		// Vrai si la case est listée dans generated_cells du master.
 		auto generated = [&](const std::string& cell) {
 			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
 		};
@@ -1057,6 +1064,7 @@ namespace
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
+		// Vrai si la case est listée dans generated_cells du master.
 		auto generated = [&](const std::string& cell) {
 			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
 		};
@@ -1096,11 +1104,13 @@ namespace
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
 		const double sea = m.scale.seaLevelM;
+		// Identifiant de case du lore (« N003_W009 ») à partir de (n, e).
 		auto cellId = [](int n, int e) {
 			char b[16];
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
 			return std::string(b);
 		};
+		// Vrai si la case est listée dans generated_cells du master.
 		auto generated = [&](const std::string& cell) {
 			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
 		};
@@ -1147,6 +1157,7 @@ namespace
 			Check(c && c->cell == cell && generated(cell) && c->startFor.empty() && MacroHeight(m, c->center.x, c->center.z) > sea + 3.0,
 				(std::string("ile v1.0.74 : ") + id + " sur cellule generee, au sec").c_str());
 		}
+		// Vrai si le segment a → b passe au-dessus de la mer (200 échantillons du relief macro).
 		auto crossesWater = [&](Vec2 a, Vec2 b) {
 			for (int k = 1; k < 200; ++k)
 			{
@@ -1307,6 +1318,7 @@ namespace
 		Check(ok, "cellules v1.0.78 : master charge");
 		if (!ok) return;
 		const WorldMaster& m = g.master;
+		// Vrai si la case est listée dans generated_cells du master.
 		auto generated = [&](const std::string& cell) {
 			return std::find(m.generatedCells.begin(), m.generatedCells.end(), cell) != m.generatedCells.end();
 		};
@@ -1372,6 +1384,7 @@ namespace
 		if (!okE) return;
 		BuildMacroTerrain(hell);
 		const std::set<std::string> generatedE(hell.master.generatedCells.begin(), hell.master.generatedCells.end());
+		// POI de la carte des Enfers par identifiant (nullptr si absent).
 		auto findE = [&](const char* id) -> const PoiDef* {
 			for (const PoiDef& p : hell.pois)
 				if (p.id == id) return &p;
@@ -1505,6 +1518,7 @@ namespace
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
 		const std::set<std::string> generated(g.master.generatedCells.begin(), g.master.generatedCells.end());
+		// POI du continent par identifiant (nullptr si absent).
 		auto find = [&](const char* id) -> const PoiDef* {
 			for (const PoiDef& p : g.pois)
 				if (p.id == id) return &p;
@@ -1612,6 +1626,7 @@ namespace
 			{ "poi_puits_des_pelerins", "S001_E002", "desert_central" },
 			{ "poi_tour_guet_garundel", "S001_E003", "desert_central" },
 		};
+		// POI du continent par identifiant (nullptr si absent).
 		auto find = [&](const char* id) -> const PoiDef* {
 			for (const PoiDef& p : g.pois)
 				if (p.id == id) return &p;
@@ -1707,11 +1722,13 @@ namespace
 			{ "poi_bivouac_de_la_legion", "S002_E003", nullptr },
 			{ "poi_sanctuaire_profane", "S002_E004", nullptr },
 		};
+		// POI du continent par identifiant (nullptr si absent).
 		auto find = [&](const char* id) -> const PoiDef* {
 			for (const PoiDef& p : g.pois)
 				if (p.id == id) return &p;
 			return nullptr;
 		};
+		// Vrai si le POI est dans la boîte de la région du master (toujours vrai sans région).
 		auto inRegion = [&](const PoiDef& p, const char* region) {
 			if (!region) return true;
 			for (const auto& r : g.master.regions)
@@ -1773,10 +1790,12 @@ namespace
 		};
 		const WorldMaster& m = g.master;
 		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		// Lit un identifiant de case « N003_W009 » en (n, e) signés.
 		auto parse = [](const std::string& c, int& n, int& e) {
 			n = std::stoi(c.substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
 			e = std::stoi(c.substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
 		};
+		// Identifiant de case du lore à partir de (n, e).
 		auto name = [](int n, int e) {
 			char b[32];
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
@@ -1840,6 +1859,7 @@ namespace
 		// Routes du générateur entre les villes de la Marche et vers Moork, Thokrul, Gharzuk.
 		const std::set<std::string> marche{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126" };
 		const std::set<std::string> ends{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126", "ville_moork", "hamlet_thokrul", "hamlet_gharzuk" };
+		// Case du lore qui contient le point global p.
 		auto cellOf = [&](const Vec2& p) {
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
@@ -1931,6 +1951,7 @@ namespace
 			if (r.id == "royaume_des_nains_de_lest") box = &r;
 		Check(box != nullptr, "lieux v1.0.89 : boite royaume_des_nains_de_lest presente");
 		if (!box) return;
+		// Identifiant de case du lore à partir de (n, e).
 		auto name = [](int n, int e) {
 			char b[32];
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
@@ -1998,10 +2019,12 @@ namespace
 		};
 		const WorldMaster& m = g.master;
 		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		// Lit un identifiant de case « N003_W009 » en (n, e) signés.
 		auto parse = [](const std::string& c, int& n, int& e) {
 			n = std::stoi(c.substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
 			e = std::stoi(c.substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
 		};
+		// Identifiant de case du lore à partir de (n, e).
 		auto name = [](int n, int e) {
 			char b[32];
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
@@ -2035,6 +2058,7 @@ namespace
 			for (const auto& d : kDirs) t = t || playable.count(name(n + d.first, e + d.second)) > 0;
 			touching += t ? 1 : 0;
 		}
+		// Cases jouables atteignables à pied depuis start (parcours en 4-voisinage des cases jouables).
 		auto reach = [&](const std::string& start) {
 			std::set<std::string> seen{ start };
 			std::vector<std::string> front{ start };
@@ -2079,6 +2103,7 @@ namespace
 			{ "town_0126", "hamlet_dustfield" }, { "town_riverfold", "town_greyfield" }, { "town_0126", "town_greyfield" },
 			{ "town_greyfield", "hamlet_dustfield" },
 		};
+		// Case du lore qui contient le point global p.
 		auto cellOf = [&](const Vec2& p) {
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
@@ -2194,10 +2219,12 @@ namespace
 
 		const WorldMaster& m = g.master;
 		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		// Lit un identifiant de case « N003_W009 » en (n, e) signés.
 		auto parse = [](const std::string& c, int& n, int& e) {
 			n = std::stoi(c.substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
 			e = std::stoi(c.substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
 		};
+		// Identifiant de case du lore à partir de (n, e).
 		auto name = [](int n, int e) {
 			char b[32];
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
@@ -2279,6 +2306,7 @@ namespace
 			{ "shadowfen", "crossroads" }, { "town_0108", "town_ironbrook" }, { "shadowfen", "town_0108" },
 			{ "town_0133", "hamlet_gharzuk" },
 		};
+		// Case du lore qui contient le point global p.
 		auto cellOf = [&](const Vec2& p) {
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
@@ -2451,6 +2479,7 @@ namespace
 	{
 		using namespace tools::world_gen;
 		namespace fs = std::filesystem;
+		// Vrai si a est à moins de tol mètres (par axe) du point (x, z).
 		auto near = [](Vec2 a, double x, double z, double tol) { return std::fabs(a.x - x) <= tol && std::fabs(a.z - z) <= tol; };
 
 		// 1. Sans position : comportement inchangé.
@@ -2588,6 +2617,7 @@ namespace
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
+		// Case du lore qui contient le point global p.
 		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
 		std::map<std::string, std::vector<const Road*>> byLore;
 		for (const Road& r : g.roads)
@@ -2741,6 +2771,7 @@ namespace
 		std::vector<std::string> ids = m.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
+		// Case du lore qui contient le point global p.
 		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
 		std::map<std::string, std::vector<const Road*>> byLore;
 		for (const Road& r : g.roads)
@@ -3032,6 +3063,7 @@ namespace
 		Check(town && std::hypot(town->center.x - r->center.x, town->center.z - r->center.z) < 1e-9
 			&& std::fabs(town->plateauY - r->floorY) < 0.05 && town->radiusM + 90.0 < r->floorRadiusM * 0.87,
 			"gouffre v1.0.107 : Thurvhal au centre du fond plat, cimetiere compris");
+		// Vrai si deux réseaux routiers sont identiques au bit près (ids, extrémités, points, profil en long).
 		auto sameRoads = [](const std::vector<Road>& a, const std::vector<Road>& b) {
 			if (a.size() != b.size()) return false;
 			for (size_t k = 0; k < a.size(); ++k)
@@ -3081,6 +3113,7 @@ namespace
 		std::error_code ec;
 		fs::remove_all(tmp, ec);
 		g1.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
+		// Génère la cellule id dans tmp/sub (pipeline complet par cellule, sorties écrites) et rend son contexte.
 		auto gen = [&](GlobalWorld& g, const std::string& id, const std::string& sub) {
 			auto w = std::make_unique<World>();
 			int n = 0, e = 0;
@@ -3094,6 +3127,7 @@ namespace
 			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
 			return w;
 		};
+		// Vrai si tous les fichiers de a existent dans b avec le même contenu octet pour octet (au moins un fichier).
 		auto sameDir = [&](const fs::path& a, const fs::path& b) {
 			size_t n = 0;
 			bool same = true;
@@ -3230,6 +3264,7 @@ namespace
 	}
 }
 
+// Point d'entrée : lance tous les tests ; code de sortie 0 si tout passe.
 int main()
 {
 	TestScatterRoundTrip();

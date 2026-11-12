@@ -271,11 +271,13 @@ def captures(page, base: Path):
     """Écrit les captures demandées (--captures) : vue d'ensemble et trois vues ciblées."""
     base.parent.mkdir(parents=True, exist_ok=True)
 
+    # Active exactement les calques cles (les autres désactivés), règle le zoom z et redessine la carte.
     def regler(cles, zoom):
         page.evaluate("([cles, tous, z]) => { tous.forEach(k => window._carteState.filters[k] = cles.indexOf(k) >= 0);"
                       " window._carteState.zoom = z; showSection('carte'); }",
                       [cles, AJOUTES + list(HISTORIQUES), zoom])
 
+    # Centre la carte sur la case cellule, survole éventuellement un marqueur, écrit la capture <base><nom>.png.
     def vue(cellule, nom, survoler=None):
         page.evaluate("() => document.getElementById('carteScroll').scrollIntoView({block: 'start'})")
         page.evaluate("""c => { const p = carteCellCenter(c), sc = document.getElementById('carteScroll');

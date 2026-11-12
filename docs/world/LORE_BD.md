@@ -1002,6 +1002,51 @@ au fichier v1.0.70).
 
 ## 16. Corrections et ajouts du propriétaire
 
+**Table des matières de la section 16** (lots du propriétaire de la branche `carte/corrections-v1.0.72`,
+v1.0.72 → v1.0.107 ; la v1.0.108 n'est que documentation). Synthèse par version, impact jeu et
+points ouverts : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) ;
+état du monde : [`ROYAUMES.md`](ROYAUMES.md) §11 ; éditeur : [`EDITEUR_LORE.md`](EDITEUR_LORE.md) ;
+scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
+
+| § | Version | Sujet | Résumé |
+|---|---|---|---|
+| [16.1](#161-corrections-v1072) | v1.0.72 | Corrections du propriétaire | 11 corrections du propriétaire : déplacements de villes, Vaerdhun sur sa colline, Vharholdt dans sa crevasse, Sanctuaire des Brisants, routes 000198-000206. |
+| [16.2](#162-villes-moyennes-et-raid-de-la-mine-v1073) | v1.0.73 | Villes moyennes et raid de la mine | Trois villes moyennes (Fhelvakt, Hazhaëlin, Kholvard), Mine de la Traverse et son raid 10-15. |
+| [16.3](#163-île-du-nord--île-de-la-trêve-v1074) | v1.0.74 | Île du Nord : Île de la Trêve | Île de la Trêve au nord : terrain fixé, région commune 45-60, 4 villes, ports, ligne maritime, raids et quêtes entre factions. |
+| [16.4](#164-la-cité-redevient--syzygie--v1075) | v1.0.75 | La cité redevient « Syzygie » | La cité redevient « Syzygie » (fin de l'affichage « Aurore »). |
+| [16.5](#165-corrections-de-routes-et-de-terrain-v1076) | v1.0.76 | Corrections de routes et de terrain | Tracés de routes (waypoints, jonctions) et corrections de terrain du lot 5. |
+| [16.6](#166-île-de-la-trêve--relief-et-temples-v1077) | v1.0.77 | Île de la Trêve : relief et temples | Relief de l'Île de la Trêve (11 massifs), temples incas habités par les Hwakhari. |
+| [16.7](#167-cellules-de-vaerdhun-et-des-brisants-décisions-du-1111-v1078) | v1.0.78 | Cellules de Vaerdhun et des Brisants, décisions du 11/11 | Cellules de Vaerdhun et des Brisants générées ; décisions du 11/11 (balisage, niveaux par faction). |
+| [16.8](#168-raccordement-de-vaerdhun-au-monde-jouable-v1079) | v1.0.79 | Raccordement de Vaerdhun au monde jouable | Trois cases ouvertes pour relier Vaerdhun au monde jouable. |
+| [16.9](#169-route-syzygie--vaerdhun-et-treuvhal-jouables-v1080) | v1.0.80 | Route Syzygie – Vaerdhun et Treuvhal jouables | Route Syzygie – Vaerdhun continue et Treuvhal jouable (3 cases). |
+| [16.10](#1610-enfers-et-dragons-de-xygga-daprès-les-tomes-15-22-v1081) | v1.0.81 | Enfers et dragons de Xygga d'après les tomes 15-22 | Enfers (hiérarchie de Lucifer, 7 lieux, plans) et 11 dragons de Xygga cachés, d'après les tomes 15-22. |
+| [16.11](#1611-les-douze-peuples-lointains-et-les-ophidiens-daprès-les-tomes-15-22-v1082) | v1.0.82 | Les douze peuples lointains et les Ophidiens d'après les tomes 15-22 | Les 12 peuples lointains (directions, comptoirs) et les Ophidiens (3 entrées cachées). |
+| [16.12](#1612-palette-infernale-du-générateur-pour-les-enfers-v1083) | v1.0.83 | Palette infernale du générateur pour les Enfers | Palette infernale du générateur : roche rouge, basalte, cendre, lave ; ni herbe ni neige. |
+| [16.13](#1613-route-frhozhol--der-hem-shelbem-par-le-deathtrap-canyon-v1084) | v1.0.84 | Route Frhozhol – Der Hem Shelbem par le Deathtrap Canyon | Route 000074 Frhozhol – Der Hem Shelbem imposée par le Deathtrap Canyon (S008_E010). |
+| [16.14](#1614-balisage-des-zones-dangereuses-et-ancrages-manquants-v1085) | v1.0.85 | Balisage des zones dangereuses et ancrages manquants | Balisage des zones dangereuses (10 cellules, 5 balises) et ancrages de quêtes manquants. |
+| [16.15](#1615-lieux-et-quêtes-de-moork-tsaroth-et-du-désert-de-loracle-v1086) | v1.0.86 | Lieux et quêtes de Moork, Tsaroth et du Désert de l'Oracle | Lieux et quêtes [GD] des cases jouables vides de Moork, Tsaroth et du Désert de l'Oracle. |
+| [16.16](#1616-lieux-et-quêtes-des-gigantomorphes-de-la-via-magna-et-de-la-marche-de-lest-v1087) | v1.0.87 | Lieux et quêtes des Gigantomorphes, de la Via Magna et de la Marche de l'Est | Lieux et quêtes [GD] des Gigantomorphes, de la Via Magna et de la Marche de l'Est. |
+| [16.17](#1617-ouverture-de-la-marche-de-lest-v1088) | v1.0.88 | Ouverture de la Marche de l'Est | Ouverture de la Marche de l'Est au jeu (45 cases, 5 villes, 40 lieux). |
+| [16.18](#1618-quêtes-et-niveaux-du-royaume-des-nains-de-lest-v1089) | v1.0.89 | Quêtes et niveaux du Royaume des nains de l'est | Quêtes et niveaux du Royaume des nains de l'est (aucune case vide jouable). |
+| [16.19](#1619-régions-et-niveaux-du-sud-centre-et-des-confins-du-midi-v1090) | v1.0.90 | Régions et niveaux du sud-centre et des Confins du Midi | 222 cases sans région rattachées ; régions et niveaux du sud-centre et des Confins du Midi. |
+| [16.20](#1620-ouverture-dysenkhal--vozmarkh-et-des-routes-de-la-marche-v1091) | v1.0.91 | Ouverture d'Ysenkhal – Vozmarkh et des routes de la Marche | Ouverture de la route Ysenkhal – Vozmarkh et de 4 routes de la Marche coupées au mur invisible. |
+| [16.21](#1621-régions-du-hors-série-et-provinces-v1092) | v1.0.92 | Régions du hors-série et provinces | Régions de référence = carte du hors-série ; anciennes régions devenues provinces. |
+| [16.22](#1622-renommage-des-88-villes-aux-noms-anglais-v1093) | v1.0.93 | Renommage des 88 villes aux noms anglais | Renommage des 88 villes aux noms anglais (ni français ni anglais, style BD). |
+| [16.23](#1623-noms-à-vérifier-hameaux-nains-et-description-dharrodh-v1094) | v1.0.94 | Noms à vérifier, hameaux nains et description d'Harrodh | Noms à vérifier tranchés (Kendrhir, Heusgly, hameaux nains), description d'Harrodh. |
+| [16.24](#1624-placement-manuel-des-villes-et-des-lieux-v1095) | v1.0.95 | Placement manuel des villes et des lieux | Placement manuel des villes et lieux : mode Déplacer de l'éditeur, sync_positions.py, `position` au master. |
+| [16.25](#1625-export-de-léditeur-sans-perte-de-données-v1096) | v1.0.96 | Export de l'éditeur sans perte de données | Export de l'éditeur sans perte (fusion à trois voies), test d'aller-retour. |
+| [16.26](#1626-tracé-des-routes-à-la-souris-et-routes-qui-suivent-les-villes-v1097) | v1.0.97 | Tracé des routes à la souris et routes qui suivent les villes | Mode Tracer : routes à la souris, embranchements, routes et pontons qui suivent une ville déplacée. |
+| [16.27](#1627-vérification-complète-de-la-sauvegarde-de-léditeur-v1098) | v1.0.98 | Vérification complète de la sauvegarde de l'éditeur | Vérification complète de la sauvegarde : formulaires sans perte, format octet pour octet. |
+| [16.28](#1628-calques-de-la-carte-de-léditeur-v1099) | v1.0.99 | Calques de la carte de l'éditeur | Panneau des calques de la carte de l'éditeur, dont calques secrets. |
+| [16.29](#1629-fiches-complètes--niveaux-étapes-de-quête-mines-formulaires-v10100) | v1.0.100 | Fiches complètes : niveaux, étapes de quête, mines, formulaires | Champs structurés : niveau_ref, niveau_par_faction, étapes de quête situées, type mine, formulaires, suppression. |
+| [16.30](#1630-îlots-de-la-via-magna-rattachés-aux-territoires-orques-v10101) | v1.0.101 | Îlots de la Via Magna rattachés aux Territoires orques | Six îlots de la Via Magna rattachés aux Territoires orques. |
+| [16.31](#1631-derniers-îlots-de-régions-et-de-provinces-v10102) | v1.0.102 | Derniers îlots de régions et de provinces | Derniers îlots de régions et de provinces (S009_W008, Forêt des Lutins). |
+| [16.32](#1632-niveaux-niveaux-par-faction-ancrages-et-fiches-complétés-v10103) | v1.0.103 | Niveaux, niveaux par faction, ancrages et fiches complétés | Niveaux [GD] des régions et des raids, niveaux par faction, ancrages, fiches sans nom, références orphelines (89 restantes). |
+| [16.33](#1633-ouverture-des-routes-de-vozmarkh-et-de-rhivkhar-v10104) | v1.0.104 | Ouverture des routes de Vozmarkh et de Rhivkhar | Ouverture des routes de Vozmarkh et de Rhivkhar (55 cases, 6 villes, 48 lieux). |
+| [16.34](#1634-routes-du-jeu-tracées-daprès-le-lore-v10105) | v1.0.105 | Routes du jeu tracées d'après le lore | Le générateur suit les routes du lore (sync_routes.py, lore_roads). |
+| [16.35](#1635-routes-manquantes-après-le-passage-aux-routes-du-lore-v10106) | v1.0.106 | Routes manquantes après le passage aux routes du lore | Routes manquantes recréées (11), 4 tracés corrigés, balises replacées, 68 cases ouvertes (481 jouables). |
+| [16.36](#1636-le-gouffre-caché-de-deathtrap-canyon-et-sa-ville-v10107) | v1.0.107 | Le gouffre caché de Deathtrap Canyon et sa ville | Gouffre caché de Deathtrap Canyon et Thurvhal, point de réapparition secret ; torches et ambiance en données. |
+
 ### 16.1 Corrections v1.0.72
 
 **Corrections du propriétaire (10/11/2026)**. Chaque fiche touchée porte une note `[DÉCISION] (v1.0.72)` ;
@@ -4301,6 +4346,7 @@ gouffre ; lumières et ambiance sombre à brancher côté client ; mécanisme de
 
 ## 17. Questions ouvertes
 
+- **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).

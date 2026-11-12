@@ -167,6 +167,7 @@ def appliquer(texte, routes):
     return "\n".join(lignes[:debut] + nouvelles + lignes[i_fin + 1:])
 
 
+# Point d'entrée : réécrit `lore_roads` du master d'après le lore (ou vérifie avec --check) ; codes 0 / 1 (--check pas à jour) / 2 (refus).
 def main():
     parser = argparse.ArgumentParser(description="Recopie les routes du lore vers world_master.json (lore_roads)")
     parser.add_argument("--check", action="store_true", help="verifie sans ecrire")

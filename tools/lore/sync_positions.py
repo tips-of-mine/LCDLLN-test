@@ -134,6 +134,7 @@ def appliquer(texte, changements):
     return "\n".join(lignes)
 
 
+# Point d'entrée : lit lore et master, recopie les positions (ou vérifie avec --check) ; codes 0 / 1 (--check pas à jour) / 2 (refus).
 def main():
     parser = argparse.ArgumentParser(description="Recopie les positions manuelles du lore vers world_master.json")
     parser.add_argument("--check", action="store_true", help="verifie sans ecrire")

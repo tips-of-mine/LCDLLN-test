@@ -258,7 +258,10 @@ namespace tools::world_gen
 	// =========================================================================
 
 	/// Relief de base (avant villes, eau et routes) : fonction PURE du master et
-	/// de la position globale. Terrain.cpp
+	/// de la position globale. Comprend les reliefs locaux du master (ReliefOffset :
+	/// colline, crevasse v1.0.72, massif v1.0.77) et, appliqués en dernier, les
+	/// gouffres (v1.0.107, jamais de relèvement). Aux Enfers, la palette (v1.0.83)
+	/// ne change pas l'altitude. \return altitude (m) en (x, z) globaux. Terrain.cpp
 	double MacroHeight(const WorldMaster& m, double x, double z);
 	/// Code de biome du lore sous (x, z), bords bruités. Terrain.cpp
 	char MacroBiome(const WorldMaster& m, double x, double z);
@@ -422,6 +425,13 @@ namespace tools::world_gen
 
 	// ---- Étapes du pipeline (une par fichier .cpp) ----------------------------
 	/// Charge et valide le master (+ résolution des cellules). WorldMaster.cpp
+	/// Clés ajoutées sur la branche carte v1.0.72-v1.0.107 : `reliefs` (colline,
+	/// crevasse, massif, gouffre avec altitudes absolues précalculées), `position`
+	/// manuelle des villes et POI (≤ 4300 m par axe, refusée pour une ville de relief
+	/// sauf gouffre), `offset_x_m` / `offset_z_m` des POI, `secret` des villes (interdit
+	/// pour une ville de départ), `lore_roads` (validation stricte : id unique, type
+	/// road | imperial_road | path, extrémité connue ou vide, cases dans la grille).
+	/// \return false + \p err au premier défaut (aucune sortie écrite).
 	bool LoadWorldMaster(const std::string& contentRoot, const std::string& worldId,
 		WorldMaster& out, std::string& err);
 
@@ -443,6 +453,10 @@ namespace tools::world_gen
 	/// la cellule). WorldGen.cpp
 	void InitCell(World& w, const GlobalWorld& g, engine::world::cells::CellCoord c);
 	/// Lieux procéduraux (hameaux, fermes, camps, ruines, mines). Places.cpp
+	/// Mine posée d'abord au fond d'une crevasse (v1.0.72) ; aucun lieu dans un
+	/// gouffre ni sa galerie (v1.0.107) ; une ville secrète n'influence le peuple des
+	/// lieux que dans sa propre cellule ; mines de la Légion (race `demons`) aux Enfers.
+	/// Effet de bord : remplit les lieux de \p w.
 	void BuildPlaces(World& w);
 	/// Altitude de base + biome de la cellule, puis comblement des cuvettes
 	/// intérieures sous le niveau de la mer (EAU.5). Terrain.cpp
@@ -493,8 +507,13 @@ namespace tools::world_gen
 	/// Routes globales découpées + chemins locaux, aplanissement. Roads.cpp
 	void ApplyRoads(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
+	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
+	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres.
+	/// Effet de bord : w.scatter, bâtiments, occupation fine de la cellule.
 	void BuildSettlements(World& w);
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
+	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
+	/// ni broussaille). Effet de bord : remplit w.scatter.
 	void BuildVegetation(World& w);
 	/// FORET.1 — carte de densité des forêts et lisières (codes T, R, L, t de la
 	/// couverture effective), exclusions comprises : eau, routes, bâti et champs
@@ -502,11 +521,15 @@ namespace tools::world_gen
 	/// arbres de remplissage (src/client/world/instances/ForestMask.h).
 	/// Effet de bord : remplit w.forestMask. À appeler après BuildSettlements et
 	/// avant BuildVegetation (les rochers posés ensuite n'y creusent pas de trous).
+	/// Aux Enfers (v1.0.83) : carte vide (aucune forêt de remplissage).
 	void BuildForestMask(World& w);
 	/// Vrai si un code de couverture effective est une forêt dont les arbres sont
 	/// posés par le client (carte de densité) au lieu de scatter.bin.
 	bool IsFillerForestCode(char code);
 	/// Spawners PNJ/créatures, respawns, départs, interactibles. Population.cpp
+	/// Un cimetière neutre et une auberge par ville (secrète comprise) dans
+	/// respawn_points.txt ; ni faune ni monstre dans un gouffre et sa galerie (v1.0.107).
+	/// Effet de bord : remplit les spawners et points de réapparition de \p w.
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp
 	bool ImportLegacyContent(World& w, std::string& err);
@@ -517,8 +540,16 @@ namespace tools::world_gen
 	/// libération de w.biome. Output.cpp
 	std::string BuildBiomeGrid(const World& w, int size);
 	/// Écriture des sorties d'une cellule. Output.cpp
+	/// Effet de bord : écrit zones/<c>/ et instances/zone_<c>/ (sauf dryRun) ; v1.0.107 :
+	/// `world.point_lights` et `world.ambiance_zones` du zone.json pour un gouffre
+	/// (clés absentes ailleurs ; pas encore lues par le client).
+	/// \return false + \p err si une écriture échoue.
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp
+	/// v1.0.83 : palette infernale de la carte des Enfers ; v1.0.107 : une ville
+	/// secrète est absente de `cities` de places.json, de la carte du continent et de
+	/// map_features.bin, et recopiée dans `secret_cities`. Effet de bord : écrit
+	/// world/<monde>/ (sauf dryRun). \return false + \p err si une écriture échoue.
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
 	/// FIX.12 — tracés de la carte du monde (world/<w>/map_features.bin) : routes
 	/// inter-villes (g.roads), chemins locaux des cellules (Road::path), rues des

@@ -176,6 +176,9 @@ namespace tools::world_gen
 			}
 		}
 
+		// Vrai si un lieu de rayon \p R (m) posé en \p p reste à l'écart des villes
+		// (rayon + R + 900 m), des lacs (+ 150 m), des gouffres et de leur galerie
+		// (+ 200 m, v1.0.107), des rivières (+ 120 m) et des routes (+ 40 m) de la cellule.
 		auto farFromEverything = [&](Vec2 p, double R) {
 			for (const CityDef& c : w.cities)
 				if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + R + 900.0) return false;

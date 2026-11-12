@@ -144,6 +144,7 @@ def ids_connus(data):
                 if isinstance(x, dict) and isinstance(x.get("id"), str):
                     ids.add(x["id"])
 
+    # Ajoute à ids tout « id » chaîne trouvé à n'importe quelle profondeur de o (lore, hydrographie, arbres).
     def tous_les_id(o):
         if isinstance(o, dict):
             if isinstance(o.get("id"), str):

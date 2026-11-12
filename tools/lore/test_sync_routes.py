@@ -44,11 +44,13 @@ def lance(*args):
     return p.returncode, p.stdout + p.stderr
 
 
+# Contenu texte UTF-8 du fichier chemin.
 def lit(chemin):
     with open(chemin, encoding="utf-8") as f:
         return f.read()
 
 
+# Point d'entrée : enchaîne les 5 contrôles sur des copies ; code 0 si tout passe.
 def main():
     code, _ = lance("--check")
     verifie(code == 0, "master du depot a jour (--check)")

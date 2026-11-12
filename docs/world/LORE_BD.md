@@ -2449,6 +2449,99 @@ Cellules générées : 301 (inchangé). **Services** : 1242 PNJ (inchangé).
 **Points incertains** : noms et étapes des 5 quêtes ; gradient proposé ; quêtes de départ ouvertes aux autres
 factions ; ouvrir une partie du royaume (Voidmark, route Eisenkehl – Voidmark) pour donner une suite 10-20 au départ.
 
+### 16.19 Régions et niveaux du sud-centre et des Confins du Midi (v1.0.90)
+
+Lot 18 du propriétaire (priorité 3 validée le 12/11/2026), d'après le relevé de densité v1.0.84 (§1 et §5) : **222 cases
+terrestres** n'avaient aucune région (ni `region_id` du lore ni boîte `regions` du master) ni niveau, surtout au
+sud-centre (S003-S014 × W001-E014). Chacune est rattachée à une région ; aucune ville ni aucun lieu déplacé, aucune
+ville renommée, aucune case ouverte (`generated_cells` inchangé), aucun identifiant supprimé. Scripts reproductibles
+(hors dépôt) : `base_v1090.py` (grille, régions du lore, boîtes du master), `assign_v1090.py` (règles de
+rattachement), `lore_v1090.py` (appliqué au fichier v1.0.89), `boxes_v1090.py` (étude des boîtes du master),
+`carte_v1090.py` (rendu).
+
+**Découpage selon le relief.** Le bloc central est fermé à l'ouest par les rocs du Royaume Drach, à l'est par la
+chaîne du désert (M, E006-E007, de S009 à la côte) et le désert de Tsaroth, au nord par la Via Magna et Moork. Trois
+milieux s'y distinguent : la forêt et le marais du T3 au nord, les plaines et la forêt de Millford à l'ouest de la
+chaîne, le désert à l'est de la chaîne au sud de Tsaroth. D'où trois nouvelles régions `[GD]` ; les marges (côte sud
+de Lhynn, bords de la Via Magna, côtes) vont aux régions existantes voisines.
+
+**Nouvelles régions** (fiches `regions`, identifiants de même forme que les boîtes du master ; noms à valider) :
+
+| Région | Cases | Terrain | Niveau de référence | Factions | Lien avec le lore |
+|---|---:|---|---|---|---|
+| **Forêt des Lutins** (`foret_des_lutins`) | 34 | Forêt et lisières (S001-S004, E002-E011), marais du Village fantôme (S003_E006), plaines de Millend et de Frosthollow (S005-S006) | **14-24** : lisière nord-ouest (Millend, Garundel, Via Magna) 14-18 ; cœur de la forêt 16-22 ; marais du Village fantôme 18-24 ; plaine de Frosthollow 20-24 | Neutres (Millend, Frosthollow, Village fantôme) ; Empire et Lune Noire de passage | Nom `[BD-T3]` (forêt des lutins, `zone_cursed_forest`, `quest_foret_lutins_t3`, Iaun Reith) ; trajet du T3 Oracle → Ghrunke Dash → forêt → village → fief de Garundel ; étendue `[INFÉRÉ]` ; Frosthollow (« Le Souffle du volcan ») ; Porte 4 des enfers |
+| **Val de Southport** (`val_de_southport`) | 59 | Plaines de Coldport (S007-S009), forêt de Millford (S010-S013, E000-E004), plaines de Claybury et de Southport, rivière de Southport ; monts de l'ouest (S007-S009, E000-E001) au contact du Drach, chaîne du désert à l'est | **18-28** : Coldport et routes de Frosthollow et d'Heureux 18-22 ; forêt de Millford 20-26 ; Claybury, Southport et la côte 22-28 ; Porte 1 et contreforts du Drach (30-56) à baliser | Neutres ; Nains du sud (forteresse d'Heureux au nord) ; Chevaliers-Dragons (frontière gardée du Drach ; suite naturelle après le départ de Wyrmhallow) | Forteresse naine d'Heureux `[BD-T9, BD-T11]` ; Royaume Drach interdit `[BD-T2]` ; rivière de Southport ; Porte 1 des enfers |
+| **Désert des Sels** (`desert_des_sels`) | 24 | Désert (S012-S014, E008-E012) prolongeant celui de Tsaroth, chaîne du désert (E007), plaines et lac de Clearwater (S013-S014, E013-E014) | **24-36** : Saltwick et le lac 24-28 ; erg central 26-32 ; marge nord vers la Plaine des Cendres et Der Hem Shelbem 30-36 (nécropole 40-56 déjà balisée) | Neutres (Saltwick) ; Nains de l'est (Clearwater, sel) ; Mort-vivants de Der Hem Shelbem au nord | Tsaroth et Der Hem Shelbem `[BD-T5]` ; sel gemme et sable à verre de Saltwick (v1.0.58) ; avertisseur de Saltwick (v1.0.86) |
+
+Ambiances (fiches) : conte inquiétant de la forêt (lutins facétieux qui n'attaquent pas un groupe fort, brume et
+arbres morts du marais le reste du siècle `[BD-T3 p.26-27, pl.25-30]`) ; campagne reculée du Val, loin de l'Empire,
+sous les cimes interdites du Drach ; chaleur, mirages, croûtes de sel et caravanes du Désert des Sels, à l'ombre de
+la nécropole.
+
+**Cases rattachées à des régions existantes** (105 ; note `[INFÉRÉ] (v1.0.90)` sur chaque case et sur la fiche) :
+
+| Région | Cases | Où | Repère |
+|---|---:|---|---|
+| Terres de l'Empereur | 48 | Côte sud de Lhynn (S001-S009, W016-W009) : Dustfen, Clearfen, Ashhollow, Greypool (hameaux impériaux), Port Franc, forêt de Harrowbrook, Porte 3 des enfers | 12-22 (côte près de Lhynn 12-16, Harrowbrook 14-20, frontière d'Hishtarland 16-22) |
+| Via Magna | 17 | Désert et lisières de N004-N000 (E007-E010), entre Harrowdale, Shadehold et Moork, et N004_E012 (Barrage de péage) | 18-26 (tronçon Harrowdale – Shadehold) |
+| Royaume des nains de l'est | 21 | Côte orientale (E025, S004-S014), pointe sud des montagnes (S015-S016, E014), côte sud (S017, E014-E021) | 18-30 (sud de la région) |
+| Terres désolées de Tsaroth | 6 | Colonne E007 (S006-S011) : plaine, chaîne et désert au bord du champ de bataille | 20-26 (abords de Frosthollow) |
+| Marche de l'Est | 5 | Lisière nord de la forêt de Blackmoor autour de Rivercross (N008, E016-E020) | 22-28 |
+| Terres des Gigantomorphes | 3 | Côte de N010 (W001-E001) | lisière sud 28-36 |
+| Syzygie, 1ère Province de l'Empire | 2 + 2 | Côtes de N012 (W009-W008) et de N006-N005 (W013) | 10-30 |
+| Forêt elfique | 1 | Île de Deepbrook (N012_E002), jumelle de N012_E003 déjà dans la boîte `foret_elfique` | 10-30 |
+
+Les villes et lieux de ces cases qui n'avaient pas de région reçoivent celle de leur case (`region_id`, note
+`[INFÉRÉ] (v1.0.90)`) : 14 villes (dont Coldport, Southport, Saltwick, Claybury, Millend, Frosthollow, le Village
+fantôme, Rivercross, Deepbrook, Thistle Creek, les quatre hameaux de la côte sud de Lhynn) et 4 lieux (Portes 1, 3 et
+4 des enfers, Port Franc). Les régions déjà renseignées ne changent pas (Harrowdale reste `via_magna`).
+
+**Confins du Midi** (`confins_du_midi`). Boîte du master depuis la v1.0.52 (W004-E013 × S017-S015, 48 cases de terre,
+§5.1 : « Plaines, chaîne du désert prolongée, terres arides, côte sud »), sans fiche, lieu, quête ni niveau. Fiche
+ajoutée sous l'identifiant de la boîte et 48 cases rattachées. Identité `[GD]` : terres du bout du monde au sud du
+continent — plaines agricoles et pâtures de Fairbrook, pointe sud de la chaîne du désert, terres arides de Thistle
+Creek au pied des montagnes naines, côte et villages de pêcheurs où les nouvelles de l'Empire arrivent avec des mois
+de retard ; neutres, Nains de l'est au-delà des montagnes, cabotage d'Hishtarland. **Niveau de référence 22-34** :
+ouest (Fairbrook, plaines et côte, au sud du Val de Southport) 22-28 ; est (Thistle Creek, terres arides, au sud du
+Désert des Sels) 28-34. Cases non jouables : identité et niveau seulement, aucun lieu ni quête.
+
+**Progression du sud-centre** (repères absolus de `regle_bestiaire_echelles` ; le niveau d'une zone reste relatif à
+la faction, `rule_niveaux_par_faction`, et aucune faction ne démarre ici : départs les plus proches Wyrmhallow à
+l'ouest, Durnhalde à l'est) : Désert de l'Oracle et Via Magna (10-25) → **Forêt des Lutins 14-24** → **Val de
+Southport 18-28** (ouest, vers le Royaume Drach 30-56) et Terres désolées de Tsaroth 20-40 (est) → **Désert des Sels
+24-36** → **Confins du Midi 22-34** ; à l'est, Baronnie de Moork 18-45 et sud du Royaume des nains de l'est 18-30.
+Plus forts, déjà balisés : Der Hem Shelbem 40-56, volcan 55-70. Contenu plus fort que le repère dans ces régions
+(faune du Village fantôme jusqu'à 30, abords des Portes 1, 3 et 4, contreforts du Drach) : balisage selon les formes
+v1.0.85, à poser quand les cases seront remplies ; aucune balise ajoutée ici.
+
+**Master inchangé.** Les régions du master sont des boîtes rectangulaires (`e_min`…`n_max`) ; le client retient la
+plus petite boîte qui contient le joueur, écrit le nom de **chaque** boîte au centre de la carte (vue d'ensemble) et
+l'annuaire MJ du shard en fait une entrée par boîte. Étude (`boxes_v1090.py`, boîtes qui ne changent la région affichée
+d'aucune case déjà couverte) : le Désert des Sels tient dans une boîte (E007-E014 × S014-S012), mais il en faudrait 2
+au Val de Southport, **8** à la Forêt des Lutins et 13 pour les extensions des régions existantes, soit 21 boîtes et
+autant d'étiquettes répétées sur la carte et d'entrées en double dans l'annuaire MJ. Le format ne le permet donc pas
+proprement : rattachement **dans le lore seulement**, et pas de test « régions v1.0.90 » (rien à tester côté master).
+Une liste de cases par région (ou une étiquette unique par identifiant de région) dans le master est une évolution à
+décider.
+
+**Règles respectées** : aucune grotte de dragon ni entrée ophidienne citée ou approchée (les monts de l'ouest du Val
+s'arrêtent à S007) ; Tsaroth toujours sans service ; aucune créature créée ni rattachée.
+
+**Registre** (`regle_canon_registre_decisions`) : 4 entrées v1.0.90 (`regions` : `foret_des_lutins`,
+`val_de_southport`, `desert_des_sels`, `confins_du_midi`). Notes `[GD] (v1.0.90)` sur `regle_bestiaire_echelles`
+(repères) et `rule_niveaux_par_faction`.
+
+**Ce qui est réel en jeu** : rien de nouveau (26 des 222 cases étaient déjà générées, sans changement). **Lore
+seulement** : régions, rattachements, niveaux.
+
+**Contrôles** : aucune case terrestre sans région (0 sur 1259, contre 222) ; tests `world_gen_tests`,
+`world_places_tests`, `start_locations_tests` inchangés et verts ; **Services** : 1242 PNJ (inchangé).
+
+**Points à valider** : noms des trois régions ; limites (S001-S002 de la forêt, colonne E007 donnée à Tsaroth, côte
+sud de Lhynn aux Terres de l'Empereur plutôt qu'une région propre, côtes S015-S017 de l'est aux nains) ; repères de
+niveau ; Fairbrook (S015_E001) garde `region_id = royaume_drach` (v1.0.52) alors que sa case est aux Confins ; forme
+future des régions dans le master ; niveau des abords des Portes des enfers du continent.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2459,6 +2552,7 @@ factions ; ouvrir une partie du royaume (Voidmark, route Eisenkehl – Voidmark)
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
 - Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rivercross, Riverfold, Greyfield et Dustfield, Via Magna non tracée par le générateur entre Shadehold, Horkher et Nightfield (16.17).
 - Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18).
+- Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Southport, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

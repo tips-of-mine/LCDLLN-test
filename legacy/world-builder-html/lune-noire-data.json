@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.99",
+    "version": "1.0.100",
     "notes": [
+      "v1.0.100 : Éditeur et lore : fiches complètes. Champ niveau_ref {min, max} sur les régions et provinces (21 renseignées d'après les repères déjà inscrits, 8 à null) et sur les raids (5 renseignés d'après leur niveau conseillé, 33 à null) ; champ niveau_par_faction {faction: {min, max}} sur les régions, vide partout (détail par faction à définir) ; champ etapes_struct (étapes ordonnées avec case, ville, lieu ou PNJ) sur les quêtes, texte des étapes conservé, pré-rempli pour 121 quêtes (étapes qui citent exactement une ville, un lieu ou un PNJ) ; type de lieu mine_poi, 8 mines reclassées. Éditeur : calque Niveaux lu dans les fiches (sélecteur de faction), formulaires de région, de raid et de quête (éditeur d'étapes), champs manquants des formulaires de faction, de race et de PNJ, suppression avec compte des références. Test Playwright tools/lore/test_editor_fiches.py. Registre : 6 entrées (LORE_BD §16.29).",
       "v1.0.99 : Éditeur : calques de la carte. Panneau « Calques » groupé (Fond, Lieux, Réseau, Contenu, Secret), état mémorisé dans le navigateur (localStorage, préférences d'affichage seulement) : régions du hors-série (fond et noms), provinces (contour pointillé et nom), niveaux de référence par case (départ > province > région, d'après les repères des notes ; légende en dégradé), densité (villes + lieux + quêtes ancrées), cases jouables (generated_cells lues dans world_master.json par « Charger la carte du jeu »), quêtes ancrées (nombre par case, tracé des étapes au survol), raids (niveau du boss ou de la zone), balises de danger, peuples lointains (flèches de direction et comptoirs), sous-filtres des lieux par type et des villes par taille ; calques secrets désactivés à chaque ouverture : grottes des dragons de Xygga, entrées ophidiennes (cachées du calque des lieux). Info-bulles au survol. Test Playwright tools/lore/test_editor_layers.py. Aucune donnée modifiée. Registre : 1 entrée (LORE_BD §16.28).",
       "v1.0.98 : Éditeur : vérification complète de la sauvegarde. Chaque formulaire n'applique plus à la fiche que les champs modifiés depuis son ouverture (avant : valeurs absentes des listes déroulantes — type, rareté, faction, catégorie… — remplacées, champs non affichés des quêtes et des raids perdus, difficulté des raids changée de type, description des personnages écrasée par la personnalité, meta.canon perdu) ; export au format exact du dépôt (json.dumps indent=2, ensure_ascii=False, sans retour à la ligne final : flottants 1.0 et ordre des clés gardés, fichier remplaçable tel quel) ; champs non listés par la normalisation de l'export (couleur des tomes…) et modifications en place (lore) exportés ; Ctrl+Z de la carte ne défait plus une édition faite ensuite par un formulaire ; import de villes en mise à jour sans perte. Test Playwright tools/lore/test_editor_forms.py (toutes les fiches de chaque formulaire). Aucune donnée modifiée. Registre : 1 entrée (LORE_BD §16.27).",
       "v1.0.97 : Éditeur : tracé des routes à la souris et routes qui suivent les villes. Mode « Tracer » de la carte (bouton ou touche R) : création d'une route, d'un sentier ou d'une route maritime en cliquant les cases (raccords ajoutés, tracé continu), d'une ville ou d'un lieu à l'autre ; sélection, déplacement, insertion et suppression de points ; embranchement depuis un point d'une autre route (jonction sans ville ni lieu, format de 000155 sur 000079) ; suppression confirmée par une boîte HTML. Mode « Déplacer » : une ville ou un lieu qui change de case emmène ses routes, sentiers et routes maritimes (extrémité et premier / dernier waypoint, raccord si besoin) ; le ponton d'une ville portuaire (sea_lines, port) passe sur la case navigable la plus proche. Annulation Ctrl+Z commune aux deux modes. Test Playwright tools/lore/test_editor_routes.py. Aucune donnée modifiée. Registre : 1 entrée (LORE_BD §16.26).",
@@ -29614,6 +29615,24 @@
         "Survivre à chaque nœud sans utiliser la magie (contrainte narrative : le destin ne triche pas).",
         "Affronter la tentation de rejoindre la Lune Noire quand Haazheel révèle la prophétie complète."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Consulter l'Oracle pour obtenir un fragment de la prophétie concernant le joueur."
+        },
+        {
+          "texte": "Retrouver les archives de l'Oracle à Lhynn : prouver que la prophétie remonte à 30 ans.",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Identifier les trois 'nœuds de probabilité' — lieux où le destin se concentre."
+        },
+        {
+          "texte": "Survivre à chaque nœud sans utiliser la magie (contrainte narrative : le destin ne triche pas)."
+        },
+        {
+          "texte": "Affronter la tentation de rejoindre la Lune Noire quand Haazheel révèle la prophétie complète."
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "zone_oracle",
@@ -29664,6 +29683,7 @@
         "Le père meurt — choix moral : venger immédiatement ou fuir avec le groupe.",
         "Retour au château : décision de brûler son passé ou de le conserver comme motivation."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_pazuzu",
         "zone_dis",
@@ -29746,6 +29766,60 @@
         "14. [CAPTURE] Être capturé par les Chevaliers. Scène narrative : le démon Urmarcht, par la bouche de Frater Sinister, reconnaît les armoiries du père et fait libérer Wismerhill.",
         "15. [VENGEANCE] Invoquer la tempête de vengeance — 'Ô vents, mes frères...' — débloque exploit_vents_vengeance_t1.",
         "16. [FUITE] Partir dans les ténèbres avec Feidreiva et Pile-ou-Face. Fin du tome 1."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "1. [PROLOGUE] Visionner la Prophétie de l'Oracle donnée à l'Empereur de Lhynn (30 ans avant) — scène cinématique non interactive.",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "2. [ORIGINE] Survivre seul dans la forêt de la Rencontre sans nom ni compagnon — chasse, abri, défense contre la faune hostile."
+        },
+        {
+          "texte": "3. [RENCONTRE] Charger le « monstre » de la forêt — ce n'est qu'un lapin. Faire face à Pile-ou-Face qui vole le repas. Choisir amitié ou combat.",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "4. [NOM] Accepter le nom 'Wismerhill' proposé par Pile-ou-Face d'après Whispers Hill — débloque exploit_premier_nom_t1."
+        },
+        {
+          "texte": "5. [HORDE] Tenter de voler les poules de Ghorghor Bey à Hayvekh. Se faire capturer. Impressionner Ghorghor — recruté dans la horde."
+        },
+        {
+          "texte": "6. [CAMPAGNE] Traverser les Marches avec la horde (Tbarak, Klindor, Hazol). Combat, pillage, rencontres."
+        },
+        {
+          "texte": "7. [FEIDREIVA] Rencontrer Feidreiva lors d'une halte au camp de l'Étang — débuter la relation romantique.",
+          "pnj_id": "char_feidreiva_t1"
+        },
+        {
+          "texte": "8. [FAILLE] Écouter les vents pour détecter l'embuscade à la Faille de Kashogs — avertir Ghorghor — contre-attaque victorieuse — promu lieutenant.",
+          "lieu_id": "lieu_faille_kashogs"
+        },
+        {
+          "texte": "9. [KENDRHIR] Participer au Sac de Kendrhir. Rencontrer Hizin — choisir de l'épargner ou non (choix conséquent)."
+        },
+        {
+          "texte": "10. [HIVER] Passer l'hiver à Kendrhir : entraînement armé (Feidreiva), festins (Ghorghor), leçons de Pile-ou-Face, apprentissage psychique (Hizin)."
+        },
+        {
+          "texte": "11. [PSYCHIQUE] Réussir le premier exercice de magie psychique — rayon mental — débloque exploit_premier_pouvoir_psychique_t1."
+        },
+        {
+          "texte": "12. [ARMÉE] Les Chevaliers de la Lumière approchent à l'aurore. Préparer les défenses."
+        },
+        {
+          "texte": "13. [BATAILLE] Survivre à la Grande Bataille. Les compagnons tombent ; Ghorghor, criblé de piques, a un sort inconnu. Mode survie."
+        },
+        {
+          "texte": "14. [CAPTURE] Être capturé par les Chevaliers. Scène narrative : le démon Urmarcht, par la bouche de Frater Sinister, reconnaît les armoiries du père et fait libérer Wismerhill."
+        },
+        {
+          "texte": "15. [VENGEANCE] Invoquer la tempête de vengeance — 'Ô vents, mes frères...' — débloque exploit_vents_vengeance_t1."
+        },
+        {
+          "texte": "16. [FUITE] Partir dans les ténèbres avec Feidreiva et Pile-ou-Face. Fin du tome 1."
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -29843,6 +29917,25 @@
         "Convaincre le Commandeur blond loyal — il refuse de croire sans preuve physique.",
         "Tendre un piège lors d'une cérémonie pour exposer Fratus devant tout l'Ordre."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Infiltrer Altenberg sous couverture de chevalier nouvellement recruté.",
+          "ville_id": "ville_altenberg"
+        },
+        {
+          "texte": "Observer les réunions nocturnes de Fratus sans se faire repérer."
+        },
+        {
+          "texte": "Voler les sceaux d'une lettre adressée à Haazheel Thorn.",
+          "pnj_id": "char_haazheel_thorn"
+        },
+        {
+          "texte": "Convaincre le Commandeur blond loyal — il refuse de croire sans preuve physique."
+        },
+        {
+          "texte": "Tendre un piège lors d'une cérémonie pour exposer Fratus devant tout l'Ordre."
+        }
+      ],
       "source_lore": [
         "char_fratus_sinister",
         "chevaliers_de_la_lumiere",
@@ -29894,6 +29987,7 @@
         "Dilemme : la Lumière pourrait gagner si le joueur intervient — Parsifal l'interdit.",
         "Choisir : sabotage de la Lumière (suit Parsifal) ou désobéissance (inimitié Justice)."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_parsifal",
         "chevaliers_de_la_justice",
@@ -29947,6 +30041,7 @@
         "Si révélation : convaincre Greldinard avec une preuve concrète — il est sceptique.",
         "Conséquence : rupture du pacte Dzorak/Lune Noire, ou trahison du joueur si utilisé à des fins personnelles."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "dzorak_orcs",
         "faction_black_moon",
@@ -29997,6 +30092,7 @@
         "Résoudre l'énigme rituelle pour sortir sans perdre un compagnon.",
         "Facultatif : retrouver la trace d'une personne disparue lors du cycle précédent (100 ans)."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "zone_cursed_swamp",
         "zone_phantom_village",
@@ -30047,6 +30143,7 @@
         "Trouver la question précise qui force Methrhton à répondre sans 'intervenir'.",
         "Repartir avant le coucher du soleil — la pyramide disparaît et ne reviendra pas avant longtemps."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "zone_flying_pyramid",
         "char_serpent_methraton"
@@ -30097,6 +30194,26 @@
         "Assembler les trois fragments de carte pour révéler le chemin vers Whispers Hill.",
         "Retour à Whispers Hill — la colline rasée. Quelque chose y est enterré sous les décombres."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Atteindre Tbarak au nord-ouest — trouver l'informateur qui connaît la Faille.",
+          "ville_id": "ville_tbarak"
+        },
+        {
+          "texte": "Traverser Hazol en pleine occupation militaire pour récupérer un objet de contrebande.",
+          "ville_id": "ville_hazol"
+        },
+        {
+          "texte": "Klindor à l'est : cité marchande neutre — négocier un laissez-passer pour l'Empire.",
+          "ville_id": "ville_klindor"
+        },
+        {
+          "texte": "Assembler les trois fragments de carte pour révéler le chemin vers Whispers Hill."
+        },
+        {
+          "texte": "Retour à Whispers Hill — la colline rasée. Quelque chose y est enterré sous les décombres."
+        }
+      ],
       "source_lore": [
         "zone_marches",
         "zone_whispers_hill"
@@ -30145,6 +30262,25 @@
         "Découvrir que c'est la Lune Noire qui a payé — l'épée est enchantée à des fins inconnues.",
         "Choisir : prendre l'épée telle quelle, la faire purifier (coût énorme en gemmes), ou la détruire.",
         "Si purifiée : combattre les agents de Haazheel arrivant pour la récupérer."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Entrer dans Ghrunke Dash avec suffisamment de gemmes pour négocier.",
+          "ville_id": "ville_ghrunke_dash"
+        },
+        {
+          "texte": "Convaincre Maître Grhumpdeth de révéler le commanditaire de l'épée.",
+          "pnj_id": "char_grhumpdeth"
+        },
+        {
+          "texte": "Découvrir que c'est la Lune Noire qui a payé — l'épée est enchantée à des fins inconnues."
+        },
+        {
+          "texte": "Choisir : prendre l'épée telle quelle, la faire purifier (coût énorme en gemmes), ou la détruire."
+        },
+        {
+          "texte": "Si purifiée : combattre les agents de Haazheel arrivant pour la récupérer."
+        }
       ],
       "source_lore": [
         "item_wismerhill_sword_forged",
@@ -30199,6 +30335,24 @@
         "Retrouver le second anneau — corrompu par des siècles de magie démoniaque résiduelle.",
         "Décider de le purifier chez les Nains (lent, coûteux) ou le garder corrompu (puissant mais instable)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Rechercher dans les archives de Ghrunke Dash la trace de l'anneau originel.",
+          "ville_id": "ville_ghrunke_dash"
+        },
+        {
+          "texte": "Identifier le lieu du vol ancien — une cité aujourd'hui en ruines dans les Marches."
+        },
+        {
+          "texte": "Fouiller les ruines en évitant ou combattant les créatures qui s'y sont installées."
+        },
+        {
+          "texte": "Retrouver le second anneau — corrompu par des siècles de magie démoniaque résiduelle."
+        },
+        {
+          "texte": "Décider de le purifier chez les Nains (lent, coûteux) ou le garder corrompu (puissant mais instable)."
+        }
+      ],
       "source_lore": [
         "item_regeneration_ring",
         "zone_ghrunke_dash",
@@ -30248,6 +30402,25 @@
         "Épreuve 3 — Résistance : subir une attaque mentale de Hizin sans perdre le contrôle.",
         "Épreuve 4 — Projection : neutraliser un démon de bas rang uniquement par pouvoir psychique.",
         "Épreuve finale — Duel : battre Hizin en duel psychique (il retient 50% de sa puissance)."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Épreuve 1 — Vide : méditer sans interruption dans une zone de combat actif (10 minutes de jeu)."
+        },
+        {
+          "texte": "Épreuve 2 — Focalisation : brûler une cible précise à distance sans toucher les adjacentes."
+        },
+        {
+          "texte": "Épreuve 3 — Résistance : subir une attaque mentale de Hizin sans perdre le contrôle.",
+          "pnj_id": "char_hizin_t1"
+        },
+        {
+          "texte": "Épreuve 4 — Projection : neutraliser un démon de bas rang uniquement par pouvoir psychique."
+        },
+        {
+          "texte": "Épreuve finale — Duel : battre Hizin en duel psychique (il retient 50% de sa puissance).",
+          "pnj_id": "char_hizin_t1"
+        }
       ],
       "source_lore": [
         "char_hizin_t1",
@@ -30299,6 +30472,7 @@
         "Séance 3 — Révélation : le joueur perçoit une présence étrangère dans l'esprit de la succube.",
         "Décision : continuer l'apprentissage (Haazheel observe) ou trouver une autre voie plus lente."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_succubus",
         "char_haazheel_thorn",
@@ -30349,6 +30523,26 @@
         "Trouver l'origine des épées dans les archives de Kendrhir (Cité des Grands Mages).",
         "Découvrir qu'elles ont été forgées à Ghrunke Dash sur commande d'un mage dont l'identité est effacée.",
         "Relier les deux épées à un artefact plus grand — elles sont des fragments d'une lame brisée autrefois unique."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Retrouver Pile-ou-Face ou ses traces pour accéder aux deux épées (sa disparition est un mystère).",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "Mener des tests en conditions réelles : dégainer Nepher, observer le comportement du groupe."
+        },
+        {
+          "texte": "Trouver l'origine des épées dans les archives de Kendrhir (Cité des Grands Mages).",
+          "ville_id": "kendrhir_vale"
+        },
+        {
+          "texte": "Découvrir qu'elles ont été forgées à Ghrunke Dash sur commande d'un mage dont l'identité est effacée.",
+          "ville_id": "ville_ghrunke_dash"
+        },
+        {
+          "texte": "Relier les deux épées à un artefact plus grand — elles sont des fragments d'une lame brisée autrefois unique."
+        }
       ],
       "source_lore": [
         "char_pile_ou_face",
@@ -30401,6 +30595,26 @@
         "Naviguer dans les brumes sans se perdre — chaque erreur de navigation coûte du temps réel.",
         "Ramener Feidreiva avant que l'accès aux brumes ne se referme (contrainte de temps strict)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Interroger le démon du village sur sa localisation — son prix est exorbitant."
+        },
+        {
+          "texte": "Trouver un mage ayant déjà traversé les brumes — il en existe un, à Kendrhir en ruines.",
+          "ville_id": "kendrhir_vale"
+        },
+        {
+          "texte": "Préparer le rituel d'accès : un objet personnel de Feidreiva + l'incantation exacte.",
+          "pnj_id": "char_feidreiva_t1"
+        },
+        {
+          "texte": "Naviguer dans les brumes sans se perdre — chaque erreur de navigation coûte du temps réel."
+        },
+        {
+          "texte": "Ramener Feidreiva avant que l'accès aux brumes ne se referme (contrainte de temps strict).",
+          "pnj_id": "char_feidreiva_t1"
+        }
+      ],
       "source_lore": [
         "char_feidreiva_t1",
         "zone_phantom_village",
@@ -30452,6 +30666,7 @@
         "Si intervention : lui offrir une alternative concrète — une cible à combattre qui vaut davantage.",
         "Sceller la loyauté par un combat commun — Ghorghor teste toujours par la force."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_ghorghor_bey",
         "faction_black_moon"
@@ -30502,6 +30717,7 @@
         "Trouver ce qu'il cherchait : une lettre d'un ami mort depuis longtemps.",
         "Décider de la lui remettre telle quelle ou de la brûler pour l'épargner."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_iaun_reith",
         "zone_cursed_forest",
@@ -30552,6 +30768,7 @@
         "Formuler SA question (rite obligatoire — le joueur doit prononcer la question lui-même).",
         "Recevoir la réponse : le père est un Prince Elfen Ténébreux errant avec les vents. Cherche-le."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "loracle_dieu_enchaine",
         "zone_oracle",
@@ -30617,6 +30834,24 @@
         "Fuite du camp sous protection neutre — les deux armées obtempèrent.",
         "Retrouvailles avec le groupe intact (sauf perte potentielle selon choix)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Sortir de l'Oracle pour trouver le camp en pleine bataille (Chevaliers vs groupe)."
+        },
+        {
+          "texte": "Survivre ou combattre jusqu'à la résurrection surprise de Ghorghor Bey.",
+          "pnj_id": "char_ghorghor_bey"
+        },
+        {
+          "texte": "Les Menthats interviennent : 'Au nom de la Lune Noire, je t'intime de cesser le combat!'"
+        },
+        {
+          "texte": "Fuite du camp sous protection neutre — les deux armées obtempèrent."
+        },
+        {
+          "texte": "Retrouvailles avec le groupe intact (sauf perte potentielle selon choix)."
+        }
+      ],
       "source_lore": [
         "zone_oracle",
         "chevaliers_de_la_lumiere",
@@ -30676,6 +30911,25 @@
         "Payer en gemmes — 'Je pense que ce sac de gemmes devrait suffire!'",
         "Attendre la forge — passer la nuit dans une auberge naine (trop basse pour Ghorghor).",
         "Récupérer la commande : armure de Goum (bijou), armes, et optionnel : char blindé + soldats nains."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Trouver Ghrunke Dash — cité volcanique réputée dans tout l'Empire pour ses métaux.",
+          "ville_id": "ville_ghrunke_dash"
+        },
+        {
+          "texte": "Rencontrer Maître Grhumpdeth et passer commande (armure sur mesure Goum + armes groupe)."
+        },
+        {
+          "texte": "Payer en gemmes — 'Je pense que ce sac de gemmes devrait suffire!'"
+        },
+        {
+          "texte": "Attendre la forge — passer la nuit dans une auberge naine (trop basse pour Ghorghor)."
+        },
+        {
+          "texte": "Récupérer la commande : armure de Goum (bijou), armes, et optionnel : char blindé + soldats nains.",
+          "pnj_id": "char_goum"
+        }
       ],
       "source_lore": [
         "ville_ghrunke_dash",
@@ -30745,6 +30999,24 @@
         "Assister ou espionner la cérémonie du serment — menaces intérieures des deux côtés.",
         "Découvrir que l'armée de Haazheel attend à l'extérieur — révèle ses intentions réelles.",
         "Exfiltrer avant que le départ d'Haazheel déclenche les représailles."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Infiltrer Lhynn pendant la visite d'Haazheel — la ville est en état d'alerte maximale.",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Observer la confrontation entre Haazheel et les Chevaliers de la Lumière aux portes."
+        },
+        {
+          "texte": "Assister ou espionner la cérémonie du serment — menaces intérieures des deux côtés."
+        },
+        {
+          "texte": "Découvrir que l'armée de Haazheel attend à l'extérieur — révèle ses intentions réelles."
+        },
+        {
+          "texte": "Exfiltrer avant que le départ d'Haazheel déclenche les représailles."
+        }
       ],
       "source_lore": [
         "ville_lhynn",
@@ -30816,6 +31088,24 @@
         "Accepter son offre de guide — 'Mauvaise idée, après s'étend un terrible marais maudit.'",
         "Traverser le marais avec sa mante géante comme guide."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Entrer dans la forêt — les lutins commencent leurs farces (boue, vol d'objets, pièges)."
+        },
+        {
+          "texte": "Résister aux farces sans perdre patience (combattre les lutins est inutile — trop nombreux)."
+        },
+        {
+          "texte": "Rencontrer Iaun Reith au cœur de la forêt — il est mystérieusement épargné par les lutins.",
+          "pnj_id": "char_iaun_reith"
+        },
+        {
+          "texte": "Accepter son offre de guide — 'Mauvaise idée, après s'étend un terrible marais maudit.'"
+        },
+        {
+          "texte": "Traverser le marais avec sa mante géante comme guide."
+        }
+      ],
       "source_lore": [
         "zone_cursed_forest",
         "char_iaun_reith",
@@ -30883,6 +31173,28 @@
         "Combat contre les entités — Feidreiva est emportée malgré tout dans les brumes du temps.",
         "Goum découvre Kruikna née — 'Mon bébé, enfin!'"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Arriver au village en plein marais — semble chaleureux et sans guerre."
+        },
+        {
+          "texte": "Identifier les entités démoniaques (vieux du village) avant qu'elles ne capturent quelqu'un."
+        },
+        {
+          "texte": "L'œuf de Kruikna éclot pendant la nuit — chaos supplémentaire.",
+          "pnj_id": "char_kruikna"
+        },
+        {
+          "texte": "À l'aube : le village disparaît, les démons révèlent leur vraie forme."
+        },
+        {
+          "texte": "Combat contre les entités — Feidreiva est emportée malgré tout dans les brumes du temps.",
+          "pnj_id": "char_feidreiva_t1"
+        },
+        {
+          "texte": "Goum découvre Kruikna née — 'Mon bébé, enfin!'"
+        }
+      ],
       "source_lore": [
         "zone_phantom_village",
         "char_feidreiva_t1",
@@ -30946,6 +31258,29 @@
         "Recruter la cohorte pour la campagne — Ghorghor, Murata, la Succube et les alliés recueillis.",
         "Premier assaut nocturne contre un vassal d'Haghendorf — brûler un château ennemi.",
         "La campagne s'étend au fil des nuits — les coeurs rallient. La Lune Noire observe."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Assister aux funérailles du père dans la ville de Dis (en fuite)."
+        },
+        {
+          "texte": "Rentrer au château — décision : brûler le passé ou le conserver."
+        },
+        {
+          "texte": "Choisir 'brûler' — Wismerhill met lui-même le feu à son château.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Recruter la cohorte pour la campagne — Ghorghor, Murata, la Succube et les alliés recueillis.",
+          "pnj_id": "char_murata"
+        },
+        {
+          "texte": "Premier assaut nocturne contre un vassal d'Haghendorf — brûler un château ennemi.",
+          "pnj_id": "char_haghendorf"
+        },
+        {
+          "texte": "La campagne s'étend au fil des nuits — les coeurs rallient. La Lune Noire observe."
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -31017,6 +31352,26 @@
         "Choisir: l'intercepter (rompre le plan de Haghendorf) ou le laisser aller (Fratus sait tout).",
         "Si intercepté: trouver une autre façon de prouver la trahison à Haghendorf.",
         "Si laissé: Fratus est informé — il accélère ses plans. Les Chevaliers de Justice bénéficient du chaos."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Rencontrer le grand astrologue impérial — il révèle le signe de Fratus: 'l'Archer Chien de Métal'."
+        },
+        {
+          "texte": "Identifier le double agent (chevalier roux) avant qu'il ne regagne Altenberg.",
+          "ville_id": "ville_altenberg"
+        },
+        {
+          "texte": "Choisir: l'intercepter (rompre le plan de Haghendorf) ou le laisser aller (Fratus sait tout).",
+          "pnj_id": "char_haghendorf"
+        },
+        {
+          "texte": "Si intercepté: trouver une autre façon de prouver la trahison à Haghendorf.",
+          "pnj_id": "char_haghendorf"
+        },
+        {
+          "texte": "Si laissé: Fratus est informé — il accélère ses plans. Les Chevaliers de Justice bénéficient du chaos."
+        }
       ],
       "source_lore": [
         "char_loyal_commandeur_t4",
@@ -31094,6 +31449,33 @@
         "Étape dans une ville avec auberge — rencontre explosive avec le Mage Shamballeau.",
         "Trouver le temple de la Lune Noire — communication avec Haazheel via le prêtre gardien.",
         "Arriver à Moork — prêter serment à Haazheel, recevoir la Garde Noire et le titre de Baron."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Quitter les ruines du château de Wismerhill — rassembler les survivants.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Traverser les villes sur la route de Moork — certaines se rendent volontairement pour éviter pillage.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Gérer l'incident au village Orkh — témoin ou participant à la barbarie des Fils de la Lumière."
+        },
+        {
+          "texte": "Arriver à Ghrunkedash — rencontrer Maître Grhumpdeth et acquérir le palais roulant (50 000 couronnes / moitié prix).",
+          "pnj_id": "char_grhumpdeth"
+        },
+        {
+          "texte": "Étape dans une ville avec auberge — rencontre explosive avec le Mage Shamballeau."
+        },
+        {
+          "texte": "Trouver le temple de la Lune Noire — communication avec Haazheel via le prêtre gardien."
+        },
+        {
+          "texte": "Arriver à Moork — prêter serment à Haazheel, recevoir la Garde Noire et le titre de Baron.",
+          "ville_id": "ville_moork"
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -31177,6 +31559,31 @@
         "Recevoir l'ordre de marche vers la Faille de Tsaroth.",
         "Partir en tête de la Garde Noire vers Tsaroth."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Entrer dans Moork avec son armée.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Être reçu en audience par Haazheel dans la salle du trône."
+        },
+        {
+          "texte": "Prononcer le serment de vassalité : 'Si votre proposition tient toujours, je suis prêt à vous rendre hommage!'"
+        },
+        {
+          "texte": "Recevoir la reconnaissance de Haazheel : 'Tu es un grand guerrier... un général d'exception aussi.'"
+        },
+        {
+          "texte": "Découvrir la Garde Noire : 500 grands guerriers + 3 000 soldats d'élite en armure verte."
+        },
+        {
+          "texte": "Recevoir l'ordre de marche vers la Faille de Tsaroth.",
+          "lieu_id": "lieu_tsaroth_fissure"
+        },
+        {
+          "texte": "Partir en tête de la Garde Noire vers Tsaroth."
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "char_haazheel_thorn",
@@ -31251,6 +31658,27 @@
         "Déclencher la transformation Titan au bon moment (jauge Lune Noire 80%+).",
         "Survivre à l'intervention des Chevaliers de Justice.",
         "Retrait tactique avec les survivants vers Moork."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Installer les troupes de la Garde Noire sur la colline stratégique."
+        },
+        {
+          "texte": "Résister à l'attaque nocturne des deux fois nés (phase défensive)."
+        },
+        {
+          "texte": "Tenir le mur face aux charges impériales du matin."
+        },
+        {
+          "texte": "Déclencher la transformation Titan au bon moment (jauge Lune Noire 80%+)."
+        },
+        {
+          "texte": "Survivre à l'intervention des Chevaliers de Justice."
+        },
+        {
+          "texte": "Retrait tactique avec les survivants vers Moork.",
+          "ville_id": "ville_moork"
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -31340,6 +31768,32 @@
         "Confrontation finale : 'Excusez-moi, seigneurs, mais je ne comprends pas!'",
         "Réponse de Haazheel : 'Mais j'espère bien que tu ne comprends pas jeune coq! Hé hé!' — Wismerhill est son pion."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Retourner à Moork après la bataille de Tsaroth — 'Nous allons prendre le pouvoir à Moork.'",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Arriver aux murs — 'Sacré morceau, s'ils n'ouvrent pas... / On ne la prendra jamais. Je sais!'"
+        },
+        {
+          "texte": "Les portes s'ouvrent — la ville est déjà à Wismerhill selon Pilou.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Entrer dans la citadelle — combattre le garde hostile près du trône."
+        },
+        {
+          "texte": "Trouver la salle du trône — découvrir Haazheel et Greldinard (?) en attente."
+        },
+        {
+          "texte": "Confrontation finale : 'Excusez-moi, seigneurs, mais je ne comprends pas!'"
+        },
+        {
+          "texte": "Réponse de Haazheel : 'Mais j'espère bien que tu ne comprends pas jeune coq! Hé hé!' — Wismerhill est son pion.",
+          "pnj_id": "char_wismerhill"
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "char_haazheel_thorn",
@@ -31412,6 +31866,27 @@
         "Recevoir en cadeau une pièce d'art nain ('en mécène et esthète de l'art nain').",
         "Déployer le palais roulant dans la longue marche vers Tsaroth."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Arriver à Ghrunkedash et trouver Maître Grhumpdeth.",
+          "pnj_id": "char_grhumpdeth"
+        },
+        {
+          "texte": "Visiter les ateliers souterrains — voir le palais roulant dans les stalactites."
+        },
+        {
+          "texte": "Négocier le prix : commande originale 50 000 couronnes, proposé à moitié prix."
+        },
+        {
+          "texte": "Accepter et payer — 'Superbe machine, mille mercis! Voici ton or maître. Nous avions bien dit 50 000 couronnes n'est-ce pas?'"
+        },
+        {
+          "texte": "Recevoir en cadeau une pièce d'art nain ('en mécène et esthète de l'art nain')."
+        },
+        {
+          "texte": "Déployer le palais roulant dans la longue marche vers Tsaroth."
+        }
+      ],
       "source_lore": [
         "char_grhumpdeth",
         "ville_ghrunke_dash",
@@ -31480,6 +31955,25 @@
         "Se rendre à la Grande Bibliothèque — rencontrer Argon (Grand Mhenthat).",
         "Découvrir les conseillers : Selinporf (mage), Pharix (espion), Zharhol (diplomate), Hokhost (militaire), Nerellhen (finances), Zhenner (intendant).",
         "Recevoir l'information : l'Empereur a donné Moork à George d'Horkher. Horkher marche sur Moork. Préparer le piège."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "S'installer sur le trône de Moork — déléguer aux gardes noirs la sécurité du palais.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Gérer les premières affaires : soldats pillards (punir), gardes réfractaires (menacer), guildes (renvoi + nouveau chef)."
+        },
+        {
+          "texte": "Se rendre à la Grande Bibliothèque — rencontrer Argon (Grand Mhenthat).",
+          "pnj_id": "char_argon_moork"
+        },
+        {
+          "texte": "Découvrir les conseillers : Selinporf (mage), Pharix (espion), Zharhol (diplomate), Hokhost (militaire), Nerellhen (finances), Zhenner (intendant)."
+        },
+        {
+          "texte": "Recevoir l'information : l'Empereur a donné Moork à George d'Horkher. Horkher marche sur Moork. Préparer le piège."
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -31559,6 +32053,27 @@
         "Nasha livre les fleurs — signal → Ghorghor capture le Comte. De partout surgissent les soldats de Wismerhill. Le carnage commence.",
         "Moork est sauvée, les troupes impériales sont défaites. Horkher est captif."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir la nouvelle : l'armée d'Horkher marche sur Moork. Préparer le plan."
+        },
+        {
+          "texte": "Décorer Moork aux couleurs d'Horkher — guirlandes, fanions, festivités."
+        },
+        {
+          "texte": "Mettre en place les soldats en manteaux violets dans les rues et fenêtres."
+        },
+        {
+          "texte": "Accueillir le Comte d'Horkher avec enthousiasme feint — parade dans les rues.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Nasha livre les fleurs — signal → Ghorghor capture le Comte. De partout surgissent les soldats de Wismerhill. Le carnage commence."
+        },
+        {
+          "texte": "Moork est sauvée, les troupes impériales sont défaites. Horkher est captif."
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "char_ghorghor_bey",
@@ -31629,6 +32144,28 @@
         "Malgré une forte résistance, les défenseurs succombent. Victoire.",
         "Lendemain : Cérémonie d'abdication dans la Salle du Trône — George d'Horkher abdique officiellement. Les vassaux prêtent serment de vassalité à Wismerhill."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Forcer le Comte d'Horkher à signer son abdication de Moork (couteau à la gorge)."
+        },
+        {
+          "texte": "Cette nuit même : téléporter le groupe dans la ville d'Horkher.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Attaquer les portes — Hellaynnea brûle les défenses, Ghorghor ouvre une brèche.",
+          "pnj_id": "char_hellaynnea_t12"
+        },
+        {
+          "texte": "Le flot des armées de Wismerhill se répand dans Horkher — combat de rues."
+        },
+        {
+          "texte": "Malgré une forte résistance, les défenseurs succombent. Victoire."
+        },
+        {
+          "texte": "Lendemain : Cérémonie d'abdication dans la Salle du Trône — George d'Horkher abdique officiellement. Les vassaux prêtent serment de vassalité à Wismerhill."
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "char_ghorghor_bey",
@@ -31698,6 +32235,24 @@
         "Déclarer la vassalité : 'Au nom de mon maître, votre majesté, salutations respectueuses !'",
         "L'Empereur répond avec rage mais prend note : 'Nous avons pris note de ce serment mais nous regrettons que notre volonté n'ait pas été respectée. Laissez-nous maintenant.'"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Rédiger la lettre de vassalité — inclure les deux fiefs (Moork + Horkher)."
+        },
+        {
+          "texte": "Désigner un plénipotentiaire digne : 'Sire Cedric, plénipotentiaire de la Baronnie de Moork'.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "L'ambassade se rend à L'Hynn — reçue en audience par l'Empereur."
+        },
+        {
+          "texte": "Déclarer la vassalité : 'Au nom de mon maître, votre majesté, salutations respectueuses !'"
+        },
+        {
+          "texte": "L'Empereur répond avec rage mais prend note : 'Nous avons pris note de ce serment mais nous regrettons que notre volonté n'ait pas été respectée. Laissez-nous maintenant.'"
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "char_haghendorf",
@@ -31766,6 +32321,30 @@
         "Rupture de l'harmonie : appel urgent depuis la tour de guet.",
         "L'émissaire de Haazheel arrive sous la pluie — demande l'hospitalité au nom de son maître."
       ],
+      "etapes_struct": [
+        {
+          "texte": "S'installer dans le château de Garundel — désormais fief du groupe.",
+          "pnj_id": "char_garundel"
+        },
+        {
+          "texte": "Wismerhill rend la justice aux paysans (disputes de bornes, dettes, conflits).",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "La vie s'écoule paisiblement — Ghorghor mange trop, Goum finit les restes.",
+          "pnj_id": "char_goum"
+        },
+        {
+          "texte": "La succube est toujours présente — chaque soir Wismerhill 'succombe'.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Rupture de l'harmonie : appel urgent depuis la tour de guet."
+        },
+        {
+          "texte": "L'émissaire de Haazheel arrive sous la pluie — demande l'hospitalité au nom de son maître."
+        }
+      ],
       "source_lore": [
         "zone_garundel_fief",
         "char_wismerhill",
@@ -31828,6 +32407,7 @@
         "Traverser les rangs sous les regards des géants ('Hé! Ils sont plus gros que moi!').",
         "Sortir de l'armée sain et sauf — 'J'ai jamais eu aussi peur de ma vie!'."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "faction_black_moon",
         "char_haazheel_thorn",
@@ -31887,6 +32467,24 @@
         "Observer la réunion : six nobles se présentent et prêtent serment.",
         "Retenir les noms des conspirateurs (Baron d'Hurkel, Prince Agnos, Haut Drakkhen, Duc d'Ornan, Duc Ushker, Prince Draakh).",
         "Quitter le Krak avant la fin de la réunion — les gardes-dragons patrouillent."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Suivre les étranges oiseaux/wyvernes survolant Lhynn la nuit.",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Localiser le Krak des Chevaliers sans se faire repérer."
+        },
+        {
+          "texte": "Observer la réunion : six nobles se présentent et prêtent serment."
+        },
+        {
+          "texte": "Retenir les noms des conspirateurs (Baron d'Hurkel, Prince Agnos, Haut Drakkhen, Duc d'Ornan, Duc Ushker, Prince Draakh)."
+        },
+        {
+          "texte": "Quitter le Krak avant la fin de la réunion — les gardes-dragons patrouillent."
+        }
       ],
       "source_lore": [
         "char_fratus_sinister",
@@ -31957,6 +32555,24 @@
         "Identifier Urmarcht et comprendre son rôle de démon majeur de confiance.",
         "Récupérer un indice sur l'état de l'épée : 'L'épée est forgée, sinon encore trempée!'"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Localiser le château loué par Haazheel sur le chemin du retour."
+        },
+        {
+          "texte": "Infiltrer ou approcher le château en profitant de la confusion de la punition."
+        },
+        {
+          "texte": "Observer la scène : Haazheel punit une créature pour avoir 'obéi à moitié'."
+        },
+        {
+          "texte": "Identifier Urmarcht et comprendre son rôle de démon majeur de confiance.",
+          "pnj_id": "char_urmarcht"
+        },
+        {
+          "texte": "Récupérer un indice sur l'état de l'épée : 'L'épée est forgée, sinon encore trempée!'"
+        }
+      ],
       "source_lore": [
         "char_urmarcht",
         "char_haazheel_thorn",
@@ -32015,6 +32631,29 @@
         "Dîner officiel — Haazheel propose son alliance et offre le château comme cadeau.",
         "Après le dîner, Urmacht arrive avec des informations sur le père de Wismerhill à Dis.",
         "Choix : suivre la piste du père maintenant, ou attendre davantage d'informations."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Haazheel arrive au château — le groupe doit décider s'il le laisse entrer ou non."
+        },
+        {
+          "texte": "Haazheel fait visiter 'son' château (Garundel était son vassal). Il inspecte tout.",
+          "pnj_id": "char_garundel"
+        },
+        {
+          "texte": "Il intimide la succube — scène privée que Wismerhill ne doit pas voir.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Dîner officiel — Haazheel propose son alliance et offre le château comme cadeau."
+        },
+        {
+          "texte": "Après le dîner, Urmacht arrive avec des informations sur le père de Wismerhill à Dis.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Choix : suivre la piste du père maintenant, ou attendre davantage d'informations."
+        }
       ],
       "source_lore": [
         "char_haazheel_thorn",
@@ -32091,6 +32730,32 @@
         "Mois 2-4 : attaque coordonnée sur 3 vassaux simultanément — la rumeur se répand.",
         "Mois 5 : combat contre un seigneur important — 'Tu as perdu, Seigneur, tout perdu!' (page 42).",
         "Mois 6 : l'armée est constituée — Wismerhill interroge son avenir ('De feu! De larmes! De pleurs! Et de sang!')."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Rassembler la cohorte initiale (Ghorghor, Murata, Succubus, quelques hommes).",
+          "pnj_id": "char_murata"
+        },
+        {
+          "texte": "Première cible : un château-vassal d'Haghendorf — brûler, se battre, survivre.",
+          "pnj_id": "char_haghendorf"
+        },
+        {
+          "texte": "Nuit 1 : d'autres rallient ('La mort n'a pas de plus fidèles amants, Seigneur!')."
+        },
+        {
+          "texte": "Semaines 2-4 : la troupe grossit — anciens soldats, mercenaires, déserteurs impériaux."
+        },
+        {
+          "texte": "Mois 2-4 : attaque coordonnée sur 3 vassaux simultanément — la rumeur se répand."
+        },
+        {
+          "texte": "Mois 5 : combat contre un seigneur important — 'Tu as perdu, Seigneur, tout perdu!' (page 42)."
+        },
+        {
+          "texte": "Mois 6 : l'armée est constituée — Wismerhill interroge son avenir ('De feu! De larmes! De pleurs! Et de sang!').",
+          "pnj_id": "char_wismerhill"
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -32170,6 +32835,21 @@
         "Payer le solde dans la salle du trésor de Moork",
         "Assister à la formation des équipes de conduite"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Rencontrer le convoi de Grhumpdeth sur la route"
+        },
+        {
+          "texte": "Inspecter le Juggernauth (visite guidée par Grhumpdeth)"
+        },
+        {
+          "texte": "Payer le solde dans la salle du trésor de Moork",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Assister à la formation des équipes de conduite"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -32243,6 +32923,24 @@
         "Passer plusieurs jours enfermé avec elles",
         "Confirmer les grossesses",
         "Organiser leur escorte vers la forteresse naine abandonnée"
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Accepter l'offre d'Hellaynnea",
+          "pnj_id": "char_hellaynnea_t12"
+        },
+        {
+          "texte": "Rencontrer les 9 femmes (guerrières, prêtresses, mages, nobles — l'une était reine)"
+        },
+        {
+          "texte": "Passer plusieurs jours enfermé avec elles"
+        },
+        {
+          "texte": "Confirmer les grossesses"
+        },
+        {
+          "texte": "Organiser leur escorte vers la forteresse naine abandonnée"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -32321,6 +33019,7 @@
         "Recevoir investiture : armure métal étoiles, épée hors-monde, heaume/couronne, opale de feu émeraude",
         "Recevoir monture : Sombre Chevaucheur des Ténèbres"
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 50000,
@@ -32422,6 +33121,28 @@
         "Passer en revue les troupes depuis le Juggernauth",
         "Lancer la grande marche : EN AVANT!"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Présenter le rapport militaire au conseil de guerre (Haazeel, Wismerhill, Greldinard)",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Rencontrer l'armée de Fratus Sinister et l'intégrer",
+          "pnj_id": "char_fratus_sinister"
+        },
+        {
+          "texte": "Négocier avec le Grand Prince des Chevaliers-Dragons (T9 : en délibération)"
+        },
+        {
+          "texte": "Recevoir la confirmation de l'alliance Tharque"
+        },
+        {
+          "texte": "Passer en revue les troupes depuis le Juggernauth"
+        },
+        {
+          "texte": "Lancer la grande marche : EN AVANT!"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 30000,
@@ -32496,6 +33217,25 @@
         "3. Tendre un piège à gibier sous les instructions de Pile-ou-Face.",
         "4. Chasser une créature de forêt de niveau 1-5.",
         "5. Cuisiner le gibier sur un feu de camp."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "1. Suivre Pile-ou-Face dans la forêt de la Rencontre.",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "2. Identifier les traces de 3 types d'animaux différents (pistage)."
+        },
+        {
+          "texte": "3. Tendre un piège à gibier sous les instructions de Pile-ou-Face.",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "4. Chasser une créature de forêt de niveau 1-5."
+        },
+        {
+          "texte": "5. Cuisiner le gibier sur un feu de camp."
+        }
       ],
       "source_lore": [
         "char_pile_ou_face",
@@ -32572,6 +33312,30 @@
         "4. [SOIR] Entraînement psychique avec Hizin : Focaliser → Vider l'esprit → Concentrer → Projeter.",
         "5. Réussir le premier rayon psychique — enflammer une cible à distance — exploit_premier_pouvoir_psychique_t1.",
         "6. Battre Pile-ou-Face au combat d'entraînement — preuve de progression."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "1. [MATIN] S'entraîner à l'épée avec Feidreiva — 7 séances (7 jours de jeu). Objectif : maîtriser le bloc et la riposte.",
+          "pnj_id": "char_feidreiva_t1"
+        },
+        {
+          "texte": "2. [MIDI] Participer aux festins de Ghorghor — apprendre la tactique militaire (7 sessions de stratégie)."
+        },
+        {
+          "texte": "3. [APRÈS-MIDI] Leçons de combat avec Pile-ou-Face — maîtrise du double combat (Nepher/Bepher mechanic).",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "4. [SOIR] Entraînement psychique avec Hizin : Focaliser → Vider l'esprit → Concentrer → Projeter.",
+          "pnj_id": "char_hizin_t1"
+        },
+        {
+          "texte": "5. Réussir le premier rayon psychique — enflammer une cible à distance — exploit_premier_pouvoir_psychique_t1."
+        },
+        {
+          "texte": "6. Battre Pile-ou-Face au combat d'entraînement — preuve de progression.",
+          "pnj_id": "char_pile_ou_face"
+        }
       ],
       "source_lore": [
         "char_hizin_t1",
@@ -32657,6 +33421,22 @@
         "Affronter Goum le Terrible dans l'arène.",
         "Le vaincre et recevoir 500 couronnes du maître-gladiateur."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Entendre le crieur sur la rue marchande de Feyhin Lokcthat.",
+          "ville_id": "ville_feyhin_lokcthat"
+        },
+        {
+          "texte": "Se porter volontaire (« Moi ! »)."
+        },
+        {
+          "texte": "Affronter Goum le Terrible dans l'arène.",
+          "pnj_id": "char_goum"
+        },
+        {
+          "texte": "Le vaincre et recevoir 500 couronnes du maître-gladiateur."
+        }
+      ],
       "source_lore": [
         "char_goum",
         "char_murata",
@@ -32713,6 +33493,26 @@
         "Forcer les couloirs gardés de l'arène (Pile-ou-Face crochète la grille).",
         "Calmer Goum grâce à Nasha.",
         "Quitter la ville en chariot, de nuit."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Aider Murata contre la bande venue reprendre sa bourse (place à la fontaine).",
+          "pnj_id": "char_murata"
+        },
+        {
+          "texte": "Écouter Nasha : son frère est retenu dans l'arène.",
+          "pnj_id": "char_nasha_t6"
+        },
+        {
+          "texte": "Forcer les couloirs gardés de l'arène (Pile-ou-Face crochète la grille).",
+          "pnj_id": "char_pile_ou_face"
+        },
+        {
+          "texte": "Calmer Goum grâce à Nasha."
+        },
+        {
+          "texte": "Quitter la ville en chariot, de nuit."
+        }
       ],
       "source_lore": [
         "char_nasha_t6",
@@ -32776,6 +33576,30 @@
         "Atteindre le Piton (sommet).",
         "Recevoir l'initiation des Grands Vents : secrets de l'air, pacte, Sceptre de Cristal."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Suivre les murmures des Vents."
+        },
+        {
+          "texte": "Arriver devant le Mont des Neuf Pics (7 jours de voyage).",
+          "lieu_id": "lieu_mont_neufs_pics"
+        },
+        {
+          "texte": "Laisser les compagnons en bas et gravir seul."
+        },
+        {
+          "texte": "Pénétrer dans les failles de la roche."
+        },
+        {
+          "texte": "Escalader l'immense colonne de pierre centrale."
+        },
+        {
+          "texte": "Atteindre le Piton (sommet)."
+        },
+        {
+          "texte": "Recevoir l'initiation des Grands Vents : secrets de l'air, pacte, Sceptre de Cristal."
+        }
+      ],
       "source_lore": [
         "char_wismerhill",
         "zone_mont_neuf_pics"
@@ -32835,6 +33659,27 @@
         "Résister / Rejeter la machine par l'énergie élémentale.",
         "Contraindre Desdémone à révéler la localisation de l'Oracle.",
         "Libérer tous les prisonniers des geôles."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Arriver à Magistrya (1 semaine après le Mont des Neuf Pics).",
+          "lieu_id": "lieu_mont_neufs_pics"
+        },
+        {
+          "texte": "Demander une audience seul au Magister."
+        },
+        {
+          "texte": "Être soumis à la machine d'extraction d'essence vitale."
+        },
+        {
+          "texte": "Résister / Rejeter la machine par l'énergie élémentale."
+        },
+        {
+          "texte": "Contraindre Desdémone à révéler la localisation de l'Oracle."
+        },
+        {
+          "texte": "Libérer tous les prisonniers des geôles."
+        }
       ],
       "source_lore": [
         "char_magister_magistrya",
@@ -32897,6 +33742,33 @@
         "S'installer dans le palais du Maître ; repousser l'ambassade de Frater Sinister.",
         "Repartir vers l'Oracle, guidé par les vents."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Camper devant l'entrée de la Passe (l'Atmosphère), sous l'œil des dragons-éclaireurs.",
+          "lieu_id": "lieu_atmosphere"
+        },
+        {
+          "texte": "Franchir le pont de corde enneigé."
+        },
+        {
+          "texte": "Être sommé de partir par le Maître des Dragons."
+        },
+        {
+          "texte": "Relever le défi : joute à pied contre le Maître et son dragon."
+        },
+        {
+          "texte": "Survivre au souffle de feu grâce à l'armure de glace des vents ; viser la gorge."
+        },
+        {
+          "texte": "Se dégager de sous le dragon mort."
+        },
+        {
+          "texte": "S'installer dans le palais du Maître ; repousser l'ambassade de Frater Sinister."
+        },
+        {
+          "texte": "Repartir vers l'Oracle, guidé par les vents."
+        }
+      ],
       "source_lore": [
         "char_lord_drakkhurst",
         "char_dracchennauknh",
@@ -32955,6 +33827,24 @@
         "Attendre l'appel de l'Oracle.",
         "Entrer dans le Tumulus de l'Oracle."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Traverser la Passe des Dragons."
+        },
+        {
+          "texte": "Arriver à la Plaine de l'Oracle (camp de pèlerins)."
+        },
+        {
+          "texte": "Rencontrer Iaun Reith (Ranger) qui explique le fonctionnement.",
+          "pnj_id": "char_iaun_reith"
+        },
+        {
+          "texte": "Attendre l'appel de l'Oracle."
+        },
+        {
+          "texte": "Entrer dans le Tumulus de l'Oracle."
+        }
+      ],
       "source_lore": [
         "char_iaun_reith",
         "loracle_dieu_enchaine",
@@ -33011,6 +33901,25 @@
         "Recevoir l'émissaire impérial qui exige la soumission — refuser.",
         "Faire participer l'émissaire au 'banquet' (Kruikna / Ghorghor s'en charge).",
         "Proclamation officielle : 'Longue vie à Wismerhill, Baron de Moork!'"
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Organiser le grand banquet au palais de Moork — inviter tous les dignitaires.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Gérer l'incident du mage méditant au plafond."
+        },
+        {
+          "texte": "Recevoir l'émissaire impérial qui exige la soumission — refuser."
+        },
+        {
+          "texte": "Faire participer l'émissaire au 'banquet' (Kruikna / Ghorghor s'en charge).",
+          "pnj_id": "char_kruikna"
+        },
+        {
+          "texte": "Proclamation officielle : 'Longue vie à Wismerhill, Baron de Moork!'"
+        }
       ],
       "source_lore": [
         "char_wismerhill",
@@ -33077,6 +33986,24 @@
         "Choix : intervenir (combat) ou observer (la victime meurt).",
         "Si combat : Esmeralda est une adversaire redoutable — fuite ou soumission."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Enquête nocturne — disparitions mystérieuses de citoyens de Moork.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Pister les traces d'énergie démoniaque dans les rues de nuit."
+        },
+        {
+          "texte": "Découvrir Esmeralda en pleine action (drain d'âme)."
+        },
+        {
+          "texte": "Choix : intervenir (combat) ou observer (la victime meurt)."
+        },
+        {
+          "texte": "Si combat : Esmeralda est une adversaire redoutable — fuite ou soumission."
+        }
+      ],
       "source_lore": [
         "char_succubus",
         "ville_moork",
@@ -33138,6 +34065,7 @@
         "Emprunter le Passage du Serpent Doré (voyage à l'intérieur du serpent cosmique).",
         "Atteindre la Cité du Jade — première vue de la civilisation jade."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "char_wismerhill",
         "zone_eaux_serpents_marins_t7",
@@ -33211,6 +34139,29 @@
         "Dialoguer avec Methraton — ne pas l'attaquer en premier (condition de survie).",
         "Survivre à l'explosion 'FOOOOO BOOSH' de la colère de Methraton.",
         "Rester en vie jusqu'à ce que Methraton reparte."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Atteindre le Temple du Soleil Noir dans la Cité du Jade."
+        },
+        {
+          "texte": "Rassembler les 7 prêtres jade nécessaires au rituel d'invocation."
+        },
+        {
+          "texte": "Accomplir le rituel de 5 minutes sans interruption."
+        },
+        {
+          "texte": "Dialoguer avec Methraton — ne pas l'attaquer en premier (condition de survie).",
+          "pnj_id": "char_methraton"
+        },
+        {
+          "texte": "Survivre à l'explosion 'FOOOOO BOOSH' de la colère de Methraton.",
+          "pnj_id": "char_methraton"
+        },
+        {
+          "texte": "Rester en vie jusqu'à ce que Methraton reparte.",
+          "pnj_id": "char_methraton"
+        }
       ],
       "source_lore": [
         "char_methraton",
@@ -33291,6 +34242,25 @@
         "Négocier les termes de l'alliance avec le Seigneur du Jade.",
         "Déjouer un complot contre Wismerhill pendant les négociations."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Obtenir une audience avec le Seigneur du Jade."
+        },
+        {
+          "texte": "Identifier les factions internes (loyalistes jade vs dissidents)."
+        },
+        {
+          "texte": "Résoudre un conflit interne pour démontrer la valeur de Wismerhill.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Négocier les termes de l'alliance avec le Seigneur du Jade."
+        },
+        {
+          "texte": "Déjouer un complot contre Wismerhill pendant les négociations.",
+          "pnj_id": "char_wismerhill"
+        }
+      ],
       "source_lore": [
         "char_seigneur_jade_t7",
         "char_wismerhill",
@@ -33367,6 +34337,7 @@
         "Accepter l'héritage — ne pas le rejeter (choix narratif).",
         "Ressentir l'éveil du Souffle de l'Héritage."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "creature_grands_vents",
         "char_wismerhill"
@@ -33433,6 +34404,7 @@
         "Protéger le Grand Prêtre pendant la perturbation.",
         "Aider à stabiliser le rituel ou choisir de le saboter (choix narratif)."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "zone_jade_temple_soleil_noir",
         "char_seigneur_jade_t7"
@@ -33506,6 +34478,24 @@
         "Sceller l'alliance formelle entre Wismerhill et l'Empire du Jade.",
         "Choisir les termes de l'alliance (choix stratégique aux conséquences futures)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Survivre à la Bataille de la Nécropole."
+        },
+        {
+          "texte": "Être invité dans la Grande Salle aux Lions (statues de lions/sphinx)."
+        },
+        {
+          "texte": "Participer au conseil de guerre avec le Seigneur du Jade et les commandants."
+        },
+        {
+          "texte": "Sceller l'alliance formelle entre Wismerhill et l'Empire du Jade.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Choisir les termes de l'alliance (choix stratégique aux conséquences futures)."
+        }
+      ],
       "source_lore": [
         "char_seigneur_jade_t7",
         "char_wismerhill"
@@ -33567,6 +34557,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 5000,
@@ -33617,6 +34608,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -33666,6 +34658,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -33718,6 +34711,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 5000,
@@ -33765,6 +34759,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 3000,
@@ -33810,6 +34805,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 18000,
@@ -33863,6 +34859,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 10000,
@@ -33910,6 +34907,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 12000,
@@ -33958,6 +34956,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -34010,6 +35009,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 10000,
@@ -34062,6 +35062,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 8000,
@@ -34112,6 +35113,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -34187,6 +35189,18 @@
         "Assister aux joutes d'échecs démoniaques et à l'accord conclu.",
         "Entendre la prophétie de l'Oracle sur la fin du jeu."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Découvrir le Pari Cosmique entre Lucifer et Pazuzu aux Enfers.",
+          "pnj_id": "char_pazuzu"
+        },
+        {
+          "texte": "Assister aux joutes d'échecs démoniaques et à l'accord conclu."
+        },
+        {
+          "texte": "Entendre la prophétie de l'Oracle sur la fin du jeu."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -34236,6 +35250,21 @@
         "Découvrir la princesse elfique qui chante sur sa tour.",
         "Assister à la naissance de Wismerhill en décembre, sous les yeux de Pazuzu.",
         "Voir la mère emmenée aux Enfers."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Observer la recherche par Pazuzu de la mère idéale à travers les civilisations.",
+          "pnj_id": "char_pazuzu"
+        },
+        {
+          "texte": "Découvrir la princesse elfique qui chante sur sa tour."
+        },
+        {
+          "texte": "Assister à la naissance de Wismerhill en décembre, sous les yeux de Pazuzu."
+        },
+        {
+          "texte": "Voir la mère emmenée aux Enfers."
+        }
       ],
       "source_lore": [
         "lieu_ruines_wismerhill"
@@ -34290,6 +35319,7 @@
         "Survivre aux brimades du Vieux Seigneur et de ses chiens.",
         "Se laisser emporter par les Vents dans les cieux lors des nuits de sommeil."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "lieu_ruines_wismerhill"
       ],
@@ -34342,6 +35372,21 @@
         "Tenter de chasser un autre gibier avec le Vieux Garde.",
         "Un sanglier charge — il meurt inexplicablement (puissance latente de Wismerhill).",
         "Rapporter le sanglier au château."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Tenter de chasser des lapins dans la forêt (ils fuient — échec comique)."
+        },
+        {
+          "texte": "Tenter de chasser un autre gibier avec le Vieux Garde."
+        },
+        {
+          "texte": "Un sanglier charge — il meurt inexplicablement (puissance latente de Wismerhill).",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Rapporter le sanglier au château."
+        }
       ],
       "source_lore": [
         "lieu_ruines_wismerhill"
@@ -34405,6 +35450,24 @@
         "Ramener l'étalon au château et l'apprivoiser.",
         "L'étalon et Wismerhill deviennent inséparables."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Découvrir l'étalon blanc blessé attaqué par des loups dans la neige."
+        },
+        {
+          "texte": "Combattre ou repousser la meute de loups (aidé par la chasseresse)."
+        },
+        {
+          "texte": "Soigner les blessures de l'étalon."
+        },
+        {
+          "texte": "Ramener l'étalon au château et l'apprivoiser."
+        },
+        {
+          "texte": "L'étalon et Wismerhill deviennent inséparables.",
+          "pnj_id": "char_wismerhill"
+        }
+      ],
       "source_lore": [
         "lieu_ruines_wismerhill"
       ],
@@ -34463,6 +35526,7 @@
         "Tuer le Vieux Seigneur (boss final de l'arc t00).",
         "Fuir le château sur l'Étalon Blanc."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "lieu_ruines_wismerhill"
       ],
@@ -34514,6 +35578,18 @@
         "Confirmer l'identité de l'Archer via les étoiles",
         "Rapporter la nouvelle à l'Empereur"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Interroger les astrologues de l'Empereur à Lhynn",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Confirmer l'identité de l'Archer via les étoiles"
+        },
+        {
+          "texte": "Rapporter la nouvelle à l'Empereur"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -34553,6 +35629,22 @@
         "Organiser l'évacuation des forteresses et cathédrales",
         "Escorter les croyants jusqu'à Syzygie"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Accompagner Parsifal à la cathédrale de Syzygie",
+          "ville_id": "ville_sysigie"
+        },
+        {
+          "texte": "Assister à la vision angélique"
+        },
+        {
+          "texte": "Organiser l'évacuation des forteresses et cathédrales"
+        },
+        {
+          "texte": "Escorter les croyants jusqu'à Syzygie",
+          "ville_id": "ville_sysigie"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -34590,6 +35682,19 @@
         "Escorter Parsifal jusqu'au palais de Lhynn",
         "Assister à l'audience avec l'Empereur",
         "Escorter la famille impériale jusqu'à Syzygie"
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Escorter Parsifal jusqu'au palais de Lhynn",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Assister à l'audience avec l'Empereur"
+        },
+        {
+          "texte": "Escorter la famille impériale jusqu'à Syzygie",
+          "ville_id": "ville_sysigie"
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -34629,6 +35734,7 @@
         "Recevoir leur réponse diplomatique",
         "Prendre en charge les dix dragons offerts"
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -34666,6 +35772,18 @@
         "Rallier la flotte Tharque (ou la flotte impériale en défense)",
         "Engager le combat naval",
         "Mettre le siège de Lhynn depuis la mer"
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Rallier la flotte Tharque (ou la flotte impériale en défense)"
+        },
+        {
+          "texte": "Engager le combat naval"
+        },
+        {
+          "texte": "Mettre le siège de Lhynn depuis la mer",
+          "ville_id": "ville_lhynn"
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -34705,6 +35823,7 @@
         "Participer au rituel d'incantation",
         "Amplifier la puissance de la Lune Noire pour la bataille"
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 5,
@@ -34744,6 +35863,7 @@
         "Prendre un Menthat",
         "Prendre position sur la plaine"
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -34781,6 +35901,19 @@
         "Suivre Wismerhill après la victoire sur la plaine",
         "Observer (ou guider) Fratus dans sa nuit fatale",
         "Confirmer qu'aucune troupe impériale ne barre la route vers Lhynn"
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Suivre Wismerhill après la victoire sur la plaine",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Observer (ou guider) Fratus dans sa nuit fatale"
+        },
+        {
+          "texte": "Confirmer qu'aucune troupe impériale ne barre la route vers Lhynn",
+          "ville_id": "ville_lhynn"
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -34827,6 +35960,27 @@
         "Parsifal invoque l'Archange au-dessus de la plus haute tour.",
         "Observer la destruction d'Altenberg pierre par pierre.",
         "Rejoindre le convoi vers Syzygie."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Évacuer toutes les troupes et civils d'Altenberg.",
+          "ville_id": "ville_altenberg"
+        },
+        {
+          "texte": "S'assurer qu'Altenberg est vide.",
+          "ville_id": "ville_altenberg"
+        },
+        {
+          "texte": "Parsifal invoque l'Archange au-dessus de la plus haute tour."
+        },
+        {
+          "texte": "Observer la destruction d'Altenberg pierre par pierre.",
+          "ville_id": "ville_altenberg"
+        },
+        {
+          "texte": "Rejoindre le convoi vers Syzygie.",
+          "ville_id": "ville_sysigie"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -34882,6 +36036,27 @@
         "Brandir l'épée de toutes ses forces sur les Tables de la Loi en cristal.",
         "Les Tables explosent — les anges disparaissent.",
         "Remonter et rapporter à Haazheel."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Être ressuscité par Haazheel après le combat contre Haghendorf.",
+          "pnj_id": "char_haghendorf"
+        },
+        {
+          "texte": "Descendre l'escalier sous le trône vers la crypte."
+        },
+        {
+          "texte": "Traverser la crypte gardée par des anges immobiles."
+        },
+        {
+          "texte": "Brandir l'épée de toutes ses forces sur les Tables de la Loi en cristal."
+        },
+        {
+          "texte": "Les Tables explosent — les anges disparaissent."
+        },
+        {
+          "texte": "Remonter et rapporter à Haazheel."
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -34942,6 +36117,36 @@
         "Utiliser l'incantation explosive sur les sacs de gaz des Dzoraks.",
         "Compléter la résurrection des deux filles.",
         "Retourner à Lhynn avec les ressuscitées."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Voler vers les ruines de Thenhart."
+        },
+        {
+          "texte": "Localiser les Marais Maudits à partir des ruines."
+        },
+        {
+          "texte": "Trouver l'Arbre aux Ossements."
+        },
+        {
+          "texte": "Localiser la tombe des filles de Ghorghor."
+        },
+        {
+          "texte": "Tenter d'ouvrir la tombe psychokinétiquement."
+        },
+        {
+          "texte": "Survivre à l'attaque des Dzoraks (vague de 6-10 créatures)."
+        },
+        {
+          "texte": "Utiliser l'incantation explosive sur les sacs de gaz des Dzoraks."
+        },
+        {
+          "texte": "Compléter la résurrection des deux filles."
+        },
+        {
+          "texte": "Retourner à Lhynn avec les ressuscitées.",
+          "ville_id": "ville_lhynn"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -35007,6 +36212,18 @@
         "Observer Haazheel Thorn poser la Couronne Impériale sur Wismerhill.",
         "Acclamer le nouvel Empereur."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Assister à la cérémonie de couronnement sur l'Esplanade des Temples de Lhynn.",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Observer Haazheel Thorn poser la Couronne Impériale sur Wismerhill."
+        },
+        {
+          "texte": "Acclamer le nouvel Empereur."
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 75000,
@@ -35056,6 +36273,23 @@
         "Observer Wismerhill 'scanner' les âmes de ses compagnons.",
         "(Optionnel) Accompagner Wismerhill dans un voyage secret.",
         "Être présent lors de la distribution des cadeaux."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Assister au dîner privé avec les compagnons de Wismerhill.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Observer Wismerhill 'scanner' les âmes de ses compagnons.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "(Optionnel) Accompagner Wismerhill dans un voyage secret.",
+          "pnj_id": "char_wismerhill"
+        },
+        {
+          "texte": "Être présent lors de la distribution des cadeaux."
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -35109,6 +36343,25 @@
         "Observer la déconfiture de Meldrim.",
         "Voir la flotte Tharque repartir bredouille."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Découvrir le complot de Meldrim via espionnage ou torture.",
+          "pnj_id": "char_meldrim_t11"
+        },
+        {
+          "texte": "Préparer une escorte de démons pour la cérémonie officielle."
+        },
+        {
+          "texte": "Assister à la cérémonie — démons visibles comme 'gardes d'honneur'."
+        },
+        {
+          "texte": "Observer la déconfiture de Meldrim.",
+          "pnj_id": "char_meldrim_t11"
+        },
+        {
+          "texte": "Voir la flotte Tharque repartir bredouille."
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -35150,6 +36403,7 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35187,6 +36441,7 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35224,6 +36479,7 @@
       "repeatable": false,
       "type": "quete_secondaire_fief",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35261,6 +36517,7 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35298,6 +36555,7 @@
       "repeatable": false,
       "tags": [],
       "steps": [],
+      "etapes_struct": [],
       "min_players": 1,
       "required_classes": [],
       "for_factions": [],
@@ -35336,6 +36594,7 @@
       "repeatable": false,
       "type": "quete_epique_cachee",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35373,6 +36632,7 @@
       "repeatable": false,
       "type": "quete_gouvernance",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35410,6 +36670,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -35452,6 +36713,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -35494,6 +36756,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 40000,
@@ -35538,6 +36801,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 25000,
@@ -35580,6 +36844,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 50000,
@@ -35623,6 +36888,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 30000,
@@ -35665,6 +36931,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp": 10000,
@@ -35707,6 +36974,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35745,6 +37013,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35783,6 +37052,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35821,6 +37091,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35855,6 +37126,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35894,6 +37166,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35932,6 +37205,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -35977,6 +37251,29 @@
         "Séduire l'architecte du palais pour obtenir les plans",
         "Rapporter à la souveraine d'Hishtarland"
       ],
+      "etapes_struct": [
+        {
+          "texte": "Traverser l'Empire de Lhynn du sud au nord (Via Magna)",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Identifier les forces militaires de l'Empire (4 gardes, légions, béhémoths, léviathans)"
+        },
+        {
+          "texte": "Localiser et interroger l'Oracle"
+        },
+        {
+          "texte": "Infiltrer Lhynn et observer le palais",
+          "ville_id": "ville_lhynn"
+        },
+        {
+          "texte": "Séduire l'architecte du palais pour obtenir les plans"
+        },
+        {
+          "texte": "Rapporter à la souveraine d'Hishtarland",
+          "ville_id": "hishtarland"
+        }
+      ],
       "source_lore": [],
       "rewards": [
         "Titre : Espionne impériale",
@@ -36016,6 +37313,7 @@
       "repeatable": false,
       "type": "",
       "steps": [],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": [
         "Connaissance détaillée de chaque épée (encyclopédie in-game)",
@@ -36060,6 +37358,7 @@
         "Poser sa question — une seule",
         "Recevoir la réponse (parfois sibylline)"
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": [
         "Une réponse cosmique à une question",
@@ -36109,6 +37408,7 @@
         "Recueillir 3 'échos de mélopée' auprès des Grands Vents résiduels.",
         "Rapporter la nature elfique de la voix à son commanditaire."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
         "lieu_ruines_wismerhill"
@@ -36173,6 +37473,7 @@
         "Reconstituer la sépulture (collecter 8 pierres taillées).",
         "Écouter le dernier murmure de la défunte porté par les vents."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
         "lieu_ruines_wismerhill"
@@ -36230,6 +37531,21 @@
         "Retrouver les indices du passage de Pazuzu (forme de fumée, traces d'orage).",
         "Recouper avec la prophétie de l'Oracle sur le Pari Cosmique.",
         "Transmettre le rapport scellé à la hiérarchie de la Lune Noire."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Infiltrer les ruines du château du vieux seigneur."
+        },
+        {
+          "texte": "Retrouver les indices du passage de Pazuzu (forme de fumée, traces d'orage).",
+          "pnj_id": "char_pazuzu"
+        },
+        {
+          "texte": "Recouper avec la prophétie de l'Oracle sur le Pari Cosmique."
+        },
+        {
+          "texte": "Transmettre le rapport scellé à la hiérarchie de la Lune Noire."
+        }
       ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
@@ -36294,6 +37610,21 @@
         "Détruire les indices du passage de Pazuzu avant lui.",
         "Affronter ou semer l'enquêteur (PvP/PvE).",
         "Sceller le site comme hérésie démoniaque."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Repérer l'agent de la Lune Noire sur la colline."
+        },
+        {
+          "texte": "Détruire les indices du passage de Pazuzu avant lui.",
+          "pnj_id": "char_pazuzu"
+        },
+        {
+          "texte": "Affronter ou semer l'enquêteur (PvP/PvE)."
+        },
+        {
+          "texte": "Sceller le site comme hérésie démoniaque."
+        }
       ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
@@ -36362,6 +37693,7 @@
         "Récupérer vivres et bétail (objectif comique : 'pas même quatre poules').",
         "Brûler le village et se replier avant la saucée."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
         "ville_whispers_hill"
@@ -36429,6 +37761,7 @@
         "Repousser l'arrière-garde de pillards.",
         "Escorter les rescapés hors de la zone."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
         "ville_whispers_hill"
@@ -36496,6 +37829,7 @@
         "Rapporter 20 unités de vivres au camp.",
         "Éviter les patrouilles des Ordres."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36551,6 +37885,7 @@
         "Traquer et tuer un sanglier (loot_viande_sanglier_t00).",
         "Rapporter la venaison au foyer."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36608,6 +37943,7 @@
         "Accepter la joute montée (3 passes de lance).",
         "Vaincre ou désarçonner l'adversaire."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36666,6 +38002,7 @@
         "Invoquer 3 démons mineurs ('apparais !').",
         "Les lier ou les bannir selon la voie choisie."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36724,6 +38061,7 @@
         "Détecter 3 présences cachées par les murmures.",
         "Recevoir la bénédiction d'écoute des Grands Vents."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques",
         "lieu_ruines_wismerhill"
@@ -36783,6 +38121,22 @@
         "Forcer le passage à Hazol et Klindor.",
         "Neutraliser un seigneur local hostile.",
         "Atteindre la Faille de Kashogs."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre la horde à Tbarak.",
+          "ville_id": "ville_tbarak"
+        },
+        {
+          "texte": "Forcer le passage à Hazol et Klindor."
+        },
+        {
+          "texte": "Neutraliser un seigneur local hostile."
+        },
+        {
+          "texte": "Atteindre la Faille de Kashogs.",
+          "lieu_id": "lieu_faille_kashogs"
+        }
       ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
@@ -36847,6 +38201,7 @@
         "Repousser la première vague de pillards.",
         "Couvrir l'évacuation des habitants."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36911,6 +38266,7 @@
         "Repérer les mouvements de la horde.",
         "Transmettre la carte mise à jour."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -36966,6 +38322,21 @@
         "Repousser les charges des Chevaliers de la Lumière.",
         "Tenir jusqu'au signal de repli.",
         "Survivre à la déroute."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Prendre position sur les remparts de Kendrhir.",
+          "ville_id": "kendrhir_vale"
+        },
+        {
+          "texte": "Repousser les charges des Chevaliers de la Lumière."
+        },
+        {
+          "texte": "Tenir jusqu'au signal de repli."
+        },
+        {
+          "texte": "Survivre à la déroute."
+        }
       ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques",
@@ -37031,6 +38402,21 @@
         "Percer les défenses de la horde.",
         "Affronter les champions ennemis.",
         "Planter l'oriflamme sur la cité."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre l'armée de la Lumière en marche sur Kendrhir.",
+          "ville_id": "kendrhir_vale"
+        },
+        {
+          "texte": "Percer les défenses de la horde."
+        },
+        {
+          "texte": "Affronter les champions ennemis."
+        },
+        {
+          "texte": "Planter l'oriflamme sur la cité."
+        }
       ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques",
@@ -37100,6 +38486,7 @@
         "Identifier la source du pouvoir déchaîné.",
         "Rapporter les présages à la Lune Noire."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques",
         "kendrhir_vale"
@@ -37163,6 +38550,7 @@
         "Réussir 3 exercices de projection mentale.",
         "Canaliser un premier rayon offensif."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -37221,6 +38609,7 @@
         "Réussir l'enchaînement à deux armes contre 5 adversaires.",
         "Valider la technique auprès d'un maître d'armes."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -37277,6 +38666,7 @@
         "Présenter une offrande / résoudre l'épreuve d'accès.",
         "Poser sa question et recevoir une prophétie énigmatique."
       ],
+      "etapes_struct": [],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -37328,6 +38718,19 @@
         "Enquêter sur le phénomène autour d'Ekvhitorn.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ d'Ekvhitorn.",
+          "ville_id": "ville_equiton"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour d'Ekvhitorn.",
+          "ville_id": "ville_equiton"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37364,6 +38767,19 @@
         "Écouter les rumeurs des PNJ de Brokhendt.",
         "Enquêter sur le phénomène autour de Brokhendt.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ de Brokhendt.",
+          "ville_id": "town_0137"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour de Brokhendt.",
+          "ville_id": "town_0137"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -37402,6 +38818,19 @@
         "Enquêter sur le phénomène autour de Hishtarland.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ de Hishtarland.",
+          "ville_id": "hishtarland"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour de Hishtarland.",
+          "ville_id": "hishtarland"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37438,6 +38867,19 @@
         "Écouter les rumeurs des PNJ de Zaltheim.",
         "Enquêter sur le phénomène autour de Zaltheim.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ de Zaltheim.",
+          "ville_id": "hamlet_0172"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour de Zaltheim.",
+          "ville_id": "hamlet_0172"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -37476,6 +38918,19 @@
         "Enquêter sur le phénomène autour de Harndrecht.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ de Harndrecht.",
+          "ville_id": "hamlet_0174"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour de Harndrecht.",
+          "ville_id": "hamlet_0174"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37513,6 +38968,19 @@
         "Enquêter sur le phénomène autour de Melvhord.",
         "Rapporter l'indice trouvé (fragment du secret de la baie)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les rumeurs des PNJ de Melvhord.",
+          "ville_id": "hamlet_0218"
+        },
+        {
+          "texte": "Enquêter sur le phénomène autour de Melvhord.",
+          "ville_id": "hamlet_0218"
+        },
+        {
+          "texte": "Rapporter l'indice trouvé (fragment du secret de la baie)."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37549,6 +39017,7 @@
         "Enquêter autour de Der Hem Shelbem.",
         "Rapporter l'indice ou l'ingrédient trouvé."
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37584,6 +39053,19 @@
         "Écouter les PNJ de Moork parler du volcan.",
         "Enquêter autour de Moork.",
         "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les PNJ de Moork parler du volcan.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Enquêter autour de Moork.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Rapporter l'indice ou l'ingrédient trouvé."
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -37621,6 +39103,19 @@
         "Enquêter autour de Shaddrek.",
         "Rapporter l'indice ou l'ingrédient trouvé."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les PNJ de Shaddrek parler du volcan.",
+          "ville_id": "shadowfen"
+        },
+        {
+          "texte": "Enquêter autour de Shaddrek.",
+          "ville_id": "shadowfen"
+        },
+        {
+          "texte": "Rapporter l'indice ou l'ingrédient trouvé."
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37656,6 +39151,19 @@
         "Écouter les PNJ de Frhozhol parler du volcan.",
         "Enquêter autour de Frhozhol.",
         "Rapporter l'indice ou l'ingrédient trouvé."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les PNJ de Frhozhol parler du volcan.",
+          "ville_id": "hamlet_0193"
+        },
+        {
+          "texte": "Enquêter autour de Frhozhol.",
+          "ville_id": "hamlet_0193"
+        },
+        {
+          "texte": "Rapporter l'indice ou l'ingrédient trouvé."
+        }
       ],
       "source_lore": [],
       "rewards": {},
@@ -37696,6 +39204,27 @@
         "Accompagner l'envoyé de Duzhmoroth jusqu'au ponton.",
         "Protéger la navette contre les naufrageurs.",
         "Assister au serment devant la Pierre de la Trêve (Thrival), pierre d'alliance des Hwakhari, en présence du Gardien de la Brume."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir le sceau des armateurs à Brenhaval.",
+          "ville_id": "town_brinehaven"
+        },
+        {
+          "texte": "Accompagner l'envoyé de Lhantarn jusqu'au ponton.",
+          "ville_id": "town_lanternhold"
+        },
+        {
+          "texte": "Accompagner l'envoyé de Duzhmoroth jusqu'au ponton.",
+          "ville_id": "town_duskmoor"
+        },
+        {
+          "texte": "Protéger la navette contre les naufrageurs."
+        },
+        {
+          "texte": "Assister au serment devant la Pierre de la Trêve (Thrival), pierre d'alliance des Hwakhari, en présence du Gardien de la Brume.",
+          "ville_id": "town_truceholm"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -37744,6 +39273,22 @@
         "Escorter les bûcherons au Camp du Cap.",
         "Défendre le convoi contre les saboteurs de la Lune Noire (JcJ).",
         "Livrer le bois au quai impérial de Brenhaval."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Obtenir au Temple des Cimes le droit de couper les chênes de marine autour de Lhantarn, loin des temples."
+        },
+        {
+          "texte": "Escorter les bûcherons au Camp du Cap.",
+          "lieu_id": "lieu_camp_du_cap"
+        },
+        {
+          "texte": "Défendre le convoi contre les saboteurs de la Lune Noire (JcJ)."
+        },
+        {
+          "texte": "Livrer le bois au quai impérial de Brenhaval.",
+          "ville_id": "town_brinehaven"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -37803,6 +39348,23 @@
         "Repérer les chênes marqués par l'Empire et les dénoncer aux prêtres du Temple des Cimes.",
         "Incendier le convoi entre le Camp du Cap et Brenhaval (JcJ).",
         "Rentrer à Duzhmoroth par la route du nord."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir les ordres au comptoir de Duzhmoroth.",
+          "ville_id": "town_duskmoor"
+        },
+        {
+          "texte": "Repérer les chênes marqués par l'Empire et les dénoncer aux prêtres du Temple des Cimes.",
+          "lieu_id": "lieu_ile_gd_temple_des_cimes"
+        },
+        {
+          "texte": "Incendier le convoi entre le Camp du Cap et Brenhaval (JcJ)."
+        },
+        {
+          "texte": "Rentrer à Duzhmoroth par la route du nord.",
+          "ville_id": "town_duskmoor"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -37864,6 +39426,22 @@
         "Tenir le chantier contre les Hauts Elfes (JcJ).",
         "Vendre l'ambre aux armateurs de Brenhaval."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Prospecter l'ambre au pied de la falaise nord, sous le Temple du Givre, avec l'accord de ses gardiens.",
+          "lieu_id": "lieu_ile_gd_temple_du_givre"
+        },
+        {
+          "texte": "Repousser les géants de froid (creature_geant_de_froid)."
+        },
+        {
+          "texte": "Tenir le chantier contre les Hauts Elfes (JcJ)."
+        },
+        {
+          "texte": "Vendre l'ambre aux armateurs de Brenhaval.",
+          "ville_id": "town_brinehaven"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp_weight": "quete_secondaire"
@@ -37917,6 +39495,21 @@
         "Saboter le chantier des Nains (JcJ).",
         "Détourner les géants de froid vers les prospecteurs.",
         "Replanter la clairière ouverte par le chantier."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les arbres de la falaise nord, autour du Temple du Givre.",
+          "lieu_id": "lieu_ile_gd_temple_du_givre"
+        },
+        {
+          "texte": "Saboter le chantier des Nains (JcJ)."
+        },
+        {
+          "texte": "Détourner les géants de froid vers les prospecteurs."
+        },
+        {
+          "texte": "Replanter la clairière ouverte par le chantier."
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -37972,6 +39565,21 @@
         "Forcer la Porte des Noyés du Temple des Ancêtres Noyés, l'entrée du Tertre des Rois Noyés (hors du temple : la paix des sanctuaires y interdit le combat).",
         "Enchaîner trois âmes royales.",
         "Repousser les Chevaliers venus sceller le tertre (JcJ)."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir le pacte d'un envoyé de la Légion à Duzhmoroth.",
+          "ville_id": "town_duskmoor"
+        },
+        {
+          "texte": "Forcer la Porte des Noyés du Temple des Ancêtres Noyés, l'entrée du Tertre des Rois Noyés (hors du temple : la paix des sanctuaires y interdit le combat)."
+        },
+        {
+          "texte": "Enchaîner trois âmes royales."
+        },
+        {
+          "texte": "Repousser les Chevaliers venus sceller le tertre (JcJ)."
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -38029,6 +39637,22 @@
         "Briser les chaînes infernales.",
         "Chasser les démonistes du tertre (JcJ)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir l'eau bénite à la chapelle de Lhantarn.",
+          "ville_id": "town_lanternhold"
+        },
+        {
+          "texte": "Bénir les trois cryptes du tertre, avec la gardienne des cordes-mémoires du Temple des Ancêtres Noyés.",
+          "lieu_id": "lieu_ile_gd_temple_des_ancetres"
+        },
+        {
+          "texte": "Briser les chaînes infernales."
+        },
+        {
+          "texte": "Chasser les démonistes du tertre (JcJ)."
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp_weight": "contre_quete"
@@ -38083,6 +39707,22 @@
         "Prêter serment à Thrival, devant la Pierre de la Trêve.",
         "Ouvrir la Porte du Gouffre au Temple de la Brume (raid_devoreur_des_brumes)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Relever les traces du Dévoreur autour de la baie."
+        },
+        {
+          "texte": "Rallier un champion d'un autre bloc que le sien."
+        },
+        {
+          "texte": "Prêter serment à Thrival, devant la Pierre de la Trêve.",
+          "ville_id": "town_truceholm"
+        },
+        {
+          "texte": "Ouvrir la Porte du Gouffre au Temple de la Brume (raid_devoreur_des_brumes).",
+          "lieu_id": "lieu_ile_gd_temple_de_la_brume"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp_weight": "quete_principale"
@@ -38132,6 +39772,26 @@
         "Porter la dernière corde à l'Autel des Sources.",
         "Recevoir le droit de passage des terrasses."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Poser une pierre sur le cairn de l'Oratoire du Col et rencontrer Tamaru."
+        },
+        {
+          "texte": "Porter la première corde au Temple des Cimes.",
+          "lieu_id": "lieu_ile_gd_temple_des_cimes"
+        },
+        {
+          "texte": "Porter la deuxième corde au Grand Sanctuaire du Soleil et saluer le Fils du Soleil.",
+          "lieu_id": "lieu_ile_gd_grand_sanctuaire_soleil"
+        },
+        {
+          "texte": "Porter la dernière corde à l'Autel des Sources.",
+          "lieu_id": "lieu_ile_gd_autel_des_sources"
+        },
+        {
+          "texte": "Recevoir le droit de passage des terrasses."
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp_weight": "quete_secondaire"
@@ -38178,6 +39838,23 @@
         "Acheter des outils de fer à Brenhaval.",
         "Réparer trois canaux des terrasses.",
         "Reprendre le grain volé aux naufrageurs, sous le Temple de la Mère des Eaux."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter les cultivateurs du Temple des Terrasses.",
+          "lieu_id": "lieu_ile_gd_temple_des_terrasses"
+        },
+        {
+          "texte": "Acheter des outils de fer à Brenhaval.",
+          "ville_id": "town_brinehaven"
+        },
+        {
+          "texte": "Réparer trois canaux des terrasses."
+        },
+        {
+          "texte": "Reprendre le grain volé aux naufrageurs, sous le Temple de la Mère des Eaux.",
+          "lieu_id": "lieu_ile_gd_temple_mere_des_eaux"
+        }
       ],
       "source_lore": [],
       "rewards": {
@@ -38226,6 +39903,7 @@
         "Rapporter les cordes-mémoires.",
         "Écouter l'histoire des rois de la mer, ancêtres des Hwakhari."
       ],
+      "etapes_struct": [],
       "source_lore": [],
       "rewards": {
         "xp_weight": "quete_secondaire"
@@ -38274,6 +39952,21 @@
         "Suivre la piste d'Amaru sur l'îlot.",
         "Vaincre Amaru au bord du gouffre (hors du temple)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir la mission de Willak Rumi au Temple de la Brume."
+        },
+        {
+          "texte": "Interroger les prêtresses du Temple de la Lune d'Argent.",
+          "lieu_id": "lieu_ile_gd_temple_de_la_lune"
+        },
+        {
+          "texte": "Suivre la piste d'Amaru sur l'îlot."
+        },
+        {
+          "texte": "Vaincre Amaru au bord du gouffre (hors du temple)."
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp_weight": "quete_principale"
@@ -38319,6 +40012,27 @@
         "Disperser les guerriers du Camp des clans insoumis.",
         "Briser les haches plantées au Tertre des Chefs de clan pour rompre le serment des insoumis.",
         "Rendre compte au chef de Ghrimfeth."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À la Tour de guet de la route de Shezhold, apprendre des guetteurs de Nakhtvar d'où vient la fumée."
+        },
+        {
+          "texte": "Fouiller la Ferme fortifiée pillée et relever les traces des pillards.",
+          "lieu_id": "lieu_ferme_fortifiee_pillee"
+        },
+        {
+          "texte": "Disperser les guerriers du Camp des clans insoumis.",
+          "lieu_id": "lieu_camp_clans_insoumis"
+        },
+        {
+          "texte": "Briser les haches plantées au Tertre des Chefs de clan pour rompre le serment des insoumis.",
+          "lieu_id": "lieu_tertre_chefs_de_clan"
+        },
+        {
+          "texte": "Rendre compte au chef de Ghrimfeth.",
+          "ville_id": "hamlet_0196"
+        }
       ],
       "source_lore": [
         "town_0127",
@@ -38373,6 +40087,28 @@
         "Faire boire les bêtes au Puits de la Piste du sel.",
         "Livrer le sel à Ghrimfeth."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Prendre à Moork la commande d'un marchand de sel.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Aux Salines de la baronnie, charger le convoi et en prendre l'escorte.",
+          "lieu_id": "lieu_salines_baronnie"
+        },
+        {
+          "texte": "Repousser les Vers de Moork qui surgissent sous les roues.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Faire boire les bêtes au Puits de la Piste du sel.",
+          "lieu_id": "lieu_puits_piste_du_sel"
+        },
+        {
+          "texte": "Livrer le sel à Ghrimfeth.",
+          "ville_id": "hamlet_0196"
+        }
+      ],
       "source_lore": [
         "ville_moork",
         "lieu_salines_baronnie",
@@ -38421,6 +40157,20 @@
         "Accepter à Moork le contrat de la guilde.",
         "Descendre dans les Fosses aux vers et tuer les vers qui en sortent.",
         "Rapporter la chair de ver à Moork."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Accepter à Moork le contrat de la guilde.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Descendre dans les Fosses aux vers et tuer les vers qui en sortent.",
+          "lieu_id": "lieu_fosses_aux_vers"
+        },
+        {
+          "texte": "Rapporter la chair de ver à Moork.",
+          "ville_id": "ville_moork"
+        }
       ],
       "source_lore": [
         "ville_moork",
@@ -38471,6 +40221,23 @@
         "Fouiller les caves et récupérer les vieilles cartes de la frontière impériale.",
         "Rapporter les cartes à l'Enclos des bêtes de guerre."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À l'Enclos des bêtes de guerre, recevoir l'ordre du maître dresseur.",
+          "lieu_id": "lieu_enclos_betes_de_guerre"
+        },
+        {
+          "texte": "Chasser les pilleurs du Fortin impérial en ruine.",
+          "lieu_id": "lieu_fortin_imperial_ruine"
+        },
+        {
+          "texte": "Fouiller les caves et récupérer les vieilles cartes de la frontière impériale."
+        },
+        {
+          "texte": "Rapporter les cartes à l'Enclos des bêtes de guerre.",
+          "lieu_id": "lieu_enclos_betes_de_guerre"
+        }
+      ],
       "source_lore": [
         "lieu_enclos_betes_de_guerre",
         "lieu_fortin_imperial_ruine",
@@ -38519,6 +40286,22 @@
         "Le retrouver à la Borne des Monts de Moork : au-delà, géants et dragon (32-55), on ne va pas plus loin.",
         "Ramener le convoi au relais en repoussant les pillards.",
         "Faire relayer l'escorte à l'Enclos des bêtes de guerre et livrer l'acier à Moork."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au Relais des convois de Ghrunke Dash, apprendre que le convoi nain est en retard.",
+          "lieu_id": "lieu_relais_convois_ghrunke_dash"
+        },
+        {
+          "texte": "Le retrouver à la Borne des Monts de Moork : au-delà, géants et dragon (32-55), on ne va pas plus loin.",
+          "lieu_id": "lieu_borne_monts_de_moork"
+        },
+        {
+          "texte": "Ramener le convoi au relais en repoussant les pillards."
+        },
+        {
+          "texte": "Faire relayer l'escorte à l'Enclos des bêtes de guerre et livrer l'acier à Moork."
+        }
       ],
       "source_lore": [
         "ville_moork",
@@ -38570,6 +40353,28 @@
         "Attaquer le Bivouac des déserteurs.",
         "Retrouver leur butin caché à la Ferme fortifiée abandonnée, gardée par des morts errants.",
         "Rapporter le butin à Frhozhol."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Frhozhol, écouter les plaintes des voyageurs dépouillés.",
+          "ville_id": "hamlet_0193"
+        },
+        {
+          "texte": "Monter à la Tour de guet effondrée et repérer les feux.",
+          "lieu_id": "lieu_tour_guet_effondree"
+        },
+        {
+          "texte": "Attaquer le Bivouac des déserteurs.",
+          "lieu_id": "lieu_bivouac_des_deserteurs"
+        },
+        {
+          "texte": "Retrouver leur butin caché à la Ferme fortifiée abandonnée, gardée par des morts errants.",
+          "lieu_id": "lieu_ferme_fortifiee_abandonnee"
+        },
+        {
+          "texte": "Rapporter le butin à Frhozhol.",
+          "ville_id": "hamlet_0193"
+        }
       ],
       "source_lore": [
         "hamlet_0193",
@@ -38623,6 +40428,28 @@
         "Murer la galerie qui mène à la Grotte aux chauves-souris, après en avoir chassé la colonie.",
         "Livrer le soufre à Moork."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Prendre la commande d'un alchimiste de Moork.",
+          "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Faire étape au Puits de la Lisière.",
+          "lieu_id": "lieu_puits_de_la_lisiere"
+        },
+        {
+          "texte": "Extraire le soufre de la Mine de soufre abandonnée.",
+          "lieu_id": "lieu_mine_de_soufre_abandonnee"
+        },
+        {
+          "texte": "Murer la galerie qui mène à la Grotte aux chauves-souris, après en avoir chassé la colonie.",
+          "lieu_id": "lieu_grotte_aux_chauves_souris"
+        },
+        {
+          "texte": "Livrer le soufre à Moork.",
+          "ville_id": "ville_moork"
+        }
+      ],
       "source_lore": [
         "ville_moork",
         "lieu_puits_de_la_lisiere",
@@ -38675,6 +40502,22 @@
         "Le protéger pendant qu'il relève les inscriptions.",
         "Le ramener avant la Stèle des Deux Fois Nés : au-delà, la nécropole (40-56)."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Retrouver l'érudit au Relais de la Piste des Morts.",
+          "lieu_id": "lieu_relais_piste_des_morts"
+        },
+        {
+          "texte": "L'escorter par Deathtrap Canyon jusqu'aux Statues brisées de la Voie antique."
+        },
+        {
+          "texte": "Le protéger pendant qu'il relève les inscriptions."
+        },
+        {
+          "texte": "Le ramener avant la Stèle des Deux Fois Nés : au-delà, la nécropole (40-56).",
+          "lieu_id": "lieu_stele_des_deux_fois_nes"
+        }
+      ],
       "source_lore": [
         "lieu_relais_piste_des_morts",
         "lieu_deathtrap_canyon",
@@ -38726,6 +40569,28 @@
         "Traverser la Lande des Pierres dressées et repousser les deux fois nés.",
         "Arracher la bannière aux carcasses du Ravin de l'Ichor.",
         "Remettre la bannière à Frhozhol, qui la rendra à la famille."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Trouver à la Stèle des Deux Fois Nés le journal de l'écuyer.",
+          "lieu_id": "lieu_stele_des_deux_fois_nes"
+        },
+        {
+          "texte": "Fouiller la Plaine des Cendres sans approcher du bord de la Faille.",
+          "lieu_id": "lieu_plaine_des_cendres"
+        },
+        {
+          "texte": "Traverser la Lande des Pierres dressées et repousser les deux fois nés.",
+          "lieu_id": "lieu_lande_pierres_dressees"
+        },
+        {
+          "texte": "Arracher la bannière aux carcasses du Ravin de l'Ichor.",
+          "lieu_id": "lieu_ravin_de_l_ichor"
+        },
+        {
+          "texte": "Remettre la bannière à Frhozhol, qui la rendra à la famille.",
+          "ville_id": "hamlet_0193"
+        }
       ],
       "source_lore": [
         "lieu_stele_des_deux_fois_nes",
@@ -38780,6 +40645,23 @@
         "Voir le Cairn des Coulées : la Forge engloutie et le volcan, au-delà, sont pour les plus forts (55-70).",
         "Rendre les outils à Ghrunke Dash."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Écouter le vieux mineur à Ghrunke Dash.",
+          "ville_id": "ville_ghrunke_dash"
+        },
+        {
+          "texte": "Explorer la Galerie naine abandonnée et en rapporter les outils du clan.",
+          "lieu_id": "lieu_galerie_naine_abandonnee"
+        },
+        {
+          "texte": "Voir le Cairn des Coulées : la Forge engloutie et le volcan, au-delà, sont pour les plus forts (55-70)."
+        },
+        {
+          "texte": "Rendre les outils à Ghrunke Dash.",
+          "ville_id": "ville_ghrunke_dash"
+        }
+      ],
       "source_lore": [
         "ville_ghrunke_dash",
         "lieu_galerie_naine_abandonnee",
@@ -38830,6 +40712,22 @@
         "Le suivre jusqu'au Repaire des pillards du désert et reprendre l'argent.",
         "Rendre l'argent aux pèlerins du Camp de l'Oracle."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Au Camp de l'Oracle, entendre un pèlerin ruiné."
+        },
+        {
+          "texte": "Démasquer le faux devin aux Échoppes des faux devins.",
+          "lieu_id": "lieu_echoppes_faux_devins"
+        },
+        {
+          "texte": "Le suivre jusqu'au Repaire des pillards du désert et reprendre l'argent.",
+          "lieu_id": "lieu_repaire_pillards_desert"
+        },
+        {
+          "texte": "Rendre l'argent aux pèlerins du Camp de l'Oracle."
+        }
+      ],
       "source_lore": [
         "ville_oracle_camp",
         "lieu_echoppes_faux_devins",
@@ -38878,6 +40776,23 @@
         "Faire boire les bêtes à l'Oasis des Palmes noires, nid de serpents.",
         "Repousser les pillards sur le chemin.",
         "Conduire la caravane au Campement des pèlerins."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Prendre l'escorte de la caravane au Relais des caravanes.",
+          "lieu_id": "lieu_relais_des_caravanes"
+        },
+        {
+          "texte": "Faire boire les bêtes à l'Oasis des Palmes noires, nid de serpents.",
+          "lieu_id": "lieu_oasis_palmes_noires"
+        },
+        {
+          "texte": "Repousser les pillards sur le chemin."
+        },
+        {
+          "texte": "Conduire la caravane au Campement des pèlerins.",
+          "lieu_id": "lieu_campement_des_pelerins"
+        }
       ],
       "source_lore": [
         "lieu_relais_des_caravanes",
@@ -38929,6 +40844,22 @@
         "Prendre les mesures au crépuscule aux Menhirs de la plaine de l'Oracle.",
         "Rapporter les mesures à Sauken Glude."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir les instruments d'un mage à Sauken Glude."
+        },
+        {
+          "texte": "Relever les cercles gravés de la Tour effondrée des mages, en chassant ce qui s'y est installé.",
+          "lieu_id": "lieu_tour_effondree_des_mages"
+        },
+        {
+          "texte": "Prendre les mesures au crépuscule aux Menhirs de la plaine de l'Oracle.",
+          "lieu_id": "lieu_menhirs_plaine_oracle"
+        },
+        {
+          "texte": "Rapporter les mesures à Sauken Glude."
+        }
+      ],
       "source_lore": [
         "sauken_glude_of_magistrya",
         "lieu_tour_effondree_des_mages",
@@ -38978,6 +40909,27 @@
         "Reprendre les ex-voto volés aux braconniers de la Tour de guet de Garundel.",
         "Au Cairn des Caravaniers, entendre l'avertissement : pas vers les falaises de grès du nord-est.",
         "Rendre les ex-voto au gardien du puits."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au fief de Garundel, apprendre que le puits sacré est souillé.",
+          "pnj_id": "char_garundel"
+        },
+        {
+          "texte": "Chasser les grandes mouches du Puits des Pèlerins.",
+          "lieu_id": "lieu_puits_des_pelerins"
+        },
+        {
+          "texte": "Reprendre les ex-voto volés aux braconniers de la Tour de guet de Garundel.",
+          "lieu_id": "lieu_tour_guet_garundel"
+        },
+        {
+          "texte": "Au Cairn des Caravaniers, entendre l'avertissement : pas vers les falaises de grès du nord-est.",
+          "lieu_id": "lieu_cairn_des_caravaniers"
+        },
+        {
+          "texte": "Rendre les ex-voto au gardien du puits."
+        }
       ],
       "source_lore": [
         "ville_garundel_fief",
@@ -39030,6 +40982,24 @@
         "Suivre leurs traces jusqu'au Poste avancé abandonné et reprendre les outils volés.",
         "Escorter le premier chariot de grumes jusqu'à Askhvir."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Askhvir, prendre le contrat du marchand de bois.",
+          "ville_id": "town_0123"
+        },
+        {
+          "texte": "À la Coupe des bûcherons, repousser les ogres qui attaquent les chariots.",
+          "lieu_id": "lieu_coupe_des_bucherons"
+        },
+        {
+          "texte": "Suivre leurs traces jusqu'au Poste avancé abandonné et reprendre les outils volés.",
+          "lieu_id": "lieu_poste_avance_abandonne"
+        },
+        {
+          "texte": "Escorter le premier chariot de grumes jusqu'à Askhvir.",
+          "ville_id": "town_0123"
+        }
+      ],
       "source_lore": [
         "town_0123",
         "lieu_coupe_des_bucherons",
@@ -39079,6 +41049,24 @@
         "Relever les signes gravés sur les blocs de la Carrière des géants.",
         "Gagner le Cercle de pierres des géants et en chasser les ogres.",
         "Relever les signes des pierres levées et rapporter les relevés à Askhvir."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Askhvir, recevoir de l'érudit ses feuilles et son fusain.",
+          "ville_id": "town_0123"
+        },
+        {
+          "texte": "Relever les signes gravés sur les blocs de la Carrière des géants.",
+          "lieu_id": "lieu_carriere_des_geants"
+        },
+        {
+          "texte": "Gagner le Cercle de pierres des géants et en chasser les ogres.",
+          "lieu_id": "lieu_cercle_pierres_des_geants"
+        },
+        {
+          "texte": "Relever les signes des pierres levées et rapporter les relevés à Askhvir.",
+          "ville_id": "town_0123"
+        }
       ],
       "source_lore": [
         "town_0123",
@@ -39130,6 +41118,24 @@
         "Entrer dans la Tanière des trolls et la nettoyer par le feu.",
         "Ramener le trappeur, ou ce qu'il en reste, à Stohnvar."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Stohnvar, apprendre la disparition d'un trappeur et se munir de torches.",
+          "ville_id": "town_0139"
+        },
+        {
+          "texte": "Au Camp des trappeurs, relever les traces des trolls.",
+          "lieu_id": "lieu_camp_des_trappeurs"
+        },
+        {
+          "texte": "Entrer dans la Tanière des trolls et la nettoyer par le feu.",
+          "lieu_id": "lieu_taniere_des_trolls"
+        },
+        {
+          "texte": "Ramener le trappeur, ou ce qu'il en reste, à Stohnvar.",
+          "ville_id": "town_0139"
+        }
+      ],
       "source_lore": [
         "town_0139",
         "lieu_camp_des_trappeurs",
@@ -39179,6 +41185,22 @@
         "Passer la Borne des Géants du nord : au-delà, la lisière des Terres des Gigantomorphes (28-36).",
         "Au Camp des trappeurs, apprendre que le fils a pris la route d'Askhvir.",
         "Le retrouver à la Carrière des géants et rapporter de ses nouvelles à Whispers Hill."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Whispers Hill, écouter la mère inquiète."
+        },
+        {
+          "texte": "Passer la Borne des Géants du nord : au-delà, la lisière des Terres des Gigantomorphes (28-36).",
+          "lieu_id": "lieu_balise_borne_geants_nord"
+        },
+        {
+          "texte": "Au Camp des trappeurs, apprendre que le fils a pris la route d'Askhvir."
+        },
+        {
+          "texte": "Le retrouver à la Carrière des géants et rapporter de ses nouvelles à Whispers Hill.",
+          "lieu_id": "lieu_carriere_des_geants"
+        }
       ],
       "source_lore": [
         "ville_whispers_hill",
@@ -39230,6 +41252,23 @@
         "Rassembler les chevaux dispersés et en prendre un frais.",
         "Remettre le pli à Shezhold avant la nuit."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Harrodh, recevoir le pli scellé du maître de poste.",
+          "ville_id": "horker"
+        },
+        {
+          "texte": "Au Poste de relais impérial, chasser les dragonnets-léopards de la lisière.",
+          "lieu_id": "lieu_poste_relais_imperial"
+        },
+        {
+          "texte": "Rassembler les chevaux dispersés et en prendre un frais."
+        },
+        {
+          "texte": "Remettre le pli à Shezhold avant la nuit.",
+          "ville_id": "town_0136"
+        }
+      ],
       "source_lore": [
         "horker",
         "lieu_poste_relais_imperial",
@@ -39279,6 +41318,22 @@
         "Attaquer le Camp des détrousseurs au-dessus de la piste.",
         "Fouiller la Caravane ensablée, nid de serpents, où ils cachent leur butin.",
         "Rapporter le butin à la garde de Sauken Glude."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Sauken Glude, prendre le contrat de la garde."
+        },
+        {
+          "texte": "Attaquer le Camp des détrousseurs au-dessus de la piste.",
+          "lieu_id": "lieu_camp_des_detrousseurs"
+        },
+        {
+          "texte": "Fouiller la Caravane ensablée, nid de serpents, où ils cachent leur butin.",
+          "lieu_id": "lieu_caravane_ensablee"
+        },
+        {
+          "texte": "Rapporter le butin à la garde de Sauken Glude."
+        }
       ],
       "source_lore": [
         "sauken_glude_of_magistrya",
@@ -39330,6 +41385,24 @@
         "Retrouver les éclaireurs au Sanctuaire profané et repousser renards infernaux et mantes.",
         "Ramener les survivants au Bivouac de la légion."
       ],
+      "etapes_struct": [
+        {
+          "texte": "Au fief de Garundel, apprendre qu'une légion cherche des guides.",
+          "pnj_id": "char_garundel"
+        },
+        {
+          "texte": "Au Bivouac de la légion, recevoir l'ordre du centurion.",
+          "lieu_id": "lieu_bivouac_de_la_legion"
+        },
+        {
+          "texte": "Retrouver les éclaireurs au Sanctuaire profané et repousser renards infernaux et mantes.",
+          "lieu_id": "lieu_sanctuaire_profane"
+        },
+        {
+          "texte": "Ramener les survivants au Bivouac de la légion.",
+          "lieu_id": "lieu_bivouac_de_la_legion"
+        }
+      ],
       "source_lore": [
         "ville_garundel_fief",
         "lieu_bivouac_de_la_legion",
@@ -39380,6 +41453,22 @@
         "Repousser les pillards qui guettent les convois.",
         "Livrer le grain aux marchands de Moork."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Nykhfeld, aider à charger les sacs de grain.",
+          "ville_id": "hamlet_0201"
+        },
+        {
+          "texte": "Escorter les chariots sur la Via Magna vers le sud."
+        },
+        {
+          "texte": "Repousser les pillards qui guettent les convois."
+        },
+        {
+          "texte": "Livrer le grain aux marchands de Moork.",
+          "ville_id": "ville_moork"
+        }
+      ],
       "source_lore": [
         "hamlet_0201",
         "ville_moork"
@@ -39428,6 +41517,20 @@
         "À Horkher, prendre les balles de laine du marchand.",
         "Faire étape au Poste de relais impérial et faire viser le laissez-passer.",
         "Livrer la laine au marchand de Harrodh."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Horkher, prendre les balles de laine du marchand.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Faire étape au Poste de relais impérial et faire viser le laissez-passer.",
+          "lieu_id": "lieu_poste_relais_imperial"
+        },
+        {
+          "texte": "Livrer la laine au marchand de Harrodh.",
+          "ville_id": "horker"
+        }
       ],
       "source_lore": [
         "city_horkher",
@@ -39479,6 +41582,20 @@
         "Fouiller les Ruines du fortin des Marches et leur cellier envahi d'araignées.",
         "Rapporter le registre des terres à Horkher."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Horkher, écouter l'intendant du comté.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Fouiller les Ruines du fortin des Marches et leur cellier envahi d'araignées.",
+          "lieu_id": "lieu_ruines_fortin_des_marches"
+        },
+        {
+          "texte": "Rapporter le registre des terres à Horkher.",
+          "ville_id": "city_horkher"
+        }
+      ],
       "source_lore": [
         "city_horkher",
         "lieu_ruines_fortin_des_marches"
@@ -39529,6 +41646,24 @@
         "Au Relais incendié de la Via Magna, chasser les maraudeurs et retrouver les marchandises volées.",
         "Rapporter aux marchands d'Horkher que les péagers et les maraudeurs se partagent le butin."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Horkher, écouter les marchands rançonnés.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Au Barrage de péage de la Lune Noire, payer le droit de passage ou le contourner.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        },
+        {
+          "texte": "Au Relais incendié de la Via Magna, chasser les maraudeurs et retrouver les marchandises volées.",
+          "lieu_id": "lieu_relais_incendie_via_magna"
+        },
+        {
+          "texte": "Rapporter aux marchands d'Horkher que les péagers et les maraudeurs se partagent le butin.",
+          "ville_id": "city_horkher"
+        }
+      ],
       "source_lore": [
         "city_horkher",
         "lieu_barrage_de_peage_lune_noire",
@@ -39578,6 +41713,28 @@
         "Nettoyer la Tanière du loup géant.",
         "Entrer dans le Repaire des trolls de la forêt et le purger par le feu.",
         "Rapporter aux bûcherons de Vlakmorh que la forêt est sûre."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Vlakmorh, écouter les bûcherons.",
+          "ville_id": "town_0131"
+        },
+        {
+          "texte": "À la Scierie abandonnée, relever les traces des loups géants.",
+          "lieu_id": "lieu_scierie_abandonnee"
+        },
+        {
+          "texte": "Nettoyer la Tanière du loup géant.",
+          "lieu_id": "lieu_taniere_du_loup_geant"
+        },
+        {
+          "texte": "Entrer dans le Repaire des trolls de la forêt et le purger par le feu.",
+          "lieu_id": "lieu_repaire_des_trolls_de_la_foret"
+        },
+        {
+          "texte": "Rapporter aux bûcherons de Vlakmorh que la forêt est sûre.",
+          "ville_id": "town_0131"
+        }
       ],
       "source_lore": [
         "town_0131",
@@ -39632,6 +41789,23 @@
         "Nettoyer le niveau inférieur des rats et des araignées.",
         "Rapporter le cuivre à la forge de Durnhalde."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Durnhalde, recevoir du forgeron un pic d'apprenti et une lampe.",
+          "ville_id": "hameau_durnhalde"
+        },
+        {
+          "texte": "Descendre par la cage du Puits des Apprentis et tailler un premier bloc de cuivre rouge.",
+          "lieu_id": "lieu_puits_des_apprentis"
+        },
+        {
+          "texte": "Nettoyer le niveau inférieur des rats et des araignées."
+        },
+        {
+          "texte": "Rapporter le cuivre à la forge de Durnhalde.",
+          "ville_id": "hameau_durnhalde"
+        }
+      ],
       "source_lore": [
         "hameau_durnhalde",
         "lieu_puits_des_apprentis",
@@ -39683,6 +41857,22 @@
         "Ranimer les braises de la vasque, déposer l'outil et frapper le sol de son marteau.",
         "Redescendre à Durnhalde : on n'y parle plus de vous comme d'un apprenti."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À la forge de Durnhalde, forger son premier outil avec le cuivre du Puits des Apprentis."
+        },
+        {
+          "texte": "Monter à l'Autel des Ancêtres par le sentier de la falaise, en chassant les corbeaux qui pillent les offrandes.",
+          "lieu_id": "lieu_autel_des_ancetres"
+        },
+        {
+          "texte": "Ranimer les braises de la vasque, déposer l'outil et frapper le sol de son marteau."
+        },
+        {
+          "texte": "Redescendre à Durnhalde : on n'y parle plus de vous comme d'un apprenti.",
+          "ville_id": "hameau_durnhalde"
+        }
+      ],
       "source_lore": [
         "hameau_durnhalde",
         "lieu_autel_des_ancetres",
@@ -39732,6 +41922,23 @@
         "Rassembler les mulets dispersés autour du hameau.",
         "Au Relais des convois de minerai, faire peser la charge et rejoindre l'escorte des mercenaires nains.",
         "Livrer le charbon et la fonte aux forges de Ghrunke Dash."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Kholbrakh, prendre la charge du convoi auprès des houilleurs.",
+          "ville_id": "hamlet_kohlbrand"
+        },
+        {
+          "texte": "Rassembler les mulets dispersés autour du hameau."
+        },
+        {
+          "texte": "Au Relais des convois de minerai, faire peser la charge et rejoindre l'escorte des mercenaires nains.",
+          "lieu_id": "lieu_relais_des_convois"
+        },
+        {
+          "texte": "Livrer le charbon et la fonte aux forges de Ghrunke Dash.",
+          "ville_id": "ville_ghrunke_dash"
+        }
       ],
       "source_lore": [
         "hamlet_kohlbrand",
@@ -39784,6 +41991,23 @@
         "Récupérer les étais encore sains et les outils abandonnés.",
         "Rapporter le tout à Ysenkhal avant le prochain éboulement."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Ysenkhal, écouter le chef des mineurs.",
+          "ville_id": "hamlet_eisenkehl"
+        },
+        {
+          "texte": "Entrer dans les Galeries effondrées de la Vieille Veine et brûler les nids d'araignées.",
+          "lieu_id": "lieu_galeries_effondrees_vieille_veine"
+        },
+        {
+          "texte": "Récupérer les étais encore sains et les outils abandonnés."
+        },
+        {
+          "texte": "Rapporter le tout à Ysenkhal avant le prochain éboulement.",
+          "ville_id": "hamlet_eisenkehl"
+        }
+      ],
       "source_lore": [
         "hamlet_eisenkehl",
         "lieu_galeries_effondrees_vieille_veine",
@@ -39834,6 +42058,24 @@
         "Au Camp des prospecteurs, chasser les vautours des déblais et remettre les vivres.",
         "Recevoir le sac d'échantillons et le porter par la route de Durnhalde.",
         "À Ghrunke Dash, faire estimer les gemmes et rapporter le prix au camp."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Durnhalde, charger un mulet de vivres pour les prospecteurs.",
+          "ville_id": "hameau_durnhalde"
+        },
+        {
+          "texte": "Au Camp des prospecteurs, chasser les vautours des déblais et remettre les vivres.",
+          "lieu_id": "lieu_camp_des_prospecteurs"
+        },
+        {
+          "texte": "Recevoir le sac d'échantillons et le porter par la route de Durnhalde.",
+          "ville_id": "hameau_durnhalde"
+        },
+        {
+          "texte": "À Ghrunke Dash, faire estimer les gemmes et rapporter le prix au camp.",
+          "ville_id": "ville_ghrunke_dash"
+        }
       ],
       "source_lore": [
         "hameau_durnhalde",
@@ -39887,6 +42129,26 @@
         "À Vozmarkh, retrouver le minerai chez les gens de la Lune Noire et le racheter, ou le reprendre.",
         "Rapporter à Ysenkhal ce qu'il en coûte désormais de commercer avec Vozmarkh."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Ysenkhal, écouter le maître de convoi inquiet.",
+          "ville_id": "hamlet_eisenkehl"
+        },
+        {
+          "texte": "À la Halte des muletiers du col, retrouver les mulets dispersés et chasser l'ours qui les a attaqués.",
+          "lieu_id": "lieu_halte_des_muletiers_du_col"
+        },
+        {
+          "texte": "À la Borne-frontière renversée, relever les traces : le minerai a continué vers Vozmarkh sans ses convoyeurs."
+        },
+        {
+          "texte": "À Vozmarkh, retrouver le minerai chez les gens de la Lune Noire et le racheter, ou le reprendre.",
+          "ville_id": "town_0125"
+        },
+        {
+          "texte": "Rapporter à Ysenkhal ce qu'il en coûte désormais de commercer avec Vozmarkh."
+        }
+      ],
       "source_lore": [
         "hamlet_eisenkehl",
         "lieu_halte_des_muletiers_du_col",
@@ -39939,6 +42201,23 @@
         "À la Carrière des forçats, libérer les carriers nains et les escorter hors de la carrière.",
         "Ramener les captifs libérés à Ysenkhal."
       ],
+      "etapes_struct": [
+        {
+          "texte": "À Ysenkhal, apprendre que des convoyeurs sont retenus à Vozmarkh."
+        },
+        {
+          "texte": "À la Ferme des chevriers nains, rencontrer les fugitifs et apprendre la relève des gardes.",
+          "lieu_id": "lieu_ferme_des_chevriers_nains"
+        },
+        {
+          "texte": "À la Carrière des forçats, libérer les carriers nains et les escorter hors de la carrière.",
+          "lieu_id": "lieu_carriere_des_forcats"
+        },
+        {
+          "texte": "Ramener les captifs libérés à Ysenkhal.",
+          "ville_id": "hamlet_eisenkehl"
+        }
+      ],
       "source_lore": [
         "hamlet_eisenkehl",
         "lieu_ferme_des_chevriers_nains",
@@ -39988,6 +42267,27 @@
         "À Ryvaldh, interroger les marins : le navire a fait naufrage au nord du port.",
         "À l'Épave échouée, chasser les charognards et sauver ce qui reste de la cargaison.",
         "Mettre la cargaison à l'abri au Caravansérail des marchands puis rapporter la nouvelle à Ebhrazul."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "À Ebhrazul, écouter les marchands qui attendent la cargaison.",
+          "ville_id": "town_0115"
+        },
+        {
+          "texte": "Au Relais de la route de Ryvaldh, apprendre que le convoi n'est jamais parti du port.",
+          "lieu_id": "lieu_relais_de_la_route_de_riverfold"
+        },
+        {
+          "texte": "À Ryvaldh, interroger les marins : le navire a fait naufrage au nord du port.",
+          "ville_id": "town_riverfold"
+        },
+        {
+          "texte": "À l'Épave échouée, chasser les charognards et sauver ce qui reste de la cargaison.",
+          "lieu_id": "lieu_epave_echouee"
+        },
+        {
+          "texte": "Mettre la cargaison à l'abri au Caravansérail des marchands puis rapporter la nouvelle à Ebhrazul."
+        }
       ],
       "source_lore": [
         "town_0115",
@@ -40366,7 +42666,8 @@
       "notes": [
         "[BD-T3 p.33-37]",
         "Règle clé : ne jamais utiliser les compétences de rage/colère"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_demons_village_fantome",
@@ -40388,7 +42689,8 @@
       "notes": [
         "[BD-T3 p.28-32]",
         "Feydriva peut être perdue si objectif secondaire échoue"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_oracle",
@@ -40411,7 +42713,8 @@
       },
       "notes": [
         "[BD-T3 p.7-12]"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_garundel",
@@ -40433,7 +42736,8 @@
       "notes": [
         "[BD-T3 p.41-44]",
         "'En Garundel, celui qui passe me doit ses biens... ou trépasse!'"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_dis_t4",
@@ -40464,7 +42768,8 @@
         "[BD-T4] Mécanisme spécial : la Queue de Dondaines ne peut pas être bloquée — seule la téléportation permet de fuir.",
         "[BD-T4] NPC à protéger (impossible) : Père de Wismerhill — sa mort est scénarisée.",
         "[INFÉRÉ] (v1.0.85) Rattachement à une case (lot 13 ; LORE_BD §16.14) : Dys (dys, N005_W009), « Dis » du T4 : l'embuscade a lieu dans le grand marché de Dis [BD-T4 p.24-31]."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_tsaroth_t5",
@@ -40496,7 +42801,8 @@
         "[BD-T5] La Faucheuse est une présence narrative — ne peut pas être combattue.",
         "[BD-T5] Fratus Sinister banquette et arrive en retard — trahison implicite envers ses alliés.",
         "[BD-T5] Haghendorf combat en personne sur son dragon dans les cieux (boss aérien optionnel)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_assaut_horkher_t6",
@@ -40532,7 +42838,8 @@
         "[BD-T6] P.43-46 : 'La ville était fortement gardée mais profitant de l'effet de surprise Wismerhill et ses compagnons anéantirent les gardes des portes.'",
         "[BD-T6] 'Malgré une forte résistance les défenseurs perdirent peu à peu du terrain avant de succomber. Wismerhill avait une fois de plus vaincu.'",
         "[BD-T6] Téléportation démoniaque utilisée pour placer le groupe directement dans la ville — élément clé de la surprise."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_pillage_marches_t1",
@@ -40558,7 +42865,8 @@
         "[BD-T1] Aventure montage pages 9-17 + bataille Faille pages 18-19.",
         "[BD-T1] Montre la vie quotidienne dans la horde : chasse, marchands, combat, humour.",
         "[BD-T1] 'Et la faille se remplit du sang des vaincus...' — texte narratif de la contre-embuscade de la Faille de Kashogs (p.27 BD)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_sac_kendrhir_t1",
@@ -40584,7 +42892,8 @@
         "[BD-T1] Pages 21-23 (pp.29-33 BD).",
         "[BD-T1] Kendrhir = 'Cité des Grands Mages' — cité de bois aux toits très pentus, perchée sur un éperon rocheux.",
         "[BD-T1] Menace du Grand Mage, rapportée par le messager de Ghorghor changé en batracien : « ...il vous transformera en grosse limace baveuse et vous jettera à ses corbeaux ! ». Ghorghor : « Rasez-moi tout ça !!! »."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_grande_bataille_kendrhir_t1",
@@ -40610,7 +42919,8 @@
         "[BD-T1] Pages 31-43 (pp.41-49 BD).",
         "[BD-T1] 'L'aube des ténèbres...' — texte narratif en ouverture de la scène.",
         "[BD-T1] Frater Sinister (T1) : blond, yeux bleus, marque en croix sur la joue — aspect différent du Menthat rasé des tomes 3-4 (voir char_fratus_sinister)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_grande_marche_lune_noire_t9",
@@ -40645,7 +42955,8 @@
         "[BD-T9] Forces détaillées : 20K Garde Noire + Juggernauth / 100K+ Orcs (sans trolls/géants) / 80K réguliers / Légions infernales Lucifer / Hors-Vivants Haazheel / Armée Fratus / Armada Tharque.",
         "[BD-T9] 'ET CHACUN À LEUR MANIÈRE ILS HURLAIENT LEUR RAGE, LEUR HAINE DE L'EMPIRE, LEUR JOIE DE COMBATTRE.'",
         "[BD-T9] 'EN AVANT!' — dernier mot du tome 9, le cri de Wismerhill."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_plaine_altenberg_t4",
@@ -40679,7 +42990,8 @@
         "[BD-T4] Page 41 — Fratus et Brakkh en revue de troupes conjointes.",
         "[BD-T4] Les deux forces (Lumière + Chevaliers-Dragons) manœuvrent 'pour le service de l'Empereur' (ironie).",
         "[BD-T4] Un démon sombre est visible dans le camp — présence démoniaque cachée."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_campagne_vassaux_t4",
@@ -40709,7 +43021,8 @@
         "[BD-T4] Pages 34-35 — campagne nocturne, châteaux brûlent à l'horizon.",
         "[BD-T4] Raid répétable — chaque fief est une instance similaire avec des gardes de niveaux croissants.",
         "[BD-T4] Page 42 — 'Encore un vassal d'Haghendorf abattu! Vas-tu me demander grâce?'"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_invocation_methraton_t7",
@@ -40738,7 +43051,8 @@
         "Methraton est unkillable — la victoire = survivre 10 minutes à sa présence.",
         "Phase finale : explosion 'FOOOOO BOOSH' — zone de damage massive, 80% mortalité normale.",
         "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_necropolis_jade_t7",
@@ -40767,7 +43081,8 @@
         "Machine de siège 'W' de Wismerhill — mécanisme d'attaque des murailles.",
         "'La bataille est terminée?' — condition de victoire : détruire le nécromancien gardien.",
         "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_der_hem_shelbem_t8",
@@ -40795,7 +43110,8 @@
         "[BD-T8] 'Quelle mort horrible ! Je ne pourrai jamais le ramener à la vie !' — compagnon sur un allié tombé.",
         "[BD-T8] 'Il ne régénère même plus !' — sur Ghorghor.",
         "[BD-T8] L'arrivée de Haazheel en milieu de raid change la dynamique du combat final."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_siege_northind_t8",
@@ -40822,7 +43138,8 @@
         "[BD-T8] 'En avant à marche forcée sur Northind !' — Haghendorf.",
         "[BD-T8] La désertion de Gabriel est un event automatique de raid (mécanique unique).",
         "[BD-T8] 'On se casse ! On s'enfuit ! Et brûlez tout !' — Fratus à ses hommes."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_t00_armee_ghorghor",
@@ -40847,7 +43164,8 @@
       "notes": [
         "Ghorghor Bey n'attaque pas le château — décide de passer après avoir brûlé le village.",
         "[INFÉRÉ] (v1.0.85) Rattachement à une case (lot 13 ; LORE_BD §16.14) : Whispers Hill (ville_whispers_hill, N011_E008) : « le village en contrebas du château » massacré et brûlé par l'armée de Ghorghor Bey [BD-T00 p.32] est celui de Whispers Hill, au pied des Ruines de Wismerhill."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_grande_bataille_plaine_t10",
@@ -40869,7 +43187,8 @@
       ],
       "notes": [
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Grande Plaine (region_grande_plaine_bataille_t10) n'a ni case ni lieu ; sa description la situe seulement entre deux villes éloignées."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_assaut_palais_lhynn_t10",
@@ -40889,7 +43208,8 @@
         "loot_epee_desintegration_imperiale (conditionnel — victoire du joueur en aide)",
         "loot_sphere_negation_imperiale (conditionnel)"
       ],
-      "notes": []
+      "notes": [],
+      "niveau_ref": null
     },
     {
       "id": "raid_bataille_finale_lhynn_t11",
@@ -40922,7 +43242,8 @@
         "[BD-T11] 'J'AI VAINCU!...À TON TOUR, HAAZHEEL THORN, VIENS M'AFFRONTER, SI TU L'OSES!'",
         "[BD-T11] Haghendorf se vide de son sang — Wismerhill Hellwelkin fatal.",
         "[BD-T11] 'AINSI PÉRIT HAGHENDORF, 1ER EMPEREUR DE LHYNN, PUISSANT MAÎTRE DE L'EMPIRE, APRÈS UN LONG RÈGNE DE PRÈS DE QUARANTE ANS.'"
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_dzoraks_marais_maudits_t11",
@@ -40967,7 +43288,8 @@
         "[BD-T11] 'Ces saletés méritent bien leur réputation. Brrr!'",
         "[BD-T11] Combat de titans — même Wismerhill (niveau max) a failli être submergé.",
         "[INFÉRÉ] (v1.0.85) Rattachement à une case (lot 13 ; LORE_BD §16.14) : N010_W004, Marais maudits de Thenhart (40-56) : la case du marais au pied des Ruines de Thenhart (N009_W004), où entre la rivière de la cascade ; Wismerhill trouve les marais depuis les ruines [BD-T11]. L'Arbre aux Ossements n'a pas de lieu propre."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_t12_01_porte_des_enfers",
@@ -40991,7 +43313,8 @@
         "[BD-T12] Post-raid : zone_porte_des_enfers_t12 modifiee, porte scellee, moins de demons actifs.",
         "[BD-T12] Parsifal est un PNJ allie obligatoire pour la phase 5.",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Porte des Enfers du T12 (zone_porte_des_enfers_t12) est « au cœur de l'Empire », au bout de la Route Noire, sans case ; distincte des 5 Portes des enfers."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_t13_bataille_finale_moork",
@@ -41020,7 +43343,8 @@
         "[BD-T13] Phase finale : attendre que Methraton active le bouclier AVANT d utiliser Hellwelkin.",
         "[BD-T13] Victoire narrative : 'C etait une victoire etrange, sans jubilation.' -- fin de l Opus I.",
         "[DÉDUCTION] (v1.0.54) La bataille a lieu dans la salle du trône du palais de Lhynn (voir zone_moork_salle_trone_t13) : nom corrigé, identifiant inchangé."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_mordrek_t14",
@@ -41045,7 +43369,8 @@
         "[BD-T14] 'Et une pluie d'enfer mortelle s'abattit sur les Gigantomorphes... la horde fut anéantie.'",
         "[BD-T14] Wismerhill commande personnellement: 'Allez-y! Maintenant!'",
         "[INFÉRÉ] (v1.0.85) Rattachement à une case (lot 13 ; LORE_BD §16.14) : Défilé de Mordrek (lieu_defile_mordrek, N016_E013), Terres des Gigantomorphes (30-56) ; pas à Lhynn, que la description ne cite que comme but des réfugiés. Boss creature_gigantomorphe (35-55)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_marches_est_t14",
@@ -41071,7 +43396,8 @@
         "[BD-T14] 'Les survivants ne seraient plus un problème, le flot de l'Exode ne serait pas troublé.'",
         "[DÉCISION] (v1.0.56) Rattaché à la région « Marche de l'Est » (region_marche_est, Q15).",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Marche de l'Est (region_marche_est) compte 56 cases ; le lieu du duel n'est pas situé."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_orques_greldinard_t14",
@@ -41096,7 +43422,8 @@
         "[BD-T14] Les Nains regardent depuis les montagnes sans intervenir.",
         "[BD-T14] Les Orques se retirent dans la forêt -- plus un problème.",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la horde « déferle du Nord » sous le regard des nains des montagnes ; aucun lieu nommé."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_t01_gd_defense_kendrhir",
@@ -41122,7 +43449,8 @@
       "notes": [
         "[GD]",
         "[GD] Perspective adverse de raid_sac_kendrhir_t1 (horde). Même évènement, camp opposé."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_t01_gd_contre_grande_bataille",
@@ -41147,7 +43475,8 @@
       "notes": [
         "[GD]",
         "[GD] CONTRE-RAID de raid_grande_bataille_kendrhir_t1 — xp_weight contre_raid. Premier contre-raid de la base."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_ile_hishtarland",
@@ -41168,7 +43497,8 @@
       ],
       "required_classes": [],
       "for_factions": [],
-      "for_races": []
+      "for_races": [],
+      "niveau_ref": null
     },
     {
       "id": "raid_abysses_temple_englouti",
@@ -41191,7 +43521,8 @@
       ],
       "required_classes": [],
       "for_factions": [],
-      "for_races": []
+      "for_races": [],
+      "niveau_ref": null
     },
     {
       "id": "raid_abysses_antre",
@@ -41214,7 +43545,8 @@
       ],
       "required_classes": [],
       "for_factions": [],
-      "for_races": []
+      "for_races": [],
+      "niveau_ref": null
     },
     {
       "id": "raid_coeur_du_volcan",
@@ -41237,7 +43569,8 @@
         "Entrée par le cratère (S008_E014).",
         "Accès : voir règle rule_volcan_acces.",
         "[INFÉRÉ] (v1.0.85) Rattachement à une case (lot 13 ; LORE_BD §16.14) : S008_E014, lieu_volcan_cratere (entrée par le cratère, rule_volcan_acces)."
-      ]
+      ],
+      "niveau_ref": null
     },
     {
       "id": "raid_mine_de_la_traverse",
@@ -41260,7 +43593,11 @@
         "[DÉCISION] (v1.0.73) Raid dans une mine entre Gredhaim et la ville de S001_W007, décision du propriétaire du 10/11/2026 (LORE_BD §16.2).",
         "[INFÉRÉ] (v1.0.73) Lecture retenue, à confirmer : la mine est une galerie sous N000_W008 (lieu lieu_mine_de_la_traverse), le raid la traverse d'une entrée à l'autre (poi_mine_traverse_nord côté Gredhaim, poi_mine_traverse_sud côté Kholvard).",
         "[GD] (v1.0.73) Niveau conseillé 10 à 15 : échelle des départs de la Première Province et des Marches (1-15, regle_bestiaire_echelles). Créatures : animal_rat (rats des profondeurs), animal_araignee (araignées géantes), boss creature_mere_des_galeries (niveau 15). Nom, récompenses et titre à valider."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 15
+      }
     },
     {
       "id": "raid_tertre_des_rois_noyes",
@@ -41283,7 +43620,11 @@
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Lieu lieu_tertre_des_rois_noyes ; boss creature_roi_noye ; niveau conseillé 45 à 50 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
         "[DÉCISION] (v1.0.77) Raid rattaché au Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres), temple de style inca habité par les Hwakhari (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_lanternhold) ; LORE_BD §16.6."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 45,
+        "max": 50
+      }
     },
     {
       "id": "raid_grottes_des_naufrageurs",
@@ -41306,7 +43647,11 @@
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Lieu lieu_grottes_des_naufrageurs ; boss creature_capitaine_maree_rouge ; niveau conseillé 50 à 55 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
         "[DÉCISION] (v1.0.77) Raid rattaché au Temple de la Mère des Eaux (lieu_ile_gd_temple_mere_des_eaux), temple de style inca habité par les Hwakhari (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_brinehaven) ; LORE_BD §16.6."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 50,
+        "max": 55
+      }
     },
     {
       "id": "raid_taniere_du_jarl",
@@ -41329,7 +43674,11 @@
         "[DÉCISION] (v1.0.74) Raid simple (une équipe) de l'Île de la Trêve, objectif du propriétaire du 10/11/2026 (3 raids simples, 1 raid multi-équipe) (LORE_BD §16.3).",
         "[GD] (v1.0.74) Lieu lieu_taniere_du_jarl ; boss creature_jarl_de_givre ; niveau conseillé 55 à 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
         "[DÉCISION] (v1.0.77) Raid rattaché au Temple du Givre (lieu_ile_gd_temple_du_givre), temple de style inca habité par les Hwakhari (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_duskmoor) ; LORE_BD §16.6."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 55,
+        "max": 60
+      }
     },
     {
       "id": "raid_devoreur_des_brumes",
@@ -41353,7 +43702,11 @@
         "[GD] (v1.0.74) Lieu lieu_gouffre_de_la_baie ; boss creature_devoreur_des_brumes ; niveau conseillé 60 (Île de la Trêve, 45 à 60, regle_bestiaire_echelles). Nom, récompenses et titre à valider.",
         "[GD] (v1.0.74) Factions mêlées : ouvert à toutes les factions (for_factions vide) ; les équipes doivent venir d'au moins deux blocs (Empire, Lune Noire, indépendants : game_design.faction_relations) [GD, règle de formation à implémenter]. Quête d'accès quest_ile_gd_chant_du_devoreur.",
         "[DÉCISION] (v1.0.77) Raid rattaché au Temple de la Brume (lieu_ile_gd_temple_de_la_brume), temple de style inca habité par les Hwakhari (demande du propriétaire du 10/11/2026 : les raids et quêtes de la v1.0.74 se rattachent aux temples) ; ville de départ inchangée (town_truceholm) ; LORE_BD §16.6."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 60,
+        "max": 60
+      }
     }
   ],
   "timeline": [
@@ -172939,7 +175292,12 @@
         "[INFÉRÉ] (v1.0.90) 3 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte de N010 (W001-E001), au nord de la Forêt elfique : repère de la région, lisière sud 28-36. Cases : N010_W001, N010_E000, N010_E001. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.91) Côte orientale au sud du Rivage des Géants (boîte rivage_des_geants du master) ouverte avec les routes de la Marche (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : Ryvaldh (N006_E023), Grhavelt (N003_E023) et Dhuzvelt (S001_E023) deviennent jouables avec les cases de leurs routes depuis Ebhrazul et Dhazkmer, une case de marge et les trous intérieurs : 38 cases (E021-E024, de N007 à S002). 35 lieux [GD] ; repère proposé, à valider : 24-30 (routes au départ d'Ebhrazul et de Dhazkmer 24-28, côte et abords des ports 26-30, bord du désert 27-30), en dessous de la lisière sud des Gigantomorphes (28-36) : pas de balise.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Terres des Gigantomorphes ») : 232 cases terrestres (`cells[].region_id`) ; provinces : Terres du Nord — Château en Ruine (`region_terres_nord_t00`, 2 cases), Marais Maudits (de Thenhart) (`marais_maudits_t11`, 5 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 30,
+        "max": 56
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "foret_elfique",
@@ -172962,7 +175320,12 @@
         "[GD] (v1.0.58) Économie : ressources bois précieux, herbes et champignons, soie d'araignée, gibier ; productions herboristerie, arcs [GD] ; exporte herbes, bois précieux ; importe métal. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.90) 1 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : île de Dyprokh (N012_E002), jumelle de N012_E003 déjà dans la boîte foret_elfique du master : repère 10-30. Cases : N012_E002. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Forêt elfique ») : 40 cases terrestres (`cells[].region_id`) ; aucune province (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 30
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "territoires_orcques",
@@ -172978,7 +175341,12 @@
         "[GD] (v1.0.58) Économie : ressources minerai « si précieux pour l'Empire », gibier, bois ; productions troc, butin ; exporte peaux, butin ; importe armes, alcool. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N006_E013 (routes d'Horkher vers Thokrul, Gharzuk et Mhozrak) est générée, avec le Camp de troc des orcs [GD].",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Territoires orques ») : 148 cases terrestres (`cells[].region_id`) ; provinces : Territoires des Marches (`region_marches`, 56 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 18,
+        "max": 45
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "royaume_des_nains_de_lest",
@@ -172992,7 +175360,12 @@
         "[INFÉRÉ] (v1.0.90) 21 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte orientale (E025, S004-S014), pointe sud des montagnes (S015-S016, E014) et côte sud (S017, E014-E021) : sud de la région, 18-30. Cases : S004_E025, S005_E025, S006_E025, S007_E025, S008_E025, S009_E025, S010_E025, S011_E025, S012_E025, S013_E025, S014_E025, S015_E014, S016_E014, S017_E014, S017_E015, S017_E016, S017_E017, S017_E018, S017_E019, S017_E020, S017_E021. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.91) Ouverture de la route Ysenkhal - Vozmarkh (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : suite 10-20 du départ de Durnhalde. 7 cases générées : S008_E019 et S009_E019 (tracé du générateur par le col), Vozmarkh (S009_E020) et sa marge (S009_E021, S010_E019, S010_E020, S010_E021) ; S008_E020 et S008_E021 restent fermées (montagne, hors tracé). 6 lieux [GD] (10-20) et 2 quêtes [GD] de suite du départ (quest_nains_est_gd_route_de_voidmark, 10+ ; quest_nains_est_gd_carriers_de_voidmark, 15+). Routes de Vozmarkh vers Mhordaal, Shaddrek et Ghrondak toujours coupées au mur invisible.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Royaume des Nains de l'Est ») : 216 cases terrestres (`cells[].region_id`) ; provinces : Désert des Sels (`desert_des_sels`, 12 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 30
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "baronnie_de_moorks",
@@ -173018,7 +175391,12 @@
         "[GD] (v1.0.86) Campagne de la baronnie (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : 11 lieux [GD] sur les cases générées vides (tour de guet, ferme pillée, camp et tertre des clans insoumis, puits et salines de la piste du sel, fosses aux vers, enclos des bêtes de guerre, fortin impérial en ruine, relais des convois d'acier, Borne des Monts de Moork) et 5 quêtes qui sortent les joueurs de Moork. Gradient [GD] dans le repère 18-45 : plaines de l'ouest 18-26, désert de la piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 (balisés). Moork reste intacte (avant le T11).",
         "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N001_E012 (route Nakhtvar - Nykhfeld) et N001_E015, N000_E015, S001_E015 (route Moork - Nykhfeld, Via Magna) sont générées, avec un lieu [GD] chacune (Campement des pêcheurs, Relais de la route de Moork, Tour à signaux de la baronnie, Cimetière des captifs).",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Baronnie de Moork ») : 80 cases terrestres (`cells[].region_id`) ; provinces : Marche de l'Est (`region_marche_est`, 18 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 18,
+        "max": 45
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "via_magna",
@@ -173042,7 +175420,12 @@
         "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N004_E012 (Via Magna entre Shezhold et Horkher, case sans région au lore) est générée, avec le Barrage de péage de la Lune Noire [GD].",
         "[INFÉRÉ] (v1.0.90) 17 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : désert et lisières entre Harrodh, Shezhold et Moork (N004-N000, E007-E010) et case du Barrage de péage (N004_E012, déjà rattachée en v1.0.88 dans les notes) : bordure de la route impériale, repère du tronçon Harrodh – Shezhold 18-26. Cases : N004_E007, N004_E008, N004_E009, N004_E012, N003_E007, N003_E008, N003_E009, N003_E010, N002_E007, N002_E008, N002_E009, N001_E007, N001_E008, N001_E010, N000_E007, N000_E009, N000_E010. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Via Magna ») : 140 cases terrestres (`cells[].region_id`) ; provinces : Désert de l'Oracle (`desert_central`, 0 cases), Forêt des Lutins (`foret_des_lutins`, 34 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 30
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "royaumes_des_nains_du_sud",
@@ -173053,7 +175436,9 @@
       "notes": [
         "[GD] (v1.0.58) Économie : ressources minerai, pierre, soufre et obsidienne (volcan voisin) ; productions acier nain, outils ; exporte acier, pierre taillée ; importe vivres, bois. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Royaume des Nains du Sud ») : 127 cases terrestres (`cells[].region_id`) ; provinces : Terres désolées de Tsaroth (`terres_desolees`, 6 cases), Val de Suthvarn (`val_de_southport`, 42 cases), Confins du Midi (`confins_du_midi`, 21 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "royaume_drach",
@@ -173071,7 +175456,12 @@
         "[DÉCISION] (v1.0.56) « Royaume Drach » retenu comme nom de région (Q18) ; « draakh » (THS) en alias.",
         "[GD] (v1.0.58) Économie : ressources poisson, sel marin, pierre ; productions pêche, cabotage ; exporte poisson salé ; importe grain, bois. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Royaume Drach ») : 50 cases terrestres (`cells[].region_id`) ; aucune province (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 30,
+        "max": 56
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "terres_de_lempereur",
@@ -173089,7 +175479,12 @@
         "[GD] (v1.0.58) Économie : ressources blé et orge, bétail, poisson, sel marin ; productions draps et soieries (marché de Dis), frappe de la monnaie [GD], armement impérial ; exporte étoffes, monnaie ; importe acier nain, impôts des fiefs, denrées de luxe. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.90) 48 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte sud de Lhynn (S001-S009, W016-W009) : Dhuzmar, Klaerhin, Aeskhol et Ghrepol (hameaux impériaux), le Port Franc, la forêt de Harndrecht et la Porte 3 des enfers ; mer à l'ouest, monts des nains du sud à l'est, Hishtarland au sud. Repère 10-30 détaillé : hameaux de la côte près de Lhynn 12-16, forêt de Harndrecht 14-20, Ghrepol et la frontière d'Hishtarland 16-22 ; abords de la Porte 3 à baliser. Cases : S001_W012, S001_W011, S001_W010, S001_W009, S002_W012, S002_W011, S002_W010, S002_W009, S003_W014, S003_W013, S003_W012, S003_W011, S003_W010, S003_W009, S004_W016, S004_W015, S004_W014, S004_W013, S004_W012, S004_W011, S004_W010, S004_W009, S005_W016, S005_W015, S005_W014, S005_W013, S005_W012, S005_W011, S005_W010, S005_W009, S006_W016, S006_W015, S006_W014, S006_W013, S006_W012, S006_W011, S006_W010, S006_W009, S007_W015, S007_W014, S007_W013, S007_W012, S007_W011, S007_W010, S007_W009, S008_W014, S008_W013, S009_W013. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Terres de l'Empereur Wismerhill Ier ») : 149 cases terrestres (`cells[].region_id`) ; provinces : 1ère Province de l'Empire (`region_premiere_province_empire`, 27 cases), Province de Northind (`region_northind`, 4 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 30
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_marches",
@@ -173106,7 +175501,12 @@
         "[BD-A1 p.5-18] « Marches du Nord de l'Empire » : hautes montagnes enneigées, ogres descendus sur un village humain ; village natal de Ghorghor (lieu_village_ghorghor).",
         "[GD] (v1.0.58) Économie : ressources blé, bétail, pierre des chaînes ; productions élevage, mercenaires ; exporte bétail, mercenaires, butin ; importe armes, sel, étoffes. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Province de la région HS Territoires orcques (`parent_region`) : 56 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 1,
+        "max": 15
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_premiere_province_empire",
@@ -173120,7 +175520,9 @@
         "[GD] (v1.0.58) Économie : ressources blé, bois des lisières, poisson ; productions grand marché de Dis, étoffes, chevaux de selle [GD] ; exporte étoffes, chevaux ; importe métaux, vin. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.90) 2 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte de N006-N005 (W013) : repère 10-30. Cases : N006_W013, N005_W013. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Province de la région HS Terres de l'empereur (`parent_region`) : 27 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "region_empire_jade",
@@ -173139,7 +175541,9 @@
         "[GD] (v1.0.58) Économie : ressources jade ; productions hors monde jouable (extension). Détail et sources : regle_eco_productions_regions.",
         "[GD] (v1.0.82) Distinct de l'Empire de Tsin (faction_empire_tsin), peuple lointain plus à l'est au-delà de la mer orientale : le Jade (est-sud-est, par les terres et les zones mystiques) et Tsin sont rivaux ; game design de l'Empire du Jade inchangé (LORE_BD §16.11).",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "region_northind",
@@ -173153,7 +175557,9 @@
         "[BD-T8] Reconstituée par l'Empereur Haghendorf après reprise.",
         "[GD] (v1.0.58) Économie : ressources bois d'œuvre, gibier et peaux, pêche de rivière ; productions charpente et bois de marine [GD], fourrures ; exporte bois, peaux ; importe grain, métaux. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Province de la région HS Terres de l'empereur (`parent_region`) : 4 cases (`cells[].province`) sur 9 avant ; les 5 autres suivent la carte du hors-série : Forêt elfique (3), Terres des Gigantomorphes (2). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "region_empire_tharque",
@@ -173165,7 +175571,9 @@
         "[BD-T9] Joint la coalition de la Lune Noire en T9 contre un port franc.",
         "[LORE_ETENDU] Région côtière non cartographiée sur la carte de l'univers connu — à positionner sur la carte lors de la création de la carte du monde.",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "region_terres_nord_t00",
@@ -173178,7 +175586,12 @@
         "[DÉCISION] (v1.0.56) Le château en ruine (lieu_ruines_wismerhill) et le village de Whispers Hill (ville_whispers_hill) sont dans la case N011_E008.",
         "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : la région couvre désormais les cases N011_E008 (Whispers Hill, Ruines de Wismerhill) et N012_E008 (Forêt de la Rencontre), enclave de niveau 1-15 dans les Terres des Gigantomorphes (30-56). Trois sorties balisées par les Bornes des Géants (lieu_balise_borne_geants_nord, _ouest, _sud), sur les routes de Stohnvar, d'Askhvir et de Feyhin Lokcthat.",
         "[DÉCISION] (v1.0.92) Province de la région HS Terres des Gigantomorphes (`parent_region`) : 2 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 1,
+        "max": 15
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_enfers_t00",
@@ -173191,7 +175604,12 @@
         "[DÉCISION] (v1.0.81) Hiérarchie (regle_hierarchie_enfers) et lieux des tomes 15-22 : le palais de Lucifer, la mer de lave, le canyon et les plateaux des légions sont sur la carte jouable des Enfers ; les plans par le Seuil des Plans (regle_plans_infernaux). Les Enfers hors carte des préquelles restent inchangés (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[DÉCISION] (v1.0.83) Palette de la carte jouable des Enfers d'après les tomes 15-22 : roche rouge striée (falaises du canyon), basalte noir, cendre grise sur les hauts sommets, lave jaune-orange (mer de lave autour du lieu « volcan » de N000_W001, fleuves de lave dans la croix volcanique) ; ni herbe, ni forêt, ni broussaille, ni neige. Générée par tools/world_gen (v1.0.83, LORE_BD §16.12). Sources : [BD-T16 p.16] ; [BD-T17 p.16] ; [BD-T20 p.30-31] ; [BD-T21 p.6, 36] ; [BD-T22 p.22]. La lave n'est qu'une couleur (carte du monde) et un sol de terre rouge-brun (splat) : pas de matériau émissif ni de dégâts côté client (à venir).",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 1,
+        "max": 10
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_grande_plaine_bataille_t10",
@@ -173201,7 +175619,9 @@
       "notes": [
         "La Lune Noire prend le centre de la plaine en premier — avantage tactique décisif.",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "marais_maudits_t11",
@@ -173218,7 +175638,12 @@
         "[INFÉRÉ] (v1.0.59) Cellules N010_W005, N010_W004, N010_W003, N011_W005, N011_W004 (marais de la grille, zones de chasse des Dvorak du bestiaire v1.0.58) ; la rivière de la cascade (riv_cascade_northind) y entre en N010_W004 depuis les ruines de Thenhart (N009_W004). Monde jouable : région marais_maudits (Haevrin, N011_W004, est au bord du marais).",
         "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ].",
         "[DÉCISION] (v1.0.92) Province de la région HS Terres des Gigantomorphes (`parent_region`) : 5 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 40,
+        "max": 56
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_terra_secunda",
@@ -173230,7 +175655,9 @@
         "[BD-T14] 'Nous pouvons y établir l'humanité pour un nouveau départ!'",
         "[BD-T14] Point de départ de l'Opus II -- Terra Secunda (tomes 15-21+).",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "syzygie",
@@ -173246,7 +175673,12 @@
         "[GD] (v1.0.58) Économie : ressources blé, lin, pêche de fleuve, poisson de mer ; productions grain et farine, toile de lin [GD] ; exporte grain, toile ; importe métaux, armes. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.90) 2 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte de N012 (W009-W008) : repère 10-30. Cases : N012_W009, N012_W008. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Syzygie ») : 37 cases terrestres (`cells[].region_id`) ; aucune province (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 30
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_marche_est",
@@ -173268,7 +175700,12 @@
         "[INFÉRÉ] (v1.0.90) 5 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : lisière nord de la forêt de Vlakmorh autour de Rhivkhar (N008, E016-E020) : 22-28. Cases : N008_E016, N008_E017, N008_E018, N008_E019, N008_E020. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.91) Routes de la Marche ouvertes jusqu'à leur arrivée (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : Ebhrazul - Rhivkhar (000104), Ebhrazul - Ryvaldh (000160), Ebhrazul - Grhavelt (000161), Dhazkmer - Dhuzvelt (000162). Dans la Marche : Rhivkhar (N008_E018), la route d'Ebhrazul (N007_E019, N007_E020, N008_E019), la marge de Rhivkhar (N007_E017, N007_E018, N008_E017 ; N009_E017 à N009_E019 dans la boîte Marches du Nord du master, sans région au lore) et les trous intérieurs N006_E017, N006_E018 (forêt du nord). 11 lieux [GD] (22-28).",
         "[DÉCISION] (v1.0.92) Province de la région HS Baronnie de Moorks (`parent_region`) : 18 cases (`cells[].province`) sur 61 avant ; les 43 autres suivent la carte du hors-série : Royaume des nains de l'est (20), Territoires orcques (19), Via Magna (4). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 15,
+        "max": 28
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "region_hishtarland",
@@ -173283,7 +175720,9 @@
         "[DÉCISION] (v1.0.56) Hishtarland devient un royaume (Q18) ; la ville actuelle en est la capitale, à la même case. Correspond à la région « hishtarland » du monde jouable (world_master.json, inchangée).",
         "[GD] (v1.0.58) Économie : ressources poisson, sel, bois de marine importé ; productions construction navale, fret maritime ; exporte navires, sel ; importe bois, grain. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Hishtarland ») : 20 cases terrestres (`cells[].region_id`) ; aucune province (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": null,
+      "niveau_par_faction": {}
     },
     {
       "id": "region_ile_de_la_treve",
@@ -173302,7 +175741,12 @@
         "[DÉCISION] (v1.0.77) Relief au dénivelé important : pics et crêtes boisés (jusqu'à environ 550 m) au cœur des branches, falaises sur la mer, vallées encaissées ; côte inchangée ; LORE_BD §16.6.",
         "[GD] (v1.0.77) Peuple natif : les Hwakhari (faction_huacani, race_huacani, culte religion_huacani_soleil), qui habitent onze temples de style inca (lieu_ile_gd_grand_sanctuaire_soleil, lieu_ile_gd_temple_des_ancetres, lieu_ile_gd_temple_de_la_brume, lieu_ile_gd_temple_du_givre, lieu_ile_gd_temple_mere_des_eaux, lieu_ile_gd_temple_de_la_lune, lieu_ile_gd_temple_des_cimes, lieu_ile_gd_temple_des_terrasses, lieu_ile_gd_oratoire_du_col, lieu_ile_gd_autel_des_sources, lieu_ile_gd_oratoire_de_l_aube) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.92) Hors de la carte du hors-série : reste une région à part entière, sans province (20 cases terrestres) (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 45,
+        "max": 60
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "terres_desolees",
@@ -173316,7 +175760,12 @@
         "[GD] (v1.0.86) Repère de niveau proposé, à valider : 20-40 en surface (abords de Frhozhol 20-26, Deathtrap Canyon et Der Hem Shelbem 24-34, champ de bataille 30-40) ; nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70, balisées (Stèle des Deux Fois Nés, Cairn des Coulées). Niveau relatif à la faction (rule_niveaux_par_faction).",
         "[INFÉRÉ] (v1.0.90) 6 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : plaines, chaîne et désert de la colonne E007 (S006-S011), entre la Forêt des Lutins, le Val de Suthvarn et le champ de bataille : abords de Frhozhol et du Deathtrap Canyon, 20-26. Cases : S006_E007, S007_E007, S008_E007, S009_E007, S010_E007, S011_E007. Aucune boîte du master ajoutée ni modifiée.",
         "[DÉCISION] (v1.0.92) Province de la région HS Royaumes des nains du sud (`parent_region`) : 6 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 20,
+        "max": 40
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "desert_central",
@@ -173329,7 +175778,12 @@
         "[INFÉRÉ] (v1.0.86) L'Oracle (extérieur) est un lieu du T2 (plan de référence, LORE_BD §9) : le camp, le tumulus et l'Oracle ne changent pas ; les lieux ajoutés sont autour.",
         "[GD] (v1.0.86) Repère de niveau proposé, à valider : 10-25 (comme la Via Magna) ; la grotte du premier-né de Xygga (N002_E004, 66-70) est balisée (Cairn des Caravaniers, avertisseurs du Camp de l'Oracle). Niveau relatif à la faction (rule_niveaux_par_faction).",
         "[DÉCISION] (v1.0.92) Province de la région HS Via Magna (`parent_region`) : 0 cases (`cells[].province`) ; aucune case au lore (étendue portée par la boîte du master). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 10,
+        "max": 25
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "foret_des_lutins",
@@ -173346,7 +175800,12 @@
         "[GD] (v1.0.90) Lien avec le lore : trajet du T3 (Oracle → Ghrunke Dash → forêt des lutins → village fantôme → fief de Garundel, story arc du T3) : zone_cursed_forest « La Forêt (avant le Marais) », quest_foret_lutins_t3 et Iaun Reith ; Village fantôme du Marais (S003_E006) ; Frhozhol, étape de la chaîne « Le Souffle du volcan » ; Porte 4 des enfers (S005_E011).",
         "[INFÉRÉ] (v1.0.90) Aucune boîte dans `regions` de world_master.json : la région n'est pas rectangulaire et le format du master (une boîte = une étiquette sur la carte et une entrée de l'annuaire MJ) ne permet pas de la décrire proprement ; région du lore seulement (LORE_BD §16.19).",
         "[DÉCISION] (v1.0.92) Province de la région HS Via Magna (`parent_region`) : 34 cases (`cells[].province`). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 14,
+        "max": 24
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "val_de_southport",
@@ -173363,7 +175822,12 @@
         "[GD] (v1.0.90) Lien avec le lore : forteresse naine d'Heusgly voisine [BD-T9, BD-T11] et route 000155 ; Royaume Drach « dont les Chevaliers-Dragons interdisent l'accès » [BD-T2] ; rivière de Suthvarn (hydrography riv_southport) ; Porte 1 des enfers (pentagramme des cinq portes).",
         "[INFÉRÉ] (v1.0.90) Aucune boîte dans `regions` de world_master.json : la région n'est pas rectangulaire et le format du master (une boîte = une étiquette sur la carte et une entrée de l'annuaire MJ) ne permet pas de la décrire proprement ; région du lore seulement (LORE_BD §16.19).",
         "[DÉCISION] (v1.0.92) Province de la région HS Royaumes des nains du sud (`parent_region`) : 42 cases (`cells[].province`) sur 59 avant ; les 17 autres suivent la carte du hors-série : Royaume Drach (11), Royaume d'Hishtarland (6). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 18,
+        "max": 28
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "desert_des_sels",
@@ -173380,7 +175844,12 @@
         "[GD] (v1.0.90) Lien avec le lore : champ de bataille de Tsaroth et Der Hem Shelbem au nord [BD-T5] ; économie du sel et du sable à verre de Saelvik (v1.0.58) ; route Saelvik – Klehrwath.",
         "[INFÉRÉ] (v1.0.90) Aucune boîte dans `regions` de world_master.json : la région n'est pas rectangulaire et le format du master (une boîte = une étiquette sur la carte et une entrée de l'annuaire MJ) ne permet pas de la décrire proprement ; région du lore seulement (LORE_BD §16.19).",
         "[DÉCISION] (v1.0.92) Province de la région HS Royaume des nains de l'est (`parent_region`) : 12 cases (`cells[].province`) sur 24 avant ; les 12 autres suivent la carte du hors-série : Royaumes des nains du sud (12). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 24,
+        "max": 36
+      },
+      "niveau_par_faction": {}
     },
     {
       "id": "confins_du_midi",
@@ -173398,7 +175867,12 @@
         "[GD] (v1.0.90) Cases non jouables (hors generated_cells et des corridors) : identité et niveau seulement, sans lieu ni quête pour l'instant.",
         "[INFÉRÉ] (v1.0.90) Faervosk (town_fairbrook, S015_E001) garde region_id = royaume_drach (v1.0.52) alors que sa case est rattachée aux Confins : à trancher (point à valider, LORE_BD §16.19).",
         "[DÉCISION] (v1.0.92) Province de la région HS Royaumes des nains du sud (`parent_region`) : 21 cases (`cells[].province`) sur 48 avant ; les 27 autres suivent la carte du hors-série : Royaume Drach (15), Royaume des nains de l'est (12). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
-      ]
+      ],
+      "niveau_ref": {
+        "min": 22,
+        "max": 34
+      },
+      "niveau_par_faction": {}
     }
   ],
   "loots": [
@@ -237286,6 +239760,48 @@
           "nom": "Calques de la carte de l'éditeur",
           "decision": "Demande du propriétaire (12/11/2026) : afficher ou masquer des informations sur la carte de l'éditeur dans un panneau de calques clair. Calques : régions du hors-série et provinces, niveaux de référence par case, cases jouables en jeu, quêtes (tracé des étapes au survol), raids, balises de danger, peuples lointains, lieux par type, villes par taille, densité ; les grottes des dragons de Xygga et les entrées ophidiennes forment des calques « secrets », désactivés à chaque ouverture (cachés aux joueurs, montrés seulement dans l'outil de conception). Les niveaux restent écrits dans les notes : l'éditeur les reprend dans une table ; un champ structuré sur les régions est proposé, à décider. Aucune donnée de lore modifiée en v1.0.99 (LORE_BD §16.28).",
           "version": "1.0.99"
+        },
+        {
+          "collection": "regions, raids",
+          "id": "niveau_ref",
+          "nom": "Niveau de référence structuré",
+          "decision": "Demande du propriétaire (12/11/2026, lot 27) : le niveau de référence est un champ niveau_ref {min, max} des fiches regions (régions du hors-série et provinces) et raids, rempli seulement d'après les repères déjà inscrits (notes, registre, §16.14-16.21, table de l'éditeur v1.0.99, niveau conseillé des raids) ; null ailleurs (Royaume des nains du sud hors départ, Hishtarland, régions sans case, 33 raids). L'éditeur lit ce champ (LORE_BD §16.29).",
+          "version": "1.0.100"
+        },
+        {
+          "collection": "regions",
+          "id": "niveau_par_faction",
+          "nom": "Niveaux par faction (champ réservé)",
+          "decision": "Principe décidé en v1.0.78 (rule_niveaux_par_faction) : le niveau d'une zone est relatif à la faction. Champ optionnel niveau_par_faction {faction_id: {min, max}} ajouté aux régions, vide partout (aucune valeur inventée, détail à définir) ; éditable dans le formulaire ; une valeur de faction prime sur niveau_ref dans le calque Niveaux (LORE_BD §16.29).",
+          "version": "1.0.100"
+        },
+        {
+          "collection": "quests",
+          "id": "etapes_struct",
+          "nom": "Étapes de quête structurées",
+          "decision": "Les quêtes reçoivent etapes_struct (liste ordonnée de {texte, cell, ville_id, lieu_id, pnj_id}) sans supprimer le texte des étapes ; pré-rempli pour 121 quêtes, seulement pour les étapes qui citent exactement une ville, un lieu ou un PNJ existant (nom ou identifiant) ; éditable dans le formulaire ; le calque Quêtes l'utilise en priorité (LORE_BD §16.29).",
+          "version": "1.0.100"
+        },
+        {
+          "collection": "place_types, lieux",
+          "id": "mine_poi",
+          "nom": "Type de lieu « mine »",
+          "decision": "Type mine_poi ajouté aux types de lieux ; 8 lieux qui sont clairement des mines reclassés (Vharholdt, la Traverse, soufre, galerie naine, fer, puits inondé, Puits des Apprentis, Vieille Veine). Les POI du master gardent leur kind (salle ou ruine : forme générée), le générateur ne lit pas le type du lore (LORE_BD §16.29).",
+          "version": "1.0.100"
+        },
+        {
+          "collection": "factions, races, persons",
+          "id": "formulaires",
+          "nom": "Formulaires complets",
+          "decision": "Formulaires de l'éditeur complétés : faction (identité visuelle, dirigeants, armée, politique, territoire et comptoir, fiche de peuple lointain, game_design en JSON), race (accès aux classes, notes des affiliations), PNJ (description) ; enregistrement sans perte (v1.0.98) (LORE_BD §16.29).",
+          "version": "1.0.100"
+        },
+        {
+          "collection": "toutes (éditeur)",
+          "id": "suppression",
+          "nom": "Suppression avec compte des références",
+          "decision": "Avant de supprimer une fiche, l'éditeur affiche dans sa boîte HTML le nombre de références à son identifiant ailleurs dans le fichier (par collection) ; Annuler ne change rien. Les références ne sont pas nettoyées (LORE_BD §16.29).",
+          "version": "1.0.100"
         }
       ]
     },
@@ -250852,7 +253368,7 @@
       "id": "lieu_galeries_effondrees_vieille_veine",
       "name": "Galeries effondrées de la Vieille Veine",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "mine_poi",
       "importance": "",
       "cell": "S006_E018",
       "position_x_m": null,
@@ -250938,7 +253454,7 @@
       "id": "lieu_puits_des_apprentis",
       "name": "Puits des Apprentis",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "S006_E017",
       "position_x_m": null,
@@ -251980,7 +254496,7 @@
       "id": "lieu_mine_de_wardholt",
       "name": "Mine de Vharholdt",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "N009_W009",
       "position_x_m": null,
@@ -252150,7 +254666,7 @@
       "id": "lieu_mine_de_la_traverse",
       "name": "Mine de la Traverse",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "N000_W008",
       "position_x_m": null,
@@ -259422,7 +261938,7 @@
       "id": "lieu_mine_de_soufre_abandonnee",
       "name": "Mine de soufre abandonnée",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "S008_E009",
       "position_x_m": null,
@@ -260035,7 +262551,7 @@
       "id": "lieu_galerie_naine_abandonnee",
       "name": "Galerie naine abandonnée",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "S006_E015",
       "position_x_m": null,
@@ -264753,7 +267269,7 @@
       "id": "lieu_mine_de_fer_abandonnee",
       "name": "Mine de fer abandonnée",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "N006_E019",
       "position_x_m": null,
@@ -266068,7 +268584,7 @@
       "id": "lieu_puits_de_mine_inonde",
       "name": "Puits de mine inondé",
       "alias": "",
-      "type": "open_dungeon_poi",
+      "type": "mine_poi",
       "importance": "",
       "cell": "S010_E021",
       "position_x_m": null,
@@ -270477,6 +272993,14 @@
       "label": "Volcan",
       "color": "#d04020",
       "shape": "triangle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "mine_poi",
+      "label": "Mine",
+      "color": "#a0784a",
+      "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
     }

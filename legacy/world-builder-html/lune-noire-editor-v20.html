@@ -2672,6 +2672,87 @@ function renderFactions(el) {
   }).join('');
 }
 
+// ─────────────────────────────────────────────
+// Fiche détaillée d'une faction (v1.0.100)
+// ─────────────────────────────────────────────
+// Sous-objets des factions jusque-là absents du formulaire (gardés mais non éditables) :
+// identité visuelle, dirigeants, armée, politique, territoire (et comptoir des peuples
+// lointains, v1.0.82), fiche de peuple lointain ; game_design en JSON. Champ : [clé,
+// libellé, genre] ; genre 'area' (texte long), 'list' (une valeur par ligne), 'ville'
+// (liste des villes), 'lieu' (liste des lieux), 'sub' (sous-objet : 4e élément = champs).
+var FACTION_SUBFORM = [
+  { key:'visual_identity', label:'Identité visuelle', fields:[['apparence','Apparence','area'],['architecture','Architecture','area']] },
+  { key:'leadership', label:'Dirigeants', fields:[['title','Titre'],['known_leader','Dirigeant connu'],['statut_nom','Statut du nom'],['description','Description','area']] },
+  { key:'military_structure', label:'Structure militaire', fields:[['description','Description','area']] },
+  { key:'politics', label:'Politique', fields:[['epoque_jeu','À l\'époque du jeu','area'],['relations','Relations','area']] },
+  { key:'territory', label:'Territoire', fields:[['description','Description','area'],['statut','Statut'],['direction','Direction (peuple lointain)'],['climat','Climat'],
+      ['lieu_id','Lieu (lieu_id)','lieu'],['main_city','Ville principale (main_city)','ville'],['presence','Présence (une par ligne)','list'],
+      ['comptoir','Comptoir','sub',[['nom','Nom du comptoir'],['ville_id','Ville du comptoir','ville'],['cell','Case du comptoir']]]] },
+  { key:'fiche_peuple', label:'Fiche du peuple lointain', fields:[['statut','Statut'],['nom_source','Source du nom'],['apparence','Apparence','area'],['culture','Culture','area'],
+      ['architecture','Architecture','area'],['territoire_lointain','Territoire lointain','area'],['climat','Climat','area'],['relations','Relations','area'],['sources','Sources','area']] }
+];
+/// HTML des champs d'un sous-objet de faction (récursif pour 'sub').
+/// \param fields champs (FACTION_SUBFORM) ; \param val valeur actuelle (objet, null ou
+/// absent) ; \param pfx préfixe des identifiants (« fsub_territory »). Pas d'effet de bord.
+function factionSubFieldsHTML(fields, val, pfx) {
+  var o=(val && typeof val==='object') ? val : {};
+  return fields.map(function(f){
+    var id=pfx+'_'+f[0], v=o[f[0]], kind=f[2]||'text';
+    if (kind==='sub') return '<div style="grid-column:1/-1;border-left:2px solid var(--border);padding-left:0.5rem"><div style="font-size:0.66rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.2rem">'+esc(f[1])+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem">'+factionSubFieldsHTML(f[3], v, id)+'</div></div>';
+    var lab='<label class="form-label" style="font-size:0.66rem" for="'+id+'">'+esc(f[1])+'</label>';
+    if (kind==='area') return '<div class="form-group" style="grid-column:1/-1;margin:0">'+lab+'<textarea class="form-textarea fsub-field" id="'+id+'" style="height:52px;font-size:0.8rem">'+esc(typeof v==='string'?v:'')+'</textarea></div>';
+    if (kind==='list') return '<div class="form-group" style="grid-column:1/-1;margin:0">'+lab+'<textarea class="form-textarea fsub-field" id="'+id+'" style="height:52px;font-size:0.8rem">'+esc(Array.isArray(v)?v.join('\n'):'')+'</textarea></div>';
+    if (kind==='ville' || kind==='lieu') {
+      var arr=kind==='ville'?db.villes:db.lieux, cur=typeof v==='string'?v:'';
+      var opts='<option value="">—</option>'+(arr||[]).map(function(r){ return '<option value="'+esc(r.id)+'"'+(r.id===cur?' selected':'')+'>'+esc(r.name||r.id)+(r.cell?' ('+esc(r.cell)+')':'')+'</option>'; }).join('');
+      if (cur && !(arr||[]).some(function(r){ return r.id===cur; })) opts+='<option value="'+esc(cur)+'" selected>'+esc(cur)+' (hors liste)</option>';
+      return '<div class="form-group" style="margin:0">'+lab+'<select class="form-select fsub-field" id="'+id+'" style="font-size:0.8rem">'+opts+'</select></div>';
+    }
+    return '<div class="form-group" style="margin:0">'+lab+'<input class="form-input fsub-field" id="'+id+'" style="font-size:0.8rem" value="'+esc(typeof v==='string'?v:(v===null||v===undefined?'':String(v)))+'"></div>';
+  }).join('');
+}
+/// Lit un sous-objet de faction depuis le formulaire. Un champ vide n'est écrit que si la
+/// fiche d'origine avait la clé (null d'origine gardé null) ; sous-objet sans aucune valeur :
+/// la valeur d'origine si elle était null, sinon undefined (clé non écrite).
+/// \param fields champs ; \param orig valeur d'origine ; \param pfx préfixe des identifiants.
+/// \return objet, null ou undefined. Pas d'effet de bord.
+function factionSubRead(fields, orig, pfx) {
+  var o=(orig && typeof orig==='object' && !Array.isArray(orig)) ? orig : null, out=o ? JSON.parse(JSON.stringify(o)) : {}, any=false;
+  var has=function(k){ return !!o && Object.prototype.hasOwnProperty.call(o, k); };
+  fields.forEach(function(f){
+    var id=pfx+'_'+f[0], kind=f[2]||'text', v;
+    if (kind==='sub') v=factionSubRead(f[3], o?o[f[0]]:undefined, id);
+    else {
+      var el=document.getElementById(id), raw=el?el.value:'';
+      if (kind==='list') v=raw.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+      else v=kind==='area' ? raw.replace(/\s+$/,'') : raw.trim();
+      if (isEmptyFormValue(v)) v=has(f[0]) ? (o[f[0]]===null ? null : v) : undefined;
+    }
+    if (v===undefined) { delete out[f[0]]; return; }
+    out[f[0]]=v; if (!isEmptyFormValue(v)) any=true;
+  });
+  if (!any && !o) return orig===null ? null : undefined;
+  return out;
+}
+/// Bloc « Fiche détaillée » du formulaire de faction (repliable) : sous-objets de
+/// FACTION_SUBFORM et game_design en JSON. \param f fiche (copie). Pas d'effet de bord.
+function factionDetailHTML(f) {
+  var n=FACTION_SUBFORM.filter(function(s){ return f[s.key] && typeof f[s.key]==='object'; }).length+(f.game_design?1:0);
+  return '<details class="faction-detail" style="margin-bottom:0.75rem;border:1px solid var(--border);border-radius:4px;padding:0.35rem 0.5rem">'
+    +'<summary style="cursor:pointer;font-family:Cinzel,serif;font-size:0.7rem;color:var(--text-secondary)">Fiche détaillée ('+n+' bloc'+(n>1?'s':'')+' renseigné'+(n>1?'s':'')+')</summary>'
+    +FACTION_SUBFORM.map(function(s){
+      return '<div style="margin-top:0.45rem"><div style="font-family:Cinzel,serif;font-size:0.62rem;text-transform:uppercase;color:#c9a84c;margin-bottom:0.2rem">'+esc(s.label)+' <span style="color:var(--text-dim);text-transform:none">('+s.key+')</span></div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem">'+factionSubFieldsHTML(s.fields, f[s.key], 'fsub_'+s.key)+'</div></div>';
+    }).join('')
+    +'<div class="form-group" style="margin-top:0.5rem"><label class="form-label" style="font-size:0.66rem">game_design (JSON ; vide = retirer)</label>'
+    +'<textarea class="form-textarea" id="f_game_design" style="height:110px;font-family:monospace;font-size:0.74rem">'+(f.game_design!==undefined?esc(JSON.stringify(f.game_design, null, 2)):'')+'</textarea></div>'
+    +'</details>';
+}
+
+/// Ouvre le formulaire de faction (création ou modification). v1.0.100 : « Fiche détaillée »
+/// (sous-objets et game_design, factionDetailHTML). \param idx index dans db.factions,
+/// undefined pour une création. Effet de bord : DOM de la modale, listes de travail, base du formulaire.
 function openFactionForm(idx) {
   var isEdit = idx !== undefined;
   var f = isEdit ? JSON.parse(JSON.stringify(db.factions[idx])) : { id:'', name:'', type:'', alignment:'', playable:true, notes:[], faction_relations:[], ville_relations:[] };
@@ -2719,6 +2800,7 @@ function openFactionForm(idx) {
     '<div id="factionRegionsList"></div></div>' +
     '<div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">' +
     '<input type="checkbox" id="f_playable"' + (f.playable?' checked':'') + ' style="accent-color:var(--accent-gold)"> Jouable</label></div>' +
+    factionDetailHTML(f) +
     '<div class="form-group"><label class="form-label">Notes</label>' +
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">' +
     '<button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>' +
@@ -2830,9 +2912,12 @@ function renderVilleRelationsList() {
 /// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
 /// Effet de bord : db.factions, ferme la modale, re-rendu de la section.
+/// v1.0.100 : écrit aussi les sous-objets de la fiche détaillée (visual_identity,
+/// leadership, military_structure, politics, territory, fiche_peuple) et game_design
+/// (JSON invalide refusé).
 function saveFaction(idx) {
-  // Préserve les champs riches (visual_identity, leadership, territory, politics,
-  // game_design…) absents de ce formulaire.
+  // Champs riches : édités dans la « Fiche détaillée » (v1.0.100) ; les clés inconnues
+  // des sous-objets sont gardées.
   var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.factions[idx])) : {};
   var obj = Object.assign(base, {
     id:        document.getElementById('f_id').value.trim(),
@@ -2847,8 +2932,18 @@ function saveFaction(idx) {
     faction_relations: window._currentFactionRelations.slice(),
     ville_relations:   window._currentVilleRelations.slice()
   });
+  // v1.0.100 : sous-objets de la fiche détaillée et game_design (JSON).
+  var fOrig = idx!==undefined ? db.factions[idx] : {};
+  FACTION_SUBFORM.forEach(function(sf){
+    var v = factionSubRead(sf.fields, fOrig[sf.key], 'fsub_'+sf.key);
+    if (v===undefined) delete obj[sf.key]; else obj[sf.key]=v;
+  });
+  var gdTxt = (document.getElementById('f_game_design')||{value:''}).value.trim(), gdErr='';
+  if (!gdTxt) delete obj.game_design;
+  else { try { obj.game_design = JSON.parse(gdTxt); } catch(e) { gdErr = 'game_design : JSON invalide ('+e.message+')'; } }
   formCapture(obj, idx!==undefined ? db.factions[idx] : null); // v1.0.98 : base du formulaire (capture)
   if (!obj.id || !obj.name) { toast('ID et Nom obligatoires'); return; }
+  if (gdErr) { toast(gdErr); return; }
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.factions,idx);if(dupW.length){toast(dupW[0]);return;}
   var prev = currentSection;
   if (idx !== undefined) db.factions[idx] = formMerge(db.factions[idx], obj); else db.factions.push(formNew(db.factions, obj));
@@ -2858,7 +2953,7 @@ function saveFaction(idx) {
   toast(idx !== undefined ? 'Faction modifiée' : 'Faction ajoutée');
 }
 function deleteFaction(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.factions[idx].name + '&nbsp;&raquo; ?', function(){ db.factions.splice(idx,1); showSection('factions'); toast('Faction supprimée'); });
+  confirmDeleteRef(db.factions[idx], 'Supprimer &laquo;&nbsp;' + db.factions[idx].name + '&nbsp;&raquo; ?', function(){ db.factions.splice(idx,1); showSection('factions'); toast('Faction supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -3089,7 +3184,7 @@ function saveClass(idx) {
   closeModal(); showSection('classes'); toast(idx!==undefined?'Classe modifiée':'Classe ajoutée');
 }
 function deleteClass(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.classes[idx].name + '&nbsp;&raquo; ?', function(){ db.classes.splice(idx,1); showSection('classes'); toast('Classe supprimée'); });
+  confirmDeleteRef(db.classes[idx], 'Supprimer &laquo;&nbsp;' + db.classes[idx].name + '&nbsp;&raquo; ?', function(){ db.classes.splice(idx,1); showSection('classes'); toast('Classe supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -3164,7 +3259,7 @@ function saveCompanion(idx) {
   closeModal(); showSection('companions'); toast(idx!==undefined?'Compagnon modifié':'Compagnon ajouté');
 }
 function deleteCompanion(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.companions[idx].name + '&nbsp;&raquo; ?', function(){ db.companions.splice(idx,1); showSection('companions'); toast('Compagnon supprimé'); });
+  confirmDeleteRef(db.companions[idx], 'Supprimer &laquo;&nbsp;' + db.companions[idx].name + '&nbsp;&raquo; ?', function(){ db.companions.splice(idx,1); showSection('companions'); toast('Compagnon supprimé'); });
 }
 
 // ─────────────────────────────────────────────
@@ -3229,6 +3324,9 @@ function renderRaces(el) {
   }).join('');
 }
 
+/// Ouvre le formulaire de race (création ou modification). v1.0.100 : accès aux classes
+/// (class_access) et notes de chaque affiliation éditables. \param idx index dans db.races,
+/// undefined pour une création. Effet de bord : DOM de la modale, listes de travail, base du formulaire.
 function openRaceForm(idx) {
   var isEdit = idx !== undefined;
   var r = isEdit ? JSON.parse(JSON.stringify(db.races[idx])) :
@@ -3238,6 +3336,9 @@ function openRaceForm(idx) {
   window._currentTraits    = (r.abilities_traits||[]).slice();
   window._currentHomelands = ((r.origins&&r.origins.homeland_notes)||[]).slice();
   window._currentAffils    = JSON.parse(JSON.stringify(r.faction_affiliations||[]));
+  window._currentRaceClasses = (Array.isArray(r.class_access)?r.class_access:[]).slice(); // v1.0.100
+  var rcOpts = '<option value="">Choisir une classe…</option>';
+  (db.classes||[]).forEach(function(c){ rcOpts += '<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>'; });
 
   var facOpts = '<option value="">Choisir une faction…</option>';
   (db.factions||[]).forEach(function(f){ facOpts += '<option value="' + esc(f.id) + '">' + esc(f.name) + (f.playable?'':' ⊘') + '</option>'; });
@@ -3287,6 +3388,9 @@ function openRaceForm(idx) {
     '<option value="exclusive_allies">Allié exclusif</option><option value="controlled_allies">Allié contrôlé</option>' +
     '</select><button class="btn btn-primary btn-sm" onclick="addAffil()">+</button></div>' +
     '<div id="affiliList"></div></div>' +
+    '<div class="form-group"><label class="form-label">Accès aux classes <span style="font-size:0.68rem;color:var(--text-dim)">(class_access)</span></label>' +
+    '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="raceClassSel">' + rcOpts + '</select>' +
+    '<button class="btn btn-primary btn-sm" onclick="addRaceClass()">+</button></div><div id="raceClassList"></div></div>' +
     '<div class="form-group"><label class="form-label">Notes</label>' +
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">' +
     '<button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>' +
@@ -3295,7 +3399,7 @@ function openRaceForm(idx) {
   renderNotesList();
   renderSimpleList('homelandList', window._currentHomelands, '_currentHomelands');
   renderSimpleList('traitList', window._currentTraits, '_currentTraits');
-  renderAffilList();
+  renderAffilList(); renderRaceClassList();
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>' +
     '<button class="btn btn-gold" onclick="saveRace(' + (isEdit?idx:'undefined') + ')">💾 Enregistrer</button>';
@@ -3314,16 +3418,41 @@ function addAffil() {
   document.getElementById('affiliFactionSel').value='';
   renderAffilList();
 }
+/// Liste des factions affiliées du formulaire de race. v1.0.100 : les notes de chaque
+/// affiliation (faction_affiliations[].notes) s'éditent dans une zone (une note par ligne).
+/// Effet de bord : DOM (#affiliList) ; les saisies écrivent dans window._currentAffils.
 function renderAffilList() {
   var el=document.getElementById('affiliList'); if(!el) return;
   var arr=window._currentAffils||[];
   if(!arr.length){ el.innerHTML='<div style="padding:0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune affiliation</div>'; return; }
   el.innerHTML=arr.map(function(a,i){
     var f=(db.factions||[]).find(function(x){return x.id===a.faction_id;}); var col=factionColor(a.faction_id); var isNP=f&&!f.playable;
-    return '<div class="note-edit-item"><span style="color:' + col + (isNP?';opacity:0.6':'') + '">⬡ ' + esc(f?f.name:a.faction_id) + (isNP?' ⊘':'') + '</span>' +
+    return '<div class="note-edit-item" style="flex-wrap:wrap"><span style="color:' + col + (isNP?';opacity:0.6':'') + '">⬡ ' + esc(f?f.name:a.faction_id) + (isNP?' ⊘':'') + '</span>' +
       '<span style="font-size:0.75rem;color:var(--text-dim)">' + esc(a.status) + '</span>' +
-      '<button class="note-del-btn" onclick="window._currentAffils.splice(' + i + ',1);renderAffilList()">✕</button></div>';
+      '<button class="note-del-btn" onclick="window._currentAffils.splice(' + i + ',1);renderAffilList()">✕</button>' +
+      '<textarea class="form-textarea affil-notes" style="flex:0 0 100%;height:38px;font-size:0.76rem;margin-top:0.2rem" placeholder="Notes de l\'affiliation (une par ligne)" oninput="affilNotesSet(' + i + ',this.value)">' + esc(Array.isArray(a.notes)?a.notes.join('\n'):'') + '</textarea></div>';
   }).join('');
+}
+/// Notes de l'affiliation i (une par ligne, lignes vides ignorées).
+/// \param i rang dans window._currentAffils ; \param txt texte saisi. Effet de bord : window._currentAffils.
+function affilNotesSet(i, txt) {
+  var a=(window._currentAffils||[])[i]; if (!a) return;
+  a.notes=String(txt).split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+}
+/// Ajoute la classe choisie (#raceClassSel) à l'accès aux classes de la race (refus si déjà
+/// présente). Effet de bord : window._currentRaceClasses, DOM.
+function addRaceClass() {
+  var sel=document.getElementById('raceClassSel'), v=sel?sel.value:''; if (!v) return;
+  if (window._currentRaceClasses.indexOf(v)!==-1) { toast('Classe déjà présente'); return; }
+  window._currentRaceClasses.push(v); sel.value=''; renderRaceClassList();
+}
+/// Liste « Accès aux classes » du formulaire de race (#raceClassList). Effet de bord : DOM.
+function renderRaceClassList() {
+  var el=document.getElementById('raceClassList'); if (!el) return;
+  var arr=window._currentRaceClasses||[];
+  if (!arr.length) { el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune classe</div>'; return; }
+  el.innerHTML=arr.map(function(id,i){ var c=(db.classes||[]).find(function(x){ return x.id===id; });
+    return '<div class="note-edit-item"><span style="color:#c9a84c">⚔️ '+esc(c?c.name:id)+(c?'':' (inconnue)')+'</span><button class="note-del-btn" onclick="window._currentRaceClasses.splice('+i+',1);renderRaceClassList()">✕</button></div>'; }).join('');
 }
 function renderSimpleList(listId,arr,arrKey) {
   var el=document.getElementById(listId); if(!el) return;
@@ -3339,6 +3468,7 @@ function renderSimpleList(listId,arr,arrKey) {
 /// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
 /// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// v1.0.100 : class_access et notes des affiliations viennent du formulaire.
 /// Effet de bord : db.races, ferme la modale, re-rendu de la section.
 function saveRace(idx) {
   var obj = {
@@ -3348,7 +3478,7 @@ function saveRace(idx) {
     origins:{summary:r_summary.value.trim(), homeland_notes:window._currentHomelands.slice()},
     faction_affiliations:window._currentAffils.slice(),
     abilities_traits:window._currentTraits.slice(),
-    class_access:(idx!==undefined?(db.races[idx].class_access||[]):[]),
+    class_access:(window._currentRaceClasses||[]).slice(), // v1.0.100 : éditable
     notes:window._currentNotes.slice()
   };
   // safe id access
@@ -3365,7 +3495,7 @@ function saveRace(idx) {
   closeModal(); showSection('races'); toast(idx!==undefined?'Race modifiée':'Race ajoutée');
 }
 function deleteRace(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.races[idx].name + '&nbsp;&raquo; ?', function(){ db.races.splice(idx,1); showSection('races'); toast('Race supprimée'); });
+  confirmDeleteRef(db.races[idx], 'Supprimer &laquo;&nbsp;' + db.races[idx].name + '&nbsp;&raquo; ?', function(){ db.races.splice(idx,1); showSection('races'); toast('Race supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -3814,7 +3944,7 @@ function saveLieu(idx) {
   closeModal(); showSection('lieux'); toast(idx!==undefined?'Lieu modifié':'Lieu ajouté');
 }
 function deleteLieu(idx) {
-  confirmDelete('Supprimer « '+db.lieux[idx].name+' » ?', function(){ db.lieux.splice(idx,1); showSection('lieux'); toast('Lieu supprimé'); });
+  confirmDeleteRef(db.lieux[idx], 'Supprimer « '+db.lieux[idx].name+' » ?', function(){ db.lieux.splice(idx,1); showSection('lieux'); toast('Lieu supprimé'); });
 }
 
 function renderVilles(el) {
@@ -4260,7 +4390,7 @@ function confirmVilleImport() {
 }
 
 function deleteVille(idx) {
-  confirmDelete('Supprimer « ' + db.villes[idx].name + ' » ?', function(){ db.villes.splice(idx,1); showSection('villes'); toast('Ville supprim\u00e9e'); });
+  confirmDeleteRef(db.villes[idx], 'Supprimer « ' + db.villes[idx].name + ' » ?', function(){ db.villes.splice(idx,1); showSection('villes'); toast('Ville supprim\u00e9e'); });
 }
 
 // ─────────────────────────────────────────────
@@ -4413,7 +4543,7 @@ function saveExploit(idx) {
   closeModal(); showSection('exploits'); toast(idx!==undefined?'Exploit modifié':'Exploit ajouté');
 }
 function deleteExploit(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.exploits[idx].name + '&nbsp;&raquo; ?', function(){ db.exploits.splice(idx,1); showSection('exploits'); toast('Exploit supprimé'); });
+  confirmDeleteRef(db.exploits[idx], 'Supprimer &laquo;&nbsp;' + db.exploits[idx].name + '&nbsp;&raquo; ?', function(){ db.exploits.splice(idx,1); showSection('exploits'); toast('Exploit supprimé'); });
 }
 
 // ─────────────────────────────────────────────
@@ -4591,7 +4721,7 @@ function saveQuest(idx) {
   closeModal(); showSection('quests'); toast(idx!==undefined?'Quête modifiée':'Quête ajoutée');
 }
 function deleteQuest(idx) {
-  confirmDelete('Supprimer &laquo;&nbsp;' + db.quests[idx].name + '&nbsp;&raquo; ?', function(){ db.quests.splice(idx,1); showSection('quests'); toast('Quête supprimée'); });
+  confirmDeleteRef(db.quests[idx], 'Supprimer &laquo;&nbsp;' + db.quests[idx].name + '&nbsp;&raquo; ?', function(){ db.quests.splice(idx,1); showSection('quests'); toast('Quête supprimée'); });
 }
 
 
@@ -4863,7 +4993,7 @@ function saveMount(idx){
   closeModal(); showSection('mounts'); toast(idx!==undefined?'Monture modifi\u00e9e':'Monture ajout\u00e9e');
 }
 function deleteMount(idx){
-  confirmDelete('Supprimer « ' + db.mounts[idx].name + ' » ?', function(){ db.mounts.splice(idx,1); showSection('mounts'); toast('Monture supprim\u00e9e'); });
+  confirmDeleteRef(db.mounts[idx], 'Supprimer « ' + db.mounts[idx].name + ' » ?', function(){ db.mounts.splice(idx,1); showSection('mounts'); toast('Monture supprim\u00e9e'); });
 }
 
 // ─────────────────────────────────────────────
@@ -5071,6 +5201,7 @@ function renderRaids(el) {
     if(r.difficulty) card+=badge(diff.label,diff.color);
     if(r.min_teams) card+=badge('🛡️ '+r.min_teams+' \u00e9quipe'+(r.min_teams>1?'s':''),'#708090');
     if(r.min_players_total>1) card+=badge('👥 '+r.min_players_total+' joueurs min.','#7090c0');
+    if(niveauTxt(r.niveau_ref)) card+=badge('📶 Niv. '+niveauTxt(r.niveau_ref),'#d0a040'); // v1.0.100
     if(r.description) card+='<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.4rem;font-style:italic">'+esc(r.description.substring(0,120))+(r.description.length>120?'\u2026':'')+'</div>';
     var parts=[];
     ((r.required_classes)||[]).forEach(function(cid){var c=(db.classes||[]).find(function(x){return x.id===cid;});if(c)parts.push(badge('★ '+c.name+' requis',classColor(cid)));});
@@ -5092,9 +5223,15 @@ function renderRaids(el) {
     return card+'</div>';
   });
 }
+/// Ouvre le formulaire de raid (création ou modification). v1.0.100 : niveau conseillé
+/// (niveau_ref), avec rappel du niveau du boss qui cite le raid.
+/// \param idx index dans db.raids, undefined pour une création.
+/// Effet de bord : DOM de la modale, listes de travail, base du formulaire.
 function openRaidForm(idx) {
   var isEdit=idx!==undefined;
-  var r=isEdit?JSON.parse(JSON.stringify(db.raids[idx])):{id:'',name:'',description:'',min_teams:2,min_players_per_team:5,min_players_total:10,required_classes:[],for_factions:[],for_races:[],difficulty:'heroic',location_ville_id:'',unlock_conditions:[],rewards:{title:'',reward:'',power:''},notes:[]};
+  var r=isEdit?JSON.parse(JSON.stringify(db.raids[idx])):{id:'',name:'',description:'',min_teams:2,min_players_per_team:5,min_players_total:10,required_classes:[],for_factions:[],for_races:[],difficulty:'heroic',location_ville_id:'',unlock_conditions:[],rewards:{title:'',reward:'',power:''},niveau_ref:null,notes:[]};
+  var rdBoss=null; if (r.id) (db.creatures||[]).forEach(function(cr){ if ((cr.difficulty==='boss'||cr.difficulty==='world_boss') && JSON.stringify(cr).indexOf(r.id)>=0 && (!rdBoss || (cr.level_max||0)>(rdBoss.level_max||0))) rdBoss=cr; });
+  var rdHint = rdBoss ? 'boss : '+esc(rdBoss.name||rdBoss.id)+' (niv. '+esc(String(rdBoss.level_min||'?'))+'-'+esc(String(rdBoss.level_max||'?'))+')' : 'vide : non renseigné';
   window.rdConditions=JSON.parse(JSON.stringify(r.unlock_conditions||[]));
   window._currentNotes=(r.notes||[]).slice();
   window._currentRaidReqClasses=(r.required_classes||[]).slice();
@@ -5120,6 +5257,7 @@ function openRaidForm(idx) {
     '<div class="form-group"><label class="form-label">Nb \u00e9quipes min.</label><input class="form-input" id="rd_teams" type="number" min="1" value="'+(r.min_teams||2)+'" placeholder="2"></div>'+
     '<div class="form-group"><label class="form-label">Joueurs / \u00e9quipe</label><input class="form-input" id="rd_ppt" type="number" min="1" value="'+(r.min_players_per_team||5)+'" placeholder="5"></div>'+
     '<div class="form-group"><label class="form-label">Total joueurs min.</label><input class="form-input" id="rd_total" type="number" min="1" value="'+(r.min_players_total||10)+'" placeholder="10"></div></div>'+
+    '<div class="form-group"><label class="form-label">Niveau conseillé <span style="font-size:0.68rem;color:var(--text-dim)">(niveau_ref)</span></label>'+niveauInputsHTML('rd', r.niveau_ref, rdHint)+'</div>'+
     '<div class="form-group"><label class="form-label">Ville / Localisation</label><select class="form-select" id="rd_ville">'+vOpts+'</select></div>'+
     '<div class="form-group"><label class="form-label">Classe(s) requise(s) <span style="font-size:0.7rem;color:var(--text-dim)">(obligatoires dans l\u0027\u00e9quipe)</span></label>'+
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="rdClsSel">'+cOpts+'</select><button class="btn btn-primary btn-sm" onclick="addRaidReqClass()">+</button></div><div id="rdClsList"></div></div>'+
@@ -5176,8 +5314,10 @@ function renderRaidTargetList(type){
 /// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
 /// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// v1.0.100 : écrit aussi niveau_ref ({min, max} ou null) ; fourchette invalide refusée.
 /// Effet de bord : db.raids, ferme la modale, re-rendu de la section.
 function saveRaid(idx){
+  var nr=niveauFromInputs('rd');
   var obj={id:document.getElementById('rd_id').value.trim(), name:document.getElementById('rd_name').value.trim(),
     description:document.getElementById('rd_desc').value.trim(),
     difficulty:document.getElementById('rd_diff').value,
@@ -5190,16 +5330,123 @@ function saveRaid(idx){
     for_factions:window._currentRaidFactions.slice(), for_races:window._currentRaidRaces.slice(),
     rewards:{title:document.getElementById('rd_rew_title').value.trim(),reward:document.getElementById('rd_rew_reward').value.trim(),power:document.getElementById('rd_rew_power').value.trim()},
     unlock_conditions:(window.rdConditions||[]).slice(),
+    niveau_ref:nr.value,
     notes:window._currentNotes.slice()};
   formCapture(obj, idx!==undefined ? db.raids[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  if(nr.err){toast('Niveau conseillé : '+nr.err);return;}
   if(idx!==undefined) db.raids[idx]=formMerge(db.raids[idx], obj); else db.raids.push(formNew(db.raids, obj));
   closeModal(); showSection('raids'); toast(idx!==undefined?'Raid modifi\u00e9':'Raid ajout\u00e9');
 }
 function deleteRaid(idx){
-  confirmDelete('Supprimer « ' + db.raids[idx].name + ' » ?', function(){ db.raids.splice(idx,1); showSection('raids'); toast('Raid supprim\u00e9'); });
+  confirmDeleteRef(db.raids[idx], 'Supprimer « ' + db.raids[idx].name + ' » ?', function(){ db.raids.splice(idx,1); showSection('raids'); toast('Raid supprim\u00e9'); });
 }
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Niveaux structurés (v1.0.100)
+// ─────────────────────────────────────────────
+// niveau_ref {min, max} (regions, raids) : niveau de référence, null = non renseigné.
+// niveau_par_faction {faction_id: {min, max}} (regions) : niveau propre à une faction
+// (rule_niveaux_par_faction), vide tant que le détail n'est pas décidé ; prime sur
+// niveau_ref pour la faction choisie dans le calque Niveaux.
+
+/// Texte « a-b » (ou « a » si min = max) d'une fourchette de niveaux ; '' si absente
+/// ou incomplète. \param n objet {min, max} (niveau_ref ou valeur de niveau_par_faction).
+/// Pas d'effet de bord.
+function niveauTxt(n) {
+  if (!n || typeof n!=='object' || n.min===undefined || n.max===undefined || n.min===null || n.max===null) return '';
+  var a=+n.min, b=+n.max; if (!isFinite(a) || !isFinite(b)) return '';
+  return a===b ? String(a) : a+'-'+b;
+}
+/// Lit une fourchette de niveaux saisie dans deux champs nombre (formulaires de région,
+/// de raid et lignes « niveaux par faction »).
+/// \param a texte du minimum ; \param b texte du maximum ; deux textes vides = null
+/// (non renseigné). Niveaux entiers de 1 à 100, min ≤ max.
+/// \return { value: {min, max} | null, err: '' | message }. Pas d'effet de bord.
+function niveauParse(a, b) {
+  a=String(a===undefined||a===null?'':a).trim(); b=String(b===undefined||b===null?'':b).trim();
+  if (a==='' && b==='') return { value:null, err:'' };
+  if (a==='' || b==='') return { value:null, err:'renseigner le minimum et le maximum (ou aucun des deux)' };
+  if (!/^\d{1,3}$/.test(a) || !/^\d{1,3}$/.test(b)) return { value:null, err:'nombres entiers de 1 à 100' };
+  var mi=parseInt(a,10), ma=parseInt(b,10);
+  if (mi<1 || ma<1 || mi>100 || ma>100) return { value:null, err:'nombres entiers de 1 à 100' };
+  if (mi>ma) return { value:null, err:'le minimum dépasse le maximum' };
+  return { value:{ min:mi, max:ma }, err:'' };
+}
+/// Lit la fourchette des champs <pfx>_nmin / <pfx>_nmax d'un formulaire (niveauParse).
+/// \param pfx préfixe des identifiants (rg, rd). Pas d'effet de bord.
+function niveauFromInputs(pfx) {
+  var a=document.getElementById(pfx+'_nmin'), b=document.getElementById(pfx+'_nmax');
+  return niveauParse(a?a.value:'', b?b.value:'');
+}
+/// Bloc HTML de saisie d'une fourchette de niveaux (deux champs nombre « min » / « max »).
+/// \param pfx préfixe des identifiants (<pfx>_nmin, <pfx>_nmax) ; \param n valeur actuelle
+/// ({min, max} ou null) ; \param hint aide affichée à droite (HTML déjà échappé).
+/// Pas d'effet de bord.
+function niveauInputsHTML(pfx, n, hint) {
+  var v=function(k){ return (n && typeof n==='object' && n[k]!==undefined && n[k]!==null) ? esc(String(n[k])) : ''; };
+  return '<div style="display:flex;gap:0.45rem;align-items:center;flex-wrap:wrap">'
+    +'<input class="form-input" id="'+pfx+'_nmin" type="number" min="1" max="100" step="1" value="'+v('min')+'" placeholder="min" style="width:86px">'
+    +'<span style="color:var(--text-dim)">à</span>'
+    +'<input class="form-input" id="'+pfx+'_nmax" type="number" min="1" max="100" step="1" value="'+v('max')+'" placeholder="max" style="width:86px">'
+    +(hint?'<span style="font-size:0.72rem;color:var(--text-dim)">'+hint+'</span>':'')+'</div>';
+}
+
+// Lignes de travail de l'éditeur « niveaux par faction » du formulaire de région :
+// [{ f: faction_id, min: texte, max: texte, extra: autres clés de la valeur d'origine }].
+window._regionNpf = [];
+/// Affiche le tableau faction → min / max du formulaire de région (#rgNpfList). Chaque
+/// saisie écrit dans window._regionNpf (sans re-rendu, le focus reste dans le champ).
+/// Effet de bord : DOM (#rgNpfList).
+function renderRegionNpf() {
+  var el=document.getElementById('rgNpfList'); if (!el) return;
+  var rows=window._regionNpf||[];
+  if (!rows.length) { el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune valeur par faction (niveau de référence pour toutes)</div>'; return; }
+  el.innerHTML='<table class="rg-npf" style="width:100%;border-collapse:collapse;font-size:0.82rem">'
+    +'<tr style="color:var(--text-dim);font-size:0.7rem;text-align:left"><th style="padding:0.15rem 0.3rem">Faction</th><th>Min</th><th>Max</th><th></th></tr>'
+    +rows.map(function(r, i){
+      var f=(db.factions||[]).find(function(x){ return x.id===r.f; });
+      return '<tr><td style="padding:0.15rem 0.3rem;color:'+factionColor(r.f)+'">⚜️ '+esc(f?f.name:r.f)+(f?'':' <span style="color:#e07070">(inconnue)</span>')+'</td>'
+        +'<td><input class="form-input rg-npf-min" type="number" min="1" max="100" step="1" style="width:76px" value="'+esc(r.min)+'" oninput="window._regionNpf['+i+'].min=this.value"></td>'
+        +'<td><input class="form-input rg-npf-max" type="number" min="1" max="100" step="1" style="width:76px" value="'+esc(r.max)+'" oninput="window._regionNpf['+i+'].max=this.value"></td>'
+        +'<td><button class="note-del-btn" title="Retirer cette faction" onclick="window._regionNpf.splice('+i+',1);renderRegionNpf()">✕</button></td></tr>';
+    }).join('')+'</table>';
+}
+/// Ajoute une ligne pour la faction choisie dans #rgNpfSel (refusée si absente ou déjà
+/// présente). Effet de bord : window._regionNpf, DOM.
+function regionNpfAdd() {
+  var sel=document.getElementById('rgNpfSel'), fid=sel?sel.value:'';
+  if (!fid) { toast('Choisissez une faction'); return; }
+  if ((window._regionNpf||[]).some(function(r){ return r.f===fid; })) { toast('Faction déjà présente'); return; }
+  window._regionNpf.push({ f:fid, min:'', max:'', extra:null }); sel.value=''; renderRegionNpf();
+}
+/// Objet niveau_par_faction construit depuis les lignes de travail (ordre des lignes ;
+/// clés inconnues d'une valeur d'origine gardées).
+/// \return { value: {faction_id: {min, max}}, err: '' | message }. Pas d'effet de bord.
+function regionNpfRead() {
+  var out={}, err='';
+  (window._regionNpf||[]).forEach(function(r){
+    if (err) return;
+    var p=niveauParse(r.min, r.max);
+    if (p.err || !p.value) { err='Niveau de la faction '+r.f+' : '+(p.err||'renseigner le minimum et le maximum'); return; }
+    var v=Object.assign({}, r.extra||{}); v.min=p.value.min; v.max=p.value.max; out[r.f]=v;
+  });
+  return { value:out, err:err };
+}
+/// Niveau de référence d'une fiche de région pour le calque Niveaux : champ niveau_ref
+/// (v1.0.100) ; fiche sans ce champ (fichier antérieur à la v1.0.100) : table de secours
+/// CARTE_NIVEAUX_REF. \param rg fiche de regions.
+/// \return { min, max, src } ou null (non renseigné). Pas d'effet de bord.
+function carteRegionNiveau(rg) {
+  if (!rg) return null;
+  if (Object.prototype.hasOwnProperty.call(rg, 'niveau_ref')) {
+    if (!niveauTxt(rg.niveau_ref)) return null;
+    return { min:+rg.niveau_ref.min, max:+rg.niveau_ref.max, src:'Fiche « '+(rg.name||rg.id)+' » (niveau_ref)' };
+  }
+  var t=CARTE_NIVEAUX_REF[rg.id];
+  return t ? { min:t.min, max:t.max, src:'Table de secours de l\'éditeur (fiche sans niveau_ref) : '+t.src, secours:true } : null;
+}
+
 // ─────────────────────────────────────────────
 // Régions
 // ─────────────────────────────────────────────
@@ -5239,6 +5486,9 @@ function renderRegions(el) {
     else if(rg.type==='region_hs'){ var provs=(db.regions||[]).filter(function(x){return x.type==='province'&&x.parent_region===rg.id;});
       card += '<div style="margin-top:0.3rem">'+badge('Région du hors-série'+(rg.nom_hs&&rg.nom_hs!==rg.name?' « '+esc(rg.nom_hs)+' »':''), col)
         +(provs.length?' <span style="font-size:0.72rem;color:var(--text-dim)">Provinces : '+provs.map(function(x){return esc(x.name);}).join(', ')+'</span>':'')+'</div>'; }
+    // Niveau de référence (v1.0.100) et nombre de valeurs par faction.
+    var rgNpf=rg.niveau_par_faction&&typeof rg.niveau_par_faction==='object'?Object.keys(rg.niveau_par_faction).length:0;
+    if(niveauTxt(rg.niveau_ref)||rgNpf) card += '<div style="margin-top:0.3rem">'+(niveauTxt(rg.niveau_ref)?badge('📶 Niv. '+niveauTxt(rg.niveau_ref),'#d0a040'):'')+(rgNpf?badge('⚜️ '+rgNpf+' niveau'+(rgNpf>1?'x':'')+' par faction','#9060c0'):'')+'</div>';
     if(rg.description) card += '<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;font-style:italic">'+esc(rg.description.substring(0,120))+(rg.description.length>120?'…':'')+'</div>';
     // Taille estimée d'après le nombre de cellules rattachées à la région.
     var nCells = cellCountByRegion[rg.id]||0;
@@ -5264,10 +5514,22 @@ function renderRegions(el) {
     return card+'</div>';
   }).join('');
 }
+/// Ouvre le formulaire de région (création ou modification). v1.0.100 : niveau de référence
+/// (niveau_ref) et tableau des niveaux par faction (niveau_par_faction).
+/// \param idx index dans db.regions, undefined pour une création.
+/// Effet de bord : DOM de la modale, listes de travail (_currentNotes, _regionNpf), base du formulaire.
 function openRegionForm(idx) {
   var isEdit = idx!==undefined;
-  var rg = isEdit ? JSON.parse(JSON.stringify(db.regions[idx])) : {id:'',name:'',description:'',notes:[]};
+  var rg = isEdit ? JSON.parse(JSON.stringify(db.regions[idx])) : {id:'',name:'',description:'',notes:[],niveau_ref:null,niveau_par_faction:{}};
   window._currentNotes = toArr(rg.notes).slice();
+  var npf = (rg.niveau_par_faction && typeof rg.niveau_par_faction==='object') ? rg.niveau_par_faction : {};
+  window._regionNpf = Object.keys(npf).map(function(fid){ var v=npf[fid]||{}, ex={};
+    Object.keys(v).forEach(function(k){ if (k!=='min'&&k!=='max') ex[k]=v[k]; });
+    return { f:fid, min:(v.min===undefined||v.min===null)?'':String(v.min), max:(v.max===undefined||v.max===null)?'':String(v.max), extra:ex }; });
+  var prg = rg.type==='province' ? (db.regions||[]).find(function(x){ return x.id===rg.parent_region; }) : null;
+  var nHint = prg ? 'vide : niveau de la région parente'+(niveauTxt(prg.niveau_ref)?' ('+esc(niveauTxt(prg.niveau_ref))+')':'') : 'vide : non renseigné';
+  var npfOpts = '<option value="">Ajouter une faction…</option>';
+  (db.factions||[]).forEach(function(f){ npfOpts += '<option value="'+esc(f.id)+'">'+esc(f.name||f.id)+(f.playable?'':' ⊘')+'</option>'; });
 
   document.getElementById('modalTitle').textContent = isEdit?'Modifier la Région':'Nouvelle Région';
   document.getElementById('modalBody').innerHTML =
@@ -5280,13 +5542,18 @@ function openRegionForm(idx) {
     [['','—'],['region_hs','Région du hors-série'],['region','Région (hors hors-série)'],['province','Province']].map(function(t){return '<option value="'+t[0]+'"'+((rg.type||'')===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></div>'+
     '<div class="form-group"><label class="form-label">Région parente (province)</label><select class="form-select" id="rg_parent"><option value="">—</option>'+
     (db.regions||[]).filter(function(x){return x.id!==rg.id&&x.type!=='province';}).map(function(x){return '<option value="'+esc(x.id)+'"'+(rg.parent_region===x.id?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></div></div>'+
+    '<div class="form-group"><label class="form-label">Niveau de référence <span style="font-size:0.68rem;color:var(--text-dim)">(niveau_ref, toutes factions)</span></label>'+
+    niveauInputsHTML('rg', rg.niveau_ref, nHint)+'</div>'+
+    '<div class="form-group"><label class="form-label">Niveaux par faction <span style="font-size:0.68rem;color:var(--text-dim)">(niveau_par_faction, optionnel : prime sur la référence pour la faction ; détail à définir, rule_niveaux_par_faction)</span></label>'+
+    '<div id="rgNpfList"></div><div style="display:flex;gap:0.4rem;margin-top:0.3rem"><select class="form-select" id="rgNpfSel">'+npfOpts+'</select>'+
+    '<button class="btn btn-primary btn-sm" onclick="regionNpfAdd()">+ Faction</button></div></div>'+
     '<div class="form-group"><label class="form-label">Description</label>'+
     '<textarea class="form-textarea" id="rg_desc" style="height:70px" placeholder="Décrivez la région…">'+esc(rg.description||'')+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Notes</label>'+
     '<div class="notes-editor"><div class="note-input-row"><input type="text" id="noteInput" placeholder="Ajouter une note…">'+
     '<button class="btn btn-primary btn-sm" onclick="addCurrentNote()">+ Ajouter</button></div>'+
     '<div class="notes-list-edit" id="notesList"></div></div></div>';
-  renderNotesList();
+  renderNotesList(); renderRegionNpf();
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
     '<button class="btn btn-gold" onclick="saveRegion('+(isEdit?idx:'undefined')+')">💾 Enregistrer</button>';
@@ -5301,22 +5568,28 @@ function openRegionForm(idx) {
 /// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
 /// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// v1.0.100 : écrit aussi niveau_ref ({min, max} ou null) et niveau_par_faction ; une
+/// fourchette incomplète ou inversée est refusée (message), rien n'est enregistré.
 /// Effet de bord : db.regions, ferme la modale, re-rendu de la section.
 function saveRegion(idx) {
   var base = (idx!==undefined) ? JSON.parse(JSON.stringify(db.regions[idx])) : {};
+  var nr = niveauFromInputs('rg'), npf = regionNpfRead();
   var obj = Object.assign(base, {id:document.getElementById('rg_id').value.trim(), name:document.getElementById('rg_name').value.trim(),
     description:document.getElementById('rg_desc').value.trim(),
-    notes:window._currentNotes.slice()});
+    notes:window._currentNotes.slice(),
+    niveau_ref:nr.value, niveau_par_faction:npf.value});
   var ty=document.getElementById('rg_type').value, par=document.getElementById('rg_parent').value;
   if(ty) obj.type=ty; else delete obj.type;
   if(ty==='province'){ if(!par){toast('Une province doit avoir une région parente');return;} obj.parent_region=par; } else delete obj.parent_region;
   formCapture(obj, idx!==undefined ? db.regions[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
+  if(nr.err){toast('Niveau de référence : '+nr.err);return;}
+  if(npf.err){toast(npf.err);return;}
   if(idx!==undefined) db.regions[idx]=formMerge(db.regions[idx], obj); else db.regions.push(formNew(db.regions, obj));
   closeModal(); showSection('regions'); toast(idx!==undefined?'Région modifiée':'Région ajoutée');
 }
 function deleteRegion(idx) {
-  confirmDelete('Supprimer « '+db.regions[idx].name+' » ?', function(){ db.regions.splice(idx,1); showSection('regions'); toast('Région supprimée'); });
+  confirmDeleteRef(db.regions[idx], 'Supprimer « '+db.regions[idx].name+' » ?', function(){ db.regions.splice(idx,1); showSection('regions'); toast('Région supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -5433,7 +5706,8 @@ window._carteState.villeTaillesOff = window._carteState.villeTaillesOff || {};
 /// calques, sous-filtres de types de lieux et de tailles de villes ; les calques secrets
 /// restent désactivés. Sans stockage disponible (navigation privée, fichier local
 /// bloqué) ou valeur illisible : valeurs par défaut, sans erreur.
-/// Effet de bord : window._carteState.filters / lieuTypesOff / villeTaillesOff.
+/// v1.0.100 : aussi la faction du calque Niveaux (niveauFaction).
+/// Effet de bord : window._carteState.filters / lieuTypesOff / villeTaillesOff / niveauFaction.
 function carteLayersLoad() {
   var saved=null;
   try { saved=JSON.parse(window.localStorage.getItem(CARTE_LAYERS_STORE)||'null'); } catch(e) { saved=null; }
@@ -5444,16 +5718,18 @@ function carteLayersLoad() {
   });
   st.lieuTypesOff={}; (Array.isArray(saved.lieuTypesOff)?saved.lieuTypesOff:[]).forEach(function(t){ st.lieuTypesOff[String(t)]=true; });
   st.villeTaillesOff={}; (Array.isArray(saved.villeTaillesOff)?saved.villeTaillesOff:[]).forEach(function(t){ st.villeTaillesOff[String(t)]=true; });
+  st.niveauFaction=typeof saved.niveauFaction==='string' ? saved.niveauFaction : ''; // v1.0.100
 }
-/// Mémorise l'état des calques (localStorage, sans les calques secrets) ; échec silencieux.
-/// Effet de bord : localStorage seulement.
+/// Mémorise l'état des calques (localStorage, sans les calques secrets) et la faction du
+/// calque Niveaux (v1.0.100) ; échec silencieux. Effet de bord : localStorage seulement.
 function carteLayersSave() {
   var st=window._carteState, f={};
   Object.keys(st.filters).forEach(function(k){ if (CARTE_LAYER_SECRETS.indexOf(k)<0) f[k]=!!st.filters[k]; });
   try {
     window.localStorage.setItem(CARTE_LAYERS_STORE, JSON.stringify({ v:1, filters:f,
       lieuTypesOff:Object.keys(st.lieuTypesOff).filter(function(k){ return st.lieuTypesOff[k]; }),
-      villeTaillesOff:Object.keys(st.villeTaillesOff).filter(function(k){ return st.villeTaillesOff[k]; }) }));
+      villeTaillesOff:Object.keys(st.villeTaillesOff).filter(function(k){ return st.villeTaillesOff[k]; }),
+      niveauFaction:st.niveauFaction||'' }));
   } catch(e) { /* stockage indisponible : l'état reste pour la session */ }
 }
 // Cases jouables (generated_cells de world_master.json) : { cells:{id:true}, count, source } ou null.
@@ -6909,13 +7185,11 @@ function carteFit() {
 // carte. Aucun calque ne modifie db : ce sont des vues calculées à partir des fiches
 // (carteBuildLayers, appelé par carteComputeGeo) ; l'export n'est pas touché.
 
-// Niveau de référence par région ou province. Les niveaux ne sont pas un champ structuré
-// du lore : ils sont écrits dans les notes des régions et des règles (regle_bestiaire_echelles,
-// rule_niveaux_par_faction, LORE_BD §16.14-16.21). Cette table les reprend, source à
-// l'appui ; à tenir à jour si un repère change (ou à remplacer par un champ niveau_ref
-// des fiches regions, proposé en LORE_BD §16.28). Une province sans entrée prend le niveau
-// de sa région ; une région sans entrée est « non renseignée » (Royaume des nains du sud
-// hors provinces, Hishtarland).
+// Table de SECOURS (v1.0.100) : depuis la v1.0.100, le niveau de référence est le champ
+// niveau_ref des fiches regions (carteRegionNiveau), rempli d'après cette table. Elle ne
+// sert plus que pour une fiche sans champ niveau_ref (fichier antérieur à la v1.0.100) ;
+// ne plus la tenir à jour. Repères d'origine : notes des régions et des règles
+// (regle_bestiaire_echelles, rule_niveaux_par_faction, LORE_BD §16.14-16.21).
 var CARTE_NIVEAUX_REF = {
   terres_des_gigantomorphes: { min:30, max:56, src:'regle_bestiaire_echelles : Terres des Gigantomorphes 30-56' },
   foret_elfique:             { min:10, max:30, src:'LORE_BD §16.14 : Forêt elfique 10-30 (forêts et plaines de l\'intérieur)' },
@@ -6954,14 +7228,16 @@ var CARTE_TAILLE_ORDER = ['capitale','grande_ville','ville','forteresse','villag
 // { x, y, r, html, quests? } (quests = ids de quêtes dont le tracé s'affiche au survol).
 var _carteLayerHits = [];
 
-/// Calcule l'index des calques à partir de db (aucune écriture) : niveaux et densité par
-/// case, quêtes ancrées (cases de leurs villes / lieux cités dans source_lore, dans l'ordre),
+/// Calcule l'index des calques à partir de db (aucune écriture) : niveaux (v1.0.100 : champs
+/// niveau_ref et niveau_par_faction des fiches, faction de _carteState.niveauFaction) et
+/// densité par case, quêtes ancrées (étapes situées etapes_struct, sinon villes / lieux cités
+/// dans source_lore, dans l'ordre),
 /// raids (case, niveau), balises de danger, lieux secrets (grottes des dragons de Xygga,
 /// entrées ophidiennes), peuples lointains et comptoirs, provinces et centres des régions.
 /// Appelée par carteComputeGeo (rendu de la section, après chaque action de la carte).
 /// \return objet d'index (voir les champs initialisés ci-dessous). Pas d'effet de bord.
 function carteBuildLayers() {
-  var L = { niveau:{}, densite:{}, densMax:0, quetesByCell:{}, quetePaths:{}, quetesAncrees:0, quetesTotal:0,
+  var L = { niveau:{}, densite:{}, densMax:0, quetesByCell:{}, quetePaths:{}, quetesAncrees:0, quetesTotal:0, quetesParEtapes:0,
     raids:[], raidsSansCase:[], balises:[], dragons:[], ophidiens:[], secretLieux:{}, peuples:[], peuplesSansDir:[],
     comptoirs:{}, provinces:{}, regionsCtr:{}, lieuTypes:{}, villeTailles:{} };
   var cells=db.cells||[], byId={}, vid={}, lid={};
@@ -6984,19 +7260,32 @@ function carteBuildLayers() {
     else if (ophCells[l.cell] || /ophidien/.test(l.id)) { L.secretLieux[l.id]='ophidiens'; L.ophidiens.push({ lieu:l, creatures:ophCells[l.cell]||[] }); }
   });
 
-  // Niveaux : région de départ d'une faction (game_design.depart.region, carte du continent)
-  // > province de la case > région de la case.
+  // Niveaux (v1.0.100) : valeur de la faction choisie (niveau_par_faction de la province, puis
+  // de la région) > région de départ d'une faction (game_design.depart.region, carte du
+  // continent) > niveau_ref de la province > niveau_ref de la région (table de secours si
+  // la fiche n'a pas le champ).
   var depart={};
   (db.factions||[]).forEach(function(f){
     var d=f.game_design&&f.game_design.depart, r=d&&d.region;
     if (!r || r.carte || !Array.isArray(r.cells) || !Array.isArray(r.niveaux) || r.niveaux.length<2) return;
     r.cells.forEach(function(id){ depart[id]={ min:r.niveaux[0], max:r.niveaux[1], src:'Région de départ : '+(f.name||f.id) }; });
   });
-  var regName={}; (db.regions||[]).forEach(function(rg){ regName[rg.id]=rg.name||rg.id; });
+  var regName={}, regNiv={}, facNiv={}, fac=window._carteState.niveauFaction||'';
+  var facRec=fac ? (db.factions||[]).find(function(f){ return f.id===fac; }) : null;
+  if (fac && !facRec) fac='';
+  L.niveauFaction=fac; L.niveauSecours=0;
+  (db.regions||[]).forEach(function(rg){
+    regName[rg.id]=rg.name||rg.id; regNiv[rg.id]=carteRegionNiveau(rg);
+    if (regNiv[rg.id] && regNiv[rg.id].secours) L.niveauSecours++;
+    var pf=fac && rg.niveau_par_faction && typeof rg.niveau_par_faction==='object' ? rg.niveau_par_faction[fac] : null;
+    if (niveauTxt(pf)) facNiv[rg.id]={ min:+pf.min, max:+pf.max, faction:true,
+      src:'Niveau pour '+(facRec.name||fac)+' : fiche « '+(rg.name||rg.id)+' » (niveau_par_faction)' };
+  });
+  L.niveauFactionRegions=Object.keys(facNiv).length;
   cells.forEach(function(c){
-    var n=depart[c.id] || null;
-    if (!n && c.province && CARTE_NIVEAUX_REF[c.province]) n=CARTE_NIVEAUX_REF[c.province];
-    if (!n && c.region_id && CARTE_NIVEAUX_REF[c.region_id]) n=CARTE_NIVEAUX_REF[c.region_id];
+    var n=(c.province && facNiv[c.province]) || (c.region_id && facNiv[c.region_id]) || depart[c.id] || null;
+    if (!n && c.province && regNiv[c.province]) n=regNiv[c.province];
+    if (!n && c.region_id && regNiv[c.region_id]) n=regNiv[c.region_id];
     if (n) L.niveau[c.id]=n; else if (c.region_id) L.niveau[c.id]=null; // null = région sans repère
     // Provinces (contour) et centres des régions (noms), en coordonnées de grille.
     var p=parseCellCoord(c.id); if (!p) return;
@@ -7004,16 +7293,22 @@ function carteBuildLayers() {
     if (c.region_id) { var rc=L.regionsCtr[c.region_id]||(L.regionsCtr[c.region_id]={ name:regName[c.region_id]||c.region_id, lat:0, lon:0, n:0 }); rc.lat+=p.lat; rc.lon+=p.lon; rc.n++; }
   });
 
-  // Quêtes : chemin = villes et lieux cités dans source_lore (ordre de la fiche) qui ont une case.
+  // Quêtes (v1.0.100) : chemin = étapes situées (etapes_struct) en priorité ; sinon villes et
+  // lieux cités dans source_lore (ordre de la fiche) qui ont une case.
+  var pid={}; (db.persons||[]).forEach(function(p){ pid[p.id]=p; });
   (db.quests||[]).forEach(function(q){
     L.quetesTotal++;
-    var path=[], seen={};
-    (Array.isArray(q.source_lore)?q.source_lore:[]).forEach(function(ref){
-      var rec=vid[ref], kind='villes'; if (!rec) { rec=lid[ref]; kind='lieux'; }
-      if (rec && rec.cell && byId[rec.cell]) path.push({ rec:rec, kind:kind });
-    });
+    var path=carteQuestEtapesPath(q, byId, vid, lid, pid), seen={}, via='etapes';
+    if (!path.length) {
+      via='source_lore';
+      (Array.isArray(q.source_lore)?q.source_lore:[]).forEach(function(ref){
+        var rec=vid[ref], kind='villes'; if (!rec) { rec=lid[ref]; kind='lieux'; }
+        if (rec && rec.cell && byId[rec.cell]) path.push({ rec:rec, kind:kind });
+      });
+    }
     if (!path.length) return;
-    L.quetesAncrees++; L.quetePaths[q.id]={ q:q, path:path };
+    L.quetesAncrees++; if (via==='etapes') L.quetesParEtapes++;
+    L.quetePaths[q.id]={ q:q, path:path, via:via };
     path.forEach(function(s){ if (seen[s.rec.cell]) return; seen[s.rec.cell]=true; push(L.quetesByCell, s.rec.cell, q.id); });
   });
 
@@ -7037,7 +7332,9 @@ function carteBuildLayers() {
     var lvl=0, src='';
     bossTxt.forEach(function(b){ if (b.t.indexOf(r.id)>=0 && (b.cr.level_max||0)>lvl) { lvl=b.cr.level_max; src=b.cr.name||b.cr.id; } });
     if (!lvl) { var m=/\bboss[^0-9.;]{0,15}(\d{1,2})\b/i.exec([r.description||''].concat(Array.isArray(r.notes)?r.notes:[]).join(' ')); if (m) { lvl=+m[1]; src='fiche du raid'; } }
-    var item={ raid:r, cell:cell, via:via, level:lvl, levelSrc:src };
+    // v1.0.100 : niveau conseillé structuré (niveau_ref), prioritaire sur le niveau du boss.
+    var nref=niveauTxt(r.niveau_ref) ? { min:+r.niveau_ref.min, max:+r.niveau_ref.max } : null;
+    var item={ raid:r, cell:cell, via:via, level:lvl, levelSrc:src, niveauRef:nref };
     if (cell) L.raids.push(item); else L.raidsSansCase.push(item);
   });
 
@@ -7076,6 +7373,31 @@ function carteBuildLayers() {
   (db.lieux||[]).forEach(function(l){ if (l.cell && !L.secretLieux[l.id]) { var t=l.type||''; L.lieuTypes[t]=(L.lieuTypes[t]||0)+1; } });
   (db.villes||[]).forEach(function(v){ if (v.cell) { var t=v.taille||''; L.villeTailles[t]=(L.villeTailles[t]||0)+1; } });
   return L;
+}
+
+/// Chemin d'une quête d'après ses étapes situées (etapes_struct, v1.0.100) : pour chaque
+/// étape, dans l'ordre, la case explicite (cell), sinon le lieu, sinon la ville, sinon la
+/// ville du PNJ (seulement si le PNJ a exactement une ville placée). Une étape sans
+/// position est sautée (son numéro est gardé).
+/// \param q quête ; \param byId cases par id ; \param vid, lid, pid villes, lieux, PNJ par id.
+/// \return [{ rec, kind, n }] (n = numéro d'étape à partir de 1) ; [] si aucune étape située.
+/// Pas d'effet de bord.
+function carteQuestEtapesPath(q, byId, vid, lid, pid) {
+  var out=[];
+  (Array.isArray(q.etapes_struct)?q.etapes_struct:[]).forEach(function(e, i){
+    if (!e || typeof e!=='object') return;
+    var it=null;
+    if (e.cell && byId[e.cell]) it={ rec:{ id:e.cell, cell:e.cell }, kind:'cells' };
+    else if (e.lieu_id && lid[e.lieu_id] && lid[e.lieu_id].cell && byId[lid[e.lieu_id].cell]) it={ rec:lid[e.lieu_id], kind:'lieux' };
+    else if (e.ville_id && vid[e.ville_id] && vid[e.ville_id].cell && byId[vid[e.ville_id].cell]) it={ rec:vid[e.ville_id], kind:'villes' };
+    else if (e.pnj_id && pid[e.pnj_id]) {
+      var vs=(Array.isArray(pid[e.pnj_id].ville_ids)?pid[e.pnj_id].ville_ids:[]).map(function(id){ return vid[id]; })
+        .filter(function(v){ return v && v.cell && byId[v.cell]; });
+      if (vs.length===1) it={ rec:vs[0], kind:'villes' };
+    }
+    if (it) { it.n=i+1; out.push(it); }
+  });
+  return out;
 }
 
 /// Couleur d'un niveau (1-70) sur l'échelle CARTE_NIVEAU_STOPS (vert → jaune → rouge → violet).
@@ -7219,7 +7541,7 @@ function drawCarteLayerMarkers(ctx, px, fl) {
       var q=L.quetePaths[qid].q, lv=(Array.isArray(q.unlock_conditions)?q.unlock_conditions:[]).map(function(u){ return u&&(u.value!==undefined?u.value:u.valeur); }).filter(function(v){ return typeof v==='number'; })[0];
       return '• '+esc(q.name||q.id)+(lv!==undefined?' <span style="opacity:.7">(niv. '+lv+'+)</span>':'')+' <span style="opacity:.6">'+L.quetePaths[qid].path.length+' étape'+(L.quetePaths[qid].path.length>1?'s':'')+'</span>';
     });
-    _carteLayerHits.push({ x:p.x, y:p.y, r:r, quests:qs, html:'<b>📜 '+qs.length+' quête'+(qs.length>1?'s':'')+'</b> — '+esc(id)+'<br>'+lines.join('<br>')+(qs.length>10?'<br>… +'+(qs.length-10):'')+'<br><span style="opacity:.6">Tracé des étapes affiché (villes et lieux cités par la quête)</span>' });
+    _carteLayerHits.push({ x:p.x, y:p.y, r:r, quests:qs, html:'<b>📜 '+qs.length+' quête'+(qs.length>1?'s':'')+'</b> — '+esc(id)+'<br>'+lines.join('<br>')+(qs.length>10?'<br>… +'+(qs.length-10):'')+'<br><span style="opacity:.6">Tracé des étapes affiché (étapes situées, sinon villes et lieux cités par la quête)</span>' });
   });
 
   // Raids : losange rouge (coin bas-droit), niveau du boss au-dessus quand il est connu.
@@ -7232,10 +7554,12 @@ function drawCarteLayerMarkers(ctx, px, fl) {
       ctx.beginPath(); ctx.moveTo(p.x, p.y-r); ctx.lineTo(p.x+r, p.y); ctx.lineTo(p.x, p.y+r); ctx.lineTo(p.x-r, p.y); ctx.closePath(); ctx.fill(); ctx.stroke();
       if (its.length>1 && r>=6) carteLayerText(ctx, String(its.length), p.x, p.y+0.5, 'bold '+Math.floor(r*1.1)+'px sans-serif', '#fff');
       var lv=its.map(function(it){ return it.level; }).filter(Boolean);
+      var nrs=its.map(function(it){ return it.niveauRef; }).filter(Boolean); // v1.0.100 : niveau_ref d'abord
+      var nrTxt=nrs.length ? niveauTxt({ min:Math.min.apply(null, nrs.map(function(n){ return n.min; })), max:Math.max.apply(null, nrs.map(function(n){ return n.max; })) }) : '';
       var zn=L.niveau[id];
-      if (px>=24) carteLayerText(ctx, lv.length ? 'niv. '+Math.max.apply(null, lv) : (zn?'zone '+zn.min+'-'+zn.max:''), p.x, p.y-r-Math.max(6,px*0.1), 'bold '+Math.max(9, Math.floor(px*0.16))+'px sans-serif', '#ffb0b0');
+      if (px>=24) carteLayerText(ctx, nrTxt ? 'niv. '+nrTxt : (lv.length ? 'niv. '+Math.max.apply(null, lv) : (zn?'zone '+zn.min+'-'+zn.max:'')), p.x, p.y-r-Math.max(6,px*0.1), 'bold '+Math.max(9, Math.floor(px*0.16))+'px sans-serif', '#ffb0b0');
       _carteLayerHits.push({ x:p.x, y:p.y, r:r, html:'<b>⚔ Raid'+(its.length>1?'s ('+its.length+')':'')+'</b> — '+esc(id)+'<br>'+its.map(function(it){
-        return '• '+esc(it.raid.name||it.raid.id)+' <span style="opacity:.75">('+(it.level?'boss niv. '+it.level:'niveau non renseigné'+(zn?' ; zone '+zn.min+'-'+zn.max:''))
+        return '• '+esc(it.raid.name||it.raid.id)+' <span style="opacity:.75">('+(it.niveauRef?'niveau conseillé '+niveauTxt(it.niveauRef)+(it.level?' ; boss niv. '+it.level:''):(it.level?'boss niv. '+it.level:'niveau non renseigné'+(zn?' ; zone '+zn.min+'-'+zn.max:'')))
           +(it.raid.difficulty!==''&&it.raid.difficulty!==undefined?' ; difficulté '+esc(String(it.raid.difficulty)):'')+')</span><br><span style="opacity:.6">&nbsp;&nbsp;lieu : '+esc(it.via)+'</span>';
       }).join('<br>') });
     });
@@ -7324,8 +7648,9 @@ function carteTipLayerExtra(kind, rec) {
 }
 
 /// Dessine (calque SVG au-dessus du canvas) le tracé des étapes des quêtes survolées : une
-/// ligne colorée par quête reliant, dans l'ordre de la fiche, les villes et lieux cités par
-/// source_lore, avec le numéro de chaque étape. Ne redessine que si la liste change.
+/// ligne colorée par quête reliant, dans l'ordre de la fiche, ses étapes situées
+/// (etapes_struct, v1.0.100 ; numéro = rang de l'étape) ou, à défaut, les villes et lieux
+/// cités par source_lore. Ne redessine que si la liste change.
 /// \param ids identifiants de quêtes, ou null pour effacer. Effet de bord : DOM (#carteOverlay).
 function carteQuestOverlay(ids) {
   var svg=document.getElementById('carteOverlay'); if (!svg) return;
@@ -7337,7 +7662,7 @@ function carteQuestOverlay(ids) {
   ids.forEach(function(id, k){
     var qp=L.quetePaths[id]; if (!qp) return;
     var col=hashColor(id, 80, 62), off=((k%5)-2)*2;
-    var pts=qp.path.map(function(s){ return cartePlacePixel(s.rec, s.kind, px); }).filter(Boolean).map(function(p){ return { x:p.x+off, y:p.y+off }; });
+    var pts=[]; qp.path.forEach(function(s, i){ var p=cartePlacePixel(s.rec, s.kind, px); if (p) pts.push({ x:p.x+off, y:p.y+off, n:s.n||i+1 }); });
     if (pts.length>1) {
       var d=pts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ');
       h+='<polyline points="'+d+'" fill="none" stroke="#000" stroke-opacity="0.7" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -7345,7 +7670,7 @@ function carteQuestOverlay(ids) {
     }
     pts.forEach(function(p, i){
       h+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+rr+'" fill="'+col+'" stroke="#000" stroke-width="1.5"/>'
-        +'<text x="'+p.x.toFixed(1)+'" y="'+(p.y+rr*0.38).toFixed(1)+'" text-anchor="middle" font-size="'+Math.round(rr*1.1)+'" font-weight="bold" font-family="sans-serif" fill="#000">'+(i+1)+'</text>';
+        +'<text x="'+p.x.toFixed(1)+'" y="'+(p.y+rr*0.38).toFixed(1)+'" text-anchor="middle" font-size="'+Math.round(rr*1.1)+'" font-weight="bold" font-family="sans-serif" fill="#000">'+p.n+'</text>';
     });
   });
   svg.innerHTML=h;
@@ -7367,13 +7692,13 @@ function carteLayersLegendHTML() {
   if (fl.niveaux) {
     var nRens=0, nNon=0; Object.keys(L.niveau).forEach(function(k){ if (L.niveau[k]) nRens++; else nNon++; });
     h+=row('Niveaux de référence', '<span style="display:inline-flex;align-items:center;gap:0.3rem">1<span style="display:inline-block;width:160px;height:11px;border-radius:2px;background:linear-gradient(90deg,'+CARTE_NIVEAU_STOPS.map(function(s){ return s[1]+' '+Math.round((s[0]-1)/69*100)+'%'; }).join(',')+')"></span>70</span>'
-      +'<span>couleur = milieu de la fourchette, étiquette « min-max » à partir du zoom ×3</span><span>'+sw('repeating-linear-gradient(45deg,#666 0 2px,transparent 2px 5px)','border:1px solid #888')+' non renseigné ('+nNon+' cases)</span><span style="opacity:.7">'+nRens+' cases ; priorité : région de départ &gt; province &gt; région (table CARTE_NIVEAUX_REF)</span>');
+      +'<span>couleur = milieu de la fourchette, étiquette « min-max » à partir du zoom ×3</span><span>'+sw('repeating-linear-gradient(45deg,#666 0 2px,transparent 2px 5px)','border:1px solid #888')+' non renseigné ('+nNon+' cases)</span><span style="opacity:.7">'+nRens+' cases ; priorité : '+(L.niveauFaction?'niveau de la faction (niveau_par_faction, '+L.niveauFactionRegions+' fiche'+(L.niveauFactionRegions>1?'s':'')+') &gt; ':'')+'région de départ &gt; province &gt; région (champ niveau_ref des fiches'+(L.niveauSecours?' ; '+L.niveauSecours+' fiche(s) sans champ : table de secours':'')+')</span>');
   }
   if (fl.densite) h+=row('Densité', CARTE_DENSITE_STEPS.map(function(s){ return '<span>'+sw(s[1])+' '+s[2]+'</span>'; }).join('')+'<span style="opacity:.7">villes + lieux + quêtes par case (max '+L.densMax+')</span>');
   if (fl.jouables) h+=row('Cases jouables', window._carteJouables ? '<span>'+sw('rgba(0,229,255,0.35)','border:2px solid #00e5ff')+' '+window._carteJouables.count+' cases générées ('+esc(window._carteJouables.source)+')</span><span style="opacity:.7">corridors des départs (AddStartCorridors) non inclus</span>'
     : '<span style="color:#ffb0b0">carte du jeu non chargée : bouton « Charger la carte du jeu » (game/data/world/royaumes/world_master.json)</span>');
-  if (fl.quetes) h+=row('Quêtes', '<span>'+sw('#2f6fe0','border-radius:50%;border:1px solid #fff')+' nombre de quêtes de la case</span><span style="opacity:.7">'+L.quetesAncrees+' quêtes ancrées sur '+L.quetesTotal+' (villes et lieux cités par source_lore) ; survol : tracé des étapes</span>');
-  if (fl.raids) h+=row('Raids', '<span>'+sw('#c0262d','transform:rotate(45deg);border:1px solid #ffd8a0;width:10px;height:10px')+' raid (nombre si plusieurs)</span><span style="opacity:.7">niv. = boss (connu pour '+L.raids.filter(function(r){ return r.level; }).length+'), sinon niveau de la zone ; '+L.raids.length+' raids placés, '+L.raidsSansCase.length+' sans case</span>');
+  if (fl.quetes) h+=row('Quêtes', '<span>'+sw('#2f6fe0','border-radius:50%;border:1px solid #fff')+' nombre de quêtes de la case</span><span style="opacity:.7">'+L.quetesAncrees+' quêtes ancrées sur '+L.quetesTotal+' ('+L.quetesParEtapes+' par leurs étapes situées, etapes_struct ; les autres par les villes et lieux de source_lore) ; survol : tracé des étapes</span>');
+  if (fl.raids) h+=row('Raids', '<span>'+sw('#c0262d','transform:rotate(45deg);border:1px solid #ffd8a0;width:10px;height:10px')+' raid (nombre si plusieurs)</span><span style="opacity:.7">niv. = niveau conseillé de la fiche (niveau_ref, '+L.raids.filter(function(r){ return r.niveauRef; }).length+'), sinon boss ('+L.raids.filter(function(r){ return !r.niveauRef && r.level; }).length+'), sinon niveau de la zone ; '+L.raids.length+' raids placés, '+L.raidsSansCase.length+' sans case</span>');
   if (fl.balises) h+=row('Balises de danger', '<span style="color:#ffd400">▲</span><span>'+L.balises.length+' balises (notes « Balisage du danger » des cases, bornes, cairns et stèles)</span>');
   if (fl.peuples) h+=row('Peuples lointains', '<span style="color:#ffcf4d">➚ direction (hors carte)</span><span><span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:2px dashed #ffcf4d;vertical-align:-3px"></span> comptoir</span><span style="opacity:.7">'+L.peuples.length+' peuples, '+Object.keys(L.comptoirs).length+' comptoirs</span>');
   if (fl.dragons) h+=row('<span style="color:#ff8a8a">🔒 Dragons</span>', '<span style="color:#e0102a">★</span><span>'+L.dragons.length+' grottes cachées (Xygga et ses premiers-nés) — secret, ne pas montrer aux joueurs</span>');
@@ -7402,7 +7727,8 @@ function carteLayersPanelHTML() {
   h+=group('Fond',
     chk('regions','🗺️ Régions du hors-série (fond)','Couleur de fond par région (cells[].region_id), nom de la région au centre')
     +chk('provinces','┅ Provinces (contour + nom)','Contour pointillé des provinces (cells[].province) et nom au centre')
-    +chk('niveaux','📶 Niveaux de référence','Fourchette de niveaux par case : région de départ, sinon province, sinon région')
+    +chk('niveaux','📶 Niveaux de référence','Fourchette de niveaux par case : niveau de la faction choisie, sinon région de départ, sinon province, sinon région')
+    +carteNiveauFactionHTML()
     +chk('densite','▦ Densité (lieux + quêtes)','Nombre de villes, lieux et quêtes ancrées par case')
     +chk('jouables','🎮 Cases jouables en jeu'+(J?' ('+J.count+')':''),'generated_cells de world_master.json')
     +'<span style="margin-left:1.1rem"><button class="btn btn-ghost btn-sm" style="font-size:0.66rem;padding:0.1rem 0.4rem" onclick="document.getElementById(\'carteMasterInput\').click()">📂 Charger la carte du jeu…</button>'
@@ -7425,6 +7751,27 @@ function carteLayersPanelHTML() {
   return h;
 }
 
+/// Sélecteur de faction du calque Niveaux (v1.0.100) : « Référence » (niveau_ref) ou une
+/// faction (ses valeurs niveau_par_faction priment ; nombre de fiches renseignées entre
+/// parenthèses). Pas d'effet de bord.
+function carteNiveauFactionHTML() {
+  var cur=window._carteState.niveauFaction||'', cnt={};
+  (db.regions||[]).forEach(function(rg){ var p=rg.niveau_par_faction; if (p && typeof p==='object') Object.keys(p).forEach(function(f){ if (niveauTxt(p[f])) cnt[f]=(cnt[f]||0)+1; }); });
+  var opts='<option value="">Référence (toutes factions)</option>'+(db.factions||[]).map(function(f){
+    return '<option value="'+esc(f.id)+'"'+(f.id===cur?' selected':'')+'>'+esc(f.name||f.id)+(cnt[f.id]?' ('+cnt[f.id]+')':'')+'</option>'; }).join('');
+  return '<label style="display:flex;align-items:center;gap:0.3rem;margin-left:1.1rem;font-size:0.68rem;color:var(--text-dim)" title="Niveau relatif à la faction (rule_niveaux_par_faction) : une valeur niveau_par_faction de la faction prime sur la référence">Faction '
+    +'<select id="carteNiveauFaction" class="form-select" style="font-size:0.68rem;padding:0.1rem 0.3rem;max-width:165px" onchange="carteSetNiveauFaction(this.value)">'+opts+'</select></label>';
+}
+/// Choisit la faction du calque Niveaux, mémorise le choix et recalcule les calques.
+/// \param fid identifiant de faction, '' = référence. Effet de bord : _carteState,
+/// localStorage, _carteGeo.layers, légende, carte.
+function carteSetNiveauFaction(fid) {
+  window._carteState.niveauFaction=fid||'';
+  carteLayersSave();
+  if (_carteGeo) _carteGeo.layers=carteBuildLayers();
+  var lg=document.getElementById('carteLegend'); if (lg) lg.innerHTML=carteLayersLegendHTML();
+  drawCarte();
+}
 /// Coche / décoche un sous-filtre (taille de ville ou type de lieu), mémorise et redessine.
 /// \param kind 'ville' (villes[].taille) ou 'lieu' (lieux[].type).  \param val valeur ('' = sans).
 /// \param on vrai = visible. Effet de bord : _carteState, localStorage, carte.
@@ -7786,7 +8133,7 @@ function saveWeapon(idx) {
   closeModal(); showSection('weapons'); toast(idx!==undefined?'Arme modifiée':'Arme ajoutée');
 }
 function deleteWeapon(idx) {
-  confirmDelete('Supprimer « '+db.weapons[idx].name+' » ?', function(){ db.weapons.splice(idx,1); showSection('weapons'); toast('Arme supprimée'); });
+  confirmDeleteRef(db.weapons[idx], 'Supprimer « '+db.weapons[idx].name+' » ?', function(){ db.weapons.splice(idx,1); showSection('weapons'); toast('Arme supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -7870,7 +8217,7 @@ function saveServerCommand(idx) {
   closeModal(); showSection('server_commands'); toast(idx!==undefined?'Commande modifiée':'Commande ajoutée');
 }
 function deleteServerCommand(idx) {
-  confirmDelete('Supprimer « '+db.server_commands[idx].name+' » ?', function(){ db.server_commands.splice(idx,1); showSection('server_commands'); toast('Commande supprimée'); });
+  confirmDeleteRef(db.server_commands[idx], 'Supprimer « '+db.server_commands[idx].name+' » ?', function(){ db.server_commands.splice(idx,1); showSection('server_commands'); toast('Commande supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -8067,7 +8414,7 @@ function saveLoot(idx) {
   closeModal(); showSection('loots'); toast(idx!==undefined?'Loot modifié':'Loot ajouté');
 }
 function deleteLoot(idx) {
-  confirmDelete('Supprimer « '+db.loots[idx].name+' » ?', function(){ db.loots.splice(idx,1); showSection('loots'); toast('Loot supprimé'); });
+  confirmDeleteRef(db.loots[idx], 'Supprimer « '+db.loots[idx].name+' » ?', function(){ db.loots.splice(idx,1); showSection('loots'); toast('Loot supprimé'); });
 }
 
 // ─────────────────────────────────────────────
@@ -8193,7 +8540,7 @@ function saveDialogue(idx) {
   closeModal(); showSection('dialogues'); toast(idx!==undefined?'Dialogue modifié':'Dialogue ajouté');
 }
 function deleteDialogue(idx) {
-  confirmDelete('Supprimer « '+db.dialogues[idx].name+' » ?', function(){ db.dialogues.splice(idx,1); showSection('dialogues'); toast('Dialogue supprimé'); });
+  confirmDeleteRef(db.dialogues[idx], 'Supprimer « '+db.dialogues[idx].name+' » ?', function(){ db.dialogues.splice(idx,1); showSection('dialogues'); toast('Dialogue supprimé'); });
 }
 
 
@@ -8415,7 +8762,7 @@ function saveCreature(idx){
   closeModal();showSection('creatures');toast(idx!==undefined?'Créature modifiée':'Créature ajoutée');
 }
 function deleteCreature(idx){
-  confirmDelete('Supprimer « '+db.creatures[idx].name+' » ?',function(){db.creatures.splice(idx,1);showSection('creatures');toast('Créature supprimée');});
+  confirmDeleteRef(db.creatures[idx], 'Supprimer « '+db.creatures[idx].name+' » ?',function(){db.creatures.splice(idx,1);showSection('creatures');toast('Créature supprimée');});
 }
 
 
@@ -8957,7 +9304,7 @@ function saveTimelineEvent(idx) {
   closeModal(); showSection('timeline'); toast(idx!==undefined?'Événement modifié':'Événement ajouté');
 }
 function deleteTimelineEvent(idx) {
-  confirmDelete('Supprimer « '+db.timeline[idx].name+' » ?',function(){ db.timeline.splice(idx,1); showSection('timeline'); toast('Événement supprimé'); });
+  confirmDeleteRef(db.timeline[idx], 'Supprimer « '+db.timeline[idx].name+' » ?',function(){ db.timeline.splice(idx,1); showSection('timeline'); toast('Événement supprimé'); });
 }
 
 
@@ -9444,9 +9791,14 @@ function saveRule() {
   closeModal(); showSection('crossrules');
   toast(ec !== null && ec !== undefined ? 'Règle modifiée' : 'Règle ajoutée');
 }
+/// Supprime une règle de cross_rules après confirmation (v1.0.100 : boîte HTML avec le
+/// nombre de références, comme les autres fiches ; avant, suppression immédiate).
+/// \param cat catégorie (clé de db.cross_rules) ; \param idx rang dans la catégorie.
+/// Effet de bord : db.cross_rules, re-rendu de la section.
 function deleteRule(cat,idx) {
-  // cross rules delete handled inline
-  db.cross_rules[cat].splice(idx,1); showSection('crossrules'); toast('Règle supprimée');
+  var r=db.cross_rules[cat][idx]; if (!r) return;
+  confirmDeleteRef(r, 'Supprimer la règle « '+esc(r.name||r.title||r.rule||r.id||String(idx))+' » ?', function(){
+    db.cross_rules[cat].splice(idx,1); showSection('crossrules'); toast('Règle supprimée'); });
 }
 
 // ─────────────────────────────────────────────
@@ -9520,12 +9872,45 @@ function renderNotesList() {
 /// (formCaptureBase) pour que « Enregistrer » n'applique que les champs modifiés.
 /// Effet de bord : _formBase. Doit être appelée une fois le formulaire construit.
 function openModal(){ document.getElementById('modalOverlay').classList.remove('hidden'); formCaptureBase(null); }
+/// Références à un identifiant ailleurs dans db (v1.0.100) : valeurs chaîne strictement
+/// égales à l'identifiant, hors de la fiche elle-même (définition du test v1.0.98).
+/// \param id identifiant de la fiche ; \param self fiche elle-même (non comptée).
+/// \return { total, parColl: {collection: nombre}, exemples: [chemins] }. Pas d'effet de bord.
+function ficheReferences(id, self) {
+  var res={ total:0, parColl:{}, exemples:[] };
+  if (!id) return res;
+  function walk(x, top, path) {
+    if (x===self) return;
+    if (typeof x==='string') { if (x===id) { res.total++; res.parColl[top]=(res.parColl[top]||0)+1; if (res.exemples.length<5) res.exemples.push(path); } return; }
+    if (Array.isArray(x)) { for (var i=0;i<x.length;i++) walk(x[i], top, path+'['+i+']'); return; }
+    if (x && typeof x==='object') Object.keys(x).forEach(function(k){ walk(x[k], top, path+'.'+k); });
+  }
+  Object.keys(db).forEach(function(k){ walk(db[k], k, k); });
+  return res;
+}
+/// Boîte de suppression d'une fiche avec le nombre de références à son identifiant
+/// ailleurs (v1.0.100), par collection ; « Annuler » ne change rien, « Supprimer » appelle
+/// onConfirm (les références ne sont pas nettoyées). \param rec fiche à supprimer ;
+/// \param message question (HTML) ; \param onConfirm action de suppression.
+/// Effet de bord : DOM (boîte modale), puis celui de onConfirm.
+function confirmDeleteRef(rec, message, onConfirm) {
+  var id=rec&&(rec.id||rec.class_id), info='';
+  if (id) {
+    var r=ficheReferences(id, rec), parts=Object.keys(r.parColl).sort(function(a,b){ return r.parColl[b]-r.parColl[a]; });
+    info = r.total
+      ? '<div id="confirmRefs" data-total="'+r.total+'" style="margin-top:0.6rem;padding:0.45rem 0.6rem;border:1px solid #c0506080;border-radius:4px;background:rgba(192,80,96,0.1);font-size:0.82rem">⚠ <b>'+r.total+' référence'+(r.total>1?'s':'')+'</b> à « '+esc(id)+' » ailleurs dans le fichier :<br>'
+        +parts.slice(0,8).map(function(k){ return esc(k)+' ('+r.parColl[k]+')'; }).join(', ')+(parts.length>8?', …':'')
+        +'<br><span style="font-size:0.74rem;color:var(--text-dim)">Elles resteront dans les fiches (références orphelines). Annuler pour garder la fiche.</span></div>'
+      : '<div id="confirmRefs" data-total="0" style="margin-top:0.6rem;font-size:0.8rem;color:var(--text-dim)">Aucune référence à « '+esc(id)+' » ailleurs dans le fichier.</div>';
+  }
+  confirmDelete(message+info, onConfirm);
+}
 function confirmDelete(message, onConfirm) {
   // Custom confirmation modal — replaces native confirm() which is blocked in sandboxed iframes
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center';
   overlay.innerHTML =
-    '<div style="background:var(--bg-card);border:1px solid #c0506080;border-radius:6px;padding:1.5rem;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5)">' +
+    '<div style="background:var(--bg-card);border:1px solid #c0506080;border-radius:6px;padding:1.5rem;max-width:460px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5)">' +
     '<div style="font-family:Cinzel,serif;font-size:0.85rem;letter-spacing:0.08em;color:#c05060;margin-bottom:0.75rem">⚠️ Confirmer la suppression</div>' +
     '<div style="font-size:0.9rem;color:var(--text-primary);margin-bottom:1.25rem">' + message + '</div>' +
     '<div style="display:flex;gap:0.75rem;justify-content:flex-end">' +
@@ -9558,6 +9943,7 @@ function closeModal() {
   window._currentAcquisition=[];
   window._currentRaidReqClasses=[]; window._currentRaidFactions=[]; window._currentRaidRaces=[];
   window.rdConditions=[]; window.qtConditions=[];
+  window._questEtapes=[]; window._regionNpf=[]; window._currentRaceClasses=[]; // v1.0.100
   window._lootMonsters=[]; window._lootVilles=[]; window._lootQuests=[]; window._lootRaids=[];
   window._currentLines=[];
   window._currentFeatures=[];
@@ -9783,7 +10169,7 @@ function savePerson(idx) {
   closeModal(); showSection('persons'); toast(idx!==undefined?'PNJ modifié':'PNJ ajouté');
 }
 function deletePerson(idx) {
-  confirmDelete('Supprimer « '+db.persons[idx].name+' » ?', function(){
+  confirmDeleteRef(db.persons[idx], 'Supprimer « '+db.persons[idx].name+' » ?', function(){
     db.persons.splice(idx,1); showSection('persons'); toast('PNJ supprimé');
   });
 }
@@ -10243,7 +10629,7 @@ function saveZone(idx) {
   closeModal(); showSection('zones'); toast(idx!==undefined?'Zone modifiée':'Zone ajoutée');
 }
 function deleteZone(idx) {
-  confirmDelete('Supprimer « '+db.zones[idx].name+' » ?', function(){
+  confirmDeleteRef(db.zones[idx], 'Supprimer « '+db.zones[idx].name+' » ?', function(){
     db.zones.splice(idx,1); showSection('zones'); toast('Zone supprimée');
   });
 }
@@ -10584,6 +10970,9 @@ function openQuestForm(idx) {
   window._currentQuestClasses  = (qt.for_classes||[]).slice();
   window._questSteps           = (qt.steps||[]).slice();
   window._questSourceLore      = (qt.source_lore||[]).slice();
+  // v1.0.100 : étapes situées (copie de travail ; clés inconnues gardées).
+  window._questEtapes = (Array.isArray(qt.etapes_struct)?qt.etapes_struct:[]).map(function(e){
+    return (e && typeof e==='object' && !Array.isArray(e)) ? JSON.parse(JSON.stringify(e)) : { texte:String(e===null||e===undefined?'':e) }; });
 
   var catOpts = '<option value="">— Catégorie —</option>';
   Object.keys(QUEST_CATEGORIES).forEach(function(k){
@@ -10612,6 +11001,11 @@ function openQuestForm(idx) {
     '<input class="form-input" id="qt_tags" value="'+esc((qt.tags||[]).join(', '))+'" placeholder="histoire_principale, wismerhill, oracle…"></div>'+
     '<div class="form-group"><label class="form-label">Étapes <span style="font-size:0.68rem;color:var(--text-dim)">(une par ligne)</span></label>'+
     '<textarea class="form-textarea" style="height:90px" id="qt_steps" placeholder="Étape 1…&#10;Étape 2…">'+esc((qt.steps||[]).join('\n'))+'</textarea></div>'+
+    '<div class="form-group"><label class="form-label">Étapes situées <span style="font-size:0.68rem;color:var(--text-dim)">(etapes_struct : ordre, case, ville, lieu ou PNJ de chaque étape ; tracé du calque Quêtes)</span></label>'+
+    '<div id="qtEtapesList"></div>'+
+    '<div style="display:flex;gap:0.4rem;margin-top:0.35rem;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="qtEtapeAddBtn" onclick="questEtapeAdd()">+ Étape</button>'+
+    '<button class="btn btn-ghost btn-sm" id="qtEtapesSyncBtn" onclick="questEtapesFromText()" title="Une étape située par ligne du champ « Étapes » (texte repris, case / ville / lieu / PNJ gardés par rang)">⇣ Reprendre le texte des étapes</button></div>'+
+    '<datalist id="qtCellsList">'+(db.cells||[]).map(function(c){ return '<option value="'+esc(c.id)+'">'; }).join('')+'</datalist></div>'+
     '<div class="form-group"><label class="form-label">Joueurs minimum</label><input class="form-input" id="qt_min_players" type="number" min="1" value="'+(qt.min_players||1)+'"></div>'+
     '<div class="form-group"><label class="form-label">Pour — Factions</label>'+
     '<div style="display:flex;gap:0.5rem;margin-bottom:0.4rem"><select class="form-select" id="qFacSel">'+fOpts+'</select><button class="btn btn-primary btn-sm" onclick="addQuestTarget(\'faction\')">+</button></div><div id="qFacList"></div></div>'+
@@ -10625,7 +11019,7 @@ function openQuestForm(idx) {
     '<div class="notes-list-edit" id="notesList"></div></div></div>';
 
   renderNotesList(); renderQuestTargetList('faction'); renderQuestTargetList('race'); renderQuestTargetList('class');
-  renderUnlockList('qt', window.qtConditions);
+  renderUnlockList('qt', window.qtConditions); renderQuestEtapes();
   document.getElementById('modalFooter').innerHTML =
     '<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>'+
     '<button class="btn btn-gold" onclick="saveQuestV2('+(isEdit?idx:'undefined')+')">💾 Enregistrer</button>';
@@ -10639,6 +11033,8 @@ function openQuestForm(idx) {
 /// d'origine (formCapture avant toute écriture, puis formMerge) : une valeur absente
 /// des listes du formulaire ou un champ non affiché n'est plus perdu ; une création
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
+/// v1.0.100 : écrit aussi etapes_struct (étapes situées) ; une étape sans texte ou une case
+/// inconnue est refusée (message).
 /// Effet de bord : db.quests, ferme la modale, re-rendu de la section.
 function saveQuestV2(idx) {
   var mp = document.getElementById('qt_min_players').value;
@@ -10661,16 +11057,132 @@ function saveQuestV2(idx) {
     unlock_conditions: (window.qtConditions||[]).slice(),
     region_id: (document.getElementById('qt_region')||{value:''}).value,
     source_lore: window._questSourceLore||[],
+    etapes_struct: questEtapesRead(),
     notes: window._currentNotes.slice()
   };
   formCapture(obj, idx!==undefined ? db.quests[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Titre obligatoires');return;}
+  var etErr=questEtapesCheck(obj.etapes_struct); if(etErr){toast(etErr);return;}
   if(!db.quests) db.quests=[];
   if(idx!==undefined) db.quests[idx]=formMerge(db.quests[idx], obj); else db.quests.push(formNew(db.quests, obj));
   closeModal(); showSection('quests'); toast(idx!==undefined?'Quête modifiée':'Quête ajoutée');
 }
 // Override saveQuest to use v2
 function saveQuest(idx) { saveQuestV2(idx); }
+
+// ─────────────────────────────────────────────
+// Étapes de quête situées (v1.0.100)
+// ─────────────────────────────────────────────
+// quests[].etapes_struct : liste ordonnée de { texte, cell?, ville_id?, lieu_id?, pnj_id? }.
+// Le texte libre des étapes (steps) n'est pas touché. Copie de travail : window._questEtapes.
+var QUEST_ETAPE_REFS = ['cell', 'ville_id', 'lieu_id', 'pnj_id'];
+window._questEtapes = [];
+
+/// Options HTML des listes ville / lieu / PNJ de l'éditeur d'étapes (calculées une fois par
+/// rendu). \return { ville, lieu, pnj } (chaînes d'options, première option vide).
+/// Pas d'effet de bord.
+function questEtapeOptions() {
+  function opts(arr, vide, lab) { return '<option value="">'+vide+'</option>'+(arr||[]).map(function(r){ return '<option value="'+esc(r.id)+'">'+esc(lab(r))+'</option>'; }).join(''); }
+  return { ville:opts(db.villes, '— ville —', function(v){ return (v.name||v.id)+(v.cell?' ('+v.cell+')':''); }),
+           lieu:opts(db.lieux, '— lieu —', function(l){ return (l.name||l.id)+(l.cell?' ('+l.cell+')':''); }),
+           pnj:opts(db.persons, '— PNJ —', function(p){ return p.name||p.id; }) };
+}
+/// Position lue de l'étape i (case explicite, lieu, ville, ville unique du PNJ), pour la
+/// ligne d'information sous l'étape. \param e étape. \return texte HTML. Pas d'effet de bord.
+function questEtapeInfo(e) {
+  var cells={}; (db.cells||[]).forEach(function(c){ cells[c.id]=true; });
+  function find(arr, id){ return (arr||[]).find(function(x){ return x.id===id; }); }
+  if (e.cell) return cells[e.cell] ? '→ case <b>'+esc(e.cell)+'</b>' : '<span style="color:#e07070">case inconnue : '+esc(e.cell)+'</span>';
+  var l=e.lieu_id&&find(db.lieux, e.lieu_id); if (l) return '→ lieu '+esc(l.name||l.id)+(l.cell?' (<b>'+esc(l.cell)+'</b>)':' <span style="color:#e0a070">sans case</span>');
+  var v=e.ville_id&&find(db.villes, e.ville_id); if (v) return '→ ville '+esc(v.name||v.id)+(v.cell?' (<b>'+esc(v.cell)+'</b>)':' <span style="color:#e0a070">sans case</span>');
+  var p=e.pnj_id&&find(db.persons, e.pnj_id);
+  if (p) { var vs=(p.ville_ids||[]).map(function(id){ return find(db.villes, id); }).filter(function(x){ return x&&x.cell; });
+    return '→ PNJ '+esc(p.name||p.id)+(vs.length===1?' à '+esc(vs[0].name)+' (<b>'+esc(vs[0].cell)+'</b>)':' <span style="color:#e0a070">'+(vs.length?'plusieurs villes : non placé':'sans ville placée')+'</span>'); }
+  if (e.lieu_id||e.ville_id||e.pnj_id) return '<span style="color:#e07070">référence inconnue</span>';
+  return '<span style="opacity:.6">étape non située</span>';
+}
+/// Affiche l'éditeur d'étapes situées du formulaire de quête (#qtEtapesList) : texte,
+/// listes ville / lieu / PNJ, case (liste #qtCellsList), boutons monter / descendre /
+/// supprimer. Un identifiant absent des listes est ajouté comme option « (inconnu) » pour
+/// ne pas être perdu. Effet de bord : DOM (#qtEtapesList).
+function renderQuestEtapes() {
+  var el=document.getElementById('qtEtapesList'); if (!el) return;
+  var arr=window._questEtapes||[];
+  if (!arr.length) { el.innerHTML='<div style="padding:0.3rem 0.5rem;font-size:0.8rem;color:var(--text-dim)">Aucune étape située (le calque Quêtes utilise alors les villes et lieux cités par la quête)</div>'; return; }
+  var o=questEtapeOptions(), n=arr.length;
+  el.innerHTML=arr.map(function(e, i){
+    return '<div class="qt-etape" data-i="'+i+'" style="border:1px solid var(--border);border-radius:4px;padding:0.35rem 0.45rem;margin-bottom:0.35rem;background:var(--bg-deep)">'
+      +'<div style="display:flex;gap:0.35rem;align-items:flex-start"><b style="min-width:1.5rem;color:var(--accent-gold)">'+(i+1)+'.</b>'
+      +'<textarea class="form-textarea qt-et-texte" style="height:40px;flex:1;font-size:0.8rem" oninput="questEtapeSet('+i+',\'texte\',this.value)">'+esc(e.texte||'')+'</textarea>'
+      +'<div style="display:flex;flex-direction:column;gap:2px">'
+      +'<button class="btn btn-ghost btn-sm qt-et-up" style="padding:0 0.35rem" title="Monter"'+(i===0?' disabled':'')+' onclick="questEtapeMove('+i+',-1)">↑</button>'
+      +'<button class="btn btn-ghost btn-sm qt-et-down" style="padding:0 0.35rem" title="Descendre"'+(i===n-1?' disabled':'')+' onclick="questEtapeMove('+i+',1)">↓</button>'
+      +'<button class="note-del-btn qt-et-del" title="Supprimer l\'étape" onclick="questEtapeDel('+i+')">✕</button></div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 112px;gap:0.3rem;margin-top:0.3rem">'
+      +'<select class="form-select qt-et-ville" style="font-size:0.75rem" onchange="questEtapeSet('+i+',\'ville_id\',this.value)">'+o.ville+'</select>'
+      +'<select class="form-select qt-et-lieu" style="font-size:0.75rem" onchange="questEtapeSet('+i+',\'lieu_id\',this.value)">'+o.lieu+'</select>'
+      +'<select class="form-select qt-et-pnj" style="font-size:0.75rem" onchange="questEtapeSet('+i+',\'pnj_id\',this.value)">'+o.pnj+'</select>'
+      +'<input class="form-input qt-et-cell" list="qtCellsList" placeholder="case" style="font-size:0.75rem" value="'+esc(e.cell||'')+'" onchange="questEtapeSet('+i+',\'cell\',this.value.trim())"></div>'
+      +'<div class="qt-et-info" style="font-size:0.72rem;color:var(--text-secondary);margin-top:0.2rem">'+questEtapeInfo(e)+'</div></div>';
+  }).join('');
+  el.querySelectorAll('.qt-etape').forEach(function(div){
+    var e=arr[+div.getAttribute('data-i')];
+    [['qt-et-ville','ville_id'],['qt-et-lieu','lieu_id'],['qt-et-pnj','pnj_id']].forEach(function(p){
+      var sel=div.querySelector('.'+p[0]), v=e[p[1]]||'';
+      if (v && !Array.prototype.some.call(sel.options, function(op){ return op.value===v; })) {
+        var op=document.createElement('option'); op.value=v; op.textContent=v+' (inconnu)'; sel.appendChild(op); }
+      sel.value=v;
+    });
+  });
+}
+/// Modifie un champ de l'étape i (texte ou référence) ; une valeur vide retire la clé.
+/// \param i rang de l'étape ; \param k 'texte', 'cell', 'ville_id', 'lieu_id' ou 'pnj_id' ;
+/// \param v nouvelle valeur. Effet de bord : window._questEtapes, ligne d'information (DOM).
+function questEtapeSet(i, k, v) {
+  var e=(window._questEtapes||[])[i]; if (!e) return;
+  if (k==='texte') e.texte=v; else if (v) e[k]=v; else delete e[k];
+  var div=document.querySelector('#qtEtapesList .qt-etape[data-i="'+i+'"] .qt-et-info'); if (div) div.innerHTML=questEtapeInfo(e);
+}
+/// Ajoute une étape vide en fin de liste. Effet de bord : window._questEtapes, DOM.
+function questEtapeAdd() { window._questEtapes.push({ texte:'' }); renderQuestEtapes(); }
+/// Supprime l'étape i. Effet de bord : window._questEtapes, DOM.
+function questEtapeDel(i) { window._questEtapes.splice(i, 1); renderQuestEtapes(); }
+/// Déplace l'étape i d'un rang. \param d -1 (monter) ou +1 (descendre).
+/// Effet de bord : window._questEtapes, DOM.
+function questEtapeMove(i, d) {
+  var a=window._questEtapes, j=i+d; if (j<0 || j>=a.length) return;
+  var t=a[i]; a[i]=a[j]; a[j]=t; renderQuestEtapes();
+}
+/// Reprend le texte du champ « Étapes » (une ligne = une étape) : l'étape de même rang
+/// garde ses références (case, ville, lieu, PNJ), les lignes en plus deviennent des
+/// étapes non situées, les étapes en trop sont retirées. Effet de bord : window._questEtapes, DOM.
+function questEtapesFromText() {
+  var t=document.getElementById('qt_steps'), lines=t ? t.value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean) : [];
+  var a=window._questEtapes||[];
+  window._questEtapes=lines.map(function(l, i){ var e=a[i] ? a[i] : {}; e.texte=l; return e; });
+  renderQuestEtapes();
+}
+/// Valeur etapes_struct à enregistrer : texte d'abord, puis les références non vides dans
+/// l'ordre cell, ville_id, lieu_id, pnj_id, puis les autres clés d'origine.
+/// \return liste d'objets (copie). Pas d'effet de bord.
+function questEtapesRead() {
+  return (window._questEtapes||[]).map(function(e){
+    var o={ texte:String(e.texte===undefined||e.texte===null?'':e.texte).trim() };
+    QUEST_ETAPE_REFS.forEach(function(k){ if (e[k]) o[k]=String(e[k]).trim(); });
+    Object.keys(e).forEach(function(k){ if (k!=='texte' && QUEST_ETAPE_REFS.indexOf(k)<0) o[k]=JSON.parse(JSON.stringify(e[k])); });
+    return o;
+  });
+}
+/// Contrôle des étapes situées avant enregistrement. \param list valeur de questEtapesRead.
+/// \return message d'erreur ('' si tout va bien) : texte vide, case inconnue. Pas d'effet de bord.
+function questEtapesCheck(list) {
+  var cells={}; (db.cells||[]).forEach(function(c){ cells[c.id]=true; });
+  for (var i=0;i<list.length;i++) {
+    if (!list[i].texte) return 'Étape située '+(i+1)+' : texte vide';
+    if (list[i].cell && !cells[list[i].cell]) return 'Étape située '+(i+1)+' : case inconnue ('+list[i].cell+')';
+  }
+  return '';
+}
 
 
 // ═══════════════════════════════════════════════════════════
@@ -10874,6 +11386,7 @@ function openPersonForm(idx) {
     '<div class="form-group"><label class="form-label">Rôle</label><input class="form-input" id="pers_role" value="'+esc(p.role||'')+'" placeholder="protagonist, companion, antagonist…"></div>'+
     '<div class="form-group"><label class="form-label">Apparence visuelle</label><textarea class="form-textarea" style="height:65px" id="pers_visual" placeholder="Description physique…">'+esc(p.visual||'')+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Personnalité</label><textarea class="form-textarea" style="height:55px" id="pers_desc" placeholder="Traits de caractère…">'+esc(p.personality||p.description||'')+'</textarea></div>'+
+    '<div class="form-group"><label class="form-label">Description <span style="font-size:0.68rem;color:var(--text-dim)">(description ; vide à la création : reprend la personnalité)</span></label><textarea class="form-textarea" style="height:55px" id="pers_descr" placeholder="Qui est ce personnage…">'+esc(p.description||'')+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Arc narratif</label><textarea class="form-textarea" style="height:55px" id="pers_arc" placeholder="Évolution dans l\'histoire…">'+esc(p.arc||'')+'</textarea></div>'+
     '<div class="form-group"><label class="form-label">Capacités & Pouvoirs <span style="font-size:0.68rem;color:var(--text-dim)">(une par ligne)</span></label>'+
     '<textarea class="form-textarea" style="height:65px" id="pers_abilities" placeholder="Magie des vents…&#10;Combat à l\'épée…">'+esc(window._personAbilities.join('\n'))+'</textarea></div>'+
@@ -10928,6 +11441,10 @@ function renderPersonZonesList() {
 /// est nettoyée de ses champs vides inconnus de la collection (formNew).
 /// Le champ « Personnalité » n'écrit plus `description` d'une fiche existante.
 /// Effet de bord : db.persons, ferme la modale, re-rendu de la section.
+/// Enregistre le formulaire de PNJ (création ou modification), seuls les champs modifiés
+/// étant appliqués (v1.0.98). v1.0.100 : champ description éditable.
+/// \param idx index dans db.persons, undefined pour une création.
+/// Effet de bord : db.persons, ferme la modale, re-rendu de la section.
 function savePersonV2(idx) {
   var abilRaw = document.getElementById('pers_abilities').value;
   var itemRaw = document.getElementById('pers_items').value;
@@ -10943,6 +11460,7 @@ function savePersonV2(idx) {
     role: document.getElementById('pers_role').value.trim(),
     visual: document.getElementById('pers_visual').value.trim(),
     personality: document.getElementById('pers_desc').value.trim(),
+    description: (document.getElementById('pers_descr')||{value:''}).value.trim(), // v1.0.100
     arc: document.getElementById('pers_arc').value.trim(),
     abilities: abilRaw ? abilRaw.split('\n').map(function(l){return l.trim();}).filter(Boolean) : [],
     special_items: itemRaw ? itemRaw.split('\n').map(function(l){return l.trim();}).filter(Boolean) : [],
@@ -10955,8 +11473,9 @@ function savePersonV2(idx) {
     notes: window._currentNotes.slice()
   };
   // v1.0.98 : le champ « Personnalité » n'écrit plus `description` d'une fiche
-  // existante (il l'écrasait) ; à la création, description = personnalité.
-  if(idx===undefined){ var o2={}; Object.keys(obj).forEach(function(k){ o2[k]=obj[k]; if(k==='personality') o2.description=obj.personality; }); obj=o2; }
+  // existante (il l'écrasait). v1.0.100 : description a son propre champ ; à la
+  // création, une description vide reprend la personnalité.
+  if(idx===undefined && !obj.description) obj.description=obj.personality;
   formCapture(obj, idx!==undefined ? db.persons[idx] : null); // v1.0.98 : base du formulaire (capture)
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupW=checkDuplicateOnSave(obj.id,obj.name,db.persons||[],idx);
@@ -11405,7 +11924,7 @@ function saveCompetence(idx) {
   closeModal(); showSection('competences'); toast(idx!==undefined?'Compétence modifiée':'Compétence ajoutée');
 }
 function deleteCompetence(idx) {
-  confirmDelete('Supprimer «&nbsp;'+db.competences[idx].name+'&nbsp;» ?', function(){
+  confirmDeleteRef(db.competences[idx], 'Supprimer «&nbsp;'+db.competences[idx].name+'&nbsp;» ?', function(){
     db.competences.splice(idx,1); showSection('competences'); toast('Compétence supprimée');
   });
 }
@@ -11632,7 +12151,7 @@ function saveRegle(idx) {
   closeModal(); showSection('regles_transverses'); toast(idx!==undefined?'Règle modifiée':'Règle ajoutée');
 }
 function deleteRegle(idx) {
-  confirmDelete('Supprimer «&nbsp;'+db.regles_transverses[idx].name+'&nbsp;» ?', function(){
+  confirmDeleteRef(db.regles_transverses[idx], 'Supprimer «&nbsp;'+db.regles_transverses[idx].name+'&nbsp;» ?', function(){
     db.regles_transverses.splice(idx,1); showSection('regles_transverses'); toast('Règle supprimée');
   });
 }

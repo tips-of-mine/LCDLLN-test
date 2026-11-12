@@ -3345,6 +3345,107 @@ relatif à la faction (`rule_niveaux_par_faction`) non représenté ; étapes de
 `steps` ; aux petits zooms, les étiquettes se chevauchent (noms des peuples, des provinces) ; carte des Enfers hors de
 cette carte.
 
+### 16.29 Fiches complètes : niveaux, étapes de quête, mines, formulaires (v1.0.100)
+
+Lot 27, demande du propriétaire (12/11/2026) : que les données structurées existent et soient éditables dans
+l'éditeur, au lieu de vivre dans des notes de texte. **Aucune valeur inventée** : les champs ajoutés ne reprennent
+que des repères déjà inscrits ; ailleurs ils restent `null` ou vides. `meta.version` 1.0.100, registre : 6 entrées
+(une par point). Aucun identifiant supprimé ; master, générateur et C++ inchangés.
+
+**1. Niveau de référence** — champ `niveau_ref` `{min, max}` (ou `null`) sur les 29 fiches `regions` et les 38 `raids`.
+
+- Régions et provinces : 21 renseignées, d'après la table `CARTE_NIVEAUX_REF` de l'éditeur v1.0.99 (§16.28, elle-même
+  sourcée par les notes, `regle_bestiaire_echelles` et §16.14 à §16.21) et la décision v1.0.71 pour les Enfers (1-10,
+  départ de la Légion infernale, sans case sur le continent). `null` (8) : Royaume des nains du sud (cœur hors départ),
+  Royaume d'Hishtarland, Empire du Jade, Empire Tharque, La Grande Plaine, Terra Secunda (aucun repère) ; Première
+  Province de l'Empire et Province de Northind (provinces sans repère propre : le calque prend celui de leur région
+  parente, 10-30, comme en v1.0.99).
+- Raids : 5 renseignés d'après leur « niveau conseillé » (v1.0.73 – v1.0.74) : Mine de la Traverse 10-15, Tertre des Rois
+  Noyés 45-50, Grottes des Naufrageurs 50-55, Tanière du Jarl 55-60, Dévoreur des Brumes 60. `null` (33) : tous les
+  autres ; `raid_t12_01_porte_des_enfers` n'a qu'un boss de niveau connu (Hécatonchire 60-70, fiche de la créature),
+  que le calque affiche toujours mais qui n'est pas recopié comme niveau conseillé.
+- Éditeur : le calque Niveaux lit `niveau_ref` des fiches ; la table n'est plus qu'un **secours** pour un fichier
+  antérieur (fiche sans le champ). Résultat case par case identique à la v1.0.99 (1 239 cases renseignées, 72 non
+  renseignées), vérifié par le test. Formulaires de région et de raid : deux champs min / max (vide = non renseigné ;
+  fourchette incomplète, inversée ou hors 1-100 refusée) ; le formulaire de raid rappelle le boss qui cite le raid. Le
+  calque Raids affiche `niveau_ref` d'abord, sinon le boss, sinon la zone. Badges « Niv. » sur les cartes de régions
+  et de raids.
+
+**2. Niveaux par faction** — champ optionnel `niveau_par_faction` `{faction_id: {min, max}}` sur les régions, **vide
+partout** (principe décidé en v1.0.78, détail à définir). Formulaire de région : tableau faction → min / max (ajout par
+liste des factions, retrait ✕). Calque Niveaux : sélecteur « Faction » sous la case à cocher (« Référence » par défaut,
+mémorisé dans le navigateur) ; pour la faction choisie, sa valeur (province, puis région) prime sur la région de départ et
+sur `niveau_ref`.
+
+**3. Étapes de quête situées** — champ `etapes_struct` sur les 192 quêtes : liste ordonnée de
+`{texte, cell?, ville_id?, lieu_id?, pnj_id?}` ; le texte des étapes (`steps`) est **gardé tel quel**. Pré-remplissage
+déterministe : une quête reçoit une étape par ligne de `steps` (même texte) dès qu'au moins une étape cite **exactement une**
+ville, un lieu ou un PNJ existant (nom exact, mots entiers, la citation la plus longue l'emporte sur une citation incluse,
+ou identifiant, ou identifiant de case) ; seules ces étapes reçoivent une référence (`ville_id` 123, `lieu_id` 83,
+`pnj_id` 73) ; les étapes à plusieurs citations ou sans citation restent sans référence. 121 quêtes pré-remplies, 71 avec
+`etapes_struct` vide. Formulaire de quête : éditeur « Étapes situées » (texte, listes ville / lieu / PNJ, case avec
+liste, ↑ ↓ ✕, « + Étape », « Reprendre le texte des étapes ») ; étape sans texte ou case inconnue refusée. Calque
+Quêtes : étapes situées en priorité (case explicite > lieu > ville > ville du PNJ s'il n'en a qu'une placée ; numéro du
+tracé = rang de l'étape), sinon villes et lieux de `source_lore` comme avant. **Quêtes plaçables : 72/192 avant,
+117/192 après** (97 par leurs étapes). Limites : beaucoup d'étapes citent un PNJ sans ville unique (Wismerhill, Pile-ou-Face…)
+ou plusieurs lieux ; à compléter à la main dans le formulaire.
+
+**4. Type « mine »** — `mine_poi` (« Mine », losange brun) ajouté à `place_types` ; 8 lieux reclassés (nom ou description
+explicites) : Mine de Vharholdt, Mine de la Traverse, Mine de soufre abandonnée, Galerie naine abandonnée, Mine de fer
+abandonnée, Puits de mine inondé (avant `open_dungeon_poi`), Puits des Apprentis (`open_dungeon_poi`, « mine de cuivre en
+activité ») et Galeries effondrées de la Vieille Veine (`ruins_settlement`, « galeries d'une veine de fer épuisée »).
+Non reclassés : carrières (des géants, des forçats, de la plaine aride), puits d'eau, relais des convois de minerai,
+Fosses aux vers, Château de la Mort (forteresse aux mines d'esclaves). **Master** : les POI correspondants gardent leur
+`kind` (`salle` pour 6, `ruine` pour la Vieille Veine ; Vharholdt n'a pas de POI) : le `kind` décrit la forme générée,
+pas l'usage, et le générateur ne lit pas le type de lieu du lore (vérifié par le test) ; aucun changement du master ni du
+C++, pas de nouvelle génération.
+
+**5. Formulaires** — faction : bloc repliable « Fiche détaillée » (identité visuelle, dirigeants, structure militaire,
+politique, territoire avec comptoir, fiche du peuple lointain ; `game_design` en JSON, invalide refusé, vide = retiré) ;
+un sous-objet `null` reste `null` tant qu'aucun champ n'est saisi ; clés inconnues gardées. Race : accès aux classes
+(`class_access`, avant non éditable) et notes de chaque affiliation. PNJ : champ « Description » (avant seulement à la
+création). Toutes les clés des fiches `factions` (dont les 12 peuples lointains, les Ophidiens et les Hwakhari),
+`races` et `persons` (dont la hiérarchie des Enfers) ont désormais un champ ; enregistrement sans perte (v1.0.98).
+
+**6. Suppression** — la boîte HTML de suppression (21 collections, et désormais `deleteRule`, qui supprimait sans
+demander) affiche le nombre de références à l'identifiant ailleurs dans le fichier, par collection (même définition que
+`test_editor_forms.py` : valeurs chaîne égales à l'identifiant), ou « Aucune référence » ; « Annuler » ne change rien.
+Les références ne sont pas nettoyées.
+
+**Notice : niveaux et étapes.**
+
+1. Charger `lune-noire-data.json`. **Régions** → ✎ : « Niveau de référence » (min, max) ; « Niveaux par faction » :
+   choisir une faction, « + Faction », saisir min et max. **Raids** → ✎ : « Niveau conseillé ».
+2. **Carte** → cocher « 📶 Niveaux de référence » ; liste « Faction » : « Référence » ou une faction (ses valeurs
+   priment).
+3. **Quêtes** → ✎ : « Étapes situées » ; « ⇣ Reprendre le texte des étapes » crée une étape par ligne du champ
+   « Étapes » ; choisir ville, lieu, PNJ ou case ; ↑ ↓ pour l'ordre. Le survol d'une pastille du calque Quêtes montre le
+   tracé numéroté.
+4. **Exporter JSON** et remplacer les deux copies ; relancer les contrôles du lore.
+
+**Test** `tools/lore/test_editor_fiches.py` (Playwright, ~20 s ; `--captures <chemin>` écrit le formulaire de quête et
+celui de région) : valeurs des champs ajoutés, calque Niveaux identique à la table v1.0.99 et secours, formulaires de
+région (niveau, refus, niveau par faction et sélecteur du calque) et de raid, éditeur d'étapes (ajout, listes, case,
+ordre, suppression, refus, tracé numéroté, `steps` inchangé), quêtes plaçables, mines (formulaire, sous-filtre, POI du
+master, générateur), formulaires de faction / race / PNJ (couverture des clés, modifications ciblées, 515 fiches
+enregistrées sans modification), suppression (références comptées, Annuler, `deleteRule`), export final identique octet
+pour octet, aucune erreur console. Les deux copies passent ce test, `test_editor_roundtrip.py`,
+`test_editor_routes.py`, `test_editor_layers.py` et `test_editor_forms.py` (complet et `--rapide`).
+
+**Fonctions** ajoutées ou modifiées documentées (règle de CLAUDE.md) : `niveauTxt`, `niveauParse`, `niveauFromInputs`,
+`niveauInputsHTML`, `renderRegionNpf`, `regionNpfAdd`, `regionNpfRead`, `carteRegionNiveau`, `carteQuestEtapesPath`,
+`carteNiveauFactionHTML`, `carteSetNiveauFaction`, `questEtapeOptions`, `questEtapeInfo`, `renderQuestEtapes`,
+`questEtapeSet`, `questEtapeAdd`, `questEtapeDel`, `questEtapeMove`, `questEtapesFromText`, `questEtapesRead`,
+`questEtapesCheck`, `factionSubFieldsHTML`, `factionSubRead`, `factionDetailHTML`, `affilNotesSet`, `addRaceClass`,
+`renderRaceClassList`, `ficheReferences`, `confirmDeleteRef`, `deleteRule`, `openRegionForm`, `saveRegion`,
+`openRaidForm`, `saveRaid`, `saveQuestV2`, `openFactionForm`, `saveFaction`, `openRaceForm`, `renderAffilList`,
+`saveRace`, `savePersonV2`, `carteBuildLayers`, `carteQuestOverlay`, `carteLayersLoad`, `carteLayersSave`.
+
+**Limites** : `niveau_par_faction` reste à remplir (décision de détail attendue) ; 8 régions et 33 raids sans niveau ;
+71 quêtes sans étape située et 24 pré-remplies sans étape plaçable (PNJ sans ville unique, villes ou lieux sans case) ;
+une case explicite l'emporte sur la ville ou le lieu de la même étape ; références orphelines signalées, pas nettoyées ;
+Playwright hors CI.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3360,6 +3461,7 @@ cette carte.
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
 - Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur à décider ; sauvegarde complète vérifiée en v1.0.98 (16.27) : références orphelines laissées par les suppressions et noms vides de 159 fiches à traiter.
+- Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

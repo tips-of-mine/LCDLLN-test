@@ -3243,6 +3243,108 @@ un navigateur récent (Chrome, Edge ou Firefox actuels) ; Playwright n'est pas d
 `rememberExportSource`, `exportJSON`, `openModal`, `closeModal`, `toast`, `renderMeta`, toutes les fonctions `save*`
 ci-dessus, `confirmVilleImport`, `carteUndo`, `carteAfterEdit`, `deleteRoute`.
 
+### 16.28 Calques de la carte de l'éditeur (v1.0.99)
+
+Demande du propriétaire (12/11/2026, lot 26) : afficher ou masquer des informations sur la carte de l'éditeur.
+Outil seulement : **aucune donnée de lore modifiée** (`meta.version` 1.0.99, registre : 1 entrée).
+
+**Panneau « Calques »** (`lune-noire-editor.html` et sa copie identique `-v20`), en colonne à gauche de la carte ; il
+remplace la barre « Filtres » (ses 7 clés gardent leur nom et leur valeur par défaut). Cases à cocher groupées, légende
+de chaque calque actif sous les cases, info-bulle au survol de chaque élément (marqueur, ou case pour les calques de
+fond). L'état est **mémorisé dans le navigateur** (`localStorage`, clé `lcdlln-editeur-carte-calques-v1`, lu et écrit
+sous `try/catch` : sans stockage, valeurs par défaut) ; ce sont des préférences d'affichage, jamais écrites dans le
+JSON exporté.
+
+| Groupe | Calque (clé) | Défaut | Donnée lue | Rendu |
+|---|---|---|---|---|
+| Fond | Régions du hors-série (`regions`) | inactif | `cells[].region_id` | couleur de fond, nom au centre des cases de la région |
+| Fond | Provinces (`provinces`) | inactif | `cells[].province` | contour pointillé blanc, nom au centre |
+| Fond | Niveaux de référence (`niveaux`) | inactif | voir ci-dessous | dégradé vert → jaune → rouge → violet (milieu de la fourchette), étiquette « 18-28 » à partir du zoom ×3, hachures = non renseigné |
+| Fond | Densité (`densite`) | inactif | villes + lieux + quêtes ancrées par case | 4 paliers (1, 2-3, 4-6, 7+), nombre au centre |
+| Fond | Cases jouables (`jouables`) | inactif | `generated_cells` de `world_master.json` | teinte cyan et bord de la zone jouable |
+| Fond | Lacs & rivières, Îles | actifs | inchangés | inchangés |
+| Lieux | Villes (`villes`) + sous-filtre **par taille** (`villes[].taille`) | actif, toutes | | |
+| Lieux | Lieux remarquables (`lieux`) + sous-filtre **par type** (`lieux[].type`) | actif, tous | | grottes et entrées secrètes exclues |
+| Lieux | Points importants (`poi`) | actif | | inchangé |
+| Réseau | Routes, sentiers, routes maritimes (`routes`) | actif | | inchangé |
+| Contenu | Quêtes (`quetes`) | inactif | `quests[].source_lore` | pastille bleue (nombre) ; survol : tracé des étapes |
+| Contenu | Raids (`raids`) | inactif | `raids[]` | losange rouge, « niv. N » (boss) ou « zone a-b » |
+| Contenu | Balises de danger (`balises`) | inactif | notes « Balisage du danger » des cases (v1.0.85+), lieux-balises | triangle jaune |
+| Contenu | Peuples lointains (`peuples`) | inactif | `factions[].territory.direction` et `.comptoir` | flèche vers le bord de la carte, anneau doré du comptoir |
+| 🔒 Secret | Dragons et grottes de Xygga (`dragons`) | **inactif à chaque ouverture** | lieux à `entree_cachee` dans une case où chasse un dragon boss mondial | étoile rouge, nom ; info-bulle : dragon et niveaux |
+| 🔒 Secret | Entrées ophidiennes (`ophidiens`) | **inactif à chaque ouverture** | lieux à `entree_cachee` dans une case d'une créature `faction_ophidiens` | losange vert |
+
+Les calques secrets ne sont jamais mémorisés actifs ; leurs lieux (11 grottes, 3 entrées) ne sont plus dessinés par le
+calque « Lieux remarquables » (avant ce lot, ils l'étaient) ; une balise dont la menace cite un dragon ou les
+Ophidiens n'en donne le texte que si le calque secret correspondant est coché. L'Entrée des Abysses (cachée, mais sans
+dragon ni Ophidien) reste un lieu ordinaire.
+
+**Règles de calcul** (`carteBuildLayers`, recalculé à chaque rendu de la carte et après chaque action) :
+
+- **Niveaux** : région de départ d'une faction (`game_design.depart.region`, 1-10) > province de la case > région de la
+  case. Les niveaux **ne sont pas un champ du lore** : ils sont écrits dans des notes (`regle_bestiaire_echelles`,
+  `rule_niveaux_par_faction`, notes des provinces, §16.14 à §16.21). L'éditeur les reprend dans une table
+  (`CARTE_NIVEAUX_REF`, 20 régions et provinces, source citée dans l'info-bulle). Sans repère : **Royaume des nains du
+  sud** (cœur hors départ de Drakhenhal, 52 cases) et **Royaume d'Hishtarland** (20) : 72 cases hachurées « non
+  renseigné ». Royaume des nains de
+  l'est : 10-30 déduit de « 10-20 puis 18-30 » (v1.0.89). **Proposition** : un champ `niveau_ref: [min, max]` sur les
+  fiches `regions`, que l'éditeur lirait à la place de la table.
+- **Quêtes ancrées** : villes et lieux cités dans `source_lore` qui ont une case ; une quête compte sur chaque case
+  qu'elle touche ; son tracé relie ces villes et lieux dans l'ordre de la fiche (les `steps` sont du texte libre, sans
+  lieu). 72 quêtes sur 192 ont au moins un ancrage (les 106 « ancrées » du §16.14 comptaient aussi les ancrages par
+  région ou par zone, non situables sur une case).
+- **Raids** : case de `location_ville_id` (ville ou lieu), sinon lieu ou note de case qui cite l'identifiant du raid :
+  23 placés, 15 sans case. **Niveau** : `level_max` du boss qui cite le raid, sinon « boss N » écrit dans la fiche ;
+  connu pour 6 raids seulement, dont 5 placés (`raids` n'a pas de champ niveau) ; sinon le niveau de référence de la zone est affiché.
+- **Balises** : 16 cases (notes « Balisage du danger ») et 9 lieux-balises (bornes, cairns, stèles).
+- **Peuples lointains** : 12 directions, 4 comptoirs (Brenhaval, Altenberg, Hishtarland, Ryvaldh).
+- **Densité** : villes + lieux (hors secrets) + quêtes ancrées ; le relevé v1.0.84 était hors dépôt, ce calque en
+  reprend le principe.
+- **Lieux par type** : les types existants (camp, ruines habitées, sanctuaire, donjon, passage, champ de bataille,
+  autre, sans type…). **Pas de type « mine »** : les 6 mines du lore (Mine de Vharholdt, de la Traverse…) sont classées
+  « autre », « donjon »… ; proposition : un type `mine_poi` dans `place_types`.
+
+**Cases jouables** : voie choisie, la plus simple et sans toucher au lore : bouton **« Charger la carte du jeu… »** du
+panneau, qui lit `game/data/world/royaumes/world_master.json` (289 `generated_cells`), garde la liste dans le
+navigateur (`lcdlln-editeur-cases-jouables-v1`) et active le calque. Les corridors des départs (`AddStartCorridors`
+du générateur) ne sont pas dans `generated_cells` : non montrés. Recopier la liste dans le lore aurait demandé un champ
+de plus à tenir synchronisé.
+
+**Performance** (Chromium sans affichage, rendu forcé, médiane de 5) : `drawCarte` avec les seuls calques historiques
+×2 13 ms, ×6 44 ms, ×12 121 ms ; avec **tous** les calques ×2 27 ms, ×6 70 ms, ×12 171 ms. Le déplacement est le
+défilement natif du conteneur (aucun redessin) ; un changement de zoom redessine une fois. Survol : 0,2 ms en médiane,
+0,4 ms au 95e centile (aucun redessin du canvas : le tracé des quêtes est un calque SVG au-dessus).
+
+**Notice : utiliser les calques.**
+
+1. Charger `lune-noire-data.json`, section **Carte** ; le panneau « Calques » est à gauche.
+2. Cocher les calques voulus ; ouvrir « par taille » / « par type » pour masquer des villes ou des lieux.
+3. Pour les cases jouables : **📂 Charger la carte du jeu…**, choisir `game/data/world/royaumes/world_master.json`
+   (une fois : la liste est gardée dans le navigateur ; recharger après une régénération du master).
+4. Survoler un marqueur pour son détail ; survoler une pastille de quête affiche le tracé de ses étapes (numérotées).
+5. Calques 🔒 **Secret** : à cocher seulement pour la conception (pas en partage d'écran avec des joueurs) ; ils sont
+   décochés à chaque ouverture de l'éditeur.
+
+**Test** `tools/lore/test_editor_layers.py` (Playwright, ~15 s ; `--captures <chemin>` écrit 4 PNG) : défauts (secrets
+inactifs, grottes absentes), chargement du master, chaque case cochée puis décochée, chaque sous-filtre (15 types de
+lieux, 7 tailles), grottes et entrées présentes seulement avec leur calque, niveaux d'une case de départ et de la poche
+des Terres du Nord, survol d'une quête (info-bulle et tracé SVG, effacé à la sortie), info-bulles raid, balise, peuple,
+niveau, état retrouvé après rechargement (secrets désactivés), `localStorage` qui lève une exception, mesures de
+performance, export identique octet pour octet, aucune erreur console. Les deux copies passent ce test,
+`test_editor_roundtrip.py`, `test_editor_routes.py` et `test_editor_forms.py --rapide`.
+
+**Fonctions** ajoutées ou modifiées documentées (règle de CLAUDE.md) : `carteLayersLoad`, `carteLayersSave`,
+`carteJouablesLoad`, `carteJouablesFrom`, `carteBuildLayers`, `carteNiveauColor`, `carteDensiteColor`,
+`carteVilleVisible`, `carteLieuVisible`, `drawCarteCellLayers`, `drawCarteLayerBorders`, `carteLayerText`,
+`drawCarteLayerMarkers`, `carteHitLayer`, `carteCellLayerTip`, `carteTipLayerExtra`, `carteQuestOverlay`,
+`carteLayersLegendHTML`, `carteLayersPanelHTML`, `carteToggleSub`, `carteLoadMaster`, `carteToggleFilter`,
+`carteComputeGeo`, `renderCarte`, `drawCarte`, `carteOnHover`, `carteTipHTML`.
+
+**Limites** : niveaux tirés d'une table de l'éditeur (à tenir à jour tant qu'il n'y a pas de champ structuré) ; niveau
+relatif à la faction (`rule_niveaux_par_faction`) non représenté ; étapes de quête = villes et lieux cités, pas les
+`steps` ; aux petits zooms, les étiquettes se chevauchent (noms des peuples, des provinces) ; carte des Enfers hors de
+cette carte.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.

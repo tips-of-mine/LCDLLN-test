@@ -5413,9 +5413,72 @@ if (!window._carteState.undoStack) window._carteState.undoStack = [];
 if (!window._carteState.filters) window._carteState.filters = { villes:true, lieux:true, routes:true, poi:true, regions:false, water:true, islands:true };
 if (window._carteState.filters.islands === undefined) window._carteState.filters.islands = true;
 if (window._carteState.filters.lieux === undefined) window._carteState.filters.lieux = true;
+// ── Calques de la carte (v1.0.99) ──
+// Valeurs par défaut des calques ajoutés (les 7 historiques ci-dessus gardent les leurs) :
+// tous désactivés pour ne pas charger la carte ; les calques « secrets » (dragons et
+// grottes de Xygga, entrées ophidiennes) sont TOUJOURS désactivés à l'ouverture (jamais
+// mémorisés actifs), car ils montrent ce que le jeu cache aux joueurs.
+var CARTE_LAYER_DEFAULTS = { provinces:false, niveaux:false, densite:false, jouables:false, quetes:false,
+  raids:false, balises:false, peuples:false, dragons:false, ophidiens:false };
+var CARTE_LAYER_SECRETS = ['dragons', 'ophidiens'];
+// Clés localStorage (préférences d'affichage propres au navigateur, jamais dans le JSON
+// exporté) : état des calques, et liste des cases jouables lue dans world_master.json.
+var CARTE_LAYERS_STORE = 'lcdlln-editeur-carte-calques-v1';
+var CARTE_JOUABLES_STORE = 'lcdlln-editeur-cases-jouables-v1';
+Object.keys(CARTE_LAYER_DEFAULTS).forEach(function(k){ if (window._carteState.filters[k]===undefined) window._carteState.filters[k]=CARTE_LAYER_DEFAULTS[k]; });
+// Sous-filtres : types de lieux et tailles de villes MASQUÉS (absents = visibles).
+window._carteState.lieuTypesOff = window._carteState.lieuTypesOff || {};
+window._carteState.villeTaillesOff = window._carteState.villeTaillesOff || {};
+/// Relit l'état mémorisé des calques (localStorage) et l'applique à _carteState :
+/// calques, sous-filtres de types de lieux et de tailles de villes ; les calques secrets
+/// restent désactivés. Sans stockage disponible (navigation privée, fichier local
+/// bloqué) ou valeur illisible : valeurs par défaut, sans erreur.
+/// Effet de bord : window._carteState.filters / lieuTypesOff / villeTaillesOff.
+function carteLayersLoad() {
+  var saved=null;
+  try { saved=JSON.parse(window.localStorage.getItem(CARTE_LAYERS_STORE)||'null'); } catch(e) { saved=null; }
+  if (!saved || typeof saved!=='object') return;
+  var st=window._carteState;
+  if (saved.filters && typeof saved.filters==='object') Object.keys(saved.filters).forEach(function(k){
+    if (k in st.filters && CARTE_LAYER_SECRETS.indexOf(k)<0) st.filters[k]=!!saved.filters[k];
+  });
+  st.lieuTypesOff={}; (Array.isArray(saved.lieuTypesOff)?saved.lieuTypesOff:[]).forEach(function(t){ st.lieuTypesOff[String(t)]=true; });
+  st.villeTaillesOff={}; (Array.isArray(saved.villeTaillesOff)?saved.villeTaillesOff:[]).forEach(function(t){ st.villeTaillesOff[String(t)]=true; });
+}
+/// Mémorise l'état des calques (localStorage, sans les calques secrets) ; échec silencieux.
+/// Effet de bord : localStorage seulement.
+function carteLayersSave() {
+  var st=window._carteState, f={};
+  Object.keys(st.filters).forEach(function(k){ if (CARTE_LAYER_SECRETS.indexOf(k)<0) f[k]=!!st.filters[k]; });
+  try {
+    window.localStorage.setItem(CARTE_LAYERS_STORE, JSON.stringify({ v:1, filters:f,
+      lieuTypesOff:Object.keys(st.lieuTypesOff).filter(function(k){ return st.lieuTypesOff[k]; }),
+      villeTaillesOff:Object.keys(st.villeTaillesOff).filter(function(k){ return st.villeTaillesOff[k]; }) }));
+  } catch(e) { /* stockage indisponible : l'état reste pour la session */ }
+}
+// Cases jouables (generated_cells de world_master.json) : { cells:{id:true}, count, source } ou null.
+window._carteJouables = null;
+/// Relit la liste des cases jouables mémorisée (localStorage) ; ignore une valeur illisible.
+/// Effet de bord : window._carteJouables.
+function carteJouablesLoad() {
+  try {
+    var s=JSON.parse(window.localStorage.getItem(CARTE_JOUABLES_STORE)||'null');
+    if (s && Array.isArray(s.cells)) window._carteJouables=carteJouablesFrom(s.cells, s.source||'world_master.json');
+  } catch(e) { window._carteJouables=null; }
+}
+/// Construit l'index des cases jouables. \param list identifiants de cases (generated_cells).
+/// \param source nom du fichier lu (affiché dans la légende). Pas d'effet de bord.
+function carteJouablesFrom(list, source) {
+  var cells={}; list.forEach(function(id){ if (typeof id==='string' && id) cells[id]=true; });
+  return { cells:cells, count:Object.keys(cells).length, source:String(source||'') };
+}
+carteLayersLoad();
+carteJouablesLoad();
 var _carteGeo = null;         // { byKey, minLat, maxLat, minLon, maxLon, cols, rows, villeByCell, lieuByCell }
 
-// Recalcule la géométrie de la grille à partir de db.cells / db.villes.
+/// Recalcule la géométrie de la grille à partir de db.cells / db.villes / db.lieux et,
+/// depuis la v1.0.99, l'index des calques (_carteGeo.layers, carteBuildLayers).
+/// Effet de bord : _carteGeo seulement (aucune donnée modifiée).
 function carteComputeGeo() {
   var cells = db.cells || [];
   var minLat=Infinity, maxLat=-Infinity, minLon=Infinity, maxLon=-Infinity, byKey={};
@@ -5432,6 +5495,7 @@ function carteComputeGeo() {
   (db.lieux||[]).forEach(function(l){ if(l.cell) (lieuByCell[l.cell]=lieuByCell[l.cell]||[]).push(l); });
   _carteGeo = { byKey:byKey, minLat:minLat, maxLat:maxLat, minLon:minLon, maxLon:maxLon,
     cols:(maxLon-minLon+1), rows:(maxLat-minLat+1), villeByCell:villeByCell, lieuByCell:lieuByCell };
+  _carteGeo.layers = carteBuildLayers(); // v1.0.99 : index des calques (quêtes, raids, niveaux…)
   return _carteGeo;
 }
 
@@ -5602,10 +5666,11 @@ function carteShowTip(e, html) {
   tip.innerHTML=html; tip.style.display='block';
   tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
 }
-/// Contenu de l'info-bulle d'une fiche : nom, type, case et position (m).
+/// Contenu de l'info-bulle d'une fiche : nom, type, case et position (m) ; v1.0.99 : taille
+/// de la ville, et compléments des calques (lieu secret, comptoir), carteTipLayerExtra.
 function carteTipHTML(kind, rec) {
-  return '<b>'+esc(rec.name||rec.id)+'</b> <span style="opacity:.7">('+esc(kind==='villes'?placeTypeLabel(rec.type):'lieu')+')</span><br>'
-    +esc(rec.cell||'—')+' — '+esc(placePositionLabel(rec));
+  return '<b>'+esc(rec.name||rec.id)+'</b> <span style="opacity:.7">('+esc(kind==='villes'?placeTypeLabel(rec.type)+(rec.taille?', '+(CARTE_TAILLE_LABELS[rec.taille]||rec.taille):''):'lieu'+(rec.type?', '+placeTypeLabel(rec.type):''))+')</span><br>'
+    +esc(rec.cell||'—')+' — '+esc(placePositionLabel(rec))+carteTipLayerExtra(kind, rec);
 }
 /// Début d'un glisser-déposer (mode « Déplacer », bouton gauche sur un marqueur).
 /// Effet de bord : window._carteDrag, curseur du canvas.
@@ -6277,6 +6342,10 @@ function drawCarteTrace(ctx, px) {
 // Rend la section « Carte » : barre d'outils (mode, zoom), légende, et un canvas
 // interactif. Clic sur une cellule = édition (mode Sélection) ou point d'une
 // nouvelle route (mode Route). Voir openCellEditor / openRouteForm.
+/// Rend la section Carte : barre des modes et du zoom, légendes des terrains, routes et
+/// types de lieux, panneau des calques (v1.0.99) et sa légende, canvas et calque SVG des
+/// quêtes, liste des routes ; branche les écouteurs souris du canvas.
+/// \param el conteneur de la section. Effet de bord : DOM, _carteGeo (carteComputeGeo).
 function renderCarte(el) {
   var cells = db.cells || [];
   if (!cells.length) {
@@ -6330,30 +6399,17 @@ function renderCarte(el) {
     h += '</div>';
   }
 
-  // Filtres d'affichage (couches)
-  var fl = st.filters;
-  function flChk(key,label){ return '<label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
-  h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;align-items:center">';
-  h += '<span style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:var(--text-dim)">Filtres</span>';
-  h += flChk('villes','🏙️ Villes') + flChk('lieux','✴️ Lieux remarquables') + flChk('routes','🛣️ Routes') + flChk('poi','📍 Points importants') + flChk('water','💧 Lacs & rivières') + flChk('islands','🏝️ Îles') + flChk('regions','🗺️ Régions (teinte)');
-  h += '</div>';
+  // Calques (v1.0.99, ex-barre « Filtres ») : panneau groupé et légende des calques actifs
+  // (la légende des régions y est passée : cocher un calque ne re-rend plus la section).
+  h += '<div style="display:flex;gap:0.6rem;align-items:flex-start">' + carteLayersPanelHTML() + '<div style="flex:1 1 auto;min-width:0">';
 
-  // Légende des régions (visible quand la couche Régions est active)
-  if (fl.regions) {
-    var regCells = {}; cells.forEach(function(c){ if(c.region_id) regCells[c.region_id]=(regCells[c.region_id]||0)+1; });
-    var regIds = Object.keys(regCells).sort(function(a,b){return regCells[b]-regCells[a];});
-    if (regIds.length) {
-      h += '<div style="display:flex;flex-wrap:wrap;gap:0.4rem 0.8rem;margin-bottom:0.75rem;align-items:center">';
-      regIds.forEach(function(rid){ var rg=(db.regions||[]).find(function(x){return x.id===rid;});
-        h += '<span style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;color:var(--text-secondary)"><span style="width:13px;height:13px;border-radius:2px;background:'+regionColor(rid)+'"></span>'+esc(rg?rg.name:rid)+' ('+regCells[rid]+')</span>';
-      });
-      h += '</div>';
-    }
-  }
-
-  // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin)
+  // Canvas dans un conteneur scrollable (hauteur étendue, scroll H/V au besoin) ; v1.0.99 :
+  // calque SVG par-dessus (tracé des étapes des quêtes survolées), sans capture de la souris.
   h += '<div id="carteScroll" style="overflow:auto;height:76vh;border:1px solid var(--border,#33333a);border-radius:6px;background:#0a0a10;resize:vertical">';
-  h += '<canvas id="carteCanvas" style="display:block;cursor:'+(st.mode==='move'?'grab':st.mode==='trace'?'crosshair':'pointer')+'"></canvas></div>';
+  h += '<div id="carteStage" style="position:relative;display:inline-block;vertical-align:top">';
+  h += '<canvas id="carteCanvas" style="display:block;cursor:'+(st.mode==='move'?'grab':st.mode==='trace'?'crosshair':'pointer')+'"></canvas>';
+  h += '<svg id="carteOverlay" xmlns="http://www.w3.org/2000/svg" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible"></svg></div></div>';
+  h += '</div></div>'; // fin de la colonne carte et de la rangée calques + carte (v1.0.99)
   h += '<div id="carteTip" style="position:fixed;display:none;pointer-events:none;z-index:60;max-width:340px;padding:0.3rem 0.5rem;font-size:0.74rem;line-height:1.35;background:#15151c;color:#f0e6cc;border:1px solid #c9a84c;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>';
   h += '<div id="carteStatus" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;font-family:monospace">&nbsp;</div>';
 
@@ -6376,7 +6432,7 @@ function renderCarte(el) {
     if (window._carteState.mode!=='trace') return; e.preventDefault();
     var h=carteHitRoute(carteEventPoint(e), true); if (h && h.handle>=0) carteTraceDeletePoint(h.route, h.handle);
   });
-  canvas.addEventListener('mouseleave', function(e){ if(!window._carteDrag) carteShowTip(e, ''); });
+  canvas.addEventListener('mouseleave', function(e){ if(!window._carteDrag) { carteShowTip(e, ''); carteQuestOverlay(null); } });
 }
 // Relâchement du glisser-déposer de la carte, même hors du canvas (v1.0.95).
 window.addEventListener('mouseup', carteOnMouseUp);
@@ -6424,7 +6480,9 @@ function carteHintText() {
     + (st.selectedRouteId ? ' — Route '+st.selectedRouteId+' sélectionnée (en noir) : recliquez-la dans la liste pour la désélectionner.' : '');
 }
 
-// Dessine la grille, les routes, les villes et les POI sur le canvas.
+/// Dessine la grille, les routes, les villes, les POI et (v1.0.99) les calques actifs sur
+/// le canvas ; vide le calque SVG des quêtes. Effet de bord : canvas, #carteOverlay,
+/// _carteHits, _carteLayerHits.
 function drawCarte() {
   var canvas = document.getElementById('carteCanvas'); if(!canvas||!_carteGeo) return;
   var st = window._carteState;
@@ -6434,6 +6492,12 @@ function drawCarte() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
   var fl = st.filters || {};
+  // Calques (v1.0.99) : index calculé par carteComputeGeo ; calque SVG des quêtes remis à la taille.
+  var LY = _carteGeo.layers || carteBuildLayers();
+  var layerFill = fl.niveaux || fl.densite || fl.jouables;
+  var ov = document.getElementById('carteOverlay');
+  if (ov) { ov.setAttribute('width', W); ov.setAttribute('height', H); ov.setAttribute('data-key', ''); ov.innerHTML=''; }
+  _carteLayerHits = [];
   var hydro = db.hydrography || {lakes:[], rivers:[]};
   var hydroCells = {};
   (hydro.lakes||[]).forEach(function(l){ (l.cells||[]).forEach(function(k){ hydroCells[k]=true; }); });
@@ -6458,6 +6522,8 @@ function drawCarte() {
         ctx.fillStyle = regionColor(c.region_id); ctx.globalAlpha = 0.5;
         ctx.fillRect(x,y,px,px); ctx.globalAlpha = 1;
       }
+      // Calques de fond (v1.0.99) : niveaux, densité, cases jouables.
+      if (layerFill) drawCarteCellLayers(ctx, c, x, y, px, fl, LY);
       // grille fine
       if (px>=8) { ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,px-1,px-1); }
       // Lacs & rivières (couche optionnelle) : tracé réel. Les cellules décrites par
@@ -6475,6 +6541,8 @@ function drawCarte() {
 
   // Routes (couche optionnelle)
   if (fl.water && px >= 6) drawCarteHydrography(ctx, hydro, px);
+  // Contours des provinces et de la zone jouable (v1.0.99).
+  drawCarteLayerBorders(ctx, px, fl);
 
   // Une route peut porter un tracé (waypoints : liste d'ids de cellules, ex. route
   // maritime suivant l'eau navigable) ; sinon ligne droite entre ses extrémités.
@@ -6535,6 +6603,8 @@ function drawCarte() {
       ctx.fillStyle='#f0d890'; ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=3;
       names.forEach(function(nm, k){ var ty=y+r+1+k*(fsz+2); ctx.strokeText(nm, x, ty); ctx.fillText(nm, x, ty); });
     }
+    // v1.0.99 : sous-filtre des types et lieux secrets (dessinés par leur calque).
+    all=all.filter(carteLieuVisible); if (!all.length) return;
     var ls=all.filter(function(li){ return !cartePlaceIsFree(li); });
     if (ls.length) {
       var l=ls[0], d=placeTypeDef(l.type), p=cartePlacePixel(l, 'lieux', px);
@@ -6560,6 +6630,7 @@ function drawCarte() {
   // dans une case à plusieurs villes, la plus importante est dessinée en dernier (dessus).
   if (fl.villes) Object.keys(_carteGeo.villeByCell).forEach(function(cellId){
     _carteGeo.villeByCell[cellId].slice().reverse().forEach(function(v0){
+      if (!carteVilleVisible(v0)) return; // v1.0.99 : sous-filtre des tailles
       var ctr=cartePlacePixel(v0, 'villes', px); if(!ctr) return;
       var d=placeTypeDef(v0.type), tier=d.tier||'town';
       if (st.zoom < (CARTE_TIER_MIN_ZOOM[tier]||1)) return;
@@ -6582,6 +6653,9 @@ function drawCarte() {
     if (tc) { ctx.strokeStyle='#c9a84c'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.strokeRect(tc.x-px/2+1,tc.y-px/2+1,px-2,px-2); ctx.setLineDash([]); }
     ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(dr.x, dr.y, Math.max(8, px*0.3), 0, Math.PI*2); ctx.stroke();
   }
+
+  // Marqueurs et étiquettes des calques (v1.0.99).
+  drawCarteLayerMarkers(ctx, px, fl);
 
   // Noms de cellules (v1.0.77) : un nom par groupe de cellules qui le portent.
   if (px >= 6) drawCarteCellNames(ctx, px);
@@ -6763,7 +6837,12 @@ function carteOnHover(e) {
     return;
   }
   var hit=carteHitPlace(e);
-  carteShowTip(e, hit ? carteTipHTML(hit.kind, hit.rec) : '');
+  // v1.0.99 : sinon marqueur d'un calque (quêtes : tracé des étapes), sinon calques de fond de la case.
+  var lh=hit?null:carteHitLayer(e);
+  carteQuestOverlay(lh&&lh.quests?lh.quests:null);
+  if (hit) carteShowTip(e, carteTipHTML(hit.kind, hit.rec));
+  else if (lh) carteShowTip(e, lh.html);
+  else { var hc=carteEventToCell(e); carteShowTip(e, hc?carteCellLayerTip(hc):''); }
   carteHoverStatus(e);
 }
 /// Barre d'état sous la carte : case survolée, terrain, région, villes, lieux, POI
@@ -6796,11 +6875,17 @@ function carteOnClick(e) {
 function carteSetMode(m) { window._carteState.mode=m; window._carteState.routeFrom=null; window._carteTrace.draft=null; window._carteTrace.drag=null; showSection('carte'); }
 /// Active / désactive le mode « Tracer » (v1.0.97). Effet de bord : voir carteSetMode.
 function carteToggleTraceMode() { carteSetMode(window._carteState.mode==='trace' ? 'select' : 'trace'); }
-// Active/désactive une couche d'affichage. La couche « régions » modifie aussi
-// la légende → re-rendu complet ; les autres se contentent d'un redraw canvas.
+/// Active / désactive un calque d'affichage, mémorise l'état (localStorage, sauf calques
+/// secrets), met à jour la légende et redessine (v1.0.99 : plus de re-rendu complet).
+/// \param key clé du calque (villes, lieux, routes, poi, water, islands, regions, provinces,
+/// niveaux, densite, jouables, quetes, raids, balises, peuples, dragons, ophidiens).
+/// Effet de bord : _carteState.filters, localStorage, DOM (#carteLegend, case à cocher), carte.
 function carteToggleFilter(key, on) {
-  window._carteState.filters[key]=on;
-  if (key==='regions') showSection('carte'); else drawCarte();
+  window._carteState.filters[key]=!!on;
+  var cb=document.getElementById('calque_'+key); if (cb && cb.checked!==!!on) cb.checked=!!on;
+  carteLayersSave();
+  var lg=document.getElementById('carteLegend'); if (lg) lg.innerHTML=carteLayersLegendHTML();
+  drawCarte();
 }
 function carteZoomBy(delta) {
   var st=window._carteState; st.zoom=Math.max(1,Math.min(MAX_CARTE_ZOOM, st.zoom+delta));
@@ -6815,6 +6900,558 @@ function carteFit() {
   window._carteState.zoom=z||1;
   var lbl=document.getElementById('carteZoomLabel'); if(lbl) lbl.textContent='×'+window._carteState.zoom;
   drawCarte();
+}
+
+// ─────────────────────────────────────────────
+// Calques de la carte (v1.0.99)
+// ─────────────────────────────────────────────
+// Le panneau « Calques » affiche ou masque des informations dessinées par-dessus la
+// carte. Aucun calque ne modifie db : ce sont des vues calculées à partir des fiches
+// (carteBuildLayers, appelé par carteComputeGeo) ; l'export n'est pas touché.
+
+// Niveau de référence par région ou province. Les niveaux ne sont pas un champ structuré
+// du lore : ils sont écrits dans les notes des régions et des règles (regle_bestiaire_echelles,
+// rule_niveaux_par_faction, LORE_BD §16.14-16.21). Cette table les reprend, source à
+// l'appui ; à tenir à jour si un repère change (ou à remplacer par un champ niveau_ref
+// des fiches regions, proposé en LORE_BD §16.28). Une province sans entrée prend le niveau
+// de sa région ; une région sans entrée est « non renseignée » (Royaume des nains du sud
+// hors provinces, Hishtarland).
+var CARTE_NIVEAUX_REF = {
+  terres_des_gigantomorphes: { min:30, max:56, src:'regle_bestiaire_echelles : Terres des Gigantomorphes 30-56' },
+  foret_elfique:             { min:10, max:30, src:'LORE_BD §16.14 : Forêt elfique 10-30 (forêts et plaines de l\'intérieur)' },
+  territoires_orcques:       { min:18, max:45, src:'regle_bestiaire_echelles : Orkland 18-45' },
+  royaume_des_nains_de_lest: { min:10, max:30, src:'regle_bestiaire_echelles v1.0.89 : hors départ 10-20 puis 18-30' },
+  baronnie_de_moorks:        { min:18, max:45, src:'regle_bestiaire_echelles : Baronnie de Moork 18-45' },
+  via_magna:                 { min:10, max:30, src:'regle_bestiaire_echelles v1.0.87 : Via Magna 10-30' },
+  royaume_drach:             { min:30, max:56, src:'regle_bestiaire_echelles : Royaume Drach 30-56' },
+  terres_de_lempereur:       { min:10, max:30, src:'note de la région (v1.0.92) : repère 10-30' },
+  syzygie:                   { min:10, max:30, src:'LORE_BD §16.14 : Syzygie 10-30' },
+  region_ile_de_la_treve:    { min:45, max:60, src:'rule_niveaux_par_faction v1.0.74 : 45-60, toutes factions' },
+  region_marches:            { min:1,  max:15, src:'regle_bestiaire_echelles : départ (Terres du Nord, Marches) 1-15' },
+  region_terres_nord_t00:    { min:1,  max:15, src:'regle_bestiaire_echelles v1.0.85 : poche des Terres du Nord 1-15' },
+  marais_maudits_t11:        { min:40, max:56, src:'regle_bestiaire_echelles : nécropoles, marais maudits 40-56' },
+  region_marche_est:         { min:15, max:28, src:'regle_bestiaire_echelles v1.0.88 : Marche de l\'Est 15-28' },
+  terres_desolees:           { min:20, max:40, src:'regle_bestiaire_echelles v1.0.86 : Terres désolées de Tsaroth 20-40' },
+  desert_central:            { min:10, max:25, src:'regle_bestiaire_echelles v1.0.86 : Désert de l\'Oracle 10-25' },
+  foret_des_lutins:          { min:14, max:24, src:'note de la province (v1.0.90) : 14-24' },
+  val_de_southport:          { min:18, max:28, src:'note de la province (v1.0.90) : 18-28' },
+  desert_des_sels:           { min:24, max:36, src:'note de la province (v1.0.90) : 24-36' },
+  confins_du_midi:           { min:22, max:34, src:'note de la province (v1.0.90) : 22-34' }
+};
+// Paliers de couleur des niveaux (niveau → couleur), interpolés par carteNiveauColor.
+var CARTE_NIVEAU_STOPS = [[1,'#2e8b57'],[15,'#9acd32'],[30,'#f2d14a'],[45,'#f08a24'],[60,'#d7263d'],[70,'#7b2cbf']];
+// Paliers de densité (lieux + villes + quêtes d'une case) : [min, couleur, libellé].
+var CARTE_DENSITE_STEPS = [[1,'#fde7a6','1'],[2,'#f6b26b','2-3'],[4,'#e06666','4-6'],[7,'#8b0000','7 et +']];
+// Directions des peuples lointains (factions[].territory.direction) en degrés, sens horaire depuis le nord.
+var CARTE_DIRECTIONS = { 'nord':0, 'nord-nord-est':22.5, 'nord-est':45, 'est-nord-est':67.5, 'est':90, 'est-sud-est':112.5,
+  'sud-est':135, 'sud-sud-est':157.5, 'sud':180, 'sud-sud-ouest':202.5, 'sud-ouest':225, 'ouest-sud-ouest':247.5,
+  'ouest':270, 'ouest-nord-ouest':292.5, 'nord-ouest':315, 'nord-nord-ouest':337.5 };
+// Libellés des tailles de villes (villes[].taille, grille des services).
+var CARTE_TAILLE_LABELS = { capitale:'Capitale', grande_ville:'Grande ville', ville:'Ville', forteresse:'Forteresse',
+  village:'Village', hameau:'Hameau', sans_service:'Sans service', '':'Sans taille' };
+var CARTE_TAILLE_ORDER = ['capitale','grande_ville','ville','forteresse','village','hameau','sans_service',''];
+// Marqueurs des calques dessinés au dernier drawCarte (info-bulles) :
+// { x, y, r, html, quests? } (quests = ids de quêtes dont le tracé s'affiche au survol).
+var _carteLayerHits = [];
+
+/// Calcule l'index des calques à partir de db (aucune écriture) : niveaux et densité par
+/// case, quêtes ancrées (cases de leurs villes / lieux cités dans source_lore, dans l'ordre),
+/// raids (case, niveau), balises de danger, lieux secrets (grottes des dragons de Xygga,
+/// entrées ophidiennes), peuples lointains et comptoirs, provinces et centres des régions.
+/// Appelée par carteComputeGeo (rendu de la section, après chaque action de la carte).
+/// \return objet d'index (voir les champs initialisés ci-dessous). Pas d'effet de bord.
+function carteBuildLayers() {
+  var L = { niveau:{}, densite:{}, densMax:0, quetesByCell:{}, quetePaths:{}, quetesAncrees:0, quetesTotal:0,
+    raids:[], raidsSansCase:[], balises:[], dragons:[], ophidiens:[], secretLieux:{}, peuples:[], peuplesSansDir:[],
+    comptoirs:{}, provinces:{}, regionsCtr:{}, lieuTypes:{}, villeTailles:{} };
+  var cells=db.cells||[], byId={}, vid={}, lid={};
+  cells.forEach(function(c){ byId[c.id]=c; });
+  (db.villes||[]).forEach(function(v){ vid[v.id]=v; });
+  (db.lieux||[]).forEach(function(l){ lid[l.id]=l; });
+  function push(map, k, v){ (map[k]=map[k]||[]).push(v); }
+
+  // Lieux secrets : entrée cachée (entree_cachee === true) dans une case où chasse un
+  // dragon boss mondial (Xygga et ses premiers-nés), ou une créature ophidienne.
+  var dragonCells={}, ophCells={};
+  (db.creatures||[]).forEach(function(cr){
+    var zs=Array.isArray(cr.zones_chasse)?cr.zones_chasse:[];
+    if (cr.type==='dragon' && cr.difficulty==='world_boss') zs.forEach(function(z){ push(dragonCells, z, cr); });
+    if (cr.faction_id==='faction_ophidiens') zs.forEach(function(z){ push(ophCells, z, cr); });
+  });
+  (db.lieux||[]).forEach(function(l){
+    if (l.entree_cachee!==true || !l.cell || !byId[l.cell]) return;
+    if (dragonCells[l.cell]) { L.secretLieux[l.id]='dragons'; L.dragons.push({ lieu:l, creatures:dragonCells[l.cell] }); }
+    else if (ophCells[l.cell] || /ophidien/.test(l.id)) { L.secretLieux[l.id]='ophidiens'; L.ophidiens.push({ lieu:l, creatures:ophCells[l.cell]||[] }); }
+  });
+
+  // Niveaux : région de départ d'une faction (game_design.depart.region, carte du continent)
+  // > province de la case > région de la case.
+  var depart={};
+  (db.factions||[]).forEach(function(f){
+    var d=f.game_design&&f.game_design.depart, r=d&&d.region;
+    if (!r || r.carte || !Array.isArray(r.cells) || !Array.isArray(r.niveaux) || r.niveaux.length<2) return;
+    r.cells.forEach(function(id){ depart[id]={ min:r.niveaux[0], max:r.niveaux[1], src:'Région de départ : '+(f.name||f.id) }; });
+  });
+  var regName={}; (db.regions||[]).forEach(function(rg){ regName[rg.id]=rg.name||rg.id; });
+  cells.forEach(function(c){
+    var n=depart[c.id] || null;
+    if (!n && c.province && CARTE_NIVEAUX_REF[c.province]) n=CARTE_NIVEAUX_REF[c.province];
+    if (!n && c.region_id && CARTE_NIVEAUX_REF[c.region_id]) n=CARTE_NIVEAUX_REF[c.region_id];
+    if (n) L.niveau[c.id]=n; else if (c.region_id) L.niveau[c.id]=null; // null = région sans repère
+    // Provinces (contour) et centres des régions (noms), en coordonnées de grille.
+    var p=parseCellCoord(c.id); if (!p) return;
+    if (c.province) { var pv=L.provinces[c.province]||(L.provinces[c.province]={ name:regName[c.province]||c.province, lat:0, lon:0, n:0 }); pv.lat+=p.lat; pv.lon+=p.lon; pv.n++; }
+    if (c.region_id) { var rc=L.regionsCtr[c.region_id]||(L.regionsCtr[c.region_id]={ name:regName[c.region_id]||c.region_id, lat:0, lon:0, n:0 }); rc.lat+=p.lat; rc.lon+=p.lon; rc.n++; }
+  });
+
+  // Quêtes : chemin = villes et lieux cités dans source_lore (ordre de la fiche) qui ont une case.
+  (db.quests||[]).forEach(function(q){
+    L.quetesTotal++;
+    var path=[], seen={};
+    (Array.isArray(q.source_lore)?q.source_lore:[]).forEach(function(ref){
+      var rec=vid[ref], kind='villes'; if (!rec) { rec=lid[ref]; kind='lieux'; }
+      if (rec && rec.cell && byId[rec.cell]) path.push({ rec:rec, kind:kind });
+    });
+    if (!path.length) return;
+    L.quetesAncrees++; L.quetePaths[q.id]={ q:q, path:path };
+    path.forEach(function(s){ if (seen[s.rec.cell]) return; seen[s.rec.cell]=true; push(L.quetesByCell, s.rec.cell, q.id); });
+  });
+
+  // Raids : case de location_ville_id (ville ou lieu), sinon lieu ou case dont la fiche cite
+  // l'identifiant du raid (rattachements v1.0.85) ; niveau = level_max du boss qui cite le raid,
+  // sinon « boss N » écrit dans la fiche du raid.
+  var lieuTxt=null, cellTxt=null, bossTxt=(db.creatures||[]).filter(function(cr){ return cr.difficulty==='boss'||cr.difficulty==='world_boss'; })
+    .map(function(cr){ return { cr:cr, t:JSON.stringify(cr) }; });
+  (db.raids||[]).forEach(function(r){
+    var loc=r.location_ville_id, rec=(loc&&(vid[loc]||lid[loc]))||null, cell=rec&&rec.cell&&byId[rec.cell]?rec.cell:'', via=rec?(rec.name||rec.id):'';
+    if (!cell) {
+      if (!lieuTxt) lieuTxt=(db.lieux||[]).filter(function(l){ return l.cell&&byId[l.cell]; }).map(function(l){ return { l:l, t:JSON.stringify(l) }; });
+      var hl=lieuTxt.find(function(x){ return x.t.indexOf('"'+r.id+'"')>=0 || x.t.indexOf(r.id+' ')>=0 || x.t.indexOf(r.id+')')>=0; });
+      if (hl) { cell=hl.l.cell; via=hl.l.name||hl.l.id; }
+    }
+    if (!cell) {
+      if (!cellTxt) cellTxt=cells.filter(function(c){ return Array.isArray(c.notes)&&c.notes.length; }).map(function(c){ return { c:c, t:JSON.stringify(c.notes) }; });
+      var hc=cellTxt.find(function(x){ return x.t.indexOf(r.id)>=0; });
+      if (hc) { cell=hc.c.id; via='note de la case'; }
+    }
+    var lvl=0, src='';
+    bossTxt.forEach(function(b){ if (b.t.indexOf(r.id)>=0 && (b.cr.level_max||0)>lvl) { lvl=b.cr.level_max; src=b.cr.name||b.cr.id; } });
+    if (!lvl) { var m=/\bboss[^0-9.;]{0,15}(\d{1,2})\b/i.exec([r.description||''].concat(Array.isArray(r.notes)?r.notes:[]).join(' ')); if (m) { lvl=+m[1]; src='fiche du raid'; } }
+    var item={ raid:r, cell:cell, via:via, level:lvl, levelSrc:src };
+    if (cell) L.raids.push(item); else L.raidsSansCase.push(item);
+  });
+
+  // Balises de danger : note « Balisage du danger » d'une case (v1.0.85+) et lieux-balises
+  // (bornes, cairns, stèles) dont une note dit « balise » ; lieux secrets exclus.
+  cells.forEach(function(c){ (Array.isArray(c.notes)?c.notes:[]).forEach(function(n){
+    if (typeof n!=='string' || n.indexOf('Balisage du danger')<0) return;
+    var i=n.indexOf(') : '), menace=i>=0?n.slice(i+4):n, j=menace.search(/\.\s/);
+    L.balises.push({ cell:c.id, menace:(j>0?menace.slice(0,j):menace).trim(), note:n });
+  }); });
+  (db.lieux||[]).forEach(function(l){
+    if (!l.cell || !byId[l.cell] || L.secretLieux[l.id]) return;
+    var ns=(Array.isArray(l.notes)?l.notes:[]).filter(function(n){ return typeof n==='string' && /\bbalise\b|Balise/.test(n); });
+    if (ns.length) L.balises.push({ cell:l.cell, lieu:l, menace:ns[0] });
+  });
+
+  // Peuples lointains : direction et comptoir (factions[].territory).
+  (db.factions||[]).forEach(function(f){
+    if (f.type!=='peuple_lointain') return;
+    var t=f.territory||{}, a=CARTE_DIRECTIONS[t.direction];
+    if (a===undefined) L.peuplesSansDir.push(f); else L.peuples.push({ f:f, angle:a, dir:t.direction, t:t });
+    if (t.comptoir && t.comptoir.ville_id && vid[t.comptoir.ville_id]) {
+      var cp=L.comptoirs[t.comptoir.ville_id]||(L.comptoirs[t.comptoir.ville_id]={ nom:t.comptoir.nom||'Comptoir', peuples:[] });
+      cp.peuples.push(f);
+    }
+  });
+
+  // Densité : villes + lieux (hors lieux secrets) + quêtes ancrées, par case.
+  function dens(cell){ if (!cell||!byId[cell]) return null; return L.densite[cell]||(L.densite[cell]={ villes:0, lieux:0, quetes:0, total:0 }); }
+  (db.villes||[]).forEach(function(v){ var d=dens(v.cell); if (d) { d.villes++; d.total++; } });
+  (db.lieux||[]).forEach(function(l){ if (L.secretLieux[l.id]) return; var d=dens(l.cell); if (d) { d.lieux++; d.total++; } });
+  Object.keys(L.quetesByCell).forEach(function(k){ var d=dens(k); if (d) { d.quetes+=L.quetesByCell[k].length; d.total+=L.quetesByCell[k].length; } });
+  Object.keys(L.densite).forEach(function(k){ if (L.densite[k].total>L.densMax) L.densMax=L.densite[k].total; });
+
+  // Sous-filtres : types de lieux et tailles de villes présents sur la carte (comptes).
+  (db.lieux||[]).forEach(function(l){ if (l.cell && !L.secretLieux[l.id]) { var t=l.type||''; L.lieuTypes[t]=(L.lieuTypes[t]||0)+1; } });
+  (db.villes||[]).forEach(function(v){ if (v.cell) { var t=v.taille||''; L.villeTailles[t]=(L.villeTailles[t]||0)+1; } });
+  return L;
+}
+
+/// Couleur d'un niveau (1-70) sur l'échelle CARTE_NIVEAU_STOPS (vert → jaune → rouge → violet).
+/// \param lvl niveau (nombre). Pas d'effet de bord.
+function carteNiveauColor(lvl) {
+  var s=CARTE_NIVEAU_STOPS;
+  // composante k (0 = rouge, 1 = vert, 2 = bleu) d'une couleur « #rrggbb »
+  var hx=function(c,k){ return parseInt(c.substr(1+2*k,2),16); };
+  if (lvl<=s[0][0]) return s[0][1];
+  for (var i=1;i<s.length;i++) if (lvl<=s[i][0]) {
+    var t=(lvl-s[i-1][0])/(s[i][0]-s[i-1][0]);
+    var r=[0,1,2].map(function(k){ return Math.round(hx(s[i-1][1],k)+(hx(s[i][1],k)-hx(s[i-1][1],k))*t); });
+    return 'rgb('+r.join(',')+')';
+  }
+  return s[s.length-1][1];
+}
+/// Couleur de densité d'une case selon CARTE_DENSITE_STEPS ; null si la case est vide.
+/// \param n nombre de villes + lieux + quêtes de la case.
+function carteDensiteColor(n) {
+  var col=null; CARTE_DENSITE_STEPS.forEach(function(s){ if (n>=s[0]) col=s[1]; }); return col;
+}
+/// Vrai si une ville est visible avec les sous-filtres (taille non masquée). Pas d'effet de bord.
+function carteVilleVisible(v) { return !window._carteState.villeTaillesOff[v.taille||'']; }
+/// Vrai si un lieu est dessiné par le calque « Lieux remarquables » : type non masqué et
+/// lieu non secret (les grottes des dragons et les entrées ophidiennes ne sont dessinées que
+/// par leur calque secret). Pas d'effet de bord.
+function carteLieuVisible(l) {
+  var L=_carteGeo&&_carteGeo.layers;
+  if (L && L.secretLieux[l.id]) return false;
+  return !window._carteState.lieuTypesOff[l.type||''];
+}
+
+/// Remplissages des calques de fond d'UNE case (niveaux, densité, cases jouables), dessinés
+/// dans la boucle des cellules de drawCarte, juste après la teinte des régions.
+/// \param x, y coin haut-gauche de la case (px).  \param px côté d'une case (px).
+/// Effet de bord : dessin seulement.
+function drawCarteCellLayers(ctx, c, x, y, px, fl, L) {
+  if (fl.niveaux && c.id in L.niveau) {
+    var n=L.niveau[c.id];
+    if (n) { ctx.fillStyle=carteNiveauColor((n.min+n.max)/2); ctx.globalAlpha=0.62; ctx.fillRect(x,y,px,px); ctx.globalAlpha=1; }
+    else if (px>=6) { // région sans repère : hachures grises
+      ctx.strokeStyle='rgba(200,200,200,0.55)'; ctx.lineWidth=1; ctx.beginPath();
+      ctx.moveTo(x,y+px); ctx.lineTo(x+px,y); ctx.moveTo(x,y+px/2); ctx.lineTo(x+px/2,y); ctx.moveTo(x+px/2,y+px); ctx.lineTo(x+px,y+px/2); ctx.stroke();
+    }
+  }
+  if (fl.densite && L.densite[c.id]) {
+    var col=carteDensiteColor(L.densite[c.id].total);
+    if (col) { ctx.fillStyle=col; ctx.globalAlpha=0.6; ctx.fillRect(x,y,px,px); ctx.globalAlpha=1; }
+  }
+  if (fl.jouables && window._carteJouables && window._carteJouables.cells[c.id]) {
+    ctx.fillStyle='rgba(0,229,255,0.22)'; ctx.fillRect(x,y,px,px);
+  }
+}
+
+/// Contours (provinces en pointillé blanc, bord de la zone jouable en cyan) : un segment
+/// par côté de case qui sépare deux valeurs différentes. Dessiné après les cellules.
+/// \param px côté d'une case (px). Effet de bord : dessin seulement.
+function drawCarteLayerBorders(ctx, px, fl) {
+  if (!fl.provinces && !(fl.jouables && window._carteJouables)) return;
+  var g=_carteGeo, J=window._carteJouables;
+  function edges(test) { // test(c, voisin) : vrai = tracer le côté
+    ctx.beginPath();
+    (db.cells||[]).forEach(function(c){
+      var p=parseCellCoord(c.id); if (!p) return;
+      var x=(p.lon-g.minLon)*px, y=(g.maxLat-p.lat)*px;
+      [[1,0,x,y,x+px,y],[-1,0,x,y+px,x+px,y+px],[0,-1,x,y,x,y+px],[0,1,x+px,y,x+px,y+px]].forEach(function(d){
+        if (test(c, g.byKey[(p.lat+d[0])+','+(p.lon+d[1])]||null)) { ctx.moveTo(d[2],d[3]); ctx.lineTo(d[4],d[5]); }
+      });
+    });
+    ctx.stroke();
+  }
+  if (fl.provinces) {
+    ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=Math.max(1.2, px*0.07); ctx.setLineDash([Math.max(3,px*0.22), Math.max(2,px*0.16)]);
+    edges(function(c, n){ return !!c.province && (!n || n.province!==c.province); });
+    ctx.setLineDash([]);
+  }
+  if (fl.jouables && J) {
+    ctx.strokeStyle='#00e5ff'; ctx.lineWidth=Math.max(1.5, px*0.08);
+    edges(function(c, n){ return !!J.cells[c.id] && (!n || !J.cells[n.id]); });
+  }
+}
+
+/// Texte avec liseré sombre (étiquettes des calques). \param font police CSS du canvas.
+/// \param align alignement horizontal ('center', 'left'…). Effet de bord : dessin seulement.
+function carteLayerText(ctx, txt, x, y, font, color, align) {
+  ctx.font=font; ctx.textAlign=align||'center'; ctx.textBaseline='middle';
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(10,8,4,0.85)'; ctx.fillStyle=color||'#fff';
+  ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+}
+
+/// Marqueurs et étiquettes des calques (après les villes et les lieux) : niveaux (« 18-28 »),
+/// densité, noms des provinces et des régions, quêtes (nombre), raids (niveau), balises,
+/// dragons et grottes, entrées ophidiennes, comptoirs et flèches des peuples lointains.
+/// Remplit _carteLayerHits (info-bulles). \param px côté d'une case (px).
+/// Effet de bord : dessin, _carteLayerHits ; secrets : ajoute les grottes à _carteHits
+/// (mode « Déplacer » et info-bulle de fiche).
+function drawCarteLayerMarkers(ctx, px, fl) {
+  var g=_carteGeo, L=g.layers, W=g.cols*px, H=g.rows*px;
+  function cellXY(id, fx, fy){ var p=parseCellCoord(id); return p ? { x:(p.lon-g.minLon+fx)*px, y:(g.maxLat-p.lat+fy)*px } : null; }
+  function gridXY(lat, lon){ return { x:(lon-g.minLon+0.5)*px, y:(g.maxLat-lat+0.5)*px }; }
+
+  // Étiquettes de niveau (bas de la case) et de densité (centre), seulement si lisibles.
+  if (fl.niveaux && px>=30) Object.keys(L.niveau).forEach(function(id){
+    var n=L.niveau[id]; if (!n) return; var p=cellXY(id, 0.5, 0.88);
+    if (p) carteLayerText(ctx, n.min+'-'+n.max, p.x, p.y, 'bold '+Math.floor(px*0.19)+'px sans-serif', '#fff');
+  });
+  if (fl.densite && px>=24) Object.keys(L.densite).forEach(function(id){
+    var d=L.densite[id], p=cellXY(id, 0.5, fl.niveaux?0.66:0.88); if (p) carteLayerText(ctx, String(d.total), p.x, p.y, 'bold '+Math.floor(px*0.2)+'px sans-serif', '#ffe9b0');
+  });
+  // Noms des régions (calque Régions) et des provinces (calque Provinces), au centre de leurs cases.
+  if (fl.regions && px>=6) Object.keys(L.regionsCtr).forEach(function(k){
+    var r=L.regionsCtr[k], p=gridXY(r.lat/r.n, r.lon/r.n);
+    carteLayerText(ctx, r.name.toUpperCase(), p.x, p.y, 'bold '+Math.max(10, Math.min(30, Math.floor(px*0.42)))+'px serif', '#ffe9b0');
+  });
+  if (fl.provinces && px>=6) Object.keys(L.provinces).forEach(function(k){
+    var r=L.provinces[k], p=gridXY(r.lat/r.n, r.lon/r.n);
+    carteLayerText(ctx, r.name, p.x, p.y+(fl.regions?Math.max(12,px*0.45):0), 'italic '+Math.max(10, Math.min(24, Math.floor(px*0.34)))+'px serif', '#ffffff');
+  });
+
+  // Balises de danger : triangle jaune « ! » (haut de la case, ou au-dessus du lieu-balise).
+  if (fl.balises) L.balises.forEach(function(b){
+    var r=Math.max(4, px*0.13), p;
+    if (b.lieu) { var lp=cartePlacePixel(b.lieu, 'lieux', px); p=lp?{ x:lp.x, y:lp.y-r*1.9 }:null; } else p=cellXY(b.cell, 0.5, 0.16);
+    if (!p) return;
+    ctx.fillStyle='#ffd400'; ctx.strokeStyle='#1a1a22'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y-r); ctx.lineTo(p.x+r*1.05, p.y+r*0.8); ctx.lineTo(p.x-r*1.05, p.y+r*0.8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (r>=6) carteLayerText(ctx, '!', p.x, p.y+r*0.15, 'bold '+Math.floor(r*1.2)+'px sans-serif', '#1a1a22');
+    var men=b.menace;
+    if ((!fl.dragons && /xygga|premier-né|grotte/i.test(men)) || (!fl.ophidiens && /ophidien/i.test(men))) men='menace secrète (cocher le calque secret correspondant pour la voir)';
+    _carteLayerHits.push({ x:p.x, y:p.y, r:r, html:'<b>⚠ Balise de danger</b>'+(b.lieu?' — '+esc(b.lieu.name||b.lieu.id):'')+'<br>'+esc(b.cell)+'<br><span style="opacity:.85">'+esc(men.length>260?men.slice(0,257)+'…':men)+'</span>' });
+  });
+
+  // Quêtes : pastille bleue avec le nombre de quêtes de la case (coin haut-gauche).
+  if (fl.quetes) Object.keys(L.quetesByCell).forEach(function(id){
+    var qs=L.quetesByCell[id], p=cellXY(id, 0.2, 0.2); if (!p) return;
+    var r=Math.max(5, px*0.14);
+    ctx.fillStyle='#2f6fe0'; ctx.strokeStyle='#fff'; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    if (r>=5) carteLayerText(ctx, String(qs.length), p.x, p.y+0.5, 'bold '+Math.floor(r*1.25)+'px sans-serif', '#fff');
+    var lines=qs.slice(0,10).map(function(qid){
+      var q=L.quetePaths[qid].q, lv=(Array.isArray(q.unlock_conditions)?q.unlock_conditions:[]).map(function(u){ return u&&(u.value!==undefined?u.value:u.valeur); }).filter(function(v){ return typeof v==='number'; })[0];
+      return '• '+esc(q.name||q.id)+(lv!==undefined?' <span style="opacity:.7">(niv. '+lv+'+)</span>':'')+' <span style="opacity:.6">'+L.quetePaths[qid].path.length+' étape'+(L.quetePaths[qid].path.length>1?'s':'')+'</span>';
+    });
+    _carteLayerHits.push({ x:p.x, y:p.y, r:r, quests:qs, html:'<b>📜 '+qs.length+' quête'+(qs.length>1?'s':'')+'</b> — '+esc(id)+'<br>'+lines.join('<br>')+(qs.length>10?'<br>… +'+(qs.length-10):'')+'<br><span style="opacity:.6">Tracé des étapes affiché (villes et lieux cités par la quête)</span>' });
+  });
+
+  // Raids : losange rouge (coin bas-droit), niveau du boss au-dessus quand il est connu.
+  if (fl.raids) {
+    var byCell={}; L.raids.forEach(function(it){ (byCell[it.cell]=byCell[it.cell]||[]).push(it); });
+    Object.keys(byCell).forEach(function(id){
+      var its=byCell[id], p=cellXY(id, 0.8, 0.8); if (!p) return;
+      var r=Math.max(4.5, px*0.13);
+      ctx.fillStyle='#c0262d'; ctx.strokeStyle='#ffd8a0'; ctx.lineWidth=1.3;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y-r); ctx.lineTo(p.x+r, p.y); ctx.lineTo(p.x, p.y+r); ctx.lineTo(p.x-r, p.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (its.length>1 && r>=6) carteLayerText(ctx, String(its.length), p.x, p.y+0.5, 'bold '+Math.floor(r*1.1)+'px sans-serif', '#fff');
+      var lv=its.map(function(it){ return it.level; }).filter(Boolean);
+      var zn=L.niveau[id];
+      if (px>=24) carteLayerText(ctx, lv.length ? 'niv. '+Math.max.apply(null, lv) : (zn?'zone '+zn.min+'-'+zn.max:''), p.x, p.y-r-Math.max(6,px*0.1), 'bold '+Math.max(9, Math.floor(px*0.16))+'px sans-serif', '#ffb0b0');
+      _carteLayerHits.push({ x:p.x, y:p.y, r:r, html:'<b>⚔ Raid'+(its.length>1?'s ('+its.length+')':'')+'</b> — '+esc(id)+'<br>'+its.map(function(it){
+        return '• '+esc(it.raid.name||it.raid.id)+' <span style="opacity:.75">('+(it.level?'boss niv. '+it.level:'niveau non renseigné'+(zn?' ; zone '+zn.min+'-'+zn.max:''))
+          +(it.raid.difficulty!==''&&it.raid.difficulty!==undefined?' ; difficulté '+esc(String(it.raid.difficulty)):'')+')</span><br><span style="opacity:.6">&nbsp;&nbsp;lieu : '+esc(it.via)+'</span>';
+      }).join('<br>') });
+    });
+  }
+
+  // Secrets : grottes des dragons de Xygga (étoile rouge) et entrées ophidiennes (losange vert).
+  // \param fill, stroke couleurs du marqueur ; shape forme (drawCartePlaceShape) ; label couleur du nom.
+  function secret(list, kind, fill, stroke, shape, label) {
+    list.forEach(function(s){
+      var l=s.lieu, p=cartePlacePixel(l, 'lieux', px); if (!p) return;
+      var r=Math.max(6, px*0.24);
+      ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=Math.max(1.5, px*0.05);
+      drawCartePlaceShape(ctx, shape, p.x, p.y, r);
+      if (px>=26) carteLayerText(ctx, l.name||l.id, p.x, p.y+r+Math.max(7,px*0.12), 'italic '+Math.floor(px*0.2)+'px serif', label);
+      _carteHits.push({ kind:'lieux', rec:l, x:p.x, y:p.y, r:r });
+    });
+  }
+  if (fl.dragons) secret(L.dragons, 'dragons', '#e0102a', '#ffffff', 'star', '#ffb3b3');
+  if (fl.ophidiens) secret(L.ophidiens, 'ophidiens', '#39e75f', '#000000', 'diamond', '#b8f5c4');
+
+  // Peuples lointains : comptoir = anneau doré autour de la ville ; flèche vers le bord de la carte.
+  if (fl.peuples) {
+    Object.keys(L.comptoirs).forEach(function(vId){
+      var v=(db.villes||[]).find(function(x){ return x.id===vId; }), cp=L.comptoirs[vId]; if (!v) return;
+      var p=cartePlacePixel(v, 'villes', px); if (!p) return;
+      var r=Math.max(8, px*0.42);
+      ctx.strokeStyle='#ffcf4d'; ctx.lineWidth=Math.max(2, px*0.08); ctx.setLineDash([Math.max(3,px*0.15), Math.max(2,px*0.1)]);
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      if (px>=12) carteLayerText(ctx, cp.nom, p.x, p.y-r-Math.max(7, px*0.14), 'bold '+Math.max(10, Math.floor(px*0.22))+'px serif', '#ffcf4d');
+      _carteLayerHits.push({ x:p.x, y:p.y, r:r, html:'<b>⚓ '+esc(cp.nom)+'</b> — '+esc(v.name||v.id)+' ('+esc(v.cell)+')<br>'+cp.peuples.map(function(f){ return '• '+esc(f.name||f.id); }).join('<br>') });
+    });
+    var cx=W/2, cy=H/2, m=Math.max(18, px*0.9);
+    L.peuples.forEach(function(pe){
+      var a=pe.angle*Math.PI/180, dx=Math.sin(a), dy=-Math.cos(a);
+      var tx=dx?((dx>0?W-m-cx:m-cx)/dx):Infinity, ty=dy?((dy>0?H-m-cy:m-cy)/dy):Infinity, t=Math.min(tx, ty);
+      var hx=cx+dx*t, hy=cy+dy*t, len=Math.max(40, px*2.4), bx=hx-dx*len, by=hy-dy*len, w=Math.max(5, px*0.22);
+      ctx.lineCap='round'; ctx.strokeStyle='rgba(10,8,4,0.85)'; ctx.lineWidth=w+3;
+      ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(hx,hy); ctx.stroke();
+      ctx.strokeStyle='#ffcf4d'; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(hx-dx*w, hy-dy*w); ctx.stroke();
+      ctx.fillStyle='#ffcf4d'; ctx.strokeStyle='rgba(10,8,4,0.85)'; ctx.lineWidth=1.5; ctx.beginPath();
+      ctx.moveTo(hx+dx*w, hy+dy*w); ctx.lineTo(hx-dx*w*1.6-dy*w*1.6, hy-dy*w*1.6+dx*w*1.6); ctx.lineTo(hx-dx*w*1.6+dy*w*1.6, hy-dy*w*1.6-dx*w*1.6); ctx.closePath(); ctx.fill(); ctx.stroke();
+      var lx=Math.max(60, Math.min(W-60, bx-dx*10)), ly=Math.max(12, Math.min(H-12, by-dy*10));
+      carteLayerText(ctx, pe.f.name||pe.f.id, lx, ly, 'bold '+Math.max(10, Math.min(18, Math.floor(px*0.26)))+'px serif', '#ffe9b0');
+      var cpt=pe.t.comptoir, cv=cpt&&(db.villes||[]).find(function(x){ return x.id===cpt.ville_id; });
+      _carteLayerHits.push({ x:hx-dx*len/2, y:hy-dy*len/2, r:len/2, html:'<b>➚ '+esc(pe.f.name||pe.f.id)+'</b> — direction '+esc(pe.dir)
+        +'<br><span style="opacity:.85">'+esc(pe.t.description||'')+'</span>'+(pe.t.statut?'<br><span style="opacity:.65">'+esc(pe.t.statut)+'</span>':'')
+        +(cpt?'<br>Comptoir : '+esc(cpt.nom||'')+(cv?' ('+esc(cv.name)+', '+esc(cv.cell)+')':''):'') });
+    });
+  }
+}
+
+/// Marqueur de calque sous la souris (le dernier dessiné), d'après _carteLayerHits.
+/// \return { x, y, r, html, quests? } ou null. Pas d'effet de bord.
+function carteHitLayer(e) {
+  var pt=carteEventPoint(e); if (!pt) return null;
+  for (var i=_carteLayerHits.length-1; i>=0; i--) {
+    var h=_carteLayerHits[i], dx=pt.x-h.x, dy=pt.y-h.y, r=Math.max(h.r+2, 6);
+    if (dx*dx+dy*dy<=r*r) return h;
+  }
+  return null;
+}
+/// Info-bulle d'une case pour les calques de fond actifs (région › province, niveau et sa
+/// source, densité, case jouable) ; '' si aucun calque de fond n'est actif. Pas d'effet de bord.
+function carteCellLayerTip(c) {
+  var fl=window._carteState.filters, L=_carteGeo&&_carteGeo.layers, out=[]; if (!L||!c) return '';
+  if ((fl.regions||fl.provinces) && c.region_id) out.push(esc(regionProvinceLabel(c)));
+  if (fl.niveaux && c.id in L.niveau) { var n=L.niveau[c.id];
+    out.push(n ? 'Niveau de référence <b>'+n.min+'-'+n.max+'</b><br><span style="opacity:.65">'+esc(n.src)+'</span>' : 'Niveau : <i>non renseigné</i> (aucun repère pour cette région)'); }
+  if (fl.densite) { var d=L.densite[c.id];
+    out.push('Densité <b>'+(d?d.total:0)+'</b>'+(d?' <span style="opacity:.7">('+d.villes+' ville(s), '+d.lieux+' lieu(x), '+d.quetes+' quête(s))</span>':'')); }
+  if (fl.jouables) out.push(window._carteJouables ? (window._carteJouables.cells[c.id] ? '<span style="color:#00e5ff">Case jouable (générée)</span>' : 'Case non jouable') : 'Cases jouables : carte du jeu non chargée');
+  return out.length ? '<b>'+esc(c.id)+'</b><br>'+out.join('<br>') : '';
+}
+/// Compléments d'info-bulle d'une fiche ville / lieu selon les calques : lieu secret (dragon
+/// ou Ophidiens, avec créatures et niveaux), comptoir des peuples lointains. Pas d'effet de bord.
+function carteTipLayerExtra(kind, rec) {
+  var L=_carteGeo&&_carteGeo.layers, fl=window._carteState.filters; if (!L) return '';
+  var h='', sk=kind==='lieux'?L.secretLieux[rec.id]:null;
+  if (sk) {
+    var it=(sk==='dragons'?L.dragons:L.ophidiens).find(function(x){ return x.lieu===rec; });
+    h+='<br><span style="color:#ff8a8a">🔒 secret — '+(sk==='dragons'?'grotte d\'un dragon de Xygga':'entrée ophidienne')+' (cachée aux joueurs)</span>';
+    if (it) h+=it.creatures.slice(0,6).map(function(cr){ return '<br>• '+esc(cr.name||cr.id)+' <span style="opacity:.7">('+(cr.level_min||'?')+'-'+(cr.level_max||'?')+')</span>'; }).join('')+(it.creatures.length>6?'<br>… +'+(it.creatures.length-6):'');
+  }
+  if (kind==='villes' && fl.peuples && L.comptoirs[rec.id]) h+='<br><span style="color:#ffcf4d">⚓ '+esc(L.comptoirs[rec.id].nom)+'</span> : '+L.comptoirs[rec.id].peuples.map(function(f){ return esc(f.name||f.id); }).join(', ');
+  return h;
+}
+
+/// Dessine (calque SVG au-dessus du canvas) le tracé des étapes des quêtes survolées : une
+/// ligne colorée par quête reliant, dans l'ordre de la fiche, les villes et lieux cités par
+/// source_lore, avec le numéro de chaque étape. Ne redessine que si la liste change.
+/// \param ids identifiants de quêtes, ou null pour effacer. Effet de bord : DOM (#carteOverlay).
+function carteQuestOverlay(ids) {
+  var svg=document.getElementById('carteOverlay'); if (!svg) return;
+  var key=(ids&&ids.length)?ids.join(','):'';
+  if (svg.getAttribute('data-key')===key) return;
+  svg.setAttribute('data-key', key);
+  if (!key || !_carteGeo) { svg.innerHTML=''; return; }
+  var L=_carteGeo.layers, px=BASE_CELL_SIZE*window._carteState.zoom, h='', rr=Math.max(7, Math.min(12, px*0.16));
+  ids.forEach(function(id, k){
+    var qp=L.quetePaths[id]; if (!qp) return;
+    var col=hashColor(id, 80, 62), off=((k%5)-2)*2;
+    var pts=qp.path.map(function(s){ return cartePlacePixel(s.rec, s.kind, px); }).filter(Boolean).map(function(p){ return { x:p.x+off, y:p.y+off }; });
+    if (pts.length>1) {
+      var d=pts.map(function(p){ return p.x.toFixed(1)+','+p.y.toFixed(1); }).join(' ');
+      h+='<polyline points="'+d+'" fill="none" stroke="#000" stroke-opacity="0.7" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>';
+      h+='<polyline class="carte-quest-path" data-quest="'+esc(id)+'" points="'+d+'" fill="none" stroke="'+col+'" stroke-width="3" stroke-dasharray="8 5" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+    pts.forEach(function(p, i){
+      h+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+rr+'" fill="'+col+'" stroke="#000" stroke-width="1.5"/>'
+        +'<text x="'+p.x.toFixed(1)+'" y="'+(p.y+rr*0.38).toFixed(1)+'" text-anchor="middle" font-size="'+Math.round(rr*1.1)+'" font-weight="bold" font-family="sans-serif" fill="#000">'+(i+1)+'</text>';
+    });
+  });
+  svg.innerHTML=h;
+}
+
+/// Légende des calques actifs (sous le panneau) : régions, niveaux (dégradé), densité,
+/// cases jouables, quêtes, raids, balises, peuples, secrets. Pas d'effet de bord.
+function carteLayersLegendHTML() {
+  var fl=window._carteState.filters, L=_carteGeo&&_carteGeo.layers; if (!L) return '';
+  function sw(bg, extra){ return '<span style="display:inline-block;width:13px;height:13px;border-radius:2px;vertical-align:-2px;background:'+bg+';'+(extra||'')+'"></span>'; }
+  function row(title, body){ return '<div class="carte-legend-row" style="display:flex;flex-wrap:wrap;gap:0.15rem 0.6rem;align-items:center;font-size:0.68rem;line-height:1.3;color:var(--text-secondary);border-top:1px solid var(--border);padding-top:0.25rem"><b style="color:var(--text-dim);flex:0 0 100%">'+title+'</b>'+body+'</div>'; }
+  var h='';
+  if (fl.regions) {
+    var regCells={}; (db.cells||[]).forEach(function(c){ if (c.region_id) regCells[c.region_id]=(regCells[c.region_id]||0)+1; });
+    h+=row('Régions (fond)', Object.keys(regCells).sort(function(a,b){ return regCells[b]-regCells[a]; }).map(function(rid){
+      var rg=(db.regions||[]).find(function(x){ return x.id===rid; }); return '<span>'+sw(regionColor(rid))+' '+esc(rg?rg.name:rid)+' ('+regCells[rid]+')</span>'; }).join(''));
+  }
+  if (fl.provinces) h+=row('Provinces', '<span><span style="display:inline-block;width:22px;border-top:2px dashed #fff;vertical-align:middle"></span> contour d\'une province, nom au centre ('+Object.keys(L.provinces).length+' provinces)</span>');
+  if (fl.niveaux) {
+    var nRens=0, nNon=0; Object.keys(L.niveau).forEach(function(k){ if (L.niveau[k]) nRens++; else nNon++; });
+    h+=row('Niveaux de référence', '<span style="display:inline-flex;align-items:center;gap:0.3rem">1<span style="display:inline-block;width:160px;height:11px;border-radius:2px;background:linear-gradient(90deg,'+CARTE_NIVEAU_STOPS.map(function(s){ return s[1]+' '+Math.round((s[0]-1)/69*100)+'%'; }).join(',')+')"></span>70</span>'
+      +'<span>couleur = milieu de la fourchette, étiquette « min-max » à partir du zoom ×3</span><span>'+sw('repeating-linear-gradient(45deg,#666 0 2px,transparent 2px 5px)','border:1px solid #888')+' non renseigné ('+nNon+' cases)</span><span style="opacity:.7">'+nRens+' cases ; priorité : région de départ &gt; province &gt; région (table CARTE_NIVEAUX_REF)</span>');
+  }
+  if (fl.densite) h+=row('Densité', CARTE_DENSITE_STEPS.map(function(s){ return '<span>'+sw(s[1])+' '+s[2]+'</span>'; }).join('')+'<span style="opacity:.7">villes + lieux + quêtes par case (max '+L.densMax+')</span>');
+  if (fl.jouables) h+=row('Cases jouables', window._carteJouables ? '<span>'+sw('rgba(0,229,255,0.35)','border:2px solid #00e5ff')+' '+window._carteJouables.count+' cases générées ('+esc(window._carteJouables.source)+')</span><span style="opacity:.7">corridors des départs (AddStartCorridors) non inclus</span>'
+    : '<span style="color:#ffb0b0">carte du jeu non chargée : bouton « Charger la carte du jeu » (game/data/world/royaumes/world_master.json)</span>');
+  if (fl.quetes) h+=row('Quêtes', '<span>'+sw('#2f6fe0','border-radius:50%;border:1px solid #fff')+' nombre de quêtes de la case</span><span style="opacity:.7">'+L.quetesAncrees+' quêtes ancrées sur '+L.quetesTotal+' (villes et lieux cités par source_lore) ; survol : tracé des étapes</span>');
+  if (fl.raids) h+=row('Raids', '<span>'+sw('#c0262d','transform:rotate(45deg);border:1px solid #ffd8a0;width:10px;height:10px')+' raid (nombre si plusieurs)</span><span style="opacity:.7">niv. = boss (connu pour '+L.raids.filter(function(r){ return r.level; }).length+'), sinon niveau de la zone ; '+L.raids.length+' raids placés, '+L.raidsSansCase.length+' sans case</span>');
+  if (fl.balises) h+=row('Balises de danger', '<span style="color:#ffd400">▲</span><span>'+L.balises.length+' balises (notes « Balisage du danger » des cases, bornes, cairns et stèles)</span>');
+  if (fl.peuples) h+=row('Peuples lointains', '<span style="color:#ffcf4d">➚ direction (hors carte)</span><span><span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:2px dashed #ffcf4d;vertical-align:-3px"></span> comptoir</span><span style="opacity:.7">'+L.peuples.length+' peuples, '+Object.keys(L.comptoirs).length+' comptoirs</span>');
+  if (fl.dragons) h+=row('<span style="color:#ff8a8a">🔒 Dragons</span>', '<span style="color:#e0102a">★</span><span>'+L.dragons.length+' grottes cachées (Xygga et ses premiers-nés) — secret, ne pas montrer aux joueurs</span>');
+  if (fl.ophidiens) h+=row('<span style="color:#ff8a8a">🔒 Ophidiens</span>', '<span style="color:#39e75f">◆</span><span>'+L.ophidiens.length+' entrées cachées — secret</span>');
+  return h;
+}
+
+/// Panneau « Calques » (colonne à gauche de la carte, défilante) : cases à cocher groupées
+/// (Fond, Lieux, Réseau, Contenu, Secret), sous-filtres repliables (tailles de villes, types
+/// de lieux), bouton de chargement de la carte du jeu et légende des calques actifs. Chaque
+/// case porte id="calque_<clé>". Pas d'effet de bord.
+function carteLayersPanelHTML() {
+  var st=window._carteState, fl=st.filters, L=_carteGeo&&_carteGeo.layers||{ lieuTypes:{}, villeTailles:{}, quetesAncrees:0, raids:[], balises:[], peuples:[], dragons:[], ophidiens:[] };
+  function chk(key, label, title){ return '<label title="'+esc(title||'')+'" style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox" id="calque_'+key+'"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
+  function group(title, body, extra){ return '<div class="carte-layer-group" style="padding:0.35rem 0.5rem;border:1px solid '+(extra?'#a33':'var(--border)')+';border-radius:4px;'+(extra?'background:rgba(120,0,0,0.12)':'')+'"><div style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:'+(extra?'#ff8a8a':'var(--text-dim)')+';margin-bottom:0.25rem">'+title+'</div><div style="display:flex;flex-direction:column;gap:0.15rem">'+body+'</div></div>'; }
+  function sub(kind, map, labels, order){
+    var keys=Object.keys(map).sort(function(a,b){ var ia=order?order.indexOf(a):-1, ib=order?order.indexOf(b):-1; if (ia>=0||ib>=0) return (ia<0?99:ia)-(ib<0?99:ib); return map[b]-map[a]; });
+    var off=kind==='lieu'?st.lieuTypesOff:st.villeTaillesOff;
+    return keys.map(function(t){ return '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.7rem;color:var(--text-secondary);margin-left:1.1rem"><input type="checkbox" class="calque-sub-'+kind+'" data-val="'+esc(t)+'"'+(off[t]?'':' checked')+' style="accent-color:var(--accent-gold)" onchange="carteToggleSub(\''+kind+'\',this.getAttribute(\'data-val\'),this.checked)"> '+esc(labels(t))+' ('+map[t]+')</label>'; }).join('');
+  }
+  var J=window._carteJouables;
+  var h='<div id="carteLayersPanel" style="flex:0 0 250px;width:250px;max-height:76vh;overflow:auto;padding:0.4rem 0.5rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;box-sizing:border-box">';
+  h+='<div style="font-family:Cinzel,serif;font-size:0.66rem;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.1rem">Calques</div>'
+    +'<div style="font-size:0.64rem;color:var(--text-dim);margin-bottom:0.35rem">État mémorisé dans ce navigateur. Survolez un élément de la carte pour son détail.</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:0.4rem">';
+  h+=group('Fond',
+    chk('regions','🗺️ Régions du hors-série (fond)','Couleur de fond par région (cells[].region_id), nom de la région au centre')
+    +chk('provinces','┅ Provinces (contour + nom)','Contour pointillé des provinces (cells[].province) et nom au centre')
+    +chk('niveaux','📶 Niveaux de référence','Fourchette de niveaux par case : région de départ, sinon province, sinon région')
+    +chk('densite','▦ Densité (lieux + quêtes)','Nombre de villes, lieux et quêtes ancrées par case')
+    +chk('jouables','🎮 Cases jouables en jeu'+(J?' ('+J.count+')':''),'generated_cells de world_master.json')
+    +'<span style="margin-left:1.1rem"><button class="btn btn-ghost btn-sm" style="font-size:0.66rem;padding:0.1rem 0.4rem" onclick="document.getElementById(\'carteMasterInput\').click()">📂 Charger la carte du jeu…</button>'
+    +'<input type="file" id="carteMasterInput" accept=".json" style="display:none" onchange="carteLoadMaster(this)"></span>'
+    +chk('water','💧 Lacs & rivières')+chk('islands','🏝️ Îles'));
+  h+=group('Lieux',
+    chk('villes','🏙️ Villes')+'<details><summary style="font-size:0.66rem;color:var(--text-dim);cursor:pointer;margin-left:1.1rem">par taille</summary>'
+      +sub('ville', L.villeTailles, function(t){ return CARTE_TAILLE_LABELS[t]||t; }, CARTE_TAILLE_ORDER)+'</details>'
+    +chk('lieux','✴️ Lieux remarquables')+'<details><summary style="font-size:0.66rem;color:var(--text-dim);cursor:pointer;margin-left:1.1rem">par type</summary>'
+      +sub('lieu', L.lieuTypes, function(t){ return t ? placeTypeDef(t).label||t : 'Sans type'; })+'</details>'
+    +chk('poi','📍 Points importants (cases)'));
+  h+=group('Réseau', chk('routes','🛣️ Routes, sentiers, routes maritimes'));
+  h+=group('Contenu',
+    chk('quetes','📜 Quêtes ('+L.quetesAncrees+' ancrées)')+chk('raids','⚔ Raids ('+L.raids.length+')')
+    +chk('balises','⚠ Balises de danger ('+L.balises.length+')')+chk('peuples','➚ Peuples lointains et comptoirs ('+L.peuples.length+')'));
+  h+=group('🔒 Secret — désactivé à l\'ouverture',
+    chk('dragons','🐉 Dragons et grottes de Xygga ('+L.dragons.length+')','Grottes cachées aux joueurs : outil de conception seulement')
+    +chk('ophidiens','🐍 Entrées ophidiennes ('+L.ophidiens.length+')','Entrées cachées aux joueurs : outil de conception seulement'), true);
+  h+='</div><div id="carteLegend" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.45rem">'+carteLayersLegendHTML()+'</div></div>';
+  return h;
+}
+
+/// Coche / décoche un sous-filtre (taille de ville ou type de lieu), mémorise et redessine.
+/// \param kind 'ville' (villes[].taille) ou 'lieu' (lieux[].type).  \param val valeur ('' = sans).
+/// \param on vrai = visible. Effet de bord : _carteState, localStorage, carte.
+function carteToggleSub(kind, val, on) {
+  var off=kind==='lieu'?window._carteState.lieuTypesOff:window._carteState.villeTaillesOff;
+  if (on) delete off[val]; else off[val]=true;
+  carteLayersSave(); drawCarte();
+}
+
+/// Lit world_master.json choisi par l'utilisateur et garde ses generated_cells (cases
+/// jouables) : mémorisées dans localStorage, calque « Cases jouables » activé. Aucune donnée
+/// du lore modifiée. \param input champ fichier (#carteMasterInput).
+/// Effet de bord : window._carteJouables, localStorage, rendu de la section, toast.
+function carteLoadMaster(input) {
+  var file=input&&input.files&&input.files[0]; if (!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var m=null; try { m=JSON.parse(ev.target.result); } catch(e) { m=null; }
+    input.value='';
+    if (!m || !Array.isArray(m.generated_cells)) { toast('Fichier sans « generated_cells » : choisir game/data/world/royaumes/world_master.json'); return; }
+    window._carteJouables=carteJouablesFrom(m.generated_cells, file.name);
+    try { window.localStorage.setItem(CARTE_JOUABLES_STORE, JSON.stringify({ cells:m.generated_cells, source:file.name })); } catch(e) { /* session seulement */ }
+    window._carteState.filters.jouables=true; carteLayersSave();
+    toast(window._carteJouables.count+' cases jouables chargées ('+file.name+')');
+    showSection('carte');
+  };
+  reader.readAsText(file);
 }
 
 // ── Éditeur de cellule (terrain, ville+position, points importants) ──

@@ -475,7 +475,7 @@ namespace tools::world_gen
 				const CityDef* best = nullptr;
 				double bd = 1e18;
 				for (const CityDef& c : g.cities)
-					if (c.n == n && c.e == e && c.procedural.empty())
+					if (c.n == n && c.e == e && c.procedural.empty() && !c.secret) // ville secrète (v1.0.107) : jamais ancre
 					{
 						const double d = std::hypot(c.center.x - ctr.x, c.center.z - ctr.z);
 						if (d < bd) { bd = d; best = &c; }
@@ -815,6 +815,16 @@ namespace tools::world_gen
 				for (int i = std::max(0, cg.cost.IndexX(r.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(r.center.x + R)); ++i)
 					if (ReliefContribution(r, cg.cost.WorldX(i), cg.cost.WorldZ(j)) > 0.35 * r.heightM) cg.cost.At(i, j) = 1e30f;
 		}
+		// Gouffre (v1.0.107) : fosse et galerie fermées aux routes (pas de route ni de
+		// sentier : on n'y entre que par la galerie dissimulée) ; marge d'un nœud.
+		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type != "gouffre") continue;
+			const double R = r.footRadiusM + 250.0;
+			for (int j = std::max(0, cg.cost.IndexZ(r.center.z - R)); j <= std::min(cg.cost.height - 1, cg.cost.IndexZ(r.center.z + R)); ++j)
+				for (int i = std::max(0, cg.cost.IndexX(r.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(r.center.x + R)); ++i)
+					if (InGouffre(r, { cg.cost.WorldX(i), cg.cost.WorldZ(j) }, 125.0)) cg.cost.At(i, j) = 1e30f;
+		}
 		// Franchir une rivière coûte (gué) : on évite de la longer dedans.
 		for (const River& r : g.rivers)
 			for (size_t k = 0; k < r.points.size(); k += 20)
@@ -825,9 +835,12 @@ namespace tools::world_gen
 
 		struct Edge { double d; int a, b; };
 		std::vector<Edge> all;
+		// Villes secrètes (v1.0.107) : hors du réseau (ni Kruskal, ni maillage) ; les
+		// indices des autres villes ne changent pas (ordre du tri identique).
 		for (size_t a = 0; a < n; ++a)
 			for (size_t b = a + 1; b < n; ++b)
-				all.push_back({ std::hypot(cities[a].center.x - cities[b].center.x, cities[a].center.z - cities[b].center.z), static_cast<int>(a), static_cast<int>(b) });
+				if (!cities[a].secret && !cities[b].secret)
+					all.push_back({ std::hypot(cities[a].center.x - cities[b].center.x, cities[a].center.z - cities[b].center.z), static_cast<int>(a), static_cast<int>(b) });
 		std::sort(all.begin(), all.end(), [](const Edge& x, const Edge& y) {
 			return x.d < y.d || (x.d == y.d && (x.a < y.a || (x.a == y.a && x.b < y.b)));
 		});

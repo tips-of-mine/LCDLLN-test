@@ -149,6 +149,7 @@ RENOMMAGES = {"horker": "Harrodh"}
 # Syllaerin, v1.0.70), humains par defaut. Liste ponderee. v1.0.73 : Hazhaelin,
 # comptoir des Elfes des bois, a aussi des marchands humains. v1.0.74 : Brenhaval, port
 # franc de l'Ile de la Treve, a des marchands de toutes les races.
+# v1.0.107 : Thurvhal (Ghaurdes) melange nains et humains.
 RACE_VILLES = {
     "ville_whispers_hill": [("race_human", 1), ("race_haut_elfe", 1)],
     "leviathan_jungle": [("race_dzorak", 1)],
@@ -167,6 +168,9 @@ RACE_VILLES = {
     # suit RACE_FACTIONS, Lhantarn et Thrival gardent le defaut humain.
     "town_brinehaven": [("race_human", 4), ("race_dwarf", 1), ("race_haut_elfe", 1), ("race_dzorak", 1),
                         ("race_dark_elf", 1)],
+    # v1.0.107 : Thurvhal, village secret des Ghaurdes au fond du gouffre de Deathtrap
+    # Canyon (mineurs nains et exiles humains).
+    "ville_thurvhal": [("race_dwarf", 1), ("race_human", 1)],
 }
 RACE_FACTIONS = {
     "lune_noire": [("race_human", 4), ("race_dark_elf", 3), ("race_dzorak", 2), ("race_demon", 1)],

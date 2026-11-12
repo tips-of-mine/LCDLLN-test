@@ -141,6 +141,36 @@ namespace tools::world_gen
 		uint8_t cullClass = 0;
 	};
 
+	/// Lumière ponctuelle posée par le générateur (v1.0.107 : torches du gouffre).
+	/// DONNÉE seulement : écrite dans zone.json (`world.point_lights`), pas encore lue
+	/// par le client (DynamicLightSystem ne lit qu'un fichier global,
+	/// lights/dynamic_lights.json) ; le mesh de la torche, lui, est un vrai décor
+	/// (scatter.bin).
+	struct PointLightDef
+	{
+		std::string id;
+		std::string type = "torch";   ///< type DynamicLightType du client (torch)
+		Vec2   position;              ///< position GLOBALE (m)
+		double y = 0.0;               ///< altitude de la flamme (m)
+		double radiusM = 7.0;         ///< portée (m)
+		double intensity = 1.6;
+		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
+	};
+
+	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre). DONNÉE
+	/// seulement (zone.json, `world.ambiance_zones`) : le client n'a pas de réglage
+	/// d'ambiance par zone ; à brancher (assombrissement, brouillard bas) côté rendu.
+	struct AmbianceZoneDef
+	{
+		std::string id;               ///< identifiant du relief (gouffre)
+		std::string label;            ///< nom du lieu
+		Vec2   center;                ///< centre GLOBAL (m)
+		double radiusM = 0.0;         ///< rayon horizontal couvert (m)
+		double floorY = 0.0;          ///< altitude du fond (m)
+		double topY = 0.0;            ///< altitude au-dessus de laquelle la zone cesse (m)
+		double darkness = 0.0;        ///< 0 = lumière du jour, 1 = nuit noire
+	};
+
 	/// Noeud du graphe de rues d'une agglomération (déplacements des PNJ).
 	struct StreetNode
 	{
@@ -257,6 +287,22 @@ namespace tools::world_gen
 	/// \param baseH altitude (m) du relief sans les reliefs locaux : les massifs
 	///        (v1.0.77) ne s'appliquent que là où elle dépasse la mer (côte inchangée). Terrain.cpp
 	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH);
+	/// Gouffre (v1.0.107) : altitude (m) en (x, z) une fois la fosse et sa galerie
+	/// creusées dans le relief \p h (fond plat à r.floorY, sol de la galerie en pente
+	/// régulière de r.floorY, à sa sortie du fond, jusqu'à r.entranceY). Ne relève jamais : rend au plus \p h ;
+	/// hors de la boîte du gouffre, rend \p h exactement. Fonction pure. Terrain.cpp
+	double GouffreHeight(const ReliefDef& r, double x, double z, double h);
+	/// Gouffre : rayon (m) du fond plat dans la direction \p angleRad (atan2(dz, dx)),
+	/// contour lobé de ± 13 % autour de floor_radius_m. Terrain.cpp
+	double GouffreFloorRadiusAt(const ReliefDef& r, double angleRad);
+	/// Gouffre : distance (m) de \p p à l'axe de la galerie ; \p outAlong reçoit
+	/// l'abscisse curviligne (m, depuis le fond) du point le plus proche. Terrain.cpp
+	double GouffreGalleryDistance(const ReliefDef& r, Vec2 p, double* outAlong);
+	/// Vrai si \p p est dans le gouffre \p r (fond et parois) ou dans sa galerie
+	/// (sol et parois), élargis de \p marginM. Faux pour un autre type de relief. Terrain.cpp
+	bool InGouffre(const ReliefDef& r, Vec2 p, double marginM);
+	/// InGouffre pour tous les gouffres du master. Terrain.cpp
+	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM);
 	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
 	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
 
@@ -336,6 +382,8 @@ namespace tools::world_gen
 		std::vector<RespawnDef> respawns;
 		std::vector<StartLocationDef> starts;
 		std::vector<InteractableDef> interactables; ///< résolus (positions absolues)
+		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
+		std::vector<AmbianceZoneDef> ambianceZones; ///< zones d'ambiance locales (v1.0.107, données)
 		bool hasSea = false;          ///< une partie de la cellule est sous la mer
 
 		/// Réglages `world.*` importés (brouillard, props, DOF…) recopiés dans zone.json.

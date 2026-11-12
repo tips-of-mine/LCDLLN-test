@@ -174,7 +174,22 @@ voisines raccord au mètre près :
    (≤ 7 km) haut de `height_m` (≤ 600 m), découpé par un bruit en crêtes ; il ne
    s'applique qu'aux terres déjà émergées, ce qui garde la côte et pose des
    falaises au rivage ; le code de la case (forêt…) ne change pas (pics et
-   crêtes boisés de l'Île de la Trêve, LORE_BD §16.6).
+   crêtes boisés de l'Île de la Trêve, LORE_BD §16.6). Depuis la v1.0.107,
+   `gouffre` **creuse** une fosse sous la ville `city` posée au fond (position
+   manuelle admise : le gouffre suit la ville) : fond plat à une altitude absolue
+   (point le plus bas du pourtour − `depth_m`), rayon `floor_radius_m` (contour
+   lobé), parois abruptes sur `wall_m`, galerie de sortie `gallery` (fente dont le
+   sol monte régulièrement du fond à l'entrée cachée) ; appliqué en dernier, jamais
+   de relèvement, fermé aux routes, sans lieu procédural ni faune ; torches (décor)
+   au fond et dans la galerie, lumières et ambiance « sombre » écrites en données
+   dans le `zone.json` de la cellule (`world.point_lights`, `world.ambiance_zones`,
+   pas encore lues par le client). Ex. : Gouffre des Revenus et Thurvhal, Deathtrap
+   Canyon (LORE_BD §16.36).
+   **Ville secrète** (`secret: true` d'une ville du master, v1.0.107) : absente de
+   la carte publique (`cities` de `places.json`, carte du continent, rues et
+   bâtiments de `map_features.bin` ; recopiée dans `secret_cities`), jamais reliée
+   par les routes (ni réseau du générateur, ni ancre de case d'une route du lore),
+   sans effet sur les cellules voisines ; cimetière et auberge générés comme ailleurs.
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`
@@ -353,6 +368,14 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   5 cases de haut-fond de la baie de l'Île de la Trêve restent sans route. Le Hameau
   de Marn, sans fiche au lore, est rattaché par la table `EXTREMITES` du script.
   Routes maritimes et pontons non tracés.
+- Ville secrète (v1.0.107, Thurvhal) : hors de `places.json` `cities`, donc sans
+  bannière d'entrée, sans radar ni ambiance sonore de ville tant que le client ne lit
+  pas `secret_cities` (mécanisme de découverte à faire). Torches du gouffre : mesh
+  réel, mais leur lumière et l'assombrissement du fond (`world.point_lights`,
+  `world.ambiance_zones` du zone.json) ne sont pas encore rendus : le client n'a
+  qu'un fichier global de lumières ponctuelles (`lights/dynamic_lights.json`, 64
+  au plus) et pas de réglage d'ambiance par zone. La galerie est une fente à ciel
+  ouvert (la heightmap ne fait pas de tunnel).
 - Les cellules non générées sont bordées d'un mur invisible (serveur et client).
 - Intégration d'une tuile au main thread : terrain (envois GPU, ~100 ms sous
   lavapipe, bien moins sur un vrai GPU) en une frame, puis décor et bâtiments

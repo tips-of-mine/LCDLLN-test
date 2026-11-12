@@ -5,11 +5,13 @@ Scénario (``lune-noire-editor.html``, section Carte) :
 
 1. valeurs par défaut : calques historiques comme avant (villes, lieux, routes, points
    importants, eau, îles actifs ; régions inactif), calques ajoutés inactifs, calques
-   secrets (dragons, Ophidiens) inactifs et grottes absentes de la carte ;
+   secrets (dragons, Ophidiens ; v1.0.107 : lieux et villes cachés) inactifs, grottes,
+   Gouffre des Revenus et Thurvhal absents de la carte ;
 2. « Charger la carte du jeu » : ``world_master.json`` du dépôt, ``generated_cells`` lues ;
 3. chaque case du panneau cochée puis décochée (état, légende, aucune erreur), chaque
    sous-filtre (taille de ville, type de lieu) décoché : plus aucun marqueur de ce type ;
-4. contrôles ciblés : grottes et entrées n'apparaissent qu'avec leur calque secret ;
+4. contrôles ciblés : grottes, entrées, lieux et ville cachés n'apparaissent qu'avec leur
+   calque secret ;
    niveau d'une case de départ (1-10) et d'une province ; survol d'une pastille de quête :
    info-bulle et tracé des étapes (SVG), effacé à la sortie ; info-bulles raid, balise,
    peuple lointain ;
@@ -45,8 +47,12 @@ import test_editor_roundtrip as rt  # noqa: E402
 
 MASTER = rt.RACINE / "game/data/world/royaumes/world_master.json"
 HISTORIQUES = {"villes": True, "lieux": True, "routes": True, "poi": True, "water": True, "islands": True, "regions": False}
-AJOUTES = ["provinces", "niveaux", "densite", "jouables", "quetes", "raids", "balises", "peuples", "dragons", "ophidiens"]
-SECRETS = ["dragons", "ophidiens"]
+AJOUTES = ["provinces", "niveaux", "densite", "jouables", "quetes", "raids", "balises", "peuples", "dragons", "ophidiens",
+           "caches"]
+SECRETS = ["dragons", "ophidiens", "caches"]
+# v1.0.107 : lieux et ville cachés (champ secret) du Gouffre des Revenus.
+CACHES_LIEUX = {"lieu_gouffre_des_revenus", "lieu_fente_des_revenus"}
+CACHE_VILLE = "ville_thurvhal"
 # Seuils de performance (ms) : détectent une lenteur grossière, pas une mesure fine.
 SEUIL_DESSIN_MS = 600
 SEUIL_SURVOL_MS = 25
@@ -77,6 +83,11 @@ def lieux_dessines(page):
     return set(page.evaluate("() => _carteHits.filter(h => h.kind === 'lieux').map(h => h.rec.id)"))
 
 
+def villes_dessinees(page):
+    """Identifiants des villes repérables sur la carte (marqueurs du dernier dessin)."""
+    return set(page.evaluate("() => _carteHits.filter(h => h.kind === 'villes').map(h => h.rec.id)"))
+
+
 def ecran(page, x, y):
     """Point écran d'un point (x, y) du canvas, après défilement pour le rendre visible."""
     return page.evaluate(
@@ -105,8 +116,13 @@ def defauts(page):
     for k in AJOUTES:
         verifier(fl.get(k) is False, f"calque ajouté {k} actif par défaut")
     secrets = page.evaluate("() => Object.keys(_carteGeo.layers.secretLieux)")
-    verifier(len(secrets) >= 14, f"lieux secrets : {len(secrets)} (11 grottes et 3 entrées attendues)")
+    verifier(len(secrets) >= 16, f"lieux secrets : {len(secrets)} (11 grottes, 3 entrées et 2 lieux cachés attendus)")
     verifier(not (lieux_dessines(page) & set(secrets)), "grotte ou entrée secrète dessinée sans son calque")
+    # v1.0.107 : ville cachée absente du calque Villes, même au plus fort zoom.
+    preparer(page, 12)
+    verifier(CACHE_VILLE not in villes_dessinees(page), "ville cachée dessinée sans son calque secret")
+    verifier(page.evaluate("v => !carteVilleVisible(db.villes.find(x => x.id === v))", CACHE_VILLE), "ville cachée visible")
+    preparer(page)
     print(f"   défauts conformes ; {len(secrets)} lieux secrets cachés")
     return secrets
 
@@ -153,13 +169,20 @@ def basculer_tout(page):
 
 def controles(page, secrets):
     """4. Secrets, niveaux, quêtes (survol et tracé), raids, balises, peuples."""
-    for k, attendu in (("dragons", 11), ("ophidiens", 3)):
+    for k, attendu in (("dragons", 11), ("ophidiens", 3), ("caches", 2)):
         page.click(f"#calque_{k}")
         n = page.evaluate("k => Object.keys(_carteGeo.layers.secretLieux).filter(i => _carteGeo.layers.secretLieux[i] === k)"
                           ".filter(i => _carteHits.some(h => h.rec.id === i)).length", k)
         verifier(n == attendu, f"calque {k} : {n} lieux dessinés au lieu de {attendu}")
         page.click(f"#calque_{k}")
     verifier(not (lieux_dessines(page) & set(secrets)), "lieux secrets restés dessinés après décochage")
+    # v1.0.107 : le calque « caches » dessine aussi la ville cachée (info-bulle « secret »).
+    page.click("#calque_caches")
+    verifier(CACHE_VILLE in villes_dessinees(page) and CACHES_LIEUX <= lieux_dessines(page), "calque caches : gouffre, Fente ou Thurvhal absents")
+    tip = page.evaluate("v => carteTipLayerExtra('villes', db.villes.find(x => x.id === v))", CACHE_VILLE)
+    verifier("secret" in tip and "ville cachée" in tip, f"info-bulle de la ville cachée : « {tip[:80]} »")
+    page.click("#calque_caches")
+    verifier(CACHE_VILLE not in villes_dessinees(page), "ville cachée restée dessinée après décochage")
 
     niv = page.evaluate("() => [_carteGeo.layers.niveau['N002_W010'], _carteGeo.layers.niveau['S010_E002'], _carteGeo.layers.niveau['N011_E008']]")
     verifier(niv[0] and (niv[0]["min"], niv[0]["max"]) == (1, 10), f"niveau de N002_W010 (départ de Haeldorf) : {niv[0]}")

@@ -5689,11 +5689,12 @@ if (window._carteState.filters.lieux === undefined) window._carteState.filters.l
 // ── Calques de la carte (v1.0.99) ──
 // Valeurs par défaut des calques ajoutés (les 7 historiques ci-dessus gardent les leurs) :
 // tous désactivés pour ne pas charger la carte ; les calques « secrets » (dragons et
-// grottes de Xygga, entrées ophidiennes) sont TOUJOURS désactivés à l'ouverture (jamais
-// mémorisés actifs), car ils montrent ce que le jeu cache aux joueurs.
+// grottes de Xygga, entrées ophidiennes ; v1.0.107 : lieux et villes cachés, champ
+// `secret`) sont TOUJOURS désactivés à l'ouverture (jamais mémorisés actifs), car ils
+// montrent ce que le jeu cache aux joueurs.
 var CARTE_LAYER_DEFAULTS = { provinces:false, niveaux:false, densite:false, jouables:false, quetes:false,
-  raids:false, balises:false, peuples:false, dragons:false, ophidiens:false };
-var CARTE_LAYER_SECRETS = ['dragons', 'ophidiens'];
+  raids:false, balises:false, peuples:false, dragons:false, ophidiens:false, caches:false };
+var CARTE_LAYER_SECRETS = ['dragons', 'ophidiens', 'caches'];
 // Clés localStorage (préférences d'affichage propres au navigateur, jamais dans le JSON
 // exporté) : état des calques, et liste des cases jouables lue dans world_master.json.
 var CARTE_LAYERS_STORE = 'lcdlln-editeur-carte-calques-v1';
@@ -7233,12 +7234,13 @@ var _carteLayerHits = [];
 /// densité par case, quêtes ancrées (étapes situées etapes_struct, sinon villes / lieux cités
 /// dans source_lore, dans l'ordre),
 /// raids (case, niveau), balises de danger, lieux secrets (grottes des dragons de Xygga,
-/// entrées ophidiennes), peuples lointains et comptoirs, provinces et centres des régions.
+/// entrées ophidiennes ; v1.0.107 : lieux et villes à `secret: true`, ex. le Gouffre des
+/// Revenus et Thurvhal), peuples lointains et comptoirs, provinces et centres des régions.
 /// Appelée par carteComputeGeo (rendu de la section, après chaque action de la carte).
 /// \return objet d'index (voir les champs initialisés ci-dessous). Pas d'effet de bord.
 function carteBuildLayers() {
   var L = { niveau:{}, densite:{}, densMax:0, quetesByCell:{}, quetePaths:{}, quetesAncrees:0, quetesTotal:0, quetesParEtapes:0,
-    raids:[], raidsSansCase:[], balises:[], dragons:[], ophidiens:[], secretLieux:{}, peuples:[], peuplesSansDir:[],
+    raids:[], raidsSansCase:[], balises:[], dragons:[], ophidiens:[], caches:[], secretLieux:{}, secretVilles:{}, peuples:[], peuplesSansDir:[],
     comptoirs:{}, provinces:{}, regionsCtr:{}, lieuTypes:{}, villeTailles:{} };
   var cells=db.cells||[], byId={}, vid={}, lid={};
   cells.forEach(function(c){ byId[c.id]=c; });
@@ -7258,6 +7260,17 @@ function carteBuildLayers() {
     if (l.entree_cachee!==true || !l.cell || !byId[l.cell]) return;
     if (dragonCells[l.cell]) { L.secretLieux[l.id]='dragons'; L.dragons.push({ lieu:l, creatures:dragonCells[l.cell] }); }
     else if (ophCells[l.cell] || /ophidien/.test(l.id)) { L.secretLieux[l.id]='ophidiens'; L.ophidiens.push({ lieu:l, creatures:ophCells[l.cell]||[] }); }
+  });
+  // v1.0.107 : lieux et villes cachés (champ `secret` === true, ni dragon ni Ophidiens), ex. le
+  // Gouffre des Revenus et sa ville : calque secret « caches », hors des calques publics
+  // (Villes, Lieux remarquables, densité, sous-filtres).
+  (db.lieux||[]).forEach(function(l){
+    if (l.secret!==true || !l.cell || !byId[l.cell] || L.secretLieux[l.id]) return;
+    L.secretLieux[l.id]='caches'; L.caches.push({ lieu:l, kind:'lieux', creatures:[] });
+  });
+  (db.villes||[]).forEach(function(v){
+    if (v.secret!==true || !v.cell || !byId[v.cell]) return;
+    L.secretVilles[v.id]='caches'; L.caches.push({ lieu:v, kind:'villes', creatures:[] });
   });
 
   // Niveaux (v1.0.100) : valeur de la faction choisie (niveau_par_faction de la province, puis
@@ -7367,14 +7380,14 @@ function carteBuildLayers() {
 
   // Densité : villes + lieux (hors lieux secrets) + quêtes ancrées, par case.
   function dens(cell){ if (!cell||!byId[cell]) return null; return L.densite[cell]||(L.densite[cell]={ villes:0, lieux:0, quetes:0, total:0 }); }
-  (db.villes||[]).forEach(function(v){ var d=dens(v.cell); if (d) { d.villes++; d.total++; } });
+  (db.villes||[]).forEach(function(v){ if (L.secretVilles[v.id]) return; var d=dens(v.cell); if (d) { d.villes++; d.total++; } });
   (db.lieux||[]).forEach(function(l){ if (L.secretLieux[l.id]) return; var d=dens(l.cell); if (d) { d.lieux++; d.total++; } });
   Object.keys(L.quetesByCell).forEach(function(k){ var d=dens(k); if (d) { d.quetes+=L.quetesByCell[k].length; d.total+=L.quetesByCell[k].length; } });
   Object.keys(L.densite).forEach(function(k){ if (L.densite[k].total>L.densMax) L.densMax=L.densite[k].total; });
 
   // Sous-filtres : types de lieux et tailles de villes présents sur la carte (comptes).
   (db.lieux||[]).forEach(function(l){ if (l.cell && !L.secretLieux[l.id]) { var t=l.type||''; L.lieuTypes[t]=(L.lieuTypes[t]||0)+1; } });
-  (db.villes||[]).forEach(function(v){ if (v.cell) { var t=v.taille||''; L.villeTailles[t]=(L.villeTailles[t]||0)+1; } });
+  (db.villes||[]).forEach(function(v){ if (v.cell && !L.secretVilles[v.id]) { var t=v.taille||''; L.villeTailles[t]=(L.villeTailles[t]||0)+1; } });
   return L;
 }
 
@@ -7422,8 +7435,14 @@ function carteNiveauColor(lvl) {
 function carteDensiteColor(n) {
   var col=null; CARTE_DENSITE_STEPS.forEach(function(s){ if (n>=s[0]) col=s[1]; }); return col;
 }
-/// Vrai si une ville est visible avec les sous-filtres (taille non masquée). Pas d'effet de bord.
-function carteVilleVisible(v) { return !window._carteState.villeTaillesOff[v.taille||'']; }
+/// Vrai si une ville est visible avec les sous-filtres (taille non masquée) et n'est pas
+/// cachée (v1.0.107 : une ville à `secret: true` n'est dessinée que par le calque secret
+/// « caches »). Pas d'effet de bord.
+function carteVilleVisible(v) {
+  var L=_carteGeo&&_carteGeo.layers;
+  if (L && L.secretVilles && L.secretVilles[v.id]) return false;
+  return !window._carteState.villeTaillesOff[v.taille||''];
+}
 /// Vrai si un lieu est dessiné par le calque « Lieux remarquables » : type non masqué et
 /// lieu non secret (les grottes des dragons et les entrées ophidiennes ne sont dessinées que
 /// par leur calque secret). Pas d'effet de bord.
@@ -7568,20 +7587,22 @@ function drawCarteLayerMarkers(ctx, px, fl) {
     });
   }
 
-  // Secrets : grottes des dragons de Xygga (étoile rouge) et entrées ophidiennes (losange vert).
+  // Secrets : grottes des dragons de Xygga (étoile rouge), entrées ophidiennes (losange vert),
+  // lieux et villes cachés (v1.0.107, rond violet ; s.kind = 'lieux' ou 'villes').
   // \param fill, stroke couleurs du marqueur ; shape forme (drawCartePlaceShape) ; label couleur du nom.
   function secret(list, kind, fill, stroke, shape, label) {
     list.forEach(function(s){
-      var l=s.lieu, p=cartePlacePixel(l, 'lieux', px); if (!p) return;
+      var l=s.lieu, hk=s.kind||'lieux', p=cartePlacePixel(l, hk, px); if (!p) return;
       var r=Math.max(6, px*0.24);
       ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=Math.max(1.5, px*0.05);
       drawCartePlaceShape(ctx, shape, p.x, p.y, r);
       if (px>=26) carteLayerText(ctx, l.name||l.id, p.x, p.y+r+Math.max(7,px*0.12), 'italic '+Math.floor(px*0.2)+'px serif', label);
-      _carteHits.push({ kind:'lieux', rec:l, x:p.x, y:p.y, r:r });
+      _carteHits.push({ kind:hk, rec:l, x:p.x, y:p.y, r:r });
     });
   }
   if (fl.dragons) secret(L.dragons, 'dragons', '#e0102a', '#ffffff', 'star', '#ffb3b3');
   if (fl.ophidiens) secret(L.ophidiens, 'ophidiens', '#39e75f', '#000000', 'diamond', '#b8f5c4');
+  if (fl.caches) secret(L.caches, 'caches', '#7a3ce0', '#ffd27a', 'circle', '#d9c2ff');
 
   // Peuples lointains : comptoir = anneau doré autour de la ville ; flèche vers le bord de la carte.
   if (fl.peuples) {
@@ -7637,13 +7658,14 @@ function carteCellLayerTip(c) {
   return out.length ? '<b>'+esc(c.id)+'</b><br>'+out.join('<br>') : '';
 }
 /// Compléments d'info-bulle d'une fiche ville / lieu selon les calques : lieu secret (dragon
-/// ou Ophidiens, avec créatures et niveaux), comptoir des peuples lointains. Pas d'effet de bord.
+/// ou Ophidiens, avec créatures et niveaux ; v1.0.107 : lieu ou ville caché), comptoir des
+/// peuples lointains. Pas d'effet de bord.
 function carteTipLayerExtra(kind, rec) {
   var L=_carteGeo&&_carteGeo.layers, fl=window._carteState.filters; if (!L) return '';
-  var h='', sk=kind==='lieux'?L.secretLieux[rec.id]:null;
+  var h='', sk=kind==='lieux'?L.secretLieux[rec.id]:(kind==='villes'&&L.secretVilles?L.secretVilles[rec.id]:null);
   if (sk) {
-    var it=(sk==='dragons'?L.dragons:L.ophidiens).find(function(x){ return x.lieu===rec; });
-    h+='<br><span style="color:#ff8a8a">🔒 secret — '+(sk==='dragons'?'grotte d\'un dragon de Xygga':'entrée ophidienne')+' (cachée aux joueurs)</span>';
+    var it=(sk==='dragons'?L.dragons:(sk==='ophidiens'?L.ophidiens:L.caches)).find(function(x){ return x.lieu===rec; });
+    h+='<br><span style="color:#ff8a8a">🔒 secret — '+(sk==='dragons'?'grotte d\'un dragon de Xygga':(sk==='ophidiens'?'entrée ophidienne':(kind==='villes'?'ville cachée':'lieu caché')+', hors de la carte publique'))+' (cachée aux joueurs)</span>';
     if (it) h+=it.creatures.slice(0,6).map(function(cr){ return '<br>• '+esc(cr.name||cr.id)+' <span style="opacity:.7">('+(cr.level_min||'?')+'-'+(cr.level_max||'?')+')</span>'; }).join('')+(it.creatures.length>6?'<br>… +'+(it.creatures.length-6):'');
   }
   if (kind==='villes' && fl.peuples && L.comptoirs[rec.id]) h+='<br><span style="color:#ffcf4d">⚓ '+esc(L.comptoirs[rec.id].nom)+'</span> : '+L.comptoirs[rec.id].peuples.map(function(f){ return esc(f.name||f.id); }).join(', ');
@@ -7706,6 +7728,7 @@ function carteLayersLegendHTML() {
   if (fl.peuples) h+=row('Peuples lointains', '<span style="color:#ffcf4d">➚ direction (hors carte)</span><span><span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:2px dashed #ffcf4d;vertical-align:-3px"></span> comptoir</span><span style="opacity:.7">'+L.peuples.length+' peuples, '+Object.keys(L.comptoirs).length+' comptoirs</span>');
   if (fl.dragons) h+=row('<span style="color:#ff8a8a">🔒 Dragons</span>', '<span style="color:#e0102a">★</span><span>'+L.dragons.length+' grottes cachées (Xygga et ses premiers-nés) — secret, ne pas montrer aux joueurs</span>');
   if (fl.ophidiens) h+=row('<span style="color:#ff8a8a">🔒 Ophidiens</span>', '<span style="color:#39e75f">◆</span><span>'+L.ophidiens.length+' entrées cachées — secret</span>');
+  if (fl.caches) h+=row('<span style="color:#ff8a8a">🔒 Cachés</span>', '<span style="color:#7a3ce0">●</span><span>'+L.caches.length+' lieux et villes cachés (champ secret) — hors carte publique</span>');
   return h;
 }
 
@@ -7714,7 +7737,7 @@ function carteLayersLegendHTML() {
 /// de lieux), bouton de chargement de la carte du jeu et légende des calques actifs. Chaque
 /// case porte id="calque_<clé>". Pas d'effet de bord.
 function carteLayersPanelHTML() {
-  var st=window._carteState, fl=st.filters, L=_carteGeo&&_carteGeo.layers||{ lieuTypes:{}, villeTailles:{}, quetesAncrees:0, raids:[], balises:[], peuples:[], dragons:[], ophidiens:[] };
+  var st=window._carteState, fl=st.filters, L=_carteGeo&&_carteGeo.layers||{ lieuTypes:{}, villeTailles:{}, quetesAncrees:0, raids:[], balises:[], peuples:[], dragons:[], ophidiens:[], caches:[] };
   function chk(key, label, title){ return '<label title="'+esc(title||'')+'" style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.74rem;color:var(--text-secondary)"><input type="checkbox" id="calque_'+key+'"'+(fl[key]?' checked':'')+' style="accent-color:var(--accent-gold)" onchange="carteToggleFilter(\''+key+'\',this.checked)"> '+label+'</label>'; }
   function group(title, body, extra){ return '<div class="carte-layer-group" style="padding:0.35rem 0.5rem;border:1px solid '+(extra?'#a33':'var(--border)')+';border-radius:4px;'+(extra?'background:rgba(120,0,0,0.12)':'')+'"><div style="font-family:Cinzel,serif;font-size:0.58rem;text-transform:uppercase;color:'+(extra?'#ff8a8a':'var(--text-dim)')+';margin-bottom:0.25rem">'+title+'</div><div style="display:flex;flex-direction:column;gap:0.15rem">'+body+'</div></div>'; }
   function sub(kind, map, labels, order){
@@ -7749,7 +7772,8 @@ function carteLayersPanelHTML() {
     +chk('balises','⚠ Balises de danger ('+L.balises.length+')')+chk('peuples','➚ Peuples lointains et comptoirs ('+L.peuples.length+')'));
   h+=group('🔒 Secret — désactivé à l\'ouverture',
     chk('dragons','🐉 Dragons et grottes de Xygga ('+L.dragons.length+')','Grottes cachées aux joueurs : outil de conception seulement')
-    +chk('ophidiens','🐍 Entrées ophidiennes ('+L.ophidiens.length+')','Entrées cachées aux joueurs : outil de conception seulement'), true);
+    +chk('ophidiens','🐍 Entrées ophidiennes ('+L.ophidiens.length+')','Entrées cachées aux joueurs : outil de conception seulement')
+    +chk('caches','🕳️ Lieux et villes cachés ('+L.caches.length+')','Fiches à secret: true (ex. Gouffre des Revenus et sa ville), absentes de la carte publique : outil de conception seulement'), true);
   h+='</div><div id="carteLegend" style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.45rem">'+carteLayersLegendHTML()+'</div></div>';
   return h;
 }

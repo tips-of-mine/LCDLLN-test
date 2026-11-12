@@ -19,7 +19,8 @@
 #   - Correspondance : ville = même `id` ; lieu `lieu_x` = POI `poi_x`, sinon POI de même nom
 #     dans la même case, sinon table EXPLICITES ci-dessous. Lieux d'une autre carte (`carte`,
 #     ex. les Enfers) ignorés.
-#   - Refus (code 2) : position hors de la case, ville ancrée sur un relief (`reliefs`).
+#   - Refus (code 2) : position hors de la case, ville ancrée sur un relief (`reliefs`) ;
+#     sauf un gouffre (v1.0.107, type `gouffre`) : il suit la ville posée au fond.
 #   - Avertissement : position posée sur une fiche sans entrée au master (ignorée).
 #   - Édition CHIRURGICALE du texte du master (une ligne par position) : la mise en forme
 #     écrite à la main est conservée ; rien d'autre ne change (vérifié avant écriture).
@@ -143,7 +144,9 @@ def main():
     with open(MASTER, encoding="utf-8") as f:
         texte = f.read()
     master = json.loads(texte)
-    ancrees = {r.get("city") for r in master.get("reliefs", []) if r.get("city")}
+    # Villes non déplaçables : ancrées sur une colline ou une crevasse (relief dessiné au
+    # centre de la case). Un gouffre (v1.0.107) suit sa ville : position admise.
+    ancrees = {r.get("city") for r in master.get("reliefs", []) if r.get("city") and r.get("type") != "gouffre"}
     entrees = {("cities", c["id"]): c for c in master["cities"]}
     entrees.update({("pois", p["id"]): p for p in master["pois"]})
 

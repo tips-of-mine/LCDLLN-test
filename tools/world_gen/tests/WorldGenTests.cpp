@@ -31,6 +31,11 @@
 // 11. v1.0.83 : palette infernale des Enfers (aucune herbe, neige, forêt ni
 //    broussaille ; lave jaune-orange sur la carte du monde) ; la cellule des
 //    Royaumes N003_W009 garde herbe, masque d'herbe et forêt (palette historique).
+// 12. v1.0.107 : gouffre caché de Deathtrap Canyon (S008_E010) : profondeur, fond plat,
+//    parois, galerie, Thurvhal au fond (secrète, sans route), route 000074 intacte,
+//    déterminisme, 3 cellules hors S008_E010 identiques octet pour octet au monde sans
+//    gouffre, réapparition au cimetière du gouffre pour une mort dans le canyon (règle du
+//    shard, RespawnRules.h) et inchangée ailleurs.
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -39,6 +44,7 @@
 #include "lib/WorldGen.h"
 #include "lib/WorldGenContext.h"
 
+#include "src/shared/world/RespawnRules.h"
 #include "src/shared/world/WorldCells.h"
 
 #include "src/client/world/instances/Buildings.h"
@@ -55,7 +61,9 @@
 #include <filesystem>
 #include <functional>
 #include <fstream>
+#include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -2454,8 +2462,10 @@ namespace
 		if (!ok0) return;
 		// v1.0.106 : premières positions manuelles du dépôt, les 4 balises de route replacées au
 		// bord des routes du lore (LORE_BD §16.35) ; aucune ville, aucun POI des sites ci-dessous.
+		// v1.0.107 : Thurvhal, au fond du gouffre de Deathtrap Canyon (relief qui suit la
+		// ville), est la seule ville à position manuelle.
 		bool none = true;
-		for (const CityDef& c : g0.master.cities) none = none && !c.hasPosition;
+		for (const CityDef& c : g0.master.cities) none = none && (!c.hasPosition || c.id == "ville_thurvhal");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
 			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes" };
 		size_t posees = 0;
@@ -2465,7 +2475,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : aucune ville deplacee ; seules les 4 balises de route ont une position manuelle (v1.0.106)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : aucune ville deplacee (sauf Thurvhal, v1.0.107) ; seules les 4 balises de route ont une position manuelle (v1.0.106)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -2751,10 +2761,12 @@ namespace
 			for (const Vec2& q : r.points) d = std::min(d, std::hypot(q.x - c.x, q.z - c.z));
 			return d;
 		};
+		// v1.0.107 : une ville secrète (Thurvhal, au fond du gouffre de Deathtrap Canyon) n'a
+		// volontairement aucune route (test « gouffre v1.0.107 ») : hors de ce décompte.
 		int villes = 0, touched = 0;
 		for (const CityDef& c : g.cities)
 		{
-			if (!c.procedural.empty() || !playable.count(c.cell)) continue;
+			if (!c.procedural.empty() || !playable.count(c.cell) || c.secret) continue;
 			++villes;
 			bool t = false;
 			for (const auto& [id, rs] : byLore)
@@ -2795,7 +2807,7 @@ namespace
 		int reliees = 0, ile = 0;
 		for (const CityDef& c : g.cities)
 		{
-			if (!c.procedural.empty() || !playable.count(c.cell)) continue;
+			if (!c.procedural.empty() || !playable.count(c.cell) || c.secret) continue;
 			if (c.n >= 17 && c.e <= -9) { ++ile; continue; } // Île de la Trêve
 			bool r = false;
 			for (size_t i = 0; i < net.size(); ++i)
@@ -2903,6 +2915,319 @@ namespace
 		}
 		Check(baie == 5, "routes v1.0.106 : 5 cases de haut-fond de la baie de l'Ile de la Treve jouables, sans route (exception documentee)");
 	}
+
+	/// v1.0.107 — Choix du cimetière de réapparition, copie de la règle du shard
+	/// (ServerApp::HandleRespawnRequest) : cimetière ÉLIGIBLE (RespawnRules.h) le plus
+	/// proche du lieu de mort en distance HORIZONTALE (X, Z), le premier à égalité.
+	/// \param neutralRadiusM rayon neutre par défaut du shard (globals.*, 500 m).
+	/// \return indice dans \p points, -1 si aucun (repli du shard : point d'entrée).
+	int PickGraveyard(const std::vector<tools::world_gen::RespawnDef>& points, tools::world_gen::Vec2 death,
+		const std::string& playerFaction, float neutralRadiusM = 500.0f)
+	{
+		int best = -1;
+		float bestDistSq = std::numeric_limits<float>::max();
+		for (size_t k = 0; k < points.size(); ++k)
+		{
+			const tools::world_gen::RespawnDef& p = points[k];
+			if (p.type != "graveyard") continue;
+			const float dx = static_cast<float>(p.position.x - death.x), dz = static_cast<float>(p.position.z - death.z);
+			const float d2 = dx * dx + dz * dz;
+			// Colonne faction du fichier : « - » = cimetière neutre (faction vide au shard).
+			const std::string owner = p.faction == "-" ? std::string() : p.faction;
+			if (!engine::world::IsGraveyardEligibleForRespawn(std::sqrt(d2), neutralRadiusM, owner, playerFaction)) continue;
+			if (d2 < bestDistSq) { bestDistSq = d2; best = static_cast<int>(k); }
+		}
+		return best;
+	}
+
+	/// v1.0.107 : le gouffre caché de Deathtrap Canyon et sa ville (lot 32 du propriétaire,
+	/// LORE_BD §16.36). Master (ville secrète, relief `gouffre`), profondeur et parois,
+	/// galerie, ville au fond, route 000074 et tout le réseau identiques au monde sans
+	/// gouffre, cellule déterministe, 3 cellules hors S008_E010 identiques octet pour octet,
+	/// torches et ambiance en données, places.json sans la ville secrète, réapparition.
+	void TestGouffreV1107()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		namespace wc = engine::world::cells;
+		GlobalWorld g1, g0;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g1.master, err)
+			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "gouffre v1.0.107 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g1.master;
+		const ReliefDef* r = nullptr;
+		for (const ReliefDef& x : m.reliefs) if (x.id == "gouffre_des_revenus") r = &x;
+		const CityDef* cm = nullptr;
+		for (const CityDef& c : m.cities) if (c.id == "ville_thurvhal") cm = &c;
+		Check(r && cm && r->type == "gouffre" && r->cityId == cm->id && cm->cell == "S008_E010" && cm->secret
+			&& cm->startFor.empty() && cm->hasPosition && std::fabs(r->center.x - (100000.0 + cm->positionXM)) < 1e-9
+			&& std::fabs(r->center.z - (80000.0 + cm->positionZM)) < 1e-9,
+			"gouffre v1.0.107 : Thurvhal secrete en S008_E010, gouffre centre sur sa position manuelle");
+		if (!r || !cm) return;
+		// Monde de référence SANS gouffre (même master, ville et relief retirés).
+		g0.master.cities.erase(std::remove_if(g0.master.cities.begin(), g0.master.cities.end(),
+			[](const CityDef& c) { return c.id == "ville_thurvhal"; }), g0.master.cities.end());
+		g0.master.reliefs.erase(std::remove_if(g0.master.reliefs.begin(), g0.master.reliefs.end(),
+			[](const ReliefDef& x) { return x.type == "gouffre"; }), g0.master.reliefs.end());
+
+		// 1. Profondeur : fond plat à floorY, depth_m sous le point le plus bas du pourtour,
+		//    80 à 150 m sous le pourtour moyen ; parois d'au moins 80 m juste derrière le fond.
+		const double rim = r->floorRadiusM * 1.13 + r->wallM + 100.0;
+		double lowest = 1e18, mean = 0.0;
+		for (int k = 0; k < 64; ++k)
+		{
+			const double a = k * 6.283185307179586 / 64.0;
+			const double h = MacroHeight(g0.master, r->center.x + std::cos(a) * rim, r->center.z + std::sin(a) * rim);
+			lowest = std::min(lowest, h); mean += h / 64.0;
+		}
+		Check(std::fabs(lowest - r->depthM - r->floorY) < 1e-6 && mean - r->floorY >= 80.0 && mean - r->floorY <= 150.0,
+			"gouffre v1.0.107 : fond depth_m sous le bord le plus bas, 80 a 150 m sous le pourtour moyen");
+		bool flat = true;
+		for (int k = 0; k < 48; ++k)
+		{
+			const double a = k * 0.6180339887 * 6.283185307179586, d = r->floorRadiusM * 0.8 * std::sqrt((k + 0.5) / 48.0);
+			flat = flat && std::fabs(MacroHeight(m, r->center.x + std::cos(a) * d, r->center.z + std::sin(a) * d) - r->floorY) < 1e-6;
+		}
+		double wallMin = 1e18;
+		for (int k = 0; k < 64; ++k)
+		{
+			const double a = k * 6.283185307179586 / 64.0, d = GouffreFloorRadiusAt(*r, a) + r->wallM + 3.0;
+			const Vec2 p{ r->center.x + std::cos(a) * d, r->center.z + std::sin(a) * d };
+			if (GouffreGalleryDistance(*r, p, nullptr) < r->galleryHalfWidthM + r->galleryWallM + 30.0) continue; // embouchure
+			wallMin = std::min(wallMin, MacroHeight(m, p.x, p.z) - r->floorY);
+		}
+		Check(flat && wallMin >= 80.0, "gouffre v1.0.107 : fond plat, parois abruptes (au moins 80 m a wall_m + 3 m du fond)");
+		// 2. Galerie : sol au niveau du fond jusqu'à sa sortie, puis pente régulière ≤ 30 %
+		//    jusqu'à l'entrée (les 60 derniers mètres suivent le terrain de l'entrée).
+		const double total = r->galleryAlong.back(), run = total - r->galleryExitM;
+		bool ramp = run > 0.0 && (r->entranceY - r->floorY) / run <= 0.30 && r->entranceY > r->floorY + 80.0;
+		for (double a = 0.0; ramp && a <= total - 60.0; a += 5.0)
+		{
+			size_t k = 0;
+			while (k + 2 < r->gallery.size() && r->galleryAlong[k + 1] < a) ++k;
+			const Vec2 p = r->gallery[k] + (r->gallery[k + 1] - r->gallery[k]) * ((a - r->galleryAlong[k]) / (r->galleryAlong[k + 1] - r->galleryAlong[k]));
+			const double want = r->floorY + (r->entranceY - r->floorY) * std::clamp((a - r->galleryExitM) / run, 0.0, 1.0);
+			ramp = std::fabs(MacroHeight(m, p.x, p.z) - want) < 0.05;
+		}
+		Check(ramp && std::fabs(MacroHeight(m, r->gallery.back().x, r->gallery.back().z) - r->entranceY) < 1e-6,
+			"gouffre v1.0.107 : galerie de la Fente en pente reguliere (<= 30 %) du fond a l'entree cachee");
+		// Le gouffre ne creuse que dans sa boîte : ailleurs, relief identique au bit près.
+		bool untouched = true;
+		for (int k = 0; k < 400; ++k)
+		{
+			const double x = 85000.0 + (k % 20) * 1500.0 + 37.0, z = 65000.0 + (k / 20) * 1500.0 + 11.0;
+			const bool inBox = std::fabs(x - r->center.x) <= r->footRadiusM && std::fabs(z - r->center.z) <= r->footRadiusM;
+			if (!inBox) untouched = untouched && MacroHeight(m, x, z) == MacroHeight(g0.master, x, z);
+		}
+		Check(untouched, "gouffre v1.0.107 : relief macro identique hors de la boite du gouffre");
+
+		// 3. Couche macro : ville au fond ; réseau routier, autres villes et POI identiques au
+		//    monde sans gouffre (route 000074 comprise) ; rien ne passe dans le gouffre.
+		BuildMacroTerrain(g1); BuildMacroRivers(g1); BuildMacroRoads(g1);
+		BuildMacroTerrain(g0); BuildMacroRivers(g0); BuildMacroRoads(g0);
+		const CityDef* town = g1.FindCity("ville_thurvhal");
+		Check(town && std::hypot(town->center.x - r->center.x, town->center.z - r->center.z) < 1e-9
+			&& std::fabs(town->plateauY - r->floorY) < 0.05 && town->radiusM + 90.0 < r->floorRadiusM * 0.87,
+			"gouffre v1.0.107 : Thurvhal au centre du fond plat, cimetiere compris");
+		auto sameRoads = [](const std::vector<Road>& a, const std::vector<Road>& b) {
+			if (a.size() != b.size()) return false;
+			for (size_t k = 0; k < a.size(); ++k)
+			{
+				if (a[k].loreId != b[k].loreId || a[k].fromId != b[k].fromId || a[k].toId != b[k].toId || a[k].points.size() != b[k].points.size()) return false;
+				for (size_t q = 0; q < a[k].points.size(); ++q)
+					if (a[k].points[q].x != b[k].points[q].x || a[k].points[q].z != b[k].points[q].z || a[k].profileY[q] != b[k].profileY[q]) return false;
+			}
+			return true;
+		};
+		const Road* r74 = nullptr;
+		for (const Road& x : g1.roads) if (x.loreId == "000074") r74 = &x;
+		bool r74InCanyon = false;
+		if (r74) for (const Vec2& p : r74->points) r74InCanyon = r74InCanyon || (std::fabs(p.x - 100000.0) < 5000.0 && std::fabs(p.z - 80000.0) < 5000.0);
+		Check(r74 && r74InCanyon && sameRoads(g1.roads, g0.roads) && sameRoads(g1.generatorRoads, g0.generatorRoads),
+			"gouffre v1.0.107 : route 000074 par S008_E010 et tout le reseau routier identiques au monde sans gouffre");
+		bool clear = true, linked = false;
+		double entranceRoad = 1e18;
+		for (const std::vector<Road>* rs : { &g1.roads, &g1.generatorRoads })
+			for (const Road& x : *rs)
+			{
+				linked = linked || x.fromId == town->id || x.toId == town->id;
+				for (const Vec2& p : x.points)
+				{
+					clear = clear && !InGouffre(*r, p, 150.0);
+					entranceRoad = std::min(entranceRoad, std::hypot(p.x - r->gallery.back().x, p.z - r->gallery.back().z));
+				}
+			}
+		Check(clear && !linked && entranceRoad > 500.0 && entranceRoad < 1000.0,
+			"gouffre v1.0.107 : aucune route dans le gouffre ni vers Thurvhal ; entree cachee a 500-1000 m de la route");
+		bool others = g1.cities.size() == g0.cities.size() + 1 && g1.pois.size() == g0.pois.size();
+		for (size_t k = 0, j = 0; others && k < g1.cities.size(); ++k)
+		{
+			if (g1.cities[k].id == "ville_thurvhal") continue;
+			others = g1.cities[k].id == g0.cities[j].id && g1.cities[k].center.x == g0.cities[j].center.x
+				&& g1.cities[k].center.z == g0.cities[j].center.z && g1.cities[k].plateauY == g0.cities[j].plateauY;
+			++j;
+		}
+		for (size_t k = 0; others && k < g1.pois.size(); ++k)
+			others = g1.pois[k].center.x == g0.pois[k].center.x && g1.pois[k].center.z == g0.pois[k].center.z;
+		std::vector<std::string> c1 = m.generatedCells, c0 = g0.master.generatedCells;
+		AddStartCorridors(g1, c1); AddStartCorridors(g0, c0);
+		Check(others && c1 == c0, "gouffre v1.0.107 : autres villes, POI et cellules jouables inchanges");
+
+		// 4. Cellules (pipeline de RunWorldGen, sorties écrites pour comparaison octet pour octet).
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_gouffre_v1107";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		g1.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
+		auto gen = [&](GlobalWorld& g, const std::string& id, const std::string& sub) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			g.outputRoot = (tmp / sub).string();
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
+			return w;
+		};
+		auto sameDir = [&](const fs::path& a, const fs::path& b) {
+			size_t n = 0;
+			bool same = true;
+			for (const auto& f : fs::recursive_directory_iterator(a))
+			{
+				if (!f.is_regular_file()) continue;
+				const fs::path rel = fs::relative(f.path(), a);
+				same = same && fs::exists(b / rel) && ReadBytes(f.path()) == ReadBytes(b / rel);
+				++n;
+			}
+			return same && n > 0;
+		};
+		std::unique_ptr<World> w1 = gen(g1, "S008_E010", "a");
+		std::unique_ptr<World> w1b = gen(g1, "S008_E010", "b");
+		Check(sameDir(tmp / "a", tmp / "b"), "gouffre v1.0.107 : cellule S008_E010 deterministe (deux generations identiques)");
+		const double hTown = w1->HeightAt(town->center);
+		bool noPlace = true, noFauna = true;
+		for (const CityDef& c : w1->cities)
+			if (!c.procedural.empty()) noPlace = noPlace && !InGouffre(*r, c.center, c.radiusM);
+		for (const SpawnerDef& sp : w1->spawners)
+			if (sp.id.rfind("faune_", 0) == 0) noFauna = noFauna && !InGouffre(*r, sp.position, 0.0);
+		Check(std::fabs(hTown - r->floorY) < 0.6 && noPlace && noFauna,
+			"gouffre v1.0.107 : terrain de Thurvhal au fond ; ni lieu procedural ni faune dans le gouffre");
+		const RespawnDef* gy = nullptr;
+		for (const RespawnDef& x : w1->respawns)
+			if (x.type == "graveyard" && std::hypot(x.position.x - r->center.x, x.position.z - r->center.z) < r->floorRadiusM * 0.8) gy = &x;
+		Check(gy && gy->faction == "-" && std::fabs(gy->y - (r->floorY + 1.0)) < 0.6,
+			"gouffre v1.0.107 : cimetiere NEUTRE au fond du gouffre (respawn_points.txt)");
+		bool torchesOk = w1->pointLights.size() >= 20;
+		size_t inGallery = 0, onFloor = 0;
+		for (const PointLightDef& l : w1->pointLights)
+		{
+			const double dc = std::hypot(l.position.x - r->center.x, l.position.z - r->center.z);
+			const bool floor = dc < r->floorRadiusM * 1.13 + 8.0;
+			const bool gal = GouffreGalleryDistance(*r, l.position, nullptr) < r->galleryHalfWidthM + 2.0;
+			onFloor += floor ? 1 : 0; inGallery += (!floor && gal) ? 1 : 0;
+			torchesOk = torchesOk && (floor || gal) && std::hypot(l.position.x - r->gallery.back().x, l.position.z - r->gallery.back().z) > 55.0;
+		}
+		size_t torchMeshes = 0;
+		for (const ScatterDef& sd : w1->scatter) torchMeshes += sd.mesh == "meshes/props/Torch_Metal.gltf" && InGouffre(*r, sd.position, 5.0) ? 1 : 0;
+		const std::string zone = ReadText(tmp / "a" / "zones" / "cell_s008_e010" / "zone.json");
+		Check(torchesOk && onFloor >= 8 && inGallery >= 8 && torchMeshes == w1->pointLights.size() && w1->ambianceZones.size() == 1
+			&& zone.find("\"point_lights\"") != std::string::npos && zone.find("\"ambiance_zones\"") != std::string::npos,
+			"gouffre v1.0.107 : torches (decor) au fond et dans la galerie, aucune dehors ; lumieres et ambiance sombre en donnees (zone.json)");
+
+		// 5. Monde inchangé ailleurs : 3 cellules hors S008_E010 (voisines est et sud, nord-ouest),
+		//    octets identiques avec et sans gouffre.
+		std::vector<std::unique_ptr<World>> around;
+		bool sameAround = true;
+		for (const char* id : { "S008_E011", "S009_E010", "S007_E009" })
+		{
+			around.push_back(gen(g1, id, "c1"));
+			gen(g0, id, "c0");
+		}
+		sameAround = sameDir(tmp / "c1", tmp / "c0");
+		Check(sameAround, "gouffre v1.0.107 : S008_E011, S009_E010 et S007_E009 identiques octet pour octet au monde sans gouffre");
+
+		// 6. places.json : Thurvhal hors de la liste publique, dans secret_cities.
+		{
+			std::vector<World*> cells = { w1.get() };
+			g1.outputRoot = (tmp / "g").string();
+			std::string e3;
+			const bool okG = WriteGlobalOutputs(g1, cells, e3);
+			const std::string places = ReadText(tmp / "g" / "world" / "royaumes" / "places.json");
+			const size_t secretAt = places.find("\"secret_cities\"");
+			const size_t townAt = places.find("\"id\": \"ville_thurvhal\"");
+			Check(okG && secretAt != std::string::npos && townAt != std::string::npos && townAt > secretAt
+				&& places.find("\"id\": \"ville_thurvhal\"", townAt + 1) == std::string::npos,
+				"gouffre v1.0.107 : places.json sans Thurvhal dans cities (carte publique), Thurvhal dans secret_cities");
+		}
+
+		// 7. Réapparition (règle du shard) : graveyards des cellules jouables assez proches
+		//    pour concurrencer le gouffre sur la zone du canyon = disque de 3 km autour du
+		//    POI Deathtrap Canyon (gorge et crête de la route 000074) et le gouffre lui-même.
+		std::vector<Vec2> zonePts;
+		for (double dz = -3000.0; dz <= 3000.0; dz += 100.0)
+			for (double dx = -3000.0; dx <= 3000.0; dx += 100.0)
+				if (dx * dx + dz * dz <= 3000.0 * 3000.0) zonePts.push_back({ 100000.0 + dx, 80000.0 + dz });
+		for (double dz = -600.0; dz <= 600.0; dz += 50.0)
+			for (double dx = -600.0; dx <= 600.0; dx += 50.0)
+				if (InGouffre(*r, { r->center.x + dx, r->center.z + dz }, 0.0)) zonePts.push_back({ r->center.x + dx, r->center.z + dz });
+		for (const Vec2& p : r74->points)
+			if (std::hypot(p.x - 100000.0, p.z - 80000.0) <= 3000.0) zonePts.push_back(p);
+		double dmax = 0.0;
+		for (const Vec2& p : zonePts) dmax = std::max(dmax, std::hypot(p.x - gy->position.x, p.z - gy->position.z));
+		// Toute cellule jouable dont le carré s'approche de la zone à moins de dmax peut
+		// porter un concurrent : on les génère toutes (les autres sont forcément plus loin).
+		std::vector<RespawnDef> all = w1->respawns, without;
+		std::set<std::string> extra = { "S008_E010", "S008_E011", "S009_E010", "S007_E009" };
+		for (const std::unique_ptr<World>& w : around) all.insert(all.end(), w->respawns.begin(), w->respawns.end());
+		size_t competitors = 0;
+		for (const std::string& id : c1)
+		{
+			int n = 0, e = 0;
+			if (extra.count(id) || !ParseCellId(id, n, e)) continue;
+			const wc::CellPoint mn = wc::CellMinCorner({ n, e });
+			const double ddx = std::max({ 0.0, (100000.0 - 3000.0) - (mn.x + 10000.0), mn.x - (r->center.x + 600.0) });
+			const double ddz = std::max({ 0.0, (80000.0 - 3000.0) - (mn.z + 10000.0), mn.z - (80000.0 + 3000.0) });
+			if (std::hypot(ddx, ddz) >= dmax) continue;
+			extra.insert(id);
+			std::unique_ptr<World> w = gen(g1, id, "r");
+			all.insert(all.end(), w->respawns.begin(), w->respawns.end());
+			++competitors;
+		}
+		for (const RespawnDef& x : all)
+			if (!(x.type == gy->type && x.position.x == gy->position.x && x.position.z == gy->position.z)) without.push_back(x);
+		size_t toGouffre = 0;
+		for (const Vec2& p : zonePts)
+			for (const char* fac : { "lumiere", "lune_noire", "" })
+			{
+				const int k = PickGraveyard(all, p, fac);
+				toGouffre += (k >= 0 && all[static_cast<size_t>(k)].position.x == gy->position.x && all[static_cast<size_t>(k)].position.z == gy->position.z) ? 1 : 0;
+			}
+		Check(competitors >= 3 && toGouffre == zonePts.size() * 3,
+			"gouffre v1.0.107 : mort dans le canyon (3 km autour de Deathtrap Canyon, route 000074, gouffre) -> cimetiere du gouffre, toutes factions");
+		// Ailleurs : même cimetière qu'avant, à Der Hem Shelbem, au hameau de Frhozhol, au
+		// cimetière de chaque hameau ou ville voisin et sur la route 000074 au-delà de 9 km.
+		std::vector<Vec2> elsewhere;
+		for (const char* id : { "ville_der_hem_shelsem", "hamlet_0193" })
+			if (const CityDef* c = g1.FindCity(id)) elsewhere.push_back(c->center);
+		for (const RespawnDef& x : without)
+			if (x.type == "graveyard") elsewhere.push_back(x.position);
+		for (const Vec2& p : r74->points)
+			if (std::hypot(p.x - gy->position.x, p.z - gy->position.z) > 9000.0) elsewhere.push_back(p);
+		bool unchanged = elsewhere.size() > 10;
+		for (const Vec2& p : elsewhere)
+		{
+			const int a = PickGraveyard(all, p, "lumiere"), b = PickGraveyard(without, p, "lumiere");
+			unchanged = unchanged && a >= 0 && b >= 0 && all[static_cast<size_t>(a)].position.x == without[static_cast<size_t>(b)].position.x
+				&& all[static_cast<size_t>(a)].position.z == without[static_cast<size_t>(b)].position.z;
+		}
+		Check(unchanged, "gouffre v1.0.107 : reapparition inchangee ailleurs (villes et hameaux voisins, route a plus de 9 km)");
+		fs::remove_all(tmp, ec);
+	}
 }
 
 int main()
@@ -2935,6 +3260,7 @@ int main()
 	TestRoutesLoreV1105();
 	TestRoutesManquantesV1106();
 	TestPlacementManuelV1095();
+	TestGouffreV1107();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

@@ -216,9 +216,77 @@ namespace tools::world_gen
 		return std::max(r.wallM, 0.4 * r.footRadiusM);
 	}
 
+	double GouffreGalleryDistance(const ReliefDef& r, Vec2 p, double* outAlong)
+	{
+		double best = 1e18, along = 0.0;
+		for (size_t k = 0; k + 1 < r.gallery.size(); ++k)
+		{
+			double t = 0.0;
+			const double d = DistPointSegment(p, r.gallery[k], r.gallery[k + 1], &t);
+			if (d < best)
+			{
+				best = d;
+				along = r.galleryAlong[k] + t * (r.galleryAlong[k + 1] - r.galleryAlong[k]);
+			}
+		}
+		if (outAlong) *outAlong = along;
+		return best;
+	}
+
+	double GouffreFloorRadiusAt(const ReliefDef& r, double angleRad)
+	{
+		// Contour lobé (± 13 %) : fosse naturelle, pas un cercle tracé au compas.
+		return r.floorRadiusM * (1.0 + 0.08 * std::sin(3.0 * angleRad + r.phase) + 0.05 * std::sin(5.0 * angleRad + 2.0 * r.phase));
+	}
+
+	double GouffreHeight(const ReliefDef& r, double x, double z, double h)
+	{
+		const double dx = x - r.center.x, dz = z - r.center.z;
+		if (std::fabs(dx) > r.footRadiusM || std::fabs(dz) > r.footRadiusM) return h;
+		double out = h;
+		// Fosse : fond plat à floorY, parois abruptes (S de wall_m de large).
+		const double ang = std::atan2(dz, dx);
+		const double rf = GouffreFloorRadiusAt(r, ang);
+		const double pit = 1.0 - SmoothStep(rf, rf + r.wallM, std::hypot(dx, dz));
+		if (pit > 0.0) out = std::min(out, Lerp(h, r.floorY, pit));
+		// Galerie : fente dont le sol monte régulièrement du fond à l'entrée.
+		if (r.gallery.size() >= 2)
+		{
+			double along = 0.0;
+			const double s = GouffreGalleryDistance(r, { x, z }, &along);
+			const double slot = 1.0 - SmoothStep(r.galleryHalfWidthM, r.galleryHalfWidthM + r.galleryWallM, s);
+			if (slot > 0.0)
+			{
+				const double run = std::max(1.0, r.galleryAlong.back() - r.galleryExitM);
+				const double y = Lerp(r.floorY, r.entranceY, Clamp((along - r.galleryExitM) / run, 0.0, 1.0));
+				out = std::min(out, Lerp(h, y, slot));
+			}
+		}
+		return out;
+	}
+
+	bool InGouffre(const ReliefDef& r, Vec2 p, double marginM)
+	{
+		if (r.type != "gouffre") return false;
+		const double dx = p.x - r.center.x, dz = p.z - r.center.z;
+		if (std::fabs(dx) > r.footRadiusM + marginM || std::fabs(dz) > r.footRadiusM + marginM) return false;
+		if (std::hypot(dx, dz) < GouffreFloorRadiusAt(r, std::atan2(dz, dx)) + r.wallM + marginM) return true;
+		return r.gallery.size() >= 2 && GouffreGalleryDistance(r, p, nullptr) < r.galleryHalfWidthM + r.galleryWallM + marginM;
+	}
+
+	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM)
+	{
+		for (const ReliefDef& r : m.reliefs)
+			if (InGouffre(r, p, marginM)) return true;
+		return false;
+	}
+
 	double ReliefContribution(const ReliefDef& r, double x, double z)
 	{
 		const double dx = x - r.center.x, dz = z - r.center.z;
+		// Gouffre (v1.0.107) : il creuse jusqu'à une altitude absolue (GouffreHeight,
+		// appliqué par ReliefOffset), il n'ajoute aucune élévation.
+		if (r.type == "gouffre") return 0.0;
 		if (r.type == "massif")
 		{
 			// Dôme au contour lobé (pied entre 0,76 et 1,24 × foot_radius_m), découpé par
@@ -259,11 +327,24 @@ namespace tools::world_gen
 	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH)
 	{
 		double h = 0.0, massif = 0.0;
+		bool gouffre = false;
 		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type == "gouffre") { gouffre = true; continue; }
 			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
+		}
 		// Massifs (v1.0.77) : seulement sur les terres émergées (0,5 à 3 m au-dessus de
 		// la mer pour le fondu) ; la côte ne bouge pas et le relief y monte en falaise.
 		if (massif > 0.0) h += massif * SmoothStep(m.scale.seaLevelM + 0.5, m.scale.seaLevelM + 3.0, baseH);
+		// Gouffres (v1.0.107) : creusés en dernier, jusqu'à leur altitude absolue ;
+		// hors de leur boîte, GouffreHeight rend l'altitude telle quelle (écart nul).
+		if (gouffre)
+			for (const ReliefDef& r : m.reliefs)
+				if (r.type == "gouffre")
+				{
+					const double cur = baseH + h;
+					h += GouffreHeight(r, x, z, cur) - cur;
+				}
 		return h;
 	}
 

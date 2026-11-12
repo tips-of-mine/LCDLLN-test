@@ -462,7 +462,7 @@ namespace tools::world_gen
 					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
 					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
 				}
-			for (const CityDef& c : g.cities) plot(c.center, 2, 92, 64, 52);
+			for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, 2, 92, 64, 52); // v1.0.107 : pas les villes secrètes
 			return rgb;
 		}
 
@@ -881,6 +881,46 @@ namespace tools::world_gen
 				}
 				its.objectValue[std::to_string(k)] = e;
 			}
+			// v1.0.107 — torches et ambiance du gouffre : DONNÉES pour le client (pas encore
+			// lues : l'éclairage ponctuel du client vient d'un fichier global, et il n'a pas
+			// de réglage d'ambiance par zone). Clés absentes des autres cellules.
+			if (!w.pointLights.empty())
+			{
+				JsonValue& pl = Child(world, "point_lights");
+				pl.objectValue["_comment"] = JStr("v1.0.107 — lumieres ponctuelles posees par le generateur (torches du gouffre), positions GLOBALES, couleur RGB 0-1. Donnee non lue par le client a ce jour (DynamicLightSystem lit lights/dynamic_lights.json).");
+				pl.objectValue["count"] = JNum(static_cast<double>(w.pointLights.size()));
+				for (size_t k = 0; k < w.pointLights.size(); ++k)
+				{
+					const PointLightDef& d = w.pointLights[k];
+					JsonValue e = JObj();
+					e.objectValue["id"] = JStr(d.id);
+					e.objectValue["type"] = JStr(d.type);
+					e.objectValue["x"] = JNum(d.position.x); e.objectValue["y"] = JNum(d.y); e.objectValue["z"] = JNum(d.position.z);
+					e.objectValue["radius"] = JNum(d.radiusM);
+					e.objectValue["intensity"] = JNum(d.intensity);
+					e.objectValue["color_r"] = JNum(d.r); e.objectValue["color_g"] = JNum(d.g); e.objectValue["color_b"] = JNum(d.b);
+					e.objectValue["auto_night_light"] = JBool(false); // allumees jour et nuit (fond sans soleil)
+					pl.objectValue[std::to_string(k)] = e;
+				}
+			}
+			if (!w.ambianceZones.empty())
+			{
+				JsonValue& az = Child(world, "ambiance_zones");
+				az.objectValue["_comment"] = JStr("v1.0.107 — zones d'ambiance locales (fond du gouffre : sombre). darkness 0 = jour, 1 = nuit noire ; la zone couvre le disque (x, z, radius_m) entre floor_y et top_y. Donnee non lue par le client a ce jour.");
+				az.objectValue["count"] = JNum(static_cast<double>(w.ambianceZones.size()));
+				for (size_t k = 0; k < w.ambianceZones.size(); ++k)
+				{
+					const AmbianceZoneDef& d = w.ambianceZones[k];
+					JsonValue e = JObj();
+					e.objectValue["id"] = JStr(d.id);
+					e.objectValue["label"] = JStr(d.label);
+					e.objectValue["x"] = JNum(d.center.x); e.objectValue["z"] = JNum(d.center.z);
+					e.objectValue["radius_m"] = JNum(d.radiusM);
+					e.objectValue["floor_y"] = JNum(d.floorY); e.objectValue["top_y"] = JNum(d.topY);
+					e.objectValue["darkness"] = JNum(d.darkness);
+					az.objectValue[std::to_string(k)] = e;
+				}
+			}
 			std::string text;
 			DumpJson(root, text, 0);
 			text += "\n";
@@ -1003,13 +1043,21 @@ namespace tools::world_gen
 				if (rd.path && rd.loreId.empty())
 					addRoad(rd.points, mf::MapRoadKind::Path, rd.widthM);
 			// Rues : chaque arête du graphe (exportée une seule fois, a < b).
+			// Ville secrète (v1.0.107) : ni ses rues ni ses bâtiments sur la carte zoomée.
+			auto secretAt = [&](Vec2 p) {
+				for (const CityDef& c : w->cities)
+					if (c.secret && std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 60.0) return true;
+				return false;
+			};
 			for (const SettlementLayout& L : w->layouts)
 				for (size_t a = 0; a < L.nodes.size(); ++a)
+					if (const CityDef* lc = w->FindCity(L.cityId); !(lc && lc->secret))
 					for (int b : L.nodes[a].links)
 						if (b > static_cast<int>(a) && static_cast<size_t>(b) < L.nodes.size())
 							addRoad({ L.nodes[a].p, L.nodes[static_cast<size_t>(b)].p }, mf::MapRoadKind::Street, 3.0);
 			for (const BuildingPlacementDef& b : w->buildings)
 			{
+				if (secretAt(b.position)) continue;
 				mf::MapBuilding m;
 				m.x = static_cast<float>(b.position.x);
 				m.z = static_cast<float>(b.position.z);
@@ -1104,8 +1152,10 @@ namespace tools::world_gen
 
 		// ---- places.json (UI client : carte, bannières, radar) — coordonnées GLOBALES.
 		{
-			std::vector<const CityDef*> all;
-			for (const CityDef& c : g.cities) all.push_back(&c);
+			// Villes secrètes (v1.0.107) : hors de la liste publique (carte, bannières,
+			// radar), recopiées à part dans `secret_cities` (non lu par le client).
+			std::vector<const CityDef*> all, secrets;
+			for (const CityDef& c : g.cities) (c.secret ? secrets : all).push_back(&c);
 			for (const World* w : cells)
 				for (const CityDef& c : w->cities)
 					if (!c.procedural.empty()) all.push_back(&c);
@@ -1135,7 +1185,21 @@ namespace tools::world_gen
 					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
 					", \"description\": " + Q(c.description) + " }" + (k + 1 < all.size() ? ",\n" : "\n");
 			}
-			j += "  ],\n  \"poi_count\": " + std::to_string(g.pois.size()) + ",\n  \"pois\": [\n";
+			j += "  ],\n";
+			if (!secrets.empty())
+			{
+				j += "  \"secret_city_count\": " + std::to_string(secrets.size()) + ",\n  \"secret_cities\": [\n";
+				for (size_t k = 0; k < secrets.size(); ++k)
+				{
+					const CityDef& c = *secrets[k];
+					j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.kind) + ", \"race\": " + Q(c.race) +
+						", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) + ", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
+						", \"radius_m\": " + Num(c.radiusM) + ", \"source\": " + Q(c.source) + ", \"description\": " + Q(c.description) + " }" +
+						(k + 1 < secrets.size() ? ",\n" : "\n");
+				}
+				j += "  ],\n";
+			}
+			j += "  \"poi_count\": " + std::to_string(g.pois.size()) + ",\n  \"pois\": [\n";
 			for (size_t k = 0; k < g.pois.size(); ++k)
 			{
 				const PoiDef& p = g.pois[k];

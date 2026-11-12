@@ -205,6 +205,10 @@ namespace tools::world_gen
 			if (!kRaces.count(d.race)) { err = "master: race inconnue pour '" + d.id + "' : " + d.race; return false; }
 			if (!kStates.count(d.state)) { err = "master: state inconnu pour '" + d.id + "' : " + d.state; return false; }
 			if (!ReadManualPosition(c, "ville '" + d.id + "'", d.hasPosition, d.positionXM, d.positionZM, err)) return false;
+			// Ville secrète (v1.0.107) : hors carte publique, sans route ; une ville de
+			// départ ne peut pas l'être (les nouveaux personnages doivent la voir).
+			d.secret = GetBool(c, "secret", false);
+			if (d.secret && !d.startFor.empty()) { err = "master: la ville de depart '" + d.id + "' ne peut pas etre secrete"; return false; }
 			out.cities.push_back(std::move(d));
 		}
 		// Une seule ville de départ par faction (v1.0.61 : start_for porte des
@@ -350,6 +354,10 @@ namespace tools::world_gen
 				d.backM = GetNum(v, "back_m", 0.0);
 				d.openToward = GetStr(v, "open_toward");
 				d.mine = GetStr(v, "mine");
+				d.depthM = GetNum(v, "depth_m", 0.0);
+				d.floorRadiusM = GetNum(v, "floor_radius_m", 0.0);
+				d.galleryHalfWidthM = GetNum(v, "gallery_half_width_m", 0.0);
+				d.galleryWallM = GetNum(v, "gallery_wall_m", 0.0);
 				// Massif (v1.0.77) : ancré sur une case (`cell`), sans ville ; jusqu'à
 				// 600 m de haut et 7 km de rayon (il déborde sur les cases voisines :
 				// MacroHeight est une fonction de la position, le raccord reste exact).
@@ -381,13 +389,58 @@ namespace tools::world_gen
 				}
 				// Le relief est dessiné au centre de la case de sa ville : une ville perchée
 				// ou au fond d'une crevasse ne peut pas être déplacée à la main (v1.0.95).
-				if (city->hasPosition)
+				// Gouffre (v1.0.107) : il SUIT la ville (position manuelle admise).
+				if (city->hasPosition && d.type != "gouffre")
 				{
 					err = "master: ville '" + d.cityId + "' ancree sur le relief '" + d.id + "' : position manuelle interdite"; return false;
 				}
 				d.n = city->n; d.e = city->e;
 				const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ d.n, d.e });
 				d.center = { ctr.x, ctr.z };
+				if (d.type == "gouffre")
+				{
+					// Fosse creusée sous la ville ; la galerie est relue en positions globales.
+					if (city->hasPosition) d.center = { ctr.x + city->positionXM, ctr.z + city->positionZM };
+					d.noiseSeed = HashString(d.id.c_str());
+					d.phase = static_cast<double>(d.noiseSeed % 6283ull) / 1000.0;
+					const JsonValue* gal = FindObjectMember(v, "gallery");
+					bool galOk = gal && gal->type == JsonType::Array && gal->arrayValue.size() >= 2 && gal->arrayValue.size() <= 32;
+					if (galOk)
+						for (const JsonValue& q : gal->arrayValue)
+						{
+							const JsonValue* qx = FindObjectMember(q, "x_m");
+							const JsonValue* qz = FindObjectMember(q, "z_m");
+							if (!qx || !qz || qx->type != JsonType::Number || qz->type != JsonType::Number) { galOk = false; break; }
+							d.gallery.push_back({ d.center.x + qx->numberValue, d.center.z + qz->numberValue });
+						}
+					double reach = d.floorRadiusM * 1.13 + d.wallM;
+					double total = 0.0;
+					if (galOk)
+					{
+						d.galleryAlong.push_back(0.0);
+						for (size_t k = 1; k < d.gallery.size(); ++k)
+						{
+							const double seg = std::hypot(d.gallery[k].x - d.gallery[k - 1].x, d.gallery[k].z - d.gallery[k - 1].z);
+							galOk = galOk && seg >= 20.0;
+							total += seg;
+							d.galleryAlong.push_back(total);
+						}
+						for (const Vec2& q : d.gallery)
+							reach = std::max(reach, std::hypot(q.x - d.center.x, q.z - d.center.z) + d.galleryHalfWidthM + d.galleryWallM);
+						// Le fond de la galerie part du fond plat du gouffre.
+						galOk = galOk && std::hypot(d.gallery.front().x - d.center.x, d.gallery.front().z - d.center.z) < d.floorRadiusM * 0.85;
+					}
+					d.footRadiusM = reach + 5.0; // boîte englobante (m) autour du centre
+					const bool inCell = std::fabs(d.center.x - ctr.x) + d.footRadiusM <= 4700.0 && std::fabs(d.center.z - ctr.z) + d.footRadiusM <= 4700.0;
+					if (!(galOk && inCell && d.depthM >= 40.0 && d.depthM <= 200.0 && d.floorRadiusM >= 150.0 && d.floorRadiusM <= 600.0
+						&& d.wallM >= 15.0 && d.wallM <= 150.0 && d.galleryHalfWidthM >= 3.0 && d.galleryHalfWidthM <= 12.0
+						&& d.galleryWallM >= 3.0 && d.galleryWallM <= 30.0))
+					{
+						err = "master: relief '" + d.id + "' : gouffre invalide (dimensions, galerie d'au moins 2 points partant du fond, tout dans la case)"; return false;
+					}
+					out.reliefs.push_back(std::move(d));
+					continue;
+				}
 				// Tout le relief (pied, parois) reste dans la case : raccord inutile.
 				bool shapeOk = d.heightM > 0.0 && d.heightM <= 400.0;
 				if (d.type == "colline")
@@ -410,6 +463,55 @@ namespace tools::world_gen
 					shapeOk = false;
 				if (!shapeOk) { err = "master: relief '" + d.id + "' : type ou dimensions invalides"; return false; }
 				out.reliefs.push_back(std::move(d));
+			}
+			// Gouffres (v1.0.107) : altitude ABSOLUE du fond et de l'entrée, relevées sur
+			// le relief SANS les gouffres (fonction pure du master : même valeur pour
+			// toutes les cellules, raccord exact). Fond = point le plus bas du pourtour
+			// (64 directions, à floor_radius_m × 1,13 + wall_m + 100 m) − depth_m : les
+			// parois ont au moins depth_m partout.
+			WorldMaster plain;
+			bool plainReady = false;
+			for (ReliefDef& d : out.reliefs)
+			{
+				if (d.type != "gouffre") continue;
+				if (!plainReady)
+				{
+					plain.worldId = out.worldId; plain.cellMap = out.cellMap; plain.seed = out.seed;
+					plain.scale = out.scale; plain.gridRows = out.gridRows; plain.legend = out.legend;
+					for (const ReliefDef& r : out.reliefs)
+						if (r.type != "gouffre") plain.reliefs.push_back(r);
+					plainReady = true;
+				}
+				const double rim = d.floorRadiusM * 1.13 + d.wallM + 100.0;
+				double lowest = 1e18;
+				for (int k = 0; k < 64; ++k)
+				{
+					const double a = k * 6.283185307179586 / 64.0;
+					lowest = std::min(lowest, MacroHeight(plain, d.center.x + std::cos(a) * rim, d.center.z + std::sin(a) * rim));
+				}
+				d.floorY = lowest - d.depthM;
+				d.entranceY = MacroHeight(plain, d.gallery.back().x, d.gallery.back().z);
+				// Sortie du fond : premier point (pas de 2 m) de la galerie au-delà du fond
+				// lobé et de ses parois ; avant, le sol de la galerie reste au niveau du fond
+				// (pas de marche à l'embouchure).
+				d.galleryExitM = d.galleryAlong.back();
+				for (double a = 0.0; a <= d.galleryAlong.back(); a += 2.0)
+				{
+					size_t k = 0;
+					while (k + 2 < d.gallery.size() && d.galleryAlong[k + 1] < a) ++k;
+					const double seg = d.galleryAlong[k + 1] - d.galleryAlong[k];
+					const Vec2 p = d.gallery[k] + (d.gallery[k + 1] - d.gallery[k]) * ((a - d.galleryAlong[k]) / seg);
+					const double dx = p.x - d.center.x, dz = p.z - d.center.z;
+					if (std::hypot(dx, dz) > GouffreFloorRadiusAt(d, std::atan2(dz, dx)) + d.wallM) { d.galleryExitM = a; break; }
+				}
+				// Galerie praticable : elle monte (au moins 10 m) avec une pente moyenne
+				// d'escalier taillé (≤ 30 %) ; le fond reste au-dessus de la mer.
+				const double rise = d.entranceY - d.floorY, run = d.galleryAlong.back() - d.galleryExitM;
+				if (rise < 10.0 || run < 50.0 || rise > 0.30 * run || d.floorY < out.scale.seaLevelM + 10.0)
+				{
+					err = "master: relief '" + d.id + "' : galerie du gouffre trop raide ou fond trop bas (denivele " + std::to_string(rise) + " m sur "
+						+ std::to_string(run) + " m)"; return false;
+				}
 			}
 		}
 

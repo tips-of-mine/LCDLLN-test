@@ -1718,6 +1718,20 @@
       "start_for": [],
       "source": "[DÉCISION] v1.0.74 (île du Nord, ville en N021_W014) ; nom, race, taille et faction [GD] à valider ; nom [DÉCISION] v1.0.93 (ancien nom Lanternhold)",
       "description": "Comptoir fortifié de l'Empire sur le bras ouest : fanal sur la falaise, chapelle des Chevaliers de la Lumière et de la Justice, entrepôts de bois de marine [GD v1.0.74, à valider]."
+    },
+    {
+      "id": "ville_thurvhal",
+      "name": "Thurvhal",
+      "cell": "S008_E010",
+      "position": { "x_m": 2300, "z_m": -200 },
+      "kind": "village",
+      "race": "nains",
+      "state": "intact",
+      "faction": "neutre",
+      "secret": true,
+      "start_for": [],
+      "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026 : ville au fond d'un gouffre caché de Deathtrap Canyon, point de résurrection) ; nom, peuple (Ghaurdes), taille et race [GD] à valider ; SECRÈTE : hors de la carte publique, sans route (relief gouffre_des_revenus)",
+      "description": "Village des Ghaurdes, peuple oublié de mineurs nains et d'exilés humains coupés du monde, au fond du Gouffre des Revenus : maisons taillées au pied des parois, torches, cimetière neutre où se réveillent les « revenus » morts dans le canyon [GD v1.0.107, à valider]."
     }
   ],
   "pois": [
@@ -4819,7 +4833,7 @@
       "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun, vers l'est puis le nord, contourne Treuvhal (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
     }
   ],
-  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain).",
+  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36).",
   "reliefs": [
     {
       "id": "colline_verdansur",
@@ -4943,6 +4957,18 @@
       "offset_x_m": -2500,
       "offset_z_m": 2000,
       "source": "[DÉCISION] v1.0.77 : dénivelé important sur l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026), côte inchangée ; falaises de la côte sud-ouest (Grottes des Naufrageurs) ; la case reste en forêt (T) : pic ou crête boisée [GD v1.0.77, hauteurs à valider]."
+    },
+    {
+      "id": "gouffre_des_revenus",
+      "type": "gouffre",
+      "city": "ville_thurvhal",
+      "depth_m": 85,
+      "floor_radius_m": 380,
+      "wall_m": 45,
+      "gallery_half_width_m": 6,
+      "gallery_wall_m": 10,
+      "gallery": [ { "x_m": -250, "z_m": 60 }, { "x_m": -700, "z_m": 350 }, { "x_m": -1150, "z_m": 650 }, { "x_m": -1550, "z_m": 850 } ],
+      "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026) : gouffre caché de Deathtrap Canyon (S008_E010), fosse latérale à l'est de la gorge de la route 000074, sans route ni sentier ; fond plat 85 m sous le point le plus bas du pourtour (environ 140 m sous le pourtour moyen) ; Thurvhal au fond, cimetière neutre = point de résurrection du canyon ; galerie de la Fente qui remonte vers l'entrée cachée (éboulis), environ 730 m à l'est de la route ; torches au fond et dans la galerie [GD]"
     }
   ],
   "_comment_lore_roads": "Routes du lore (v1.0.105), recopiees de legacy/world-builder-html/lune-noire-data.json (collection routes) par tools/lore/sync_routes.py : NE PAS EDITER A LA MAIN, tracer dans l'editeur (mode Tracer) puis relancer le script. type : road | imperial_road | path (routes maritimes non recopiees) ; from / to : ville ou POI du master, vide = jonction (embranchement sur une autre route de la case) ou extremite sans entree au master ; waypoints : cases du trace, extremites comprises. tools/world_gen (Roads.cpp) trace chaque route en passant par chaque case (ville de la case, sinon point praticable le plus proche du centre) et cherche son chemin sur le terrain entre deux cases ; les routes de son propre reseau ne sont gardees que pour relier les villes de depart sans equivalent au lore (docs/world/LORE_BD.md section 16.34).",

@@ -79,6 +79,14 @@ namespace tools::world_gen
 		bool   hasPosition = false;
 		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
 		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
+		/// Ville SECRÈTE (v1.0.107, clé `secret` du master, défaut false) : absente de la
+		/// carte publique (places.json `cities`, carte du continent, rues et bâtiments de
+		/// map_features.bin ; recopiée dans `secret_cities` de places.json pour un futur
+		/// mécanisme de découverte côté client), jamais reliée par les routes (ni réseau
+		/// du générateur, ni ancre de case d'une route du lore) et ignorée hors de sa
+		/// cellule (peuple des lieux procéduraux voisins). Cimetière et auberge générés
+		/// comme ailleurs (respawn_points.txt). Ex. : la ville du Gouffre des Revenus.
+		bool   secret = false;
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -129,10 +137,22 @@ namespace tools::world_gen
 	///    en crêtes (crêtes, pics, ravins). Il ne s'applique qu'aux terres déjà
 	///    émergées (MacroHeight) : la côte ne bouge pas et le relief monte d'un coup au
 	///    rivage (falaises). Le code de la case (forêt…) ne change pas.
+	///  - `gouffre` (v1.0.107) : fosse CREUSÉE sous le relief, ancrée sur la ville
+	///    `city` posée au fond (position manuelle admise : le gouffre suit la ville) :
+	///    fond plat d'altitude ABSOLUE `floorY` (= point le plus bas du pourtour, à
+	///    `floor_radius_m` + `wall_m` + 100 m, moins `depth_m`), de rayon
+	///    `floor_radius_m` (contour lobé), parois abruptes sur `wall_m` ; galerie de
+	///    sortie (`gallery` : points en mètres depuis le centre du gouffre, du fond vers
+	///    l'entrée cachée) = fente de `gallery_half_width_m` de demi-largeur, parois de
+	///    `gallery_wall_m`, dont le sol reste à `floorY` tant qu'elle traverse le fond
+	///    et ses parois, puis monte en pente régulière jusqu'au terrain de l'entrée. Le gouffre ne fait que CREUSER (jamais de relèvement). Les routes
+	///    ne le franchissent pas (Roads.cpp), les lieux procéduraux et la faune l'évitent
+	///    (Places.cpp, Population.cpp) ; torches posées au fond et le long de la galerie
+	///    (Settlements.cpp). Tout reste dans la case de la ville.
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif
+		std::string type;          ///< colline|crevasse|massif|gouffre
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -145,12 +165,24 @@ namespace tools::world_gen
 		double backM = 0.0;        ///< crevasse : longueur du fond derrière la ville (m)
 		std::string openToward;    ///< crevasse : case vers laquelle la fente s'ouvre
 		std::string mine;          ///< crevasse : nom de la mine posée au fond (vide = aucune)
+		double depthM = 0.0;       ///< gouffre : profondeur du fond sous le point le plus bas du pourtour (m)
+		double floorRadiusM = 0.0; ///< gouffre : rayon du fond plat (m, avant lobes)
+		double galleryHalfWidthM = 0.0; ///< gouffre : demi-largeur du sol de la galerie (m)
+		double galleryWallM = 0.0; ///< gouffre : largeur horizontale des parois de la galerie (m)
+		/// Gouffre : tracé de la galerie de sortie, du fond vers l'entrée cachée. Au
+		/// chargement : décalages (m, X est / Z sud) depuis le centre du gouffre ; résolu
+		/// en positions GLOBALES (le premier point est dans le fond plat).
+		std::vector<Vec2> gallery;
 		// --- résolu au chargement ---
 		int  n = 0, e = 0;         ///< case de la ville (massif : case `cell`)
 		Vec2 center;               ///< centre de la case (= centre de la ville ; massif : centre décalé)
 		Vec2 dir{ 1.0, 0.0 };      ///< crevasse : direction unitaire de l'ouverture
 		uint64_t noiseSeed = 0;    ///< massif : graine du bruit en crêtes (dérivée de l'id)
 		double phase = 0.0;        ///< massif : phase des lobes du contour (rad)
+		double floorY = 0.0;       ///< gouffre : altitude absolue du fond (m)
+		double entranceY = 0.0;    ///< gouffre : altitude du terrain à l'entrée de la galerie (m)
+		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
+		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).

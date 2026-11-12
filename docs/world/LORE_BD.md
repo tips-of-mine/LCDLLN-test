@@ -4184,6 +4184,121 @@ ouverture de 68 cases sans demande explicite case par case (méthode des lots 16
 Fhelvakt – Hazhaëlin (Gigantomorphes 30-56) contre 20-26 côté elfe ; baie de l'Île de la Trêve laissée sans route.
 
 
+### 16.36 Le gouffre caché de Deathtrap Canyon et sa ville (v1.0.107)
+
+Lot 32, idée du propriétaire (12/11/2026, validée : lieu Deathtrap Canyon S008_E010, habitants = peuple oublié
+neutre) : « un gouffre qui n'est pas facilement visible ; le seul moyen pour les joueurs de le trouver est de mourir
+et d'aller au point de résurrection, qui doit se trouver au fond du gouffre avec une ville. Le gouffre est un peu
+sombre et éclairé de torches parsemées. » `meta.version` 1.0.107 ; registre : 1 entrée ; script reproductible hors
+dépôt `lore_v1107.py` (appliqué au fichier v1.0.106) et `master_v1107.py`. Aucun identifiant supprimé.
+
+**Lore** (tout est `[GD]` à valider, sauf la décision elle-même) :
+
+| Fiche | Contenu |
+|---|---|
+| `lieu_gouffre_des_revenus` — **Gouffre des Revenus** (type `gouffre_poi`, nouveau type « Gouffre ») | fosse fermée dans la crête, **2,3 km à l'est de la gorge** que suit la route 000074 (§16.13), sans route ni sentier ; `secret: true`, `entree_cachee: true` ; position 2300 m est, 200 m nord du centre de S008_E010 |
+| `lieu_fente_des_revenus` — **Fente des Revenus** (`passage_poi`) | galerie taillée (fente de 12 m, ≈ 1,5 km, pente régulière ≈ 15 %) qui remonte du fond vers une entrée cachée par des éboulis, ≈ 730 m à l'est de la route ; `secret`, `entree_cachee` ; position = l'entrée (750 m est, 650 m sud) |
+| `ville_thurvhal` — **Thurvhal** (village, `secret: true`) | village au centre du fond ; `faction_control` `faction_neutral` ; services générés (8 PNJ dont le **fossoyeur** et le cimetière) ; PNJ nains et humains (`RACE_VILLES` de `generate_city_services.py`) |
+| `faction_ghaurdes` — **les Ghaurdes** (`peuple_oublie`, neutre, non jouable) | mineurs nains du soufre et du sel et exilés humains (déserteurs, bannis) bloqués au fond par un éboulement il y a des générations ; ils ont rouvert la Fente sans la montrer ; ils accueillent les « revenus » (les morts du canyon qui se réveillent à leur cimetière, au pied de la Pierre d'Appel, vestige de la cité antique du canyon) |
+| `char_gd_mhaldra` (Mhaldra, Ancienne, naine) ; `char_gd_kerreth` (Kerreth, guide de la remontée, humain) | PNJ nommés de Thurvhal ; le fossoyeur est le PNJ de service `pnj_ville_thurvhal_cimetiere_01` |
+| `quest_gd_les_revenus` (niv. 30), `quest_gd_la_remontee` (32), `quest_gd_ce_que_garde_le_gouffre` (38, groupe) | découverte (réveil au cimetière, fossoyeur, Mhaldra, embouchure de la Fente) ; remontée (serment, Fente, éboulis, retour : l'accès par le haut est connu) ; secret du gouffre (stèle jumelle de la Pierre d'Appel dans les ruines du canyon, gardée par les spectres) ; `etapes_struct` situées |
+| `regle_gouffre_des_revenus` | règle « découverte par la mort » (aucune règle de réapparition spéciale, voir plus bas) |
+| `cells` S008_E010 | note `[DÉCISION] (v1.0.107)` |
+
+**Niveaux** : région Baronnie de Moorks (18-45) ; le canyon porte déjà ses créatures (chauves-souris géantes 30-40,
+spectres 40-52) et ses lieux voisins (mine de soufre 26-32, grotte aux chauves-souris 30-38, stèle et nécropole 40-56,
+balisée) : le fond est un **refuge sans monstre**, les quêtes vont de 30 à 38. Pas de nouvelle créature ni de balise.
+
+**Secret** : la ville et les deux lieux ont `secret: true`. Éditeur (`lune-noire-editor.html` et sa copie `-v20`) :
+nouveau calque **🔒 « Lieux et villes cachés »** (`caches`), désactivé à chaque ouverture comme les dragons et les
+Ophidiens ; sans lui, la ville et les lieux ne sont pas dessinés (ni calque Villes, ni Lieux remarquables, ni densité,
+ni sous-filtres) ; info-bulle « secret — ville cachée, hors de la carte publique ». Jeu : la ville secrète est absente
+de `places.json` `cities` (carte du monde, bannières, radar), de la carte du continent et des rues et bâtiments de
+`map_features.bin` ; elle est recopiée dans `secret_cities` (non lu par le client) pour un futur mécanisme de découverte.
+
+**Générateur** (`tools/world_gen`) : nouveau relief **`gouffre`** au master (`gouffre_des_revenus`, ancré sur
+`ville_thurvhal`, qui a une position manuelle : **le gouffre suit la ville**, `sync_positions.py` l'admet pour ce seul
+type de relief) et clé **`secret`** des villes.
+
+- Fosse **creusée** (jamais de relèvement), appliquée en dernier dans `MacroHeight` : fond plat à **410 m** = point le
+  plus bas du pourtour (64 directions, à `floor_radius_m` × 1,13 + `wall_m` + 100 m) − `depth_m` (85 m) ; pourtour moyen
+  ≈ 556 m, donc **≈ 146 m sous le terrain environnant** (85 à 230 m selon le côté) ; fond de 380 m de rayon (contour
+  lobé ± 13 %, ≈ 800 m de large), parois abruptes sur 45 m (≥ 83 m de haut juste derrière le fond) ;
+- **galerie de la Fente** (4 points depuis le centre du gouffre) : sol au niveau du fond tant qu'elle traverse le fond,
+  puis pente régulière (14,6 %) jusqu'au terrain de l'entrée (608 m) ; fente de 6 m de demi-largeur, parois de 10 m ;
+  à ciel ouvert (la heightmap ne fait pas de tunnel) ; l'entrée est derrière une crête (622 m) qui la cache de la
+  route ;
+- routes : le gouffre et la galerie sont fermés à l'A* ; la ville secrète n'entre ni dans le réseau du générateur ni
+  comme ancre de case d'une route du lore : **la route 000074 et tout le réseau sont identiques au bit près** ;
+- ni lieu procédural, ni étang, ni faune dans le gouffre et la galerie ; le peuple des lieux procéduraux des cellules
+  voisines ne change pas (une ville secrète est ignorée hors de sa cellule) ;
+- **torches** : le mesh `Torch_Metal` (déjà utilisé aux portes des villes) est un vrai décor (`scatter.bin`) :
+  **36** : au pied des parois du fond (une tous les ~140 m de pourtour) et dans la galerie (une tous les 70 m, en quinconce), aucune dehors ; éboulis de l'entrée
+  (jusqu'à 9 blocs de `Rock_Medium_*`, passage laissé libre).
+
+**Ce qui est réel en jeu et ce qui attend le client** :
+
+| Élément | État |
+|---|---|
+| Relief (fosse, parois, galerie, entrée) | réel (heightmap, splat, collisions du terrain) |
+| Thurvhal (bâtiments, rues, PNJ d'ambiance, auberge) | réel (cellule générée) |
+| Cimetière neutre et auberge | réels (`respawn_points.txt` de cell_s008_e010, lus par le shard) |
+| Torches (mesh), éboulis | réels (décor) |
+| Lumière des torches | **donnée** : `world.point_lights` du zone.json (36 lumières « torch », allumées jour et nuit) ; le client ne lit qu'un fichier global (`lights/dynamic_lights.json`, 64 au plus) : à brancher |
+| Fond « sombre » | **donnée** : `world.ambiance_zones` du zone.json (disque, altitudes du fond et du bord, `darkness` 0,65) ; aucun réglage d'ambiance par zone au client : à faire |
+| Carte publique | ville absente ; bannière d'entrée, radar et ambiance sonore de ville absents dans Thurvhal tant que le client ne lit pas `secret_cities` |
+
+**Réapparition** (vérifiée dans le code du shard) : `ServerApp::InitRespawnPoints` concatène au démarrage les
+`zones/<cellule>/respawn_points.txt` de toutes les cellules générées ; ces fichiers sont écrits par le générateur
+(`Population.cpp`) : un cimetière (faction `-`, neutre) et une auberge par ville du lore et par hameau procédural, les
+services `cimetiere` du lore n'y jouent aucun rôle. `ServerApp::HandleRespawnRequest` choisit, sur la même carte,
+le point du type demandé **le plus proche du lieu de mort en distance horizontale (X, Z)**, filtré par
+`IsGraveyardEligibleForRespawn` (`RespawnRules.h` : un cimetière neutre est éligible partout). Le système ne connaît
+pas la profondeur : la distance horizontale suffit, le gouffre étant sous la crête du canyon. Il suffisait donc de
+poser une ville au fond pour que son cimetière soit le plus proche : **aucune modification du shard ni de la règle**.
+
+Étendue (relevé sur 24 cellules générées avant / après, grille de 100 m) : le cimetière de Thurvhal (102372, 79839,
+y 411) gagne **85,6 % de S008_E010** (toute la crête et la gorge ; seuls le coin nord-ouest, vers les hameaux de
+S007_E009, et la bordure sud, vers le hameau de S009_E010, gardent leur cimetière), **tout le disque de 4 km** autour du
+POI Deathtrap Canyon, 54,7 % de S008_E011 (la crête jusqu'à la Grotte aux chauves-souris, case sans cimetière) et une
+frange de 0,5 à 1,5 % de S008_E009 et S009_E010 (et des cases non jouables S007_E010 / S007_E011, derrière le mur
+invisible). Aucun autre point ne change de cimetière. **Zone du canyon garantie** (test) : disque de 3 km autour du
+POI, route 000074 dans ce disque, gouffre et galerie, pour toutes les factions.
+
+**Preuve « monde inchangé ailleurs »** : générateur avant / après sur 24 cellules (les 22 cellules jouables de S005 à
+S010 × E008 à E013, plus N002_W010 et N011_E008) : 265 fichiers, **seuls les 8 fichiers de cell_s008_e010 changent**
+(terrain, splat, herbe, décor, bâtiments, spawners, respawns, zone.json) ; dans S008_E010, la faune perd 2 groupes
+(dans le gouffre), la ville gagne 16 PNJ d'ambiance ; les 28 lieux procéduraux et les routes ne bougent pas.
+
+**Rendu** : `gouffre_v1107.png` (rapport du lot) — vue de dessus de S008_E010 et zoom (gorge et route 000074, galerie,
+entrée, gouffre, ville, cimetière, torches), coupe route → éboulis → galerie → fond → paroi est, relief avant en
+pointillé.
+
+**Tests** : `world_gen_tests`, nouveau test « gouffre v1.0.107 » (profondeur et fond plat, parois ≥ 80 m, galerie
+régulière ≤ 30 %, relief identique hors de la boîte du gouffre, ville au fond, route 000074 et tout le réseau
+identiques au monde sans gouffre, aucune route dans le gouffre ni vers Thurvhal, entrée à 500-1000 m de la route,
+autres villes, POI et cellules jouables inchangés, cellule déterministe, ni lieu procédural ni faune dans le gouffre,
+cimetière neutre au fond, torches et données, S008_E011, S009_E010 et S007_E009 identiques octet pour octet au monde
+sans gouffre, `places.json`, réapparition au cimetière du gouffre pour une mort dans le canyon — copie de la règle du
+shard avec `IsGraveyardEligibleForRespawn` sur les cimetières de toutes les cellules jouables assez proches pour
+concurrencer — et inchangée ailleurs) ; tests adaptés : « placement v1.0.95 » (Thurvhal, seule ville à position), « routes v1.0.106 » (la ville secrète, sans
+route par construction, est hors du décompte des villes reliées).
+`world_places_tests`, `start_locations_tests`, `respawn_rules_tests`. Éditeur : `test_editor_layers.py` (calque
+`caches` : défaut inactif, jamais mémorisé, ville et lieux dessinés seulement avec lui, info-bulle) et
+`test_editor_roundtrip.py` sur les deux copies, `test_editor_routes.py`, `test_editor_forms.py --rapide`,
+`test_editor_fiches.py`. Lore : services 1256 → 1264 PNJ (`generate_city_services.py`, `--check`,
+`validate_city_services.py`), `sync_positions.py --check` (2 avertissements attendus : les lieux secrets n'ont pas
+d'entrée au master), `sync_routes.py --check`, 89 références orphelines (inchangé).
+
+**Déploiement** : le code du shard ne change pas, mais ses **données** changent : `respawn_points.txt` de
+cell_s008_e010 (nouveau cimetière et auberge), lu au démarrage du shard → monde régénéré (CI) puis **redémarrage du
+shard** avec ces données ; le client doit recevoir la même cellule (terrain, décor, zone.json).
+
+**Points incertains** : noms `[GD]` (Gouffre des Revenus — « revenus » au sens de « revenants » —, Thurvhal, Ghaurdes,
+Mhaldra, Kerreth, Fente) ; une partie de S008_E011 (Grotte aux chauves-souris) renvoie aussi au gouffre (pas de
+cimetière plus proche) ; galerie à ciel ouvert faute de tunnels ; écurie générée par la grille (1 minimum) au fond d'un
+gouffre ; lumières et ambiance sombre à brancher côté client ; mécanisme de « lieu découvert » à définir.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -4233,3 +4348,4 @@ Fhelvakt – Hazhaëlin (Gigantomorphes 30-56) contre 20-26 côté elfe ; baie d
 - Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).
 - Routes du jeu d'après le lore (v1.0.105) : routes maritimes et pontons non tracés (16.34) ; 000017, cellules et villes sans route, balises et passages hors zone traités en v1.0.106 (16.35).
 - Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).
+- Gouffre de Deathtrap Canyon (v1.0.107) : noms [GD] (Gouffre des Revenus, Thurvhal, Ghaurdes, PNJ, quêtes), lumières des torches et fond sombre à rendre côté client, mécanisme de lieu découvert (`secret_cities`), part de S008_E011 renvoyée au gouffre (16.36).

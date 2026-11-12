@@ -1941,11 +1941,113 @@ Nouveau tracé : S010_E010 (Der Hem Shelbem) → S009_E010 → **S008_E010** →
 **En jeu** : rien ne change pour l'instant. Le générateur ne lit pas les tracés du lore ; il continue de calculer
 son propre passage. Toutes les cellules du nouveau tracé sont déjà générées.
 
+### 16.14 Balisage des zones dangereuses et ancrages manquants (v1.0.85)
+
+Lot 13 du propriétaire (corrections rapides validées le 12/11/2026), d'après le relevé de densité v1.0.84 (§4 et
+anomalies). **Rien n'est déplacé**, aucun identifiant n'est supprimé. Scripts reproductibles : `lore_v1085.py`
+(appliqué au fichier v1.0.84) et `master_v1085.py` (POI du master des Royaumes).
+
+**Décisions inscrites au registre** (`regle_canon_registre_decisions`, 5 entrées v1.0.85, une par type de correction,
+note `[DÉCISION] (v1.0.85)` ou `[INFÉRÉ] (v1.0.85)` sur chaque fiche) :
+
+| # | Correction | Fiches |
+|---|---|---|
+| 1 | Balisage des contenus nettement plus forts que leur zone (décision 1 de §16.7) | 10 cellules, `rule_niveaux_par_faction`, `regle_dragons_de_xygga` |
+| 2 | Whispers Hill : poche de bas niveau des Terres du Nord | `region_terres_nord_t00` |
+| 3 | Abysses de la baie : lieu sous-marin voulu, conservé | `lieu_abysses_baie` |
+| 4 | Raids rattachés à une case | 7 raids |
+| 5 | Quêtes ancrées à une case | 19 quêtes |
+
+**1. Balisage.** Même mécanisme que pour les Ophidiens (v1.0.82) : note de cellule « balisée » (`[DÉCISION]
+(v1.0.85) Balisage du danger…`), note sur les fiches de créature et de lieu, et, dans une cellule générée, la balise
+décrite dans un POI réel. Formes retenues (`rule_niveaux_par_faction`) : repère visible sur le passage (panneau,
+stèle, cairn, borne ; POI `monolithe` si la case est générée), PNJ avertisseur au hameau ou à la ville voisine (note
+« avertisseur » de la ville, pas de nouveau PNJ), légendes et ossements **sans révéler l'entrée** pour les grottes des
+dragons, enceinte interdite et gardée pour les créatures d'une faction.
+
+| Case | Menace (niveaux) | Zone | Balise |
+|---|---|---|---|
+| N013_E017 | Premier-né de Xygga, l'hydre (66-70) | Marches 1-15 | Légende de la « bête aux têtes de toutes les couleurs » à Deepmoor, carcasses à la lisière du « marais du sud » |
+| N008_W015 | Premier-né, dragon bleu (66-70) | Syzygie 10-30 | Pêcheurs de Verdansur : « la côte du sud » et son rayon bleu ; rochers vitrifiés, carcasses gelées |
+| N006_E007 | Premier-né, dragon oriental (66-70) | Forêt elfique 10-30 | Bûcherons de Feyhin Lokcthat : « la rivière du sud » ; arbres roussis, ossements |
+| N010_E012 | Premier-né, dragon noir aux ailes brunes (66-70) | Orkland 18-45, voisin du départ de Grakhul | **Cairn des Os noircis** `[GD]` (POI réel, au sud de la case, à plus de 3 km de la grotte) ; chamans de Grakhul : « la forêt du nord » |
+| N001_W010 | Dragons d'or (50-65), dragon de l'Empereur (42-50), golems (35-50) | Lhynn, départ des Légions 1-10 | Forces de l'Empire, pas de la faune : dragonnières interdites et gardées (gardes rouges, hérauts) ; golems avec les mages de bataille |
+| N001_W010 | Raid du Défilé de Mordrek (boss 55) | — | Faux positif du relevé (« Lhynn » cité comme but des réfugiés) : raid rattaché au Défilé de Mordrek (N016_E013, Gigantomorphes 30-56) |
+| N002_W008 | Dragons d'or (50-65), golems (35-50) | Terres de l'Empereur 10-30 | Élevages impériaux palissadés et gardés, panneaux « défense d'approcher » sur le chemin Ambermead – Greyhedge |
+| N008_W007 | Gargouilles (40-50), démons à tête de sanglier (30-40) | Départ de Silverglade 1-10 | **Stèle des Flèches blanches** `[GD]` (POI réel, 3 km au sud de la Porte 5) : flèches à empennage blanc des guetteurs [HS] ; avertisseur à Fernhollow |
+| S003_W004 | Dragons des Chevaliers-Dragons (40-48) | Départ de Wyrmhallow 1-10 | Montures de la faction : sentinelles et dragons guetteurs interdisent l'accès hors faction [BD-T2 p.29-30] |
+| N016_E019, N016_E020 | Trolls (26-40) | Marches 1-15 | Panneaux « TROLLS » [BD-A3 pl.16] ; à Greyhaven et Klindor, on conseille le feu [BD-A1 p.60] |
+
+Les 6 couples restants du relevé (faune 1-15 de N011_E008 et N012_E008 en zone 30-56) sont traités au point 2.
+
+**2. Whispers Hill.** La case N011_E008 porte le village vivant de Whispers Hill et les Ruines de Wismerhill (décision
+v1.0.56), N012_E008 la Forêt de la Rencontre (T1) ; leur faune (loup, sanglier, lapin du T00, monstre de forêt du T1)
+est de niveau 1-15, alors que les cases étaient rattachées aux Terres des Gigantomorphes (30-56). La région
+`region_terres_nord_t00` (« Terres du Nord — Château en Ruine ») existait déjà, décrivait ces lieux et portait les
+quêtes du T00, et les repères de `regle_bestiaire_echelles` donnent déjà « Terres du Nord » 1-15. Correction minimale :
+`region_id` des deux cases, de Whispers Hill et de la Forêt de la Rencontre → `region_terres_nord_t00`, **enclave de
+deux cases** dans les Terres des Gigantomorphes ; faune, villes et lieux inchangés. Sorties balisées par trois
+**Bornes des Géants** `[GD]` (POI réels, borne gravée d'une empreinte de géant, à moins de 500 m de la route) : nord
+(N012_E008, route de Stonehaven), ouest (N011_E008, route d'Ashwick), sud (N011_E008, routes de Feyhin Lokcthat et de
+Leviathan). Le master (boîtes `regions`) n'est pas modifié.
+
+**3. Abysses.** `lieu_abysses_baie` (S008_W005, mer profonde) est voulu sous la mer : fiche dictée par le propriétaire
+(`rule_abysses_baie_acces`, 25/10/2026), entrée cachée « jamais indiquée ». Gardé en place, avec l'accès précisé : en
+plongeant, potion de respiration aquatique bue, depuis le bateau de la ligne maritime du sud, dont l'étape 4 (route
+000110, Saltfen → Equiton) passe au-dessus de S008_W005. Terre la plus proche : plages de S006_W005 / S006_W006 (deux
+cases au nord) et îles d'Hishtarland (S010_W006, deux cases au sud) ; ports : Equiton (S005_W004) et Brookend
+(S008_W002), à trois cases.
+
+**4. Raids.** Rattachés (note `[INFÉRÉ] (v1.0.85)`, `location_ville_id` quand le lieu est une ville, sinon id du raid
+cité dans la fiche du lieu ou de la cellule) :
+
+| Raid | Case | Appui |
+|---|---|---|
+| `raid_bataille_dis_t4` | N005_W009 (Dys) | marché de Dis [BD-T4 p.24-31] |
+| `raid_t00_armee_ghorghor` | N011_E008 (Whispers Hill) | village en contrebas du château [BD-T00 p.32] |
+| `raid_mordrek_t14` | N016_E013 (`lieu_defile_mordrek`) | nom du raid ; boss `creature_gigantomorphe` |
+| `raid_dzoraks_marais_maudits_t11` | N010_W004 (marais de Thenhart) | case du marais au pied des Ruines de Thenhart [BD-T11] ; l'Arbre aux Ossements n'a pas de lieu |
+| `raid_abysses_temple_englouti`, `raid_abysses_antre` | S008_W005 (`lieu_abysses_baie`) | description du raid |
+| `raid_coeur_du_volcan` | S008_E014 (`lieu_volcan_cratere`) | `rule_volcan_acces` |
+
+Restent sans case (note sur la fiche) : `raid_grande_bataille_plaine_t10` (Grande Plaine sans case),
+`raid_t12_01_porte_des_enfers` (Porte du T12 « au cœur de l'Empire », distincte des 5 Portes),
+`raid_marches_est_t14` (Marche de l'Est, 56 cases, lieu du duel non situé), `raid_orques_greldinard_t14` (aucun lieu).
+
+**5. Quêtes.** 19 ancrées sans ambiguïté par le lieu ou la ville cités (id ajouté à `source_lore`, note
+`[INFÉRÉ] (v1.0.85)`) : `quest_mort_du_pere` (Dys) ; `quest_plan_parsifal` (Syzygie) ;
+`quest_village_fantome_feidreiva_t3` (Village Fantôme) ; `quest_automne_chateau_garundel_t3`,
+`quest_visite_haazheel_chateau_t4` (fief de Garundel) ; `quest_t01_gd_tenir_les_rangs`, `quest_t01_gd_assaut_sacre`,
+`quest_t01_gd_observer_le_signe` (Kendrhir) ; 9 quêtes du T00 au château (Ruines de Wismerhill) et 2 au village
+(Whispers Hill). Quêtes ancrées : **87 → 106** sur 158.
+
+Restent sans case (52) : région seule — 6 de l'Empire du Jade (extension hors carte), `quest_campagne_6mois_t4`
+(campagne contre plusieurs vassaux), 4 du T00 (`butin_maigre`, `apprendre_chasse`, `joute_errante`,
+`echo_invocation` : forêt ou fermes de la vallée, sans lieu précis), 4 des Marches (`defendre_cite_marches`, cité non
+nommée ; `eclaireur_marches`, `voie_psychique`, `deux_lames`) ; sans lieu identifiable — 37 quêtes (lieu non nommé,
+mobile ou multiple : Juggernaut, pyramide volante, Grande Plaine, Porte du T12, château loué par Haazheel, taverne,
+forteresse naine abandonnée, palais non désigné, T12-T14 sans lieu dans leur fiche, etc.).
+
+**Ce qui est réel en jeu** : les 5 POI de balise (`poi_balise_*`, `monolithe` : bannière de nom à l'approche,
+aplanissement) dans des cellules générées. **Lore seulement** : avertisseurs des villes, panneaux, enceintes gardées,
+légendes ; balises des cases non générées (N013_E017, N008_W015, N006_E007, N016_E019, N016_E020) ; changement de
+région de Whispers Hill (le générateur ne lit pas les régions du lore) ; rattachements de raids et de quêtes. Aucun
+système de niveau de zone ni de couleur de nom de zone côté jeu.
+
+Test `world_gen_tests` « lieux v1.0.85 » (5 balises au sec dans des cellules générées ; cairn à plus de 3 km de la
+grotte ; stèle à plus de 2 km de la Porte 5 ; bornes dans la poche, à moins de 500 m d'une route ; grotte toujours à
+plus de 1,5 km des routes). **Services** : 1242 PNJ (inchangé). Aucun identifiant supprimé (5 lieux et 5 POI ajoutés).
+
+**Points incertains** : noms `[GD]` des balises ; la Stèle compte-t-elle dans les POI de la région de Silverglade
+(ici non) ; la poche 1-15 de Whispers Hill n'est accessible que par des cases 30-56 ; case exacte de l'Arbre aux
+Ossements.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
+- Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

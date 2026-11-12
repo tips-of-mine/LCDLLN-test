@@ -2447,6 +2447,51 @@
       "offset_x_m": -2250,
       "offset_z_m": -2500,
       "description": "Puits naturel à demi comblé de racines et de lianes, au cœur de la jungle de Leviathan : il descend vers la cité ophidienne de la jungle. Têtes plantées sur des piques et ossements rongés en balisent les abords. Aucun chemin. Niveaux 55-62, contenu de haut niveau en zone plus basse, balisé [BD-T17 p.5 ; GD v1.0.82]."
+    },
+    {
+      "id": "poi_balise_cairn_os_noircis",
+      "name": "Cairn des Os noircis",
+      "cell": "N010_E012",
+      "kind": "monolithe",
+      "offset_x_m": 1500,
+      "offset_z_m": 3800,
+      "description": "Cairn de crânes de grands fauves plantés sur des pieux et d'os calcinés, dressé par les chamans de Grakhul au sud de la forêt : la forêt du nord abrite un premier-né de Xygga (66-70). Balise de danger, ne désigne pas la grotte [GD v1.0.85, lieu_balise_cairn_os_noircis]."
+    },
+    {
+      "id": "poi_balise_stele_fleches_blanches",
+      "name": "Stèle des Flèches blanches",
+      "cell": "N008_W007",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 3000,
+      "description": "Vieille stèle hérissée de flèches à empennage blanc plantées par les guetteurs elfes, à 3 km au sud du château de la Porte 5 : gargouilles et démons (30-50) au-delà. Balise de danger [HS ; GD v1.0.85, lieu_balise_stele_fleches_blanches]."
+    },
+    {
+      "id": "poi_balise_borne_geants_nord",
+      "name": "Borne des Géants du nord",
+      "cell": "N012_E008",
+      "kind": "monolithe",
+      "offset_x_m": -4150,
+      "offset_z_m": -4150,
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route de Stonehaven : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_nord]."
+    },
+    {
+      "id": "poi_balise_borne_geants_ouest",
+      "name": "Borne des Géants de l'ouest",
+      "cell": "N011_E008",
+      "kind": "monolithe",
+      "offset_x_m": -4100,
+      "offset_z_m": -2050,
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord de la route d'Ashwick : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_ouest]."
+    },
+    {
+      "id": "poi_balise_borne_geants_sud",
+      "name": "Borne des Géants du sud",
+      "cell": "N011_E008",
+      "kind": "monolithe",
+      "offset_x_m": -1350,
+      "offset_z_m": 4300,
+      "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord des routes de Feyhin Lokcthat et de Leviathan : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_sud]."
     }
   ],
   "imports": {

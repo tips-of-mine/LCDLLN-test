@@ -1466,6 +1466,65 @@ namespace
 			"lieux v1.0.82 : Puits des Lianes hors case a ville, a plus de 1,5 km des routes et 15 km des grottes de dragons");
 	}
 
+	/// v1.0.85 (lore, lot 13) : balises de danger (POI « monolithe ») sur le passage vers un
+	/// contenu de plus haut niveau, dans des cellules générées. Cairn des Os noircis (N010_E012,
+	/// au sud de la case, à plus de 3 km de la grotte du dragon qu'il ne désigne pas) ; Stèle des
+	/// Flèches blanches (N008_W007, à plus de 2 km de la Porte 5) ; trois Bornes des Géants aux
+	/// sorties de la poche de Whispers Hill (N011_E008, N012_E008), à moins de 500 m d'une route.
+	void TestLieuxV1085()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lieux v1.0.85 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const std::set<std::string> generated(g.master.generatedCells.begin(), g.master.generatedCells.end());
+		auto find = [&](const char* id) -> const PoiDef* {
+			for (const PoiDef& p : g.pois)
+				if (p.id == id) return &p;
+			return nullptr;
+		};
+		auto roadDist = [&](const PoiDef& p) {
+			double dmin = 1e18;
+			for (const Road& r : g.roads)
+				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
+			return dmin;
+		};
+		int balises = 0, valid = 0;
+		for (const PoiDef& p : g.pois)
+		{
+			if (p.id.rfind("poi_balise_", 0) != 0) continue;
+			++balises;
+			valid += p.kind == "monolithe" && generated.count(p.cell)
+				&& MacroHeight(g.master, p.center.x, p.center.z) > g.master.scale.seaLevelM + 5.0;
+		}
+		Check(balises == 5 && valid == 5, "lieux v1.0.85 : 5 balises monolithe au sec dans des cellules generees");
+		const PoiDef* cairn = find("poi_balise_cairn_os_noircis");
+		const PoiDef* grotte = find("poi_grotte_premier_ne_noir_ailes_brunes");
+		Check(cairn && grotte && cairn->cell == "N010_E012" && grotte->cell == cairn->cell
+				&& std::hypot(cairn->center.x - grotte->center.x, cairn->center.z - grotte->center.z) > 3000.0,
+			"lieux v1.0.85 : Cairn des Os noircis en N010_E012, a plus de 3 km de la grotte");
+		const PoiDef* stele = find("poi_balise_stele_fleches_blanches");
+		const PoiDef* porte = find("poi_porte_5");
+		Check(stele && porte && stele->cell == "N008_W007"
+				&& std::hypot(stele->center.x - porte->center.x, stele->center.z - porte->center.z) > 2000.0,
+			"lieux v1.0.85 : Stele des Fleches blanches en N008_W007, a plus de 2 km de la Porte 5");
+		int bornes = 0;
+		for (const char* id : { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest", "poi_balise_borne_geants_sud" })
+		{
+			const PoiDef* b = find(id);
+			bornes += b && (b->cell == "N011_E008" || b->cell == "N012_E008") && roadDist(*b) < 500.0;
+		}
+		Check(bornes == 3, "lieux v1.0.85 : 3 Bornes des Geants dans la poche de Whispers Hill, a moins de 500 m d'une route");
+		// Le balisage ne rapproche aucune grotte de dragon d'une route (v1.0.81).
+		Check(grotte && roadDist(*grotte) > 1500.0, "lieux v1.0.85 : la grotte de N010_E012 reste a plus de 1,5 km des routes");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1560,6 +1619,7 @@ int main()
 	TestCellulesV1078();
 	TestLieuxV1081();
 	TestLieuxV1082();
+	TestLieuxV1085();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

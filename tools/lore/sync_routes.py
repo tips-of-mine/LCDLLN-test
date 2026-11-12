@@ -53,9 +53,13 @@ TYPES_TERRESTRES = ("road", "imperial_road", "path")
 #   (id de route, "from" | "to") -> id du master.
 # La Mine de la Traverse (lieu unique du lore, N000_W008, sous la chaîne) a deux entrées au
 # master (v1.0.73) : le sentier de Gredhaim mène à l'entrée nord, celui de Kholvard au sud.
+#
+# Le Hameau de Marn (ancienne ville de départ, N003_W009) n'existe qu'au master, sans fiche au
+# lore : la route Haeldorf → Marn (000237, v1.0.106) y arrive par une extrémité vide au lore.
 EXTREMITES = {
     ("000212", "to"): "poi_mine_traverse_nord",
     ("000213", "to"): "poi_mine_traverse_sud",
+    ("000237", "to"): "hameau_marn",
 }
 # Lieux du lore qui sont une VILLE du master (même case).
 LIEUX_VILLES = {

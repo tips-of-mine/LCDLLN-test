@@ -53,6 +53,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <map>
 #include <set>
@@ -1502,11 +1503,12 @@ namespace
 			return nullptr;
 		};
 		// Balises posées le long du réseau du GÉNÉRATEUR (v1.0.85-86). v1.0.105 : ce réseau
-		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34) ; le test vérifie le
-		// placement d'origine sur g.generatorRoads.
+		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34). v1.0.106 : les balises
+		// de route ont une position manuelle au bord d'une route du lore (§16.35) ; le test
+		// mesure de nouveau sur les routes réellement tracées en jeu (g.roads).
 		auto roadDist = [&](const PoiDef& p) {
 			double dmin = 1e18;
-			for (const Road& r : g.generatorRoads.empty() ? g.roads : g.generatorRoads)
+			for (const Road& r : g.roads)
 				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
 			return dmin;
 		};
@@ -1608,11 +1610,12 @@ namespace
 			return nullptr;
 		};
 		// Balises posées le long du réseau du GÉNÉRATEUR (v1.0.85-86). v1.0.105 : ce réseau
-		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34) ; le test vérifie le
-		// placement d'origine sur g.generatorRoads.
+		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34). v1.0.106 : les balises
+		// de route ont une position manuelle au bord d'une route du lore (§16.35) ; le test
+		// mesure de nouveau sur les routes réellement tracées en jeu (g.roads).
 		auto roadDist = [&](const PoiDef& p) {
 			double dmin = 1e18;
-			for (const Road& r : g.generatorRoads.empty() ? g.roads : g.generatorRoads)
+			for (const Road& r : g.roads)
 				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
 			return dmin;
 		};
@@ -1896,7 +1899,9 @@ namespace
 	/// Moork, coulées de l'ouest), et chacune porte une ville ou un POI. Le lot n'ouvre aucune case et
 	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. v1.0.91 : la route Ysenkhal -
 	/// Vozmarkh ajoute 7 cases jouables dans la boîte (21 au total) ; v1.0.104 : les routes de Vozmarkh en
-	/// ajoutent 29 (50 au total), chacune avec une ville ou un POI. Il vérifie aussi que les
+	/// ajoutent 29 (50 au total) ; v1.0.106 : 2 trous intérieurs de la route Ghrunke Dash - Ghrimfeth
+	/// (S004_E015, S005_E015, Baronnie de Moork par le lore) en ajoutent 2 (52), chacune avec une ville
+	/// ou un POI. Il vérifie aussi que les
 	/// 5 lieux du départ que relient les quêtes sont dans leur case.
 	void TestLieuxV1089()
 	{
@@ -1936,7 +1941,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 50, "lieux v1.0.89 : 50 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104)");
+		Check(inBox == 52, "lieux v1.0.89 : 52 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, trous de la route de Ghrunke Dash, v1.0.106)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -2447,10 +2452,20 @@ namespace
 		if (!ok0) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok0, "placement v1.0.95 : master charge");
 		if (!ok0) return;
+		// v1.0.106 : premières positions manuelles du dépôt, les 4 balises de route replacées au
+		// bord des routes du lore (LORE_BD §16.35) ; aucune ville, aucun POI des sites ci-dessous.
 		bool none = true;
 		for (const CityDef& c : g0.master.cities) none = none && !c.hasPosition;
-		for (const PoiDef& p : g0.master.pois) none = none && !p.hasPosition;
-		Check(none, "placement v1.0.95 : aucune position manuelle dans le master (aucune ville deplacee)");
+		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
+			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes" };
+		size_t posees = 0;
+		for (const PoiDef& p : g0.master.pois)
+		{
+			if (!p.hasPosition) continue;
+			none = none && balises.count(p.id);
+			++posees;
+		}
+		Check(none && posees == balises.size(), "placement v1.0.95 : aucune ville deplacee ; seules les 4 balises de route ont une position manuelle (v1.0.106)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -2567,9 +2582,9 @@ namespace
 		std::map<std::string, std::vector<const Road*>> byLore;
 		for (const Road& r : g.roads)
 			if (!r.loreId.empty()) byLore[r.loreId].push_back(&r);
-		// 1) Chaque route du lore est tracée et passe DANS chaque case de son tracé. Seule
-		//    exception attendue : 000017 (Atmosphère → case du Palais des Maîtres des
-		//    Dragons, S003_W004, enclavée : le seul chemin ferait le tour du continent).
+		// 1) Chaque route du lore est tracée et passe DANS chaque case de son tracé. Jusqu'à la
+		//    v1.0.105, 000017 (Atmosphère → case enclavée du Palais des Maîtres des Dragons)
+		//    ne l'était pas ; v1.0.106 : tracé imposé par la Passe des Dragons (S002_W003).
 		size_t traced = 0, missed = 0;
 		std::set<std::string> untraced;
 		for (const LoreRoadDef& d : g.master.loreRoads)
@@ -2583,8 +2598,8 @@ namespace
 			for (size_t k = 1; k + 1 < d.waypoints.size(); ++k)
 				if (!cells.count(d.waypoints[k])) { ++missed; std::fprintf(stderr, "  %s ne passe pas par %s\n", d.id.c_str(), d.waypoints[k].c_str()); }
 		}
-		Check(traced + 1 == g.master.loreRoads.size() && untraced == std::set<std::string>{ "000017" } && missed == 0,
-			"routes du lore v1.0.105 : toutes tracees (sauf 000017, case enclavee), chacune passe dans chaque case de son trace");
+		Check(traced == g.master.loreRoads.size() && untraced.empty() && missed == 0,
+			"routes du lore v1.0.105 : toutes tracees (000017 comprise depuis v1.0.106), chacune passe dans chaque case de son trace");
 		// 2) Embranchements : 000155 part d'un point de 000079 (en S007_E006), 000130 arrive
 		//    sur un point de la Via Magna 000120 (en S001_W009).
 		auto startsOn = [&](const char* branch, const char* host, bool atStart, const char* cell) {
@@ -2604,7 +2619,7 @@ namespace
 		std::vector<std::string> ids = g.master.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
-		Check(playable.size() == 413, "routes du lore v1.0.105 : 413 cellules jouables (corridors du reseau du generateur, inchanges)");
+		Check(playable.size() == 481, "routes du lore v1.0.105 : 481 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
 		int viaOk = 0;
@@ -2618,8 +2633,9 @@ namespace
 				}
 		Check(viaOk == 3, "routes du lore v1.0.105 : Via Magna Shezhold - Horkher - Nykhfeld - Moork tracee dans des cellules jouables");
 		// 4) Pas de route parasite : hors routes du lore, seules des routes du générateur
-		//    des corridors de départ, à l'identique ; N011_W013 (route Syzygie - Vaerdhun du
-		//    générateur, sans route au lore) n'a plus de route.
+		//    des corridors de départ, à l'identique ; N019_W012 (haut-fond de la baie de l'Île
+		//    de la Trêve, route Brenhaval - Duzhmoroth du générateur, sans route au lore) n'a
+		//    plus de route. (v1.0.105 : N011_W013, qui a une route du lore depuis v1.0.106.)
 		const std::vector<size_t> corridor = StartCorridorRoads(g, g.generatorRoads, false);
 		size_t generator = 0, parasite = 0;
 		for (const Road& r : g.roads)
@@ -2633,9 +2649,9 @@ namespace
 			parasite += !found;
 		}
 		bool hadRoad = false, hasRoad = false;
-		for (const Road& r : g.generatorRoads) for (const Vec2& p : r.points) hadRoad = hadRoad || cellOf(p) == "N011_W013";
-		for (const Road& r : g.roads) for (const Vec2& p : r.points) hasRoad = hasRoad || cellOf(p) == "N011_W013";
-		Check(generator > 0 && parasite == 0 && playable.count("N011_W013") && hadRoad && !hasRoad,
+		for (const Road& r : g.generatorRoads) for (const Vec2& p : r.points) hadRoad = hadRoad || cellOf(p) == "N019_W012";
+		for (const Road& r : g.roads) for (const Vec2& p : r.points) hasRoad = hasRoad || cellOf(p) == "N019_W012";
+		Check(generator > 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
 			"routes du lore v1.0.105 : routes du generateur gardees = corridors de depart ; case sans route du lore sans route parasite");
 		// 5) Sentiers et voies : types respectés.
 		bool types = true;
@@ -2659,6 +2675,233 @@ namespace
 			for (size_t k = 0; same && k < a.points.size(); ++k) same = a.points[k].x == b.points[k].x && a.points[k].z == b.points[k].z;
 		}
 		Check(same, "routes du lore v1.0.105 : deux constructions identiques (deterministe)");
+	}
+	/// v1.0.106 (lot 30b) : routes manquantes après le passage aux routes du lore (LORE_BD §16.35).
+	/// (a) chaque ville et hameau d'une cellule jouable touche une route du lore tracée en jeu (extrémité
+	///     ou à moins de 400 m) ; tous sont reliés à pied, par des routes entièrement jouables, à l'un des
+	///     départs, sauf les villes de l'Île de la Trêve (île, réseau propre) ;
+	/// (b) les 5 balises de route (3 Bornes des Géants, Stèle des Deux Fois Nés, Borne des Monts de Moork)
+	///     sont à moins de 500 m d'une route tracée, au sec ;
+	/// (c) aucune route du lore ne sort des cellules jouables pour y revenir (passage par une case non
+	///     générée) ; exceptions documentées : les routes qui mènent à une zone fermée (elles s'arrêtent
+	///     au mur invisible) ;
+	/// et : 68 cases ouvertes, terrestres ; 11 routes créées tracées ; 000017 par la Passe des Dragons ;
+	/// 64 POI au sec, seuls sur leur case ; les 5 cases de haut-fond de la baie de l'Île de la Trêve
+	/// (exception documentée) restent sans route.
+	void TestRoutesManquantesV1106()
+	{
+		using namespace tools::world_gen;
+		namespace wc = engine::world::cells;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "routes v1.0.106 : master royaumes charge");
+		if (!ok) return;
+		static const char* kCells[] = {
+			"N000_W009", "S001_W009", "S001_W008", "S001_W010", "S002_W007", "S002_W008",
+			"N000_W007", "N000_W006", "N001_W006", "N001_W005", "N002_W005", "N002_W004",
+			"N001_W003", "N000_W003", "S001_W003", "S002_W003", "N000_E004", "N000_E005",
+			"N000_E006", "N001_E006", "N002_E006", "N002_E007", "N003_E007", "N003_E008",
+			"N004_E008", "S006_E014", "S005_E014", "S005_E013", "S004_E013", "S003_E013",
+			"S003_E012", "S002_E005", "N009_E000", "N008_E000", "N008_E001", "N007_E001",
+			"N009_E007", "N008_E008", "N008_E009", "N002_E012", "N002_W001", "N003_W001",
+			"N003_E000", "N004_E000", "N004_E001", "N005_E001", "N005_E002", "N006_E002",
+			"N000_E003", "N000_W002", "N001_W004", "N003_E012", "N003_W002", "N006_E001",
+			"N009_E008", "S001_E005", "S002_W009", "S003_E005", "S003_E014", "S003_W007",
+			"S004_E011", "S005_E015", "S003_W006", "S004_E012", "S004_E014", "S004_E015",
+			"S005_E010", "S005_E012",
+		};
+		const WorldMaster& m = g.master;
+		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		int inList = 0, land = 0, nCells = 0;
+		for (const char* c : kCells)
+		{
+			++nCells;
+			const int n = std::stoi(std::string(c).substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
+			const int e = std::stoi(std::string(c).substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
+			inList += listed.count(c) ? 1 : 0;
+			const char code = LoreCode(m, n, e);
+			land += (code != ' ' && code != '-') ? 1 : 0;
+		}
+		Check(nCells == 68 && inList == 68 && land == 68, "routes v1.0.106 : 68 cases de passage ouvertes, toutes terrestres");
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
+		std::map<std::string, std::vector<const Road*>> byLore;
+		for (const Road& r : g.roads)
+			if (!r.loreId.empty()) byLore[r.loreId].push_back(&r);
+
+		// Routes créées et 000017.
+		int created = 0;
+		for (const char* id : { "000228", "000229", "000230", "000231", "000232", "000233", "000234", "000235", "000236", "000237", "000238" })
+			created += byLore.count(id) ? 1 : 0;
+		bool pass = false;
+		for (const Road* r : byLore["000017"])
+			for (const Vec2& p : r->points) pass = pass || cellOf(p) == "S002_W003";
+		Check(created == 11 && pass, "routes v1.0.106 : 11 routes creees tracees ; 000017 par la Passe des Dragons (S002_W003)");
+
+		// (a) Villes et hameaux jouables touchés par une route du lore.
+		auto distTo = [](const Road& r, Vec2 c) {
+			double d = 1e18;
+			for (const Vec2& q : r.points) d = std::min(d, std::hypot(q.x - c.x, q.z - c.z));
+			return d;
+		};
+		int villes = 0, touched = 0;
+		for (const CityDef& c : g.cities)
+		{
+			if (!c.procedural.empty() || !playable.count(c.cell)) continue;
+			++villes;
+			bool t = false;
+			for (const auto& [id, rs] : byLore)
+				for (const Road* r : rs) t = t || r->fromId == c.id || r->toId == c.id || distTo(*r, c.center) < 400.0;
+			if (!t) std::fprintf(stderr, "  ville jouable sans route du lore : %s\n", c.id.c_str());
+			touched += t ? 1 : 0;
+		}
+		Check(villes > 70 && touched == villes, "routes v1.0.106 : (a) chaque ville et hameau jouable touche une route du lore tracee");
+		// Réseau à pied : routes entièrement dans des cellules jouables, liées par une extrémité
+		// commune (ville) ou une extrémité à moins de 120 m d'une autre route.
+		std::vector<const Road*> net;
+		for (const Road& r : g.roads)
+		{
+			bool in = true;
+			for (const Vec2& p : r.points) in = in && playable.count(cellOf(p));
+			if (in) net.push_back(&r);
+		}
+		std::vector<size_t> par(net.size());
+		for (size_t i = 0; i < par.size(); ++i) par[i] = i;
+		std::function<size_t(size_t)> root = [&](size_t a) { return par[a] == a ? a : par[a] = root(par[a]); };
+		for (size_t i = 0; i < net.size(); ++i)
+			for (size_t j = 0; j < net.size(); ++j)
+			{
+				if (i == j || root(i) == root(j)) continue;
+				const Road& a = *net[i];
+				const Road& b = *net[j];
+				bool link = (!a.fromId.empty() && (a.fromId == b.fromId || a.fromId == b.toId))
+					|| (!a.toId.empty() && (a.toId == b.fromId || a.toId == b.toId));
+				for (const Vec2& e : { a.points.front(), a.points.back() })
+					for (size_t k = 0; !link && k < b.points.size(); k += 4)
+						link = std::hypot(b.points[k].x - e.x, b.points[k].z - e.z) < 120.0;
+				if (link) par[root(i)] = root(j);
+			}
+		std::set<size_t> startRoots;
+		for (size_t i = 0; i < net.size(); ++i)
+			for (const CityDef& c : g.cities)
+				if (!c.startFor.empty() && (net[i]->fromId == c.id || net[i]->toId == c.id)) startRoots.insert(root(i));
+		int reliees = 0, ile = 0;
+		for (const CityDef& c : g.cities)
+		{
+			if (!c.procedural.empty() || !playable.count(c.cell)) continue;
+			if (c.n >= 17 && c.e <= -9) { ++ile; continue; } // Île de la Trêve
+			bool r = false;
+			for (size_t i = 0; i < net.size(); ++i)
+				r = r || ((net[i]->fromId == c.id || net[i]->toId == c.id) && startRoots.count(root(i)));
+			if (!r) std::fprintf(stderr, "  ville jouable hors du reseau des departs : %s\n", c.id.c_str());
+			reliees += r ? 1 : 0;
+		}
+		Check(startRoots.size() == 1 && reliees + ile == villes && ile == 4,
+			"routes v1.0.106 : (a) villes jouables reliees a pied aux departs (Orkh, Marn, Fhelvakt, Hazhaelin, Feyhin, Kholvard compris ; ile a part)");
+
+		// (b) Balises de route.
+		int balises = 0;
+		for (const char* id : { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest", "poi_balise_borne_geants_sud",
+			"poi_stele_des_deux_fois_nes", "poi_borne_monts_de_moork" })
+			for (const PoiDef& p : g.pois)
+			{
+				if (p.id != id) continue;
+				double d = 1e18;
+				for (const Road& r : g.roads) d = std::min(d, distTo(r, p.center));
+				const bool good = d < 500.0 && playable.count(p.cell) && MacroHeight(m, p.center.x, p.center.z) > m.scale.seaLevelM + 5.0;
+				if (!good) std::fprintf(stderr, "  balise %s a %.0f m d'une route\n", id, d);
+				balises += good ? 1 : 0;
+			}
+		Check(balises == 5, "routes v1.0.106 : (b) 5 balises de route a moins de 500 m d'une route tracee, au sec");
+
+		// (c) Aucun passage d'une route du lore par une case non générée entre deux points jouables.
+		int passages = 0, versFerme = 0;
+		for (const auto& [id, rs] : byLore)
+			for (const Road* r : rs)
+			{
+				bool seenIn = false, out = false, any = false;
+				for (const Vec2& p : r->points)
+				{
+					const bool in = playable.count(cellOf(p)) > 0;
+					if (in && out && seenIn) { ++passages; std::fprintf(stderr, "  passage hors zone : %s (%s)\n", id.c_str(), cellOf(p).c_str()); out = false; }
+					if (in) seenIn = true; else if (seenIn) out = true;
+					any = any || !in;
+				}
+				versFerme += any ? 1 : 0;
+			}
+		Check(passages == 0 && versFerme > 0, "routes v1.0.106 : (c) aucune route du lore ne traverse une case non generee entre deux zones jouables");
+
+		// Lieux [GD] : au sec, seuls sur leur case jouable.
+		struct Expected { const char* poi; const char* cell; };
+		static const Expected kLieux[] = {
+			{ "poi_bornes_milliaires_de_la_via_magna", "N000_W009" }, { "poi_relais_de_poste_imperial", "S001_W009" },
+			{ "poi_champs_de_la_couronne", "S001_W008" }, { "poi_pres_de_la_route_de_dhuzmar", "S001_W010" },
+			{ "poi_moulin_a_vent_abandonne", "S002_W009" }, { "poi_halte_des_charrois_de_kholvard", "S002_W007" },
+			{ "poi_fours_a_minerai_de_kholvard", "S002_W008" }, { "poi_ancienne_galerie_de_kholvard", "S003_W007" },
+			{ "poi_abri_des_bergers_de_la_corniche", "S003_W006" }, { "poi_croix_des_pelerins_de_moros", "N000_W006" },
+			{ "poi_puits_de_moros", "N001_W006" }, { "poi_tombeaux_des_caravaniers", "N001_W005" },
+			{ "poi_fortin_de_la_via_magna", "N002_W005" }, { "poi_citerne_imperiale", "N002_W004" },
+			{ "poi_nid_des_scarabees_geants", "N001_W004" }, { "poi_camp_des_pelerins_de_la_passe", "N001_W003" },
+			{ "poi_bivouac_sous_l_atmosphere", "N000_W003" }, { "poi_passe_des_dragons", "S002_W003" },
+			{ "poi_mas_abandonne_de_la_plaine", "N000_W002" }, { "poi_scierie_de_la_lisiere", "N000_E003" },
+			{ "poi_lisiere_des_bucherons_de_garundel", "N000_E004" }, { "poi_chapelle_de_la_via_magna", "N000_E005" },
+			{ "poi_campement_des_gardes_de_la_voie", "N000_E006" }, { "poi_relais_des_sables", "N001_E006" },
+			{ "poi_arche_de_la_voie", "N002_E007" }, { "poi_tertre_des_voyageurs_perdus", "N003_E007" },
+			{ "poi_bivouac_des_caravaniers_d_harrodh", "N003_E008" }, { "poi_postes_de_guet_d_harrodh", "N004_E008" },
+			{ "poi_fumerolles_de_la_baronnie", "S006_E014" }, { "poi_gibet_de_la_baronnie", "S005_E014" },
+			{ "poi_caravanserail_pille", "S005_E013" }, { "poi_camp_des_esclavagistes_de_moork", "S004_E013" },
+			{ "poi_puits_amer", "S003_E013" }, { "poi_menhirs_du_sel", "S003_E012" },
+			{ "poi_tranchee_des_forcats", "S003_E014" }, { "poi_tour_de_signaux_de_moork", "S004_E012" },
+			{ "poi_bergerie_des_nomades", "S004_E014" }, { "poi_autel_de_la_lune_noire", "S004_E015" },
+			{ "poi_abri_sous_roche_des_contrebandiers", "S005_E015" }, { "poi_tombes_ensablees", "S005_E012" },
+			{ "poi_cercle_des_fees", "S002_E005" }, { "poi_souche_creuse_des_lutins", "S001_E005" },
+			{ "poi_clairiere_des_mantes", "S003_E005" }, { "poi_ferme_des_orties", "S004_E011" },
+			{ "poi_chaumiere_de_l_herboriste", "S005_E010" }, { "poi_empreintes_du_geant", "N009_E000" },
+			{ "poi_camp_des_chasseurs_de_geants", "N008_E000" }, { "poi_ossements_de_geant", "N008_E001" },
+			{ "poi_poste_de_guet_elfe", "N007_E001" }, { "poi_abattis_des_geants", "N009_E007" },
+			{ "poi_fosse_aux_betes_de_feyhin", "N008_E008" }, { "poi_camp_des_rabatteurs_orcs", "N008_E009" },
+			{ "poi_affut_des_chasseurs_de_feyhin", "N009_E008" }, { "poi_tour_de_guet_orque", "N002_E012" },
+			{ "poi_parc_a_chevaux_des_orcs", "N003_E012" }, { "poi_tumulus_de_la_plaine_de_magistrya", "N003_W002" },
+			{ "poi_halte_des_pelerins_de_l_oracle", "N002_W001" }, { "poi_vergers_abandonnes", "N003_W001" },
+			{ "poi_champs_d_orge_d_arkhanyra", "N003_E000" }, { "poi_moulin_d_arkhanyra", "N004_E000" },
+			{ "poi_menhir_aux_elfes", "N005_E001" }, { "poi_clairiere_des_chasseurs_elfes", "N005_E002" },
+			{ "poi_ruines_du_domaine_elfique", "N006_E001" }, { "poi_cabane_du_garde_forestier", "N006_E002" },
+		};
+		int valid = 0, nLieux = 0;
+		for (const Expected& x : kLieux)
+		{
+			++nLieux;
+			const PoiDef* p = nullptr;
+			for (const PoiDef& q : g.pois)
+				if (q.id == x.poi) p = &q;
+			bool alone = true;
+			for (const CityDef& c : g.cities)
+				if (p && c.procedural.empty() && c.n == p->n && c.e == p->e) alone = false;
+			for (const PoiDef& q : g.pois)
+				if (p && &q != p && q.cell == p->cell) alone = false;
+			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone
+				&& MacroHeight(m, p->center.x, p->center.z) > m.scale.seaLevelM + 5.0;
+			if (!good) std::fprintf(stderr, "  lieu v1.0.106 invalide : %s\n", x.poi);
+			valid += good ? 1 : 0;
+		}
+		Check(nLieux == 64 && valid == 64, "routes v1.0.106 : 64 lieux au sec, seuls sur leur case jouable");
+
+		// Exception documentée : haut-fond de la baie de l'Île de la Trêve, sans route.
+		int baie = 0;
+		for (const char* c : { "N018_W012", "N019_W012", "N020_W012", "N021_W011", "N021_W012" })
+		{
+			bool road = false;
+			for (const Road& r : g.roads) for (const Vec2& p : r.points) road = road || cellOf(p) == c;
+			baie += (playable.count(c) && !road) ? 1 : 0;
+		}
+		Check(baie == 5, "routes v1.0.106 : 5 cases de haut-fond de la baie de l'Ile de la Treve jouables, sans route (exception documentee)");
 	}
 }
 
@@ -2690,6 +2933,7 @@ int main()
 	TestCellulesLieuxV1091();
 	TestCellulesLieuxV1104();
 	TestRoutesLoreV1105();
+	TestRoutesManquantesV1106();
 	TestPlacementManuelV1095();
 	TestGenerationEnfers();
 	if (g_failures)

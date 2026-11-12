@@ -194,7 +194,8 @@ voisines raccord au mètre près :
    de leur case, ou décalés (`offset_x_m`, `offset_z_m`, v1.0.72) ; plusieurs POI
    d'une même case sont écartés d'un quart de tour autour de la ville de la case.
    Un POI à `position` manuelle (v1.0.95, même format que les villes) est posé
-   exactement là, sans écartement ; ses `offset_*` sont alors ignorés.
+   exactement là, sans écartement ; ses `offset_*` sont alors ignorés (v1.0.106 :
+   les 4 balises de route replacées au bord des routes du lore, LORE_BD §16.35).
 4. **Routes** (`Roads.cpp`) — depuis la v1.0.105, **le générateur suit les routes du
    lore** (`lore_roads` du master, recopiées de la collection `routes` du lore par
    `tools/lore/sync_routes.py`, voir LORE_BD §16.34) :
@@ -343,8 +344,15 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
 - L'île d'Hishtarland n'a pas de route (avertissement attendu).
 - Routes (v1.0.105) : seules les routes tracées dans le lore existent en jeu (plus
   les routes du générateur des corridors de départ). Une liaison sans tracé au lore
-  n'a plus de route (22 cellules jouables, Orkh) : la tracer dans l'éditeur puis
-  lancer `tools/lore/sync_routes.py`. Routes maritimes et pontons non tracés.
+  n'a pas de route : la tracer dans l'éditeur puis lancer `tools/lore/sync_routes.py`.
+  v1.0.106 (LORE_BD §16.35) : les liaisons perdues au v1.0.105 sont tracées au lore
+  (11 routes créées, dont Orkh et Marn), chaque ville et hameau jouable est relié à
+  pied aux départs (sauf l'Île de la Trêve, réseau propre), aucune route du lore ne
+  passe plus par une case non générée entre deux zones jouables (68 cases ouvertes,
+  481 cellules jouables ; la Via Magna est jouable de Lhynn à Moork). Exception : les
+  5 cases de haut-fond de la baie de l'Île de la Trêve restent sans route. Le Hameau
+  de Marn, sans fiche au lore, est rattaché par la table `EXTREMITES` du script.
+  Routes maritimes et pontons non tracés.
 - Les cellules non générées sont bordées d'un mur invisible (serveur et client).
 - Intégration d'une tuile au main thread : terrain (envois GPU, ~100 ms sous
   lavapipe, bien moins sur un vrai GPU) en une frame, puis décor et bâtiments

@@ -3959,6 +3959,231 @@ idempotence, résultat identique au master, routes maritimes ignorées, refus). 
   jouables (000010, 000072, 000097, 000148, 000205) ;
 - routes maritimes et pontons non tracés ; les routes du lore n'ont pas de largeur propre (déduite du type).
 
+### 16.35 Routes manquantes après le passage aux routes du lore (v1.0.106)
+
+Lot 30b, décision du propriétaire (12/11/2026) : corriger les régressions du lot 30 (§16.34, « Limites »). Objectif : chaque
+ville et hameau jouable a au moins une route du lore qui le relie au réseau jouable ; aucune cellule jouable qui avait une
+route au v1.0.104 n'en est privée sans raison documentée ; balises de route à moins de 500 m d'une route ; plus de passage
+d'une route du lore par une case non générée entre deux zones jouables. `meta.version` 1.0.106 ; registre : 4 entrées (une
+par point). Aucun identifiant supprimé (PNJ de service compris). Scripts reproductibles (hors dépôt, appliqués au fichier
+v1.0.105) : `routes_v1106.py` (données des routes et des ouvertures), `holes_v1106.py`, `pick_v1106.py`, `data_v1106.py`,
+`balises_v1106.py`, `lore_v1106.py`, `master_v1106.py`, `ana.py` et `conn.py` (contrôles), `carte_v1106.py`, `doc_v1106.py`.
+
+**1. Routes créées ou corrigées.** Chaque liaison perdue a d'abord été cherchée au lore : aucune n'y existait (les routes
+perdues étaient des routes du générateur). Deux données du lore étaient fausses : **Orkh** (`ville_orkh`, BD-T5) n'avait
+**pas de case** au lore (`cell` vide) : elle reçoit celle du master (N008_W006, forêt) et la région de la case ; le **Hameau de
+Marn** n'existe qu'au master (ancienne ville de départ, aucune fiche au lore) : la route qui y mène a une extrémité vide au lore,
+rattachée à `hameau_marn` par la table `EXTREMITES` de `tools/lore/sync_routes.py` (aucune référence orpheline). Routes
+créées `[GD]` (type `road` entre villes, `path` vers un lieu, une piste muletière ou secondaire ; tracés par des cases
+jouables, loin des grottes et entrées cachées) :
+
+| Route | Type | Liaison | Tracé (cases) | Longueur en jeu | Motif |
+|---|---|---|---|---|---|
+| 000228 | road | Northind → Village Orkh | N007_W005 → N008_W005 → N008_W006 | 22,9 km | Orkh n'avait aucune route au lore (v1.0.105 : plus de route en jeu) ; tracé de la route du générateur du v1.0.104 (forêt, par N008_W005) |
+| 000229 | road | Gharzuk → Hilvakh | N008_E013 → N008_E014 → N009_E014 → N009_E015 → N010_E016 | 47,3 km | route ouverte au lot 29 (v1.0.104, Hilvakh - Gharzuk, générateur) sans tracé au lore ; par les Granges de Gharzuk, l'Abattis de la lisière et la Halte des caravanes orques |
+| 000230 | road | Syzygie → Treuvhal | N009_W011 → N010_W012 → N010_W013 → N011_W013 → N011_W014 | 50,2 km | route du générateur du v1.0.104 (Syzygie - Treuvhal et Vaerdhun par N011_W013) sans équivalent au lore ; la plaine côtière jusqu'au hameau |
+| 000231 | road | Ryvaldh → Grhavelt | N006_E023 → N005_E023 → N004_E023 → N003_E023 | 34,4 km | route du générateur du v1.0.104 (Ryvaldh - Grhavelt) sans équivalent au lore ; le long de la côte par le Chemin de halage et la Grange aux dîmes |
+| 000232 | road | Grhavelt → Dhazkmer | N003_E023 → N002_E023 → N002_E022 → N001_E022 → N001_E021 → N001_E020 | 57,9 km | route du générateur du v1.0.104 (Dhazkmer - Grhavelt) sans équivalent au lore ; par les Menhirs des géants, le Rucher de la forêt et la Fosse à loups |
+| 000233 | path | Dhuzvelt → Bergerie des chevriers | S001_E023 → N000_E022 | 18,3 km | la Bergerie des chevriers (v1.0.91) est « sur la piste qui monte vers Dhazkmer » ; route du générateur du v1.0.104 par N000_E022 sans équivalent au lore |
+| 000234 | road | Ebhrazul → Ryvaldh | N005_E020 → N006_E021 → N006_E022 → N006_E023 | 37,5 km | le Relais de la route de Ryvaldh (N006_E021, v1.0.91) est « sur la route qui mène d'Ebhrazul au port de Ryvaldh » : route du générateur du v1.0.104 ; 000160 (par le Gibet du carrefour et l'Oratoire des voyageurs) est gardée |
+| 000235 | path | Ysenkhal → Vozmarkh | S008_E018 → S008_E019 → S009_E019 → S009_E020 | 33,2 km | la Halte des muletiers du col (S008_E019, v1.0.91) est sur le passage du minerai d'Ysenkhal vers Vozmarkh ; route du générateur du v1.0.104 ; sentier de col (montagne) |
+| 000236 | path | embranchement de 000074 → Der Hem Shelbem | S006_E008 → S007_E008 → S008_E008 → S009_E009 → S010_E010 | 53,8 km | ancienne route du départ des démons (cellules gardées au master depuis v1.0.61) ; le Relais de la Piste des Morts (S008_E008) et les Statues de la Voie antique (S009_E009) sont sur ce passage ; la route 000074 reste imposée par le Deathtrap Canyon (v1.0.84) : sentier secondaire, embranchement de 000074 en S006_E008 |
+| 000237 | road | Haeldorf → Marn | N002_W010 → N003_W009 | 17,6 km | Marn n'avait aucune route au lore (en jeu : route Marn - Haeldorf du générateur, gardée au v1.0.105 comme corridor de départ) ; le Hameau de Marn n'existe qu'au master (ancienne ville de départ, sans fiche au lore) : extrémité vide au lore, rattachée à hameau_marn par la table EXTREMITES de tools/lore/sync_routes.py |
+| 000238 | road | Whispers Hill (La Colline aux Murmures) → Feyhin Lokcthat | N011_E008 → N010_E008 → N009_E007 → N008_E007 | 40,5 km | sortie sud de la poche de Whispers Hill (route du générateur du v1.0.104, Borne des Géants du sud) ; Feyhin Lokcthat n'était reliée au reste du jeu par aucune case |
+
+Tracés corrigés (`[DÉCISION]` sur la route, tracé d'avant cité) :
+
+| Route | Correction | Longueur en jeu |
+|---|---|---|
+| 000017 | S001_W003 → S002_W003 → S003_W004 : non tracée au v1.0.105 (case du Palais enclavée par les neiges éternelles, chemin libre de 363 km) : tracé imposé par la Passe des Dragons (S002_W003, [DÉDUCTION BD-T2 p.27]), route de 28,6 km ; les cases de la passe et de l'Atmosphère sont ouvertes | 28,6 km |
+| 000072 | N000_E000 → N000_E001 → S001_E002 → S001_E003 → S002_E003 → S003_E003 : tracé posé par des cases jouables (le tracé libre coupait le coin de S002_E002, non générée) | 57,3 km |
+| 000094 | N008_E007 → N008_E008 → N008_E009 → N008_E010 → N007_E011 → N006_E011 : tracé libre de 87 km par le nord (N009_E007, non générée) ; tracé direct par la forêt, cases N008_E008 et N008_E009 ouvertes | 59,4 km |
+| 000203 | N005_W009 → N006_W008 → N006_W007 → N006_W006 : retracée par des cases jouables (N006_W008, N006_W007) au lieu de N005_W008 et N005_W007, non générées : même longueur | 39,0 km |
+
+Gardée telle quelle : **000160** (Ryvaldh → Ebhrazul par le Gibet du carrefour et l'Oratoire des voyageurs, lieux qui la
+citent) ; la route 000234 rend la sienne au Relais de la route de Ryvaldh. **000074** reste imposée par le Deathtrap Canyon
+(v1.0.84) : l'ancienne route du départ des démons (cases S006_E008 à S009_E009, gardées au master depuis la v1.0.61) devient un
+sentier secondaire, embranchement de 000074 (000236, Piste des Morts).
+
+**Les 22 cellules perdues au v1.0.105** : 17 retrouvent une route (Ebhrazul – Grhavelt – Dhazkmer – Dhuzvelt : 000231 à
+000234 ; Hilvakh – Gharzuk : 000229 ; Orkh : 000228 ; Syzygie – Treuvhal : 000230 ; départ démon : 000236 ; Ysenkhal –
+Vozmarkh : 000235). **Exception documentée** : N018_W012, N019_W012, N020_W012, N021_W011 et N021_W012, cases de
+**haut-fond de la baie de l'Île de la Trêve** (`shallow_sea`) : la route Brenhaval – Duzhmoroth du générateur ne faisait
+qu'en longer les bords ; l'île est desservie par les routes du lore de l'ouest (000214 à 000216) ; tracer une route dans
+la baie demanderait une chaussée, que le lore n'a pas. Truceholm (Thrival, îlot) garde son seul sentier (000220).
+
+**Services** : nouvelles sorties terrestres → `generate_city_services.py` ajoute 14 palefreniers (écuries) : 1242 → **1256**
+PNJ. 000017 reste de type `road` (en `path`, le Palais aurait perdu une sortie et un PNJ d'écurie).
+
+**2. Route 000017 (Atmosphère → Palais des Maîtres des Dragons).** Le tracé libre échouait (case du Palais enclavée par
+les neiges éternelles, seul chemin de 363 km). Solution : le **col** — la case S002_W003, que les notes de l'Atmosphère
+nomment l'entrée de la **Passe des Dragons** `[DÉDUCTION BD-T2 p.27-29]`, est ajoutée au tracé (S001_W003 → S002_W003 →
+S003_W004) : la route est tracée en jeu (28,6 km, pente ≤ 16 %). Les cases de la passe et de l'Atmosphère, et
+celles de la route Magistrya – Atmosphère (000010, BD-T2 : même route depuis Magistrya), sont ouvertes (groupe D). Le
+Palais reste sans entrée au master : la route finit au point praticable de sa case (comme 000124 depuis Drakhenhal).
+
+**3. Balises de route.** Les balises posées le long de routes du générateur qui ne sont plus tracées sont **replacées** :
+position manuelle (`position_x_m` / `position_z_m` du lore → `sync_positions.py` → `position` du master) à 70 m du bord
+d'une route du lore, à la sortie de la poche qu'elles balisent (choix plus cohérent que de tracer une route pour elles :
+leur rôle est de marquer la sortie par les routes existantes). Descriptions du master et notes mises à jour.
+
+| Balise | Case | Position (m) | Route |
+|---|---|---|---|
+| Borne des Géants du nord | N011_E008 | 2787, -3862 | 000143, route de Kendrhir, sortie nord-est de la poche (avant : N012_E008, route de Stohnvar du générateur ; un premier point, à 3 m au-dessus de la mer, a été écarté) |
+| Borne des Géants de l'ouest | N011_E008 | -3443, 4105 | 000144, route d'Askhvir, sortie sud-ouest |
+| Borne des Géants du sud | N011_E008 | -2015, 4199 | 000238, route de Feyhin Lokcthat, sortie sud |
+| Stèle des Deux Fois Nés | S009_E010 | 553, 3234 | 000074, route de Der Hem Shelbem, au nord de la nécropole |
+
+Borne des Monts de Moork : déjà à 373 m d'une route (route du générateur gardée, corridor de Ghrunke Dash) ; inchangée.
+Stèle des Flèches blanches (N008_W007) : balise de la Porte 5, posée hors route en v1.0.85 (« à 3 km au sud du château »),
+hors du contrôle ; Borne-frontière renversée (S009_E019) : 41 m du sentier 000235.
+
+**4. Passages des routes du lore par des cases non générées.** Les 15 passages relevés au v1.0.105 (10 passages réels et
+5 coins coupés) :
+
+| Route | Passage au v1.0.105 | Solution |
+|---|---|---|
+| 000064 Lhynn – Dhuzmar | S001_W010 | ouverte (groupe A) |
+| 000120 Via Magna Lhynn – Kholvard | N000_W009, S001_W009, S001_W008 | ouvertes (A) |
+| 000120 Via Magna Kholvard – Magistrya | N000_W007 à N002_W004 (6 cases) | ouvertes (C) |
+| 000120 Via Magna fief de Garundel – Harrodh | N000_E004 à N004_E008 (9 cases) | ouvertes (E), sauf N001_E005 (voisine de la grotte du premier-né doré, N002_E004) : la route passe par N000_E006 |
+| 000148 Ghrunke Dash – Ghrimfeth | S006_E014 (coin, 880 m), S005_E014 à S003_E012 | ouvertes (F) ; S006_E014 (coulées) car les deux voisines du pas diagonal S006_E015 → S005_E014 étaient fermées |
+| 000150 Village fantôme – Garundel | S002_E005 | ouverte (G) |
+| 000203 Dys – Ghwenaëth | N005_W008, N005_W007 | **retracée** par N006_W008 et N006_W007, jouables (même longueur) |
+| 000209 Fhelvakt – Hazhaëlin | N009_E000, N008_E000, N008_E001, N007_E001 | ouvertes (H) |
+| 000211 Kholvard – Skhaldrach | S002_W007, S002_W008 | ouvertes (B) |
+| 000094 Feyhin Lokcthat – Mhozrak | N009_E007 (tracé libre de 87 km par le nord) | **retracée** par N008_E008 et N008_E009 (ouvertes, I), 60 km ; N009_E007 ouverte pour 000238 |
+| 000010 Magistrya – Atmosphère | N001_W003 (2 coins) | ouvertes avec la Passe des Dragons (D) |
+| 000072 Camp de l'Oracle – Mhillenz (coin de S002_E002) | 200 m | **retracée** par S001_E003 (cases jouables) |
+| 000097 Shezhold – Nykhfeld (coin de N002_E012) | 160 m | N002_E012 ouverte (J) : les deux voisines du pas diagonal étaient fermées |
+
+Un passage non relevé au v1.0.105 est apparu au contrôle de connexité : **Fhelvakt et Hazhaëlin** (cases isolées décidées
+en v1.0.73) n'étaient reliés qu'entre eux. Les routes du lore d'**Arkhanyra** (000086 depuis Magistrya, 000091 depuis le
+Camp de l'Oracle, 000207 vers Hazhaëlin) sont ouvertes (groupe K) : Arkhanyra (`hamlet_0205`, N004_E001) devient jouable.
+De même Kholvard (case isolée, reliée par la Mine de la Traverse) et Feyhin Lokcthat (case isolée) sont reliés à pied.
+
+**Cases ouvertes** (68, `generated_cells`, 8 nouvelles dernières lignes, commentaire du master mis à jour) : 48 cases de
+passage, puis 20 **trous intérieurs** (case terrestre bordée sur au moins 3 côtés par des cases jouables, itéré), hors cases
+sensibles (grottes de dragons, entrées ophidiennes et leurs 8 voisines) et hors chaîne de la Mine de la Traverse (N000_W008,
+N001_W007, gardées fermées : le passage y est souterrain). Toutes terrestres. Cellules jouables : **413 → 481**.
+
+| Groupe | Motif | Cases |
+|---|---|---|
+| A | Via Magna Lhynn - Kholvard (000120) et route Lhynn - Dhuzmar (000064) | N000_W009, S001_W009, S001_W008, S001_W010 |
+| B | route Kholvard - Skhaldrach (000211) | S002_W007, S002_W008 |
+| C | Via Magna Kholvard - Magistrya (000120) | N000_W007, N000_W006, N001_W006, N001_W005, N002_W005, N002_W004 |
+| D | Passe des Dragons : route Magistrya - Atmosphère (000010) et route Atmosphère - Palais des Maîtres des Dragons (000017) | N001_W003, N000_W003, S001_W003, S002_W003 |
+| E | Via Magna fief de Garundel - Harrodh (000120) | N000_E004, N000_E005, N000_E006, N001_E006, N002_E006, N002_E007, N003_E007, N003_E008, N004_E008 |
+| F | route Ghrunke Dash - Ghrimfeth (000148) | S006_E014, S005_E014, S005_E013, S004_E013, S003_E013, S003_E012 |
+| G | route Village fantôme - fief de Garundel (000150) | S002_E005 |
+| H | route Fhelvakt - Hazhaëlin (000209) | N009_E000, N008_E000, N008_E001, N007_E001 |
+| I | routes de Feyhin Lokcthat : Whispers Hill - Feyhin Lokcthat (000238) et Feyhin Lokcthat - Mhozrak (000094) | N009_E007, N008_E008, N008_E009 |
+| J | route Shezhold - Nykhfeld (000097) | N002_E012 |
+| K | routes d'Arkhanyra : Magistrya - Arkhanyra (000086) et Hazhaëlin - Arkhanyra (000207) ; Fhelvakt et Hazhaëlin reliés au réseau jouable | N002_W001, N003_W001, N003_E000, N004_E000, N004_E001, N005_E001, N005_E002, N006_E002 |
+| T | trous intérieurs | N000_E003, N000_W002, N001_W004, N003_E012, N003_W002, N006_E001, N009_E008, S001_E005, S002_W009, S003_E005, S003_E014, S003_W007, S004_E011, S005_E015, S003_W006, S004_E012, S004_E014, S004_E015, S005_E010, S005_E012 |
+
+**Lieux** : un lieu `[GD]` par case vide (64), POI réel dans `pois` du master, décalage choisi par la sonde du générateur
+(au sec, hors route, rivière, lac et ville) ; Moros (`poi_moros`, cité, BD-T12), l'Atmosphère, Haawling Spines et Arkhanyra
+gardent leur entrée, rien n'est ajouté sur leur case. La Passe
+des Dragons porte le nom de la BD `[DÉDUCTION BD-T2]`. Niveaux d'après `niveau_ref` et les lieux voisins, **à valider**. Noms
+vérifiés contre les PNJ de service (« Pierre aux elfes », « Pierres levées du sel » et « Rond des fées » renommés « Menhir aux
+elfes », « Menhirs du sel » et « Cercle des fées » : « pierre » et « rond » entrent dans des noms de PNJ).
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N000_W009 | **Bornes milliaires de la Via Magna** (`lieu_bornes_milliaires_de_la_via_magna`, `poi_bornes_milliaires_de_la_via_magna`, `monolithe`) | 10-14 |
+| S001_W009 | **Relais de poste impérial** (`lieu_relais_de_poste_imperial`, `poi_relais_de_poste_imperial`, `camp`) | 12-16 |
+| S001_W008 | **Champs de la Couronne** (`lieu_champs_de_la_couronne`, `poi_champs_de_la_couronne`, `elevage`) | 12-16 |
+| S001_W010 | **Prés de la route de Dhuzmar** (`lieu_pres_de_la_route_de_dhuzmar`, `poi_pres_de_la_route_de_dhuzmar`, `elevage`) | 10-14 |
+| S002_W009 | **Moulin à vent abandonné** (`lieu_moulin_a_vent_abandonne`, `poi_moulin_a_vent_abandonne`, `ruine`) | 12-16 |
+| S002_W007 | **Halte des charrois de Kholvard** (`lieu_halte_des_charrois_de_kholvard`, `poi_halte_des_charrois_de_kholvard`, `camp`) | 14-18 |
+| S002_W008 | **Fours à minerai de Kholvard** (`lieu_fours_a_minerai_de_kholvard`, `poi_fours_a_minerai_de_kholvard`, `camp`) | 14-18 |
+| S003_W007 | **Ancienne galerie de Kholvard** (`lieu_ancienne_galerie_de_kholvard`, `poi_ancienne_galerie_de_kholvard`, `mine`) | 15-19 |
+| S003_W006 | **Abri des bergers de la corniche** (`lieu_abri_des_bergers_de_la_corniche`, `poi_abri_des_bergers_de_la_corniche`, `camp`) | 12-16 |
+| N000_W006 | **Croix des pèlerins de Moros** (`lieu_croix_des_pelerins_de_moros`, `poi_croix_des_pelerins_de_moros`, `sanctuaire`) | 15-19 |
+| N001_W006 | **Puits de Moros** (`lieu_puits_de_moros`, `poi_puits_de_moros`, `camp`) | 16-20 |
+| N001_W005 | **Tombeaux des caravaniers** (`lieu_tombeaux_des_caravaniers`, `poi_tombeaux_des_caravaniers`, `sanctuaire`) | 16-20 |
+| N002_W005 | **Fortin de la Via Magna** (`lieu_fortin_de_la_via_magna`, `poi_fortin_de_la_via_magna`, `ruine`) | 15-19 |
+| N002_W004 | **Citerne impériale** (`lieu_citerne_imperiale`, `poi_citerne_imperiale`, `ruine`) | 14-18 |
+| N001_W004 | **Nid des scarabées géants** (`lieu_nid_des_scarabees_geants`, `poi_nid_des_scarabees_geants`, `salle`) | 15-19 |
+| N001_W003 | **Camp des pèlerins de la Passe** (`lieu_camp_des_pelerins_de_la_passe`, `poi_camp_des_pelerins_de_la_passe`, `camp`) | 14-18 |
+| N000_W003 | **Bivouac sous l’Atmosphère** (`lieu_bivouac_sous_l_atmosphere`, `poi_bivouac_sous_l_atmosphere`, `camp`) | 14-18 |
+| S002_W003 | **Passe des Dragons** (`lieu_passe_des_dragons`, `poi_passe_des_dragons`, `defile`) | 18-24 |
+| N000_W002 | **Mas abandonné de la plaine** (`lieu_mas_abandonne_de_la_plaine`, `poi_mas_abandonne_de_la_plaine`, `ruine`) | 12-16 |
+| N000_E003 | **Scierie de la lisière** (`lieu_scierie_de_la_lisiere`, `poi_scierie_de_la_lisiere`, `camp`) | 15-19 |
+| N000_E004 | **Lisière des bûcherons de Garundel** (`lieu_lisiere_des_bucherons_de_garundel`, `poi_lisiere_des_bucherons_de_garundel`, `camp`) | 16-20 |
+| N000_E005 | **Chapelle de la Via Magna** (`lieu_chapelle_de_la_via_magna`, `poi_chapelle_de_la_via_magna`, `sanctuaire`) | 16-20 |
+| N000_E006 | **Campement des gardes de la Voie** (`lieu_campement_des_gardes_de_la_voie`, `poi_campement_des_gardes_de_la_voie`, `camp`) | 17-21 |
+| N001_E006 | **Relais des sables** (`lieu_relais_des_sables`, `poi_relais_des_sables`, `ruine`) | 18-22 |
+| N002_E007 | **Arche de la Voie** (`lieu_arche_de_la_voie`, `poi_arche_de_la_voie`, `ruine`) | 18-22 |
+| N003_E007 | **Tertre des voyageurs perdus** (`lieu_tertre_des_voyageurs_perdus`, `poi_tertre_des_voyageurs_perdus`, `sanctuaire`) | 18-22 |
+| N003_E008 | **Bivouac des caravaniers d’Harrodh** (`lieu_bivouac_des_caravaniers_d_harrodh`, `poi_bivouac_des_caravaniers_d_harrodh`, `camp`) | 18-24 |
+| N004_E008 | **Postes de guet d’Harrodh** (`lieu_postes_de_guet_d_harrodh`, `poi_postes_de_guet_d_harrodh`, `ruine`) | 18-24 |
+| S006_E014 | **Fumerolles de la Baronnie** (`lieu_fumerolles_de_la_baronnie`, `poi_fumerolles_de_la_baronnie`, `gouffre`) | 24-30 |
+| S005_E014 | **Gibet de la Baronnie** (`lieu_gibet_de_la_baronnie`, `poi_gibet_de_la_baronnie`, `ruine`) | 26-32 |
+| S005_E013 | **Caravansérail pillé** (`lieu_caravanserail_pille`, `poi_caravanserail_pille`, `ruine`) | 24-30 |
+| S004_E013 | **Camp des esclavagistes de Moork** (`lieu_camp_des_esclavagistes_de_moork`, `poi_camp_des_esclavagistes_de_moork`, `camp`) | 22-28 |
+| S003_E013 | **Puits amer** (`lieu_puits_amer`, `poi_puits_amer`, `camp`) | 22-28 |
+| S003_E012 | **Menhirs du sel** (`lieu_menhirs_du_sel`, `poi_menhirs_du_sel`, `monolithe`) | 20-26 |
+| S003_E014 | **Tranchée des forçats** (`lieu_tranchee_des_forcats`, `poi_tranchee_des_forcats`, `salle`) | 22-28 |
+| S004_E012 | **Tour de signaux de Moork** (`lieu_tour_de_signaux_de_moork`, `poi_tour_de_signaux_de_moork`, `ruine`) | 21-27 |
+| S004_E014 | **Bergerie des nomades** (`lieu_bergerie_des_nomades`, `poi_bergerie_des_nomades`, `elevage`) | 22-28 |
+| S004_E015 | **Autel de la Lune Noire** (`lieu_autel_de_la_lune_noire`, `poi_autel_de_la_lune_noire`, `sanctuaire`) | 24-30 |
+| S005_E015 | **Abri sous roche des contrebandiers** (`lieu_abri_sous_roche_des_contrebandiers`, `poi_abri_sous_roche_des_contrebandiers`, `salle`) | 26-32 |
+| S005_E012 | **Tombes ensablées** (`lieu_tombes_ensablees`, `poi_tombes_ensablees`, `sanctuaire`) | 20-26 |
+| S002_E005 | **Cercle des fées** (`lieu_cercle_des_fees`, `poi_cercle_des_fees`, `sanctuaire`) | 16-22 |
+| S001_E005 | **Souche creuse des lutins** (`lieu_souche_creuse_des_lutins`, `poi_souche_creuse_des_lutins`, `salle`) | 16-20 |
+| S003_E005 | **Clairière des mantes** (`lieu_clairiere_des_mantes`, `poi_clairiere_des_mantes`, `camp`) | 16-22 |
+| S004_E011 | **Ferme des orties** (`lieu_ferme_des_orties`, `poi_ferme_des_orties`, `elevage`) | 20-26 |
+| S005_E010 | **Chaumière de l’herboriste** (`lieu_chaumiere_de_l_herboriste`, `poi_chaumiere_de_l_herboriste`, `camp`) | 20-26 |
+| N009_E000 | **Empreintes du géant** (`lieu_empreintes_du_geant`, `poi_empreintes_du_geant`, `monolithe`) | 30-34 |
+| N008_E000 | **Camp des chasseurs de géants** (`lieu_camp_des_chasseurs_de_geants`, `poi_camp_des_chasseurs_de_geants`, `camp`) | 30-34 |
+| N008_E001 | **Ossements de géant** (`lieu_ossements_de_geant`, `poi_ossements_de_geant`, `monolithe`) | 30-35 |
+| N007_E001 | **Poste de guet elfe** (`lieu_poste_de_guet_elfe`, `poi_poste_de_guet_elfe`, `ruine`) | 20-26 |
+| N009_E007 | **Abattis des géants** (`lieu_abattis_des_geants`, `poi_abattis_des_geants`, `camp`) | 30-34 |
+| N008_E008 | **Fosse aux bêtes de Feyhin** (`lieu_fosse_aux_betes_de_feyhin`, `poi_fosse_aux_betes_de_feyhin`, `salle`) | 26-30 |
+| N008_E009 | **Camp des rabatteurs orcs** (`lieu_camp_des_rabatteurs_orcs`, `poi_camp_des_rabatteurs_orcs`, `camp`) | 28-32 |
+| N009_E008 | **Affût des chasseurs de Feyhin** (`lieu_affut_des_chasseurs_de_feyhin`, `poi_affut_des_chasseurs_de_feyhin`, `camp`) | 26-30 |
+| N002_E012 | **Tour de guet orque** (`lieu_tour_de_guet_orque`, `poi_tour_de_guet_orque`, `ruine`) | 18-24 |
+| N003_E012 | **Parc à chevaux des orcs** (`lieu_parc_a_chevaux_des_orcs`, `poi_parc_a_chevaux_des_orcs`, `elevage`) | 18-23 |
+| N003_W002 | **Tumulus de la plaine de Magistrya** (`lieu_tumulus_de_la_plaine_de_magistrya`, `poi_tumulus_de_la_plaine_de_magistrya`, `sanctuaire`) | 12-16 |
+| N002_W001 | **Halte des pèlerins de l’Oracle** (`lieu_halte_des_pelerins_de_l_oracle`, `poi_halte_des_pelerins_de_l_oracle`, `camp`) | 12-16 |
+| N003_W001 | **Vergers abandonnés** (`lieu_vergers_abandonnes`, `poi_vergers_abandonnes`, `elevage`) | 12-16 |
+| N003_E000 | **Champs d’orge d’Arkhanyra** (`lieu_champs_d_orge_d_arkhanyra`, `poi_champs_d_orge_d_arkhanyra`, `elevage`) | 13-17 |
+| N004_E000 | **Moulin d’Arkhanyra** (`lieu_moulin_d_arkhanyra`, `poi_moulin_d_arkhanyra`, `camp`) | 13-17 |
+| N005_E001 | **Menhir aux elfes** (`lieu_menhir_aux_elfes`, `poi_menhir_aux_elfes`, `monolithe`) | 16-20 |
+| N005_E002 | **Clairière des chasseurs elfes** (`lieu_clairiere_des_chasseurs_elfes`, `poi_clairiere_des_chasseurs_elfes`, `camp`) | 16-20 |
+| N006_E001 | **Ruines du domaine elfique** (`lieu_ruines_du_domaine_elfique`, `poi_ruines_du_domaine_elfique`, `ruine`) | 18-22 |
+| N006_E002 | **Cabane du garde-forestier** (`lieu_cabane_du_garde_forestier`, `poi_cabane_du_garde_forestier`, `camp`) | 18-22 |
+
+**Contrôles (a)/(b)/(c)** (`ana.py`, `conn.py` sur une sonde du générateur, puis test C++) : (a) aucune ville ou hameau jouable
+sans route du lore (extrémité ou à moins de 400 m) ; toutes les villes jouables sont reliées à pied aux 7 départs par des
+routes entièrement jouables, sauf les 4 villes de l'Île de la Trêve (réseau propre) ; (b) 3 Bornes des Géants et Stèle à
+70 m d'une route, Borne des Monts de Moork à 373 m ; (c) aucune route du lore ne sort des cellules jouables pour y revenir.
+**Exceptions documentées** : 43 routes du lore mènent à une zone fermée et s'arrêtent au mur invisible (ex. Northind –
+Haevrin, Hazhaëlin – Askhvir, Fhelvakt – Haevrin) : ce ne sont pas des passages entre deux zones jouables ; baie de l'Île
+de la Trêve (ci-dessus). 165 routes du lore tracées sur 165 (000017 comprise) ; 10 routes du générateur gardées (13 au
+v1.0.105 : Marn – Haeldorf, Lhynn – Dhuzmar et fief de Garundel – Village fantôme sont désormais doublées par des routes du lore
+entièrement jouables).
+
+**Ce qui est réel en jeu** : les 68 cases, 64 POI, les 11 routes créées et les 4 tracés corrigés, les positions des 4
+balises. **Lore seulement** : niveaux, intérieurs, noms `[GD]`.
+
+**Rendu** : `routes_jeu_v1106.png` (rapport du lot) — routes tracées en jeu au v1.0.105 (gauche) et au v1.0.106 (droite),
+cases ouvertes en jaune, routes créées ou corrigées en vert, balises de route.
+
+**Tests** : `world_gen_tests`, nouveau test « routes v1.0.106 » ((a), (b), (c), 68 cases terrestres, 11 routes créées
+tracées, 000017 par S002_W003, 64 lieux au sec seuls sur leur case, baie de l'île sans route) ; tests adaptés : « lieux
+v1.0.85/86 » (balises mesurées sur les routes tracées en jeu), « lieux v1.0.89 » (52 cases dans la boîte du Royaume des
+nains de l'est : S004_E015 et S005_E015 en plus), « routes du lore v1.0.105 » (000017 tracée, 481 cellules, case témoin
+sans route : N019_W012), « placement v1.0.95 » (seules les 4 balises ont une position manuelle). Contrôles du lore :
+services 1256 PNJ, 89 références orphelines (inchangé), `sync_routes.py --check`, `sync_positions.py --check`.
+
+**Points incertains** : tracés `[GD]` des 11 routes (à revoir dans l'éditeur) ; Piste des Morts en double de 000074 ;
+ouverture de 68 cases sans demande explicite case par case (méthode des lots 16, 19, 29) ; niveaux 30-35 sur la route
+Fhelvakt – Hazhaëlin (Gigantomorphes 30-56) contre 20-26 côté elfe ; baie de l'Île de la Trêve laissée sans route.
+
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -4006,4 +4231,5 @@ idempotence, résultat identique au master, routes maritimes ignorées, refus). 
   « proche de Moork » (S002_E015), sans appui BD.
 - Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, 59 quêtes et 6 raids sans case, 89 références orphelines à trancher (16.32).
 - Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).
-- Routes du jeu d'après le lore (v1.0.105) : 000017 non tracée (case enclavée du Palais des Maîtres des Dragons), 22 cellules jouables et Orkh sans route faute de tracé au lore, balises v1.0.85-86 éloignées des routes, routes maritimes et pontons non tracés (16.34).
+- Routes du jeu d'après le lore (v1.0.105) : routes maritimes et pontons non tracés (16.34) ; 000017, cellules et villes sans route, balises et passages hors zone traités en v1.0.106 (16.35).
+- Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).

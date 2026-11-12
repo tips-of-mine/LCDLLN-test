@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Verdansur sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Verdansur en N010_W014), qui relient a pied Verdansur et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, riviere nord de Verdansur), traversees par la route Syzygie - Verdansur du generateur : la route est entierement dans des cellules generees et Trueford (route Verdansur - Trueford) devient accessible. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Verdansur sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Verdansur en N010_W014), qui relient a pied Verdansur et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, riviere nord de Verdansur), traversees par la route Syzygie - Verdansur du generateur : la route est entierement dans des cellules generees et Trueford (route Verdansur - Trueford) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nightfield N002_E015, Blackmoor N004_E018, Ebonvale N005_E020, Duskmere N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shadehold a Moork par Horkher et Nightfield), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -47,7 +47,12 @@
     "S004_W006", "S004_W002", "S005_W008", "S006_W004", "S006_W005", "S006_W006", "S006_W007", "S006_W008",
     "N010_W015", "N010_W016",
     "N010_W012", "N010_W013", "N010_W014",
-    "N009_W012", "N011_W013", "N011_W014"
+    "N009_W012", "N011_W013", "N011_W014",
+    "N007_E015", "N006_E013", "N006_E014", "N006_E015", "N006_E019", "N006_E020", "N005_E013", "N005_E014", "N005_E015",
+    "N005_E016", "N005_E017", "N005_E018", "N005_E019", "N005_E020", "N004_E012", "N004_E013", "N004_E014", "N004_E015",
+    "N004_E016", "N004_E017", "N004_E018", "N004_E019", "N004_E020", "N003_E013", "N003_E014", "N003_E015", "N003_E016",
+    "N003_E017", "N003_E018", "N003_E019", "N003_E020", "N002_E013", "N002_E014", "N002_E015", "N002_E016", "N002_E019",
+    "N002_E020", "N001_E012", "N001_E015", "N001_E019", "N001_E020", "N000_E015", "N000_E019", "N000_E020", "S001_E015"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -2915,6 +2920,366 @@
       "offset_x_m": 0,
       "offset_z_m": 500,
       "description": "Vieux sanctuaire de bord de route, profané, à l'orée de la forêt maudite ; renards infernaux et mantes géantes en sortent. Niveaux 16-22. [GD v1.0.87, lieu_sanctuaire_profane]."
+    },
+    {
+      "id": "poi_barrage_de_peage_lune_noire",
+      "name": "Barrage de péage de la Lune Noire",
+      "cell": "N004_E012",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": -2500,
+      "description": "Barrage dressé sur la Via Magna à l'entrée de la Marche : depuis la conquête [BD-A5], les gens de la Lune Noire y lèvent un droit de passage sur les marchands qui montent vers Horkher et rançonnent ceux qui refusent. Niveaux 16-20. [GD v1.0.88, lieu_barrage_de_peage_lune_noire]."
+    },
+    {
+      "id": "poi_relais_incendie_via_magna",
+      "name": "Relais incendié de la Via Magna",
+      "cell": "N005_E013",
+      "kind": "ruine",
+      "offset_x_m": -2000,
+      "offset_z_m": 2000,
+      "description": "Ancien relais impérial de la Via Magna, brûlé pendant la conquête de la Marche par la Lune Noire [BD-A5] et jamais relevé ; des maraudeurs s'y abritent. Niveaux 15-18. [GD v1.0.88, lieu_relais_incendie_via_magna]."
+    },
+    {
+      "id": "poi_camp_de_troc_des_orcs",
+      "name": "Camp de troc des orcs",
+      "cell": "N006_E013",
+      "kind": "camp",
+      "offset_x_m": -1500,
+      "offset_z_m": 2500,
+      "description": "Camp où les orcs de l'Orkland viennent troquer bétail et peaux contre le grain et la laine d'Horkher ; les marchandages tournent souvent à la rixe. Niveaux 15-18. [GD v1.0.88, lieu_camp_de_troc_des_orcs]."
+    },
+    {
+      "id": "poi_cabanes_des_charbonniers",
+      "name": "Cabanes des charbonniers",
+      "cell": "N007_E015",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": 1500,
+      "description": "Charbonniers d'Horkher installés en lisière : leur charbon part vers les forges de la Marche ; les loups de la forêt rôdent autour des meules. Niveaux 16-20. [GD v1.0.88, lieu_cabanes_des_charbonniers]."
+    },
+    {
+      "id": "poi_bergerie_fortifiee",
+      "name": "Bergerie fortifiée",
+      "cell": "N006_E015",
+      "kind": "elevage",
+      "offset_x_m": 1500,
+      "offset_z_m": -1500,
+      "description": "Grande bergerie entourée d'un mur de pierre sèche : la laine de la Marche (économie v1.0.58) y est tondue avant de partir pour Horkher ; les bergers y repoussent loups et voleurs de bétail. Niveaux 15-18. [GD v1.0.88, lieu_bergerie_fortifiee]."
+    },
+    {
+      "id": "poi_moulin_a_vent_pille",
+      "name": "Moulin à vent pillé",
+      "cell": "N005_E014",
+      "kind": "ruine",
+      "offset_x_m": 2000,
+      "offset_z_m": 1500,
+      "description": "Moulin du comté d'Horkher pillé par une bande de maraudeurs qui en a fait son repaire ; le grain de la Marche (économie v1.0.58) n'y est plus moulu. Niveaux 16-20. [GD v1.0.88, lieu_moulin_a_vent_pille]."
+    },
+    {
+      "id": "poi_repaire_des_braconniers",
+      "name": "Repaire des braconniers",
+      "cell": "N005_E015",
+      "kind": "camp",
+      "offset_x_m": 2000,
+      "offset_z_m": 0,
+      "description": "Repaire de braconniers caché à la lisière de la forêt : ils chassent sur les terres du comté et pillent les voyageurs isolés de la Via Magna. Niveaux 17-21. [GD v1.0.88, lieu_repaire_des_braconniers]."
+    },
+    {
+      "id": "poi_champ_de_bataille_de_la_conquete",
+      "name": "Champ de bataille de la conquête",
+      "cell": "N004_E013",
+      "kind": "champ_bataille",
+      "offset_x_m": -500,
+      "offset_z_m": 0,
+      "description": "Plaine où l'armée impériale de la Marche fut écrasée lors de la conquête par la Lune Noire [BD-A5] ; les morts levés par la Lune Noire y errent encore la nuit. Niveaux 18-22. [GD v1.0.88, lieu_champ_de_bataille_de_la_conquete]."
+    },
+    {
+      "id": "poi_tertre_des_legionnaires",
+      "name": "Tertre des légionnaires",
+      "cell": "N003_E013",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 1000,
+      "description": "Tertre où les paysans de la Marche ont enterré en secret les légionnaires tombés pendant la conquête ; ils y viennent encore prier malgré l'interdit de la Lune Noire. Niveaux 18-22. [GD v1.0.88, lieu_tertre_des_legionnaires]."
+    },
+    {
+      "id": "poi_grenier_a_ble_requisitionne",
+      "name": "Grenier à blé réquisitionné",
+      "cell": "N004_E014",
+      "kind": "camp",
+      "offset_x_m": 2000,
+      "offset_z_m": 1500,
+      "description": "Grenier où le blé de la Marche est réquisitionné avant de partir vers Moork (économie v1.0.58) ; les paysans affamés et les pillards le guettent. Niveaux 18-22. [GD v1.0.88, lieu_grenier_a_ble_requisitionne]."
+    },
+    {
+      "id": "poi_poste_de_garde_lune_noire",
+      "name": "Poste de garde de la Lune Noire",
+      "cell": "N003_E014",
+      "kind": "camp",
+      "offset_x_m": -2500,
+      "offset_z_m": 2000,
+      "description": "Poste de garde de la Lune Noire sur la Via Magna entre Horkher et Nightfield : on y contrôle les laissez-passer et on y enferme les suspects. Niveaux 20-24. [GD v1.0.88, lieu_poste_de_garde_lune_noire]."
+    },
+    {
+      "id": "poi_chapelle_imperiale_desaffectee",
+      "name": "Chapelle impériale désaffectée",
+      "cell": "N004_E015",
+      "kind": "sanctuaire",
+      "offset_x_m": -1500,
+      "offset_z_m": 0,
+      "description": "Chapelle de l'Empire fermée depuis la conquête, ses fresques martelées par les gens de la Lune Noire ; des bêtes y gîtent. Niveaux 18-22. [GD v1.0.88, lieu_chapelle_imperiale_desaffectee]."
+    },
+    {
+      "id": "poi_grange_incendiee",
+      "name": "Grange incendiée",
+      "cell": "N003_E015",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": -2500,
+      "description": "Grange brûlée par des pillards sur les terres de Nightfield ; les survivants ont fui vers Horkher et la friche gagne les champs. Niveaux 20-24. [GD v1.0.88, lieu_grange_incendiee]."
+    },
+    {
+      "id": "poi_bivouac_des_colporteurs",
+      "name": "Bivouac des colporteurs",
+      "cell": "N002_E013",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": -2500,
+      "description": "Halte des colporteurs entre Nightward et Nightfield : on y échange nouvelles et marchandises, et on y paie des escortes pour traverser la Marche. Niveaux 20-24. [GD v1.0.88, lieu_bivouac_des_colporteurs]."
+    },
+    {
+      "id": "poi_enclos_a_betail",
+      "name": "Enclos à bétail",
+      "cell": "N002_E014",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": -2500,
+      "description": "Grands enclos où le bétail de la Marche (économie v1.0.58) est rassemblé avant d'être mené à Moork ; les voleurs de bétail y frappent la nuit. Niveaux 20-24. [GD v1.0.88, lieu_enclos_a_betail]."
+    },
+    {
+      "id": "poi_campement_des_pecheurs",
+      "name": "Campement des pêcheurs",
+      "cell": "N001_E012",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Pêcheurs installés près de l'étang de la plaine, qui vendent leur poisson séché à Nightward et à Moork ; des bêtes du désert descendent y boire. Niveaux 20-24. [GD v1.0.88, lieu_campement_des_pecheurs]."
+    },
+    {
+      "id": "poi_relais_de_la_route_de_moork",
+      "name": "Relais de la route de Moork",
+      "cell": "N001_E015",
+      "kind": "camp",
+      "offset_x_m": 2000,
+      "offset_z_m": 0,
+      "description": "Relais fortifié sur la route qui descend de Nightfield à Moork, où les convois de grain font halte sous la garde de la Lune Noire. Niveaux 22-26. [GD v1.0.88, lieu_relais_de_la_route_de_moork]."
+    },
+    {
+      "id": "poi_tour_a_signaux_de_la_baronnie",
+      "name": "Tour à signaux de la baronnie",
+      "cell": "N000_E015",
+      "kind": "ruine",
+      "offset_x_m": -2000,
+      "offset_z_m": 0,
+      "description": "Tour à signaux de l'ancienne baronnie impériale de Moork, abandonnée au sable ; des pillards du désert y guettent les convois. Niveaux 22-26. [GD v1.0.88, lieu_tour_a_signaux_de_la_baronnie]."
+    },
+    {
+      "id": "poi_cimetiere_des_captifs",
+      "name": "Cimetière des captifs",
+      "cell": "S001_E015",
+      "kind": "sanctuaire",
+      "offset_x_m": 2000,
+      "offset_z_m": 0,
+      "description": "Cimetière où l'on jette les captifs morts aux travaux de Moork ; les morts n'y restent pas toujours couchés. Niveaux 22-26. [GD v1.0.88, lieu_cimetiere_des_captifs]."
+    },
+    {
+      "id": "poi_croix_de_carrefour_profanee",
+      "name": "Croix de carrefour profanée",
+      "cell": "N002_E016",
+      "kind": "sanctuaire",
+      "offset_x_m": 1000,
+      "offset_z_m": -2000,
+      "description": "Croix de carrefour impériale renversée et couverte des signes de la Lune Noire sur la route de Nightfield à Blackmoor ; des fidèles de la Lune Noire s'y retrouvent la nuit. Niveaux 22-26. [GD v1.0.88, lieu_croix_de_carrefour_profanee]."
+    },
+    {
+      "id": "poi_haras_de_la_lune_noire",
+      "name": "Haras de la Lune Noire",
+      "cell": "N003_E016",
+      "kind": "elevage",
+      "offset_x_m": 1500,
+      "offset_z_m": 2500,
+      "description": "Haras où la Lune Noire élève les montures de ses chevaliers ; les chevaux volés y sont aussi ramenés et marqués. Niveaux 22-26. [GD v1.0.88, lieu_haras_de_la_lune_noire]."
+    },
+    {
+      "id": "poi_camp_des_refugies",
+      "name": "Camp des réfugiés",
+      "cell": "N003_E017",
+      "kind": "camp",
+      "offset_x_m": 500,
+      "offset_z_m": -2500,
+      "description": "Camp de paysans chassés de leurs terres par la Lune Noire, qui survivent de chasse et de rapines ; les patrouilles de Blackmoor les harcèlent. Niveaux 22-26. [GD v1.0.88, lieu_camp_des_refugies]."
+    },
+    {
+      "id": "poi_tumulus_de_la_plaine",
+      "name": "Tumulus de la plaine",
+      "cell": "N003_E018",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 3000,
+      "description": "Très ancien tumulus de la plaine, plus vieux que l'Empire ; des pillards ont descellé son entrée et quelque chose en est sorti. Niveaux 24-28. [GD v1.0.88, lieu_tumulus_de_la_plaine]."
+    },
+    {
+      "id": "poi_scierie_abandonnee",
+      "name": "Scierie abandonnée",
+      "cell": "N004_E016",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": -1500,
+      "description": "Scierie abandonnée en lisière de la forêt depuis que les loups géants ont tué les scieurs ; le bois coupé pourrit sur place. Niveaux 22-26. [GD v1.0.88, lieu_scierie_abandonnee]."
+    },
+    {
+      "id": "poi_tour_de_guet_de_la_lisiere",
+      "name": "Tour de guet de la lisière",
+      "cell": "N004_E017",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 2000,
+      "description": "Tour de guet impériale qui surveillait la forêt de la Marche, abandonnée depuis la conquête ; les bêtes de la forêt en ont fait leur territoire. Niveaux 24-28. [GD v1.0.88, lieu_tour_de_guet_de_la_lisiere]."
+    },
+    {
+      "id": "poi_taniere_du_loup_geant",
+      "name": "Tanière du loup géant",
+      "cell": "N005_E016",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tanière d'une meute de loups géants de guerre échappés des camps orques ; elle attaque les scieurs et les patrouilles. Niveaux 24-28. [GD v1.0.88, lieu_taniere_du_loup_geant]."
+    },
+    {
+      "id": "poi_autel_sylvestre_lune_noire",
+      "name": "Autel sylvestre de la Lune Noire",
+      "cell": "N005_E017",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Autel caché dans la forêt où les fidèles de la Lune Noire de Blackmoor célèbrent leurs rites ; les intrus n'en reviennent pas. Niveaux 24-28. [GD v1.0.88, lieu_autel_sylvestre_lune_noire]."
+    },
+    {
+      "id": "poi_repaire_des_trolls_de_la_foret",
+      "name": "Repaire des trolls de la forêt",
+      "cell": "N005_E018",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Repaire d'une bande de trolls au plus profond de la forêt de la Marche ; ils descendent parfois jusqu'aux fermes de Blackmoor. Le feu les repousse. Niveaux 26-28. [GD v1.0.88, lieu_repaire_des_trolls_de_la_foret]."
+    },
+    {
+      "id": "poi_camp_de_la_patrouille_noire",
+      "name": "Camp de la patrouille noire",
+      "cell": "N004_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": -2500,
+      "description": "Camp d'une patrouille de la Lune Noire qui tient la route de Blackmoor à Ebonvale et pourchasse réfugiés et déserteurs. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_la_patrouille_noire]."
+    },
+    {
+      "id": "poi_ermitage_en_ruine",
+      "name": "Ermitage en ruine",
+      "cell": "N005_E019",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": -1000,
+      "description": "Ermitage d'un ancien prêtre de l'Empire, mis à sac lors de la conquête ; on dit que l'ermite y a caché les registres de sa paroisse. Niveaux 24-28. [GD v1.0.88, lieu_ermitage_en_ruine]."
+    },
+    {
+      "id": "poi_mine_de_fer_abandonnee",
+      "name": "Mine de fer abandonnée",
+      "cell": "N006_E019",
+      "kind": "salle",
+      "offset_x_m": -2000,
+      "offset_z_m": 0,
+      "description": "Petite mine de fer de la Marche, abandonnée faute de bras ; la Marche doit désormais importer ses armes (économie v1.0.58). Des bêtes ont pris les galeries. Niveaux 24-28. [GD v1.0.88, lieu_mine_de_fer_abandonnee]."
+    },
+    {
+      "id": "poi_poste_frontiere_du_nord",
+      "name": "Poste-frontière du nord",
+      "cell": "N006_E020",
+      "kind": "camp",
+      "offset_x_m": 2000,
+      "offset_z_m": -1500,
+      "description": "Poste-frontière de la Lune Noire au nord d'Ebonvale, sur la route de Rivercross : on n'y passe pas sans laissez-passer. Niveaux 24-28. [GD v1.0.88, lieu_poste_frontiere_du_nord]."
+    },
+    {
+      "id": "poi_domaine_seigneurial_confisque",
+      "name": "Domaine seigneurial confisqué",
+      "cell": "N004_E020",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 2000,
+      "description": "Domaine d'un seigneur impérial de la Marche, confisqué après la conquête ; les nouveaux maîtres y font travailler les serfs sous le fouet. Niveaux 24-28. [GD v1.0.88, lieu_domaine_seigneurial_confisque]."
+    },
+    {
+      "id": "poi_fosse_aux_ossements",
+      "name": "Fosse aux ossements",
+      "cell": "N003_E019",
+      "kind": "gouffre",
+      "offset_x_m": 2000,
+      "offset_z_m": 2000,
+      "description": "Fosse où un ogre jette les restes de ses proies, près de la route de Blackmoor à Duskmere. Niveaux 24-28. [GD v1.0.88, lieu_fosse_aux_ossements]."
+    },
+    {
+      "id": "poi_camp_de_chasse_orque",
+      "name": "Camp de chasse orque",
+      "cell": "N003_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Camp de chasse des orcs de Duskmere, qui battent la plaine jusqu'à la forêt ; ils n'aiment pas les étrangers. Niveaux 24-28. [GD v1.0.88, lieu_camp_de_chasse_orque]."
+    },
+    {
+      "id": "poi_menhir_du_carrefour",
+      "name": "Menhir du carrefour",
+      "cell": "N002_E019",
+      "kind": "monolithe",
+      "offset_x_m": 2000,
+      "offset_z_m": -500,
+      "description": "Menhir au bord de la route de Duskmere, où les orcs de la Marche déposent des offrandes avant la chasse. Niveaux 24-28. [GD v1.0.88, lieu_menhir_du_carrefour]."
+    },
+    {
+      "id": "poi_arene_de_lutte_des_orcs",
+      "name": "Arène de lutte des orcs",
+      "cell": "N002_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": -3000,
+      "description": "Arène de terre battue où les orcs de Duskmere règlent leurs querelles et éprouvent leurs jeunes guerriers. Niveaux 24-28. [GD v1.0.88, lieu_arene_de_lutte_des_orcs]."
+    },
+    {
+      "id": "poi_enclos_des_sangliers_de_guerre",
+      "name": "Enclos des sangliers de guerre",
+      "cell": "N001_E019",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 2500,
+      "description": "Enclos où les orcs de Duskmere dressent les sangliers de guerre de leurs montures. Niveaux 24-28. [GD v1.0.88, lieu_enclos_des_sangliers_de_guerre]."
+    },
+    {
+      "id": "poi_tour_ensablee",
+      "name": "Tour ensablée",
+      "cell": "N000_E019",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tour impériale des confins du désert, à demi engloutie par le sable ; des pillards s'y abritent des tempêtes. Niveaux 26-28. [GD v1.0.88, lieu_tour_ensablee]."
+    },
+    {
+      "id": "poi_camp_des_nomades",
+      "name": "Camp des nomades",
+      "cell": "N000_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Camp de nomades venus du désert de la baronnie, qui commercent avec Duskmere et guident les voyageurs dans les sables. Niveaux 26-28. [GD v1.0.88, lieu_camp_des_nomades]."
     }
   ],
   "imports": {

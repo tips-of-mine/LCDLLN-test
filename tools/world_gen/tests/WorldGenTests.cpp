@@ -1714,6 +1714,164 @@ namespace
 			"lieux v1.0.87 : Cercle de pierres des geants a plus de 10 km du Puits des Lianes");
 	}
 
+	/// v1.0.88 (lot 16) : ouverture de la Marche de l'Est. 45 cases ajoutées à `generated_cells`
+	/// (cases des villes Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere, routes qui les relient
+	/// entre elles et au monde déjà jouable, marge d'une case autour des villes, trous intérieurs).
+	/// Vérifie : les 45 cases sont générées et terrestres ; chacune touche (4-voisinage) une case jouable
+	/// et toutes sont atteintes à pied depuis le départ de Grakhul (N008_E012) sans quitter les cases
+	/// jouables ; les 5 villes sont dans leurs cases ; chaque point des 6 routes du générateur entre ces
+	/// villes et Moork, Thokrul et Gharzuk est dans une case jouable ; chaque case vide reçoit un lieu
+	/// [GD] (40 POI au sec, seuls sur leur case) ; les cases de villes n'ont aucun POI ; les Ruines du
+	/// fortin des Marches restent en N007_E013.
+	void TestCellulesLieuxV1088()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "cellules et lieux v1.0.88 : master royaumes charge");
+		if (!ok) return;
+		static const char* kCells[] = {
+			"N007_E015", "N006_E013", "N006_E014", "N006_E015", "N006_E019", "N006_E020",
+			"N005_E013", "N005_E014", "N005_E015", "N005_E016", "N005_E017", "N005_E018",
+			"N005_E019", "N005_E020", "N004_E012", "N004_E013", "N004_E014", "N004_E015",
+			"N004_E016", "N004_E017", "N004_E018", "N004_E019", "N004_E020", "N003_E013",
+			"N003_E014", "N003_E015", "N003_E016", "N003_E017", "N003_E018", "N003_E019",
+			"N003_E020", "N002_E013", "N002_E014", "N002_E015", "N002_E016", "N002_E019",
+			"N002_E020", "N001_E012", "N001_E015", "N001_E019", "N001_E020", "N000_E015",
+			"N000_E019", "N000_E020", "S001_E015",
+		};
+		const WorldMaster& m = g.master;
+		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		auto parse = [](const std::string& c, int& n, int& e) {
+			n = std::stoi(c.substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
+			e = std::stoi(c.substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
+		};
+		auto name = [](int n, int e) {
+			char b[32];
+			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
+			return std::string(b);
+		};
+		int inList = 0, land = 0;
+		for (const char* c : kCells)
+		{
+			int n = 0, e = 0;
+			parse(c, n, e);
+			inList += listed.count(c) ? 1 : 0;
+			const char code = LoreCode(m, n, e);
+			land += (code != ' ' && code != '-') ? 1 : 0;
+		}
+		Check(inList == 45 && land == 45, "cellules et lieux v1.0.88 : 45 cases de la Marche de l'Est generees, toutes terrestres");
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		// Connexité : chaque nouvelle case touche une case jouable, et toutes sont atteintes depuis Grakhul.
+		int touching = 0;
+		for (const char* c : kCells)
+		{
+			int n = 0, e = 0;
+			parse(c, n, e);
+			bool t = false;
+			for (const auto& d : { std::pair<int, int>{ 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } })
+				t = t || playable.count(name(n + d.first, e + d.second)) > 0;
+			touching += t ? 1 : 0;
+		}
+		std::set<std::string> seen{ "N008_E012" };
+		std::vector<std::string> front{ "N008_E012" };
+		while (!front.empty())
+		{
+			const std::string c = front.back();
+			front.pop_back();
+			int n = 0, e = 0;
+			parse(c, n, e);
+			for (const auto& d : { std::pair<int, int>{ 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } })
+			{
+				const std::string x = name(n + d.first, e + d.second);
+				if (playable.count(x) && seen.insert(x).second) front.push_back(x);
+			}
+		}
+		int reached = 0;
+		for (const char* c : kCells) reached += seen.count(c) ? 1 : 0;
+		Check(touching == 45 && reached == 45, "cellules et lieux v1.0.88 : aucune case isolee, toutes reliees a pied au depart de Grakhul");
+		// Villes de la Marche dans leurs cases (générées).
+		struct Ville { const char* id; const char* cell; };
+		static const Ville kVilles[] = { { "city_horkher", "N006_E014" }, { "hamlet_0201", "N002_E015" }, { "town_0131", "N004_E018" },
+			{ "town_0115", "N005_E020" }, { "town_0126", "N001_E020" } };
+		int villes = 0;
+		for (const Ville& v : kVilles)
+		{
+			const CityDef* c = g.FindCity(v.id);
+			villes += (c && c->cell == v.cell && playable.count(c->cell)) ? 1 : 0;
+		}
+		Check(villes == 5, "cellules et lieux v1.0.88 : Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere jouables");
+		// Routes du générateur entre les villes de la Marche et vers Moork, Thokrul, Gharzuk.
+		const std::set<std::string> marche{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126" };
+		const std::set<std::string> ends{ "city_horkher", "hamlet_0201", "town_0131", "town_0115", "town_0126", "ville_moork", "hamlet_thokrul", "hamlet_gharzuk" };
+		auto cellOf = [&](const Vec2& p) {
+			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
+		};
+		int routes = 0, outside = 0;
+		for (const Road& r : g.roads)
+		{
+			if (!(marche.count(r.fromId) || marche.count(r.toId)) || !ends.count(r.fromId) || !ends.count(r.toId)) continue;
+			++routes;
+			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
+		}
+		Check(routes == 6 && outside == 0, "cellules et lieux v1.0.88 : 6 routes de la Marche entierement dans des cases jouables");
+		// Lieux [GD] : un POI par case vide.
+		struct Expected { const char* poi; const char* cell; };
+		static const Expected kLieux[] = {
+			{ "poi_barrage_de_peage_lune_noire", "N004_E012" }, { "poi_relais_incendie_via_magna", "N005_E013" },
+			{ "poi_camp_de_troc_des_orcs", "N006_E013" }, { "poi_cabanes_des_charbonniers", "N007_E015" },
+			{ "poi_bergerie_fortifiee", "N006_E015" }, { "poi_moulin_a_vent_pille", "N005_E014" },
+			{ "poi_repaire_des_braconniers", "N005_E015" }, { "poi_champ_de_bataille_de_la_conquete", "N004_E013" },
+			{ "poi_tertre_des_legionnaires", "N003_E013" }, { "poi_grenier_a_ble_requisitionne", "N004_E014" },
+			{ "poi_poste_de_garde_lune_noire", "N003_E014" }, { "poi_chapelle_imperiale_desaffectee", "N004_E015" },
+			{ "poi_grange_incendiee", "N003_E015" }, { "poi_bivouac_des_colporteurs", "N002_E013" },
+			{ "poi_enclos_a_betail", "N002_E014" }, { "poi_campement_des_pecheurs", "N001_E012" },
+			{ "poi_relais_de_la_route_de_moork", "N001_E015" }, { "poi_tour_a_signaux_de_la_baronnie", "N000_E015" },
+			{ "poi_cimetiere_des_captifs", "S001_E015" }, { "poi_croix_de_carrefour_profanee", "N002_E016" },
+			{ "poi_haras_de_la_lune_noire", "N003_E016" }, { "poi_camp_des_refugies", "N003_E017" },
+			{ "poi_tumulus_de_la_plaine", "N003_E018" }, { "poi_scierie_abandonnee", "N004_E016" },
+			{ "poi_tour_de_guet_de_la_lisiere", "N004_E017" }, { "poi_taniere_du_loup_geant", "N005_E016" },
+			{ "poi_autel_sylvestre_lune_noire", "N005_E017" }, { "poi_repaire_des_trolls_de_la_foret", "N005_E018" },
+			{ "poi_camp_de_la_patrouille_noire", "N004_E019" }, { "poi_ermitage_en_ruine", "N005_E019" },
+			{ "poi_mine_de_fer_abandonnee", "N006_E019" }, { "poi_poste_frontiere_du_nord", "N006_E020" },
+			{ "poi_domaine_seigneurial_confisque", "N004_E020" }, { "poi_fosse_aux_ossements", "N003_E019" },
+			{ "poi_camp_de_chasse_orque", "N003_E020" }, { "poi_menhir_du_carrefour", "N002_E019" },
+			{ "poi_arene_de_lutte_des_orcs", "N002_E020" }, { "poi_enclos_des_sangliers_de_guerre", "N001_E019" },
+			{ "poi_tour_ensablee", "N000_E019" }, { "poi_camp_des_nomades", "N000_E020" },
+		};
+		int valid = 0;
+		for (const Expected& x : kLieux)
+		{
+			const PoiDef* p = nullptr;
+			for (const PoiDef& q : g.pois)
+				if (q.id == x.poi) p = &q;
+			bool alone = true;
+			for (const CityDef& c : g.cities)
+				if (p && c.n == p->n && c.e == p->e) alone = false;
+			for (const PoiDef& q : g.pois)
+				if (p && &q != p && q.cell == p->cell) alone = false;
+			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone
+				&& MacroHeight(m, p->center.x, p->center.z) > m.scale.seaLevelM + 5.0;
+			if (!good) std::fprintf(stderr, "  lieu v1.0.88 invalide : %s\n", x.poi);
+			valid += good ? 1 : 0;
+		}
+		Check(valid == 40, "cellules et lieux v1.0.88 : 40 lieux au sec, seuls sur leur case jouable");
+		int poiVilles = 0;
+		for (const Ville& v : kVilles)
+			for (const PoiDef& q : g.pois) poiVilles += q.cell == v.cell ? 1 : 0;
+		Check(poiVilles == 0, "cellules et lieux v1.0.88 : aucun POI sur les cases des villes de la Marche");
+		bool fortin = false;
+		for (const PoiDef& q : g.pois) fortin = fortin || (q.id == "poi_ruines_fortin_des_marches" && q.cell == "N007_E013");
+		Check(fortin, "cellules et lieux v1.0.88 : Ruines du fortin des Marches toujours en N007_E013");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1811,6 +1969,7 @@ int main()
 	TestLieuxV1085();
 	TestLieuxV1086();
 	TestLieuxV1087();
+	TestCellulesLieuxV1088();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

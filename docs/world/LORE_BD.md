@@ -2186,7 +2186,7 @@ ville ni nouveau hameau, aucun identifiant supprimé, aucune ville renommée. Sc
 (N011_E008 et N012_E008, Terres du Nord 1-15, §16.14), qui n'est pas touchée. Via Magna : 5 cases. **Marche de
 l'Est : aucune** — sa seule case générée, N007_E013 (région de départ de Grakhul), porte déjà les Ruines du fortin des
 Marches ; aucun lieu n'y est ajouté, seulement 3 quêtes (lore seulement). Ouvrir des cases de la Marche au jeu
-(`generated_cells`, ou corridor le long de la Via Magna par Horkher) reste à décider.
+(`generated_cells`, ou corridor le long de la Via Magna par Horkher) reste à décider (décidé en v1.0.88 : §16.17).
 
 **Repères de niveau `[GD]` proposés, à valider** (niveau relatif à la faction, `rule_niveaux_par_faction`) :
 Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ;
@@ -2251,7 +2251,7 @@ hostiles génériques, sans fiche.
 
 **Ce qui est réel en jeu** : les 11 POI (bannière de nom à l'approche, aplanissement) dans des cellules générées.
 **Lore seulement** : quêtes (aucun système de quête de monde ne lit ces fiches), PNJ donneurs et adversaires,
-intérieurs (tanière), repères de niveau (aucun niveau de zone côté jeu), toute la Marche de l'Est.
+intérieurs (tanière), repères de niveau (aucun niveau de zone côté jeu), toute la Marche de l'Est (ouverte en v1.0.88, §16.17).
 
 **Contrôles** : test `world_gen_tests` « lieux v1.0.87 » (11 lieux au sec, seuls sur leur case jouable, sans autre POI
 ni ville ; boîte de région vérifiée pour N004_W003 et N004_W004, les autres cases étant rattachées par le lore hors
@@ -2259,7 +2259,135 @@ des boîtes du master ; enclave de Whispers Hill inchangée ; Cercle de pierres 
 Cellules générées : 256 (inchangé). **Services** : 1242 PNJ (inchangé).
 
 **Points incertains** : tous les noms `[GD]` ; repères de niveau proposés ; quêtes ouvertes à toutes les factions ;
-la Marche de l'Est reste hors du monde jouable ; la quête « Au-delà des Bornes » (28+) part de l'enclave 1-15.
+la Marche de l'Est reste hors du monde jouable (ouverte en v1.0.88, §16.17) ; la quête « Au-delà des Bornes » (28+) part de l'enclave 1-15.
+
+### 16.17 Ouverture de la Marche de l'Est (v1.0.88)
+
+Lot 16, décision du propriétaire (12/11/2026) : la Marche de l'Est est ouverte au jeu. Jusqu'ici, seule N007_E013
+(Ruines du fortin des Marches, région de départ de Grakhul) était générée. Scripts reproductibles (hors dépôt) :
+`select_v1088.py` (sélection des cases), `data_v1088.py`, `quests_v1088.py`, `lore_v1088.py` (appliqué au fichier
+v1.0.87), `master_v1088.py`.
+
+**Choix des cases.** L'emprise lore de `region_marche_est` compte 56 cases de terre (E013 à E020 de N002 à N007,
+plus les confins E019-E020 de S003 à N001 ; la boîte `marche_de_lest` du master couvre E013-E020 × N004-N007) :
+plus de 40, donc la région n'est pas ouverte en entier. Sont générées :
+
+- les cases des **5 villes** : Horkher (`city_horkher`, N006_E014), Nightfield (`hamlet_0201`, N002_E015), Blackmoor
+  (`town_0131`, N004_E018), Ebonvale (`town_0115`, N005_E020), Duskmere (`town_0126`, N001_E020) ;
+- les cases des **routes** qui les relient entre elles et au monde déjà jouable : tracés du générateur (Horkher –
+  Thokrul et Horkher – Gharzuk par N006_E013 et le fortin, Moork – Nightfield, Nightfield – Blackmoor, Blackmoor –
+  Ebonvale, Blackmoor – Duskmere) **et** routes du lore (000120 Via Magna de Shadehold à Moork par Horkher et
+  Nightfield, 000056 Horkher – Mossy Rock, 000067 Moork – Nightfield, 000097 Nightward – Nightfield, 000100, 000101,
+  000102) ;
+- une **case de marge** autour de chaque ville (dans la région) ;
+- les **trous intérieurs** (case de la région bordée sur au moins 3 côtés par des cases jouables) : N003_E013,
+  N004_E013, N004_E015, N004_E016, N005_E016, N003_E020.
+
+Total : **45 cases** (39 dans la région, 6 voisines : N006_E013 Orkland, N004_E012 sans région au lore, N001_E012,
+N001_E015, N000_E015, S001_E015 baronnie de Moork). Toutes touchent des cases jouables ; la zone est reliée à pied à
+Grakhul, Shadehold, Nightward, Mossy Rock, Thokrul, Gharzuk et Moork. Le Fortin des Marches (N007_E013) est relié à
+Horkher par N006_E013. `generated_cells` : 5 nouvelles dernières lignes (commentaire du master mis à jour).
+Cellules générées : **256 → 301** (sonde : liste master + corridors, avant / après ; aucune perdue, corridors
+inchangés).
+
+Restent fermées : la forêt du nord (N007_E016 à N007_E020, N006_E016 à N006_E018), N002_E017 et N002_E018 (encoche
+au nord de la baronnie) et les confins désertiques S001-S003 × E019-E020.
+
+Cases générées : N007_E015, N006_E013, N006_E014, N006_E015, N006_E019, N006_E020, N005_E013, N005_E014, N005_E015, N005_E016, N005_E017, N005_E018, N005_E019, N005_E020, N004_E012, N004_E013, N004_E014, N004_E015, N004_E016, N004_E017, N004_E018, N004_E019, N004_E020, N003_E013, N003_E014, N003_E015, N003_E016, N003_E017, N003_E018, N003_E019, N003_E020, N002_E013, N002_E014, N002_E015, N002_E016, N002_E019, N002_E020, N001_E012, N001_E015, N001_E019, N001_E020, N000_E015, N000_E019, N000_E020, S001_E015.
+
+**Lieux** : chaque nouvelle case vide (40 ; les 5 cases de villes ne reçoivent rien) reçoit un lieu `[GD]` avec POI
+réel dans `pois` du master ; aucune nouvelle ville ni hameau, aucun identifiant supprimé, aucune ville renommée.
+Repère 15-28 du lot 15 détaillé (**à valider**) : abords d'Horkher et de la Via Magna 15-22, Nightfield et la route
+de Moork 20-26, forêt de Blackmoor et confins d'Ebonvale et de Duskmere 22-28. Aucun lieu ne dépasse 28 : pas de
+nouvelle balise.
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N004_E012 | **Barrage de péage de la Lune Noire** (`lieu_barrage_de_peage_lune_noire`, `poi_barrage_de_peage_lune_noire`, `camp`) | 16-20 |
+| N005_E013 | **Relais incendié de la Via Magna** (`lieu_relais_incendie_via_magna`, `poi_relais_incendie_via_magna`, `ruine`) | 15-18 |
+| N006_E013 | **Camp de troc des orcs** (`lieu_camp_de_troc_des_orcs`, `poi_camp_de_troc_des_orcs`, `camp`) | 15-18 |
+| N007_E015 | **Cabanes des charbonniers** (`lieu_cabanes_des_charbonniers`, `poi_cabanes_des_charbonniers`, `camp`) | 16-20 |
+| N006_E015 | **Bergerie fortifiée** (`lieu_bergerie_fortifiee`, `poi_bergerie_fortifiee`, `elevage`) | 15-18 |
+| N005_E014 | **Moulin à vent pillé** (`lieu_moulin_a_vent_pille`, `poi_moulin_a_vent_pille`, `ruine`) | 16-20 |
+| N005_E015 | **Repaire des braconniers** (`lieu_repaire_des_braconniers`, `poi_repaire_des_braconniers`, `camp`) | 17-21 |
+| N004_E013 | **Champ de bataille de la conquête** (`lieu_champ_de_bataille_de_la_conquete`, `poi_champ_de_bataille_de_la_conquete`, `champ_bataille`) | 18-22 |
+| N003_E013 | **Tertre des légionnaires** (`lieu_tertre_des_legionnaires`, `poi_tertre_des_legionnaires`, `sanctuaire`) | 18-22 |
+| N004_E014 | **Grenier à blé réquisitionné** (`lieu_grenier_a_ble_requisitionne`, `poi_grenier_a_ble_requisitionne`, `camp`) | 18-22 |
+| N003_E014 | **Poste de garde de la Lune Noire** (`lieu_poste_de_garde_lune_noire`, `poi_poste_de_garde_lune_noire`, `camp`) | 20-24 |
+| N004_E015 | **Chapelle impériale désaffectée** (`lieu_chapelle_imperiale_desaffectee`, `poi_chapelle_imperiale_desaffectee`, `sanctuaire`) | 18-22 |
+| N003_E015 | **Grange incendiée** (`lieu_grange_incendiee`, `poi_grange_incendiee`, `ruine`) | 20-24 |
+| N002_E013 | **Bivouac des colporteurs** (`lieu_bivouac_des_colporteurs`, `poi_bivouac_des_colporteurs`, `camp`) | 20-24 |
+| N002_E014 | **Enclos à bétail** (`lieu_enclos_a_betail`, `poi_enclos_a_betail`, `elevage`) | 20-24 |
+| N001_E012 | **Campement des pêcheurs** (`lieu_campement_des_pecheurs`, `poi_campement_des_pecheurs`, `camp`) | 20-24 |
+| N001_E015 | **Relais de la route de Moork** (`lieu_relais_de_la_route_de_moork`, `poi_relais_de_la_route_de_moork`, `camp`) | 22-26 |
+| N000_E015 | **Tour à signaux de la baronnie** (`lieu_tour_a_signaux_de_la_baronnie`, `poi_tour_a_signaux_de_la_baronnie`, `ruine`) | 22-26 |
+| S001_E015 | **Cimetière des captifs** (`lieu_cimetiere_des_captifs`, `poi_cimetiere_des_captifs`, `sanctuaire`) | 22-26 |
+| N002_E016 | **Croix de carrefour profanée** (`lieu_croix_de_carrefour_profanee`, `poi_croix_de_carrefour_profanee`, `sanctuaire`) | 22-26 |
+| N003_E016 | **Haras de la Lune Noire** (`lieu_haras_de_la_lune_noire`, `poi_haras_de_la_lune_noire`, `elevage`) | 22-26 |
+| N003_E017 | **Camp des réfugiés** (`lieu_camp_des_refugies`, `poi_camp_des_refugies`, `camp`) | 22-26 |
+| N003_E018 | **Tumulus de la plaine** (`lieu_tumulus_de_la_plaine`, `poi_tumulus_de_la_plaine`, `sanctuaire`) | 24-28 |
+| N004_E016 | **Scierie abandonnée** (`lieu_scierie_abandonnee`, `poi_scierie_abandonnee`, `ruine`) | 22-26 |
+| N004_E017 | **Tour de guet de la lisière** (`lieu_tour_de_guet_de_la_lisiere`, `poi_tour_de_guet_de_la_lisiere`, `ruine`) | 24-28 |
+| N005_E016 | **Tanière du loup géant** (`lieu_taniere_du_loup_geant`, `poi_taniere_du_loup_geant`, `salle`) | 24-28 |
+| N005_E017 | **Autel sylvestre de la Lune Noire** (`lieu_autel_sylvestre_lune_noire`, `poi_autel_sylvestre_lune_noire`, `sanctuaire`) | 24-28 |
+| N005_E018 | **Repaire des trolls de la forêt** (`lieu_repaire_des_trolls_de_la_foret`, `poi_repaire_des_trolls_de_la_foret`, `salle`) | 26-28 |
+| N004_E019 | **Camp de la patrouille noire** (`lieu_camp_de_la_patrouille_noire`, `poi_camp_de_la_patrouille_noire`, `camp`) | 24-28 |
+| N005_E019 | **Ermitage en ruine** (`lieu_ermitage_en_ruine`, `poi_ermitage_en_ruine`, `ruine`) | 24-28 |
+| N006_E019 | **Mine de fer abandonnée** (`lieu_mine_de_fer_abandonnee`, `poi_mine_de_fer_abandonnee`, `salle`) | 24-28 |
+| N006_E020 | **Poste-frontière du nord** (`lieu_poste_frontiere_du_nord`, `poi_poste_frontiere_du_nord`, `camp`) | 24-28 |
+| N004_E020 | **Domaine seigneurial confisqué** (`lieu_domaine_seigneurial_confisque`, `poi_domaine_seigneurial_confisque`, `ruine`) | 24-28 |
+| N003_E019 | **Fosse aux ossements** (`lieu_fosse_aux_ossements`, `poi_fosse_aux_ossements`, `gouffre`) | 24-28 |
+| N003_E020 | **Camp de chasse orque** (`lieu_camp_de_chasse_orque`, `poi_camp_de_chasse_orque`, `camp`) | 24-28 |
+| N002_E019 | **Menhir du carrefour** (`lieu_menhir_du_carrefour`, `poi_menhir_du_carrefour`, `monolithe`) | 24-28 |
+| N002_E020 | **Arène de lutte des orcs** (`lieu_arene_de_lutte_des_orcs`, `poi_arene_de_lutte_des_orcs`, `camp`) | 24-28 |
+| N001_E019 | **Enclos des sangliers de guerre** (`lieu_enclos_des_sangliers_de_guerre`, `poi_enclos_des_sangliers_de_guerre`, `elevage`) | 24-28 |
+| N000_E019 | **Tour ensablée** (`lieu_tour_ensablee`, `poi_tour_ensablee`, `ruine`) | 26-28 |
+| N000_E020 | **Camp des nomades** (`lieu_camp_des_nomades`, `poi_camp_des_nomades`, `camp`) | 26-28 |
+
+**Quêtes.** Les 3 quêtes v1.0.87 deviennent jouables (note `[DÉCISION] (v1.0.88)`) : « Le Grain de la Marche »
+(Nightfield → Moork, route du générateur dans des cases générées), « La Laine d'Horkher » (Horkher → Poste de relais
+impérial → Harrowdale, par Thokrul et Mossy Rock), « Le Registre du fortin » (Horkher → Ruines du fortin des
+Marches). Donneurs : Horkher et Nightfield, désormais jouables. 2 quêtes `[GD]` ajoutées :
+
+- `quest_marche_est_gd_peage_de_la_via_magna` « Le Péage de la Via Magna » (niveau 16+) : city_horkher → lieu_barrage_de_peage_lune_noire → lieu_relais_incendie_via_magna
+- `quest_marche_est_gd_trolls_de_la_foret` « Les Trolls de la forêt » (niveau 26+) : town_0131 → lieu_scierie_abandonnee → lieu_taniere_du_loup_geant → lieu_repaire_des_trolls_de_la_foret
+
+**Sources.** Inventés `[GD]` sauf : conquête de la Marche par la Lune Noire avant le T1 et règne de Greldinard
+`[BD-A5 p.38-44]` (péage, poste de garde, champ de bataille, chapelle désaffectée, domaine confisqué) ; Horker
+« alors marche de l'Empire » `[BD-THS p.23]` ; blé, bétail, laine, grain vers Moork, importation d'armes (économie
+v1.0.58) ; trolls et feu `[BD-A1 p.60]`. Placements `[INFÉRÉ]`. Aucun nom propre inventé ; noms vérifiés contre les
+PNJ de service (« Pierre levée du carrefour » renommé « Menhir du carrefour » avant livraison : « pierre » est un
+prénom de PNJ). Le flot de barbares du T14 (`raid_marches_est_t14`) n'est pas utilisé (après le T11).
+
+**Faune** : aucune créature créée ; espèces existantes rattachées (`zones_chasse`, `creature_ids`) : loup,
+dragonnet-léopard, deux fois nés (champ de bataille, cimetière), corbeau, mammouth de trait, loup géant de guerre,
+troll, ogre, sanglier de guerre.
+
+**Règles respectées** : aucune grotte de dragon ni entrée ophidienne dans les cases ouvertes ou voisines (rien
+ajouté, rien désigné) ; services inchangés (1242 PNJ).
+
+**Registre** (`regle_canon_registre_decisions`) : 1 entrée v1.0.88 « Ouverture de la Marche de l'Est ».
+
+**Ce qui est réel en jeu** : les 45 cases et leurs villes, les 40 POI, les routes du générateur entre les villes de
+la Marche (6 tracés entièrement dans des cases jouables). **Ce qui ne l'est pas** :
+
+- le générateur ne trace pas la **Via Magna** du lore entre Shadehold et Horkher ni entre Horkher et Nightfield
+  (son réseau relie Horkher à Thokrul et Gharzuk, Nightfield à Moork et Blackmoor) : on y marche à travers les
+  plaines des cases ouvertes ; les lieux « sur la Via Magna » sont au bord de son tracé lore ;
+- routes sortant de la zone vers des villes hors région, coupées au mur invisible : Ebonvale – Rivercross (000104,
+  par N007_E019/N007_E020), Ebonvale – Riverfold (000160) et Ebonvale – Greyfield (000161) par E021, Duskmere –
+  Dustfield (000162) et Duskmere – Greyfield par E021 ;
+- quêtes, PNJ donneurs et adversaires, intérieurs, repères de niveau (lore seulement, comme aux lots 14-15).
+
+**Contrôles** : test `world_gen_tests` « cellules et lieux v1.0.88 » (45 cases générées et terrestres, aucune
+isolée, toutes atteintes à pied depuis Grakhul ; 5 villes jouables ; 6 routes de la Marche entièrement dans des
+cases jouables ; 40 lieux au sec, seuls sur leur case ; aucun POI sur les cases de villes ; fortin inchangé).
+Génération de cases de la Marche avec le générateur sans erreur (voir le rapport du lot).
+
+**Points incertains** : tous les noms `[GD]` ; repère 15-28 et son gradient ; marge d'une case (16 cases) et trous
+intérieurs ; ouvrir aussi la forêt du nord, les confins du sud-est et les routes vers Rivercross, Riverfold,
+Greyfield et Dustfield ; tracer la Via Magna dans le générateur ; quêtes ouvertes à toutes les factions alors que la
+Marche est tenue par la Lune Noire.
 
 ## 17. Questions ouvertes
 
@@ -2268,7 +2396,8 @@ la Marche de l'Est reste hors du monde jouable ; la quête « Au-delà des Borne
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
-- Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16).
+- Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
+- Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rivercross, Riverfold, Greyfield et Dustfield, Via Magna non tracée par le générateur entre Shadehold, Horkher et Nightfield (16.17).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

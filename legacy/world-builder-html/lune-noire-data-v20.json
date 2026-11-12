@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.87",
+    "version": "1.0.88",
     "notes": [
+      "v1.0.88 : [DÉCISION] Ouverture de la Marche de l'Est au jeu (lot 16 du propriétaire, 12/11/2026). 45 cases ajoutées à generated_cells : les 5 villes (Horkher, Nightfield, Blackmoor, Ebonvale, Duskmere) deviennent jouables, avec les routes qui les relient entre elles et au monde déjà jouable (Via Magna de Shadehold à Moork par Horkher et Nightfield, routes de Thokrul, Mossy Rock et Nightward), une case de marge autour des villes et les trous intérieurs. 40 lieux [GD] avec POI réel (un par case vide), repère 15-28 détaillé, 2 quêtes [GD] ; les 3 quêtes v1.0.87 deviennent jouables. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.17.",
       "v1.0.87 : [GD] Lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est (lot 15 du propriétaire, 12/11/2026). Chaque case jouable vide reçoit un lieu [GD] avec POI réel : 6 sur la lisière sud des Terres des Gigantomorphes (autour de l'enclave de Whispers Hill, inchangée), 5 sur la Via Magna (11 lieux) ; la Marche de l'Est n'a aucune case jouable vide (aucun lieu). 10 quêtes [GD] (4 Gigantomorphes, 3 Via Magna, 3 Marche de l'Est). Repères proposés : lisière sud des Gigantomorphes 28-36, gradient de la Via Magna, Marche de l'Est 15-28. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.16.",
       "v1.0.86 : [GD] Lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle (lot 14, priorité 2 validée par le propriétaire le 12/11/2026). Chaque case générée vide des trois régions reçoit un lieu [GD] avec POI réel : 11 en Baronnie de Moork, 15 dans les Terres désolées, 10 dans le Désert de l'Oracle (36 lieux, dont 4 balises : Borne des Monts de Moork, Stèle des Deux Fois Nés, Cairn des Coulées, Cairn des Caravaniers). 14 quêtes [GD] relient les lieux (5 Moork, 5 Tsaroth, 4 Oracle). Fiches de région ajoutées : terres_desolees (20-40 proposé), desert_central (10-25 proposé). Tsaroth reste sans service, sans camp de la Légion ; Moork reste intacte. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.15.",
       "v1.0.85 : [CANON] Balisage des zones dangereuses et ancrages manquants (lot 13, corrections validées par le propriétaire le 12/11/2026). Rien n'est déplacé : 10 cases de contenu nettement plus fort que leur zone sont balisées (repères sur le passage, PNJ avertisseurs aux villes voisines, légendes sans révéler les grottes des dragons, enceintes gardées pour les dragons et golems de l'Empire et les dragons des Chevaliers-Dragons) ; 5 lieux de balisage [GD] avec POI réels (Cairn des Os noircis N010_E012, Stèle des Flèches blanches N008_W007, trois Bornes des Géants). Whispers Hill : N011_E008 et N012_E008 passent aux Terres du Nord (region_terres_nord_t00, 1-15), enclave dans les Terres des Gigantomorphes. Abysses conservées sous la mer (accès par la ligne maritime du sud). 7 raids et 19 quêtes rattachés à une case. Registre : 5 entrées. Détail : docs/world/LORE_BD.md, section 16.14.",
@@ -12514,7 +12515,8 @@
         "[BD-T7] p.18, 30, 38 : « Baron de Moork et d'Horkher » ; les dissidents d'Horkher diminuent ; « NORKHER » sur la carte impériale (lecture incertaine) ; [BD-T8] p.50 : graphie « Horker ».",
         "[DÉCISION] (v1.0.56) Comté rattaché à la Marche de l'Est (Q15) ; graphie THS « Horker » en alias (Q12).",
         "[GD] (v1.0.58) Économie : cité marchande ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N006_E014) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -13826,7 +13828,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N005_E020) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -15205,7 +15208,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois d'œuvre, gibier et peaux ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois d'œuvre, gibier et peaux ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N001_E020) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -15819,7 +15823,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : bourg artisanal ; produit bois de chauffe, petit gibier, miel, blé et orge ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : bourg artisanal ; produit bois de chauffe, petit gibier, miel, blé et orge ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N004_E018) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -19029,7 +19034,8 @@
       "footprint_tiles": [],
       "notes": [
         "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage ; récolte : gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N002_E015) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -38896,7 +38902,8 @@
       "notes": [
         "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
         "[GD] (v1.0.87) Niveau 18 et plus ; cases : N002_E015, S002_E015. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
-        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées.",
+        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus."
       ],
       "quest_kind": "group",
       "has_counter_quest": false
@@ -38945,7 +38952,8 @@
       "notes": [
         "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
         "[GD] (v1.0.87) Niveau 18 et plus ; cases : N006_E014, N004_E010, N004_E009. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
-        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées.",
+        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus."
       ],
       "quest_kind": "solo",
       "has_counter_quest": false
@@ -38993,9 +39001,112 @@
       "notes": [
         "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
         "[GD] (v1.0.87) Niveau 15 et plus ; cases : N006_E014, N007_E013. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
-        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées."
+        "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées.",
+        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus."
       ],
       "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_peage_de_la_via_magna",
+      "name": "Le Péage de la Via Magna",
+      "description": "Les marchands d'Horkher se plaignent du barrage que la Lune Noire a dressé sur la Via Magna et des maraudeurs qui tiennent le relais incendié. Découvrir qui rançonne vraiment les convois.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.88)",
+      "steps": [
+        "À Horkher, écouter les marchands rançonnés.",
+        "Au Barrage de péage de la Lune Noire, payer le droit de passage ou le contourner.",
+        "Au Relais incendié de la Via Magna, chasser les maraudeurs et retrouver les marchandises volées.",
+        "Rapporter aux marchands d'Horkher que les péagers et les maraudeurs se partagent le butin."
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_barrage_de_peage_lune_noire",
+        "lieu_relais_incendie_via_magna"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 16
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.88) Quête proposée, nom et étapes à valider ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17.",
+        "[GD] (v1.0.88) Niveau 16 et plus ; cases : N006_E014, N004_E012, N005_E013 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_trolls_de_la_foret",
+      "name": "Les Trolls de la forêt",
+      "description": "Les bûcherons de Blackmoor n'osent plus entrer dans la forêt : les loups géants ont tué les scieurs et des trolls descendent jusqu'aux fermes. Les repousser par le fer et par le feu.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.88)",
+      "steps": [
+        "À Blackmoor, écouter les bûcherons.",
+        "À la Scierie abandonnée, relever les traces des loups géants.",
+        "Nettoyer la Tanière du loup géant.",
+        "Entrer dans le Repaire des trolls de la forêt et le purger par le feu.",
+        "Rapporter aux bûcherons de Blackmoor que la forêt est sûre."
+      ],
+      "source_lore": [
+        "town_0131",
+        "lieu_scierie_abandonnee",
+        "lieu_taniere_du_loup_geant",
+        "lieu_repaire_des_trolls_de_la_foret",
+        "creature_loup_geant_de_guerre",
+        "creature_troll"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 26
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.88) Quête proposée, nom et étapes à valider ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17.",
+        "[GD] (v1.0.88) Niveau 26 et plus ; cases : N004_E018, N004_E016, N005_E016, N005_E018 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
       "has_counter_quest": false
     }
   ],
@@ -164176,7 +164287,8 @@
         "[BD-T5] La Faucheuse exulte : 'Les portes des enfers accueillaient un gigantesque flot d'âmes.'",
         "[BD-A5 p.25] Squelettes armés (casques, boucliers ronds), « deux fois nés », hordes relevées par Haazheel.",
         "[BD-T8 p.7] Horde des deux fois nés, armée putréfiée des héros morts.",
-        "[GD] (v1.0.86) Rattachée aux lieux lieu_plaine_des_cendres, lieu_lande_pierres_dressees, lieu_ravin_de_l_ichor (LORE_BD §16.15)."
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_plaine_des_cendres, lieu_lande_pierres_dressees, lieu_ravin_de_l_ichor (LORE_BD §16.15).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_champ_de_bataille_de_la_conquete, lieu_cimetiere_des_captifs (Marche de l'Est, LORE_BD §16.17)."
       ],
       "habitat": "Der Hem Shelbem et champs de bataille.",
       "groupe": "horde",
@@ -164190,7 +164302,11 @@
         "S010_E011",
         "lieu_lande_pierres_dressees",
         "S010_E012",
-        "lieu_ravin_de_l_ichor"
+        "lieu_ravin_de_l_ichor",
+        "N004_E013",
+        "lieu_champ_de_bataille_de_la_conquete",
+        "S001_E015",
+        "lieu_cimetiere_des_captifs"
       ]
     },
     {
@@ -166352,7 +166468,8 @@
       "notes": [
         "[BD-T00 p.37] Meute de loups noirs.",
         "Variante locale : creature_loup_t00 ; loups dressés : creature_loup_geant_de_guerre.",
-        "[GD] (v1.0.87) Rattachée aux lieux lieu_camp_des_trappeurs (LORE_BD §16.16)."
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_camp_des_trappeurs (LORE_BD §16.16).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_cabanes_des_charbonniers, lieu_bergerie_fortifiee (Marche de l'Est, LORE_BD §16.17)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Canidés",
@@ -166372,7 +166489,11 @@
         "N016_E019",
         "N016_E020",
         "N012_E007",
-        "lieu_camp_des_trappeurs"
+        "lieu_camp_des_trappeurs",
+        "N007_E015",
+        "lieu_cabanes_des_charbonniers",
+        "N006_E015",
+        "lieu_bergerie_fortifiee"
       ]
     },
     {
@@ -168085,7 +168206,8 @@
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N009_E012, N009_E013, N008_E011, N007_E011, N007_E013 (LORE_BD §15.4).",
         "[GD] (v1.0.68) Faune de la région de départ de Wyrmhallow (niveaux 1 à 10) : S003_W005, S003_W003, S005_W005, S005_W003 (LORE_BD §15.5).",
         "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018, S008_E016 (LORE_BD §15.6).",
-        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N007_W007, N008_W005 (LORE_BD §15.7)."
+        "[GD] (v1.0.70) Faune de la région de départ de Silverglade (niveaux 1 à 10) : N007_W007, N008_W005 (LORE_BD §15.7).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_champ_de_bataille_de_la_conquete (Marche de l'Est, LORE_BD §16.17)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -168124,7 +168246,9 @@
         "S008_E016",
         "N007_W007",
         "N008_W005",
-        "S004_W005"
+        "S004_W005",
+        "N004_E013",
+        "lieu_champ_de_bataille_de_la_conquete"
       ]
     },
     {
@@ -169604,7 +169728,8 @@
         "[BD-T11 p.40, p.44] Ogres et géants manutentionnaires ; ogres de l'assaut du Sud (avenir du monde jouable).",
         "[BD-A1] Ghorghor est un demi-ogre (race_half_ogre) : les ogres sont le peuple de son père.",
         "[GD] (v1.0.58) Hostile en Orkland et dans les Marches ; présent en troupes alliées dans les armées de la Lune Noire.",
-        "[GD] (v1.0.87) Rattachée aux lieux lieu_coupe_des_bucherons, lieu_cercle_pierres_des_geants (LORE_BD §16.16)."
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_coupe_des_bucherons, lieu_cercle_pierres_des_geants (LORE_BD §16.16).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_fosse_aux_ossements (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Forêts et plaines de l'Orkland ; bandes errantes dans les Territoires des Marches.",
@@ -169618,7 +169743,9 @@
         "N010_E007",
         "lieu_coupe_des_bucherons",
         "N011_E009",
-        "lieu_cercle_pierres_des_geants"
+        "lieu_cercle_pierres_des_geants",
+        "N003_E019",
+        "lieu_fosse_aux_ossements"
       ],
       "groupe": "horde"
     },
@@ -169660,7 +169787,8 @@
         "[BD-THS p.30] Quelques dizaines par bataille, stupides, opiniâtres (rang 3).",
         "[GD] (v1.0.58) Trois variantes de modèle : troll des forêts, troll de guerre, troll rouge des collines ; même fiche de combat.",
         "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N016_E019, N016_E020 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
-        "[GD] (v1.0.87) Rattachée aux lieux lieu_taniere_des_trolls (LORE_BD §16.16)."
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_taniere_des_trolls (LORE_BD §16.16).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_repaire_des_trolls_de_la_foret (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Forêts profondes de l'Orkland et des Marches ; trolls de guerre dans les camps de la Lune Noire.",
@@ -169671,7 +169799,9 @@
         "N016_E019",
         "N016_E020",
         "N012_E009",
-        "lieu_taniere_des_trolls"
+        "lieu_taniere_des_trolls",
+        "N005_E018",
+        "lieu_repaire_des_trolls_de_la_foret"
       ],
       "groupe": "solitaire",
       "variantes": [
@@ -169989,7 +170119,8 @@
       "notes": [
         "[BD-A1 p.22] Bêtes de trait laineuses à défenses tirant les roulottes du cirque.",
         "[BD-T5 p.24] Énormes bêtes à défenses velues rousses au camp de la Lune Noire.",
-        "[GD] (v1.0.58) Troupeaux sauvages dans les plaines des Marches ; bêtes domestiques des convois."
+        "[GD] (v1.0.58) Troupeaux sauvages dans les plaines des Marches ; bêtes domestiques des convois.",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_grenier_a_ble_requisitionne (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Plaines des Territoires des Marches ; convois et camps militaires.",
@@ -169998,7 +170129,9 @@
         "N018_E015",
         "N018_E016",
         "N017_E018",
-        "N016_E018"
+        "N016_E018",
+        "N004_E014",
+        "lieu_grenier_a_ble_requisitionne"
       ],
       "groupe": "troupeau"
     },
@@ -170068,7 +170201,8 @@
       "notes": [
         "[BD-A4 p.12] Jeune recrue orque à cape rouge montée sur un loup.",
         "[BD-A4 p.13] Loups géants de guerre : fourrure noire, chaînes, crânes, muselières de fer.",
-        "[GD] (v1.0.58) Meutes dressées autour des camps orques ; meutes retournées à l'état sauvage dans les forêts de l'Orkland."
+        "[GD] (v1.0.58) Meutes dressées autour des camps orques ; meutes retournées à l'état sauvage dans les forêts de l'Orkland.",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_scierie_abandonnee, lieu_taniere_du_loup_geant, lieu_tour_de_guet_de_la_lisiere (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Forêts de l'Orkland, autour des camps orques.",
@@ -170077,7 +170211,13 @@
         "N013_E012",
         "N012_E011",
         "N011_E010",
-        "N010_E009"
+        "N010_E009",
+        "N004_E016",
+        "lieu_scierie_abandonnee",
+        "N005_E016",
+        "lieu_taniere_du_loup_geant",
+        "N004_E017",
+        "lieu_tour_de_guet_de_la_lisiere"
       ],
       "groupe": "meute"
     },
@@ -170111,7 +170251,8 @@
       "notes": [
         "[BD-A4 p.29, p.38] Sangliers de guerre géants : défenses, harnachement rouge, crânes.",
         "[BD-A3 pl.9] Montures porcines de Parsifal enfant (cochon rose, sangliers gris et noir).",
-        "[GD] (v1.0.58) Plaines de l'Orkland."
+        "[GD] (v1.0.58) Plaines de l'Orkland.",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_enclos_des_sangliers_de_guerre (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Plaines de l'Orkland.",
@@ -170119,7 +170260,9 @@
         "N011_E017",
         "N009_E016",
         "N007_E014",
-        "N006_E013"
+        "N006_E013",
+        "N001_E019",
+        "lieu_enclos_des_sangliers_de_guerre"
       ],
       "groupe": "meute"
     },
@@ -170240,7 +170383,8 @@
         "[À VÉRIFIER] [BD-T10 p.6] Petite créature dorée-écailleuse à longue queue rayée ; [BD-T7 p.20] créature écailleuse jaune tachetée de noir : même espèce ?",
         "[DÉCISION] (v1.0.55) Kruikna, « Cruik » et le dragon bleu de Pilou sont trois dragons distincts : ce dragonnet n'est aucun d'eux.",
         "[GD] (v1.0.58) Lisières des forêts de la Via Magna.",
-        "[GD] (v1.0.87) Rattachée aux lieux lieu_poste_relais_imperial (LORE_BD §16.16)."
+        "[GD] (v1.0.87) Rattachée aux lieux lieu_poste_relais_imperial (LORE_BD §16.16).",
+        "[GD] (v1.0.88) Rattachée aux lieux lieu_repaire_des_braconniers (Marche de l'Est, LORE_BD §16.17)."
       ],
       "bestiaire": true,
       "habitat": "Forêts et lisières de la Via Magna.",
@@ -170249,7 +170393,9 @@
         "N008_E008",
         "N006_E008",
         "N004_E010",
-        "lieu_poste_relais_imperial"
+        "lieu_poste_relais_imperial",
+        "N005_E015",
+        "lieu_repaire_des_braconniers"
       ],
       "groupe": "solitaire"
     },
@@ -171866,7 +172012,8 @@
         "[BD-A4 p.14, 41-44] L'Empire jugeait les orques « pas civilisables » ; Greldinard devient maître « du plus puissant royaume orque », puis « chef suprême de tous les orques ».",
         "[BD-THS p.26-27] « Territoires Orques » ; orques soumis à Greldinard (doigt, main, pied, horde).",
         "[DÉCISION] (v1.0.56) « Orkland » est le nom orque de la région (Q17), en alias ; région et identifiant inchangés. « orcs » dans les données de jeu, « orques » accepté en texte (Q12).",
-        "[GD] (v1.0.58) Économie : ressources minerai « si précieux pour l'Empire », gibier, bois ; productions troc, butin ; exporte peaux, butin ; importe armes, alcool. Détail et sources : regle_eco_productions_regions."
+        "[GD] (v1.0.58) Économie : ressources minerai « si précieux pour l'Empire », gibier, bois ; productions troc, butin ; exporte peaux, butin ; importe armes, alcool. Détail et sources : regle_eco_productions_regions.",
+        "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N006_E013 (routes d'Horkher vers Thokrul, Gharzuk et Mossy Rock) est générée, avec le Camp de troc des orcs [GD]."
       ]
     },
     {
@@ -171896,7 +172043,8 @@
         "[HS] Ville de Horker : marche de l'Empire, être nommé là n'était pas une sinécure.",
         "[DÉCISION] (v1.0.56) Baronnie rattachée à la région « Marche de l'Est » (Q15, region_marche_est) ; tenue par Wismerhill à l'époque du jeu (Q10).",
         "[GD] (v1.0.58) Économie : ressources sel et pierre du désert, vers de Moork, soufre (Tsaroth) ; productions élevage des Grands Vers Messagers, artisanat des guildes de Moork ; exporte impôts en couronnes vers Lhynn, vers et chair de ver ; importe grain, bois, acier nain. Détail et sources : regle_eco_productions_regions.",
-        "[GD] (v1.0.86) Campagne de la baronnie (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : 11 lieux [GD] sur les cases générées vides (tour de guet, ferme pillée, camp et tertre des clans insoumis, puits et salines de la piste du sel, fosses aux vers, enclos des bêtes de guerre, fortin impérial en ruine, relais des convois d'acier, Borne des Monts de Moork) et 5 quêtes qui sortent les joueurs de Moork. Gradient [GD] dans le repère 18-45 : plaines de l'ouest 18-26, désert de la piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 (balisés). Moork reste intacte (avant le T11)."
+        "[GD] (v1.0.86) Campagne de la baronnie (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : 11 lieux [GD] sur les cases générées vides (tour de guet, ferme pillée, camp et tertre des clans insoumis, puits et salines de la piste du sel, fosses aux vers, enclos des bêtes de guerre, fortin impérial en ruine, relais des convois d'acier, Borne des Monts de Moork) et 5 quêtes qui sortent les joueurs de Moork. Gradient [GD] dans le repère 18-45 : plaines de l'ouest 18-26, désert de la piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 (balisés). Moork reste intacte (avant le T11).",
+        "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N001_E012 (route Nightward - Nightfield) et N001_E015, N000_E015, S001_E015 (route Moork - Nightfield, Via Magna) sont générées, avec un lieu [GD] chacune (Campement des pêcheurs, Relais de la route de Moork, Tour à signaux de la baronnie, Cimetière des captifs)."
       ]
     },
     {
@@ -171915,7 +172063,8 @@
         "[GD] (v1.0.58) Économie : ressources relais et caravansérails ; productions services aux voyageurs, relais de poste impériaux. Détail et sources : regle_eco_productions_regions.",
         "[CARTE] (v1.0.60) Tracé : route 000120 (type imperial_road), 34 cellules de N001_W010 à S002_E015 ; les cellules de la région ne sont pas toutes sur le tracé (région inchangée).",
         "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
-        "[GD] (v1.0.87) Relais et dangers de la route (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : les 5 cases jouables vides reçoivent un lieu [GD] (poste de relais impérial, camp des détrousseurs, caravane ensablée, bivouac de la légion, sanctuaire profané) et 3 quêtes partent de Harrowdale, de Sauken Glude et du fief de Garundel. Gradient proposé dans le repère 10-30, à valider : désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, tronçon Harrowdale – Shadehold vers Moork 18-26."
+        "[GD] (v1.0.87) Relais et dangers de la route (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : les 5 cases jouables vides reçoivent un lieu [GD] (poste de relais impérial, camp des détrousseurs, caravane ensablée, bivouac de la légion, sanctuaire profané) et 3 quêtes partent de Harrowdale, de Sauken Glude et du fief de Garundel. Gradient proposé dans le repère 10-30, à valider : désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, tronçon Harrowdale – Shadehold vers Moork 18-26.",
+        "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : N004_E012 (Via Magna entre Shadehold et Horkher, case sans région au lore) est générée, avec le Barrage de péage de la Lune Noire [GD]."
       ]
     },
     {
@@ -172094,7 +172243,9 @@
         "[GD] (v1.0.58) Économie : ressources blé, bétail ; productions laine [GD] ; exporte grain vers Moork ; importe armes. Détail et sources : regle_eco_productions_regions.",
         "[INFÉRÉ] (v1.0.59) Emprise : les 56 cellules sans région de E013 à E020, de S003 à N007, autour de la baronnie de Moork (baronnie_de_moorks, qui en fait partie) : au nord le comté d'Horkher (city_horkher, N006_E014), à l'est les confins jusqu'au Rivage des Géants. Monde jouable : région marche_de_lest (E013 à E020, N004 à N007, au nord de la baronnie, qui garde son nom).",
         "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ].",
-        "[GD] (v1.0.87) lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16 : aucune case jouable vide (seule N007_E013 est générée, dans la région de départ de Grakhul, et porte déjà les Ruines du fortin des Marches) : aucun lieu ajouté. 3 quêtes [GD] relient les villes de la Marche à la Via Magna, à Moork et au fortin. Repère de niveau proposé, à valider : 15-28 hors de la baronnie (entre la région de départ de Grakhul, 1-10, et l'Orkland et la baronnie, 18-45). Ouvrir des cases de la Marche au jeu (generated_cells ou corridor par la Via Magna) reste à décider."
+        "[GD] (v1.0.87) lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16 : aucune case jouable vide (seule N007_E013 est générée, dans la région de départ de Grakhul, et porte déjà les Ruines du fortin des Marches) : aucun lieu ajouté. 3 quêtes [GD] relient les villes de la Marche à la Via Magna, à Moork et au fortin. Repère de niveau proposé, à valider : 15-28 hors de la baronnie (entre la région de départ de Grakhul, 1-10, et l'Orkland et la baronnie, 18-45). Ouvrir des cases de la Marche au jeu (generated_cells ou corridor par la Via Magna) reste à décider.",
+        "[DÉCISION] (v1.0.88) Ouverture de la Marche de l'Est au jeu (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17). L'emprise lore (56 cases de terre) dépasse 40 cases : sont générées les cases des 5 villes (Horkher, Nightfield, Blackmoor, Ebonvale, Duskmere), celles des routes qui les relient entre elles et au monde déjà jouable (tracés du générateur et routes du lore, dont la Via Magna de Shadehold à Moork par Horkher et Nightfield), une case de marge autour de chaque ville et les trous intérieurs : 45 cases nouvelles (39 dans la région, 6 voisines : N006_E013, N004_E012, N001_E012, N001_E015, N000_E015, S001_E015). Les Ruines du fortin des Marches (N007_E013) étaient déjà jouables. Restent fermées : la forêt du nord (N006-N007, E016-E020, sauf la marge), N002_E017, N002_E018 et les confins désertiques du sud-est (S001-S003, E019-E020).",
+        "[GD] (v1.0.88) Chaque nouvelle case vide reçoit un lieu [GD] avec POI réel (40 lieux) ; repère 15-28 détaillé : abords d'Horkher et de la Via Magna 15-22, Nightfield et la route de Moork 20-26, forêt de Blackmoor et confins d'Ebonvale et de Duskmere 22-28. Aucun contenu ne dépasse 28 : pas de nouvelle balise. 2 quêtes [GD] de plus ; les 3 quêtes v1.0.87 deviennent jouables."
       ]
     },
     {
@@ -202963,10 +203114,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_loup"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Cabanes des charbonniers (lieu_cabanes_des_charbonniers, POI poi_cabanes_des_charbonniers, camp, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -203858,7 +204013,10 @@
         "creature_sanglier_de_guerre"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Camp de troc des orcs (lieu_camp_de_troc_des_orcs, POI poi_camp_de_troc_des_orcs, camp, 15-18) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -203878,7 +204036,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore."
       ],
       "coord_x": null,
       "coord_y": null
@@ -203895,10 +204054,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_loup"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Bergerie fortifiée (lieu_bergerie_fortifiee, POI poi_bergerie_fortifiee, elevage, 15-18) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -203978,7 +204141,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Mine de fer abandonnée (lieu_mine_de_fer_abandonnee, POI poi_mine_de_fer_abandonnee, salle, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -203998,7 +204163,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Poste-frontière du nord (lieu_poste_frontiere_du_nord, POI poi_poste_frontiere_du_nord, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204744,7 +204911,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Relais incendié de la Via Magna (lieu_relais_incendie_via_magna, POI poi_relais_incendie_via_magna, ruine, 15-18) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204764,7 +204933,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Moulin à vent pillé (lieu_moulin_a_vent_pille, POI poi_moulin_a_vent_pille, ruine, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204781,10 +204952,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_dragonnet_leopard"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Repaire des braconniers (lieu_repaire_des_braconniers, POI poi_repaire_des_braconniers, camp, 17-21) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204801,10 +204976,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_geant_de_guerre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Tanière du loup géant (lieu_taniere_du_loup_geant, POI poi_taniere_du_loup_geant, salle, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204824,7 +205003,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Autel sylvestre de la Lune Noire (lieu_autel_sylvestre_lune_noire, POI poi_autel_sylvestre_lune_noire, sanctuaire, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204841,10 +205022,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_troll"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Repaire des trolls de la forêt (lieu_repaire_des_trolls_de_la_foret, POI poi_repaire_des_trolls_de_la_foret, salle, 26-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204864,7 +205049,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur.",
+        "[GD] (v1.0.88) Ermitage en ruine (lieu_ermitage_en_ruine, POI poi_ermitage_en_ruine, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -204884,7 +205071,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205625,7 +205813,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Barrage de péage de la Lune Noire (lieu_barrage_de_peage_lune_noire, POI poi_barrage_de_peage_lune_noire, camp, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205641,10 +205832,15 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_deux_fois_ne",
+        "animal_corbeau"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Champ de bataille de la conquête (lieu_champ_de_bataille_de_la_conquete, POI poi_champ_de_bataille_de_la_conquete, champ_bataille, 18-22) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205661,10 +205857,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_mammouth_de_trait"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Grenier à blé réquisitionné (lieu_grenier_a_ble_requisitionne, POI poi_grenier_a_ble_requisitionne, camp, 18-22) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205684,7 +205884,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Chapelle impériale désaffectée (lieu_chapelle_imperiale_desaffectee, POI poi_chapelle_imperiale_desaffectee, sanctuaire, 18-22) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205701,10 +205903,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_geant_de_guerre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Scierie abandonnée (lieu_scierie_abandonnee, POI poi_scierie_abandonnee, ruine, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205721,10 +205927,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_loup_geant_de_guerre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Tour de guet de la lisière (lieu_tour_de_guet_de_la_lisiere, POI poi_tour_de_guet_de_la_lisiere, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205744,7 +205954,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205764,7 +205975,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Camp de la patrouille noire (lieu_camp_de_la_patrouille_noire, POI poi_camp_de_la_patrouille_noire, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -205784,7 +205997,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Domaine seigneurial confisqué (lieu_domaine_seigneurial_confisque, POI poi_domaine_seigneurial_confisque, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206540,7 +206755,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Tertre des légionnaires (lieu_tertre_des_legionnaires, POI poi_tertre_des_legionnaires, sanctuaire, 18-22) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206560,7 +206777,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Poste de garde de la Lune Noire (lieu_poste_de_garde_lune_noire, POI poi_poste_de_garde_lune_noire, camp, 20-24) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206580,7 +206799,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Grange incendiée (lieu_grange_incendiee, POI poi_grange_incendiee, ruine, 20-24) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206600,7 +206821,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Haras de la Lune Noire (lieu_haras_de_la_lune_noire, POI poi_haras_de_la_lune_noire, elevage, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206620,7 +206843,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Camp des réfugiés (lieu_camp_des_refugies, POI poi_camp_des_refugies, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206640,7 +206865,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur.",
+        "[GD] (v1.0.88) Tumulus de la plaine (lieu_tumulus_de_la_plaine, POI poi_tumulus_de_la_plaine, sanctuaire, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206657,10 +206884,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_ogre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Fosse aux ossements (lieu_fosse_aux_ossements, POI poi_fosse_aux_ossements, gouffre, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206680,7 +206911,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[GD] (v1.0.88) Camp de chasse orque (lieu_camp_de_chasse_orque, POI poi_camp_de_chasse_orque, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207453,7 +207686,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Bivouac des colporteurs (lieu_bivouac_des_colporteurs, POI poi_bivouac_des_colporteurs, camp, 20-24) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207473,7 +207708,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Enclos à bétail (lieu_enclos_a_betail, POI poi_enclos_a_betail, elevage, 20-24) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207493,7 +207730,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207513,7 +207751,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur.",
+        "[GD] (v1.0.88) Croix de carrefour profanée (lieu_croix_de_carrefour_profanee, POI poi_croix_de_carrefour_profanee, sanctuaire, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207573,7 +207813,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Menhir du carrefour (lieu_menhir_du_carrefour, POI poi_menhir_du_carrefour, monolithe, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207593,7 +207835,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Arène de lutte des orcs (lieu_arene_de_lutte_des_orcs, POI poi_arene_de_lutte_des_orcs, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -208331,7 +208575,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : route du lore.",
+        "[GD] (v1.0.88) Campement des pêcheurs (lieu_campement_des_pecheurs, POI poi_campement_des_pecheurs, camp, 20-24) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -208388,7 +208635,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Relais de la route de Moork (lieu_relais_de_la_route_de_moork, POI poi_relais_de_la_route_de_moork, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -208462,10 +208712,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_sanglier_de_guerre"
+      ],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur.",
+        "[GD] (v1.0.88) Enclos des sangliers de guerre (lieu_enclos_des_sangliers_de_guerre, POI poi_enclos_des_sangliers_de_guerre, elevage, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -208485,7 +208739,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : case de ville, tracé de route du générateur, route du lore."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209275,7 +209530,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Tour à signaux de la baronnie (lieu_tour_a_signaux_de_la_baronnie, POI poi_tour_a_signaux_de_la_baronnie, ruine, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -209356,7 +209614,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Tour ensablée (lieu_tour_ensablee, POI poi_tour_ensablee, ruine, 26-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209376,7 +209636,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44]."
+        "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : marge d'une case autour d'une ville.",
+        "[GD] (v1.0.88) Camp des nomades (lieu_camp_des_nomades, POI poi_camp_des_nomades, camp, 26-28) : première occupation de cette case jouable vide (LORE_BD §16.17)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -210147,9 +210409,14 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_deux_fois_ne"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.88) Case générée (jouable) : ouverture de la Marche de l'Est (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) ; motif : tracé de route du générateur, route du lore.",
+        "[GD] (v1.0.88) Cimetière des captifs (lieu_cimetiere_des_captifs, POI poi_cimetiere_des_captifs, sanctuaire, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.17)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -230285,7 +230552,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -232743,6 +233010,13 @@
           "nom": "Marche de l'Est",
           "decision": "Aucune case jouable vide (N007_E013 porte déjà les Ruines du fortin des Marches) : aucun lieu ajouté ; 3 quêtes [GD] (quest_marche_est_gd_grain_de_la_marche, quest_marche_est_gd_laine_d_horkher, quest_marche_est_gd_registre_du_fortin) ; repère proposé 15-28 hors baronnie (LORE_BD §16.16).",
           "version": "1.0.87"
+        },
+        {
+          "collection": "regions",
+          "id": "region_marche_est",
+          "nom": "Ouverture de la Marche de l'Est",
+          "decision": "Décision du propriétaire (12/11/2026) : la Marche de l'Est est ouverte au jeu. 45 cases ajoutées à generated_cells (villes Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere ; routes entre elles et vers Shadehold, Nightward, Moork, Thokrul et Mossy Rock ; marge d'une case autour des villes ; trous intérieurs), toutes reliées aux cases déjà générées. 40 lieux [GD] (un par case vide), 2 quêtes [GD] (quest_marche_est_gd_peage_de_la_via_magna, quest_marche_est_gd_trolls_de_la_foret) ; les 3 quêtes v1.0.87 deviennent jouables. Repère 15-28 (LORE_BD §16.17).",
+          "version": "1.0.88"
         }
       ]
     },
@@ -237012,7 +237286,8 @@
         "[DÉCISION] (v1.0.78) Une créature de plus haut niveau peut vivre dans une zone de niveau inférieur, à condition que les chemins qui y mènent avertissent le joueur (balisage) : voir rule_niveaux_par_faction. Le Grand Ancien (creature_dragon_grand_ancien, 66-70) reste en S004_W006, case du haras de Bridlecrag (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7).",
         "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : les « Terres du Nord » du repère 1-15 sont region_terres_nord_t00 : cases N011_E008 et N012_E008, enclave dans les Terres des Gigantomorphes (30-56), sorties balisées.",
         "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés).",
-        "[GD] (v1.0.87) Repères proposés, à valider (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : Terres des Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ; Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrowdale – Shadehold 18-26) ; Marche de l'Est (hors baronnie) 15-28."
+        "[GD] (v1.0.87) Repères proposés, à valider (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : Terres des Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ; Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrowdale – Shadehold 18-26) ; Marche de l'Est (hors baronnie) 15-28.",
+        "[GD] (v1.0.88) Marche de l'Est ouverte au jeu (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : repère 15-28 détaillé, à valider : abords d'Horkher et de la Via Magna 15-22, Nightfield et la route de Moork 20-26, forêt de Blackmoor et confins d'Ebonvale et de Duskmere 22-28."
       ]
     },
     {
@@ -256935,6 +257210,3366 @@
         "[GD] (v1.0.87) Nom et lieu proposés, à valider par le propriétaire ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16. Vieux sanctuaire de bord de route, profané, à l'orée de la forêt maudite ; renards infernaux et mantes géantes en sortent. Niveaux 16-22.",
         "[GD] (v1.0.87) Niveau : 16-22 (Via Magna).",
         "Réel en jeu : POI poi_sanctuaire_profane (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_barrage_de_peage_lune_noire",
+      "name": "Barrage de péage de la Lune Noire",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_E012",
+      "region_id": "via_magna",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chaîne tendue en travers de la chaussée",
+        "baraque de péagers",
+        "étendard noir à la lune"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E012"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Barrage dressé sur la Via Magna à l'entrée de la Marche : depuis la conquête [BD-A5], les gens de la Lune Noire y lèvent un droit de passage sur les marchands qui montent vers Horkher et rançonnent ceux qui refusent. Niveaux 16-20.",
+        "[GD] (v1.0.88) Niveau : 16-20 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_barrage_de_peage_lune_noire (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_relais_incendie_via_magna",
+      "name": "Relais incendié de la Via Magna",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N005_E013",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "écuries effondrées",
+        "murs noircis par le feu",
+        "abreuvoir comblé de gravats"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "15-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Ancien relais impérial de la Via Magna, brûlé pendant la conquête de la Marche par la Lune Noire [BD-A5] et jamais relevé ; des maraudeurs s'y abritent. Niveaux 15-18.",
+        "[GD] (v1.0.88) Niveau : 15-18 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_relais_incendie_via_magna (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_de_troc_des_orcs",
+      "name": "Camp de troc des orcs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N006_E013",
+      "region_id": "territoires_orcques",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes de peaux et pieux plantés",
+        "bétail parqué à la corde",
+        "pierre plate des marchandages"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "15-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N006_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Camp où les orcs de l'Orkland viennent troquer bétail et peaux contre le grain et la laine d'Horkher ; les marchandages tournent souvent à la rixe. Niveaux 15-18.",
+        "[GD] (v1.0.88) Niveau : 15-18 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_camp_de_troc_des_orcs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_cabanes_des_charbonniers",
+      "name": "Cabanes des charbonniers",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N007_E015",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "meules de charbon fumantes",
+        "cabanes de branchages",
+        "sentier noirci vers la forêt"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N007_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Charbonniers d'Horkher installés en lisière : leur charbon part vers les forges de la Marche ; les loups de la forêt rôdent autour des meules. Niveaux 16-20.",
+        "[GD] (v1.0.88) Niveau : 16-20 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_cabanes_des_charbonniers (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_bergerie_fortifiee",
+      "name": "Bergerie fortifiée",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N006_E015",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "troupeaux de moutons à laine",
+        "enclos de pierre sèche",
+        "tour de berger"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "15-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N006_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Grande bergerie entourée d'un mur de pierre sèche : la laine de la Marche (économie v1.0.58) y est tondue avant de partir pour Horkher ; les bergers y repoussent loups et voleurs de bétail. Niveaux 15-18.",
+        "[GD] (v1.0.88) Niveau : 15-18 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_bergerie_fortifiee (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_moulin_a_vent_pille",
+      "name": "Moulin à vent pillé",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N005_E014",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "ailes arrachées",
+        "meules de pierre renversées",
+        "sacs de grain éventrés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Moulin du comté d'Horkher pillé par une bande de maraudeurs qui en a fait son repaire ; le grain de la Marche (économie v1.0.58) n'y est plus moulu. Niveaux 16-20.",
+        "[GD] (v1.0.88) Niveau : 16-20 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_moulin_a_vent_pille (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_repaire_des_braconniers",
+      "name": "Repaire des braconniers",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N005_E015",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "peaux tendues sur des cadres",
+        "pièges et collets",
+        "abri sous les racines"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "17-21"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Repaire de braconniers caché à la lisière de la forêt : ils chassent sur les terres du comté et pillent les voyageurs isolés de la Via Magna. Niveaux 17-21.",
+        "[GD] (v1.0.88) Niveau : 17-21 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_repaire_des_braconniers (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_champ_de_bataille_de_la_conquete",
+      "name": "Champ de bataille de la conquête",
+      "alias": "",
+      "type": "battlefield_poi",
+      "importance": "",
+      "cell": "N004_E013",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "armes rouillées dans les herbes",
+        "boucliers impériaux brisés",
+        "corbeaux sur les tertres"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Plaine où l'armée impériale de la Marche fut écrasée lors de la conquête par la Lune Noire [BD-A5] ; les morts levés par la Lune Noire y errent encore la nuit. Niveaux 18-22.",
+        "[GD] (v1.0.88) Niveau : 18-22 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_champ_de_bataille_de_la_conquete (champ_bataille) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tertre_des_legionnaires",
+      "name": "Tertre des légionnaires",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N003_E013",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tertre herbeux",
+        "stèles aux noms effacés",
+        "offrandes de pain et de laine"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tertre où les paysans de la Marche ont enterré en secret les légionnaires tombés pendant la conquête ; ils y viennent encore prier malgré l'interdit de la Lune Noire. Niveaux 18-22.",
+        "[GD] (v1.0.88) Niveau : 18-22 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_tertre_des_legionnaires (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_grenier_a_ble_requisitionne",
+      "name": "Grenier à blé réquisitionné",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_E014",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grange aux portes cloutées",
+        "charrettes de sacs de blé",
+        "gardes en armure noire"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Grenier où le blé de la Marche est réquisitionné avant de partir vers Moork (économie v1.0.58) ; les paysans affamés et les pillards le guettent. Niveaux 18-22.",
+        "[GD] (v1.0.88) Niveau : 18-22 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_grenier_a_ble_requisitionne (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_poste_de_garde_lune_noire",
+      "name": "Poste de garde de la Lune Noire",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N003_E014",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "palissade et tour de bois",
+        "cage à prisonniers",
+        "feu de signal"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Poste de garde de la Lune Noire sur la Via Magna entre Horkher et Nightfield : on y contrôle les laissez-passer et on y enferme les suspects. Niveaux 20-24.",
+        "[GD] (v1.0.88) Niveau : 20-24 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_poste_de_garde_lune_noire (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_chapelle_imperiale_desaffectee",
+      "name": "Chapelle impériale désaffectée",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N004_E015",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "nef sans toit",
+        "autel brisé",
+        "fresques martelées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Chapelle de l'Empire fermée depuis la conquête, ses fresques martelées par les gens de la Lune Noire ; des bêtes y gîtent. Niveaux 18-22.",
+        "[GD] (v1.0.88) Niveau : 18-22 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_chapelle_imperiale_desaffectee (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_grange_incendiee",
+      "name": "Grange incendiée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N003_E015",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "poutres calcinées",
+        "chariot renversé",
+        "champs retournés à la friche"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Grange brûlée par des pillards sur les terres de Nightfield ; les survivants ont fui vers Horkher et la friche gagne les champs. Niveaux 20-24.",
+        "[GD] (v1.0.88) Niveau : 20-24 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_grange_incendiee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_bivouac_des_colporteurs",
+      "name": "Bivouac des colporteurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N002_E013",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chariots en cercle",
+        "feux de camp",
+        "étals de pacotille"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Halte des colporteurs entre Nightward et Nightfield : on y échange nouvelles et marchandises, et on y paie des escortes pour traverser la Marche. Niveaux 20-24.",
+        "[GD] (v1.0.88) Niveau : 20-24 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_bivouac_des_colporteurs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_enclos_a_betail",
+      "name": "Enclos à bétail",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N002_E014",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "parcs à bœufs",
+        "abreuvoirs de bois",
+        "vachers armés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Grands enclos où le bétail de la Marche (économie v1.0.58) est rassemblé avant d'être mené à Moork ; les voleurs de bétail y frappent la nuit. Niveaux 20-24.",
+        "[GD] (v1.0.88) Niveau : 20-24 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_enclos_a_betail (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_campement_des_pecheurs",
+      "name": "Campement des pêcheurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N001_E012",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "claies à poisson",
+        "barques tirées au sec",
+        "huttes de roseaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N001_E012"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Pêcheurs installés près de l'étang de la plaine, qui vendent leur poisson séché à Nightward et à Moork ; des bêtes du désert descendent y boire. Niveaux 20-24.",
+        "[GD] (v1.0.88) Niveau : 20-24 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_campement_des_pecheurs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_relais_de_la_route_de_moork",
+      "name": "Relais de la route de Moork",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N001_E015",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "auberge fortifiée",
+        "écurie et forge de maréchal",
+        "convois de grain à l'arrêt"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N001_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Relais fortifié sur la route qui descend de Nightfield à Moork, où les convois de grain font halte sous la garde de la Lune Noire. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_relais_de_la_route_de_moork (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_a_signaux_de_la_baronnie",
+      "name": "Tour à signaux de la baronnie",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N000_E015",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour ronde à demi ensablée",
+        "brasier de signal éteint",
+        "escalier effondré"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour à signaux de l'ancienne baronnie impériale de Moork, abandonnée au sable ; des pillards du désert y guettent les convois. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_tour_a_signaux_de_la_baronnie (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_cimetiere_des_captifs",
+      "name": "Cimetière des captifs",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S001_E015",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "fosses peu profondes",
+        "piquets sans nom",
+        "chiens errants"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S001_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Cimetière où l'on jette les captifs morts aux travaux de Moork ; les morts n'y restent pas toujours couchés. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_cimetiere_des_captifs (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_croix_de_carrefour_profanee",
+      "name": "Croix de carrefour profanée",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N002_E016",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "croix impériale renversée",
+        "signes de la Lune Noire peints",
+        "ossements d'animaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Croix de carrefour impériale renversée et couverte des signes de la Lune Noire sur la route de Nightfield à Blackmoor ; des fidèles de la Lune Noire s'y retrouvent la nuit. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_croix_de_carrefour_profanee (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_haras_de_la_lune_noire",
+      "name": "Haras de la Lune Noire",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N003_E016",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chevaux noirs en enclos",
+        "écuries fortifiées",
+        "palefreniers armés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Haras où la Lune Noire élève les montures de ses chevaliers ; les chevaux volés y sont aussi ramenés et marqués. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_haras_de_la_lune_noire (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_refugies",
+      "name": "Camp des réfugiés",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N003_E017",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes rapiécées",
+        "feux de tourbe",
+        "enfants affamés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E017"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Camp de paysans chassés de leurs terres par la Lune Noire, qui survivent de chasse et de rapines ; les patrouilles de Blackmoor les harcèlent. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_camp_des_refugies (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tumulus_de_la_plaine",
+      "name": "Tumulus de la plaine",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N003_E018",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tertre couronné de pierres",
+        "entrée murée",
+        "pillards au travail"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E018"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Très ancien tumulus de la plaine, plus vieux que l'Empire ; des pillards ont descellé son entrée et quelque chose en est sorti. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_tumulus_de_la_plaine (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_scierie_abandonnee",
+      "name": "Scierie abandonnée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N004_E016",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "roue de scie immobile",
+        "grumes pourrissantes",
+        "hangar effondré"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Scierie abandonnée en lisière de la forêt depuis que les loups géants ont tué les scieurs ; le bois coupé pourrit sur place. Niveaux 22-26.",
+        "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_scierie_abandonnee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_de_guet_de_la_lisiere",
+      "name": "Tour de guet de la lisière",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N004_E017",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour de pierre fendue",
+        "palissade pourrie",
+        "traces de griffes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E017"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour de guet impériale qui surveillait la forêt de la Marche, abandonnée depuis la conquête ; les bêtes de la forêt en ont fait leur territoire. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_tour_de_guet_de_la_lisiere (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_taniere_du_loup_geant",
+      "name": "Tanière du loup géant",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N005_E016",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "terrier sous un chêne abattu",
+        "ossements rongés",
+        "hurlements la nuit"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tanière d'une meute de loups géants de guerre échappés des camps orques ; elle attaque les scieurs et les patrouilles. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_taniere_du_loup_geant (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_autel_sylvestre_lune_noire",
+      "name": "Autel sylvestre de la Lune Noire",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N005_E017",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "pierre noire au cœur d'une clairière",
+        "arbres marqués du croissant",
+        "traces de sacrifices"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E017"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Autel caché dans la forêt où les fidèles de la Lune Noire de Blackmoor célèbrent leurs rites ; les intrus n'en reviennent pas. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_autel_sylvestre_lune_noire (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_repaire_des_trolls_de_la_foret",
+      "name": "Repaire des trolls de la forêt",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N005_E018",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte sous des rochers moussus",
+        "tas d'os et de ferraille",
+        "odeur de charogne"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E018"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Repaire d'une bande de trolls au plus profond de la forêt de la Marche ; ils descendent parfois jusqu'aux fermes de Blackmoor. Le feu les repousse. Niveaux 26-28.",
+        "[GD] (v1.0.88) Niveau : 26-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_repaire_des_trolls_de_la_foret (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_de_la_patrouille_noire",
+      "name": "Camp de la patrouille noire",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N004_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes noires alignées",
+        "chevaux sellés",
+        "prisonniers enchaînés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Camp d'une patrouille de la Lune Noire qui tient la route de Blackmoor à Ebonvale et pourchasse réfugiés et déserteurs. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_camp_de_la_patrouille_noire (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_ermitage_en_ruine",
+      "name": "Ermitage en ruine",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N005_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cellule de pierre",
+        "jardin retourné à la friche",
+        "source tarie"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N005_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Ermitage d'un ancien prêtre de l'Empire, mis à sac lors de la conquête ; on dit que l'ermite y a caché les registres de sa paroisse. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_ermitage_en_ruine (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_mine_de_fer_abandonnee",
+      "name": "Mine de fer abandonnée",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N006_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "galerie étayée de bois",
+        "wagonnets rouillés",
+        "terril de minerai"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N006_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Petite mine de fer de la Marche, abandonnée faute de bras ; la Marche doit désormais importer ses armes (économie v1.0.58). Des bêtes ont pris les galeries. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_mine_de_fer_abandonnee (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_poste_frontiere_du_nord",
+      "name": "Poste-frontière du nord",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N006_E020",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "barrière de rondins",
+        "corps de garde",
+        "potence"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N006_E020"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Poste-frontière de la Lune Noire au nord d'Ebonvale, sur la route de Rivercross : on n'y passe pas sans laissez-passer. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_poste_frontiere_du_nord (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_domaine_seigneurial_confisque",
+      "name": "Domaine seigneurial confisqué",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N004_E020",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "manoir aux volets clos",
+        "blason impérial gratté",
+        "serfs au travail sous la garde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N004_E020"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Domaine d'un seigneur impérial de la Marche, confisqué après la conquête ; les nouveaux maîtres y font travailler les serfs sous le fouet. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_domaine_seigneurial_confisque (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_fosse_aux_ossements",
+      "name": "Fosse aux ossements",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "N003_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "fosse béante",
+        "ossements de bétail et d'hommes",
+        "traces d'ogre"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Fosse où un ogre jette les restes de ses proies, près de la route de Blackmoor à Duskmere. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_fosse_aux_ossements (gouffre) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_de_chasse_orque",
+      "name": "Camp de chasse orque",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N003_E020",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "séchoirs à viande",
+        "trophées de chasse",
+        "tentes de peaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_E020"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Camp de chasse des orcs de Duskmere, qui battent la plaine jusqu'à la forêt ; ils n'aiment pas les étrangers. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_camp_de_chasse_orque (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_menhir_du_carrefour",
+      "name": "Menhir du carrefour",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N002_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "menhir solitaire",
+        "offrandes orques",
+        "cercle de terre battue"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Menhir au bord de la route de Duskmere, où les orcs de la Marche déposent des offrandes avant la chasse. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_menhir_du_carrefour (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_arene_de_lutte_des_orcs",
+      "name": "Arène de lutte des orcs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N002_E020",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cercle de pieux",
+        "gradins de terre",
+        "tambours de guerre"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E020"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Arène de terre battue où les orcs de Duskmere règlent leurs querelles et éprouvent leurs jeunes guerriers. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_arene_de_lutte_des_orcs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_enclos_des_sangliers_de_guerre",
+      "name": "Enclos des sangliers de guerre",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N001_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "parcs de pieux",
+        "sangliers caparaçonnés",
+        "dresseurs orques"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N001_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Enclos où les orcs de Duskmere dressent les sangliers de guerre de leurs montures. Niveaux 24-28.",
+        "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_enclos_des_sangliers_de_guerre (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_ensablee",
+      "name": "Tour ensablée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N000_E019",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour à demi engloutie par le sable",
+        "meurtrières",
+        "carcasses de chevaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour impériale des confins du désert, à demi engloutie par le sable ; des pillards s'y abritent des tempêtes. Niveaux 26-28.",
+        "[GD] (v1.0.88) Niveau : 26-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_tour_ensablee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_des_nomades",
+      "name": "Camp des nomades",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N000_E020",
+      "region_id": "region_marche_est",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes basses",
+        "chameaux entravés",
+        "puits de fortune"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E020"
+      ],
+      "notes": [
+        "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Camp de nomades venus du désert de la baronnie, qui commercent avec Duskmere et guident les voyageurs dans les sables. Niveaux 26-28.",
+        "[GD] (v1.0.88) Niveau : 26-28 (Marche de l'Est, repère 15-28).",
+        "Réel en jeu : POI poi_camp_des_nomades (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     }
   ],

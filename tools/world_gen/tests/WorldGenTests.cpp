@@ -11,7 +11,7 @@
 // 5. Génération de la cellule voisine (ouest) : la colonne de frontière de la
 //    heightmap est IDENTIQUE des deux côtés (raccord sans couture) ; puis d'une
 //    cellule de départ de faction (Haeldorf) : spawn par défaut au sec.
-// 6. État « reconstruction » (Kendrhir Vale) : maisons, ruines et chantiers
+// 6. État « reconstruction » (Kendrhir) : maisons, ruines et chantiers
 //    mêlés, auberge en service, étais autour des chantiers.
 // 7. EAU.5 : cuvettes sous la mer isolées comblées (mer reliée conservée) ;
 //    lac creusé d'après son polygone, rives au-dessus de l'eau même à flanc
@@ -670,7 +670,7 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
-	/// État « reconstruction » (Kendrhir Vale, N015_E012) : la ville mêle maisons
+	/// État « reconstruction » (Kendrhir, N015_E012) : la ville mêle maisons
 	/// habitées, ruines et chantiers (étais), et garde son auberge.
 	void TestReconstruction()
 	{
@@ -687,14 +687,14 @@ namespace
 		o.outputRoot = tmp.string();
 		const bool ok = tools::world_gen::RunWorldGen(o, r, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
-		Check(ok, "reconstruction : generation cellule N015_E012 (Kendrhir Vale)");
+		Check(ok, "reconstruction : generation cellule N015_E012 (Kendrhir)");
 		if (!ok) return;
 
 		const std::string cell = "cell_n015_e012";
 		std::vector<engine::world::instances::BuildingPlacement> pls; std::string e;
 		Check(engine::world::instances::LoadBuildingsBin(ReadBytes(tmp / "instances" / ("zone_" + cell) / "buildings.bin"), pls, e),
 			"reconstruction : buildings.bin relu");
-		const std::string suffix = "(Kendrhir Vale)";
+		const std::string suffix = "(Kendrhir)";
 		int intactHouses = 0, ruins = 0, sites = 0, inns = 0;
 		for (const auto& p : pls)
 		{
@@ -715,12 +715,12 @@ namespace
 		for (const std::string& m : sf.meshPaths)
 			if (m == "meshes/props/Prop_Support.gltf") supports = true;
 		Check(okScatter && supports, "reconstruction : etais poses autour des chantiers");
-		// v1.0.52 : champs cultives aussi autour des villes (Kendrhir Vale est une ville).
+		// v1.0.52 : champs cultives aussi autour des villes (Kendrhir est une ville).
 		bool crops = false;
 		for (const std::string& m : sf.meshPaths)
 			if (m == "meshes/props/Carrot.gltf" || m == "meshes/props/Plant_7.gltf") crops = true;
 		Check(okScatter && crops, "champs : cultures autour d'une ville");
-		// FORET.1 — densité forestière écrite (Kendrhir Vale est en forêt) et
+		// FORET.1 — densité forestière écrite (Kendrhir est en forêt) et
 		// cadrée sur la cellule ; plus aucun arbre de forêt dans scatter.bin.
 		engine::world::instances::ForestMask fm;
 		const bool okForest = engine::world::instances::LoadForestMask(
@@ -1876,7 +1876,7 @@ namespace
 	/// (`generated_cells` + corridors des départs) de la boîte `royaume_des_nains_de_lest` du master
 	/// (E015-E024 × S016-S004) sont les 14 déjà générées (départ 3×3 de Durnhalde, Ghrunke Dash, Monts de
 	/// Moork, coulées de l'ouest), et chacune porte une ville ou un POI. Le lot n'ouvre aucune case et
-	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. v1.0.91 : la route Eisenkehl -
+	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. v1.0.91 : la route Ysenkhal -
 	/// Vozmarkh ajoute 7 cases jouables dans la boîte (21 au total), chacune avec une ville ou un POI. Il vérifie aussi que les
 	/// 5 lieux du départ que relient les quêtes sont dans leur case.
 	void TestLieuxV1089()
@@ -1932,7 +1932,7 @@ namespace
 		Check(found == 5, "lieux v1.0.89 : les 5 lieux des quetes du depart de Durnhalde dans leurs cases jouables");
 	}
 
-	/// v1.0.91 (lot 19) : ouverture de la route Eisenkehl - Vozmarkh (suite du départ nain) et des 4 routes
+	/// v1.0.91 (lot 19) : ouverture de la route Ysenkhal - Vozmarkh (suite du départ nain) et des 4 routes
 	/// de la Marche de l'Est coupées au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul -
 	/// Grhavelt, Dhazkmer - Dhuzvelt). 57 cases ajoutées à `generated_cells` (tracés du lore et du
 	/// générateur, villes d'arrivée, marge d'une case, trous intérieurs).
@@ -1940,7 +1940,7 @@ namespace
 	/// les 7 cases de Vozmarkh sont atteintes à pied depuis Durnhalde (S007_E017) et les 50 de la Marche
 	/// depuis Grakhul (N008_E012) sans quitter les cases jouables ; Vozmarkh, Rhivkhar, Ryvaldh,
 	/// Grhavelt et Dhuzvelt sont jouables ; chaque point des routes du générateur entre ces villes et
-	/// Eisenkehl, Ebhrazul, Dhazkmer (et entre Ryvaldh, Grhavelt et Dhuzvelt) est dans une case jouable,
+	/// Ysenkhal, Ebhrazul, Dhazkmer (et entre Ryvaldh, Grhavelt et Dhuzvelt) est dans une case jouable,
 	/// de même que chaque case des 5 tracés du lore ; un POI [GD] par case vide (52, au sec, seuls sur leur
 	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées.
 	void TestCellulesLieuxV1091()
@@ -2061,9 +2061,9 @@ namespace
 			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
 		}
 		Check(routes == 7 && outside == 0, "cellules et lieux v1.0.91 : 7 routes du generateur entierement dans des cases jouables");
-		// Tracés du lore (waypoints, ou ligne droite pour Eisenkehl - Vozmarkh), case par case.
+		// Tracés du lore (waypoints, ou ligne droite pour Ysenkhal - Vozmarkh), case par case.
 		static const char* kLoreCells[] = {
-			"S008_E018", "S008_E019", "S009_E020",                 // Eisenkehl - Vozmarkh
+			"S008_E018", "S008_E019", "S009_E020",                 // Ysenkhal - Vozmarkh
 			"N008_E018", "N007_E019", "N006_E019", "N005_E020",    // Ebhrazul - Rhivkhar (000104)
 			"N006_E023", "N005_E022", "N004_E021",                 // Ebhrazul - Ryvaldh (000160)
 			"N003_E023", "N003_E022",                              // Ebhrazul - Grhavelt (000161)

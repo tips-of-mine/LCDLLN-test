@@ -1,13 +1,14 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.93",
+    "version": "1.0.94",
     "notes": [
+      "v1.0.94 : [DÉCISION] Noms à vérifier (lot 22 du propriétaire, 12/11/2026) : Kendrhir Vale → Kendrhir (même cité des Grands Mages du T1, pas de doublon) ; Forteresse Naine d'Heureux → Forteresse naine d'Heusgly (BD-T11 p.36) ; hameaux nains Kohlbrand → Kholbrakh, Eisenkehl → Ysenkhal ; anciens noms en alias, identifiants inchangés. Gardés : Les Hauts Elfes, Grakhul, Thokrul, Gharzuk, Ghazrak, Les Nuées, La Légion infernale, Les Légions Impériales, Marn ; Nhorvaël reste elfe (faction_control hauts elfes, 5 PNJ de service régénérés en hauts elfes). Description d'Harrodh (horker) corrigée au master, Horkher (city_horkher) complétée. Registre : 5 entrées (LORE_BD §16.23).",
       "v1.0.93 : [DÉCISION] Renommage des 88 villes aux noms anglais (lot 21 du propriétaire, 12/11/2026 ; règle : noms propres ni français ni anglais, style BD) : 87 villes et hameaux et le peuple Huacani. Eaglewatch → Haeldorf ; Ambermead → Ombhral ; Greyhedge → Gredhaim ; Hollowgate → Kholvard ; Greypool → Ghrepol ; Saltfen → Zaltheim ; Harrowbrook → Harndrecht ; Ashhollow → Aeskhol ; Dustfen → Dhuzmar ; Clearfen → Klaerhin ; Dawnmere → Orhendal ; Brightholm → Lhumbrecht ; Whitesheaf → Ysselhaim ; Lambsfold → Lammerhin ; Justfall → Iustarn ; Oathford → Ordhrann ; Tithemead → Thydmar ; Wardholt → Vharholdt ; Orderfen → Ostrevan ; Trueford → Treuvhal ; Verdansur → Vaerdhun ; Wyrmhallow → Drakhenhal ; Cragfold → Krakhol ; Bridlecrag → Bhridrak ; Scalebrook → Skhaldrach ; Equiton → Ekvhitorn ; Brookend → Brokhendt ; Millford → Melvhord ; Fairbrook → Faervosk ; Ironbrook → Ghrondak ; Darkwater → Mhordaal ; Voidmark → Vozmarkh ; Leviathan Jungle → Ghulvathan ; Mossy Rock → Mhozrak ; Silverglade → Syllaërin ; Greenbough → Ghwenaëth ; Fernhollow → Faernilh ; Northfen → Nhorvaël ; Hazelgate → Hazhaëlin ; Brinehaven → Brenhaval ; Duskmoor → Duzhmoroth ; Truceholm → Thrival ; Lanternhold → Lhantarn ; Huacani → Hwakhari ; Hayfen → Haevrin ; Ashwick → Askhvir ; Stonehaven → Stohnvar ; Coldhollow → Khaldhol ; Fernhill → Vernhild ; Draketon → Dhraegtun ; Stonebridge → Shtenbrak ; Fellwatch → Fhelvakt ; Deepbrook → Dyprokh ; Moorgate → Mhorgad ; Dunfold → Dhunfal ; Ashcroft → Askhrof ; Haywick → Hayvekh ; Westmoor → Vestmhor ; Northgate → Nhorgast ; Greyhaven → Grhaevan ; Deepmoor → Dhemorr ; Runecroft → Runhkar ; Highfall → Hagfhal ; Farwatch → Farvhenn ; Shadowfen → Shaddrek ; Ebonvale → Ebhrazul ; Duskmere → Dhazkmer ; Nightward → Nakhtvar ; Blackmoor → Vlakmorh ; Nightfield → Nykhfeld ; Grimfen → Ghrimfeth ; Shadehold → Shezhold ; Harrowdale → Harrodh ; Arcanefield → Arkhanyra ; Rivercross → Rhivkhar ; Hillwatch → Hilvakh ; Riverfold → Ryvaldh ; Greyfield → Grhavelt ; Dustfield → Dhuzvelt ; Crossroads → Khrozrad ; Clearwater → Klehrwath ; Southport → Suthvarn ; Saltwick → Saelvik ; Coldport → Kholdvar ; Frosthollow → Frhozhol ; Millend → Mhillenz ; Claybury → Khlaybur ; Thistle Creek → Thysskar. Le nouveau nom remplace l'ancien partout où il désigne la ville ou le peuple (fiches, routes, cellules, lieux et noms de lieux dérivés, provinces, quêtes, raids, créatures, factions, races, règles, registre, notes) ; ancien nom gardé en alias (villes) ou en note [DÉCISION] (peuple) ; identifiants inchangés ; PNJ de service inchangés. Gardés : « jungle de Leviathan » (forêt), le Leviathan de la Porte des Enfers et ses butins, étiquettes `huacani` des quêtes. Master, carte_export, ROYAUMES.md, LORE_BD.md, générateur de services et commentaires C++ alignés. Détail : docs/world/LORE_BD.md §16.22.",
       "v1.0.92 : [DÉCISION] Régions du hors-série « L'Empire de la Négation » (carte p.4) et provinces (lot 20 du propriétaire, 12/11/2026). Les 11 régions HS (+ Île de la Trêve) deviennent les régions de référence : chaque case terrestre porte sa région HS (`region_id`) et sa province éventuelle (`province`). 12 régions du lore qui ne sont pas des régions HS deviennent des provinces (`type: \"province\"`, `parent_region`), sans changement d'identifiant ni de nom. Zone Altenberg - Dys aux Terres de l'Empereur ; sud sans frontière à la région HS la plus proche ; Forêt elfique et Nains de l'Est selon le hors-série, grille inchangée. Villes et lieux suivent leur case. Master inchangé. Registre : 5 entrées. Détail : docs/world/LORE_BD.md, section 16.21.",
-      "v1.0.91 : [DÉCISION] Ouverture au jeu de la route Eisenkehl - Vozmarkh (suite 10-20 du départ nain) et des 4 routes de la Marche de l'Est coupées au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (lot 19 du propriétaire, 12/11/2026). 57 cases ajoutées à generated_cells (7 vers Vozmarkh, 50 pour la Marche et la côte orientale) : Vozmarkh, Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt deviennent jouables. 52 lieux [GD] avec POI réel (un par case vide), repères 10-20, 22-28 et 24-30, 3 quêtes [GD]. Registre : 2 entrées. Détail : docs/world/LORE_BD.md, section 16.20.",
+      "v1.0.91 : [DÉCISION] Ouverture au jeu de la route Ysenkhal - Vozmarkh (suite 10-20 du départ nain) et des 4 routes de la Marche de l'Est coupées au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (lot 19 du propriétaire, 12/11/2026). 57 cases ajoutées à generated_cells (7 vers Vozmarkh, 50 pour la Marche et la côte orientale) : Vozmarkh, Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt deviennent jouables. 52 lieux [GD] avec POI réel (un par case vide), repères 10-20, 22-28 et 24-30, 3 quêtes [GD]. Registre : 2 entrées. Détail : docs/world/LORE_BD.md, section 16.20.",
       "v1.0.90 : [GD] Régions et niveaux du sud-centre (lot 18 du propriétaire, priorité 3, 12/11/2026). Les 222 cases terrestres sans région sont rattachées : 3 nouvelles régions [GD] (Forêt des Lutins 34 cases, 14-24 ; Val de Suthvarn 59, 18-28 ; Désert des Sels 24, 24-36) et 105 cases à 9 régions existantes voisines (dont 48 aux Terres de l'Empereur). Confins du Midi : fiche, 48 cases, identité et niveau 22-34 (non jouables). Master inchangé (régions irrégulières, format en boîtes). Registre : 4 entrées. Détail : docs/world/LORE_BD.md, section 16.19.",
-      "v1.0.89 : [GD] Royaume des nains de l'est (lot 17 du propriétaire, 12/11/2026). Aucune case jouable vide : les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville ou un lieu ; aucun lieu ni POI ajouté, aucune case ouverte. 5 quêtes [GD] de départ (niveaux 1 à 7 et plus) reliant Durnhalde, Kohlbrand, Eisenkehl, Ghrunke Dash et les lieux du départ ; niveaux proposés des 5 lieux du départ et gradient de la région, à valider. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.18.",
+      "v1.0.89 : [GD] Royaume des nains de l'est (lot 17 du propriétaire, 12/11/2026). Aucune case jouable vide : les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville ou un lieu ; aucun lieu ni POI ajouté, aucune case ouverte. 5 quêtes [GD] de départ (niveaux 1 à 7 et plus) reliant Durnhalde, Kholbrakh, Ysenkhal, Ghrunke Dash et les lieux du départ ; niveaux proposés des 5 lieux du départ et gradient de la région, à valider. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.18.",
       "v1.0.88 : [DÉCISION] Ouverture de la Marche de l'Est au jeu (lot 16 du propriétaire, 12/11/2026). 45 cases ajoutées à generated_cells : les 5 villes (Horkher, Nykhfeld, Vlakmorh, Ebhrazul, Dhazkmer) deviennent jouables, avec les routes qui les relient entre elles et au monde déjà jouable (Via Magna de Shezhold à Moork par Horkher et Nykhfeld, routes de Thokrul, Mhozrak et Nakhtvar), une case de marge autour des villes et les trous intérieurs. 40 lieux [GD] avec POI réel (un par case vide), repère 15-28 détaillé, 2 quêtes [GD] ; les 3 quêtes v1.0.87 deviennent jouables. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.17.",
       "v1.0.87 : [GD] Lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est (lot 15 du propriétaire, 12/11/2026). Chaque case jouable vide reçoit un lieu [GD] avec POI réel : 6 sur la lisière sud des Terres des Gigantomorphes (autour de l'enclave de Whispers Hill, inchangée), 5 sur la Via Magna (11 lieux) ; la Marche de l'Est n'a aucune case jouable vide (aucun lieu). 10 quêtes [GD] (4 Gigantomorphes, 3 Via Magna, 3 Marche de l'Est). Repères proposés : lisière sud des Gigantomorphes 28-36, gradient de la Via Magna, Marche de l'Est 15-28. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.16.",
       "v1.0.86 : [GD] Lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle (lot 14, priorité 2 validée par le propriétaire le 12/11/2026). Chaque case générée vide des trois régions reçoit un lieu [GD] avec POI réel : 11 en Baronnie de Moork, 15 dans les Terres désolées, 10 dans le Désert de l'Oracle (36 lieux, dont 4 balises : Borne des Monts de Moork, Stèle des Deux Fois Nés, Cairn des Coulées, Cairn des Caravaniers). 14 quêtes [GD] relient les lieux (5 Moork, 5 Tsaroth, 4 Oracle). Fiches de région ajoutées : terres_desolees (20-40 proposé), desert_central (10-25 proposé). Tsaroth reste sans service, sans camp de la Légion ; Moork reste intacte. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.15.",
@@ -19,13 +20,13 @@
       "v1.0.79 : [CARTE] raccordement de Vaerdhun au monde jouable (lot 8 du propriétaire, 11/11/2026). Monde jouable : N010_W012, N010_W013 et N010_W014 (plaines de la région de Syzygie, rivière nord de Vaerdhun en N010_W014) ajoutées à generated_cells de world_master.json ; avec N010_W015 et N010_W016 (v1.0.78), elles forment une rangée continue jusqu'à N010_W011, déjà générée : Vaerdhun et le Sanctuaire des Brisants sont accessibles à pied. Fiches de cellules inchangées (terrain cohérent avec la grille du monde). La route 000083 Syzygie → Vaerdhun existe ; dans le jeu, son tracé passe aussi par N009_W012, N011_W013 et N011_W014, non générées. Détail : docs/world/LORE_BD.md, section 16.8.",
       "v1.0.78 : [CARTE] cellules de Vaerdhun et des Brisants, décisions du propriétaire du 11/11/2026 (lot 7). Monde jouable : N010_W015 (Vaerdhun sur sa colline, source des deux rivières) et N010_W016 (Sanctuaire des Brisants) ajoutées à generated_cells de world_master.json ; elles restaient hors de la génération depuis la v1.0.72. Décisions inscrites au registre : contenu de plus haut niveau permis dans une zone de niveau inférieur, chemins balisés pour prévenir le joueur (exemple : Bhridrak et le Grand Ancien partagent S004_W006 et restent en place) ; nom « lac / fleuve de Syzygie » conservé (riv_fleuve_sysigie nommé « Fleuve de Syzygie ») ; niveau d'une zone relatif à la faction (principe, détail par faction plus tard). Détail : docs/world/LORE_BD.md, section 16.7.",
       "v1.0.77 : [CARTE] relief et temples de l'Île de la Trêve (lot 6 du propriétaire, 10/11/2026). Nom « Île de la Trêve » gardé et visible : name des 20 cellules terrestres, affiché par l'éditeur. Relief : 7 pics et crêtes boisés en mountain (N022_W012, N021_W013, N020_W014, N019_W013, N018_W013, N017_W012, N020_W011), falaises et vallées encaissées ; monde jouable : 11 massifs (reliefs du master), grille en forêt, côte inchangée. Peuple [GD] : les Hwakhari (faction_huacani, race_huacani, culte religion_huacani_soleil), 5 PNJ et 5 dialogues. 11 temples de style inca [GD] (3 grands, 5 moyens, 3 oratoires) avec leurs POI ; les 4 raids et les 8 quêtes de la v1.0.74 s'y rattachent ; 4 quêtes [GD] ; sentiers 000226, 000227. Détail : docs/world/LORE_BD.md, section 16.6.",
-      "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Ostrevan → Haevrin par la terre, 000064 Lhynn → Dhuzmar, 000073 Dhuzmar → Klaerhin, 000076 Askhvir → Stohnvar, 000074 Der Hem Shelbem → Frhozhol (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Kholdvar – Frhozhol (000079, en S007_E006) vers la Forteresse Naine d'Heureux ; tronçon Dhunfal → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harndrecht → Ekvhitorn (sable), 000225 Lhumbrecht → Ruines du prieuré (remplace 000140), 000201 Gredhaim → Ombhral devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bhridrak S004_W005 → S004_W006, Krakhol S004_W003 → S004_W002 (hors de la région 3×3 de Drakhenhal). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
+      "v1.0.76 : [CARTE] corrections de routes et de terrain du propriétaire (10/11/2026, lot 5). Routes retracées : 000095 Ostrevan → Haevrin par la terre, 000064 Lhynn → Dhuzmar, 000073 Dhuzmar → Klaerhin, 000076 Askhvir → Stohnvar, 000074 Der Hem Shelbem → Frhozhol (par le col S009_E009 – S008_E008) ; 000155 devient l'embranchement de la route Kholdvar – Frhozhol (000079, en S007_E006) vers la Forteresse naine d'Heusgly ; tronçon Dhunfal → N015_E015 de 000146 supprimé (000146 part de 000116 en N016_E016). Sentiers : 000224 Harndrecht → Ekvhitorn (sable), 000225 Lhumbrecht → Ruines du prieuré (remplace 000140), 000201 Gredhaim → Ombhral devient un sentier ; règles des sentiers appliquées à toute la carte : 000131, 000133, 000139, 000169, 000170, 000175, 000177, 000197, 000218, 000219 supprimés (ils doublaient une route ou leur lieu est sur une route), 000138 et 000141 raccourcis au croisement. Déplacements : Der Hem Shelbem S009_E010 → S010_E010 (nécropole et gardiens compris), Bhridrak S004_W005 → S004_W006, Krakhol S004_W003 → S004_W002 (hors de la région 3×3 de Drakhenhal). Terrain : S001_E020 à S003_E020 en désert, S004_E020 en zone rocheuse (arid_land). Détail : docs/world/LORE_BD.md, section 16.5.",
       "v1.0.74 : [CARTE] île du Nord (lot 3 du propriétaire, 10/11/2026). Terrain : fer à cheval de forêt (20 cases) autour d'une baie ouverte à l'est et d'un îlot, haut-fond (34 cases). Région region_ile_de_la_treve « Île de la Trêve » [GD], commune à toutes les factions (Légion comprise), niveaux 45 à 60. Villes [GD] à valider : Brenhaval (N017_W010, port franc neutre), Duzhmoroth (N022_W010, Lune Noire), Thrival (N019_W010, îlot, neutre), Lhantarn (N021_W014, Empire). Ports avec ponton à Haevrin et Ostrevan ; ligne maritime du Nord Brenhaval ↔ Haevrin ↔ Ostrevan (000221, 000222) et navette de Thrival (000223) ; routes 000214 à 000216, sentiers 000217 à 000220. Raids : 3 simples (raid_tertre_des_rois_noyes, raid_grottes_des_naufrageurs, raid_taniere_du_jarl) et 1 multi-équipe (raid_devoreur_des_brumes) ; 8 quêtes entre factions ; 6 créatures [GD]. Monde jouable : 4 villes, 9 POI et 54 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.3.",
       "v1.0.73 : [CARTE] décisions du propriétaire (10/11/2026). Trois villes moyennes (services complets) [GD] à valider : Hazhaëlin (N007_E002, Elfes des bois, neutre), Fhelvakt (N009_W001, humains, Empire), Kholvard (S001_W007, humains, Empire, étape de la Via Magna). Raid raid_mine_de_la_traverse à une équipe dans la Mine de la Traverse (lieu_mine_de_la_traverse), galerie sous la chaîne N000_W008 entre Gredhaim et Kholvard (lecture retenue), boss creature_mere_des_galeries (niveau 15). Routes 000207 à 000211 et sentiers 000212, 000213. Monde jouable : 3 villes, 2 POI d'entrée et 3 cellules générées dans world_master.json. Détail : docs/world/LORE_BD.md, section 16.2.",
       "v1.0.72 : [CARTE] corrections du propriétaire (10/11/2026). Routes supprimées : 000066 Syzygie → Ostrevan, 000006 Lhynn → Altenberg, 000151 Hishtarland → Zaltheim (terre ; la ligne maritime 000109 reste), 000085 Dys → Northind ; routes ajoutées 000198 Thydmar → Ostrevan, 000199 Haeldorf → Lammerhin, 000200 Lammerhin → Altenberg, 000201 Gredhaim → Ombhral, 000202 Ombhral → Dys, 000203 Dys → Ghwenaëth, 000204 Ghwenaëth → Northind, 000205 Ghwenaëth → Magistrya, 000206 Vaerdhun → Sanctuaire des Brisants. Déplacements : Ombhral N003_W010 → N003_W008, Gredhaim N001_W009 → N001_W008, Syllaërin (départ des Hauts Elfes) N007_W006 → N007_W003, sa région de départ restant en place ; routes 000128, 000129, 000130, 000127, 000192, 000193 et sentiers 000194 à 000197 retracés. Vharholdt au fond d'une crevasse en cul-de-sac, avec une mine (lieu_mine_de_wardholt) ; Vaerdhun au sommet d'une haute colline, ses deux rivières naissent au pied ; Sanctuaire des Brisants et Veillée des Feux des Brisants [GD] contre les falaises de N010_W016. Monde jouable : reliefs, cours d'eau et POI dans world_master.json (tools/world_gen). Détail : docs/world/LORE_BD.md, section 16.",
       "v1.0.71 : [CARTE] région de départ de la Légion infernale autour de la Citadelle de la Légion (carte des Enfers, N000_E000). Décisions du propriétaire du 09/11/2026 : les 4 coins de la carte des Enfers sont ouverts (9 cellules générées, coins en chaîne de montagnes M praticable) ; les Enfers sont une zone de niveau 1 à 10, sauf boss et abords des portails (regle_bestiaire_echelles corrigée : plus de « Enfers 55-70 ») ; pas de hameau, la Citadelle reste la seule ville. POI [GD] Ruines du Bastion des Damnés (N001_W001), Camp d'épreuve des Recrues (N001_E001), Autel des Pactes (S001_W001), Faille des Cohortes (S001_E001), Poste de garde du Portail I (S001_E000, à 400 m du portail) ; espèces [GD] Diablotin errant (1-4) et Chien des cendres (2-6), alignées sur les archétypes de jeu 150 et 151, et salamandre rattachées aux cases (« enfers:<case> » dans zones_chasse, pas de fiche cells pour les Enfers) ; petit démon (8-14) aux abords des portails I à IV ; Autel ajouté aux lieux de culte de religion_enfers_princes_demons. Aucune route : le réseau routier du lore ne couvre pas les Enfers. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.8.",
       "v1.0.70 : [CARTE] région de départ des Hauts Elfes autour de Syllaërin (N007_W006) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Ghwenaëth (N006_W006, cueilleurs et herboristes) et Faernilh (N007_W007, facteurs d'arcs) ; POI [GD] Autel des Vents (N006_W006), Bosquet des Pavanes (N006_W007), Tour des Flèches blanches (N007_W007), Ruines du Temple sylvestre (N008_W005) ; routes locales 000192 Syllaërin → Ghwenaëth et 000193 Syllaërin → Faernilh, voisin le plus proche (règle v1.0.65), et sentiers 000194 à 000197 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel et Bosquet ajoutés aux lieux de culte de « Mère Nature et les Vents » (religion_peuples_des_bois) ; PNJ de service hauts elfes dans les nouveaux hameaux (RACE_FACTIONS : faction_hauts_elfes). Rien dans les cases de Northind (N007_W005), du village Orkh (N008_W006) et de la Porte 5 des enfers (N008_W007) ; aucun lieu dans N006_W005 (rivière) ; routes 000127, 000077 et 000085 inchangées ; Ruines de Thenhart et marais maudits hors région. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.7.",
-      "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Eisenkehl (S008_E018, mine de fer) et Kohlbrand (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kohlbrand et 000186 Kohlbrand → Eisenkehl, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
+      "v1.0.69 : [CARTE] région de départ des Nains autour de Durnhalde (S007_E017) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Ysenkhal (S008_E018, mine de fer) et Kholbrakh (S008_E017, houilleurs et fondeurs) ; POI [GD] Autel des Ancêtres (S006_E016), Galeries effondrées de la Vieille Veine (S006_E018), Puits des Apprentis (S006_E017), Relais des convois de minerai (S008_E016), Camp des prospecteurs (S007_E018) ; routes locales 000185 Durnhalde → Kholbrakh et 000186 Kholbrakh → Ysenkhal, voisin le plus proche (règle v1.0.65), et sentiers 000187 à 000191 ; faune existante de niveau 1 à 10 rattachée aux cases (aucune créature à retirer) ; Autel ajouté aux lieux de culte des nains (religion_nains) ; PNJ de service nains dans les nouveaux hameaux (RACE_FACTIONS : faction_dwarves). Rien dans la case de Ghrunke Dash (S007_E016) ; cratère et Grand Hall (S008_E014) hors région ; routes 000126 et 000148 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.6.",
       "v1.0.68 : [CARTE] région de départ des Chevaliers-Dragons autour de Drakhenhal (S004_W004) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Hameaux [GD] Krakhol (S004_W003, bergers) et Bhridrak (S004_W005, élevage de montures) ; POI [GD] Nids abandonnés des Crêtes (S003_W003), Cairn des Ailes tombées (S003_W005), Ruines du pont des Gorges (S005_W003), Aire de dressage des écuyers (S005_W005) ; routes locales 000179 et 000180 vers Drakhenhal, voisin le plus proche (règle v1.0.65), et sentiers 000181 à 000184 ; faune existante de niveau 1 à 10 rattachée aux cases ; Grand Ancien retiré de S003_W005 et dragon des Princes Dragons de S005_W005 (pas de dragon adulte en zone débutant) ; Cairn ajouté aux lieux de culte des croyances mineures (culte du pacte). Rien dans les cases du Palais et du Sanctuaire (S003_W004) ni d'Ekvhitorn (S005_W004) ; routes 000017, 000082 et 000124 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.5.",
       "v1.0.67 : [CARTE] région de départ des Dzorak autour de Grakhul (N008_E012) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Kraals [GD] Thokrul (N007_E012, éleveurs) et Gharzuk (N008_E013, chasseurs) ; POI [GD] Totem d'Ogunta (N008_E011), Arène des Jeunes-Sangs (N009_E012), Camp de guerre du clan Ghazrak (N009_E013), Affût de la Grande Chasse (N007_E011), Ruines du fortin des Marches (N007_E013) ; routes locales 000172 et 000173 vers Grakhul, voisin le plus proche (règle v1.0.65), et sentiers 000174 à 000178 ; faune existante de niveau 1 à 10 rattachée aux cases ; Totem d'Ogunta ajouté aux lieux de culte des esprits des orques. Rien dans la case de Ghulvathan (N009_E011) ; routes 000125 et 000142 inchangées. Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.4.",
       "v1.0.66 : [CARTE] région de départ des Chevaliers de la Justice autour d'Ordhrann (N009_W010) : 3×3 cases de niveau débutant (décision du 06/11/2026, déjà inscrite en v1.0.62). Ferme [GD] Thydmar (N010_W010) et hameau de garnison [GD] Vharholdt (N009_W009) ; POI [GD] Stèle des Serments (N008_W010), Lices des novices (N010_W010, à distance de la ferme), Camp des parjures (N010_W009), Ruines de la tour du guet (N008_W009) ; routes locales 000166 et 000167 vers Ordhrann, voisin le plus proche (règle v1.0.65), et sentiers 000168 à 000171 ; faune existante de niveau 1 à 10 rattachée aux cases ; Stèle des Serments ajoutée aux lieux de culte de l'Église. Rien dans la case de Syzygie ni dans les cases du fleuve (N008_W011, N010_W011). Noms [GD] à valider. Détail : docs/world/LORE_BD.md, section 15.3.",
@@ -39,17 +40,17 @@
       "v1.0.58 : [GD] économie — monnaies (denier, pièce d'argent, couronne ; 1 c = 100 pa = 10 000 d, aligné sur game/data), impôts et péages, primes, productions par région, routes commerciales, corporations et métiers (regles_transverses regle_eco_*) ; grille de prix de référence (game_design.economie.grille_prix) ; notes « [GD] (v1.0.58) Économie » sur les régions, villes et lieux concernés.",
       "v1.0.57 : [CANON] règles « ce qui fait foi » (regles_transverses, catégorie canon) : corpus (Tome 0, Tomes 1-14, L'Empire de la Négation, Methraton 1-3, Arcanes 1-5 ; tomes 15 et suivants exclus), priorité des sources, époque du jeu, étiquettes, registre de 198 décisions du propriétaire (173 notes [DÉCISION], 16 fiches dictées par le propriétaire, 7 décisions de LORE_BD inscrites sur leurs fiches, 2 décisions de corpus et de priorité). Détail : docs/world/LORE_BD.md, section 0.",
       "v1.0.56 : [BD-HS] albums hors série (Tome 0 « En un jeu cruel », « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5) : 25 décisions du propriétaire (propositions par défaut) — THS après T11, préquelles avant T1 (état de fin d'album) ; Sysigie affichée « Aurore » (alias Sysigie, Syzygie ; principauté syzygie) ; char_wismerhill_father fusionné dans char_pazuzu ; Greldinard demi-orque, Ghorghor demi-ogre, Pile-ou-Face elfe des bois (alias Nelfe) ; jumelles « Carole et Caroline » ; Okhost alias Hokhost ; Dvorak / Dzorak ; régions Marche de l'Est et royaume d'Hishtarland ; Orkland alias des Territoires orcques ; Erypt et plans hors carte ; Sekh = le Serpent ; Haghendorf empereur des préquelles ; Ruines de Wismerhill : POI poi_ruines_wismerhill à côté du village de Whispers Hill (N011_E008), fusion de ville_chateau_ruine_t00 ; personnages, lieux, objets et frise des albums ajoutés. Détail : docs/world/LORE_BD.md, section 10.",
-      "v1.0.55 : placements T7-T14 et fleuve de Sysigie — temple de Methraton et Seuil de Lhynn dans la cellule de Lhynn (N001_W010), forteresse naine d'Heureux / Heusgly en S006_E004, sanctuaire des Chevaliers Dragons en S003_W004 (décisions) ; Port Franc (S003_W013), Hoengardt (N014_E016), défilé de Mordrek (N016_E013), Moros (N000_W007), Grand Hall des nains (S008_E014) [INFÉRÉ] ; fleuve « [à nommer] » qui entoure l'île de Sysigie (N006_W010 → N012_W011) ; fusion char_haut_tharque → char_meldrim_t11 (décision) ; notes : enfants de Wismerhill, Kruikna / Cruik / dragon bleu distincts, Parsifal caché au T12, titre « Baron » de Greldinard. Détail : docs/world/LORE_BD.md, section 8.",
+      "v1.0.55 : placements T7-T14 et fleuve de Sysigie — temple de Methraton et Seuil de Lhynn dans la cellule de Lhynn (N001_W010), forteresse naine d'Heusgly en S006_E004, sanctuaire des Chevaliers Dragons en S003_W004 (décisions) ; Port Franc (S003_W013), Hoengardt (N014_E016), défilé de Mordrek (N016_E013), Moros (N000_W007), Grand Hall des nains (S008_E014) [INFÉRÉ] ; fleuve « [à nommer] » qui entoure l'île de Sysigie (N006_W010 → N012_W011) ; fusion char_haut_tharque → char_meldrim_t11 (décision) ; notes : enfants de Wismerhill, Kruikna / Cruik / dragon bleu distincts, Parsifal caché au T12, titre « Baron » de Greldinard. Détail : docs/world/LORE_BD.md, section 8.",
       "v1.0.54 : [BD-T7 à T14] corrections confrontées aux albums « De Vents, de Jade et de Jais », « Le Glaive de justice », « Les Chants de la négation », « L'Aigle foudroyé », « Ave Tenebrae », « La Porte des Enfers », « La Prophétie », « La Fin des Temps » : fusions char_prince_tenebres_t11 → char_lucifer_prince_tenebres (le Sombre Prince est le père d'Haazheel), char_baron_aspirant_t13 → char_fratus_sinister, char_pilou → char_pile_ou_face, char_methrhton_herald → char_serpent_methraton ; contenu « Jade » du T7 marqué [À VÉRIFIER] ; bataille finale du T13 dans la salle du trône de Lhynn ; Lhynn sur la mer de l'ouest, Sysigie (Syzygie) île fluviale noyée de brouillard (décisions) ; notes BD d'Horkher déplacées depuis Harrodh ; graphies Grhumpdeth, Hellwelkin, Feu Solaire ; statuts (Haazheel, Fratus, Urmacht, Gunthar morts ; père de Wismerhill et Iaun Reith vivants) ; frise T7-T14 complétée (90 fiches vides remplies ou ajoutées) ; 4 personnages et 8 lieux ajoutés. Détail : docs/world/LORE_BD.md, section 7.",
       "v1.0.53 : [BD-T4/T5/T6] corrections confrontées aux BD « Quand sifflent les serpents », « La Danse écarlate », « La Couronne des ombres » : graphies Hellaynnea, Selinporf, Pharix, Hokhost, Sysigie, Krukh ; fusions char_esmeralda_succubus → char_succubus (Esmeralda = apparence), char_grand_maitre_lion → char_fratus_sinister ; titan de Tsaroth = Haazheel ; Tsaroth sans service ; Faille tenue par la Lune Noire ; Krak de Jhenner ; plan de bataille ; palais lunaire et son reflet, Passe de Heniak, citadelle impériale ; 9 évènements corrigés, 2 ajoutés ; tomes des personnages normalisés (tNN). Détail : docs/world/LORE_BD.md.",
       "v1.0.52 : [CARTE] carte agrandie et densifiée : grille du lore N023..S018 x W019..E026 (côte orientale « Rivage des Géants », extrême nord des Terres des Gigantomorphes, confins du Midi : le continent n'est plus coupé par les bords) ; 23 cellules du lore reportées dans le monde jouable ; 45 villes du lore intégrées au monde jouable, Unnamed-64 → Runhkar, Unnamed-143 → Klaerhin, Dhemorr décalée en N014_E017, 10 villes créées sur les nouvelles terres ; rivières de Rhivkhar et de Suthvarn, 5 lacs de plaine, 4 forêts, marais des landes ; champs cultivés autour de toutes les villes. Détail : docs/world/LORE_BD.md.",
       "v1.0.51 : [BD-T3] corrections confrontées à la BD « La Marque des Démons » : Goum (armure à nacelle de Nasha, notes fausses retirées) ; locuteurs de l'éclosion de Kruikna ; Haazheel en vieillard au turban ; fusions companion_dragon_pilou → companion_kruikna, char_desdemone → char_succubus « Hellaynnea (la Succube) », char_emperor_lhynn_t1 → char_haghendorf, lieu_garundel_estate → ville_garundel_fief ; alias Hizim ; Baron de Mhoorkh ; Garundel sans meurtrier nommé ; trajet continu Oracle → Ghrunke Dash (S007_E016) → village fantôme (S003_E006, marais) → fief de Garundel (S001_E004), routes Camp de l'Oracle–Ghrunke Dash–Fief ; 8 évènements T3 ; arc arc_t03_marque_des_demons. Détail : docs/world/LORE_BD.md.",
       "v1.0.50 : [BD-T1/T2] corrections confrontées à la BD « Le Vent des Dragons » : Fey = Feidreiva (fusion char_fey, companion_fey_t2) ; Pilou = Pile-ou-Face ; Gunther = Gunthar (fusion) ; Goum = frère jumeau de Nasha (quête quest_t2_liberation_goum), Murata vainqueur de l'arène ; Lord Drakkhurst (char_lord_drakkhurst) et maître Orkhan (char_orkhan_t2) créés ; locuteurs des dialogues T2 corrigés ; Mont des Neuf Pics en N007_E005 ; Atmosphère = entrée de la Passe ; route Feyhin–Magistrya ; extrémités de routes resynchronisées (Kendrhir) ; 10 butins T1 orphelins créés ; arc arc_t02_vent_des_dragons. Détail : docs/world/LORE_BD.md.",
       "v1.0.49 : [CARTE] lieux mineurs du T1 placés : Forêt de la Rencontre (N012_E008, près de Whispers Hill alignée sur world_master en N011_E008), Hayvekh (N018_E013, village du poulailler et cour de Ghorghor, ruine), Camp de l'Étang (N018_E012, rencontre de Feidreiva), Champ de la Première Bataille (N018_E011) et citadelle d'Askhrof (N017_E012, ruine) ; textes « forêt des Marches » corrigés ; noms Hayvekh et Askhrof repris de carte_export.json.",
-      "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Mhorgad (N015_E017) → Dhunfal (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir Vale (N015_E012) ; Mhorgad et Dhunfal créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
-      "v1.0.47 : [VILLES] Kendrhir Vale en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
-      "v1.0.46 : [VILLES] Kendrhir Vale : intérieur de la cité rempli (citadelle, muraille et trois portes, cinq quartiers, lices, emplacement des 19 PNJ de service, PNJ d'ambiance) et description complète (topographie, architecture, végétation, ciel, accès, prompt image) ; éléments hors BD marqués [INFÉRÉ].",
-      "v1.0.45 : [CARTE] Positions confrontées au T1 : Kendrhir Vale en N015_E012, juste au sud de la Faille de Kashogs, en haut d'une falaise et sans vue sur la mer ; N014_E012 passée en plaine (plaine du siège) ; Tbarak (N018_E014), Klindor (N017_E019) et Hazol (N015_E015) replacées dans les Territoires des Marches selon la carte p.25 ; routes Tbarak–Klindor–Hazol–Kendrhir Vale (itinéraire de la horde) ; le port de la baie en S005_W004 devient Ekvhitorn (ville_equiton, nom non utilisé de carte_export.json) : ligne maritime du sud, ports et scénario « Les Abysses de la baie » (quest_abysses_1_equiton) rattachés à Ekvhitorn.",
+      "v1.0.48 : [CARTE] Territoires des Marches étendus au nord de la Faille de Kashogs (cellules N017-N018, E09-E13) ; itinéraire de la horde du T1 complet selon la carte p.25 : Tbarak (N018_E010) → Klindor (N017_E019) → Hazol (N017_E011) → Mhorgad (N015_E017) → Dhunfal (N017_E013) → Faille de Kashogs (N016_E012) → Kendrhir (N015_E012) ; Mhorgad et Dhunfal créées pour les deux cités sans nom de la carte (noms non utilisés de carte_export.json).",
+      "v1.0.47 : [VILLES] Kendrhir en reconstruction après le tome 1 (architecture, ambiance, état de jeu) ; nouvel état « reconstruction » du générateur de monde (world_master.json).",
+      "v1.0.46 : [VILLES] Kendrhir : intérieur de la cité rempli (citadelle, muraille et trois portes, cinq quartiers, lices, emplacement des 19 PNJ de service, PNJ d'ambiance) et description complète (topographie, architecture, végétation, ciel, accès, prompt image) ; éléments hors BD marqués [INFÉRÉ].",
+      "v1.0.45 : [CARTE] Positions confrontées au T1 : Kendrhir en N015_E012, juste au sud de la Faille de Kashogs, en haut d'une falaise et sans vue sur la mer ; N014_E012 passée en plaine (plaine du siège) ; Tbarak (N018_E014), Klindor (N017_E019) et Hazol (N015_E015) replacées dans les Territoires des Marches selon la carte p.25 ; routes Tbarak–Klindor–Hazol–Kendrhir (itinéraire de la horde) ; le port de la baie en S005_W004 devient Ekvhitorn (ville_equiton, nom non utilisé de carte_export.json) : ligne maritime du sud, ports et scénario « Les Abysses de la baie » (quest_abysses_1_equiton) rattachés à Ekvhitorn.",
       "v1.0.44 : [TOME 1] Confrontation avec la BD : graphie « Kendrhir » du T1 appliquée partout (textes et identifiants) ; fin du tome corrigée (Hizin mort, Feidreiva et Pile-ou-Face survivent et partent avec Wismerhill ; Chevaliers en déroute) ; Urmarcht parle par la bouche de Frater Sinister ; locuteurs rétablis dans 6 dialogues T1 (dont Whispers Hill, origine de Wismerhill et non de Pile-ou-Face) ; « monstre » d'ouverture = lapin, « dragon » des Marches = leurre de bois ; Grand Mage de Kendrhir (ex-Seigneur) ; fusions : Frater/Fratus Sinister, Ghorghor Bey ×2, Urmarcht/Urmacht, Methraton ×2, Le Serpent ×2, 7 doublons de timeline T1 ; références orphelines T1 rattachées (ville vers kendrhir_vale, char_feydriva, char_oracle*).",
       "v1.0.43 : [VILLES] Services de toutes les villes remplis selon la grille par taille (game_design.cities_services.grille) : hameau, village, ville, grande ville, capitale, forteresse ; champ « taille » par ville ; un PNJ de service par exemplaire de service (service_npcs : nom propre unique, métier) ; cimetière ajouté aux services ; Horker renommée Harrodh ; types attribués aux 19 villes qui n'en avaient pas, Altenberg et Northind passées en grande ville.",
       "v1.0.42 : [BESTIAIRE] 125 espèces animales ajoutées aux créatures (catégorie, famille, variantes) ; 20 familles de familiers (19 normales, 1 exotique : Ver) dans familiar_families.",
@@ -66,8 +67,8 @@
       "v1.0.31 : [CARTE] Ligne maritime du sud : ponton dans la cellule de chaque ville ; vraie rotation, chaque étape de la boucle suit un chenal différent de la baie.",
       "v1.0.30 : [CARTE] Feyhin Lokcthat sur une très grosse colline, Porte 2 des enfers dessous (nouveau lieu N008_E007) ; Oldbridge, Ironmere, Deepvale, Millway, Stonemark supprimées ; routes Nykhfeld–Vlakmorh, Hilvakh–Rhivkhar, Rhivkhar–Ebhrazul, Farvhenn–Rhivkhar, Farvhenn–Vestmhor ; routes maritimes tracées sur l'eau navigable (waypoints) avec un ponton à chaque escale.",
       "v1.0.29 : [CARTE] Ashgrave, Grimholt, Ridgeholt supprimées ; Unnamed-66 renommée Brokhendt ; routes Ostrevan–Haevrin, Nakhtvar–Nykhfeld, Tbarak–Brokhendt et Zaltheim–Tbarak (maritimes) créées, Camp de l'Oracle–Horkher remplacée par Camp de l'Oracle–Horker, Lhynn–Sauken et Harndrecht–Tbarak supprimées ; S006_W004 → côte, S006_W007 → plage ; 16 cellules de plaine au contact d'une forêt passées en lisière ; règles de rendu (plaine, forêt, lisière, routes le long de l'eau) et ligne maritime du sud (2 bateaux, pause 30 s) ajoutées ; routes Dhazkmer–Vlakmorh, Vlakmorh–Ebhrazul (villes isolées par les suppressions).",
-      "v1.0.28 : [CARTE] Routes : Dhuzmar–Skhaldrach, Mhillenz–Frhozhol, Camp de l'Oracle–Arkhanyra (au lieu de Camp de l'Oracle–Kendrhir Vale), Moork–Nykhfeld–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mhozrak–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Iustarn et Dys.",
-      "v1.0.27 : [CARTE] Longmere supprimée, Skhaldrach rétablie (S003_W008), Haevrin décalée en N011_W004 ; routes : Sysigie–Vaerdhun (au lieu de Sysigie–Treuvhal), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arkhanyra–Kendrhir Vale (au lieu de Sauken–Kendrhir Vale), Harndrecht–Tbarak (au lieu de Palais des Maîtres des Dragons–Harndrecht), route maritime Zaltheim–Hishtarland, Skhaldrach reliée à Harndrecht.",
+      "v1.0.28 : [CARTE] Routes : Dhuzmar–Skhaldrach, Mhillenz–Frhozhol, Camp de l'Oracle–Arkhanyra (au lieu de Camp de l'Oracle–Kendrhir), Moork–Nykhfeld–Horkher (au lieu de Moork–Horkher), Feyhin Lokcthat–Mhozrak–Horkher (au lieu de Feyhin Lokcthat–Horkher). Porte 3 des enfers (S005_W011) : grande vallée, portail dans les sous-sols d'un vieux temple au centre. Porte 5 des enfers (N008_W007) : château fortifié abandonné, à l'écart des routes ; route Sysigie–Northind supprimée (elle traversait la cellule de la Porte 5), trajet par Iustarn et Dys.",
+      "v1.0.27 : [CARTE] Longmere supprimée, Skhaldrach rétablie (S003_W008), Haevrin décalée en N011_W004 ; routes : Sysigie–Vaerdhun (au lieu de Sysigie–Treuvhal), Altenberg–Dys–Northind (au lieu d'Altenberg–Northind), Sauken–Arkhanyra–Kendrhir (au lieu de Sauken–Kendrhir), Harndrecht–Tbarak (au lieu de Palais des Maîtres des Dragons–Harndrecht), route maritime Zaltheim–Hishtarland, Skhaldrach reliée à Harndrecht.",
       "v1.0.26 : [CARTE] Revue des villes : 66 supprimées, 4 renommées (Unnamed-147→Melvhord, Unnamed-146→Khlaybur, Unnamed-144→Longmere, Unnamed-68→Stohnvar, décalée d'une cellule à l'est), route Sysigie–Altenberg passant par Iustarn, réseau routier minimal connecté (58 routes ajoutées), route maritime Hishtarland–Unnamed-66, Tbarak placée en S005_W004 (Royaume Drach).",
       "v1.0.25 : [CARTE] Fusion de carte_export.json (éditeur de carte v23) : 17 ville(s) enrichie(s), 115 ajoutée(s) (hameaux, bourgs, villes, avec leur fiche descriptive), 17 lieu(x) remarquable(s) dans la nouvelle collection « lieux », 19 route(s), référentiels place_types (32 types de lieux), terrain_types et route_types. En cas de conflit, la v1.0.24 prime.",
       "v1.0.24 : [GD] 12 classes converties en structure HYBRIDE ALTERNÉE (Mage, Chaman, Prêtre de la Lune Noire, Menthats, Inquisiteur, Paladin, Prêtre de la Grâce, Prêtre du Jugement, Démoniste, Tourmenteur, Sorcier de sang, Archimage). 3 branches fixes (single/aoe/def) dont le TYPE alterne : niveaux impairs = soin unitaire + attaque zone ; niveaux pairs = attaque unitaire + soin zone ; défense à tous les niveaux. Soins thématisés par classe (drain/sang pour les sombres, lumière pour les sacrés, esprits pour le chaman, arcane pour les mages). Icônes à régénérer pour ces classes.",
@@ -762,7 +763,7 @@
         "[BD] Ne s'entendent pas avec les elfes (conflit ancien — modèle v0.1).",
         "[GD] (v1.0.58) Religion : « Le Métal, le Feu et la Lave » (lore.religions, religion_nains).",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Durnhalde (hameau_durnhalde, S007_E017), près de Ghrunke Dash. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[GD] (v1.0.69) Région de départ 3×3 autour de Durnhalde (LORE_BD §15.6) : hameaux Eisenkehl (mine de fer) et Kohlbrand (houilleurs et fondeurs), Autel des Ancêtres, Galeries effondrées de la Vieille Veine, Puits des Apprentis, Relais des convois de minerai, Camp des prospecteurs ; routes locales vers le voisin le plus proche ; faune de niveau 1 à 10. Rien dans la case de Ghrunke Dash (S007_E016).",
+        "[GD] (v1.0.69) Région de départ 3×3 autour de Durnhalde (LORE_BD §15.6) : hameaux Ysenkhal (mine de fer) et Kholbrakh (houilleurs et fondeurs), Autel des Ancêtres, Galeries effondrées de la Vieille Veine, Puits des Apprentis, Relais des convois de minerai, Camp des prospecteurs ; routes locales vers le voisin le plus proche ; faune de niveau 1 à 10. Rien dans la case de Ghrunke Dash (S007_E016).",
         "[GD] (v1.0.89) 5 quêtes [GD] de départ autour de Durnhalde (niveaux 1 à 7 et plus) ; gradient proposé du départ (LORE_BD §16.18)."
       ],
       "faction_relations": [],
@@ -5712,7 +5713,7 @@
         "[BD-T11] Présente au banquet de victoire dans le palais brûlant de Haghendorf.",
         "[BD-T11] Fait l'amour avec Wismerhill parmi les flammes du palais — 'violemment, passionnément, sauvagement, inlassablement'.",
         "[BD-T11] Reçoit les plus belles parures du monde comme cadeau de Wismerhill : 'Elles sont magnifiques, merci.'",
-        "[BD-T11] Donne naissance à un enfant dans la forteresse naine d'Heureux.",
+        "[BD-T11] Donne naissance à un enfant dans la forteresse naine d'Heusgly.",
         "[BD-T11] À la fin du tome, ouvre la porte et annonce : 'Il y a là quelqu'un qui dit qu'il souhaite rencontrer sa petite-fille...' — cliffhanger T12.",
         "[v1.0.51] Fiche personnage : char_succubus « Hellaynnea (la Succube) », qui absorbe Desdémone (T2) [DÉDUCTION].",
         "[BD-T6] p.22-24 : Esmeralda est une apparence prise par la succube elle-même ; sa victime est un homme blond anonyme de Moork (pas Fratus)."
@@ -7598,8 +7599,8 @@
     },
     {
       "id": "kendrhir_vale",
-      "name": "Kendrhir Vale",
-      "alias": "",
+      "name": "Kendrhir",
+      "alias": "Kendrhir Vale",
       "type": "training_city",
       "importance": "capitale stratégique",
       "cell": "N015_E012",
@@ -7640,8 +7641,9 @@
         "Kendrhir est la première grande ville après la Faille de Kashogs (au sud des Marches)",
         "[BD-T1] Position : juste au sud de la Faille de Kashogs (N016_E012), que la horde franchit avant d'atteindre la cité au début de l'hiver (pp.25-29 BD).",
         "[GD] v1.0.46 : intérieur de la cité proposé (quartiers, lieux et emplacement des PNJ de service, PNJ d'ambiance) — tout ce qui n'est pas montré dans la BD est marqué [INFÉRÉ]. Plan de référence : artefact « Plan de Kendrhir ».",
-        "[GD] v1.0.47 : Kendrhir Vale passe à l'état « reconstruction » (après le T1) — ruines, brèches et chantiers générés par tools/world_gen ; les quartiers et services décrits dans elements_principaux sont ceux de la cité relevée.",
-        "[GD] (v1.0.58) Économie : reconstruction : achète bois, pierre et vivres, emploie maçons et charpentiers [GD] ; la horde a écumé les fermes alentour [BD-T1]."
+        "[GD] v1.0.47 : Kendrhir passe à l'état « reconstruction » (après le T1) — ruines, brèches et chantiers générés par tools/world_gen ; les quartiers et services décrits dans elements_principaux sont ceux de la cité relevée.",
+        "[GD] (v1.0.58) Économie : reconstruction : achète bois, pierre et vivres, emploie maçons et charpentiers [GD] ; la horde a écumé les fermes alentour [BD-T1].",
+        "[DÉCISION] (v1.0.94) Nom affiché « Kendrhir » (décision du propriétaire du 12/11/2026, lot 22 : la BD dit Kendrhir [BD-T1], « Vale » était un ajout anglais ; c'est bien la cité des Grands Mages du T1, en reconstruction, aucune autre fiche Kendrhir) ; l'ancien nom « Kendrhir Vale » est gardé en alias. Identifiant inchangé (kendrhir_vale) (LORE_BD §16.23)."
       ],
       "dimensions_estimees": {
         "hauteur": "40m",
@@ -8354,7 +8356,8 @@
         "[v1.0.54] Les notes BD d'Horkher (T6) portées par cette fiche ont été déplacées vers city_horkher (N006_E014), la vraie Horkher. Harrodh reste une ville du jeu (renommage figé par generate_city_services.py, RENOMMAGES).",
         "[GD] (v1.0.58) Économie : cité marchande ; produit bois de chauffe, petit gibier, miel, sel gemme ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Harrodh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Harrowdale » est gardé en alias. Identifiant inchangé (horker) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Harrodh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Harrowdale » est gardé en alias. Identifiant inchangé (horker) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.94) Description de world_master.json corrigée : elle décrivait la vraie Horkher (comté de George d'Horkher, BD-T6, city_horkher) ; elle décrit désormais Harrodh, cité marchande de la Via Magna. Horkher garde sa propre entrée (city_horkher, N006_E014) (LORE_BD §16.23)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -11430,8 +11433,8 @@
     },
     {
       "id": "ville_forteresse_naine_heureux_t11",
-      "name": "Forteresse Naine d'Heureux",
-      "alias": "Heusgly",
+      "name": "Forteresse naine d'Heusgly",
+      "alias": "Forteresse Naine d'Heureux, Heusgly",
       "type": "fortress_city",
       "importance": "",
       "cell": "S006_E004",
@@ -11459,9 +11462,10 @@
         "[BD-T11] 'LE TEMPS AVAIT PASSÉ LENTEMENT, ET DANS L'ANCIENNE FORTERESSE NAINE D'HEUREUX DES ÉVÉNEMENTS SE PRÉPARAIENT.'",
         "[BD-T11] Les bébés impériaux y sont gardés par des démons — rarissime protection.",
         "[BD-T11] Lieu de naissance des 10 héritiers impériaux (9 filles + 1 garçon).",
-        "[À VÉRIFIER BD-T11] p.36 : le cartouche se lit « l'ancienne forteresse naine d'Heusgly » (lecture incertaine) ; « d'Heureux » est une lecture du lore, conservée. Même forteresse que celle du T9 p.26 (zone_forteresse_naine_abandonnee_t9) [DÉDUCTION].",
+        "[À VÉRIFIER BD-T11] p.36 : le cartouche se lit « l'ancienne forteresse naine d'Heusgly » (lecture incertaine) ; « d'Heureux » était une lecture du lore, remplacée par « d'Heusgly » en v1.0.94 (décision du propriétaire). Même forteresse que celle du T9 p.26 (zone_forteresse_naine_abandonnee_t9) [DÉDUCTION].",
         "[DÉCISION] (v1.0.55) Cellule S006_E004 (montagnes) : refuge des neuf mères au T9 (p.26, pendant la livraison du Juggernauth) et « forteresse naine d'Heusgly » du T11 (p.36). Le monde jouable la déplace de S004_W004 à S006_E004.",
-        "[GD] (v1.0.58) Économie : forteresse : achète vivres et armes ; produit minerai, pierre de taille, blé et orge, élevage ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : forteresse : achète vivres et armes ; produit minerai, pierre de taille, blé et orge, élevage ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[DÉCISION] (v1.0.94) Nom affiché « Forteresse naine d'Heusgly » (décision du propriétaire du 12/11/2026, lot 22 : graphie du cartouche [BD-T11 p.36] « l'ancienne forteresse naine d'Heusgly ») ; l'ancien nom « Forteresse Naine d'Heureux » est gardé en alias. Identifiant inchangé (ville_forteresse_naine_heureux_t11) (LORE_BD §16.23)."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -12576,7 +12580,8 @@
         "[DÉCISION] (v1.0.56) Comté rattaché à la Marche de l'Est (Q15) ; graphie THS « Horker » en alias (Q12).",
         "[GD] (v1.0.58) Économie : cité marchande ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
-        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N006_E014) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17)."
+        "[DÉCISION] (v1.0.88) Ville désormais jouable : sa case (N006_E014) est générée (ouverture de la Marche de l'Est, LORE_BD §16.17).",
+        "[DÉCISION] (v1.0.94) Entrée de world_master.json (city_horkher, N006_E014) complétée avec la description du comté de George d'Horkher qui était par erreur sur horker (Harrodh) (LORE_BD §16.23)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -15142,7 +15147,7 @@
       "footprint_tiles": [],
       "notes": [
         "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, minerai, pierre de taille ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (S009_E020) est générée (ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (S009_E020) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.93) Nom affiché « Vozmarkh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Voidmark » est gardé en alias. Identifiant inchangé (town_0125) (LORE_BD §16.22)."
       ],
       "taille": "village",
@@ -16099,7 +16104,7 @@
       "notes": [
         "[GD] (v1.0.58) Économie : bourg artisanal ; produit moulins et maraîchage, pêche de rivière, lin, bois d'œuvre ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[INFÉRÉ] (v1.0.90) region_id = region_marche_est (région de sa case, LORE_BD §16.19) ; ville inchangée (case, nom, services).",
-        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N008_E018) est générée (ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N008_E018) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (case N008_E018, carte du hors-série ; avant : Marche de l'Est, `region_marche_est`) (LORE_BD §16.21).",
         "[DÉCISION] (v1.0.93) Nom affiché « Rhivkhar » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Rivercross » est gardé en alias. Identifiant inchangé (town_0132) (LORE_BD §16.22)."
       ],
@@ -17889,7 +17894,7 @@
       "anchor_tile": "N018_E009",
       "coord_x": null,
       "coord_y": null,
-      "faction_control": "",
+      "faction_control": "faction_hauts_elfes",
       "region_id": "territoires_orcques",
       "province": "region_marches",
       "housing_count": null,
@@ -17969,47 +17974,48 @@
       "notes": [
         "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage, poisson, sel marin ; récolte : gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques, province Territoires des Marches (case N018_E009, carte du hors-série ; avant : Forêt elfique, `foret_elfique`) (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Nhorvaël » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Northfen » est gardé en alias. Identifiant inchangé (hamlet_0166) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Nhorvaël » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Northfen » est gardé en alias. Identifiant inchangé (hamlet_0166) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.94) Nhorvaël reste un hameau ELFE (décision du propriétaire du 12/11/2026, lot 22) : faction_control faction_hauts_elfes (comme Ghwenaëth et Faernilh hors de la Forêt elfique), PNJ de service hauts elfes (régénérés, mêmes identifiants), master race « elfes » / faction « elfe ». Case N018_E009 et région (Territoires orcques, province Territoires des Marches, v1.0.92) inchangées (LORE_BD §16.23)."
       ],
       "taille": "hameau",
       "service_npcs": [
         {
           "id": "pnj_hamlet_0166_auberge_01",
-          "name": "Falelle Rosslande",
+          "name": "Ilanlith Loriel",
           "gender": "female",
-          "race_id": "race_human",
+          "race_id": "race_haut_elfe",
           "service": "auberge",
           "metier": "aubergiste"
         },
         {
           "id": "pnj_hamlet_0166_potions_01",
-          "name": "Gileline Clairfort",
+          "name": "Celesse Silvaleth",
           "gender": "female",
-          "race_id": "race_human",
+          "race_id": "race_haut_elfe",
           "service": "potions",
           "metier": "herboriste"
         },
         {
           "id": "pnj_hamlet_0166_forgeron_01",
-          "name": "Renisse Corbvigne",
+          "name": "Saelith Venaleth",
           "gender": "female",
-          "race_id": "race_human",
+          "race_id": "race_haut_elfe",
           "service": "forgeron",
           "metier": "forgeron"
         },
         {
           "id": "pnj_hamlet_0166_ecurie_01",
-          "name": "Alard Belfort",
+          "name": "Aernor Silvethil",
           "gender": "male",
-          "race_id": "race_human",
+          "race_id": "race_haut_elfe",
           "service": "ecurie",
           "metier": "palefrenier"
         },
         {
           "id": "pnj_hamlet_0166_cimetiere_01",
-          "name": "Renia Chenombre",
+          "name": "Aernya Celorin",
           "gender": "female",
-          "race_id": "race_human",
+          "race_id": "race_haut_elfe",
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
@@ -21190,7 +21196,7 @@
         "[DÉCISION] (v1.0.82) Comptoir de l'Est : Port de Ryvaldh, à l'embouchure de la rivière de Rhivkhar sur la côte orientale : jonques et navires du levant y mouillent. Peuples : L'Empire Minghol (nord-est), L'archipel d'Akhazumi (est-nord-est), L'Empire de Tsin (est), Le Kharzhad (sud-est) ; lore seulement, aucun PNJ placé dans le monde jouable (décision du propriétaire du 11/11/2026 ; LORE_BD §16.11).",
         "[GD] (v1.0.82) Port ajouté à game_design.cities_services.grille.ports (un capitaine de port) : la ville était déjà « port_town » ; ponton vers N006_E024 (LORE_BD §16.11).",
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Pheng Lhaosu (L'Empire de Tsin, marchand) ; Okhiyu Shiranhe (L'archipel d'Akhazumi, marchand) (fiches persons, LORE_BD §16.11).",
-        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N006_E023) est générée (ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N006_E023) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.93) Nom affiché « Ryvaldh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Riverfold » est gardé en alias. Identifiant inchangé (town_riverfold) (LORE_BD §16.22)."
       ],
       "taille": "ville",
@@ -21458,7 +21464,7 @@
       "notes": [
         "[INFÉRÉ] v1.0.52 : ville créée sur les terres ajoutées par l'agrandissement de la carte. Village de la côte orientale, en lisière de forêt.",
         "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N003_E023) est générée (ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N003_E023) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.93) Nom affiché « Grhavelt » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Greyfield » est gardé en alias. Identifiant inchangé (town_greyfield) (LORE_BD §16.22)."
       ],
       "taille": "village",
@@ -21635,7 +21641,7 @@
       "notes": [
         "[INFÉRÉ] v1.0.52 : ville créée sur les terres ajoutées par l'agrandissement de la carte. Hameau des terres arides de la côte orientale.",
         "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit chèvres, pierre, blé et orge, élevage ; récolte : gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (S001_E023) est générée (ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (S001_E023) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.93) Nom affiché « Dhuzvelt » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Dustfield » est gardé en alias. Identifiant inchangé (hamlet_dustfield) (LORE_BD §16.22)."
       ],
       "taille": "hameau",
@@ -24792,8 +24798,8 @@
     },
     {
       "id": "hamlet_eisenkehl",
-      "name": "Eisenkehl",
-      "alias": "",
+      "name": "Ysenkhal",
+      "alias": "Eisenkehl",
       "type": "farm_hamlet",
       "importance": "local",
       "cell": "S008_E018",
@@ -24879,12 +24885,13 @@
       "footprint_tiles": [],
       "notes": [
         "[GD] (v1.0.69) Nom proposé, à valider par le propriétaire. Hameau minier accroché à une gorge : entrées de mine de fer étayées de poutres, terrils, treuils et wagonnets ; le minerai part à dos de mulet vers les forges de Ghrunke Dash. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
-        "[INFÉRÉ] (v1.0.69) Cellule S008_E018 : Montagne du royaume des nains de l'Est au sud-est de Durnhalde, à l'est de Kohlbrand (S008_E017), hors des cases volcaniques ; case libre. La case à l'est de Durnhalde (S007_E018) rendait inaccessible un lieu procédural (mine) et celle au nord (S006_E017) faisait passer le corridor des départs par S005_E017 (géant brun, dragon noir).",
+        "[INFÉRÉ] (v1.0.69) Cellule S008_E018 : Montagne du royaume des nains de l'Est au sud-est de Durnhalde, à l'est de Kholbrakh (S008_E017), hors des cases volcaniques ; case libre. La case à l'est de Durnhalde (S007_E018) rendait inaccessible un lieu procédural (mine) et celle au nord (S006_E017) faisait passer le corridor des départs par S005_E017 (géant brun, dragon noir).",
         "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.69) Économie : mines de fer et de cuivre, minerai brut, étais et outils de mineur ; élevage de mulets de bât et de chèvres ; récolte : minerai, pierre (déduit du terrain, voir regle_eco_productions_regions).",
         "[GD] (v1.0.69) Ancrage : Ghrunke Dash « célèbre dans l'Empire pour la qualité de ses métaux » [BD-T3 pl.16] ; forges et acier nain [GD v1.0.58] ; mines d'apprentissage de Durnhalde (v1.0.61) ; le hameau est [GD].",
         "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_vieille_veine (LORE_BD §16.18).",
-        "[GD] (v1.0.91) Donneur de quête(s) [GD] : quest_nains_est_gd_route_de_voidmark, quest_nains_est_gd_carriers_de_voidmark (LORE_BD §16.20)."
+        "[GD] (v1.0.91) Donneur de quête(s) [GD] : quest_nains_est_gd_route_de_voidmark, quest_nains_est_gd_carriers_de_voidmark (LORE_BD §16.20).",
+        "[DÉCISION] (v1.0.94) Nom affiché « Ysenkhal » (décision du propriétaire du 12/11/2026, lot 22 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Eisenkehl » est gardé en alias. Identifiant inchangé (hamlet_eisenkehl) (LORE_BD §16.23)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -24932,8 +24939,8 @@
     },
     {
       "id": "hamlet_kohlbrand",
-      "name": "Kohlbrand",
-      "alias": "",
+      "name": "Kholbrakh",
+      "alias": "Kohlbrand",
       "type": "farm_hamlet",
       "importance": "local",
       "cell": "S008_E017",
@@ -25023,7 +25030,8 @@
         "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.69) Économie : charbon de terre et coke, fonte en lingots ; élevage de mulets, d'ânes et de chèvres ; récolte : charbon, minerai (déduit du terrain, voir regle_eco_productions_regions).",
         "[GD] (v1.0.69) Ancrage : Charbon de Ghrunke Dash [BD-T9 p.12] ; forges et acier nain [GD v1.0.58] ; le hameau est [GD].",
-        "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_convoi_de_kohlbrand (LORE_BD §16.18)."
+        "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_convoi_de_kohlbrand (LORE_BD §16.18).",
+        "[DÉCISION] (v1.0.94) Nom affiché « Kholbrakh » (décision du propriétaire du 12/11/2026, lot 22 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Kohlbrand » est gardé en alias. Identifiant inchangé (hamlet_kohlbrand) (LORE_BD §16.23)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -39460,8 +39468,8 @@
     },
     {
       "id": "quest_nains_est_gd_convoi_de_kohlbrand",
-      "name": "Le Convoi de Kohlbrand",
-      "description": "Les houilleurs de Kohlbrand doivent livrer leur charbon et leurs lingots de fonte aux forges de Ghrunke Dash, mais les mulets du convoi se sont dispersés dans la montagne.",
+      "name": "Le Convoi de Kholbrakh",
+      "description": "Les houilleurs de Kholbrakh doivent livrer leur charbon et leurs lingots de fonte aux forges de Ghrunke Dash, mais les mulets du convoi se sont dispersés dans la montagne.",
       "category": "exploration",
       "tags": [
         "[GD]",
@@ -39473,7 +39481,7 @@
       "repeatable": false,
       "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
       "steps": [
-        "À Kohlbrand, prendre la charge du convoi auprès des houilleurs.",
+        "À Kholbrakh, prendre la charge du convoi auprès des houilleurs.",
         "Rassembler les mulets dispersés autour du hameau.",
         "Au Relais des convois de minerai, faire peser la charge et rejoindre l'escorte des mercenaires nains.",
         "Livrer le charbon et la fonte aux forges de Ghrunke Dash."
@@ -39512,7 +39520,7 @@
     {
       "id": "quest_nains_est_gd_vieille_veine",
       "name": "La Vieille Veine",
-      "description": "Les mineurs d'Eisenkehl manquent d'étais et d'outils. Les Galeries effondrées de la Vieille Veine en sont pleines, mais les araignées en tiennent les boyaux.",
+      "description": "Les mineurs d'Ysenkhal manquent d'étais et d'outils. Les Galeries effondrées de la Vieille Veine en sont pleines, mais les araignées en tiennent les boyaux.",
       "category": "exploration",
       "tags": [
         "[GD]",
@@ -39524,10 +39532,10 @@
       "repeatable": false,
       "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
       "steps": [
-        "À Eisenkehl, écouter le chef des mineurs.",
+        "À Ysenkhal, écouter le chef des mineurs.",
         "Entrer dans les Galeries effondrées de la Vieille Veine et brûler les nids d'araignées.",
         "Récupérer les étais encore sains et les outils abandonnés.",
-        "Rapporter le tout à Eisenkehl avant le prochain éboulement."
+        "Rapporter le tout à Ysenkhal avant le prochain éboulement."
       ],
       "source_lore": [
         "hamlet_eisenkehl",
@@ -39614,7 +39622,7 @@
     {
       "id": "quest_nains_est_gd_route_de_voidmark",
       "name": "La Route de Vozmarkh",
-      "description": "Le dernier convoi de minerai parti d'Eisenkehl n'est jamais arrivé à Vozmarkh, le bourg tenu par la Lune Noire où les nains vendent leur fer. Suivre la route du col et retrouver les muletiers.",
+      "description": "Le dernier convoi de minerai parti d'Ysenkhal n'est jamais arrivé à Vozmarkh, le bourg tenu par la Lune Noire où les nains vendent leur fer. Suivre la route du col et retrouver les muletiers.",
       "category": "exploration",
       "tags": [
         "[GD]",
@@ -39626,11 +39634,11 @@
       "repeatable": false,
       "type": "[GD] Quête de suite du départ (Royaume des nains de l'est, v1.0.91)",
       "steps": [
-        "À Eisenkehl, écouter le maître de convoi inquiet.",
+        "À Ysenkhal, écouter le maître de convoi inquiet.",
         "À la Halte des muletiers du col, retrouver les mulets dispersés et chasser l'ours qui les a attaqués.",
         "À la Borne-frontière renversée, relever les traces : le minerai a continué vers Vozmarkh sans ses convoyeurs.",
         "À Vozmarkh, retrouver le minerai chez les gens de la Lune Noire et le racheter, ou le reprendre.",
-        "Rapporter à Eisenkehl ce qu'il en coûte désormais de commercer avec Vozmarkh."
+        "Rapporter à Ysenkhal ce qu'il en coûte désormais de commercer avec Vozmarkh."
       ],
       "source_lore": [
         "hamlet_eisenkehl",
@@ -39667,7 +39675,7 @@
     {
       "id": "quest_nains_est_gd_carriers_de_voidmark",
       "name": "Les Carriers de Vozmarkh",
-      "description": "Des nains d'Eisenkehl capturés sur la route travaillent enchaînés dans la carrière de Vozmarkh. Une famille de chevriers cache déjà des fugitifs : préparer l'évasion des autres.",
+      "description": "Des nains d'Ysenkhal capturés sur la route travaillent enchaînés dans la carrière de Vozmarkh. Une famille de chevriers cache déjà des fugitifs : préparer l'évasion des autres.",
       "category": "exploration",
       "tags": [
         "[GD]",
@@ -39679,10 +39687,10 @@
       "repeatable": false,
       "type": "[GD] Quête de suite du départ (Royaume des nains de l'est, v1.0.91)",
       "steps": [
-        "À Eisenkehl, apprendre que des convoyeurs sont retenus à Vozmarkh.",
+        "À Ysenkhal, apprendre que des convoyeurs sont retenus à Vozmarkh.",
         "À la Ferme des chevriers nains, rencontrer les fugitifs et apprendre la relève des gardes.",
         "À la Carrière des forçats, libérer les carriers nains et les escorter hors de la carrière.",
-        "Ramener les captifs libérés à Eisenkehl."
+        "Ramener les captifs libérés à Ysenkhal."
       ],
       "source_lore": [
         "hamlet_eisenkehl",
@@ -164946,7 +164954,7 @@
         "[BD-T8 p.7] Horde des deux fois nés, armée putréfiée des héros morts.",
         "[GD] (v1.0.86) Rattachée aux lieux lieu_plaine_des_cendres, lieu_lande_pierres_dressees, lieu_ravin_de_l_ichor (LORE_BD §16.15).",
         "[GD] (v1.0.88) Rattachée aux lieux lieu_champ_de_bataille_de_la_conquete, lieu_cimetiere_des_captifs (Marche de l'Est, LORE_BD §16.17).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_cimetiere_des_marins, lieu_tombeau_des_sables (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_cimetiere_des_marins, lieu_tombeau_des_sables (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "habitat": "Der Hem Shelbem et champs de bataille.",
       "groupe": "horde",
@@ -167088,7 +167096,7 @@
       "notes": [
         "[BD-T00 p.35] Ours pêchant dans la rivière.",
         "[BD-A1 p.22] Nours, l'ours du cirque du Magnifique.",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_halte_des_muletiers_du_col, lieu_rucher_de_la_foret (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_halte_des_muletiers_du_col, lieu_rucher_de_la_foret (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Carnivores",
@@ -168028,7 +168036,7 @@
         "[GD] (v1.0.67) Faune de la région de départ de Grakhul (niveaux 1 à 10) : N008_E012, N007_E012 (LORE_BD §15.4).",
         "[GD] (v1.0.68) Faune de la région de départ de Drakhenhal (niveaux 1 à 10) : S003_W005, S004_W004, S004_W003, S005_W005 (LORE_BD §15.5).",
         "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E017, S008_E017, S008_E018 (LORE_BD §15.6).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_ferme_des_chevriers_nains, lieu_bergerie_des_chevriers (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_ferme_des_chevriers_nains, lieu_bergerie_des_chevriers (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "1. Mammifères",
       "famille": "Bovins",
@@ -168516,7 +168524,7 @@
       "notes": [
         "[GD] (v1.0.62) Faune de la région de départ de Haeldorf (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ d'Orhendal (niveaux 1 à 10) : N004_W012 (LORE_BD §15.2).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_epave_echouee (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_epave_echouee (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Oiseaux marins",
@@ -168844,7 +168852,7 @@
       "notes": [
         "[GD] (v1.0.68) Faune de la région de départ de Drakhenhal (niveaux 1 à 10) : S003_W003, S005_W003 (LORE_BD §15.5).",
         "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S007_E018 (LORE_BD §15.6).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_rocher_des_vautours (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_rocher_des_vautours (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -168886,7 +168894,7 @@
         "[GD] (v1.0.69) Faune de la région de départ de Durnhalde (niveaux 1 à 10) : S006_E016, S006_E018, S007_E018, S008_E016 (LORE_BD §15.6).",
         "[GD] (v1.0.70) Faune de la région de départ de Syllaërin (niveaux 1 à 10) : N007_W007, N008_W005 (LORE_BD §15.7).",
         "[GD] (v1.0.88) Rattachée aux lieux lieu_champ_de_bataille_de_la_conquete (Marche de l'Est, LORE_BD §16.17).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_chene_aux_pendus, lieu_gibet_du_carrefour (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_chene_aux_pendus, lieu_gibet_du_carrefour (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "2. Oiseaux",
       "famille": "Rapaces",
@@ -169087,7 +169095,7 @@
         "Grande espèce bleue : creature_serpent_geant_bleu.",
         "[GD] (v1.0.86) Rattachée aux lieux lieu_oasis_palmes_noires (LORE_BD §16.15).",
         "[GD] (v1.0.87) Rattachée aux lieux lieu_caravane_ensablee (LORE_BD §16.16).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_carriere_des_forcats (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_carriere_des_forcats (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "3. Reptiles et dinosaures",
       "famille": "Serpents",
@@ -169506,7 +169514,7 @@
       "notes": [
         "[GD] (v1.0.62) Faune de la région de départ de Haeldorf (niveaux 1 à 10) : N001_W011 (LORE_BD §15.1).",
         "[GD] (v1.0.64) Faune de la région de départ d'Orhendal (niveaux 1 à 10) : N004_W012 (LORE_BD §15.2).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_epave_echouee (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_epave_echouee (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "categorie": "5. Insectes, arachnides et autres arthropodes",
       "famille": "Crustacés",
@@ -170419,7 +170427,7 @@
         "[GD] (v1.0.58) Hostile en Orkland et dans les Marches ; présent en troupes alliées dans les armées de la Lune Noire.",
         "[GD] (v1.0.87) Rattachée aux lieux lieu_coupe_des_bucherons, lieu_cercle_pierres_des_geants (LORE_BD §16.16).",
         "[GD] (v1.0.88) Rattachée aux lieux lieu_fosse_aux_ossements (Marche de l'Est, LORE_BD §16.17).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_repaire_de_l_ogre_de_la_foret (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_repaire_de_l_ogre_de_la_foret (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "bestiaire": true,
       "habitat": "Forêts et plaines de l'Orkland ; bandes errantes dans les Territoires des Marches.",
@@ -170895,7 +170903,7 @@
         "[BD-A4 p.13] Loups géants de guerre : fourrure noire, chaînes, crânes, muselières de fer.",
         "[GD] (v1.0.58) Meutes dressées autour des camps orques ; meutes retournées à l'état sauvage dans les forêts de l'Orkland.",
         "[GD] (v1.0.88) Rattachée aux lieux lieu_scierie_abandonnee, lieu_taniere_du_loup_geant, lieu_tour_de_guet_de_la_lisiere (Marche de l'Est, LORE_BD §16.17).",
-        "[GD] (v1.0.91) Rattachée aux lieux lieu_camp_des_chasseurs_de_loups, lieu_camp_des_deserteurs (routes Eisenkehl - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
+        "[GD] (v1.0.91) Rattachée aux lieux lieu_camp_des_chasseurs_de_loups, lieu_camp_des_deserteurs (routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20)."
       ],
       "bestiaire": true,
       "habitat": "Forêts de l'Orkland, autour des camps orques.",
@@ -172733,9 +172741,9 @@
       "description": "",
       "notes": [
         "[GD] (v1.0.58) Économie : ressources minerai de fer et de cuivre, charbon, gemmes, pierre ; productions acier nain, armes et armures, chars blindés et machines de guerre ; exporte acier nain, armes et armures, machines (sur commande) ; importe vivres, bois, bière. Détail et sources : regle_eco_productions_regions.",
-        "[GD] (v1.0.89) lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18 : aucune case jouable vide — les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville, un hameau ou un lieu (v1.0.69) ; aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] relient les hameaux, Ghrunke Dash et les lieux du départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient de niveau proposé, à valider (niveau relatif à la faction, rule_niveaux_par_faction) : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Eisenkehl, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70).",
+        "[GD] (v1.0.89) lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18 : aucune case jouable vide — les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville, un hameau ou un lieu (v1.0.69) ; aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] relient les hameaux, Ghrunke Dash et les lieux du départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient de niveau proposé, à valider (niveau relatif à la faction, rule_niveaux_par_faction) : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kholbrakh et Relais des convois de minerai 3-6, Ysenkhal et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Ysenkhal, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70).",
         "[INFÉRÉ] (v1.0.90) 21 case(s) sans région rattachée(s) (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : côte orientale (E025, S004-S014), pointe sud des montagnes (S015-S016, E014) et côte sud (S017, E014-E021) : sud de la région, 18-30. Cases : S004_E025, S005_E025, S006_E025, S007_E025, S008_E025, S009_E025, S010_E025, S011_E025, S012_E025, S013_E025, S014_E025, S015_E014, S016_E014, S017_E014, S017_E015, S017_E016, S017_E017, S017_E018, S017_E019, S017_E020, S017_E021. Aucune boîte du master ajoutée ni modifiée.",
-        "[DÉCISION] (v1.0.91) Ouverture de la route Eisenkehl - Vozmarkh (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : suite 10-20 du départ de Durnhalde. 7 cases générées : S008_E019 et S009_E019 (tracé du générateur par le col), Vozmarkh (S009_E020) et sa marge (S009_E021, S010_E019, S010_E020, S010_E021) ; S008_E020 et S008_E021 restent fermées (montagne, hors tracé). 6 lieux [GD] (10-20) et 2 quêtes [GD] de suite du départ (quest_nains_est_gd_route_de_voidmark, 10+ ; quest_nains_est_gd_carriers_de_voidmark, 15+). Routes de Vozmarkh vers Mhordaal, Shaddrek et Ghrondak toujours coupées au mur invisible.",
+        "[DÉCISION] (v1.0.91) Ouverture de la route Ysenkhal - Vozmarkh (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : suite 10-20 du départ de Durnhalde. 7 cases générées : S008_E019 et S009_E019 (tracé du générateur par le col), Vozmarkh (S009_E020) et sa marge (S009_E021, S010_E019, S010_E020, S010_E021) ; S008_E020 et S008_E021 restent fermées (montagne, hors tracé). 6 lieux [GD] (10-20) et 2 quêtes [GD] de suite du départ (quest_nains_est_gd_route_de_voidmark, 10+ ; quest_nains_est_gd_carriers_de_voidmark, 15+). Routes de Vozmarkh vers Mhordaal, Shaddrek et Ghrondak toujours coupées au mur invisible.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Royaume des Nains de l'Est ») : 216 cases terrestres (`cells[].region_id`) ; provinces : Désert des Sels (`desert_des_sels`, 12 cases) ; les autres cases forment le cœur (`province` vide) (LORE_BD §16.21)."
       ]
     },
@@ -173103,9 +173111,9 @@
         "[DÉCISION] (v1.0.90) Région créée (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : rattachement des cases terrestres qui n'avaient aucune région (ni region_id du lore ni boîte du master). Nom [GD] nom et étendue ; Kholdvar, Khlaybur et Suthvarn existent depuis la v1.0.26-1.0.52, à valider.",
         "[GD] (v1.0.90) Emprise : 59 cases terrestres (S007_E000, S007_E001, S007_E002, S007_E003, S007_E004, S007_E005, S007_E006, S008_E000, S008_E001, S008_E002, S008_E003, S008_E004, S008_E005, S008_E006, S009_E000, S009_E001, S009_E002, S009_E003, S009_E004, S009_E005, S009_E006, S010_E000, S010_E001, S010_E002, S010_E003, S010_E004, S010_E005, S010_E006, S011_E000, S011_E001, S011_E002, S011_E003, S011_E004, S011_E005, S011_E006, S012_W001, S012_E000, S012_E001, S012_E002, S012_E003, S012_E004, S012_E005, S012_E006, S013_W001, S013_E000, S013_E001, S013_E002, S013_E003, S013_E004, S013_E005, S013_E006, S014_W001, S014_E000, S014_E001, S014_E002, S014_E003, S014_E004, S014_E005, S014_E006). Terrain : plaines de Kholdvar (S007-S009), forêt de Melvhord (S010-S013, E000-E004), plaines de Khlaybur et de Suthvarn (S014), rivière de Suthvarn ; à l'ouest les monts (S007-S009, E000-E001) qui bordent le Royaume Drach, à l'est la chaîne du désert (E006-E007).",
         "[GD] (v1.0.90) Ambiance : campagne reculée, blé, vergers et moulins ; on y sait peu de l'Empire ; forêt de Melvhord brumeuse ; au loin, les cimes interdites du Drach.",
-        "[GD] (v1.0.90) Niveau de référence proposé, à valider : 18-28 (repère absolu de regle_bestiaire_echelles ; le niveau d'une zone est relatif à la faction, rule_niveaux_par_faction) ; gradient : plaines de Kholdvar, routes de Frhozhol et de la forteresse d'Heureux 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 des enfers (S013_E000) et contreforts du Royaume Drach (30-56) : contenu plus fort à baliser. Tout contenu plus fort que ce repère est balisé (formes v1.0.85).",
-        "[GD] (v1.0.90) Factions concernées : neutres (Kholdvar, Khlaybur, Suthvarn) ; Nains du sud (forteresse d'Heureux, S006_E004, au nord) ; Chevaliers-Dragons, qui gardent la frontière du Royaume Drach (départ de Drakhenhal, S004_W004 : la région est une suite naturelle pour eux après les Royaumes des nains du sud).",
-        "[GD] (v1.0.90) Lien avec le lore : forteresse naine d'Heureux voisine [BD-T9, BD-T11] et route 000155 ; Royaume Drach « dont les Chevaliers-Dragons interdisent l'accès » [BD-T2] ; rivière de Suthvarn (hydrography riv_southport) ; Porte 1 des enfers (pentagramme des cinq portes).",
+        "[GD] (v1.0.90) Niveau de référence proposé, à valider : 18-28 (repère absolu de regle_bestiaire_echelles ; le niveau d'une zone est relatif à la faction, rule_niveaux_par_faction) ; gradient : plaines de Kholdvar, routes de Frhozhol et de la forteresse d'Heusgly 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 des enfers (S013_E000) et contreforts du Royaume Drach (30-56) : contenu plus fort à baliser. Tout contenu plus fort que ce repère est balisé (formes v1.0.85).",
+        "[GD] (v1.0.90) Factions concernées : neutres (Kholdvar, Khlaybur, Suthvarn) ; Nains du sud (forteresse d'Heusgly, S006_E004, au nord) ; Chevaliers-Dragons, qui gardent la frontière du Royaume Drach (départ de Drakhenhal, S004_W004 : la région est une suite naturelle pour eux après les Royaumes des nains du sud).",
+        "[GD] (v1.0.90) Lien avec le lore : forteresse naine d'Heusgly voisine [BD-T9, BD-T11] et route 000155 ; Royaume Drach « dont les Chevaliers-Dragons interdisent l'accès » [BD-T2] ; rivière de Suthvarn (hydrography riv_southport) ; Porte 1 des enfers (pentagramme des cinq portes).",
         "[INFÉRÉ] (v1.0.90) Aucune boîte dans `regions` de world_master.json : la région n'est pas rectangulaire et le format du master (une boîte = une étiquette sur la carte et une entrée de l'annuaire MJ) ne permet pas de la décrire proprement ; région du lore seulement (LORE_BD §16.19).",
         "[DÉCISION] (v1.0.92) Province de la région HS Royaumes des nains du sud (`parent_region`) : 42 cases (`cells[].province`) sur 59 avant ; les 17 autres suivent la carte du hors-série : Royaume Drach (11), Royaume d'Hishtarland (6). Identifiant, nom, notes et niveaux de référence inchangés (LORE_BD §16.21)."
       ]
@@ -186358,7 +186366,7 @@
           {
             "collection": "villes",
             "id": "kendrhir_vale",
-            "nom": "Kendrhir Vale",
+            "nom": "Kendrhir",
             "nature": "Temple de la ville rattaché par défaut à l'Église [GD]."
           },
           {
@@ -187940,8 +187948,8 @@
           {
             "collection": "villes",
             "id": "ville_forteresse_naine_heureux_t11",
-            "nom": "Forteresse Naine d'Heureux",
-            "nature": "Forteresse naine d'Heureux ; [GD] salle des marteaux, sans service de temple."
+            "nom": "Forteresse naine d'Heusgly",
+            "nature": "Forteresse naine d'Heusgly ; [GD] salle des marteaux, sans service de temple."
           },
           {
             "collection": "villes",
@@ -202862,7 +202870,7 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Cairn des voyageurs (lieu_cairn_des_voyageurs, POI poi_cairn_des_voyageurs, monolithe, 22-24) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -202884,7 +202892,7 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Ferme abandonnée du nord (lieu_ferme_abandonnee_du_nord, POI poi_ferme_abandonnee_du_nord, ruine, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -202908,7 +202916,7 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Camp des chasseurs de loups (lieu_camp_des_chasseurs_de_loups, POI poi_camp_des_chasseurs_de_loups, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -203879,7 +203887,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.90) Rattachée à la région « Marche de l'Est » (region_marche_est) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Chantier de flottage (lieu_chantier_de_flottage, POI poi_chantier_de_flottage, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -203903,7 +203911,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.90) Rattachée à la région « Marche de l'Est » (region_marche_est) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Ebhrazul - Rhivkhar).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Ebhrazul - Rhivkhar).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
       "coord_x": null,
@@ -203926,7 +203934,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.90) Rattachée à la région « Marche de l'Est » (region_marche_est) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Rhivkhar).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Rhivkhar).",
         "[GD] (v1.0.91) Relais de la route du nord (lieu_relais_de_la_route_du_nord, POI poi_relais_de_la_route_du_nord, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -204894,7 +204902,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Chêne aux pendus (lieu_chene_aux_pendus, POI poi_chene_aux_pendus, sanctuaire, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -204920,7 +204928,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Repaire de l'ogre de la forêt (lieu_repaire_de_l_ogre_de_la_foret, POI poi_repaire_de_l_ogre_de_la_foret, salle, 25-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -204944,7 +204952,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Ebhrazul - Rhivkhar).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Ebhrazul - Rhivkhar).",
         "[GD] (v1.0.91) Bac du passeur (lieu_bac_du_passeur, POI poi_bac_du_passeur, camp, 22-26) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -204968,7 +204976,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Rhivkhar).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Rhivkhar).",
         "[GD] (v1.0.91) Moulin à eau de la rivière (lieu_moulin_a_eau_de_la_riviere, POI poi_moulin_a_eau_de_la_riviere, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -204992,7 +205000,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Pont effondré (lieu_pont_effondre, POI poi_pont_effondre, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -205016,7 +205024,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Pâturages de la côte (lieu_paturages_de_la_cote, POI poi_paturages_de_la_cote, elevage, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -205039,7 +205047,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Tour de guet côtière (lieu_tour_de_guet_cotiere, POI poi_tour_de_guet_cotiere, ruine, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -205065,7 +205073,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Épave échouée (lieu_epave_echouee, POI poi_epave_echouee, ruine, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -205919,7 +205927,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Pavillon de chasse impérial (lieu_pavillon_de_chasse_imperial, POI poi_pavillon_de_chasse_imperial, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -205945,7 +205953,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.59) Rattachée à la Marche de l'Est (region_marche_est) : extrême est de l'Empire autour de Moork et du comté d'Horkher [BD-A5 p.38-44].",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Camp des déserteurs (lieu_camp_des_deserteurs, POI poi_camp_des_deserteurs, camp, 26-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (carte du hors-série ; avant : Marche de l'Est, `region_marche_est`, dont le rattachement HS est Baronnie de Moorks) (LORE_BD §16.21)."
       ],
@@ -206017,7 +206025,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
         "[GD] (v1.0.91) Relais de la route de Ryvaldh (lieu_relais_de_la_route_de_riverfold, POI poi_relais_de_la_route_de_riverfold, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -206041,7 +206049,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
         "[GD] (v1.0.91) Caravansérail des marchands (lieu_caravanserail_des_marchands, POI poi_caravanserail_des_marchands, camp, 25-29) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -206064,7 +206072,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Ebhrazul - Ryvaldh)."
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Ebhrazul - Ryvaldh)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206086,7 +206094,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Marais salants (lieu_marais_salants, POI poi_marais_salants, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -206991,7 +206999,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ebhrazul - Ryvaldh).",
         "[GD] (v1.0.91) Ferme des colons (lieu_ferme_des_colons, POI poi_ferme_des_colons, elevage, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -207015,7 +207023,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Ryvaldh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Ryvaldh).",
         "[GD] (v1.0.91) Oratoire des voyageurs (lieu_oratoire_des_voyageurs, POI poi_oratoire_des_voyageurs, sanctuaire, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -207039,7 +207047,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Chemin de halage (lieu_chemin_de_halage, POI poi_chemin_de_halage, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -207064,7 +207072,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Cimetière des marins (lieu_cimetiere_des_marins, POI poi_cimetiere_des_marins, sanctuaire, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -207995,7 +208003,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt).",
         "[GD] (v1.0.91) Gibet du carrefour (lieu_gibet_du_carrefour, POI poi_gibet_du_carrefour, ruine, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -208019,7 +208027,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Prairie des chevaux sauvages (lieu_prairie_des_chevaux_sauvages, POI poi_prairie_des_chevaux_sauvages, elevage, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -208043,7 +208051,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Grange aux dîmes (lieu_grange_aux_dimes, POI poi_grange_aux_dimes, ruine, 25-29) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -208066,7 +208074,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Pêcherie de la côte (lieu_pecherie_de_la_cote, POI poi_pecherie_de_la_cote, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -208978,7 +208986,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Hutte de la rebouteuse (lieu_hutte_de_la_rebouteuse, POI poi_hutte_de_la_rebouteuse, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -209002,7 +209010,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Grhavelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore (route Ebhrazul - Grhavelt).",
         "[GD] (v1.0.91) Repaire des coupe-jarrets (lieu_repaire_des_coupe_jarrets, POI poi_repaire_des_coupe_jarrets, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -209026,7 +209034,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, case de la ville d'arrivée (route Ebhrazul - Grhavelt)."
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, case de la ville d'arrivée (route Ebhrazul - Grhavelt)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209048,7 +209056,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Dolmen de la côte (lieu_dolmen_de_la_cote, POI poi_dolmen_de_la_cote, monolithe, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -209967,7 +209975,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Ossuaire du géant (lieu_ossuaire_du_geant, POI poi_ossuaire_du_geant, sanctuaire, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -209993,7 +210001,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Rucher de la forêt (lieu_rucher_de_la_foret, POI poi_rucher_de_la_foret, elevage, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -210017,7 +210025,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Menhirs des géants (lieu_menhirs_des_geants, POI poi_menhirs_des_geants, monolithe, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -210040,7 +210048,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Cabanes de pêcheurs abandonnées (lieu_cabanes_de_pecheurs_abandonnees, POI poi_cabanes_de_pecheurs_abandonnees, ruine, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -210939,7 +210947,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
         "[GD] (v1.0.91) Source sacrée de la forêt (lieu_source_sacree_de_la_foret, POI poi_source_sacree_de_la_foret, sanctuaire, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -210963,7 +210971,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Fosse à loups (lieu_fosse_a_loups, POI poi_fosse_a_loups, gouffre, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -210987,7 +210995,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Ferme fortifiée de la côte (lieu_ferme_fortifiee_de_la_cote, POI poi_ferme_fortifiee_de_la_cote, elevage, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -211010,7 +211018,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : trou intérieur (au moins 3 côtés jouables).",
         "[GD] (v1.0.91) Anse des naufrageurs (lieu_anse_des_naufrageurs, POI poi_anse_des_naufrageurs, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -211907,7 +211915,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
         "[GD] (v1.0.91) Puits de la piste (lieu_puits_de_la_piste, POI poi_puits_de_la_piste, camp, 24-28) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -211933,7 +211941,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
         "[GD] (v1.0.91) Bergerie des chevriers (lieu_bergerie_des_chevriers, POI poi_bergerie_des_chevriers, elevage, 25-29) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -211959,7 +211967,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Rocher des vautours (lieu_rocher_des_vautours, POI poi_rocher_des_vautours, monolithe, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -211982,7 +211990,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Fortin côtier abandonné (lieu_fortin_cotier_abandonne, POI poi_fortin_cotier_abandonne, ruine, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -212888,7 +212896,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur (route Dhazkmer - Dhuzvelt).",
         "[GD] (v1.0.91) Carrière de la plaine aride (lieu_carriere_de_la_plaine_aride, POI poi_carriere_de_la_plaine_aride, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -212912,7 +212920,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Dhazkmer - Dhuzvelt)."
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : route du lore, tracé de route du générateur, case de la ville d'arrivée (route Dhazkmer - Dhuzvelt)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -212934,7 +212942,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Tour à feu de la côte (lieu_tour_a_feu_de_la_cote, POI poi_tour_a_feu_de_la_cote, ruine, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -213851,7 +213859,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Tombeau des sables (lieu_tombeau_des_sables, POI poi_tombeau_des_sables, sanctuaire, 27-30) : première occupation de cette case jouable vide (LORE_BD §16.20).",
         "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`, dont le rattachement HS est Terres des Gigantomorphes) (LORE_BD §16.21)."
       ],
@@ -213875,7 +213883,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Campement des pillards du désert (lieu_campement_des_pillards_du_desert, POI poi_campement_des_pillards_du_desert, camp, 27-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -213898,7 +213906,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Crique des contrebandiers (lieu_crique_des_contrebandiers, POI poi_crique_des_contrebandiers, camp, 26-30) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -219647,7 +219655,7 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.69) Hameau de houilleurs Kohlbrand (hamlet_kohlbrand) de la région de départ de Durnhalde (LORE_BD §15.6)."
+        "[GD] (v1.0.69) Hameau de houilleurs Kholbrakh (hamlet_kohlbrand) de la région de départ de Durnhalde (LORE_BD §15.6)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -219674,7 +219682,7 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.69) Hameau minier Eisenkehl (hamlet_eisenkehl) de la région de départ de Durnhalde (LORE_BD §15.6)."
+        "[GD] (v1.0.69) Hameau minier Ysenkhal (hamlet_eisenkehl) de la région de départ de Durnhalde (LORE_BD §15.6)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -219698,7 +219706,7 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : ligne droite de la route (pas de route au lore), tracé de route du générateur (route Eisenkehl - Vozmarkh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : ligne droite de la route (pas de route au lore), tracé de route du générateur (route Ysenkhal - Vozmarkh).",
         "[GD] (v1.0.91) Halte des muletiers du col (lieu_halte_des_muletiers_du_col, POI poi_halte_des_muletiers_du_col, camp, 10-13) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -220653,7 +220661,7 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Eisenkehl - Vozmarkh).",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : tracé de route du générateur (route Ysenkhal - Vozmarkh).",
         "[GD] (v1.0.91) Borne-frontière renversée (lieu_borne_frontiere_renversee, POI poi_borne_frontiere_renversee, monolithe, 12-15) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -220676,7 +220684,7 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : ligne droite de la route (pas de route au lore), tracé de route du générateur, case de la ville d'arrivée (route Eisenkehl - Vozmarkh)."
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : ligne droite de la route (pas de route au lore), tracé de route du générateur, case de la ville d'arrivée (route Ysenkhal - Vozmarkh)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -220701,7 +220709,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Carrière des forçats (lieu_carriere_des_forcats, POI poi_carriere_des_forcats, camp, 14-18) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -221617,7 +221625,7 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Ferme des chevriers nains (lieu_ferme_des_chevriers_nains, POI poi_ferme_des_chevriers_nains, elevage, 15-18) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -221640,7 +221648,7 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Corps de garde de la route du sud (lieu_corps_de_garde_de_la_route_du_sud, POI poi_corps_de_garde_de_la_route_du_sud, camp, 16-20) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -221664,7 +221672,7 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Eisenkehl - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
+        "[DÉCISION] (v1.0.91) Case générée (jouable) : ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) ; motif : marge d'une case autour d'une ville.",
         "[GD] (v1.0.91) Puits de mine inondé (lieu_puits_de_mine_inonde, POI poi_puits_de_mine_inonde, salle, 17-20) : première occupation de cette case jouable vide (LORE_BD §16.20)."
       ],
       "coord_x": null,
@@ -230078,7 +230086,7 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[INFÉRÉ] (v1.0.76) Même ligne que le tracé droit, explicitée pour porter la jonction S007_E006 de l'embranchement 000155 (Forteresse Naine d'Heureux). Tracé : 4 case(s), S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008 ; LORE_BD §16.5."
+        "[INFÉRÉ] (v1.0.76) Même ligne que le tracé droit, explicitée pour porter la jonction S007_E006 de l'embranchement 000155 (Forteresse naine d'Heusgly). Tracé : 4 case(s), S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008 ; LORE_BD §16.5."
       ],
       "waypoints": [
         "S009_E004",
@@ -230830,7 +230838,7 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir Vale → Arkhanyra)."
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir → Arkhanyra)."
       ],
       "waypoints": [
         "N015_E012",
@@ -230851,7 +230859,7 @@
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir Vale → Arkhanyra)."
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000058 (Kendrhir → Arkhanyra)."
       ],
       "waypoints": [
         "N011_E008",
@@ -230948,7 +230956,7 @@
       "description": "",
       "notes": [
         "[GD] (v1.0.65) Tronçon remplaçant la route 000119 (Ghrunke Dash → Fief et Château de Garundel (Base de Wismerhill)).",
-        "[INFÉRÉ] (v1.0.76) Son dernier tronçon (Frhozhol → Village Fantôme) fait partie de la liaison Village Fantôme → Forteresse d'Heureux (000149, 000079, 000155) ; LORE_BD §16.5."
+        "[INFÉRÉ] (v1.0.76) Son dernier tronçon (Frhozhol → Village Fantôme) fait partie de la liaison Village Fantôme → Forteresse d'Heusgly (000149, 000079, 000155) ; LORE_BD §16.5."
       ],
       "waypoints": [
         "S002_E011",
@@ -231030,10 +231038,10 @@
       "to_place": "S006_E004",
       "to_ville_id": "ville_forteresse_naine_heureux_t11",
       "to_lieu_id": "",
-      "description": "Embranchement de la route Kholdvar → Frhozhol (000079) vers la Forteresse Naine d'Heureux. Depuis le Village Fantôme du Marais : route 000149 jusqu'à Frhozhol, puis 000079 jusqu'à l'embranchement.",
+      "description": "Embranchement de la route Kholdvar → Frhozhol (000079) vers la Forteresse naine d'Heusgly. Depuis le Village Fantôme du Marais : route 000149 jusqu'à Frhozhol, puis 000079 jusqu'à l'embranchement.",
       "notes": [
         "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Le Village Fantôme du Marais).",
-        "[DÉCISION] (v1.0.76) La route Village Fantôme → Forteresse d'Heureux passait par la montagne (S005_E004) : la branche vers la forteresse part maintenant de la route Frhozhol – Kholdvar (000079), en S007_E006 (propriétaire, 10/11/2026). Le village rejoint 000079 à Frhozhol par la route 000149. Tracé : 2 case(s), S007_E006 → S006_E005 → S006_E004 ; LORE_BD §16.5.",
+        "[DÉCISION] (v1.0.76) La route Village Fantôme → Forteresse d'Heusgly passait par la montagne (S005_E004) : la branche vers la forteresse part maintenant de la route Frhozhol – Kholdvar (000079), en S007_E006 (propriétaire, 10/11/2026). Le village rejoint 000079 à Frhozhol par la route 000149. Tracé : 2 case(s), S007_E006 → S006_E005 → S006_E004 ; LORE_BD §16.5.",
         "[INFÉRÉ] (v1.0.76) Jonction sans ville ni lieu (from_ville_id et from_lieu_id vides, from_place = case de la route hôte), comme l'embranchement 000130 sur la Via Magna ; LORE_BD §16.5."
       ],
       "waypoints": [
@@ -231471,9 +231479,9 @@
       "to_place": "S008_E017",
       "to_ville_id": "hamlet_kohlbrand",
       "to_lieu_id": "",
-      "description": "Route locale de Durnhalde à Kohlbrand.",
+      "description": "Route locale de Durnhalde à Kholbrakh.",
       "notes": [
-        "[INFÉRÉ] (v1.0.69) Voisin le plus proche de Kohlbrand : Durnhalde, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.6."
+        "[INFÉRÉ] (v1.0.69) Voisin le plus proche de Kholbrakh : Durnhalde, case voisine, sans étape (règle v1.0.65) ; LORE_BD §15.6."
       ]
     },
     {
@@ -231485,9 +231493,9 @@
       "to_place": "S008_E018",
       "to_ville_id": "hamlet_eisenkehl",
       "to_lieu_id": "",
-      "description": "Route locale de Kohlbrand à Eisenkehl.",
+      "description": "Route locale de Kholbrakh à Ysenkhal.",
       "notes": [
-        "[INFÉRÉ] (v1.0.69) Voisin le plus proche d'Eisenkehl : Kohlbrand, case voisine orthogonale (Durnhalde n'est que diagonal), sans étape (règle v1.0.65) ; LORE_BD §15.6."
+        "[INFÉRÉ] (v1.0.69) Voisin le plus proche d'Ysenkhal : Kholbrakh, case voisine orthogonale (Durnhalde n'est que diagonal), sans étape (règle v1.0.65) ; LORE_BD §15.6."
       ]
     },
     {
@@ -234230,7 +234238,7 @@
       "id": "regle_canon_epoque_jeu",
       "name": "Époque du jeu",
       "category": "canon",
-      "description": "Moment du jeu : après la destruction de Kendrhir Vale par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Syzygie (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
+      "description": "Moment du jeu : après la destruction de Kendrhir par la horde de Ghorghor Bey et Wismerhill (Tome 1), la cité étant en reconstruction, et avant les destructions du Tome 11 ; le monde jouable est figé sur ce moment. Le jeu se situe donc avant les destructions des Tomes 11 et 14 : Altenberg, Syzygie (Sysigie), Moork, Feyhin Lokcthat et Magistrya sont intactes. Les préquelles (Tome 0, Methraton 1-3, Arcanes 1-5) décrivent le passé : on retient l'état de fin d'album puis l'évolution connue des T1-T10 (regle_epoque_hors_serie). « L'Empire de la Négation » (après le T11) n'entre que pour ce que les décisions de la v1.0.56 ont retenu : la Via Magna, le royaume d'Hishtarland et le plan de Lhynn ; le reste est lore [HS] hors époque (docs/world/LORE_BD.md §10.3, Q1).",
       "applies_to": [
         "regle_epoque_hors_serie",
         "ville_altenberg",
@@ -234246,7 +234254,7 @@
       "source": "[DÉCISION] v1.0.54 (LORE_BD §7.4) et v1.0.56 (LORE_BD §10.3, Q1-Q3)",
       "notes": [
         "Les fiches des T11 à T14 décrivent l'avenir du monde jouable : récit, quêtes de prophétie ou contenu hors époque, pas l'état des lieux.",
-        "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur)."
+        "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur)."
       ]
     },
     {
@@ -234405,7 +234413,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Eisenkehl - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -234774,7 +234782,7 @@
         {
           "collection": "villes",
           "id": "ville_forteresse_naine_heureux_t11",
-          "nom": "Forteresse Naine d'Heureux",
+          "nom": "Forteresse naine d'Heusgly",
           "decision": "Cellule S006_E004 (montagnes) : refuge des neuf mères au T9 (p.26, pendant la livraison du Juggernauth) et « forteresse naine d'Heusgly » du T11 (p.36). Le monde jouable la déplace de S004_W004 à S006_E004.",
           "version": "1.0.55"
         },
@@ -235811,7 +235819,7 @@
           "collection": "regles_transverses",
           "id": "regle_canon_epoque_jeu",
           "nom": "Époque du jeu",
-          "decision": "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir Vale détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur).",
+          "decision": "[DÉCISION] (v1.0.57) Moment du jeu : entre le Tome 1 (Kendrhir détruite, en reconstruction) et les destructions du Tome 11 ; année de jeu unique, monde figé (pas d'avancée de l'histoire avec le temps du serveur).",
           "version": "1.0.57"
         },
         {
@@ -236412,8 +236420,8 @@
         {
           "collection": "routes",
           "id": "000155",
-          "nom": "Route Village Fantôme ↔ Forteresse d'Heureux",
-          "decision": "La route entre le Village Fantôme du Marais et la Forteresse Naine d'Heureux passe par Frhozhol (000149) et la route Frhozhol – Kholdvar (000079) ; la branche vers la forteresse (000155) part de 000079 en S007_E006 (LORE_BD §16.5).",
+          "nom": "Route Village Fantôme ↔ Forteresse d'Heusgly",
+          "decision": "La route entre le Village Fantôme du Marais et la Forteresse naine d'Heusgly passe par Frhozhol (000149) et la route Frhozhol – Kholdvar (000079) ; la branche vers la forteresse (000155) part de 000079 en S007_E006 (LORE_BD §16.5).",
           "version": "1.0.76"
         },
         {
@@ -236875,7 +236883,7 @@
           "collection": "regions",
           "id": "royaume_des_nains_de_lest",
           "nom": "Royaume des nains de l'est",
-          "decision": "Lot 17 : aucune case jouable vide (les 9 cases générées, départ 3×3 de Durnhalde, sont toutes occupées) : aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] de départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient proposé, à valider : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Eisenkehl, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70) (LORE_BD §16.18).",
+          "decision": "Lot 17 : aucune case jouable vide (les 9 cases générées, départ 3×3 de Durnhalde, sont toutes occupées) : aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] de départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient proposé, à valider : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kholbrakh et Relais des convois de minerai 3-6, Ysenkhal et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Ysenkhal, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70) (LORE_BD §16.18).",
           "version": "1.0.89"
         },
         {
@@ -236889,7 +236897,7 @@
           "collection": "regions",
           "id": "val_de_southport",
           "nom": "Val de Suthvarn",
-          "decision": "Lot 18 : région [GD] créée pour rattacher 59 cases sans région du sud-centre ; terrain : plaines de Kholdvar (S007-S009), forêt de Melvhord (S010-S013, E000-E004), plaines de Khlaybur et de Suthvarn (S014), rivière de Suthvarn ; à l'ouest les monts (S007-S009, E000-E001) qui bordent le Royaume Drach, à l'est la chaîne du désert (E006-E007) ; niveau de référence proposé 18-28 (plaines de Kholdvar, routes de Frhozhol et de la forteresse d'Heureux 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 des enfers (S013_E000) et contreforts du Royaume Drach (30-56) : contenu plus fort à baliser) ; région du lore seulement, master inchangé (LORE_BD §16.19).",
+          "decision": "Lot 18 : région [GD] créée pour rattacher 59 cases sans région du sud-centre ; terrain : plaines de Kholdvar (S007-S009), forêt de Melvhord (S010-S013, E000-E004), plaines de Khlaybur et de Suthvarn (S014), rivière de Suthvarn ; à l'ouest les monts (S007-S009, E000-E001) qui bordent le Royaume Drach, à l'est la chaîne du désert (E006-E007) ; niveau de référence proposé 18-28 (plaines de Kholdvar, routes de Frhozhol et de la forteresse d'Heusgly 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 des enfers (S013_E000) et contreforts du Royaume Drach (30-56) : contenu plus fort à baliser) ; région du lore seulement, master inchangé (LORE_BD §16.19).",
           "version": "1.0.90"
         },
         {
@@ -236909,8 +236917,8 @@
         {
           "collection": "regions",
           "id": "royaume_des_nains_de_lest",
-          "nom": "Ouverture de la route Eisenkehl - Vozmarkh",
-          "decision": "Décision du propriétaire (12/11/2026) : la route Eisenkehl - Vozmarkh est ouverte au jeu comme suite 10-20 du départ de Durnhalde. 7 cases ajoutées à generated_cells (col S008_E019 et S009_E019, Vozmarkh S009_E020 et 4 cases de marge), reliées au départ. 6 lieux [GD] (10-20), 2 quêtes [GD] (quest_nains_est_gd_route_de_voidmark 10+, quest_nains_est_gd_carriers_de_voidmark 15+) (LORE_BD §16.20).",
+          "nom": "Ouverture de la route Ysenkhal - Vozmarkh",
+          "decision": "Décision du propriétaire (12/11/2026) : la route Ysenkhal - Vozmarkh est ouverte au jeu comme suite 10-20 du départ de Durnhalde. 7 cases ajoutées à generated_cells (col S008_E019 et S009_E019, Vozmarkh S009_E020 et 4 cases de marge), reliées au départ. 6 lieux [GD] (10-20), 2 quêtes [GD] (quest_nains_est_gd_route_de_voidmark 10+, quest_nains_est_gd_carriers_de_voidmark 15+) (LORE_BD §16.20).",
           "version": "1.0.91"
         },
         {
@@ -236961,6 +236969,41 @@
           "nom": "Renommage des 88 villes aux noms anglais",
           "decision": "Décision du propriétaire (12/11/2026, lot 21) : noms propres ni français ni anglais, style BD. Eaglewatch → Haeldorf ; Ambermead → Ombhral ; Greyhedge → Gredhaim ; Hollowgate → Kholvard ; Greypool → Ghrepol ; Saltfen → Zaltheim ; Harrowbrook → Harndrecht ; Ashhollow → Aeskhol ; Dustfen → Dhuzmar ; Clearfen → Klaerhin ; Dawnmere → Orhendal ; Brightholm → Lhumbrecht ; Whitesheaf → Ysselhaim ; Lambsfold → Lammerhin ; Justfall → Iustarn ; Oathford → Ordhrann ; Tithemead → Thydmar ; Wardholt → Vharholdt ; Orderfen → Ostrevan ; Trueford → Treuvhal ; Verdansur → Vaerdhun ; Wyrmhallow → Drakhenhal ; Cragfold → Krakhol ; Bridlecrag → Bhridrak ; Scalebrook → Skhaldrach ; Equiton → Ekvhitorn ; Brookend → Brokhendt ; Millford → Melvhord ; Fairbrook → Faervosk ; Ironbrook → Ghrondak ; Darkwater → Mhordaal ; Voidmark → Vozmarkh ; Leviathan Jungle → Ghulvathan ; Mossy Rock → Mhozrak ; Silverglade → Syllaërin ; Greenbough → Ghwenaëth ; Fernhollow → Faernilh ; Northfen → Nhorvaël ; Hazelgate → Hazhaëlin ; Brinehaven → Brenhaval ; Duskmoor → Duzhmoroth ; Truceholm → Thrival ; Lanternhold → Lhantarn ; Huacani → Hwakhari ; Hayfen → Haevrin ; Ashwick → Askhvir ; Stonehaven → Stohnvar ; Coldhollow → Khaldhol ; Fernhill → Vernhild ; Draketon → Dhraegtun ; Stonebridge → Shtenbrak ; Fellwatch → Fhelvakt ; Deepbrook → Dyprokh ; Moorgate → Mhorgad ; Dunfold → Dhunfal ; Ashcroft → Askhrof ; Haywick → Hayvekh ; Westmoor → Vestmhor ; Northgate → Nhorgast ; Greyhaven → Grhaevan ; Deepmoor → Dhemorr ; Runecroft → Runhkar ; Highfall → Hagfhal ; Farwatch → Farvhenn ; Shadowfen → Shaddrek ; Ebonvale → Ebhrazul ; Duskmere → Dhazkmer ; Nightward → Nakhtvar ; Blackmoor → Vlakmorh ; Nightfield → Nykhfeld ; Grimfen → Ghrimfeth ; Shadehold → Shezhold ; Harrowdale → Harrodh ; Arcanefield → Arkhanyra ; Rivercross → Rhivkhar ; Hillwatch → Hilvakh ; Riverfold → Ryvaldh ; Greyfield → Grhavelt ; Dustfield → Dhuzvelt ; Crossroads → Khrozrad ; Clearwater → Klehrwath ; Southport → Suthvarn ; Saltwick → Saelvik ; Coldport → Kholdvar ; Frosthollow → Frhozhol ; Millend → Mhillenz ; Claybury → Khlaybur ; Thistle Creek → Thysskar. Ancien nom en alias, identifiants inchangés, noms de lieux et de provinces dérivés renommés (LORE_BD §16.22).",
           "version": "1.0.93"
+        },
+        {
+          "collection": "villes",
+          "id": "kendrhir_vale",
+          "nom": "Kendrhir Vale devient Kendrhir",
+          "decision": "Décision du propriétaire (12/11/2026, lot 22) : la ville s'appelle Kendrhir comme dans la BD (« Vale » était un ajout anglais). kendrhir_vale est bien la cité des Grands Mages du T1 en reconstruction (zone_kendrhir, raids et quêtes du sac) : aucune autre fiche Kendrhir, pas de fusion. Ancien nom en alias, identifiant inchangé (LORE_BD §16.23).",
+          "version": "1.0.94"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_forteresse_naine_heureux_t11",
+          "nom": "Forteresse naine d'Heusgly",
+          "decision": "Décision du propriétaire (12/11/2026, lot 22) : « Forteresse Naine d'Heureux » devient « Forteresse naine d'Heusgly » (cartouche BD-T11 p.36, LORE_BD §7.1/§8.1). Ancien nom en alias, identifiant inchangé (LORE_BD §16.23).",
+          "version": "1.0.94"
+        },
+        {
+          "collection": "villes",
+          "id": "hamlet_kohlbrand, hamlet_eisenkehl",
+          "nom": "Hameaux nains Kholbrakh et Ysenkhal",
+          "decision": "Décision du propriétaire (12/11/2026, lot 22) : Kohlbrand → Kholbrakh ; Eisenkehl → Ysenkhal (noms propres ni français ni anglais). Anciens noms en alias, identifiants inchangés (LORE_BD §16.23).",
+          "version": "1.0.94"
+        },
+        {
+          "collection": "factions, villes, lieux, world_master",
+          "id": "faction_hauts_elfes, hamlet_0166, hameau_grakhul, hamlet_thokrul, hamlet_gharzuk, lieu_camp_de_guerre_ghazrak, faction_nuees, faction_legion_infernale, faction_legions_imperiales, hameau_marn",
+          "nom": "Noms gardés de la liste « à vérifier »",
+          "decision": "Décision du propriétaire (12/11/2026, lot 22) : gardés sans changement : peuple « Les Hauts Elfes » ; Grakhul, Thokrul, Gharzuk, Ghazrak ; Les Nuées, La Légion infernale, Les Légions Impériales ; Marn (Hameau de Marn). Le hameau Nhorvaël (hamlet_0166) reste elfe : faction_control faction_hauts_elfes, PNJ de service hauts elfes, master race elfes ; case et région inchangées (LORE_BD §16.23).",
+          "version": "1.0.94"
+        },
+        {
+          "collection": "villes, world_master",
+          "id": "horker, city_horkher",
+          "nom": "Description d'Harrodh au master",
+          "decision": "Décision du propriétaire (12/11/2026, lot 22) : la description de horker (Harrodh) dans world_master.json parlait de la vraie Horkher (comté de George d'Horkher, BD-T6) ; elle décrit désormais Harrodh d'après sa fiche (cité marchande, étape de la Via Magna). city_horkher garde sa propre entrée, complétée. Aucun identifiant changé (LORE_BD §16.23).",
+          "version": "1.0.94"
         }
       ]
     },
@@ -239941,7 +239984,7 @@
       ],
       "change": [
         "[GD] Banque : change gemmes ↔ couronnes avec 5 % de commission (prix de rachat = 95 % de la valeur).",
-        "[GD] Chez les nains (Ghrunke Dash, Heureux) : paiement en gemmes ou en or seulement [BD-T3 pl.19-20] ; les pièces d'argent et les deniers sont refusés au-delà de 1 couronne d'achat.",
+        "[GD] Chez les nains (Ghrunke Dash, Heusgly) : paiement en gemmes ou en or seulement [BD-T3 pl.19-20] ; les pièces d'argent et les deniers sont refusés au-delà de 1 couronne d'achat.",
         "[GD] Orques, Krell et peuples des forêts : troc et butin ; leurs marchands acceptent la couronne au poids (pas de rendu de monnaie en deniers).",
         "[GD] Hishtarland, Tharques et Empire du Jade : monnaies propres non montrées par la BD ; à l'époque du jeu elles ne circulent pas dans le monde jouable (aucune frappe nommée)."
       ]
@@ -240103,7 +240146,7 @@
           "villes": [
             "ville_forteresse_naine_heureux_t11"
           ],
-          "source": "[GD] (forteresse naine d'Heureux, Grand Hall des nains en S008_E014 près du volcan).",
+          "source": "[GD] (forteresse naine d'Heusgly, Grand Hall des nains en S008_E014 près du volcan).",
           "terrains_principaux": [
             {
               "terrain": "mountain",
@@ -241233,9 +241276,9 @@
         "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés).",
         "[GD] (v1.0.87) Repères proposés, à valider (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : Terres des Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ; Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrodh – Shezhold 18-26) ; Marche de l'Est (hors baronnie) 15-28.",
         "[GD] (v1.0.88) Marche de l'Est ouverte au jeu (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : repère 15-28 détaillé, à valider : abords d'Horkher et de la Via Magna 15-22, Nykhfeld et la route de Moork 20-26, forêt de Vlakmorh et confins d'Ebhrazul et de Dhazkmer 22-28.",
-        "[GD] (v1.0.89) Repère proposé, à valider (lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18) : Royaume des nains de l'est — départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Eisenkehl, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70).",
+        "[GD] (v1.0.89) Repère proposé, à valider (lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18) : Royaume des nains de l'est — départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kholbrakh et Relais des convois de minerai 3-6, Ysenkhal et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Vozmarkh et routes d'Ysenkhal, Mhordaal et Shaddrek 10-20, montagnes de l'est vers Ghrondak et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70).",
         "[GD] (v1.0.90) Repères proposés, à valider (lot 18 du propriétaire (priorité 3, 12/11/2026) ; LORE_BD §16.19) : Forêt des Lutins 14-24 ; Val de Suthvarn 18-28 ; Désert des Sels 24-36 ; Confins du Midi 22-34 ; côte sud de Lhynn (Terres de l'Empereur) 12-22. Progression du sud-centre : Désert de l'Oracle et Via Magna (10-25) → Forêt des Lutins 14-24 → Val de Suthvarn 18-28 (ouest, vers le Royaume Drach 30-56) et Terres désolées de Tsaroth 20-40 (est) → Désert des Sels 24-36 → Confins du Midi 22-34 ; à l'est, Baronnie de Moork 18-45 et sud du Royaume des nains de l'est 18-30 ; plus forts et balisés : Der Hem Shelbem 40-56, volcan 55-70.",
-        "[GD] (v1.0.91) Repères proposés, à valider (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : route Eisenkehl - Vozmarkh et abords de Vozmarkh 10-20 (col 10-15, Vozmarkh et sa marge 14-20) ; abords de Rhivkhar et forêt du nord de Vlakmorh 22-28 ; côte orientale de Ryvaldh à Dhuzvelt (sud du Rivage des Géants) 24-30."
+        "[GD] (v1.0.91) Repères proposés, à valider (lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20) : route Ysenkhal - Vozmarkh et abords de Vozmarkh 10-20 (col 10-15, Vozmarkh et sa marge 14-20) ; abords de Rhivkhar et forêt du nord de Vlakmorh 22-28 ; côte orientale de Ryvaldh à Dhuzvelt (sud du Rivage des Géants) 24-30."
       ]
     },
     {
@@ -242157,7 +242200,7 @@
         "Ville forteresse",
         "Cité neutre (<50)",
         "Tour arcane",
-        "Cité gladiateur (Kendrhir Vale)",
+        "Cité gladiateur (Kendrhir)",
         "Cité d'entraînement",
         "Lieu de passage"
       ],
@@ -264900,8 +264943,8 @@
         "S008_E019"
       ],
       "notes": [
-        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Halte des muletiers nains qui font passer le minerai d'Eisenkehl par le col vers Vozmarkh ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13.",
-        "[GD] (v1.0.91) Niveau : 10-13 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Halte des muletiers nains qui font passer le minerai d'Ysenkhal par le col vers Vozmarkh ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13.",
+        "[GD] (v1.0.91) Niveau : 10-13 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_halte_des_muletiers_du_col (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -264985,8 +265028,8 @@
         "S009_E019"
       ],
       "notes": [
-        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Borne qui marquait la limite des terres des clans nains et de Vozmarkh ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Eisenkehl jurent de la relever. Niveaux 12-15.",
-        "[GD] (v1.0.91) Niveau : 12-15 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Borne qui marquait la limite des terres des clans nains et de Vozmarkh ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Ysenkhal jurent de la relever. Niveaux 12-15.",
+        "[GD] (v1.0.91) Niveau : 12-15 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_borne_frontiere_renversee (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -265071,7 +265114,7 @@
       ],
       "notes": [
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Carrière où Vozmarkh fait extraire sa pierre de taille (économie v1.0.58) par des forçats sous la garde de la Lune Noire ; des serpents nichent dans les blocs abandonnés. Niveaux 14-18.",
-        "[GD] (v1.0.91) Niveau : 14-18 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Niveau : 14-18 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_carriere_des_forcats (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -265155,8 +265198,8 @@
         "S010_E019"
       ],
       "notes": [
-        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Vozmarkh ; elle paie tribut à la Lune Noire et cache des fugitifs d'Eisenkehl. Niveaux 15-18.",
-        "[GD] (v1.0.91) Niveau : 15-18 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Vozmarkh ; elle paie tribut à la Lune Noire et cache des fugitifs d'Ysenkhal. Niveaux 15-18.",
+        "[GD] (v1.0.91) Niveau : 15-18 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_ferme_des_chevriers_nains (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -265241,7 +265284,7 @@
       ],
       "notes": [
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Corps de garde de la Lune Noire sur la route qui descend de Vozmarkh vers Mhordaal : on y fouille les convois nains et on y lève l'octroi. Niveaux 16-20.",
-        "[GD] (v1.0.91) Niveau : 16-20 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Niveau : 16-20 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_corps_de_garde_de_la_route_du_sud (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -265326,7 +265369,7 @@
       ],
       "notes": [
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Ancien puits de mine de Vozmarkh noyé par une source ; les galeries hautes servent de repaire à des pillards et à des bêtes. Niveaux 17-20.",
-        "[GD] (v1.0.91) Niveau : 17-20 (route Eisenkehl - Vozmarkh, repère 10-20).",
+        "[GD] (v1.0.91) Niveau : 17-20 (route Ysenkhal - Vozmarkh, repère 10-20).",
         "Réel en jeu : POI poi_puits_de_mine_inonde (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
@@ -270095,7 +270138,7 @@
         "river_id": "riv_ashwick",
         "cell": "N008_E006",
         "notes": [
-          "Route Kendrhir Vale – Feyhin Lokcthat"
+          "Route Kendrhir – Feyhin Lokcthat"
         ]
       }
     ],

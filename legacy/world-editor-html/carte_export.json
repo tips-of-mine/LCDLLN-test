@@ -7555,8 +7555,8 @@
     },
     {
       "id": "city_kendrhir_vale",
-      "name": "Kendrhir Vale",
-      "alias": "",
+      "name": "Kendrhir",
+      "alias": "Kendrhir Vale",
       "type": "training_city",
       "anchor_tile": "R120C210",
       "importance": "capitale stratégique",

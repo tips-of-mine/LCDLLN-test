@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Eisenkehl - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -516,26 +516,26 @@
     },
     {
       "id": "hamlet_eisenkehl",
-      "name": "Eisenkehl",
+      "name": "Ysenkhal",
       "cell": "S008_E018",
       "kind": "hameau",
       "race": "nains",
       "state": "intact",
       "faction": "naine",
       "start_for": [],
-      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde",
-      "description": "Hameau minier au sud-est de Durnhalde, à l'est de Kohlbrand : mines de fer étayées, terrils et treuils ; le minerai part à dos de mulet vers les forges de Ghrunke Dash."
+      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde ; nom [DÉCISION] v1.0.94 (ancien nom Eisenkehl)",
+      "description": "Hameau minier au sud-est de Durnhalde, à l'est de Kholbrakh : mines de fer étayées, terrils et treuils ; le minerai part à dos de mulet vers les forges de Ghrunke Dash."
     },
     {
       "id": "hamlet_kohlbrand",
-      "name": "Kohlbrand",
+      "name": "Kholbrakh",
       "cell": "S008_E017",
       "kind": "hameau",
       "race": "nains",
       "state": "intact",
       "faction": "naine",
       "start_for": [],
-      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde",
+      "source": "[GD] v1.0.69 (nom à valider) ; cellule [INFÉRÉ], région de départ de Durnhalde ; nom [DÉCISION] v1.0.94 (ancien nom Kohlbrand)",
       "description": "Hameau de houilleurs et de fondeurs au sud de Durnhalde : puits de charbon, meules de coke et bas fourneaux qui fument jour et nuit."
     },
     {
@@ -626,14 +626,14 @@
     },
     {
       "id": "kendrhir_vale",
-      "name": "Kendrhir Vale",
+      "name": "Kendrhir",
       "cell": "N015_E012",
       "kind": "ville",
       "race": "humains",
       "state": "reconstruction",
       "faction": "neutre",
       "start_for": [],
-      "source": "[BD] BD-T1",
+      "source": "[BD] BD-T1 ; nom [DÉCISION] v1.0.94 (ancien nom Kendrhir Vale)",
       "description": "Cité des Grands Mages — prise par la horde de Ghorghor Bey puis dévastée par la tempête de Wismerhill à la fin du tome 1 ; en reconstruction : quartiers en ruine, brèches dans les murs, maisons et quartiers en chantier."
     },
     {
@@ -645,8 +645,8 @@
       "state": "intact",
       "faction": "empire_hynn",
       "start_for": [],
-      "source": "[BD] BD-T6 ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore)",
-      "description": "Comté dirigé par George d'Horkher, situé près de Moork (carte visible page 37 : Horkher au nord, Moork au sud, route directe)."
+      "source": "[GD] fiche lore horker (notes BD-T6 déplacées vers city_horkher en v1.0.54) ; nom [DÉCISION] v1.0.93 (ancien nom Horker au master, Harrowdale au lore) ; description [DÉCISION] v1.0.94",
+      "description": "Cité marchande de la Via Magna (étape de la route 000120) : bois de chauffe, petit gibier, miel et sel gemme ; à ne pas confondre avec Horkher, le comté de George d'Horkher au nord de Moork."
     },
     {
       "id": "ville_moork",
@@ -758,14 +758,14 @@
     },
     {
       "id": "ville_forteresse_naine_heureux_t11",
-      "name": "Forteresse d'Heureux",
+      "name": "Forteresse naine d'Heusgly",
       "cell": "S006_E004",
       "kind": "forteresse",
       "race": "nains",
       "state": "intact",
       "faction": "naine",
       "start_for": [],
-      "source": "[INFÉRÉ] BD-T9, BD-T11 (v1.0.55 : cellule du proprietaire)",
+      "source": "[INFÉRÉ] BD-T9, BD-T11 (v1.0.55 : cellule du proprietaire) ; nom [DÉCISION] v1.0.94 (ancien nom Forteresse d'Heureux)",
       "description": "Ancienne forteresse naine reconvertie en refuge pour les concubines de Wismerhill."
     },
     {
@@ -969,8 +969,8 @@
       "state": "intact",
       "faction": "neutre",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52",
-      "description": "Située au nord de Moork."
+      "source": "[BD] BD-T6 (description reprise de horker en v1.0.94) ; cellule [INFÉRÉ] lore v1.0.52",
+      "description": "Comté dirigé par George d'Horkher, au nord de Moork : sur ses cartes (BD-T6 p.35, 37), Horkher en haut, Moork en bas, route directe ; ville aux couleurs jaune, or et rouge."
     },
     {
       "id": "town_0108",
@@ -1289,12 +1289,12 @@
       "name": "Nhorvaël",
       "cell": "N018_E009",
       "kind": "hameau",
-      "race": "humains",
+      "race": "elfes",
       "state": "intact",
-      "faction": "neutre",
+      "faction": "elfe",
       "start_for": [],
-      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northfen)",
-      "description": "Hameau de Nhorvaël."
+      "source": "[INFÉRÉ] lore v1.0.52 ; nom [DÉCISION] v1.0.93 (ancien nom Northfen) ; race et faction [DÉCISION] v1.0.94 (hameau elfe)",
+      "description": "Hameau elfe de Nhorvaël."
     },
     {
       "id": "hamlet_0172",
@@ -3295,7 +3295,7 @@
       "kind": "camp",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Halte des muletiers nains qui font passer le minerai d'Eisenkehl par le col vers Vozmarkh ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13. [GD v1.0.91, lieu_halte_des_muletiers_du_col]."
+      "description": "Halte des muletiers nains qui font passer le minerai d'Ysenkhal par le col vers Vozmarkh ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13. [GD v1.0.91, lieu_halte_des_muletiers_du_col]."
     },
     {
       "id": "poi_borne_frontiere_renversee",
@@ -3304,7 +3304,7 @@
       "kind": "monolithe",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Borne qui marquait la limite des terres des clans nains et de Vozmarkh ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Eisenkehl jurent de la relever. Niveaux 12-15. [GD v1.0.91, lieu_borne_frontiere_renversee]."
+      "description": "Borne qui marquait la limite des terres des clans nains et de Vozmarkh ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Ysenkhal jurent de la relever. Niveaux 12-15. [GD v1.0.91, lieu_borne_frontiere_renversee]."
     },
     {
       "id": "poi_carriere_des_forcats",
@@ -3322,7 +3322,7 @@
       "kind": "elevage",
       "offset_x_m": 0,
       "offset_z_m": 0,
-      "description": "Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Vozmarkh ; elle paie tribut à la Lune Noire et cache des fugitifs d'Eisenkehl. Niveaux 15-18. [GD v1.0.91, lieu_ferme_des_chevriers_nains]."
+      "description": "Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Vozmarkh ; elle paie tribut à la Lune Noire et cache des fugitifs d'Ysenkhal. Niveaux 15-18. [GD v1.0.91, lieu_ferme_des_chevriers_nains]."
     },
     {
       "id": "poi_corps_de_garde_de_la_route_du_sud",

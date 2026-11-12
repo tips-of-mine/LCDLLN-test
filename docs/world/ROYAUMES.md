@@ -216,7 +216,7 @@ voisines raccord au mètre près :
    après un sac : environ 51 % de maisons habitées, 31 % de ruines et 18 % de
    chantiers entourés d'étais et de matériaux, trois brèches avec gravats dans
    le rempart ou la palissade ; auberge, marché, forge, pavage et PNJ comme une
-   ville intacte — ex. Kendrhir Vale après le tome 1).
+   ville intacte — ex. Kendrhir après le tome 1).
 9. `Vegetation.cpp` : treillis **global** jitterisé (aucun motif répété),
    couverture nuancée (bois dans les plaines, clairières dans les forêts).
    **Forêts et lisières (FORET.1)** : leurs arbres ne sont plus stockés dans

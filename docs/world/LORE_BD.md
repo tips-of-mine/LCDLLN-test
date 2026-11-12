@@ -14,7 +14,7 @@ Tout ce qui fait foi est inscrit dans le JSON (`regles_transverses`, catégorie 
 `regle_canon_calendrier`, `regle_canon_etiquettes`, `regle_canon_registre_decisions` (index de toutes les décisions du propriétaire).
 - **Corpus** : Tome 0, Tomes 1 à 14, « L'Empire de la Négation », Methraton 1-3, Arcanes 1-5 ; les tomes 15 et suivants sont exclus (exceptions : Enfers et dragons de Xygga en v1.0.81, peuples lointains et Ophidiens en v1.0.82 ; 16.10, 16.11).
 - **Priorité** : [DÉCISION] > Tomes 0-14 > L'Empire de la Négation > Arcanes et Methraton ; [GD] comble les vides sans contredire ; [INFÉRÉ], [À VÉRIFIER] ne font pas foi.
-- **Moment du jeu** : après la destruction de Kendrhir Vale (T1, en reconstruction) et avant les destructions du T11 (donc aussi du T14) ; année unique, monde figé ; préquelles = passé ; THS limité à la section 10.3 (Q1).
+- **Moment du jeu** : après la destruction de Kendrhir (T1, en reconstruction) et avant les destructions du T11 (donc aussi du T14) ; année unique, monde figé ; préquelles = passé ; THS limité à la section 10.3 (Q1).
 - **Calendrier** : ère de l'Oblivion (an 0 = effacement de Methraton) ; année lunaire de 13 lunes de 28 jours + la Nuit de la Lune Noire ; noms [GD] à valider, année de jeu à fixer.
 - **Nouvelle décision** : note `[DÉCISION] (v1.0.xx)` sur la fiche, puis entrée au registre. Script reproductible : `lore_canon.py` (appliqué au fichier v1.0.56).
 
@@ -319,7 +319,7 @@ Placements des lieux des tomes 7 à 14 dans le lore (`cell`) et dans le monde jo
 |---|---|---|---|
 | Temple de Methraton (`lieu_temple_methraton_lhynn`) | N001_W010 | POI `poi_temple_methraton` (`temple`) | **Décision du propriétaire** : dans Lhynn. |
 | Seuil de Lhynn (`lieu_seuil_lhynn`) | N001_W010 | POI `poi_seuil_lhynn` (`portail`, sans liaison) | **Décision du propriétaire** : près du palais de Lhynn (T14 p.26). |
-| Forteresse naine d'Heureux / « Heusgly » (`ville_forteresse_naine_heureux_t11`) | S006_E004 | forteresse naine déplacée de S004_W004 | **Décision du propriétaire** : refuge des neuf mères (T9 p.26) et forteresse « d'Heusgly » (T11 p.36). |
+| Forteresse naine d'Heusgly (ex-« d'Heusgly », v1.0.94) (`ville_forteresse_naine_heureux_t11`) | S006_E004 | forteresse naine déplacée de S004_W004 | **Décision du propriétaire** : refuge des neuf mères (T9 p.26) et forteresse « d'Heusgly » (T11 p.36). |
 | Sanctuaire des Chevaliers Dragons (`lieu_sanctuaire_chevaliers_dragons`) | S003_W004 | POI `poi_sanctuaire_chevaliers_dragons` (`sanctuaire`) | **Décision du propriétaire** : case du palais du Maître des Dragons. |
 | Hoengardt (`ville_hoengardt_t11`) | N014_E016 | cellule inchangée, type `ville` → `forteresse` (comme le lore) | [INFÉRÉ] Plaine au pied de la chaîne, dans la région des Marches du Nord ; l'armée non humaine doit y « remonter » (T11 p.25). |
 | Port Franc (`lieu_port_franc`) | S003_W013 | POI `poi_port_franc` (`port`) | [INFÉRÉ] Plage de la côte ouest, ~40 km au sud de Lhynn : la flotte tharque vient de la mer de l'ouest (T10-T11) et le raz-de-marée tharque doit atteindre Lhynn (T14 p.40) ; Altenberg tient la côte au nord. |
@@ -845,8 +845,8 @@ mines et les forges qui font la réputation de Ghrunke Dash (« célèbre dans l
 métaux » `[BD-T3 pl.16]`, charbon `[BD-T9 p.12]`) — hameau minier, houillère, galeries effondrées, puits des
 apprentis, convois de minerai, prospecteurs, autel des ancêtres ; l'autel est ajouté aux `lieux_de_culte` de
 `religion_nains` (« Le Métal, le Feu et la Lave »). Routes selon la règle du propriétaire v1.0.65 : chaque
-nouveau hameau est relié au voisin le plus proche, sans étape : Kohlbrand à Durnhalde (case voisine
-orthogonale ; Ghrunke Dash n'est que diagonal), Eisenkehl à Kohlbrand (case voisine orthogonale ; Durnhalde
+nouveau hameau est relié au voisin le plus proche, sans étape : Kholbrakh à Durnhalde (case voisine
+orthogonale ; Ghrunke Dash n'est que diagonal), Ysenkhal à Kholbrakh (case voisine orthogonale ; Durnhalde
 n'est que diagonal) ; routes existantes inchangées (000126 Durnhalde → Ghrunke Dash, 000148
 Ghrunke Dash → hamlet_0196). Les PNJ de service des hameaux sont nains (`RACE_FACTIONS` de
 `generate_city_services.py` : `faction_dwarves`). Script reproductible : `lore_v1069.py` (appliqué au
@@ -858,20 +858,20 @@ fichier v1.0.68).
 | S006_E017 | montagne (nains de l'Est) | POI **Puits des Apprentis** (`lieu_puits_des_apprentis`, `poi_puits_des_apprentis`, `salle`) : mine de cuivre des apprentis de Durnhalde, niveaux profonds à vermine `[GD]` ; mines d'apprentissage de Durnhalde (v1.0.61) | rat (1), araignée (3-8), chèvre |
 | S006_E018 | montagne (nains de l'Est) | POI **Galeries effondrées de la Vieille Veine** (`lieu_galeries_effondrees_vieille_veine`, `poi_galeries_effondrees_vieille_veine`, `ruine`) : veine de fer épuisée, galeries effondrées depuis des générations `[GD]` (aucune destruction de l'époque du jeu) ; tunnels nains `[BD-T5]` | rat, araignée, corbeau, marmotte |
 | S007_E016 | montagne | Ghrunke Dash (grande ville, inchangée, rien n'est posé) | inchangée |
-| S007_E017 | montagne (nains de l'Est) | **Durnhalde** (hameau de départ) ; routes 000126 (Ghrunke Dash), 000185 (Kohlbrand) ; sentiers 000187 à 000191 vers les 5 POI | chien, mulet, rat |
+| S007_E017 | montagne (nains de l'Est) | **Durnhalde** (hameau de départ) ; routes 000126 (Ghrunke Dash), 000185 (Kholbrakh) ; sentiers 000187 à 000191 vers les 5 POI | chien, mulet, rat |
 | S007_E018 | montagne (nains de l'Est) | POI **Camp des prospecteurs** (`lieu_camp_des_prospecteurs`, `poi_camp_des_prospecteurs`, `camp`) : tentes, tranchées d'essai, recherche de nouvelles veines `[GD]` ; paiement en gemmes `[BD-T3]` | vautour (1), aigle, marmotte, corbeau |
 | S008_E016 | montagne | POI **Relais des convois de minerai** (`lieu_relais_des_convois`, `poi_relais_des_convois`, `camp`) : pesée et regroupement des convois de minerai et de charbon sous escorte avant Ghrunke Dash `[GD]` ; chars blindés et mercenaires nains `[BD-T3 pl.17-18]` | mulet, âne (2-4), poney (1), corbeau |
-| S008_E017 | montagne (nains de l'Est) | Hameau de houilleurs **Kohlbrand** (`hamlet_kohlbrand`, `farm_hamlet` / `hameau`) : puits de charbon, meules de coke, bas fourneaux `[GD]` ; charbon `[BD-T9 p.12]` ; routes 000185 vers Durnhalde et 000186 vers Eisenkehl | mulet, âne, chien, chèvre, rat |
-| S008_E018 | montagne (nains de l'Est) | Hameau minier **Eisenkehl** (`hamlet_eisenkehl`, `farm_hamlet` / `hameau`) : mines de fer étayées, terrils, treuils ; minerai à dos de mulet vers les forges de Ghrunke Dash `[GD]` ; route 000186 vers Kohlbrand (voisin orthogonal ; Durnhalde n'est que diagonal) | mulet (1), chien (2-6), chèvre, rat |
+| S008_E017 | montagne (nains de l'Est) | Hameau de houilleurs **Kholbrakh** (`hamlet_kohlbrand`, `farm_hamlet` / `hameau`) : puits de charbon, meules de coke, bas fourneaux `[GD]` ; charbon `[BD-T9 p.12]` ; routes 000185 vers Durnhalde et 000186 vers Ysenkhal | mulet, âne, chien, chèvre, rat |
+| S008_E018 | montagne (nains de l'Est) | Hameau minier **Ysenkhal** (`hamlet_eisenkehl`, `farm_hamlet` / `hameau`) : mines de fer étayées, terrils, treuils ; minerai à dos de mulet vers les forges de Ghrunke Dash `[GD]` ; route 000186 vers Kholbrakh (voisin orthogonal ; Durnhalde n'est que diagonal) | mulet (1), chien (2-6), chèvre, rat |
 
-- **Routes** (`routes`) : 000185 Durnhalde → Kohlbrand, 000186 Kohlbrand → Eisenkehl (`road`, cases
+- **Routes** (`routes`) : 000185 Durnhalde → Kholbrakh, 000186 Kholbrakh → Ysenkhal (`road`, cases
   voisines, sans `waypoints`) ; sentiers 000187 à 000191 (`path`, sans écurie) de Durnhalde vers les 5 POI.
 - **Services** : 2 hameaux (taille `hameau`) ; écuries d'après les routes `road` : Durnhalde 2 (au lieu
-  de 1), Kohlbrand 2, Eisenkehl 1 ; 1102 → 1114 PNJ de service, tous nains dans les nouveaux hameaux.
-- **Placement d'Eisenkehl** (contrôlé par `tools/world_gen`) : au nord (S006_E017), le corridor des
+  de 1), Kholbrakh 2, Ysenkhal 1 ; 1102 → 1114 PNJ de service, tous nains dans les nouveaux hameaux.
+- **Placement d'Ysenkhal** (contrôlé par `tools/world_gen`) : au nord (S006_E017), le corridor des
   départs (`connect_start_cities`) passait le long de S005_E017 (Baronnie de Moorks, géant brun 32-44,
   dragon noir 45-55), qui devenait jouable au contact de la région ; à l'est (S007_E018), le hameau rendait
-  inaccessible un lieu procédural de la case (avertissement « chemin impossible vers …_mine_0 »). Eisenkehl
+  inaccessible un lieu procédural de la case (avertissement « chemin impossible vers …_mine_0 »). Ysenkhal
   est donc au sud-est (S008_E018) : corridor inchangé, 181 → 181 cellules générées, aucune ajoutée ni
   perdue, aucun nouvel avertissement du dry-run.
 - **Faune** : les 8 cases hors Ghrunke Dash n'avaient aucune créature, aucune n'est retirée ; espèces
@@ -1364,7 +1364,7 @@ cette case.
 | 1 | Ostrevan – Haevrin passe dans la mer | 000095 : N011_W008 → N010_W007 → N010_W006 → N010_W005 → N011_W004, par la forêt et le marais au sud de la côte. |
 | 2 | Tracer 000064, 000073, 000076 | **Lhynn → Dhuzmar** : N001_W010 → N000_W010 (sortie commune avec la Via Magna) → S001_W010 → S002_W011. **Dhuzmar → Klaerhin** : S002_W011 → S003_W012 → S003_W013 (Port Franc, déjà desservi par la ligne droite) → S004_W014 → S004_W015, par la plage. **Askhvir → Stohnvar** : N010_E005 → N010_E006 → N011_E007 → N012_E007 → N013_E007 → N014_E008, par la lisière, en retrait de la côte. |
 | 3 | Sentier dans le sable Harndrecht – Ekvhitorn | **000224** (`path`) : S006_W008 → S006_W007 → S006_W006 → S006_W005 (plage) → S005_W004. |
-| 4 | Village fantôme – forteresse naine, branche sur 000079 | Village Fantôme du Marais (`ville_village_fantome`, S003_E006) et Forteresse Naine d'Heureux (`ville_forteresse_naine_heureux_t11`, S006_E004). L'ancienne 000155 passait par la montagne (S005_E004). **000155** devient l'embranchement de 000079 Kholdvar → Frhozhol en **S007_E006** : S007_E006 → S006_E005 → S006_E004. Le village rejoint 000079 à Frhozhol par 000149 (déjà tracée). 000079 reçoit ses `waypoints` (S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008). |
+| 4 | Village fantôme – forteresse naine, branche sur 000079 | Village Fantôme du Marais (`ville_village_fantome`, S003_E006) et Forteresse naine d'Heusgly (`ville_forteresse_naine_heureux_t11`, S006_E004). L'ancienne 000155 passait par la montagne (S005_E004). **000155** devient l'embranchement de 000079 Kholdvar → Frhozhol en **S007_E006** : S007_E006 → S006_E005 → S006_E004. Le village rejoint 000079 à Frhozhol par 000149 (déjà tracée). 000079 reçoit ses `waypoints` (S009_E004 → S008_E005 → S007_E006 → S006_E007 → S005_E008). |
 | 5 | Réajuster Frhozhol – Der Hem Shelbem (000074) | La ligne droite franchissait la chaîne (Deathtrap Canyon). Nouveau tracé par le col entre les deux chaînes : S010_E010 → S009_E009 → S008_E008 → S007_E008 → S006_E008 → S005_E008. C'est aussi le passage du générateur. |
 | 6 | Der Hem Shelbem S009_E010 → S010_E010 | Fiche, `cities` du master, lieu `lieu_der_hem_shelbem` (nécropole) et ses 7 espèces (morts-vivants, Shedu, roi-momie : `creature_ids` des cases et `zones_chasse`) ; extrémités de 000019, 000080, 000152 (tracés droits, au sec). |
 | 7 | E020 : désert et zone rocheuse | S001_E020 à S003_E020 : `desert` (`~`). S004_E020 : **`arid_land`** (`:`), voir plus bas. |
@@ -1409,7 +1409,7 @@ et n'en croisent aucune. Les nouveaux sentiers 000224, 000225 et 000201 non plus
 **Réseau** (`routes/reseau.py --dry` et `reseau_check.py`, `MAXLEN` = 5). Avant : 117 villes et hameaux, 169 routes.
 Après : **160 routes**, aucune anomalie. Une seule composante avec les liaisons maritimes. Sans elles, l'île de la
 Trêve, Thrival, Dyprokh et Hishtarland restent hors du réseau terrestre, comme en v1.0.75. `reseau.py` ignore
-les jonctions (extrémité sans ville) et voit la Forteresse d'Heureux isolée. `reseau_check.py` (v1.0.76) raccorde
+les jonctions (extrémité sans ville) et voit la Forteresse d'Heusgly isolée. `reseau_check.py` (v1.0.76) raccorde
 une jonction aux villes de sa route hôte : la forteresse est dans la composante principale.
 
 **Services** : 1244 → 1241 PNJ de service. Une écurie de moins pour Dhunfal (5 → 4 : 000146 n'y arrive plus),
@@ -2400,7 +2400,7 @@ ville, aucun identifiant supprimé, aucune ville renommée. Scripts reproductibl
 **Périmètre réel : aucune case jouable vide.** La région compte 95 cases de terre au lore (`region_id`) et la boîte
 `royaume_des_nains_de_lest` du master en couvre 129 (E015-E024 × S016-S004) ; seules 9 cases de la région sont
 jouables — le départ 3×3 de Durnhalde (§15.6), Ghrunke Dash comprise — et toutes portent déjà une ville, un hameau ou
-un lieu (Durnhalde, Kohlbrand, Eisenkehl, Ghrunke Dash, Autel des Ancêtres, Puits des Apprentis, Galeries effondrées
+un lieu (Durnhalde, Kholbrakh, Ysenkhal, Ghrunke Dash, Autel des Ancêtres, Puits des Apprentis, Galeries effondrées
 de la Vieille Veine, Camp des prospecteurs, Relais des convois de minerai). Les 5 autres cases jouables de la boîte
 (Monts de Moork, Relais des convois de Ghrunke Dash, Galerie naine abandonnée, coulées de l'ouest) sont rattachées à
 d'autres régions et occupées depuis la v1.0.86. Comme pour la Marche de l'Est au lot 15 : **aucun lieu ni POI
@@ -2413,14 +2413,14 @@ quête, et vers Ghrunke Dash :
 
 - `quest_nains_est_gd_premiere_descente` « La Première Descente » (niveau 1+, solo) : hameau_durnhalde → lieu_puits_des_apprentis
 - `quest_nains_est_gd_premier_outil` « Le Premier Outil » (niveau 2+, solo) : hameau_durnhalde → lieu_autel_des_ancetres
-- `quest_nains_est_gd_convoi_de_kohlbrand` « Le Convoi de Kohlbrand » (niveau 3+, solo) : hamlet_kohlbrand → lieu_relais_des_convois → ville_ghrunke_dash
+- `quest_nains_est_gd_convoi_de_kohlbrand` « Le Convoi de Kholbrakh » (niveau 3+, solo) : hamlet_kohlbrand → lieu_relais_des_convois → ville_ghrunke_dash
 - `quest_nains_est_gd_vieille_veine` « La Vieille Veine » (niveau 5+, group) : hamlet_eisenkehl → lieu_galeries_effondrees_vieille_veine
 - `quest_nains_est_gd_filon_des_prospecteurs` « Le Filon des prospecteurs » (niveau 7+, solo) : hameau_durnhalde → lieu_camp_des_prospecteurs → ville_ghrunke_dash
 
 **Niveaux proposés, à valider** (niveau relatif à la faction, `rule_niveaux_par_faction`). Dans le départ 1-10 :
-Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4 ; Kohlbrand et Relais des convois de minerai 3-6 ; Eisenkehl
+Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4 ; Kholbrakh et Relais des convois de minerai 3-6 ; Ysenkhal
 et Galeries effondrées de la Vieille Veine 5-8 ; Camp des prospecteurs 7-10 (champ `ambiance.niveau_menace` des 5
-lieux, vide jusqu'ici). Au-delà, pour l'ouverture future : abords de Vozmarkh et routes d'Eisenkehl, Mhordaal et
+lieux, vide jusqu'ici). Au-delà, pour l'ouverture future : abords de Vozmarkh et routes d'Ysenkhal, Mhordaal et
 Shaddrek 10-20 ; montagnes de l'est vers Ghrondak et sud de la région 18-30. Les zones plus fortes au contact du
 départ restent celles balisées en v1.0.86 (Monts de Moork au nord, 32-55 ; coulées et volcan à l'ouest, 55-70) ;
 aucune balise ajoutée (aucun contenu plus fort ajouté).
@@ -2447,7 +2447,7 @@ l'est, aucune ouverte ; chacune porte une ville ou un POI ; les 5 lieux des quê
 Cellules générées : 301 (inchangé). **Services** : 1242 PNJ (inchangé).
 
 **Points incertains** : noms et étapes des 5 quêtes ; gradient proposé ; quêtes de départ ouvertes aux autres
-factions ; ouvrir une partie du royaume (Vozmarkh, route Eisenkehl – Vozmarkh) pour donner une suite 10-20 au départ
+factions ; ouvrir une partie du royaume (Vozmarkh, route Ysenkhal – Vozmarkh) pour donner une suite 10-20 au départ
 (route ouverte en v1.0.91, §16.20).
 
 ### 16.19 Régions et niveaux du sud-centre et des Confins du Midi (v1.0.90)
@@ -2471,7 +2471,7 @@ de Lhynn, bords de la Via Magna, côtes) vont aux régions existantes voisines.
 | Région | Cases | Terrain | Niveau de référence | Factions | Lien avec le lore |
 |---|---:|---|---|---|---|
 | **Forêt des Lutins** (`foret_des_lutins`) | 34 | Forêt et lisières (S001-S004, E002-E011), marais du Village fantôme (S003_E006), plaines de Mhillenz et de Frhozhol (S005-S006) | **14-24** : lisière nord-ouest (Mhillenz, Garundel, Via Magna) 14-18 ; cœur de la forêt 16-22 ; marais du Village fantôme 18-24 ; plaine de Frhozhol 20-24 | Neutres (Mhillenz, Frhozhol, Village fantôme) ; Empire et Lune Noire de passage | Nom `[BD-T3]` (forêt des lutins, `zone_cursed_forest`, `quest_foret_lutins_t3`, Iaun Reith) ; trajet du T3 Oracle → Ghrunke Dash → forêt → village → fief de Garundel ; étendue `[INFÉRÉ]` ; Frhozhol (« Le Souffle du volcan ») ; Porte 4 des enfers |
-| **Val de Suthvarn** (`val_de_southport`) | 59 | Plaines de Kholdvar (S007-S009), forêt de Melvhord (S010-S013, E000-E004), plaines de Khlaybur et de Suthvarn, rivière de Suthvarn ; monts de l'ouest (S007-S009, E000-E001) au contact du Drach, chaîne du désert à l'est | **18-28** : Kholdvar et routes de Frhozhol et d'Heureux 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 et contreforts du Drach (30-56) à baliser | Neutres ; Nains du sud (forteresse d'Heureux au nord) ; Chevaliers-Dragons (frontière gardée du Drach ; suite naturelle après le départ de Drakhenhal) | Forteresse naine d'Heureux `[BD-T9, BD-T11]` ; Royaume Drach interdit `[BD-T2]` ; rivière de Suthvarn ; Porte 1 des enfers |
+| **Val de Suthvarn** (`val_de_southport`) | 59 | Plaines de Kholdvar (S007-S009), forêt de Melvhord (S010-S013, E000-E004), plaines de Khlaybur et de Suthvarn, rivière de Suthvarn ; monts de l'ouest (S007-S009, E000-E001) au contact du Drach, chaîne du désert à l'est | **18-28** : Kholdvar et routes de Frhozhol et d'Heusgly 18-22 ; forêt de Melvhord 20-26 ; Khlaybur, Suthvarn et la côte 22-28 ; Porte 1 et contreforts du Drach (30-56) à baliser | Neutres ; Nains du sud (forteresse d'Heusgly au nord) ; Chevaliers-Dragons (frontière gardée du Drach ; suite naturelle après le départ de Drakhenhal) | Forteresse naine d'Heusgly `[BD-T9, BD-T11]` ; Royaume Drach interdit `[BD-T2]` ; rivière de Suthvarn ; Porte 1 des enfers |
 | **Désert des Sels** (`desert_des_sels`) | 24 | Désert (S012-S014, E008-E012) prolongeant celui de Tsaroth, chaîne du désert (E007), plaines et lac de Klehrwath (S013-S014, E013-E014) | **24-36** : Saelvik et le lac 24-28 ; erg central 26-32 ; marge nord vers la Plaine des Cendres et Der Hem Shelbem 30-36 (nécropole 40-56 déjà balisée) | Neutres (Saelvik) ; Nains de l'est (Klehrwath, sel) ; Mort-vivants de Der Hem Shelbem au nord | Tsaroth et Der Hem Shelbem `[BD-T5]` ; sel gemme et sable à verre de Saelvik (v1.0.58) ; avertisseur de Saelvik (v1.0.86) |
 
 Ambiances (fiches) : conte inquiétant de la forêt (lutins facétieux qui n'attaquent pas un groupe fort, brume et
@@ -2543,9 +2543,9 @@ sud de Lhynn aux Terres de l'Empereur plutôt qu'une région propre, côtes S015
 niveau ; Faervosk (S015_E001) garde `region_id = royaume_drach` (v1.0.52) alors que sa case est aux Confins ; forme
 future des régions dans le master ; niveau des abords des Portes des enfers du continent.
 
-### 16.20 Ouverture d'Eisenkehl – Vozmarkh et des routes de la Marche (v1.0.91)
+### 16.20 Ouverture d'Ysenkhal – Vozmarkh et des routes de la Marche (v1.0.91)
 
-Lot 19, décisions du propriétaire (12/11/2026) : ouvrir au jeu (A) la route Eisenkehl → Vozmarkh, suite 10-20 du
+Lot 19, décisions du propriétaire (12/11/2026) : ouvrir au jeu (A) la route Ysenkhal → Vozmarkh, suite 10-20 du
 départ nain (mur invisible à la sortie du départ de Durnhalde jusqu'ici) ; (B) les 4 routes de la Marche de l'Est
 coupées au mur invisible en v1.0.88 : Ebhrazul → Rhivkhar (000104), Ebhrazul → Ryvaldh (000160), Ebhrazul →
 Grhavelt (000161), Dhazkmer → Dhuzvelt (000162). Même méthode qu'au lot 16 (§16.17). Scripts reproductibles (hors
@@ -2553,7 +2553,7 @@ dépôt) : `select_v1091.py` (sélection), `pick_v1091.py` (placement des POI d'
 `data_v1091.py`, `quests_v1091.py`, `lore_v1091.py` (appliqué au fichier v1.0.90), `master_v1091.py`,
 `carte_v1091.py` (rendu).
 
-**Choix des cases.** Pour chaque route : cases de son tracé lore (waypoints ; Eisenkehl – Vozmarkh n'a pas de route au
+**Choix des cases.** Pour chaque route : cases de son tracé lore (waypoints ; Ysenkhal – Vozmarkh n'a pas de route au
 lore : ligne droite), cases du tracé du générateur entre les mêmes villes, case de la ville d'arrivée, une case de
 marge (terre) autour de chaque ville devenue jouable, puis trous intérieurs (case bordée sur au moins 3 côtés par des
 cases jouables, itéré). Au nord de Vozmarkh, S008_E020 et S008_E021 (montagne, hors tracé) restent fermées.
@@ -2562,7 +2562,7 @@ terrestres, aucune isolée. Cellules jouables (liste master + corridors) : **301
 
 | Route | Cases propres à la route (tracés lore + générateur) | Arrivée |
 |---|---|---|
-| A. Eisenkehl → Vozmarkh | S008_E019, S009_E019 (col) | Vozmarkh (`town_0125`, S009_E020) + marge S009_E021, S010_E019, S010_E020, S010_E021 : **7 cases** |
+| A. Ysenkhal → Vozmarkh | S008_E019, S009_E019 (col) | Vozmarkh (`town_0125`, S009_E020) + marge S009_E021, S010_E019, S010_E020, S010_E021 : **7 cases** |
 | B1. Ebhrazul → Rhivkhar | N007_E019, N007_E020, N008_E019 | Rhivkhar (`town_0132`, N008_E018) + marge N007_E017, N007_E018, N008_E017, N009_E017 à N009_E019 |
 | B2. Ebhrazul → Ryvaldh | N004_E021, N005_E021, N005_E022, N006_E021, N006_E022 | Ryvaldh (`town_riverfold`, N006_E023) + marge N005_E023, N005_E024, N006_E024, N007_E022 à N007_E024 |
 | B3. Ebhrazul → Grhavelt | N003_E022 (N004_E021 partagée avec B2) | Grhavelt (`town_greyfield`, N003_E023) + marge N002_E022 à N002_E024, N003_E024, N004_E022 à N004_E024 |
@@ -2579,7 +2579,7 @@ Cases générées : N009_E017, N009_E018, N009_E019, N008_E017, N008_E018, N008_
 
 **Lieux** : chaque nouvelle case vide (52 ; les 5 cases de villes ne reçoivent rien) reçoit un lieu `[GD]` avec POI
 réel dans `pois` du master ; aucune nouvelle ville ni hameau, aucun identifiant supprimé, aucune ville renommée.
-Repères **à valider** : route Eisenkehl – Vozmarkh et abords de Vozmarkh 10-20 (repère v1.0.89 ; col 10-15,
+Repères **à valider** : route Ysenkhal – Vozmarkh et abords de Vozmarkh 10-20 (repère v1.0.89 ; col 10-15,
 Vozmarkh et sa marge 14-20) ; abords de Rhivkhar et forêt du nord de Vlakmorh 22-28 (repère v1.0.90) ; côte
 orientale de Ryvaldh à Dhuzvelt (sud du Rivage des Géants) **24-30** (routes au départ d'Ebhrazul et de Dhazkmer
 24-28, côte et abords des ports 26-30, bord du désert 27-30), sous la lisière sud des Gigantomorphes (28-36). Aucun
@@ -2656,7 +2656,7 @@ contre les PNJ de service (« Carrière de pierre de taille » renommée « Carr
 **Faune** : aucune créature créée ; espèces existantes rattachées (`zones_chasse`, `creature_ids`) : ours, serpent,
 chèvre, loup géant de guerre, ogre, corbeau, crabe, mouette, deux fois né, vautour.
 
-**Registre** (`regle_canon_registre_decisions`) : 2 entrées v1.0.91 « Ouverture de la route Eisenkehl - Vozmarkh »
+**Registre** (`regle_canon_registre_decisions`) : 2 entrées v1.0.91 « Ouverture de la route Ysenkhal - Vozmarkh »
 (`royaume_des_nains_de_lest`) et « Ouverture des routes de la Marche de l'Est » (`region_marche_est`).
 
 **Routes encore coupées au mur invisible** (non suivies, à décider) : Vozmarkh – Mhordaal (000034, S011_E020),
@@ -2791,11 +2791,11 @@ entiers, du plus long au plus court (paires proches : Duskmoor/Duskmere, Dustfen
   « Ecaille de Leviathan », « Defenses du Leviathan » et le « titanesque Leviathan » (créature et butins).
 - **Harrowdale** (`horker`) : `RENOMMAGES` du générateur de services passe à « Harrodh » ; le master affichait encore
   « Horker » pour cette ville (graphie THS de Horkher) : nom aligné sur le lore. Sa description du master (comté de George
-  d'Horkher, BD-T6) reste celle de la vraie Horkher (`city_horkher`) : à corriger.
+  d'Horkher, BD-T6) reste celle de la vraie Horkher (`city_horkher`) : à corriger (corrigée en v1.0.94, §16.23).
 - **Huacani** : adjectif en prose « huacani » → « hwakhari » ; étiquettes `tags` des quêtes (`huacani`) inchangées.
 - Aucune citation de la BD ne contenait ces noms (tous `[GD]` ou repris de `carte_export.json`). Les anciennes copies
   `lune-noire-data-v18.json` et `-v19.json` ne sont pas modifiées. Section « À vérifier » de la proposition (Kendrhir
-  Vale, Forteresse d'Heureux, Kohlbrand, Eisenkehl…) non traitée.
+  Vale, Forteresse d'Heureux, Kohlbrand, Eisenkehl…) non traitée (tranchée en v1.0.94, §16.23).
 
 | Groupe | Identifiant | Ancien nom | Nouveau nom |
 |---|---|---|---|
@@ -2895,6 +2895,52 @@ ROYAUMES.md 10, `generate_city_services.py` 10, `WorldGenTests.cpp` 91, `Terrain
 ni supprimé (lore, master, `carte_export.json`) ; services : 121 villes, 1242 PNJ inchangés (`generate_city_services.py`,
 `validate_city_services.py`, `--check`) ; `world_gen_tests`, `world_places_tests`, `start_locations_tests` verts.
 
+### 16.23 Noms à vérifier, hameaux nains et description d'Harrodh (v1.0.94)
+
+`[DÉCISION]` du propriétaire (12/11/2026, lot 22) sur la section « À vérifier » de la liste du 11/11/2026 (§16.22).
+Même méthode que la v1.0.93 : mots entiers (seul « Kendrhir Vale » est remplacé, jamais « Kendrhir » seul), ancien nom
+en tête du champ `alias` de la fiche `villes`, note `[DÉCISION] (v1.0.94)`, ancien nom dans `source` du master, alias
+dans `carte_export.json`, identifiants inchangés. Copies `lune-noire-data-v18.json` et `-v19.json` non modifiées.
+
+| Identifiant | Ancien nom | Nouveau nom | Motif |
+|---|---|---|---|
+| `kendrhir_vale` | Kendrhir Vale | **Kendrhir** | La BD dit Kendrhir `[BD-T1]` ; « Vale » était un ajout anglais |
+| `ville_forteresse_naine_heureux_t11` | Forteresse Naine d'Heureux (master : Forteresse d'Heureux) | **Forteresse naine d'Heusgly** | Cartouche `[BD-T11 p.36]` « l'ancienne forteresse naine d'Heusgly » (§7.1, §8.1) |
+| `hamlet_kohlbrand` | Kohlbrand | **Kholbrakh** | Noms ni français ni anglais |
+| `hamlet_eisenkehl` | Eisenkehl | **Ysenkhal** | Noms ni français ni anglais |
+
+- **Kendrhir** : vérifié avant renommage, `kendrhir_vale` **est** la cité des Grands Mages du T1, en reconstruction
+  (master `state` « reconstruction », notes `[BD-T1]`, `zone_kendrhir`, raids et quêtes du sac). Aucune autre fiche ni
+  ville « Kendrhir » (lore, master, `carte_export.json`) : renommage sans fusion. Le libellé de bâtiment testé par
+  `world_gen_tests` devient « (Kendrhir) ».
+- **Heusgly** : dérivés renommés (« Forteresse d'Heusgly », « forteresse naine d'Heusgly », route 000155
+  « Route Village Fantôme ↔ Forteresse d'Heusgly », « Ghrunke Dash, Heusgly »). Gardés : la note `[À VÉRIFIER BD-T11]`
+  qui rappelle l'ancienne lecture « d'Heureux » et l'adjectif « Heureux d'être envoyé en ambassade » (personnage).
+- **Kholbrakh, Ysenkhal** : dérivés renommés (« Le Convoi de Kholbrakh », route « Ysenkhal – Vozmarkh », « nains
+  d'Ysenkhal »…) ; identifiants `hamlet_kohlbrand`, `hamlet_eisenkehl`, `quest_nains_est_gd_convoi_de_kohlbrand` et PNJ
+  `pnj_hamlet_*` inchangés.
+- **Gardés** (registre, sans renommage) : peuple « Les Hauts Elfes » (`faction_hauts_elfes`) ; Grakhul, Thokrul, Gharzuk,
+  Ghazrak (`hameau_grakhul`, `hamlet_thokrul`, `hamlet_gharzuk`, `lieu_camp_de_guerre_ghazrak`) ; Les Nuées, La Légion
+  infernale, Les Légions Impériales ; Marn (`hameau_marn`, master).
+- **Nhorvaël** (`hamlet_0166`) reste **elfe** : la fiche n'avait ni faction ni race elfe (master `humains`/`neutre`, PNJ
+  humains). Corrigé : `faction_control` `faction_hauts_elfes` (comme Ghwenaëth et Faernilh, hors de la Forêt elfique),
+  master `race` « elfes », `faction` « elfe », 5 PNJ de service régénérés en hauts elfes (mêmes identifiants). Case
+  N018_E009 et région (Territoires orcques, province Territoires des Marches, v1.0.92) inchangées.
+- **Harrodh** (`horker`, N004_E009) : la description du master (comté de George d'Horkher, BD-T6) est remplacée par
+  celle de sa fiche (cité marchande, étape de la Via Magna, route 000120 ; bois, gibier, miel, sel gemme) ; `source`
+  corrigée (`[GD]`). La vraie **Horkher** (`city_horkher`, N006_E014, Marche) a sa propre entrée : description complétée
+  (comté de George d'Horkher au nord de Moork, cartes BD-T6 p.35, 37), `source` `[BD] BD-T6`. Faction master de
+  `horker` (`empire_hynn`, héritée de la même confusion) non modifiée : à confirmer.
+
+**Remplacements** : 230 (lore 169, master 9, `carte_export.json` 1, LORE_BD.md 39 avant cette section, ROYAUMES.md 1,
+`WorldGenTests.cpp` 11). **Registre** : 5 entrées v1.0.94 (Kendrhir, Heusgly, hameaux nains, noms gardés et Nhorvaël,
+Harrodh/Horkher).
+
+**Contrôles** : aucun ancien nom hors alias, notes et registre v1.0.94, §16.22 et exceptions ci-dessus ; aucun identifiant
+ajouté ni supprimé (lore hors registre, master, `carte_export.json`) ; services : 121 villes, 1242 PNJ
+(`generate_city_services.py`, `validate_city_services.py`, `--check`) ; `world_gen_tests`, `world_places_tests`,
+`start_locations_tests` verts.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2904,10 +2950,11 @@ ni supprimé (lore, master, `carte_export.json`) ; services : 121 villes, 1242 P
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
 - Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shezhold, Horkher et Nykhfeld (16.17).
-- Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18 ; route Eisenkehl – Vozmarkh ouverte en v1.0.91).
-- Ouverture d'Eisenkehl – Vozmarkh et des routes de la Marche (v1.0.91) : noms [GD] des 52 lieux et 3 quêtes, repère 24-30 de la côte orientale, marge et trous intérieurs, routes encore coupées vers Mhordaal, Shaddrek, Ghrondak, Hilvakh et Farvhenn (16.20).
+- Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18 ; route Ysenkhal – Vozmarkh ouverte en v1.0.91).
+- Ouverture d'Ysenkhal – Vozmarkh et des routes de la Marche (v1.0.91) : noms [GD] des 52 lieux et 3 quêtes, repère 24-30 de la côte orientale, marge et trous intérieurs, routes encore coupées vers Mhordaal, Shaddrek, Ghrondak, Hilvakh et Farvhenn (16.20).
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
-- Renommage des 88 villes (v1.0.93) : description du master de `horker` (Harrodh) reprise de Horkher ; « jungle de Leviathan » gardée ; Kendrhir Vale, Forteresse d'Heureux, Kohlbrand, Eisenkehl à décider (16.22).
+- Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
+- Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer
@@ -2935,5 +2982,5 @@ ni supprimé (lore, master, `carte_export.json`) ; services : 121 villes, 1242 P
 - ~~Greldinard appelé « Baron » (T10-T13)~~ : **close** (v1.0.55) — appellation de la BD, sans fief.
 - Noms des fleuves, rivières et lacs : à donner par le propriétaire. Le fleuve et le lac de Syzygie sont nommés
   (v1.0.78, §16.7).
-- Forteresse naine d'Heureux (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
+- Forteresse naine d'Heusgly (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.

@@ -2492,6 +2492,330 @@
       "offset_x_m": -1350,
       "offset_z_m": 4300,
       "description": "Borne de pierre gravée d'une empreinte de pied de géant, au bord des routes de Feyhin Lokcthat et de Leviathan : fin des Terres du Nord (1-15), début des Terres des Gigantomorphes (30-56) [GD v1.0.85, lieu_balise_borne_geants_sud]."
+    },
+    {
+      "id": "poi_tour_guet_route_shadehold",
+      "name": "Tour de guet de la route de Shadehold",
+      "cell": "N002_E011",
+      "kind": "camp",
+      "offset_x_m": 1100,
+      "offset_z_m": 2900,
+      "description": "Tour de guet orque au bord de la route Nightward – Shadehold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24. [GD v1.0.86, lieu_tour_guet_route_shadehold]."
+    },
+    {
+      "id": "poi_ferme_fortifiee_pillee",
+      "name": "Ferme fortifiée pillée",
+      "cell": "N000_E011",
+      "kind": "ruine",
+      "offset_x_m": 1800,
+      "offset_z_m": -1500,
+      "description": "Ferme fortifiée de colons humains que les clans orques insoumis ont pillée et brûlée : silos vidés, enclos défoncé. Niveaux 18-22. [GD v1.0.86, lieu_ferme_fortifiee_pillee]."
+    },
+    {
+      "id": "poi_camp_clans_insoumis",
+      "name": "Camp des clans insoumis",
+      "cell": "S001_E011",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": -500,
+      "description": "Camp d'un clan orque qui refuse l'autorité de Greldinard sur les clans de la baronnie [HS] et pille les fermes de la route de Grimfen. Niveaux 20-24. [GD v1.0.86, lieu_camp_clans_insoumis]."
+    },
+    {
+      "id": "poi_tertre_chefs_de_clan",
+      "name": "Tertre des Chefs de clan",
+      "cell": "S003_E011",
+      "kind": "sanctuaire",
+      "offset_x_m": -2500,
+      "offset_z_m": -2500,
+      "description": "Tertre funéraire des anciens chefs des clans orques de la baronnie, couronné de pierres levées : les insoumis y prêtent serment. Niveaux 20-26. [GD v1.0.86, lieu_tertre_chefs_de_clan]."
+    },
+    {
+      "id": "poi_puits_piste_du_sel",
+      "name": "Puits de la Piste du sel",
+      "cell": "S002_E012",
+      "kind": "camp",
+      "offset_x_m": 300,
+      "offset_z_m": 1300,
+      "description": "Puits et halte des convois de sel entre les salines et Grimfen, sur la route de Moork : dernier point d'eau avant le désert. Niveaux 22-28. [GD v1.0.86, lieu_puits_piste_du_sel]."
+    },
+    {
+      "id": "poi_salines_baronnie",
+      "name": "Salines de la baronnie",
+      "cell": "S002_E013",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Salines du désert de la baronnie, exploitées pour Moork (ressource sel, économie v1.0.58) ; les convois partent vers Moork et Grimfen. Niveaux 22-30. [GD v1.0.86, lieu_salines_baronnie]."
+    },
+    {
+      "id": "poi_fosses_aux_vers",
+      "name": "Fosses aux vers",
+      "cell": "S002_E014",
+      "kind": "gouffre",
+      "offset_x_m": -500,
+      "offset_z_m": 2200,
+      "description": "Entonnoirs et galeries où pullulent les Vers de Moork (souterrains [BD-T6]) ; les vers en sortent pour attaquer les convois de sel. Niveaux 20-28. [GD v1.0.86, lieu_fosses_aux_vers]."
+    },
+    {
+      "id": "poi_enclos_betes_de_guerre",
+      "name": "Enclos des bêtes de guerre",
+      "cell": "S003_E015",
+      "kind": "elevage",
+      "offset_x_m": 2500,
+      "offset_z_m": -1000,
+      "description": "Enclos et camp de dressage des bêtes de guerre de l'armée de Moork, près de la route de Ghrunke Dash (camps et routes militaires de la baronnie). Niveaux 28-36. [GD v1.0.86, lieu_enclos_betes_de_guerre]."
+    },
+    {
+      "id": "poi_fortin_imperial_ruine",
+      "name": "Fortin impérial en ruine",
+      "cell": "S003_E016",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": -1000,
+      "description": "Fortin de l'ancienne frontière impériale, tombé quand la Lune Noire a conquis Moork, cité impériale (Q15) ; des pilleurs y fouillent les caves. Niveaux 28-34. [GD v1.0.86, lieu_fortin_imperial_ruine]."
+    },
+    {
+      "id": "poi_relais_convois_ghrunke_dash",
+      "name": "Relais des convois de Ghrunke Dash",
+      "cell": "S004_E016",
+      "kind": "camp",
+      "offset_x_m": -1600,
+      "offset_z_m": -200,
+      "description": "Relais à mi-chemin de Moork et de Ghrunke Dash : l'acier nain importé par la baronnie y change d'escorte. Niveaux 26-32. [GD v1.0.86, lieu_relais_convois_ghrunke_dash]."
+    },
+    {
+      "id": "poi_borne_monts_de_moork",
+      "name": "Borne des Monts de Moork",
+      "cell": "S005_E016",
+      "kind": "monolithe",
+      "offset_x_m": -100,
+      "offset_z_m": 4000,
+      "description": "Borne de pierre noire au bord de la route de Ghrunke Dash, au pied des Monts de Moork : géants bruns (32-44) et dragon noir (45-55) au-delà. Balise de danger pour qui vient de Durnhalde (1-10). [GD v1.0.86, lieu_borne_monts_de_moork]."
+    },
+    {
+      "id": "poi_tour_guet_effondree",
+      "name": "Tour de guet effondrée",
+      "cell": "S006_E008",
+      "kind": "ruine",
+      "offset_x_m": 2500,
+      "offset_z_m": -500,
+      "description": "Tour de guet impériale effondrée sur une butte au sud de Frosthollow : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24. [GD v1.0.86, lieu_tour_guet_effondree]."
+    },
+    {
+      "id": "poi_puits_de_la_lisiere",
+      "name": "Puits de la Lisière",
+      "cell": "S006_E009",
+      "kind": "camp",
+      "offset_x_m": -3000,
+      "offset_z_m": 1500,
+      "description": "Dernier puits sûr sur la route de Frosthollow à Der Hem Shelbem, où voyageurs et convois font halte avant les terres désolées. Niveaux 20-26. [GD v1.0.86, lieu_puits_de_la_lisiere]."
+    },
+    {
+      "id": "poi_ferme_fortifiee_abandonnee",
+      "name": "Ferme fortifiée abandonnée",
+      "cell": "S007_E008",
+      "kind": "ruine",
+      "offset_x_m": 2500,
+      "offset_z_m": -1500,
+      "description": "Ferme fortifiée dont les habitants ont fui après la bataille de Tsaroth ; des morts errants (deux fois nés) rôdent autour des tombes rouvertes. Niveaux 22-26. [GD v1.0.86, lieu_ferme_fortifiee_abandonnee]."
+    },
+    {
+      "id": "poi_bivouac_des_deserteurs",
+      "name": "Bivouac des déserteurs",
+      "cell": "S007_E009",
+      "kind": "camp",
+      "offset_x_m": -500,
+      "offset_z_m": 2500,
+      "description": "Bivouac de soldats impériaux qui ont déserté après la défaite de Tsaroth et vivent du pillage des morts et des voyageurs. Niveaux 24-30. [GD v1.0.86, lieu_bivouac_des_deserteurs]."
+    },
+    {
+      "id": "poi_relais_piste_des_morts",
+      "name": "Relais de la Piste des Morts",
+      "cell": "S008_E008",
+      "kind": "ruine",
+      "offset_x_m": 3300,
+      "offset_z_m": -300,
+      "description": "Relais abandonné sur la route qui descend vers Deathtrap Canyon et Der Hem Shelbem, que les voyageurs appellent la Piste des Morts. Niveaux 24-30. [GD v1.0.86, lieu_relais_piste_des_morts]."
+    },
+    {
+      "id": "poi_mine_de_soufre_abandonnee",
+      "name": "Mine de soufre abandonnée",
+      "cell": "S008_E009",
+      "kind": "salle",
+      "offset_x_m": 1500,
+      "offset_z_m": -1500,
+      "description": "Mine de soufre de la montagne au nord de Deathtrap Canyon (soufre de Tsaroth, économie v1.0.58), abandonnée par ses mineurs. Niveaux 26-32. [GD v1.0.86, lieu_mine_de_soufre_abandonnee]."
+    },
+    {
+      "id": "poi_grotte_aux_chauves_souris",
+      "name": "Grotte aux chauves-souris",
+      "cell": "S008_E011",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": -1000,
+      "description": "Grande grotte de la montagne entre Deathtrap Canyon et la Faille de Tsaroth, repaire des chauves-souris géantes (30-40). Niveaux 30-38. [GD v1.0.86, lieu_grotte_aux_chauves_souris]."
+    },
+    {
+      "id": "poi_statues_voie_antique",
+      "name": "Statues brisées de la Voie antique",
+      "cell": "S009_E009",
+      "kind": "ruine",
+      "offset_x_m": 2900,
+      "offset_z_m": -1100,
+      "description": "Tronçon de la voie pavée de la civilisation antique de Deathtrap Canyon, bordé de statues ailées renversées. Niveaux 28-34. [GD v1.0.86, lieu_statues_voie_antique]."
+    },
+    {
+      "id": "poi_stele_des_deux_fois_nes",
+      "name": "Stèle des Deux Fois Nés",
+      "cell": "S009_E010",
+      "kind": "monolithe",
+      "offset_x_m": -2700,
+      "offset_z_m": 3900,
+      "description": "Stèle noire couverte de mains peintes au bord de la route de Der Hem Shelbem : la nécropole abrite spectres, shedu et rois-momies (40-56). Balise de danger. [GD v1.0.86, lieu_stele_des_deux_fois_nes]."
+    },
+    {
+      "id": "poi_plaine_des_cendres",
+      "name": "Plaine des Cendres",
+      "cell": "S009_E012",
+      "kind": "champ_bataille",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Champ de bataille de Tsaroth à l'est de la Faille : « un formidable embrasement endigué par des flots d'ichor et de sang » [BD-T5] ; armes brisées et morts qui se relèvent. Niveaux 30-38. [GD v1.0.86, lieu_plaine_des_cendres]."
+    },
+    {
+      "id": "poi_lande_pierres_dressees",
+      "name": "Lande des Pierres dressées",
+      "cell": "S010_E011",
+      "kind": "monolithe",
+      "offset_x_m": 1500,
+      "offset_z_m": 1500,
+      "description": "Lande de pierres dressées au sud de la Faille, où la Lune Noire fit lever les morts la nuit de la bataille [BD-T5 p.30, lecture incertaine] ; des deux fois nés y errent encore. Niveaux 30-38. [GD v1.0.86, lieu_lande_pierres_dressees]."
+    },
+    {
+      "id": "poi_ravin_de_l_ichor",
+      "name": "Ravin de l'Ichor",
+      "cell": "S010_E012",
+      "kind": "faille",
+      "offset_x_m": -1500,
+      "offset_z_m": -1500,
+      "description": "Ravin où ont coulé l'ichor et le sang de la bataille de Tsaroth [BD-T5] ; carcasses de démons et morts errants. Niveaux 32-40. [GD v1.0.86, lieu_ravin_de_l_ichor]."
+    },
+    {
+      "id": "poi_galerie_naine_abandonnee",
+      "name": "Galerie naine abandonnée",
+      "cell": "S006_E015",
+      "kind": "salle",
+      "offset_x_m": 2500,
+      "offset_z_m": -500,
+      "description": "Galerie de mine naine abandonnée à l'ouest de Ghrunke Dash quand les coulées du volcan ont gagné ses niveaux profonds. Niveaux 18-25. [GD v1.0.86, lieu_galerie_naine_abandonnee]."
+    },
+    {
+      "id": "poi_forge_engloutie",
+      "name": "Forge engloutie",
+      "cell": "S007_E015",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": 0,
+      "description": "Avant-poste de forge des nains de Ghrunke Dash englouti par une coulée du volcan ; la chaleur et les créatures de lave y règnent. Niveaux 55-62, balisé. [GD v1.0.86, lieu_forge_engloutie]."
+    },
+    {
+      "id": "poi_cairn_des_coulees",
+      "name": "Cairn des Coulées",
+      "cell": "S008_E015",
+      "kind": "monolithe",
+      "offset_x_m": 3600,
+      "offset_z_m": 0,
+      "description": "Cairn de basalte coiffé d'un marteau brisé, dressé par les nains au bord des coulées, sur le passage depuis le Relais des convois : volcan et coulées (55-70) au-delà. Balise de danger. [GD v1.0.86, lieu_cairn_des_coulees]."
+    },
+    {
+      "id": "poi_campement_des_pelerins",
+      "name": "Campement des pèlerins",
+      "cell": "N000_E001",
+      "kind": "camp",
+      "offset_x_m": -3000,
+      "offset_z_m": -1000,
+      "description": "Campement des pèlerins qui attendent leur tour d'entrer à l'Oracle, à l'est de « l'océan de tentes » [BD-T3]. Niveaux 10-14. [GD v1.0.86, lieu_campement_des_pelerins]."
+    },
+    {
+      "id": "poi_cairn_des_caravaniers",
+      "name": "Cairn des Caravaniers",
+      "cell": "N000_E002",
+      "kind": "monolithe",
+      "offset_x_m": 1500,
+      "offset_z_m": -1500,
+      "description": "Cairn de pierres et de crânes de bêtes que les caravaniers dressent pour dire : pas vers les falaises de grès du nord-est. Balise de danger (premier-né de Xygga, 66-70), ne désigne pas la grotte. [GD v1.0.86, lieu_cairn_des_caravaniers]."
+    },
+    {
+      "id": "poi_menhirs_plaine_oracle",
+      "name": "Menhirs de la plaine de l'Oracle",
+      "cell": "N000_W001",
+      "kind": "monolithe",
+      "offset_x_m": -1500,
+      "offset_z_m": 0,
+      "description": "Menhirs de la plaine, à l'ouest du tumulus bleu de l'Oracle (carte du T3 : le tumulus et ses menhirs [BD-T3 pl.13]). Niveaux 12-18. [GD v1.0.86, lieu_menhirs_plaine_oracle]."
+    },
+    {
+      "id": "poi_echoppes_faux_devins",
+      "name": "Échoppes des faux devins",
+      "cell": "N001_W001",
+      "kind": "camp",
+      "offset_x_m": 2600,
+      "offset_z_m": 3700,
+      "description": "Échoppes de faux voyants, devins et charlatans qui bordent le chemin de l'Oracle [BD-T2 p.47] ; l'avenir pour cinq pièces d'argent. Niveaux 10-16. [GD v1.0.86, lieu_echoppes_faux_devins]."
+    },
+    {
+      "id": "poi_oasis_palmes_noires",
+      "name": "Oasis des Palmes noires",
+      "cell": "N001_W002",
+      "kind": "etang",
+      "offset_x_m": -500,
+      "offset_z_m": -1500,
+      "description": "Petite oasis aux palmes noircies au nord du chemin de l'Oracle, halte des caravanes et des pèlerins. Niveaux 12-18 (l'eau n'est pas modélisée). [GD v1.0.86, lieu_oasis_palmes_noires]."
+    },
+    {
+      "id": "poi_relais_des_caravanes",
+      "name": "Relais des caravanes",
+      "cell": "N002_W002",
+      "kind": "camp",
+      "offset_x_m": -700,
+      "offset_z_m": 1300,
+      "description": "Caravansérail sur la voie impériale entre Sauken Glude et l'Oracle, étape des caravanes de la Via Magna. Niveaux 12-18. [GD v1.0.86, lieu_relais_des_caravanes]."
+    },
+    {
+      "id": "poi_repaire_pillards_desert",
+      "name": "Repaire des pillards du désert",
+      "cell": "N002_W003",
+      "kind": "camp",
+      "offset_x_m": -1000,
+      "offset_z_m": 1500,
+      "description": "Repaire de pillards qui guettent les caravanes de la Via Magna et les pèlerins de l'Oracle. Niveaux 14-20. [GD v1.0.86, lieu_repaire_pillards_desert]."
+    },
+    {
+      "id": "poi_tour_effondree_des_mages",
+      "name": "Tour effondrée des mages",
+      "cell": "N003_W004",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": 0,
+      "description": "Tour d'observation des mages de Magistrya (Sauken Glude), fendue et désertée ; ses cercles gravés attirent encore des choses. Niveaux 16-22. [GD v1.0.86, lieu_tour_effondree_des_mages]."
+    },
+    {
+      "id": "poi_puits_des_pelerins",
+      "name": "Puits des Pèlerins",
+      "cell": "S001_E002",
+      "kind": "sanctuaire",
+      "offset_x_m": 2500,
+      "offset_z_m": -3600,
+      "description": "Puits sacré où les pèlerins se purifient avant de marcher vers l'Oracle, près du chemin de Garundel. Niveaux 10-14. [GD v1.0.86, lieu_puits_des_pelerins]."
+    },
+    {
+      "id": "poi_tour_guet_garundel",
+      "name": "Tour de guet de Garundel",
+      "cell": "S001_E003",
+      "kind": "ruine",
+      "offset_x_m": 2500,
+      "offset_z_m": 500,
+      "description": "Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20. [GD v1.0.86, lieu_tour_guet_garundel]."
     }
   ],
   "imports": {

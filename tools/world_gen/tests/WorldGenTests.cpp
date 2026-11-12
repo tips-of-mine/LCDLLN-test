@@ -1525,6 +1525,121 @@ namespace
 		Check(grotte && roadDist(*grotte) > 1500.0, "lieux v1.0.85 : la grotte de N010_E012 reste a plus de 1,5 km des routes");
 	}
 
+	/// v1.0.86 (lore, lot 14) : un lieu [GD] (POI réel) sur chaque case jouable vide de la Baronnie
+	/// de Moork (11), des Terres désolées de Tsaroth (15) et du Désert de l'Oracle (10). Jouable =
+	/// `generated_cells` du master + corridors des départs (AddStartCorridors), comme en génération.
+	/// Chaque POI est seul sur sa case (aucune ville), au sec, dans la boîte `regions` de sa région
+	/// (sauf S004_E016 et S005_E016, Baronnie de Moork par le lore mais hors de la boîte du master).
+	/// Balises : Borne des Monts de Moork et Stèle des Deux Fois Nés à moins de 500 m d'une route,
+	/// Cairn des Coulées en case volcanique, Cairn des Caravaniers loin de la grotte du premier-né
+	/// qu'il ne désigne pas. Tsaroth (S009_E011) reste sans POI ni ville (lieu sans service).
+	void TestLieuxV1086()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lieux v1.0.86 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = g.master.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		struct Expected { const char* poi; const char* cell; const char* region; };
+		static const Expected kLieux[] = {
+			{ "poi_tour_guet_route_shadehold", "N002_E011", "baronnie_de_moorks" },
+			{ "poi_ferme_fortifiee_pillee", "N000_E011", "baronnie_de_moorks" },
+			{ "poi_camp_clans_insoumis", "S001_E011", "baronnie_de_moorks" },
+			{ "poi_tertre_chefs_de_clan", "S003_E011", "baronnie_de_moorks" },
+			{ "poi_puits_piste_du_sel", "S002_E012", "baronnie_de_moorks" },
+			{ "poi_salines_baronnie", "S002_E013", "baronnie_de_moorks" },
+			{ "poi_fosses_aux_vers", "S002_E014", "baronnie_de_moorks" },
+			{ "poi_enclos_betes_de_guerre", "S003_E015", "baronnie_de_moorks" },
+			{ "poi_fortin_imperial_ruine", "S003_E016", "baronnie_de_moorks" },
+			{ "poi_relais_convois_ghrunke_dash", "S004_E016", nullptr },
+			{ "poi_borne_monts_de_moork", "S005_E016", nullptr },
+			{ "poi_tour_guet_effondree", "S006_E008", "terres_desolees" },
+			{ "poi_puits_de_la_lisiere", "S006_E009", "terres_desolees" },
+			{ "poi_ferme_fortifiee_abandonnee", "S007_E008", "terres_desolees" },
+			{ "poi_bivouac_des_deserteurs", "S007_E009", "terres_desolees" },
+			{ "poi_relais_piste_des_morts", "S008_E008", "terres_desolees" },
+			{ "poi_mine_de_soufre_abandonnee", "S008_E009", "terres_desolees" },
+			{ "poi_grotte_aux_chauves_souris", "S008_E011", "terres_desolees" },
+			{ "poi_statues_voie_antique", "S009_E009", "terres_desolees" },
+			{ "poi_stele_des_deux_fois_nes", "S009_E010", "terres_desolees" },
+			{ "poi_plaine_des_cendres", "S009_E012", "terres_desolees" },
+			{ "poi_lande_pierres_dressees", "S010_E011", "terres_desolees" },
+			{ "poi_ravin_de_l_ichor", "S010_E012", "terres_desolees" },
+			{ "poi_galerie_naine_abandonnee", "S006_E015", "terres_desolees" },
+			{ "poi_forge_engloutie", "S007_E015", "terres_desolees" },
+			{ "poi_cairn_des_coulees", "S008_E015", "terres_desolees" },
+			{ "poi_campement_des_pelerins", "N000_E001", "desert_central" },
+			{ "poi_cairn_des_caravaniers", "N000_E002", "desert_central" },
+			{ "poi_menhirs_plaine_oracle", "N000_W001", "desert_central" },
+			{ "poi_echoppes_faux_devins", "N001_W001", "desert_central" },
+			{ "poi_oasis_palmes_noires", "N001_W002", "desert_central" },
+			{ "poi_relais_des_caravanes", "N002_W002", "desert_central" },
+			{ "poi_repaire_pillards_desert", "N002_W003", "desert_central" },
+			{ "poi_tour_effondree_des_mages", "N003_W004", "desert_central" },
+			{ "poi_puits_des_pelerins", "S001_E002", "desert_central" },
+			{ "poi_tour_guet_garundel", "S001_E003", "desert_central" },
+		};
+		auto find = [&](const char* id) -> const PoiDef* {
+			for (const PoiDef& p : g.pois)
+				if (p.id == id) return &p;
+			return nullptr;
+		};
+		auto roadDist = [&](const PoiDef& p) {
+			double dmin = 1e18;
+			for (const Road& r : g.roads)
+				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
+			return dmin;
+		};
+		// region nullptr : case de la Baronnie de Moork dans le lore (region_id des cellules), hors de
+		// la boîte `regions` du master (n_min = -3) : S004_E016 et S005_E016.
+		auto inRegion = [&](const PoiDef& p, const char* region) {
+			if (!region) return true;
+			for (const auto& r : g.master.regions)
+				if (r.id == region) return p.e >= r.eMin && p.e <= r.eMax && p.n >= r.nMin && p.n <= r.nMax;
+			return false;
+		};
+		int valid = 0;
+		for (const Expected& x : kLieux)
+		{
+			const PoiDef* p = find(x.poi);
+			bool alone = true;
+			for (const CityDef& c : g.cities)
+				if (p && c.n == p->n && c.e == p->e) alone = false;
+			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone && inRegion(*p, x.region)
+				&& MacroHeight(g.master, p->center.x, p->center.z) > g.master.scale.seaLevelM + 5.0;
+			if (!good) std::fprintf(stderr, "  lieu v1.0.86 invalide : %s\n", x.poi);
+			valid += good;
+		}
+		Check(valid == 36, "lieux v1.0.86 : 36 lieux au sec, seuls sur leur case jouable, dans leur region");
+		const PoiDef* borne = find("poi_borne_monts_de_moork");
+		const PoiDef* stele = find("poi_stele_des_deux_fois_nes");
+		const PoiDef* coulees = find("poi_cairn_des_coulees");
+		const PoiDef* caravaniers = find("poi_cairn_des_caravaniers");
+		const PoiDef* grotte = find("poi_grotte_premier_ne_dore_enflamme");
+		Check(borne && stele && coulees && caravaniers && borne->kind == "monolithe" && stele->kind == "monolithe"
+				&& coulees->kind == "monolithe" && caravaniers->kind == "monolithe",
+			"lieux v1.0.86 : 4 balises monolithe");
+		Check(borne && stele && roadDist(*borne) < 500.0 && roadDist(*stele) < 500.0,
+			"lieux v1.0.86 : Borne des Monts de Moork et Stele des Deux Fois Nes a moins de 500 m d'une route");
+		Check(coulees && LoreCode(g.master, coulees->n, coulees->e) == 'V', "lieux v1.0.86 : Cairn des Coulees en case volcanique");
+		Check(caravaniers && grotte && grotte->cell == "N002_E004"
+				&& std::hypot(caravaniers->center.x - grotte->center.x, caravaniers->center.z - grotte->center.z) > 15000.0
+				&& roadDist(*grotte) > 1500.0,
+			"lieux v1.0.86 : Cairn des Caravaniers a plus de 15 km de la grotte, grotte toujours loin des routes");
+		bool tsarothVide = true;
+		for (const PoiDef& p : g.pois) tsarothVide = tsarothVide && p.cell != "S009_E011";
+		for (const CityDef& c : g.cities) tsarothVide = tsarothVide && !(c.n == -9 && c.e == 11);
+		Check(tsarothVide, "lieux v1.0.86 : Tsaroth (S009_E011) reste sans POI ni ville");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1620,6 +1735,7 @@ int main()
 	TestLieuxV1081();
 	TestLieuxV1082();
 	TestLieuxV1085();
+	TestLieuxV1086();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

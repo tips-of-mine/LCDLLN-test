@@ -2042,12 +2042,145 @@ plus de 1,5 km des routes). **Services** : 1242 PNJ (inchangé). Aucun identifia
 (ici non) ; la poche 1-15 de Whispers Hill n'est accessible que par des cases 30-56 ; case exacte de l'Arbre aux
 Ossements.
 
+### 16.15 Lieux et quêtes de Moork, Tsaroth et du Désert de l'Oracle (v1.0.86)
+
+Lot 14 du propriétaire (priorité 2 validée le 12/11/2026), d'après le relevé de densité v1.0.84 (trous 1 à 4, 10,
+17, 22, 25). Cible : les cases **jouables** (générées : `generated_cells` du master **et** corridors des départs,
+`AddStartCorridors`) **vides** (ni ville, ni lieu, ni quête) de trois régions. Les cases de la Baronnie de Moork et
+du Désert de l'Oracle viennent des corridors, celles des Terres désolées de la liste du master. Chaque case reçoit un
+lieu `[GD]` avec un POI réel dans `pois` du master ; aucune nouvelle ville ni nouveau hameau, aucun identifiant
+supprimé, aucune ville renommée. Scripts reproductibles : `data_v1086.py`, `lore_v1086.py` (appliqué au fichier
+v1.0.85), `quests_v1086.py`, `master_v1086.py`.
+
+**Règles respectées** : Tsaroth (`ville_tsaroth`, S009_E011) reste **sans service** et sans POI, aucun donneur de
+quête n'y est placé, le camp de la Légion (départ des démons, retiré du monde principal) n'est pas recréé ; Moork
+reste intacte (avant le T11) ; l'Oracle (extérieur, lieu du T2, §9) ne change pas : les lieux sont autour. Balisage
+selon le mécanisme v1.0.85 (repère visible POI `monolithe`, avertisseurs aux villes voisines, légende sans révéler
+l'entrée des grottes de dragon).
+
+**Fiches de région ajoutées** (identifiants des boîtes `regions` du master, aucune case ne change de région) :
+`terres_desolees` (« Terres désolées de Tsaroth ») et `desert_central` (« Désert de l'Oracle »). Repères de niveau
+`[GD]` proposés, **à valider** (niveau relatif à la faction, `rule_niveaux_par_faction`) : Tsaroth 20-40 en surface
+(nécropole 40-56 et cases volcaniques 55-70 balisées) ; Oracle 10-25 (comme la Via Magna) ; Moork inchangée (18-45),
+avec un gradient : plaines de l'ouest 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés.
+
+**Baronnie de Moork** (11 cases ; les 13 quêtes existantes étaient toutes à Moork : 5 quêtes ajoutées hors de la ville)
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N002_E011 | **Tour de guet de la route de Shadehold** (`lieu_tour_guet_route_shadehold`, `poi_tour_guet_route_shadehold`, `camp`) | 18-24 |
+| N000_E011 | **Ferme fortifiée pillée** (`lieu_ferme_fortifiee_pillee`, `poi_ferme_fortifiee_pillee`, `ruine`) | 18-22 |
+| S001_E011 | **Camp des clans insoumis** (`lieu_camp_clans_insoumis`, `poi_camp_clans_insoumis`, `camp`) | 20-24 |
+| S003_E011 | **Tertre des Chefs de clan** (`lieu_tertre_chefs_de_clan`, `poi_tertre_chefs_de_clan`, `sanctuaire`) | 20-26 |
+| S002_E012 | **Puits de la Piste du sel** (`lieu_puits_piste_du_sel`, `poi_puits_piste_du_sel`, `camp`) | 22-28 |
+| S002_E013 | **Salines de la baronnie** (`lieu_salines_baronnie`, `poi_salines_baronnie`, `camp`) | 22-30 |
+| S002_E014 | **Fosses aux vers** (`lieu_fosses_aux_vers`, `poi_fosses_aux_vers`, `gouffre`) | 20-28 |
+| S003_E015 | **Enclos des bêtes de guerre** (`lieu_enclos_betes_de_guerre`, `poi_enclos_betes_de_guerre`, `elevage`) | 28-36 |
+| S003_E016 | **Fortin impérial en ruine** (`lieu_fortin_imperial_ruine`, `poi_fortin_imperial_ruine`, `ruine`) | 28-34 |
+| S004_E016 | **Relais des convois de Ghrunke Dash** (`lieu_relais_convois_ghrunke_dash`, `poi_relais_convois_ghrunke_dash`, `camp`) | 26-32 |
+| S005_E016 | **Borne des Monts de Moork** (`lieu_borne_monts_de_moork`, `poi_borne_monts_de_moork`, `monolithe`) | balise (32-55 au-delà) |
+
+- `quest_moork_gd_clans_insoumis` « Les Clans insoumis » (niveau 18+) : town_0127 → lieu_tour_guet_route_shadehold → lieu_ferme_fortifiee_pillee → lieu_camp_clans_insoumis → lieu_tertre_chefs_de_clan → hamlet_0196
+- `quest_moork_gd_piste_du_sel` « La Piste du sel » (niveau 22+) : ville_moork → lieu_salines_baronnie → lieu_puits_piste_du_sel → hamlet_0196
+- `quest_moork_gd_fosses_aux_vers` « Les Fosses aux vers » (niveau 20+) : ville_moork → lieu_fosses_aux_vers
+- `quest_moork_gd_fortin_des_pilleurs` « Le Fortin des pilleurs » (niveau 28+) : lieu_enclos_betes_de_guerre → lieu_fortin_imperial_ruine
+- `quest_moork_gd_acier_de_ghrunke_dash` « L'Acier de Ghrunke Dash » (niveau 26+) : ville_moork → lieu_relais_convois_ghrunke_dash → lieu_borne_monts_de_moork → lieu_enclos_betes_de_guerre
+
+**Terres désolées de Tsaroth** (15 cases ; corridor vide de l'ancien départ démon)
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| S006_E008 | **Tour de guet effondrée** (`lieu_tour_guet_effondree`, `poi_tour_guet_effondree`, `ruine`) | 20-24 |
+| S006_E009 | **Puits de la Lisière** (`lieu_puits_de_la_lisiere`, `poi_puits_de_la_lisiere`, `camp`) | 20-26 |
+| S007_E008 | **Ferme fortifiée abandonnée** (`lieu_ferme_fortifiee_abandonnee`, `poi_ferme_fortifiee_abandonnee`, `ruine`) | 22-26 |
+| S007_E009 | **Bivouac des déserteurs** (`lieu_bivouac_des_deserteurs`, `poi_bivouac_des_deserteurs`, `camp`) | 24-30 |
+| S008_E008 | **Relais de la Piste des Morts** (`lieu_relais_piste_des_morts`, `poi_relais_piste_des_morts`, `ruine`) | 24-30 |
+| S008_E009 | **Mine de soufre abandonnée** (`lieu_mine_de_soufre_abandonnee`, `poi_mine_de_soufre_abandonnee`, `salle`) | 26-32 |
+| S008_E011 | **Grotte aux chauves-souris** (`lieu_grotte_aux_chauves_souris`, `poi_grotte_aux_chauves_souris`, `salle`) | 30-38 |
+| S009_E009 | **Statues brisées de la Voie antique** (`lieu_statues_voie_antique`, `poi_statues_voie_antique`, `ruine`) | 28-34 |
+| S009_E010 | **Stèle des Deux Fois Nés** (`lieu_stele_des_deux_fois_nes`, `poi_stele_des_deux_fois_nes`, `monolithe`) | balise (40-56 au-delà) |
+| S009_E012 | **Plaine des Cendres** (`lieu_plaine_des_cendres`, `poi_plaine_des_cendres`, `champ_bataille`) | 30-38 |
+| S010_E011 | **Lande des Pierres dressées** (`lieu_lande_pierres_dressees`, `poi_lande_pierres_dressees`, `monolithe`) | 30-38 |
+| S010_E012 | **Ravin de l'Ichor** (`lieu_ravin_de_l_ichor`, `poi_ravin_de_l_ichor`, `faille`) | 32-40 |
+| S006_E015 | **Galerie naine abandonnée** (`lieu_galerie_naine_abandonnee`, `poi_galerie_naine_abandonnee`, `salle`) | 18-25 |
+| S007_E015 | **Forge engloutie** (`lieu_forge_engloutie`, `poi_forge_engloutie`, `ruine`) | 55-62 |
+| S008_E015 | **Cairn des Coulées** (`lieu_cairn_des_coulees`, `poi_cairn_des_coulees`, `monolithe`) | balise (55-70 au-delà) |
+
+- `quest_tsaroth_gd_fuyards` « Les Fuyards de Tsaroth » (niveau 22+) : hamlet_0193 → lieu_tour_guet_effondree → lieu_bivouac_des_deserteurs → lieu_ferme_fortifiee_abandonnee
+- `quest_tsaroth_gd_soufre` « Le Soufre de Tsaroth » (niveau 26+) : ville_moork → lieu_puits_de_la_lisiere → lieu_mine_de_soufre_abandonnee → lieu_grotte_aux_chauves_souris
+- `quest_tsaroth_gd_voie_antique` « La Voie antique » (niveau 28+) : lieu_relais_piste_des_morts → lieu_deathtrap_canyon → lieu_statues_voie_antique → lieu_stele_des_deux_fois_nes
+- `quest_tsaroth_gd_cendres` « Les Cendres de Tsaroth » (niveau 30+) : lieu_stele_des_deux_fois_nes → lieu_plaine_des_cendres → lieu_lande_pierres_dressees → lieu_ravin_de_l_ichor → hamlet_0193
+- `quest_tsaroth_gd_galerie_des_coulees` « La Galerie des coulées » (niveau 18+) : ville_ghrunke_dash → lieu_galerie_naine_abandonnee → lieu_cairn_des_coulees
+
+**Désert de l'Oracle** (10 cases ; 12 quêtes concentrées sur l'Oracle)
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N000_E001 | **Campement des pèlerins** (`lieu_campement_des_pelerins`, `poi_campement_des_pelerins`, `camp`) | 10-14 |
+| N000_E002 | **Cairn des Caravaniers** (`lieu_cairn_des_caravaniers`, `poi_cairn_des_caravaniers`, `monolithe`) | balise (66-70 au-delà) |
+| N000_W001 | **Menhirs de la plaine de l'Oracle** (`lieu_menhirs_plaine_oracle`, `poi_menhirs_plaine_oracle`, `monolithe`) | 12-18 |
+| N001_W001 | **Échoppes des faux devins** (`lieu_echoppes_faux_devins`, `poi_echoppes_faux_devins`, `camp`) | 10-16 |
+| N001_W002 | **Oasis des Palmes noires** (`lieu_oasis_palmes_noires`, `poi_oasis_palmes_noires`, `etang`) | 12-18 |
+| N002_W002 | **Relais des caravanes** (`lieu_relais_des_caravanes`, `poi_relais_des_caravanes`, `camp`) | 12-18 |
+| N002_W003 | **Repaire des pillards du désert** (`lieu_repaire_pillards_desert`, `poi_repaire_pillards_desert`, `camp`) | 14-20 |
+| N003_W004 | **Tour effondrée des mages** (`lieu_tour_effondree_des_mages`, `poi_tour_effondree_des_mages`, `ruine`) | 16-22 |
+| S001_E002 | **Puits des Pèlerins** (`lieu_puits_des_pelerins`, `poi_puits_des_pelerins`, `sanctuaire`) | 10-14 |
+| S001_E003 | **Tour de guet de Garundel** (`lieu_tour_guet_garundel`, `poi_tour_guet_garundel`, `ruine`) | 14-20 |
+
+- `quest_oracle_gd_faux_devins` « Les Faux Devins » (niveau 10+) : ville_oracle_camp → lieu_echoppes_faux_devins → lieu_repaire_pillards_desert
+- `quest_oracle_gd_caravane` « La Caravane de la Via Magna » (niveau 12+) : lieu_relais_des_caravanes → lieu_oasis_palmes_noires → lieu_campement_des_pelerins
+- `quest_oracle_gd_menhirs` « Les Menhirs de la plaine » (niveau 14+) : sauken_glude_of_magistrya → lieu_tour_effondree_des_mages → lieu_menhirs_plaine_oracle
+- `quest_oracle_gd_puits_des_pelerins` « Le Puits des Pèlerins » (niveau 10+) : ville_garundel_fief → lieu_puits_des_pelerins → lieu_tour_guet_garundel → lieu_cairn_des_caravaniers
+
+**Sources des lieux.** Inventés `[GD]` sauf : « océan de tentes » de l'Oracle `[BD-T3]` (Campement des pèlerins) ;
+échoppes de faux voyants à cinq pièces d'argent `[BD-T2 p.47]` ; tumulus de l'Oracle et ses menhirs sur la carte du
+T3 `[BD-T3 pl.13]` ; plaine de Tsaroth « embrasement endigué par des flots d'ichor et de sang » `[BD-T5]` (Plaine des
+Cendres, Ravin de l'Ichor) ; morts levés par la Lune Noire devant des pierres dressées `[BD-T5 p.30, page rognée,
+lecture incertaine]` (Lande des Pierres dressées) ; soufre de Tsaroth, sel et Vers de Moork (économie v1.0.58,
+`[BD-T6]` pour les vers) ; Greldinard maître des clans orques `[HS]` (clans insoumis : `[GD]`) ; Moork cité impériale
+conquise (Q15 : Fortin impérial). Les placements sont `[INFÉRÉ]` (aucune case dans la BD).
+
+**Balisage** (`[DÉCISION] (v1.0.86)` sur les cellules, avertisseurs sur les villes, notes sur les créatures) :
+
+| Case | Menace | Balise | Avertisseurs |
+|---|---|---|---|
+| S005_E016 | géants bruns (32-44), dragon noir (45-55), au nord du départ de Durnhalde (1-10) | Borne des Monts de Moork (< 500 m de la route de Ghrunke Dash) | Durnhalde, Ghrunke Dash |
+| S009_E010 | nécropole de Der Hem Shelbem (spectres, shedu, rois-momies, Prince Hors-Vivant ; 40-56) | Stèle des Deux Fois Nés (< 500 m de la route de Frosthollow) | Frosthollow, Saltwick |
+| S007_E015, S008_E015 | coulées et volcan (55-70), à l'ouest de Ghrunke Dash et du Relais des convois de minerai | Cairn des Coulées (S008_E015) ; panneaux runiques (lore) en S007_E015 | Ghrunke Dash, Durnhalde |
+| N002_E004 | premier-né de Xygga, dragon doré enflammé (66-70), case non générée | Cairn des Caravaniers (N000_E002, à plus de 15 km de la grotte, qu'il ne désigne pas) | Camp de l'Oracle |
+
+**Faune** : aucune créature créée ; espèces existantes rattachées aux nouveaux lieux (`zones_chasse` et
+`creature_ids`) : Vers de Moork (Fosses aux vers), bête de guerre de la Lune Noire (Enclos), deux fois nés (Plaine
+des Cendres, Lande, Ravin), chauve-souris géante (Grotte), géant de feu (Forge engloutie), grandes mouches de
+l'Oracle (Puits des Pèlerins), serpent (Oasis). Les adversaires humains (pillards, déserteurs, clans insoumis) sont
+des PNJ hostiles génériques, sans fiche.
+
+**Registre** (`regle_canon_registre_decisions`) : 3 entrées v1.0.86, une par région (`regions` :
+`baronnie_de_moorks`, `terres_desolees`, `desert_central`).
+
+**Ce qui est réel en jeu** : les 36 POI (bannière de nom à l'approche, aplanissement) dans des cellules générées.
+**Lore seulement** : quêtes (aucun système de quête de monde ne lit ces fiches), PNJ donneurs et adversaires,
+avertisseurs, panneaux de S007_E015, intérieurs (mine, grotte, fosses), eau de l'oasis (`etang` sans plan d'eau),
+repères de niveau des régions (aucun niveau de zone côté jeu).
+
+**Contrôles** : test `world_gen_tests` « lieux v1.0.86 » (36 lieux au sec, seuls sur leur case jouable, dans la boîte
+de leur région, sauf S004_E016 et S005_E016, Baronnie de Moork par le lore mais hors de la boîte du master ; 4 balises `monolithe` ; Borne et Stèle à moins de 500 m d'une route ; Cairn des Coulées en case
+volcanique ; Cairn des Caravaniers à plus de 15 km de la grotte, grotte toujours à plus de 1,5 km des routes ; Tsaroth
+sans POI ni ville). Cellules générées : 256 (inchangé, corridors identiques). **Services** : 1242 PNJ (inchangé). Lieu renommé avant livraison : « Relais des convois d'acier »
+→ « Relais des convois de Ghrunke Dash » (le mot « acier » entrait dans les noms interdits et invalidait des PNJ nains).
+
+**Points incertains** : tous les noms `[GD]` ; repères de niveau de Tsaroth et de l'Oracle ; lecture des pierres
+dressées du T5 p.30 ; quêtes ouvertes à toutes les factions alors que la baronnie est tenue par la Lune Noire
+(contre-quêtes à définir) ; le Krak de Jhenner, la citadelle impériale et la Passe de Heniak `[BD-T5]` restent sans
+case (non placés ici).
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
+- Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

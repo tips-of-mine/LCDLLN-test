@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.85",
+    "version": "1.0.86",
     "notes": [
+      "v1.0.86 : [GD] Lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle (lot 14, priorité 2 validée par le propriétaire le 12/11/2026). Chaque case générée vide des trois régions reçoit un lieu [GD] avec POI réel : 11 en Baronnie de Moork, 15 dans les Terres désolées, 10 dans le Désert de l'Oracle (36 lieux, dont 4 balises : Borne des Monts de Moork, Stèle des Deux Fois Nés, Cairn des Coulées, Cairn des Caravaniers). 14 quêtes [GD] relient les lieux (5 Moork, 5 Tsaroth, 4 Oracle). Fiches de région ajoutées : terres_desolees (20-40 proposé), desert_central (10-25 proposé). Tsaroth reste sans service, sans camp de la Légion ; Moork reste intacte. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.15.",
       "v1.0.85 : [CANON] Balisage des zones dangereuses et ancrages manquants (lot 13, corrections validées par le propriétaire le 12/11/2026). Rien n'est déplacé : 10 cases de contenu nettement plus fort que leur zone sont balisées (repères sur le passage, PNJ avertisseurs aux villes voisines, légendes sans révéler les grottes des dragons, enceintes gardées pour les dragons et golems de l'Empire et les dragons des Chevaliers-Dragons) ; 5 lieux de balisage [GD] avec POI réels (Cairn des Os noircis N010_E012, Stèle des Flèches blanches N008_W007, trois Bornes des Géants). Whispers Hill : N011_E008 et N012_E008 passent aux Terres du Nord (region_terres_nord_t00, 1-15), enclave dans les Terres des Gigantomorphes. Abysses conservées sous la mer (accès par la ligne maritime du sud). 7 raids et 19 quêtes rattachés à une case. Registre : 5 entrées. Détail : docs/world/LORE_BD.md, section 16.14.",
       "v1.0.83 : [CANON] Palette infernale de la carte des Enfers (lot 12) : le générateur (tools/world_gen) ne produit plus d'herbe, de forêt, de broussailles ni de neige aux Enfers ; sol de terre rouge-brun et de roche, arbres morts et rochers seulement ; carte du monde en roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave de N000_W001, fleuves de lave dans la croix). Sources : [BD-T16 p.16] ; [BD-T17 p.16] ; [BD-T20 p.30-31] ; [BD-T21 p.6, 36] ; [BD-T22 p.22]. Lave non émissive (pas de couche dédiée côté client). Monde des Royaumes inchangé. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.12.",
       "v1.0.82 : [CANON] Les douze peuples lointains et les Ophidiens d'après les tomes 15-22 (lot 11 du propriétaire, décisions du 11/11/2026). Peuples (regle_peuples_lointains) : 12 factions non jouables, indépendantes à l'époque du jeu, sur des terres hors carte placées par climat (Nordiques, Vharnoctes, Empire Minghol, Akhazumi, Empire de Tsin, Kharzhad, Sheydhar, Nebkhara, Nkhaloa, Azteca, nations tahokhanes, Saelvhyr) ; noms de la BD gardés (Nordiques, Haaghen, Tsin, Empire Minghol, Azteca, Murata), autres noms [GD] à valider ; 12 lieux hors carte ; 3 dirigeants nommés par la BD (Haaghen, Tsin, l'Azteca) et 28 PNJ [GD] dans 10 villes ; comptoirs à Brinehaven, Altenberg, Hishtarland et Riverfold (port ajouté à grille.ports). Ophidiens (regle_ophidiens) : peuple ennemi souterrain hostile à tous, race_ophidien, Empereur, Impératrice pondeuse et Prince Serpent, 10 créatures (55-68), Cité-Nid et écloserie souterraines, 3 entrées cachées (N010_E010 jungle, POI réel ; N010_W003 marais et S011_E015 montagne, lore seul). Gemmes, Unique, Grand Conseil, légions et Ophidia Prime restent post-T14. Registre : 12 entrées. Détail : docs/world/LORE_BD.md, section 16.11.",
@@ -6393,7 +6394,9 @@
         "[BD-T3 pl.16] « La ville naine de Ghrunke Dash, célèbre dans l'Empire pour la qualité de ses métaux » : carapace rocheuse grise veinée de rouge, fente de lave à la base, fumée au sommet, eau à l'est.",
         "[BD-T3 pl.17-18] Maître des forges Grhumpdeth (« Nous fournissons toutes les nations ! ») ; auberge « presque assez haute » pour Ghorghor ; le groupe achète armes, un char blindé et des mercenaires nains.",
         "[GD] (v1.0.58) Économie : forges et acier nain, armes, armures, chars blindés et machines sur commande ; vend à toutes les nations, en gemmes ou en or [BD-T3 pl.16-20] [BD-T5] ; charbon [BD-T9 p.12].",
-        "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14)."
+        "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : les convoyeurs de Ghrunke Dash ne dépassent la Borne des Monts de Moork (S005_E016) qu'en nombre : géants bruns (32-44) et dragon noir (45-55).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : les nains de Ghrunke Dash interdisent aux jeunes les coulées de l'ouest (S007_E015, S008_E015 ; 55-70) et ont dressé le Cairn des Coulées."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -6640,7 +6643,8 @@
         "[BD-T2] Page 47 — chemin bordé d'« échoppes de faux voyants, magiciens, devins, et de vrais charlatans » ; un devin propose l'avenir pour cinq pièces d'argent.",
         "[BD-T11] p.42 : l'Oracle est « au cœur de l'Empire », près des « lacs du destin » ; [BD-T12] p.30 : colline et sanctuaire à portes éthériques ; [BD-T14] p.12 : antre souterrain où il est enchaîné.",
         "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain.",
-        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120)."
+        "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : au Camp de l'Oracle, caravaniers et devins mettent en garde contre « les falaises de grès du nord-est » et leur feu doré (premier-né de Xygga, 66-70, N002_E004) ; ils ignorent où le dragon gîte."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -14181,7 +14185,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, sel gemme, sable à verre ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : bourg artisanal ; produit blé et orge, élevage, sel gemme, sable à verre ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Saltwick, on met en garde contre la nécropole de Der Hem Shelbem, au nord-ouest (40-56)."
       ],
       "taille": "village",
       "service_npcs": [
@@ -18566,7 +18571,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions)."
+        "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit blé et orge, élevage, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Frosthollow, on dit que la nécropole de Der Hem Shelbem « ne rend pas ceux qui y entrent » (40-56) ; la Stèle des Deux Fois Nés marque la limite sur la route du sud."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -22812,7 +22818,9 @@
         "[DÉCISION] (v1.0.61) Hameau de départ de la faction Nains (faction_dwarves ; faction de jeu « naine »), « pas loin de Ghrunke Dash » : décision du propriétaire du 06/11/2026 (LORE_BD §14).",
         "[GD] (v1.0.61) Nom proposé, à valider par le propriétaire. Hameau nain à flanc de montagne, à l'est de Ghrunke Dash : mines d'apprentissage et forges des jeunes nains.",
         "[INFÉRÉ] (v1.0.61) Cellule S007_E017 : Montagne du royaume des nains de l'Est à l'est de Ghrunke Dash (S007_E016), hors des zones volcaniques de l'ouest ; cellule déjà jouable.",
-        "[GD] (v1.0.61) Population : nains ; services d'un hameau (grille game_design.cities_services)."
+        "[GD] (v1.0.61) Population : nains ; services d'un hameau (grille game_design.cities_services).",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Durnhalde, on prévient que la route du nord monte dans les Monts de Moork (S005_E016) : géants bruns (32-44) et dragon noir (45-55) ; la Borne des Monts de Moork en marque l'entrée.",
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Durnhalde, on raconte la forge des anciens engloutie par la lave à l'ouest de Ghrunke Dash (S007_E015, 55-62)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -37780,6 +37788,717 @@
         "[GD] (v1.0.77) Précède quest_ile_gd_chant_du_devoreur ; Amaru (char_ile_gd_amaru) est un PNJ ennemi."
       ],
       "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_moork_gd_clans_insoumis",
+      "name": "Les Clans insoumis",
+      "description": "Un clan orque qui refuse l'autorité de Greldinard pille les fermes de la route de Grimfen. Suivre la fumée signalée par la tour de guet jusqu'à la ferme brûlée, puis jusqu'au camp du clan et au tertre où ses chefs prêtent serment.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "baronnie_de_moorks",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Baronnie de Moork, v1.0.86)",
+      "steps": [
+        "À la Tour de guet de la route de Shadehold, apprendre des guetteurs de Nightward d'où vient la fumée.",
+        "Fouiller la Ferme fortifiée pillée et relever les traces des pillards.",
+        "Disperser les guerriers du Camp des clans insoumis.",
+        "Briser les haches plantées au Tertre des Chefs de clan pour rompre le serment des insoumis.",
+        "Rendre compte au chef de Grimfen."
+      ],
+      "source_lore": [
+        "town_0127",
+        "lieu_tour_guet_route_shadehold",
+        "lieu_ferme_fortifiee_pillee",
+        "lieu_camp_clans_insoumis",
+        "lieu_tertre_chefs_de_clan",
+        "hamlet_0196"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 18 et plus ; cases : N001_E011, N002_E011, N000_E011, S001_E011, S003_E011, S002_E011. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_moork_gd_piste_du_sel",
+      "name": "La Piste du sel",
+      "description": "Les marchands de Moork attendent le sel des salines de la baronnie. Escorter un convoi des salines jusqu'au puits de la Piste du sel, puis jusqu'à Grimfen.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "baronnie_de_moorks",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Baronnie de Moork, v1.0.86)",
+      "steps": [
+        "Prendre à Moork la commande d'un marchand de sel.",
+        "Aux Salines de la baronnie, charger le convoi et en prendre l'escorte.",
+        "Repousser les Vers de Moork qui surgissent sous les roues.",
+        "Faire boire les bêtes au Puits de la Piste du sel.",
+        "Livrer le sel à Grimfen."
+      ],
+      "source_lore": [
+        "ville_moork",
+        "lieu_salines_baronnie",
+        "lieu_puits_piste_du_sel",
+        "hamlet_0196"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 22
+        }
+      ],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 22 et plus ; cases : S002_E015, S002_E013, S002_E012, S002_E011. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_moork_gd_fosses_aux_vers",
+      "name": "Les Fosses aux vers",
+      "description": "Les Vers de Moork sortent des fosses du désert pour attaquer les convois. La guilde de Moork paie la chair de ver et veut qu'on éclaircisse les fosses.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "baronnie_de_moorks",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Baronnie de Moork, v1.0.86)",
+      "steps": [
+        "Accepter à Moork le contrat de la guilde.",
+        "Descendre dans les Fosses aux vers et tuer les vers qui en sortent.",
+        "Rapporter la chair de ver à Moork."
+      ],
+      "source_lore": [
+        "ville_moork",
+        "lieu_fosses_aux_vers",
+        "creature_vers_moork"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 20
+        }
+      ],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 20 et plus ; cases : S002_E015, S002_E014. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_moork_gd_fortin_des_pilleurs",
+      "name": "Le Fortin des pilleurs",
+      "description": "Des pilleurs ont pris pied dans le fortin impérial en ruine, à une demi-journée de l'enclos des bêtes de guerre. Les dresseurs de Moork veulent qu'on les chasse et qu'on rapporte ce qu'ils cherchaient dans les caves.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "baronnie_de_moorks",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Baronnie de Moork, v1.0.86)",
+      "steps": [
+        "À l'Enclos des bêtes de guerre, recevoir l'ordre du maître dresseur.",
+        "Chasser les pilleurs du Fortin impérial en ruine.",
+        "Fouiller les caves et récupérer les vieilles cartes de la frontière impériale.",
+        "Rapporter les cartes à l'Enclos des bêtes de guerre."
+      ],
+      "source_lore": [
+        "lieu_enclos_betes_de_guerre",
+        "lieu_fortin_imperial_ruine",
+        "creature_bete_de_guerre_lune_noire"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 28
+        }
+      ],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 28 et plus ; cases : S003_E015, S003_E016. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_moork_gd_acier_de_ghrunke_dash",
+      "name": "L'Acier de Ghrunke Dash",
+      "description": "La baronnie importe de l'acier nain. Aller à la rencontre d'un convoi de Ghrunke Dash jusqu'à la Borne des Monts de Moork, sans la dépasser, et le ramener par le relais jusqu'à Moork.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "baronnie_de_moorks",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Baronnie de Moork, v1.0.86)",
+      "steps": [
+        "Au Relais des convois de Ghrunke Dash, apprendre que le convoi nain est en retard.",
+        "Le retrouver à la Borne des Monts de Moork : au-delà, géants et dragon (32-55), on ne va pas plus loin.",
+        "Ramener le convoi au relais en repoussant les pillards.",
+        "Faire relayer l'escorte à l'Enclos des bêtes de guerre et livrer l'acier à Moork."
+      ],
+      "source_lore": [
+        "ville_moork",
+        "lieu_relais_convois_ghrunke_dash",
+        "lieu_borne_monts_de_moork",
+        "lieu_enclos_betes_de_guerre"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 26
+        }
+      ],
+      "region_id": "baronnie_de_moorks",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 26 et plus ; cases : S002_E015, S004_E016, S005_E016, S003_E015. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_tsaroth_gd_fuyards",
+      "name": "Les Fuyards de Tsaroth",
+      "description": "Depuis la Tour de guet effondrée, on voit des feux dans la plaine : des déserteurs impériaux de Tsaroth pillent les voyageurs. Les débusquer et retrouver leur butin.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_desolees",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres désolées de Tsaroth, v1.0.86)",
+      "steps": [
+        "À Frosthollow, écouter les plaintes des voyageurs dépouillés.",
+        "Monter à la Tour de guet effondrée et repérer les feux.",
+        "Attaquer le Bivouac des déserteurs.",
+        "Retrouver leur butin caché à la Ferme fortifiée abandonnée, gardée par des morts errants.",
+        "Rapporter le butin à Frosthollow."
+      ],
+      "source_lore": [
+        "hamlet_0193",
+        "lieu_tour_guet_effondree",
+        "lieu_bivouac_des_deserteurs",
+        "lieu_ferme_fortifiee_abandonnee"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 22
+        }
+      ],
+      "region_id": "terres_desolees",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 22 et plus ; cases : S005_E008, S006_E008, S007_E009, S007_E008. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.86) Aucun donneur ni service à Tsaroth (lieu sans service) ; aucun camp de faction recréé à Tsaroth."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_tsaroth_gd_soufre",
+      "name": "Le Soufre de Tsaroth",
+      "description": "Les alchimistes de Moork manquent de soufre. La vieille mine du nord de Deathtrap Canyon en regorge, mais ses galeries communiquent avec la grotte des chauves-souris géantes.",
+      "category": "craft",
+      "tags": [
+        "[GD]",
+        "terres_desolees",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres désolées de Tsaroth, v1.0.86)",
+      "steps": [
+        "Prendre la commande d'un alchimiste de Moork.",
+        "Faire étape au Puits de la Lisière.",
+        "Extraire le soufre de la Mine de soufre abandonnée.",
+        "Murer la galerie qui mène à la Grotte aux chauves-souris, après en avoir chassé la colonie.",
+        "Livrer le soufre à Moork."
+      ],
+      "source_lore": [
+        "ville_moork",
+        "lieu_puits_de_la_lisiere",
+        "lieu_mine_de_soufre_abandonnee",
+        "lieu_grotte_aux_chauves_souris",
+        "creature_chauve_souris_geante"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 26
+        }
+      ],
+      "region_id": "terres_desolees",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 26 et plus ; cases : S002_E015, S006_E009, S008_E009, S008_E011. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.86) Aucun donneur ni service à Tsaroth (lieu sans service) ; aucun camp de faction recréé à Tsaroth."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_tsaroth_gd_voie_antique",
+      "name": "La Voie antique",
+      "description": "Un érudit veut relever les inscriptions de la voie pavée de Deathtrap Canyon. L'escorter du relais de la Piste des Morts jusqu'aux statues brisées, et pas un pas au-delà de la stèle de la nécropole.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_desolees",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres désolées de Tsaroth, v1.0.86)",
+      "steps": [
+        "Retrouver l'érudit au Relais de la Piste des Morts.",
+        "L'escorter par Deathtrap Canyon jusqu'aux Statues brisées de la Voie antique.",
+        "Le protéger pendant qu'il relève les inscriptions.",
+        "Le ramener avant la Stèle des Deux Fois Nés : au-delà, la nécropole (40-56)."
+      ],
+      "source_lore": [
+        "lieu_relais_piste_des_morts",
+        "lieu_deathtrap_canyon",
+        "lieu_statues_voie_antique",
+        "lieu_stele_des_deux_fois_nes"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 28
+        }
+      ],
+      "region_id": "terres_desolees",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 28 et plus ; cases : S008_E008, S008_E010, S009_E009, S009_E010. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.86) Aucun donneur ni service à Tsaroth (lieu sans service) ; aucun camp de faction recréé à Tsaroth."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_tsaroth_gd_cendres",
+      "name": "Les Cendres de Tsaroth",
+      "description": "Une stèle porte le journal d'un écuyer tombé à Tsaroth. Il y parle de la bannière de son seigneur, perdue dans la plaine. La chercher sur le champ de bataille, où les morts se relèvent encore.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "terres_desolees",
+        "campagne"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres désolées de Tsaroth, v1.0.86)",
+      "steps": [
+        "Trouver à la Stèle des Deux Fois Nés le journal de l'écuyer.",
+        "Fouiller la Plaine des Cendres sans approcher du bord de la Faille.",
+        "Traverser la Lande des Pierres dressées et repousser les deux fois nés.",
+        "Arracher la bannière aux carcasses du Ravin de l'Ichor.",
+        "Remettre la bannière à Frosthollow, qui la rendra à la famille."
+      ],
+      "source_lore": [
+        "lieu_stele_des_deux_fois_nes",
+        "lieu_plaine_des_cendres",
+        "lieu_lande_pierres_dressees",
+        "lieu_ravin_de_l_ichor",
+        "hamlet_0193",
+        "creature_deux_fois_ne"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 30
+        }
+      ],
+      "region_id": "terres_desolees",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 30 et plus ; cases : S009_E010, S009_E012, S010_E011, S010_E012, S005_E008. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.86) Aucun donneur ni service à Tsaroth (lieu sans service) ; aucun camp de faction recréé à Tsaroth."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_tsaroth_gd_galerie_des_coulees",
+      "name": "La Galerie des coulées",
+      "description": "À Ghrunke Dash, un vieux mineur veut récupérer les outils de son clan dans une galerie abandonnée à l'ouest. Les coulées du volcan ne sont pas loin : on lui apprend où s'arrêter.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "terres_desolees",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Terres désolées de Tsaroth, v1.0.86)",
+      "steps": [
+        "Écouter le vieux mineur à Ghrunke Dash.",
+        "Explorer la Galerie naine abandonnée et en rapporter les outils du clan.",
+        "Voir le Cairn des Coulées : la Forge engloutie et le volcan, au-delà, sont pour les plus forts (55-70).",
+        "Rendre les outils à Ghrunke Dash."
+      ],
+      "source_lore": [
+        "ville_ghrunke_dash",
+        "lieu_galerie_naine_abandonnee",
+        "lieu_cairn_des_coulees"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "terres_desolees",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 18 et plus ; cases : S007_E016, S006_E015, S008_E015. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.86) Aucun donneur ni service à Tsaroth (lieu sans service) ; aucun camp de faction recréé à Tsaroth."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_gd_faux_devins",
+      "name": "Les Faux Devins",
+      "description": "Un devin des échoppes vend de fausses prophéties aux pèlerins et partage ses gains avec les pillards du désert. Le démasquer et retrouver l'argent des pèlerins.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "desert_central",
+        "campagne"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Désert de l'Oracle, v1.0.86)",
+      "steps": [
+        "Au Camp de l'Oracle, entendre un pèlerin ruiné.",
+        "Démasquer le faux devin aux Échoppes des faux devins.",
+        "Le suivre jusqu'au Repaire des pillards du désert et reprendre l'argent.",
+        "Rendre l'argent aux pèlerins du Camp de l'Oracle."
+      ],
+      "source_lore": [
+        "ville_oracle_camp",
+        "lieu_echoppes_faux_devins",
+        "lieu_repaire_pillards_desert"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 10
+        }
+      ],
+      "region_id": "desert_central",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 10 et plus ; cases : N000_E000, N001_W001, N002_W003. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_gd_caravane",
+      "name": "La Caravane de la Via Magna",
+      "description": "Une caravane de la Via Magna doit gagner le camp des pèlerins avant la nuit. L'escorter depuis le relais, en faisant boire les bêtes à l'oasis.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "desert_central",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Désert de l'Oracle, v1.0.86)",
+      "steps": [
+        "Prendre l'escorte de la caravane au Relais des caravanes.",
+        "Faire boire les bêtes à l'Oasis des Palmes noires, nid de serpents.",
+        "Repousser les pillards sur le chemin.",
+        "Conduire la caravane au Campement des pèlerins."
+      ],
+      "source_lore": [
+        "lieu_relais_des_caravanes",
+        "lieu_oasis_palmes_noires",
+        "lieu_campement_des_pelerins",
+        "animal_serpent"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 12
+        }
+      ],
+      "region_id": "desert_central",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 12 et plus ; cases : N002_W002, N001_W002, N000_E001. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_gd_menhirs",
+      "name": "Les Menhirs de la plaine",
+      "description": "Les mages de Sauken Glude veulent savoir pourquoi les menhirs de la plaine bourdonnent au crépuscule. Relever les cercles de leur vieille tour, puis les mesures aux menhirs.",
+      "category": "magie",
+      "tags": [
+        "[GD]",
+        "desert_central",
+        "campagne"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Désert de l'Oracle, v1.0.86)",
+      "steps": [
+        "Recevoir les instruments d'un mage à Sauken Glude.",
+        "Relever les cercles gravés de la Tour effondrée des mages, en chassant ce qui s'y est installé.",
+        "Prendre les mesures au crépuscule aux Menhirs de la plaine de l'Oracle.",
+        "Rapporter les mesures à Sauken Glude."
+      ],
+      "source_lore": [
+        "sauken_glude_of_magistrya",
+        "lieu_tour_effondree_des_mages",
+        "lieu_menhirs_plaine_oracle"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 14
+        }
+      ],
+      "region_id": "desert_central",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 14 et plus ; cases : N003_W003, N003_W004, N000_W001. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_oracle_gd_puits_des_pelerins",
+      "name": "Le Puits des Pèlerins",
+      "description": "Les grandes mouches ont souillé le puits sacré des pèlerins et des braconniers de la tour de Garundel volent les ex-voto. Nettoyer le puits, chasser les braconniers ; les caravaniers diront où ne pas aller.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "desert_central",
+        "campagne"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Désert de l'Oracle, v1.0.86)",
+      "steps": [
+        "Au fief de Garundel, apprendre que le puits sacré est souillé.",
+        "Chasser les grandes mouches du Puits des Pèlerins.",
+        "Reprendre les ex-voto volés aux braconniers de la Tour de guet de Garundel.",
+        "Au Cairn des Caravaniers, entendre l'avertissement : pas vers les falaises de grès du nord-est.",
+        "Rendre les ex-voto au gardien du puits."
+      ],
+      "source_lore": [
+        "ville_garundel_fief",
+        "lieu_puits_des_pelerins",
+        "lieu_tour_guet_garundel",
+        "lieu_cairn_des_caravaniers",
+        "creature_grandes_mouches_oracle"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 10
+        }
+      ],
+      "region_id": "desert_central",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.86) Quête proposée, nom et étapes à valider ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[GD] (v1.0.86) Niveau 10 et plus ; cases : S001_E004, S001_E002, S001_E003, N000_E002. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+      ],
+      "quest_kind": "solo",
       "has_counter_quest": false
     }
   ],
@@ -162955,7 +163674,8 @@
         "[BD-T5] Repoussés au petit matin par les mages impériaux — 'Enfin au petit matin, le dernier des deux fois nés était peux fois mort.'",
         "[BD-T5] La Faucheuse exulte : 'Les portes des enfers accueillaient un gigantesque flot d'âmes.'",
         "[BD-A5 p.25] Squelettes armés (casques, boucliers ronds), « deux fois nés », hordes relevées par Haazheel.",
-        "[BD-T8 p.7] Horde des deux fois nés, armée putréfiée des héros morts."
+        "[BD-T8 p.7] Horde des deux fois nés, armée putréfiée des héros morts.",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_plaine_des_cendres, lieu_lande_pierres_dressees, lieu_ravin_de_l_ichor (LORE_BD §16.15)."
       ],
       "habitat": "Der Hem Shelbem et champs de bataille.",
       "groupe": "horde",
@@ -162963,7 +163683,13 @@
         "zone_der_hem_shelbem",
         "lieu_der_hem_shelbem",
         "lieu_deathtrap_canyon",
-        "S010_E010"
+        "S010_E010",
+        "S009_E012",
+        "lieu_plaine_des_cendres",
+        "S010_E011",
+        "lieu_lande_pierres_dressees",
+        "S010_E012",
+        "lieu_ravin_de_l_ichor"
       ]
     },
     {
@@ -163353,7 +164079,8 @@
       ],
       "notes": [
         "[BD-T3 p.3] Visibles autour de la falaise de l'Oracle la nuit.",
-        "[BD-T3 p.3] Insectes géants volants (libellules ou sauterelles ailées, peut-être montées) sur la paroi bleue de l'Oracle."
+        "[BD-T3 p.3] Insectes géants volants (libellules ou sauterelles ailées, peut-être montées) sur la paroi bleue de l'Oracle.",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_puits_des_pelerins (LORE_BD §16.15)."
       ],
       "habitat": "Plaine de l'Oracle.",
       "groupe": "nuée",
@@ -163361,7 +164088,9 @@
         "ville_oracle_camp",
         "zone_oracle",
         "N000_E000",
-        "N000_E001"
+        "N000_E001",
+        "S001_E002",
+        "lieu_puits_des_pelerins"
       ]
     },
     {
@@ -163546,7 +164275,8 @@
         "[LORE_ETENDU] Peut être utilisé comme monture rare drop (raid phase 1) si le roi est vaincu mais le dragon capturé.",
         "[BD-T5 p.29, p.31] Dragon mort-vivant rouge-brun aux ailes déchirées, enchaîné, monté par un seigneur mort-vivant ; abattu par les jets de feu des mages impériaux.",
         "[BD-T8 p.8] Dragon/gargouille mort-vivant de Der Hem Shelbem.",
-        "[BD-T14 p.23] Dragon décharné aux ailes en lambeaux."
+        "[BD-T14 p.23] Dragon décharné aux ailes en lambeaux.",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S009_E010 (LORE_BD §16.15)."
       ],
       "habitat": "Ciels de Der Hem Shelbem.",
       "groupe": "solitaire",
@@ -163933,14 +164663,17 @@
       ],
       "notes": [
         "[BD-T6] P.4-5 : Ghorghor remarque les vers en prenant Moork : 'T'as vu la taille des vers, gros!' / 'Chiément coquets qu'ils sont les vers dans le bled, chiément coquets!'",
-        "[BD-T6] Faune caractéristique de Moork — probablement liée aux activités nécromantiques souterraines."
+        "[BD-T6] Faune caractéristique de Moork — probablement liée aux activités nécromantiques souterraines.",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_fosses_aux_vers (LORE_BD §16.15)."
       ],
       "habitat": "Moork et désert de la baronnie.",
       "groupe": "meute",
       "zones_chasse": [
         "ville_moork",
         "S001_E014",
-        "S001_E016"
+        "S001_E016",
+        "S002_E014",
+        "lieu_fosses_aux_vers"
       ]
     },
     {
@@ -165037,7 +165770,8 @@
       ],
       "notes": [
         "Nom et niveau à définir.",
-        "[GD] (v1.0.58) Boss du raid raid_coeur_du_volcan (4 groupes), au cœur du volcan du sud-est ; aucune source BD (création du propriétaire)."
+        "[GD] (v1.0.58) Boss du raid raid_coeur_du_volcan (4 groupes), au cœur du volcan du sud-est ; aucune source BD (création du propriétaire).",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S008_E015 (LORE_BD §16.15)."
       ],
       "habitat": "Cœur du volcan du sud-est (galeries de lave).",
       "groupe": "unique",
@@ -167039,7 +167773,8 @@
       "notes": [
         "[BD-M1 p.47] Serpents verts de la fosse.",
         "[BD-M2 p.13] Pot de serpents : jarre brisée libérant des serpents mortels.",
-        "Grande espèce bleue : creature_serpent_geant_bleu."
+        "Grande espèce bleue : creature_serpent_geant_bleu.",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_oasis_palmes_noires (LORE_BD §16.15)."
       ],
       "categorie": "3. Reptiles et dinosaures",
       "famille": "Serpents",
@@ -167054,7 +167789,9 @@
       "zones_chasse": [
         "N002_W005",
         "N001_W005",
-        "N000_W004"
+        "N000_W004",
+        "N001_W002",
+        "lieu_oasis_palmes_noires"
       ]
     },
     {
@@ -168551,7 +169288,8 @@
         "[BD-A5 p.39] Les géants refont Moork en citadelle.",
         "[BD-A5 p.40] Géant brun à crête noire et défenses : « Écrasons-les, frères ! ».",
         "[BD-T5 p.37] Géant barbare torse nu levant un rocher à Tsaroth.",
-        "[GD] (v1.0.58) Alliés de Moork à l'époque du jeu : hostiles aux joueurs du bloc Empire seulement (camps dans les monts de la baronnie)."
+        "[GD] (v1.0.58) Alliés de Moork à l'époque du jeu : hostiles aux joueurs du bloc Empire seulement (camps dans les monts de la baronnie).",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S005_E016 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Monts de la Baronnie de Moork.",
@@ -168593,7 +169331,10 @@
       ],
       "notes": [
         "[BD-THS p.29] Types de gigantomorphes : feu (régions volcaniques), froid, titans, géants des montagnes (rang 3).",
-        "[GD] (v1.0.58) Placé sur les pentes du volcan du sud-est (hors cratère) : cohérent avec la chaîne « Le Souffle du volcan »."
+        "[GD] (v1.0.58) Placé sur les pentes du volcan du sud-est (hors cratère) : cohérent avec la chaîne « Le Souffle du volcan ».",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S008_E015 (LORE_BD §16.15).",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S007_E015 (LORE_BD §16.15).",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_forge_engloutie (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Pentes du volcan du sud-est (hors du cratère).",
@@ -168602,7 +169343,9 @@
         "S007_E013",
         "S009_E013",
         "S009_E014",
-        "zone_volcan_sud_est"
+        "zone_volcan_sud_est",
+        "S007_E015",
+        "lieu_forge_engloutie"
       ],
       "groupe": "paire"
     },
@@ -168943,7 +169686,8 @@
         "[BD-A5 p.34] Grand dragon/wyverne noir-bleu monté (Greldinard).",
         "[BD-T11 p.23] Dragon noir, monture de Wismerhill (avenir du monde jouable).",
         "[BD-T14 p.30] Monture noire écailleuse de Greldinard.",
-        "[GD] (v1.0.58) Quelques dragons noirs sauvages nichent dans les monts de la Baronnie de Moork."
+        "[GD] (v1.0.58) Quelques dragons noirs sauvages nichent dans les monts de la Baronnie de Moork.",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S005_E016 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Monts de la Baronnie de Moork.",
@@ -169060,7 +169804,8 @@
         "[BD-T7 p.52] Spectres noirs à longs cheveux armés d'épées dans la tombe du Prince éternel.",
         "[BD-T8 p.12] Guerrier transpercé par un spectre (Der Hem Shelbem).",
         "[GD] (v1.0.58) Nécropole de Der Hem Shelbem et Deathtrap Canyon.",
-        "[GD] (v1.0.74) Île de la Trêve : cour spectrale du Roi noyé (LORE_BD §16.3)."
+        "[GD] (v1.0.74) Île de la Trêve : cour spectrale du Roi noyé (LORE_BD §16.3).",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S009_E010 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Nécropole de Der Hem Shelbem, canyon voisin, nécropoles.",
@@ -169101,7 +169846,8 @@
         "[BD-T7 p.47] Shedu : colosses ailés à tête humaine barbue (statues).",
         "[BD-T7 p.52] Deux shedu morts vivants (corps de taureau ou de lion, ailes, têtes de rois-crânes) dans la tombe.",
         "[BD-T8 p.10] « Titans Shedis hors vivants » (lecture « Shedis » incertaine).",
-        "[GD] (v1.0.58) Gardiens par paires des portes de la nécropole de Der Hem Shelbem."
+        "[GD] (v1.0.58) Gardiens par paires des portes de la nécropole de Der Hem Shelbem.",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S009_E010 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Portes et salles de la nécropole de Der Hem Shelbem.",
@@ -169142,7 +169888,8 @@
       "notes": [
         "[BD-T7 p.52] Roi-momie couronné ; public de morts décharnés et squelettes casqués.",
         "[BD-T8 p.7] Deux statues-momies barbues couronnées (mort-vivant ou statue, incertain).",
-        "[GD] (v1.0.58) Élites des salles royales de Der Hem Shelbem."
+        "[GD] (v1.0.58) Élites des salles royales de Der Hem Shelbem.",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en S009_E010 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Salles royales de la nécropole de Der Hem Shelbem.",
@@ -169180,7 +169927,8 @@
         "[BD-T5 p.29] Chauves-souris devant la lune, avant l'attaque des morts-vivants.",
         "[BD-T8 p.8] Dragon/gargouille mort-vivant et chauves-souris géantes à Der Hem Shelbem.",
         "Famille de familiers : familier_chauve_souris.",
-        "[GD] (v1.0.58) Canyons et abords de Der Hem Shelbem."
+        "[GD] (v1.0.58) Canyons et abords de Der Hem Shelbem.",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_grotte_aux_chauves_souris (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Canyons et abords de Der Hem Shelbem.",
@@ -169188,7 +169936,8 @@
         "lieu_deathtrap_canyon",
         "S008_E010",
         "S008_E011",
-        "S010_E010"
+        "S010_E010",
+        "lieu_grotte_aux_chauves_souris"
       ],
       "groupe": "nuée"
     },
@@ -169437,14 +170186,17 @@
         "[BD-T10 p.23] Créature à griffes et fourrure chargeant les piques.",
         "[BD-T10 p.35] Monstre noir à crocs, cornes dorées, yeux rouges, anneaux d'or ; créature à corne et œil rouge transpercée de flèches.",
         "[BD-T5 p.36] Char de guerre de la Lune Noire mené par un monstre velu à crocs et défenses.",
-        "[GD] (v1.0.58) Une fiche, plusieurs modèles (variantes)."
+        "[GD] (v1.0.58) Une fiche, plusieurs modèles (variantes).",
+        "[GD] (v1.0.86) Rattachée aux lieux lieu_enclos_betes_de_guerre (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Camps et routes militaires de la Baronnie de Moork.",
       "zones_chasse": [
         "S001_E014",
         "S001_E016",
-        "S002_E015"
+        "S002_E015",
+        "S003_E015",
+        "lieu_enclos_betes_de_guerre"
       ],
       "groupe": "meute",
       "variantes": [
@@ -169855,7 +170607,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_dore_enflamme, N002_E004) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte de la falaise de grès » : lore seulement (cellule non générée)."
+        "Grotte « Grotte de la falaise de grès » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en N002_E004 (LORE_BD §16.15)."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (désert, N002_E004) : faille étroite dans une falaise de grès, au cœur du désert.",
@@ -170624,7 +171377,8 @@
         "[HS] Frontière orientale de l'Empire : zone de contact permanent avec les Territoires Orques.",
         "[HS] Ville de Horker : marche de l'Empire, être nommé là n'était pas une sinécure.",
         "[DÉCISION] (v1.0.56) Baronnie rattachée à la région « Marche de l'Est » (Q15, region_marche_est) ; tenue par Wismerhill à l'époque du jeu (Q10).",
-        "[GD] (v1.0.58) Économie : ressources sel et pierre du désert, vers de Moork, soufre (Tsaroth) ; productions élevage des Grands Vers Messagers, artisanat des guildes de Moork ; exporte impôts en couronnes vers Lhynn, vers et chair de ver ; importe grain, bois, acier nain. Détail et sources : regle_eco_productions_regions."
+        "[GD] (v1.0.58) Économie : ressources sel et pierre du désert, vers de Moork, soufre (Tsaroth) ; productions élevage des Grands Vers Messagers, artisanat des guildes de Moork ; exporte impôts en couronnes vers Lhynn, vers et chair de ver ; importe grain, bois, acier nain. Détail et sources : regle_eco_productions_regions.",
+        "[GD] (v1.0.86) Campagne de la baronnie (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : 11 lieux [GD] sur les cases générées vides (tour de guet, ferme pillée, camp et tertre des clans insoumis, puits et salines de la piste du sel, fosses aux vers, enclos des bêtes de guerre, fortin impérial en ruine, relais des convois d'acier, Borne des Monts de Moork) et 5 quêtes qui sortent les joueurs de Moork. Gradient [GD] dans le repère 18-45 : plaines de l'ouest 18-26, désert de la piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 (balisés). Moork reste intacte (avant le T11)."
       ]
     },
     {
@@ -170850,6 +171604,26 @@
         "[DÉCISION] (v1.0.77) Nom « Île de la Trêve » gardé et rendu visible (name des 20 cellules terrestres, carte de l'éditeur) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Relief au dénivelé important : pics et crêtes boisés (jusqu'à environ 550 m) au cœur des branches, falaises sur la mer, vallées encaissées ; côte inchangée ; LORE_BD §16.6.",
         "[GD] (v1.0.77) Peuple natif : les Huacani (faction_huacani, race_huacani, culte religion_huacani_soleil), qui habitent onze temples de style inca (lieu_ile_gd_grand_sanctuaire_soleil, lieu_ile_gd_temple_des_ancetres, lieu_ile_gd_temple_de_la_brume, lieu_ile_gd_temple_du_givre, lieu_ile_gd_temple_mere_des_eaux, lieu_ile_gd_temple_de_la_lune, lieu_ile_gd_temple_des_cimes, lieu_ile_gd_temple_des_terrasses, lieu_ile_gd_oratoire_du_col, lieu_ile_gd_autel_des_sources, lieu_ile_gd_oratoire_de_l_aube) ; LORE_BD §16.6."
+      ]
+    },
+    {
+      "id": "terres_desolees",
+      "name": "Terres désolées de Tsaroth",
+      "description": "Plaines, déserts et montagnes entre Frosthollow, la Faille de Tsaroth, Der Hem Shelbem et les coulées du volcan : le champ de bataille de Tsaroth [BD-T5] et ses abords, sans ville ni service.",
+      "notes": [
+        "[INFÉRÉ] (v1.0.86) Fiche ajoutée sous l'identifiant de la boîte du master (`regions` de world_master.json : E008-E015 × S006-S011) ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[BD-T5] Tsaroth est « un lieu désolé et loin de tout » (p.23, 26) : aucun habitant ni service (v1.0.53) ; le camp de la Légion a été retiré du jeu et n'est pas recréé.",
+        "[GD] (v1.0.86) Repère de niveau proposé, à valider : 20-40 en surface (abords de Frosthollow 20-26, Deathtrap Canyon et Der Hem Shelbem 24-34, champ de bataille 30-40) ; nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70, balisées (Stèle des Deux Fois Nés, Cairn des Coulées). Niveau relatif à la faction (rule_niveaux_par_faction)."
+      ]
+    },
+    {
+      "id": "desert_central",
+      "name": "Désert de l'Oracle",
+      "description": "Désert et plaines arides autour du tumulus de l'Oracle, carrefour de la Via Magna, de Sauken Glude et du fief de Garundel : pèlerins, caravanes, devins et pillards [BD-T2, BD-T3].",
+      "notes": [
+        "[INFÉRÉ] (v1.0.86) Fiche ajoutée sous l'identifiant de la boîte du master (`regions` de world_master.json : W006-E004 × S002-N003) ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15.",
+        "[INFÉRÉ] (v1.0.86) L'Oracle (extérieur) est un lieu du T2 (plan de référence, LORE_BD §9) : le camp, le tumulus et l'Oracle ne changent pas ; les lieux ajoutés sont autour.",
+        "[GD] (v1.0.86) Repère de niveau proposé, à valider : 10-25 (comme la Via Magna) ; la grotte du premier-né de Xygga (N002_E004, 66-70) est balisée (Cairn des Caravaniers, avertisseurs du Camp de l'Oracle). Niveau relatif à la faction (rule_niveaux_par_faction)."
       ]
     }
   ],
@@ -204906,7 +205680,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Tour effondrée des mages (lieu_tour_effondree_des_mages, POI poi_tour_effondree_des_mages, ruine, 16-22) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205828,7 +206604,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Repaire des pillards du désert (lieu_repaire_pillards_desert, POI poi_repaire_pillards_desert, camp, 14-20) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205846,7 +206624,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Relais des caravanes (lieu_relais_des_caravanes, POI poi_relais_des_caravanes, camp, 12-18) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -205957,7 +206737,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon doré enflammé, 66-70), POI poi_grotte_premier_ne_dore_enflamme ; LORE_BD §16.10."
+        "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (le dragon doré enflammé, 66-70), POI poi_grotte_premier_ne_dore_enflamme ; LORE_BD §16.10.",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : premier-né de Xygga, le dragon doré enflammé (66-70), dans le Désert de l'Oracle (repère proposé 10-25). Cellule non générée ; sur le passage depuis le chemin de l'Oracle à Garundel, le Cairn des Caravaniers (N000_E002, lieu_cairn_des_caravaniers, POI réel) : « pas vers les falaises de grès du nord-est ». [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -206085,7 +206866,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Tour de guet de la route de Shadehold (lieu_tour_guet_route_shadehold, POI poi_tour_guet_route_shadehold, camp, 18-24) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -206739,9 +207522,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "animal_serpent"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Oasis des Palmes noires (lieu_oasis_palmes_noires, POI poi_oasis_palmes_noires, etang, 12-18) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -206759,7 +207546,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Échoppes des faux devins (lieu_echoppes_faux_devins, POI poi_echoppes_faux_devins, camp, 10-16) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -207633,7 +208422,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Menhirs de la plaine de l'Oracle (lieu_menhirs_plaine_oracle, POI poi_menhirs_plaine_oracle, monolithe, 12-18) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -207673,7 +208464,9 @@
         "creature_grandes_mouches_oracle"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Campement des pèlerins (lieu_campement_des_pelerins, POI poi_campement_des_pelerins, camp, 10-14) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -207691,7 +208484,10 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Cairn des Caravaniers (lieu_cairn_des_caravaniers, POI poi_cairn_des_caravaniers, monolithe, balise (66-70 au-delà)) : première occupation de cette case générée vide (LORE_BD §16.15).",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : Cairn des Caravaniers, balise de la grotte du premier-né de Xygga de N002_E004 (66-70), sans la désigner. [GD]"
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -207854,7 +208650,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Ferme fortifiée pillée (lieu_ferme_fortifiee_pillee, POI poi_ferme_fortifiee_pillee, ruine, 18-22) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208551,9 +209349,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_grandes_mouches_oracle"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Puits des Pèlerins (lieu_puits_des_pelerins, POI poi_puits_des_pelerins, sanctuaire, 10-14) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208571,7 +209373,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Tour de guet de Garundel (lieu_tour_guet_garundel, POI poi_tour_guet_garundel, ruine, 14-20) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208716,7 +209520,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Camp des clans insoumis (lieu_camp_clans_insoumis, POI poi_camp_clans_insoumis, camp, 20-24) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -209618,7 +210424,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Puits de la Piste du sel (lieu_puits_piste_du_sel, POI poi_puits_piste_du_sel, camp, 22-28) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -209637,7 +210445,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Salines de la baronnie (lieu_salines_baronnie, POI poi_salines_baronnie, camp, 22-30) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -209654,9 +210464,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_vers_moork"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Fosses aux vers (lieu_fosses_aux_vers, POI poi_fosses_aux_vers, gouffre, 20-28) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -210484,7 +211298,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Tertre des Chefs de clan (lieu_tertre_chefs_de_clan, POI poi_tertre_chefs_de_clan, sanctuaire, 20-26) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -210557,9 +211373,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_bete_de_guerre_lune_noire"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Enclos des bêtes de guerre (lieu_enclos_betes_de_guerre, POI poi_enclos_betes_de_guerre, elevage, 28-36) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -210578,7 +211398,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Fortin impérial en ruine (lieu_fortin_imperial_ruine, POI poi_fortin_imperial_ruine, ruine, 28-34) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -211471,7 +212293,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Relais des convois de Ghrunke Dash (lieu_relais_convois_ghrunke_dash, POI poi_relais_convois_ghrunke_dash, camp, 26-32) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -212373,7 +213197,10 @@
         "creature_dragon_noir"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Borne des Monts de Moork (lieu_borne_monts_de_moork, POI poi_borne_monts_de_moork, monolithe, balise (32-55 au-delà)) : première occupation de cette case générée vide (LORE_BD §16.15).",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]"
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -213090,7 +213917,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Tour de guet effondrée (lieu_tour_guet_effondree, POI poi_tour_guet_effondree, ruine, 20-24) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -213108,7 +213937,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Puits de la Lisière (lieu_puits_de_la_lisiere, POI poi_puits_de_la_lisiere, camp, 20-26) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -213220,7 +214051,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Galerie naine abandonnée (lieu_galerie_naine_abandonnee, POI poi_galerie_naine_abandonnee, salle, 18-25) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -213960,7 +214793,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Ferme fortifiée abandonnée (lieu_ferme_fortifiee_abandonnee, POI poi_ferme_fortifiee_abandonnee, ruine, 22-26) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -213978,7 +214813,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Bivouac des déserteurs (lieu_bivouac_des_deserteurs, POI poi_bivouac_des_deserteurs, camp, 24-30) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -214094,11 +214931,16 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_geant_de_feu"
+      ],
       "visual_elements": [
         "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
       ],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Forge engloutie (lieu_forge_engloutie, POI poi_forge_engloutie, ruine, 55-62) : première occupation de cette case générée vide (LORE_BD §16.15).",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : Forge engloutie (55-62) et géants de feu (50-60), case volcanique voisine de Ghrunke Dash (région de départ de Durnhalde, 1-10). Panneaux runiques nains « coulées » à la lisière est (lore) ; Cairn des Coulées en S008_E015 ; avertisseurs de Ghrunke Dash et de Durnhalde. [GD]"
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -214837,7 +215679,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Relais de la Piste des Morts (lieu_relais_piste_des_morts, POI poi_relais_piste_des_morts, ruine, 24-30) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -214855,7 +215699,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Mine de soufre abandonnée (lieu_mine_de_soufre_abandonnee, POI poi_mine_de_soufre_abandonnee, salle, 26-32) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -214896,7 +215742,9 @@
         "creature_chauve_souris_geante"
       ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Grotte aux chauves-souris (lieu_grotte_aux_chauves_souris, POI poi_grotte_aux_chauves_souris, salle, 30-38) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -214982,7 +215830,10 @@
       "visual_elements": [
         "Flanc du volcan actif : cheminées volcaniques d'où s'échappe de la lave"
       ],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Cairn des Coulées (lieu_cairn_des_coulees, POI poi_cairn_des_coulees, monolithe, balise (55-70 au-delà)) : première occupation de cette case générée vide (LORE_BD §16.15).",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : coulées et volcan (55-70 : créature de la lave 60-66, géants de feu 50-60) à l'ouest de la région de départ de Durnhalde (1-10). Sur le passage depuis le Relais des convois (S008_E016), le Cairn des Coulées (lieu_cairn_des_coulees, POI réel). [GD]"
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -215742,7 +216593,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Statues brisées de la Voie antique (lieu_statues_voie_antique, POI poi_statues_voie_antique, ruine, 28-34) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -215761,7 +216614,9 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.76) Der Hem Shelbem descend en S010_E010 : la nécropole et ses gardiens (morts-vivants, Shedu) suivent ; case de désert entre la nécropole et la passe de Deathtrap Canyon ; LORE_BD §16.5."
+        "[DÉCISION] (v1.0.76) Der Hem Shelbem descend en S010_E010 : la nécropole et ses gardiens (morts-vivants, Shedu) suivent ; case de désert entre la nécropole et la passe de Deathtrap Canyon ; LORE_BD §16.5.",
+        "[GD] (v1.0.86) Stèle des Deux Fois Nés (lieu_stele_des_deux_fois_nes, POI poi_stele_des_deux_fois_nes, monolithe, balise (40-56 au-delà)) : première occupation de cette case générée vide (LORE_BD §16.15).",
+        "[DÉCISION] (v1.0.86) Balisage du danger (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78, formes v1.0.85) : nécropole de Der Hem Shelbem (S010_E010) : spectres (40-52), shedu (48-56), rois-momies (46-54), Prince Hors-Vivant (48-55), dragon mort-vivant (35-45) dans le ciel, dans une région proposée à 20-40. Sur la route de Frosthollow, la Stèle des Deux Fois Nés (lieu_stele_des_deux_fois_nes, POI réel) ; au sud, la route de Saltwick n'a qu'un avertisseur. [GD]"
       ],
       "coord_x": null,
       "coord_y": null
@@ -215796,9 +216651,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_deux_fois_ne"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Plaine des Cendres (lieu_plaine_des_cendres, POI poi_plaine_des_cendres, champ_bataille, 30-38) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -216650,9 +217509,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_deux_fois_ne"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Lande des Pierres dressées (lieu_lande_pierres_dressees, POI poi_lande_pierres_dressees, monolithe, 30-38) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -216668,9 +217531,13 @@
       "has_mountain_range": false,
       "river_direction": "",
       "connects_to": [],
-      "creature_ids": [],
+      "creature_ids": [
+        "creature_deux_fois_ne"
+      ],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.86) Ravin de l'Ichor (lieu_ravin_de_l_ichor, POI poi_ravin_de_l_ichor, faille, 32-40) : première occupation de cette case générée vide (LORE_BD §16.15)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -228866,7 +229733,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -231282,6 +232149,27 @@
           "nom": "Quêtes ancrées à une case",
           "decision": "19 quêtes ancrées par le lieu ou la ville cités (ajout à source_lore) : Dys, Syzygie, Village Fantôme, fief de Garundel, Kendrhir, Ruines de Wismerhill et Whispers Hill ; les autres restent sans case (LORE_BD §16.14).",
           "version": "1.0.85"
+        },
+        {
+          "collection": "regions",
+          "id": "baronnie_de_moorks",
+          "nom": "Baronnie de Moork",
+          "decision": "Campagne de la baronnie : chaque case générée vide reçoit un lieu [GD] — Tour de guet de la route de Shadehold (N002_E011), Ferme fortifiée pillée (N000_E011), Camp des clans insoumis (S001_E011), Tertre des Chefs de clan (S003_E011), Puits de la Piste du sel (S002_E012), Salines de la baronnie (S002_E013), Fosses aux vers (S002_E014), Enclos des bêtes de guerre (S003_E015), Fortin impérial en ruine (S003_E016), Relais des convois de Ghrunke Dash (S004_E016), Borne des Monts de Moork (S005_E016) ; 5 quêtes [GD] hors de Moork (quest_moork_gd_clans_insoumis, quest_moork_gd_piste_du_sel, quest_moork_gd_fosses_aux_vers, quest_moork_gd_fortin_des_pilleurs, quest_moork_gd_acier_de_ghrunke_dash) ; Borne des Monts de Moork en balise des géants et du dragon noir au nord de Durnhalde. Moork reste intacte (LORE_BD §16.15).",
+          "version": "1.0.86"
+        },
+        {
+          "collection": "regions",
+          "id": "terres_desolees",
+          "nom": "Terres désolées de Tsaroth",
+          "decision": "Fiche de région ajoutée (repère proposé 20-40). Lieux [GD] des cases générées vides — Tour de guet effondrée (S006_E008), Puits de la Lisière (S006_E009), Ferme fortifiée abandonnée (S007_E008), Bivouac des déserteurs (S007_E009), Relais de la Piste des Morts (S008_E008), Mine de soufre abandonnée (S008_E009), Grotte aux chauves-souris (S008_E011), Statues brisées de la Voie antique (S009_E009), Stèle des Deux Fois Nés (S009_E010), Plaine des Cendres (S009_E012), Lande des Pierres dressées (S010_E011), Ravin de l'Ichor (S010_E012), Galerie naine abandonnée (S006_E015), Forge engloutie (S007_E015), Cairn des Coulées (S008_E015) ; 5 quêtes [GD] (quest_tsaroth_gd_fuyards, quest_tsaroth_gd_soufre, quest_tsaroth_gd_voie_antique, quest_tsaroth_gd_cendres, quest_tsaroth_gd_galerie_des_coulees). Tsaroth reste sans service, le camp de la Légion n'est pas recréé ; nécropole et coulées balisées (LORE_BD §16.15).",
+          "version": "1.0.86"
+        },
+        {
+          "collection": "regions",
+          "id": "desert_central",
+          "nom": "Désert de l'Oracle",
+          "decision": "Fiche de région ajoutée (repère proposé 10-25). Lieux [GD] des cases générées vides — Campement des pèlerins (N000_E001), Cairn des Caravaniers (N000_E002), Menhirs de la plaine de l'Oracle (N000_W001), Échoppes des faux devins (N001_W001), Oasis des Palmes noires (N001_W002), Relais des caravanes (N002_W002), Repaire des pillards du désert (N002_W003), Tour effondrée des mages (N003_W004), Puits des Pèlerins (S001_E002), Tour de guet de Garundel (S001_E003) ; 4 quêtes [GD] (quest_oracle_gd_faux_devins, quest_oracle_gd_caravane, quest_oracle_gd_menhirs, quest_oracle_gd_puits_des_pelerins). L'Oracle (extérieur, lieu du T2) ne change pas ; grotte du premier-né balisée par le Cairn des Caravaniers (LORE_BD §16.15).",
+          "version": "1.0.86"
         }
       ]
     },
@@ -233914,7 +234802,8 @@
         "[DÉCISION] (v1.0.74) Île de la Trêve (region_ile_de_la_treve) : même niveau, 45 à 60, pour toutes les factions (zone commune, Légion comprise) ; décision du propriétaire du 10/11/2026 (LORE_BD §16.3).",
         "[DÉCISION] (v1.0.78) Du contenu de plus haut niveau (quêtes, raids, monstres) peut exister dans une zone de niveau inférieur. Les chemins qui y mènent doivent être bien balisés pour faire comprendre au joueur de faible niveau qu'il entre dans une zone où les adversaires sont plus forts. But : obliger à visiter tout le monde. Exemple : Bridlecrag (départ, niveaux 1 à 10) partage sa case S004_W006 avec le Grand Ancien (66-70) ; les deux restent en place. Décision du propriétaire du 11/11/2026 (LORE_BD §16.7).",
         "[DÉCISION] (v1.0.78) Le niveau d'une zone est relatif à la faction : une zone de faible niveau pour une faction ne l'est pas forcément pour les autres. Principe seulement : le détail par faction sera défini plus tard ; à partir du niveau 20 du joueur, beaucoup de choses changent. Décision du propriétaire du 11/11/2026 (LORE_BD §16.7).",
-        "[DÉCISION] (v1.0.85) Formes du balisage (lot 13, propriétaire, 12/11/2026 ; LORE_BD §16.14) : sur le passage vers la zone forte, un repère visible (panneau, stèle, cairn de crânes et d'ossements, borne), POI réel quand la case est générée ; au dernier hameau ou à la ville voisine, un PNJ avertisseur (note « avertisseur » de la ville) ; pour les grottes cachées des dragons, légendes, ossements et mises en garde vagues (« le marais du sud », « la forêt du nord ») qui ne révèlent pas l'entrée ; pour les créatures d'une faction (dragons impériaux, dragons des Chevaliers-Dragons), enceinte interdite et gardée. Cases balisées : N013_E017, N008_W015, N006_E007, N010_E012, N001_W010, N002_W008, N008_W007, S003_W004, N016_E019, N016_E020 ; sorties de la poche de Whispers Hill (N011_E008, N012_E008)."
+        "[DÉCISION] (v1.0.85) Formes du balisage (lot 13, propriétaire, 12/11/2026 ; LORE_BD §16.14) : sur le passage vers la zone forte, un repère visible (panneau, stèle, cairn de crânes et d'ossements, borne), POI réel quand la case est générée ; au dernier hameau ou à la ville voisine, un PNJ avertisseur (note « avertisseur » de la ville) ; pour les grottes cachées des dragons, légendes, ossements et mises en garde vagues (« le marais du sud », « la forêt du nord ») qui ne révèlent pas l'entrée ; pour les créatures d'une faction (dragons impériaux, dragons des Chevaliers-Dragons), enceinte interdite et gardée. Cases balisées : N013_E017, N008_W015, N006_E007, N010_E012, N001_W010, N002_W008, N008_W007, S003_W004, N016_E019, N016_E020 ; sorties de la poche de Whispers Hill (N011_E008, N012_E008).",
+        "[DÉCISION] (v1.0.86) Balisage étendu (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Monts de Moork (S005_E016, Borne des Monts de Moork), nécropole de Der Hem Shelbem (S009_E010, Stèle des Deux Fois Nés), coulées du volcan (S007_E015 et S008_E015, Cairn des Coulées) au contact de la région de départ de Durnhalde, grotte du premier-né du désert (N002_E004, Cairn des Caravaniers en N000_E002)."
       ]
     },
     {
@@ -235548,7 +236437,8 @@
         "[GD] (v1.0.71) Cases de la carte des Enfers dans zones_chasse : « enfers:<case> » (ex. enfers:N001_W001) ; elles n'ont pas de fiche cells (les identifiants N000_E000… sont ceux du continent), donc pas de creature_ids ({SEC}).",
         "[DÉCISION] (v1.0.74) L'Île de la Trêve (île du Nord, region_ile_de_la_treve) est une zone commune à toutes les factions, Légion comprise, de niveau 45 à 60 (décision du propriétaire du 10/11/2026 ; LORE_BD §16.3). Espèces : creature_loup_des_brumes et creature_naufrageur [GD], creature_geant_de_froid et creature_spectre (existantes) ; boss des raids creature_roi_noye (50), creature_capitaine_maree_rouge (54), creature_jarl_de_givre (58) et creature_devoreur_des_brumes (boss mondial, 60).",
         "[DÉCISION] (v1.0.78) Une créature de plus haut niveau peut vivre dans une zone de niveau inférieur, à condition que les chemins qui y mènent avertissent le joueur (balisage) : voir rule_niveaux_par_faction. Le Grand Ancien (creature_dragon_grand_ancien, 66-70) reste en S004_W006, case du haras de Bridlecrag (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7).",
-        "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : les « Terres du Nord » du repère 1-15 sont region_terres_nord_t00 : cases N011_E008 et N012_E008, enclave dans les Terres des Gigantomorphes (30-56), sorties balisées."
+        "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : les « Terres du Nord » du repère 1-15 sont region_terres_nord_t00 : cases N011_E008 et N012_E008, enclave dans les Terres des Gigantomorphes (30-56), sorties balisées.",
+        "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés)."
       ]
     },
     {
@@ -247479,7 +248369,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Chaque premier-né de Xygga vit caché dans une grotte difficile à trouver, à l'écart des villes et des routes (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[INFÉRÉ] (v1.0.81) Cellule N002_E004 (désert) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_dore_enflamme.",
-        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
+        "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : premier-né de Xygga, le dragon doré enflammé (66-70), dans le Désert de l'Oracle (repère proposé 10-25). Cellule non générée ; sur le passage depuis le chemin de l'Oracle à Garundel, le Cairn des Caravaniers (N000_E002, lieu_cairn_des_caravaniers, POI réel) : « pas vers les falaises de grès du nord-est ». [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
       "entree_cachee": true
     },
@@ -251518,6 +252409,3034 @@
       "notes": [
         "[GD] (v1.0.85) Nom et lieu proposés, à valider par le propriétaire. Balise de sortie de la poche de bas niveau de Whispers Hill (Terres du Nord, 1-15), sur la route de Feyhin Lokcthat et de Leviathan, au sud : au-delà, Terres des Gigantomorphes (30-56). Les gens de Whispers Hill ne la dépassent pas. LORE_BD §16.14.",
         "Réel en jeu : POI poi_balise_borne_geants_sud (monolithe) dans une cellule générée."
+      ]
+    },
+    {
+      "id": "lieu_tour_guet_route_shadehold",
+      "name": "Tour de guet de la route de Shadehold",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N002_E011",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour de bois et de pierre sèche tenue par des guetteurs orques de Nightward",
+        "feu d'alarme au sommet",
+        "bannière au disque noir de la Lune Noire"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour de guet orque au bord de la route Nightward – Shadehold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24.",
+        "[GD] (v1.0.86) Niveau : 18-24 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_tour_guet_route_shadehold (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_ferme_fortifiee_pillee",
+      "name": "Ferme fortifiée pillée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N000_E011",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "enclos de pieux à demi brûlé",
+        "grange éventrée, silos de grain vidés",
+        "traces de loups de monte et de pieds orques"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Ferme fortifiée de colons humains que les clans orques insoumis ont pillée et brûlée : silos vidés, enclos défoncé. Niveaux 18-22.",
+        "[GD] (v1.0.86) Niveau : 18-22 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_ferme_fortifiee_pillee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_camp_clans_insoumis",
+      "name": "Camp des clans insoumis",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S001_E011",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "huttes de peaux sur une butte",
+        "palissade de pieux et de crânes de bétail",
+        "butin des fermes pillées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S001_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Camp d'un clan orque qui refuse l'autorité de Greldinard sur les clans de la baronnie [HS] et pille les fermes de la route de Grimfen. Niveaux 20-24.",
+        "[GD] (v1.0.86) Niveau : 20-24 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_camp_clans_insoumis (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tertre_chefs_de_clan",
+      "name": "Tertre des Chefs de clan",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S003_E011",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tertre herbeux couronné de pierres levées",
+        "haches et boucliers rouillés plantés en offrande",
+        "tombes des anciens chefs orques"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S003_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tertre funéraire des anciens chefs des clans orques de la baronnie, couronné de pierres levées : les insoumis y prêtent serment. Niveaux 20-26.",
+        "[GD] (v1.0.86) Niveau : 20-26 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_tertre_chefs_de_clan (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_puits_piste_du_sel",
+      "name": "Puits de la Piste du sel",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S002_E012",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "puits maçonné à margelle de pierre",
+        "abreuvoir et auvent pour les bêtes de trait",
+        "sacs de sel empilés sous bâche"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S002_E012"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Puits et halte des convois de sel entre les salines et Grimfen, sur la route de Moork : dernier point d'eau avant le désert. Niveaux 22-28.",
+        "[GD] (v1.0.86) Niveau : 22-28 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_puits_piste_du_sel (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_salines_baronnie",
+      "name": "Salines de la baronnie",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S002_E013",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "croûtes de sel blanc à perte de vue",
+        "baraques des sauniers et des gardes",
+        "tas de sel prêts pour les convois"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-30"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S002_E013"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Salines du désert de la baronnie, exploitées pour Moork (ressource sel, économie v1.0.58) ; les convois partent vers Moork et Grimfen. Niveaux 22-30.",
+        "[GD] (v1.0.86) Niveau : 22-30 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_salines_baronnie (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_fosses_aux_vers",
+      "name": "Fosses aux vers",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S002_E014",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entonnoirs de sable mouvant",
+        "galeries creusées par les Vers de Moork",
+        "carcasses de bêtes de trait à demi englouties"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S002_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Entonnoirs et galeries où pullulent les Vers de Moork (souterrains [BD-T6]) ; les vers en sortent pour attaquer les convois de sel. Niveaux 20-28.",
+        "[GD] (v1.0.86) Niveau : 20-28 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_fosses_aux_vers (gouffre) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_enclos_betes_de_guerre",
+      "name": "Enclos des bêtes de guerre",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S003_E015",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "enclos de troncs noircis",
+        "bêtes de guerre de la Lune Noire enchaînées",
+        "baraques de dresseurs et de soldats"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-36"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S003_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Enclos et camp de dressage des bêtes de guerre de l'armée de Moork, près de la route de Ghrunke Dash (camps et routes militaires de la baronnie). Niveaux 28-36.",
+        "[GD] (v1.0.86) Niveau : 28-36 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_enclos_betes_de_guerre (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_fortin_imperial_ruine",
+      "name": "Fortin impérial en ruine",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S003_E016",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "enceinte carrée effondrée",
+        "tour d'angle encore debout",
+        "aigle impérial martelé sur la porte"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-34"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S003_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Fortin de l'ancienne frontière impériale, tombé quand la Lune Noire a conquis Moork, cité impériale (Q15) ; des pilleurs y fouillent les caves. Niveaux 28-34.",
+        "[GD] (v1.0.86) Niveau : 28-34 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_fortin_imperial_ruine (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_relais_convois_ghrunke_dash",
+      "name": "Relais des convois de Ghrunke Dash",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S004_E016",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cour fermée pour les chariots",
+        "écurie et forge de campagne",
+        "lingots d'acier nain sous bonne garde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S004_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Relais à mi-chemin de Moork et de Ghrunke Dash : l'acier nain importé par la baronnie y change d'escorte. Niveaux 26-32.",
+        "[GD] (v1.0.86) Niveau : 26-32 (Baronnie de Moork).",
+        "Réel en jeu : POI poi_relais_convois_ghrunke_dash (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_borne_monts_de_moork",
+      "name": "Borne des Monts de Moork",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S005_E016",
+      "region_id": "baronnie_de_moorks",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "borne de pierre noire gravée d'une silhouette de géant et d'une aile de dragon",
+        "au bord de la route de Ghrunke Dash",
+        "balise : monts de Moork, géants bruns et dragon noir"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "balise (32-55 au-delà)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S005_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Borne de pierre noire au bord de la route de Ghrunke Dash, au pied des Monts de Moork : géants bruns (32-44) et dragon noir (45-55) au-delà. Balise de danger pour qui vient de Durnhalde (1-10).",
+        "[GD] (v1.0.86) Niveau : balise (32-55 au-delà) (Baronnie de Moork). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
+        "Réel en jeu : POI poi_borne_monts_de_moork (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]"
+      ]
+    },
+    {
+      "id": "lieu_tour_guet_effondree",
+      "name": "Tour de guet effondrée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S006_E008",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour ronde éventrée sur une butte",
+        "escalier encore praticable jusqu'au premier étage",
+        "vue sur toute la plaine du sud"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S006_E008"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour de guet impériale effondrée sur une butte au sud de Frosthollow : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24.",
+        "[GD] (v1.0.86) Niveau : 20-24 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_tour_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_puits_de_la_lisiere",
+      "name": "Puits de la Lisière",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S006_E009",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "puits profond à treuil",
+        "murets de pierres sèches",
+        "dernier point d'eau sûr avant les terres désolées"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "20-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S006_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Dernier puits sûr sur la route de Frosthollow à Der Hem Shelbem, où voyageurs et convois font halte avant les terres désolées. Niveaux 20-26.",
+        "[GD] (v1.0.86) Niveau : 20-26 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_puits_de_la_lisiere (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_ferme_fortifiee_abandonnee",
+      "name": "Ferme fortifiée abandonnée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S007_E008",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "ferme à tour carrée, portes barricadées de l'intérieur",
+        "champs retournés à la friche",
+        "tombes fraîches rouvertes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S007_E008"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Ferme fortifiée dont les habitants ont fui après la bataille de Tsaroth ; des morts errants (deux fois nés) rôdent autour des tombes rouvertes. Niveaux 22-26.",
+        "[GD] (v1.0.86) Niveau : 22-26 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_ferme_fortifiee_abandonnee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_bivouac_des_deserteurs",
+      "name": "Bivouac des déserteurs",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S007_E009",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes impériales rapiécées",
+        "boucliers à l'aigle retournés",
+        "butin pris sur les morts de la plaine"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-30"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S007_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Bivouac de soldats impériaux qui ont déserté après la défaite de Tsaroth et vivent du pillage des morts et des voyageurs. Niveaux 24-30.",
+        "[GD] (v1.0.86) Niveau : 24-30 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_bivouac_des_deserteurs (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_relais_piste_des_morts",
+      "name": "Relais de la Piste des Morts",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S008_E008",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "relais de poste aux murs noircis",
+        "écurie effondrée",
+        "pancarte « Der Hem Shelbem » rongée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-30"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S008_E008"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Relais abandonné sur la route qui descend vers Deathtrap Canyon et Der Hem Shelbem, que les voyageurs appellent la Piste des Morts. Niveaux 24-30.",
+        "[GD] (v1.0.86) Niveau : 24-30 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_relais_piste_des_morts (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_mine_de_soufre_abandonnee",
+      "name": "Mine de soufre abandonnée",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S008_E009",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "galeries jaunes de soufre",
+        "wagonnets renversés",
+        "vapeurs qui piquent les yeux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S008_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Mine de soufre de la montagne au nord de Deathtrap Canyon (soufre de Tsaroth, économie v1.0.58), abandonnée par ses mineurs. Niveaux 26-32.",
+        "[GD] (v1.0.86) Niveau : 26-32 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_mine_de_soufre_abandonnee (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_grotte_aux_chauves_souris",
+      "name": "Grotte aux chauves-souris",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S008_E011",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grande voûte noire",
+        "colonies de chauves-souris géantes",
+        "guano épais au sol"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "30-38"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S008_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Grande grotte de la montagne entre Deathtrap Canyon et la Faille de Tsaroth, repaire des chauves-souris géantes (30-40). Niveaux 30-38.",
+        "[GD] (v1.0.86) Niveau : 30-38 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_grotte_aux_chauves_souris (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_statues_voie_antique",
+      "name": "Statues brisées de la Voie antique",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S009_E009",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tronçon de voie pavée sous le sable",
+        "statues ailées renversées",
+        "inscriptions d'une langue oubliée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-34"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S009_E009"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tronçon de la voie pavée de la civilisation antique de Deathtrap Canyon, bordé de statues ailées renversées. Niveaux 28-34.",
+        "[GD] (v1.0.86) Niveau : 28-34 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_statues_voie_antique (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_stele_des_deux_fois_nes",
+      "name": "Stèle des Deux Fois Nés",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S009_E010",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "stèle noire couverte de mains peintes",
+        "ossements disposés en cercle",
+        "balise : la nécropole ne rend pas ceux qui y entrent"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "balise (40-56 au-delà)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S009_E010"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Stèle noire couverte de mains peintes au bord de la route de Der Hem Shelbem : la nécropole abrite spectres, shedu et rois-momies (40-56). Balise de danger.",
+        "[GD] (v1.0.86) Niveau : balise (40-56 au-delà) (Terres désolées de Tsaroth). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
+        "Réel en jeu : POI poi_stele_des_deux_fois_nes (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : nécropole de Der Hem Shelbem (S010_E010) : spectres (40-52), shedu (48-56), rois-momies (46-54), Prince Hors-Vivant (48-55), dragon mort-vivant (35-45) dans le ciel, dans une région proposée à 20-40. Sur la route de Frosthollow, la Stèle des Deux Fois Nés (lieu_stele_des_deux_fois_nes, POI réel) ; au sud, la route de Saltwick n'a qu'un avertisseur. [GD]"
+      ]
+    },
+    {
+      "id": "lieu_plaine_des_cendres",
+      "name": "Plaine des Cendres",
+      "alias": "",
+      "type": "battlefield_poi",
+      "importance": "",
+      "cell": "S009_E012",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "plaine ocre jonchée d'armes brisées et d'ossements",
+        "terre noircie par l'embrasement",
+        "bannières en lambeaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "30-38"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S009_E012"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Champ de bataille de Tsaroth à l'est de la Faille : « un formidable embrasement endigué par des flots d'ichor et de sang » [BD-T5] ; armes brisées et morts qui se relèvent. Niveaux 30-38.",
+        "[GD] (v1.0.86) Niveau : 30-38 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_plaine_des_cendres (champ_bataille) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_lande_pierres_dressees",
+      "name": "Lande des Pierres dressées",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S010_E011",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "lande rase hérissée de pierres dressées",
+        "sol retourné d'où sont sortis les morts",
+        "silence absolu la nuit"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "30-38"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S010_E011"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Lande de pierres dressées au sud de la Faille, où la Lune Noire fit lever les morts la nuit de la bataille [BD-T5 p.30, lecture incertaine] ; des deux fois nés y errent encore. Niveaux 30-38.",
+        "[GD] (v1.0.86) Niveau : 30-38 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_lande_pierres_dressees (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_ravin_de_l_ichor",
+      "name": "Ravin de l'Ichor",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "S010_E012",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "ravin aux parois tachées de noir",
+        "mares d'ichor séché",
+        "carcasses de démons invoqués"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "32-40"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S010_E012"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Ravin où ont coulé l'ichor et le sang de la bataille de Tsaroth [BD-T5] ; carcasses de démons et morts errants. Niveaux 32-40.",
+        "[GD] (v1.0.86) Niveau : 32-40 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_ravin_de_l_ichor (faille) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_galerie_naine_abandonnee",
+      "name": "Galerie naine abandonnée",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S006_E015",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée taillée aux runes naines",
+        "rails et treuils rouillés",
+        "galeries murées vers l'ouest"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "18-25"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S006_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Galerie de mine naine abandonnée à l'ouest de Ghrunke Dash quand les coulées du volcan ont gagné ses niveaux profonds. Niveaux 18-25.",
+        "[GD] (v1.0.86) Niveau : 18-25 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_galerie_naine_abandonnee (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_forge_engloutie",
+      "name": "Forge engloutie",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S007_E015",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "forge naine à demi noyée dans la lave figée",
+        "enclumes rougeoyantes",
+        "fumerolles"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "55-62"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S007_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Avant-poste de forge des nains de Ghrunke Dash englouti par une coulée du volcan ; la chaleur et les créatures de lave y règnent. Niveaux 55-62, balisé.",
+        "[GD] (v1.0.86) Niveau : 55-62 (Terres désolées de Tsaroth).",
+        "Réel en jeu : POI poi_forge_engloutie (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : Forge engloutie (55-62) et géants de feu (50-60), case volcanique voisine de Ghrunke Dash (région de départ de Durnhalde, 1-10). Panneaux runiques nains « coulées » à la lisière est (lore) ; Cairn des Coulées en S008_E015 ; avertisseurs de Ghrunke Dash et de Durnhalde. [GD]"
+      ]
+    },
+    {
+      "id": "lieu_cairn_des_coulees",
+      "name": "Cairn des Coulées",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S008_E015",
+      "region_id": "terres_desolees",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cairn de blocs de basalte coiffé d'un marteau brisé",
+        "runes naines d'avertissement",
+        "balise : coulées et volcan"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "balise (55-70 au-delà)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S008_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Cairn de basalte coiffé d'un marteau brisé, dressé par les nains au bord des coulées, sur le passage depuis le Relais des convois : volcan et coulées (55-70) au-delà. Balise de danger.",
+        "[GD] (v1.0.86) Niveau : balise (55-70 au-delà) (Terres désolées de Tsaroth). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
+        "Réel en jeu : POI poi_cairn_des_coulees (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : coulées et volcan (55-70 : créature de la lave 60-66, géants de feu 50-60) à l'ouest de la région de départ de Durnhalde (1-10). Sur le passage depuis le Relais des convois (S008_E016), le Cairn des Coulées (lieu_cairn_des_coulees, POI réel). [GD]"
+      ]
+    },
+    {
+      "id": "lieu_campement_des_pelerins",
+      "name": "Campement des pèlerins",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N000_E001",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tentes de pèlerins à perte de vue",
+        "feux de bouse séchée",
+        "nuées de grandes mouches"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "10-14"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E001"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Campement des pèlerins qui attendent leur tour d'entrer à l'Oracle, à l'est de « l'océan de tentes » [BD-T3]. Niveaux 10-14.",
+        "[GD] (v1.0.86) Niveau : 10-14 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_campement_des_pelerins (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_cairn_des_caravaniers",
+      "name": "Cairn des Caravaniers",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N000_E002",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cairn de pierres et de crânes de chameaux",
+        "lanières de cuir rouge nouées",
+        "balise : ne pas aller vers les falaises de grès du nord-est"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "balise (66-70 au-delà)"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_E002"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Cairn de pierres et de crânes de bêtes que les caravaniers dressent pour dire : pas vers les falaises de grès du nord-est. Balise de danger (premier-né de Xygga, 66-70), ne désigne pas la grotte.",
+        "[GD] (v1.0.86) Niveau : balise (66-70 au-delà) (Désert de l'Oracle). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
+        "Réel en jeu : POI poi_cairn_des_caravaniers (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_menhirs_plaine_oracle",
+      "name": "Menhirs de la plaine de l'Oracle",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N000_W001",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "menhirs dressés en arc face au tumulus de l'Oracle",
+        "offrandes de pèlerins au pied",
+        "pierres qui bourdonnent au crépuscule"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "12-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N000_W001"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Menhirs de la plaine, à l'ouest du tumulus bleu de l'Oracle (carte du T3 : le tumulus et ses menhirs [BD-T3 pl.13]). Niveaux 12-18.",
+        "[GD] (v1.0.86) Niveau : 12-18 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_menhirs_plaine_oracle (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_echoppes_faux_devins",
+      "name": "Échoppes des faux devins",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N001_W001",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "étals de toile le long du chemin",
+        "boules de cristal, osselets, fumées",
+        "aboyeurs qui promettent l'avenir"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "10-16"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N001_W001"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Échoppes de faux voyants, devins et charlatans qui bordent le chemin de l'Oracle [BD-T2 p.47] ; l'avenir pour cinq pièces d'argent. Niveaux 10-16.",
+        "[GD] (v1.0.86) Niveau : 10-16 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_echoppes_faux_devins (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_oasis_palmes_noires",
+      "name": "Oasis des Palmes noires",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N001_W002",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "mare saumâtre sous des palmiers aux palmes noircies",
+        "traces de bêtes et de caravanes",
+        "serpents dans les racines"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "12-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N001_W002"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Petite oasis aux palmes noircies au nord du chemin de l'Oracle, halte des caravanes et des pèlerins. Niveaux 12-18 (l'eau n'est pas modélisée).",
+        "[GD] (v1.0.86) Niveau : 12-18 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_oasis_palmes_noires (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_relais_des_caravanes",
+      "name": "Relais des caravanes",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N002_W002",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "caravansérail de pisé autour d'une cour",
+        "chameaux et mulets à l'attache",
+        "marchands de la Via Magna"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "12-18"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_W002"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Caravansérail sur la voie impériale entre Sauken Glude et l'Oracle, étape des caravanes de la Via Magna. Niveaux 12-18.",
+        "[GD] (v1.0.86) Niveau : 12-18 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_relais_des_caravanes (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_repaire_pillards_desert",
+      "name": "Repaire des pillards du désert",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N002_W003",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "grotte basse sous un éperon rocheux",
+        "chevaux cachés dans un ravin",
+        "butin pris aux caravanes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N002_W003"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Repaire de pillards qui guettent les caravanes de la Via Magna et les pèlerins de l'Oracle. Niveaux 14-20.",
+        "[GD] (v1.0.86) Niveau : 14-20 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_repaire_pillards_desert (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_effondree_des_mages",
+      "name": "Tour effondrée des mages",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N003_W004",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour d'observation fendue",
+        "cercles gravés au sol",
+        "fragments d'instruments d'astronomie"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "16-22"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N003_W004"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour d'observation des mages de Magistrya (Sauken Glude), fendue et désertée ; ses cercles gravés attirent encore des choses. Niveaux 16-22.",
+        "[GD] (v1.0.86) Niveau : 16-22 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_tour_effondree_des_mages (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_puits_des_pelerins",
+      "name": "Puits des Pèlerins",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S001_E002",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "puits sacré à margelle peinte en bleu",
+        "ex-voto et rubans",
+        "gardien pèlerin"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "10-14"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S001_E002"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Puits sacré où les pèlerins se purifient avant de marcher vers l'Oracle, près du chemin de Garundel. Niveaux 10-14.",
+        "[GD] (v1.0.86) Niveau : 10-14 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_puits_des_pelerins (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_guet_garundel",
+      "name": "Tour de guet de Garundel",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S001_E003",
+      "region_id": "desert_central",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour carrée à la lisière du bois",
+        "toit effondré, créneaux ébréchés",
+        "abri de braconniers"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-20"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S001_E003"
+      ],
+      "notes": [
+        "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20.",
+        "[GD] (v1.0.86) Niveau : 14-20 (Désert de l'Oracle).",
+        "Réel en jeu : POI poi_tour_guet_garundel (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     }
   ],

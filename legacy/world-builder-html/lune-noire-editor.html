@@ -1405,9 +1405,16 @@ var currentSection = null;
 // ═══════════════════════════════════════════════════════════
 // AUTO-ID GENERATOR
 // ═══════════════════════════════════════════════════════════
+/// Propose un identifiant dérivé du nom saisi (minuscules, sans accents, `_`).
+/// \param nameInput champ « Nom » (source).
+/// \param idFieldId id du champ « Identifiant » à remplir.
+/// v1.0.96 : sans effet si l'identifiant avait déjà une valeur à l'ouverture du
+/// formulaire (édition d'une fiche existante : renommer ne change jamais l'id,
+/// sinon les références des routes, quêtes… seraient cassées) ou s'il a été
+/// saisi à la main.
 function autoGenId(nameInput, idFieldId) {
   var idField = document.getElementById(idFieldId);
-  if (!idField || idField.dataset.manual === '1') return;
+  if (!idField || idField.dataset.manual === '1' || idField.defaultValue) return;
   var val = nameInput.value
     .toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -1654,7 +1661,13 @@ function villeRelationsHTML(ville_relations) {
 // ─────────────────────────────────────────────
 // Full-schema export builder
 // ─────────────────────────────────────────────
-function buildExportSchema() {
+/// Construit le schéma normalisé de l'état courant (`db`) : un clone complet de
+/// `db` sur lequel les collections connues sont réécrites champ par champ.
+/// Cette normalisation peut perdre des champs non listés (ex. `alternance` et
+/// `rule` des arbres de compétences) ou changer des types : elle n'est donc plus
+/// exportée telle quelle, voir buildExportSchema() (v1.0.96).
+/// \return nouvel objet (db n'est pas modifié).
+function buildExportSchemaBrut() {
   // On part d'un clone complet de db pour ne JAMAIS perdre les champs/collections
   // non explicitement listés ci-dessous (cells, routes, game_design, alignments,
   // terrain_types, et toute clé future). Le schéma normalisé est ensuite superposé.
@@ -1842,8 +1855,162 @@ function buildExportSchema() {
   return Object.assign(_out, _schema);
 }
 
+// ── Export sans perte (v1.0.96) ──
+// Au chargement, l'éditeur garde le JSON tel que lu (_exportSource) et le schéma
+// normalisé calculé juste après (_exportBase). À l'export, une fusion à trois
+// voies ne retient de la normalisation courante que ce qui a changé depuis le
+// chargement : tout le reste (champs inconnus, types, ordre des clés) revient du
+// fichier d'origine.
+var _exportSource = null; // JSON d'origine tel que lu (jamais modifié)
+var _exportBase   = null; // buildExportSchemaBrut() juste après le chargement
 
-// ── Sanitize entire db after import: normalize string fields to arrays ──
+/// Égalité profonde de deux valeurs JSON (objets, tableaux, scalaires).
+/// L'ordre des clés d'un objet est ignoré ; `undefined` n'est égal qu'à lui-même.
+function jsonDeepEqual(a, b) {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  var aa = Array.isArray(a), ba = Array.isArray(b);
+  if (aa !== ba) return false;
+  if (aa) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (!jsonDeepEqual(a[i], b[i])) return false;
+    return true;
+  }
+  var ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  for (var j = 0; j < ka.length; j++) {
+    if (!Object.prototype.hasOwnProperty.call(b, ka[j])) return false;
+    if (!jsonDeepEqual(a[ka[j]], b[ka[j]])) return false;
+  }
+  return true;
+}
+
+/// Vrai pour un objet JSON « simple » (ni tableau, ni null).
+function _isPlainObj(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
+
+/// Clé d'identité commune à tous les éléments de plusieurs tableaux ('id' ou
+/// 'class_id'), uniquement si chaque élément est un objet avec une valeur
+/// chaîne non vide et unique dans son tableau ; sinon ''.
+/// \param arrs tableaux à examiner (les undefined sont ignorés).
+function _exportArrayKey(arrs) {
+  var cands = ['id', 'class_id'];
+  for (var c = 0; c < cands.length; c++) {
+    var k = cands[c], ok = true;
+    for (var a = 0; a < arrs.length && ok; a++) {
+      var arr = arrs[a]; if (!arr) continue;
+      var seen = {};
+      for (var i = 0; i < arr.length; i++) {
+        var it = arr[i];
+        if (!_isPlainObj(it) || typeof it[k] !== 'string' || !it[k] || seen[it[k]]) { ok = false; break; }
+        seen[it[k]] = 1;
+      }
+    }
+    if (ok) return k;
+  }
+  return '';
+}
+
+/// Fusion à trois voies d'une valeur exportée.
+/// \param orig valeur du fichier d'origine (undefined si absente).
+/// \param base valeur normalisée au chargement (undefined si absente).
+/// \param cur  valeur normalisée maintenant.
+/// \return la valeur à écrire ; undefined = clé à omettre.
+/// Règles : cur inchangé depuis base → orig (champs, types et ordre d'origine) ;
+/// objet modifié → fusion clé par clé (ordre d'origine, puis nouvelles clés ;
+/// une clé absente de cur mais présente dans base a été supprimée par
+/// l'utilisateur, une clé absente des deux a été perdue par la normalisation et
+/// revient d'orig) ; tableau modifié → éléments appariés par 'id' / 'class_id',
+/// sinon par index (même longueur), sinon par égalité avec base.
+/// Aucun effet de bord (orig, base et cur ne sont pas modifiés).
+function mergeExportValue(orig, base, cur) {
+  if (jsonDeepEqual(base, cur)) return orig;
+  if (orig === undefined) return cur;
+  if (_isPlainObj(cur) && _isPlainObj(orig)) {
+    var b = _isPlainObj(base) ? base : {};
+    var out = {};
+    Object.keys(orig).forEach(function(k) {
+      var has = Object.prototype.hasOwnProperty;
+      if (has.call(cur, k)) {
+        var v = mergeExportValue(orig[k], b[k], cur[k]);
+        if (v !== undefined) out[k] = v;
+      } else if (!has.call(b, k)) {
+        out[k] = orig[k];
+      }
+    });
+    Object.keys(cur).forEach(function(k) {
+      if (Object.prototype.hasOwnProperty.call(orig, k)) return;
+      var v = mergeExportValue(undefined, b[k], cur[k]);
+      if (v !== undefined) out[k] = v;
+    });
+    return out;
+  }
+  if (Array.isArray(cur) && Array.isArray(orig) && Array.isArray(base) && base.length === orig.length) {
+    var key = _exportArrayKey([orig, base, cur]);
+    if (key) {
+      var oBy = {}, bBy = {};
+      orig.forEach(function(x){ oBy[x[key]] = x; });
+      base.forEach(function(x){ bBy[x[key]] = x; });
+      return cur.map(function(x) {
+        var v = mergeExportValue(oBy[x[key]], bBy[x[key]], x);
+        return v === undefined ? x : v;
+      });
+    }
+    if (cur.length === base.length) {
+      return cur.map(function(x, i) {
+        var v = mergeExportValue(orig[i], base[i], x);
+        return v === undefined ? x : v;
+      });
+    }
+    // Longueur changée sans identifiant : un élément identique à base reprend
+    // son original (chaque élément de base ne sert qu'une fois).
+    var pool = {};
+    base.forEach(function(x, i) { var s = JSON.stringify(x); (pool[s] = pool[s] || []).push(i); });
+    return cur.map(function(x) {
+      var s = JSON.stringify(x), l = pool[s];
+      return (l && l.length) ? orig[l.shift()] : x;
+    });
+  }
+  return cur;
+}
+
+/// Mémorise l'état de référence de l'export juste après un chargement.
+/// \param texte contenu brut du fichier JSON chargé (relu pour obtenir une
+///        copie indépendante de `db`).
+/// Effet de bord : remplace _exportSource et _exportBase. Doit être appelée
+/// après sanitizeDb() et l'ajout des collections par défaut.
+function rememberExportSource(texte) {
+  try { _exportSource = JSON.parse(texte); _exportBase = buildExportSchemaBrut(); }
+  catch (e) { _exportSource = null; _exportBase = null; }
+}
+
+/// Construit l'objet à exporter (v1.0.96 : sans perte).
+/// Sans fichier chargé (ou import d'un ancien format BD), renvoie la
+/// normalisation brute ; sinon fusionne la normalisation courante avec le
+/// fichier d'origine (mergeExportValue) : un export sans modification restitue
+/// le fichier à l'identique (aux nombres flottants entiers près, ex. 1.0 → 1).
+/// Aucun champ d'horodatage n'est ajouté.
+function buildExportSchema() {
+  var cur = buildExportSchemaBrut();
+  if (!_exportSource || !_exportBase) return cur;
+  var out = mergeExportValue(_exportSource, _exportBase, cur);
+  return out === undefined ? cur : out;
+}
+
+
+/// Normalise après chargement les champs « liste » saisis comme chaîne.
+/// v1.0.96 : la conversion est limitée pour ne plus changer les types des
+/// données que l'éditeur ne gère pas comme listes :
+/// - seules les collections de premier niveau qui sont des tableaux (villes,
+///   quêtes…) et les tableaux de `cross_rules` sont parcourus ; les structures
+///   libres (`game_design`, `hydrography`, `map`, `lore`, `meta`…) ne le sont pas ;
+/// - dans un élément, seuls ses champs et ceux de ses sous-objets directs (ex.
+///   `origins.homeland_notes`) sont convertis, pas les structures plus profondes
+///   (ex. `regions[].terrains_principaux[].terrain` d'une règle) ;
+/// - seule une chaîne non vide (ou null) devient une liste ; une chaîne vide
+///   reste telle quelle (ex. `faction_affiliations[].notes` des classes, champ
+///   texte) et un objet n'est jamais enveloppé dans une liste.
+/// Effet de bord : modifie `db` en place. L'export restitue de toute façon les
+/// types d'origine des champs non modifiés (buildExportSchema).
 function sanitizeDb() {
   var ARRAY_FIELDS = ['notes','abilities','special_items','steps','tags','source_lore','tomes',
     'usable_by','progression','effects','training_steps','learning_steps','applies_to',
@@ -1856,19 +2023,29 @@ function sanitizeDb() {
     'incantations_known','schools','points_of_interest','connects_to','creature_ids',
     'visual_elements','region_ids','footprint_tiles','variantes','elements_principaux','couleurs_dominantes',
     'remarques_visuelles'];
-  function fix(obj) {
-    if (Array.isArray(obj)) { obj.forEach(fix); return; }
+  // depth : 0 = élément d'une collection, 1 = sous-objet direct ; au-delà, rien.
+  function fix(obj, depth) {
+    if (depth > 1) return;
+    if (Array.isArray(obj)) { obj.forEach(function(x){ fix(x, depth); }); return; }
     if (obj && typeof obj === 'object') {
       Object.keys(obj).forEach(function(k) {
-        if (ARRAY_FIELDS.indexOf(k) !== -1) {
-          obj[k] = toArr(obj[k]);
-        } else {
-          fix(obj[k]);
+        var v = obj[k];
+        if (ARRAY_FIELDS.indexOf(k) !== -1 && !Array.isArray(v) && (v === null || v === undefined || (typeof v === 'string' && v !== ''))) {
+          obj[k] = toArr(v);
+        } else if (v && typeof v === 'object') {
+          fix(v, depth + 1);
         }
       });
     }
   }
-  fix(db);
+  Object.keys(db).forEach(function(k) {
+    if (Array.isArray(db[k])) db[k].forEach(function(it){ fix(it, 0); });
+  });
+  if (db.cross_rules && typeof db.cross_rules === 'object') {
+    Object.keys(db.cross_rules).forEach(function(k) {
+      if (Array.isArray(db.cross_rules[k])) db.cross_rules[k].forEach(function(it){ fix(it, 0); });
+    });
+  }
 }
 // ─────────────────────────────────────────────
 // Import / Export
@@ -1944,6 +2121,9 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       if (!db.map) db.map = null;
       if (!db.quest_categories) db.quest_categories = [];
       sanitizeDb();
+      // Référence de l'export sans perte (v1.0.96) ; pas pour un ancien format BD converti.
+      if (isBDLore) { _exportSource = null; _exportBase = null; }
+      else rememberExportSource(ev.target.result);
       updateCounts();
       showSection('dashboard');
     } catch(err) { toast('Erreur : JSON invalide — ' + err.message); }
@@ -3264,6 +3444,33 @@ function openLieuForm(idx) {
   document.getElementById('featureInput').addEventListener('keydown',function(e){if(e.key==='Enter'){addFeature();e.preventDefault();}});
   openModal();
 }
+/// Vrai pour une valeur « vide » de formulaire : '', null, undefined, [] ou un
+/// objet dont toutes les valeurs sont vides.
+function isEmptyFormValue(v) {
+  if (v === '' || v === null || v === undefined) return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v).every(function(k){ return isEmptyFormValue(v[k]); });
+  return false;
+}
+
+/// Retire d'une fiche enregistrée par un formulaire les champs vides qu'elle
+/// n'avait pas avant l'édition (v1.0.96) : un formulaire qui affiche des champs
+/// facultatifs (description riche, empreinte…) ne les ajoute plus à une fiche
+/// dont seul le nom a changé.
+/// \param obj fiche construite par le formulaire (modifiée en place).
+/// \param before fiche d'origine (null pour une création : rien n'est retiré).
+function dropNewEmptyFields(obj, before) {
+  if (!before) return obj;
+  Object.keys(obj).forEach(function(k) {
+    if (!Object.prototype.hasOwnProperty.call(before, k) && isEmptyFormValue(obj[k])) delete obj[k];
+  });
+  return obj;
+}
+
+/// Enregistre le formulaire de lieu (création ou modification).
+/// \param idx index dans db.lieux, undefined pour une création.
+/// Effet de bord : remplace ou ajoute la fiche dans db.lieux, ferme la modale.
+/// v1.0.96 : les champs vides absents de la fiche d'origine ne sont pas ajoutés.
 function saveLieu(idx) {
   if(!db.lieux) db.lieux=[];
   var cell=document.getElementById('l_cell').value.trim().toUpperCase();
@@ -3279,6 +3486,7 @@ function saveLieu(idx) {
     faction_control:document.getElementById('l_faction').value,
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
   });
+  dropNewEmptyFields(obj, idx!==undefined ? db.lieux[idx] : null);
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dup=checkDuplicateOnSave(obj.id,obj.name,db.lieux,idx);if(dup.length){toast(dup[0]);return;}
   if(idx!==undefined) db.lieux[idx]=obj; else db.lieux.push(obj);
@@ -3502,30 +3710,50 @@ function renderFeaturesList(){
 }
 // Enregistre le formulaire de ville. v1.0.95 : Position X/Z (m) lue et validée par
 // readPositionInputs ; coord_x / coord_y (grille héritée v18) conservés tels quels.
+/// Enregistre le formulaire de ville (création ou modification).
+/// \param idx index dans db.villes, undefined pour une création.
+/// Effet de bord : remplace ou ajoute la fiche dans db.villes, ferme la modale.
+/// v1.0.96 : rien d'autre que les champs édités ne change — `anchor_tile` n'est
+/// réécrit que s'il existait ou si la case change, le ponton du port n'est
+/// recalé sur la case que si elle change, les services hors de la liste du
+/// formulaire (ex. `cimetiere`) sont conservés dans leur ordre, et les champs
+/// vides absents de la fiche d'origine ne sont pas ajoutés.
 function saveVille(idx) {
   var cell=document.getElementById('v_cell').value.trim().toUpperCase();
   if(cell&&!parseCellCoord(cell)){toast('Cellule invalide (format N000_E000)');return;}
   var vpos=readPositionInputs('v_px','v_pz'); if(!vpos.ok){toast(vpos.msg);return;}
+  var before=(idx!==undefined)?db.villes[idx]:null;
   var base=(idx!==undefined)?JSON.parse(JSON.stringify(db.villes[idx])):{};
+  var cellChanged=!before||cell!==(before.cell||'');
+  // Services : ordre d'origine gardé ; ceux que le formulaire ne propose pas restent.
+  var formSvc=Array.from(document.querySelectorAll('input[name="v_service"]'));
+  var offered=formSvc.map(function(cb){return cb.value;});
+  var checked=formSvc.filter(function(cb){return cb.checked;}).map(function(cb){return cb.value;});
+  var oldSvc=toArr(base.services);
+  var services=oldSvc.filter(function(sv){ return offered.indexOf(sv)===-1 || checked.indexOf(sv)!==-1; })
+    .concat(checked.filter(function(sv){ return oldSvc.indexOf(sv)===-1; }));
   var obj=Object.assign(base, collectRichFields('v', base), {
     id:document.getElementById('v_id').value.trim(), name:document.getElementById('v_name').value.trim(),
     alias:document.getElementById('v_alias').value.trim(), type:document.getElementById('v_type').value,
-    cell:cell, anchor_tile:cell,
+    cell:cell,
     position_x_m:vpos.x, position_z_m:vpos.z,
     importance:document.getElementById('v_importance').value.trim(),
     faction_control:document.getElementById('v_faction_control').value.trim(),
     region_id:(document.getElementById('v_region')||{value:''}).value,
     housing_count:(document.getElementById('v_housing').value!==''?parseInt(document.getElementById('v_housing').value,10):null),
     population:(document.getElementById('v_population').value!==''?parseInt(document.getElementById('v_population').value,10):null),
-    services:Array.from(document.querySelectorAll('input[name="v_service"]:checked')).map(function(cb){return cb.value;}),
+    services:services,
     features:window._currentFeatures.slice(), notes:window._currentNotes.slice()
   });
+  if(cellChanged || Object.prototype.hasOwnProperty.call(before,'anchor_tile')) obj.anchor_tile=cell;
   // Port : conservé (destinations, durée d'arrêt…) et recalé sur la cellule de la ville.
   if(document.getElementById('v_port_on').checked){
     var vers=document.getElementById('v_port_vers').value.trim().toUpperCase();
     if(vers&&!parseCellCoord(vers)){toast('Côté mer : cellule invalide (format N000_E000)');return;}
-    obj.port=Object.assign({destinations:[],stop_seconds:30}, base.port||{}, {ponton_cell:cell, vers_cell:vers, statut:document.getElementById('v_port_statut').value.trim()});
+    var oldPort=(before&&before.port)||{};
+    obj.port=Object.assign({destinations:[],stop_seconds:30}, oldPort, {ponton_cell:(cellChanged||!oldPort.ponton_cell)?cell:oldPort.ponton_cell, vers_cell:vers, statut:document.getElementById('v_port_statut').value.trim()});
   } else delete obj.port;
+  dropNewEmptyFields(obj, before);
   if(!obj.id||!obj.name){toast('ID et Nom obligatoires');return;}
   var dupWV=checkDuplicateOnSave(obj.id,obj.name,db.villes,idx);if(dupWV.length){toast(dupWV[0]);return;}
   if(idx!==undefined) db.villes[idx]=obj; else db.villes.push(obj);

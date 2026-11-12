@@ -3029,6 +3029,58 @@ non déplaçables ; lieux des Enfers (`carte`) hors de cette carte. Constat hors
 déjà, avant la v1.0.95, `alternance` / `rule` de 12 arbres de compétences et convertit au chargement quelques
 chaînes en listes (`game_design`, `hydrography`, `regles_transverses`) : à corriger dans un lot dédié.
 
+### 16.25 Export de l'éditeur sans perte de données (v1.0.96)
+
+Correction demandée par le propriétaire (12/11/2026) du constat de la v1.0.95 (§16.24) : l'export de l'éditeur
+perdait `alternance` de 12 arbres de compétences (`skill_trees`) et `rule` de l'un d'eux, et le chargement
+changeait des types (chaînes et objets mis en listes) dans `game_design`, `hydrography` et `regles_transverses`.
+
+**Causes.** (1) `buildExportSchema()` réécrit chaque collection connue champ par champ (`skill_trees` : seulement
+`class_id`, `branches`, `skills`) : tout champ non listé disparaît, et des valeurs par défaut s'ajoutent (`variants: []`
+de deux classes). (2) `sanitizeDb()` parcourait tout le fichier et mettait en liste toute valeur d'une clé de sa liste
+(`notes`, `terrain`, `services`…), où qu'elle soit : `terrains_principaux[].terrain` (chaîne) d'une règle,
+`rivers[].source.notes` (chaîne) de l'hydrographie, `grille.tailles.*.services` (objet) de `game_design`. (3) Le
+formulaire de ville, au renommage, régénérait l'identifiant (`autoGenId`), retirait le service `cimetiere` (absent de
+sa liste), ajoutait `anchor_tile` et une quinzaine de champs descriptifs vides.
+
+**Correction, générale** (`lune-noire-editor.html` et sa copie identique `-v20`) :
+
+- Au chargement, l'éditeur garde le fichier tel que lu et la normalisation calculée juste après. À l'export, une
+  **fusion à trois voies** (`mergeExportValue`) ne retient de la normalisation courante que ce qui a changé depuis le
+  chargement ; tout le reste revient du fichier d'origine : champs inconnus de l'éditeur, types, ordre des clés.
+  Objet modifié : fusion clé par clé (une clé retirée par l'utilisateur disparaît, une clé perdue par la
+  normalisation revient) ; tableau modifié : éléments appariés par `id` (ou `class_id`), sinon par index, sinon par
+  égalité. Vaut pour toute collection présente ou future, sans liste de champs à tenir.
+- `sanitizeDb()` ne parcourt plus que les collections tableaux (et `cross_rules`), sur deux niveaux (champs d'une
+  fiche et de ses sous-objets directs) ; seule une chaîne non vide (ou `null`) devient une liste, jamais un objet ni
+  une chaîne vide. Sur `lune-noire-data.json`, le chargement ne change plus aucun type.
+- Formulaire de ville : l'identifiant n'est plus régénéré quand on renomme une fiche existante (tous les formulaires,
+  `autoGenId`) ; services hors liste gardés dans leur ordre ; `anchor_tile` et le ponton ne suivent la case que si elle
+  change ; aucun champ vide ajouté (aussi pour le formulaire de lieu).
+- **Aucun champ d'horodatage** n'est écrit à l'export (`meta` restitué tel quel). Seule différence possible avec le
+  fichier : un flottant entier (`1.0`) est écrit `1` par JavaScript (même valeur JSON) ; l'export n'est donc pas
+  octet pour octet celui de `json.dumps`, d'où la comparaison en JSON profond.
+
+**Test d'aller-retour** `tools/lore/test_editor_roundtrip.py` (Playwright, Chromium sans affichage, ~3 s) : charge
+le fichier, vérifie que le chargement ne change aucun type ni ne retire de champ, exporte sans modification (différence
+vide attendue), renomme Dys par son formulaire et exporte (seule `villes[…].name` change). Comparaison stricte des types
+(chaîne contre liste, booléen contre nombre), entier et flottant de même valeur égaux. Aucune écriture dans le dépôt.
+
+```
+pip install playwright && python3 -m playwright install chromium   # une fois
+python3 tools/lore/test_editor_roundtrip.py                          # code de sortie 0 = OK
+python3 tools/lore/test_editor_roundtrip.py --editeur legacy/world-builder-html/lune-noire-editor-v20.html \
+        --donnees legacy/world-builder-html/lune-noire-data-v20.json
+```
+
+Avant la correction : 79 différences à l'aller-retour (12 arbres, 52 `terrain`, 8 `services`, 4 `source.notes`,
+2 `variants`) et 18 au renommage ; après : 0 et 0, sur les deux copies. **CI** : le workflow `lore-city-services.yml`
+ne lance que du Python standard (~10 s) et Playwright n'y est pas installé (navigateur à télécharger, ~150 Mo) ;
+l'étape n'est pas ajoutée, le test se lance à la main après toute modification de l'éditeur.
+
+**Données** : aucune fiche modifiée ; `meta.version` 1.0.96, registre : 1 entrée. **Services** : 121 villes,
+1242 PNJ inchangés.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3043,7 +3095,7 @@ chaînes en listes (`game_design`, `hydrography`, `regles_transverses`) : à cor
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
-- Placement manuel (v1.0.95) : routes du lore et export des arbres de compétences de l'éditeur (`alternance`, `rule` perdus) à reprendre (16.24).
+- Placement manuel (v1.0.95) : routes du lore à reprendre (16.24) ; export des arbres de compétences de l'éditeur corrigé en v1.0.96 (16.25).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

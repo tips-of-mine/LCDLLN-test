@@ -2661,7 +2661,7 @@ chèvre, loup géant de guerre, ogre, corbeau, crabe, mouette, deux fois né, va
 
 **Routes encore coupées au mur invisible** (non suivies, à décider) : Vozmarkh – Mhordaal (000034, S011_E020),
 Vozmarkh – Shaddrek, Vozmarkh – Ghrondak (générateur, par S010_E022 – S008_E024), Rhivkhar – Hilvakh
-(000103, N009_E016 – N010_E016), Farvhenn – Rhivkhar (000105, N010_E019 – N011_E020).
+(000103, N009_E016 – N010_E016), Farvhenn – Rhivkhar (000105, N010_E019 – N011_E020) (ouvertes en v1.0.104, §16.33).
 
 **Ce qui est réel en jeu** : les 57 cases, les 5 villes, les 52 POI, les 7 routes du générateur entre ces villes.
 **Lore seulement** : quêtes, PNJ donneurs et adversaires, intérieurs, repères de niveau.
@@ -3709,6 +3709,145 @@ de l'éditeur ; aucun code du jeu ni du serveur ne les lit.
 Légendaires à Lhynn) ; décalage +5 / seuil 20 des territoires ennemis ; Marches sans maître ; Hishtarland et Via Magna
 sans maître ; les orphelines restantes.
 
+### 16.33 Ouverture des routes de Vozmarkh et de Rhivkhar (v1.0.104)
+
+Lot 29, décision du propriétaire (12/11/2026) : ouvrir au jeu les 5 routes restées coupées au mur invisible en
+v1.0.91 (§16.20) : Vozmarkh → Mhordaal (000034), Vozmarkh → Shaddrek, Vozmarkh → Ghrondak (générateur), Rhivkhar →
+Hilvakh (000103), Farvhenn → Rhivkhar (000105) ; puis, si les villes devenues jouables ouvrent d'autres routes coupées
+vers une ville proche (4 cases au plus), les ouvrir aussi. Même méthode qu'aux lots 16 et 19 (§16.17, §16.20).
+Scripts reproductibles (hors dépôt) : `select_v1104.py`, `pick_v1104.py`, `data_v1104.py`, `quests_v1104.py`,
+`lore_v1104.py` (appliqué au fichier v1.0.103), `master_v1104.py`, `test_v1104.py`, `doc_v1104.py`, `carte_v1104.py`.
+
+**Choix des cases.** Pour chaque route : cases de son tracé lore (waypoints, sinon ligne droite entre les villes ;
+sans route au lore : ligne droite), cases du tracé du générateur entre les mêmes villes, case de la ville d'arrivée,
+une case de marge (terre) autour de chaque ville devenue jouable, puis trous intérieurs (case bordée sur au moins
+3 côtés par des cases jouables, itéré). La ligne droite Vozmarkh – Ghrondak passe par S008_E022, qui reste fermée
+(la route du générateur passe par S010_E022 – S009_E024, entièrement ouverte). Total : **55 cases**
+(`generated_cells`, 7 nouvelles dernières lignes, commentaire du master mis à jour), toutes terrestres, aucune
+isolée (le sud est relié à pied à Durnhalde, le nord à Grakhul). Cellules jouables (liste master + corridors) :
+**358 → 413**, aucune perdue ; routes du générateur inchangées.
+
+**Routes ouvertes en cascade** (ville devenue jouable ↔ ville proche) : Mhordaal – Khrozrad (000026, 2 cases),
+Shaddrek – Khrozrad (générateur), Mhordaal – Ghrondak (000163), Shaddrek – Mhordaal (000033), Hilvakh – Gharzuk
+(générateur, 3 cases, Gharzuk déjà jouable). Khrozrad n'a pas d'autre route : la cascade s'arrête là.
+
+| Route | Cases propres à la route (tracés lore + générateur) | Arrivée et marge |
+|---|---|---|
+| A1. Vozmarkh → Mhordaal (000034) | — (S010_E020 déjà jouable) | Mhordaal (`town_0108`, S011_E020) + S011_E021, S012_E019 à S012_E021 |
+| A2. Vozmarkh → Shaddrek (générateur) | S011_E019, S012_E019 | Shaddrek (`shadowfen`, S011_E018) + S010_E017, S010_E018, S011_E017, S012_E017, S012_E018 |
+| A3. Vozmarkh → Ghrondak (générateur) | S010_E022, S010_E023, S009_E023, S009_E024, S008_E023 (ligne) | Ghrondak (`town_ironbrook`, S008_E024) + S007_E023 à S007_E025, S008_E025, S009_E025 |
+| B1. Rhivkhar → Hilvakh (000103) | N009_E016 | Hilvakh (`town_0133`, N010_E016) + N009_E015, N010_E015, N010_E017, N011_E015 à N011_E017 |
+| B2. Farvhenn → Rhivkhar (000105) | N010_E019, N010_E020 | Farvhenn (`farwatch`, N011_E020) + N010_E021, N011_E019, N011_E021, N012_E019 à N012_E021 |
+| C1-C4. Mhordaal, Shaddrek, Ghrondak, Khrozrad | S011_E021, S012_E020 (et cases de A1-A3) | Khrozrad (`crossroads`, S013_E020) + S013_E019, S013_E021, S014_E019 à S014_E021 |
+| C5. Hilvakh → Gharzuk (générateur) | N008_E014, N009_E014 | — |
+| Trous intérieurs | S009_E017, S009_E018 (montagne au sud du départ de Durnhalde), S009_E022, N008_E015, N008_E016, N010_E018, N011_E018 | — |
+
+Soit 32 cases au sud (Royaume des nains de l'est) et 23 au nord (Territoires orcques, dont N011_E018 à N011_E020,
+N012_E019 et N012_E020 dans la province des Territoires des Marches). **Villes devenues jouables** : Mhordaal,
+Shaddrek, Ghrondak, Khrozrad, Hilvakh, Farvhenn. N011_E017 porte Khurden (lieu BD, POI `poi_khurden` inchangé) :
+aucun lieu ajouté. Aucune case ne change de région ni de province : `niveau_par_faction` inchangé.
+
+Cases générées : N012_E019, N012_E020, N012_E021, N011_E015, N011_E016, N011_E017, N011_E018, N011_E019, N011_E020, N011_E021, N010_E015, N010_E016, N010_E017, N010_E018, N010_E019, N010_E020, N010_E021, N009_E014, N009_E015, N009_E016, N008_E014, N008_E015, N008_E016, S007_E023, S007_E024, S007_E025, S008_E023, S008_E024, S008_E025, S009_E017, S009_E018, S009_E022, S009_E023, S009_E024, S009_E025, S010_E017, S010_E018, S010_E022, S010_E023, S011_E017, S011_E018, S011_E019, S011_E020, S011_E021, S012_E017, S012_E018, S012_E019, S012_E020, S012_E021, S013_E019, S013_E020, S013_E021, S014_E019, S014_E020, S014_E021.
+
+**Lieux** : chaque nouvelle case vide (48 ; les 6 cases de villes et celle de Khurden ne reçoivent rien) reçoit un
+lieu `[GD]` avec POI réel dans `pois` du master, décalage choisi par la sonde du générateur (au sec, hors route,
+rivière, lac et ville) ; aucune nouvelle ville ni hameau, aucun identifiant supprimé. Niveaux d'après `niveau_ref`
+(v1.0.103), **à valider** : abords nord de Farvhenn (province des Territoires des Marches, 1-15) 12-15 ; abords de
+Farvhenn et de Hilvakh (Territoires orcques, 18-45) 20-26 ; routes de Vozmarkh (Royaume des nains de l'est, 10-30)
+12-28 (montagne au sud de Durnhalde 12-17, Shaddrek et Mhordaal 16-24, Khrozrad 20-28, route et côte de Ghrondak
+18-26). Aucun lieu ne dépasse le repère de sa zone : pas de nouvelle balise. Les 4 galeries et puits de mine prennent
+le type de lieu `mine_poi` (v1.0.100), POI de forme `salle`.
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| N012_E019 | **Enclos des bouviers** (`lieu_enclos_des_bouviers`, `poi_enclos_des_bouviers`, `elevage`) | 12-15 |
+| N012_E020 | **Séchoir à lin** (`lieu_sechoir_a_lin`, `poi_sechoir_a_lin`, `camp`) | 12-15 |
+| N011_E019 | **Moulin des maraîchers** (`lieu_moulin_des_maraichers`, `poi_moulin_des_maraichers`, `camp`) | 13-15 |
+| N011_E018 | **Vigie de la crête** (`lieu_vigie_de_la_crete`, `poi_vigie_de_la_crete`, `ruine`) | 13-15 |
+| N012_E021 | **Coupe de bois des orcs** (`lieu_coupe_de_bois_des_orcs`, `poi_coupe_de_bois_des_orcs`, `camp`) | 20-24 |
+| N011_E021 | **Campement des maquignons** (`lieu_campement_des_maquignons`, `poi_campement_des_maquignons`, `elevage`) | 20-24 |
+| N010_E021 | **Tertre des chefs de guerre** (`lieu_tertre_des_chefs_de_guerre`, `poi_tertre_des_chefs_de_guerre`, `sanctuaire`) | 22-26 |
+| N010_E020 | **Relais de la route de Farvhenn** (`lieu_relais_de_la_route_de_farvhenn`, `poi_relais_de_la_route_de_farvhenn`, `camp`) | 20-24 |
+| N010_E019 | **Poste de péage orque** (`lieu_poste_de_peage_orque`, `poi_poste_de_peage_orque`, `camp`) | 21-25 |
+| N010_E018 | **Cercle des menhirs** (`lieu_cercle_des_menhirs`, `poi_cercle_des_menhirs`, `monolithe`) | 22-26 |
+| N011_E015 | **Tanière des loups de guerre** (`lieu_taniere_des_loups_de_guerre`, `poi_taniere_des_loups_de_guerre`, `salle`) | 24-26 |
+| N011_E016 | **Camp des marchands d’esclaves** (`lieu_camp_des_marchands_d_esclaves`, `poi_camp_des_marchands_d_esclaves`, `camp`) | 22-26 |
+| N010_E015 | **Hutte du chaman orque** (`lieu_hutte_du_chaman_orque`, `poi_hutte_du_chaman_orque`, `sanctuaire`) | 22-26 |
+| N010_E017 | **Campement du lac** (`lieu_campement_du_lac`, `poi_campement_du_lac`, `camp`) | 20-24 |
+| N009_E014 | **Abattis de la lisière** (`lieu_abattis_de_la_lisiere`, `poi_abattis_de_la_lisiere`, `camp`) | 20-24 |
+| N009_E015 | **Halte des caravanes orques** (`lieu_halte_des_caravanes_orques`, `poi_halte_des_caravanes_orques`, `camp`) | 20-24 |
+| N009_E016 | **Poteaux de guerre du carrefour** (`lieu_poteaux_de_guerre_du_carrefour`, `poi_poteaux_de_guerre_du_carrefour`, `monolithe`) | 20-24 |
+| N008_E014 | **Granges de Gharzuk** (`lieu_granges_de_gharzuk`, `poi_granges_de_gharzuk`, `elevage`) | 20-24 |
+| N008_E015 | **Charbonnière de la lisière** (`lieu_charbonniere_de_la_lisiere`, `poi_charbonniere_de_la_lisiere`, `camp`) | 22-26 |
+| N008_E016 | **Arbre aux crânes** (`lieu_arbre_aux_cranes`, `poi_arbre_aux_cranes`, `sanctuaire`) | 24-26 |
+| S009_E017 | **Refuge de montagne** (`lieu_refuge_de_montagne`, `poi_refuge_de_montagne`, `camp`) | 12-16 |
+| S009_E018 | **Ancienne galerie de prospection** (`lieu_galerie_de_prospection`, `poi_galerie_de_prospection`, `salle`, type de lieu `mine_poi`) | 13-17 |
+| S010_E017 | **Belvédère nain** (`lieu_belvedere_nain`, `poi_belvedere_nain`, `ruine`) | 16-20 |
+| S010_E018 | **Mine éboulée de Shaddrek** (`lieu_mine_eboulee_de_shaddrek`, `poi_mine_eboulee_de_shaddrek`, `salle`, type de lieu `mine_poi`) | 17-21 |
+| S011_E017 | **Col des contrebandiers** (`lieu_col_des_contrebandiers`, `poi_col_des_contrebandiers`, `camp`) | 18-22 |
+| S012_E017 | **Gîte des carriers** (`lieu_gite_des_carriers`, `poi_gite_des_carriers`, `camp`) | 18-22 |
+| S012_E018 | **Aiguille des vautours** (`lieu_aiguille_des_vautours`, `poi_aiguille_des_vautours`, `monolithe`) | 20-24 |
+| S011_E019 | **Relais des trois routes** (`lieu_relais_des_trois_routes`, `poi_relais_des_trois_routes`, `camp`) | 16-20 |
+| S012_E019 | **Champs d’orge des nains** (`lieu_champs_d_orge_des_nains`, `poi_champs_d_orge_des_nains`, `elevage`) | 18-22 |
+| S011_E021 | **Rive des lavandières** (`lieu_rive_des_lavandieres`, `poi_rive_des_lavandieres`, `camp`) | 18-22 |
+| S012_E020 | **Potence de la Lune Noire** (`lieu_potence_de_la_lune_noire`, `poi_potence_de_la_lune_noire`, `ruine`) | 18-22 |
+| S012_E021 | **Puits d’extraction de Mhordaal** (`lieu_puits_d_extraction_de_mhordaal`, `poi_puits_d_extraction_de_mhordaal`, `salle`, type de lieu `mine_poi`) | 20-24 |
+| S013_E019 | **Carrière de Khrozrad** (`lieu_carriere_de_khrozrad`, `poi_carriere_de_khrozrad`, `camp`) | 20-24 |
+| S013_E021 | **Forge de la crête** (`lieu_forge_de_la_crete`, `poi_forge_de_la_crete`, `ruine`) | 22-26 |
+| S014_E019 | **Caveau des anciens nains** (`lieu_caveau_des_anciens_nains`, `poi_caveau_des_anciens_nains`, `sanctuaire`) | 24-28 |
+| S014_E020 | **Pont de corde de la gorge** (`lieu_pont_de_corde_de_la_gorge`, `poi_pont_de_corde_de_la_gorge`, `camp`) | 22-26 |
+| S014_E021 | **Tanière de l’ours** (`lieu_taniere_de_l_ours`, `poi_taniere_de_l_ours`, `salle`) | 24-28 |
+| S010_E022 | **Auberge brûlée de la route de l’est** (`lieu_auberge_brulee_de_la_route_de_l_est`, `poi_auberge_brulee_de_la_route_de_l_est`, `ruine`) | 18-22 |
+| S010_E023 | **Chariots renversés** (`lieu_chariots_renverses`, `poi_chariots_renverses`, `ruine`) | 18-22 |
+| S009_E022 | **Ermitage de la montagne** (`lieu_ermitage_de_la_montagne`, `poi_ermitage_de_la_montagne`, `sanctuaire`) | 20-24 |
+| S009_E023 | **Ferme des mineurs** (`lieu_ferme_des_mineurs`, `poi_ferme_des_mineurs`, `elevage`) | 18-22 |
+| S009_E024 | **Salines de Ghrondak** (`lieu_salines_de_ghrondak`, `poi_salines_de_ghrondak`, `camp`) | 20-24 |
+| S008_E023 | **Galerie de Ghrondak** (`lieu_galerie_de_ghrondak`, `poi_galerie_de_ghrondak`, `salle`, type de lieu `mine_poi`) | 20-24 |
+| S007_E023 | **Poste de guet nain** (`lieu_poste_de_guet_nain`, `poi_poste_de_guet_nain`, `ruine`) | 22-26 |
+| S007_E024 | **Sépultures des mineurs** (`lieu_sepultures_des_mineurs`, `poi_sepultures_des_mineurs`, `sanctuaire`) | 22-26 |
+| S007_E025 | **Phare nain éteint** (`lieu_phare_nain_eteint`, `poi_phare_nain_eteint`, `ruine`) | 22-26 |
+| S008_E025 | **Fumoir à poisson** (`lieu_fumoir_a_poisson`, `poi_fumoir_a_poisson`, `camp`) | 20-24 |
+| S009_E025 | **Plage d’échouage des barques** (`lieu_plage_d_echouage_des_barques`, `poi_plage_d_echouage_des_barques`, `camp`) | 20-24 |
+
+**Quêtes** (3, `[GD]`, `etapes_struct` rempli : une étape par ligne, avec la ville ou le lieu cité ; toutes les
+étapes dans des cases générées) :
+
+- `quest_nains_est_gd_col_des_contrebandiers` « Le Col des contrebandiers » (niveau 18+, solo) : shadowfen → lieu_col_des_contrebandiers → lieu_refuge_de_montagne → hamlet_eisenkehl
+- `quest_nains_est_gd_sel_de_ghrondak` « Le Sel de Ghrondak » (niveau 18+, solo) : town_ironbrook → lieu_salines_de_ghrondak → lieu_chariots_renverses → lieu_auberge_brulee_de_la_route_de_l_est → town_0108
+- `quest_orcs_gd_convoi_de_khurden` « Le Convoi de Khurden » (niveau 22+, groupe) : town_0133 → lieu_camp_des_marchands_d_esclaves → lieu_khurden → lieu_taniere_des_loups_de_guerre
+
+**Sources.** Inventés `[GD]` sauf : convoi d'esclaves vers Khurden `[BD-A2 pl.14-17]` (camp des marchands d'esclaves,
+quête du convoi) ; Vozmarkh, Mhordaal et Shaddrek tenus par la Lune Noire (fiches) ; économie v1.0.58 (minerai et
+pierre de taille de Mhordaal, Shaddrek et Khrozrad ; poisson et sel marin de Ghrondak ; lin, moulins et maraîchage de
+Farvhenn ; bois de chauffe de Hilvakh) ; Ghrondak « village minier nain sur la côte » (fiche, v1.0.52). Placements
+`[INFÉRÉ]`. Aucun nom propre inventé ; noms vérifiés contre les PNJ de service (« Mine de cuivre éboulée » renommée
+« Mine éboulée de Shaddrek » et « Pic des vautours » renommé « Aiguille des vautours » avant livraison : « cuivre » et
+« pic » entrent dans des noms de PNJ).
+
+**Faune** : aucune créature créée ; espèces existantes rattachées (`zones_chasse`, `creature_ids`) : loup, corbeau,
+deux fois né, cheval, loup géant de guerre, sanglier de guerre, chèvre, vautour, troll, ours, serpent, crabe, mouette.
+
+**Registre** (`regle_canon_registre_decisions`) : 1 entrée v1.0.104 « Ouverture des routes de Vozmarkh et de
+Rhivkhar ».
+
+**Routes encore coupées au mur invisible** (non suivies, à décider) : Farvhenn – Vestmhor (000106, par N012_E020 –
+N014_E018) et Shaddrek – Klehrwath (000071, par S012_E016 – S014_E015). Vestmhor et Klehrwath restent fermées.
+
+**Ce qui est réel en jeu** : les 55 cases, les 6 villes, les 48 POI, les 10 routes du générateur entre ces villes.
+**Lore seulement** : quêtes, PNJ donneurs et adversaires, intérieurs, niveaux.
+
+**Contrôles** : test `world_gen_tests` « cellules et lieux v1.0.104 » (55 cases générées et terrestres, aucune
+isolée ; le sud atteint à pied depuis Durnhalde, le nord depuis Grakhul ; 6 villes jouables ; 10 routes du générateur
+et les 21 cases des 6 tracés du lore dans des cases jouables ; 48 lieux au sec, seuls sur leur case ; aucun POI sur
+les cases des villes ; Khurden seul sur sa case ; S008_E022, S012_E016 et N013_E019 fermées). Le test « lieux
+v1.0.89 » compte désormais 50 cases jouables dans la boîte du Royaume des nains de l'est (21 + 29). Génération de
+6 cases avec le générateur sans erreur (Mhordaal, Ghrondak, Hilvakh, Farvhenn, S012_E019, N011_E016).
+**Services** : 1242 PNJ (inchangé).
+
+**Points incertains** : tous les noms `[GD]` ; niveaux 12-15 au nord de Farvhenn (province 1-15) contre 20-26 sur la
+route de Rhivkhar ; marges en haute montagne autour de Shaddrek et de Khrozrad ; cascade limitée aux villes à 4 cases
+au plus ; quêtes ouvertes à toutes les factions.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3755,3 +3894,4 @@ sans maître ; les orphelines restantes.
 - Forteresse naine d'Heusgly (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.
 - Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, 59 quêtes et 6 raids sans case, 89 références orphelines à trancher (16.32).
+- Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).

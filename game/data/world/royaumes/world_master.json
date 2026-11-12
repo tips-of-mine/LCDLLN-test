@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -59,7 +59,14 @@
     "N004_E024", "N003_E021", "N003_E022", "N003_E023", "N003_E024", "N002_E021", "N002_E022", "N002_E023", "N002_E024",
     "N001_E021", "N001_E022", "N001_E023", "N001_E024", "N000_E021", "N000_E022", "N000_E023", "N000_E024", "S001_E022",
     "S001_E023", "S001_E024", "S002_E022", "S002_E023", "S002_E024", "S008_E019", "S009_E019", "S009_E020", "S009_E021",
-    "S010_E019", "S010_E020", "S010_E021"
+    "S010_E019", "S010_E020", "S010_E021",
+    "N012_E019", "N012_E020", "N012_E021", "N011_E015", "N011_E016", "N011_E017", "N011_E018", "N011_E019", "N011_E020",
+    "N011_E021", "N010_E015", "N010_E016", "N010_E017", "N010_E018", "N010_E019", "N010_E020", "N010_E021", "N009_E014",
+    "N009_E015", "N009_E016", "N008_E014", "N008_E015", "N008_E016", "S007_E023", "S007_E024", "S007_E025", "S008_E023",
+    "S008_E024", "S008_E025", "S009_E017", "S009_E018", "S009_E022", "S009_E023", "S009_E024", "S009_E025", "S010_E017",
+    "S010_E018", "S010_E022", "S010_E023", "S011_E017", "S011_E018", "S011_E019", "S011_E020", "S011_E021", "S012_E017",
+    "S012_E018", "S012_E019", "S012_E020", "S012_E021", "S013_E019", "S013_E020", "S013_E021", "S014_E019", "S014_E020",
+    "S014_E021"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -3755,6 +3762,438 @@
       "offset_x_m": -1500,
       "offset_z_m": 0,
       "description": "Crique où les contrebandiers débarquent les marchandises qui échappent à l'octroi de la Lune Noire. Niveaux 26-30. [GD v1.0.91, lieu_crique_des_contrebandiers]."
+    },
+    {
+      "id": "poi_enclos_des_bouviers",
+      "name": "Enclos des bouviers",
+      "cell": "N012_E019",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Enclos où les bouviers de Farvhenn rassemblent les bœufs avant de les mener aux champs ; des loups rôdent la nuit autour des bêtes. Niveaux 12-15. [GD v1.0.104, lieu_enclos_des_bouviers]."
+    },
+    {
+      "id": "poi_sechoir_a_lin",
+      "name": "Séchoir à lin",
+      "cell": "N012_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Hangar où les gens de Farvhenn font sécher et peigner le lin de leurs champs (économie v1.0.58) ; des maraudeurs viennent y voler la toile. Niveaux 12-15. [GD v1.0.104, lieu_sechoir_a_lin]."
+    },
+    {
+      "id": "poi_moulin_des_maraichers",
+      "name": "Moulin des maraîchers",
+      "cell": "N011_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Moulin à vent au milieu des jardins qui nourrissent Farvhenn ; le meunier paie les orcs du voisinage pour qu'on le laisse moudre. Niveaux 13-15. [GD v1.0.104, lieu_moulin_des_maraichers]."
+    },
+    {
+      "id": "poi_vigie_de_la_crete",
+      "name": "Vigie de la crête",
+      "cell": "N011_E018",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Vieille tour de guet sur la crête à l'ouest de Farvhenn, d'où l'on surveillait les incursions orques ; des corbeaux nichent dans ses ruines. Niveaux 13-15. [GD v1.0.104, lieu_vigie_de_la_crete]."
+    },
+    {
+      "id": "poi_coupe_de_bois_des_orcs",
+      "name": "Coupe de bois des orcs",
+      "cell": "N012_E021",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Coupe où des bûcherons orcs abattent la lisière pour leurs palissades et leurs feux ; ils chassent les humains de Farvhenn qui s'y aventurent. Niveaux 20-24. [GD v1.0.104, lieu_coupe_de_bois_des_orcs]."
+    },
+    {
+      "id": "poi_campement_des_maquignons",
+      "name": "Campement des maquignons",
+      "cell": "N011_E021",
+      "kind": "elevage",
+      "offset_x_m": -3000,
+      "offset_z_m": 0,
+      "description": "Campement de maquignons qui vendent des chevaux aux orcs comme aux humains de Farvhenn, sans demander d'où viennent les bêtes. Niveaux 20-24. [GD v1.0.104, lieu_campement_des_maquignons]."
+    },
+    {
+      "id": "poi_tertre_des_chefs_de_guerre",
+      "name": "Tertre des chefs de guerre",
+      "cell": "N010_E021",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tertre où les orcs enterraient leurs chefs de guerre avec leurs armes ; les pilleurs de tombes qui s'y risquent réveillent les morts. Niveaux 22-26. [GD v1.0.104, lieu_tertre_des_chefs_de_guerre]."
+    },
+    {
+      "id": "poi_relais_de_la_route_de_farvhenn",
+      "name": "Relais de la route de Farvhenn",
+      "cell": "N010_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Relais sur la route qui descend de Farvhenn vers Rhivkhar ; on y change de chevaux et on y paie l'escorte pour traverser les terres orques. Niveaux 20-24. [GD v1.0.104, lieu_relais_de_la_route_de_farvhenn]."
+    },
+    {
+      "id": "poi_poste_de_peage_orque",
+      "name": "Poste de péage orque",
+      "cell": "N010_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Barrière dressée par une bande d'orcs sur la route de Farvhenn à Rhivkhar : chaque convoi paie en vivres, en armes ou en sang. Niveaux 21-25. [GD v1.0.104, lieu_poste_de_peage_orque]."
+    },
+    {
+      "id": "poi_cercle_des_menhirs",
+      "name": "Cercle des menhirs",
+      "cell": "N010_E018",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Cercle de menhirs plus vieux que les orcs ; leurs chamans y font des offrandes les nuits sans lune. Niveaux 22-26. [GD v1.0.104, lieu_cercle_des_menhirs]."
+    },
+    {
+      "id": "poi_taniere_des_loups_de_guerre",
+      "name": "Tanière des loups de guerre",
+      "cell": "N011_E015",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tanière d'une meute de loups géants de guerre retournés à l'état sauvage, au fond de la forêt au nord-ouest de Hilvakh. Niveaux 24-26. [GD v1.0.104, lieu_taniere_des_loups_de_guerre]."
+    },
+    {
+      "id": "poi_camp_des_marchands_d_esclaves",
+      "name": "Camp des marchands d’esclaves",
+      "cell": "N011_E016",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Camp où les convois d'esclaves font halte avant de gagner Khurden, où on les vend [BD-A2 pl.14-17 : convoi d'esclaves vers Khurden] ; les captifs viennent de toutes les Marches. Niveaux 22-26. [GD v1.0.104, lieu_camp_des_marchands_d_esclaves]."
+    },
+    {
+      "id": "poi_hutte_du_chaman_orque",
+      "name": "Hutte du chaman orque",
+      "cell": "N010_E015",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Hutte d'un vieux chaman orc à la lisière de la forêt ; les guerriers de la région viennent y chercher des présages avant les razzias. Niveaux 22-26. [GD v1.0.104, lieu_hutte_du_chaman_orque]."
+    },
+    {
+      "id": "poi_campement_du_lac",
+      "name": "Campement du lac",
+      "cell": "N010_E017",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Campement de pêcheurs au bord du lac à l'est de Hilvakh ; ils vendent leur poisson au bourg et aux orcs. Niveaux 20-24. [GD v1.0.104, lieu_campement_du_lac]."
+    },
+    {
+      "id": "poi_abattis_de_la_lisiere",
+      "name": "Abattis de la lisière",
+      "cell": "N009_E014",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Abattis dressé par les orcs de Gharzuk à la lisière, sur la route de Hilvakh, pour arrêter les cavaliers. Niveaux 20-24. [GD v1.0.104, lieu_abattis_de_la_lisiere]."
+    },
+    {
+      "id": "poi_halte_des_caravanes_orques",
+      "name": "Halte des caravanes orques",
+      "cell": "N009_E015",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Halte des caravanes qui font le trajet entre Gharzuk et Hilvakh avec du grain et des peaux. Niveaux 20-24. [GD v1.0.104, lieu_halte_des_caravanes_orques]."
+    },
+    {
+      "id": "poi_poteaux_de_guerre_du_carrefour",
+      "name": "Poteaux de guerre du carrefour",
+      "cell": "N009_E016",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Poteaux sculptés plantés au carrefour des routes de Gharzuk, de Hilvakh et de Rhivkhar, où les bandes orques affichent leurs trophées. Niveaux 20-24. [GD v1.0.104, lieu_poteaux_de_guerre_du_carrefour]."
+    },
+    {
+      "id": "poi_granges_de_gharzuk",
+      "name": "Granges de Gharzuk",
+      "cell": "N008_E014",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": -1500,
+      "description": "Granges des fermes de Gharzuk, où des esclaves cultivent l'orge pour les orcs. Niveaux 20-24. [GD v1.0.104, lieu_granges_de_gharzuk]."
+    },
+    {
+      "id": "poi_charbonniere_de_la_lisiere",
+      "name": "Charbonnière de la lisière",
+      "cell": "N008_E015",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Meules de charbon de bois tenues par des charbonniers qui vendent leur charbon aux forges orques. Niveaux 22-26. [GD v1.0.104, lieu_charbonniere_de_la_lisiere]."
+    },
+    {
+      "id": "poi_arbre_aux_cranes",
+      "name": "Arbre aux crânes",
+      "cell": "N008_E016",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Chêne mort couvert de crânes cloués, où les orcs offrent les têtes de leurs ennemis ; personne ne s'y arrête la nuit. Niveaux 24-26. [GD v1.0.104, lieu_arbre_aux_cranes]."
+    },
+    {
+      "id": "poi_refuge_de_montagne",
+      "name": "Refuge de montagne",
+      "cell": "S009_E017",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Refuge des nains de Durnhalde dans la montagne, au sud du départ ; on y attend la fin des tempêtes et des chèvres sauvages broutent alentour. Niveaux 12-16. [GD v1.0.104, lieu_refuge_de_montagne]."
+    },
+    {
+      "id": "poi_galerie_de_prospection",
+      "name": "Ancienne galerie de prospection",
+      "cell": "S009_E018",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Galerie creusée par des prospecteurs nains qui cherchaient un filon et ne l'ont pas trouvé ; des bêtes s'y abritent. Niveaux 13-17. [GD v1.0.104, lieu_galerie_de_prospection]."
+    },
+    {
+      "id": "poi_belvedere_nain",
+      "name": "Belvédère nain",
+      "cell": "S010_E017",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Terrasse taillée par les nains au-dessus de Shaddrek, d'où l'on voyait toute la vallée ; la Lune Noire y a démoli les statues des clans. Niveaux 16-20. [GD v1.0.104, lieu_belvedere_nain]."
+    },
+    {
+      "id": "poi_mine_eboulee_de_shaddrek",
+      "name": "Mine éboulée de Shaddrek",
+      "cell": "S010_E018",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Mine de cuivre de Shaddrek, fermée après un éboulement ; des mineurs y seraient encore emmurés et des pillards fouillent les galeries hautes. Niveaux 17-21. [GD v1.0.104, lieu_mine_eboulee_de_shaddrek]."
+    },
+    {
+      "id": "poi_col_des_contrebandiers",
+      "name": "Col des contrebandiers",
+      "cell": "S011_E017",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Col par lequel des contrebandiers nains font passer le minerai de Shaddrek sans payer l'octroi de la Lune Noire. Niveaux 18-22. [GD v1.0.104, lieu_col_des_contrebandiers]."
+    },
+    {
+      "id": "poi_gite_des_carriers",
+      "name": "Gîte des carriers",
+      "cell": "S012_E017",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Gîte des carriers qui taillent la roche des montagnes au sud-ouest de Shaddrek (économie v1.0.58). Niveaux 18-22. [GD v1.0.104, lieu_gite_des_carriers]."
+    },
+    {
+      "id": "poi_aiguille_des_vautours",
+      "name": "Aiguille des vautours",
+      "cell": "S012_E018",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Aiguille rocheuse où nichent des vautours ; les gens de la Lune Noire y exposent les corps des condamnés de Shaddrek. Niveaux 20-24. [GD v1.0.104, lieu_aiguille_des_vautours]."
+    },
+    {
+      "id": "poi_relais_des_trois_routes",
+      "name": "Relais des trois routes",
+      "cell": "S011_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Relais où se rejoignent les routes de Shaddrek, de Vozmarkh et de Mhordaal, tenu par la Lune Noire ; on y contrôle les convois de minerai. Niveaux 16-20. [GD v1.0.104, lieu_relais_des_trois_routes]."
+    },
+    {
+      "id": "poi_champs_d_orge_des_nains",
+      "name": "Champs d’orge des nains",
+      "cell": "S012_E019",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": -1500,
+      "description": "Champs en terrasses où des familles naines cultivent l'orge sous le joug de la Lune Noire, entre Shaddrek et Khrozrad. Niveaux 18-22. [GD v1.0.104, lieu_champs_d_orge_des_nains]."
+    },
+    {
+      "id": "poi_rive_des_lavandieres",
+      "name": "Rive des lavandières",
+      "cell": "S011_E021",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Lavoir au bord du lac à l'est de Mhordaal, sur la route de Ghrondak ; on dit que des noyés reviennent la nuit. Niveaux 18-22. [GD v1.0.104, lieu_rive_des_lavandieres]."
+    },
+    {
+      "id": "poi_potence_de_la_lune_noire",
+      "name": "Potence de la Lune Noire",
+      "cell": "S012_E020",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Potence dressée par la Lune Noire sur la route de Mhordaal à Khrozrad, où pendent les nains rebelles et les déserteurs. Niveaux 18-22. [GD v1.0.104, lieu_potence_de_la_lune_noire]."
+    },
+    {
+      "id": "poi_puits_d_extraction_de_mhordaal",
+      "name": "Puits d’extraction de Mhordaal",
+      "cell": "S012_E021",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Puits d'où Mhordaal tire son minerai (économie v1.0.58), creusé par des forçats sous la garde de la Lune Noire. Niveaux 20-24. [GD v1.0.104, lieu_puits_d_extraction_de_mhordaal]."
+    },
+    {
+      "id": "poi_carriere_de_khrozrad",
+      "name": "Carrière de Khrozrad",
+      "cell": "S013_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Carrière où Khrozrad extrait la pierre de taille qu'elle vend à Mhordaal (économie v1.0.58). Niveaux 20-24. [GD v1.0.104, lieu_carriere_de_khrozrad]."
+    },
+    {
+      "id": "poi_forge_de_la_crete",
+      "name": "Forge de la crête",
+      "cell": "S013_E021",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Forge naine abandonnée sur la crête à l'est de Khrozrad ; des trolls y ont élu domicile. Niveaux 22-26. [GD v1.0.104, lieu_forge_de_la_crete]."
+    },
+    {
+      "id": "poi_caveau_des_anciens_nains",
+      "name": "Caveau des anciens nains",
+      "cell": "S014_E019",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Caveau scellé où reposent des nains d'avant la conquête ; ses gardiens morts se relèvent contre les pilleurs. Niveaux 24-28. [GD v1.0.104, lieu_caveau_des_anciens_nains]."
+    },
+    {
+      "id": "poi_pont_de_corde_de_la_gorge",
+      "name": "Pont de corde de la gorge",
+      "cell": "S014_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": -3000,
+      "description": "Pont de corde au-dessus d'une gorge au sud de Khrozrad, seul passage vers les vallées du sud. Niveaux 22-26. [GD v1.0.104, lieu_pont_de_corde_de_la_gorge]."
+    },
+    {
+      "id": "poi_taniere_de_l_ours",
+      "name": "Tanière de l’ours",
+      "cell": "S014_E021",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Caverne d'un grand ours de montagne qui attaque les troupeaux de Khrozrad. Niveaux 24-28. [GD v1.0.104, lieu_taniere_de_l_ours]."
+    },
+    {
+      "id": "poi_auberge_brulee_de_la_route_de_l_est",
+      "name": "Auberge brûlée de la route de l’est",
+      "cell": "S010_E022",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Auberge sur la route de Mhordaal à Ghrondak, brûlée par des pillards ; sa cave sert de repaire. Niveaux 18-22. [GD v1.0.104, lieu_auberge_brulee_de_la_route_de_l_est]."
+    },
+    {
+      "id": "poi_chariots_renverses",
+      "name": "Chariots renversés",
+      "cell": "S010_E023",
+      "kind": "ruine",
+      "offset_x_m": 1500,
+      "offset_z_m": 0,
+      "description": "Convoi de sel de Ghrondak attaqué et abandonné au bord de la route ; les charognards rôdent. Niveaux 18-22. [GD v1.0.104, lieu_chariots_renverses]."
+    },
+    {
+      "id": "poi_ermitage_de_la_montagne",
+      "name": "Ermitage de la montagne",
+      "cell": "S009_E022",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ermitage perché dans la montagne au-dessus de la route de Ghrondak ; l'ermite a disparu et des serpents occupent sa cellule. Niveaux 20-24. [GD v1.0.104, lieu_ermitage_de_la_montagne]."
+    },
+    {
+      "id": "poi_ferme_des_mineurs",
+      "name": "Ferme des mineurs",
+      "cell": "S009_E023",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ferme où des familles de mineurs de Ghrondak élèvent chèvres et porcs entre deux descentes à la mine. Niveaux 18-22. [GD v1.0.104, lieu_ferme_des_mineurs]."
+    },
+    {
+      "id": "poi_salines_de_ghrondak",
+      "name": "Salines de Ghrondak",
+      "cell": "S009_E024",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Salines où Ghrondak produit le sel marin qu'elle vend à Mhordaal et à Vozmarkh (économie v1.0.58). Niveaux 20-24. [GD v1.0.104, lieu_salines_de_ghrondak]."
+    },
+    {
+      "id": "poi_galerie_de_ghrondak",
+      "name": "Galerie de Ghrondak",
+      "cell": "S008_E023",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Galerie de la mine de Ghrondak, village minier nain de la côte ; les mineurs y ont percé une poche d'eau noire et n'osent plus y descendre. Niveaux 20-24. [GD v1.0.104, lieu_galerie_de_ghrondak]."
+    },
+    {
+      "id": "poi_poste_de_guet_nain",
+      "name": "Poste de guet nain",
+      "cell": "S007_E023",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Poste de guet nain au nord de Ghrondak, abandonné depuis que la Lune Noire tient la région. Niveaux 22-26. [GD v1.0.104, lieu_poste_de_guet_nain]."
+    },
+    {
+      "id": "poi_sepultures_des_mineurs",
+      "name": "Sépultures des mineurs",
+      "cell": "S007_E024",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Niches funéraires creusées dans la montagne pour les mineurs morts à Ghrondak ; certaines ont été pillées. Niveaux 22-26. [GD v1.0.104, lieu_sepultures_des_mineurs]."
+    },
+    {
+      "id": "poi_phare_nain_eteint",
+      "name": "Phare nain éteint",
+      "cell": "S007_E025",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Phare bâti par les nains pour guider les barques de Ghrondak, éteint depuis des années ; des naufrageurs y guettent les navires. Niveaux 22-26. [GD v1.0.104, lieu_phare_nain_eteint]."
+    },
+    {
+      "id": "poi_fumoir_a_poisson",
+      "name": "Fumoir à poisson",
+      "cell": "S008_E025",
+      "kind": "camp",
+      "offset_x_m": -3000,
+      "offset_z_m": -3000,
+      "description": "Fumoir où les pêcheurs de Ghrondak conservent leur poisson ; les crabes et les mouettes s'y disputent les restes. Niveaux 20-24. [GD v1.0.104, lieu_fumoir_a_poisson]."
+    },
+    {
+      "id": "poi_plage_d_echouage_des_barques",
+      "name": "Plage d’échouage des barques",
+      "cell": "S009_E025",
+      "kind": "camp",
+      "offset_x_m": -4000,
+      "offset_z_m": -1500,
+      "description": "Plage où les pêcheurs de Ghrondak tirent leurs barques au sec et les réparent. Niveaux 20-24. [GD v1.0.104, lieu_plage_d_echouage_des_barques]."
     }
   ],
   "imports": {

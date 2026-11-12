@@ -1876,7 +1876,8 @@ namespace
 	/// (`generated_cells` + corridors des départs) de la boîte `royaume_des_nains_de_lest` du master
 	/// (E015-E024 × S016-S004) sont les 14 déjà générées (départ 3×3 de Durnhalde, Ghrunke Dash, Monts de
 	/// Moork, coulées de l'ouest), et chacune porte une ville ou un POI. Le lot n'ouvre aucune case et
-	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. Il vérifie aussi que les
+	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. v1.0.91 : la route Eisenkehl -
+	/// Voidmark ajoute 7 cases jouables dans la boîte (21 au total), chacune avec une ville ou un POI. Il vérifie aussi que les
 	/// 5 lieux du départ que relient les quêtes sont dans leur case.
 	void TestLieuxV1089()
 	{
@@ -1916,7 +1917,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 14, "lieux v1.0.89 : 14 cases jouables dans la boite du Royaume des nains de l'est (aucune ouverte)");
+		Check(inBox == 21, "lieux v1.0.89 : 21 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Voidmark, v1.0.91)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -1929,6 +1930,199 @@ namespace
 			for (const PoiDef& p : g.pois)
 				found += (p.id == x.poi && p.cell == x.cell && playable.count(p.cell)) ? 1 : 0;
 		Check(found == 5, "lieux v1.0.89 : les 5 lieux des quetes du depart de Durnhalde dans leurs cases jouables");
+	}
+
+	/// v1.0.91 (lot 19) : ouverture de la route Eisenkehl - Voidmark (suite du départ nain) et des 4 routes
+	/// de la Marche de l'Est coupées au mur invisible (Ebonvale - Rivercross, Ebonvale - Riverfold, Ebonvale -
+	/// Greyfield, Duskmere - Dustfield). 57 cases ajoutées à `generated_cells` (tracés du lore et du
+	/// générateur, villes d'arrivée, marge d'une case, trous intérieurs).
+	/// Vérifie : les 57 cases sont générées et terrestres ; chacune touche (4-voisinage) une case jouable ;
+	/// les 7 cases de Voidmark sont atteintes à pied depuis Durnhalde (S007_E017) et les 50 de la Marche
+	/// depuis Grakhul (N008_E012) sans quitter les cases jouables ; Voidmark, Rivercross, Riverfold,
+	/// Greyfield et Dustfield sont jouables ; chaque point des routes du générateur entre ces villes et
+	/// Eisenkehl, Ebonvale, Duskmere (et entre Riverfold, Greyfield et Dustfield) est dans une case jouable,
+	/// de même que chaque case des 5 tracés du lore ; un POI [GD] par case vide (52, au sec, seuls sur leur
+	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées.
+	void TestCellulesLieuxV1091()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "cellules et lieux v1.0.91 : master royaumes charge");
+		if (!ok) return;
+		static const char* kCells[] = {
+			"N009_E017", "N009_E018", "N009_E019", "N008_E017", "N008_E018", "N008_E019",
+			"N007_E017", "N007_E018", "N007_E019", "N007_E020", "N007_E021", "N007_E022",
+			"N007_E023", "N007_E024", "N006_E017", "N006_E018", "N006_E021", "N006_E022",
+			"N006_E023", "N006_E024", "N005_E021", "N005_E022", "N005_E023", "N005_E024",
+			"N004_E021", "N004_E022", "N004_E023", "N004_E024", "N003_E021", "N003_E022",
+			"N003_E023", "N003_E024", "N002_E021", "N002_E022", "N002_E023", "N002_E024",
+			"N001_E021", "N001_E022", "N001_E023", "N001_E024", "N000_E021", "N000_E022",
+			"N000_E023", "N000_E024", "S001_E022", "S001_E023", "S001_E024", "S002_E022",
+			"S002_E023", "S002_E024", "S008_E019", "S009_E019", "S009_E020", "S009_E021",
+			"S010_E019", "S010_E020", "S010_E021",
+		};
+		const WorldMaster& m = g.master;
+		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		auto parse = [](const std::string& c, int& n, int& e) {
+			n = std::stoi(c.substr(1, 3)) * (c[0] == 'N' ? 1 : -1);
+			e = std::stoi(c.substr(6, 3)) * (c[5] == 'E' ? 1 : -1);
+		};
+		auto name = [](int n, int e) {
+			char b[32];
+			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
+			return std::string(b);
+		};
+		int inList = 0, land = 0;
+		for (const char* c : kCells)
+		{
+			int n = 0, e = 0;
+			parse(c, n, e);
+			inList += listed.count(c) ? 1 : 0;
+			const char code = LoreCode(m, n, e);
+			land += (code != ' ' && code != '-') ? 1 : 0;
+		}
+		Check(inList == 57 && land == 57, "cellules et lieux v1.0.91 : 57 cases generees, toutes terrestres");
+		Check(!listed.count("S008_E020") && !listed.count("S008_E021"), "cellules et lieux v1.0.91 : S008_E020 et S008_E021 restent fermees");
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		// Connexité : chaque nouvelle case touche une case jouable ; parcours à pied depuis deux départs.
+		static const std::pair<int, int> kDirs[] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+		int touching = 0;
+		for (const char* c : kCells)
+		{
+			int n = 0, e = 0;
+			parse(c, n, e);
+			bool t = false;
+			for (const auto& d : kDirs) t = t || playable.count(name(n + d.first, e + d.second)) > 0;
+			touching += t ? 1 : 0;
+		}
+		auto reach = [&](const std::string& start) {
+			std::set<std::string> seen{ start };
+			std::vector<std::string> front{ start };
+			while (!front.empty())
+			{
+				const std::string c = front.back();
+				front.pop_back();
+				int n = 0, e = 0;
+				parse(c, n, e);
+				for (const auto& d : kDirs)
+				{
+					const std::string x = name(n + d.first, e + d.second);
+					if (playable.count(x) && seen.insert(x).second) front.push_back(x);
+				}
+			}
+			return seen;
+		};
+		const std::set<std::string> fromDurnhalde = reach("S007_E017");
+		const std::set<std::string> fromGrakhul = reach("N008_E012");
+		int reached = 0;
+		for (const char* c : kCells)
+		{
+			int n = 0, e = 0;
+			parse(c, n, e);
+			reached += (n < -3 ? fromDurnhalde.count(c) : fromGrakhul.count(c)) ? 1 : 0;
+		}
+		Check(touching == 57 && reached == 57, "cellules et lieux v1.0.91 : aucune case isolee, Voidmark relie a Durnhalde et la Marche a Grakhul");
+		// Villes d'arrivée jouables.
+		struct Ville { const char* id; const char* cell; };
+		static const Ville kVilles[] = { { "town_0125", "S009_E020" }, { "town_0132", "N008_E018" }, { "town_riverfold", "N006_E023" },
+			{ "town_greyfield", "N003_E023" }, { "hamlet_dustfield", "S001_E023" } };
+		int villes = 0;
+		for (const Ville& v : kVilles)
+		{
+			const CityDef* c = g.FindCity(v.id);
+			villes += (c && c->cell == v.cell && playable.count(c->cell)) ? 1 : 0;
+		}
+		Check(villes == 5, "cellules et lieux v1.0.91 : Voidmark, Rivercross, Riverfold, Greyfield et Dustfield jouables");
+		// Routes du générateur entre les villes concernées.
+		static const std::pair<const char*, const char*> kPairs[] = {
+			{ "hamlet_eisenkehl", "town_0125" }, { "town_0115", "town_0132" }, { "town_0115", "town_riverfold" },
+			{ "town_0126", "hamlet_dustfield" }, { "town_riverfold", "town_greyfield" }, { "town_0126", "town_greyfield" },
+			{ "town_greyfield", "hamlet_dustfield" },
+		};
+		auto cellOf = [&](const Vec2& p) {
+			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
+		};
+		int routes = 0, outside = 0;
+		for (const Road& r : g.roads)
+		{
+			bool match = false;
+			for (const auto& pr : kPairs)
+				match = match || (r.fromId == pr.first && r.toId == pr.second) || (r.fromId == pr.second && r.toId == pr.first);
+			if (!match) continue;
+			++routes;
+			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
+		}
+		Check(routes == 7 && outside == 0, "cellules et lieux v1.0.91 : 7 routes du generateur entierement dans des cases jouables");
+		// Tracés du lore (waypoints, ou ligne droite pour Eisenkehl - Voidmark), case par case.
+		static const char* kLoreCells[] = {
+			"S008_E018", "S008_E019", "S009_E020",                 // Eisenkehl - Voidmark
+			"N008_E018", "N007_E019", "N006_E019", "N005_E020",    // Ebonvale - Rivercross (000104)
+			"N006_E023", "N005_E022", "N004_E021",                 // Ebonvale - Riverfold (000160)
+			"N003_E023", "N003_E022",                              // Ebonvale - Greyfield (000161)
+			"S001_E023", "S001_E022", "N000_E021", "N001_E020",    // Duskmere - Dustfield (000162)
+		};
+		int lore = 0;
+		for (const char* c : kLoreCells) lore += playable.count(c) ? 1 : 0;
+		Check(lore == 16, "cellules et lieux v1.0.91 : chaque case des 5 traces du lore est jouable");
+		// Lieux [GD] : un POI par case vide.
+		struct Expected { const char* poi; const char* cell; };
+		static const Expected kLieux[] = {
+			{ "poi_halte_des_muletiers_du_col", "S008_E019" }, { "poi_borne_frontiere_renversee", "S009_E019" },
+			{ "poi_carriere_des_forcats", "S009_E021" }, { "poi_ferme_des_chevriers_nains", "S010_E019" },
+			{ "poi_corps_de_garde_de_la_route_du_sud", "S010_E020" }, { "poi_puits_de_mine_inonde", "S010_E021" },
+			{ "poi_cairn_des_voyageurs", "N009_E017" }, { "poi_ferme_abandonnee_du_nord", "N009_E018" },
+			{ "poi_camp_des_chasseurs_de_loups", "N009_E019" }, { "poi_chantier_de_flottage", "N008_E017" },
+			{ "poi_relais_de_la_route_du_nord", "N008_E019" }, { "poi_chene_aux_pendus", "N007_E017" },
+			{ "poi_repaire_de_l_ogre_de_la_foret", "N007_E018" }, { "poi_bac_du_passeur", "N007_E019" },
+			{ "poi_moulin_a_eau_de_la_riviere", "N007_E020" }, { "poi_pavillon_de_chasse_imperial", "N006_E017" },
+			{ "poi_camp_des_deserteurs", "N006_E018" }, { "poi_pont_effondre", "N007_E021" },
+			{ "poi_paturages_de_la_cote", "N007_E022" }, { "poi_tour_de_guet_cotiere", "N007_E023" },
+			{ "poi_epave_echouee", "N007_E024" }, { "poi_relais_de_la_route_de_riverfold", "N006_E021" },
+			{ "poi_caravanserail_des_marchands", "N006_E022" }, { "poi_marais_salants", "N006_E024" },
+			{ "poi_ferme_des_colons", "N005_E021" }, { "poi_oratoire_des_voyageurs", "N005_E022" },
+			{ "poi_chemin_de_halage", "N005_E023" }, { "poi_cimetiere_des_marins", "N005_E024" },
+			{ "poi_gibet_du_carrefour", "N004_E021" }, { "poi_prairie_des_chevaux_sauvages", "N004_E022" },
+			{ "poi_grange_aux_dimes", "N004_E023" }, { "poi_pecherie_de_la_cote", "N004_E024" },
+			{ "poi_hutte_de_la_rebouteuse", "N003_E021" }, { "poi_repaire_des_coupe_jarrets", "N003_E022" },
+			{ "poi_dolmen_de_la_cote", "N003_E024" }, { "poi_ossuaire_du_geant", "N002_E021" },
+			{ "poi_rucher_de_la_foret", "N002_E022" }, { "poi_menhirs_des_geants", "N002_E023" },
+			{ "poi_cabanes_de_pecheurs_abandonnees", "N002_E024" }, { "poi_source_sacree_de_la_foret", "N001_E021" },
+			{ "poi_fosse_a_loups", "N001_E022" }, { "poi_ferme_fortifiee_de_la_cote", "N001_E023" },
+			{ "poi_anse_des_naufrageurs", "N001_E024" }, { "poi_puits_de_la_piste", "N000_E021" },
+			{ "poi_bergerie_des_chevriers", "N000_E022" }, { "poi_rocher_des_vautours", "N000_E023" },
+			{ "poi_fortin_cotier_abandonne", "N000_E024" }, { "poi_carriere_de_la_plaine_aride", "S001_E022" },
+			{ "poi_tour_a_feu_de_la_cote", "S001_E024" }, { "poi_tombeau_des_sables", "S002_E022" },
+			{ "poi_campement_des_pillards_du_desert", "S002_E023" }, { "poi_crique_des_contrebandiers", "S002_E024" },
+		};
+		int valid = 0;
+		for (const Expected& x : kLieux)
+		{
+			const PoiDef* p = nullptr;
+			for (const PoiDef& q : g.pois)
+				if (q.id == x.poi) p = &q;
+			bool alone = true;
+			for (const CityDef& c : g.cities)
+				if (p && c.n == p->n && c.e == p->e) alone = false;
+			for (const PoiDef& q : g.pois)
+				if (p && &q != p && q.cell == p->cell) alone = false;
+			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone
+				&& MacroHeight(m, p->center.x, p->center.z) > m.scale.seaLevelM + 5.0;
+			if (!good) std::fprintf(stderr, "  lieu v1.0.91 invalide : %s\n", x.poi);
+			valid += good ? 1 : 0;
+		}
+		Check(valid == 52, "cellules et lieux v1.0.91 : 52 lieux au sec, seuls sur leur case jouable");
+		int poiVilles = 0;
+		for (const Ville& v : kVilles)
+			for (const PoiDef& q : g.pois) poiVilles += q.cell == v.cell ? 1 : 0;
+		Check(poiVilles == 0, "cellules et lieux v1.0.91 : aucun POI sur les cases des villes d'arrivee");
 	}
 
 	void TestWaterShores()
@@ -2030,6 +2224,7 @@ int main()
 	TestLieuxV1087();
 	TestCellulesLieuxV1088();
 	TestLieuxV1089();
+	TestCellulesLieuxV1091();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

@@ -2376,7 +2376,7 @@ la Marche (6 tracés entièrement dans des cases jouables). **Ce qui ne l'est pa
   plaines des cases ouvertes ; les lieux « sur la Via Magna » sont au bord de son tracé lore ;
 - routes sortant de la zone vers des villes hors région, coupées au mur invisible : Ebonvale – Rivercross (000104,
   par N007_E019/N007_E020), Ebonvale – Riverfold (000160) et Ebonvale – Greyfield (000161) par E021, Duskmere –
-  Dustfield (000162) et Duskmere – Greyfield par E021 ;
+  Dustfield (000162) et Duskmere – Greyfield par E021 (ouvertes en v1.0.91, §16.20) ;
 - quêtes, PNJ donneurs et adversaires, intérieurs, repères de niveau (lore seulement, comme aux lots 14-15).
 
 **Contrôles** : test `world_gen_tests` « cellules et lieux v1.0.88 » (45 cases générées et terrestres, aucune
@@ -2447,7 +2447,8 @@ l'est, aucune ouverte ; chacune porte une ville ou un POI ; les 5 lieux des quê
 Cellules générées : 301 (inchangé). **Services** : 1242 PNJ (inchangé).
 
 **Points incertains** : noms et étapes des 5 quêtes ; gradient proposé ; quêtes de départ ouvertes aux autres
-factions ; ouvrir une partie du royaume (Voidmark, route Eisenkehl – Voidmark) pour donner une suite 10-20 au départ.
+factions ; ouvrir une partie du royaume (Voidmark, route Eisenkehl – Voidmark) pour donner une suite 10-20 au départ
+(route ouverte en v1.0.91, §16.20).
 
 ### 16.19 Régions et niveaux du sud-centre et des Confins du Midi (v1.0.90)
 
@@ -2542,6 +2543,140 @@ sud de Lhynn aux Terres de l'Empereur plutôt qu'une région propre, côtes S015
 niveau ; Fairbrook (S015_E001) garde `region_id = royaume_drach` (v1.0.52) alors que sa case est aux Confins ; forme
 future des régions dans le master ; niveau des abords des Portes des enfers du continent.
 
+### 16.20 Ouverture d'Eisenkehl – Voidmark et des routes de la Marche (v1.0.91)
+
+Lot 19, décisions du propriétaire (12/11/2026) : ouvrir au jeu (A) la route Eisenkehl → Voidmark, suite 10-20 du
+départ nain (mur invisible à la sortie du départ de Durnhalde jusqu'ici) ; (B) les 4 routes de la Marche de l'Est
+coupées au mur invisible en v1.0.88 : Ebonvale → Rivercross (000104), Ebonvale → Riverfold (000160), Ebonvale →
+Greyfield (000161), Duskmere → Dustfield (000162). Même méthode qu'au lot 16 (§16.17). Scripts reproductibles (hors
+dépôt) : `select_v1091.py` (sélection), `pick_v1091.py` (placement des POI d'après la sonde du générateur),
+`data_v1091.py`, `quests_v1091.py`, `lore_v1091.py` (appliqué au fichier v1.0.90), `master_v1091.py`,
+`carte_v1091.py` (rendu).
+
+**Choix des cases.** Pour chaque route : cases de son tracé lore (waypoints ; Eisenkehl – Voidmark n'a pas de route au
+lore : ligne droite), cases du tracé du générateur entre les mêmes villes, case de la ville d'arrivée, une case de
+marge (terre) autour de chaque ville devenue jouable, puis trous intérieurs (case bordée sur au moins 3 côtés par des
+cases jouables, itéré). Au nord de Voidmark, S008_E020 et S008_E021 (montagne, hors tracé) restent fermées.
+Total : **57 cases** (`generated_cells`, 7 nouvelles dernières lignes, commentaire du master mis à jour), toutes
+terrestres, aucune isolée. Cellules jouables (liste master + corridors) : **301 → 358**, aucune perdue.
+
+| Route | Cases propres à la route (tracés lore + générateur) | Arrivée |
+|---|---|---|
+| A. Eisenkehl → Voidmark | S008_E019, S009_E019 (col) | Voidmark (`town_0125`, S009_E020) + marge S009_E021, S010_E019, S010_E020, S010_E021 : **7 cases** |
+| B1. Ebonvale → Rivercross | N007_E019, N007_E020, N008_E019 | Rivercross (`town_0132`, N008_E018) + marge N007_E017, N007_E018, N008_E017, N009_E017 à N009_E019 |
+| B2. Ebonvale → Riverfold | N004_E021, N005_E021, N005_E022, N006_E021, N006_E022 | Riverfold (`town_riverfold`, N006_E023) + marge N005_E023, N005_E024, N006_E024, N007_E022 à N007_E024 |
+| B3. Ebonvale → Greyfield | N003_E022 (N004_E021 partagée avec B2) | Greyfield (`town_greyfield`, N003_E023) + marge N002_E022 à N002_E024, N003_E024, N004_E022 à N004_E024 |
+| B4. Duskmere → Dustfield | N000_E021, N000_E022, N001_E021, S001_E022 | Dustfield (`hamlet_dustfield`, S001_E023) + marge N000_E023, N000_E024, S001_E024, S002_E022 à S002_E024 |
+| Trous intérieurs (B) | N006_E017, N006_E018 (forêt du nord de Blackmoor), N007_E021, N003_E021, N002_E021, N001_E022 à N001_E024 | — |
+
+Soit 50 cases pour (B) : 12 dans la Marche et ses abords (dont N009_E017 à N009_E019, dans la boîte Marches du Nord
+du master, sans région au lore), 38 sur la côte orientale (boîte `rivage_des_geants`, région lore Terres des
+Gigantomorphes). Le Duskmere – Greyfield, le Riverfold – Greyfield et le Greyfield – Dustfield du générateur sont aussi
+entièrement dans des cases jouables. **Villes devenues jouables** : Voidmark, Rivercross, Riverfold, Greyfield,
+Dustfield.
+
+Cases générées : N009_E017, N009_E018, N009_E019, N008_E017, N008_E018, N008_E019, N007_E017, N007_E018, N007_E019, N007_E020, N007_E021, N007_E022, N007_E023, N007_E024, N006_E017, N006_E018, N006_E021, N006_E022, N006_E023, N006_E024, N005_E021, N005_E022, N005_E023, N005_E024, N004_E021, N004_E022, N004_E023, N004_E024, N003_E021, N003_E022, N003_E023, N003_E024, N002_E021, N002_E022, N002_E023, N002_E024, N001_E021, N001_E022, N001_E023, N001_E024, N000_E021, N000_E022, N000_E023, N000_E024, S001_E022, S001_E023, S001_E024, S002_E022, S002_E023, S002_E024, S008_E019, S009_E019, S009_E020, S009_E021, S010_E019, S010_E020, S010_E021.
+
+**Lieux** : chaque nouvelle case vide (52 ; les 5 cases de villes ne reçoivent rien) reçoit un lieu `[GD]` avec POI
+réel dans `pois` du master ; aucune nouvelle ville ni hameau, aucun identifiant supprimé, aucune ville renommée.
+Repères **à valider** : route Eisenkehl – Voidmark et abords de Voidmark 10-20 (repère v1.0.89 ; col 10-15,
+Voidmark et sa marge 14-20) ; abords de Rivercross et forêt du nord de Blackmoor 22-28 (repère v1.0.90) ; côte
+orientale de Riverfold à Dustfield (sud du Rivage des Géants) **24-30** (routes au départ d'Ebonvale et de Duskmere
+24-28, côte et abords des ports 26-30, bord du désert 27-30), sous la lisière sud des Gigantomorphes (28-36). Aucun
+lieu ne dépasse le repère de sa zone : pas de nouvelle balise.
+
+| Case | Lieu `[GD]` (lieu, POI, genre) | Niveaux |
+|---|---|---|
+| S008_E019 | **Halte des muletiers du col** (`lieu_halte_des_muletiers_du_col`, `poi_halte_des_muletiers_du_col`, `camp`) | 10-13 |
+| S009_E019 | **Borne-frontière renversée** (`lieu_borne_frontiere_renversee`, `poi_borne_frontiere_renversee`, `monolithe`) | 12-15 |
+| S009_E021 | **Carrière des forçats** (`lieu_carriere_des_forcats`, `poi_carriere_des_forcats`, `camp`) | 14-18 |
+| S010_E019 | **Ferme des chevriers nains** (`lieu_ferme_des_chevriers_nains`, `poi_ferme_des_chevriers_nains`, `elevage`) | 15-18 |
+| S010_E020 | **Corps de garde de la route du sud** (`lieu_corps_de_garde_de_la_route_du_sud`, `poi_corps_de_garde_de_la_route_du_sud`, `camp`) | 16-20 |
+| S010_E021 | **Puits de mine inondé** (`lieu_puits_de_mine_inonde`, `poi_puits_de_mine_inonde`, `salle`) | 17-20 |
+| N009_E017 | **Cairn des voyageurs** (`lieu_cairn_des_voyageurs`, `poi_cairn_des_voyageurs`, `monolithe`) | 22-24 |
+| N009_E018 | **Ferme abandonnée du nord** (`lieu_ferme_abandonnee_du_nord`, `poi_ferme_abandonnee_du_nord`, `ruine`) | 22-26 |
+| N009_E019 | **Camp des chasseurs de loups** (`lieu_camp_des_chasseurs_de_loups`, `poi_camp_des_chasseurs_de_loups`, `camp`) | 22-26 |
+| N008_E017 | **Chantier de flottage** (`lieu_chantier_de_flottage`, `poi_chantier_de_flottage`, `camp`) | 22-26 |
+| N008_E019 | **Relais de la route du nord** (`lieu_relais_de_la_route_du_nord`, `poi_relais_de_la_route_du_nord`, `camp`) | 22-26 |
+| N007_E017 | **Chêne aux pendus** (`lieu_chene_aux_pendus`, `poi_chene_aux_pendus`, `sanctuaire`) | 24-28 |
+| N007_E018 | **Repaire de l'ogre de la forêt** (`lieu_repaire_de_l_ogre_de_la_foret`, `poi_repaire_de_l_ogre_de_la_foret`, `salle`) | 25-28 |
+| N007_E019 | **Bac du passeur** (`lieu_bac_du_passeur`, `poi_bac_du_passeur`, `camp`) | 22-26 |
+| N007_E020 | **Moulin à eau de la rivière** (`lieu_moulin_a_eau_de_la_riviere`, `poi_moulin_a_eau_de_la_riviere`, `camp`) | 24-28 |
+| N006_E017 | **Pavillon de chasse impérial** (`lieu_pavillon_de_chasse_imperial`, `poi_pavillon_de_chasse_imperial`, `ruine`) | 24-28 |
+| N006_E018 | **Camp des déserteurs** (`lieu_camp_des_deserteurs`, `poi_camp_des_deserteurs`, `camp`) | 26-28 |
+| N007_E021 | **Pont effondré** (`lieu_pont_effondre`, `poi_pont_effondre`, `ruine`) | 24-28 |
+| N007_E022 | **Pâturages de la côte** (`lieu_paturages_de_la_cote`, `poi_paturages_de_la_cote`, `elevage`) | 24-28 |
+| N007_E023 | **Tour de guet côtière** (`lieu_tour_de_guet_cotiere`, `poi_tour_de_guet_cotiere`, `ruine`) | 26-30 |
+| N007_E024 | **Épave échouée** (`lieu_epave_echouee`, `poi_epave_echouee`, `ruine`) | 26-30 |
+| N006_E021 | **Relais de la route de Riverfold** (`lieu_relais_de_la_route_de_riverfold`, `poi_relais_de_la_route_de_riverfold`, `camp`) | 24-28 |
+| N006_E022 | **Caravansérail des marchands** (`lieu_caravanserail_des_marchands`, `poi_caravanserail_des_marchands`, `camp`) | 25-29 |
+| N006_E024 | **Marais salants** (`lieu_marais_salants`, `poi_marais_salants`, `camp`) | 26-30 |
+| N005_E021 | **Ferme des colons** (`lieu_ferme_des_colons`, `poi_ferme_des_colons`, `elevage`) | 24-28 |
+| N005_E022 | **Oratoire des voyageurs** (`lieu_oratoire_des_voyageurs`, `poi_oratoire_des_voyageurs`, `sanctuaire`) | 24-28 |
+| N005_E023 | **Chemin de halage** (`lieu_chemin_de_halage`, `poi_chemin_de_halage`, `camp`) | 26-30 |
+| N005_E024 | **Cimetière des marins** (`lieu_cimetiere_des_marins`, `poi_cimetiere_des_marins`, `sanctuaire`) | 26-30 |
+| N004_E021 | **Gibet du carrefour** (`lieu_gibet_du_carrefour`, `poi_gibet_du_carrefour`, `ruine`) | 24-28 |
+| N004_E022 | **Prairie des chevaux sauvages** (`lieu_prairie_des_chevaux_sauvages`, `poi_prairie_des_chevaux_sauvages`, `elevage`) | 24-28 |
+| N004_E023 | **Grange aux dîmes** (`lieu_grange_aux_dimes`, `poi_grange_aux_dimes`, `ruine`) | 25-29 |
+| N004_E024 | **Pêcherie de la côte** (`lieu_pecherie_de_la_cote`, `poi_pecherie_de_la_cote`, `camp`) | 26-30 |
+| N003_E021 | **Hutte de la rebouteuse** (`lieu_hutte_de_la_rebouteuse`, `poi_hutte_de_la_rebouteuse`, `camp`) | 24-28 |
+| N003_E022 | **Repaire des coupe-jarrets** (`lieu_repaire_des_coupe_jarrets`, `poi_repaire_des_coupe_jarrets`, `camp`) | 24-28 |
+| N003_E024 | **Dolmen de la côte** (`lieu_dolmen_de_la_cote`, `poi_dolmen_de_la_cote`, `monolithe`) | 26-30 |
+| N002_E021 | **Ossuaire du géant** (`lieu_ossuaire_du_geant`, `poi_ossuaire_du_geant`, `sanctuaire`) | 26-30 |
+| N002_E022 | **Rucher de la forêt** (`lieu_rucher_de_la_foret`, `poi_rucher_de_la_foret`, `elevage`) | 26-30 |
+| N002_E023 | **Menhirs des géants** (`lieu_menhirs_des_geants`, `poi_menhirs_des_geants`, `monolithe`) | 26-30 |
+| N002_E024 | **Cabanes de pêcheurs abandonnées** (`lieu_cabanes_de_pecheurs_abandonnees`, `poi_cabanes_de_pecheurs_abandonnees`, `ruine`) | 26-30 |
+| N001_E021 | **Source sacrée de la forêt** (`lieu_source_sacree_de_la_foret`, `poi_source_sacree_de_la_foret`, `sanctuaire`) | 24-28 |
+| N001_E022 | **Fosse à loups** (`lieu_fosse_a_loups`, `poi_fosse_a_loups`, `gouffre`) | 24-28 |
+| N001_E023 | **Ferme fortifiée de la côte** (`lieu_ferme_fortifiee_de_la_cote`, `poi_ferme_fortifiee_de_la_cote`, `elevage`) | 26-30 |
+| N001_E024 | **Anse des naufrageurs** (`lieu_anse_des_naufrageurs`, `poi_anse_des_naufrageurs`, `camp`) | 26-30 |
+| N000_E021 | **Puits de la piste** (`lieu_puits_de_la_piste`, `poi_puits_de_la_piste`, `camp`) | 24-28 |
+| N000_E022 | **Bergerie des chevriers** (`lieu_bergerie_des_chevriers`, `poi_bergerie_des_chevriers`, `elevage`) | 25-29 |
+| N000_E023 | **Rocher des vautours** (`lieu_rocher_des_vautours`, `poi_rocher_des_vautours`, `monolithe`) | 26-30 |
+| N000_E024 | **Fortin côtier abandonné** (`lieu_fortin_cotier_abandonne`, `poi_fortin_cotier_abandonne`, `ruine`) | 26-30 |
+| S001_E022 | **Carrière de la plaine aride** (`lieu_carriere_de_la_plaine_aride`, `poi_carriere_de_la_plaine_aride`, `camp`) | 26-30 |
+| S001_E024 | **Tour à feu de la côte** (`lieu_tour_a_feu_de_la_cote`, `poi_tour_a_feu_de_la_cote`, `ruine`) | 26-30 |
+| S002_E022 | **Tombeau des sables** (`lieu_tombeau_des_sables`, `poi_tombeau_des_sables`, `sanctuaire`) | 27-30 |
+| S002_E023 | **Campement des pillards du désert** (`lieu_campement_des_pillards_du_desert`, `poi_campement_des_pillards_du_desert`, `camp`) | 27-30 |
+| S002_E024 | **Crique des contrebandiers** (`lieu_crique_des_contrebandiers`, `poi_crique_des_contrebandiers`, `camp`) | 26-30 |
+
+**Quêtes** (3, `[GD]`, toutes les étapes dans des cases générées) :
+
+- `quest_nains_est_gd_route_de_voidmark` « La Route de Voidmark » (niveau 10+, solo) : hamlet_eisenkehl → lieu_halte_des_muletiers_du_col → lieu_borne_frontiere_renversee → town_0125 (suite du départ nain)
+- `quest_nains_est_gd_carriers_de_voidmark` « Les Carriers de Voidmark » (niveau 15+, groupe) : hamlet_eisenkehl → lieu_ferme_des_chevriers_nains → lieu_carriere_des_forcats
+- `quest_rivage_gd_cargaison_du_levant` « La Cargaison du levant » (niveau 24+, solo) : town_0115 → lieu_relais_de_la_route_de_riverfold → town_riverfold → lieu_epave_echouee → lieu_caravanserail_des_marchands
+
+**Sources.** Inventés `[GD]` sauf : conquête de la Marche par la Lune Noire `[BD-A5]` (pavillon de chasse) ; géants
+repoussés vers le nord et l'est `[HS]` (ossuaire, menhirs) ; Voidmark tenu par la Lune Noire (fiche) ; économie
+v1.0.58 (minerai et pierre de taille de Voidmark, moulins, pêche et bois d'œuvre de Rivercross, chèvres et pierre de
+Dustfield) ; navires du levant à Riverfold (v1.0.82). Placements `[INFÉRÉ]`. Aucun nom propre inventé ; noms vérifiés
+contre les PNJ de service (« Carrière de pierre de taille » renommée « Carrière des forçats » avant livraison :
+« pierre » entre dans des noms de famille de PNJ).
+
+**Faune** : aucune créature créée ; espèces existantes rattachées (`zones_chasse`, `creature_ids`) : ours, serpent,
+chèvre, loup géant de guerre, ogre, corbeau, crabe, mouette, deux fois né, vautour.
+
+**Registre** (`regle_canon_registre_decisions`) : 2 entrées v1.0.91 « Ouverture de la route Eisenkehl - Voidmark »
+(`royaume_des_nains_de_lest`) et « Ouverture des routes de la Marche de l'Est » (`region_marche_est`).
+
+**Routes encore coupées au mur invisible** (non suivies, à décider) : Voidmark – Darkwater (000034, S011_E020),
+Voidmark – Shadowfen, Voidmark – Ironbrook (générateur, par S010_E022 – S008_E024), Rivercross – Hillwatch
+(000103, N009_E016 – N010_E016), Farwatch – Rivercross (000105, N010_E019 – N011_E020).
+
+**Ce qui est réel en jeu** : les 57 cases, les 5 villes, les 52 POI, les 7 routes du générateur entre ces villes.
+**Lore seulement** : quêtes, PNJ donneurs et adversaires, intérieurs, repères de niveau.
+
+**Contrôles** : test `world_gen_tests` « cellules et lieux v1.0.91 » (57 cases générées et terrestres, aucune isolée ;
+Voidmark atteint à pied depuis Durnhalde, la Marche et la côte depuis Grakhul ; 5 villes jouables ; 7 routes du
+générateur et 16 cases des 5 tracés du lore dans des cases jouables ; 52 lieux au sec, seuls sur leur case ; aucun POI
+sur les cases des villes ; S008_E020 et S008_E021 fermées). Le test « lieux v1.0.89 » compte désormais 21 cases
+jouables dans la boîte du Royaume des nains de l'est (14 + 7). Génération de cases avec le générateur sans erreur.
+**Services** : 1242 PNJ (inchangé).
+
+**Points incertains** : tous les noms `[GD]` ; repère 24-30 de la côte orientale ; marge d'une case (dont la rangée
+N009 et les forêts N006-N007 × E017-E018) ; quêtes ouvertes à toutes les factions ; Voidmark, ville de la Lune
+Noire au cœur du royaume nain, comme suite du départ nain.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2550,8 +2685,9 @@ future des régions dans le master ; niveau des abords des Portes des enfers du 
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
-- Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rivercross, Riverfold, Greyfield et Dustfield, Via Magna non tracée par le générateur entre Shadehold, Horkher et Nightfield (16.17).
-- Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18).
+- Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rivercross, Riverfold, Greyfield et Dustfield (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shadehold, Horkher et Nightfield (16.17).
+- Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18 ; route Eisenkehl – Voidmark ouverte en v1.0.91).
+- Ouverture d'Eisenkehl – Voidmark et des routes de la Marche (v1.0.91) : noms [GD] des 52 lieux et 3 quêtes, repère 24-30 de la côte orientale, marge et trous intérieurs, routes encore coupées vers Darkwater, Shadowfen, Ironbrook, Hillwatch et Farwatch (16.20).
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Southport, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).

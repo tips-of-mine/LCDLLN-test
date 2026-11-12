@@ -14,7 +14,7 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Verdansur sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Verdansur en N010_W014), qui relient a pied Verdansur et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, riviere nord de Verdansur), traversees par la route Syzygie - Verdansur du generateur : la route est entierement dans des cellules generees et Trueford (route Verdansur - Trueford) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nightfield N002_E015, Blackmoor N004_E018, Ebonvale N005_E020, Duskmere N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shadehold a Moork par Horkher et Nightfield), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Leviathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Oathford-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Oathford (Wardholt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Silverglade (Greenbough) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Greyhedge (N001_W008) et Silverglade, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Silverglade en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazelgate N007_E002, Fellwatch N009_W001, Hollowgate S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Greyhedge), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bridlecrag (S004_W006) et Cragfold (S004_W002), hameaux de la region de depart de Wyrmhallow (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bridlecrag en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Verdansur sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Verdansur en N010_W014), qui relient a pied Verdansur et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Trueford, riviere nord de Verdansur), traversees par la route Syzygie - Verdansur du generateur : la route est entierement dans des cellules generees et Trueford (route Verdansur - Trueford) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nightfield N002_E015, Blackmoor N004_E018, Ebonvale N005_E020, Duskmere N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shadehold a Moork par Horkher et Nightfield), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Eisenkehl - Voidmark (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebonvale - Rivercross, Ebonvale - Riverfold, Ebonvale - Greyfield, Duskmere - Dustfield) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Voidmark S009_E020, Rivercross N008_E018, Riverfold N006_E023, Greyfield N003_E023, Dustfield S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
@@ -52,7 +52,14 @@
     "N005_E016", "N005_E017", "N005_E018", "N005_E019", "N005_E020", "N004_E012", "N004_E013", "N004_E014", "N004_E015",
     "N004_E016", "N004_E017", "N004_E018", "N004_E019", "N004_E020", "N003_E013", "N003_E014", "N003_E015", "N003_E016",
     "N003_E017", "N003_E018", "N003_E019", "N003_E020", "N002_E013", "N002_E014", "N002_E015", "N002_E016", "N002_E019",
-    "N002_E020", "N001_E012", "N001_E015", "N001_E019", "N001_E020", "N000_E015", "N000_E019", "N000_E020", "S001_E015"
+    "N002_E020", "N001_E012", "N001_E015", "N001_E019", "N001_E020", "N000_E015", "N000_E019", "N000_E020", "S001_E015",
+    "N009_E017", "N009_E018", "N009_E019", "N008_E017", "N008_E018", "N008_E019", "N007_E017", "N007_E018", "N007_E019",
+    "N007_E020", "N007_E021", "N007_E022", "N007_E023", "N007_E024", "N006_E017", "N006_E018", "N006_E021", "N006_E022",
+    "N006_E023", "N006_E024", "N005_E021", "N005_E022", "N005_E023", "N005_E024", "N004_E021", "N004_E022", "N004_E023",
+    "N004_E024", "N003_E021", "N003_E022", "N003_E023", "N003_E024", "N002_E021", "N002_E022", "N002_E023", "N002_E024",
+    "N001_E021", "N001_E022", "N001_E023", "N001_E024", "N000_E021", "N000_E022", "N000_E023", "N000_E024", "S001_E022",
+    "S001_E023", "S001_E024", "S002_E022", "S002_E023", "S002_E024", "S008_E019", "S009_E019", "S009_E020", "S009_E021",
+    "S010_E019", "S010_E020", "S010_E021"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -3280,6 +3287,474 @@
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Camp de nomades venus du désert de la baronnie, qui commercent avec Duskmere et guident les voyageurs dans les sables. Niveaux 26-28. [GD v1.0.88, lieu_camp_des_nomades]."
+    },
+    {
+      "id": "poi_halte_des_muletiers_du_col",
+      "name": "Halte des muletiers du col",
+      "cell": "S008_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Halte des muletiers nains qui font passer le minerai d'Eisenkehl par le col vers Voidmark ; des ours descendent des pentes rôder autour des bêtes de somme. Niveaux 10-13. [GD v1.0.91, lieu_halte_des_muletiers_du_col]."
+    },
+    {
+      "id": "poi_borne_frontiere_renversee",
+      "name": "Borne-frontière renversée",
+      "cell": "S009_E019",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Borne qui marquait la limite des terres des clans nains et de Voidmark ; les gens de la Lune Noire l'ont renversée et marquée de leur croissant. Les nains d'Eisenkehl jurent de la relever. Niveaux 12-15. [GD v1.0.91, lieu_borne_frontiere_renversee]."
+    },
+    {
+      "id": "poi_carriere_des_forcats",
+      "name": "Carrière des forçats",
+      "cell": "S009_E021",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Carrière où Voidmark fait extraire sa pierre de taille (économie v1.0.58) par des forçats sous la garde de la Lune Noire ; des serpents nichent dans les blocs abandonnés. Niveaux 14-18. [GD v1.0.91, lieu_carriere_des_forcats]."
+    },
+    {
+      "id": "poi_ferme_des_chevriers_nains",
+      "name": "Ferme des chevriers nains",
+      "cell": "S010_E019",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ferme d'une famille naine qui élève des chèvres au pied des montagnes, à l'ouest de Voidmark ; elle paie tribut à la Lune Noire et cache des fugitifs d'Eisenkehl. Niveaux 15-18. [GD v1.0.91, lieu_ferme_des_chevriers_nains]."
+    },
+    {
+      "id": "poi_corps_de_garde_de_la_route_du_sud",
+      "name": "Corps de garde de la route du sud",
+      "cell": "S010_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Corps de garde de la Lune Noire sur la route qui descend de Voidmark vers Darkwater : on y fouille les convois nains et on y lève l'octroi. Niveaux 16-20. [GD v1.0.91, lieu_corps_de_garde_de_la_route_du_sud]."
+    },
+    {
+      "id": "poi_puits_de_mine_inonde",
+      "name": "Puits de mine inondé",
+      "cell": "S010_E021",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ancien puits de mine de Voidmark noyé par une source ; les galeries hautes servent de repaire à des pillards et à des bêtes. Niveaux 17-20. [GD v1.0.91, lieu_puits_de_mine_inonde]."
+    },
+    {
+      "id": "poi_cairn_des_voyageurs",
+      "name": "Cairn des voyageurs",
+      "cell": "N009_E017",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Cairn où les voyageurs qui quittent Rivercross vers le nord ajoutent une pierre pour un retour sans encombre. Niveaux 22-24. [GD v1.0.91, lieu_cairn_des_voyageurs]."
+    },
+    {
+      "id": "poi_ferme_abandonnee_du_nord",
+      "name": "Ferme abandonnée du nord",
+      "cell": "N009_E018",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ferme du nord de Rivercross abandonnée après les razzias venues de la frontière ; des maraudeurs y passent la nuit. Niveaux 22-26. [GD v1.0.91, lieu_ferme_abandonnee_du_nord]."
+    },
+    {
+      "id": "poi_camp_des_chasseurs_de_loups",
+      "name": "Camp des chasseurs de loups",
+      "cell": "N009_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Camp de chasseurs payés par Rivercross pour chaque tête de loup géant de guerre échappé des camps orques. Niveaux 22-26. [GD v1.0.91, lieu_camp_des_chasseurs_de_loups]."
+    },
+    {
+      "id": "poi_chantier_de_flottage",
+      "name": "Chantier de flottage",
+      "cell": "N008_E017",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Chantier où les bûcherons de Rivercross font glisser les troncs de la forêt vers la rivière pour les mener en aval (bois d'œuvre, économie v1.0.58). Niveaux 22-26. [GD v1.0.91, lieu_chantier_de_flottage]."
+    },
+    {
+      "id": "poi_relais_de_la_route_du_nord",
+      "name": "Relais de la route du nord",
+      "cell": "N008_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Relais sur la route d'Ebonvale à Rivercross, où les patrouilles de la Lune Noire contrôlent voyageurs et marchands. Niveaux 22-26. [GD v1.0.91, lieu_relais_de_la_route_du_nord]."
+    },
+    {
+      "id": "poi_chene_aux_pendus",
+      "name": "Chêne aux pendus",
+      "cell": "N007_E017",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Vieux chêne où la Lune Noire pend déserteurs et braconniers pour l'exemple ; les gens du pays évitent la clairière à la nuit tombée. Niveaux 24-28. [GD v1.0.91, lieu_chene_aux_pendus]."
+    },
+    {
+      "id": "poi_repaire_de_l_ogre_de_la_foret",
+      "name": "Repaire de l'ogre de la forêt",
+      "cell": "N007_E018",
+      "kind": "salle",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Repaire d'un ogre qui chasse dans la forêt au sud de Rivercross et enlève le bétail des fermes. Niveaux 25-28. [GD v1.0.91, lieu_repaire_de_l_ogre_de_la_foret]."
+    },
+    {
+      "id": "poi_bac_du_passeur",
+      "name": "Bac du passeur",
+      "cell": "N007_E019",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Bac qui fait passer la rivière aux voyageurs entre Ebonvale et Rivercross ; le passeur vend ses nouvelles aussi cher que la traversée. Niveaux 22-26. [GD v1.0.91, lieu_bac_du_passeur]."
+    },
+    {
+      "id": "poi_moulin_a_eau_de_la_riviere",
+      "name": "Moulin à eau de la rivière",
+      "cell": "N007_E020",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Moulin à eau sur la rivière de Rivercross (moulins, économie v1.0.58) ; le meunier moud pour Ebonvale et paie la dîme à la Lune Noire. Niveaux 24-28. [GD v1.0.91, lieu_moulin_a_eau_de_la_riviere]."
+    },
+    {
+      "id": "poi_pavillon_de_chasse_imperial",
+      "name": "Pavillon de chasse impérial",
+      "cell": "N006_E017",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Pavillon de chasse d'un seigneur impérial de la Marche, abandonné depuis la conquête par la Lune Noire [BD-A5] ; des bêtes y ont fait leur gîte. Niveaux 24-28. [GD v1.0.91, lieu_pavillon_de_chasse_imperial]."
+    },
+    {
+      "id": "poi_camp_des_deserteurs",
+      "name": "Camp des déserteurs",
+      "cell": "N006_E018",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Camp caché au cœur de la forêt du nord, où des déserteurs de la Lune Noire vivent de chasse et de rapines ; les loups géants rôdent alentour. Niveaux 26-28. [GD v1.0.91, lieu_camp_des_deserteurs]."
+    },
+    {
+      "id": "poi_pont_effondre",
+      "name": "Pont effondré",
+      "cell": "N007_E021",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Pont impérial sur la rivière, effondré faute d'entretien ; on passe désormais à gué, au risque des crues et des brigands. Niveaux 24-28. [GD v1.0.91, lieu_pont_effondre]."
+    },
+    {
+      "id": "poi_paturages_de_la_cote",
+      "name": "Pâturages de la côte",
+      "cell": "N007_E022",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 3000,
+      "description": "Pâturages qui nourrissent Riverfold ; les bergers y repoussent loups et voleurs de bétail. Niveaux 24-28. [GD v1.0.91, lieu_paturages_de_la_cote]."
+    },
+    {
+      "id": "poi_tour_de_guet_cotiere",
+      "name": "Tour de guet côtière",
+      "cell": "N007_E023",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tour qui guettait les navires au nord de Riverfold, abandonnée ; des pillards l'utilisent pour repérer les jonques du levant. Niveaux 26-30. [GD v1.0.91, lieu_tour_de_guet_cotiere]."
+    },
+    {
+      "id": "poi_epave_echouee",
+      "name": "Épave échouée",
+      "cell": "N007_E024",
+      "kind": "ruine",
+      "offset_x_m": -3000,
+      "offset_z_m": 3000,
+      "description": "Épave d'un navire de commerce venu du levant (v1.0.82), drossé à la côte au nord de Riverfold ; naufrageurs et charognards se disputent sa cargaison. Niveaux 26-30. [GD v1.0.91, lieu_epave_echouee]."
+    },
+    {
+      "id": "poi_relais_de_la_route_de_riverfold",
+      "name": "Relais de la route de Riverfold",
+      "cell": "N006_E021",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": 0,
+      "description": "Relais sur la route qui mène d'Ebonvale au port de Riverfold ; les charretiers y attendent les convois du levant. Niveaux 24-28. [GD v1.0.91, lieu_relais_de_la_route_de_riverfold]."
+    },
+    {
+      "id": "poi_caravanserail_des_marchands",
+      "name": "Caravansérail des marchands",
+      "cell": "N006_E022",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 1500,
+      "description": "Caravansérail où les marchands des peuples lointains (v1.0.82) entreposent leurs marchandises avant de les mener vers la Marche ; il attire voleurs et collecteurs de la Lune Noire. Niveaux 25-29. [GD v1.0.91, lieu_caravanserail_des_marchands]."
+    },
+    {
+      "id": "poi_marais_salants",
+      "name": "Marais salants",
+      "cell": "N006_E024",
+      "kind": "camp",
+      "offset_x_m": 1500,
+      "offset_z_m": 3000,
+      "description": "Marais salants au sud de Riverfold : le sel part avec le poisson salé ; des contrebandiers y cachent leurs barques. Niveaux 26-30. [GD v1.0.91, lieu_marais_salants]."
+    },
+    {
+      "id": "poi_ferme_des_colons",
+      "name": "Ferme des colons",
+      "cell": "N005_E021",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ferme de colons venus de l'Empire avant la conquête de la Marche ; ils tiennent bon entre la Lune Noire et les brigands. Niveaux 24-28. [GD v1.0.91, lieu_ferme_des_colons]."
+    },
+    {
+      "id": "poi_oratoire_des_voyageurs",
+      "name": "Oratoire des voyageurs",
+      "cell": "N005_E022",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": -3000,
+      "description": "Oratoire au bord de la route de Riverfold où marins et charretiers laissent des ex-voto ; on le dit hanté depuis qu'un convoi y a été massacré. Niveaux 24-28. [GD v1.0.91, lieu_oratoire_des_voyageurs]."
+    },
+    {
+      "id": "poi_chemin_de_halage",
+      "name": "Chemin de halage",
+      "cell": "N005_E023",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Chemin de halage où l'on remonte à la corde les barges de Riverfold ; les haleurs se louent aussi comme gros bras. Niveaux 26-30. [GD v1.0.91, lieu_chemin_de_halage]."
+    },
+    {
+      "id": "poi_cimetiere_des_marins",
+      "name": "Cimetière des marins",
+      "cell": "N005_E024",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Cimetière des marins noyés au large de Riverfold ; les nuits de tempête, des noyés en remontent. Niveaux 26-30. [GD v1.0.91, lieu_cimetiere_des_marins]."
+    },
+    {
+      "id": "poi_gibet_du_carrefour",
+      "name": "Gibet du carrefour",
+      "cell": "N004_E021",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Gibet dressé au carrefour des routes de Riverfold et de Greyfield, où la Lune Noire expose les brigands pris sur la route. Niveaux 24-28. [GD v1.0.91, lieu_gibet_du_carrefour]."
+    },
+    {
+      "id": "poi_prairie_des_chevaux_sauvages",
+      "name": "Prairie des chevaux sauvages",
+      "cell": "N004_E022",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Prairie où paissent des chevaux sauvages que les dresseurs de la côte capturent pour les haras de la Lune Noire. Niveaux 24-28. [GD v1.0.91, lieu_prairie_des_chevaux_sauvages]."
+    },
+    {
+      "id": "poi_grange_aux_dimes",
+      "name": "Grange aux dîmes",
+      "cell": "N004_E023",
+      "kind": "ruine",
+      "offset_x_m": -3000,
+      "offset_z_m": 0,
+      "description": "Grange où l'on stockait la dîme de la côte, pillée et vide ; ses registres disent qui doit encore quoi à la Lune Noire. Niveaux 25-29. [GD v1.0.91, lieu_grange_aux_dimes]."
+    },
+    {
+      "id": "poi_pecherie_de_la_cote",
+      "name": "Pêcherie de la côte",
+      "cell": "N004_E024",
+      "kind": "camp",
+      "offset_x_m": -3000,
+      "offset_z_m": 0,
+      "description": "Pêcherie de la côte orientale qui fournit le poisson salé de Greyfield et de Riverfold ; des créatures de la mer y montent les nuits de brume. Niveaux 26-30. [GD v1.0.91, lieu_pecherie_de_la_cote]."
+    },
+    {
+      "id": "poi_hutte_de_la_rebouteuse",
+      "name": "Hutte de la rebouteuse",
+      "cell": "N003_E021",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Hutte d'une rebouteuse de la lisière, qui soigne bêtes et gens contre des simples ou des services ; la Lune Noire la soupçonne d'aider les réfugiés. Niveaux 24-28. [GD v1.0.91, lieu_hutte_de_la_rebouteuse]."
+    },
+    {
+      "id": "poi_repaire_des_coupe_jarrets",
+      "name": "Repaire des coupe-jarrets",
+      "cell": "N003_E022",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Repaire de brigands sur la route d'Ebonvale à Greyfield, qui coupent le chemin d'un arbre abattu pour détrousser les voyageurs. Niveaux 24-28. [GD v1.0.91, lieu_repaire_des_coupe_jarrets]."
+    },
+    {
+      "id": "poi_dolmen_de_la_cote",
+      "name": "Dolmen de la côte",
+      "cell": "N003_E024",
+      "kind": "monolithe",
+      "offset_x_m": -1500,
+      "offset_z_m": 0,
+      "description": "Dolmen très ancien au-dessus de la mer, plus vieux que l'Empire ; les pêcheurs de Greyfield y laissent des offrandes avant les grandes sorties. Niveaux 26-30. [GD v1.0.91, lieu_dolmen_de_la_cote]."
+    },
+    {
+      "id": "poi_ossuaire_du_geant",
+      "name": "Ossuaire du géant",
+      "cell": "N002_E021",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Ossements d'un géant tué jadis quand l'Empire repoussa les géants vers le nord et l'est [HS] ; les gens de la côte en ont fait un lieu de crainte et d'offrandes. Niveaux 26-30. [GD v1.0.91, lieu_ossuaire_du_geant]."
+    },
+    {
+      "id": "poi_rucher_de_la_foret",
+      "name": "Rucher de la forêt",
+      "cell": "N002_E022",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Rucher d'un apiculteur de Greyfield en pleine forêt ; le miel et la cire partent vers Riverfold, et les ours ne laissent pas le rucher en paix. Niveaux 26-30. [GD v1.0.91, lieu_rucher_de_la_foret]."
+    },
+    {
+      "id": "poi_menhirs_des_geants",
+      "name": "Menhirs des géants",
+      "cell": "N002_E023",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Menhirs démesurés que la tradition attribue aux géants d'avant leur retraite vers le nord [HS] ; on y entend parfois des chants graves. Niveaux 26-30. [GD v1.0.91, lieu_menhirs_des_geants]."
+    },
+    {
+      "id": "poi_cabanes_de_pecheurs_abandonnees",
+      "name": "Cabanes de pêcheurs abandonnées",
+      "cell": "N002_E024",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Cabanes de pêcheurs désertées après une razzia venue de la mer ; des naufrageurs y allument de faux feux. Niveaux 26-30. [GD v1.0.91, lieu_cabanes_de_pecheurs_abandonnees]."
+    },
+    {
+      "id": "poi_source_sacree_de_la_foret",
+      "name": "Source sacrée de la forêt",
+      "cell": "N001_E021",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Source à laquelle les gens de Duskmere et de la côte prêtent des vertus de guérison ; des orcs viennent y boire et ne tolèrent personne. Niveaux 24-28. [GD v1.0.91, lieu_source_sacree_de_la_foret]."
+    },
+    {
+      "id": "poi_fosse_a_loups",
+      "name": "Fosse à loups",
+      "cell": "N001_E022",
+      "kind": "gouffre",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Fosse piégée creusée par les chasseurs de la côte ; des voyageurs y sont tombés autant que des loups. Niveaux 24-28. [GD v1.0.91, lieu_fosse_a_loups]."
+    },
+    {
+      "id": "poi_ferme_fortifiee_de_la_cote",
+      "name": "Ferme fortifiée de la côte",
+      "cell": "N001_E023",
+      "kind": "elevage",
+      "offset_x_m": -3000,
+      "offset_z_m": 0,
+      "description": "Ferme fortifiée entre Greyfield et Dustfield, qui rentre son bétail derrière ses murs chaque nuit à cause des pillards. Niveaux 26-30. [GD v1.0.91, lieu_ferme_fortifiee_de_la_cote]."
+    },
+    {
+      "id": "poi_anse_des_naufrageurs",
+      "name": "Anse des naufrageurs",
+      "cell": "N001_E024",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Anse où des naufrageurs allument de faux feux pour attirer les navires sur les récifs. Niveaux 26-30. [GD v1.0.91, lieu_anse_des_naufrageurs]."
+    },
+    {
+      "id": "poi_puits_de_la_piste",
+      "name": "Puits de la piste",
+      "cell": "N000_E021",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Puits sur la piste de Duskmere à Dustfield, seul point d'eau sûr des terres arides ; on s'y bat parfois pour l'eau. Niveaux 24-28. [GD v1.0.91, lieu_puits_de_la_piste]."
+    },
+    {
+      "id": "poi_bergerie_des_chevriers",
+      "name": "Bergerie des chevriers",
+      "cell": "N000_E022",
+      "kind": "elevage",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Bergerie des chevriers de Dustfield (chèvres, économie v1.0.58), sur la piste qui monte vers Duskmere ; les orcs y prélèvent leur part. Niveaux 25-29. [GD v1.0.91, lieu_bergerie_des_chevriers]."
+    },
+    {
+      "id": "poi_rocher_des_vautours",
+      "name": "Rocher des vautours",
+      "cell": "N000_E023",
+      "kind": "monolithe",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Rocher isolé des terres arides où tournent les vautours ; on y abandonne les bêtes mortes, et parfois pire. Niveaux 26-30. [GD v1.0.91, lieu_rocher_des_vautours]."
+    },
+    {
+      "id": "poi_fortin_cotier_abandonne",
+      "name": "Fortin côtier abandonné",
+      "cell": "N000_E024",
+      "kind": "ruine",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Fortin impérial qui gardait la côte au nord de Dustfield, abandonné ; des contrebandiers y entreposent leurs marchandises. Niveaux 26-30. [GD v1.0.91, lieu_fortin_cotier_abandonne]."
+    },
+    {
+      "id": "poi_carriere_de_la_plaine_aride",
+      "name": "Carrière de la plaine aride",
+      "cell": "S001_E022",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Carrière de pierre de Dustfield (économie v1.0.58) ; ses carriers travaillent sous la menace des pillards du désert. Niveaux 26-30. [GD v1.0.91, lieu_carriere_de_la_plaine_aride]."
+    },
+    {
+      "id": "poi_tour_a_feu_de_la_cote",
+      "name": "Tour à feu de la côte",
+      "cell": "S001_E024",
+      "kind": "ruine",
+      "offset_x_m": -1500,
+      "offset_z_m": 0,
+      "description": "Tour à feu qui guidait les navires vers la côte de Dustfield, éteinte depuis des années ; on dit que les naufrageurs l'ont fait taire. Niveaux 26-30. [GD v1.0.91, lieu_tour_a_feu_de_la_cote]."
+    },
+    {
+      "id": "poi_tombeau_des_sables",
+      "name": "Tombeau des sables",
+      "cell": "S002_E022",
+      "kind": "sanctuaire",
+      "offset_x_m": 0,
+      "offset_z_m": 0,
+      "description": "Tombeau oublié au bord du désert, à demi enseveli par le sable ; ses morts s'en relèvent quand on le profane. Niveaux 27-30. [GD v1.0.91, lieu_tombeau_des_sables]."
+    },
+    {
+      "id": "poi_campement_des_pillards_du_desert",
+      "name": "Campement des pillards du désert",
+      "cell": "S002_E023",
+      "kind": "camp",
+      "offset_x_m": 0,
+      "offset_z_m": -3000,
+      "description": "Campement des pillards qui descendent du désert pour razzier Dustfield et la piste de Duskmere. Niveaux 27-30. [GD v1.0.91, lieu_campement_des_pillards_du_desert]."
+    },
+    {
+      "id": "poi_crique_des_contrebandiers",
+      "name": "Crique des contrebandiers",
+      "cell": "S002_E024",
+      "kind": "camp",
+      "offset_x_m": -1500,
+      "offset_z_m": 0,
+      "description": "Crique où les contrebandiers débarquent les marchandises qui échappent à l'octroi de la Lune Noire. Niveaux 26-30. [GD v1.0.91, lieu_crique_des_contrebandiers]."
     }
   ],
   "imports": {

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.88",
+    "version": "1.0.89",
     "notes": [
+      "v1.0.89 : [GD] Royaume des nains de l'est (lot 17 du propriétaire, 12/11/2026). Aucune case jouable vide : les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville ou un lieu ; aucun lieu ni POI ajouté, aucune case ouverte. 5 quêtes [GD] de départ (niveaux 1 à 7 et plus) reliant Durnhalde, Kohlbrand, Eisenkehl, Ghrunke Dash et les lieux du départ ; niveaux proposés des 5 lieux du départ et gradient de la région, à valider. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.18.",
       "v1.0.88 : [DÉCISION] Ouverture de la Marche de l'Est au jeu (lot 16 du propriétaire, 12/11/2026). 45 cases ajoutées à generated_cells : les 5 villes (Horkher, Nightfield, Blackmoor, Ebonvale, Duskmere) deviennent jouables, avec les routes qui les relient entre elles et au monde déjà jouable (Via Magna de Shadehold à Moork par Horkher et Nightfield, routes de Thokrul, Mossy Rock et Nightward), une case de marge autour des villes et les trous intérieurs. 40 lieux [GD] avec POI réel (un par case vide), repère 15-28 détaillé, 2 quêtes [GD] ; les 3 quêtes v1.0.87 deviennent jouables. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.17.",
       "v1.0.87 : [GD] Lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est (lot 15 du propriétaire, 12/11/2026). Chaque case jouable vide reçoit un lieu [GD] avec POI réel : 6 sur la lisière sud des Terres des Gigantomorphes (autour de l'enclave de Whispers Hill, inchangée), 5 sur la Via Magna (11 lieux) ; la Marche de l'Est n'a aucune case jouable vide (aucun lieu). 10 quêtes [GD] (4 Gigantomorphes, 3 Via Magna, 3 Marche de l'Est). Repères proposés : lisière sud des Gigantomorphes 28-36, gradient de la Via Magna, Marche de l'Est 15-28. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.16.",
       "v1.0.86 : [GD] Lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle (lot 14, priorité 2 validée par le propriétaire le 12/11/2026). Chaque case générée vide des trois régions reçoit un lieu [GD] avec POI réel : 11 en Baronnie de Moork, 15 dans les Terres désolées, 10 dans le Désert de l'Oracle (36 lieux, dont 4 balises : Borne des Monts de Moork, Stèle des Deux Fois Nés, Cairn des Coulées, Cairn des Caravaniers). 14 quêtes [GD] relient les lieux (5 Moork, 5 Tsaroth, 4 Oracle). Fiches de région ajoutées : terres_desolees (20-40 proposé), desert_central (10-25 proposé). Tsaroth reste sans service, sans camp de la Légion ; Moork reste intacte. Registre : 3 entrées. Détail : docs/world/LORE_BD.md, section 16.15.",
@@ -757,7 +758,8 @@
         "[BD] Ne s'entendent pas avec les elfes (conflit ancien — modèle v0.1).",
         "[GD] (v1.0.58) Religion : « Le Métal, le Feu et la Lave » (lore.religions, religion_nains).",
         "[DÉCISION] (v1.0.61) Départ de la faction : hameau dédié Durnhalde (hameau_durnhalde, S007_E017), près de Ghrunke Dash. « Les départs ne sont pas en fonction de la race, mais de la faction. »",
-        "[GD] (v1.0.69) Région de départ 3×3 autour de Durnhalde (LORE_BD §15.6) : hameaux Eisenkehl (mine de fer) et Kohlbrand (houilleurs et fondeurs), Autel des Ancêtres, Galeries effondrées de la Vieille Veine, Puits des Apprentis, Relais des convois de minerai, Camp des prospecteurs ; routes locales vers le voisin le plus proche ; faune de niveau 1 à 10. Rien dans la case de Ghrunke Dash (S007_E016)."
+        "[GD] (v1.0.69) Région de départ 3×3 autour de Durnhalde (LORE_BD §15.6) : hameaux Eisenkehl (mine de fer) et Kohlbrand (houilleurs et fondeurs), Autel des Ancêtres, Galeries effondrées de la Vieille Veine, Puits des Apprentis, Relais des convois de minerai, Camp des prospecteurs ; routes locales vers le voisin le plus proche ; faune de niveau 1 à 10. Rien dans la case de Ghrunke Dash (S007_E016).",
+        "[GD] (v1.0.89) 5 quêtes [GD] de départ autour de Durnhalde (niveaux 1 à 7 et plus) ; gradient proposé du départ (LORE_BD §16.18)."
       ],
       "faction_relations": [],
       "ville_relations": [],
@@ -22827,7 +22829,8 @@
         "[INFÉRÉ] (v1.0.61) Cellule S007_E017 : Montagne du royaume des nains de l'Est à l'est de Ghrunke Dash (S007_E016), hors des zones volcaniques de l'ouest ; cellule déjà jouable.",
         "[GD] (v1.0.61) Population : nains ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Durnhalde, on prévient que la route du nord monte dans les Monts de Moork (S005_E016) : géants bruns (32-44) et dragon noir (45-55) ; la Borne des Monts de Moork en marque l'entrée.",
-        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Durnhalde, on raconte la forge des anciens engloutie par la lave à l'ouest de Ghrunke Dash (S007_E015, 55-62)."
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : à Durnhalde, on raconte la forge des anciens engloutie par la lave à l'ouest de Ghrunke Dash (S007_E015, 55-62).",
+        "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_filon_des_prospecteurs (LORE_BD §16.18)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -24657,7 +24660,8 @@
         "[INFÉRÉ] (v1.0.69) Cellule S008_E018 : Montagne du royaume des nains de l'Est au sud-est de Durnhalde, à l'est de Kohlbrand (S008_E017), hors des cases volcaniques ; case libre. La case à l'est de Durnhalde (S007_E018) rendait inaccessible un lieu procédural (mine) et celle au nord (S006_E017) faisait passer le corridor des départs par S005_E017 (géant brun, dragon noir).",
         "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.69) Économie : mines de fer et de cuivre, minerai brut, étais et outils de mineur ; élevage de mulets de bât et de chèvres ; récolte : minerai, pierre (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.69) Ancrage : Ghrunke Dash « célèbre dans l'Empire pour la qualité de ses métaux » [BD-T3 pl.16] ; forges et acier nain [GD v1.0.58] ; mines d'apprentissage de Durnhalde (v1.0.61) ; le hameau est [GD]."
+        "[GD] (v1.0.69) Ancrage : Ghrunke Dash « célèbre dans l'Empire pour la qualité de ses métaux » [BD-T3 pl.16] ; forges et acier nain [GD v1.0.58] ; mines d'apprentissage de Durnhalde (v1.0.61) ; le hameau est [GD].",
+        "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_vieille_veine (LORE_BD §16.18)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -24794,7 +24798,8 @@
         "[INFÉRÉ] (v1.0.69) Cellule S008_E017 : Montagne du royaume des nains de l'Est au sud de Durnhalde, hors des cases volcaniques ; case libre.",
         "[GD] (v1.0.69) Population : nains, croyances « Le Métal, le Feu et la Lave » (religion_nains) ; services d'un hameau (grille game_design.cities_services).",
         "[GD] (v1.0.69) Économie : charbon de terre et coke, fonte en lingots ; élevage de mulets, d'ânes et de chèvres ; récolte : charbon, minerai (déduit du terrain, voir regle_eco_productions_regions).",
-        "[GD] (v1.0.69) Ancrage : Charbon de Ghrunke Dash [BD-T9 p.12] ; forges et acier nain [GD v1.0.58] ; le hameau est [GD]."
+        "[GD] (v1.0.69) Ancrage : Charbon de Ghrunke Dash [BD-T9 p.12] ; forges et acier nain [GD v1.0.58] ; le hameau est [GD].",
+        "[GD] (v1.0.89) Donneur de quête(s) [GD] : quest_nains_est_gd_convoi_de_kohlbrand (LORE_BD §16.18)."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -39107,6 +39112,260 @@
         "[GD] (v1.0.88) Niveau 26 et plus ; cases : N004_E018, N004_E016, N005_E016, N005_E018 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
       ],
       "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_nains_est_gd_premiere_descente",
+      "name": "La Première Descente",
+      "description": "À Durnhalde, chaque jeune nain fait sa première taille au Puits des Apprentis. Cette saison, les niveaux profonds sont envahis de rats et d'araignées et la cage de descente ne remonte plus que des apprentis effrayés.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "royaume_des_nains_de_lest",
+        "depart",
+        "faction_dwarves"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
+      "steps": [
+        "À Durnhalde, recevoir du forgeron un pic d'apprenti et une lampe.",
+        "Descendre par la cage du Puits des Apprentis et tailler un premier bloc de cuivre rouge.",
+        "Nettoyer le niveau inférieur des rats et des araignées.",
+        "Rapporter le cuivre à la forge de Durnhalde."
+      ],
+      "source_lore": [
+        "hameau_durnhalde",
+        "lieu_puits_des_apprentis",
+        "animal_rat",
+        "animal_araignee"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 1
+        }
+      ],
+      "region_id": "royaume_des_nains_de_lest",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.89) Quête proposée, nom et étapes à valider ; lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18.",
+        "[GD] (v1.0.89) Niveau 1 et plus ; cases : S007_E017, S006_E017 (toutes générées, région de départ de Durnhalde). Pensée pour le départ des Nains (faction_dwarves, 1-10) ; ouverte aux autres factions (niveau relatif à la faction ; à valider)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_nains_est_gd_premier_outil",
+      "name": "Le Premier Outil",
+      "description": "Le cuivre de la première taille devient le premier outil du jeune nain. La coutume veut qu'il le dépose à l'Autel des Ancêtres et frappe le sol de son marteau avant de redescendre à la mine.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "royaume_des_nains_de_lest",
+        "depart",
+        "faction_dwarves"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
+      "steps": [
+        "À la forge de Durnhalde, forger son premier outil avec le cuivre du Puits des Apprentis.",
+        "Monter à l'Autel des Ancêtres par le sentier de la falaise, en chassant les corbeaux qui pillent les offrandes.",
+        "Ranimer les braises de la vasque, déposer l'outil et frapper le sol de son marteau.",
+        "Redescendre à Durnhalde : on n'y parle plus de vous comme d'un apprenti."
+      ],
+      "source_lore": [
+        "hameau_durnhalde",
+        "lieu_autel_des_ancetres",
+        "animal_corbeau"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 2
+        }
+      ],
+      "region_id": "royaume_des_nains_de_lest",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.89) Quête proposée, nom et étapes à valider ; lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18.",
+        "[GD] (v1.0.89) Niveau 2 et plus ; cases : S007_E017, S006_E016 (toutes générées, région de départ de Durnhalde). Pensée pour le départ des Nains (faction_dwarves, 1-10) ; ouverte aux autres factions (niveau relatif à la faction ; à valider)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_nains_est_gd_convoi_de_kohlbrand",
+      "name": "Le Convoi de Kohlbrand",
+      "description": "Les houilleurs de Kohlbrand doivent livrer leur charbon et leurs lingots de fonte aux forges de Ghrunke Dash, mais les mulets du convoi se sont dispersés dans la montagne.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "royaume_des_nains_de_lest",
+        "depart",
+        "faction_dwarves"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
+      "steps": [
+        "À Kohlbrand, prendre la charge du convoi auprès des houilleurs.",
+        "Rassembler les mulets dispersés autour du hameau.",
+        "Au Relais des convois de minerai, faire peser la charge et rejoindre l'escorte des mercenaires nains.",
+        "Livrer le charbon et la fonte aux forges de Ghrunke Dash."
+      ],
+      "source_lore": [
+        "hamlet_kohlbrand",
+        "lieu_relais_des_convois",
+        "ville_ghrunke_dash",
+        "animal_mulet"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 3
+        }
+      ],
+      "region_id": "royaume_des_nains_de_lest",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.89) Quête proposée, nom et étapes à valider ; lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18.",
+        "[GD] (v1.0.89) Niveau 3 et plus ; cases : S008_E017, S008_E016, S007_E016 (toutes générées, région de départ de Durnhalde). Pensée pour le départ des Nains (faction_dwarves, 1-10) ; ouverte aux autres factions (niveau relatif à la faction ; à valider)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_nains_est_gd_vieille_veine",
+      "name": "La Vieille Veine",
+      "description": "Les mineurs d'Eisenkehl manquent d'étais et d'outils. Les Galeries effondrées de la Vieille Veine en sont pleines, mais les araignées en tiennent les boyaux.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "royaume_des_nains_de_lest",
+        "depart",
+        "faction_dwarves"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
+      "steps": [
+        "À Eisenkehl, écouter le chef des mineurs.",
+        "Entrer dans les Galeries effondrées de la Vieille Veine et brûler les nids d'araignées.",
+        "Récupérer les étais encore sains et les outils abandonnés.",
+        "Rapporter le tout à Eisenkehl avant le prochain éboulement."
+      ],
+      "source_lore": [
+        "hamlet_eisenkehl",
+        "lieu_galeries_effondrees_vieille_veine",
+        "animal_araignee",
+        "animal_rat"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 5
+        }
+      ],
+      "region_id": "royaume_des_nains_de_lest",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.89) Quête proposée, nom et étapes à valider ; lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18.",
+        "[GD] (v1.0.89) Niveau 5 et plus ; cases : S008_E018, S006_E018 (toutes générées, région de départ de Durnhalde). Pensée pour le départ des Nains (faction_dwarves, 1-10) ; ouverte aux autres factions (niveau relatif à la faction ; à valider)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": false
+    },
+    {
+      "id": "quest_nains_est_gd_filon_des_prospecteurs",
+      "name": "Le Filon des prospecteurs",
+      "description": "Les prospecteurs du camp à l'est de Durnhalde croient avoir trouvé une nouvelle veine de gemmes. Il faut leur porter des vivres, puis faire estimer leurs échantillons à Ghrunke Dash, où l'on paie en gemmes.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "royaume_des_nains_de_lest",
+        "depart",
+        "faction_dwarves"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de départ (Royaume des nains de l'est, v1.0.89)",
+      "steps": [
+        "À Durnhalde, charger un mulet de vivres pour les prospecteurs.",
+        "Au Camp des prospecteurs, chasser les vautours des déblais et remettre les vivres.",
+        "Recevoir le sac d'échantillons et le porter par la route de Durnhalde.",
+        "À Ghrunke Dash, faire estimer les gemmes et rapporter le prix au camp."
+      ],
+      "source_lore": [
+        "hameau_durnhalde",
+        "lieu_camp_des_prospecteurs",
+        "ville_ghrunke_dash",
+        "animal_vautour"
+      ],
+      "rewards": {
+        "xp_weight": "quete_secondaire"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 7
+        }
+      ],
+      "region_id": "royaume_des_nains_de_lest",
+      "counter_quest_id": "",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.89) Quête proposée, nom et étapes à valider ; lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18.",
+        "[GD] (v1.0.89) Niveau 7 et plus ; cases : S007_E017, S007_E018, S007_E016 (toutes générées, région de départ de Durnhalde). Pensée pour le départ des Nains (faction_dwarves, 1-10) ; ouverte aux autres factions (niveau relatif à la faction ; à valider)."
+      ],
+      "quest_kind": "solo",
       "has_counter_quest": false
     }
   ],
@@ -172021,7 +172280,8 @@
       "name": "Royaume des nains de l'est",
       "description": "",
       "notes": [
-        "[GD] (v1.0.58) Économie : ressources minerai de fer et de cuivre, charbon, gemmes, pierre ; productions acier nain, armes et armures, chars blindés et machines de guerre ; exporte acier nain, armes et armures, machines (sur commande) ; importe vivres, bois, bière. Détail et sources : regle_eco_productions_regions."
+        "[GD] (v1.0.58) Économie : ressources minerai de fer et de cuivre, charbon, gemmes, pierre ; productions acier nain, armes et armures, chars blindés et machines de guerre ; exporte acier nain, armes et armures, machines (sur commande) ; importe vivres, bois, bière. Détail et sources : regle_eco_productions_regions.",
+        "[GD] (v1.0.89) lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18 : aucune case jouable vide — les 9 cases générées de la région (départ 3×3 de Durnhalde) portent déjà une ville, un hameau ou un lieu (v1.0.69) ; aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] relient les hameaux, Ghrunke Dash et les lieux du départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient de niveau proposé, à valider (niveau relatif à la faction, rule_niveaux_par_faction) : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Voidmark et routes d'Eisenkehl, Darkwater et Shadowfen 10-20, montagnes de l'est vers Ironbrook et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70)."
       ]
     },
     {
@@ -230552,7 +230812,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -233017,6 +233277,13 @@
           "nom": "Ouverture de la Marche de l'Est",
           "decision": "Décision du propriétaire (12/11/2026) : la Marche de l'Est est ouverte au jeu. 45 cases ajoutées à generated_cells (villes Horkher, Nightfield, Blackmoor, Ebonvale et Duskmere ; routes entre elles et vers Shadehold, Nightward, Moork, Thokrul et Mossy Rock ; marge d'une case autour des villes ; trous intérieurs), toutes reliées aux cases déjà générées. 40 lieux [GD] (un par case vide), 2 quêtes [GD] (quest_marche_est_gd_peage_de_la_via_magna, quest_marche_est_gd_trolls_de_la_foret) ; les 3 quêtes v1.0.87 deviennent jouables. Repère 15-28 (LORE_BD §16.17).",
           "version": "1.0.88"
+        },
+        {
+          "collection": "regions",
+          "id": "royaume_des_nains_de_lest",
+          "nom": "Royaume des nains de l'est",
+          "decision": "Lot 17 : aucune case jouable vide (les 9 cases générées, départ 3×3 de Durnhalde, sont toutes occupées) : aucun lieu ajouté, aucune case ouverte. 5 quêtes [GD] de départ (quest_nains_est_gd_premiere_descente, quest_nains_est_gd_premier_outil, quest_nains_est_gd_convoi_de_kohlbrand, quest_nains_est_gd_vieille_veine, quest_nains_est_gd_filon_des_prospecteurs). Gradient proposé, à valider : départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Voidmark et routes d'Eisenkehl, Darkwater et Shadowfen 10-20, montagnes de l'est vers Ironbrook et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70) (LORE_BD §16.18).",
+          "version": "1.0.89"
         }
       ]
     },
@@ -237287,7 +237554,8 @@
         "[DÉCISION] (v1.0.85) Poche de bas niveau (lot 13, correction validée par le propriétaire le 12/11/2026 ; LORE_BD §16.14) : les « Terres du Nord » du repère 1-15 sont region_terres_nord_t00 : cases N011_E008 et N012_E008, enclave dans les Terres des Gigantomorphes (30-56), sorties balisées.",
         "[GD] (v1.0.86) Repères proposés, à valider (lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15) : Terres désolées de Tsaroth (terres_desolees) 20-40 en surface, nécropole de Der Hem Shelbem 40-56 et cases volcaniques 55-70 balisées ; Désert de l'Oracle (desert_central) 10-25, grotte du premier-né (N002_E004) balisée ; Baronnie de Moork inchangée (18-45 : plaines 18-26, piste du sel 20-30, route de Ghrunke Dash 26-36, monts 32-55 balisés).",
         "[GD] (v1.0.87) Repères proposés, à valider (lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16) : Terres des Gigantomorphes, lisière sud autour de Whispers Hill 28-36 (chaîne de Mordrek et centre 35-50, extrême nord 45-56) ; Via Magna 10-30 détaillée (désert au nord de Sauken Glude 14-20, abords de Garundel 16-22, Harrowdale – Shadehold 18-26) ; Marche de l'Est (hors baronnie) 15-28.",
-        "[GD] (v1.0.88) Marche de l'Est ouverte au jeu (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : repère 15-28 détaillé, à valider : abords d'Horkher et de la Via Magna 15-22, Nightfield et la route de Moork 20-26, forêt de Blackmoor et confins d'Ebonvale et de Duskmere 22-28."
+        "[GD] (v1.0.88) Marche de l'Est ouverte au jeu (lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17) : repère 15-28 détaillé, à valider : abords d'Horkher et de la Via Magna 15-22, Nightfield et la route de Moork 20-26, forêt de Blackmoor et confins d'Ebonvale et de Duskmere 22-28.",
+        "[GD] (v1.0.89) Repère proposé, à valider (lot 17 du propriétaire (12/11/2026) ; LORE_BD §16.18) : Royaume des nains de l'est — départ de Durnhalde 1-10 (S006-S008 × E016-E018), détaillé : Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4, Kohlbrand et Relais des convois de minerai 3-6, Eisenkehl et Galeries effondrées de la Vieille Veine 5-8, Camp des prospecteurs 7-10 ; au-delà (cases non générées) : abords de Voidmark et routes d'Eisenkehl, Darkwater et Shadowfen 10-20, montagnes de l'est vers Ironbrook et sud de la région 18-30 ; zones plus fortes déjà balisées en v1.0.86 (Monts de Moork au nord 32-55, coulées et volcan à l'ouest 55-70)."
       ]
     },
     {
@@ -246307,7 +246575,7 @@
       "ambiance": {
         "atmosphere": "",
         "sentiment": "",
-        "niveau_menace": ""
+        "niveau_menace": "1-4"
       },
       "ciel_climat": {
         "ciel": "",
@@ -246333,7 +246601,8 @@
       "notes": [
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Niche taillée dans la falaise entre Ghrunke Dash et Durnhalde, aux visages des ancêtres des clans : les jeunes nains y déposent le premier outil qu'ils ont forgé et frappent le sol de leur marteau avant de descendre à la mine. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Rythme des marteaux et origine « du métal, du feu et de la lave » [BD-T14 p.39] ; forge comme prière et marque du clan [GD v1.0.58, religion_nains]. L'autel et le culte des ancêtres sont [GD].",
-        "[INFÉRÉ] (v1.0.69) Cellule S006_E016 : Montagne au nord de Ghrunke Dash (S007_E016) et au nord-ouest de Durnhalde, hors de la case de Ghrunke Dash ; case libre."
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E016 : Montagne au nord de Ghrunke Dash (S007_E016) et au nord-ouest de Durnhalde, hors de la case de Ghrunke Dash ; case libre.",
+        "[GD] (v1.0.89) Niveau proposé 1-4 dans le départ 1-10 de Durnhalde, à valider ; quête(s) : quest_nains_est_gd_premier_outil (LORE_BD §16.18)."
       ]
     },
     {
@@ -246389,7 +246658,7 @@
       "ambiance": {
         "atmosphere": "",
         "sentiment": "",
-        "niveau_menace": ""
+        "niveau_menace": "5-8"
       },
       "ciel_climat": {
         "ciel": "",
@@ -246415,7 +246684,8 @@
       "notes": [
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Anciennes galeries d'une veine de fer épuisée, effondrées et abandonnées depuis des générations : rats et araignées ont envahi les boyaux, les apprentis y récupèrent outils et ferraille. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Tunnels nains [BD-T5] ; les galeries et leur effondrement sont [GD] (aucune destruction de l'époque du jeu).",
-        "[INFÉRÉ] (v1.0.69) Cellule S006_E018 : Montagne du royaume des nains de l'Est au nord-est de Durnhalde ; case libre."
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E018 : Montagne du royaume des nains de l'Est au nord-est de Durnhalde ; case libre.",
+        "[GD] (v1.0.89) Niveau proposé 5-8 dans le départ 1-10 de Durnhalde, à valider ; quête(s) : quest_nains_est_gd_vieille_veine (LORE_BD §16.18)."
       ]
     },
     {
@@ -246471,7 +246741,7 @@
       "ambiance": {
         "atmosphere": "",
         "sentiment": "",
-        "niveau_menace": ""
+        "niveau_menace": "1-4"
       },
       "ciel_climat": {
         "ciel": "",
@@ -246497,7 +246767,8 @@
       "notes": [
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Mine de cuivre en activité au nord de Durnhalde, où les apprentis descendent pour leur première taille ; les niveaux profonds, délaissés, grouillent de rats et d'araignées. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Mines d'apprentissage de Durnhalde (v1.0.61) ; métaux de Ghrunke Dash [BD-T3 pl.16]. Le puits est [GD].",
-        "[INFÉRÉ] (v1.0.69) Cellule S006_E017 : Montagne du royaume des nains de l'Est au nord de Durnhalde, en diagonale de Ghrunke Dash ; case libre."
+        "[INFÉRÉ] (v1.0.69) Cellule S006_E017 : Montagne du royaume des nains de l'Est au nord de Durnhalde, en diagonale de Ghrunke Dash ; case libre.",
+        "[GD] (v1.0.89) Niveau proposé 1-4 dans le départ 1-10 de Durnhalde, à valider ; quête(s) : quest_nains_est_gd_premiere_descente (LORE_BD §16.18)."
       ]
     },
     {
@@ -246553,7 +246824,7 @@
       "ambiance": {
         "atmosphere": "",
         "sentiment": "",
-        "niveau_menace": ""
+        "niveau_menace": "3-6"
       },
       "ciel_climat": {
         "ciel": "",
@@ -246579,7 +246850,8 @@
       "notes": [
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Halte des convois de minerai et de charbon au sud de Ghrunke Dash : les chariots y sont pesés et regroupés sous l'escorte de mercenaires nains avant d'entrer dans la cité. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Chars blindés et mercenaires nains vendus à Ghrunke Dash [BD-T3 pl.17-18] ; vente à toutes les nations [BD]. Le relais est [GD].",
-        "[INFÉRÉ] (v1.0.69) Cellule S008_E016 : Montagne au sud de Ghrunke Dash (S007_E016) et au sud-ouest de Durnhalde, hors de la case de Ghrunke Dash et à l'est des cases volcaniques ; case libre."
+        "[INFÉRÉ] (v1.0.69) Cellule S008_E016 : Montagne au sud de Ghrunke Dash (S007_E016) et au sud-ouest de Durnhalde, hors de la case de Ghrunke Dash et à l'est des cases volcaniques ; case libre.",
+        "[GD] (v1.0.89) Niveau proposé 3-6 dans le départ 1-10 de Durnhalde, à valider ; quête(s) : quest_nains_est_gd_convoi_de_kohlbrand (LORE_BD §16.18)."
       ]
     },
     {
@@ -246635,7 +246907,7 @@
       "ambiance": {
         "atmosphere": "",
         "sentiment": "",
-        "niveau_menace": ""
+        "niveau_menace": "7-10"
       },
       "ciel_climat": {
         "ciel": "",
@@ -246661,7 +246933,8 @@
       "notes": [
         "[GD] (v1.0.69) Nom et lieu proposés, à valider par le propriétaire. Camp de prospecteurs nains qui sondent les pentes à la recherche de nouvelles veines ; vautours et corbeaux rôdent sur les déblais. Région de départ de Durnhalde (Nains), niveaux 1 à 10 (LORE_BD §15.6).",
         "[GD] (v1.0.69) Ancrage : Paiement en gemmes à Ghrunke Dash [BD-T3] ; le camp est [GD].",
-        "[INFÉRÉ] (v1.0.69) Cellule S007_E018 : Montagne du royaume des nains de l'Est à l'est de Durnhalde ; case libre."
+        "[INFÉRÉ] (v1.0.69) Cellule S007_E018 : Montagne du royaume des nains de l'Est à l'est de Durnhalde ; case libre.",
+        "[GD] (v1.0.89) Niveau proposé 7-10 dans le départ 1-10 de Durnhalde, à valider ; quête(s) : quest_nains_est_gd_filon_des_prospecteurs (LORE_BD §16.18)."
       ]
     },
     {

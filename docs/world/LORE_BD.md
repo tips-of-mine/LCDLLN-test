@@ -2389,6 +2389,66 @@ intérieurs ; ouvrir aussi la forêt du nord, les confins du sud-est et les rout
 Greyfield et Dustfield ; tracer la Via Magna dans le générateur ; quêtes ouvertes à toutes les factions alors que la
 Marche est tenue par la Lune Noire.
 
+### 16.18 Quêtes et niveaux du Royaume des nains de l'est (v1.0.89)
+
+Lot 17 du propriétaire (12/11/2026), même méthode que les lots 14 et 15 (§16.15, §16.16). Cible : les cases
+**jouables** (`generated_cells` du master **et** corridors des départs, `AddStartCorridors`) **vides** du Royaume des
+nains de l'est (85 % de cases vides au relevé v1.0.84). Aucune case ouverte (`generated_cells` inchangé), aucune
+ville, aucun identifiant supprimé, aucune ville renommée. Scripts reproductibles (hors dépôt) : `select_v1089.py`
+(sonde : liste master + corridors), `quests_v1089.py`, `lore_v1089.py` (appliqué au fichier v1.0.88).
+
+**Périmètre réel : aucune case jouable vide.** La région compte 95 cases de terre au lore (`region_id`) et la boîte
+`royaume_des_nains_de_lest` du master en couvre 129 (E015-E024 × S016-S004) ; seules 9 cases de la région sont
+jouables — le départ 3×3 de Durnhalde (§15.6), Ghrunke Dash comprise — et toutes portent déjà une ville, un hameau ou
+un lieu (Durnhalde, Kohlbrand, Eisenkehl, Ghrunke Dash, Autel des Ancêtres, Puits des Apprentis, Galeries effondrées
+de la Vieille Veine, Camp des prospecteurs, Relais des convois de minerai). Les 5 autres cases jouables de la boîte
+(Monts de Moork, Relais des convois de Ghrunke Dash, Galerie naine abandonnée, coulées de l'ouest) sont rattachées à
+d'autres régions et occupées depuis la v1.0.86. Comme pour la Marche de l'Est au lot 15 : **aucun lieu ni POI
+ajouté**, le master n'est pas modifié ; le reste de la région (Voidmark, Darkwater, Ironbrook, montagnes de l'est et
+du sud) reste hors du monde jouable. L'ouvrir est une décision à prendre (comme en v1.0.88 pour la Marche).
+
+**Quêtes** (5, `[GD]`, région de départ, toutes les étapes dans des cases générées ; aucun système de quête de monde
+ne les lit encore). Elles font sortir les joueurs des trois hameaux du départ vers ses lieux, qui n'avaient aucune
+quête, et vers Ghrunke Dash :
+
+- `quest_nains_est_gd_premiere_descente` « La Première Descente » (niveau 1+, solo) : hameau_durnhalde → lieu_puits_des_apprentis
+- `quest_nains_est_gd_premier_outil` « Le Premier Outil » (niveau 2+, solo) : hameau_durnhalde → lieu_autel_des_ancetres
+- `quest_nains_est_gd_convoi_de_kohlbrand` « Le Convoi de Kohlbrand » (niveau 3+, solo) : hamlet_kohlbrand → lieu_relais_des_convois → ville_ghrunke_dash
+- `quest_nains_est_gd_vieille_veine` « La Vieille Veine » (niveau 5+, group) : hamlet_eisenkehl → lieu_galeries_effondrees_vieille_veine
+- `quest_nains_est_gd_filon_des_prospecteurs` « Le Filon des prospecteurs » (niveau 7+, solo) : hameau_durnhalde → lieu_camp_des_prospecteurs → ville_ghrunke_dash
+
+**Niveaux proposés, à valider** (niveau relatif à la faction, `rule_niveaux_par_faction`). Dans le départ 1-10 :
+Durnhalde, Autel des Ancêtres et Puits des Apprentis 1-4 ; Kohlbrand et Relais des convois de minerai 3-6 ; Eisenkehl
+et Galeries effondrées de la Vieille Veine 5-8 ; Camp des prospecteurs 7-10 (champ `ambiance.niveau_menace` des 5
+lieux, vide jusqu'ici). Au-delà, pour l'ouverture future : abords de Voidmark et routes d'Eisenkehl, Darkwater et
+Shadowfen 10-20 ; montagnes de l'est vers Ironbrook et sud de la région 18-30. Les zones plus fortes au contact du
+départ restent celles balisées en v1.0.86 (Monts de Moork au nord, 32-55 ; coulées et volcan à l'ouest, 55-70) ;
+aucune balise ajoutée (aucun contenu plus fort ajouté).
+
+**Sources.** Lieux et hameaux du départ `[GD]` (v1.0.69) ; première taille des apprentis et mines d'apprentissage de
+Durnhalde (v1.0.61) ; outil déposé à l'Autel et marteau frappé contre le sol (« nés du métal, du feu et de la lave »)
+`[BD-T14 p.39]` ; charbon de Ghrunke Dash `[BD-T9 p.12]` ; mercenaires nains et paiement en gemmes `[BD-T3 pl.17-18]`.
+Aucun nom propre inventé ; aucun lieu nommé, donc aucun mot ajouté à la liste des noms interdits des PNJ de service.
+
+**Règles respectées** : aucune grotte de dragon ni entrée ophidienne n'est citée, désignée ou approchée (aucune
+étape hors du départ 3×3 et de Ghrunke Dash, rien ajouté) ; Grand Hall des nains et cratère inchangés (rien ajouté
+dans la zone 55-70).
+
+**Faune** : aucune créature créée ni rattachée (rats, araignées, corbeaux, mulets et vautours sont déjà dans les
+`creature_ids` des cases du départ depuis la v1.0.69).
+
+**Registre** (`regle_canon_registre_decisions`) : 1 entrée v1.0.89 (`regions` : `royaume_des_nains_de_lest`).
+
+**Ce qui est réel en jeu** : rien de nouveau (les 9 cases et leurs POI le sont depuis la v1.0.69). **Lore
+seulement** : les 5 quêtes, leurs donneurs et les niveaux proposés.
+
+**Contrôles** : test `world_gen_tests` « lieux v1.0.89 » (14 cases jouables dans la boîte du Royaume des nains de
+l'est, aucune ouverte ; chacune porte une ville ou un POI ; les 5 lieux des quêtes dans leurs cases jouables).
+Cellules générées : 301 (inchangé). **Services** : 1242 PNJ (inchangé).
+
+**Points incertains** : noms et étapes des 5 quêtes ; gradient proposé ; quêtes de départ ouvertes aux autres
+factions ; ouvrir une partie du royaume (Voidmark, route Eisenkehl – Voidmark) pour donner une suite 10-20 au départ.
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -2398,6 +2458,7 @@ Marche est tenue par la Lune Noire.
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
 - Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rivercross, Riverfold, Greyfield et Dustfield, Via Magna non tracée par le générateur entre Shadehold, Horkher et Nightfield (16.17).
+- Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
 - ~~Lhynn : presqu'île dans un grand lac (BD-T3) ou côte~~ : **close** (v1.0.54) — océan / mer

@@ -1872,6 +1872,65 @@ namespace
 		Check(fortin, "cellules et lieux v1.0.88 : Ruines du fortin des Marches toujours en N007_E013");
 	}
 
+	/// v1.0.89 (lore, lot 17) : Royaume des nains de l'est. Aucune case jouable vide : les cases jouables
+	/// (`generated_cells` + corridors des départs) de la boîte `royaume_des_nains_de_lest` du master
+	/// (E015-E024 × S016-S004) sont les 14 déjà générées (départ 3×3 de Durnhalde, Ghrunke Dash, Monts de
+	/// Moork, coulées de l'ouest), et chacune porte une ville ou un POI. Le lot n'ouvre aucune case et
+	/// n'ajoute aucun POI (quêtes seulement, dans le lore) : le test le garde. Il vérifie aussi que les
+	/// 5 lieux du départ que relient les quêtes sont dans leur case.
+	void TestLieuxV1089()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lieux v1.0.89 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		std::vector<std::string> ids = g.master.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		const RegionDef* box = nullptr;
+		for (const auto& r : g.master.regions)
+			if (r.id == "royaume_des_nains_de_lest") box = &r;
+		Check(box != nullptr, "lieux v1.0.89 : boite royaume_des_nains_de_lest presente");
+		if (!box) return;
+		auto name = [](int n, int e) {
+			char b[32];
+			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
+			return std::string(b);
+		};
+		int inBox = 0, occupied = 0;
+		for (int n = box->nMin; n <= box->nMax; ++n)
+			for (int e = box->eMin; e <= box->eMax; ++e)
+			{
+				const std::string c = name(n, e);
+				if (!playable.count(c)) continue;
+				++inBox;
+				bool used = false;
+				for (const CityDef& v : g.cities) used = used || v.cell == c;
+				for (const PoiDef& p : g.pois) used = used || p.cell == c;
+				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
+				occupied += used ? 1 : 0;
+			}
+		Check(inBox == 14, "lieux v1.0.89 : 14 cases jouables dans la boite du Royaume des nains de l'est (aucune ouverte)");
+		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
+		struct Expected { const char* poi; const char* cell; };
+		static const Expected kLieux[] = {
+			{ "poi_puits_des_apprentis", "S006_E017" }, { "poi_autel_des_ancetres", "S006_E016" },
+			{ "poi_relais_des_convois", "S008_E016" }, { "poi_galeries_effondrees_vieille_veine", "S006_E018" },
+			{ "poi_camp_des_prospecteurs", "S007_E018" },
+		};
+		int found = 0;
+		for (const Expected& x : kLieux)
+			for (const PoiDef& p : g.pois)
+				found += (p.id == x.poi && p.cell == x.cell && playable.count(p.cell)) ? 1 : 0;
+		Check(found == 5, "lieux v1.0.89 : les 5 lieux des quetes du depart de Durnhalde dans leurs cases jouables");
+	}
+
 	void TestWaterShores()
 	{
 		using namespace tools::world_gen;
@@ -1970,6 +2029,7 @@ int main()
 	TestLieuxV1086();
 	TestLieuxV1087();
 	TestCellulesLieuxV1088();
+	TestLieuxV1089();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

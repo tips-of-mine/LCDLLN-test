@@ -1165,16 +1165,28 @@ namespace
 			Check(p && p->kind == "port" && MacroHeight(m, p->center.x, p->center.z) >= sea && near,
 				(std::string("ile v1.0.74 : ") + id + " au sec, au bord de l'eau").c_str());
 		}
-		// Aucune route du générateur ne quitte l'île ni n'atteint l'îlot (liaisons maritimes du lore).
+		// Aucune route ne quitte l'île ni ne relie l'îlot aux villes de l'île (liaisons
+		// maritimes du lore). v1.0.105 : les routes du lore finissent aussi sur des POI de
+		// l'île ; le sentier du lore 000220 de l'îlot (Truceholm → Gouffre de la baie)
+		// reste sur l'îlot.
 		auto onIsland = [&](const std::string& id) {
-			const CityDef* c = g.FindCity(id);
-			return c && c->n >= 16 && c->n <= 23 && c->e >= -15 && c->e <= -9;
+			int n = 0, e = 0;
+			if (const CityDef* c = g.FindCity(id)) { n = c->n; e = c->e; }
+			else
+			{
+				const auto p = std::find_if(g.pois.begin(), g.pois.end(), [&](const PoiDef& q) { return q.id == id; });
+				if (p == g.pois.end()) return false;
+				n = p->n; e = p->e;
+			}
+			return n >= 16 && n <= 23 && e >= -15 && e <= -9;
 		};
 		int bad = 0, island = 0;
 		for (const Road& r : g.roads)
 		{
-			if (onIsland(r.fromId) != onIsland(r.toId) || r.fromId == "town_truceholm" || r.toId == "town_truceholm") ++bad;
-			if (onIsland(r.fromId) && onIsland(r.toId)) ++island;
+			if (onIsland(r.fromId) != onIsland(r.toId)) ++bad;
+			const bool truce = r.fromId == "town_truceholm" || r.toId == "town_truceholm";
+			if (truce && (g.FindCity(r.fromId) && g.FindCity(r.toId))) ++bad; // îlot relié à une ville
+			if (onIsland(r.fromId) && onIsland(r.toId) && !truce) ++island;
 		}
 		Check(bad == 0 && island >= 2, "ile v1.0.74 : routes de l'ile entre ses villes, aucune vers le continent ni l'ilot");
 	}
@@ -1489,9 +1501,12 @@ namespace
 				if (p.id == id) return &p;
 			return nullptr;
 		};
+		// Balises posées le long du réseau du GÉNÉRATEUR (v1.0.85-86). v1.0.105 : ce réseau
+		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34) ; le test vérifie le
+		// placement d'origine sur g.generatorRoads.
 		auto roadDist = [&](const PoiDef& p) {
 			double dmin = 1e18;
-			for (const Road& r : g.roads)
+			for (const Road& r : g.generatorRoads.empty() ? g.roads : g.generatorRoads)
 				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
 			return dmin;
 		};
@@ -1592,9 +1607,12 @@ namespace
 				if (p.id == id) return &p;
 			return nullptr;
 		};
+		// Balises posées le long du réseau du GÉNÉRATEUR (v1.0.85-86). v1.0.105 : ce réseau
+		// n'est plus tracé en entier (routes du lore, LORE_BD §16.34) ; le test vérifie le
+		// placement d'origine sur g.generatorRoads.
 		auto roadDist = [&](const PoiDef& p) {
 			double dmin = 1e18;
-			for (const Road& r : g.roads)
+			for (const Road& r : g.generatorRoads.empty() ? g.roads : g.generatorRoads)
 				for (const Vec2& q : r.points) dmin = std::min(dmin, std::hypot(q.x - p.center.x, q.z - p.center.z));
 			return dmin;
 		};
@@ -2052,7 +2070,8 @@ namespace
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
 		int routes = 0, outside = 0;
-		for (const Road& r : g.roads)
+		// Réseau du générateur (v1.0.105 : g.generatorRoads, base des corridors et du choix des cases).
+		for (const Road& r : g.generatorRoads)
 		{
 			bool match = false;
 			for (const auto& pr : kPairs)
@@ -2251,7 +2270,8 @@ namespace
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
 		int routes = 0, outside = 0;
-		for (const Road& r : g.roads)
+		// Réseau du générateur (v1.0.105 : g.generatorRoads, base des corridors et du choix des cases).
+		for (const Road& r : g.generatorRoads)
 		{
 			bool match = false;
 			for (const auto& pr : kPairs)
@@ -2523,6 +2543,123 @@ namespace
 		Check(!relief && e2.find("relief") != std::string::npos, "placement v1.0.95 : ville ancree sur un relief non deplacable");
 		fs::remove_all(tmp, ec);
 	}
+
+	/// v1.0.105 : le générateur suit les routes du lore (`lore_roads` du master, recopiées
+	/// par tools/lore/sync_routes.py). Chaque route passe par chaque case de son tracé ;
+	/// un embranchement se raccorde à sa route hôte ; la Via Magna est tracée de Shezhold
+	/// à Moork par Horkher et Nykhfeld dans des cellules jouables ; seules les routes du
+	/// générateur des corridors de départ restent (pas de route parasite) ; cellules
+	/// jouables inchangées ; deux constructions identiques.
+	void TestRoutesLoreV1105()
+	{
+		using namespace tools::world_gen;
+		namespace wc = engine::world::cells;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && g.master.loreRoads.size() >= 150, "routes du lore v1.0.105 : lore_roads charge (>= 150 routes)");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
+		std::map<std::string, std::vector<const Road*>> byLore;
+		for (const Road& r : g.roads)
+			if (!r.loreId.empty()) byLore[r.loreId].push_back(&r);
+		// 1) Chaque route du lore est tracée et passe DANS chaque case de son tracé. Seule
+		//    exception attendue : 000017 (Atmosphère → case du Palais des Maîtres des
+		//    Dragons, S003_W004, enclavée : le seul chemin ferait le tour du continent).
+		size_t traced = 0, missed = 0;
+		std::set<std::string> untraced;
+		for (const LoreRoadDef& d : g.master.loreRoads)
+		{
+			const auto it = byLore.find(d.id);
+			if (it == byLore.end()) { untraced.insert(d.id); continue; }
+			++traced;
+			std::set<std::string> cells;
+			for (const Road* r : it->second)
+				for (const Vec2& p : r->points) cells.insert(cellOf(p));
+			for (size_t k = 1; k + 1 < d.waypoints.size(); ++k)
+				if (!cells.count(d.waypoints[k])) { ++missed; std::fprintf(stderr, "  %s ne passe pas par %s\n", d.id.c_str(), d.waypoints[k].c_str()); }
+		}
+		Check(traced + 1 == g.master.loreRoads.size() && untraced == std::set<std::string>{ "000017" } && missed == 0,
+			"routes du lore v1.0.105 : toutes tracees (sauf 000017, case enclavee), chacune passe dans chaque case de son trace");
+		// 2) Embranchements : 000155 part d'un point de 000079 (en S007_E006), 000130 arrive
+		//    sur un point de la Via Magna 000120 (en S001_W009).
+		auto startsOn = [&](const char* branch, const char* host, bool atStart, const char* cell) {
+			const auto b = byLore.find(branch), h = byLore.find(host);
+			if (b == byLore.end() || h == byLore.end()) return false;
+			const Vec2 e = atStart ? b->second.front()->points.front() : b->second.back()->points.back();
+			if (cellOf(e) != cell) return false;
+			for (const Road* r : h->second)
+				for (const Vec2& p : r->points)
+					if (std::hypot(p.x - e.x, p.z - e.z) < 1e-6) return true;
+			return false;
+		};
+		Check(startsOn("000155", "000079", true, "S007_E006") && startsOn("000130", "000120", false, "S001_W009"),
+			"routes du lore v1.0.105 : embranchements raccordes a leur route hote, dans la case de jonction");
+		// 3) Via Magna : coupée aux villes traversées ; de Shezhold à Moork par Horkher et
+		//    Nykhfeld, entièrement dans des cellules jouables.
+		std::vector<std::string> ids = g.master.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		Check(playable.size() == 413, "routes du lore v1.0.105 : 413 cellules jouables (corridors du reseau du generateur, inchanges)");
+		const std::pair<const char*, const char*> via[] = {
+			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
+		int viaOk = 0;
+		for (const auto& [a, b] : via)
+			for (const Road* r : byLore["000120"])
+				if (r->fromId == a && r->toId == b && r->major && r->widthM >= 7.0)
+				{
+					bool in = true;
+					for (const Vec2& p : r->points) in = in && playable.count(cellOf(p));
+					viaOk += in;
+				}
+		Check(viaOk == 3, "routes du lore v1.0.105 : Via Magna Shezhold - Horkher - Nykhfeld - Moork tracee dans des cellules jouables");
+		// 4) Pas de route parasite : hors routes du lore, seules des routes du générateur
+		//    des corridors de départ, à l'identique ; N011_W013 (route Syzygie - Vaerdhun du
+		//    générateur, sans route au lore) n'a plus de route.
+		const std::vector<size_t> corridor = StartCorridorRoads(g, g.generatorRoads, false);
+		size_t generator = 0, parasite = 0;
+		for (const Road& r : g.roads)
+		{
+			if (!r.loreId.empty()) continue;
+			++generator;
+			bool found = false;
+			for (size_t k : corridor)
+				found = found || (g.generatorRoads[k].fromId == r.fromId && g.generatorRoads[k].toId == r.toId
+					&& g.generatorRoads[k].points.size() == r.points.size());
+			parasite += !found;
+		}
+		bool hadRoad = false, hasRoad = false;
+		for (const Road& r : g.generatorRoads) for (const Vec2& p : r.points) hadRoad = hadRoad || cellOf(p) == "N011_W013";
+		for (const Road& r : g.roads) for (const Vec2& p : r.points) hasRoad = hasRoad || cellOf(p) == "N011_W013";
+		Check(generator > 0 && parasite == 0 && playable.count("N011_W013") && hadRoad && !hasRoad,
+			"routes du lore v1.0.105 : routes du generateur gardees = corridors de depart ; case sans route du lore sans route parasite");
+		// 5) Sentiers et voies : types respectés.
+		bool types = true;
+		for (const LoreRoadDef& d : g.master.loreRoads)
+			for (const Road* r : byLore[d.id])
+				types = types && (r->path == (d.type == "path")) && (d.type != "imperial_road" || r->major);
+		Check(types, "routes du lore v1.0.105 : sentiers (3,2 m) et voie imperiale (7 m) selon le type du lore");
+		// 6) Déterminisme : une seconde construction donne exactement le même réseau.
+		GlobalWorld h;
+		LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", h.master, err);
+		BuildMacroTerrain(h);
+		BuildMacroRivers(h);
+		BuildMacroRoads(h);
+		bool same = g.roads.size() == h.roads.size();
+		for (size_t i = 0; same && i < g.roads.size(); ++i)
+		{
+			const Road& a = g.roads[i];
+			const Road& b = h.roads[i];
+			same = a.loreId == b.loreId && a.fromId == b.fromId && a.toId == b.toId && a.points.size() == b.points.size()
+				&& a.profileY == b.profileY;
+			for (size_t k = 0; same && k < a.points.size(); ++k) same = a.points[k].x == b.points[k].x && a.points[k].z == b.points[k].z;
+		}
+		Check(same, "routes du lore v1.0.105 : deux constructions identiques (deterministe)");
+	}
 }
 
 int main()
@@ -2552,6 +2689,7 @@ int main()
 	TestLieuxV1089();
 	TestCellulesLieuxV1091();
 	TestCellulesLieuxV1104();
+	TestRoutesLoreV1105();
 	TestPlacementManuelV1095();
 	TestGenerationEnfers();
 	if (g_failures)

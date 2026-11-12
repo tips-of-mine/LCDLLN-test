@@ -3141,6 +3141,7 @@ N019_W010`.
    du lore (`generate_city_services.py --check`, `validate_city_services.py`, `sync_positions.py`). Le générateur
    (`tools/world_gen`) ne lit pas les routes du lore : il trace ses propres routes entre les villes du master par
    recherche de chemin ; une route tracée ici reste une donnée du lore (tracé de référence).
+   **v1.0.105** : lancer aussi `tools/lore/sync_routes.py` ; le générateur suit désormais ces tracés (§16.34).
 
 **Fonctions** ajoutées ou modifiées documentées (rôle, paramètres, effets de bord), règle de CLAUDE.md :
 `cartePushUndo`, `carteUndo`, `carteFollowPlace`, `carteRouteSetEnd`, `carteNearestNavigableCell`,
@@ -3848,6 +3849,116 @@ v1.0.89 » compte désormais 50 cases jouables dans la boîte du Royaume des nai
 route de Rhivkhar ; marges en haute montagne autour de Shaddrek et de Khrozrad ; cascade limitée aux villes à 4 cases
 au plus ; quêtes ouvertes à toutes les factions.
 
+### 16.34 Routes du jeu tracées d'après le lore (v1.0.105)
+
+Lot 30, décision du propriétaire (12/11/2026) : le générateur du jeu (`tools/world_gen`) **suit les tracés des routes
+du lore** (collection `routes` : type, `from_/to_place`, ville ou lieu, `waypoints`, embranchements) au lieu de
+calculer seul ses routes entre les villes. `meta.version` 1.0.105 ; registre : 1 entrée « Routes du jeu tracées
+d'après le lore » ; note `[DÉCISION] (v1.0.105)` sur la Via Magna (000120). Aucun identifiant supprimé, aucune route
+du lore modifiée.
+
+**Chaîne lore → master → générateur.**
+
+1. **Lore** : routes tracées dans l'éditeur (mode « 〰 Tracer », §16.26).
+2. **Script `tools/lore/sync_routes.py`** (nouveau, Python standard, idempotent, `--check`, ajouté au workflow CI
+   « Lore — services des villes » avec son test `tools/lore/test_sync_routes.py`) : recopie les routes terrestres
+   dans `game/data/world/royaumes/world_master.json`, clé **`lore_roads`** (une ligne par route, ordre du lore,
+   insérée avant `extra_lakes` ; édition chirurgicale, contrôle que rien d'autre ne change) :
+   `{ "id", "type": road | imperial_road | path, "from", "to", "waypoints" }`. `from` / `to` = ville du master (même
+   id), POI du master (lieu `lieu_x` → `poi_x`, règle de `sync_positions.py`, plus une table : sentiers 000212 et
+   000213 vers les entrées nord et sud de la Mine de la Traverse ; `lieu_der_hem_shelbem` → ville
+   `ville_der_hem_shelsem`), ou `""` (jonction / extrémité sans entrée au master). `waypoints` = cases du tracé,
+   extrémités comprises ; sans tracé au lore : `[départ, arrivée]`. Bilan : **154 routes** (road 123, imperial_road 1,
+   path 30) ; 8 routes maritimes non recopiées ; 7 extrémités vides : 3 jonctions (000130, 000146, 000155) et
+   4 extrémités sans entrée au master (Palais des Maîtres des Dragons ×3, Tsaroth), avertissements du script.
+3. **Générateur** (`tools/world_gen/lib/Roads.cpp`, `BuildMacroRoads`) : lit `lore_roads` (`WorldMaster.cpp`,
+   validation stricte : id unique, type connu, extrémité connue, cases dans la grille) et trace chaque route :
+   - **ancres** : ville ou POI d'extrémité ; pour chaque case intermédiaire, la ville du lore de la case (la route y
+     passe et y est **coupée** : un tronçon par paire de villes, rues rayonnantes et approches pavées aux deux bouts),
+     sinon le nœud praticable (grille de 250 m) le plus proche du centre, à plus de 600 m des bords ; pas en diagonale
+     entre deux cellules jouables dont une voisine commune ne l'est pas : la route passe par le **coin commun** (elle
+     ne coupe plus le coin d'une cellule non générée, derrière le mur invisible) ;
+   - **entre deux ancres**, le même A* que le réseau du générateur (pente, eau, relief, crevasses fermées, rivières
+     franchies à gué, fusion sur les routes déjà tracées), pénalisé ×8 hors des cellules jouables et des cases de la
+     route ; ancre enclavée (POI au pied d'une falaise, grotte côtière) : départ du nœud franchissable le plus proche
+     (≤ 1,5 km) et dernier tronçon droit (≤ 3 km) ; détour de plus de 3 × la distance : segment refusé (tronçon coupé) ;
+   - **lissage** comme avant (RDP par segment, méandres ±110 m nuls à moins de 600 m d'une ancre et jamais hors du
+     tracé, Chaikin), profil en long global (pente ≤ 16 %, sentiers ≤ 18 %) : raccord exact aux frontières ;
+   - **types** : `imperial_road` = voie de 7 m (grande route : approches pavées, patrouilles impériales) ; `road` = 5 m
+     (7 m entre deux grandes villes) ; `path` = sentier de 3,2 m (pas de voyageurs, tracé « chemin » sur la carte) ;
+   - **embranchements** : routes aux deux extrémités nommées d'abord, puis les autres ; une extrémité vide part du
+     point d'une route du lore déjà tracée dans sa case (le plus proche de l'ancre voisine), sinon du point praticable
+     de la case. Ex. : 000155 part de 000079 en S007_E006, 000130 arrive sur la Via Magna en S001_W009 ;
+   - **routes maritimes** : non tracées ; le générateur n'a pas de mécanisme de ponton (les pontons restent une
+     donnée du lore, `sea_lines`).
+
+**Routes du générateur gardées ou supprimées.** Le réseau historique (Kruskal + 2 voisines, 157 routes) est toujours
+calculé, à l'identique, et sert aux **corridors des villes de départ** (`AddStartCorridors`) : les **cellules jouables
+ne changent pas (413, liste identique)**. Une de ses routes n'est gardée en jeu que si elle fait partie de ces
+corridors (30 routes) **et** que les routes du lore ne relient pas déjà ses deux villes à pied (tronçons entièrement
+dans des cellules jouables, détour ≤ 1,5 ×) : **13 gardées**, 17 remplacées par le lore, 127 abandonnées. Les 7 villes
+de départ restent reliées entre elles par des routes entièrement jouables (vérifié). Hors corridors, une case sans
+route du lore n'a plus de route (les chemins locaux des lieux procéduraux restent).
+
+**Via Magna.** Tracée en jeu sur tout son parcours (9 tronçons coupés aux villes : Lhynn, Kholvard, Magistrya, Camp
+de l'Oracle, fief de Garundel, Harrodh, Shezhold, Horkher, Nykhfeld, Moork), voie de 7 m. **De Shezhold à Moork par
+Horkher et Nykhfeld, elle est entièrement dans des cellules jouables** (N003_E011 → N004_E012 → N005_E013 → N005_E014 →
+N006_E014 → … → N002_E015 → … → S002_E015) ; avant, ces cases n'avaient aucune route. Entre Lhynn et Magistrya et
+entre Garundel et Harrodh, elle traverse des cases non générées (le lore y passe, les cases ne sont pas ouvertes).
+
+**Preuve d'impact** (génération `--cells` avant / après, 6 cellules : N002_W010 Haeldorf, départ ; N001_W010 Lhynn ;
+N004_E012 et N005_E013 Via Magna entre Shezhold et Horkher ; N004_E014 Via Magna de la Marche entre Horkher et
+Nykhfeld ; N004_E018 Vlakmorh, Marche) :
+
+| Cellule | Routes avant (générateur) | Routes après |
+|---|---|---|
+| N002_W010 | Haeldorf – Lhynn, Marn – Haeldorf | 000121 Haeldorf – Lhynn, 000128, 000129, sentiers 000132, 000134, 000199 ; Marn – Haeldorf gardée (corridor) |
+| N001_W010 | Haeldorf – Lhynn, Gredhaim – Lhynn, Lhynn – hameau 0197 | Via Magna 000120, 000121, 000064 ; Lhynn – hameau 0197 gardée (corridor) |
+| N004_E012, N005_E013 | aucune | Via Magna Shezhold – Horkher |
+| N004_E014 | aucune | Via Magna Horkher – Nykhfeld |
+| N004_E018 | 3 routes du générateur (Vlakmorh – Ebhrazul, Dhazkmer, Nykhfeld) | les 3 routes du lore 000100, 000101, 000102 entre les mêmes villes |
+
+Ce qui change : routes et chemins locaux ; en conséquence, les **lieux procéduraux** (tirés à l'écart des routes ou
+près d'elles) et leurs chemins, le décor, les bâtiments des rues rayonnantes, les voyageurs et patrouilles des routes
+(`amb_route_*`), le splat et l'herbe. Ce qui ne change pas : **plateaux des villes** (même altitude au centimètre),
+POI et villes du master (positions calculées avant les routes), lacs et étangs (`water.bin` identique sauf N004_E018,
+où les étangs, tirés à l'écart des routes, changent), `zone.json` (sauf N002_W010), cellules jouables ; spawners de faune et des villes : 457 à 480
+par cellule identiques au bit près, les autres sont ceux des lieux procéduraux déplacés. Relief : 0,6 à 1,2 % des
+échantillons changent ; hors des routes (30 m), des lieux procéduraux (300 m) et de leurs chemins (approchés),
+l'écart résiduel médian est de 0,2 à 0,3 m (chemins locaux tracés par A*).
+
+**Rendu** : `routes_jeu_v1105.png` (rapport du lot) — continent, réseau du générateur avant à gauche, routes du lore
+tracées et routes du générateur gardées à droite, tracés du lore en surimpression, cellules jouables encadrées.
+
+**Contrôles** : `world_gen_tests` (nouveau test « routes du lore v1.0.105 » : chaque route passe dans chaque case de son
+tracé, 153 sur 154 tracées ; embranchements 000155 et 000130 raccordés à leur hôte ; 413 cellules jouables ; Via
+Magna Shezhold – Moork dans des cellules jouables ; routes du générateur gardées = corridors de départ, N011_W013
+sans route parasite ; types ; deux constructions identiques) ; tests existants adaptés : l'île de la Trêve compte
+les routes du lore vers ses POI, les balises v1.0.85-86 et les routes des lots v1.0.91 et v1.0.104 sont vérifiées
+sur le réseau du générateur (`g.generatorRoads`), qui a servi à les placer. `test_sync_routes.py` (--check,
+idempotence, résultat identique au master, routes maritimes ignorées, refus). Contrôles du lore inchangés (1242 PNJ,
+89 références orphelines).
+
+**Limites** :
+
+- **000017** (Atmosphère → Palais des Maîtres des Dragons, S003_W004) n'est pas tracée : la case est enclavée, le
+  seul chemin faisait le tour du continent (363 km) ; le Palais n'a pas d'entrée au master ;
+- **22 cellules jouables perdent leur route** (routes du générateur sans équivalent au lore, hors corridors) :
+  N000_E022, N001_E022, N002_E022, N002_E023, N004_E023, N005_E023, N006_E021 (Ebhrazul – Grhavelt, Dhazkmer –
+  Grhavelt), N008_E014, N009_E014, N009_E015 (Hilvakh – Gharzuk, ouverte au lot 29), N008_W006, N011_W013
+  (Syzygie – Vaerdhun), N018_W012 à N021_W012 et N021_W011 (Brenhaval – Duskmoor sur l'île de la Trêve, remplacée
+  par les routes du lore par l'ouest), S007_E008, S008_E008, S009_E009 (ancienne route du départ démon), S008_E019,
+  S009_E019. **Orkh** (`ville_orkh`) n'a plus de route (aucune au lore) ; Truceholm en gagne une (sentier 000220). À
+  tracer dans l'éditeur si ces liaisons doivent exister ;
+- les **balises** posées le long des routes du générateur (Bornes des Géants ×3, Stèle des Deux Fois Nés, v1.0.85-86)
+  sont maintenant à 1,5 à 6 km de la route la plus proche : à replacer (position manuelle) ou à relier par un tracé
+  du lore ;
+- une route du lore entre deux zones ouvertes peut traverser des cases non générées (le lore y passe ; 15 passages,
+  ex. Via Magna Garundel – Harrodh) : on y bute sur le mur invisible ; les cases ne sont pas ouvertes ici ;
+- quelques coins de cases non générées coupés sur 100 à 400 m quand le tracé lore n'a pas de case entre deux cases
+  jouables (000010, 000072, 000097, 000148, 000205) ;
+- routes maritimes et pontons non tracés ; les routes du lore n'ont pas de largeur propre (déduite du type).
+
 ## 17. Questions ouvertes
 
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
@@ -3856,13 +3967,13 @@ au plus ; quêtes ouvertes à toutes les factions.
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
-- Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shezhold, Horkher et Nykhfeld (16.17).
+- Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shezhold, Horkher et Nykhfeld (16.17 ; tracée en v1.0.105, 16.34).
 - Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18 ; route Ysenkhal – Vozmarkh ouverte en v1.0.91).
 - Ouverture d'Ysenkhal – Vozmarkh et des routes de la Marche (v1.0.91) : noms [GD] des 52 lieux et 3 quêtes, repère 24-30 de la côte orientale, marge et trous intérieurs, routes encore coupées vers Mhordaal, Shaddrek, Ghrondak, Hilvakh et Farvhenn (16.20).
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
-- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur à décider ; sauvegarde complète vérifiée en v1.0.98 (16.27) : références orphelines laissées par les suppressions et noms vides de 159 fiches à traiter.
+- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : références orphelines laissées par les suppressions et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).
@@ -3895,3 +4006,4 @@ au plus ; quêtes ouvertes à toutes les factions.
   « proche de Moork » (S002_E015), sans appui BD.
 - Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, 59 quêtes et 6 raids sans case, 89 références orphelines à trancher (16.32).
 - Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).
+- Routes du jeu d'après le lore (v1.0.105) : 000017 non tracée (case enclavée du Palais des Maîtres des Dragons), 22 cellules jouables et Orkh sans route faute de tracé au lore, balises v1.0.85-86 éloignées des routes, routes maritimes et pontons non tracés (16.34).

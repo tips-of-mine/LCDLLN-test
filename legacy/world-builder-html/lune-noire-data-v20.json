@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.104",
+    "version": "1.0.105",
     "notes": [
+      "v1.0.105 : [DÉCISION] Le générateur du jeu suit les tracés des routes du lore (lot 30 du propriétaire, 12/11/2026) : les 154 routes terrestres (road, imperial_road, path ; les 8 routes maritimes ne sont pas tracées) sont recopiées dans le master (clé lore_roads, script tools/lore/sync_routes.py) et tracées case par case par tools/world_gen (153 ; 000017 vers la case enclavée du Palais des Maîtres des Dragons ne l'est pas) ; les routes calculées par le générateur ne restent que là où elles relient les villes de départ sans équivalent au lore (13 sur 157). La Via Magna est tracée en jeu de Shezhold à Moork par Horkher et Nykhfeld. Cellules jouables inchangées (413). Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.34.",
       "v1.0.104 : [DÉCISION] Ouverture au jeu des 5 routes restées coupées au mur invisible en v1.0.91 (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, de 5 routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (lot 29 du propriétaire, 12/11/2026). 55 cases ajoutées à generated_cells (32 au sud, 23 au nord) : Mhordaal, Shaddrek, Ghrondak, Khrozrad, Hilvakh et Farvhenn deviennent jouables. 48 lieux [GD] avec POI réel (un par case vide), niveaux d'après niveau_ref, 3 quêtes [GD] avec etapes_struct. Registre : 1 entrée. Détail : docs/world/LORE_BD.md, section 16.33.",
       "v1.0.103 : Lore : niveaux, niveaux par faction, ancrages et fiches complétés (lot 28). Harrodh reste à l'Empire (faction_empire / empire_hynn, Via Magna impériale) ; niveau_ref de 5 régions et provinces (Jade, Tharque, Terra Secunda : null, extension ; Enfers 1-10 confirmés) et de 31 raids (2 du Jade à null) ; règle de niveaux par faction et niveau_par_faction rempli (24 régions et provinces × 12 factions jouables) ; quêtes plaçables 117 → 133, raids placés 23 → 32 ; 159 fiches sans nom nommées ; script tools/lore/check_references.py, 88 références orphelines corrigées, 89 listées. Registre : 6 entrées (LORE_BD §16.32).",
       "v1.0.100 : Éditeur et lore : fiches complètes. Champ niveau_ref {min, max} sur les régions et provinces (21 renseignées d'après les repères déjà inscrits, 8 à null) et sur les raids (5 renseignés d'après leur niveau conseillé, 33 à null) ; champ niveau_par_faction {faction: {min, max}} sur les régions, vide partout (détail par faction à définir) ; champ etapes_struct (étapes ordonnées avec case, ville, lieu ou PNJ) sur les quêtes, texte des étapes conservé, pré-rempli pour 121 quêtes (étapes qui citent exactement une ville, un lieu ou un PNJ) ; type de lieu mine_poi, 8 mines reclassées. Éditeur : calque Niveaux lu dans les fiches (sélecteur de faction), formulaires de région, de raid et de quête (éditeur d'étapes), champs manquants des formulaires de faction, de race et de PNJ, suppression avec compte des références. Test Playwright tools/lore/test_editor_fiches.py. Registre : 6 entrées (LORE_BD §16.29).",
@@ -235148,7 +235149,8 @@
         "[DÉCISION] (v1.0.60) Tracé de la Via Magna demandé par le propriétaire.",
         "[v1.0.60] Remplace les routes provisoires 000011 (Lhynn → Camp de l'Oracle) et 000012 (fief de Garundel → Camp de l'Oracle), supprimées ; 000013 (fief de Garundel → Moork) gardée en raccourci.",
         "[GD] (v1.0.62) Embranchement en N000_W010 : route locale 000130 vers Gredhaim et Haeldorf (région de départ, LORE_BD §15.1).",
-        "[DÉCISION] (v1.0.73) Traverse Kholvard (town_hollowgate, S001_W007), nouvelle étape entre Lhynn et l'Oracle ; LORE_BD §16.2."
+        "[DÉCISION] (v1.0.73) Traverse Kholvard (town_hollowgate, S001_W007), nouvelle étape entre Lhynn et l'Oracle ; LORE_BD §16.2.",
+        "[DÉCISION] (v1.0.105) Tracée en jeu par le générateur (tools/world_gen) case par case, par les villes de son tracé (Kholvard, Magistrya, Camp de l'Oracle, fief de Garundel, Harrodh, Shezhold, Horkher, Nykhfeld) : voie de 7 m, coupée à chaque ville traversée ; de Shezhold à Moork entièrement dans des cases jouables ; LORE_BD §16.34."
       ],
       "waypoints": [
         "N001_W010",
@@ -241790,6 +241792,13 @@
           "nom": "Ouverture des routes de Vozmarkh et de Rhivkhar",
           "decision": "Décision du propriétaire (12/11/2026) : les 5 routes restées coupées au mur invisible en v1.0.91 sont ouvertes jusqu'à leur arrivée : Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar ; puis, en cascade, les routes qui relient une ville devenue jouable à une ville proche (4 cases au plus) : Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk. 55 cases ajoutées à generated_cells (tracés du lore et du générateur, villes d'arrivée, marge d'une case, trous intérieurs) : Mhordaal, Shaddrek, Ghrondak, Khrozrad, Hilvakh et Farvhenn deviennent jouables. 48 lieux [GD] (12-28), 3 quêtes [GD] (LORE_BD §16.33).",
           "version": "1.0.104"
+        },
+        {
+          "collection": "routes",
+          "id": "154 routes terrestres",
+          "nom": "Routes du jeu tracées d'après le lore",
+          "decision": "Décision du propriétaire (12/11/2026) : le générateur du monde jouable suit les routes du lore au lieu de calculer seul ses routes entre villes. Les routes terrestres (road, imperial_road, path) sont recopiées dans le master (lore_roads, tools/lore/sync_routes.py) et tracées en passant par chaque case de leur tracé (ville de la case, sinon point praticable le plus proche du centre), en suivant le terrain entre deux cases ; un embranchement part de sa route hôte ; les routes maritimes ne sont pas tracées. Les routes du générateur ne restent que pour relier les villes de départ sans équivalent au lore (13 sur 157) ; cellules jouables inchangées (LORE_BD §16.34).",
+          "version": "1.0.105"
         }
       ]
     },

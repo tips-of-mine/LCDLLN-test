@@ -1,19 +1,31 @@
 // tools/world_gen — réseau routier.
 //
 // MACRO (continent, une fois) :
-// 1. Graphe : arbre couvrant minimal (Kruskal) des villes du lore + liaisons
-//    vers les 2 plus proches voisines (réseau maillé crédible).
-// 2. Tracé : A* sur la grille grossière de 250 m ; coût = distance × (pente,
-//    eau, relief) ; les tronçons déjà tracés coûtent moins cher (les routes
-//    fusionnent en grands axes au lieu de courir en parallèle).
-// 3. Lissage (Chaikin) + profil en long GLOBAL (pente ≤ 16 %) calculé sur le
-//    relief macro : chaque cellule aplanit sa portion de route au même profil,
-//    les chaussées se raccordent donc exactement aux frontières.
+// 1. Réseau du GÉNÉRATEUR (historique) : arbre couvrant minimal (Kruskal) des
+//    villes du lore + liaisons vers les 2 plus proches voisines ; A* sur la grille
+//    grossière de 250 m ; coût = distance × (pente, eau, relief) ; les tronçons
+//    déjà tracés coûtent moins cher (les routes fusionnent en grands axes).
+//    Il sert toujours aux corridors des villes de départ (cellules jouables).
+// 2. Routes du LORE (v1.0.105, `lore_roads` du master, recopiées par
+//    tools/lore/sync_routes.py) : chaque route passe par chaque case de son tracé
+//    (la ville du lore de la case, sinon le point praticable le plus proche du
+//    centre) ; entre deux cases, le même A* suit le terrain. Une route coupe aux
+//    villes qu'elle traverse (un tronçon par paire de villes : rues et approches
+//    pavées des deux côtés). Embranchement (extrémité sans ville ni POI) : la route
+//    part du point le plus proche d'une route du lore déjà tracée dans la case.
+//    Les routes maritimes ne sont pas recopiées (aucun ponton dans le générateur).
+// 3. Tri du réseau du générateur : une route n'est gardée que si elle fait partie
+//    des corridors des villes de départ ET que les routes du lore ne relient pas
+//    déjà ses deux villes à pied (cases jouables, détour ≤ 1,5 ×). Les autres
+//    sont abandonnées : hors corridors, une case sans route du lore n'a pas de route.
+// 4. Lissage (RDP, méandres, Chaikin) + profil en long GLOBAL (pente ≤ 16 %)
+//    calculé sur le relief macro : chaque cellule aplanit sa portion de route au
+//    même profil, les chaussées se raccordent donc exactement aux frontières.
 //
 // CELLULE :
-// 4. Découpe des routes globales sur l'emprise de la cellule, aplanissement
+// 5. Découpe des routes globales sur l'emprise de la cellule, aplanissement
 //    de la chaussée et des accotements.
-// 5. Chemins locaux (A* sur ≈ 10 m) reliant chaque lieu procédural au réseau.
+// 6. Chemins locaux (A* sur ≈ 10 m) reliant chaque lieu procédural au réseau.
 
 #include "WorldGenContext.h"
 #include "Parallel.h"
@@ -21,7 +33,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <limits>
+#include <map>
 #include <queue>
+#include <set>
 #include <unordered_map>
 
 namespace tools::world_gen
@@ -50,7 +66,12 @@ namespace tools::world_gen
 		};
 
 		/// A* 8-connexe. Renvoie le chemin (centres de cases) ou vide.
-		std::vector<Vec2> AStar(const CostGrid& cg, Vec2 from, Vec2 to)
+		/// \param partial  (v1.0.105) si le but est injoignable, renvoie le chemin vers le
+		///                 nœud atteint le plus proche du but au lieu d'un chemin vide.
+		/// \param allowed  (v1.0.105) masque des nœuds « dans le tracé » (même cadrage que
+		///                 cg.cost) : hors masque, le coût est multiplié par 8 (la route du
+		///                 lore reste dans ses cases et les cellules jouables). nullptr : aucun.
+		std::vector<Vec2> AStar(const CostGrid& cg, Vec2 from, Vec2 to, bool partial = false, const Grid<uint8_t>* allowed = nullptr)
 		{
 			const Grid<float>& g = cg.cost;
 			const int si = g.IndexX(from.x), sj = g.IndexZ(from.z);
@@ -87,6 +108,7 @@ namespace tools::world_gen
 						// Les extrémités (dans les villes) restent toujours franchissables.
 						if (c > 1e29f && nidx != goal) continue;
 						if (c > 1e29f) c = 1.0f;
+						if (allowed && !allowed->At(ni, nj)) c *= 8.0f;
 						if (cg.onRoad.At(ni, nj)) c *= 0.35f;
 						const float len = static_cast<float>(((di && dj) ? 1.41421356 : 1.0) * g.step);
 						const float ng = gs[static_cast<size_t>(cur.idx)] + c * len;
@@ -98,9 +120,22 @@ namespace tools::world_gen
 						}
 					}
 			}
-			if (parent[static_cast<size_t>(goal)] < 0 && goal != s0) return {};
+			int end = goal;
+			if (parent[static_cast<size_t>(goal)] < 0 && goal != s0)
+			{
+				if (!partial) return {};
+				// Nœud fermé (atteint) le plus proche du but.
+				double bd = 1e300;
+				for (size_t q = 0; q < N; ++q)
+					if (closed[q])
+					{
+						const double d = std::hypot(static_cast<int>(q % static_cast<size_t>(g.width)) - ti, static_cast<int>(q / static_cast<size_t>(g.width)) - tj);
+						if (d < bd) { bd = d; end = static_cast<int>(q); }
+					}
+				if (end == goal) return {};
+			}
 			std::vector<Vec2> path;
-			for (int k = goal; k >= 0; k = parent[static_cast<size_t>(k)])
+			for (int k = end; k >= 0; k = parent[static_cast<size_t>(k)])
 			{
 				path.push_back({ g.WorldX(k % g.width), g.WorldZ(k / g.width) });
 				if (k == s0) break;
@@ -248,6 +283,486 @@ namespace tools::world_gen
 				w.roadDist.data[q] = std::min(w.roadDist.data[q], rd);
 			}
 		}
+		/// Longueur (m) d'une polyligne.
+		double PolylineLength(const std::vector<Vec2>& p)
+		{
+			double len = 0.0;
+			for (size_t k = 1; k < p.size(); ++k) len += std::hypot(p[k].x - p[k - 1].x, p[k].z - p[k - 1].z);
+			return len;
+		}
+
+		/// Tracé naturel (v1.0.105) d'une route du lore à partir des chemins bruts de
+		/// l'A* entre ses ANCRES successives (cases du lore) : chaque segment est
+		/// simplifié séparément (RDP, l'ancre reste un sommet), subdivisé tous les
+		/// 150 m, écarté en méandres bruités (±110 m, longueur d'onde ≈ 2,5 km, comme le
+		/// réseau du générateur) nuls à moins de 600 m d'une ancre et sur l'eau, puis
+		/// lissé (Chaikin) et rééchantillonné tous les 4 m. Les deux extrémités sont
+		/// exactes ; une ancre intermédiaire bouge de quelques dizaines de mètres au
+		/// plus (coin arrondi) : elle reste dans sa case.
+		/// \param segments chemins bruts successifs ; segments[i].front() est l'ancre i,
+		///        segments.back().back() la dernière ancre.
+		/// \param allowed  masque des nœuds du tracé (voir AStar) : un méandre ne fait pas
+		///        sortir la route du masque.
+		/// Pur (lit le relief macro, les lacs et la graine).
+		std::vector<Vec2> NaturalizeThroughAnchors(const GlobalWorld& g, const std::vector<std::vector<Vec2>>& segments,
+			const Grid<uint8_t>& allowed)
+		{
+			const WorldMaster& m = g.master;
+			const double sea = m.scale.seaLevelM;
+			std::vector<Vec2> simple;
+			std::vector<size_t> anchorIdx;
+			for (const std::vector<Vec2>& seg : segments)
+			{
+				const std::vector<Vec2> s = SimplifyRdp(seg, 180.0);
+				if (simple.empty()) { simple = s; anchorIdx.push_back(0); continue; }
+				anchorIdx.push_back(simple.size() - 1);
+				simple.insert(simple.end(), s.begin() + 1, s.end());
+			}
+			anchorIdx.push_back(simple.size() - 1);
+			std::vector<Vec2> dense;
+			std::vector<size_t> denseAnchor;
+			size_t nextAnchor = 0;
+			for (size_t k = 0; k + 1 < simple.size(); ++k)
+			{
+				if (nextAnchor < anchorIdx.size() && anchorIdx[nextAnchor] == k) { denseAnchor.push_back(dense.size()); ++nextAnchor; }
+				const Vec2 a = simple[k], b = simple[k + 1];
+				const int parts = std::max(1, static_cast<int>(std::ceil(std::hypot(b.x - a.x, b.z - a.z) / 150.0)));
+				for (int q = 0; q < parts; ++q) dense.push_back(a + (b - a) * (static_cast<double>(q) / parts));
+			}
+			denseAnchor.push_back(dense.size());
+			dense.push_back(simple.back());
+			std::vector<double> along(dense.size(), 0.0);
+			for (size_t k = 1; k < dense.size(); ++k) along[k] = along[k - 1] + std::hypot(dense[k].x - dense[k - 1].x, dense[k].z - dense[k - 1].z);
+			std::vector<Vec2> meander = dense;
+			for (size_t k = 1; k + 1 < dense.size(); ++k)
+			{
+				const Vec2 d = dense[k + 1] - dense[k - 1];
+				const double l = std::hypot(d.x, d.z);
+				if (l < 1e-6) continue;
+				double nearest = 1e18;
+				for (size_t ai : denseAnchor) nearest = std::min(nearest, std::fabs(along[k] - along[ai]));
+				const double taper = Clamp(nearest / 600.0, 0.0, 1.0);
+				const double off = Fbm(dense[k].x, dense[k].z, 2500.0, 2, m.seed + 4747) * 110.0 * taper;
+				const Vec2 q = dense[k] + Vec2{ -d.z / l, d.x / l } * off;
+				bool wet = SampleBilinear(g.coarse, q.x, q.z) < sea + 1.5;
+				for (const Lake& lk : g.lakes)
+					if (std::hypot(q.x - lk.center.x, q.z - lk.center.z) < lk.radiusM + 30.0) wet = true;
+				const int ai = allowed.IndexX(dense[k].x), aj = allowed.IndexZ(dense[k].z);
+				const int qi = allowed.IndexX(q.x), qj = allowed.IndexZ(q.z);
+				const bool leaves = allowed.InBounds(ai, aj) && allowed.At(ai, aj) && (!allowed.InBounds(qi, qj) || !allowed.At(qi, qj));
+				if (!wet && !leaves) meander[k] = q;
+			}
+			std::vector<Vec2> out = ResamplePolyline(SmoothPolyline(meander, 4), 4.0);
+			out.front() = segments.front().front();
+			out.back() = segments.back().back();
+			return out;
+		}
+
+		/// A* entre deux ancres d'une route du lore (v1.0.105). Si l'une d'elles est
+		/// enclavée dans un relief infranchissable à 250 m (POI au pied d'une falaise,
+		/// grotte côtière…), la recherche part du nœud franchissable le plus proche à
+		/// moins de 1 500 m et va au plus près du but ; le chemin rejoint ensuite
+		/// l'ancre exacte en ligne droite si elle est à moins de 3 km. Vide sinon.
+		/// \param allowed masque du tracé (voir AStar).
+		std::vector<Vec2> AStarLoose(const CostGrid& cg, Vec2 from, Vec2 to, const Grid<uint8_t>* allowed)
+		{
+			std::vector<Vec2> raw = AStar(cg, from, to, false, allowed);
+			if (raw.size() >= 2) return raw;
+			const Grid<float>& gr = cg.cost;
+			auto nearestOpen = [&](Vec2 p) {
+				const int ci = gr.IndexX(p.x), cj = gr.IndexZ(p.z);
+				const int r = static_cast<int>(std::ceil(1500.0 / gr.step));
+				Vec2 best = p;
+				double bd = 1e18;
+				for (int j = cj - r; j <= cj + r; ++j)
+					for (int i = ci - r; i <= ci + r; ++i)
+					{
+						if (!gr.InBounds(i, j) || gr.At(i, j) > 1e29f) continue;
+						const double d = std::hypot(gr.WorldX(i) - p.x, gr.WorldZ(j) - p.z);
+						if (d < bd && d <= 1500.0) { bd = d; best = { gr.WorldX(i), gr.WorldZ(j) }; }
+					}
+				return best;
+			};
+			const Vec2 a = nearestOpen(from), b = nearestOpen(to);
+			raw = AStar(cg, a, b, true, allowed);
+			// But séparé du réseau franchissable par une lagune ou un bras de mer de moins
+			// de 3 km (POI côtier) : le dernier tronçon y va tout droit, en chaussée (le
+			// profil en long reste au-dessus de la mer).
+			if (raw.size() < 2 || std::hypot(raw.back().x - to.x, raw.back().z - to.z) > 3000.0) return {};
+			raw.insert(raw.begin(), from);
+			const Vec2 last = raw.back();
+			const int parts = std::max(1, static_cast<int>(std::ceil(std::hypot(to.x - last.x, to.z - last.z) / gr.step)));
+			for (int q = 1; q <= parts; ++q) raw.push_back(last + (to - last) * (static_cast<double>(q) / parts));
+			return raw;
+		}
+
+		/// Point praticable (v1.0.105) d'une case du lore pour une route : nœud de la
+		/// grille de coûts franchissable le plus proche de \p wanted, à plus de 600 m des
+		/// bords de la case (la route lissée y reste). Faux si la case n'en a aucun
+		/// (mer, lac, crevasse…).
+		bool PracticablePointInCell(const CostGrid& cg, int n, int e, Vec2 wanted, Vec2& out)
+		{
+			namespace wc = engine::world::cells;
+			const wc::CellPoint mn = wc::CellMinCorner({ n, e });
+			const double inset = 600.0, size = wc::kCellSizeMeters;
+			const Grid<float>& gr = cg.cost;
+			const int i0 = std::max(0, gr.IndexX(mn.x + inset)), i1 = std::min(gr.width - 1, gr.IndexX(mn.x + size - inset));
+			const int j0 = std::max(0, gr.IndexZ(mn.z + inset)), j1 = std::min(gr.height - 1, gr.IndexZ(mn.z + size - inset));
+			double best = 1e18;
+			for (int j = j0; j <= j1; ++j)
+				for (int i = i0; i <= i1; ++i)
+				{
+					const Vec2 p{ gr.WorldX(i), gr.WorldZ(j) };
+					if (p.x < mn.x + inset || p.x > mn.x + size - inset || p.z < mn.z + inset || p.z > mn.z + size - inset) continue;
+					if (gr.At(i, j) > 1e29f) continue;
+					const double d = std::hypot(p.x - wanted.x, p.z - wanted.z);
+					if (d < best) { best = d; out = p; }
+				}
+			return best < 1e17;
+		}
+
+		/// Est-ce une grande agglomération (routes larges, approches pavées) ?
+		bool IsMajorId(const GlobalWorld& g, const std::string& id)
+		{
+			const CityDef* c = id.empty() ? nullptr : g.FindCity(id);
+			return c && IsMajor(c->kind);
+		}
+
+		/// Routes du lore (v1.0.105) : tracé case par case, puis tri du réseau du
+		/// générateur (voir l'en-tête du fichier, étapes 2 et 3).
+		/// \param cg       grille de coûts du continent (250 m) ; son marquage des routes
+		///                 (onRoad) est remis à zéro puis rempli par les routes du lore.
+		/// \param network  réseau du générateur déjà tracé (devient g.generatorRoads).
+		/// Effet de bord : remplit g.roads (routes du lore, puis routes du générateur
+		/// gardées) et g.generatorRoads ; avertissements dans g.report.
+		void BuildLoreRoads(GlobalWorld& g, CostGrid& cg, const RiverIndex& rivers, std::vector<Road> network)
+		{
+			namespace wc = engine::world::cells;
+			const WorldMaster& m = g.master;
+			const double sea = m.scale.seaLevelM;
+			std::fill(cg.onRoad.data.begin(), cg.onRoad.data.end(), static_cast<uint8_t>(0));
+
+			/// Ancre d'une route : point imposé (ville, POI, point praticable d'une case).
+			struct Anchor
+			{
+				Vec2 p;
+				std::string id;       ///< ville ou POI du master (vide : case seule / jonction)
+				bool city = false;    ///< ancre sur une ville (la route y est coupée)
+				bool ok = false;      ///< ancre résolue
+				int snapPiece = -1;   ///< jonction : tronçon hôte (index dans pieces)
+				size_t snapK = 0;     ///< jonction : point de raccord sur l'hôte
+				bool corner = false;  ///< coin commun de deux cases en diagonale
+				wc::CellCoord ca{}, cb{}; ///< coin : les deux cases qu'il relie
+			};
+			/// Raccord d'un embranchement sur sa route hôte (graphe de connexité).
+			struct Snap { std::string node; size_t host; size_t k; };
+			std::vector<Road> pieces;
+			std::vector<Snap> snaps;
+			std::vector<std::string> pieceFrom, pieceTo; // nœuds du graphe (ids ou jonctions)
+
+			// Position d'une extrémité nommée (ville, sinon POI) ; faux si inconnue.
+			auto entityAnchor = [&](const std::string& id, Anchor& a) {
+				if (id.empty()) return false;
+				if (const CityDef* c = g.FindCity(id)) { a.p = c->center; a.id = id; a.city = true; a.ok = true; return true; }
+				for (const PoiDef& poi : g.pois)
+					if (poi.id == id) { a.p = poi.center; a.id = id; a.ok = true; return true; }
+				return false;
+			};
+			// Ancre d'une case de passage : ville du lore de la case (la plus proche du
+			// centre), sinon point praticable le plus proche du centre.
+			auto cellAnchor = [&](int n, int e, Anchor& a) {
+				const wc::CellPoint ctr = wc::CellCenter({ n, e });
+				const CityDef* best = nullptr;
+				double bd = 1e18;
+				for (const CityDef& c : g.cities)
+					if (c.n == n && c.e == e && c.procedural.empty())
+					{
+						const double d = std::hypot(c.center.x - ctr.x, c.center.z - ctr.z);
+						if (d < bd) { bd = d; best = &c; }
+					}
+				if (best) { a.p = best->center; a.id = best->id; a.city = true; a.ok = true; return true; }
+				a.ok = PracticablePointInCell(cg, n, e, { ctr.x, ctr.z }, a.p);
+				return a.ok;
+			};
+			// Extrémité sans ville ni POI : jonction sur une route du lore déjà tracée
+			// dans la case (point le plus proche de l'ancre voisine), sinon point
+			// praticable de la case.
+			auto bareAnchor = [&](int n, int e, Vec2 toward, Anchor& a) {
+				double bd = 1e18;
+				for (size_t pi = 0; pi < pieces.size(); ++pi)
+					for (size_t k = 0; k < pieces[pi].points.size(); ++k)
+					{
+						const Vec2 q = pieces[pi].points[k];
+						const wc::CellCoord c = wc::CellFromPosition(q.x, q.z);
+						if (c.n != n || c.e != e) continue;
+						const double d = std::hypot(q.x - toward.x, q.z - toward.z);
+						if (d < bd) { bd = d; a.p = q; a.snapPiece = static_cast<int>(pi); a.snapK = k; }
+					}
+				if (a.snapPiece >= 0) { a.ok = true; return true; }
+				const wc::CellPoint ctr = wc::CellCenter({ n, e });
+				a.ok = PracticablePointInCell(cg, n, e, { ctr.x, ctr.z }, a.p);
+				return a.ok;
+			};
+
+			// Ordre : routes aux deux extrémités nommées d'abord, embranchements ensuite
+			// (ils se raccordent aux routes déjà tracées) ; ordre du master sinon.
+			std::vector<size_t> order;
+			// Cellules jouables : generated_cells + corridors du réseau du GÉNÉRATEUR
+			// (mêmes cellules qu'avant v1.0.105, cf. AddStartCorridors).
+			std::set<std::string> playable(m.generatedCells.begin(), m.generatedCells.end());
+			std::vector<size_t> corridor;
+			if (m.connectStartCities)
+			{
+				corridor = StartCorridorRoads(g, network, false);
+				std::vector<std::string> ids = m.generatedCells;
+				AddCorridorCells(g, network, corridor, ids);
+				playable.insert(ids.begin(), ids.end());
+			}
+			// Masque des nœuds de la grille de coûts dans une cellule jouable (base du
+			// masque « dans le tracé » de chaque route, cf. AStar).
+			Grid<uint8_t> playableMask;
+			playableMask.Init(cg.cost.width, cg.cost.height, cg.cost.originX, cg.cost.originZ, cg.cost.step, 0);
+			for (int j = 0; j < playableMask.height; ++j)
+				for (int i = 0; i < playableMask.width; ++i)
+					playableMask.At(i, j) = playable.count(wc::LoreCellId(wc::CellFromPosition(playableMask.WorldX(i), playableMask.WorldZ(j)))) ? 1 : 0;
+			// Ajoute au masque \p mask les nœuds de la case (n, e).
+			auto markCell = [&](Grid<uint8_t>& mask, int n, int e) {
+				const wc::CellPoint mn = wc::CellMinCorner({ n, e });
+				const double size = wc::kCellSizeMeters;
+				for (int j = std::max(0, mask.IndexZ(mn.z)); j <= std::min(mask.height - 1, mask.IndexZ(mn.z + size)); ++j)
+					for (int i = std::max(0, mask.IndexX(mn.x)); i <= std::min(mask.width - 1, mask.IndexX(mn.x + size)); ++i)
+					{
+						const wc::CellCoord c = wc::CellFromPosition(mask.WorldX(i), mask.WorldZ(j));
+						if (c.n == n && c.e == e) mask.At(i, j) = 1;
+					}
+			};
+			for (int pass = 0; pass < 2; ++pass)
+				for (size_t li = 0; li < m.loreRoads.size(); ++li)
+				{
+					const LoreRoadDef& d = m.loreRoads[li];
+					const bool named = !d.fromId.empty() && !d.toId.empty();
+					if (named == (pass == 0)) order.push_back(li);
+				}
+
+			size_t tracedRoads = 0, failedSegments = 0, skippedCells = 0;
+			for (size_t li : order)
+			{
+				const LoreRoadDef& d = m.loreRoads[li];
+				const size_t n = d.waypoints.size();
+				// Masque du tracé : cellules jouables + cases de la route.
+				Grid<uint8_t> allowed = playableMask;
+				for (const auto& [cn, ce] : d.cellNE) markCell(allowed, cn, ce);
+				std::vector<Anchor> an(n);
+				entityAnchor(d.fromId, an.front());
+				entityAnchor(d.toId, an.back());
+				for (size_t k = 1; k + 1 < n; ++k)
+					if (!cellAnchor(d.cellNE[k].first, d.cellNE[k].second, an[k]))
+					{
+						++skippedCells;
+						g.Warn("route du lore " + d.id + " : case " + d.waypoints[k] + " sans point praticable (ignoree)");
+					}
+				// Extrémités sans ville ni POI : vers l'ancre résolue la plus proche.
+				auto neighbour = [&](size_t from, int step) {
+					for (long k = static_cast<long>(from) + step; k >= 0 && k < static_cast<long>(n); k += step)
+						if (an[static_cast<size_t>(k)].ok) return an[static_cast<size_t>(k)].p;
+					const wc::CellPoint c = wc::CellCenter({ d.cellNE[n - 1 - from].first, d.cellNE[n - 1 - from].second });
+					return Vec2{ c.x, c.z };
+				};
+				if (!an.front().ok && !bareAnchor(d.cellNE.front().first, d.cellNE.front().second, neighbour(0, 1), an.front()))
+					g.Warn("route du lore " + d.id + " : depart " + d.waypoints.front() + " sans point praticable");
+				if (!an.back().ok && !bareAnchor(d.cellNE.back().first, d.cellNE.back().second, neighbour(n - 1, -1), an.back()))
+					g.Warn("route du lore " + d.id + " : arrivee " + d.waypoints.back() + " sans point praticable");
+				// Ancres retenues (résolues, sans doublon consécutif).
+				std::vector<Anchor> pts;
+				for (const Anchor& a : an)
+				{
+					if (!a.ok) continue;
+					if (!pts.empty() && std::hypot(a.p.x - pts.back().p.x, a.p.z - pts.back().p.z) < 1.0)
+					{
+						if (pts.back().id.empty()) pts.back() = a; // garder l'ancre nommée
+						continue;
+					}
+					pts.push_back(a);
+				}
+				if (pts.size() < 2) { g.Warn("route du lore " + d.id + " : moins de deux points praticables (non tracee)"); continue; }
+				// Pas en diagonale entre deux cellules jouables dont une des deux voisines
+				// communes ne l'est pas : la route passe par le coin commun (sinon elle
+				// pourrait couper le coin d'une cellule non générée, derrière le mur invisible).
+				{
+					std::vector<Anchor> withCorners;
+					for (size_t i = 0; i < pts.size(); ++i)
+					{
+						withCorners.push_back(pts[i]);
+						if (i + 1 >= pts.size()) break;
+						const wc::CellCoord ca = wc::CellFromPosition(pts[i].p.x, pts[i].p.z);
+						const wc::CellCoord cb = wc::CellFromPosition(pts[i + 1].p.x, pts[i + 1].p.z);
+						if (std::abs(ca.n - cb.n) != 1 || std::abs(ca.e - cb.e) != 1) continue;
+						auto isPlayable = [&](wc::CellCoord c) { return playable.count(wc::LoreCellId(c)) > 0; };
+						if (!isPlayable(ca) || !isPlayable(cb) || (isPlayable({ ca.n, cb.e }) && isPlayable({ cb.n, ca.e }))) continue;
+						const wc::CellPoint ma = wc::CellMinCorner(ca), mb = wc::CellMinCorner(cb);
+						Anchor corner;
+						corner.p = { std::max(ma.x, mb.x), std::max(ma.z, mb.z) };
+						const int ci = cg.cost.IndexX(corner.p.x), cj = cg.cost.IndexZ(corner.p.z);
+						if (!cg.cost.InBounds(ci, cj) || cg.cost.At(ci, cj) > 1e29f) continue;
+						corner.ok = true;
+						corner.corner = true;
+						corner.ca = ca; corner.cb = cb;
+						withCorners.push_back(corner);
+					}
+					pts.swap(withCorners);
+				}
+
+				// Tronçons : coupés aux villes traversées et aux segments sans chemin.
+				bool any = false;
+				size_t pieceStart = 0;
+				std::vector<std::vector<Vec2>> segs;
+				auto finish = [&](size_t endIdx) {
+					if (segs.empty()) return;
+					const Anchor& A = pts[pieceStart];
+					const Anchor& B = pts[endIdx];
+					Road road;
+					road.loreId = d.id;
+					road.fromId = A.id; road.toId = B.id;
+					road.path = d.type == "path";
+					road.major = d.type == "imperial_road" || (d.type == "road" && IsMajorId(g, A.id) && IsMajorId(g, B.id));
+					road.widthM = road.path ? 3.2 : (road.major ? 7.0 : 5.0);
+					road.points = NaturalizeThroughAnchors(g, segs, allowed);
+					// Le lissage arrondit le coin d'un pas en diagonale : les points à moins de
+					// 50 m du coin qui tombent dans une autre case sont ramenés (au mètre près)
+					// dans la plus proche des deux cases reliées.
+					for (size_t ai = pieceStart; ai <= endIdx; ++ai)
+					{
+						if (!pts[ai].corner) continue;
+						const Anchor& C = pts[ai];
+						for (Vec2& q : road.points)
+						{
+							if (std::hypot(q.x - C.p.x, q.z - C.p.z) > 50.0) continue;
+							const wc::CellCoord cq = wc::CellFromPosition(q.x, q.z);
+							if ((cq.n == C.ca.n && cq.e == C.ca.e) || (cq.n == C.cb.n && cq.e == C.cb.e)) continue;
+							Vec2 best = q;
+							double bd = 1e18;
+							for (const wc::CellCoord& c : { C.ca, C.cb })
+							{
+								const wc::CellPoint mn = wc::CellMinCorner(c);
+								const Vec2 in{ Clamp(q.x, mn.x + 0.5, mn.x + wc::kCellSizeMeters - 0.5), Clamp(q.z, mn.z + 0.5, mn.z + wc::kCellSizeMeters - 0.5) };
+								const double dd = std::hypot(in.x - q.x, in.z - q.z);
+								if (dd < bd) { bd = dd; best = in; }
+							}
+							q = best;
+						}
+					}
+					for (const Vec2& p : road.points)
+					{
+						const int i = cg.onRoad.IndexX(p.x), j = cg.onRoad.IndexZ(p.z);
+						if (cg.onRoad.InBounds(i, j)) cg.onRoad.At(i, j) = 1;
+					}
+					std::vector<double> ground(road.points.size());
+					ParallelRows(static_cast<int>(road.points.size()), [&](int k) {
+						ground[static_cast<size_t>(k)] = MacroHeight(m, road.points[static_cast<size_t>(k)].x, road.points[static_cast<size_t>(k)].z);
+					});
+					ComputeProfile(road, ground, g.cities, rivers, sea, road.path ? 0.18 : 0.16);
+					const size_t pi = pieces.size();
+					const std::string nodeA = A.id.empty() ? "#" + d.id + ":" + std::to_string(pi) + ":a" : A.id;
+					const std::string nodeB = B.id.empty() ? "#" + d.id + ":" + std::to_string(pi) + ":b" : B.id;
+					if (A.snapPiece >= 0) snaps.push_back({ nodeA, static_cast<size_t>(A.snapPiece), A.snapK });
+					if (B.snapPiece >= 0) snaps.push_back({ nodeB, static_cast<size_t>(B.snapPiece), B.snapK });
+					pieceFrom.push_back(nodeA); pieceTo.push_back(nodeB);
+					pieces.push_back(std::move(road));
+					segs.clear();
+					any = true;
+				};
+				for (size_t i = 0; i + 1 < pts.size(); ++i)
+				{
+					std::vector<Vec2> raw = AStarLoose(cg, pts[i].p, pts[i + 1].p, &allowed);
+					// Détour absurde (case enclavée dans un massif : le chemin ferait le tour
+					// du continent) : traité comme une absence de chemin.
+					const double straight = std::hypot(pts[i + 1].p.x - pts[i].p.x, pts[i + 1].p.z - pts[i].p.z);
+					if (raw.size() >= 2 && PolylineLength(raw) > 3.0 * straight + 3000.0) raw.clear();
+					if (raw.size() < 2)
+					{
+						++failedSegments;
+						const wc::CellCoord ca = wc::CellFromPosition(pts[i].p.x, pts[i].p.z), cb = wc::CellFromPosition(pts[i + 1].p.x, pts[i + 1].p.z);
+						g.Warn("route du lore " + d.id + " : pas de chemin " + wc::LoreCellId(ca) + " -> " + wc::LoreCellId(cb) + " (relief/eau ou detour > 3x, troncon coupe)");
+						finish(i);
+						pieceStart = i + 1;
+						continue;
+					}
+					raw.front() = pts[i].p;
+					raw.back() = pts[i + 1].p;
+					segs.push_back(std::move(raw));
+					if (pts[i + 1].city && i + 2 < pts.size()) { finish(i + 1); pieceStart = i + 1; }
+				}
+				finish(pts.size() - 1);
+				if (any) ++tracedRoads;
+			}
+
+			// Graphe des routes du lore praticables à pied (tronçons entièrement dans des
+			// cellules jouables) : nœuds = villes, POI, jonctions ; arêtes = longueurs.
+			std::map<std::string, std::vector<std::pair<std::string, double>>> adj;
+			std::vector<char> walkable(pieces.size(), 0);
+			for (size_t pi = 0; pi < pieces.size(); ++pi)
+			{
+				const std::vector<Vec2>& pts = pieces[pi].points;
+				bool in = true;
+				for (size_t k = 0; in && k < pts.size(); k += (k + 8 < pts.size() ? 8 : 1))
+					in = playable.count(wc::LoreCellId(wc::CellFromPosition(pts[k].x, pts[k].z))) > 0;
+				walkable[pi] = in;
+				if (!in) continue;
+				const double len = PolylineLength(pts);
+				adj[pieceFrom[pi]].push_back({ pieceTo[pi], len });
+				adj[pieceTo[pi]].push_back({ pieceFrom[pi], len });
+			}
+			for (const Snap& sn : snaps)
+			{
+				if (!walkable[sn.host]) continue;
+				const std::vector<Vec2>& hp = pieces[sn.host].points;
+				const std::vector<Vec2> head(hp.begin(), hp.begin() + static_cast<long>(sn.k) + 1);
+				const double toA = PolylineLength(head), toB = PolylineLength(hp) - toA;
+				adj[sn.node].push_back({ pieceFrom[sn.host], toA }); adj[pieceFrom[sn.host]].push_back({ sn.node, toA });
+				adj[sn.node].push_back({ pieceTo[sn.host], toB }); adj[pieceTo[sn.host]].push_back({ sn.node, toB });
+			}
+			// Distance à pied (m) entre deux villes par les routes du lore (∞ si aucune).
+			auto loreDistance = [&](const std::string& a, const std::string& b) {
+				std::map<std::string, double> dist;
+				using QE = std::pair<double, std::string>;
+				std::priority_queue<QE, std::vector<QE>, std::greater<QE>> pq;
+				dist[a] = 0.0; pq.push({ 0.0, a });
+				while (!pq.empty())
+				{
+					const auto [du, u] = pq.top(); pq.pop();
+					if (u == b) return du;
+					if (du > dist[u]) continue;
+					const auto it = adj.find(u);
+					if (it == adj.end()) continue;
+					for (const auto& [v, w] : it->second)
+					{
+						const auto dv = dist.find(v);
+						if (dv == dist.end() || du + w < dv->second) { dist[v] = du + w; pq.push({ du + w, v }); }
+					}
+				}
+				return std::numeric_limits<double>::infinity();
+			};
+			// Tri du réseau du générateur : gardée = corridor de départ sans équivalent
+			// au lore (le lore ne relie pas ses deux villes à pied en ≤ 1,5 × sa longueur).
+			std::vector<char> keep(network.size(), 0);
+			size_t replaced = 0;
+			for (size_t r : corridor)
+			{
+				if (keep[r]) continue;
+				const Road& gr = network[r];
+				if (loreDistance(gr.fromId, gr.toId) <= 1.5 * PolylineLength(gr.points)) { ++replaced; continue; }
+				keep[r] = 1;
+			}
+			g.roads = std::move(pieces);
+			size_t kept = 0;
+			for (size_t r = 0; r < network.size(); ++r)
+				if (keep[r]) { g.roads.push_back(network[r]); ++kept; }
+			std::printf("[world_gen] routes du lore : %zu/%zu tracee(s) en %zu troncon(s) (%zu case(s) sans point praticable, %zu segment(s) sans chemin) ; "
+				"reseau du generateur : %zu route(s) gardee(s) pour les departs, %zu remplacee(s) par le lore, %zu abandonnee(s)\n",
+				tracedRoads, m.loreRoads.size(), g.roads.size() - kept, skippedCells, failedSegments,
+				kept, replaced, network.size() - kept - replaced);
+			g.generatorRoads = std::move(network);
+		}
 	}
 
 	// ----------------------------------------------------------------- macro
@@ -347,6 +862,8 @@ namespace tools::world_gen
 
 		RiverIndex rivers;
 		rivers.Build(g.rivers);
+		// 1) Réseau du générateur (historique, inchangé) : corridors des départs.
+		std::vector<Road> network;
 		for (const auto& [ia, ib] : chosen)
 		{
 			const CityDef& A = cities[static_cast<size_t>(ia)];
@@ -406,10 +923,18 @@ namespace tools::world_gen
 				ground[static_cast<size_t>(k)] = MacroHeight(m, road.points[static_cast<size_t>(k)].x, road.points[static_cast<size_t>(k)].z);
 			});
 			ComputeProfile(road, ground, g.cities, rivers, sea, 0.16);
-			for (size_t k = 1; k < road.points.size(); ++k)
-				g.report.roadLengthM += std::hypot(road.points[k].x - road.points[k - 1].x, road.points[k].z - road.points[k - 1].z);
-			g.roads.push_back(std::move(road));
+			network.push_back(std::move(road));
 		}
+		if (m.loreRoads.empty())
+		{
+			// Pas de routes du lore (ex. Enfers) : le réseau du générateur est le réseau.
+			g.roads = std::move(network);
+			g.generatorRoads.clear();
+		}
+		else
+			BuildLoreRoads(g, cg, rivers, std::move(network));
+		g.report.roadLengthM = 0.0;
+		for (const Road& r : g.roads) g.report.roadLengthM += PolylineLength(r.points);
 		g.report.roads = g.roads.size();
 	}
 

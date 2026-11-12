@@ -99,16 +99,14 @@ namespace tools::world_gen
 			});
 	}
 
-	/// Cellules traversées par les routes qui relient les villes de départ.
+	/// Routes qui relient les villes de départ.
 	/// Arbre couvrant « au plus près » : en partant de la première ville de départ,
 	/// on ajoute à chaque tour la ville de départ non reliée la plus proche PAR LA
 	/// ROUTE (Dijkstra multi-sources depuis tout ce qui est déjà relié). Seules les
 	/// routes inter-villes comptent (pas les chemins locaux). Une ville de départ
-	/// injoignable (île) est signalée et laissée isolée. Les cellules ajoutées
-	/// suivent celles du master, dans l'ordre de parcours des routes. Déterministe.
-	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids)
+	/// injoignable (île) est signalée (si \p warn) et laissée isolée. Déterministe.
+	std::vector<size_t> StartCorridorRoads(GlobalWorld& g, const std::vector<Road>& roads, bool warn)
 	{
-		namespace wc = engine::world::cells;
 		// Graphe : villes (id → index) et arêtes = routes inter-villes.
 		std::map<std::string, int> node;
 		auto nodeOf = [&](const std::string& id) {
@@ -120,9 +118,9 @@ namespace tools::world_gen
 		};
 		struct Edge { int to; size_t road; double len; };
 		std::vector<std::vector<Edge>> adj;
-		for (size_t r = 0; r < g.roads.size(); ++r)
+		for (size_t r = 0; r < roads.size(); ++r)
 		{
-			const Road& road = g.roads[r];
+			const Road& road = roads[r];
 			if (road.path || road.points.size() < 2) continue;
 			const int a = nodeOf(road.fromId), b = nodeOf(road.toId);
 			if (static_cast<int>(adj.size()) <= std::max(a, b)) adj.resize(static_cast<size_t>(std::max(a, b)) + 1u);
@@ -137,10 +135,10 @@ namespace tools::world_gen
 			if (!c.startFor.empty())
 				starts.push_back(nodeOf(c.id));
 		adj.resize(node.size());
-		if (starts.size() < 2) return;
+		std::vector<size_t> chosenRoads;
+		if (starts.size() < 2) return chosenRoads;
 
 		std::vector<char> connected(node.size(), 0);
-		std::vector<size_t> chosenRoads;
 		connected[static_cast<size_t>(starts.front())] = 1;
 		std::set<int> remaining(starts.begin() + 1, starts.end());
 		while (!remaining.empty())
@@ -175,9 +173,10 @@ namespace tools::world_gen
 					best = s;
 			if (best < 0)
 			{
-				for (int s : remaining)
-					for (const auto& [id, k] : node)
-						if (k == s) g.Warn("ville de depart sans route vers les autres : " + id + " (reste isolee)");
+				if (warn)
+					for (int s : remaining)
+						for (const auto& [id, k] : node)
+							if (k == s) g.Warn("ville de depart sans route vers les autres : " + id + " (reste isolee)");
 				break;
 			}
 			for (int v = best; !connected[static_cast<size_t>(v)]; v = prev[static_cast<size_t>(v)].first)
@@ -187,8 +186,15 @@ namespace tools::world_gen
 			}
 			remaining.erase(best);
 		}
+		return chosenRoads;
+	}
 
-		// Cellules de la chaussée (+ voisine quand la route longe une frontière).
+	/// Cellules de la chaussée des routes choisies (+ voisine quand la route longe
+	/// une frontière), ajoutées à \p ids dans l'ordre de parcours des routes.
+	size_t AddCorridorCells(const GlobalWorld& g, const std::vector<Road>& roads,
+		const std::vector<size_t>& chosen, std::vector<std::string>& ids)
+	{
+		namespace wc = engine::world::cells;
 		std::set<std::string> have(ids.begin(), ids.end());
 		const double margin = g.master.corridorMarginM;
 		size_t added = 0;
@@ -197,8 +203,8 @@ namespace tools::world_gen
 			const std::string id = wc::LoreCellId(c);
 			if (have.insert(id).second) { ids.push_back(id); ++added; }
 		};
-		for (size_t r : chosenRoads)
-			for (const Vec2& p : g.roads[r].points)
+		for (size_t r : chosen)
+			for (const Vec2& p : roads[r].points)
 			{
 				const wc::CellCoord c = wc::CellFromPosition(p.x, p.z);
 				addCell(c);
@@ -211,6 +217,18 @@ namespace tools::world_gen
 				if (p.z - mn.z < margin)     addCell({ c.n + 1, c.e });
 				if (mn.z + s - p.z < margin) addCell({ c.n - 1, c.e });
 			}
+		return added;
+	}
+
+	/// Cellules traversées par les routes qui relient les villes de départ, sur le
+	/// réseau du GÉNÉRATEUR (g.generatorRoads, v1.0.105 ; g.roads s'il est vide) :
+	/// les cellules jouables ne changent pas quand les routes du lore sont tracées.
+	/// Les cellules ajoutées suivent celles du master, dans l'ordre de parcours.
+	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids)
+	{
+		const std::vector<Road>& network = g.generatorRoads.empty() ? g.roads : g.generatorRoads;
+		const std::vector<size_t> chosenRoads = StartCorridorRoads(g, network, true);
+		const size_t added = AddCorridorCells(g, network, chosenRoads, ids);
 		std::printf("[world_gen] liaison des villes de depart : %zu route(s), %zu cellule(s) ajoutee(s) (%zu au total)\n",
 			chosenRoads.size(), added, ids.size());
 	}
@@ -225,7 +243,7 @@ namespace tools::world_gen
 		// Couche macro : tout ce qui traverse les frontières de cellules.
 		BuildMacroTerrain(g);   // relief grossier, sites des villes, lacs
 		BuildMacroRivers(g);    // rivières (contournent les villes)
-		BuildMacroRoads(g);     // routes inter-villes + profils en long
+		BuildMacroRoads(g);     // routes du lore + corridors du générateur, profils en long
 
 		std::vector<std::string> ids = opt.cells.empty() ? g.master.generatedCells : opt.cells;
 		// Monde complet : cellules des routes reliant les villes de départ.

@@ -80,7 +80,11 @@ namespace tools::world_gen
 		std::vector<double> profileY; ///< altitude lissée de la chaussée par point
 		double widthM = 5.0;          ///< largeur de chaussée
 		bool   major = false;         ///< grande route (entre villes importantes)
-		bool   path = false;          ///< chemin local (lieu procédural → réseau)
+		bool   path = false;          ///< chemin local (lieu procédural → réseau) ou sentier du lore
+		/// Route du lore tracée (v1.0.105) : identifiant de la route du lore (`lore_roads`
+		/// du master) dont ce tronçon est issu ; vide = route du générateur ou chemin local.
+		/// fromId / toId : ville ou POI du master, vide pour une jonction ou une case seule.
+		std::string loreId;
 	};
 
 	/// Rivière (polyligne descendante jusqu'à la mer).
@@ -271,7 +275,15 @@ namespace tools::world_gen
 		std::vector<PoiDef> pois;       ///< lieux remarquables, centres résolus
 		std::vector<River> rivers;      ///< polylignes globales (pas 6 m)
 		std::vector<Lake> lakes;        ///< lacs du lore + lacs manuels
-		std::vector<Road> roads;        ///< réseau inter-villes (profil en long global)
+		/// Réseau routier final (profil en long global) : routes du lore tracées
+		/// (v1.0.105, Road::loreId non vide) + routes du générateur gardées pour relier
+		/// les villes de départ ; sans `lore_roads` au master, le seul réseau du générateur.
+		std::vector<Road> roads;
+		/// Réseau calculé par le générateur seul (Kruskal + voisines, comportement
+		/// historique), avant le tri v1.0.105. Sert aux corridors des villes de départ
+		/// (AddStartCorridors) : les cellules jouables ne dépendent pas des routes du lore.
+		/// Vide quand le master n'a pas de `lore_roads` (g.roads est alors ce réseau).
+		std::vector<Road> generatorRoads;
 		std::vector<Vec2> startCenters; ///< centres des villes de départ
 
 		GenReport report;
@@ -373,6 +385,9 @@ namespace tools::world_gen
 	/// Rivières (descente sur la grille grossière remplie). Terrain.cpp
 	void BuildMacroRivers(GlobalWorld& g);
 	/// Réseau routier inter-villes + profils en long. Roads.cpp
+	/// v1.0.105 : avec `lore_roads` au master, les routes du lore sont tracées case
+	/// par case (g.roads) ; le réseau du générateur (g.generatorRoads) ne garde que
+	/// les routes des corridors de départ sans équivalent au lore.
 	void BuildMacroRoads(GlobalWorld& g);
 
 	// Par cellule.
@@ -467,8 +482,20 @@ namespace tools::world_gen
 
 	/// Ajoute à \p ids les cellules des routes reliant les villes de départ
 	/// (`connect_start_cities`, cf. WorldMaster). Nécessite g.cities (sites) et
-	/// g.roads (BuildMacroRoads). WorldGen.cpp
+	/// le réseau du générateur g.generatorRoads (BuildMacroRoads ; g.roads s'il est
+	/// vide, ex. tests qui posent leurs routes à la main). WorldGen.cpp
 	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids);
+	/// Routes de \p roads qui relient les villes de départ (arbre couvrant « au plus
+	/// près » par la route, chemins locaux exclus), dans l'ordre de parcours.
+	/// \param warn  signale (g.Warn) les villes de départ injoignables.
+	/// Déterministe ; ne modifie g que par les avertissements. WorldGen.cpp
+	std::vector<size_t> StartCorridorRoads(GlobalWorld& g, const std::vector<Road>& roads, bool warn);
+	/// Cellules (identifiants du lore) traversées par les routes \p chosen de
+	/// \p roads, + la voisine quand la route passe à moins de corridor_margin_m de
+	/// la frontière ; ajoutées à \p ids (sans doublon, ordre de parcours).
+	/// \return nombre de cellules ajoutées. WorldGen.cpp
+	size_t AddCorridorCells(const GlobalWorld& g, const std::vector<Road>& roads,
+		const std::vector<size_t>& chosen, std::vector<std::string>& ids);
 
 	/// Décode un identifiant de cellule "N003_W009" → (n, e). WorldMaster.cpp
 	bool ParseCellId(const std::string& id, int& n, int& e);

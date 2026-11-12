@@ -997,9 +997,10 @@ namespace tools::world_gen
 		for (const World* w : cells)
 		{
 			// Chemins locaux de la cellule (les tronçons de routes globales y sont
-			// des découpes de g.roads, déjà exportées ci-dessus).
+			// des découpes de g.roads, déjà exportées ci-dessus ; v1.0.105 : les
+			// sentiers du lore, Road::loreId, aussi).
 			for (const Road& rd : w->roads)
-				if (rd.path)
+				if (rd.path && rd.loreId.empty())
 					addRoad(rd.points, mf::MapRoadKind::Path, rd.widthM);
 			// Rues : chaque arête du graphe (exportée une seule fois, a < b).
 			for (const SettlementLayout& L : w->layouts)

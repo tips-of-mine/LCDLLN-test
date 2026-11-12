@@ -201,6 +201,20 @@ namespace tools::world_gen
 		std::string islandCity;           ///< ville entourée par deux bras (vide = aucune)
 	};
 
+	/// Route du lore (section `lore_roads`, v1.0.105), recopiée de la collection `routes`
+	/// du lore par tools/lore/sync_routes.py. Le générateur (Roads.cpp) la trace en
+	/// passant par chaque case de `waypoints` (ville de la case, sinon point praticable
+	/// le plus proche du centre) et suit le terrain entre deux cases (A* 250 m).
+	struct LoreRoadDef
+	{
+		std::string id;                    ///< identifiant de la route du lore ("000120")
+		std::string type;                  ///< road | imperial_road | path
+		std::string fromId;                ///< ville ou POI du master au départ ; vide = jonction / case seule
+		std::string toId;                  ///< ville ou POI du master à l'arrivée ; vide = jonction / case seule
+		std::vector<std::string> waypoints;///< cases du tracé, extrémités comprises (≥ 2)
+		std::vector<std::pair<int, int>> cellNE; ///< (n, e) résolus de chaque case
+	};
+
 	/// Contenu complet du master après chargement + validation.
 	struct WorldMaster
 	{
@@ -221,6 +235,9 @@ namespace tools::world_gen
 		std::vector<ExtraLakeDef> extraLakes;
 		std::vector<RiverCourseDef> riverCourses;
 		std::vector<ReliefDef> reliefs;         ///< reliefs locaux (v1.0.72)
+		/// Routes du lore (v1.0.105, `lore_roads`). Vide (ex. Enfers) : le générateur
+		/// garde son seul réseau calculé (comportement historique).
+		std::vector<LoreRoadDef> loreRoads;
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;
 		// Imports du contenu existant (chemins relatifs au content root).

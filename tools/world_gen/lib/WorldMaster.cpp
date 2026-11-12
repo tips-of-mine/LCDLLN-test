@@ -413,6 +413,42 @@ namespace tools::world_gen
 			}
 		}
 
+		// --- routes du lore (v1.0.105, tools/lore/sync_routes.py) ---
+		if (const JsonValue* lr = FindObjectMember(root, "lore_roads"); lr && lr->type == JsonType::Array)
+		{
+			std::set<std::string> roadIds;
+			for (const JsonValue& v : lr->arrayValue)
+			{
+				LoreRoadDef d;
+				d.id = GetStr(v, "id"); d.type = GetStr(v, "type");
+				d.fromId = GetStr(v, "from"); d.toId = GetStr(v, "to");
+				d.waypoints = GetStrArray(v, "waypoints");
+				if (d.id.empty() || !roadIds.insert(d.id).second || d.waypoints.size() < 2
+					|| (d.type != "road" && d.type != "imperial_road" && d.type != "path"))
+				{
+					err = "master: lore_roads invalide '" + d.id + "' (id unique, type road|imperial_road|path, 2 cases au moins)"; return false;
+				}
+				// Extrémité : ville ou POI connus (vide = jonction ou case seule).
+				for (const std::string* end : { &d.fromId, &d.toId })
+					if (!end->empty() && !ids.count(*end))
+					{
+						err = "master: lore_roads '" + d.id + "' : extremite inconnue '" + *end + "'"; return false;
+					}
+				for (const std::string& cell : d.waypoints)
+				{
+					int n = 0, e = 0;
+					if (!ParseCellId(cell, n, e)) { err = "master: lore_roads '" + d.id + "' : cellule invalide " + cell; return false; }
+					const int r = s.northN - n, c = e - s.westE;
+					if (r < 0 || c < 0 || r >= static_cast<int>(out.gridRows.size()) || c >= s.gridCols)
+					{
+						err = "master: lore_roads '" + d.id + "' : " + cell + " hors grille"; return false;
+					}
+					d.cellNE.push_back({ n, e });
+				}
+				out.loreRoads.push_back(std::move(d));
+			}
+		}
+
 		// --- imports ---
 		if (const JsonValue* im = FindObjectMember(root, "imports"); im && im->type == JsonType::Object)
 		{

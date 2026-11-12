@@ -9,6 +9,10 @@
 # - sync_positions.py --check (v1.0.95) : les positions posées à la main dans
 #   l'éditeur (position_x_m / position_z_m des villes et lieux) sont recopiées
 #   dans game/data/world/royaumes/world_master.json (clé position) ;
+# - sync_routes.py --check (v1.0.105) : les routes du lore (collection routes, tracées
+#   dans l'éditeur) sont recopiées dans world_master.json (clé lore_roads), que
+#   tools/world_gen suit case par case ; test_sync_routes.py vérifie le script
+#   (--check, idempotence, routes maritimes ignorées) sur des copies ;
 # - check_references.py (v1.0.103) : références vers des identifiants inexistants,
 #   en mode rapport (non bloquant tant qu'il reste des orphelines à trancher ;
 #   passer à --strict quand la liste est vide).
@@ -55,6 +59,12 @@ jobs:
 
       - name: Positions manuelles recopiées au master
         run: python tools/lore/sync_positions.py --check
+
+      - name: Routes du lore recopiées au master
+        run: python tools/lore/sync_routes.py --check
+
+      - name: Test du script de recopie des routes
+        run: python tools/lore/test_sync_routes.py
 
       - name: Références orphelines (rapport, non bloquant)
         run: python tools/lore/check_references.py

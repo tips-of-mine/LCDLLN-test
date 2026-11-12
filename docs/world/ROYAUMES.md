@@ -104,7 +104,7 @@ Docker du master et du shard). Elle échoue si `start_locations.json` ou ses
 (v1.0.61) les 7 hameaux de départ par faction et leurs voisines hors mer (104 cellules listées),
 plus — `connect_start_cities: true` — les cellules traversées par les routes qui
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
-routier, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
+routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
 suivant la route. Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
@@ -195,9 +195,29 @@ voisines raccord au mètre près :
    d'une même case sont écartés d'un quart de tour autour de la ville de la case.
    Un POI à `position` manuelle (v1.0.95, même format que les villes) est posé
    exactement là, sans écartement ; ses `offset_*` sont alors ignorés.
-4. **Routes** (`Roads.cpp`) : Kruskal + 2 plus proches voisines, A* 250 m,
-   simplification RDP (plus d'escalier), méandres ±110 m, lissage ; profil en
-   long **global** (pente ≤ 16 %) → chaque cellule aplanit sa portion au même profil.
+4. **Routes** (`Roads.cpp`) — depuis la v1.0.105, **le générateur suit les routes du
+   lore** (`lore_roads` du master, recopiées de la collection `routes` du lore par
+   `tools/lore/sync_routes.py`, voir LORE_BD §16.34) :
+   - chaque route du lore (`road`, `imperial_road`, `path` ; les routes maritimes ne
+     sont pas tracées, aucun ponton) passe par chaque case de ses `waypoints` : la
+     ville du lore de la case (la route y est coupée en tronçons ville à ville), sinon
+     le point praticable le plus proche du centre ; un pas en diagonale entre deux
+     cellules jouables passe par le coin commun si une voisine commune n'est pas
+     jouable ; entre deux cases, A* 250 m sur le terrain (pente, eau, relief, gués),
+     pénalisé hors des cellules jouables et des cases de la route ; un détour de plus
+     de 3 × est refusé (tronçon coupé, avertissement) ;
+   - embranchement (extrémité sans ville ni POI) : départ du point le plus proche d'une
+     route du lore déjà tracée dans la case ;
+   - largeurs : voie impériale 7 m (grande route), route 5 m (7 m entre grandes
+     villes), sentier 3,2 m (`Road::path`, pas de voyageurs) ;
+   - le **réseau du générateur** (Kruskal + 2 plus proches voisines, comme avant) est
+     toujours calculé (`g.generatorRoads`) : il fixe les **corridors des villes de
+     départ** (cellules jouables inchangées) ; une de ses routes n'est gardée en jeu
+     que si elle fait partie de ces corridors et que le lore ne relie pas déjà ses deux
+     villes à pied (détour ≤ 1,5 ×). Sans `lore_roads` (Enfers), seul ce réseau existe ;
+   - pour tous : simplification RDP, méandres ±110 m (nuls près des cases imposées),
+     lissage ; profil en long **global** (pente ≤ 16 %) → chaque cellule aplanit sa
+     portion au même profil.
 
 **Par cellule** :
 
@@ -321,6 +341,10 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   plafond 48) personnages distants dessinés, dans le champ de la caméra.
 - Elfes et démons empruntent la silhouette humaine.
 - L'île d'Hishtarland n'a pas de route (avertissement attendu).
+- Routes (v1.0.105) : seules les routes tracées dans le lore existent en jeu (plus
+  les routes du générateur des corridors de départ). Une liaison sans tracé au lore
+  n'a plus de route (22 cellules jouables, Orkh) : la tracer dans l'éditeur puis
+  lancer `tools/lore/sync_routes.py`. Routes maritimes et pontons non tracés.
 - Les cellules non générées sont bordées d'un mur invisible (serveur et client).
 - Intégration d'une tuile au main thread : terrain (envois GPU, ~100 ms sous
   lavapipe, bien moins sur un vrai GPU) en une frame, puis décor et bâtiments

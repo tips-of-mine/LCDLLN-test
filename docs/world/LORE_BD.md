@@ -1049,6 +1049,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.37](#1637-lieux-secrets-cachés-aux-joueurs-v10110) | v1.0.110 | Lieux secrets cachés aux joueurs | Drapeau `secret` des POI, `secret_places.json` réservé au serveur et retiré du paquet client, case « Secret » de l'éditeur, `check_secrets.py`. |
 | [16.38](#1638-666-cimetières-et-exploit-du-pèlerin-v10111) | v1.0.111 | 666 cimetières et exploit du pèlerin | Toujours 666 cimetières dans les Royaumes (contrôle CI) ; exploit [GD] pour les avoir tous visités. |
 | [16.39](#1639-répartition-des-666-cimetières-v10112) | v1.0.112 | Répartition des 666 cimetières | Un cimetière au moins par cellule à terre : 71 cimetières isolés, 71 hameaux sans cimetière, total 666 contrôlé par le générateur. |
+| [16.40](#1640-décisions-du-131126-v10113) | v1.0.113 | Décisions du 13/11/2026 | Noms [GD] validés, Xygga femelle et noms des dragons, année de jeu, niveaux, balisage, factions, Ghulvathan, références orphelines, arbitrages de lore. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4435,6 +4436,40 @@ d'environ moitié (mesure sur une grille de 1 km, mer comprise : ≈ 23,6 km →
 **Tests** : `world_gen_tests` (`TestCimetieresV1111` : master, cimetière isolé dans N011_E018, aucun sans
 `fill_empty_cells`, hameau de N001_E011 sans cimetière).
 
+### 16.40 Décisions du 13/11/2026 (v1.0.113)
+
+Réponses du propriétaire aux questions ouvertes de la branche carte (CHANGELOG §4), toutes inscrites au registre
+(`regle_canon_registre_decisions`, version 1.0.113) et dans `game_design.decisions_13_11`.
+
+| Sujet | Décision |
+|---|---|
+| Noms `[GD]` | **Validés en bloc** (villes moyennes, Île de la Trêve, Hwakhari, gouffre, balises, lieux et quêtes des ouvertures, régions du sud-centre…) ; l'étiquette `[GD]` reste pour dire leur origine |
+| Xygga | **Femelle**, « la Grande Dragonne rouge » (master et lore) |
+| Premiers-nés `[GD]` | Vhaëlgorn (doré enflammé), Kharzhaëd (rouge à cornes), Thrögnavyr (tête de tricératops), Skhiraz (petit rouge épineux), Ysvaërnoth (blanc à cornes noires), Mordhakhal (noir aux ailes brunes), Ylghydrath (hydre), Frizhaldûr (glace), Azhvaëlin (bleu), Lhung-Tsaëm (oriental) |
+| Calendrier | Année de jeu **3417 AO** `[GD]` ; noms des lunes et des jours validés |
+| Niveaux | Raids de Kendrhir **38-56** gardés ; raids de fin 45/50/55/60 ; règle de faction **+5, seuil 20** |
+| Balisage | **Couleur du nom de zone** selon l'écart de niveau (seul signal) |
+| Harrodh | **Empire** |
+| Île de la Trêve | « La Légion » = **Légion infernale et Légions impériales** |
+| Zones de la Lune Noire | **Contre-quêtes** Lune Noire pour les quêtes ouvertes à tous (à écrire) |
+| Ghulvathan | **N009_E011** (comme en jeu) ; question close |
+| `faction_demons` (30 réf.) | → `faction_legion_infernale` |
+| `race_half_dark_elf` (6 réf.) | → `race_dark_elf` |
+| `race_menthat` (11 réf.) | race PNJ **créée**, rattachée à la Lune Noire |
+| Hishtarland, Dyprokh | **Bateau** (lignes maritimes à rendre jouables) |
+| Exploit des 666 cimetières | visite = **entrer dans le rayon OU y réapparaître** |
+| Lieux secrets | **révélés sur la carte du joueur dès qu'il y entre** (pour lui seul) |
+| Routes coupées | **ouvrir** les 2 routes coupées et les 43 routes arrêtées à une zone fermée |
+
+**Arbitrages de lore `[GD]`** (demandés au propriétaire, à relire) :
+- **Oracle** : la rampe et l'escalier de briques du T2 et les huit escaliers blancs du T3 coexistent (deux vues du
+  même site) ; lacs du destin (T11), colline à sanctuaire (T12) et antre (T14) sont après l'époque du jeu.
+- **Heusgly** : aucune planche ne la dit « proche de Moork » ; elle reste en S006_E004.
+- **Palais du Maître des Dragons** : un seul palais ; « au-delà des sept régions » est une façon de parler.
+
+Références orphelines : 89 → **42** (33 identifiants). Au passage, une affiliation en double de `race_dzorak` à la
+Lune Noire (sans note) est retirée.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -4459,13 +4494,13 @@ d'environ moitié (mesure sur une grille de 1 km, mer comprise : ≈ 23,6 km →
 - ~~Pilou~~ : **close** (v1.0.54) — surnom de Pile-ou-Face ; `char_pilou` fusionné.
 - Identité de « l'amant » vengé par la succube (pl.31) : non nommé.
 - Sort de Feidreiva après les « brumes du temps » : à suivre dans les tomes suivants.
-- Race `race_half_dark_elf` utilisée par des quêtes et compétences mais absente de `races`.
-- Escaliers de l'Oracle : rampe et escalier de briques (BD-T2) contre huit escaliers
+- ~~Race `race_half_dark_elf`~~ : **close** (v1.0.113) — elfe noir (16.40).
+- ~~Escaliers de l'Oracle~~ : **tranché** (v1.0.113, 16.40) — rampe et escalier de briques (BD-T2) contre huit escaliers
   blancs (lore, BD-T3) ; s'y ajoutent les « lacs du destin » au cœur de l'Empire (T11),
   une colline à sanctuaire (T12) et un antre souterrain où il est enchaîné (T14).
-- Palais du Maître des Dragons « au-delà des sept régions » (p.29) mais visible depuis le
+- ~~Palais du Maître des Dragons~~ : **tranché** (v1.0.113, 16.40) — « au-delà des sept régions » (p.29) mais visible depuis le
   pont de la Passe (p.42) : hyperbole ou second palais.
-- Ghulvathan : N009_E011 dans le monde jouable (cellules générées) contre N012_E012 dans
+- ~~Ghulvathan~~ : **close** (v1.0.113, 16.40 : N009_E011) — N009_E011 dans le monde jouable (cellules générées) contre N012_E012 dans
   le lore (v1.0.40). Ce n'est plus une ville de départ (v1.0.61, section 14) ; le hameau
   dzorak Grakhul (N008_E012) est placé à côté de la position jouable.
 - Krak de Jhenner : sans cellule.

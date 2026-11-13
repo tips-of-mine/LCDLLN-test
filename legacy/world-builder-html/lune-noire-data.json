@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.112",
+    "version": "1.0.113",
     "notes": [
+      "v1.0.113 : [DÉCISION] Réponses du propriétaire du 13/11/2026 : noms [GD] validés en bloc ; Xygga femelle et noms [GD] des 10 premiers-nés ; année de jeu 3417 AO ; niveaux confirmés (Kendrhir 38-56, raids de fin 45/50/55/60, faction +5 seuil 20) ; balisage par la couleur du nom de zone ; Harrodh à l'Empire ; « la Légion » de l'Île de la Trêve = les deux ; contre-quêtes Lune Noire ; Ghulvathan en N009_E011 ; faction_demons → Légion infernale ; demi-elfe noir → elfe noir ; race des Menthats créée (Lune Noire) ; îles par bateau ; arbitrages de l'Oracle, d'Heusgly et du Palais du Maître des Dragons ; règles de l'exploit des 666 cimetières et des lieux secrets découverts ; ouverture des routes coupées décidée (LORE_BD §16.40).",
       "v1.0.112 : [DÉCISION] Répartition des 666 cimetières (choix 1 du propriétaire, 13/11/2026) : chaque cellule jouable à terre a au moins un cimetière. Les 71 cellules à terre qui n'en avaient pas reçoivent un cimetière isolé (sans ville, au bord d'une route ; les 10 autres sont en pleine mer) ; 71 hameaux procéduraux des cellules les plus fournies perdent le leur (auberge gardée) : le total reste 666. Une cellule peut contenir une ville ou un hameau et plusieurs éléments de décor (cimetière isolé compris). Master : section graveyards (target 666, fill_empty_cells, without_graveyard) ; tools/world_gen échoue si une génération complète ne donne pas 666 cimetières.",
       "v1.0.111 : [DÉCISION] 666 cimetières (propriétaire, 13/11/2026) : le monde jouable des Royaumes compte toujours exactement 666 cimetières (points de réapparition `graveyard` des cellules générées, état mesuré à la v1.0.110) ; tout ajout ou retrait doit garder ce nombre (contrôle bloquant de la CI build-linux). Nouvel exploit d'exploration exploit_pelerin_des_666_tombes [GD] : visiter les 666 cimetières.",
       "v1.0.110 : [DÉCISION] Lieux secrets cachés aux joueurs (point 65, choix « option a » du propriétaire, 13/11/2026) : champ `secret: true` posé sur les 11 grottes des dragons de Xygga et le Puits des Lianes (Ophidiens), en plus du Gouffre des Revenus, de la Fente des Revenus et de Thurvhal (v1.0.107). Au master, les POI et villes secrets ne figurent plus dans places.json (carte du jeu, bannières, radar, annuaire public) : ils sont écrits dans world/<monde>/secret_places.json, lu seulement par l'annuaire des MJ du shard et retiré du paquet client par la CI. Le lieu reste généré sur le terrain : seul son affichage est caché. Case « Secret » ajoutée aux formulaires lieu et ville de l'éditeur ; tools/lore/check_secrets.py vérifie que le lore et le master concordent.",
@@ -744,7 +745,7 @@
           "relation": "enemy"
         },
         {
-          "faction_id": "faction_demons",
+          "faction_id": "faction_legion_infernale",
           "relation": "enemy"
         },
         {
@@ -5145,11 +5146,6 @@
           "notes": [
             "Pacte ancien — le chef Greldinard ignore le vrai but de la Lune Noire"
           ]
-        },
-        {
-          "faction_id": "faction_black_moon",
-          "status": "exclusive_allies",
-          "notes": []
         }
       ],
       "abilities_traits": [
@@ -5236,7 +5232,7 @@
       },
       "faction_affiliations": [
         {
-          "faction_id": "faction_demons",
+          "faction_id": "faction_legion_infernale",
           "status": "member",
           "notes": []
         }
@@ -5661,6 +5657,39 @@
       "class_access": [],
       "notes": [
         "[DÉCISION] (v1.0.82) Peuple ennemi souterrain (regle_ophidiens) ; PNJ et créatures seulement (décision du propriétaire du 11/11/2026 ; LORE_BD §16.11)."
+      ]
+    },
+    {
+      "id": "race_menthat",
+      "name": "Menthats",
+      "playable": false,
+      "npc": true,
+      "companion": false,
+      "genders": [
+        "masculine",
+        "feminine"
+      ],
+      "origins": {
+        "summary": "Les Menthats : mages et prêtres que la BD montre aux côtés de la Lune Noire (Fratus Sinister, Argon de Moork, le Messager lunaire) ; à l'Oracle, ils peuvent ordonner un cessez-le-feu [BD-T3].",
+        "homeland_notes": [
+          "Rattachés à la Lune Noire (décision du propriétaire du 13/11/2026)"
+        ]
+      },
+      "faction_affiliations": [
+        {
+          "faction_id": "faction_black_moon",
+          "status": "member",
+          "notes": [
+            "Rattachement décidé par le propriétaire (13/11/2026)."
+          ]
+        }
+      ],
+      "abilities_traits": [
+        "Magie lunaire (skill_magie_lune_noire)"
+      ],
+      "class_access": [],
+      "notes": [
+        "[DÉCISION] (v1.0.113, 13/11/2026) Race PNJ créée pour les 11 références `race_menthat` (persons, loots, dialogues, compétences) ; les Menthats sont rattachés à la Lune Noire (LORE_BD §16.40)."
       ]
     }
   ],
@@ -6720,7 +6749,8 @@
         "[BD-T11] p.42 : l'Oracle est « au cœur de l'Empire », près des « lacs du destin » ; [BD-T12] p.30 : colline et sanctuaire à portes éthériques ; [BD-T14] p.12 : antre souterrain où il est enchaîné.",
         "[GD] (v1.0.58) Économie : économie de pèlerinage : devins à 5 pièces d'argent, faux voyants, charlatans [BD-T2 p.47], marchands de boules de cristal (loot_boule_cristal) ; carrefour de la Via Magna et de la route du métal nain.",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
-        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : au Camp de l'Oracle, caravaniers et devins mettent en garde contre « les falaises de grès du nord-est » et leur feu doré (premier-né de Xygga, 66-70, N002_E004) ; ils ignorent où le dragon gîte."
+        "[GD] (v1.0.86) Balisage (LORE_BD §16.15) — avertisseur : au Camp de l'Oracle, caravaniers et devins mettent en garde contre « les falaises de grès du nord-est » et leur feu doré (premier-né de Xygga, 66-70, N002_E004) ; ils ignorent où le dragon gîte.",
+        "[GD] (v1.0.113) Escaliers de l'Oracle : la rampe et l'escalier de briques du T2 (approche par le chemin des échoppes) et les huit escaliers blancs du T3 (tour du rocher) coexistent — deux vues du même site. Les « lacs du destin » (T11), la colline à sanctuaire (T12) et l'antre où il est enchaîné (T14) sont postérieurs à l'époque du jeu : hors de l'état du lieu (arbitrage demandé par le propriétaire, 13/11/2026)."
       ],
       "dimensions_estimees": {
         "hauteur": "environ 300m pour le rocher central",
@@ -8443,7 +8473,8 @@
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
         "[DÉCISION] (v1.0.93) Nom affiché « Harrodh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Harrowdale » est gardé en alias. Identifiant inchangé (horker) (LORE_BD §16.22).",
         "[DÉCISION] (v1.0.94) Description de world_master.json corrigée : elle décrivait la vraie Horkher (comté de George d'Horkher, BD-T6, city_horkher) ; elle décrit désormais Harrodh, cité marchande de la Via Magna. Horkher garde sa propre entrée (city_horkher, N006_E014) (LORE_BD §16.23).",
-        "[GD] (v1.0.103) Faction : Empire de Lhynn (faction_empire ; empire_hynn au master, inchangé). La case N004_E009 est dans la Via Magna, route impériale aux « postes impériaux tous les 30 km » et parcourue par les légions [HS] ; Harrodh y a le maître de poste du courrier impérial (quest_via_magna_gd_courrier_imperial, v1.0.87). La faction du master venait d'une confusion avec Horkher (city_horkher) ; elle est gardée parce qu'elle est cohérente avec la région, pas à cause d'Horkher. Proposition à valider (LORE_BD §16.32)."
+        "[GD] (v1.0.103) Faction : Empire de Lhynn (faction_empire ; empire_hynn au master, inchangé). La case N004_E009 est dans la Via Magna, route impériale aux « postes impériaux tous les 30 km » et parcourue par les légions [HS] ; Harrodh y a le maître de poste du courrier impérial (quest_via_magna_gd_courrier_imperial, v1.0.87). La faction du master venait d'une confusion avec Horkher (city_horkher) ; elle est gardée parce qu'elle est cohérente avec la région, pas à cause d'Horkher. Proposition à valider (LORE_BD §16.32).",
+        "[DÉCISION] (v1.0.113, 13/11/2026) Harrodh appartient à l'Empire (faction confirmée par le propriétaire)."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -11621,7 +11652,8 @@
         "[À VÉRIFIER BD-T11] p.36 : le cartouche se lit « l'ancienne forteresse naine d'Heusgly » (lecture incertaine) ; « d'Heureux » était une lecture du lore, remplacée par « d'Heusgly » en v1.0.94 (décision du propriétaire). Même forteresse que celle du T9 p.26 (zone_forteresse_naine_abandonnee_t9) [DÉDUCTION].",
         "[DÉCISION] (v1.0.55) Cellule S006_E004 (montagnes) : refuge des neuf mères au T9 (p.26, pendant la livraison du Juggernauth) et « forteresse naine d'Heusgly » du T11 (p.36). Le monde jouable la déplace de S004_W004 à S006_E004.",
         "[GD] (v1.0.58) Économie : forteresse : achète vivres et armes ; produit minerai, pierre de taille, blé et orge, élevage ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.94) Nom affiché « Forteresse naine d'Heusgly » (décision du propriétaire du 12/11/2026, lot 22 : graphie du cartouche [BD-T11 p.36] « l'ancienne forteresse naine d'Heusgly ») ; l'ancien nom « Forteresse Naine d'Heureux » est gardé en alias. Identifiant inchangé (ville_forteresse_naine_heureux_t11) (LORE_BD §16.23)."
+        "[DÉCISION] (v1.0.94) Nom affiché « Forteresse naine d'Heusgly » (décision du propriétaire du 12/11/2026, lot 22 : graphie du cartouche [BD-T11 p.36] « l'ancienne forteresse naine d'Heusgly ») ; l'ancien nom « Forteresse Naine d'Heureux » est gardé en alias. Identifiant inchangé (ville_forteresse_naine_heureux_t11) (LORE_BD §16.23).",
+        "[GD] (v1.0.113) Heusgly n'est pas « proche de Moork » : aucune planche ne le dit ; la forteresse reste en S006_E004 (Royaumes des nains du sud), position retenue en v1.0.55 (arbitrage demandé par le propriétaire, 13/11/2026)."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -11727,7 +11759,7 @@
       "alias": "Leviathan Jungle",
       "type": "village",
       "importance": "",
-      "cell": "N012_E012",
+      "cell": "N009_E011",
       "coord_x": null,
       "coord_y": null,
       "position_x_m": null,
@@ -11749,9 +11781,10 @@
       "notes": [
         "[GD] (v1.0.58) Économie : village agricole ; produit bois d'œuvre, gibier et peaux ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[DÉCISION] (v1.0.61) N'est plus une ville de départ (ancien départ par race) : ville normale. Les départs sont par faction (LORE_BD §14).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Ghulvathan » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Leviathan Jungle » est gardé en alias. Identifiant inchangé (leviathan_jungle) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Ghulvathan » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Leviathan Jungle » est gardé en alias. Identifiant inchangé (leviathan_jungle) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.113, 13/11/2026) Ghulvathan est en N009_E011, comme dans le monde jouable (le lore la plaçait en N012_E012 depuis la v1.0.40) : question close (LORE_BD §17)."
       ],
-      "anchor_tile": "N012_E012",
+      "anchor_tile": "N009_E011",
       "taille": "village",
       "service_npcs": [
         {
@@ -30496,7 +30529,7 @@
       "source_lore": [
         "zone_cursed_swamp",
         "zone_phantom_village",
-        "faction_demons",
+        "faction_legion_infernale",
         "ville_village_fantome"
       ],
       "rewards": {},
@@ -34038,7 +34071,7 @@
       "required_classes": [],
       "for_factions": [],
       "for_races": [
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "for_classes": [],
       "unlock_conditions": [
@@ -163004,7 +163037,7 @@
         "t13",
         "t14"
       ],
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "race_demon",
       "class_id": "class_mage",
       "role": "companion_demon_pacte",
@@ -163271,7 +163304,7 @@
         "t21",
         "t22"
       ],
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "class_id": "",
       "role": "cosmic_antagonist",
@@ -164547,7 +164580,7 @@
       "tomes": [
         "t12"
       ],
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "class_id": "",
       "role": "boss_zone",
@@ -164693,7 +164726,7 @@
       "role": "npc_majeur",
       "visual": "Le plus grand des dragons : écailles rouge sombre à rouge vif en rangées épaisses, yeux vert-jaune à pupille fendue, crête de longues cornes rouges, collerette d'écailles, immenses ailes rouges membraneuses aux griffes blanches, long cou ; parle en bulles rouges [BD-T16 p.4-9].",
       "personality": "Ancien et sage. Sait ce qui se passe. S'incline devant les faits. Respectueux envers Wismerhill tout en étant conscient de sa propre grandeur.",
-      "description": "Le Grand Dragon rouge, « le Premier » (« Ô Premier… », T16 p.5), premier Grand Rêveur : ses premiers-nés sont « les Enfants, les rêves de Xygga » [BD-T16 p.7]. À l'époque du jeu, Xygga dort statufié dans une caverne au cœur d'un volcan (lieu_grotte_xygga, S008_E012) ; il ne se réveille qu'au T14.",
+      "description": "La Grande Dragonne rouge, « le Premier » (« Ô Premier… », T16 p.5), premier Grand Rêveur : ses premiers-nés sont « les Enfants, les rêves de Xygga » [BD-T16 p.7]. À l'époque du jeu, Xygga dort statufié dans une caverne au cœur d'un volcan (lieu_grotte_xygga, S008_E012) ; il ne se réveille qu'au T14.",
       "arc": "",
       "abilities": [
         "Rêve des races : ses rêves engendrent des êtres ; il peut cesser de « rêver » une race [BD-T16 p.19]",
@@ -164845,7 +164878,7 @@
       "tomes": [
         "t_hs_empire"
       ],
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "race_demon",
       "class_id": "class_succube",
       "role": "imperatrice_demon",
@@ -168341,7 +168374,7 @@
       "description": "Entité démoniaque déguisée en vieillard de village. Révèle sa vraie forme à l'aube. Peut emporter un compagnon dans les brumes du temps.",
       "region_id": "foret_elfique",
       "ville_id": "ville_village_fantome",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         "loot_larme_brume_temps",
         "loot_essence_dimensionnelle"
@@ -168845,7 +168878,7 @@
       "description": "Hordes de démons rouges ailés invoqués par Haazheel depuis la Faille de Tsaroth. Petits démons agressifs à crocs et griffes, se ruant en désordre sanglant sur tout ce qui vit.",
       "region_id": "baronnie_de_moorks",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_essence_infernale_nuee",
@@ -169016,7 +169049,7 @@
       "description": "Deux renards roux à corps translucide, yeux verts. Espions des entités du village fantôme. Agissent en binôme pour surveiller le groupe et attaquer les créatures juvéniles (Kruikna).",
       "region_id": "foret_elfique",
       "ville_id": "ville_village_fantome",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         "loot_pelage_roux_infernal",
         "loot_oeil_renard_infernal"
@@ -169046,7 +169079,7 @@
       "description": "Grand oiseau noir prédateur, ailes larges, bec crochu. Attaque Kruikna juvénile. Sous contrôle des entités du village fantôme.",
       "region_id": "foret_elfique",
       "ville_id": "ville_village_fantome",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         "loot_plume_noire_demonique"
       ],
@@ -169817,7 +169850,7 @@
       "description": "Grand dragon aux écailles rouge sang, opposé au Dragon Vert Jade. Potentiellement une créature hostile à l'Empire du Jade ou envoyée par une faction ennemie. Combat aérien spectaculaire dans le ciel jade.",
       "region_id": "region_empire_jade",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_ecaille_dragon_rouge_t7",
@@ -170318,7 +170351,7 @@
       "description": "Titan demoniaque aux cent bras. Montagne de chair demoniaque, rempart vivant gardant la Porte des Enfers.",
       "region_id": "region_enfers_t00",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_bras_hecatoncheire_t12",
@@ -170366,7 +170399,7 @@
       "description": "Demon rouge musculeux, cornu, griffu. Garde la Porte des Enfers cote infernal. Combat en legion compacte.",
       "region_id": "region_enfers_t00",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_essence_infernale_nuee",
@@ -170406,7 +170439,7 @@
       "description": "Creature demoniaque ailee, mi-chauve-souris mi-dragon miniature. Vol en nuee.",
       "region_id": "region_enfers_t00",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_aile_demon_volant_t12",
@@ -170474,7 +170507,7 @@
       "description": "Bete titanesque style rhinoceros blinde monstreux, placee face a la Porte des Enfers. Charge et ecrase tout. Ecailles noires/bleues, defenses massives.",
       "region_id": "region_enfers_t00",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_ecaille_leviathan_t12",
@@ -175194,7 +175227,7 @@
       "description": "« Démon de pierre » : statue de terrasse qui suit du regard et s'anime ; foules de gargouilles et diablotins aux Enfers [BD-THS p.41] [BD-T8 p.52].",
       "region_id": "region_enfers_t00",
       "ville_id": "",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "drops": [
         {
           "loot_id": "loot_eclat_pierre_animee",
@@ -175658,12 +175691,12 @@
     },
     {
       "id": "creature_xygga",
-      "name": "Xygga, le Grand Dragon rouge (endormi)",
+      "name": "Xygga, la Grande Dragonne rouge (endormie)",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 70,
       "level_max": 70,
-      "description": "Xygga, « le Premier », premier Grand Rêveur et parent des premiers-nés [BD-T16 p.4-9] ; à l'époque du jeu, statufié dans la caverne du cœur d'un volcan, d'où il ne s'éveille qu'au T14 [BD-T14 p.20-34]. Fiche de combat de char_xygga.",
+      "description": "Xygga, « le Premier », premier Grand Rêveur et parent des premiers-nés [BD-T16 p.4-9] ; à l'époque du jeu, statufiée dans la caverne du cœur d'un volcan, d'où il ne s'éveille qu'au T14 [BD-T14 p.20-34]. Fiche de combat de char_xygga.",
       "region_id": "",
       "ville_id": "",
       "faction_id": "faction_neutral",
@@ -175692,7 +175725,8 @@
       "notes": [
         "Personnage : char_xygga. Genre non tranché ([DÉCISION] v1.0.81).",
         "[GD] (v1.0.81) Niveau 70 : le plafond actuel des boss mondiaux (55-70), au-dessus du Grand Ancien (66-70) dont il est le premier.",
-        "[DÉCISION] (v1.0.81) Caché dans une grotte, dans un volcan (S008_E012, cellule générée) : lieu_grotte_xygga, poi_grotte_xygga (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10)."
+        "[DÉCISION] (v1.0.81) Caché dans une grotte, dans un volcan (S008_E012, cellule générée) : lieu_grotte_xygga, poi_grotte_xygga (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
+        "[DÉCISION] (v1.0.113, 13/11/2026) Xygga est une femelle : la mère des dragons [BD-T16 p.4-5] (décision du propriétaire)."
       ],
       "bestiaire": true,
       "habitat": "Caverne du cœur d'un volcan, sous une coulée figée (S008_E012).",
@@ -175703,7 +175737,7 @@
     },
     {
       "id": "creature_premier_ne_dore_enflamme",
-      "name": "Premier-né de Xygga — le dragon doré enflammé",
+      "name": "Vhaëlgorn, premier-né de Xygga — le dragon doré enflammé",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175737,7 +175771,8 @@
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_dore_enflamme, N002_E004) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
         "Grotte « Grotte de la falaise de grès » : lore seulement (cellule non générée).",
-        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en N002_E004 (LORE_BD §16.15)."
+        "[GD] (v1.0.86) Contenu de plus haut niveau que la zone : balisé en N002_E004 (LORE_BD §16.15).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (désert, N002_E004) : faille étroite dans une falaise de grès, au cœur du désert.",
@@ -175748,7 +175783,7 @@
     },
     {
       "id": "creature_premier_ne_rouge_a_cornes",
-      "name": "Premier-né de Xygga — le dragon rouge à cornes",
+      "name": "Kharzhaëd, premier-né de Xygga — le dragon rouge à cornes",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175781,7 +175816,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_rouge_a_cornes, S005_E001) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte de la vire » : lore seulement (cellule non générée)."
+        "Grotte « Grotte de la vire » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (montagne, S005_E001) : bouche d'ombre dans une paroi, accessible par une seule vire.",
@@ -175792,7 +175828,7 @@
     },
     {
       "id": "creature_premier_ne_triceratops",
-      "name": "Premier-né de Xygga — le dragon jaune-vert épineux à tête de tricératops",
+      "name": "Thrögnavyr, premier-né de Xygga — le dragon jaune-vert épineux à tête de tricératops",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175825,7 +175861,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_triceratops, N011_W005) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte des racines du marais » : lore seulement (cellule non générée)."
+        "Grotte « Grotte des racines du marais » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (marais, N011_W005) : entrée noyée sous les racines d'un sous-bois du marais.",
@@ -175836,7 +175873,7 @@
     },
     {
       "id": "creature_premier_ne_petit_rouge_epineux",
-      "name": "Premier-né de Xygga — le petit dragon rouge épineux",
+      "name": "Skhiraz, premier-né de Xygga — le petit dragon rouge épineux",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175869,7 +175906,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_petit_rouge_epineux, S007_E021) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte de la crevasse de l'est » : lore seulement (cellule non générée)."
+        "Grotte « Grotte de la crevasse de l'est » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (montagne, S007_E021) : crevasse étroite entre deux arêtes, prise pour une simple fente.",
@@ -175880,7 +175918,7 @@
     },
     {
       "id": "creature_premier_ne_blanc_cornes_noires",
-      "name": "Premier-né de Xygga — le dragon blanc à cornes noires",
+      "name": "Ysvaërnoth, premier-né de Xygga — le dragon blanc à cornes noires",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175913,7 +175951,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_blanc_cornes_noires, S006_W001) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte du surplomb » : lore seulement (cellule non générée)."
+        "Grotte « Grotte du surplomb » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (montagne (Royaume Drach), S006_W001) : cavité sous un surplomb de falaise, cachée par les éboulis.",
@@ -175924,7 +175963,7 @@
     },
     {
       "id": "creature_premier_ne_noir_ailes_brunes",
-      "name": "Premier-né de Xygga — le dragon noir aux ailes brunes",
+      "name": "Mordhakhal, premier-né de Xygga — le dragon noir aux ailes brunes",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -175958,7 +175997,8 @@
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_noir_ailes_brunes, N010_E012) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
         "Grotte « Grotte des ronces » : réelle en jeu (cellule générée).",
-        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N010_E012 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14)."
+        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N010_E012 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (forêt, N010_E012) : entrée basse sous un fourré de ronces et de racines (sous-bois), au flanc d'une colline.",
@@ -175969,7 +176009,7 @@
     },
     {
       "id": "creature_premier_ne_hydre",
-      "name": "Premier-né de Xygga — l'hydre",
+      "name": "Ylghydrath, premier-né de Xygga — l'hydre",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -176003,7 +176043,8 @@
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_hydre, N013_E017) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
         "Grotte « Grotte de la cascade du marais » : lore seulement (cellule non générée).",
-        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N013_E017 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14)."
+        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N013_E017 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (marais, N013_E017) : grotte derrière une cascade qui tombe d'une colline au bord du marais.",
@@ -176014,7 +176055,7 @@
     },
     {
       "id": "creature_premier_ne_glace",
-      "name": "Premier-né de Xygga — le dragon de glace",
+      "name": "Frizhaldûr, premier-né de Xygga — le dragon de glace",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -176047,7 +176088,8 @@
       "notes": [
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_glace, N021_E016) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
-        "Grotte « Grotte du glacier » : lore seulement (cellule non générée)."
+        "Grotte « Grotte du glacier » : lore seulement (cellule non générée).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (montagne enneigée du grand nord, N021_E016) : crevasse de glacier au pied d'une falaise, refermée chaque hiver par le givre.",
@@ -176058,7 +176100,7 @@
     },
     {
       "id": "creature_premier_ne_bleu",
-      "name": "Premier-né de Xygga — le dragon bleu",
+      "name": "Azhvaëlin, premier-né de Xygga — le dragon bleu",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -176093,7 +176135,8 @@
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
         "Grotte « Grotte marine de la côte ouest » : lore seulement (cellule non générée).",
         "[DÉDUCTION] Distinct du dragon bleu de Pilou (companion_dragon_bleu_pilou_t11), de Kruikna et de « Cruik » (LORE_BD §17, close v1.0.55).",
-        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N008_W015 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14)."
+        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N008_W015 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (côte, N008_W015) : grotte marine au pied d'une falaise basse, dont l'entrée n'émerge qu'à marée basse.",
@@ -176104,7 +176147,7 @@
     },
     {
       "id": "creature_premier_ne_oriental",
-      "name": "Premier-né de Xygga — le dragon oriental doré-orangé",
+      "name": "Lhung-Tsaëm, premier-né de Xygga — le dragon oriental doré-orangé",
       "type": "dragon",
       "difficulty": "world_boss",
       "level_min": 66,
@@ -176138,7 +176181,8 @@
         "[DÉCISION] (v1.0.81) Un des 10 premiers-nés de Xygga, sans nom pour l'instant ; caché dans une grotte difficile à trouver (lieu_grotte_premier_ne_oriental, N006_E007) (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[GD] (v1.0.81) Niveau 66-70, celui du Grand Ancien : « une des créatures les plus puissantes de l'univers » [BD-T16 p.6].",
         "Grotte « Grotte derrière la cascade » : lore seulement (cellule non générée).",
-        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N006_E007 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14)."
+        "[GD] (v1.0.85) Contenu de plus haut niveau en zone plus basse : balisé en N006_E007 (panneaux, cairns ou stèles, PNJ avertisseurs ; LORE_BD §16.14).",
+        "[GD] (v1.0.113) Nom inventé dans l'esprit de la BD, à la demande du propriétaire (13/11/2026) ; validé par la règle des noms [GD]."
       ],
       "bestiaire": true,
       "habitat": "Grotte cachée (forêt à rivière, N006_E007) : grotte cachée derrière une cascade de la rivière forestière.",
@@ -176978,7 +177022,8 @@
         "[DÉCISION] (v1.0.56) « Royaume Drach » retenu comme nom de région (Q18) ; « draakh » (THS) en alias.",
         "[GD] (v1.0.58) Économie : ressources poisson, sel marin, pierre ; productions pêche, cabotage ; exporte poisson salé ; importe grain, bois. Détail et sources : regle_eco_productions_regions.",
         "[DÉCISION] (v1.0.92) Région de référence du hors-série « L'Empire de la Négation » (carte p.4, nom HS « Royaume Drach ») : 50 cases terrestres (`cells[].region_id`) ; aucune province (LORE_BD §16.21).",
-        "[GD] (v1.0.103) niveau_par_faction rempli selon la règle de rule_niveaux_par_faction : maître = faction_dragon_knights (les Chevaliers-Dragons en interdisent l'accès [BD-T2]) ; territoire ennemi (+5, au moins 20) pour faction_hauts_elfes, Hors-La-Loi ; référence 30-56 pour les autres (LORE_BD §16.32)."
+        "[GD] (v1.0.103) niveau_par_faction rempli selon la règle de rule_niveaux_par_faction : maître = faction_dragon_knights (les Chevaliers-Dragons en interdisent l'accès [BD-T2]) ; territoire ennemi (+5, au moins 20) pour faction_hauts_elfes, Hors-La-Loi ; référence 30-56 pour les autres (LORE_BD §16.32).",
+        "[GD] (v1.0.113) Palais du Maître des Dragons : un seul palais ; « au-delà des sept régions » (BD-T2 p.29) est une façon de parler, le palais visible depuis le pont de la Passe (p.42) est le même (arbitrage demandé par le propriétaire, 13/11/2026)."
       ],
       "niveau_ref": {
         "min": 30,
@@ -177785,7 +177830,8 @@
         "[DÉCISION] (v1.0.77) Relief au dénivelé important : pics et crêtes boisés (jusqu'à environ 550 m) au cœur des branches, falaises sur la mer, vallées encaissées ; côte inchangée ; LORE_BD §16.6.",
         "[GD] (v1.0.77) Peuple natif : les Hwakhari (faction_huacani, race_huacani, culte religion_huacani_soleil), qui habitent onze temples de style inca (lieu_ile_gd_grand_sanctuaire_soleil, lieu_ile_gd_temple_des_ancetres, lieu_ile_gd_temple_de_la_brume, lieu_ile_gd_temple_du_givre, lieu_ile_gd_temple_mere_des_eaux, lieu_ile_gd_temple_de_la_lune, lieu_ile_gd_temple_des_cimes, lieu_ile_gd_temple_des_terrasses, lieu_ile_gd_oratoire_du_col, lieu_ile_gd_autel_des_sources, lieu_ile_gd_oratoire_de_l_aube) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.92) Hors de la carte du hors-série : reste une région à part entière, sans province (20 cases terrestres) (LORE_BD §16.21).",
-        "[GD] (v1.0.103) niveau_par_faction rempli selon la règle de rule_niveaux_par_faction : maître = aucun (zone commune (décision v1.0.74)) ; aucune faction ennemie ; référence 45-60 pour les autres (LORE_BD §16.32)."
+        "[GD] (v1.0.103) niveau_par_faction rempli selon la règle de rule_niveaux_par_faction : maître = aucun (zone commune (décision v1.0.74)) ; aucune faction ennemie ; référence 45-60 pour les autres (LORE_BD §16.32).",
+        "[DÉCISION] (v1.0.113, 13/11/2026) « La Légion » admise sur l'Île de la Trêve désigne À LA FOIS la Légion infernale (démons) et les Légions impériales."
       ],
       "niveau_ref": {
         "min": 45,
@@ -179319,7 +179365,7 @@
       "description": "Sceptre de cristal né dans la main de Wismerhill lors de son initiation au sommet du Monolithe des Neuf Pics. Palpite doucement comme un cœur humain. Symbole du pacte élémentaire entre Wismerhill et les Grands Vents.",
       "min_level": 25,
       "eligible_races": [
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "eligible_classes": [],
       "source_monsters": [],
@@ -183544,7 +183590,7 @@
       "id": "dial_succube_teleportation_t4",
       "name": "Apprentissage de la Téléportation Démoniaque",
       "npc_name": "Succube / Wismerhill",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "race_demon",
       "location_ville_id": "",
       "lines": [
@@ -185628,7 +185674,7 @@
       "id": "dial_lucifer_haazeel_gemme_t9",
       "name": "Remise de la Gemme des Sombres Splendeurs",
       "npc_name": "Lucifer / Prince des Ténèbres & Haazheel Thorn",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "location_ville_id": "",
       "lines": [
@@ -185803,7 +185849,7 @@
       "id": "dial_hellavnnea_wismerhill_neuf_femmes_t9",
       "name": "Hellaynnea convainc Wismerhill d'accepter la transformation",
       "npc_name": "Hellaynnea & Wismerhill",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "location_ville_id": "ville_moork",
       "lines": [
@@ -187291,7 +187337,7 @@
       "id": "dial_esmeralda_drain_ame_t6",
       "name": "Esmeralda — Le Drain d'Âme",
       "npc_name": "Esmeralda",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "race_demon",
       "location_ville_id": "ville_moork",
       "lines": [
@@ -187712,7 +187758,7 @@
       "id": "dial_lucifer_delegueson_legion_wismerhill_t9",
       "name": "Lucifer délègue sa légion infernale à Wismerhill",
       "npc_name": "Lucifer & Haazheel & Wismerhill (Prince de la Négation)",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "location_ville_id": "",
       "lines": [
@@ -187849,7 +187895,7 @@
       "id": "dial_t00_pari_lucifer_pazuzu",
       "name": "Le Pari Cosmique",
       "npc_name": "Lucifer / Pazuzu",
-      "faction_id": "faction_demons",
+      "faction_id": "faction_legion_infernale",
       "race_id": "",
       "location_ville_id": "region_enfers_t00",
       "lines": [
@@ -237951,8 +237997,7 @@
       "name": "Magie des Vents",
       "school": "elfique_instinctive",
       "usable_by": [
-        "race_dark_elf",
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "prerequisite": "Sang elfen ténébreux (pur ou demi)",
       "description": "Maîtrise des courants aériens — communication passive avec les vents, invocation de tempêtes, murs de vent défensifs, déplacements accélérés.",
@@ -237995,8 +238040,7 @@
       "school": "psychique_apprise",
       "usable_by": [
         "race_human",
-        "race_dark_elf",
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "prerequisite": "Entraînement avec Hizin ou maître psychique",
       "description": "Pouvoir mental permettant d'attaquer, défendre et percevoir au-delà du physique. Apprentissage long et rigoureux. Manifestation : rayon d'énergie rouge sang projeté par les yeux ou les mains.",
@@ -238132,8 +238176,7 @@
       "name": "Bouclier Zéphyr",
       "school": "elfique_protection",
       "usable_by": [
-        "race_dark_elf",
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "prerequisite": "skill_magie_vents niveau 2",
       "description": "Invocation d'un mur de vent infrangissable repoussant les créatures démoniaques et les attaques magiques.",
@@ -238416,7 +238459,7 @@
       "name": "Sceptre de Cristal des Vents",
       "school": "elfique_elementale",
       "usable_by": [
-        "race_half_dark_elf"
+        "race_dark_elf"
       ],
       "prerequisite": "Avoir été initié par les Grands Vents (Mont des Neuf Pics)",
       "description": "[BD-T2] Artefact vivant donné par les Grands Vents lors de l'initiation. Palpite comme un cœur. Rejette la magie d'extraction d'essence vitale. Symbole du pacte élémentaire.",
@@ -240025,7 +240068,7 @@
         "abreviation": "AO",
         "an_zero": "Effacement de Methraton (l'Oblivion)"
       },
-      "annee_jeu": null,
+      "annee_jeu": 3417,
       "jours_par_lune": 28,
       "lunes": [
         {
@@ -240117,7 +240160,8 @@
         "[DÉCISION] (v1.0.57) Un seul calendrier, ère comptée depuis l'Oblivion (an 0) ; année lunaire ; année de jeu unique, monde figé.",
         "[GD] (v1.0.57) Structure 13 × 28 jours + 1 jour hors lune, noms des lunes, des jours et répartition des saisons : proposition à valider par le propriétaire.",
         "[À VÉRIFIER] Année de jeu exacte (champ annee_jeu) à fixer par le propriétaire : postérieure à l'an 3000 AO (enfance de Sekh dans Methraton) ; le Tome 0 cite « décembre » (naissance de Wismerhill), à lire comme la Lune des Ombres [GD].",
-        "[GD] (v1.0.58) Fêtes religieuses placées dans ce calendrier : voir regle_calendrier_fetes_religieuses et lore.religions."
+        "[GD] (v1.0.58) Fêtes religieuses placées dans ce calendrier : voir regle_calendrier_fetes_religieuses et lore.religions.",
+        "[GD] (v1.0.113) Année de jeu : 3417 de l'Ère de l'Oblivion (AO), plusieurs siècles après les albums Methraton (vers l'an 3000) ; noms des 13 lunes, des jours et de la Nuit de la Lune Noire validés par le propriétaire (13/11/2026)."
       ]
     },
     {
@@ -242973,6 +243017,125 @@
           "nom": "Répartition des 666 cimetières",
           "decision": "Choix 1 du propriétaire (13/11/2026) : redistribuer à nombre constant. Toute cellule jouable à terre a au moins un cimetière : cimetière isolé (sans ville) dans les 71 cellules à terre qui n'en avaient pas (10 autres sont en pleine mer), retiré de 71 hameaux procéduraux là où les cimetières étaient les plus serrés (l'auberge reste). Une cellule n'est pas limitée à un seul lieu : une ville ou un hameau et plusieurs éléments de décor peuvent y cohabiter.",
           "version": "1.0.112"
+        },
+        {
+          "collection": "lore",
+          "id": "regle_canon_etiquettes",
+          "nom": "Noms [GD] validés en bloc",
+          "decision": "Décision du propriétaire (13/11/2026) : Tous les noms inventés [GD] jusqu'à la v1.0.112 (villes moyennes, Île de la Trêve, Hwakhari, gouffre, balises, lieux et quêtes des ouvertures, régions du sud-centre…) sont validés par le propriétaire ; l'étiquette [GD] reste pour dire leur origine.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "creatures",
+          "id": "creature_xygga",
+          "nom": "Xygga femelle, noms des 10 premiers-nés",
+          "decision": "Décision du propriétaire (13/11/2026) : Xygga est une femelle (la mère des dragons). Noms [GD] des premiers-nés : Vhaëlgorn, Kharzhaëd, Thrögnavyr, Skhiraz, Ysvaërnoth, Mordhakhal, Ylghydrath, Frizhaldûr, Azhvaëlin, Lhung-Tsaëm.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "regle_canon_calendrier",
+          "nom": "Année de jeu",
+          "decision": "Décision du propriétaire (13/11/2026) : Année de jeu 3417 AO [GD] ; noms des lunes et des jours validés.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "raids",
+          "id": "kendrhir",
+          "nom": "Niveaux confirmés",
+          "decision": "Décision du propriétaire (13/11/2026) : Raids de Kendrhir 38-56 gardés ; planchers des raids de fin 45/50/55/60 ; règle de faction +5, seuil 20.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "game_design",
+          "id": "balisage",
+          "nom": "Balisage des zones",
+          "decision": "Décision du propriétaire (13/11/2026) : Signal unique : couleur du nom de zone selon l'écart de niveau.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "villes",
+          "id": "horker",
+          "nom": "Faction d'Harrodh",
+          "decision": "Décision du propriétaire (13/11/2026) : Empire (confirmé).",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "regions",
+          "id": "ile_de_la_treve",
+          "nom": "La Légion sur l'Île",
+          "decision": "Décision du propriétaire (13/11/2026) : Légion infernale ET Légions impériales.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "quests",
+          "id": "contre_quetes",
+          "nom": "Contre-quêtes Lune Noire",
+          "decision": "Décision du propriétaire (13/11/2026) : Chaque quête ouverte à tous dans une zone de la Lune Noire a une contre-quête Lune Noire.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "villes",
+          "id": "leviathan_jungle",
+          "nom": "Ghulvathan",
+          "decision": "Décision du propriétaire (13/11/2026) : N009_E011 (comme en jeu).",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "factions",
+          "id": "faction_legion_infernale",
+          "nom": "faction_demons",
+          "decision": "Décision du propriétaire (13/11/2026) : Les 30 références à faction_demons pointent vers la Légion infernale.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "races",
+          "id": "race_dark_elf",
+          "nom": "Demi-elfe noir",
+          "decision": "Décision du propriétaire (13/11/2026) : race_half_dark_elf = elfe noir (race_dark_elf) ; références remplacées.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "races",
+          "id": "race_menthat",
+          "nom": "Menthats",
+          "decision": "Décision du propriétaire (13/11/2026) : Race PNJ créée, rattachée à la Lune Noire.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "sea_lines",
+          "id": "hishtarland",
+          "nom": "Îles sans route",
+          "decision": "Décision du propriétaire (13/11/2026) : Hishtarland et Dyprokh par bateau.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "villes",
+          "id": "ville_oracle_camp",
+          "nom": "Arbitrages de lore",
+          "decision": "Décision du propriétaire (13/11/2026) : Oracle : rampe de briques (T2) et huit escaliers blancs (T3) coexistent ; Heusgly reste en S006_E004, pas « proche de Moork » ; un seul Palais du Maître des Dragons (« au-delà des sept régions » = façon de parler).",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "exploits",
+          "id": "exploit_pelerin_des_666_tombes",
+          "nom": "Cimetière visité",
+          "decision": "Décision du propriétaire (13/11/2026) : Entrer dans son rayon OU y réapparaître.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_grotte_xygga",
+          "nom": "Lieu secret découvert",
+          "decision": "Décision du propriétaire (13/11/2026) : Révélé sur la carte du joueur dès qu'il y entre.",
+          "version": "1.0.113"
+        },
+        {
+          "collection": "routes",
+          "id": "routes_coupees",
+          "nom": "Routes coupées",
+          "decision": "Décision du propriétaire (13/11/2026) : Ouvrir les cases des 2 routes coupées et des 43 routes arrêtées à une zone fermée.",
+          "version": "1.0.113"
         }
       ]
     },
@@ -243428,7 +243591,7 @@
       "applies_to": [
         "hellavnnea_la_succube",
         "char_succubus",
-        "faction_demons"
+        "faction_legion_infernale"
       ],
       "mechanique_jeu": "Tout mortel qui tente de s'unir à une succube sans pacte actif est vidé de son âme (mort instantanée, âme non récupérable). La succube peut maintenir des illusions d'amour pour approcher sa cible. Seul un pacte officiel protège le mortel.",
       "apparition_window": "",
@@ -243927,7 +244090,7 @@
       "applies_to": [
         "char_haazheel_thorn",
         "loot_gemme_sombres_splendeurs_t9",
-        "faction_demons"
+        "faction_legion_infernale"
       ],
       "mechanique_jeu": "Événement unique de fin de campagne. Déclenchement : Haazheel utilise la Gemme juste avant la bataille finale. Effets : toutes les zones reçoivent un spawn permanent de démons; les Portes Infernales deviennent des donjons permanents; seul un artefact de contre-négation peut refermer les seuils.",
       "apparition_window": "raid_grande_marche_lune_noire_t9 et au-delà",
@@ -244690,7 +244853,7 @@
       "category": "cosmique_majeur",
       "description": "Un seuil permanent vers les Enfers a été ouvert par le rituel d'Haazheel Thorn (Gemme des Sombres Splendeurs, T10 p.14). Haazheel en rend compte à son père, le Sombre Prince (Lucifer), qui peut désormais venir en ce monde ; les légions démoniaques peuvent déferler et les âmes montent en flux continu vers Haazheel, qui contrôle les démons par un sceptre de commande infernal.",
       "applies_to": [
-        "faction_demons",
+        "faction_legion_infernale",
         "char_haazheel_thorn",
         "char_lucifer_prince_tenebres"
       ],
@@ -244788,7 +244951,7 @@
       "category": "cosmique_majeur",
       "description": "La Porte des Enfers est desormais scellee par un rituel divin de Parsifal et ses paladins en coordination avec Wismerhill. Scellement permanent : les legions demoniaques ne peuvent plus deferler librement. Le flux continu d ames vers Haazheel est brise.",
       "applies_to": [
-        "faction_demons",
+        "faction_legion_infernale",
         "char_haazheel_thorn",
         "char_parsifal",
         "char_wismerhill",
@@ -244834,7 +244997,7 @@
       "category": "menace_mondiale",
       "description": "L Oracle predit l arrivee de six legions demoniaques. L Empire de Wismerhill sera epargne en dernier. Sans action, destruction totale de toute vie.",
       "applies_to": [
-        "faction_demons",
+        "faction_legion_infernale",
         "char_wismerhill",
         "loracle_dieu_enchaine"
       ],
@@ -245307,7 +245470,7 @@
       "applies_to": [
         "loot_baton_priere_lune_noire",
         "creature_petit_demon",
-        "faction_demons"
+        "faction_legion_infernale"
       ],
       "mechanique_jeu": "En présence d'un démon de niveau ≤ 30 : brandir le bâton = le démon ne peut pas attaquer pendant 5 rounds. Démons supérieurs (>30) : résistance partielle. Nécessite de s'agenouiller et tenir le bâton à deux mains.",
       "apparition_window": "",
@@ -245326,7 +245489,7 @@
       "description": "Haazheel Thorn a ouvert une porte sur les Enfers peu après la victoire sur l'Empire d'Haghendorf. Depuis, les démons passent sans difficulté d'un plan à l'autre. Si la porte n'est pas fermée, la fin du monde peut survenir.",
       "applies_to": [
         "char_haazheel_thorn",
-        "faction_demons",
+        "faction_legion_infernale",
         "quest_fermer_porte_enfers_hs"
       ],
       "mechanique_jeu": "Spawn de démons augmenté de 200% dans toutes les zones proches de l'ancienne Porte. Quête de fermeture disponible. Si non résolue au niveau de jeu global : événement mondial (demons_envahissent_monde).",
@@ -247345,7 +247508,7 @@
       "id": "regle_dragons_de_xygga",
       "name": "Les dragons de Xygga",
       "category": "lore_monde",
-      "description": "Xygga, le Grand Dragon rouge, « le Premier », et ses dix premiers-nés, « les Enfants, les rêves de Xygga » [BD-T16 p.4-9], vivent dans le monde des Royaumes à l'époque du jeu. Chacun est caché dans une grotte difficile à trouver (entrée dissimulée : cascade, crevasse, sous-bois, falaise, grotte marine), dispersée sur la carte dans une case accordée à son élément ou à son milieu, loin des villes et des routes ; aucune route n'y mène. Xygga dort statufié dans un volcan. Les premiers-nés n'ont pas de nom : désignation descriptive. Le genre de Xygga n'est pas tranché.",
+      "description": "Xygga, la Grande Dragonne rouge, « le Premier », et ses dix premiers-nés, « les Enfants, les rêves de Xygga » [BD-T16 p.4-9], vivent dans le monde des Royaumes à l'époque du jeu. Chacun est caché dans une grotte difficile à trouver (entrée dissimulée : cascade, crevasse, sous-bois, falaise, grotte marine), dispersée sur la carte dans une case accordée à son élément ou à son milieu, loin des villes et des routes ; aucune route n'y mène. Xygga dort statufié dans un volcan. Les premiers-nés n'ont pas de nom : désignation descriptive. Le genre de Xygga n'est pas tranché.",
       "applies_to": [
         "char_xygga",
         "creature_xygga",
@@ -249605,6 +249768,16 @@
           }
         ]
       }
+    },
+    "decisions_13_11": {
+      "balisage_zone": "Couleur du nom de zone selon l'écart entre le niveau du joueur et celui de la zone (niveau de la faction du joueur) ; pas de panneau ni de bandeau imposé.",
+      "contre_quetes": "Une quête ouverte à toutes les factions dans une zone tenue par la Lune Noire a une contre-quête Lune Noire (même lieu, but inverse).",
+      "iles_sans_route": "Hishtarland et Dyprokh se rejoignent par bateau (lignes maritimes jouables).",
+      "niveaux": "Raids de Kendrhir gardés à 38-56 ; planchers des raids de fin 45/50/55/60 ; règle faction : +5 en territoire ennemi, au moins 20, au plus 70.",
+      "exploit_666": "Un cimetière compte comme visité quand le joueur entre dans son rayon OU y réapparaît.",
+      "lieux_secrets": "Un lieu secret est révélé sur la carte du joueur dès qu'il y entre (pour ce joueur seulement).",
+      "routes": "Ouvrir les cases des 2 routes coupées et des 43 routes du lore qui s'arrêtent à une zone fermée.",
+      "source": "[DÉCISION] (v1.0.113, 13/11/2026)"
     }
   },
   "weapons": [

@@ -355,17 +355,28 @@ namespace tools::world_gen
 		return nullptr;
 	}
 
-	char MacroBiome(const WorldMaster& m, double x, double z)
+	void MacroBiomeWarp(const WorldMaster& m, double x, double z, double& bx, double& bz)
 	{
 		const uint64_t seed = m.seed;
 		// Déformation forte (≈ 1,3 case) et fine (lisières à l'échelle du marcheur).
-		const double bx = x + Fbm(x, z, 1.33 * kC, 3, seed + 13) * 1.3 * kC
+		bx = x + Fbm(x, z, 1.33 * kC, 3, seed + 13) * 1.3 * kC
 			+ Fbm(x, z, 0.35 * kC, 2, seed + 14) * 0.3 * kC + Fbm(x, z, 300.0, 3, seed + 17) * 380.0;
-		const double bz = z + Fbm(x, z, 1.33 * kC, 3, seed + 15) * 1.3 * kC
+		bz = z + Fbm(x, z, 1.33 * kC, 3, seed + 15) * 1.3 * kC
 			+ Fbm(x, z, 0.35 * kC, 2, seed + 16) * 0.3 * kC + Fbm(x, z, 300.0, 3, seed + 18) * 380.0;
+	}
+
+	char MacroBiomeFromWarp(const WorldMaster& m, double bx, double bz)
+	{
 		const int be = static_cast<int>(std::lround(bx / kC));
 		const int bn = static_cast<int>(std::lround(-bz / kC));
 		return LoreCode(m, bn, be);
+	}
+
+	char MacroBiome(const WorldMaster& m, double x, double z)
+	{
+		double bx = 0.0, bz = 0.0;
+		MacroBiomeWarp(m, x, z, bx, bz);
+		return MacroBiomeFromWarp(m, bx, bz);
 	}
 
 	double InfernalLavaAt(const WorldMaster& m, double x, double z)

@@ -2971,6 +2971,89 @@ namespace
 		return best;
 	}
 
+	/// v1.0.112 — accélération de la génération, sans changer une seule donnée :
+	///  1. bruit de gradient avec cache des mailles (GradNoise2) identique au bit près
+	///     au calcul direct (4 hachages par point) ;
+	///  2. grille de biomes du splat (SplatBiomeGrid) identique au calcul direct sur
+	///     deux cellules (dont une côtière) ;
+	///  3. cellules générées en parallèle (--jobs 2) : fichiers identiques octet pour
+	///     octet à la génération séquentielle (--jobs 1).
+	void TestAccelerationV1112()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		// 1. Référence : le calcul direct d'avant le cache (mêmes opérations flottantes).
+		auto reference = [](double x, double z, uint64_t seed) {
+			static const double kGx[16] = { 0.98007, 0.82944, 0.55253, 0.19151, -0.19867, -0.55860, -0.83349, -0.98149, -0.98007, -0.82944, -0.55253, -0.19151, 0.19867, 0.55860, 0.83349, 0.98149 };
+			static const double kGz[16] = { 0.19867, 0.55860, 0.83349, 0.98149, 0.98007, 0.82944, 0.55253, 0.19151, -0.19867, -0.55860, -0.83349, -0.98149, -0.98007, -0.82944, -0.55253, -0.19151 };
+			const double fx = std::floor(x), fz = std::floor(z);
+			const int64_t ix = static_cast<int64_t>(fx), iz = static_cast<int64_t>(fz);
+			const double tx = x - fx, tz = z - fz;
+			auto smooth = [](double t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); };
+			auto dot = [seed](int64_t a, int64_t b, double dx, double dz) {
+				const unsigned k = static_cast<unsigned>(Hash(seed, static_cast<uint64_t>(a), static_cast<uint64_t>(b)) & 15u);
+				return kGx[k] * dx + kGz[k] * dz;
+			};
+			const double sx = smooth(tx), sz = smooth(tz);
+			const double v00 = dot(ix, iz, tx, tz), v10 = dot(ix + 1, iz, tx - 1.0, tz);
+			const double v01 = dot(ix, iz + 1, tx, tz - 1.0), v11 = dot(ix + 1, iz + 1, tx - 1.0, tz - 1.0);
+			const double a = v00 + (v10 - v00) * sx;
+			const double b = v01 + (v11 - v01) * sx;
+			return (a + (b - a) * sz) * 1.41421356;
+		};
+		bool same = true;
+		Rng rng(20261113);
+		for (int k = 0; k < 300000 && same; ++k)
+		{
+			const double x = rng.Range(-200.0, 200.0), z = rng.Range(-200.0, 200.0);
+			const uint64_t seed = 1000 + rng.Below(40);
+			same = GradNoise2(x, z, seed) == reference(x, z, seed);
+		}
+		Check(same, "acceleration v1.0.112 : bruit de gradient avec cache identique au bit pres (300 000 points)");
+
+		// 2. Grille de biomes du splat.
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "acceleration v1.0.112 : master charge");
+		if (!ok) return;
+		size_t bad = 0;
+		for (const char* id : { "N003_W009", "S009_E010" })
+		{
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			World w;
+			InitCell(w, g, { n, e });
+			bad += CountSplatBiomeGridMismatches(w, 5);
+		}
+		if (bad) std::fprintf(stderr, "  %zu ecart(s)\n", bad);
+		Check(bad == 0, "acceleration v1.0.112 : biomes du splat precalcules identiques au calcul direct");
+
+		// 3. Cellules en parallèle : mêmes fichiers que la génération séquentielle.
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_jobs_v1112";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		GenOptions o;
+		o.contentRoot = LCDLLN_CONTENT_DIR;
+		o.worldId = "royaumes";
+		o.cells = { "N003_W009", "N004_W009" };
+		GenReport r1, r2;
+		o.outputRoot = (tmp / "seq").string(); o.jobs = 1;
+		const bool ok1 = RunWorldGen(o, r1, err);
+		o.outputRoot = (tmp / "par").string(); o.jobs = 2;
+		const bool ok2 = RunWorldGen(o, r2, err);
+		bool identical = ok1 && ok2 && r1.writtenFiles == r2.writtenFiles && r1.warnings == r2.warnings;
+		for (const std::string& f : r1.writtenFiles)
+			if (identical && ReadBytes(tmp / "seq" / f) != ReadBytes(tmp / "par" / f))
+			{
+				std::fprintf(stderr, "  difference : %s\n", f.c_str());
+				identical = false;
+			}
+		Check(identical, "acceleration v1.0.112 : 2 cellules en parallele identiques a la generation sequentielle");
+		fs::remove_all(tmp, ec);
+	}
+
 	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
 	/// Master (`graveyards` : target 666, fill_empty_cells, 71 hameaux sans cimetière) ;
 	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
@@ -3377,6 +3460,7 @@ int main()
 	TestPlacementManuelV1095();
 	TestGouffreV1107();
 	TestCimetieresV1111();
+	TestAccelerationV1112();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

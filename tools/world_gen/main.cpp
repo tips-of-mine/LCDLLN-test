@@ -9,7 +9,9 @@
 
 #include "lib/WorldGen.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -23,6 +25,7 @@ int main(int argc, char** argv)
 		else if (a == "--world" && i + 1 < argc) opt.worldId = argv[++i];
 		else if (a == "--output" && i + 1 < argc) opt.outputRoot = argv[++i];
 		else if (a == "--dry-run") opt.dryRun = true;
+		else if (a == "--jobs" && i + 1 < argc) opt.jobs = std::max(0, std::atoi(argv[++i]));
 		else if (a == "--cells" && i + 1 < argc)
 		{
 			std::string list = argv[++i];
@@ -38,7 +41,7 @@ int main(int argc, char** argv)
 		}
 		else if (a == "-h" || a == "--help")
 		{
-			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--dry-run]\n");
+			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--jobs N] [--dry-run]\n");
 			return 0;
 		}
 		else

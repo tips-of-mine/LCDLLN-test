@@ -95,9 +95,14 @@ int main()
 			Check(real.StartCityFor(faction) != nullptr && real.StartCityFor(faction)->kind == "hameau", faction);
 		Check(real.StartCityFor("legion") == nullptr, "royaumes : pas de depart de la Legion sur le continent");
 		Check(real.StartCityFor("humains") == nullptr, "royaumes : plus de depart par race");
-		// Repère global des cellules : Marn au centre de la cellule N003_W009.
-		const PlaceCity* marn = real.CityAt(-90000.0f, -30000.0f);
-		Check(marn && marn->id == "hameau_marn", "royaumes : hameau de Marn au centre de N003_W009");
+		// Repère global des cellules : Marn dans la cellule N003_W009 (centre -90000, -30000).
+		// v1.0.110 : Marn n'est plus une ville de départ (v1.0.61), son site est choisi par
+		// le générateur (≈ 560 m du centre) : on vérifie la cellule, plus le centre exact.
+		const PlaceCity* marn = nullptr;
+		for (const PlaceCity& c : real.Cities())
+			if (c.id == "hameau_marn") marn = &c;
+		Check(marn && std::fabs(marn->x + 90000.0f) < 5000.0f && std::fabs(marn->z + 30000.0f) < 5000.0f,
+			"royaumes : hameau de Marn dans la cellule N003_W009");
 		Check(real.WorldToMapUv(0, 0, u, v), "royaumes : origine sur la carte");
 	}
 	else

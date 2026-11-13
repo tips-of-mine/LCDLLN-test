@@ -189,6 +189,9 @@ namespace tools::world_gen
 		std::vector<int> buildingIndices;   ///< indices dans World::buildings
 		Vec2 innDoor;                       ///< porte de l'auberge (ou place)
 		Vec2 graveyard;                     ///< cimetière (point de résurrection)
+		/// Vrai si un cimetière est réellement bâti pour cette agglomération (villes du
+		/// lore et hameaux, sauf `graveyards.without_graveyard` du master, v1.0.111).
+		bool hasGraveyard = false;
 		Vec2 startSpot;                     ///< point de départ joueur (si ville de départ)
 		double startYawDeg = 0.0;
 	};
@@ -393,6 +396,10 @@ namespace tools::world_gen
 		tools::zone_builder::JsonValue importedWorldConfig;
 		/// Lignes de respawn importées (déjà au format serveur, zone id corrigé).
 		std::vector<std::string> importedRespawnLines;
+		/// v1.0.111 — cimetière isolé (sans ville) posé par BuildSettlements quand la
+		/// cellule n'en a aucun et que `graveyards.fill_empty_cells` est vrai.
+		bool hasIsolatedGraveyard = false;
+		Vec2 isolatedGraveyard;
 
 		GenReport report;
 
@@ -509,7 +516,9 @@ namespace tools::world_gen
 	void ApplyRoads(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
 	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
-	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres.
+	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;
+	/// v1.0.111 : pas de cimetière pour un hameau de `graveyards.without_graveyard`,
+	/// cimetière isolé dans une cellule qui n'en a aucun (`fill_empty_cells`).
 	/// Effet de bord : w.scatter, bâtiments, occupation fine de la cellule.
 	void BuildSettlements(World& w);
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
@@ -529,7 +538,7 @@ namespace tools::world_gen
 	bool IsFillerForestCode(char code);
 	/// Spawners PNJ/créatures, respawns, départs, interactibles. Population.cpp
 	/// Un cimetière neutre et une auberge par ville (secrète comprise) dans
-	/// respawn_points.txt ; ni faune ni monstre dans un gouffre et sa galerie (v1.0.107).
+	/// respawn_points.txt, plus le cimetière isolé de la cellule (v1.0.111) ; ni faune ni monstre dans un gouffre et sa galerie (v1.0.107).
 	/// Effet de bord : remplit les spawners et points de réapparition de \p w.
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp

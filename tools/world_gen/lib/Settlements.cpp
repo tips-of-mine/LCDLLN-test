@@ -222,6 +222,70 @@ namespace tools::world_gen
 		/// écrites dans zone.json ; le client ne les lit pas encore). Déterministe.
 		/// Effet de bord : w.scatter, w.pointLights, w.ambianceZones, occupation fine.
 		/// À appeler après les agglomérations (les torches évitent le bâti).
+		/// Cimetière ISOLÉ (v1.0.111) : si `graveyards.fill_empty_cells` est vrai et que la
+		/// cellule n'a aucun cimetière (ni agglomération qui en a un, ni cimetière importé),
+		/// en pose un sans ville : au bord de la route la plus proche du centre de la case
+		/// (14 m de l'axe, côté sec et libre), sinon sur le premier point praticable d'une
+		/// spirale depuis le centre (pas de 150 m, jusqu'à 4300 m). Décor : cercle de
+		/// pierres et chandelier, comme les cimetières des villes. Déterministe.
+		/// Effet de bord : w.isolatedGraveyard, w.scatter, occupation fine ; avertit si
+		/// aucun site n'est trouvé (le total `graveyards.target` échouera alors).
+		void BuildIsolatedGraveyard(World& w)
+		{
+			if (!w.master.graveyardFillEmptyCells) return;
+			for (const SettlementLayout& L : w.layouts)
+				if (L.hasGraveyard && L.cityId != w.master.importAnchorCity) return;
+			for (const std::string& l : w.importedRespawnLines)
+				if (l.find(" graveyard ") != std::string::npos) return;
+			const double sea = w.master.scale.seaLevelM;
+			// Site valable : terre ferme, dans la zone jouable, libre.
+			auto ok = [&](Vec2 p) {
+				return w.InPlayableBounds(p, 80.0) && !w.IsWater(p) && w.HeightAt(p) > sea + 2.0 && !w.IsOccupied(p, 6.0);
+			};
+			const Vec2 ctr{ w.terrainOriginX + w.terrainSizeM * 0.5, w.terrainOriginZ + w.terrainSizeM * 0.5 };
+			bool found = false;
+			Vec2 site;
+			double best = 1e18;
+			for (const Road& r : w.roads)
+				for (size_t i = 1; i + 1 < r.points.size(); i += 4)
+				{
+					const Vec2 p = r.points[i];
+					const double d = std::hypot(p.x - ctr.x, p.z - ctr.z);
+					if (d >= best) continue;
+					const Vec2 dir = r.points[i + 1] - r.points[i - 1];
+					const double len = std::hypot(dir.x, dir.z);
+					if (len < 1e-6) continue;
+					const Vec2 nrm{ -dir.z / len, dir.x / len };
+					const double off = r.widthM * 0.5 + 12.0;
+					for (const double side : { 1.0, -1.0 })
+					{
+						const Vec2 q = p + nrm * (off * side);
+						if (ok(q)) { best = d; site = q; found = true; break; }
+					}
+				}
+			for (double rad = 0.0; !found && rad <= 4300.0; rad += 150.0)
+			{
+				const int steps = rad < 1.0 ? 1 : static_cast<int>(rad / 150.0) * 6;
+				for (int k = 0; k < steps && !found; ++k)
+				{
+					const double a = k * 2.0 * kPi / steps;
+					const Vec2 q = ctr + Vec2{ std::cos(a), std::sin(a) } * rad;
+					if (ok(q)) { site = q; found = true; }
+				}
+			}
+			if (!found) { w.Warn("aucun site pour le cimetiere isole de la cellule"); return; }
+			w.hasIsolatedGraveyard = true;
+			w.isolatedGraveyard = site;
+			w.Occupy(site, 6.0);
+			Rng rng(Hash(w.master.seed, HashString(w.cellName.c_str()), 6666));
+			for (int k = 0; k < 8; ++k)
+			{
+				const Vec2 p = site + Dir(k * kPi / 4.0 + 0.2) * 4.0;
+				AddProp(w, (k % 2) ? "Pebble_Square_3" : "Rock_Medium_2", p, rng.Range(0, 360), (k % 2) ? 2.2 : 0.45, 0, 1);
+			}
+			AddProp(w, "CandleStick_Stand", site, 0.0, 1.0, 0, 1);
+		}
+
 		void BuildGouffreProps(World& w)
 		{
 			for (const ReliefDef& r : w.master.reliefs)
@@ -836,9 +900,11 @@ namespace tools::world_gen
 			}
 
 			// --- Cimetière / point de résurrection : hors les murs, près d'une route
-			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines).
-			if (c.procedural.empty() || c.procedural == "hameau")
+			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines ;
+			//     v1.0.111 : ni pour un hameau de `graveyards.without_graveyard`).
+			if ((c.procedural.empty() || c.procedural == "hameau") && !w.master.graveyardExcluded.count(c.id))
 			{
+				L.hasGraveyard = true;
 				const double a = angles.empty() ? 0.0 : angles[0] + 0.5;
 				Vec2 gy = c.center + Dir(a) * (R + 12.0);
 				for (int attempt = 0; attempt < 16; ++attempt)
@@ -921,6 +987,7 @@ namespace tools::world_gen
 			w.layouts.push_back(std::move(L));
 		}
 		BuildGouffreProps(w); // v1.0.107 : torches, éboulis et ambiance du gouffre
+		BuildIsolatedGraveyard(w); // v1.0.111 : cellule sans cimetière
 		w.report.buildings = w.buildings.size();
 	}
 }

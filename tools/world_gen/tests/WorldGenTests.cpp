@@ -2971,6 +2971,72 @@ namespace
 		return best;
 	}
 
+	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
+	/// Master (`graveyards` : target 666, fill_empty_cells, 81 hameaux sans cimetière) ;
+	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
+	/// dans la case, au sec ; sans fill_empty_cells elle n'en a aucun ; un hameau de
+	/// without_graveyard (N001_E011) n'a pas de cimetière mais la cellule en garde un.
+	/// Le total exact (666) est vérifié par RunWorldGen sur une génération complète
+	/// (et par la CI build-linux).
+	void TestCimetieresV1111()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		GlobalWorld g, g0;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err)
+			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
+			&& g.master.graveyardExcluded.size() == 81u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0"),
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 81 hameaux sans cimetiere)");
+		if (!ok) return;
+		g0.master.graveyardFillEmptyCells = false;
+		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		BuildMacroTerrain(g0); BuildMacroRivers(g0); BuildMacroRoads(g0);
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_cimetieres_v1111";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		// Génère la cellule id (pipeline complet, sans écriture) et rend son contexte.
+		auto gen = [&](GlobalWorld& gw, const std::string& id) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			gw.outputRoot = tmp.string();
+			InitCell(*w, gw, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			return w;
+		};
+		auto graves = [](const World& w) {
+			int n = 0;
+			for (const RespawnDef& r : w.respawns) n += r.type == "graveyard" ? 1 : 0;
+			return n;
+		};
+		{
+			auto w = gen(g, "N011_E018");
+			const Vec2 p = w->isolatedGraveyard;
+			Check(w->hasIsolatedGraveyard && graves(*w) == 1 && p.x > w->terrainOriginX && p.x < w->terrainOriginX + w->terrainSizeM
+				&& p.z > w->terrainOriginZ && p.z < w->terrainOriginZ + w->terrainSizeM && !w->IsWater(p)
+				&& w->HeightAt(p) > w->master.scale.seaLevelM + 2.0,
+				"cimetieres v1.0.111 : cimetiere isole dans N011_E018 (cellule sans agglomeration a cimetiere), au sec");
+			auto w0 = gen(g0, "N011_E018");
+			Check(!w0->hasIsolatedGraveyard && graves(*w0) == 0, "cimetieres v1.0.111 : sans fill_empty_cells, N011_E018 n'a aucun cimetiere");
+		}
+		{
+			auto w = gen(g, "N001_E011");
+			bool excluded = false, hamlet = false;
+			for (const SettlementLayout& L : w->layouts)
+				if (L.cityId == "cell_n001_e011_hameau_0") { hamlet = true; excluded = !L.hasGraveyard; }
+			Check(hamlet && excluded && !w->hasIsolatedGraveyard && graves(*w) >= 1,
+				"cimetieres v1.0.111 : hameau cell_n001_e011_hameau_0 sans cimetiere, la cellule en garde au moins un");
+		}
+		fs::remove_all(tmp, ec);
+	}
+
 	/// v1.0.107 : le gouffre caché de Deathtrap Canyon et sa ville (lot 32 du propriétaire,
 	/// LORE_BD §16.36). Master (ville secrète, relief `gouffre`), profondeur et parois,
 	/// galerie, ville au fond, route 000074 et tout le réseau identiques au monde sans
@@ -3310,6 +3376,7 @@ int main()
 	TestRoutesManquantesV1106();
 	TestPlacementManuelV1095();
 	TestGouffreV1107();
+	TestCimetieresV1111();
 	TestGenerationEnfers();
 	if (g_failures)
 	{

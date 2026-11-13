@@ -589,6 +589,19 @@ namespace tools::world_gen
 		out.generatedCells = GetStrArray(root, "generated_cells");
 		out.connectStartCities = GetBool(root, "connect_start_cities", false);
 		out.corridorMarginM = std::clamp(GetNum(root, "corridor_margin_m", 300.0), 0.0, 4000.0);
+		// --- cimetières (v1.0.111) : nombre fixe, cellules sans cimetière remplies ---
+		if (const JsonValue* gv = FindObjectMember(root, "graveyards"); gv && gv->type == JsonType::Object)
+		{
+			const double target = GetNum(*gv, "target", 0.0);
+			if (target < 0.0 || target > 100000.0 || target != std::floor(target)) { err = "master: graveyards.target invalide"; return false; }
+			out.graveyardTarget = static_cast<int>(target);
+			out.graveyardFillEmptyCells = GetBool(*gv, "fill_empty_cells", false);
+			for (const std::string& id : GetStrArray(*gv, "without_graveyard"))
+				if (id.empty() || !out.graveyardExcluded.insert(id).second)
+				{
+					err = "master: graveyards.without_graveyard vide ou duplique '" + id + "'"; return false;
+				}
+		}
 		{
 			std::set<std::string> seen;
 			for (const std::string& c : out.generatedCells)

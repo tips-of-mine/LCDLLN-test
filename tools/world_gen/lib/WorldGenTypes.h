@@ -14,6 +14,7 @@
 // (src/shared/world/WorldCells.h).
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -297,6 +298,17 @@ namespace tools::world_gen
 		/// Marge (m) autour de la chaussée : la cellule voisine est ajoutée quand la
 		/// route passe à moins de cette distance de sa frontière. `corridor_margin_m`.
 		double corridorMarginM = 300.0;
+		/// Cimetières (v1.0.111, section `graveyards` du master ; décision du
+		/// propriétaire : toujours exactement 666 dans les Royaumes, exploit du pèlerin).
+		///  - `target` : nombre exact attendu pour une génération COMPLÈTE (sans
+		///    --cells) ; un autre total fait échouer la génération. 0 = pas de contrôle.
+		///  - `fill_empty_cells` : une cellule générée sans cimetière reçoit un cimetière
+		///    ISOLÉ (sans ville), au bord d'une route si possible.
+		///  - `without_graveyard` : hameaux procéduraux (id) privés de cimetière pour
+		///    compenser les cimetières isolés (le total reste `target`).
+		int graveyardTarget = 0;
+		bool graveyardFillEmptyCells = false;
+		std::set<std::string> graveyardExcluded;
 	};
 
 	/// Bilan d'une génération (journalisé par la CLI, vérifié par les tests).

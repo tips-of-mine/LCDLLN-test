@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.111",
+    "version": "1.0.112",
     "notes": [
+      "v1.0.112 : [DÉCISION] Répartition des 666 cimetières (choix 1 du propriétaire, 13/11/2026) : chaque cellule jouable a au moins un cimetière. Les 81 cellules qui n'en avaient pas reçoivent un cimetière isolé (sans ville, au bord d'une route) ; 81 hameaux procéduraux des cellules les plus fournies perdent le leur (auberge gardée) : le total reste 666. Une cellule peut contenir une ville ou un hameau et plusieurs éléments de décor (cimetière isolé compris). Master : section graveyards (target 666, fill_empty_cells, without_graveyard) ; tools/world_gen échoue si une génération complète ne donne pas 666 cimetières.",
       "v1.0.111 : [DÉCISION] 666 cimetières (propriétaire, 13/11/2026) : le monde jouable des Royaumes compte toujours exactement 666 cimetières (points de réapparition `graveyard` des cellules générées, état mesuré à la v1.0.110) ; tout ajout ou retrait doit garder ce nombre (contrôle bloquant de la CI build-linux). Nouvel exploit d'exploration exploit_pelerin_des_666_tombes [GD] : visiter les 666 cimetières.",
       "v1.0.110 : [DÉCISION] Lieux secrets cachés aux joueurs (point 65, choix « option a » du propriétaire, 13/11/2026) : champ `secret: true` posé sur les 11 grottes des dragons de Xygga et le Puits des Lianes (Ophidiens), en plus du Gouffre des Revenus, de la Fente des Revenus et de Thurvhal (v1.0.107). Au master, les POI et villes secrets ne figurent plus dans places.json (carte du jeu, bannières, radar, annuaire public) : ils sont écrits dans world/<monde>/secret_places.json, lu seulement par l'annuaire des MJ du shard et retiré du paquet client par la CI. Le lieu reste généré sur le terrain : seul son affichage est caché. Case « Secret » ajoutée aux formulaires lieu et ville de l'éditeur ; tools/lore/check_secrets.py vérifie que le lore et le master concordent.",
       "v1.0.109 : Vérification finale de la branche carte v1.0.72 → v1.0.108 : formulaire de faction de l'éditeur complété (champ territory.ville_id, « Ville du territoire », jusque-là conservé sans champ : Thurvhal des Ghaurdes) ; test_editor_fiches.py rendu robuste (mines et quêtes ancrées calculées depuis les données au lieu des chiffres du v1.0.103). Aucune fiche de lore modifiée.",
@@ -242965,6 +242966,13 @@
           "nom": "666 cimetières et exploit du pèlerin",
           "decision": "Décision du propriétaire (13/11/2026) : il faut toujours 666 cimetières dans le monde (Royaumes, points de réapparition graveyard des cellules jouables, nombre atteint à la v1.0.110) ; un exploit récompense le joueur qui les a tous visités. La CI build-linux échoue si la génération du monde ne donne pas exactement 666 cimetières.",
           "version": "1.0.111"
+        },
+        {
+          "collection": "exploits",
+          "id": "exploit_pelerin_des_666_tombes",
+          "nom": "Répartition des 666 cimetières",
+          "decision": "Choix 1 du propriétaire (13/11/2026) : redistribuer à nombre constant. Toute cellule jouable a au moins un cimetière : cimetière isolé (sans ville) dans les 81 cellules qui n'en avaient pas, retiré de 81 hameaux procéduraux là où les cimetières étaient les plus serrés (l'auberge reste). Une cellule n'est pas limitée à un seul lieu : une ville ou un hameau et plusieurs éléments de décor peuvent y cohabiter.",
+          "version": "1.0.112"
         }
       ]
     },

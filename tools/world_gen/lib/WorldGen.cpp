@@ -310,6 +310,24 @@ namespace tools::world_gen
 			cells.push_back(w.get());
 			worlds.push_back(std::move(w));
 		}
+		// v1.0.111 — nombre exact de cimetières (graveyards.target du master, 666 aux
+		// Royaumes) : contrôlé seulement sur une génération complète (sans --cells).
+		if (opt.cells.empty() && g.master.graveyardTarget > 0)
+		{
+			int graves = 0;
+			for (const World* w : cells)
+			{
+				for (const RespawnDef& r : w->respawns) graves += r.type == "graveyard" ? 1 : 0;
+				for (const std::string& l : w->importedRespawnLines) graves += l.find(" graveyard ") != std::string::npos ? 1 : 0;
+			}
+			std::printf("[world_gen] cimetieres : %d (attendus : %d)\n", graves, g.master.graveyardTarget);
+			if (graves != g.master.graveyardTarget)
+			{
+				err = "cimetieres : " + std::to_string(graves) + " generes, " + std::to_string(g.master.graveyardTarget) +
+					" attendus (graveyards.target du master ; ajuster graveyards.without_graveyard)";
+				return false;
+			}
+		}
 		bool anyStart = false;
 		for (const World* w : cells) anyStart = anyStart || !w->starts.empty();
 		if (!anyStart && opt.cells.empty()) { err = "aucun point de depart genere"; return false; }

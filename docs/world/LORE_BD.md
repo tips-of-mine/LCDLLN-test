@@ -1048,6 +1048,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.36](#1636-le-gouffre-caché-de-deathtrap-canyon-et-sa-ville-v10107) | v1.0.107 | Le gouffre caché de Deathtrap Canyon et sa ville | Gouffre caché de Deathtrap Canyon et Thurvhal, point de réapparition secret ; torches et ambiance en données. |
 | [16.37](#1637-lieux-secrets-cachés-aux-joueurs-v10110) | v1.0.110 | Lieux secrets cachés aux joueurs | Drapeau `secret` des POI, `secret_places.json` réservé au serveur et retiré du paquet client, case « Secret » de l'éditeur, `check_secrets.py`. |
 | [16.38](#1638-666-cimetières-et-exploit-du-pèlerin-v10111) | v1.0.111 | 666 cimetières et exploit du pèlerin | Toujours 666 cimetières dans les Royaumes (contrôle CI) ; exploit [GD] pour les avoir tous visités. |
+| [16.39](#1639-répartition-des-666-cimetières-v10112) | v1.0.112 | Répartition des 666 cimetières | Un cimetière au moins par cellule : 81 cimetières isolés, 81 hameaux sans cimetière, total 666 contrôlé par le générateur. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4401,7 +4402,34 @@ pas exactement 666.
 visités mémorisés par personnage, réapparition forcée non comptée, cimetière secret de Thurvhal compris).
 
 **État mesuré (v1.0.110)** : 81 cases jouables sans cimetière ; par endroits le cimetière le plus proche est à
-une vingtaine de kilomètres. Répartition à revoir avec le propriétaire, à nombre constant.
+une vingtaine de kilomètres. Répartition revue en v1.0.112 (16.39).
+
+### 16.39 Répartition des 666 cimetières (v1.0.112)
+
+**Décision du propriétaire (13/11/2026)** : « choix 1 », redistribuer **à nombre constant**. Précision : une cellule
+n'est pas limitée à un seul lieu ou élément de décor ; une ville ou un hameau et plusieurs éléments de décor peuvent
+y cohabiter (un cimetière isolé s'ajoute donc sans difficulté).
+
+**Avant** (v1.0.110) : 666 cimetières, tous attachés à une ville du lore ou à un hameau procédural ; 81 cellules
+jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière le plus proche.
+
+**Règle** (master, section `graveyards`) :
+
+| Clé | Valeur | Effet |
+|---|---|---|
+| `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
+| `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
+| `without_graveyard` | 81 hameaux | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+
+**Choix des 81 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
+comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
+v1.0.110 ; si le générateur change les hameaux, le total ne fera plus 666 et la génération échouera : refaire le choix.
+
+**Après** : chaque cellule jouable a au moins un cimetière ; distance maximale au cimetière le plus proche réduite
+d'environ moitié (mesure sur une grille de 1 km, mer comprise : ≈ 23,6 km → ≈ 12,8 km).
+
+**Tests** : `world_gen_tests` (`TestCimetieresV1111` : master, cimetière isolé dans N011_E018, aucun sans
+`fill_empty_cells`, hameau de N001_E011 sans cimetière).
 
 ## 17. Questions ouvertes
 

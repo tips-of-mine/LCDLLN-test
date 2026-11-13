@@ -77,7 +77,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.109 | `f939b0b` | vérification finale : champ `territory.ville_id` au formulaire de faction (deux éditeurs), `test_editor_fiches.py` calculé depuis les données (point 57) | — | lieux secrets dans `places.json` (point 65) |
 | v1.0.110 | `1b72856` | **lieux secrets cachés aux joueurs** (point 65, option a) : `secret` des POI au master (11 grottes des dragons, Puits des Lianes), `secret_places.json` réservé au serveur et retiré du paquet client, annuaire MJ du shard, case « Secret » de l'éditeur, `check_secrets.py` en CI ([LORE_BD §16.37](LORE_BD.md)) | — | — |
 | v1.0.111 | `83aa9fc` | **666 cimetières** : nombre fixe (contrôle bloquant de la CI build-linux), exploit [GD] « Pèlerin des 666 tombes » ([LORE_BD §16.38](LORE_BD.md)) | — | répartition des cimetières (81 cases sans), mécanique de l'exploit |
-| v1.0.112 | (ce commit) | **répartition des 666 cimetières** : un cimetière au moins par cellule à terre (71 isolés ; 10 cellules de mer sans), 71 hameaux sans cimetière, total vérifié par le générateur ([LORE_BD §16.39](LORE_BD.md)) | — | — |
+| v1.0.112 | `b6f3fa1` | **répartition des 666 cimetières** : un cimetière au moins par cellule à terre (71 isolés ; 10 cellules de mer sans), 71 hameaux sans cimetière, total vérifié par le générateur ([LORE_BD §16.39](LORE_BD.md)) | — | — |
+| v1.0.112 (outil) | (ce commit) | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
 
 ## 3. Impact sur le jeu et déploiement
 

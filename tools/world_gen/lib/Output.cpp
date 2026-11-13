@@ -278,11 +278,95 @@ namespace tools::world_gen
 			return { 0.0, dirt, rock, 0.0, 0.0 };
 		}
 
+		/// Biome effectif (EffectiveCover(MacroBiome)) des échantillons du splat, calculé
+		/// une seule fois par nœud d'une grille calée sur les centres de texels de la
+		/// cellule (marge de 14 texels pour les échantillons à ±60 m), puis RÉUTILISÉ
+		/// pour les points voisins SANS changer le résultat : la position déformée d'un
+		/// point à distance d d'un nœud est connue à kMacroBiomeWarpLipschitz × d près ;
+		/// si tout l'intervalle tombe dans la même case du lore (et si le bruit de
+		/// EffectiveCover reste du même côté de son seuil), le code est celui du calcul
+		/// direct ; sinon (bord de case, ≈ 3 % des points) on le calcule directement.
+		/// Résultat identique au bit près à EffectiveCover(MacroBiome(...)), ≈ 4 fois
+		/// moins de bruits évalués (v1.0.112, accélération de la génération).
+		struct SplatBiomeGrid
+		{
+			/// Côté d'une case du lore (même constante que MacroBiomeFromWarp).
+			static constexpr double kCellSizeM = engine::world::cells::kCellSizeMeters;
+			const World* w = nullptr;
+			double x0 = 0.0, z0 = 0.0, step = 1.0; ///< centre du nœud (0, 0), pas (m)
+			int margin = 0, n = 0;                  ///< nœuds de marge, nœuds par côté
+			std::vector<double> bx, bz;             ///< position déformée exacte du nœud
+			std::vector<float> fA, fB;              ///< bruits de EffectiveCover au nœud
+
+			/// Remplit la grille de la cellule \p cell (texels de \p px m). Effet de
+			/// bord : alloue ≈ 100 Mo ; calcul parallèle par rangée.
+			void Build(const World& cell, int texels, double px)
+			{
+				w = &cell;
+				margin = 14;
+				n = texels + 2 * margin;
+				step = px;
+				x0 = cell.terrainOriginX + (0.5 - margin) * px;
+				z0 = cell.terrainOriginZ + (0.5 - margin) * px;
+				const size_t count = static_cast<size_t>(n) * n;
+				bx.assign(count, 0.0); bz.assign(count, 0.0); fA.assign(count, 0.0f); fB.assign(count, 0.0f);
+				const uint64_t seed = cell.master.seed;
+				ParallelRows(n, [&](int j) {
+					for (int i = 0; i < n; ++i)
+					{
+						const double x = NodeX(i), z = NodeZ(j);
+						const size_t q = static_cast<size_t>(j) * n + i;
+						MacroBiomeWarp(cell.master, x, z, bx[q], bz[q]);
+						fA[q] = static_cast<float>(Fbm(x, z, 3500.0, 2, seed + 77));
+						fB[q] = static_cast<float>(Fbm(x, z, 2600.0, 2, seed + 78));
+					}
+				});
+			}
+			/// Abscisse du nœud i (même formule que les centres de texels du splat).
+			double NodeX(int i) const { return w->terrainOriginX + ((i - margin) + 0.5) * step; }
+			double NodeZ(int j) const { return w->terrainOriginZ + ((j - margin) + 0.5) * step; }
+
+			/// EffectiveCover(MacroBiome(m, x, z), x, z, seed), au bit près.
+			char Cover(double x, double z) const
+			{
+				const WorldMaster& m = w->master;
+				const int i = std::clamp(static_cast<int>(std::lround((x - x0) / step)), 0, n - 1);
+				const int j = std::clamp(static_cast<int>(std::lround((z - z0) / step)), 0, n - 1);
+				const size_t q = static_cast<size_t>(j) * n + i;
+				const double dx = x - NodeX(i), dz = z - NodeZ(j);
+				const double d = std::fabs(dx) + std::fabs(dz); // ≥ distance euclidienne
+				// Position déformée du point : celle du nœud + déplacement, ± pente × d
+				// (+ 1 m de marge pour les arrondis du calcul flottant).
+				const double e = kMacroBiomeWarpLipschitz * d + 1.0;
+				const double cx = bx[q] + dx, cz = bz[q] + dz;
+				const long e0 = std::lround((cx - e) / kCellSizeM), e1 = std::lround((cx + e) / kCellSizeM);
+				const long n0 = std::lround(-(cz + e) / kCellSizeM), n1 = std::lround(-(cz - e) / kCellSizeM);
+				const char code = (e0 == e1 && n0 == n1) ? LoreCode(m, static_cast<int>(n0), static_cast<int>(e0))
+					: MacroBiome(m, x, z);
+				// EffectiveCover : seuil du bruit tranché sur l'intervalle, sinon calcul direct.
+				const double ef = kEffectiveCoverNoiseLipschitz * d + 1e-5;
+				if (code == '.' || code == 'r' || code == 'p')
+				{
+					if (fA[q] - ef > 0.22) return 't';
+					if (fA[q] + ef <= 0.22) return code;
+				}
+				else if (code == 'T' || code == 'R' || code == 'L')
+				{
+					if (fB[q] + ef < -0.45) return '.';
+					if (fB[q] - ef >= -0.45) return code;
+				}
+				else
+					return code;
+				return EffectiveCover(code, x, z, m.seed);
+			}
+		};
+
 		/// Mélange des 4 couches du sol (herbe, terre, roche, neige) au point global \p p
 		/// de la cellule : biome fondu aux frontières, pente, altitude, eau, routes et
 		/// emprise urbaine. Aux Enfers (v1.0.83), délègue à InfernalSplat (ni herbe ni
 		/// neige). Fonction pure (lecture seule de \p w), appelée en parallèle par rangée.
-		SplatTexel ComputeSplat(const World& w, Vec2 p)
+		/// \param grid biomes précalculés de la cellule (résultat identique), ou nullptr.
+		SplatTexel ComputeSplat(const World& w, Vec2 p, const SplatBiomeGrid* grid = nullptr)
 		{
 			// v1.0.83 : les Enfers ont leur propre palette (les Royaumes ne passent pas ici).
 			if (IsInfernalMap(w.master)) return InfernalSplat(w, p);
@@ -298,7 +382,7 @@ namespace tools::world_gen
 				const double sx = p.x + o[0], sz = p.z + o[1];
 				// Fonction macro (et non la grille) : identique des deux côtés d'une
 				// frontière de cellule → splat raccord.
-				const char c = EffectiveCover(MacroBiome(w.master, sx, sz), sx, sz, w.master.seed);
+				const char c = grid ? grid->Cover(sx, sz) : EffectiveCover(MacroBiome(w.master, sx, sz), sx, sz, w.master.seed);
 				const SplatTexel b = BaseSplat(c, h, sea);
 				t.grass += b.grass * 0.2; t.dirt += b.dirt * 0.2; t.rock += b.rock * 0.2; t.snow += b.snow * 0.2; t.grassMask += b.grassMask * 0.2;
 			}
@@ -597,6 +681,24 @@ namespace tools::world_gen
 		return g;
 	}
 
+	size_t CountSplatBiomeGridMismatches(const World& w, int stride)
+	{
+		const int T = w.master.scale.heightmapRes - 1;
+		const double px = w.terrainSizeM / T;
+		SplatBiomeGrid grid;
+		grid.Build(w, T, px);
+		const double off[5][2] = { { 0, 0 }, { 60, 0 }, { -60, 0 }, { 0, 60 }, { 0, -60 } };
+		size_t bad = 0;
+		for (int j = 0; j < T; j += std::max(1, stride))
+			for (int i = 0; i < T; i += std::max(1, stride))
+				for (const auto& o : off)
+				{
+					const double sx = w.terrainOriginX + (i + 0.5) * px + o[0], sz = w.terrainOriginZ + (j + 0.5) * px + o[1];
+					if (grid.Cover(sx, sz) != EffectiveCover(MacroBiome(w.master, sx, sz), sx, sz, w.master.seed)) ++bad;
+				}
+		return bad;
+	}
+
 	bool WriteCellOutputs(World& w, std::string& err)
 	{
 		const std::string wid = w.master.worldId;
@@ -637,11 +739,16 @@ namespace tools::world_gen
 			const int T = N - 1;
 			const double px = w.terrainSizeM / T;
 			std::vector<uint8_t> splatPx(static_cast<size_t>(T) * T * 4), grassPx(static_cast<size_t>(T) * T);
+			// Biomes précalculés (résultat identique, ≈ 4 fois moins de bruits) ; les
+			// Enfers ont leur propre palette (InfernalSplat), sans cette grille.
+			SplatBiomeGrid grid;
+			if (!IsInfernalMap(w.master)) grid.Build(w, T, px);
+			const SplatBiomeGrid* gridPtr = IsInfernalMap(w.master) ? nullptr : &grid;
 			ParallelRows(T, [&](int j) {
 				for (int i = 0; i < T; ++i)
 				{
 					const Vec2 p{ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px };
-					const SplatTexel t = ComputeSplat(w, p);
+					const SplatTexel t = ComputeSplat(w, p, gridPtr);
 					double sum = t.grass + t.dirt + t.rock + t.snow;
 					if (sum <= 1e-6) sum = 1.0;
 					// Quantification à somme exacte 255 (le reste va au canal dominant).

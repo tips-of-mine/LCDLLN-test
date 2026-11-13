@@ -267,7 +267,27 @@ namespace tools::world_gen
 	/// ne change pas l'altitude. \return altitude (m) en (x, z) globaux. Terrain.cpp
 	double MacroHeight(const WorldMaster& m, double x, double z);
 	/// Code de biome du lore sous (x, z), bords bruités. Terrain.cpp
+	/// = MacroBiomeFromWarp(MacroBiomeWarp(x, z)).
 	char MacroBiome(const WorldMaster& m, double x, double z);
+	/// Position DÉFORMÉE (\p bx, \p bz, m) dont MacroBiome lit la case du lore : (x, z)
+	/// plus trois bruits (longueurs d'onde 13,3 km, 3,5 km, 300 m). Fonction pure.
+	/// Terrain.cpp
+	void MacroBiomeWarp(const WorldMaster& m, double x, double z, double& bx, double& bz);
+	/// Code du lore de la case qui contient la position déformée (\p bx, \p bz).
+	/// Terrain.cpp
+	char MacroBiomeFromWarp(const WorldMaster& m, double bx, double bz);
+	/// Majorant RIGOUREUX de la pente de la déformation de MacroBiomeWarp (m de
+	/// déplacement de bx ou bz par m parcouru, en norme euclidienne) : la pente du bruit
+	/// de gradient (GradNoise2) est au plus 12,57 par unité de treillis (quintique :
+	/// 6,285 par axe, ×√2, ×1,41421356), d'où, pour les trois Fbm pondérés,
+	/// 12,57 × (1,3/1,33 × 3/1,75 + 0,3/0,35 × 2/1,5 + 380/300 × 3/1,75) ≈ 62,8 ;
+	/// arrondi à 64. Sert à SplatBiomeGrid (Output.cpp) pour réutiliser une valeur
+	/// voisine sans changer le résultat.
+	inline constexpr double kMacroBiomeWarpLipschitz = 64.0;
+	/// Majorant rigoureux de la pente des bruits de EffectiveCover (Fbm 2 octaves de
+	/// longueur d'onde 3500 m et 2600 m) : 12,57 × 2/1,5 / 2600 ≈ 0,00645 par m ;
+	/// arrondi à 0,0066.
+	inline constexpr double kEffectiveCoverNoiseLipschitz = 0.0066;
 	/// Code du lore de la case (n, e) (' ' = mer hors grille). Terrain.cpp
 	char LoreCode(const WorldMaster& m, int n, int e);
 	/// v1.0.83 : la carte du master est-elle les Enfers ? Le générateur y applique
@@ -555,6 +575,11 @@ namespace tools::world_gen
 	/// (clés absentes ailleurs ; pas encore lues par le client).
 	/// \return false + \p err si une écriture échoue.
 	bool WriteCellOutputs(World& w, std::string& err);
+	/// Test (v1.0.112) : nombre d'échantillons du splat (centres de texels pris tous
+	/// les \p stride texels, et leurs 4 voisins à ±60 m) dont le biome lu dans la
+	/// grille précalculée (SplatBiomeGrid) diffère du calcul direct. 0 attendu.
+	/// \p w : cellule initialisée (InitCell suffit). Output.cpp
+	size_t CountSplatBiomeGridMismatches(const World& w, int stride);
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp
 	/// v1.0.83 : palette infernale de la carte des Enfers ; v1.0.107 : une ville
 	/// secrète est absente de `cities` de places.json, de la carte du continent et de

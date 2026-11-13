@@ -25,6 +25,11 @@ namespace tools::world_gen
 		/// Cellules à générer (identifiants du lore « N003_W009 ») ; vide = la
 		/// liste `generated_cells` du master.
 		std::vector<std::string> cells;
+		/// Nombre de cellules générées EN MÊME TEMPS (option --jobs). 0 = automatique
+		/// (nombre de cœurs, 4 au plus). Les sorties ne dépendent pas de ce nombre
+		/// (fichiers identiques octet pour octet) : chaque cellule est indépendante et
+		/// les bilans sont fusionnés dans l'ordre des cellules.
+		int jobs = 0;
 	};
 
 	/// Exécute le pipeline complet. \return false + \p err en cas d'échec

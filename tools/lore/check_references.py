@@ -18,6 +18,10 @@
 # (`skill_trees[].skills[].id`) ; plus les noms des collections elles-mêmes (une règle
 # transverse peut s'appliquer à « factions »). Une case de la carte des Enfers s'écrit
 # « enfers:<case> » (zones_chasse, v1.0.71) : elle est valide si <case> a la forme d'une case.
+# S'y ajoutent (v1.0.115) les villes et lieux du master des Enfers
+# (game/data/world/enfers/world_master.json, `cities[].id` et `pois[].id` : départ de la Légion
+# infernale, `citadelle_legion`) et le mot-clé « monde_entier » (règle qui s'applique au monde
+# entier).
 #
 # Seules les valeurs qui ont la forme d'un identifiant sont contrôlées (lettres, chiffres,
 # « _ » et « - », sans espace ni point) : une source citée en clair (« [BD-T0] … ») ou un
@@ -40,6 +44,10 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LORE = os.path.join(REPO, "legacy", "world-builder-html", "lune-noire-data.json")
+MASTER_ENFERS = os.path.join(REPO, "game", "data", "world", "enfers", "world_master.json")
+
+# Valeurs admises qui ne désignent pas une fiche (v1.0.115).
+MOTS_CLES = {"monde_entier"}
 
 # Forme d'un identifiant et d'une case (N000_E000).
 ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_\-]*$")
@@ -137,7 +145,7 @@ def ids_connus(data):
     """Ensemble des identifiants définis dans `data` (voir l'en-tête du fichier).
 
     \\param data lore chargé (dict). \\return set de chaînes. Pas d'effet de bord."""
-    ids = set(k for k in data.keys())
+    ids = set(k for k in data.keys()) | MOTS_CLES
     for coll, val in data.items():
         if isinstance(val, list):
             for x in val:
@@ -161,7 +169,19 @@ def ids_connus(data):
         for s in t.get("skills", []) if isinstance(t, dict) else []:
             if isinstance(s, dict) and isinstance(s.get("id"), str):
                 ids.add(s["id"])
+    ids |= ids_enfers()
     return ids
+
+
+def ids_enfers():
+    """Identifiants des villes et lieux du master des Enfers (MASTER_ENFERS).
+
+    \\return set de chaînes, vide si le fichier est absent (checkout partiel). Lecture seule."""
+    if not os.path.isfile(MASTER_ENFERS):
+        return set()
+    with open(MASTER_ENFERS, encoding="utf-8") as f:
+        m = json.load(f)
+    return {e["id"] for coll in ("cities", "pois") for e in m.get(coll, []) if isinstance(e.get("id"), str)}
 
 
 def est_valide(valeur, ids):

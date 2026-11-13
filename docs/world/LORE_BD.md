@@ -1051,6 +1051,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.39](#1639-répartition-des-666-cimetières-v10112) | v1.0.112 | Répartition des 666 cimetières | Un cimetière au moins par cellule à terre : 71 cimetières isolés, 71 hameaux sans cimetière, total 666 contrôlé par le générateur. |
 | [16.40](#1640-décisions-du-131126-v10113) | v1.0.113 | Décisions du 13/11/2026 | Noms [GD] validés, Xygga femelle et noms des dragons, année de jeu, niveaux, balisage, factions, Ghulvathan, références orphelines, arbitrages de lore. |
 | [16.41](#1641-exploit-des-666-cimetières-et-lieux-secrets-découverts-v10114) | v1.0.114 | Exploit des 666 cimetières et lieux secrets découverts | Mécanique serveur par personnage : cimetières visités (rayon ou réapparition), lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits. |
+| [16.42](#1642-références-orphelines-tranchées-v10115) | v1.0.115 | Références orphelines tranchées | 42 → 0 : classes PNJ, butins [GD], dragon adulte, exploit de la mort d'Haghendorf, types de lieu, corrections en bloc ; `--strict` à la CI. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4501,6 +4502,22 @@ personnage), à 4 Hz par joueur avec la carte à découvrir ; tables `character_
 base de données (ou migration 0086 absente) le suivi est désactivé pour la session ; un cimetière dont l'id change à une
 régénération du monde n'est plus compté pour les personnages qui l'avaient visité.
 
+### 16.42 Références orphelines tranchées (v1.0.115)
+
+**Décisions du propriétaire (13/11/2026)** : les 42 références orphelines restantes (16.32, 16.40) sont tranchées ;
+`tools/lore/check_references.py` passe à **0** et devient bloquant (`--strict`) dans la CI `lore-city-services`.
+
+| Cas | Traitement |
+|---|---|
+| 8 classes citées sans fiche | fiches **PNJ non jouables** (`playable: false`, `npc: true`, [GD]) : `class_bard`, `class_succube`, `class_artisan`, `class_samourai`, `class_seigneur_des_tenebres`, `class_necromancien`, `class_alchimiste`, `class_noble` ; arbres de talents existants du barde et de l'artisan gardés ; `classe_*` des butins renommés `class_*` |
+| 9 butins de créatures | fiches [GD] : poussière féerique, bille de ruse (lutin), antenne de mante, écaille et sang de jeune dragon (prélevés à la mue, le dragon juvénile n'est pas à tuer), œil de renard infernal, carapace d'insecte de l'Oracle, écaille de démon majeur, armure cramoisie démoniaque |
+| Dragon adulte | `creature_dragon_adult` : fiche générique des dragons adultes qui parlent le Draakhs (hors bestiaire, sans zone de chasse) |
+| Récompense du raid de Lhynn | exploit `exploit_mort_haghendorf_t11` « La Chute du Trône », titre « Tombeur d'Empereur » [GD] |
+| Types de lieu | `forest_poi` (Forêt) et `battlefield_poi` (Champ de bataille) ajoutés à `place_types` |
+| `monde_entier` | mot-clé admis par `check_references.py` (règle qui s'applique au monde entier) |
+| `citadelle_legion` | ville du master des Enfers : `check_references.py` lit aussi les villes et lieux de `game/data/world/enfers/world_master.json` |
+| Corrections évidentes | `zone_garundel_fief` → `ville_garundel_fief` ; `race_orc` → `race_orkh` ; `race_half_demon` → `demi-demon_elfique` (Wismerhill) ; `class_pretre` → prêtres de Grâce et de Jugement ; `race_elfe` → hauts elfes et elfes des bois ; `faction_gods` → Église de Lumière et panthéon d'Erypt (bouclier de Methraton) ; 2 conditions de quête « quête » → « exploit » (`exploit_brule_le_passe_t4`, `exploit_premier_jour_baron_t6`) ; `quest_fermer_porte_enfers_hs` → `quest_t12_05_fermer_la_porte` ; race du Serpent Héraut de Methrhton vidée (créature mystique, pas une race) |
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -4516,7 +4533,7 @@ régénération du monde n'est plus compté pour les personnages qui l'avaient v
 - Sud-centre (v1.0.90) : noms et repères des régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi ; régions irrégulières dans le master (16.19).
 - Renommage des 88 villes (v1.0.93) : « jungle de Leviathan » gardée (16.22) ; noms « à vérifier » et description du master de `horker` tranchés en v1.0.94 (16.23).
 - Harrodh (`horker`, v1.0.94) : faction du master `empire_hynn`, sans doute reprise de Horkher comme l'ancienne description, à confirmer (16.23).
-- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : références orphelines laissées par les suppressions et noms vides de 159 fiches à traiter.
+- Placement manuel (v1.0.95) : export de l'éditeur corrigé en v1.0.96 (16.25) ; routes qui suivent une ville déplacée et tracé à la souris en v1.0.97 (16.26) ; usage des routes du lore par le générateur tranché en v1.0.105 (16.34 : le générateur suit les routes du lore) ; sauvegarde complète vérifiée en v1.0.98 (16.27) : ~~références orphelines laissées par les suppressions~~ (0 en v1.0.115, 16.42) et noms vides de 159 fiches à traiter.
 - Fiches complètes (v1.0.100) : niveaux par faction à définir (`niveau_par_faction` vide), niveaux des 8 régions et 33 raids sans repère, étapes situées des 71 quêtes non pré-remplies (16.29).
 
 - ~~Départ des Démons~~ : traité par la seconde carte des Enfers (voir [`ENFERS.md`](ENFERS.md)).

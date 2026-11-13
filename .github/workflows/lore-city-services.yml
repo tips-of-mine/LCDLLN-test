@@ -16,9 +16,9 @@
 # - check_secrets.py (v1.0.110) : les villes et lieux `secret: true` du lore le sont
 #   aussi au master (cachés de places.json, écrits dans secret_places.json réservé
 #   au serveur), aucune route du lore ne mène à un lieu secret ;
-# - check_references.py (v1.0.103) : références vers des identifiants inexistants,
-#   en mode rapport (non bloquant tant qu'il reste des orphelines à trancher ;
-#   passer à --strict quand la liste est vide).
+# - check_references.py --strict (v1.0.103, bloquant depuis v1.0.115) : aucune référence
+#   vers un identifiant inexistant (fiches du lore, villes et lieux du master des Enfers,
+#   mot-clé monde_entier).
 #
 # Ne lance que du Python standard, ~10 s. Indépendant des builds.
 name: Lore — services des villes
@@ -29,6 +29,7 @@ on:
       - 'legacy/world-builder-html/lune-noire-data*.json'
       - 'tools/lore/**'
       - 'game/data/world/royaumes/world_master.json'
+      - 'game/data/world/enfers/world_master.json'
       - '.github/workflows/lore-city-services.yml'
   pull_request:
     branches: [develop, main]
@@ -36,6 +37,7 @@ on:
       - 'legacy/world-builder-html/lune-noire-data*.json'
       - 'tools/lore/**'
       - 'game/data/world/royaumes/world_master.json'
+      - 'game/data/world/enfers/world_master.json'
       - '.github/workflows/lore-city-services.yml'
 
 permissions:
@@ -72,5 +74,5 @@ jobs:
       - name: Lieux secrets concordants (lore ↔ master)
         run: python tools/lore/check_secrets.py
 
-      - name: Références orphelines (rapport, non bloquant)
-        run: python tools/lore/check_references.py
+      - name: Aucune référence orpheline
+        run: python tools/lore/check_references.py --strict

@@ -133,11 +133,11 @@ Lancement : `python3 tools/lore/check_secrets.py` (Python standard, aucune écri
 |---|---|
 | Rôle | Liste les valeurs de champs de référence qui désignent un identifiant **inexistant** (case d'une ville, région d'une case, PNJ d'une étape, butin d'une créature…). |
 | Champs contrôlés | table `REFERENCES` du script (~160 champs) ; exclus : champs libres ou d'énumération (`type`, `category`, `tags`, `faction_control`…), registre des décisions. |
-| Identifiants connus | `id` des fiches de premier niveau, de `lore`, de `hydrography`, compétences des arbres, noms des collections ; cases des Enfers `enfers:<case>`. Seules les valeurs de forme identifiant sont contrôlées. |
+| Identifiants connus | `id` des fiches de premier niveau, de `lore`, de `hydrography`, compétences des arbres, noms des collections ; cases des Enfers `enfers:<case>` ; villes et lieux du master des Enfers (`game/data/world/enfers/world_master.json`) ; mot-clé `monde_entier` (v1.0.115). Seules les valeurs de forme identifiant sont contrôlées. |
 | Sortie | une ligne par orpheline (collection, fiche, champ, valeur) avec une suggestion `difflib` à vérifier, puis le total. |
 | Options | `--strict` (code 1 s'il reste une orpheline), `--fichier <json>`. |
 | Quand | après une suppression ou un renommage d'identifiant. |
-| État v1.0.108 | **89 références (36 identifiants)** à trancher ; le contrôle reste **non bloquant** en CI jusqu'à ce que la liste soit vide (passer alors à `--strict`). |
+| État v1.0.115 | **0 référence orpheline** (LORE_BD §16.42) ; contrôle **bloquant** en CI (`--strict`). |
 
 ### Tests de l'éditeur (Playwright)
 
@@ -161,7 +161,7 @@ aucun n'écrit dans le dépôt ; code 0 = tout passe ; **hors CI** (à lancer à
 | créé / supprimé une ville, changé sa taille | `generate_city_services.py` | `validate_city_services.py` |
 | déplacé une ville ou un lieu | `sync_positions.py` | `sync_positions.py --check` |
 | créé / modifié / supprimé une route terrestre | `sync_routes.py` puis `generate_city_services.py` (écuries) | `sync_routes.py --check`, `test_sync_routes.py`, `validate_city_services.py` |
-| supprimé ou renommé un identifiant | — | `check_references.py` (ne pas augmenter le nombre d'orphelines) |
+| supprimé ou renommé un identifiant | — | `check_references.py --strict` (aucune orpheline) |
 | modifié l'éditeur HTML | recopier sur `-v20.html` | les 5 tests Playwright, sur les deux copies |
 | modifié le master à la main (cases ouvertes, reliefs…) | — | `sync_positions.py --check`, `sync_routes.py --check`, build + `world_gen_tests` |
 
@@ -169,7 +169,7 @@ aucun n'écrit dans le dépôt ; code 0 = tout passe ; **hors CI** (à lancer à
 
 Fichier : `.github/workflows/lore-city-services.yml`. Déclenché sur `push` et `pull_request`
 vers `develop` et `main` quand changent `legacy/world-builder-html/lune-noire-data*.json`,
-`tools/lore/**`, `game/data/world/royaumes/world_master.json` ou le workflow lui-même. Python
+`tools/lore/**`, `game/data/world/royaumes/world_master.json`, `game/data/world/enfers/world_master.json` ou le workflow lui-même. Python
 3.12 standard, ~10 s, indépendant des builds.
 
 | Étape | Commande | Bloquante |
@@ -180,7 +180,7 @@ vers `develop` et `main` quand changent `legacy/world-builder-html/lune-noire-da
 | Routes du lore recopiées au master | `python tools/lore/sync_routes.py --check` | oui |
 | Test du script de recopie des routes | `python tools/lore/test_sync_routes.py` | oui |
 | Lieux secrets concordants (lore ↔ master) | `python tools/lore/check_secrets.py` | oui |
-| Références orphelines | `python tools/lore/check_references.py` | **non** (rapport) |
+| Aucune référence orpheline | `python tools/lore/check_references.py --strict` | oui (depuis v1.0.115) |
 
 La CI **ne réécrit rien** : un `--check` en échec signifie qu'il fallait lancer le script sans
 `--check` et committer son résultat.

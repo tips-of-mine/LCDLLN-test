@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.114",
+    "version": "1.0.115",
     "notes": [
+      "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
       "v1.0.114 : [DÉCISION] Exploit des 666 cimetières et lieux secrets découverts mis en jeu (décisions du propriétaire du 13/11/2026, affichage « message discret + compteur ») : par personnage, un cimetière des Royaumes est visité en y entrant vivant (rayon de 15 m) ou en y réapparaissant ; l'exploit exploit_pelerin_des_666_tombes est débloqué au 666e ; un lieu secret est révélé pour toujours sur la carte du seul personnage qui entre dans son rayon (radius_m d'une ville, 40 m pour un lieu) ; messages système dans le chat (« Cimetière visité (124/666) », « Lieu découvert : <nom> », « Exploit débloqué : <titre> »), compteur « Cimetières visités : N/666 » dans l'onglet Exploits. Identifiant stable gy=<id> des cimetières écrit par tools/world_gen ; serveur : migration 0086, messages UDP 105/106, kProtocolVersion 21 (LORE_BD §16.41).",
       "v1.0.113 : [DÉCISION] Réponses du propriétaire du 13/11/2026 : noms [GD] validés en bloc ; Xygga femelle et noms [GD] des 10 premiers-nés ; année de jeu 3417 AO ; niveaux confirmés (Kendrhir 38-56, raids de fin 45/50/55/60, faction +5 seuil 20) ; balisage par la couleur du nom de zone ; Harrodh à l'Empire ; « la Légion » de l'Île de la Trêve = les deux ; contre-quêtes Lune Noire ; Ghulvathan en N009_E011 ; faction_demons → Légion infernale ; demi-elfe noir → elfe noir ; race des Menthats créée (Lune Noire) ; îles par bateau ; arbitrages de l'Oracle, d'Heusgly et du Palais du Maître des Dragons ; règles de l'exploit des 666 cimetières et des lieux secrets découverts ; ouverture des routes coupées décidée (LORE_BD §16.40).",
       "v1.0.112 : [DÉCISION] Répartition des 666 cimetières (choix 1 du propriétaire, 13/11/2026) : chaque cellule jouable à terre a au moins un cimetière. Les 71 cellules à terre qui n'en avaient pas reçoivent un cimetière isolé (sans ville, au bord d'une route ; les 10 autres sont en pleine mer) ; 71 hameaux procéduraux des cellules les plus fournies perdent le leur (auberge gardée) : le total reste 666. Une cellule peut contenir une ville ou un hameau et plusieurs éléments de décor (cimetière isolé compris). Master : section graveyards (target 666, fill_empty_cells, without_graveyard) ; tools/world_gen échoue si une génération complète ne donne pas 666 cimetières.",
@@ -4991,6 +4992,142 @@
       "life_gauge": "Vie",
       "endurance_gauge": "Endurance",
       "specific_gauge": "Endurance"
+    },
+    {
+      "id": "class_bard",
+      "name": "Barde",
+      "type": "support",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Musicien et conteur ; ses chants soutiennent ou troublent. Arbre de talents existant (Note Discordante, Cacophonie, Ballade Protectrice) gardé pour les PNJ.",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_succube",
+      "name": "Succube",
+      "type": "infernal",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Démone séductrice des Enfers (l'Impératrice) ; charme et drain de vie.",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_artisan",
+      "name": "Artisan",
+      "type": "craft",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Forgeron et armurier (armures naines sur mesure, plans d'artisanat). Arbre de talents existant (Marteau du Forgeron, Atelier de Guerre, Armure sur Mesure) gardé pour les PNJ.",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_samourai",
+      "name": "Samouraï",
+      "type": "combat",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Guerrier à la lame des empires d'Orient (lame féline solaire).",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_seigneur_des_tenebres",
+      "name": "Seigneur des Ténèbres",
+      "type": "infernal",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Maître de légions infernales (sceptre de commandement infernal).",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_necromancien",
+      "name": "Nécromancien",
+      "type": "arcane",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Mage des morts ; relève et commande les morts-vivants.",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_alchimiste",
+      "name": "Alchimiste",
+      "type": "craft",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Préparateur de potions, gaz et poisons (sac de gaz dzorak).",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
+    },
+    {
+      "id": "class_noble",
+      "name": "Noble",
+      "type": "social",
+      "playable": false,
+      "npc": true,
+      "notes": [
+        "[GD] Seigneur ou baron qui gouverne un fief (gouvernance quotidienne).",
+        "[GD] (v1.0.115) Classe de PNJ, non jouable (Décision du propriétaire (13/11/2026) : classes citées par des PNJ, butins ou règles créées en fiches PNJ)."
+      ],
+      "variants": [],
+      "faction_affiliations": [],
+      "level_titles": [],
+      "life_gauge": "",
+      "endurance_gauge": "",
+      "specific_gauge": ""
     }
   ],
   "races": [
@@ -30024,6 +30161,30 @@
         "[GD] Nom, titre et récompense à valider par le propriétaire.",
         "[DÉCISION] (v1.0.114, 13/11/2026) : mécanique en jeu — le shard mémorise par personnage chaque cimetière visité (entrée vivant dans un rayon de 15 m, ou réapparition à ce cimetière) ; le cimetière secret de Thurvhal compte ; exploit débloqué au 666e (seulement si le monde compte exactement 666 cimetières) ; message dans le chat et compteur N/666 dans l'onglet Exploits (LORE_BD §16.41)."
       ]
+    },
+    {
+      "id": "exploit_mort_haghendorf_t11",
+      "name": "La Chute du Trône",
+      "type": "raid",
+      "death_cause_detail": "",
+      "how_to_obtain": "Terminer le raid « La Chute du Trône — Lhynn » (raid_bataille_finale_lhynn_t11) : l'Empereur Haghendorf meurt dans la salle du trône.",
+      "eligible": {
+        "races": [],
+        "factions": [],
+        "classes": []
+      },
+      "location": {
+        "ville_id": "",
+        "details": "Palais de Lhynn, salle du trône"
+      },
+      "rewards": {
+        "title": "Tombeur d'Empereur",
+        "reward": "",
+        "power": ""
+      },
+      "notes": [
+        "[GD] (v1.0.115) Exploit créé pour la récompense du raid (Décision du propriétaire (13/11/2026)) ; voir dialogue_mort_haghendorf_t11."
+      ]
     }
   ],
   "quests": [
@@ -31956,8 +32117,8 @@
       "for_classes": [],
       "unlock_conditions": [
         {
-          "type": "quest",
-          "id": "quest_brule_le_passe_t4",
+          "type": "exploit",
+          "id": "exploit_brule_le_passe_t4",
           "description": "Avoir brûlé le château de Wismerhill (fin T4)"
         },
         {
@@ -34551,8 +34712,8 @@
           "description": "Niveau minimum 30"
         },
         {
-          "type": "quest",
-          "id": "quest_premier_jour_baron_t6",
+          "type": "exploit",
+          "id": "exploit_premier_jour_baron_t6",
           "description": "Avoir accompli la prise d'Horkher (T6)"
         }
       ],
@@ -161392,7 +161553,7 @@
       "source": "[BD-T3] Pages 41, 42, 43, 44",
       "ville_ids": [],
       "zone_ids": [
-        "zone_garundel_fief"
+        "ville_garundel_fief"
       ],
       "dialogue_ids": [],
       "notes": [
@@ -162818,7 +162979,7 @@
       "source": "[BD-T3] Page 43",
       "ville_ids": [],
       "zone_ids": [
-        "zone_garundel_fief"
+        "ville_garundel_fief"
       ],
       "dialogue_ids": [],
       "notes": []
@@ -176479,6 +176640,26 @@
         "S011_E015"
       ],
       "groupe": "unique"
+    },
+    {
+      "id": "creature_dragon_adult",
+      "name": "Dragon adulte (Draakh)",
+      "type": "dragon",
+      "difficulty": "elite",
+      "level_min": 45,
+      "level_max": 60,
+      "description": "Fiche générique des dragons adultes doués de parole, qui comprennent et parlent le Draakhs. Les dragons placés au bestiaire (dragon noir, dragons de jade, dragon impérial…) en sont des instances.",
+      "region_id": "",
+      "ville_id": "",
+      "faction_id": "faction_neutral",
+      "drops": [],
+      "abilities_traits": [
+        "Langue des Dragons (Draakhs)"
+      ],
+      "notes": [
+        "[GD] (v1.0.115) Fiche générique créée pour la règle rule_langue_draakhs (Décision du propriétaire (13/11/2026)) ; pas de zone de chasse propre."
+      ],
+      "bestiaire": false
     }
   ],
   "regions": [
@@ -181096,7 +181277,7 @@
       "min_level": 35,
       "eligible_races": [],
       "eligible_classes": [
-        "classe_samourai",
+        "class_samourai",
         "class_warrior"
       ],
       "source_monsters": [],
@@ -181150,7 +181331,7 @@
       "min_level": 25,
       "eligible_races": [
         "race_half_ogre",
-        "race_orc",
+        "race_orkh",
         "geants"
       ],
       "eligible_classes": [],
@@ -181181,8 +181362,8 @@
         "race_demon"
       ],
       "eligible_classes": [
-        "classe_seigneur_des_tenebres",
-        "classe_necromancien"
+        "class_seigneur_des_tenebres",
+        "class_necromancien"
       ],
       "source_monsters": [],
       "source_villes": [],
@@ -181203,7 +181384,7 @@
       "min_level": 35,
       "eligible_races": [],
       "eligible_classes": [
-        "classe_alchimiste"
+        "class_alchimiste"
       ],
       "source_monsters": [
         "creature_dzorak_marais_t11"
@@ -183020,6 +183201,177 @@
       "notes": [
         "[GD] (v1.0.58) Butin thématique de creature_gigantomorphe."
       ]
+    },
+    {
+      "id": "loot_poussiere_feerie",
+      "name": "Poussière féerique",
+      "type": "crafting_material",
+      "rarity": "Commun",
+      "description": "Poussière scintillante laissée par les lutins ; ingrédient d'alchimie (potions de lumière, d'illusion).",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_lutin"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_lutin (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_bille_de_ruse",
+      "name": "Bille de ruse",
+      "type": "trinket",
+      "rarity": "Peu commun",
+      "description": "Petite bille de verre ensorcelée avec laquelle les lutins jouent leurs farces ; lancée, elle fait trébucher.",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_lutin"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_lutin (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_antenne_mante",
+      "name": "Antenne de mante géante",
+      "type": "crafting_material",
+      "rarity": "Peu commun",
+      "description": "Longue antenne sensible ; composant d'artisanat (harnais de monture, détecteurs).",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_mante_geante"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_mante_geante (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_ecaille_dragon_jeune",
+      "name": "Écaille de jeune dragon",
+      "type": "crafting_material",
+      "rarity": "Rare",
+      "description": "Écaille orangée d'un dragon juste éclos, encore souple ; ne se prélève qu'à la mue (le dragon juvénile n'est pas à tuer).",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_juvenil"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_dragon_juvenil (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_sang_de_dragon",
+      "name": "Sang de jeune dragon",
+      "type": "potion_ingredient",
+      "rarity": "Rare",
+      "description": "Quelques gouttes de sang d'un dragon juvénile ; ingrédient alchimique moins puissant que le sang de dragon d'or.",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_dragon_juvenil"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_dragon_juvenil (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_oeil_renard_infernal",
+      "name": "Œil de renard infernal",
+      "type": "crafting_material",
+      "rarity": "Peu commun",
+      "description": "Œil vert luisant d'un renard démoniaque ; ingrédient de potions de vision dans l'ombre.",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_renard_demoniaque_village"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_renard_demoniaque_village (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_carapace_insecte_oracle",
+      "name": "Carapace d'insecte de l'Oracle",
+      "type": "crafting_material",
+      "rarity": "Commun",
+      "description": "Plaque de chitine des insectes géants qui tournent autour de l'Aérolithe de l'Oracle.",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_grandes_mouches_oracle"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_grandes_mouches_oracle (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_ecaille_demon_majeur",
+      "name": "Écaille de démon majeur",
+      "type": "crafting_material",
+      "rarity": "Épique",
+      "description": "Écaille noire et brûlante d'un grand démon ; composant d'armes et d'armures infernales.",
+      "min_level": 0,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_demon_emissaire"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_demon_emissaire (Décision du propriétaire (13/11/2026))."
+      ]
+    },
+    {
+      "id": "loot_armure_cramoisie_demoniaque",
+      "name": "Armure cramoisie démoniaque",
+      "type": "armor",
+      "rarity": "Épique",
+      "description": "Fragment de l'armure rouge cramoisie des émissaires de Haazheel Thorn, refaçonnable par un artisan.",
+      "min_level": 30,
+      "eligible_races": [],
+      "eligible_classes": [],
+      "source_monsters": [
+        "creature_demon_emissaire"
+      ],
+      "source_villes": [],
+      "source_quests": [],
+      "source_raids": [],
+      "notes": [
+        "[GD] (v1.0.115) Butin créé pour la créature creature_demon_emissaire (Décision du propriétaire (13/11/2026))."
+      ]
     }
   ],
   "dialogues": [
@@ -183441,7 +183793,7 @@
       "name": "Refus de la Pyramide Volante",
       "npc_name": "Haghendorf / Serpent Héraut de Methrhton",
       "faction_id": "faction_neutral",
-      "race_id": "serpent_mystique",
+      "race_id": "",
       "location_ville_id": "",
       "lines": [
         {
@@ -183500,7 +183852,8 @@
       "notes": [
         "[BD-T4] Pages 9-11. Haghendorf chevauche Drakkahen jusqu'à la pyramide volante entre soleil et lune.",
         "[BD-T4] Methrhton a déjà aidé l'Empereur une fois — détail de lore non précisé.",
-        "[BD-T4] Incantation de vol pour Drakkahen : 'Khaankhen Khorsht Shhullkh' (confirmé page 9)."
+        "[BD-T4] Incantation de vol pour Drakkahen : 'Khaankhen Khorsht Shhullkh' (confirmé page 9).",
+        "[GD] (v1.0.115) race_id vidé : le Serpent Héraut de Methrhton est une créature mystique du culte du Serpent (religion_methraton_serpent), pas une race (Décision du propriétaire (13/11/2026))."
       ]
     },
     {
@@ -243144,6 +243497,34 @@
           "nom": "Affichage de l'exploit et des lieux découverts",
           "decision": "Décision du propriétaire (13/11/2026) : « message discret + compteur » — message système dans le chat (cimetière visité avec compteur, lieu découvert, exploit débloqué), compteur « Cimetières visités : N/666 » dans l'onglet Exploits, lieux secrets découverts dessinés sur la carte du monde du seul personnage qui les a trouvés.",
           "version": "1.0.114"
+        },
+        {
+          "collection": "classes",
+          "id": "classes_pnj",
+          "nom": "Classes citées sans fiche",
+          "decision": "Décision du propriétaire (13/11/2026) : Classes PNJ non jouables : class_bard, class_succube, class_artisan, class_samourai, class_seigneur_des_tenebres, class_necromancien, class_alchimiste, class_noble créées (playable false, npc true) ; arbres de talents du barde et de l'artisan gardés.",
+          "version": "1.0.115"
+        },
+        {
+          "collection": "loots",
+          "id": "butins_orphelins",
+          "nom": "Butins de créatures sans fiche",
+          "decision": "Décision du propriétaire (13/11/2026) : Créer les 9 fiches [GD] et la créature générique creature_dragon_adult.",
+          "version": "1.0.115"
+        },
+        {
+          "collection": "place_types",
+          "id": "forest_poi",
+          "nom": "Types de lieu et mot-clé monde_entier",
+          "decision": "Décision du propriétaire (13/11/2026) : forest_poi et battlefield_poi ajoutés aux types de lieu ; « monde_entier » reconnu comme mot-clé par check_references.py (règle qui s'applique au monde entier).",
+          "version": "1.0.115"
+        },
+        {
+          "collection": "regles_transverses",
+          "id": "corrections_orphelines",
+          "nom": "Corrections évidentes des références",
+          "decision": "Décision du propriétaire (13/11/2026) : Appliquées en bloc : zone_garundel_fief → ville_garundel_fief, race_orc → race_orkh, race_half_demon → demi-demon_elfique, class_pretre → prêtres de Grâce et de Jugement, race_elfe → hauts elfes et elfes des bois, faction_gods → Église de Lumière et panthéon d'Erypt, conditions de quête → exploits, quest_fermer_porte_enfers_hs → quest_t12_05_fermer_la_porte ; references orphelines 42 → 0, check_references.py passe en --strict à la CI.",
+          "version": "1.0.115"
         }
       ]
     },
@@ -243207,7 +243588,7 @@
       "description": "À cette époque agitée, chaque petit fief peut se transformer en piège mortel. Les droits des seigneurs sont absolus sur leurs terres. Tuer un seigneur dans un combat légal sur ses terres transfère les droits seigneuriaux au vainqueur.",
       "applies_to": [
         "faction_empire",
-        "zone_garundel_fief",
+        "ville_garundel_fief",
         "char_wismerhill"
       ],
       "mechanique_jeu": "",
@@ -245133,7 +245514,8 @@
       "applies_to": [
         "char_methraton",
         "les_archimages",
-        "faction_gods"
+        "religion_eglise_lumiere",
+        "religion_pantheon_erypt"
       ],
       "mechanique_jeu": "Permanent (jusqu a evenement de desactivation). Effets : aucune intervention divine directe possible. Les sorts de type divin ont leur puissance reduite de 70%. Les entites divines ne peuvent pas se manifester physiquement. Exceptions : Oracle (predatif, pas interventionniste).",
       "apparition_window": "T13+",
@@ -245157,7 +245539,7 @@
       "description": "Wismerhill est le fils de Pazuzu, prince démoniaque des vents et des tempêtes, et de la princesse elfique ; cette ascendance explique sa capacité à se transformer en démon. Haazheel Thorn, lui, est le fils de Lucifer et ignore de quel démon descend Wismerhill (T13 p.38).",
       "applies_to": [
         "char_wismerhill",
-        "race_half_demon"
+        "demi-demon_elfique"
       ],
       "mechanique_jeu": "Wismerhill : acces a la forme demoniaque permanente post-T13. Bonus : +30% a toutes les stats demoniaques. La revelation impacte les factions : faction_demons le respecte desormais, chevaliers_de_la_lumiere le craint encore plus.",
       "apparition_window": "T13+",
@@ -245319,7 +245701,8 @@
       "applies_to": [
         "char_wismerhill",
         "faction_empire",
-        "class_pretre"
+        "class_priest_grace",
+        "class_priest_judgment"
       ],
       "mechanique_jeu": "Post-résurrection T14: Les sorts divins ont leur puissance réduite de 100% (épuisement temporaire). Durée: 30 jours réels. Les prêtres ne peuvent plus incanter de miracles majeurs. Récupération progressive via Terra Secunda.",
       "apparition_window": "T14",
@@ -245340,7 +245723,8 @@
       "description": "Les Peuples Premiers (elfes, nains, fées, orques sauvages) choisissent de rester dans le monde mourant et d'y finir leurs jours en dansant les Pavanes Sacrées. Ils meurent avec leur monde. Les Esprits de la Nature (vents) passent les Portes.",
       "applies_to": [
         "faction_peuples_premiers",
-        "race_elfe",
+        "race_haut_elfe",
+        "race_elfe_des_bois",
         "race_dwarf"
       ],
       "mechanique_jeu": "Post-T14: les races Elfe et Nain ne sont plus disponibles comme races jouables (monde originel détruit). Dans l'Opus II (Terra Secunda), ces races ne sont pas présentes sauf événements spéciaux.",
@@ -245498,7 +245882,7 @@
       "applies_to": [
         "char_haazheel_thorn",
         "faction_legion_infernale",
-        "quest_fermer_porte_enfers_hs"
+        "quest_t12_05_fermer_la_porte"
       ],
       "mechanique_jeu": "Spawn de démons augmenté de 200% dans toutes les zones proches de l'ancienne Porte. Quête de fermeture disponible. Si non résolue au niveau de jeu global : événement mondial (demons_envahissent_monde).",
       "apparition_window": "",
@@ -286354,6 +286738,22 @@
       "label": "Gouffre",
       "color": "#4a2f63",
       "shape": "circle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "forest_poi",
+      "label": "Forêt",
+      "color": "#3f7a3a",
+      "shape": "circle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "battlefield_poi",
+      "label": "Champ de bataille",
+      "color": "#8a3a2a",
+      "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
     }

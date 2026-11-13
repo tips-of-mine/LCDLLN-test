@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.114)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.115)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -80,7 +80,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.112 | `b6f3fa1` | **répartition des 666 cimetières** : un cimetière au moins par cellule à terre (71 isolés ; 10 cellules de mer sans), 71 hameaux sans cimetière, total vérifié par le générateur ([LORE_BD §16.39](LORE_BD.md)) | — | — |
 | v1.0.112 (outil) | #1128 | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
 | v1.0.113 | `1dd004e` | **décisions du 13/11** : noms [GD] validés, Xygga femelle et noms des dragons, année 3417 AO, niveaux et balisage, Harrodh, Légion, contre-quêtes, Ghulvathan, références orphelines 89 → 42, Menthats, arbitrages de lore ([LORE_BD §16.40](LORE_BD.md)) | — | contre-quêtes à écrire, mécanismes serveur (exploit, lieux découverts), routes à ouvrir |
-| v1.0.114 | (ce commit) | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
+| v1.0.114 | `a7df2f9` | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
+| v1.0.115 | (ce commit) | **références orphelines 42 → 0** : 8 classes PNJ non jouables, 9 butins [GD], dragon adulte générique, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé `monde_entier`, corrections en bloc ; `check_references.py --strict` à la CI ([LORE_BD §16.42](LORE_BD.md)) | — | — |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -152,7 +153,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.4 Données incomplètes et références
 
-32. **89 → 42 références orphelines** (v1.0.113 : `faction_demons`, `race_half_dark_elf`, `race_menthat` traités ; 33 identifiants restants ; au départ 36) : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` / `forest_poi`, classes inexistantes, 9 butins, `citadelle_legion`… (16.32).
+32. ~~**89 → 42 références orphelines** (v1.0.113 : `faction_demons`, `race_half_dark_elf`, `race_menthat` traités ; 33 identifiants restants ; au départ 36) : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` / `forest_poi`, classes inexistantes, 9 butins, `citadelle_legion`… (16.32).~~ **Tranché en v1.0.115** : 0 orpheline (LORE_BD §16.42).
 33. 59 quêtes non plaçables (étapes à situer) et 6 raids sans case (16.32).
 34. 32 dialogues `dial_t10_NN` vides à écrire ; 45 dialogues sans réplique (16.32).
 35. Krak de Jhenner, citadelle impériale et Passe de Heniak sans case (16.15, R).
@@ -184,7 +185,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 ### 4.7 Outillage
 
 54. Tests Playwright de l'éditeur hors CI (à lancer à la main) (16.25 à 16.29).
-55. `check_references.py` non bloquant : passer à `--strict` quand les orphelines seront tranchées (16.32).
+55. ~~`check_references.py` non bloquant : passer à `--strict` quand les orphelines seront tranchées (16.32).~~ **Fait en v1.0.115** : `--strict` à la CI.
 56. Éditeur : carte des Enfers absente ; `description` / `notes` d'une route non éditables en mode Tracer ; fusion de fiches et import « BD » peu testés ; `secret` et `entree_cachee` sans champ de formulaire (16.26 à 16.29, 16.36).
 57. ~~`test_editor_fiches.py` : 3 échecs déjà présents au v1.0.107 (attentes figées au v1.0.103 : 5 lieux `mine_poi` ajoutés depuis, 96 quêtes ancrées sans `etapes_struct` au lieu de 90, champ `territory.ville_id` sans champ de formulaire).~~ **Corrigé en v1.0.109** : attentes calculées depuis les données, champ « Ville du territoire » ajouté au formulaire de faction des deux éditeurs.
 
@@ -236,7 +237,7 @@ Branche `carte/corrections-v1.0.72` : 39 commits, lore v1.0.72 → v1.0.112 (un 
 ## Contrôles
 
 - `validate_city_services.py` (122 villes, 1264 PNJ), `generate_city_services.py --check`,
-  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py` (89 orphelines, rapport)
+  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py --strict` (0 orpheline depuis v1.0.115)
 - `world_gen_tests` (un test par lot), `world_places_tests`, `start_locations_tests`, `respawn_rules_tests`, `gm_place_directory_tests`
 - Tests de l'éditeur (Playwright, à la main) : roundtrip, routes, forms, layers et fiches, tous verts sur les deux copies
   (v1.0.110)

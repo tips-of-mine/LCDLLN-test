@@ -2972,7 +2972,7 @@ namespace
 	}
 
 	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
-	/// Master (`graveyards` : target 666, fill_empty_cells, 81 hameaux sans cimetière) ;
+	/// Master (`graveyards` : target 666, fill_empty_cells, 71 hameaux sans cimetière) ;
 	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
 	/// dans la case, au sec ; sans fill_empty_cells elle n'en a aucun ; un hameau de
 	/// without_graveyard (N001_E011) n'a pas de cimetière mais la cellule en garde un.
@@ -2988,8 +2988,8 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 81u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 81 hameaux sans cimetiere)");
+			&& g.master.graveyardExcluded.size() == 71u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0"),
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 71 hameaux sans cimetiere)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;

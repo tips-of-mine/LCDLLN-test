@@ -263,7 +263,7 @@ voisines raccord au mètre près :
    **Cimetières** (v1.0.112, section `graveyards` du master) : toujours exactement
    **666** aux Royaumes (`target`, génération en échec sinon) ; une cellule sans
    cimetière en reçoit un **isolé**, sans ville, au bord d'une route
-   (`fill_empty_cells`) ; les hameaux de `without_graveyard` n'en ont pas (auberge
+   (`fill_empty_cells` ; aucun dans une cellule de pleine mer) ; les hameaux de `without_graveyard` n'en ont pas (auberge
    seule) pour garder le total (LORE_BD §16.38-16.39).
    Champs clôturés hors les murs (`FieldsFor`) : 2 à 4 petits champs (16 × 10 m)
    par hameau ou village, 4 à 6 grandes parcelles (24 × 14 m à 32 × 18 m) par

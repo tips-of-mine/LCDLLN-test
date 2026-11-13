@@ -392,6 +392,29 @@ namespace tools::world_gen
 				return false;
 			}
 		}
+		// v1.0.114 — identifiant stable de chaque cimetière (gy=<id>) : présent et unique
+		// dans le monde (visites mémorisées par personnage, exploit des 666 cimetières).
+		{
+			std::set<std::string> ids;
+			for (const World* w : cells)
+			{
+				std::vector<std::string> cellIds;
+				for (const RespawnDef& r : w->respawns)
+					if (r.type == "graveyard") cellIds.push_back(r.graveyardId);
+				for (const std::string& l : w->importedRespawnLines)
+					if (l.find(" graveyard ") != std::string::npos)
+					{
+						const size_t at = l.rfind(" gy=");
+						cellIds.push_back(at == std::string::npos ? std::string() : l.substr(at + 4));
+					}
+				for (const std::string& id : cellIds)
+					if (id.empty() || !ids.insert(id).second)
+					{
+						err = "cimetiere de " + w->cellName + (id.empty() ? std::string(" sans identifiant") : " : identifiant en double '" + id + "'");
+						return false;
+					}
+			}
+		}
 		bool anyStart = false;
 		for (const World* w : cells) anyStart = anyStart || !w->starts.empty();
 		if (!anyStart && opt.cells.empty()) { err = "aucun point de depart genere"; return false; }

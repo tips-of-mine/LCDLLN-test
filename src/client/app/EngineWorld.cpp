@@ -617,6 +617,9 @@ namespace engine
 		in.defaultViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.default_view_m", 2000.0)));
 		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));
 		in.features = &m_worldMapFeatures;
+		// Lore v1.0.114 — lieux secrets découverts par CE personnage (reçus du shard).
+		in.secretPlaces = &m_uiModelBinding.GetModel().discovery.places;
+		in.currentMap = static_cast<uint8_t>(m_cellWorld ? m_activeCellMap : engine::world::cells::CellMap::Royaumes);
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
 	}
 }

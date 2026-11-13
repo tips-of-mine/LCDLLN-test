@@ -658,6 +658,11 @@ namespace engine::client
 		// ADM.1 — pouvoirs de maître de jeu (vol, gel, vitesse).
 		case engine::server::MessageKind::GmStateUpdate:
 			return ApplyGmStateUpdate(packet);
+		// Lore v1.0.114 — exploration (cimetières, lieux secrets, exploit).
+		case engine::server::MessageKind::DiscoveryState:
+			return ApplyDiscoveryState(packet);
+		case engine::server::MessageKind::DiscoveryEvent:
+			return ApplyDiscoveryEvent(packet);
 		// Validation v12 — butin auto-crédité à la mort d'un mob.
 		case engine::server::MessageKind::LootNotify:
 			return ApplyLootNotify(packet);
@@ -1128,6 +1133,74 @@ namespace engine::client
 		m_model.gmState.speedMultiplier = message.speedMultiplier;
 		LOG_INFO(Net, "[UIModelBinding] ADM.1 état MJ reçu (flags=0x{:x}, vitesse x{:.2f})",
 			message.flags, message.speedMultiplier);
+		NotifyObservers(UIModelChangeWorld);
+		return true;
+	}
+
+	std::string FormatDiscoveryEventLine(const engine::server::DiscoveryEventMessage& event)
+	{
+		using engine::server::DiscoveryEventKind;
+		switch (event.kind)
+		{
+		case DiscoveryEventKind::GraveyardVisited:
+			return "Cimetière visité (" + std::to_string(event.graveyardsVisited) + "/"
+				+ std::to_string(event.graveyardsTotal) + ")";
+		case DiscoveryEventKind::PlaceDiscovered:
+			return "Lieu découvert : " + (event.place.name.empty() ? event.place.id : event.place.name);
+		case DiscoveryEventKind::ExploitUnlocked:
+			return "Exploit débloqué : " + (event.title.empty() ? event.id : event.title);
+		}
+		return {};
+	}
+
+	std::vector<engine::server::DiscoveryEventMessage> UIModelBinding::TakeDiscoveryEvents()
+	{
+		std::vector<engine::server::DiscoveryEventMessage> out;
+		out.swap(m_pendingDiscoveryEvents);
+		return out;
+	}
+
+	bool UIModelBinding::ApplyDiscoveryState(std::span<const std::byte> packet)
+	{
+		engine::server::DiscoveryStateMessage message{};
+		if (!engine::server::DecodeDiscoveryState(packet, message))
+		{
+			LOG_WARN(Net, "[UIModelBinding] DiscoveryState FAILED: decode error");
+			return false;
+		}
+		UIDiscoveryState& d = m_model.discovery;
+		if ((message.flags & engine::server::kDiscoveryStateFlagFirst) != 0u)
+			d.places.clear();
+		d.known = true;
+		d.graveyardsVisited = message.graveyardsVisited;
+		d.graveyardsTotal = message.graveyardsTotal;
+		d.places.insert(d.places.end(), message.places.begin(), message.places.end());
+		LOG_INFO(Net, "[UIModelBinding] Exploration : cimetieres {}/{}, {} lieu(x) secret(s) decouvert(s)",
+			d.graveyardsVisited, d.graveyardsTotal, d.places.size());
+		NotifyObservers(UIModelChangeWorld);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyDiscoveryEvent(std::span<const std::byte> packet)
+	{
+		engine::server::DiscoveryEventMessage message{};
+		if (!engine::server::DecodeDiscoveryEvent(packet, message))
+		{
+			LOG_WARN(Net, "[UIModelBinding] DiscoveryEvent FAILED: decode error");
+			return false;
+		}
+		UIDiscoveryState& d = m_model.discovery;
+		d.graveyardsVisited = message.graveyardsVisited;
+		d.graveyardsTotal = message.graveyardsTotal;
+		if (message.kind == engine::server::DiscoveryEventKind::PlaceDiscovered)
+		{
+			const bool present = std::any_of(d.places.begin(), d.places.end(),
+				[&](const engine::server::DiscoveredPlaceWire& p) { return p.id == message.place.id; });
+			if (!present)
+				d.places.push_back(message.place);
+		}
+		if (m_pendingDiscoveryEvents.size() < 64u)
+			m_pendingDiscoveryEvents.push_back(std::move(message));
 		NotifyObservers(UIModelChangeWorld);
 		return true;
 	}

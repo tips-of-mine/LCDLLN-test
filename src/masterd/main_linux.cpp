@@ -608,6 +608,7 @@ int main(int argc, char** argv)
 	exploitHandler.SetSessionManager(&sessionManager);
 	exploitHandler.SetConnectionSessionMap(&connSessionMap);
 	exploitHandler.SetStore(&exploitStore);
+	exploitHandler.SetSessionCharacterMap(&sessionCharMap); // lore v1.0.114 — portée personnage
 
 	// Carte à découvrir (opcodes 208/209 lecture paginée, 210 fusion) : cases
 	// révélées par personnage, table character_map_discovery (migration 0076).

@@ -59,6 +59,15 @@ namespace engine::server
 		/// CellZoneId + masque). Fusionnées (OU) dans character_map_discovery par la
 		/// sauvegarde en base. Jamais écrites dans le fichier .ini.
 		std::vector<std::pair<uint32_t, engine::world::discovery::CellBitmap>> mapDiscoveryCells;
+		/// Lore v1.0.114 — cimetières visités pendant la session (INSERT IGNORE dans
+		/// character_graveyard_visits). Jamais écrits dans le fichier .ini.
+		std::vector<std::string> graveyardVisits;
+		/// Lore v1.0.114 — lieux secrets découverts pendant la session (INSERT IGNORE
+		/// dans character_secret_discoveries). Jamais écrits dans le fichier .ini.
+		std::vector<std::string> secretDiscoveries;
+		/// Lore v1.0.114 — exploit des 666 cimetières atteint : INSERT IGNORE dans
+		/// character_exploit_unlocks. Jamais écrit dans le fichier .ini.
+		bool grantPilgrimExploit = false;
 		/// ETAPE2.6 — instantané restauré au chargement (character_snapshots.id, 0 =
 		/// aucun). La sauvegarde suivante marque la demande de restauration appliquée,
 		/// dans sa transaction. Jamais écrit dans le fichier .ini.

@@ -601,6 +601,7 @@ namespace engine::server
 
 		// Validation v12 (wire v13) — points de réapparition (non bloquant).
 		InitRespawnPoints();
+		InitDiscoveryCatalog(); // lore v1.0.114 — après les points de réapparition
 
 		if (!InitQuests())
 		{
@@ -1619,6 +1620,31 @@ namespace engine::server
 			ok = up != nullptr && up->Bind(0, state.characterKey) && up->Bind(1, cellZoneId)
 				&& up->BindBlob(2, bytes.data(), bytes.size()) && up->Execute();
 		}
+		// 0 sexies bis. Lore v1.0.114 — cimetières visités et lieux secrets découverts
+		// pendant la session (INSERT IGNORE : rejouer une ligne déjà écrite est sans effet),
+		// puis l'exploit des 666 cimetières une fois atteint.
+		for (size_t i = 0; ok && i < state.graveyardVisits.size(); ++i)
+		{
+			auto* ins = cache->Acquire(mysql,
+				"INSERT IGNORE INTO character_graveyard_visits (character_id, graveyard_id) VALUES (?, ?)");
+			ok = ins != nullptr && ins->Bind(0, state.characterKey)
+				&& ins->Bind(1, std::string_view(state.graveyardVisits[i])) && ins->Execute();
+		}
+		for (size_t i = 0; ok && i < state.secretDiscoveries.size(); ++i)
+		{
+			auto* ins = cache->Acquire(mysql,
+				"INSERT IGNORE INTO character_secret_discoveries (character_id, place_id) VALUES (?, ?)");
+			ok = ins != nullptr && ins->Bind(0, state.characterKey)
+				&& ins->Bind(1, std::string_view(state.secretDiscoveries[i])) && ins->Execute();
+		}
+		if (ok && state.grantPilgrimExploit)
+		{
+			auto* grant = cache->Acquire(mysql,
+				"INSERT IGNORE INTO character_exploit_unlocks (character_id, exploit_id, source_detail) "
+				"SELECT ?, id, 'graveyards_visited' FROM exploits WHERE code = ? AND is_active = 1");
+			ok = grant != nullptr && grant->Bind(0, state.characterKey)
+				&& grant->Bind(1, kPilgrimExploitCode) && grant->Execute();
+		}
 		// 1. Wallet : upsert des 4 devises (ids alignés sur PlayerWalletService :
 		// 1=gold, 2=honor, 3=badges, 4=premium). Les 4 lignes sont TOUJOURS écrites
 		// (même à 0) : elles servent de sentinelle d'existence à LoadCharacterFromDb.
@@ -1715,6 +1741,7 @@ namespace engine::server
 		// pas de transaction du tout, donc pas de contrôle de propriété non plus (rien n'est
 		// écrit : un shard qui ne serait plus propriétaire n'abîme rien).
 		if (blocks == 0u && state.mailboxClaimedIds.empty() && state.mapDiscoveryCells.empty()
+			&& state.graveyardVisits.empty() && state.secretDiscoveries.empty() && !state.grantPilgrimExploit
 			&& m_characterDbPool != nullptr && state.characterKey != 0u)
 		{
 			m_saveBlocksSkipped.fetch_add(CountSaveBlocks(kSaveBlocksAll), std::memory_order_relaxed);
@@ -2187,8 +2214,68 @@ namespace engine::server
 		{
 			data.spawnLoaded = LoadSpawnFromDb(characterKey, data.spawnX, data.spawnY, data.spawnZ, data.spawnYawDeg,
 				data.name, data.gender, data.level, data.factionId, data.classId, data.raceId);
+			data.discoveryLoaded = LoadDiscoveryFromDb(characterKey, data); // lore v1.0.114
 		}
 		return data;
+	}
+
+	bool ServerApp::LoadDiscoveryFromDb(uint64_t characterKey, LoadedCharacterData& data)
+	{
+#if defined(SHARD_POSITION_DB)
+		if (m_characterDbPool == nullptr || characterKey == 0u)
+		{
+			return false;
+		}
+		auto guard = m_characterDbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		auto* cache = guard.cache();
+		if (mysql == nullptr || cache == nullptr)
+		{
+			return false;
+		}
+		{
+			auto* sel = cache->Acquire(mysql,
+				"SELECT graveyard_id FROM character_graveyard_visits WHERE character_id = ?");
+			if (sel == nullptr || !sel->Bind(0, characterKey) || !sel->Execute())
+			{
+				LOG_WARN(Net, "[ServerApp] Exploration : character_graveyard_visits illisible (migration 0086 appliquée ?) "
+					"(character_key={}) — suivi désactivé pour la session", characterKey);
+				return false;
+			}
+			while (sel->FetchRow())
+				data.visitedGraveyards.push_back(sel->GetString(0));
+		}
+		{
+			auto* sel = cache->Acquire(mysql,
+				"SELECT place_id FROM character_secret_discoveries WHERE character_id = ?");
+			if (sel == nullptr || !sel->Bind(0, characterKey) || !sel->Execute())
+			{
+				LOG_WARN(Net, "[ServerApp] Exploration : character_secret_discoveries illisible (character_key={})", characterKey);
+				return false;
+			}
+			while (sel->FetchRow())
+				data.discoveredSecretPlaces.push_back(sel->GetString(0));
+		}
+		{
+			auto* sel = cache->Acquire(mysql,
+				"SELECT COUNT(*) FROM character_exploit_unlocks u JOIN exploits e ON e.id = u.exploit_id "
+				"WHERE u.character_id = ? AND e.code = ?");
+			if (sel == nullptr || !sel->Bind(0, characterKey) || !sel->Bind(1, kPilgrimExploitCode) || !sel->Execute())
+			{
+				LOG_WARN(Net, "[ServerApp] Exploration : character_exploit_unlocks illisible (character_key={})", characterKey);
+				return false;
+			}
+			if (sel->FetchRow())
+			{
+				data.pilgrimExploitUnlocked = sel->GetUInt64(0) != 0u;
+				while (sel->FetchRow()) {}
+			}
+		}
+		return true;
+#else
+		(void)characterKey; (void)data;
+		return false;
+#endif
 	}
 
 	void ServerApp::DrainCompletedCharacterLoads()
@@ -2678,6 +2765,23 @@ namespace engine::server
 		(void)SendInventoryDelta(acceptedClient,
 			std::span<const ItemStack>(acceptedClient.inventory.data(), acceptedClient.inventory.size()));
 		(void)SendEquipmentUpdate(acceptedClient);
+		// Lore v1.0.114 — exploration du personnage (cimetières visités, lieux secrets
+		// découverts) : suivie seulement dans le monde en cellules, avec une base lisible.
+		if (m_cellWorld && loaded.discoveryLoaded)
+		{
+			const bool catchUp = acceptedClient.discovery.Load(m_discoveryCatalog, loaded.visitedGraveyards,
+				loaded.discoveredSecretPlaces, loaded.pilgrimExploitUnlocked);
+			SendDiscoveryState(acceptedClient);
+			if (catchUp)
+			{
+				// Tous les cimetières visités mais exploit absent (sauvegarde perdue) :
+				// débloqué maintenant, écrit par la sauvegarde ci-dessous.
+				DiscoveryEvents events;
+				events.exploitUnlocked = true;
+				SendDiscoveryEvents(acceptedClient, events);
+				SaveConnectedClient(acceptedClient, "pilgrim_exploit_catch_up");
+			}
+		}
 		OnClientLogin(acceptedClient);
 	}
 
@@ -4129,27 +4233,61 @@ namespace engine::server
 					LOG_WARN(Net, "[ServerApp] Respawn points: type '{}' inconnu ligne {} (attendu graveyard|inn)", typeToken, lineNumber);
 					continue;
 				}
-				// Colonnes optionnelles (cimetières) : faction propriétaire puis rayon neutre.
+				// Colonnes optionnelles (cimetières) : faction propriétaire puis rayon neutre,
+				// et (lore v1.0.114) identifiant stable `gy=<id>` en dernier jeton.
 				// Absentes → cimetière neutre (faction vide) avec le rayon par défaut.
-				point.neutralRadiusM = defaultNeutralRadiusM;
-				std::string factionToken;
-				if (lineStream >> factionToken)
-				{
-					if (factionToken != "-")
-					{
-						point.ownerFactionId = factionToken;
-					}
-					float radiusToken = 0.0f;
-					if (lineStream >> radiusToken)
-					{
-						point.neutralRadiusM = radiusToken;
-					}
-				}
+				std::string rest;
+				std::getline(lineStream, rest);
+				const RespawnTrailingTokens tokens = ParseRespawnTrailingTokens(rest);
+				point.ownerFactionId = tokens.faction;
+				point.neutralRadiusM = tokens.hasNeutralRadius ? tokens.neutralRadiusM : defaultNeutralRadiusM;
+				if (point.destinationType == kRespawnDestinationGraveyard)
+					point.graveyardId = tokens.graveyardId;
 				m_respawnPoints.push_back(point);
 			}
 		}
 
 		LOG_INFO(Net, "[ServerApp] Respawn points init OK (points={}, files={})", m_respawnPoints.size(), relativePaths.size());
+	}
+
+	void ServerApp::InitDiscoveryCatalog()
+	{
+		m_discoveryCatalog = DiscoveryCatalog{};
+		// Positions globales seulement dans le monde en cellules (zone historique : rien).
+		if (!m_cellWorld)
+		{
+			return;
+		}
+		// Cimetières des Royaumes identifiés (gy=) ; ceux des Enfers ne comptent pas.
+		std::vector<GraveyardSite> graveyards;
+		size_t withoutId = 0;
+		for (const RespawnPointDefinition& point : m_respawnPoints)
+		{
+			if (point.destinationType != kRespawnDestinationGraveyard
+				|| engine::world::cells::CellMapOfZoneId(point.zoneId) != engine::world::cells::CellMap::Royaumes)
+				continue;
+			if (point.graveyardId.empty())
+			{
+				++withoutId;
+				continue;
+			}
+			graveyards.push_back({ point.graveyardId, point.positionMetersX, point.positionMetersZ });
+		}
+		const size_t duplicates = m_discoveryCatalog.SetGraveyards(std::move(graveyards));
+		// Lieux secrets : fichiers réservés au serveur (absents = aucun secret sur la carte).
+		for (int m = 0; m < engine::world::cells::kCellMapCount; ++m)
+		{
+			const std::string world(engine::world::cells::WorldIdOf(static_cast<engine::world::cells::CellMap>(m)));
+			const std::string text = engine::platform::FileSystem::ReadAllTextContent(m_config,
+				"world/" + world + "/secret_places.json");
+			std::string error;
+			if (!text.empty() && !m_discoveryCatalog.AppendSecretPlacesFromText(text, error))
+				LOG_WARN(Net, "[ServerApp] Lieux secrets ({}) illisibles : {}", world, error);
+		}
+		LOG_INFO(Net, "[ServerApp] Exploration (v1.0.114) : {} cimetiere(s) identifie(s) dans les Royaumes ({} sans id, {} en double), "
+			"{} lieu(x) secret(s), exploit des {} cimetieres {}",
+			m_discoveryCatalog.GraveyardCount(), withoutId, duplicates, m_discoveryCatalog.SecretPlaceCount(),
+			kPilgrimGraveyardCount, m_discoveryCatalog.PilgrimExploitPossible() ? "actif" : "INACTIF (nombre different)");
 	}
 
 	bool ServerApp::InitQuests()
@@ -4273,6 +4411,8 @@ namespace engine::server
 			{
 				continue;
 			}
+			// Lore v1.0.114 — cimetières et lieux secrets (même tranche, les deux cartes).
+			UpdateDiscoveryProgress(client);
 			// Zone non cellulaire (instance, zone historique) : position locale, pas de carte.
 			// Seconde carte : la carte à découvrir ne couvre que le continent (les cases
 			// sont indexées par cellule des Royaumes) — rien n'est révélé aux Enfers.
@@ -4283,6 +4423,81 @@ namespace engine::server
 			}
 			(void)client.mapDiscovery.RevealAround(client.positionMetersX, client.positionMetersZ);
 		}
+	}
+
+	void ServerApp::UpdateDiscoveryProgress(ConnectedClient& client)
+	{
+		// Vivant seulement (un mort ne visite rien ; sa réapparition au cimetière compte
+		// dans HandleRespawnRequest), position globale d'une cellule (pas d'instance).
+		if (!client.discovery.Loaded() || (client.stateFlags & kEntityStateDead) != 0u
+			|| !engine::world::cells::CellMapOfZoneId(client.zoneId).has_value()
+			|| !std::isfinite(client.positionMetersX) || !std::isfinite(client.positionMetersZ))
+		{
+			return;
+		}
+		DiscoveryEvents events;
+		client.discovery.ObservePosition(m_discoveryCatalog, ClientCellMap(client),
+			client.positionMetersX, client.positionMetersZ, events);
+		if (!events.Empty())
+		{
+			SendDiscoveryEvents(client, events);
+		}
+	}
+
+	void ServerApp::SendDiscoveryEvents(const ConnectedClient& client, const DiscoveryEvents& events)
+	{
+		const uint16_t visited = static_cast<uint16_t>(std::min<uint32_t>(client.discovery.VisitedCount(), 0xFFFFu));
+		const uint16_t total = static_cast<uint16_t>(std::min<size_t>(m_discoveryCatalog.GraveyardCount(), 0xFFFFu));
+		for (size_t i = 0; i < events.graveyards.size(); ++i)
+		{
+			// Compteur propre à chaque visite (plusieurs cimetières dans une même observation).
+			const size_t after = events.graveyards.size() - 1u - i;
+			DiscoveryEventMessage message{};
+			message.kind = DiscoveryEventKind::GraveyardVisited;
+			message.graveyardsVisited = static_cast<uint16_t>(visited >= after ? visited - after : 0u);
+			message.graveyardsTotal = total;
+			message.id = events.graveyards[i];
+			(void)SendDatagram(client.endpoint, EncodeDiscoveryEvent(message));
+		}
+		for (const uint32_t index : events.secretPlaces)
+		{
+			const SecretPlaceSite& place = m_discoveryCatalog.SecretPlace(index);
+			DiscoveryEventMessage message{};
+			message.kind = DiscoveryEventKind::PlaceDiscovered;
+			message.graveyardsVisited = visited;
+			message.graveyardsTotal = total;
+			message.id = place.id;
+			message.title = place.name;
+			message.place = { place.id, place.name, place.kind, place.x, place.z, static_cast<uint8_t>(place.map) };
+			(void)SendDatagram(client.endpoint, EncodeDiscoveryEvent(message));
+			LOG_INFO(Net, "[ServerApp] Lieu secret decouvert (character_key={}, lieu={})", client.persistenceCharacterKey, place.id);
+		}
+		if (events.exploitUnlocked)
+		{
+			DiscoveryEventMessage message{};
+			message.kind = DiscoveryEventKind::ExploitUnlocked;
+			message.graveyardsVisited = visited;
+			message.graveyardsTotal = total;
+			message.id = std::string(kPilgrimExploitCode);
+			message.title = std::string(kPilgrimExploitTitle);
+			(void)SendDatagram(client.endpoint, EncodeDiscoveryEvent(message));
+			LOG_INFO(Net, "[ServerApp] Exploit {} debloque (character_key={}, cimetieres={}/{})",
+				kPilgrimExploitCode, client.persistenceCharacterKey, visited, total);
+		}
+	}
+
+	void ServerApp::SendDiscoveryState(const ConnectedClient& client)
+	{
+		std::vector<DiscoveredPlaceWire> places;
+		for (const uint32_t index : client.discovery.DiscoveredPlaceIndices(m_discoveryCatalog))
+		{
+			const SecretPlaceSite& place = m_discoveryCatalog.SecretPlace(index);
+			places.push_back({ place.id, place.name, place.kind, place.x, place.z, static_cast<uint8_t>(place.map) });
+		}
+		const uint16_t visited = static_cast<uint16_t>(std::min<uint32_t>(client.discovery.VisitedCount(), 0xFFFFu));
+		const uint16_t total = static_cast<uint16_t>(std::min<size_t>(m_discoveryCatalog.GraveyardCount(), 0xFFFFu));
+		for (const std::vector<std::byte>& packet : EncodeDiscoveryStatePackets(visited, total, places))
+			(void)SendDatagram(client.endpoint, packet);
 	}
 
 	void ServerApp::MaybeAutosaveCharacters()
@@ -4356,6 +4571,10 @@ namespace engine::server
 		state.knownSkillIds = client.knownSkillIds;
 		/// ETAPE2.5 — carte découverte pendant la session (fusion OU en base).
 		state.mapDiscoveryCells = client.mapDiscovery.SessionCells();
+		// Lore v1.0.114 — nouveautés d'exploration de la session (vides si suivi désactivé).
+		state.graveyardVisits = client.discovery.SessionGraveyardVisits();
+		state.secretDiscoveries = client.discovery.SessionSecretDiscoveries();
+		state.grantPilgrimExploit = client.discovery.ExploitGrantPending();
 		state.restoreSnapshotId = client.restoreSnapshotId; // ETAPE2.6
 		return state;
 	}
@@ -6318,6 +6537,7 @@ namespace engine::server
 		float respawnX = client->spawnPositionMetersX;
 		float respawnY = client->spawnPositionMetersY;
 		float respawnZ = client->spawnPositionMetersZ;
+		const std::string* respawnGraveyardId = nullptr; // lore v1.0.114 — cimetière choisi (gy=)
 		{
 			float bestDistSq = std::numeric_limits<float>::max();
 			bool found = false;
@@ -6344,6 +6564,7 @@ namespace engine::server
 					respawnX = point.positionMetersX;
 					respawnY = point.positionMetersY;
 					respawnZ = point.positionMetersZ;
+					respawnGraveyardId = &point.graveyardId;
 					found = true;
 				}
 			}
@@ -6387,6 +6608,15 @@ namespace engine::server
 		resurrectionEvent.flags = kCombatEventFlagResurrection;
 		BroadcastCombatEvent(resurrectionEvent);
 		UpdateClientInterest(*client);
+		// Lore v1.0.114 — réapparaître à un cimetière le compte comme visité (avant la
+		// sauvegarde ci-dessous, qui l'écrit).
+		if (respawnGraveyardId != nullptr && !respawnGraveyardId->empty()
+			&& engine::world::cells::CellMapOfZoneId(client->zoneId) == engine::world::cells::CellMap::Royaumes)
+		{
+			DiscoveryEvents events;
+			if (client->discovery.RecordGraveyardVisit(m_discoveryCatalog, *respawnGraveyardId, events))
+				SendDiscoveryEvents(*client, events);
+		}
 		SaveConnectedClient(*client, "respawn");
 		LOG_INFO(Net,
 			"[ServerApp] Player respawned (client_id={}, entity_id={}, pos=({:.1f}, {:.1f}, {:.1f}), hp={}/{})",

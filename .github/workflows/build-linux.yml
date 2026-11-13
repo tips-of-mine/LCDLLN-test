@@ -199,6 +199,13 @@ jobs:
           GRAVES=$(cat "$GITHUB_WORKSPACE"/game/data/zones/cell_*/respawn_points.txt | awk '$2 == "graveyard"' | wc -l)
           test "$GRAVES" -eq 666 || { echo "[FAIL] $GRAVES cimetiere(s) dans les Royaumes, 666 attendus (lore v1.0.111)"; exit 1; }
           echo "[OK] 666 cimetieres dans les Royaumes"
+          # v1.0.114 : chaque cimetière porte un identifiant stable (jeton final gy=<id>),
+          # unique dans le monde (visites mémorisées par personnage).
+          GYIDS=$(cat "$GITHUB_WORKSPACE"/game/data/zones/cell_*/respawn_points.txt | awk '$2 == "graveyard" && $NF ~ /^gy=/ { print $NF }')
+          test "$(printf '%s\n' "$GYIDS" | grep -c .)" -eq 666 || { echo "[FAIL] cimetiere(s) sans identifiant gy=<id> (lore v1.0.114)"; exit 1; }
+          DUP=$(printf '%s\n' "$GYIDS" | sort | uniq -d)
+          test -z "$DUP" || { echo "[FAIL] identifiants de cimetiere en double : $DUP"; exit 1; }
+          echo "[OK] 666 identifiants de cimetiere uniques"
           "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }

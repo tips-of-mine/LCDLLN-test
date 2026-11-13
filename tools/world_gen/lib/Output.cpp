@@ -699,6 +699,28 @@ namespace tools::world_gen
 		return bad;
 	}
 
+	std::string RespawnPointsText(const World& w)
+	{
+		std::string t = "# GENERE par tools/world_gen — points de reapparition de la cellule " + w.cellName + " (positions GLOBALES).\n"
+			"# Format : zone_id type x y z [faction] [neutral_radius_m] [gy=<id>] (cf. ServerApp::InitRespawnPoints).\n"
+			"# gy=<id> (cimetieres, v1.0.114) : identifiant stable du cimetiere (exploit des 666 cimetieres).\n"
+			"# zone_id = identifiant numerique de la cellule (" + std::to_string(w.zoneId) + ", WorldCells::CellZoneId).\n";
+		for (const std::string& l : w.importedRespawnLines) t += l + "\n";
+		for (const RespawnDef& r : w.respawns)
+		{
+			t += std::to_string(w.zoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z);
+			if (r.type == "graveyard")
+			{
+				// Faction toujours écrite avant gy= : l'ancien parseur (faction puis rayon
+				// flottant) ignore alors le jeton final sans erreur.
+				t += " " + (r.faction.empty() ? std::string("-") : r.faction);
+				if (!r.graveyardId.empty()) t += " gy=" + r.graveyardId;
+			}
+			t += "\n";
+		}
+		return t;
+	}
+
 	bool WriteCellOutputs(World& w, std::string& err)
 	{
 		const std::string wid = w.master.worldId;
@@ -1090,17 +1112,8 @@ namespace tools::world_gen
 			if (!WriteFile(w, zoneDir + "spawners.json", j, err)) return false;
 		}
 
-		// ---- respawn_points.txt.
-		{
-			std::string t = "# GENERE par tools/world_gen — points de reapparition de la cellule " + w.cellName + " (positions GLOBALES).\n"
-				"# Format : zone_id type x y z [faction] [neutral_radius_m] (cf. ServerApp::InitRespawnPoints).\n"
-				"# zone_id = identifiant numerique de la cellule (" + std::to_string(w.zoneId) + ", WorldCells::CellZoneId).\n";
-			for (const std::string& l : w.importedRespawnLines) t += l + "\n";
-			for (const RespawnDef& r : w.respawns)
-				t += std::to_string(w.zoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z) +
-					(r.type == "graveyard" ? " " + r.faction : std::string()) + "\n";
-			if (!WriteFile(w, zoneDir + "respawn_points.txt", t, err)) return false;
-		}
+		// ---- respawn_points.txt (v1.0.114 : identifiant stable gy=<id> des cimetières).
+		if (!WriteFile(w, zoneDir + "respawn_points.txt", RespawnPointsText(w), err)) return false;
 
 		// ---- runtime_manifest.json.
 		{

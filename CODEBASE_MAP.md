@@ -215,6 +215,17 @@ RenderModel
 > (position autoritaire, `MapDiscoveryTracker`) ; le master ne fait que la lire
 > (opcodes 208/209), l'opcode 210 du client est ignoré.
 >
+> **Règle (lore v1.0.114)** : cimetières visités (exploit des 666 cimetières) et lieux
+> secrets découverts sont calculés par le shard, PAR PERSONNAGE
+> (`src/shardd/world/DiscoveryProgress`, même tranche 4 Hz que la carte, réapparition
+> au cimetière comptée dans `HandleRespawnRequest`) ; écrits en INSERT IGNORE dans la
+> transaction de sauvegarde (`character_graveyard_visits`, `character_secret_discoveries`,
+> `character_exploit_unlocks`, migration 0086) ; envoyés au seul joueur concerné
+> (UDP `DiscoveryState` 105, `DiscoveryEvent` 106, `kProtocolVersion` 21). Les
+> cimetières sont identifiés par le jeton `gy=<id>` de `respawn_points.txt`
+> (`tools/world_gen`). Le master ajoute les exploits de portée personnage du
+> personnage en jeu à la liste 206/207.
+>
 > **Règle (ETAPE2.6)** : instantané complet à chaque déconnexion
 > (`character_snapshots`, 20 gardés) ; `/snapshots` et `/restore` (MJ, master)
 > posent une demande appliquée par le shard à la connexion suivante (migration 0080).

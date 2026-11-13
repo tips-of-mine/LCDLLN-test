@@ -410,7 +410,9 @@ namespace
 			const std::string line = std::to_string(wc::CellZoneId({ 0, 0 }, wc::CellMap::Enfers)) + " graveyard ";
 			const size_t at = text.find(line);
 			const size_t eol = at == std::string::npos ? std::string::npos : text.find('\n', at);
-			Check(at != std::string::npos && eol != std::string::npos && text[eol - 1] == '-',
+			// v1.0.114 : faction '-' puis identifiant stable gy=<id> en fin de ligne.
+			const std::string row = at == std::string::npos || eol == std::string::npos ? std::string() : text.substr(at, eol - at);
+			Check(row.find(" - gy=") != std::string::npos,
 				"enfers : cimetiere neutre a la Citadelle");
 		}
 		// Sorties globales de la carte.
@@ -3120,6 +3122,68 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// v1.0.114 : identifiant stable de chaque cimetière (jeton final `gy=<id>` de
+	/// respawn_points.txt, exploit des 666 cimetières). Ligne importée réécrite (faction
+	/// '-' ajoutée, ancien gy= remplacé) ; N003_W009 (cimetière importé du hameau de Marn
+	/// et hameaux), N011_E018 (cimetière isolé) : chaque cimetière a un id, unique,
+	/// identique d'une génération à l'autre.
+	void TestIdentifiantsCimetieresV1114()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		Check(GraveyardLineTail("", "a") == " - gy=a" && GraveyardLineTail(" -", "a") == " - gy=a"
+			&& GraveyardLineTail(" faction_x 300", "b") == " faction_x 300 gy=b"
+			&& GraveyardLineTail(" - gy=ancien", "c") == " - gy=c",
+			"cimetieres v1.0.114 : ligne importee (faction '-' ajoutee, gy= remplace)");
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "cimetieres v1.0.114 : master charge");
+		if (!ok) return;
+		g.contentRoot = LCDLLN_CONTENT_DIR;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_cimetieres_v1114";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		g.outputRoot = tmp.string();
+		// Pipeline d'une cellule (sans écriture) ; rend les ids des cimetières de son
+		// respawn_points.txt, dans l'ordre (vide = une ligne de cimetière sans id).
+		auto ids = [&](const std::string& id, bool& allHaveId) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			std::vector<std::string> out;
+			std::istringstream in(RespawnPointsText(*w));
+			for (std::string line; std::getline(in, line);)
+			{
+				if (line.empty() || line[0] == '#' || line.find(" graveyard ") == std::string::npos) continue;
+				const size_t at = line.rfind(" gy=");
+				if (at == std::string::npos || line.find(' ', at + 1) != std::string::npos) { allHaveId = false; continue; }
+				out.push_back(line.substr(at + 4));
+			}
+			return out;
+		};
+		bool allHaveId = true;
+		const std::vector<std::string> a = ids("N003_W009", allHaveId);
+		const std::vector<std::string> b = ids("N003_W009", allHaveId);
+		const std::vector<std::string> iso = ids("N011_E018", allHaveId);
+		std::set<std::string> uniq(a.begin(), a.end());
+		uniq.insert(iso.begin(), iso.end());
+		Check(allHaveId && !a.empty() && !iso.empty(), "cimetieres v1.0.114 : chaque cimetiere porte gy=<id> en dernier jeton");
+		Check(uniq.size() == a.size() + iso.size(), "cimetieres v1.0.114 : identifiants uniques");
+		Check(a == b, "cimetieres v1.0.114 : identifiants deterministes (deux generations)");
+		Check(std::find(a.begin(), a.end(), "hameau_marn") != a.end(),
+			"cimetieres v1.0.114 : cimetiere importe = id de la ville d'ancrage (hameau_marn)");
+		Check(iso.size() == 1u && iso[0] == "isole_cell_n011_e018", "cimetieres v1.0.114 : cimetiere isole isole_<cellule>");
+		fs::remove_all(tmp, ec);
+	}
+
 	/// v1.0.107 : le gouffre caché de Deathtrap Canyon et sa ville (lot 32 du propriétaire,
 	/// LORE_BD §16.36). Master (ville secrète, relief `gouffre`), profondeur et parois,
 	/// galerie, ville au fond, route 000074 et tout le réseau identiques au monde sans
@@ -3460,6 +3524,7 @@ int main()
 	TestPlacementManuelV1095();
 	TestGouffreV1107();
 	TestCimetieresV1111();
+	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();
 	TestGenerationEnfers();
 	if (g_failures)

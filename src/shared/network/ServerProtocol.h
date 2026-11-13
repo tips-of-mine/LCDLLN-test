@@ -84,7 +84,12 @@ namespace engine::server
 	/// zone ids des cellules des Enfers (2 000 000+, WorldCells.h) circulent dans
 	/// ZoneChange (kind 7) et désignent une AUTRE carte : un client v19 resterait
 	/// sur le continent aux coordonnées des Enfers. Lock-step master + shardd + client.
-	inline constexpr uint16_t kProtocolVersion = 20;
+	/// Lore v1.0.114 — bump 20 → 21 : nouveaux kinds DiscoveryState (105, état complet à
+	/// l'entrée en jeu : cimetières visités, lieux secrets découverts du personnage) et
+	/// DiscoveryEvent (106 : cimetière visité, lieu découvert, exploit débloqué), fiables.
+	/// Un client v20 ne recevrait jamais sa progression ni ses lieux secrets.
+	/// Lock-step master + shardd + client.
+	inline constexpr uint16_t kProtocolVersion = 21;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -347,7 +352,14 @@ namespace engine::server
 		/// ADM.1 — shard → client : état « maître de jeu » du joueur local (vol, gel,
 		/// multiplicateur de vitesse…). Envoyé à chaque changement par une commande MJ.
 		/// Un client plus ancien l'ignore (message inconnu journalisé, sans effet).
-		GmStateUpdate = 104
+		GmStateUpdate = 104,
+		/// Lore v1.0.114 — shard → client : état complet de la progression d'exploration du
+		/// personnage (cimetières visités / total, lieux secrets découverts), à l'entrée en
+		/// jeu. Peut tenir en plusieurs paquets (drapeau « premier » = remise à zéro).
+		DiscoveryState = 105,
+		/// Lore v1.0.114 — shard → client : un événement d'exploration (cimetière visité,
+		/// lieu secret découvert, exploit débloqué). Jamais envoyé à un autre joueur.
+		DiscoveryEvent = 106
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -660,6 +672,59 @@ namespace engine::server
 		float speedMultiplier = 1.0f;
 	};
 
+	/// Lore v1.0.114 — un lieu secret découvert par le personnage (copie de
+	/// secret_places.json réservée à CE joueur). Chaînes tronquées à l'encodage
+	/// (id 96 o, nom 128 o, genre 48 o).
+	struct DiscoveredPlaceWire
+	{
+		std::string id;
+		std::string name;
+		std::string kind;    ///< genre du lieu (« grotte », « capitale »…)
+		float x = 0.0f;      ///< position monde GLOBALE (m)
+		float z = 0.0f;
+		uint8_t map = 0;     ///< engine::world::cells::CellMap (0 Royaumes, 1 Enfers)
+	};
+
+	/// Bit de DiscoveryStateMessage::flags : premier paquet de l'état (le client remet
+	/// sa liste de lieux à zéro avant d'ajouter ceux du paquet).
+	inline constexpr uint8_t kDiscoveryStateFlagFirst = 1u << 0;
+	/// Bit de DiscoveryStateMessage::flags : dernier paquet de l'état.
+	inline constexpr uint8_t kDiscoveryStateFlagLast = 1u << 1;
+	/// Plafond de lieux par paquet DiscoveryState (≤ ~300 o par lieu : < 1100 o utiles).
+	inline constexpr size_t kMaxDiscoveryPlacesPerPacket = 3u;
+
+	/// Lore v1.0.114 — MessageKind::DiscoveryState. Payload : flags u8, graveyardsVisited
+	/// u16, graveyardsTotal u16, count u8, puis par lieu : id, name, kind (u16 + UTF-8),
+	/// x f32, z f32, map u8.
+	struct DiscoveryStateMessage
+	{
+		uint8_t flags = kDiscoveryStateFlagFirst | kDiscoveryStateFlagLast;
+		uint16_t graveyardsVisited = 0;
+		uint16_t graveyardsTotal = 0;   ///< 0 = suivi indisponible (pas de base, pas de monde en cellules)
+		std::vector<DiscoveredPlaceWire> places;
+	};
+
+	/// Genre d'un DiscoveryEvent.
+	enum class DiscoveryEventKind : uint8_t
+	{
+		GraveyardVisited = 1, ///< `id` = identifiant du cimetière ; compteur à jour
+		PlaceDiscovered = 2,  ///< `place` = le lieu secret découvert
+		ExploitUnlocked = 3,  ///< `id` = code de l'exploit, `title` = son titre
+	};
+
+	/// Lore v1.0.114 — MessageKind::DiscoveryEvent. Payload : kind u8, graveyardsVisited
+	/// u16, graveyardsTotal u16, id, title (u16 + UTF-8), puis pour PlaceDiscovered le lieu
+	/// (même forme qu'un lieu de DiscoveryState).
+	struct DiscoveryEventMessage
+	{
+		DiscoveryEventKind kind = DiscoveryEventKind::GraveyardVisited;
+		uint16_t graveyardsVisited = 0;
+		uint16_t graveyardsTotal = 0;
+		std::string id;
+		std::string title;
+		DiscoveredPlaceWire place;   ///< renseigné pour PlaceDiscovered seulement
+	};
+
 	/// Client request asking the authoritative server to pick up one loot bag entity.
 	struct PickupRequestMessage
 	{
@@ -901,6 +966,19 @@ namespace engine::server
 	///         multiplicateur n'est pas un réel fini dans [0, 100].
 	bool DecodeGmStateUpdate(std::span<const std::byte> packet, GmStateUpdateMessage& outMessage);
 	bool DecodeForcePosition(std::span<const std::byte> packet, ForcePositionMessage& outMessage);
+
+	/// Lore v1.0.114 — état d'exploration du personnage, découpé en paquets d'au plus
+	/// kMaxDiscoveryPlacesPerPacket lieux (au moins un paquet, même sans lieu). Le premier
+	/// porte kDiscoveryStateFlagFirst, le dernier kDiscoveryStateFlagLast.
+	std::vector<std::vector<std::byte>> EncodeDiscoveryStatePackets(uint16_t graveyardsVisited,
+		uint16_t graveyardsTotal, const std::vector<DiscoveredPlaceWire>& places);
+	/// \return false si le paquet n'est pas un DiscoveryState bien formé (taille, chaînes,
+	///         coordonnées non finies, carte inconnue, plus de lieux que le plafond).
+	bool DecodeDiscoveryState(std::span<const std::byte> packet, DiscoveryStateMessage& outMessage);
+	/// Lore v1.0.114 — un événement d'exploration (shard → client).
+	std::vector<std::byte> EncodeDiscoveryEvent(const DiscoveryEventMessage& message);
+	/// \return false si le paquet est mal formé ou de genre inconnu.
+	bool DecodeDiscoveryEvent(std::span<const std::byte> packet, DiscoveryEventMessage& outMessage);
 
 	/// ETAPE3.3 — position officielle après une commande de mouvement (shard → client).
 	std::vector<std::byte> EncodeMoveCorrection(const MoveCorrectionMessage& message);

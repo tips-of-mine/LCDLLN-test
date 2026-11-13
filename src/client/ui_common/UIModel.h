@@ -297,6 +297,22 @@ namespace engine::client
 		bool Frozen() const { return (flags & (1u << 1)) != 0u; }
 	};
 
+	/// Lore v1.0.114 — exploration du personnage (DiscoveryState 105 / DiscoveryEvent 106) :
+	/// compteur des 666 cimetières et lieux secrets découverts PAR CE personnage (dessinés
+	/// sur la carte du monde). Remplacé à chaque entrée en jeu.
+	struct UIDiscoveryState
+	{
+		bool known = false;              ///< vrai après le premier DiscoveryState reçu
+		uint16_t graveyardsVisited = 0;
+		uint16_t graveyardsTotal = 0;    ///< 0 = suivi indisponible côté shard
+		std::vector<engine::server::DiscoveredPlaceWire> places;
+	};
+
+	/// Lore v1.0.114 — ligne de chat système d'un événement d'exploration :
+	/// « Cimetière visité (124/666) », « Lieu découvert : <nom> »,
+	/// « Exploit débloqué : <titre> ». Pur (testé par ui_model_discovery_tests).
+	std::string FormatDiscoveryEventLine(const engine::server::DiscoveryEventMessage& event);
+
 	/// ETAPE3.3 — position officielle du shard pour une commande de mouvement
 	/// (MoveCorrection) en attente d'application par Engine (recalage + rejeu).
 	struct UIMoveCorrection
@@ -504,6 +520,8 @@ namespace engine::client
 		UIForcedPosition forcedPosition{};
 		/// ADM.1 — pouvoirs de maître de jeu de la session (vol, gel, vitesse).
 		UIGmState gmState{};
+		/// Lore v1.0.114 — cimetières visités et lieux secrets découverts.
+		UIDiscoveryState discovery{};
 		/// ETAPE3.3 — dernière position officielle reçue (MoveCorrection), à appliquer.
 		UIMoveCorrection moveCorrection{};
 		/// Validation v12 — fenêtre de butin automatique (LootNotify cumulés).
@@ -639,6 +657,9 @@ namespace engine::client
 		/// ADM.1 — oublie l'état « maître de jeu » (nouveau Welcome : le shard repart de
 		/// l'état neutre). Thread principal.
 		void ClearGmState() { m_model.gmState = UIGmState{}; }
+		/// Lore v1.0.114 — retire et rend les événements d'exploration reçus depuis le
+		/// dernier appel (Engine en fait des lignes de chat). Thread principal.
+		std::vector<engine::server::DiscoveryEventMessage> TakeDiscoveryEvents();
 
 		/// Seconde carte (Les Enfers) — dernier ZoneChange reçu du shard (zone = cellule,
 		/// donc carte ; point d'arrivée en coordonnées GLOBALES, non converties).
@@ -722,6 +743,12 @@ namespace engine::client
 		bool ApplyMoveCorrection(std::span<const std::byte> packet);
 		/// ADM.1 — GmStateUpdate : met à jour m_model.gmState.
 		bool ApplyGmStateUpdate(std::span<const std::byte> packet);
+		/// Lore v1.0.114 — DiscoveryState : compteur et lieux découverts (premier paquet =
+		/// liste remise à zéro).
+		bool ApplyDiscoveryState(std::span<const std::byte> packet);
+		/// Lore v1.0.114 — DiscoveryEvent : compteur, lieu ajouté à la liste, événement mis
+		/// en file pour TakeDiscoveryEvents (au plus 64 en attente).
+		bool ApplyDiscoveryEvent(std::span<const std::byte> packet);
 
 		/// Validation v12 — butin auto-crédité (LootNotify) : abonde la fenêtre.
 		bool ApplyLootNotify(std::span<const std::byte> packet);
@@ -835,6 +862,8 @@ namespace engine::client
 		engine::server::ForcePositionMessage m_forcePositionMessage{};
 		engine::server::LootNotifyMessage m_lootNotifyMessage{};
 		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
+		/// Lore v1.0.114 — événements d'exploration en attente (TakeDiscoveryEvents).
+		std::vector<engine::server::DiscoveryEventMessage> m_pendingDiscoveryEvents;
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		/// Chantier 2 SP-A — scratch du snapshot d'équipement (réutilisé par paquet).
 		engine::server::EquipmentUpdateMessage m_equipmentMessage{};

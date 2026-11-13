@@ -8665,6 +8665,8 @@ namespace engine
 				// au presenter m_exploitsUi ; la requête part au toggle F1).
 				m_exploitsImGui = std::make_unique<engine::render::ExploitsImGuiRenderer>();
 				m_exploitsImGui->Bind(&m_exploitsUi);
+				// Lore v1.0.114 — compteur « Cimetières visités : N/666 » de l'onglet Exploits.
+				m_exploitsImGui->BindDiscovery(&m_uiModelBinding.GetModel().discovery);
 				m_characterWindowImGui->SetExploitsRenderer(m_exploitsImGui.get());
 				// Chantier 2 SP-A — catalogue d'objets client (noms/slots/bonus pour le
 				// panneau équipement + tooltips). Source d'affichage ; le serveur reste
@@ -17519,6 +17521,22 @@ namespace engine
 				}
 			}
 			(void)m_uiModelBinding.ApplyPacket(packet);
+		}
+
+		// Lore v1.0.114 — exploration : message système discret dans le chat (cimetière
+		// visité avec compteur, lieu secret découvert, exploit débloqué). Un exploit
+		// débloqué relance la liste du master pour l'onglet Exploits.
+		for (const engine::server::DiscoveryEventMessage& event : m_uiModelBinding.TakeDiscoveryEvents())
+		{
+			engine::net::ChatMessage line{};
+			line.timestampUnixMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+			line.channel = engine::net::ChatChannel::Server;
+			line.sender = "Système";
+			line.text = engine::client::FormatDiscoveryEventLine(event);
+			m_chatUi.PushNetworkLine(line);
+			if (event.kind == engine::server::DiscoveryEventKind::ExploitUnlocked)
+				m_exploitsUi.RequestExploitList();
 		}
 
 		// ETAPE3.4 — canal fiable en échec (aucun accusé du shard depuis 30 s) : les

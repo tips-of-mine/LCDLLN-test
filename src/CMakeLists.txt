@@ -124,6 +124,8 @@ if(WIN32)
     # ETAPE2.5 : carte à découvrir calculée par le shard (server_app WIN32 ne linke pas engine_core).
     ${CMAKE_SOURCE_DIR}/src/shared/world/MapDiscovery.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
+    # Lore v1.0.114 : cimetières visités et lieux secrets découverts par personnage.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DiscoveryProgress.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
@@ -818,6 +820,9 @@ elseif(UNIX)
   # racine) -> ne pas les re-lister ici (double définition de symboles).
   lcdlln_add_simple_test(ui_model_quest_giver_tests
     ${CMAKE_SOURCE_DIR}/src/client/ui_common/UIModelQuestGiverTests.cpp)
+  # Lore v1.0.114 (client) : DiscoveryState / DiscoveryEvent -> UIModel.discovery + chat.
+  lcdlln_add_simple_test(ui_model_discovery_tests
+    ${CMAKE_SOURCE_DIR}/src/client/ui_common/UIModelDiscoveryTests.cpp)
   # SP1 : compat des statuts de quête persistés (ancien enum 0/1/2 -> nouveau).
   lcdlln_add_simple_test(character_persistence_quest_compat_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistenceQuestCompatTests.cpp
@@ -848,6 +853,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(map_discovery_tracker_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTrackerTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp)
+  # Lore v1.0.114 : exploit des 666 cimetières et lieux secrets découverts (pur).
+  lcdlln_add_simple_test(discovery_progress_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DiscoveryProgressTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DiscoveryProgress.cpp)
   # ETAPE3.1 : enveloppe chiffrée UDP (UdpSecureChannel.cpp vient d'engine_core).
   lcdlln_add_simple_test(udp_secure_channel_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/UdpSecureChannelTests.cpp)
@@ -1601,6 +1610,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp
     # ETAPE2.5 : carte à découvrir calculée par le shard (MapDiscovery.cpp vient d'engine_core).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MapDiscoveryTracker.cpp
+    # Lore v1.0.114 : cimetières visités et lieux secrets découverts par personnage.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/DiscoveryProgress.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/RegionActivity.cpp
     # Seconde carte (Les Enfers) : portails entre cartes.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp

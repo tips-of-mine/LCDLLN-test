@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.112)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.114)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -79,13 +79,19 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.111 | `83aa9fc` | **666 cimetières** : nombre fixe (contrôle bloquant de la CI build-linux), exploit [GD] « Pèlerin des 666 tombes » ([LORE_BD §16.38](LORE_BD.md)) | — | répartition des cimetières (81 cases sans), mécanique de l'exploit |
 | v1.0.112 | `b6f3fa1` | **répartition des 666 cimetières** : un cimetière au moins par cellule à terre (71 isolés ; 10 cellules de mer sans), 71 hameaux sans cimetière, total vérifié par le générateur ([LORE_BD §16.39](LORE_BD.md)) | — | — |
 | v1.0.112 (outil) | #1128 | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
-| v1.0.113 | (ce commit) | **décisions du 13/11** : noms [GD] validés, Xygga femelle et noms des dragons, année 3417 AO, niveaux et balisage, Harrodh, Légion, contre-quêtes, Ghulvathan, références orphelines 89 → 42, Menthats, arbitrages de lore ([LORE_BD §16.40](LORE_BD.md)) | — | contre-quêtes à écrire, mécanismes serveur (exploit, lieux découverts), routes à ouvrir |
+| v1.0.113 | `1dd004e` | **décisions du 13/11** : noms [GD] validés, Xygga femelle et noms des dragons, année 3417 AO, niveaux et balisage, Harrodh, Légion, contre-quêtes, Ghulvathan, références orphelines 89 → 42, Menthats, arbitrages de lore ([LORE_BD §16.40](LORE_BD.md)) | — | contre-quêtes à écrire, mécanismes serveur (exploit, lieux découverts), routes à ouvrir |
+| v1.0.114 | (ce commit) | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
 
 ## 3. Impact sur le jeu et déploiement
 
 - **Code du shard** : seul l'annuaire des MJ (`src/shardd/gameplay/gm/GmPlaceDirectory`, v1.0.110)
   change — il lit en plus `world/<monde>/secret_places.json` (lieux secrets pour `/tp` et `/places`).
   Pas de nouvel opcode, pas de migration, pas de nouvelle clé de `config.json`, `kProtocolVersion` inchangé.
+- **v1.0.114 (exploit des 666 cimetières, lieux secrets découverts)** : **code serveur et client**
+  modifiés — migration `0086_character_graveyards_secret_places.sql`, messages UDP `DiscoveryState` (105)
+  et `DiscoveryEvent` (106), `kProtocolVersion` 20 → 21, exploits de portée personnage dans la liste du
+  master (206/207), jeton `gy=<id>` dans `respawn_points.txt` (monde régénéré). **Master, shard et client
+  en lock-step** ([LORE_BD §16.41](LORE_BD.md)).
 - **Paquet client** : `secret_places.json` en est retiré par `.github/scripts/package-windows.ps1`
   (`Copy-GameData -StripServerOnly`, v1.0.110) ; il reste dans le paquet serveur (deploy/docker).
 - Mais les **données** changent : `game/data/world/royaumes/world_master.json` (cases, villes,
@@ -169,7 +175,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 46. **Lumière des torches** du gouffre (`world.point_lights` du zone.json) non lue par le client (un seul fichier global de 64 lumières) (16.36).
 47. **Fond sombre** du gouffre (`world.ambiance_zones`) : aucun réglage d'ambiance par zone au client (16.36).
 48. **Lave** des Enfers non émissive, sans dégâts (4 couches de sol à couleur fixe) (16.12).
-49. Ville et lieux secrets : absents de `places.json` (v1.0.110 : bannière, radar, son de ville et carte du jeu sans eux) ; mécanisme de « lieu découvert » (révéler un secret au joueur qui l'a trouvé) à définir (16.36, 16.37).
+49. ~~Ville et lieux secrets : absents de `places.json` (v1.0.110 : bannière, radar, son de ville et carte du jeu sans eux) ; mécanisme de « lieu découvert » (révéler un secret au joueur qui l'a trouvé) à définir (16.36, 16.37).~~ **Fait en v1.0.114** : lieu révélé sur la carte du personnage qui entre dans son rayon (LORE_BD §16.41) ; bannière, radar et son de ville toujours sans lieux secrets.
 50. Gouffre : galerie à ciel ouvert (pas de tunnel dans la heightmap), écurie générée au fond, part de S008_E011 renvoyée au cimetière du gouffre (16.36).
 51. Modèles 3D absents : temples incas, palais de Lucifer, viaduc, grottes, croix et brasier du sanctuaire ; le générateur ne modèle pas de falaises côtières (16.1, 16.6, 16.10).
 52. Instances, boss et récompenses absents : raids de l'Île, Mine de la Traverse, Cité-Nid ophidienne, plans infernaux (Seuil des Plans sans transfert), combat contre Xygga endormi (16.2, 16.3, 16.10, 16.11).

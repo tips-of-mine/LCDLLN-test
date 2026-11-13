@@ -4,6 +4,7 @@
 #include "src/shardd/gameplay/character/CharacterPersistence.h"
 #include "src/shardd/gameplay/character/CharacterSaveQueue.h"
 #include "src/shardd/world/MapDiscoveryTracker.h"
+#include "src/shardd/world/DiscoveryProgress.h"
 #include "src/shardd/gameplay/character/CharacterStatsTables.h"
 #include "src/shardd/gameplay/character/SpawnStatsResolver.h"
 #include "src/shardd/gameplay/crafting/CraftingSystem.h"
@@ -278,6 +279,10 @@ namespace engine::server
 		/// ETAPE2.5 — carte à découvrir : cases révélées pendant la session autour de
 		/// la position autoritaire (monde en cellules). Écrites à chaque sauvegarde.
 		MapDiscoveryTracker mapDiscovery;
+		/// Lore v1.0.114 — cimetières visités et lieux secrets découverts du personnage
+		/// (chargés au Hello, nouveautés écrites à chaque sauvegarde). Non chargé (base
+		/// absente, migration 0086 manquante) : suivi désactivé pour la session.
+		CharacterDiscoveryProgress discovery;
 		/// Seconde carte (Les Enfers) — état de passage des portails entre cartes
 		/// (réarmement 5 s après la sortie du rayon). Désarmé à la connexion.
 		PortalTravelState portalTravel;
@@ -749,7 +754,18 @@ namespace engine::server
 			std::string factionId;
 			std::string classId;
 			std::string raceId;
+			/// Lore v1.0.114 — progression d'exploration lue en base (LoadDiscoveryFromDb).
+			bool discoveryLoaded = false;   ///< false : base absente ou tables illisibles
+			std::vector<std::string> visitedGraveyards;
+			std::vector<std::string> discoveredSecretPlaces;
+			bool pilgrimExploitUnlocked = false;
 		};
+
+		/// Lore v1.0.114 — lit les cimetières visités, les lieux secrets découverts et
+		/// l'état de l'exploit du pèlerin (tables de la migration 0086). Thread-safe (pool
+		/// seulement) : appelée par LoadCharacterForHello. \return false si la base est
+		/// absente ou les tables illisibles (suivi désactivé, sans refuser le Hello).
+		bool LoadDiscoveryFromDb(uint64_t characterKey, LoadedCharacterData& data);
 
 		/// ETAPE2.7 — Hello en attente de sa lecture en base (thread de la file).
 		struct PendingCharacterLoad
@@ -842,6 +858,21 @@ namespace engine::server
 		/// ETAPE2.5 — révèle la carte autour de chaque joueur (monde en cellules
 		/// uniquement ; recalcul seulement quand le joueur change de case de 125 m).
 		void UpdateMapDiscovery();
+
+		/// Lore v1.0.114 — construit m_discoveryCatalog : cimetières identifiés (`gy=`)
+		/// des Royaumes depuis m_respawnPoints, lieux secrets de secret_places.json des
+		/// deux cartes. À appeler après InitRespawnPoints. Effet de bord : lecture disque.
+		void InitDiscoveryCatalog();
+		/// Lore v1.0.114 — observe la position d'un joueur VIVANT du monde en cellules
+		/// (cimetières dans 15 m, lieux secrets dans leur rayon) et notifie les nouveautés.
+		/// Appelée dans la tranche de UpdateMapDiscovery (4 Hz par joueur).
+		void UpdateDiscoveryProgress(ConnectedClient& client);
+		/// Lore v1.0.114 — envoie au SEUL \p client les événements \p events
+		/// (DiscoveryEvent, kind 106) et journalise un exploit débloqué.
+		void SendDiscoveryEvents(const ConnectedClient& client, const DiscoveryEvents& events);
+		/// Lore v1.0.114 — envoie au SEUL \p client son état complet (DiscoveryState,
+		/// kind 105) : compteur de cimetières et lieux secrets qu'il a découverts.
+		void SendDiscoveryState(const ConnectedClient& client);
 
 		/// Persist one connected character to the current runtime store.
 		/// ETAPE2.2 — avec une base, dépose un instantané dans m_characterSaveQueue
@@ -1881,6 +1912,7 @@ namespace engine::server
 			float positionMetersZ = 0.0f;
 			std::string ownerFactionId;       ///< Faction propriétaire du cimetière (vide/"-" = neutre partout). Ignoré pour les auberges.
 			float       neutralRadiusM = 0.0f; ///< Rayon (m) dans lequel le cimetière est neutre (toutes factions). Défaut = globals.graveyard_default_faction_neutral_radius_m.
+			std::string graveyardId;          ///< Lore v1.0.114 — jeton `gy=<id>` (vide : ancien fichier, ou auberge).
 		};
 		std::vector<RespawnPointDefinition> m_respawnPoints;
 		std::vector<DynamicEventState> m_dynamicEvents;
@@ -1999,6 +2031,8 @@ namespace engine::server
 		/// ADM.1 — annuaire des lieux (/tp <lieu>, /places), chargé au premier usage.
 		gm::GmPlaceDirectory m_gmPlaces;
 		bool m_gmPlacesLoaded = false;
+		/// Lore v1.0.114 — cimetières des Royaumes et lieux secrets (InitDiscoveryCatalog).
+		DiscoveryCatalog m_discoveryCatalog;
 		/// ADM.1 — favoris de position des MJ (/mark, /gomark), par personnage. En
 		/// mémoire : perdus au redémarrage du shard.
 		std::unordered_map<uint64_t, std::map<std::string, gm::GmSavedPosition>> m_gmBookmarks;

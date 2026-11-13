@@ -13,6 +13,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 using engine::server::DecodeHello;
@@ -726,6 +727,100 @@ namespace
 		std::puts("[OK] TestEquipmentUpdateRoundTrip");
 	}
 
+	/// Lore v1.0.114 — DiscoveryState : découpage en paquets (premier / dernier), lieux
+	/// restitués à l'identique, état vide en un seul paquet, rejet d'un paquet tronqué,
+	/// chaîne trop longue tronquée sans couper un caractère UTF-8.
+	void TestDiscoveryStateRoundTrip()
+	{
+		using namespace engine::server;
+		std::vector<DiscoveredPlaceWire> places;
+		for (int i = 0; i < 7; ++i)
+		{
+			DiscoveredPlaceWire p;
+			p.id = "poi_grotte_" + std::to_string(i);
+			p.name = "Grotte " + std::to_string(i);
+			p.kind = "grotte";
+			p.x = 1000.5f + static_cast<float>(i);
+			p.z = -2000.25f;
+			p.map = static_cast<uint8_t>(i == 6 ? 1 : 0);
+			places.push_back(p);
+		}
+		const auto packets = EncodeDiscoveryStatePackets(124u, 666u, places);
+		assert(packets.size() == 3u); // 3 + 3 + 1 lieux
+		std::vector<DiscoveredPlaceWire> got;
+		for (size_t k = 0; k < packets.size(); ++k)
+		{
+			DiscoveryStateMessage m{};
+			assert(DecodeDiscoveryState(packets[k], m));
+			assert(m.graveyardsVisited == 124u && m.graveyardsTotal == 666u);
+			assert(((m.flags & kDiscoveryStateFlagFirst) != 0u) == (k == 0u));
+			assert(((m.flags & kDiscoveryStateFlagLast) != 0u) == (k + 1u == packets.size()));
+			assert(packets[k].size() <= 1100u);
+			got.insert(got.end(), m.places.begin(), m.places.end());
+		}
+		assert(got.size() == places.size());
+		for (size_t i = 0; i < got.size(); ++i)
+			assert(got[i].id == places[i].id && got[i].name == places[i].name && got[i].kind == places[i].kind
+				&& got[i].x == places[i].x && got[i].z == places[i].z && got[i].map == places[i].map);
+
+		const auto empty = EncodeDiscoveryStatePackets(0u, 0u, {});
+		DiscoveryStateMessage m{};
+		assert(empty.size() == 1u && DecodeDiscoveryState(empty[0], m) && m.places.empty()
+			&& m.flags == (kDiscoveryStateFlagFirst | kDiscoveryStateFlagLast));
+
+		std::vector<std::byte> truncated = packets[0];
+		truncated.resize(truncated.size() - 1u);
+		assert(!DecodeDiscoveryState(truncated, m));
+
+		// Nom de 200 « é » (400 o) : tronqué à 128 o, soit 64 « é » entiers.
+		DiscoveredPlaceWire longName;
+		longName.id = "x";
+		for (int i = 0; i < 200; ++i) longName.name += "\xc3\xa9";
+		const auto one = EncodeDiscoveryStatePackets(1u, 2u, { longName });
+		assert(DecodeDiscoveryState(one[0], m) && m.places.size() == 1u && m.places[0].name.size() == 128u);
+		// 127 o puis un « é » à cheval sur la limite : coupé avant (127 o).
+		longName.name = std::string(127, 'a') + "\xc3\xa9";
+		const auto two = EncodeDiscoveryStatePackets(1u, 2u, { longName });
+		assert(DecodeDiscoveryState(two[0], m) && m.places[0].name.size() == 127u);
+		std::puts("[OK] TestDiscoveryStateRoundTrip");
+	}
+
+	/// Lore v1.0.114 — DiscoveryEvent : les trois genres, rejet d'un genre inconnu.
+	void TestDiscoveryEventRoundTrip()
+	{
+		using namespace engine::server;
+		DiscoveryEventMessage in{};
+		in.kind = DiscoveryEventKind::GraveyardVisited;
+		in.graveyardsVisited = 125u;
+		in.graveyardsTotal = 666u;
+		in.id = "hameau_marn";
+		DiscoveryEventMessage out{};
+		assert(DecodeDiscoveryEvent(EncodeDiscoveryEvent(in), out));
+		assert(out.kind == in.kind && out.graveyardsVisited == 125u && out.graveyardsTotal == 666u && out.id == "hameau_marn");
+
+		in.kind = DiscoveryEventKind::PlaceDiscovered;
+		in.place.id = "ville_thurvhal";
+		in.place.name = "Thurvhal";
+		in.place.kind = "ville";
+		in.place.x = 12.0f;
+		in.place.z = -34.0f;
+		in.place.map = 0u;
+		assert(DecodeDiscoveryEvent(EncodeDiscoveryEvent(in), out));
+		assert(out.kind == DiscoveryEventKind::PlaceDiscovered && out.place.id == "ville_thurvhal"
+			&& out.place.name == "Thurvhal" && out.place.x == 12.0f && out.place.z == -34.0f);
+
+		in.kind = DiscoveryEventKind::ExploitUnlocked;
+		in.id = "exploit_pelerin_des_666_tombes";
+		in.title = "Le P\xc3\xa8lerin des Six Cent Soixante-Six Tombes";
+		auto packet = EncodeDiscoveryEvent(in);
+		assert(DecodeDiscoveryEvent(packet, out));
+		assert(out.kind == DiscoveryEventKind::ExploitUnlocked && out.id == in.id && out.title == in.title);
+
+		packet[8] = static_cast<std::byte>(9); // genre inconnu (1er octet de la charge utile)
+		assert(!DecodeDiscoveryEvent(packet, out));
+		std::puts("[OK] TestDiscoveryEventRoundTrip");
+	}
+
 int main()
 {
 	TestInputRoundTrip();
@@ -755,6 +850,8 @@ int main()
 	TestEquipRequestRoundTrip();
 	TestUnequipRequestRoundTrip();
 	TestEquipmentUpdateRoundTrip();
+	TestDiscoveryStateRoundTrip();
+	TestDiscoveryEventRoundTrip();
 	std::puts("All ServerProtocol tests passed");
 	return 0;
 }

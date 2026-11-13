@@ -139,6 +139,8 @@ namespace engine::network::reliable
 		case MessageKind::EquipmentUpdate:
 		case MessageKind::BeltLayoutUpdate:
 		case MessageKind::GmStateUpdate: // ADM.1 — envoyé seulement au changement
+		case MessageKind::DiscoveryState: // lore v1.0.114 — envoyé une fois à l'entrée en jeu
+		case MessageKind::DiscoveryEvent: // lore v1.0.114 — cimetière, lieu secret, exploit
 			return true;
 		default:
 			// Non fiable : Hello/Welcome/Goodbye (gérés à part), Input, Snapshot,

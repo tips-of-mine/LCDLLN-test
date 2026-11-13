@@ -1050,6 +1050,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.38](#1638-666-cimetières-et-exploit-du-pèlerin-v10111) | v1.0.111 | 666 cimetières et exploit du pèlerin | Toujours 666 cimetières dans les Royaumes (contrôle CI) ; exploit [GD] pour les avoir tous visités. |
 | [16.39](#1639-répartition-des-666-cimetières-v10112) | v1.0.112 | Répartition des 666 cimetières | Un cimetière au moins par cellule à terre : 71 cimetières isolés, 71 hameaux sans cimetière, total 666 contrôlé par le générateur. |
 | [16.40](#1640-décisions-du-131126-v10113) | v1.0.113 | Décisions du 13/11/2026 | Noms [GD] validés, Xygga femelle et noms des dragons, année de jeu, niveaux, balisage, factions, Ghulvathan, références orphelines, arbitrages de lore. |
+| [16.41](#1641-exploit-des-666-cimetières-et-lieux-secrets-découverts-v10114) | v1.0.114 | Exploit des 666 cimetières et lieux secrets découverts | Mécanique serveur par personnage : cimetières visités (rayon ou réapparition), lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4385,7 +4386,7 @@ avec tous), `gm_place_directory_tests` (lieux secrets marqués), `test_editor_fi
 décochée, export identique).
 
 **Reste à faire** : un mécanisme de **lieu découvert** (le serveur révèle un secret au joueur qui l'a trouvé,
-par exemple en entrant dans son rayon) ; sans lui, un lieu secret n'apparaît jamais sur la carte du joueur.
+par exemple en entrant dans son rayon) ; sans lui, un lieu secret n'apparaît jamais sur la carte du joueur. **Fait en v1.0.114** (16.41).
 
 ### 16.38 666 cimetières et exploit du pèlerin (v1.0.111)
 
@@ -4399,7 +4400,7 @@ pas) doit être compensé ailleurs.
 pas exactement 666.
 
 **Exploit** `exploit_pelerin_des_666_tombes` [GD] « Le Pèlerin des Six Cent Soixante-Six Tombes », type
-`exploration`, titre « Pèlerin des Tombes » : visiter les 666 cimetières. Mécanique serveur à créer (cimetières
+`exploration`, titre « Pèlerin des Tombes » : visiter les 666 cimetières. Mécanique serveur faite en v1.0.114 (16.41) ; prévue ici (cimetières
 visités mémorisés par personnage, réapparition forcée non comptée, cimetière secret de Thurvhal compris).
 
 **État mesuré (v1.0.110)** : 81 cases jouables sans cimetière ; par endroits le cimetière le plus proche est à
@@ -4469,6 +4470,36 @@ Réponses du propriétaire aux questions ouvertes de la branche carte (CHANGELOG
 
 Références orphelines : 89 → **42** (33 identifiants). Au passage, une affiliation en double de `race_dzorak` à la
 Lune Noire (sans note) est retirée.
+
+### 16.41 Exploit des 666 cimetières et lieux secrets découverts (v1.0.114)
+
+**Décisions du propriétaire (13/11/2026)** : mise en jeu des règles de 16.38 et 16.40, affichage « message discret +
+compteur ».
+
+| Règle | Effet en jeu |
+|---|---|
+| Cimetière visité | le personnage **vivant** entre dans un rayon de **15 m** autour du cimetière, **ou** y réapparaît après une mort (le cimetière choisi par le serveur au respawn) ; Royaumes seulement (pas les Enfers) |
+| Exploit | `exploit_pelerin_des_666_tombes` « Le Pèlerin des Six Cent Soixante-Six Tombes » (exploration, titre « Pèlerin des Tombes ») débloqué **par personnage** au 666e cimetière ; jamais si le monde chargé ne compte pas exactement 666 cimetières identifiés |
+| Lieu secret découvert | un lieu de `secret_places.json` (ville : son `radius_m` ; lieu sans rayon : **40 m**) est révélé **pour toujours** sur la carte de **ce** personnage dès qu'il entre dans son rayon ; rien d'un lieu secret n'est envoyé à un autre joueur |
+| Messages | message système dans le chat : « Cimetière visité (124/666) », « Lieu découvert : <nom> », « Exploit débloqué : <titre> » |
+| Compteur | « Cimetières visités : N/666 » en tête de l'onglet Exploits de la fiche personnage ; l'exploit débloqué rejoint la liste |
+| Carte du monde | lieux secrets découverts dessinés d'une étoile turquoise (nom au survol, « Lieu secret découvert ») |
+
+**Identifiant des cimetières** : `tools/world_gen` écrit un jeton final `gy=<id>` sur chaque ligne `graveyard` de
+`respawn_points.txt` — id de la ville ou du hameau (`CityDef::id`), `isole_<cellule>` pour un cimetière isolé (ex.
+`isole_cell_n011_e018`), id de la ville d'ancrage pour le cimetière importé du hameau de Marn (`hameau_marn`). La faction
+(`-` si neutre) précède toujours le jeton : un ancien parseur l'ignore. Le générateur échoue si un cimetière n'a pas d'id
+ou si deux ids se répètent ; la CI `build-linux` vérifie aussi 666 ids uniques.
+
+**Serveur** : shard `src/shardd/world/DiscoveryProgress` (index spatial des cimetières et des lieux secrets, état par
+personnage), à 4 Hz par joueur avec la carte à découvrir ; tables `character_graveyard_visits` et
+`character_secret_discoveries` (migration 0086, écrites par INSERT IGNORE dans la transaction de sauvegarde), déblocage dans
+`character_exploit_unlocks`. Messages UDP `DiscoveryState` (105, à l'entrée en jeu) et `DiscoveryEvent` (106), fiables,
+`kProtocolVersion` 21. Le master ajoute les exploits de portée personnage du personnage en jeu à la liste des exploits.
+
+**Limites** : pas de colonne « titre de joueur » au catalogue des exploits (le titre est cité dans la description) ; sans
+base de données (ou migration 0086 absente) le suivi est désactivé pour la session ; un cimetière dont l'id change à une
+régénération du monde n'est plus compté pour les personnages qui l'avaient visité.
 
 ## 17. Questions ouvertes
 

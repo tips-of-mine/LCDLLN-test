@@ -228,8 +228,9 @@ namespace tools::world_gen
 		/// (14 m de l'axe, côté sec et libre), sinon sur le premier point praticable d'une
 		/// spirale depuis le centre (pas de 150 m, jusqu'à 4300 m). Décor : cercle de
 		/// pierres et chandelier, comme les cimetières des villes. Déterministe.
-		/// Effet de bord : w.isolatedGraveyard, w.scatter, occupation fine ; avertit si
-		/// aucun site n'est trouvé (le total `graveyards.target` échouera alors).
+		/// Effet de bord : w.isolatedGraveyard, w.scatter, occupation fine ; une cellule
+		/// sans terre (pleine mer) n'en reçoit pas : avertissement seulement (le choix de
+		/// `without_graveyard` en tient compte pour garder `graveyards.target`).
 		void BuildIsolatedGraveyard(World& w)
 		{
 			if (!w.master.graveyardFillEmptyCells) return;
@@ -273,7 +274,8 @@ namespace tools::world_gen
 					if (ok(q)) { site = q; found = true; }
 				}
 			}
-			if (!found) { w.Warn("aucun site pour le cimetiere isole de la cellule"); return; }
+			// Cellule de pleine mer (ex. mer autour de l'Île de la Trêve) : pas de cimetière.
+			if (!found) { w.Warn("aucun site a terre pour le cimetiere isole (cellule de mer)"); return; }
 			w.hasIsolatedGraveyard = true;
 			w.isolatedGraveyard = site;
 			w.Occupy(site, 6.0);

@@ -139,7 +139,7 @@ aucun n'écrit dans le dépôt ; code 0 = tout passe ; **hors CI** (à lancer à
 | `test_editor_routes.py` | ~10 s | mode Tracer (sentier, points glissés / insérés / supprimés, tracé continu), embranchement, suppression + Ctrl+Z, Brenhaval déplacée (routes, routes maritimes, pontons suivis), pile vidée → export identique. | `--captures` (GIF + PNG) |
 | `test_editor_forms.py` | ~4 min (`--rapide` ~1,5 min) | format octet pour octet ; **toutes** les fiches de chaque formulaire enregistrées sans modification ; un champ modifié = seul chemin changé ; création puis suppression ; suppression de la fiche la plus citée ; séquence mixte qui passe les contrôles du lore ; import partiel de villes. | `--rapide` |
 | `test_editor_layers.py` | ~15 s | défauts (secrets inactifs), chargement du master, chaque calque et sous-filtre, lieux secrets seulement avec leur calque, niveaux, survol d'une quête, mémorisation (sauf secrets), `localStorage` en panne, performance, export identique. | `--captures` (4 PNG) |
-| `test_editor_fiches.py` | ~20 s | `niveau_ref`, `niveau_par_faction` (et départ à 1-10), `etapes_struct`, type `mine_poi`, formulaires de faction / race / PNJ, suppression avec compte des références, export final identique. | `--captures` (2 PNG) |
+| `test_editor_fiches.py` | ~20 s | `niveau_ref`, `niveau_par_faction` (et départ à 1-10), `etapes_struct`, type `mine_poi`, formulaires de faction (dont `territory.ville_id`) / race / PNJ, suppression avec compte des références, export final identique. | `--captures` (2 PNG) |
 
 ## 3. Quand lancer quoi
 

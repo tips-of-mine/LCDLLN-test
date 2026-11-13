@@ -2680,13 +2680,15 @@ function renderFactions(el) {
 // lointains, v1.0.82), fiche de peuple lointain ; game_design en JSON. Champ : [clé,
 // libellé, genre] ; genre 'area' (texte long), 'list' (une valeur par ligne), 'ville'
 // (liste des villes), 'lieu' (liste des lieux), 'sub' (sous-objet : 4e élément = champs).
+// v1.0.109 : territory.ville_id (ville du territoire, ex. Thurvhal des Ghaurdes, v1.0.107)
+// ajouté ; jusque-là gardé à l'enregistrement mais sans champ.
 var FACTION_SUBFORM = [
   { key:'visual_identity', label:'Identité visuelle', fields:[['apparence','Apparence','area'],['architecture','Architecture','area']] },
   { key:'leadership', label:'Dirigeants', fields:[['title','Titre'],['known_leader','Dirigeant connu'],['statut_nom','Statut du nom'],['description','Description','area']] },
   { key:'military_structure', label:'Structure militaire', fields:[['description','Description','area']] },
   { key:'politics', label:'Politique', fields:[['epoque_jeu','À l\'époque du jeu','area'],['relations','Relations','area']] },
   { key:'territory', label:'Territoire', fields:[['description','Description','area'],['statut','Statut'],['direction','Direction (peuple lointain)'],['climat','Climat'],
-      ['lieu_id','Lieu (lieu_id)','lieu'],['main_city','Ville principale (main_city)','ville'],['presence','Présence (une par ligne)','list'],
+      ['lieu_id','Lieu (lieu_id)','lieu'],['main_city','Ville principale (main_city)','ville'],['ville_id','Ville du territoire (ville_id)','ville'],['presence','Présence (une par ligne)','list'],
       ['comptoir','Comptoir','sub',[['nom','Nom du comptoir'],['ville_id','Ville du comptoir','ville'],['cell','Case du comptoir']]]] },
   { key:'fiche_peuple', label:'Fiche du peuple lointain', fields:[['statut','Statut'],['nom_source','Source du nom'],['apparence','Apparence','area'],['culture','Culture','area'],
       ['architecture','Architecture','area'],['territoire_lointain','Territoire lointain','area'],['climat','Climat','area'],['relations','Relations','area'],['sources','Sources','area']] }

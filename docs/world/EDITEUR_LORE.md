@@ -233,7 +233,7 @@ déroulantes est gardée ; un formulaire refuse une fiche sans nom.
 | **Raids** | **Niveau conseillé** min / max (`niveau_ref`) ; le formulaire rappelle le boss qui cite le raid ; `location_ville_id` (ville ou lieu). |
 | **PNJ (Personnes)** | faction, race, **Description** et **Personnalité** (champs distincts). |
 | **Peuples (races)** | accès aux classes (`class_access`), notes de chaque affiliation. |
-| **Factions** | bloc repliable **Fiche détaillée** : identité visuelle, dirigeants, structure militaire, politique, territoire avec **comptoir** (peuples lointains), `game_design` en JSON (invalide refusé, vide = retiré) ; clés inconnues gardées. |
+| **Factions** | bloc repliable **Fiche détaillée** : identité visuelle, dirigeants, structure militaire, politique, territoire avec **ville du territoire** (`territory.ville_id`, v1.0.109) et **comptoir** (peuples lointains), `game_design` en JSON (invalide refusé, vide = retiré) ; clés inconnues gardées. |
 | **Autres** | classes, arbres de compétences (modale), compagnons, montures, créatures, exploits, armes, loots, dialogues, chronologie, règles, commandes serveur, types de lieux, lore, métadonnées. |
 
 | Formulaire de quête (étapes situées) | Formulaire de région (niveaux) |
@@ -343,9 +343,9 @@ python3 tools/lore/test_editor_layers.py        # ~15 s  calques, secrets, mémo
 python3 tools/lore/test_editor_fiches.py        # ~20 s  niveaux, étapes situées, mines, formulaires, suppression
 ```
 
-État au v1.0.108 : `test_editor_fiches.py` a 3 échecs connus, déjà présents au v1.0.107 (attentes
-figées au v1.0.103 ; point 57 de [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md)) ;
-les autres tests passent.
+État au v1.0.109 : les 5 tests passent sur les deux copies. `test_editor_fiches.py` lit désormais
+le nombre de mines et de quêtes ancrées dans les données (ses attentes étaient figées au v1.0.103 :
+point 57 de [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md), corrigé).
 
 Chaque test accepte `--editeur <html>` et `--donnees <json>` pour vérifier **la seconde copie**
 (`lune-noire-editor-v20.html` / `lune-noire-data-v20.json`) ; `test_editor_routes.py`,

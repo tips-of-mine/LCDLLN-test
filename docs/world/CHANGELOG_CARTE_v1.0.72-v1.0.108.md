@@ -1,7 +1,7 @@
 # Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.108)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
-> 37 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation). Détail de chaque lot :
+> 38 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale). Détail de chaque lot :
 > [`LORE_BD.md`](LORE_BD.md) §16 (table des matières en tête de section). État du monde :
 > [`ROYAUMES.md`](ROYAUMES.md) §11 et [`ENFERS.md`](ENFERS.md) §7. Outillage :
 > [`EDITEUR_LORE.md`](EDITEUR_LORE.md), [`OUTILS_LORE.md`](OUTILS_LORE.md). Index : [`README.md`](README.md).
@@ -73,7 +73,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.105 | `c4f9941` | le générateur suit les routes du lore (`sync_routes.py`) | R | routes maritimes et pontons |
 | v1.0.106 | `f6982df` | 11 routes créées, 4 tracés corrigés, balises replacées, 68 cases ouvertes | R | tracés `[GD]` ; Piste des Morts ; baie de l'Île sans route |
 | v1.0.107 | `2c1aba0` | gouffre caché de Deathtrap Canyon et Thurvhal (réapparition secrète) | R (dont `respawn_points.txt` du shard) | noms `[GD]` ; rendu des torches et du fond sombre ; mécanisme de découverte |
-| v1.0.108 | (ce commit) | documentation complète : guide de l'éditeur, outils, monde, synthèse ; commentaires de code | — | — |
+| v1.0.108 | `bb469af` | documentation complète : guide de l'éditeur, outils, monde, synthèse ; commentaires de code | — | — |
+| v1.0.109 | (ce commit) | vérification finale : champ `territory.ville_id` au formulaire de faction (deux éditeurs), `test_editor_fiches.py` calculé depuis les données (point 57) | — | lieux secrets dans `places.json` (point 65) |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -171,7 +172,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 54. Tests Playwright de l'éditeur hors CI (à lancer à la main) (16.25 à 16.29).
 55. `check_references.py` non bloquant : passer à `--strict` quand les orphelines seront tranchées (16.32).
 56. Éditeur : carte des Enfers absente ; `description` / `notes` d'une route non éditables en mode Tracer ; fusion de fiches et import « BD » peu testés ; `secret` et `entree_cachee` sans champ de formulaire (16.26 à 16.29, 16.36).
-57. `test_editor_fiches.py` : 3 échecs **déjà présents au v1.0.107** (attentes figées au v1.0.103 : 5 lieux `mine_poi` ajoutés depuis, 96 quêtes ancrées sans `etapes_struct` au lieu de 90, champ `territory.ville_id` des comptoirs sans champ de formulaire) : mettre à jour les attentes du test ou le formulaire de faction (constat v1.0.108).
+57. ~~`test_editor_fiches.py` : 3 échecs déjà présents au v1.0.107 (attentes figées au v1.0.103 : 5 lieux `mine_poi` ajoutés depuis, 96 quêtes ancrées sans `etapes_struct` au lieu de 90, champ `territory.ville_id` sans champ de formulaire).~~ **Corrigé en v1.0.109** : attentes calculées depuis les données, champ « Ville du territoire » ajouté au formulaire de faction des deux éditeurs.
 
 ### 4.8 Questions de lore antérieures encore ouvertes (section 17)
 
@@ -183,18 +184,22 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 63. Ghulvathan : N009_E011 en jeu contre N012_E012 au lore.
 64. Forteresse naine d'Heusgly dite « proche de Moork » sans appui BD.
 
-**Total : 64 points ouverts consolidés.**
+### 4.9 Vérification finale (v1.0.109)
+
+65. **Lieux secrets dans la sortie publique** : les 11 grottes des dragons de Xygga (`poi_grotte_xygga`, `poi_grotte_premier_ne_*`) et l'entrée ophidienne `poi_ophidiens_puits_des_lianes` sont des POI du master ; le générateur recopie **tous** les POI du master (`g.pois`, Terrain.cpp) dans `places.json` `pois`, fichier livré au client, avec position exacte et description (« grotte cachée », Xygga…). Trois sont sur des cellules générées (S008_E012, N010_E012, N010_E010) et la carte du jeu les affiche une fois la zone découverte. Seules les villes `secret: true` sont écartées de la liste publique (v1.0.107), mais `secret_cities` (Thurvhal, description du Gouffre des Revenus) est écrit dans ce même `places.json` livré au client (non lu, mais lisible). Vérifié sur une génération complète (481 cellules, 354 POI dont ces 12). À trancher : drapeau `secret` des POI (écartés de `pois` comme `secret_cities`, et POI hors cellules générées non publiés) ou découverte par la carte assumée.
+
+**Total : 65 points ouverts consolidés (64 + 1, dont le point 57 corrigé).**
 
 ## 5. Description de PR proposée
 
-**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.108)`
+**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.109)`
 
 **Corps** :
 
 ```markdown
 ## Résumé
 
-Branche `carte/corrections-v1.0.72` : 37 commits, lore v1.0.72 → v1.0.108 (un lot du propriétaire par commit).
+Branche `carte/corrections-v1.0.72` : 38 commits, lore v1.0.72 → v1.0.109 (un lot du propriétaire par commit).
 
 - **Monde jouable** : 191 → 481 cellules jouables (Marche de l'Est, routes de Vozmarkh et de Rhivkhar, passages
   des routes du lore, Vaerdhun, Île de la Trêve) ; lieux du lore 88 → 408 (dont les lieux [GD] des cases ouvertes, avec POI réels) ; 3 villes moyennes ; gouffre
@@ -217,12 +222,12 @@ Branche `carte/corrections-v1.0.72` : 37 commits, lore v1.0.72 → v1.0.108 (un 
 - `validate_city_services.py` (122 villes, 1264 PNJ), `generate_city_services.py --check`,
   `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_references.py` (89 orphelines, rapport)
 - `world_gen_tests` (un test par lot), `world_places_tests`, `start_locations_tests`, `respawn_rules_tests`
-- Tests de l'éditeur (Playwright, à la main) : roundtrip, routes, forms, layers sur les deux copies ; `test_editor_fiches.py` :
-  3 échecs connus (attentes du test figées au v1.0.103, point 57 du changelog)
+- Tests de l'éditeur (Playwright, à la main) : roundtrip, routes, forms, layers et fiches, tous verts sur les deux copies
+  (v1.0.109)
 
 ## Points à valider
 
-64 points consolidés : voir `docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md` §4 (noms [GD], niveaux, raids de
+65 points consolidés : voir `docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md` §4 (noms [GD], niveaux, raids de
 Kendrhir 38-56, faction d'Harrodh, 89 références orphelines, routes encore coupées, rendu client des torches, du
 fond sombre et de la lave, mécanisme de découverte de la ville secrète).
 

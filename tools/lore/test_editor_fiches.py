@@ -18,15 +18,16 @@ sans affichage) :
    (lignes rendues, ajout, sélection d'une ville, d'un lieu, d'un PNJ et d'une case,
    réordonnancement, suppression ; case inconnue refusée) ; le calque Quêtes utilise les
    étapes en priorité ; nombre de quêtes plaçables avant (sans ``etapes_struct``) / après ;
-4. **type « mine »** : ``mine_poi`` dans ``place_types``, 8 lieux reclassés, proposé par le
+4. **type « mine »** : ``mine_poi`` dans ``place_types``, les 8 lieux reclassés en v1.0.100
+   toujours de ce type (les mines ajoutées depuis sont lues dans les données), proposé par le
    formulaire de lieu et le sous-filtre des lieux ; les POI correspondants du
    ``world_master.json`` gardent leur ``kind`` (salle ou ruine) et le générateur ne lit pas
    le type du lore ;
 5. **formulaires** : faction (toutes les clés des sous-objets ont un champ ; un champ de
    fiche de peuple lointain, du comptoir et de ``game_design`` modifiés : seuls ces chemins
    changent ; JSON invalide refusé), race (``class_access`` et notes d'affiliation), PNJ
-   (``description``) ; toutes les fiches des formulaires de région, raid, quête, faction,
-   race et PNJ enregistrées sans modification : export inchangé ;
+   (``description``), champ ``territory.ville_id`` (v1.0.109) ; toutes les fiches des
+   formulaires de région, raid, quête, faction, race et PNJ enregistrées sans modification : export inchangé ;
 6. **suppression** : la boîte HTML affiche le nombre de références (identique au compte
    du test) ; « Annuler » ne change rien ; ``deleteRule`` demande aussi confirmation ;
 7. export final identique octet pour octet ; aucune erreur console.
@@ -80,10 +81,25 @@ RAIDS_NULS = {"raid_invocation_methraton_t7", "raid_bataille_necropolis_jade_t7"
 RAIDS = {"raid_mine_de_la_traverse": (10, 15), "raid_tertre_des_rois_noyes": (45, 50),
          "raid_grottes_des_naufrageurs": (50, 55), "raid_taniere_du_jarl": (55, 60),
          "raid_devoreur_des_brumes": (60, 60)}
+# Les 8 lieux reclassés en mine en v1.0.100 (sous-ensemble garanti ; d'autres mines [GD]
+# ont été ajoutées depuis, le test lit leur liste dans les données).
 MINES = {"lieu_mine_de_wardholt", "lieu_mine_de_la_traverse", "lieu_mine_de_soufre_abandonnee",
          "lieu_galerie_naine_abandonnee", "lieu_mine_de_fer_abandonnee", "lieu_puits_de_mine_inonde",
          "lieu_puits_des_apprentis", "lieu_galeries_effondrees_vieille_veine"}
-QUETES_AVANT = 90  # quêtes ancrées par source_lore seul (72 en v1.0.99, LORE_BD §16.28 ; 90 en v1.0.103, §16.32)
+
+
+def quetes_avant_attendues(original):
+    """Nombre de quêtes ancrées par ``source_lore`` seul (sans ``etapes_struct``), calculé
+    depuis les données comme le fait ``carteBuildLayers`` : une quête compte si l'un des
+    identifiants de ``source_lore`` est une ville ou un lieu dont la case existe. Valeurs
+    historiques : 72 en v1.0.99 (LORE_BD §16.28), 90 en v1.0.103 (§16.32), 96 en v1.0.108.
+    ``original`` : lore chargé (dict). Pas d'effet de bord."""
+    cells = {c["id"] for c in original["cells"]}
+    recs = {x["id"]: x for x in original["lieux"]}
+    recs.update({x["id"]: x for x in original["villes"]})  # l'éditeur cherche d'abord les villes
+    return sum(1 for q in original["quests"]
+               if any(r in recs and recs[r].get("cell") in cells
+                      for r in (q.get("source_lore") if isinstance(q.get("source_lore"), list) else [])))
 
 
 class Echec(Exception):
@@ -194,7 +210,7 @@ def donnees(original):
             verifier("cell" not in e or e["cell"] in cells, f"quête {q['id']} : case inconnue")
     verifier(any(p["id"] == "mine_poi" for p in original["place_types"]), "type mine_poi absent")
     mines = {l["id"] for l in original["lieux"] if l["type"] == "mine_poi"}
-    verifier(mines == MINES, f"mines : {sorted(mines ^ MINES)}")
+    verifier(MINES <= mines, f"mines reclassées en v1.0.100 qui ne sont plus des mines : {sorted(MINES - mines)}")
     # Cohérence avec les POI du master : même kind qu'avant (salle / ruine), aucun type « mine ».
     master = json.loads(MASTER.read_text(encoding="utf-8"))
     kinds = {}
@@ -329,7 +345,8 @@ def quetes(page, original, cap):
       const L0 = carteBuildLayers(); db.quests.forEach((q, i) => { q.etapes_struct = sv[i]; });
       return { apres: L.quetesAncrees, parEtapes: L.quetesParEtapes, avant: L0.quetesAncrees, total: L.quetesTotal };
     }""")
-    verifier(r["avant"] == QUETES_AVANT, f"quêtes ancrées sans etapes_struct : {r['avant']} au lieu de {QUETES_AVANT}")
+    att = quetes_avant_attendues(original)
+    verifier(r["avant"] == att, f"quêtes ancrées sans etapes_struct : {r['avant']} au lieu de {att}")
     verifier(r["apres"] > r["avant"] and r["parEtapes"] > 0, f"quêtes ancrées : {r['apres']}")
     print(f"   quêtes plaçables : {r['avant']}/{r['total']} avant, {r['apres']}/{r['total']} après ({r['parEtapes']} par leurs étapes situées)")
 
@@ -469,6 +486,22 @@ def formulaires(page, original):
     tf.ecrire_champ(page, "#f_game_design", json.dumps(original["factions"][i]["game_design"], ensure_ascii=False))
     tf.enregistrer(page)
     identique(page, original, "faction remise")
+    # v1.0.109 : territory.ville_id (Ghaurdes → Thurvhal) a son champ ; modifié puis remis,
+    # seul ce chemin change.
+    g = next((k for k, f in enumerate(original["factions"])
+              if isinstance(f.get("territory"), dict) and f["territory"].get("ville_id")), None)
+    if g is not None:
+        v0 = original["factions"][g]["territory"]["ville_id"]
+        autre = next(v["id"] for v in original["villes"] if v["id"] != v0)
+        page.evaluate(f"() => openFactionForm({g})")
+        verifier(page.input_value("#fsub_territory_ville_id") == v0, "territory.ville_id mal affiché")
+        tf.ecrire_champ(page, "#fsub_territory_ville_id", autre)
+        verifier(not tf.enregistrer(page), "faction (ville_id) refusée")
+        seulement(page, original, [f"factions[{g}].territory.ville_id"], "territory.ville_id")
+        page.evaluate(f"() => openFactionForm({g})")
+        tf.ecrire_champ(page, "#fsub_territory_ville_id", v0)
+        tf.enregistrer(page)
+        identique(page, original, "territory.ville_id remis")
     # Faction sans sous-objets (null) : un champ rempli crée l'objet, vidé le remet à null.
     j = next(k for k, f in enumerate(original["factions"]) if f.get("politics") is None)
     page.evaluate(f"() => openFactionForm({j})")

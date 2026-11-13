@@ -2386,6 +2386,7 @@
       "name": "Grotte du volcan endormi",
       "cell": "S008_E012",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": 3250,
       "offset_z_m": -2000,
       "description": "Fissure dans une coulée figée au flanc du volcan, invisible sous les fumerolles : elle descend jusqu'à la caverne où Xygga, le Grand Dragon rouge, dort statufié depuis des millénaires. Aucun chemin. Niveau 70 [BD-T14 p.20-34, BD-T16 p.4-9 ; GD v1.0.81, grotte cachée]."
@@ -2395,6 +2396,7 @@
       "name": "Grotte de la falaise de grès",
       "cell": "N002_E004",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -1750,
       "offset_z_m": 1750,
       "description": "Faille étroite dans une falaise de grès, au cœur du désert, d'où monte une chaleur de four : l'antre du premier-né de Xygga au corps de flammes jaune-orange. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
@@ -2404,6 +2406,7 @@
       "name": "Grotte de la vire",
       "cell": "S005_E001",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": 3250,
       "offset_z_m": -1250,
       "description": "Bouche d'ombre dans une paroi des montagnes du sud, accessible par une seule vire : l'antre du premier-né de Xygga rouge aux cornes noires et aux ailes à spirales. Aucun chemin. Niveau 66-70 [BD-T16 p.7 ; GD v1.0.81, grotte cachée]."
@@ -2413,6 +2416,7 @@
       "name": "Grotte des racines du marais",
       "cell": "N011_W005",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -3500,
       "offset_z_m": 1000,
       "description": "Entrée noyée sous les racines d'un sous-bois du marais, aux eaux brûlées d'acide : l'antre du premier-né de Xygga jaune-vert à tête de tricératops. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
@@ -2422,6 +2426,7 @@
       "name": "Grotte de la crevasse de l'est",
       "cell": "S007_E021",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -2000,
       "offset_z_m": -1000,
       "description": "Crevasse étroite entre deux arêtes des montagnes de l'est, que l'on prend pour une simple fente : l'antre du plus petit des premiers-nés de Xygga, rouge et épineux. Aucun chemin. Niveau 66-70 [BD-T16 p.7 ; GD v1.0.81, grotte cachée]."
@@ -2431,6 +2436,7 @@
       "name": "Grotte du surplomb",
       "cell": "S006_W001",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -3250,
       "offset_z_m": 2000,
       "description": "Cavité sous un surplomb de falaise du Royaume Drach, cachée par les éboulis : l'antre du premier-né de Xygga blanc comme l'os, qui l'appelle « Ô Premier ». Aucun chemin. Niveau 66-70 [BD-T16 p.5, p.7 ; GD v1.0.81, grotte cachée]."
@@ -2440,6 +2446,7 @@
       "name": "Grotte des ronces",
       "cell": "N010_E012",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -2500,
       "offset_z_m": 2250,
       "description": "Entrée basse sous un fourré de ronces et de racines, au flanc d'une colline de la forêt : l'antre du premier-né de Xygga noir aux ailes brunes. Aucun chemin. Niveau 66-70 [BD-T16 p.7 ; GD v1.0.81, grotte cachée]."
@@ -2449,6 +2456,7 @@
       "name": "Grotte de la cascade du marais",
       "cell": "N013_E017",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -500,
       "offset_z_m": 3250,
       "description": "Grotte derrière une cascade qui tombe d'une colline au bord du marais : l'antre de l'hydre, premier-né de Xygga aux têtes multiples. Aucun chemin. Niveau 66-70 [BD-T16 p.7 ; GD v1.0.81, grotte cachée]."
@@ -2458,6 +2466,7 @@
       "name": "Grotte du glacier",
       "cell": "N021_E016",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -2250,
       "offset_z_m": 250,
       "description": "Crevasse de glacier au pied d'une falaise des sommets du grand nord, refermée chaque hiver par le givre : l'antre du premier-né de Xygga couvert de pics de cristal. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
@@ -2467,6 +2476,7 @@
       "name": "Grotte marine de la côte ouest",
       "cell": "N008_W015",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": 1750,
       "offset_z_m": -3500,
       "description": "Grotte marine au pied d'une falaise basse de la côte ouest, dont l'entrée n'émerge qu'à marée basse : l'antre du premier-né de Xygga bleu roi. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
@@ -2476,6 +2486,7 @@
       "name": "Grotte derrière la cascade",
       "cell": "N006_E007",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": 2250,
       "offset_z_m": -1500,
       "description": "Grotte cachée derrière une cascade de la rivière forestière : l'antre du premier-né de Xygga oriental, serpent doré-orangé sans ailes. Aucun chemin. Niveau 66-70 [BD-T16 p.7-8 ; GD v1.0.81, grotte cachée]."
@@ -2485,6 +2496,7 @@
       "name": "Puits des Lianes",
       "cell": "N010_E010",
       "kind": "salle",
+      "secret": true,
       "offset_x_m": -2250,
       "offset_z_m": -2500,
       "description": "Puits naturel à demi comblé de racines et de lianes, au cœur de la jungle de Leviathan : il descend vers la cité ophidienne de la jungle. Têtes plantées sur des piques et ossements rongés en balisent les abords. Aucun chemin. Niveaux 55-62, contenu de haut niveau en zone plus basse, balisé [BD-T17 p.5 ; GD v1.0.82]."

@@ -254,6 +254,10 @@ namespace tools::world_gen
 						err = "master: link invalide pour POI '" + d.id + "' (attendu : portail, \"<autre monde>:<id>\")"; return false;
 					}
 				}
+				// Lieu secret (v1.0.110) : caché de places.json ; un portail relié ne peut
+				// pas l'être (le shard et le client doivent connaître ses deux extrémités).
+				d.secret = GetBool(p, "secret", false);
+				if (d.secret && !d.link.empty()) { err = "master: le portail '" + d.id + "' ne peut pas etre secret"; return false; }
 				out.pois.push_back(std::move(d));
 			}
 		}
@@ -530,12 +534,23 @@ namespace tools::world_gen
 				{
 					err = "master: lore_roads invalide '" + d.id + "' (id unique, type road|imperial_road|path, 2 cases au moins)"; return false;
 				}
-				// Extrémité : ville ou POI connus (vide = jonction ou case seule).
+				// Extrémité : ville ou POI connus (vide = jonction ou case seule). Un lieu
+				// secret (v1.0.110) n'est jamais extrémité : la route le révélerait sur la
+				// carte (map_features.bin).
 				for (const std::string* end : { &d.fromId, &d.toId })
+				{
 					if (!end->empty() && !ids.count(*end))
 					{
 						err = "master: lore_roads '" + d.id + "' : extremite inconnue '" + *end + "'"; return false;
 					}
+					bool secretEnd = false;
+					for (const PoiDef& poi : out.pois) secretEnd = secretEnd || (poi.secret && poi.id == *end);
+					for (const CityDef& c : out.cities) secretEnd = secretEnd || (c.secret && c.id == *end);
+					if (secretEnd)
+					{
+						err = "master: lore_roads '" + d.id + "' : extremite secrete '" + *end + "'"; return false;
+					}
+				}
 				for (const std::string& cell : d.waypoints)
 				{
 					int n = 0, e = 0;

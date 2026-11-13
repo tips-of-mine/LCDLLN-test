@@ -135,7 +135,8 @@ jobs:
           # Seconde carte « enfers » (9 cellules, départ des démons, portails) : toujours
           # livrée avec le continent (docs/world/ENFERS.md).
           Invoke-WorldGen -World "enfers"
-          Copy-GameData
+          # -StripServerOnly : secret_places.json (lieux secrets) reste côté serveur.
+          Copy-GameData -StripServerOnly
           Copy-ClientConfig
 
       - name: Upload artifact (jeu)

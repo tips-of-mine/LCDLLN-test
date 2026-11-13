@@ -194,9 +194,14 @@ voisines raccord au mètre près :
    Canyon (LORE_BD §16.36).
    **Ville secrète** (`secret: true` d'une ville du master, v1.0.107) : absente de
    la carte publique (`cities` de `places.json`, carte du continent, rues et
-   bâtiments de `map_features.bin` ; recopiée dans `secret_cities`), jamais reliée
+   bâtiments de `map_features.bin` ; recopiée dans `secret_places.json`, réservé au
+   serveur, v1.0.110), jamais reliée
    par les routes (ni réseau du générateur, ni ancre de case d'une route du lore),
    sans effet sur les cellules voisines ; cimetière et auberge générés comme ailleurs.
+   **Lieu secret** (`secret: true` d'un POI du master, v1.0.110) : absent de
+   `places.json`, recopié dans `world/<monde>/secret_places.json` (annuaire des MJ du
+   shard, retiré du paquet client par la CI) ; interdit pour un portail relié et une
+   extrémité de route du lore (LORE_BD §16.37).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`
@@ -376,8 +381,10 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   de Marn, sans fiche au lore, est rattaché par la table `EXTREMITES` du script.
   Routes maritimes et pontons non tracés.
 - Ville secrète (v1.0.107, Thurvhal) : hors de `places.json` `cities`, donc sans
-  bannière d'entrée, sans radar ni ambiance sonore de ville tant que le client ne lit
-  pas `secret_cities` (mécanisme de découverte à faire). Torches du gouffre : mesh
+  bannière d'entrée, sans radar ni ambiance sonore de ville ; depuis v1.0.110, les villes
+  et lieux secrets (dont les 11 grottes des dragons et le Puits des Lianes) ne sont plus du
+  tout dans les données du client (`secret_places.json`, serveur seulement) : mécanisme de
+  découverte à faire. Torches du gouffre : mesh
   réel, mais leur lumière et l'assombrissement du fond (`world.point_lights`,
   `world.ambiance_zones` du zone.json) ne sont pas encore rendus : le client n'a
   qu'un fichier global de lumières ponctuelles (`lights/dynamic_lights.json`, 64
@@ -615,7 +622,7 @@ ordinaire du lore.
 | Master | relief `gouffre_des_revenus` (`type: gouffre`) ancré sur `ville_thurvhal` (`secret: true`, position 2300 m est, 200 m nord) : fond plat ≈ 410 m (85 m sous le point le plus bas du pourtour, ≈ 146 m sous le terrain environnant), rayon du fond 380 m, parois 45 m, galerie de la Fente (pente ≈ 15 %) vers une entrée cachée par des éboulis |
 | Lore `[GD]` | Gouffre des Revenus (`gouffre_poi`), Fente des Revenus, village de Thurvhal, peuple oublié neutre des **Ghaurdes** (`faction_ghaurdes`), PNJ Mhaldra et Kerreth, 3 quêtes (30-38) |
 | Réapparition | le cimetière neutre de Thurvhal (`respawn_points.txt` de `cell_s008_e010`) est le plus proche pour 85,6 % de S008_E010 et 54,7 % de S008_E011 : un joueur mort dans le canyon se réveille au fond. Aucune modification du shard (règle « cimetière le plus proche en X, Z »). |
-| Secret | ville absente de `places.json` `cities`, de la carte et de `map_features.bin` ; recopiée dans `secret_cities` (non lu par le client) |
+| Secret | ville absente de `places.json` `cities`, de la carte et de `map_features.bin` ; recopiée dans `secret_places.json` (v1.0.110 : réservé au serveur, retiré du paquet client) |
 | À faire côté client | lumière des 36 torches (`world.point_lights` du zone.json), fond sombre (`world.ambiance_zones`), mécanisme de « lieu découvert », bannière et radar de la ville secrète |
 
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)

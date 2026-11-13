@@ -198,8 +198,8 @@ jamais écrite dans le JSON exporté**.
 | Contenu | Raids (`raids`) | case du raid, `niveau_ref` |
 | Contenu | Balises de danger (`balises`) | notes « Balisage du danger », lieux-balises |
 | Contenu | Peuples lointains (`peuples`) | `factions[].territory.direction` et `.comptoir` |
-| 🔒 Secret | Dragons et grottes de Xygga (`dragons`) | lieux `entree_cachee` d'une case de dragon boss |
-| 🔒 Secret | Entrées ophidiennes (`ophidiens`) | lieux `entree_cachee` d'une case ophidienne |
+| 🔒 Secret | Dragons et grottes de Xygga (`dragons`) | lieux `entree_cachee` d'une case de dragon boss (v1.0.110 : aussi `secret: true`) |
+| 🔒 Secret | Entrées ophidiennes (`ophidiens`) | lieux `entree_cachee` d'une case ophidienne (Puits des Lianes : aussi `secret: true`, v1.0.110) |
 | 🔒 Secret | Lieux et villes cachés (`caches`, v1.0.107) | fiches `secret: true` (Gouffre des Revenus, Fente, Thurvhal) |
 
 **Calques secrets** : décochés **à chaque ouverture** de l'éditeur, jamais mémorisés actifs.
@@ -228,7 +228,7 @@ déroulantes est gardée ; un formulaire refuse une fiche sans nom.
 |---|---|
 | **Régions / provinces** | `type` (`region_hs` = région de la carte p.4 du hors-série, `province`, `region`), `nom_hs`, `parent_region` (province). **Niveau de référence** min / max (vide = non renseigné ; fourchette incomplète, inversée ou hors 1-100 refusée). **Niveaux par faction** : choisir une faction, **+ Faction**, saisir min / max, ✕ pour retirer. |
 | **Cellule** (clic sur une case, mode Sélection) | terrain, région, province, rivière, lac, montagne, ville, points importants, notes. |
-| **Villes / Lieux remarquables** | case, type (dont `mine_poi`, `gouffre_poi`), faction, **Position X / Z**, port (`ponton_cell`, `vers_cell`). `secret` et `entree_cachee` n'ont pas de champ : ils sont gardés tels quels à l'enregistrement (à poser dans le JSON). Une ville créée n'a ni `taille` ni PNJ de service tant que `generate_city_services.py` n'est pas relancé. |
+| **Villes / Lieux remarquables** | case, type (dont `mine_poi`, `gouffre_poi`), faction, **Position X / Z**, port (`ponton_cell`, `vers_cell`). **Case « 👁️ Secret »** (v1.0.110) : cochée → `secret: true` (lieu ou ville caché aux joueurs : hors de la carte du jeu, écrit dans `secret_places.json` réservé au serveur) ; décochée → champ retiré. Après un changement, reporter `"secret": true` au master et lancer `check_secrets.py` (voir [OUTILS_LORE.md](OUTILS_LORE.md)). `entree_cachee` n'a pas de champ : gardé tel quel à l'enregistrement. Une ville créée n'a ni `taille` ni PNJ de service tant que `generate_city_services.py` n'est pas relancé. |
 | **Quêtes** | texte des étapes (`steps`, gardé tel quel) et **Étapes situées** (`etapes_struct`) : une ligne = texte + ville / lieu / PNJ / case ; ↑ ↓ ✕, **+ Étape**, **⇣ Reprendre le texte des étapes** ; étape sans texte ou case inconnue refusée. |
 | **Raids** | **Niveau conseillé** min / max (`niveau_ref`) ; le formulaire rappelle le boss qui cite le raid ; `location_ville_id` (ville ou lieu). |
 | **PNJ (Personnes)** | faction, race, **Description** et **Personnalité** (champs distincts). |

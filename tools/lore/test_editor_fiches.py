@@ -26,7 +26,8 @@ sans affichage) :
 5. **formulaires** : faction (toutes les clés des sous-objets ont un champ ; un champ de
    fiche de peuple lointain, du comptoir et de ``game_design`` modifiés : seuls ces chemins
    changent ; JSON invalide refusé), race (``class_access`` et notes d'affiliation), PNJ
-   (``description``), champ ``territory.ville_id`` (v1.0.109) ; toutes les fiches des
+   (``description``), champ ``territory.ville_id`` (v1.0.109), case « Secret » des fiches
+   lieu et ville (v1.0.110 : cochée, décochée, sans champ ajouté à une fiche publique) ; toutes les fiches des
    formulaires de région, raid, quête, faction, race et PNJ enregistrées sans modification : export inchangé ;
 6. **suppression** : la boîte HTML affiche le nombre de références (identique au compte
    du test) ; « Annuler » ne change rien ; ``deleteRule`` demande aussi confirmation ;
@@ -502,6 +503,35 @@ def formulaires(page, original):
         tf.ecrire_champ(page, "#fsub_territory_ville_id", v0)
         tf.enregistrer(page)
         identique(page, original, "territory.ville_id remis")
+    # v1.0.110 : case « Secret » des fiches lieu et ville. Lieu secret décoché → champ
+    # secret retiré (seul ce chemin change), recoché → export identique ; lieu public coché →
+    # secret true, décoché → champ retiré (export identique) ; ville secrète affichée cochée.
+    s = next(k for k, l in enumerate(original["lieux"]) if l.get("secret") is True)
+    page.evaluate(f"() => openLieuForm({s})")
+    verifier(page.is_checked("#l_secret"), "lieu secret : case « Secret » non cochée")
+    page.uncheck("#l_secret")
+    verifier(not tf.enregistrer(page), "lieu (secret décoché) refusé")
+    seulement(page, original, [f"lieux[{s}].secret"], "lieu secret décoché")
+    verifier(page.evaluate(f"() => 'secret' in db.lieux[{s}]") is False, "lieu secret décoché : champ secret encore présent")
+    page.evaluate(f"() => openLieuForm({s})")
+    page.check("#l_secret")
+    tf.enregistrer(page)
+    identique(page, original, "lieu secret recoché")
+    u = next(k for k, l in enumerate(original["lieux"]) if "secret" not in l)
+    page.evaluate(f"() => openLieuForm({u})")
+    verifier(not page.is_checked("#l_secret"), "lieu public : case « Secret » cochée")
+    page.check("#l_secret")
+    tf.enregistrer(page)
+    seulement(page, original, [f"lieux[{u}].secret"], "lieu public rendu secret")
+    page.evaluate(f"() => openLieuForm({u})")
+    page.uncheck("#l_secret")
+    tf.enregistrer(page)
+    identique(page, original, "lieu public : secret retiré")
+    v = next((k for k, x in enumerate(original["villes"]) if x.get("secret") is True), None)
+    if v is not None:
+        page.evaluate(f"() => openVilleForm({v})")
+        verifier(page.is_checked("#v_secret"), "ville secrète : case « Secret » non cochée")
+        page.evaluate("() => closeModal()")
     # Faction sans sous-objets (null) : un champ rempli crée l'objet, vidé le remet à null.
     j = next(k for k, f in enumerate(original["factions"]) if f.get("politics") is None)
     page.evaluate(f"() => openFactionForm({j})")

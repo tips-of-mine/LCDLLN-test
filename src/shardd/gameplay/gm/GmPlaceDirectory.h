@@ -11,6 +11,11 @@
 // « L'hynn », « foret » trouve « Forêt ») : nom exact d'abord, puis identifiant,
 // puis début de nom, puis nom contenant le texte.
 //
+// Lieux secrets (v1.0.110) : `world/<monde>/secret_places.json` (même schéma, clé
+// "secret": true, généré par tools/world_gen, JAMAIS livré au client) est ajouté
+// après places.json s'il existe ; ces lieux portent `secret = true` et un détail
+// préfixé « secret · ».
+//
 // Seconde carte (Les Enfers) : chaque lieu porte sa carte (champ "world" de
 // places.json) ; les lieux des Enfers s'ajoutent à ceux du continent
 // (AppendFromContent) et /tp vers l'un d'eux change de carte.
@@ -51,6 +56,8 @@ namespace engine::server::gm
 		float xMin = 0.0f, xMax = 0.0f, zMin = 0.0f, zMax = 0.0f;
 		/// Carte du lieu (Royaumes par défaut ; Enfers pour world/enfers/places.json).
 		engine::world::cells::CellMap map = engine::world::cells::CellMap::Royaumes;
+		/// v1.0.110 — lieu secret (lu depuis secret_places.json, réservé aux MJ).
+		bool secret = false;
 	};
 
 	/// Texte replié pour la recherche : minuscules ASCII, accents français retirés,
@@ -64,8 +71,9 @@ namespace engine::server::gm
 		/// JSON est invalide ou ne contient aucun lieu.
 		bool LoadFromText(std::string_view json, std::string& outError);
 
-		/// Charge `world/<worldId>/places.json` (paths.content). \return false si absent
-		/// ou invalide (annuaire vide : seuls les départs ajoutés restent).
+		/// Charge `world/<worldId>/places.json` (paths.content), puis ajoute
+		/// `secret_places.json` s'il existe (v1.0.110, absent = normal). \return false si
+		/// places.json est absent ou invalide (annuaire vide : seuls les départs restent).
 		/// Effet de bord : lecture disque.
 		bool LoadFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError);
 
@@ -73,8 +81,9 @@ namespace engine::server::gm
 		/// les existants ; la carte des lieux est celle du champ "world".
 		/// \return false (rien ajouté) si le JSON est invalide ou ne contient aucun lieu.
 		bool AppendFromText(std::string_view json, std::string& outError);
-		/// Seconde carte — AJOUTE les lieux de `world/<worldId>/places.json`. Effet de
-		/// bord : lecture disque. \return false si absent ou invalide.
+		/// Seconde carte — AJOUTE les lieux de `world/<worldId>/places.json`, puis ceux de
+		/// `secret_places.json` s'il existe (v1.0.110). Effet de bord : lecture disque.
+		/// \return false si places.json est absent ou invalide.
 		bool AppendFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError);
 
 		/// Ajoute un lieu (villes de départ, tests).
@@ -100,6 +109,11 @@ namespace engine::server::gm
 		bool Empty() const { return m_places.empty(); }
 
 	private:
+		/// v1.0.110 — ajoute `world/<worldId>/secret_places.json` s'il existe (lieux
+		/// marqués secret). Absent ou invalide : rien ajouté, sans erreur.
+		/// Effet de bord : lecture disque.
+		void AppendSecretFromContent(const engine::core::Config& config, std::string_view worldId);
+
 		std::vector<GmPlace> m_places;
 	};
 }

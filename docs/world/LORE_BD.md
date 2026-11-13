@@ -1046,6 +1046,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.34](#1634-routes-du-jeu-tracées-daprès-le-lore-v10105) | v1.0.105 | Routes du jeu tracées d'après le lore | Le générateur suit les routes du lore (sync_routes.py, lore_roads). |
 | [16.35](#1635-routes-manquantes-après-le-passage-aux-routes-du-lore-v10106) | v1.0.106 | Routes manquantes après le passage aux routes du lore | Routes manquantes recréées (11), 4 tracés corrigés, balises replacées, 68 cases ouvertes (481 jouables). |
 | [16.36](#1636-le-gouffre-caché-de-deathtrap-canyon-et-sa-ville-v10107) | v1.0.107 | Le gouffre caché de Deathtrap Canyon et sa ville | Gouffre caché de Deathtrap Canyon et Thurvhal, point de réapparition secret ; torches et ambiance en données. |
+| [16.37](#1637-lieux-secrets-cachés-aux-joueurs-v10110) | v1.0.110 | Lieux secrets cachés aux joueurs | Drapeau `secret` des POI, `secret_places.json` réservé au serveur et retiré du paquet client, case « Secret » de l'éditeur, `check_secrets.py`. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4259,7 +4260,8 @@ nouveau calque **🔒 « Lieux et villes cachés »** (`caches`), désactivé à
 Ophidiens ; sans lui, la ville et les lieux ne sont pas dessinés (ni calque Villes, ni Lieux remarquables, ni densité,
 ni sous-filtres) ; info-bulle « secret — ville cachée, hors de la carte publique ». Jeu : la ville secrète est absente
 de `places.json` `cities` (carte du monde, bannières, radar), de la carte du continent et des rues et bâtiments de
-`map_features.bin` ; elle est recopiée dans `secret_cities` (non lu par le client) pour un futur mécanisme de découverte.
+`map_features.bin` ; elle est recopiée dans `secret_cities` (non lu par le client) pour un futur mécanisme de découverte
+(v1.0.110 : `secret_cities` remplacé par `secret_places.json`, réservé au serveur, voir 16.37).
 
 **Générateur** (`tools/world_gen`) : nouveau relief **`gouffre`** au master (`gouffre_des_revenus`, ancré sur
 `ville_thurvhal`, qui a une position manuelle : **le gouffre suit la ville**, `sync_positions.py` l'admet pour ce seul
@@ -4291,7 +4293,7 @@ type de relief) et clé **`secret`** des villes.
 | Torches (mesh), éboulis | réels (décor) |
 | Lumière des torches | **donnée** : `world.point_lights` du zone.json (36 lumières « torch », allumées jour et nuit) ; le client ne lit qu'un fichier global (`lights/dynamic_lights.json`, 64 au plus) : à brancher |
 | Fond « sombre » | **donnée** : `world.ambiance_zones` du zone.json (disque, altitudes du fond et du bord, `darkness` 0,65) ; aucun réglage d'ambiance par zone au client : à faire |
-| Carte publique | ville absente ; bannière d'entrée, radar et ambiance sonore de ville absents dans Thurvhal tant que le client ne lit pas `secret_cities` |
+| Carte publique | ville absente ; bannière d'entrée, radar et ambiance sonore de ville absents dans Thurvhal (v1.0.110 : la ville n'est plus du tout dans les données du client, voir 16.37) |
 
 **Réapparition** (vérifiée dans le code du shard) : `ServerApp::InitRespawnPoints` concatène au démarrage les
 `zones/<cellule>/respawn_points.txt` de toutes les cellules générées ; ces fichiers sont écrits par le générateur
@@ -4344,6 +4346,44 @@ Mhaldra, Kerreth, Fente) ; une partie de S008_E011 (Grotte aux chauves-souris) r
 cimetière plus proche) ; galerie à ciel ouvert faute de tunnels ; écurie générée par la grille (1 minimum) au fond d'un
 gouffre ; lumières et ambiance sombre à brancher côté client ; mécanisme de « lieu découvert » à définir.
 
+### 16.37 Lieux secrets cachés aux joueurs (v1.0.110)
+
+**Décision du propriétaire (13/11/2026)** : « option a » du point 65 de la vérification finale. Un lieu
+secret ne doit jamais être lisible par un joueur, ni sur la carte du jeu ni dans les fichiers du client.
+
+**Constat (v1.0.109)** : le générateur recopiait **tous** les POI du master dans `places.json` (livré au
+client) avec position exacte et description : les 11 grottes des dragons de Xygga et l'entrée ophidienne du
+Puits des Lianes apparaissaient sur la carte du jeu une fois leur zone découverte (3 sont sur des cellules
+générées : S008_E012, N010_E012, N010_E010). La ville secrète Thurvhal était écartée de la liste publique
+mais recopiée dans `secret_cities` du même fichier.
+
+**Règle** :
+
+| Où | Effet de `secret: true` |
+|---|---|
+| Lore (`villes`, `lieux`) | case **« 👁️ Secret »** des formulaires lieu et ville de l'éditeur ; décochée = champ retiré (lieu public) ; calques secrets inchangés (dragons, Ophidiens, « Lieux et villes cachés ») |
+| Master (`cities`, `pois`) | clé `"secret": true` ; interdite pour une ville de départ (v1.0.107), un portail relié (`link`) et une extrémité de route du lore (`lore_roads`, refus du générateur) |
+| `places.json` (client) | ville et POI secrets **absents** (carte du jeu, bannières, radar, son de ville) ; plus de clé `secret_cities` |
+| `secret_places.json` (nouveau) | `world/<monde>/secret_places.json`, même schéma que `places.json` (`"secret": true`, `cities`, `pois`) ; supprimé s'il n'y a aucun secret (Enfers) |
+| Paquet client Windows | `secret_places.json` **retiré** (`Copy-GameData -StripServerOnly`, `.github/scripts/package-windows.ps1`), contrôle d'absence ; il reste dans le paquet serveur (deploy/docker) |
+| Shard | l'annuaire des MJ (`GmPlaceDirectory`, `/tp`, `/places`, position) lit aussi `secret_places.json` : détail préfixé « secret · » |
+| Terrain | inchangé : le lieu est toujours généré (aplanissement, décor) ; seul son affichage est caché |
+
+**Lieux secrets (15)** : au master, 12 POI — `poi_grotte_xygga`, les 10 `poi_grotte_premier_ne_*`,
+`poi_ophidiens_puits_des_lianes` — et la ville `ville_thurvhal` ; au lore seulement (pas de POI au master),
+`lieu_gouffre_des_revenus` et `lieu_fente_des_revenus`. Restent **publics** : l'Entrée des Abysses
+(`entree_cachee` sans `secret`, un lieu connu de la BD), la Bouche des Roseaux et la Faille des Mues (entrées
+ophidiennes sans POI au master). `[GD]` : liste à revoir par le propriétaire.
+
+**Contrôle** : `tools/lore/check_secrets.py` (workflow « Lore — services des villes ») échoue si une fiche
+secrète au lore ne l'est pas au master (ou l'inverse), si un secret du master n'a pas de fiche liée, ou si une
+route du lore mène à un lieu secret. Tests : `world_gen_tests` (places.json sans aucun secret, secret_places.json
+avec tous), `gm_place_directory_tests` (lieux secrets marqués), `test_editor_fiches.py` (case Secret cochée,
+décochée, export identique).
+
+**Reste à faire** : un mécanisme de **lieu découvert** (le serveur révèle un secret au joueur qui l'a trouvé,
+par exemple en entrant dans son rayon) ; sans lui, un lieu secret n'apparaît jamais sur la carte du joueur.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -4394,4 +4434,5 @@ gouffre ; lumières et ambiance sombre à brancher côté client ; mécanisme de
 - Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).
 - Routes du jeu d'après le lore (v1.0.105) : routes maritimes et pontons non tracés (16.34) ; 000017, cellules et villes sans route, balises et passages hors zone traités en v1.0.106 (16.35).
 - Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).
-- Gouffre de Deathtrap Canyon (v1.0.107) : noms [GD] (Gouffre des Revenus, Thurvhal, Ghaurdes, PNJ, quêtes), lumières des torches et fond sombre à rendre côté client, mécanisme de lieu découvert (`secret_cities`), part de S008_E011 renvoyée au gouffre (16.36).
+- Gouffre de Deathtrap Canyon (v1.0.107) : noms [GD] (Gouffre des Revenus, Thurvhal, Ghaurdes, PNJ, quêtes), lumières des torches et fond sombre à rendre côté client, mécanisme de lieu découvert, part de S008_E011 renvoyée au gouffre (16.36).
+- Lieux secrets (v1.0.110) : mécanisme de « lieu découvert » (révéler au joueur un secret qu'il a trouvé) à concevoir côté client et serveur ; Entrée des Abysses (`entree_cachee`) laissée publique (16.37).

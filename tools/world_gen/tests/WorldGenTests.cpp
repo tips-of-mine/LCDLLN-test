@@ -3185,18 +3185,32 @@ namespace
 		sameAround = sameDir(tmp / "c1", tmp / "c0");
 		Check(sameAround, "gouffre v1.0.107 : S008_E011, S009_E010 et S007_E009 identiques octet pour octet au monde sans gouffre");
 
-		// 6. places.json : Thurvhal hors de la liste publique, dans secret_cities.
+		// 6. places.json : Thurvhal et les lieux secrets (v1.0.110 : grottes des dragons,
+		//    Puits des Lianes) hors du fichier public, écrits dans secret_places.json
+		//    (réservé au serveur) ; plus de clé secret_cities dans places.json.
 		{
 			std::vector<World*> cells = { w1.get() };
 			g1.outputRoot = (tmp / "g").string();
 			std::string e3;
 			const bool okG = WriteGlobalOutputs(g1, cells, e3);
 			const std::string places = ReadText(tmp / "g" / "world" / "royaumes" / "places.json");
-			const size_t secretAt = places.find("\"secret_cities\"");
-			const size_t townAt = places.find("\"id\": \"ville_thurvhal\"");
-			Check(okG && secretAt != std::string::npos && townAt != std::string::npos && townAt > secretAt
-				&& places.find("\"id\": \"ville_thurvhal\"", townAt + 1) == std::string::npos,
-				"gouffre v1.0.107 : places.json sans Thurvhal dans cities (carte publique), Thurvhal dans secret_cities");
+			const std::string secret = ReadText(tmp / "g" / "world" / "royaumes" / "secret_places.json");
+			Check(okG && places.find("ville_thurvhal") == std::string::npos && places.find("secret_cities") == std::string::npos
+				&& secret.find("\"id\": \"ville_thurvhal\"") != std::string::npos && secret.find("\"secret\": true") != std::string::npos,
+				"gouffre v1.0.110 : Thurvhal absente de places.json, presente dans secret_places.json");
+			size_t secretPois = 0;
+			bool hidden = true;
+			for (const PoiDef& p : g1.pois)
+			{
+				const std::string key = "\"id\": \"" + p.id + "\"";
+				const bool inPublic = places.find(key) != std::string::npos;
+				const bool inSecret = secret.find(key) != std::string::npos;
+				if (p.secret) ++secretPois;
+				if (p.secret ? (inPublic || !inSecret) : (!inPublic || inSecret)) hidden = false;
+			}
+			if (secretPois < 12u) std::fprintf(stderr, "  %zu POI secrets seulement\n", secretPois);
+			Check(hidden && secretPois >= 12u,
+				"lieux secrets v1.0.110 : POI secrets dans secret_places.json seulement, POI publics dans places.json seulement");
 		}
 
 		// 7. Réapparition (règle du shard) : graveyards des cellules jouables assez proches

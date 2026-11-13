@@ -13,6 +13,9 @@
 #   dans l'éditeur) sont recopiées dans world_master.json (clé lore_roads), que
 #   tools/world_gen suit case par case ; test_sync_routes.py vérifie le script
 #   (--check, idempotence, routes maritimes ignorées) sur des copies ;
+# - check_secrets.py (v1.0.110) : les villes et lieux `secret: true` du lore le sont
+#   aussi au master (cachés de places.json, écrits dans secret_places.json réservé
+#   au serveur), aucune route du lore ne mène à un lieu secret ;
 # - check_references.py (v1.0.103) : références vers des identifiants inexistants,
 #   en mode rapport (non bloquant tant qu'il reste des orphelines à trancher ;
 #   passer à --strict quand la liste est vide).
@@ -65,6 +68,9 @@ jobs:
 
       - name: Test du script de recopie des routes
         run: python tools/lore/test_sync_routes.py
+
+      - name: Lieux secrets concordants (lore ↔ master)
+        run: python tools/lore/check_secrets.py
 
       - name: Références orphelines (rapport, non bloquant)
         run: python tools/lore/check_references.py

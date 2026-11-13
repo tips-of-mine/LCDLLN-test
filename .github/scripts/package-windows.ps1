@@ -109,11 +109,27 @@ function Invoke-WorldGen {
 }
 
 # game/data (assets, shaders SPIR-V, icônes LFS) -> artifacts/game/data.
+# -StripServerOnly (paquet du JEU) : retire les fichiers réservés au serveur, à
+# savoir world/<monde>/secret_places.json (v1.0.110 : gouffre, grottes des dragons,
+# entrées ophidiennes — ne doivent jamais être lisibles par un joueur).
 function Copy-GameData {
+    param([switch]$StripServerOnly)
     Initialize-Artifacts
     $src = Join-Path $env:GITHUB_WORKSPACE "game\data"
     if (Test-Path $src) {
-        Copy-Item -Recurse -Path $src -Destination (Join-Path $Artifacts "game\data") -Force
+        $dst = Join-Path $Artifacts "game\data"
+        Copy-Item -Recurse -Path $src -Destination $dst -Force
+        if ($StripServerOnly) {
+            $worldDir = Join-Path $dst "world"
+            if (Test-Path $worldDir) {
+                Get-ChildItem -Path $worldDir -Recurse -File -Filter "secret_places.json" | ForEach-Object {
+                    Remove-Item -LiteralPath $_.FullName -Force
+                    Write-Host "[package] fichier serveur retiré du paquet client : $($_.FullName)"
+                }
+            }
+            $left = Get-ChildItem -Path $dst -Recurse -File -Filter "secret_places.json"
+            if ($left) { throw "[package] secret_places.json encore présent dans le paquet client" }
+        }
     }
 }
 

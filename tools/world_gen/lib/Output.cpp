@@ -17,6 +17,8 @@
 // Sorties GLOBALES :
 //   buildings/templates/maison.json    maisons paramétriques (bibliothèque, versionnée)
 //   world/<w>/places.json              villes, lieux, régions, cellules générées (UI client)
+//   world/<w>/secret_places.json       villes et lieux secrets (annuaire MJ du shard, JAMAIS
+//                                      livré au client — v1.0.110)
 //   world/<w>/world_map.png            carte du continent (fenêtre Carte)
 //   world/<w>/map_features.bin         routes, rues, bâtiments en vectoriel (FIX.12)
 //   world/<w>/start_locations.json     points de départ par faction, repli par race (master, shard)
@@ -1155,14 +1157,52 @@ namespace tools::world_gen
 		const double originX = g.minX, originZ = g.minZ;
 
 		// ---- places.json (UI client : carte, bannières, radar) — coordonnées GLOBALES.
+		//      v1.0.110 : villes et lieux SECRETS (clé `secret` du master) absents de ce
+		//      fichier, écrits à part dans secret_places.json (serveur seulement).
 		{
-			// Villes secrètes (v1.0.107) : hors de la liste publique (carte, bannières,
-			// radar), recopiées à part dans `secret_cities` (non lu par le client).
 			std::vector<const CityDef*> all, secrets;
 			for (const CityDef& c : g.cities) (c.secret ? secrets : all).push_back(&c);
 			for (const World* w : cells)
 				for (const CityDef& c : w->cities)
 					if (!c.procedural.empty()) all.push_back(&c);
+			std::vector<const PoiDef*> pois, secretPois;
+			for (const PoiDef& p : g.pois) (p.secret ? secretPois : pois).push_back(&p);
+			// Une ville (forme commune à places.json et secret_places.json).
+			auto cityJson = [&](const CityDef& c, bool last) {
+				std::string starts;
+				for (size_t q = 0; q < c.startFor.size(); ++q) starts += (q ? ", " : "") + Q(c.startFor[q]);
+				return "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.procedural.empty() ? c.kind : c.procedural) +
+					", \"race\": " + Q(c.race) + ", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) +
+					", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
+					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
+					", \"description\": " + Q(c.description) + " }" + (last ? "\n" : ",\n");
+			};
+			// Un lieu (forme commune aux deux fichiers).
+			auto poiJson = [&](const PoiDef& p, bool last) {
+				return "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"x\": " + Num(p.center.x) +
+					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (last ? "\n" : ",\n");
+			};
+
+			// secret_places.json : même schéma que places.json (villes, lieux), lu par
+			// l'annuaire des MJ du shard ; retiré du paquet client (package-windows.ps1).
+			// Supprimé s'il n'y a aucun secret (pas de fichier périmé).
+			if (!secrets.empty() || !secretPois.empty())
+			{
+				std::string sj = "{\n  \"_comment\": \"GENERE par tools/world_gen — villes et lieux SECRETS (gouffre, grottes des dragons, entrees ophidiennes). RESERVE AU SERVEUR : jamais livre au client (retire par .github/scripts/package-windows.ps1). Coordonnees GLOBALES.\",\n";
+				sj += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"secret\": true,\n";
+				sj += "  \"city_count\": " + std::to_string(secrets.size()) + ",\n  \"cities\": [\n";
+				for (size_t k = 0; k < secrets.size(); ++k) sj += cityJson(*secrets[k], k + 1 == secrets.size());
+				sj += "  ],\n  \"poi_count\": " + std::to_string(secretPois.size()) + ",\n  \"pois\": [\n";
+				for (size_t k = 0; k < secretPois.size(); ++k) sj += poiJson(*secretPois[k], k + 1 == secretPois.size());
+				sj += "  ]\n}\n";
+				if (!WriteFile(g.outputRoot, g.report, dir + "secret_places.json", sj, err)) return false;
+			}
+			else
+			{
+				std::error_code ec;
+				fs::remove(fs::path(g.outputRoot) / (dir + "secret_places.json"), ec);
+			}
+
 			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lieux du monde pour l'interface (carte du monde, bannieres d'entree, radar). Coordonnees GLOBALES (cellules de 10 km, origine = centre de cell_n000_e000).\",\n";
 			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"display_name\": " + Q(g.master.displayName) + ",\n";
 			j += "  \"map_image\": " + Q(dir + "world_map.png") + ",\n";
@@ -1178,38 +1218,10 @@ namespace tools::world_gen
 					" }" + (k + 1 < cells.size() ? ",\n" : "\n");
 			}
 			j += "  ],\n  \"city_count\": " + std::to_string(all.size()) + ",\n  \"cities\": [\n";
-			for (size_t k = 0; k < all.size(); ++k)
-			{
-				const CityDef& c = *all[k];
-				std::string starts;
-				for (size_t q = 0; q < c.startFor.size(); ++q) starts += (q ? ", " : "") + Q(c.startFor[q]);
-				j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.procedural.empty() ? c.kind : c.procedural) +
-					", \"race\": " + Q(c.race) + ", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) +
-					", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
-					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
-					", \"description\": " + Q(c.description) + " }" + (k + 1 < all.size() ? ",\n" : "\n");
-			}
+			for (size_t k = 0; k < all.size(); ++k) j += cityJson(*all[k], k + 1 == all.size());
 			j += "  ],\n";
-			if (!secrets.empty())
-			{
-				j += "  \"secret_city_count\": " + std::to_string(secrets.size()) + ",\n  \"secret_cities\": [\n";
-				for (size_t k = 0; k < secrets.size(); ++k)
-				{
-					const CityDef& c = *secrets[k];
-					j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.kind) + ", \"race\": " + Q(c.race) +
-						", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) + ", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
-						", \"radius_m\": " + Num(c.radiusM) + ", \"source\": " + Q(c.source) + ", \"description\": " + Q(c.description) + " }" +
-						(k + 1 < secrets.size() ? ",\n" : "\n");
-				}
-				j += "  ],\n";
-			}
-			j += "  \"poi_count\": " + std::to_string(g.pois.size()) + ",\n  \"pois\": [\n";
-			for (size_t k = 0; k < g.pois.size(); ++k)
-			{
-				const PoiDef& p = g.pois[k];
-				j += "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"x\": " + Num(p.center.x) +
-					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (k + 1 < g.pois.size() ? ",\n" : "\n");
-			}
+			j += "  \"poi_count\": " + std::to_string(pois.size()) + ",\n  \"pois\": [\n";
+			for (size_t k = 0; k < pois.size(); ++k) j += poiJson(*pois[k], k + 1 == pois.size());
 			j += "  ],\n  \"region_count\": " + std::to_string(g.master.regions.size()) + ",\n  \"regions\": [\n";
 			const double C = engine::world::cells::kCellSizeMeters;
 			for (size_t k = 0; k < g.master.regions.size(); ++k)

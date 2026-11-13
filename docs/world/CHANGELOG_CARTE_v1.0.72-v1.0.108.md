@@ -1,7 +1,7 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.108)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.110)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
-> 38 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale). Détail de chaque lot :
+> 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
 > [`LORE_BD.md`](LORE_BD.md) §16 (table des matières en tête de section). État du monde :
 > [`ROYAUMES.md`](ROYAUMES.md) §11 et [`ENFERS.md`](ENFERS.md) §7. Outillage :
 > [`EDITEUR_LORE.md`](EDITEUR_LORE.md), [`OUTILS_LORE.md`](OUTILS_LORE.md). Index : [`README.md`](README.md).
@@ -74,12 +74,16 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.106 | `f6982df` | 11 routes créées, 4 tracés corrigés, balises replacées, 68 cases ouvertes | R | tracés `[GD]` ; Piste des Morts ; baie de l'Île sans route |
 | v1.0.107 | `2c1aba0` | gouffre caché de Deathtrap Canyon et Thurvhal (réapparition secrète) | R (dont `respawn_points.txt` du shard) | noms `[GD]` ; rendu des torches et du fond sombre ; mécanisme de découverte |
 | v1.0.108 | `bb469af` | documentation complète : guide de l'éditeur, outils, monde, synthèse ; commentaires de code | — | — |
-| v1.0.109 | (ce commit) | vérification finale : champ `territory.ville_id` au formulaire de faction (deux éditeurs), `test_editor_fiches.py` calculé depuis les données (point 57) | — | lieux secrets dans `places.json` (point 65) |
+| v1.0.109 | `f939b0b` | vérification finale : champ `territory.ville_id` au formulaire de faction (deux éditeurs), `test_editor_fiches.py` calculé depuis les données (point 57) | — | lieux secrets dans `places.json` (point 65) |
+| v1.0.110 | (ce commit) | **lieux secrets cachés aux joueurs** (point 65, option a) : `secret` des POI au master (11 grottes des dragons, Puits des Lianes), `secret_places.json` réservé au serveur et retiré du paquet client, annuaire MJ du shard, case « Secret » de l'éditeur, `check_secrets.py` en CI ([LORE_BD §16.37](LORE_BD.md)) | — | — |
 
 ## 3. Impact sur le jeu et déploiement
 
-- **Aucun code du jeu, du master ni du shard n'est modifié** (`src/` inchangé) : pas de nouvel
-  opcode, pas de migration, pas de nouvelle clé de `config.json`, `kProtocolVersion` inchangé.
+- **Code du shard** : seul l'annuaire des MJ (`src/shardd/gameplay/gm/GmPlaceDirectory`, v1.0.110)
+  change — il lit en plus `world/<monde>/secret_places.json` (lieux secrets pour `/tp` et `/places`).
+  Pas de nouvel opcode, pas de migration, pas de nouvelle clé de `config.json`, `kProtocolVersion` inchangé.
+- **Paquet client** : `secret_places.json` en est retiré par `.github/scripts/package-windows.ps1`
+  (`Copy-GameData -StripServerOnly`, v1.0.110) ; il reste dans le paquet serveur (deploy/docker).
 - Mais les **données** changent : `game/data/world/royaumes/world_master.json` (cases, villes,
   POI, reliefs, routes du lore), `game/data/world/enfers/world_master.json` (POI), et le
   **générateur** (`tools/world_gen`). La CI régénère le monde : `start_locations.json`
@@ -161,7 +165,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 46. **Lumière des torches** du gouffre (`world.point_lights` du zone.json) non lue par le client (un seul fichier global de 64 lumières) (16.36).
 47. **Fond sombre** du gouffre (`world.ambiance_zones`) : aucun réglage d'ambiance par zone au client (16.36).
 48. **Lave** des Enfers non émissive, sans dégâts (4 couches de sol à couleur fixe) (16.12).
-49. Ville secrète : `secret_cities` non lu (bannière, radar, son de ville absents) ; mécanisme de « lieu découvert » à définir (16.36).
+49. Ville et lieux secrets : absents de `places.json` (v1.0.110 : bannière, radar, son de ville et carte du jeu sans eux) ; mécanisme de « lieu découvert » (révéler un secret au joueur qui l'a trouvé) à définir (16.36, 16.37).
 50. Gouffre : galerie à ciel ouvert (pas de tunnel dans la heightmap), écurie générée au fond, part de S008_E011 renvoyée au cimetière du gouffre (16.36).
 51. Modèles 3D absents : temples incas, palais de Lucifer, viaduc, grottes, croix et brasier du sanctuaire ; le générateur ne modèle pas de falaises côtières (16.1, 16.6, 16.10).
 52. Instances, boss et récompenses absents : raids de l'Île, Mine de la Traverse, Cité-Nid ophidienne, plans infernaux (Seuil des Plans sans transfert), combat contre Xygga endormi (16.2, 16.3, 16.10, 16.11).
@@ -186,33 +190,35 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.9 Vérification finale (v1.0.109)
 
-65. **Lieux secrets dans la sortie publique** : les 11 grottes des dragons de Xygga (`poi_grotte_xygga`, `poi_grotte_premier_ne_*`) et l'entrée ophidienne `poi_ophidiens_puits_des_lianes` sont des POI du master ; le générateur recopie **tous** les POI du master (`g.pois`, Terrain.cpp) dans `places.json` `pois`, fichier livré au client, avec position exacte et description (« grotte cachée », Xygga…). Trois sont sur des cellules générées (S008_E012, N010_E012, N010_E010) et la carte du jeu les affiche une fois la zone découverte. Seules les villes `secret: true` sont écartées de la liste publique (v1.0.107), mais `secret_cities` (Thurvhal, description du Gouffre des Revenus) est écrit dans ce même `places.json` livré au client (non lu, mais lisible). Vérifié sur une génération complète (481 cellules, 354 POI dont ces 12). À trancher : drapeau `secret` des POI (écartés de `pois` comme `secret_cities`, et POI hors cellules générées non publiés) ou découverte par la carte assumée.
+65. ~~**Lieux secrets dans la sortie publique**~~ — **Corrigé en v1.0.110 (option a)** : drapeau `secret` des POI, `secret_places.json` réservé au serveur, retiré du paquet client (LORE_BD §16.37). Constat d'origine : les 11 grottes des dragons de Xygga (`poi_grotte_xygga`, `poi_grotte_premier_ne_*`) et l'entrée ophidienne `poi_ophidiens_puits_des_lianes` sont des POI du master ; le générateur recopie **tous** les POI du master (`g.pois`, Terrain.cpp) dans `places.json` `pois`, fichier livré au client, avec position exacte et description (« grotte cachée », Xygga…). Trois sont sur des cellules générées (S008_E012, N010_E012, N010_E010) et la carte du jeu les affiche une fois la zone découverte. Seules les villes `secret: true` sont écartées de la liste publique (v1.0.107), mais `secret_cities` (Thurvhal, description du Gouffre des Revenus) est écrit dans ce même `places.json` livré au client (non lu, mais lisible). Vérifié sur une génération complète (481 cellules, 354 POI dont ces 12). À trancher : drapeau `secret` des POI (écartés de `pois` comme `secret_cities`, et POI hors cellules générées non publiés) ou découverte par la carte assumée.
 
 **Total : 65 points ouverts consolidés (64 + 1, dont le point 57 corrigé).**
 
 ## 5. Description de PR proposée
 
-**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.109)`
+**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.110)`
 
 **Corps** :
 
 ```markdown
 ## Résumé
 
-Branche `carte/corrections-v1.0.72` : 38 commits, lore v1.0.72 → v1.0.109 (un lot du propriétaire par commit).
+Branche `carte/corrections-v1.0.72` : 39 commits, lore v1.0.72 → v1.0.110 (un lot du propriétaire par commit).
 
 - **Monde jouable** : 191 → 481 cellules jouables (Marche de l'Est, routes de Vozmarkh et de Rhivkhar, passages
   des routes du lore, Vaerdhun, Île de la Trêve) ; lieux du lore 88 → 408 (dont les lieux [GD] des cases ouvertes, avec POI réels) ; 3 villes moyennes ; gouffre
-  caché de Deathtrap Canyon avec Thurvhal, point de réapparition secret.
+  caché de Deathtrap Canyon avec Thurvhal, point de réapparition secret ; lieux secrets (gouffre, grottes des
+  dragons, Puits des Lianes) hors de la carte du jeu et du paquet client (`secret_places.json`, serveur seulement).
 - **Routes** : le générateur suit désormais les routes tracées dans le lore (`lore_roads`, recopiées par
   `tools/lore/sync_routes.py`) ; 165 routes tracées, chaque ville jouable reliée à pied aux départs.
 - **Lore** : Enfers et dragons de Xygga (T15-22), 12 peuples lointains, Ophidiens, régions du hors-série et
   provinces, niveaux de référence et par faction, renommage des 88 villes, étapes de quête situées.
 - **Éditeur de lore** : export sans perte (octet pour octet), modes Déplacer et Tracer, calques (dont secrets),
   champs structurés ; 5 tests Playwright.
-- **Outils et CI** : `sync_positions.py`, `sync_routes.py`, `test_sync_routes.py`, `check_references.py` ajoutés au
-  workflow « Lore — services des villes ».
-- **Générateur** : reliefs colline / crevasse / massif / gouffre, positions manuelles, villes secrètes, palette des
+- **Outils et CI** : `sync_positions.py`, `sync_routes.py`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py`
+  ajoutés au workflow « Lore — services des villes » ; le paquet client Windows retire `secret_places.json`.
+- **Shard** : l'annuaire des MJ (`/tp`, `/places`) lit aussi `secret_places.json`.
+- **Générateur** : reliefs colline / crevasse / massif / gouffre, positions manuelles, villes et lieux secrets, palette des
   Enfers, lumières et ambiance en données.
 - **Documentation** : `docs/world/README.md` (index), `EDITEUR_LORE.md`, `OUTILS_LORE.md`,
   `CHANGELOG_CARTE_v1.0.72-v1.0.108.md`, ROYAUMES.md §11, ENFERS.md §7, table des matières de LORE_BD.md §16.
@@ -220,19 +226,20 @@ Branche `carte/corrections-v1.0.72` : 38 commits, lore v1.0.72 → v1.0.109 (un 
 ## Contrôles
 
 - `validate_city_services.py` (122 villes, 1264 PNJ), `generate_city_services.py --check`,
-  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_references.py` (89 orphelines, rapport)
-- `world_gen_tests` (un test par lot), `world_places_tests`, `start_locations_tests`, `respawn_rules_tests`
+  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py` (89 orphelines, rapport)
+- `world_gen_tests` (un test par lot), `world_places_tests`, `start_locations_tests`, `respawn_rules_tests`, `gm_place_directory_tests`
 - Tests de l'éditeur (Playwright, à la main) : roundtrip, routes, forms, layers et fiches, tous verts sur les deux copies
-  (v1.0.109)
+  (v1.0.110)
 
 ## Points à valider
 
-65 points consolidés : voir `docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md` §4 (noms [GD], niveaux, raids de
+65 points consolidés (57 et 65 corrigés) : voir `docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md` §4 (noms [GD], niveaux, raids de
 Kendrhir 38-56, faction d'Harrodh, 89 références orphelines, routes encore coupées, rendu client des torches, du
-fond sombre et de la lave, mécanisme de découverte de la ville secrète).
+fond sombre et de la lave, mécanisme de découverte des lieux secrets).
 
 **Déploiement** : ⚠️ redéploiement serveur (master + shard) requis — la branche change `world_master.json`, le
-générateur et les données du shard (points de réapparition, spawners, `start_locations.json`) : client, master et
+générateur, l'annuaire des MJ du shard et les données du shard (points de réapparition, spawners, `start_locations.json`,
+`secret_places.json`) : client, master et
 shard **en lock-step** avec le `game/data` généré par la CI du même commit ; **régénération du monde requise**.
 Aucun opcode, aucune migration, `kProtocolVersion` inchangé.
 ```

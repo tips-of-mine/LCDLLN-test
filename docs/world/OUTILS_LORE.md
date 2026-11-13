@@ -115,6 +115,18 @@ Python standard (~2 s), sur des **copies** : master du dépôt à jour (`--check
 ignorée ; extrémités (ville, lieu → POI, jonction, `EXTREMITES`) ; route sans case refusée
 (code 2) sans écriture. Lancement : `python3 tools/lore/test_sync_routes.py`.
 
+### `check_secrets.py` — lieux secrets du lore et du master (v1.0.110)
+
+| | |
+|---|---|
+| Rôle | vérifie que les villes et lieux `secret: true` du lore (case « Secret » de l'éditeur) le sont aussi au master, et l'inverse ; qu'aucune route du lore (`lore_roads`) ne mène à un lieu secret. |
+| Pourquoi | un POI secret au master est écrit par le générateur dans `world/<monde>/secret_places.json` (réservé au serveur, retiré du paquet client) au lieu de `places.json` (carte du jeu) : un oubli au master révélerait le lieu aux joueurs. |
+| Correspondance | celle de `sync_positions.py` (même id de ville ; `lieu_x` = `poi_x`, sinon même nom dans la même case, sinon table explicite). |
+| Sortie | `[OK] lore et master concordent`, ou la liste des écarts (`[FAIL]`, code 1). Fiches secrètes sans POI (Gouffre et Fente des Revenus) : signalées, pas en erreur. |
+| Correction | ajouter ou retirer `"secret": true` sur l'entrée du master (édition à la main, une ligne après `"kind"`), ou cocher / décocher « Secret » dans l'éditeur. |
+
+Lancement : `python3 tools/lore/check_secrets.py` (Python standard, aucune écriture). Voir LORE_BD §16.37.
+
 ### `check_references.py` — références orphelines
 
 | | |
@@ -167,6 +179,7 @@ vers `develop` et `main` quand changent `legacy/world-builder-html/lune-noire-da
 | Positions manuelles recopiées au master | `python tools/lore/sync_positions.py --check` | oui |
 | Routes du lore recopiées au master | `python tools/lore/sync_routes.py --check` | oui |
 | Test du script de recopie des routes | `python tools/lore/test_sync_routes.py` | oui |
+| Lieux secrets concordants (lore ↔ master) | `python tools/lore/check_secrets.py` | oui |
 | Références orphelines | `python tools/lore/check_references.py` | **non** (rapport) |
 
 La CI **ne réécrit rien** : un `--check` en échec signifie qu'il fallait lancer le script sans

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.109",
+    "version": "1.0.110",
     "notes": [
+      "v1.0.110 : [DÉCISION] Lieux secrets cachés aux joueurs (point 65, choix « option a » du propriétaire, 13/11/2026) : champ `secret: true` posé sur les 11 grottes des dragons de Xygga et le Puits des Lianes (Ophidiens), en plus du Gouffre des Revenus, de la Fente des Revenus et de Thurvhal (v1.0.107). Au master, les POI et villes secrets ne figurent plus dans places.json (carte du jeu, bannières, radar, annuaire public) : ils sont écrits dans world/<monde>/secret_places.json, lu seulement par l'annuaire des MJ du shard et retiré du paquet client par la CI. Le lieu reste généré sur le terrain : seul son affichage est caché. Case « Secret » ajoutée aux formulaires lieu et ville de l'éditeur ; tools/lore/check_secrets.py vérifie que le lore et le master concordent.",
       "v1.0.109 : Vérification finale de la branche carte v1.0.72 → v1.0.108 : formulaire de faction de l'éditeur complété (champ territory.ville_id, « Ville du territoire », jusque-là conservé sans champ : Thurvhal des Ghaurdes) ; test_editor_fiches.py rendu robuste (mines et quêtes ancrées calculées depuis les données au lieu des chiffres du v1.0.103). Aucune fiche de lore modifiée.",
       "v1.0.108 : Documentation complète de la branche carte v1.0.72 → v1.0.107 (lot 31 du propriétaire, 12/11/2026) : guide de l'éditeur (docs/world/EDITEUR_LORE.md), outils du lore et CI (docs/world/OUTILS_LORE.md), état du monde (docs/world/ROYAUMES.md §11, docs/world/ENFERS.md §7), table des matières de LORE_BD.md §16, synthèse par version et points ouverts (docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md), index docs/world/README.md. Aucune fiche de lore modifiée.",
       "v1.0.107 : [DÉCISION] Le gouffre caché de Deathtrap Canyon et sa ville (lot 32 du propriétaire, 12/11/2026) : Gouffre des Revenus [GD] en S008_E010, fosse latérale à l'est de la gorge de la route 000074, sans route ni sentier, secrète (calque secret de l'éditeur, hors de la carte du jeu) ; au fond, Thurvhal [GD], village des Ghaurdes [GD] (peuple oublié neutre) avec un cimetière neutre, point de réapparition des morts du canyon ; galerie de la Fente vers une entrée cachée ; torches ; 2 PNJ et 3 quêtes [GD] (LORE_BD §16.36).",
@@ -242923,6 +242924,13 @@
           "nom": "Champ « Ville du territoire » du formulaire de faction",
           "decision": "Vérification finale de la branche (12/11/2026) : territory.ville_id (ville du territoire d'une faction, seule valeur : Thurvhal des Ghaurdes, v1.0.107) a désormais son champ dans le formulaire de faction des deux éditeurs ; l'export reste identique octet pour octet. test_editor_fiches.py lit le nombre de mines et de quêtes ancrées dans les données (point 57 du changelog de la branche). Aucune donnée de lore modifiée.",
           "version": "1.0.109"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_grotte_xygga",
+          "nom": "Lieux secrets hors de la sortie publique",
+          "decision": "Option a du propriétaire (13/11/2026) : un lieu ou une ville `secret: true` est caché aux joueurs — absent de places.json et de la carte du jeu, recopié dans secret_places.json (réservé au serveur, annuaire des MJ, jamais livré au client). Secrets : 11 grottes des dragons, Puits des Lianes, Gouffre et Fente des Revenus, Thurvhal. Les entrées ophidiennes de la Bouche des Roseaux et de la Faille des Mues, et l'Entrée des Abysses, restent publiques (sans POI ou non secrètes au lore). Un portail relié ou une extrémité de route ne peut pas être secret.",
+          "version": "1.0.110"
         }
       ]
     },
@@ -259446,7 +259454,8 @@
         "[INFÉRÉ] (v1.0.81) Cellule S008_E012 : zone volcanique sans ville, sans route ni POI, à deux cases du Cratère du volcan (S008_E014) ; POI poi_grotte_xygga à 3,25 km à l'est et 2 km au nord du centre, sur le flanc (≈ 355 m).",
         "Niveau 70 ; réelle en jeu : POI de la cellule générée (repère et aplanissement de 40 m, aucun modèle de grotte ni de dragon)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_dore_enflamme",
@@ -259537,7 +259546,8 @@
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
         "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : premier-né de Xygga, le dragon doré enflammé (66-70), dans le Désert de l'Oracle (repère proposé 10-25). Cellule non générée ; sur le passage depuis le chemin de l'Oracle à Garundel, le Cairn des Caravaniers (N000_E002, lieu_cairn_des_caravaniers, POI réel) : « pas vers les falaises de grès du nord-est ». [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_rouge_a_cornes",
@@ -259627,7 +259637,8 @@
         "[INFÉRÉ] (v1.0.81) Cellule S005_E001 (montagne) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_rouge_a_cornes.",
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_triceratops",
@@ -259717,7 +259728,8 @@
         "[INFÉRÉ] (v1.0.81) Cellule N011_W005 (marais) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_triceratops.",
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_petit_rouge_epineux",
@@ -259807,7 +259819,8 @@
         "[INFÉRÉ] (v1.0.81) Cellule S007_E021 (montagne) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_petit_rouge_epineux.",
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_blanc_cornes_noires",
@@ -259898,7 +259911,8 @@
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
         "[DÉCISION] (v1.0.92) Région HS : Royaumes des nains du sud (case S006_W001, carte du hors-série ; avant : Royaume Drach, `royaume_drach`) (LORE_BD §16.21)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_noir_ailes_brunes",
@@ -259989,7 +260003,8 @@
         "Niveau 66-70 ; réelle en jeu : POI de la cellule générée (repère et aplanissement de 40 m, aucun modèle de grotte ni de dragon).",
         "[GD] (v1.0.85) Balisage du danger dans la case (LORE_BD §16.14) : premier-né de Xygga, le dragon noir aux ailes brunes (66-70), à une case de la région de départ de Grakhul (1-10). Au sud de la case, sur le passage depuis le départ, le Cairn des Os noircis (lieu_balise_cairn_os_noircis, POI réel poi_balise_cairn_os_noircis) : crânes de grands fauves plantés sur des pieux et os calcinés, dressés par les chamans de Grakhul ; à Grakhul (hameau_grakhul), on interdit « la forêt du nord » aux jeunes sangs. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_hydre",
@@ -260080,7 +260095,8 @@
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
         "[GD] (v1.0.85) Balisage du danger dans la case (LORE_BD §16.14) : premier-né de Xygga, l'hydre (66-70). À Dhemorr (town_0134, N014_E017), les anciens racontent la légende de la « bête aux têtes de toutes les couleurs » du marais du sud et en interdisent l'approche ; sur la lisière du marais, carcasses de bétail et de cerfs rongées jusqu'à l'os. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_glace",
@@ -260170,7 +260186,8 @@
         "[INFÉRÉ] (v1.0.81) Cellule N021_E016 (montagne enneigée du grand nord) choisie pour l'élément ou le milieu du dragon : sans ville, sans route à moins de 4 km, sans POI ni lieu, hors des régions de départ ; POI poi_grotte_premier_ne_glace.",
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_bleu",
@@ -260261,7 +260278,8 @@
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
         "[GD] (v1.0.85) Balisage du danger dans la case (LORE_BD §16.14) : premier-né de Xygga, le dragon bleu (66-70). Les pêcheurs de Vaerdhun (town_0119, N010_W015) ne longent plus la côte vers le sud et parlent d'un « rayon bleu » qui fend les barques ; sur les grèves, rochers vitrifiés et carcasses de phoques gelées. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_grotte_premier_ne_oriental",
@@ -260352,7 +260370,8 @@
         "Niveau 66-70 ; lore seulement : la cellule n'est pas générée (POI calculé par le générateur, hors du monde jouable).",
         "[GD] (v1.0.85) Balisage du danger dans la case (LORE_BD §16.14) : premier-né de Xygga, le dragon oriental doré-orangé (66-70). Les bûcherons et chasseurs de Feyhin Lokcthat (ville_feyhin_lokcthat, N008_E007) ne descendent plus la rivière forestière du sud ; arbres roussis et ossements de gros gibier jalonnent ses berges. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_palais_de_lucifer",
@@ -262911,7 +262930,8 @@
         "Réelle en jeu : POI poi_ophidiens_puits_des_lianes (salle) dans une cellule générée.",
         "[INFÉRÉ] (v1.0.82) Case choisie pour son milieu (jungle) : sans ville ni lieu, hors des grottes de Xygga et à deux cases au moins de chacune, hors régions de départ."
       ],
-      "entree_cachee": true
+      "entree_cachee": true,
+      "secret": true
     },
     {
       "id": "lieu_ophidiens_bouche_des_roseaux",

@@ -81,8 +81,8 @@ namespace tools::world_gen
 		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
 		/// Ville SECRÈTE (v1.0.107, clé `secret` du master, défaut false) : absente de la
 		/// carte publique (places.json `cities`, carte du continent, rues et bâtiments de
-		/// map_features.bin ; recopiée dans `secret_cities` de places.json pour un futur
-		/// mécanisme de découverte côté client), jamais reliée par les routes (ni réseau
+		/// map_features.bin ; v1.0.110 : recopiée dans `secret_places.json`, fichier
+		/// réservé au serveur et retiré du paquet client), jamais reliée par les routes (ni réseau
 		/// du générateur, ni ancre de case d'une route du lore) et ignorée hors de sa
 		/// cellule (peuple des lieux procéduraux voisins). Cimetière et auberge générés
 		/// comme ailleurs (respawn_points.txt). Ex. : la ville du Gouffre des Revenus.
@@ -116,6 +116,13 @@ namespace tools::world_gen
 		bool   hasPosition = false;
 		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
 		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
+		/// Lieu SECRET (v1.0.110, clé `secret` du master, défaut false) : grottes des
+		/// dragons, entrées ophidiennes cachées, Gouffre des Revenus… Absent de
+		/// places.json (carte du jeu, bannières, radar), recopié dans
+		/// `secret_places.json` (annuaire des MJ, jamais livré au client). Le lieu reste
+		/// généré sur le terrain (aplanissement) : seul son affichage est caché. Interdit
+		/// pour un portail relié (`link`) et pour une extrémité de route du lore.
+		bool   secret = false;
 	};
 
 	/// Relief local posé à la main (section `reliefs`, v1.0.72), ancré sur le

@@ -429,7 +429,8 @@ namespace tools::world_gen
 	/// crevasse, massif, gouffre avec altitudes absolues précalculées), `position`
 	/// manuelle des villes et POI (≤ 4300 m par axe, refusée pour une ville de relief
 	/// sauf gouffre), `offset_x_m` / `offset_z_m` des POI, `secret` des villes (interdit
-	/// pour une ville de départ), `lore_roads` (validation stricte : id unique, type
+	/// pour une ville de départ) et des POI (v1.0.110, interdit pour un portail relié),
+	/// `lore_roads` (extrémité secrète refusée) (validation stricte : id unique, type
 	/// road | imperial_road | path, extrémité connue ou vide, cases dans la grille).
 	/// \return false + \p err au premier défaut (aucune sortie écrite).
 	bool LoadWorldMaster(const std::string& contentRoot, const std::string& worldId,
@@ -548,8 +549,11 @@ namespace tools::world_gen
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp
 	/// v1.0.83 : palette infernale de la carte des Enfers ; v1.0.107 : une ville
 	/// secrète est absente de `cities` de places.json, de la carte du continent et de
-	/// map_features.bin, et recopiée dans `secret_cities`. Effet de bord : écrit
-	/// world/<monde>/ (sauf dryRun). \return false + \p err si une écriture échoue.
+	/// map_features.bin ; v1.0.110 : villes ET lieux secrets écrits dans
+	/// `secret_places.json` (réservé au serveur, retiré du paquet client), plus de
+	/// `secret_cities` dans places.json ; le fichier est supprimé s'il n'y a aucun
+	/// secret. Effet de bord : écrit world/<monde>/ (sauf dryRun).
+	/// \return false + \p err si une écriture échoue.
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
 	/// FIX.12 — tracés de la carte du monde (world/<w>/map_features.bin) : routes
 	/// inter-villes (g.roads), chemins locaux des cellules (Road::path), rues des

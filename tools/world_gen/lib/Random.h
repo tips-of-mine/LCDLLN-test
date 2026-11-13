@@ -82,9 +82,53 @@ namespace tools::world_gen
 		return a + (b - a) * sz;
 	}
 
+	namespace noise_detail
+	{
+		/// Directions de gradient du treillis (index 0..15) aux 4 coins d'une maille.
+		struct LatticeCell
+		{
+			uint64_t seed = 0;
+			int64_t ix = 0, iz = 0;
+			bool valid = false;
+			uint8_t k00 = 0, k10 = 0, k01 = 0, k11 = 0;
+		};
+
+		/// Index de gradient (0..15) du nœud (a, b) du treillis de graine \p seed.
+		inline unsigned GradIndex(uint64_t seed, int64_t a, int64_t b)
+		{
+			return static_cast<unsigned>(Hash(seed, static_cast<uint64_t>(a), static_cast<uint64_t>(b)) & 15u);
+		}
+
+		/// Indices de gradient des 4 coins de la maille (ix, iz), mémorisés par fil.
+		/// Optimisation EXACTE (les mêmes entiers que sans cache, donc les mêmes
+		/// octets en sortie) : les points voisins tombent presque toujours dans la
+		/// même maille des octaves basses, dont les 4 hachages (16 Mix64) sont alors
+		/// évités. Cache direct de 4096 mailles par fil (thread_local : aucun partage
+		/// entre fils, sans verrou). Effet de bord : met à jour le cache du fil.
+		inline const LatticeCell& CachedLatticeCell(uint64_t seed, int64_t ix, int64_t iz)
+		{
+			constexpr size_t kSize = 4096;
+			thread_local LatticeCell cache[kSize];
+			const uint64_t key = (seed * 0x9E3779B97F4A7C15ull) ^ (static_cast<uint64_t>(ix) * 0xC2B2AE3D27D4EB4Full)
+				^ (static_cast<uint64_t>(iz) * 0x165667B19E3779F9ull);
+			LatticeCell& c = cache[(key >> 40) & (kSize - 1)];
+			if (!c.valid || c.seed != seed || c.ix != ix || c.iz != iz)
+			{
+				c.seed = seed; c.ix = ix; c.iz = iz; c.valid = true;
+				c.k00 = static_cast<uint8_t>(GradIndex(seed, ix, iz));
+				c.k10 = static_cast<uint8_t>(GradIndex(seed, ix + 1, iz));
+				c.k01 = static_cast<uint8_t>(GradIndex(seed, ix, iz + 1));
+				c.k11 = static_cast<uint8_t>(GradIndex(seed, ix + 1, iz + 1));
+			}
+			return c;
+		}
+	}
+
 	/// Bruit de GRADIENT 2D (Perlin) dans ~[-1,1] : contrairement au bruit de
 	/// valeur, ses passages par zéro ne s'alignent pas sur les axes du treillis
-	/// (pas de « terrasses » rectangulaires dans les crêtes).
+	/// (pas de « terrasses » rectangulaires dans les crêtes). Les indices de gradient
+	/// des coins viennent d'un cache par fil (noise_detail::CachedLatticeCell) :
+	/// mêmes valeurs, au bit près, que le calcul direct.
 	inline double GradNoise2(double x, double z, uint64_t seed)
 	{
 		// 16 directions décalées de 0,2 rad (aucune parallèle aux axes).
@@ -94,13 +138,11 @@ namespace tools::world_gen
 		const int64_t ix = static_cast<int64_t>(fx), iz = static_cast<int64_t>(fz);
 		const double tx = x - fx, tz = z - fz;
 		auto smooth = [](double t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); };
-		auto dot = [seed](int64_t a, int64_t b, double dx, double dz) {
-			const unsigned k = static_cast<unsigned>(Hash(seed, static_cast<uint64_t>(a), static_cast<uint64_t>(b)) & 15u);
-			return kGx[k] * dx + kGz[k] * dz;
-		};
+		const noise_detail::LatticeCell& cell = noise_detail::CachedLatticeCell(seed, ix, iz);
+		auto dot = [](unsigned k, double dx, double dz) { return kGx[k] * dx + kGz[k] * dz; };
 		const double sx = smooth(tx), sz = smooth(tz);
-		const double v00 = dot(ix, iz, tx, tz), v10 = dot(ix + 1, iz, tx - 1.0, tz);
-		const double v01 = dot(ix, iz + 1, tx, tz - 1.0), v11 = dot(ix + 1, iz + 1, tx - 1.0, tz - 1.0);
+		const double v00 = dot(cell.k00, tx, tz), v10 = dot(cell.k10, tx - 1.0, tz);
+		const double v01 = dot(cell.k01, tx, tz - 1.0), v11 = dot(cell.k11, tx - 1.0, tz - 1.0);
 		const double a = v00 + (v10 - v00) * sx;
 		const double b = v01 + (v11 - v01) * sx;
 		return (a + (b - a) * sz) * 1.41421356;

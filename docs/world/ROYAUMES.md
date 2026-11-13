@@ -123,11 +123,28 @@ données de rendu restent dans le paquet client. En local (Windows) :
 #                               les sorties globales (places, carte, départs) ne sont alors PAS réécrites
 # --output <dir>              : écrire ailleurs que dans --content
 # --dry-run                   : générer en mémoire, sans rien écrire
+# --jobs N                    : cellules générées en même temps (défaut : nombre de cœurs, 4 au plus)
 ```
 
-Durée : ~23 min pour les 117 cellules sur 2 cœurs, ~1 min pour 5 (parallélisé, résultat
-identique quel que soit le nombre de cœurs). **Déterministe** : mêmes entrées
-⇒ fichiers identiques octet pour octet (testé).
+Durée (v1.0.112, 2 cœurs) : ≈ 12 s pour la couche macro, puis ≈ 5,3 s par cellule
+(≈ 9,4 s avant l'accélération) ; résultat identique quel que soit le nombre de cœurs ou
+de `--jobs`. **Déterministe** : mêmes entrées ⇒ fichiers identiques octet pour octet
+(testé). En fin de génération, `[world_gen] temps par etape` donne le temps cumulé de
+chaque étape (repère pour de futures optimisations).
+
+**Accélération sans changer une donnée** (v1.0.112, demande du propriétaire : « un
+résultat de qualité ») — fichiers produits identiques au bit près, vérifié sur des
+cellules des Royaumes et sur les 9 cellules des Enfers, et par `world_gen_tests`
+(`TestAccelerationV1112`) :
+
+| Changement | Gain mesuré | Pourquoi le résultat ne change pas |
+|---|---|---|
+| Cache par fil des mailles du bruit de gradient (`Random.h`, `GradNoise2`) | ≈ 1,5× sur tout le générateur | mêmes indices de gradient (entiers), mêmes calculs flottants |
+| Grille des biomes du splat (`Output.cpp`, `SplatBiomeGrid`) | ≈ 1,7× sur l'écriture des textures du sol | biome d'un nœud voisin réutilisé seulement si la case du lore est certaine (majorant rigoureux de la pente de la déformation, `kMacroBiomeWarpLipschitz`), sinon calcul direct |
+| Plusieurs cellules en parallèle (`--jobs`) | sur les machines de la CI à 4 cœurs : recouvre les étapes non parallèles (routes, forêt, végétation, écriture) | chaque cellule ne lit que la couche macro ; bilans fusionnés dans l'ordre des cellules |
+
+Écarté : calculer les biomes sur une grille approchée (≈ 3× plus rapide) — les textures
+du sol auraient changé de quelques mètres aux frontières de biome.
 
 Les sorties ne sont **pas versionnées** (`.gitignore`) : ~40 Mo par cellule.
 Seuls `world/royaumes/world_master.json` (source) et

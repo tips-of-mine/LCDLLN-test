@@ -4,14 +4,18 @@
 #include "WorldGenContext.h"
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <functional>
 #include <limits>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <set>
+#include <thread>
 
 namespace tools::world_gen
 {
@@ -240,10 +244,26 @@ namespace tools::world_gen
 		g.outputRoot = opt.outputRoot.empty() ? opt.contentRoot : opt.outputRoot;
 		if (!LoadWorldMaster(opt.contentRoot, opt.worldId, g.master, err)) return false;
 
+		// Mesure du temps par étape (secondes cumulées), affichée en fin de génération.
+		using Clock = std::chrono::steady_clock;
+		std::map<std::string, double> stepSec;
+		std::vector<std::string> stepOrder;
+		// Exécute fn et ajoute sa durée à l'étape name (appelable depuis plusieurs fils :
+		// avec des cellules en parallèle, les durées des cellules s'additionnent).
+		std::mutex stepMutex;
+		auto timed = [&](const char* name, auto&& fn) {
+			const auto t0 = Clock::now();
+			fn();
+			const double dt = std::chrono::duration<double>(Clock::now() - t0).count();
+			std::lock_guard<std::mutex> lock(stepMutex);
+			if (!stepSec.count(name)) stepOrder.push_back(name);
+			stepSec[name] += dt;
+		};
+
 		// Couche macro : tout ce qui traverse les frontières de cellules.
-		BuildMacroTerrain(g);   // relief grossier, sites des villes, lacs
-		BuildMacroRivers(g);    // rivières (contournent les villes)
-		BuildMacroRoads(g);     // routes du lore + corridors du générateur, profils en long
+		timed("macro : relief", [&] { BuildMacroTerrain(g); });   // relief grossier, sites des villes, lacs
+		timed("macro : rivieres", [&] { BuildMacroRivers(g); });  // rivières (contournent les villes)
+		timed("macro : routes", [&] { BuildMacroRoads(g); });     // routes du lore + corridors du générateur, profils en long
 
 		std::vector<std::string> ids = opt.cells.empty() ? g.master.generatedCells : opt.cells;
 		// Monde complet : cellules des routes reliant les villes de départ.
@@ -260,9 +280,11 @@ namespace tools::world_gen
 		// Un sous-ensemble (--cells) ne réécrit PAS les sorties globales : elles
 		// seraient incomplètes (départs, lieux et carte des autres cellules perdus).
 		const bool writeGlobal = opt.cells.empty();
-		std::vector<std::unique_ptr<World>> worlds;
+		std::vector<std::unique_ptr<World>> worlds(ids.size());
 		std::vector<World*> cells;
 		GenReport total;
+		// Cellules valides (avant tout calcul).
+		std::vector<engine::world::cells::CellCoord> coords;
 		for (const std::string& id : ids)
 		{
 			int n = 0, e = 0;
@@ -271,44 +293,86 @@ namespace tools::world_gen
 			{
 				err = "cellule hors de la grille de la carte '" + g.master.worldId + "' : " + id; return false;
 			}
+			coords.push_back({ n, e });
+		}
+		// Génère la cellule k (pipeline complet, écriture comprise) dans worlds[k].
+		// Ne lit que g (constant) et n'écrit que dans sa cellule et ses fichiers :
+		// plusieurs cellules peuvent tourner en même temps. \return message d'erreur
+		// (vide si succès).
+		auto genCell = [&](size_t k) -> std::string {
+			std::string cerr;
 			auto w = std::make_unique<World>();
-			InitCell(*w, g, { n, e });
+			timed("cellule : init", [&] { InitCell(*w, g, coords[k]); });
 			// L'ordre compte : chaque étape s'appuie sur les champs des précédentes.
-			BuildPlaces(*w);        // lieux procéduraux (avant le terrain : leurs plateaux)
-			BuildCellTerrain(*w);   // altitude + biomes (fonctions macro)
-			FlattenSettlements(*w); // plateaux urbains
-			CarveWater(*w);         // lits de rivière, lacs
-			ApplyRoads(*w);         // routes globales + chemins locaux
-			FillSeaPockets(*w);     // EAU.5 : un déblai de route ne crée pas de « mare de mer »
-			if (!ImportLegacyContent(*w, err)) return false; // occupe la place des objets historiques
-			BuildSettlements(*w);   // rues, bâtiments, remparts, mobilier, graphe PNJ
-			BuildForestMask(*w);    // FORET.1 : densité des forêts (arbres posés par le client)
-			BuildVegetation(*w);    // décor naturel (respecte l'occupation)
-			BuildPopulation(*w);    // spawners, respawns, départs
+			timed("cellule : lieux", [&] { BuildPlaces(*w); });            // lieux procéduraux (avant le terrain : leurs plateaux)
+			timed("cellule : terrain", [&] { BuildCellTerrain(*w); });     // altitude + biomes (fonctions macro)
+			timed("cellule : plateaux", [&] { FlattenSettlements(*w); });  // plateaux urbains
+			timed("cellule : eau", [&] { CarveWater(*w); });               // lits de rivière, lacs
+			timed("cellule : routes", [&] { ApplyRoads(*w); });            // routes globales + chemins locaux
+			timed("cellule : poches de mer", [&] { FillSeaPockets(*w); }); // EAU.5 : un déblai de route ne crée pas de « mare de mer »
+			bool imported = true;
+			timed("cellule : import", [&] { imported = ImportLegacyContent(*w, cerr); }); // occupe la place des objets historiques
+			if (!imported) return cerr.empty() ? std::string("import du contenu historique impossible") : cerr;
+			timed("cellule : agglomerations", [&] { BuildSettlements(*w); }); // rues, bâtiments, remparts, mobilier, graphe PNJ
+			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
+			timed("cellule : vegetation", [&] { BuildVegetation(*w); });      // décor naturel (respecte l'occupation)
+			timed("cellule : population", [&] { BuildPopulation(*w); });      // spawners, respawns, départs
 			w->report.scatterInstances = w->scatter.size();
 			w->report.buildings = w->buildings.size();
 			w->report.spawners = w->spawners.size();
 
 			for (const CityDef& c : w->cities)
 				if (w->HeightAt(c.center) < w->master.scale.seaLevelM + 1.0)
-				{
-					err = "agglomeration sous le niveau de la mer : " + c.id;
-					return false;
-				}
-			if (!opt.dryRun && !WriteCellOutputs(*w, err)) return false;
+					return "agglomeration sous le niveau de la mer : " + c.id;
+			bool written = true;
+			if (!opt.dryRun) timed("cellule : ecriture", [&] { written = WriteCellOutputs(*w, cerr); });
+			if (!written) return cerr.empty() ? std::string("ecriture de la cellule impossible") : cerr;
 			// Altitude du sol au centre des lieux remarquables (portails : portals.json),
 			// relevée AVANT la libération de la heightmap.
 			for (PoiDef& p : w->pois)
 				p.y = w->HeightAt(p.center);
-			Accumulate(total, w->report);
-			++total.cells;
 			// Libère les champs lourds (≈ 100 Mo par cellule) : seules les listes
 			// servent encore aux sorties globales.
 			w->height = {}; w->biome = {}; w->roadDist = {}; w->riverDist = {}; w->urban = {};
 			w->occupied.Clear();
 			w->scatter.clear(); w->scatter.shrink_to_fit();
+			worlds[k] = std::move(w);
+			return {};
+		};
+		// Plusieurs cellules en même temps (opt.jobs, 4 au plus par défaut : ≈ 350 Mo
+		// de mémoire par cellule en cours). Chaque fil prend la cellule suivante ; une
+		// erreur arrête la distribution, et c'est la PREMIÈRE cellule en erreur (ordre
+		// de la liste) qui est rapportée, comme en génération séquentielle.
+		{
+			const unsigned hw = std::max(1u, std::thread::hardware_concurrency());
+			const size_t jobs = std::min<size_t>(ids.size(), opt.jobs > 0 ? static_cast<size_t>(opt.jobs) : std::min(4u, hw));
+			std::vector<std::string> errs(ids.size());
+			std::atomic<size_t> next{ 0 };
+			std::atomic<bool> stop{ false };
+			auto worker = [&]() {
+				for (size_t k = next.fetch_add(1); k < ids.size() && !stop.load(); k = next.fetch_add(1))
+				{
+					errs[k] = genCell(k);
+					if (!errs[k].empty()) stop.store(true);
+				}
+			};
+			std::printf("[world_gen] %zu cellule(s) a generer, %zu en parallele\n", ids.size(), jobs);
+			if (jobs <= 1) worker();
+			else
+			{
+				std::vector<std::thread> pool;
+				for (size_t t = 0; t < jobs; ++t) pool.emplace_back(worker);
+				for (std::thread& th : pool) th.join();
+			}
+			for (size_t k = 0; k < ids.size(); ++k)
+				if (!errs[k].empty()) { err = errs[k]; return false; }
+		}
+		// Bilans fusionnés dans l'ordre des cellules (indépendant du parallélisme).
+		for (std::unique_ptr<World>& w : worlds)
+		{
+			Accumulate(total, w->report);
+			++total.cells;
 			cells.push_back(w.get());
-			worlds.push_back(std::move(w));
 		}
 		// v1.0.111 — nombre exact de cimetières (graveyards.target du master, 666 aux
 		// Royaumes) : contrôlé seulement sur une génération complète (sans --cells).
@@ -335,7 +399,17 @@ namespace tools::world_gen
 		if (!opt.dryRun)
 		{
 			if (!WriteHouseTemplates(g.outputRoot, g.report, err)) return false;
-			if (writeGlobal && !WriteGlobalOutputs(g, cells, err)) return false;
+			bool globalOk = true;
+			if (writeGlobal) timed("sorties globales", [&] { globalOk = WriteGlobalOutputs(g, cells, err); });
+			if (!globalOk) return false;
+		}
+		// Temps par étape (cumul sur toutes les cellules) : repère pour les optimisations.
+		{
+			double sum = 0.0;
+			for (const auto& kv : stepSec) sum += kv.second;
+			std::printf("[world_gen] temps par etape (%zu cellule(s), %.1f s cumules sur tous les fils) :\n", cells.size(), sum);
+			for (const std::string& name : stepOrder)
+				std::printf("  %-26s %8.1f s  %5.1f %%\n", name.c_str(), stepSec[name], sum > 0.0 ? 100.0 * stepSec[name] / sum : 0.0);
 		}
 		total.roads = g.report.roads;
 		total.roadLengthM = g.report.roadLengthM;

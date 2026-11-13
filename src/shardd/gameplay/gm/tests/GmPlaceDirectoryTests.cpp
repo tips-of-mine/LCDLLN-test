@@ -152,6 +152,21 @@ int main()
 		Check(dir.RegionAt(2000.0f, 0.0f, CellMap::Enfers) == nullptr, "régions du continent absentes des enfers");
 	}
 
+	// v1.0.110 — lieux secrets (secret_places.json, "secret": true) : ajoutés, marqués
+	// secret, détail préfixé ; les lieux publics restent non secrets.
+	{
+		const size_t before = dir.Size();
+		Check(dir.AppendFromText(R"({ "schema_version": 1, "world": "royaumes", "secret": true,
+		  "cities": [ { "id": "ville_thurvhal", "name": "Thurvhal", "kind": "bourg", "x": 5000, "z": 5000 } ],
+		  "pois": [ { "id": "poi_grotte_xygga", "name": "Grotte du volcan endormi", "kind": "salle", "x": 6000, "z": 6000 } ] })", err),
+			"ajout des lieux secrets : " + err);
+		Check(dir.Size() == before + 2u, "lieux secrets ajoutés");
+		const auto cave = dir.Search("grotte du volcan");
+		Check(!cave.empty() && cave[0]->secret && cave[0]->detail == "secret · salle", "lieu secret marqué, détail préfixé");
+		const auto pub = dir.Search("Marn");
+		Check(!pub.empty() && !pub[0]->secret, "lieu public non secret");
+	}
+
 	if (s_failCount == 0)
 		std::cout << "gm_place_directory_tests : tout est vert" << std::endl;
 	return s_failCount == 0 ? 0 : 1;

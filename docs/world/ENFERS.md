@@ -5,6 +5,11 @@
 propre grille d'intérêt. Ce n'est pas un groupe de cellules réservées dans la
 grille du continent.
 
+> **Voir aussi** : index [`README.md`](README.md) ; synthèse de la carte au v1.0.108 :
+> [§7](#7-synthèse-de-la-carte-des-enfers-v10108) ; continent : [`ROYAUMES.md`](ROYAUMES.md) ;
+> sources BD et décisions : [`LORE_BD.md`](LORE_BD.md) §15.8, §16.10, §16.12 ; évolutions de la
+> branche : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md).
+
 ## 1. La carte
 
 | Point | Valeur |
@@ -38,6 +43,21 @@ par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (gen
 | S001_W001 | `M` | Autel des Pactes (`sanctuaire`) |
 | S001_E001 | `M` | Faille des Cohortes (`faille`) |
 | S001_E000 | `V` | Poste de garde du Portail I (`camp`), à 400 m à l'est du portail |
+
+**v1.0.81** (lieux des tomes 15-22, §6) : 7 POI de haut niveau sur les bras de la croix, placés par décalage
+(`offset_x_m` / `offset_z_m`) loin des portails ; la case de la Citadelle n'en reçoit aucun.
+
+| Case | POI (genre, décalage depuis le centre) |
+|---|---|
+| N001_E000 | Palais de Lucifer (`temple`, 0 / −3 250 m), Nef des Âmes (`salle`, −2 000 / −3 250 m), Plateau du Rituel (`sanctuaire`, +2 750 / −2 250 m) |
+| N000_W001 | Mer de lave (`volcan`, −2 750 / −1 250 m), Seuil des Plans (`faille`, −2 750 / +2 250 m) |
+| N000_E001 | Canyon des Falaises rouges (`defile`, +2 500 / −2 000 m, viaduc compris), Plateaux suspendus des Légions (`camp`, +2 500 / +2 500 m) |
+
+**Palette (v1.0.83)** : le générateur applique aux Enfers une palette infernale (T15-22) : ni herbe, ni forêt,
+ni broussaille, ni neige ; sol de terre rouge-brun et de roche (splat), arbres morts et rochers ; sur la carte du
+monde, roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave autour de la Mer de lave de
+N000_W001, fleuves de lave dans la croix). La lave n'est pas émissive en jeu (pas de couche dédiée côté client).
+Détail : [`LORE_BD.md`](LORE_BD.md) §16.12.
 
 Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
 (`routes`) ne couvre pas les Enfers. Faune procédurale de la carte (`Population.cpp`, `CreatureFor`) :
@@ -118,3 +138,90 @@ La liste est configurable par archétype (toute race, tout PNJ d'ambiance).
 ~2 min (9 cellules). La CI génère `royaumes` puis `enfers` avant l'empaquetage
 et vérifie `world/enfers/start_locations.json` et les deux `portals.json`.
 Déploiement : client, master et shard **en lock-step** (`kProtocolVersion` 20).
+
+## 6. Lieux et hiérarchie des tomes 15-22 (v1.0.81)
+
+**Décisions du propriétaire (11/11/2026)** : à l'époque du jeu (entre le T1 et le T11), **Lucifer** est le maître
+des Enfers ; les tomes 16 à 22, où il a disparu et où Belzébuth règne, sont postérieurs et ne s'appliquent pas. Les
+tomes 15 à 22 sont une référence visuelle et technique, sauf les Enfers et les dragons de Xygga, intégrés au lore.
+Détail et sources : [`LORE_BD.md`](LORE_BD.md) §16.10.
+
+**Hiérarchie** (`regle_hierarchie_enfers`) : Lucifer (nom secret lu « Nerheneïm », T15 p.31) ; princes : Belzébuth,
+Roi des Mouches (grand prince, non jouable, utilisable dans les histoires), Pazuzu (cieux des Enfers), Proserpine et
+Helle (archidémonesses), Quetebah, Bellatrux, maîtres des plans ; en dessous : la mère de Wismerhill, la démone
+conseillère de Belzébuth, les ducs des abysses, les démons de cour, la garde rouge, Sorrow, Bourzigutt ; puis les
+légions. Les démons restent hostiles aux humains (§4).
+
+**Sur la carte** (§1, v1.0.81) : le palais de Lucifer (nef gothique rouge, piliers de crânes, sol vert au
+pentagramme, Grand Trône doré sur une pyramide de visages hurlants, bain de sang aux défenses d'ivoire), la nef des
+âmes et le plateau du rituel au nord ; la mer de lave et le Seuil des Plans à l'ouest ; le canyon des falaises
+rouges (fleuves et cascades de lave, viaduc aux gueules qui vomissent la lave, pyramides inversées flottantes) et les
+plateaux suspendus des légions à l'est. Le pentacle étoilé de seuil est rattaché aux 5 portes (lore, sans POI).
+Contenu de haut niveau (55-70, palais 66-70) dans la zone de départ 1-10, permis si les chemins sont balisés.
+
+**Hors carte** (`regle_plans_infernaux`) : les plans du Jardin des Supplices, des eaux sombres, du feu, de la
+maladie, des insectes et le plan prison s'atteignent par le **Seuil des Plans** (N000_W001). Ce n'est pas un
+portail apparié : aucun transfert de carte n'existe encore (instances à créer).
+
+**Ce qui est réel en jeu** : les 7 POI (repère, nom, aplanissement de 40 m), générés avec les 9 cellules sans
+avertissement. **Lore seulement** : pas de lave, de palais, de viaduc ni de plateau suspendu modélisés ; pas de PNJ ni
+de boss pour Lucifer et les princes ; plans sans instance.
+
+## 7. Synthèse de la carte des Enfers (v1.0.108)
+
+Vue d'ensemble pour un contributeur : ce qui fait foi, où sont les données, ce qui existe en jeu.
+
+### 7.1 Hiérarchie (`regle_hierarchie_enfers`, v1.0.81)
+
+À l'époque du jeu (T1-T11), **Lucifer** règne ; les tomes 16-22 (Belzébuth régent puis maître)
+sont postérieurs et ne s'appliquent pas. Pas de noms inventés : désignations descriptives.
+
+| Rang | Personnages (fiches `persons`, faction `faction_legion_infernale`) | Note |
+|---|---|---|
+| Maître | Lucifer (`char_lucifer_prince_tenebres`), nom secret « Nerheneïm » (T15 p.31) | trône au Palais de Lucifer |
+| Princes | Belzébuth, Roi des Mouches (`char_belzebuth`, grand prince **non jouable**, utilisable dans les histoires) ; Pazuzu (cieux des Enfers) ; Proserpine et Helle (archidémonesses) ; Quetebah ; Bellatrux | |
+| Maîtres des plans | Fleur du Mal (Jardin des Supplices) ; prince-pieuvre violet, démon de flammes à tête de crâne, prince vert pustuleux, prince insectoïde violet (`char_maitre_plan_*`) | un par plan hors carte |
+| En dessous | mère de Wismerhill ; démone conseillère de Belzébuth ; ducs des abysses ; démons de cour ; garde du palais (« garde rouge ») ; Sorrow (six bras) ; Bourzigutt | |
+| Puis | les légions (Légion infernale, faction de jeu `legion`) | départ des démons à la Citadelle |
+| Hors hiérarchie | l'archimage Crâne (`char_archimage_crane`), archimage de Methraton | pas un démon |
+
+### 7.2 Lieux de la carte
+
+| Case | Biome | Lieux (POI, genre) | Niveaux (zone 1-10) |
+|---|---|---|---|
+| N000_E000 | `V` | **Citadelle de la Légion** (ville de départ, cimetière neutre), Portail V ; pentacle étoilé de seuil (lore, sans POI) | 1-10 |
+| N001_E000 | `V` | Portail II ; Palais de Lucifer (`temple`), Nef des Âmes (`salle`), Plateau du Rituel (`sanctuaire`) | POI de haut niveau (palais 66-70) |
+| N000_W001 | `V` | Portail III ; Mer de lave (`volcan`), Seuil des Plans (`faille`) | POI de haut niveau (55-70) |
+| N000_E001 | `V` | Portail IV ; Canyon des Falaises rouges et Viaduc des Gueules de lave (`defile`), Plateaux suspendus des Légions (`camp`) | POI de haut niveau (55-70) |
+| S001_E000 | `V` | Portail I ; Poste de garde du Portail I (`camp`) | 1-10 (abords du portail plus forts) |
+| N001_W001 | `M` | Ruines du Bastion des Damnés (`ruine`) | 1-10 |
+| N001_E001 | `M` | Camp d'épreuve des Recrues (`camp`) | 1-10 |
+| S001_W001 | `M` | Autel des Pactes (`sanctuaire`) | 1-10 |
+| S001_E001 | `M` | Faille des Cohortes (`faille`) | 1-10 |
+
+Décalages exacts des POI : [§1](#1-la-carte). Le contenu de haut niveau dans la zone 1-10 est
+admis s'il est balisé (décision v1.0.78). Portails appariés aux Portes du continent : [§3](#3-les-portails).
+
+### 7.3 Plans hors carte (`regle_plans_infernaux`)
+
+Jardin des Supplices, plan des eaux sombres, plan du feu, plan de la maladie, plan des insectes,
+plan prison. Accès prévu par le **Seuil des Plans** (N000_W001) ; ce n'est pas un portail apparié :
+**aucune instance ni aucun transfert de carte n'existe encore**.
+
+### 7.4 Palette du générateur (v1.0.83)
+
+| Sortie de `tools/world_gen` (carte `enfers`) | Rendu |
+|---|---|
+| Splat `terrain_splat.slap` | terre rouge-brun (plaines, lave, chemins) et roche (pentes, coins `M`, sommets) ; ni herbe ni neige |
+| Masque d'herbe, densité forestière | vides |
+| Décor `scatter.bin` | arbres morts (calcinés) et rochers seulement |
+| Carte du monde `world_map.png` | roche rouge striée par l'altitude, basalte noir, cendre grise au sommet, lave jaune-orange non ombrée |
+| Lave (`InfernalLavaAt`) | mer de lave (~1,7 km) autour de la Mer de lave, fleuves de lave (80-120 m) dans la croix, tenus à l'écart des villes et des lieux |
+
+Toutes les branches sont gardées par `IsInfernalMap` : le continent n'est pas touché.
+
+### 7.5 Réel en jeu / lore seulement
+
+| Réel en jeu | Lore seulement (à faire) |
+|---|---|
+| 9 cellules, Citadelle, cimetière neutre, 5 portails appariés, POI (repère, nom, aplanissement), palette, faune procédurale, hostilité des démons envers les humains | lave **émissive** et dégâts (le client n'a que 4 couches de sol à couleur fixe), palais / viaduc / plateaux modélisés, PNJ et boss (Lucifer, princes), instances des plans, carte des Enfers dans l'éditeur de lore |

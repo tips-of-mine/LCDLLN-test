@@ -575,6 +575,9 @@ namespace tools::world_gen
 				for (const CityDef& c : w.cities)
 					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 120.0) nearCity = true;
 				if (nearCity) continue;
+				// Gouffre (v1.0.107) : refuge du peuple oublié, ni faune ni monstres dans
+				// la fosse ni dans sa galerie (le canyon autour garde les siens).
+				if (InAnyGouffre(w.master, p, 20.0)) continue;
 				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 25.0f) continue;
 				double dStart = 1e18;
@@ -634,13 +637,22 @@ namespace tools::world_gen
 			const CityDef* c = w.FindCity(L.cityId);
 			if (!c || c->id == w.master.importAnchorCity) continue; // le hameau importé a les siens
 			if (!c->procedural.empty() && c->procedural != "hameau") continue; // fermes, camps, ruines : pas de respawn
-			RespawnDef g; g.type = "graveyard"; g.position = L.graveyard; g.y = w.HeightAt(L.graveyard) + 1.0; g.faction = "-";
-			w.respawns.push_back(g);
+			if (L.hasGraveyard) // v1.0.111 : hameau de graveyards.without_graveyard : auberge seule
+			{
+				RespawnDef g; g.type = "graveyard"; g.position = L.graveyard; g.y = w.HeightAt(L.graveyard) + 1.0; g.faction = "-";
+				w.respawns.push_back(g);
+			}
 			if (c->state != "ruine" && c->kind != "camp")
 			{
 				RespawnDef inn; inn.type = "inn"; inn.position = L.innDoor; inn.y = w.HeightAt(L.innDoor) + 1.0; inn.faction = "-";
 				w.respawns.push_back(inn);
 			}
+		}
+		// v1.0.111 : cimetière isolé (cellule sans agglomération à cimetière).
+		if (w.hasIsolatedGraveyard)
+		{
+			RespawnDef g; g.type = "graveyard"; g.position = w.isolatedGraveyard; g.y = w.HeightAt(w.isolatedGraveyard) + 1.0; g.faction = "-";
+			w.respawns.push_back(g);
 		}
 		w.report.respawnPoints = w.respawns.size() + w.importedRespawnLines.size();
 

@@ -486,6 +486,7 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `tools/hlod_builder/` | Génère les niveaux de détail (HLOD) pour les zones 3D. |
 | `tools/zone_builder/` | Construit les packages de zones (chunks, GLTF → PAK). |
 | `tools/world_gen/` | **Générateur du monde « Royaumes »** (`lcdlln_world_gen`) : depuis `game/data/world/royaumes/world_master.json`, produit terrain, routes, eau, villes, végétation, PNJ et points de départ. Doc : `docs/world/ROYAUMES.md`. |
+| `tools/lore/` | Scripts du fichier de lore (`legacy/world-builder-html/lune-noire-data.json`) : services des villes, recopie lore → master (`sync_positions.py`, `sync_routes.py`), références orphelines, tests de l'éditeur de lore. Doc : `docs/world/OUTILS_LORE.md` ; éditeur : `docs/world/EDITEUR_LORE.md` ; index : `docs/world/README.md`. |
 | `tools/load_tester/` | Simule des connexions massives pour tester la charge serveur. |
 | `tools/migration_checksum/` | Vérifie l'intégrité des migrations SQL. |
 
@@ -2627,7 +2628,7 @@ Une **minimap radar** schématique (sans texture, dessinée à l'`ImDrawList`) a
 
 ## Monde jouable « Royaumes » (2026-10)
 
-Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré par `tools/world_gen` depuis `game/data/world/royaumes/world_master.json` ; sorties générées par la CI (non versionnées). Avancement par étapes et doc complète : **`docs/world/ROYAUMES.md`**.
+Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré par `tools/world_gen` depuis `game/data/world/royaumes/world_master.json` ; sorties générées par la CI (non versionnées). Avancement par étapes et doc complète : **`docs/world/ROYAUMES.md`**. Index de la documentation du monde (éditeur de lore, outils, synthèse de la branche carte v1.0.72 → v1.0.108) : **`docs/world/README.md`**.
 
 | Fichier | Rôle |
 |---|---|

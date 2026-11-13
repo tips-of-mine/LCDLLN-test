@@ -164,6 +164,8 @@ namespace tools::world_gen
 		const uint64_t seed = w.master.seed;
 		w.forestMaskRes = N;
 		w.forestMask.assign(static_cast<size_t>(N) * N, 0u);
+		// v1.0.83 : aucune forêt de remplissage aux Enfers (carte vide, explicite).
+		if (IsInfernalMap(w.master)) return;
 		ParallelRows(N, [&](int j) {
 			for (int i = 0; i < N; ++i)
 			{
@@ -213,8 +215,12 @@ namespace tools::world_gen
 		};
 		const uint64_t seed = w.master.seed;
 		const size_t before = w.scatter.size();
+		// v1.0.83 : aux Enfers, ni broussailles, ni fleurs, ni herbes hautes ; seuls
+		// des arbres morts (calcinés) et des rochers. Les Royaumes sont inchangés.
+		const bool infernal = IsInfernalMap(w.master);
 		for (const ClassParams& cp : classes)
 		{
+			if (infernal && (cp.cls == VegClass::Bush || cp.cls == VegClass::Small)) continue;
 			// Treillis GLOBAL : la case (gi, gj) couvre [gi·cellM, (gi+1)·cellM[.
 			const int gi0 = static_cast<int>(std::floor(w.terrainOriginX / cp.cellM)) - 1;
 			const int gj0 = static_cast<int>(std::floor(w.terrainOriginZ / cp.cellM)) - 1;
@@ -277,7 +283,8 @@ namespace tools::world_gen
 					const std::vector<Species>* pool = nullptr;
 					switch (cp.cls)
 					{
-					case VegClass::Tree: pool = &TreesFor(code, alt); break;
+					// Enfers : le jeu d'arbres morts du biome volcanique, même dans les coins `M`.
+					case VegClass::Tree: pool = &TreesFor(infernal ? 'V' : code, alt); break;
 					case VegClass::Bush: pool = &BushesFor(code); break;
 					case VegClass::Small: pool = &SmallFor(code); break;
 					case VegClass::Rock: pool = &RocksFor(code); break;

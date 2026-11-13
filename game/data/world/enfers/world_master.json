@@ -135,6 +135,69 @@
       "cell": "S001_E000",
       "kind": "camp",
       "description": "Corps de garde de la Legion a quelques centaines de metres du Portail I : les sentinelles surveillent ce qui sort du cercle de pierres noires [GD v1.0.71, region de depart des Enfers]."
+    },
+    {
+      "id": "poi_enfers_palais_de_lucifer",
+      "name": "Palais de Lucifer",
+      "cell": "N001_E000",
+      "kind": "temple",
+      "offset_x_m": 0,
+      "offset_z_m": -3250,
+      "description": "Cathedrale gothique rouge aux voutes ogivales et aux piliers de cranes, sol vert au grand pentagramme ; au fond, le trone dore de Lucifer sur une pyramide de visages hurlants, et le bain de sang cerne de defenses d'ivoire. Contenu de tres haut niveau (66-70), chemins balises [BD-T15 p.24, BD-T16 p.12-15, BD-T20 p.13-14 et p.30 ; GD v1.0.81]."
+    },
+    {
+      "id": "poi_enfers_nef_des_ames",
+      "name": "Nef des Ames",
+      "cell": "N001_E000",
+      "kind": "salle",
+      "offset_x_m": -2000,
+      "offset_z_m": -3250,
+      "description": "Nef rouge sang du palais ou les ames des morts arrivent en flots de bulles vert-jaune a visages hurlants, autour d'une plateforme ronde posee sur un amas de corps ; Lucifer s'en nourrit [BD-T15 p.15 ; GD v1.0.81]."
+    },
+    {
+      "id": "poi_enfers_plateau_du_rituel",
+      "name": "Plateau du Rituel",
+      "cell": "N001_E000",
+      "kind": "sanctuaire",
+      "offset_x_m": 2750,
+      "offset_z_m": -2250,
+      "description": "Disque de roche orange borde de pics noirs, grave d'un pentagramme rouge, ou Lucifer accroit ses pouvoirs de detection dans un anneau de flammes jaunes et vertes [BD-T15 p.24, BD-T17 p.16 ; GD v1.0.81]."
+    },
+    {
+      "id": "poi_enfers_mer_de_lave",
+      "name": "Mer de lave",
+      "cell": "N000_W001",
+      "kind": "volcan",
+      "offset_x_m": -2750,
+      "offset_z_m": -1250,
+      "description": "Rivage d'une mer de lave jaune et orange hachee de veines sombres, ou emergent des ilots de basalte noir en colonnes ; fleuves et cascades de lave y descendent. Abords de haut niveau, balises [BD-T16 p.16, BD-T17 p.16, BD-T22 p.22 ; GD v1.0.81]."
+    },
+    {
+      "id": "poi_enfers_seuil_des_plans",
+      "name": "Seuil des Plans",
+      "cell": "N000_W001",
+      "kind": "faille",
+      "offset_x_m": -2750,
+      "offset_z_m": 2250,
+      "description": "Faille cerclee de runes au bord de la mer de lave : par elle on passe dans les plans infernaux des princes (Jardin des Supplices, eaux sombres, feu, maladie, insectes, plan prison), hors de la carte [GD v1.0.81, a valider]."
+    },
+    {
+      "id": "poi_enfers_canyon_des_falaises_rouges",
+      "name": "Canyon des Falaises rouges",
+      "cell": "N000_E001",
+      "kind": "defile",
+      "offset_x_m": 2500,
+      "offset_z_m": -2000,
+      "description": "Canyon aux falaises rouges striees ou coulent fleuves et cascades de lave ; un viaduc a arches le franchit, chaque arche portant un visage sculpte qui vomit de la lave ; des pyramides inversees flottent au-dessus [BD-T16 p.16 ; GD v1.0.81]."
+    },
+    {
+      "id": "poi_enfers_plateaux_des_legions",
+      "name": "Plateaux suspendus des Legions",
+      "cell": "N000_E001",
+      "kind": "camp",
+      "offset_x_m": 2500,
+      "offset_z_m": 2500,
+      "description": "Dalles de pierre geantes suspendues dans un ciel de feu, etagees a perte de vue, ou les legions se rangent en carres sous leurs bannieres ; des pyramides inversees portent des corteges de demons [BD-T16 p.16, BD-T20 p.30-31 et p.33 ; GD v1.0.81]."
     }
   ],
   "imports": {

@@ -14,6 +14,7 @@
 // (src/shared/world/WorldCells.h).
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -70,6 +71,23 @@ namespace tools::world_gen
 		/// Lieu PROCÉDURAL (enrichissement de cellule) : vide pour une ville du
 		/// lore, sinon ferme|bucherons|bandits|ruine|mine|hameau.
 		std::string procedural;
+		/// Position posée à la main (v1.0.95, clé `position` du master :
+		/// `{ "x_m": …, "z_m": … }`, recopiée du lore par tools/lore/sync_positions.py) :
+		/// décalage en MÈTRES depuis le CENTRE de la case (X vers l'est, Z vers le sud),
+		/// |x|, |z| ≤ 4300 m. true : la ville est posée exactement là (aucune recherche
+		/// de site, plateau aplani autour) ; false (clé absente ou null) : site choisi
+		/// par le générateur comme avant (centre pour une ville de départ ou ancrée).
+		bool   hasPosition = false;
+		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
+		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
+		/// Ville SECRÈTE (v1.0.107, clé `secret` du master, défaut false) : absente de la
+		/// carte publique (places.json `cities`, carte du continent, rues et bâtiments de
+		/// map_features.bin ; v1.0.110 : recopiée dans `secret_places.json`, fichier
+		/// réservé au serveur et retiré du paquet client), jamais reliée par les routes (ni réseau
+		/// du générateur, ni ancre de case d'une route du lore) et ignorée hors de sa
+		/// cellule (peuple des lieux procéduraux voisins). Cimetière et auberge générés
+		/// comme ailleurs (respawn_points.txt). Ex. : la ville du Gouffre des Revenus.
+		bool   secret = false;
 	};
 
 	/// Point d'intérêt (section `pois`).
@@ -88,6 +106,91 @@ namespace tools::world_gen
 		/// Altitude du sol au centre (m), relevée sur la heightmap de la cellule
 		/// pendant la génération (sortie portals.json). 0 tant que non calculée.
 		double y = 0.0;
+		/// Décalage (m, repère global : X est, Z sud) du lieu depuis le centre de sa
+		/// case (clés `offset_x_m`, `offset_z_m`, v1.0.72), ex. un lieu contre la côte
+		/// ouest de la case. 0 = centre de la case (règle historique).
+		double offsetX = 0.0, offsetZ = 0.0;
+		/// Position posée à la main (v1.0.95, clé `position` : `x_m`, `z_m`, mètres
+		/// depuis le centre de la case, X est, Z sud, |x|, |z| ≤ 4300 m). true : le
+		/// lieu est posé exactement là — ni écarté de la ville de la case ni des autres
+		/// POI — et `offset_x_m` / `offset_z_m` sont ignorés ; false : règle historique.
+		bool   hasPosition = false;
+		double positionXM = 0.0;  ///< décalage vers l'est (m), si hasPosition
+		double positionZM = 0.0;  ///< décalage vers le sud (m), si hasPosition
+		/// Lieu SECRET (v1.0.110, clé `secret` du master, défaut false) : grottes des
+		/// dragons, entrées ophidiennes cachées, Gouffre des Revenus… Absent de
+		/// places.json (carte du jeu, bannières, radar), recopié dans
+		/// `secret_places.json` (annuaire des MJ, jamais livré au client). Le lieu reste
+		/// généré sur le terrain (aplanissement) : seul son affichage est caché. Interdit
+		/// pour un portail relié (`link`) et pour une extrémité de route du lore.
+		bool   secret = false;
+	};
+
+	/// Relief local posé à la main (section `reliefs`, v1.0.72), ancré sur le
+	/// centre de la case de la ville `city`, où la ville est alors posée (pas de
+	/// recherche de site). Ajouté à MacroHeight : fonction pure de la position,
+	/// raccord exact entre cellules voisines.
+	///  - `colline` : dôme sous une ville perchée — plateau sommital de rayon
+	///    `top_radius_m` à `height_m` au-dessus du relief, pente douce jusqu'au pied
+	///    (`foot_radius_m`). Les cours d'eau tracés à la main qui partent de la case
+	///    naissent au pied (Terrain.cpp, BuildMacroRivers).
+	///  - `crevasse` : cul-de-sac — massif de rayon `foot_radius_m` (contour ondulé,
+	///    bord extérieur en pente douce) relevé de `height_m`, entaillé d'une fente à
+	///    fond plat (demi-largeur `half_width_m`, parois raides de `wall_m`) qui va de
+	///    `back_m` derrière la ville jusqu'au-delà du massif, vers la case `open_toward`. Les routes ne franchissent pas les
+	///    parois (Roads.cpp) ; `mine` (nom) pose une mine au fond (Places.cpp).
+	///  - `massif` (v1.0.77) : relief de crêtes et de pics SANS ville, ancré sur le
+	///    centre de la case `cell` décalé de (`offset_x_m`, `offset_z_m`) : dôme de
+	///    rayon `foot_radius_m` (contour lobé) haut de `height_m`, découpé par un bruit
+	///    en crêtes (crêtes, pics, ravins). Il ne s'applique qu'aux terres déjà
+	///    émergées (MacroHeight) : la côte ne bouge pas et le relief monte d'un coup au
+	///    rivage (falaises). Le code de la case (forêt…) ne change pas.
+	///  - `gouffre` (v1.0.107) : fosse CREUSÉE sous le relief, ancrée sur la ville
+	///    `city` posée au fond (position manuelle admise : le gouffre suit la ville) :
+	///    fond plat d'altitude ABSOLUE `floorY` (= point le plus bas du pourtour, à
+	///    `floor_radius_m` + `wall_m` + 100 m, moins `depth_m`), de rayon
+	///    `floor_radius_m` (contour lobé), parois abruptes sur `wall_m` ; galerie de
+	///    sortie (`gallery` : points en mètres depuis le centre du gouffre, du fond vers
+	///    l'entrée cachée) = fente de `gallery_half_width_m` de demi-largeur, parois de
+	///    `gallery_wall_m`, dont le sol reste à `floorY` tant qu'elle traverse le fond
+	///    et ses parois, puis monte en pente régulière jusqu'au terrain de l'entrée. Le gouffre ne fait que CREUSER (jamais de relèvement). Les routes
+	///    ne le franchissent pas (Roads.cpp), les lieux procéduraux et la faune l'évitent
+	///    (Places.cpp, Population.cpp) ; torches posées au fond et le long de la galerie
+	///    (Settlements.cpp). Tout reste dans la case de la ville.
+	struct ReliefDef
+	{
+		std::string id;
+		std::string type;          ///< colline|crevasse|massif|gouffre
+		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
+		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
+		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
+		double offsetZM = 0.0;     ///< massif : décalage du centre vers le sud (m)
+		double heightM = 0.0;      ///< hauteur du sommet / des parois au-dessus du relief (m)
+		double topRadiusM = 0.0;   ///< colline : rayon du plateau sommital (m)
+		double footRadiusM = 0.0;  ///< colline : rayon du pied ; crevasse : rayon du massif (m)
+		double halfWidthM = 0.0;   ///< crevasse : demi-largeur du fond de la fente (m)
+		double wallM = 0.0;        ///< crevasse : largeur horizontale des parois (m)
+		double backM = 0.0;        ///< crevasse : longueur du fond derrière la ville (m)
+		std::string openToward;    ///< crevasse : case vers laquelle la fente s'ouvre
+		std::string mine;          ///< crevasse : nom de la mine posée au fond (vide = aucune)
+		double depthM = 0.0;       ///< gouffre : profondeur du fond sous le point le plus bas du pourtour (m)
+		double floorRadiusM = 0.0; ///< gouffre : rayon du fond plat (m, avant lobes)
+		double galleryHalfWidthM = 0.0; ///< gouffre : demi-largeur du sol de la galerie (m)
+		double galleryWallM = 0.0; ///< gouffre : largeur horizontale des parois de la galerie (m)
+		/// Gouffre : tracé de la galerie de sortie, du fond vers l'entrée cachée. Au
+		/// chargement : décalages (m, X est / Z sud) depuis le centre du gouffre ; résolu
+		/// en positions GLOBALES (le premier point est dans le fond plat).
+		std::vector<Vec2> gallery;
+		// --- résolu au chargement ---
+		int  n = 0, e = 0;         ///< case de la ville (massif : case `cell`)
+		Vec2 center;               ///< centre de la case (= centre de la ville ; massif : centre décalé)
+		Vec2 dir{ 1.0, 0.0 };      ///< crevasse : direction unitaire de l'ouverture
+		uint64_t noiseSeed = 0;    ///< massif : graine du bruit en crêtes (dérivée de l'id)
+		double phase = 0.0;        ///< massif : phase des lobes du contour (rad)
+		double floorY = 0.0;       ///< gouffre : altitude absolue du fond (m)
+		double entranceY = 0.0;    ///< gouffre : altitude du terrain à l'entrée de la galerie (m)
+		std::vector<double> galleryAlong; ///< gouffre : abscisse curviligne (m) de chaque point de la galerie
+		double galleryExitM = 0.0; ///< gouffre : abscisse (m) où la galerie sort du fond et de ses parois (le sol y quitte floorY)
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).
@@ -138,6 +241,20 @@ namespace tools::world_gen
 		std::string islandCity;           ///< ville entourée par deux bras (vide = aucune)
 	};
 
+	/// Route du lore (section `lore_roads`, v1.0.105), recopiée de la collection `routes`
+	/// du lore par tools/lore/sync_routes.py. Le générateur (Roads.cpp) la trace en
+	/// passant par chaque case de `waypoints` (ville de la case, sinon point praticable
+	/// le plus proche du centre) et suit le terrain entre deux cases (A* 250 m).
+	struct LoreRoadDef
+	{
+		std::string id;                    ///< identifiant de la route du lore ("000120")
+		std::string type;                  ///< road | imperial_road | path
+		std::string fromId;                ///< ville ou POI du master au départ ; vide = jonction / case seule
+		std::string toId;                  ///< ville ou POI du master à l'arrivée ; vide = jonction / case seule
+		std::vector<std::string> waypoints;///< cases du tracé, extrémités comprises (≥ 2)
+		std::vector<std::pair<int, int>> cellNE; ///< (n, e) résolus de chaque case
+	};
+
 	/// Contenu complet du master après chargement + validation.
 	struct WorldMaster
 	{
@@ -157,6 +274,10 @@ namespace tools::world_gen
 		std::vector<InteractableDef> interactables;
 		std::vector<ExtraLakeDef> extraLakes;
 		std::vector<RiverCourseDef> riverCourses;
+		std::vector<ReliefDef> reliefs;         ///< reliefs locaux (v1.0.72)
+		/// Routes du lore (v1.0.105, `lore_roads`). Vide (ex. Enfers) : le générateur
+		/// garde son seul réseau calculé (comportement historique).
+		std::vector<LoreRoadDef> loreRoads;
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;
 		// Imports du contenu existant (chemins relatifs au content root).
@@ -177,6 +298,17 @@ namespace tools::world_gen
 		/// Marge (m) autour de la chaussée : la cellule voisine est ajoutée quand la
 		/// route passe à moins de cette distance de sa frontière. `corridor_margin_m`.
 		double corridorMarginM = 300.0;
+		/// Cimetières (v1.0.111, section `graveyards` du master ; décision du
+		/// propriétaire : toujours exactement 666 dans les Royaumes, exploit du pèlerin).
+		///  - `target` : nombre exact attendu pour une génération COMPLÈTE (sans
+		///    --cells) ; un autre total fait échouer la génération. 0 = pas de contrôle.
+		///  - `fill_empty_cells` : une cellule générée sans cimetière reçoit un cimetière
+		///    ISOLÉ (sans ville), au bord d'une route si possible.
+		///  - `without_graveyard` : hameaux procéduraux (id) privés de cimetière pour
+		///    compenser les cimetières isolés (le total reste `target`).
+		int graveyardTarget = 0;
+		bool graveyardFillEmptyCells = false;
+		std::set<std::string> graveyardExcluded;
 	};
 
 	/// Bilan d'une génération (journalisé par la CLI, vérifié par les tests).

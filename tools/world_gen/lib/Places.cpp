@@ -88,6 +88,7 @@ namespace tools::world_gen
 					if (std::hypot(c.x - city.center.x, c.z - city.center.z) < city.radiusM + R + 300.0) ok = false;
 				for (const Lake& l : w.lakes)
 					if (std::hypot(c.x - l.center.x, c.z - l.center.z) < l.radiusM + R + 200.0) ok = false;
+				if (InAnyGouffre(m, c, R + 100.0)) ok = false; // gouffre (v1.0.107) : ni étang ni mare
 				for (const Road& r : w.roads)
 					for (size_t k = 0; ok && k < r.points.size(); k += 6)
 						if (std::hypot(c.x - r.points[k].x, c.z - r.points[k].z) < R + 50.0) ok = false;
@@ -132,6 +133,30 @@ namespace tools::world_gen
 		const WorldMaster& m = w.master;
 		const double sea = m.scale.seaLevelM;
 		const char code = LoreCode(m, w.cell.n, w.cell.e);
+		// Mine au fond d'une crevasse (v1.0.72, reliefs du master) : posée AVANT les
+		// lieux tirés au sort (qui s'en écartent), à `back_m` − 60 m derrière la ville,
+		// dans l'axe de la fente ; peuple de la ville ancrée, reliée par un chemin local.
+		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type != "crevasse" || r.mine.empty() || r.n != w.cell.n || r.e != w.cell.e) continue;
+			const auto host = std::find_if(w.cities.begin(), w.cities.end(), [&](const CityDef& c) { return c.id == r.cityId; });
+			if (host == w.cities.end()) continue;
+			CityDef c;
+			c.procedural = "mine";
+			c.kind = "camp";
+			c.state = "camp";
+			c.race = host->race;
+			c.radiusM = 34.0;
+			c.n = w.cell.n; c.e = w.cell.e;
+			c.center = host->center - r.dir * std::max(0.0, r.backM - 60.0);
+			c.id = w.cellName + "_" + r.id + "_mine";
+			c.name = r.mine;
+			c.faction = host->faction;
+			c.description = "Mine au fond de la crevasse de " + host->name + " (" + r.id + ").";
+			c.source = "[GD] master reliefs";
+			w.cities.push_back(std::move(c));
+			++w.report.proceduralPlaces;
+		}
 		const std::vector<PlaceQuota> quotas = QuotasFor(code);
 		if (quotas.empty()) { BuildPonds(w); return; }
 		Rng rng(Hash(m.seed, static_cast<uint64_t>(w.cell.n + 1000), static_cast<uint64_t>(w.cell.e + 1000), 8080));
@@ -143,16 +168,24 @@ namespace tools::world_gen
 			double bd = 4.0 * engine::world::cells::kCellSizeMeters;
 			for (const CityDef& c : w.g->cities)
 			{
+				// Ville secrète (v1.0.107) : sans effet hors de sa cellule (les cellules
+				// voisines gardent le peuple de leurs lieux).
+				if (c.secret && (c.n != w.cell.n || c.e != w.cell.e)) continue;
 				const double d = std::hypot(c.center.x - ctr.x, c.center.z - ctr.z);
 				if (d < bd && c.race != "neutre") { bd = d; race = c.race; }
 			}
 		}
 
+		// Vrai si un lieu de rayon \p R (m) posé en \p p reste à l'écart des villes
+		// (rayon + R + 900 m), des lacs (+ 150 m), des gouffres et de leur galerie
+		// (+ 200 m, v1.0.107), des rivières (+ 120 m) et des routes (+ 40 m) de la cellule.
 		auto farFromEverything = [&](Vec2 p, double R) {
 			for (const CityDef& c : w.cities)
 				if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + R + 900.0) return false;
 			for (const Lake& l : w.lakes)
 				if (std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM + R + 150.0) return false;
+			// Gouffre (v1.0.107) : aucun lieu procédural dans la fosse, sa galerie ni au bord.
+			if (InAnyGouffre(m, p, R + 200.0)) return false;
 			for (const River& r : w.rivers)
 				for (size_t k = 0; k < r.points.size(); k += 4)
 					if (std::hypot(p.x - r.points[k].x, p.z - r.points[k].z) < R + 120.0) return false;

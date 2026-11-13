@@ -80,7 +80,11 @@ namespace tools::world_gen
 		std::vector<double> profileY; ///< altitude lissée de la chaussée par point
 		double widthM = 5.0;          ///< largeur de chaussée
 		bool   major = false;         ///< grande route (entre villes importantes)
-		bool   path = false;          ///< chemin local (lieu procédural → réseau)
+		bool   path = false;          ///< chemin local (lieu procédural → réseau) ou sentier du lore
+		/// Route du lore tracée (v1.0.105) : identifiant de la route du lore (`lore_roads`
+		/// du master) dont ce tronçon est issu ; vide = route du générateur ou chemin local.
+		/// fromId / toId : ville ou POI du master, vide pour une jonction ou une case seule.
+		std::string loreId;
 	};
 
 	/// Rivière (polyligne descendante jusqu'à la mer).
@@ -137,6 +141,36 @@ namespace tools::world_gen
 		uint8_t cullClass = 0;
 	};
 
+	/// Lumière ponctuelle posée par le générateur (v1.0.107 : torches du gouffre).
+	/// DONNÉE seulement : écrite dans zone.json (`world.point_lights`), pas encore lue
+	/// par le client (DynamicLightSystem ne lit qu'un fichier global,
+	/// lights/dynamic_lights.json) ; le mesh de la torche, lui, est un vrai décor
+	/// (scatter.bin).
+	struct PointLightDef
+	{
+		std::string id;
+		std::string type = "torch";   ///< type DynamicLightType du client (torch)
+		Vec2   position;              ///< position GLOBALE (m)
+		double y = 0.0;               ///< altitude de la flamme (m)
+		double radiusM = 7.0;         ///< portée (m)
+		double intensity = 1.6;
+		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
+	};
+
+	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre). DONNÉE
+	/// seulement (zone.json, `world.ambiance_zones`) : le client n'a pas de réglage
+	/// d'ambiance par zone ; à brancher (assombrissement, brouillard bas) côté rendu.
+	struct AmbianceZoneDef
+	{
+		std::string id;               ///< identifiant du relief (gouffre)
+		std::string label;            ///< nom du lieu
+		Vec2   center;                ///< centre GLOBAL (m)
+		double radiusM = 0.0;         ///< rayon horizontal couvert (m)
+		double floorY = 0.0;          ///< altitude du fond (m)
+		double topY = 0.0;            ///< altitude au-dessus de laquelle la zone cesse (m)
+		double darkness = 0.0;        ///< 0 = lumière du jour, 1 = nuit noire
+	};
+
 	/// Noeud du graphe de rues d'une agglomération (déplacements des PNJ).
 	struct StreetNode
 	{
@@ -155,6 +189,9 @@ namespace tools::world_gen
 		std::vector<int> buildingIndices;   ///< indices dans World::buildings
 		Vec2 innDoor;                       ///< porte de l'auberge (ou place)
 		Vec2 graveyard;                     ///< cimetière (point de résurrection)
+		/// Vrai si un cimetière est réellement bâti pour cette agglomération (villes du
+		/// lore et hameaux, sauf `graveyards.without_graveyard` du master, v1.0.111).
+		bool hasGraveyard = false;
 		Vec2 startSpot;                     ///< point de départ joueur (si ville de départ)
 		double startYawDeg = 0.0;
 	};
@@ -224,12 +261,56 @@ namespace tools::world_gen
 	// =========================================================================
 
 	/// Relief de base (avant villes, eau et routes) : fonction PURE du master et
-	/// de la position globale. Terrain.cpp
+	/// de la position globale. Comprend les reliefs locaux du master (ReliefOffset :
+	/// colline, crevasse v1.0.72, massif v1.0.77) et, appliqués en dernier, les
+	/// gouffres (v1.0.107, jamais de relèvement). Aux Enfers, la palette (v1.0.83)
+	/// ne change pas l'altitude. \return altitude (m) en (x, z) globaux. Terrain.cpp
 	double MacroHeight(const WorldMaster& m, double x, double z);
 	/// Code de biome du lore sous (x, z), bords bruités. Terrain.cpp
 	char MacroBiome(const WorldMaster& m, double x, double z);
 	/// Code du lore de la case (n, e) (' ' = mer hors grille). Terrain.cpp
 	char LoreCode(const WorldMaster& m, int n, int e);
+	/// v1.0.83 : la carte du master est-elle les Enfers ? Le générateur y applique
+	/// la palette infernale (splat sans herbe ni neige, pas de broussailles ni de
+	/// conifères, carte du monde en roche rouge, basalte, cendre et lave) ; les
+	/// Royaumes gardent la palette historique, octet pour octet.
+	inline bool IsInfernalMap(const WorldMaster& m) { return m.cellMap == engine::world::cells::CellMap::Enfers; }
+	/// v1.0.83 : présence de lave en (x, z), dans [0, 1] (0 hors des Enfers) :
+	/// mers de lave autour des lieux `volcan` (≈ 1,7 km de rayon, bord bruité) et
+	/// fleuves de lave sinueux (≈ 80-120 m de large) dans le biome volcanique `V`,
+	/// écartés des villes et des lieux (≈ 0,9 km). Fonction PURE du master et de la
+	/// position (raccord exact entre cellules). Pas de matériau émissif côté client :
+	/// la lave n'est qu'une couleur (carte du monde) et un sol de terre (splat). Terrain.cpp
+	double InfernalLavaAt(const WorldMaster& m, double x, double z);
+	/// Élévation (m) apportée en (x, z) par UN relief local (`reliefs` du master,
+	/// v1.0.72) : dôme d'une colline, massif entaillé d'une crevasse ; massif de
+	/// crêtes sans ville (v1.0.77), avant le masque des terres émergées. Terrain.cpp
+	double ReliefContribution(const ReliefDef& r, double x, double z);
+	/// Crevasse : largeur (m) de la pente douce extérieure du massif, de part et
+	/// d'autre de `foot_radius_m` (au moins `wall_m`, 40 % du rayon). Terrain.cpp
+	double CrevasseOuterSlopeM(const ReliefDef& r);
+	/// Somme des reliefs locaux du master en (x, z) ; incluse dans MacroHeight.
+	/// \param baseH altitude (m) du relief sans les reliefs locaux : les massifs
+	///        (v1.0.77) ne s'appliquent que là où elle dépasse la mer (côte inchangée). Terrain.cpp
+	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH);
+	/// Gouffre (v1.0.107) : altitude (m) en (x, z) une fois la fosse et sa galerie
+	/// creusées dans le relief \p h (fond plat à r.floorY, sol de la galerie en pente
+	/// régulière de r.floorY, à sa sortie du fond, jusqu'à r.entranceY). Ne relève jamais : rend au plus \p h ;
+	/// hors de la boîte du gouffre, rend \p h exactement. Fonction pure. Terrain.cpp
+	double GouffreHeight(const ReliefDef& r, double x, double z, double h);
+	/// Gouffre : rayon (m) du fond plat dans la direction \p angleRad (atan2(dz, dx)),
+	/// contour lobé de ± 13 % autour de floor_radius_m. Terrain.cpp
+	double GouffreFloorRadiusAt(const ReliefDef& r, double angleRad);
+	/// Gouffre : distance (m) de \p p à l'axe de la galerie ; \p outAlong reçoit
+	/// l'abscisse curviligne (m, depuis le fond) du point le plus proche. Terrain.cpp
+	double GouffreGalleryDistance(const ReliefDef& r, Vec2 p, double* outAlong);
+	/// Vrai si \p p est dans le gouffre \p r (fond et parois) ou dans sa galerie
+	/// (sol et parois), élargis de \p marginM. Faux pour un autre type de relief. Terrain.cpp
+	bool InGouffre(const ReliefDef& r, Vec2 p, double marginM);
+	/// InGouffre pour tous les gouffres du master. Terrain.cpp
+	bool InAnyGouffre(const WorldMaster& m, Vec2 p, double marginM);
+	/// Relief local ancré sur la ville \p cityId (nullptr si aucun). Terrain.cpp
+	const ReliefDef* ReliefOfCity(const WorldMaster& m, const std::string& cityId);
 
 	struct GlobalWorld
 	{
@@ -246,7 +327,15 @@ namespace tools::world_gen
 		std::vector<PoiDef> pois;       ///< lieux remarquables, centres résolus
 		std::vector<River> rivers;      ///< polylignes globales (pas 6 m)
 		std::vector<Lake> lakes;        ///< lacs du lore + lacs manuels
-		std::vector<Road> roads;        ///< réseau inter-villes (profil en long global)
+		/// Réseau routier final (profil en long global) : routes du lore tracées
+		/// (v1.0.105, Road::loreId non vide) + routes du générateur gardées pour relier
+		/// les villes de départ ; sans `lore_roads` au master, le seul réseau du générateur.
+		std::vector<Road> roads;
+		/// Réseau calculé par le générateur seul (Kruskal + voisines, comportement
+		/// historique), avant le tri v1.0.105. Sert aux corridors des villes de départ
+		/// (AddStartCorridors) : les cellules jouables ne dépendent pas des routes du lore.
+		/// Vide quand le master n'a pas de `lore_roads` (g.roads est alors ce réseau).
+		std::vector<Road> generatorRoads;
 		std::vector<Vec2> startCenters; ///< centres des villes de départ
 
 		GenReport report;
@@ -299,12 +388,18 @@ namespace tools::world_gen
 		std::vector<RespawnDef> respawns;
 		std::vector<StartLocationDef> starts;
 		std::vector<InteractableDef> interactables; ///< résolus (positions absolues)
+		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
+		std::vector<AmbianceZoneDef> ambianceZones; ///< zones d'ambiance locales (v1.0.107, données)
 		bool hasSea = false;          ///< une partie de la cellule est sous la mer
 
 		/// Réglages `world.*` importés (brouillard, props, DOF…) recopiés dans zone.json.
 		tools::zone_builder::JsonValue importedWorldConfig;
 		/// Lignes de respawn importées (déjà au format serveur, zone id corrigé).
 		std::vector<std::string> importedRespawnLines;
+		/// v1.0.111 — cimetière isolé (sans ville) posé par BuildSettlements quand la
+		/// cellule n'en a aucun et que `graveyards.fill_empty_cells` est vrai.
+		bool hasIsolatedGraveyard = false;
+		Vec2 isolatedGraveyard;
 
 		GenReport report;
 
@@ -337,15 +432,28 @@ namespace tools::world_gen
 
 	// ---- Étapes du pipeline (une par fichier .cpp) ----------------------------
 	/// Charge et valide le master (+ résolution des cellules). WorldMaster.cpp
+	/// Clés ajoutées sur la branche carte v1.0.72-v1.0.107 : `reliefs` (colline,
+	/// crevasse, massif, gouffre avec altitudes absolues précalculées), `position`
+	/// manuelle des villes et POI (≤ 4300 m par axe, refusée pour une ville de relief
+	/// sauf gouffre), `offset_x_m` / `offset_z_m` des POI, `secret` des villes (interdit
+	/// pour une ville de départ) et des POI (v1.0.110, interdit pour un portail relié),
+	/// `lore_roads` (extrémité secrète refusée) (validation stricte : id unique, type
+	/// road | imperial_road | path, extrémité connue ou vide, cases dans la grille).
+	/// \return false + \p err au premier défaut (aucune sortie écrite).
 	bool LoadWorldMaster(const std::string& contentRoot, const std::string& worldId,
 		WorldMaster& out, std::string& err);
 
 	// Couche macro (une fois).
 	/// Grille grossière, sites des villes/POI, lacs. Terrain.cpp
+	/// Une ville ou un POI à position manuelle (`position` du master, v1.0.95) est
+	/// posé exactement à cette position ; les autres gardent la règle historique.
 	void BuildMacroTerrain(GlobalWorld& g);
 	/// Rivières (descente sur la grille grossière remplie). Terrain.cpp
 	void BuildMacroRivers(GlobalWorld& g);
 	/// Réseau routier inter-villes + profils en long. Roads.cpp
+	/// v1.0.105 : avec `lore_roads` au master, les routes du lore sont tracées case
+	/// par case (g.roads) ; le réseau du générateur (g.generatorRoads) ne garde que
+	/// les routes des corridors de départ sans équivalent au lore.
 	void BuildMacroRoads(GlobalWorld& g);
 
 	// Par cellule.
@@ -353,6 +461,10 @@ namespace tools::world_gen
 	/// la cellule). WorldGen.cpp
 	void InitCell(World& w, const GlobalWorld& g, engine::world::cells::CellCoord c);
 	/// Lieux procéduraux (hameaux, fermes, camps, ruines, mines). Places.cpp
+	/// Mine posée d'abord au fond d'une crevasse (v1.0.72) ; aucun lieu dans un
+	/// gouffre ni sa galerie (v1.0.107) ; une ville secrète n'influence le peuple des
+	/// lieux que dans sa propre cellule ; mines de la Légion (race `demons`) aux Enfers.
+	/// Effet de bord : remplit les lieux de \p w.
 	void BuildPlaces(World& w);
 	/// Altitude de base + biome de la cellule, puis comblement des cuvettes
 	/// intérieures sous le niveau de la mer (EAU.5). Terrain.cpp
@@ -403,8 +515,15 @@ namespace tools::world_gen
 	/// Routes globales découpées + chemins locaux, aplanissement. Roads.cpp
 	void ApplyRoads(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
+	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
+	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;
+	/// v1.0.111 : pas de cimetière pour un hameau de `graveyards.without_graveyard`,
+	/// cimetière isolé dans une cellule qui n'en a aucun (`fill_empty_cells`).
+	/// Effet de bord : w.scatter, bâtiments, occupation fine de la cellule.
 	void BuildSettlements(World& w);
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
+	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
+	/// ni broussaille). Effet de bord : remplit w.scatter.
 	void BuildVegetation(World& w);
 	/// FORET.1 — carte de densité des forêts et lisières (codes T, R, L, t de la
 	/// couverture effective), exclusions comprises : eau, routes, bâti et champs
@@ -412,11 +531,15 @@ namespace tools::world_gen
 	/// arbres de remplissage (src/client/world/instances/ForestMask.h).
 	/// Effet de bord : remplit w.forestMask. À appeler après BuildSettlements et
 	/// avant BuildVegetation (les rochers posés ensuite n'y creusent pas de trous).
+	/// Aux Enfers (v1.0.83) : carte vide (aucune forêt de remplissage).
 	void BuildForestMask(World& w);
 	/// Vrai si un code de couverture effective est une forêt dont les arbres sont
 	/// posés par le client (carte de densité) au lieu de scatter.bin.
 	bool IsFillerForestCode(char code);
 	/// Spawners PNJ/créatures, respawns, départs, interactibles. Population.cpp
+	/// Un cimetière neutre et une auberge par ville (secrète comprise) dans
+	/// respawn_points.txt, plus le cimetière isolé de la cellule (v1.0.111) ; ni faune ni monstre dans un gouffre et sa galerie (v1.0.107).
+	/// Effet de bord : remplit les spawners et points de réapparition de \p w.
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp
 	bool ImportLegacyContent(World& w, std::string& err);
@@ -427,8 +550,19 @@ namespace tools::world_gen
 	/// libération de w.biome. Output.cpp
 	std::string BuildBiomeGrid(const World& w, int size);
 	/// Écriture des sorties d'une cellule. Output.cpp
+	/// Effet de bord : écrit zones/<c>/ et instances/zone_<c>/ (sauf dryRun) ; v1.0.107 :
+	/// `world.point_lights` et `world.ambiance_zones` du zone.json pour un gouffre
+	/// (clés absentes ailleurs ; pas encore lues par le client).
+	/// \return false + \p err si une écriture échoue.
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Écriture des sorties globales (lieux, carte, départs, POI de quêtes). Output.cpp
+	/// v1.0.83 : palette infernale de la carte des Enfers ; v1.0.107 : une ville
+	/// secrète est absente de `cities` de places.json, de la carte du continent et de
+	/// map_features.bin ; v1.0.110 : villes ET lieux secrets écrits dans
+	/// `secret_places.json` (réservé au serveur, retiré du paquet client), plus de
+	/// `secret_cities` dans places.json ; le fichier est supprimé s'il n'y a aucun
+	/// secret. Effet de bord : écrit world/<monde>/ (sauf dryRun).
+	/// \return false + \p err si une écriture échoue.
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
 	/// FIX.12 — tracés de la carte du monde (world/<w>/map_features.bin) : routes
 	/// inter-villes (g.roads), chemins locaux des cellules (Road::path), rues des
@@ -440,8 +574,20 @@ namespace tools::world_gen
 
 	/// Ajoute à \p ids les cellules des routes reliant les villes de départ
 	/// (`connect_start_cities`, cf. WorldMaster). Nécessite g.cities (sites) et
-	/// g.roads (BuildMacroRoads). WorldGen.cpp
+	/// le réseau du générateur g.generatorRoads (BuildMacroRoads ; g.roads s'il est
+	/// vide, ex. tests qui posent leurs routes à la main). WorldGen.cpp
 	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids);
+	/// Routes de \p roads qui relient les villes de départ (arbre couvrant « au plus
+	/// près » par la route, chemins locaux exclus), dans l'ordre de parcours.
+	/// \param warn  signale (g.Warn) les villes de départ injoignables.
+	/// Déterministe ; ne modifie g que par les avertissements. WorldGen.cpp
+	std::vector<size_t> StartCorridorRoads(GlobalWorld& g, const std::vector<Road>& roads, bool warn);
+	/// Cellules (identifiants du lore) traversées par les routes \p chosen de
+	/// \p roads, + la voisine quand la route passe à moins de corridor_margin_m de
+	/// la frontière ; ajoutées à \p ids (sans doublon, ordre de parcours).
+	/// \return nombre de cellules ajoutées. WorldGen.cpp
+	size_t AddCorridorCells(const GlobalWorld& g, const std::vector<Road>& roads,
+		const std::vector<size_t>& chosen, std::vector<std::string>& ids);
 
 	/// Décode un identifiant de cellule "N003_W009" → (n, e). WorldMaster.cpp
 	bool ParseCellId(const std::string& id, int& n, int& e);

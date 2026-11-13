@@ -101,6 +101,8 @@ namespace engine::server::gm
 		// Carte des lieux : champ "world" ("enfers" → Enfers, sinon Royaumes).
 		const engine::world::cells::CellMap map =
 			engine::world::cells::CellMapFromWorldId(c.GetString("world", "")).value_or(engine::world::cells::CellMap::Royaumes);
+		// v1.0.110 : fichier des lieux secrets (secret_places.json, "secret": true).
+		const bool secret = c.GetBool("secret", false);
 		const size_t before = m_places.size();
 		for (int64_t i = 0; i < c.GetInt("city_count", 4096); ++i)
 		{
@@ -162,7 +164,25 @@ namespace engine::server::gm
 			outError = "places: aucun lieu";
 			return false;
 		}
+		if (secret)
+		{
+			for (size_t i = before; i < m_places.size(); ++i)
+			{
+				m_places[i].secret = true;
+				m_places[i].detail = "secret · " + m_places[i].detail;
+			}
+		}
 		return true;
+	}
+
+	void GmPlaceDirectory::AppendSecretFromContent(const engine::core::Config& config, std::string_view worldId)
+	{
+		const std::string rel = "world/" + std::string(worldId) + "/secret_places.json";
+		const std::string text = engine::platform::FileSystem::ReadAllTextContent(config, rel);
+		if (text.empty())
+			return;
+		std::string ignored;
+		(void)AppendFromText(text, ignored);
 	}
 
 	bool GmPlaceDirectory::LoadFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError)
@@ -174,7 +194,10 @@ namespace engine::server::gm
 			outError = rel + " absent";
 			return false;
 		}
-		return LoadFromText(text, outError);
+		if (!LoadFromText(text, outError))
+			return false;
+		AppendSecretFromContent(config, worldId);
+		return true;
 	}
 
 	bool GmPlaceDirectory::AppendFromContent(const engine::core::Config& config, std::string_view worldId, std::string& outError)
@@ -186,7 +209,10 @@ namespace engine::server::gm
 			outError = rel + " absent";
 			return false;
 		}
-		return AppendFromText(text, outError);
+		if (!AppendFromText(text, outError))
+			return false;
+		AppendSecretFromContent(config, worldId);
+		return true;
 	}
 
 	std::vector<const GmPlace*> GmPlaceDirectory::Search(std::string_view query, size_t maxResults) const

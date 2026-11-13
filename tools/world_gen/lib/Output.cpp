@@ -17,6 +17,8 @@
 // Sorties GLOBALES :
 //   buildings/templates/maison.json    maisons paramétriques (bibliothèque, versionnée)
 //   world/<w>/places.json              villes, lieux, régions, cellules générées (UI client)
+//   world/<w>/secret_places.json       villes et lieux secrets (annuaire MJ du shard, JAMAIS
+//                                      livré au client — v1.0.110)
 //   world/<w>/world_map.png            carte du continent (fenêtre Carte)
 //   world/<w>/map_features.bin         routes, rues, bâtiments en vectoriel (FIX.12)
 //   world/<w>/start_locations.json     points de départ par faction, repli par race (master, shard)
@@ -212,14 +214,78 @@ namespace tools::world_gen
 			case '*': t = { 0.05, 0.0, 0.35, 0.6, 0.0 }; break;
 			case 'V': t = { 0.0, 0.35, 0.65, 0.0, 0.0 }; break;
 			case '%': case '&': t = { 0.45, 0.55, 0.0, 0.0, 0.6 }; break;
-			case ' ': case '-': t = { 0.0, 0.9, 0.1, 0.0, 0.0 }; break;
+			case ' ': case '-':
+				// v1.0.74 : terre émergée sous un code marin (une île de forêt entourée de
+				// haut-fond n'a pas de case de côte) : traitée comme une côte (plage près
+				// de l'eau, prairie littorale au-dessus) au lieu d'un fond nu.
+				if (h >= sea)
+				{
+					const double sand = SmoothStep(sea + 6.0, sea + 1.5, h);
+					t = { 0.85 - 0.75 * sand, 0.15 + 0.75 * sand, 0.0, 0.0, 0.8 * (1.0 - sand) };
+				}
+				else
+					t = { 0.0, 0.9, 0.1, 0.0, 0.0 };
+				break;
 			default: break;
 			}
 			return t;
 		}
 
+		/// v1.0.83 — splat des Enfers (T15-22 : falaises rouges striées, basalte, cendre,
+		/// lave). Le client n'a que 4 couches à couleur fixe (herbe, terre rouge-brun,
+		/// roche gris-brun, neige) : aucune herbe, aucune neige, aucun masque d'herbe ;
+		/// sol de terre rouge-brun (plaines, cendres, lave, chemins) et roche (pentes,
+		/// crêtes, coins montagneux, hauts sommets cendreux).
+		SplatTexel InfernalSplat(const World& w, Vec2 p)
+		{
+			const double h = w.HeightAt(p);
+			const double slope = w.SlopeDegAt(p);
+			const double n = Fbm(p.x, p.z, 26.0, 3, w.master.seed + 501);
+			// Fondu des frontières de biome sur ~120 m (même échantillonnage que ComputeSplat).
+			double dirt = 0.0, rock = 0.0;
+			const double off[5][2] = { { 0, 0 }, { 60, 0 }, { -60, 0 }, { 0, 60 }, { 0, -60 } };
+			for (const auto& o : off)
+			{
+				const char c = MacroBiome(w.master, p.x + o[0], p.z + o[1]);
+				// Croix volcanique : plaines de terre rouge et dalles rocheuses ; coins `M` : roche.
+				if (c == 'V') { dirt += 0.6 * 0.2; rock += 0.4 * 0.2; }
+				else { dirt += 0.3 * 0.2; rock += 0.7 * 0.2; }
+			}
+			// Taches (affleurements rocheux dans la terre, et inversement).
+			const double patch = Clamp(n * 0.9, -0.25, 0.25);
+			dirt = std::max(0.0, dirt + patch);
+			rock = std::max(0.0, rock - patch);
+			// Pentes fortes et hauts sommets (cendre grise au lieu de neige) : roche.
+			const double rockK = std::max(SmoothStep(26.0, 40.0, slope + n * 4.0), SmoothStep(480.0, 580.0, h + n * 25.0));
+			rock = std::max(rock, rockK);
+			// Lave (mers et fleuves) : terre, la couche la plus chaude disponible.
+			const double lava = InfernalLavaAt(w.master, p.x, p.z);
+			dirt = Lerp(dirt, 1.0, lava); rock *= 1.0 - lava;
+			// Chemins et emprise urbaine (Citadelle, mines, camps) : terre battue.
+			const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+			if (w.roadDist.InBounds(ri, rj))
+			{
+				const double k = SmoothStep(2.2, -0.8, w.roadDist.At(ri, rj));
+				rock *= 1 - k; dirt = Lerp(dirt, 1.0, k);
+			}
+			const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
+			if (w.urban.InBounds(ui, uj))
+			{
+				const uint8_t u = w.urban.At(ui, uj);
+				if (u == 2) { dirt = 0.95; rock = 0.05; }
+				else if (u == 1) dirt += 0.35;
+			}
+			return { 0.0, dirt, rock, 0.0, 0.0 };
+		}
+
+		/// Mélange des 4 couches du sol (herbe, terre, roche, neige) au point global \p p
+		/// de la cellule : biome fondu aux frontières, pente, altitude, eau, routes et
+		/// emprise urbaine. Aux Enfers (v1.0.83), délègue à InfernalSplat (ni herbe ni
+		/// neige). Fonction pure (lecture seule de \p w), appelée en parallèle par rangée.
 		SplatTexel ComputeSplat(const World& w, Vec2 p)
 		{
+			// v1.0.83 : les Enfers ont leur propre palette (les Royaumes ne passent pas ici).
+			if (IsInfernalMap(w.master)) return InfernalSplat(w, p);
 			const double h = w.HeightAt(p);
 			const double slope = w.SlopeDegAt(p);
 			const double sea = w.master.scale.seaLevelM;
@@ -295,7 +361,9 @@ namespace tools::world_gen
 			case ':': case 'l': r = 176; g = 158; b = 112; break;
 			case '%': case '&': r = 92; g = 104; b = 74; break;
 			case 'V': r = 92; g = 70; b = 62; break;
-			case '_': case ',':
+			// v1.0.74 : terre émergée sous un code marin (île entourée de haut-fond,
+			// sans case de côte) : couleur de côte, comme dans BaseSplat.
+			case '_': case ',': case ' ': case '-':
 				if (h < sea + 5.0) { r = 214; g = 200; b = 150; } else { r = 132; g = 160; b = 92; }
 				break;
 			default: r = 132; g = 160; b = 92; break;
@@ -306,6 +374,27 @@ namespace tools::world_gen
 			r = Lerp(r, 238, snow); g = Lerp(g, 240, snow); b = Lerp(b, 245, snow);
 		}
 
+		/// v1.0.83 — couleur de terrain des Enfers (carte du monde), sans ombrage ni
+		/// lave : roche rouge striée par l'altitude (T16 p16), coulées et dalles de
+		/// basalte noir (T17 p16), cendre grise sur les hauts sommets (au lieu de la
+		/// neige), coins montagneux plus sombres.
+		/// \param code code de biome du lore (MacroBiome), \param h altitude (m)
+		void InfernalTerrainColor(char code, double h, double x, double z, uint64_t seed, double& r, double& g, double& b)
+		{
+			if (code == 'V') { r = 150; g = 62; b = 40; }   // roche rouge
+			else { r = 112; g = 48; b = 38; }               // chaîne : rouge sombre
+			// Strates (falaises rouges striées) : bandes d'altitude de ~45 m.
+			const double strata = 0.9 + 0.1 * std::sin(h / 7.0 + 2.0 * Fbm(x, z, 1200.0, 2, seed + 9103));
+			r *= strata; g *= strata; b *= strata;
+			// Basalte noir : coulées figées à l'échelle du kilomètre, plus en altitude.
+			const double basalt = SmoothStep(0.05, 0.3, Fbm(x, z, 1400.0, 3, seed + 9104) + (code == 'V' ? 0.0 : 0.12)
+				+ SmoothStep(300.0, 500.0, h) * 0.15);
+			r = Lerp(r, 44, basalt); g = Lerp(g, 36, basalt); b = Lerp(b, 38, basalt);
+			// Cendre grise sur les sommets.
+			const double ash = SmoothStep(470.0, 590.0, h);
+			r = Lerp(r, 128, ash); g = Lerp(g, 122, ash); b = Lerp(b, 118, ash);
+		}
+
 		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
 		/// lacs, routes, villes, cellules générées. Rendu parallèle par rangée.
 		std::vector<uint8_t> RenderContinentMap(const GlobalWorld& g, int N, double originX, double originZ, double sizeM,
@@ -314,6 +403,7 @@ namespace tools::world_gen
 			std::vector<uint8_t> rgb(static_cast<size_t>(N) * N * 3);
 			const double sea = g.master.scale.seaLevelM;
 			const double px = sizeM / N;
+			const bool infernal = IsInfernalMap(g.master); // v1.0.83 : palette des Enfers
 			ParallelRows(N, [&](int j) {
 				for (int i = 0; i < N; ++i)
 				{
@@ -322,13 +412,27 @@ namespace tools::world_gen
 					const bool outside = p.x < g.minX || p.x > g.maxX || p.z < g.minZ || p.z > g.maxZ;
 					const double h = outside ? 6.0 : SampleBilinear(g.coarse, p.x, p.z);
 					double r, gg, b;
-					TerrainColor(MacroBiome(g.master, p.x, p.z), h, sea, r, gg, b);
+					const char code = MacroBiome(g.master, p.x, p.z);
+					if (!infernal) TerrainColor(code, h, sea, r, gg, b);
+					else if (outside || h < sea) { r = 30; gg = 18; b = 18; } // v1.0.83 : abîme hors de la carte des Enfers
+					else InfernalTerrainColor(code, h, p.x, p.z, g.master.seed, r, gg, b);
 					if (h >= sea)
 					{
 						const double hx = SampleBilinear(g.coarse, p.x + px, p.z) - SampleBilinear(g.coarse, p.x - px, p.z);
 						const double hz = SampleBilinear(g.coarse, p.x, p.z + px) - SampleBilinear(g.coarse, p.x, p.z - px);
 						const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * px) * 2.5, 0.55, 1.35);
 						r *= shade; gg *= shade; b *= shade;
+					}
+					// v1.0.83 : lave jaune-orange NON ombrée (lumineuse), cœur jaune, bord orange-rouge.
+					if (infernal && !outside)
+					{
+						const double lava = InfernalLavaAt(g.master, p.x, p.z);
+						if (lava > 0.0)
+						{
+							const double core = SmoothStep(0.35, 1.0, lava);
+							const double lr = Lerp(222, 255, core), lg = Lerp(84, 186, core), lb = Lerp(22, 48, core);
+							r = Lerp(r, lr, lava); gg = Lerp(gg, lg, lava); b = Lerp(b, lb, lava);
+						}
 					}
 					uint8_t* o = &rgb[(static_cast<size_t>(j) * N + i) * 3];
 					o[0] = static_cast<uint8_t>(Clamp(r, 0, 255));
@@ -364,7 +468,7 @@ namespace tools::world_gen
 					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
 					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
 				}
-			for (const CityDef& c : g.cities) plot(c.center, 2, 92, 64, 52);
+			for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, 2, 92, 64, 52); // v1.0.107 : pas les villes secrètes
 			return rgb;
 		}
 
@@ -783,6 +887,46 @@ namespace tools::world_gen
 				}
 				its.objectValue[std::to_string(k)] = e;
 			}
+			// v1.0.107 — torches et ambiance du gouffre : DONNÉES pour le client (pas encore
+			// lues : l'éclairage ponctuel du client vient d'un fichier global, et il n'a pas
+			// de réglage d'ambiance par zone). Clés absentes des autres cellules.
+			if (!w.pointLights.empty())
+			{
+				JsonValue& pl = Child(world, "point_lights");
+				pl.objectValue["_comment"] = JStr("v1.0.107 — lumieres ponctuelles posees par le generateur (torches du gouffre), positions GLOBALES, couleur RGB 0-1. Donnee non lue par le client a ce jour (DynamicLightSystem lit lights/dynamic_lights.json).");
+				pl.objectValue["count"] = JNum(static_cast<double>(w.pointLights.size()));
+				for (size_t k = 0; k < w.pointLights.size(); ++k)
+				{
+					const PointLightDef& d = w.pointLights[k];
+					JsonValue e = JObj();
+					e.objectValue["id"] = JStr(d.id);
+					e.objectValue["type"] = JStr(d.type);
+					e.objectValue["x"] = JNum(d.position.x); e.objectValue["y"] = JNum(d.y); e.objectValue["z"] = JNum(d.position.z);
+					e.objectValue["radius"] = JNum(d.radiusM);
+					e.objectValue["intensity"] = JNum(d.intensity);
+					e.objectValue["color_r"] = JNum(d.r); e.objectValue["color_g"] = JNum(d.g); e.objectValue["color_b"] = JNum(d.b);
+					e.objectValue["auto_night_light"] = JBool(false); // allumees jour et nuit (fond sans soleil)
+					pl.objectValue[std::to_string(k)] = e;
+				}
+			}
+			if (!w.ambianceZones.empty())
+			{
+				JsonValue& az = Child(world, "ambiance_zones");
+				az.objectValue["_comment"] = JStr("v1.0.107 — zones d'ambiance locales (fond du gouffre : sombre). darkness 0 = jour, 1 = nuit noire ; la zone couvre le disque (x, z, radius_m) entre floor_y et top_y. Donnee non lue par le client a ce jour.");
+				az.objectValue["count"] = JNum(static_cast<double>(w.ambianceZones.size()));
+				for (size_t k = 0; k < w.ambianceZones.size(); ++k)
+				{
+					const AmbianceZoneDef& d = w.ambianceZones[k];
+					JsonValue e = JObj();
+					e.objectValue["id"] = JStr(d.id);
+					e.objectValue["label"] = JStr(d.label);
+					e.objectValue["x"] = JNum(d.center.x); e.objectValue["z"] = JNum(d.center.z);
+					e.objectValue["radius_m"] = JNum(d.radiusM);
+					e.objectValue["floor_y"] = JNum(d.floorY); e.objectValue["top_y"] = JNum(d.topY);
+					e.objectValue["darkness"] = JNum(d.darkness);
+					az.objectValue[std::to_string(k)] = e;
+				}
+			}
 			std::string text;
 			DumpJson(root, text, 0);
 			text += "\n";
@@ -899,18 +1043,27 @@ namespace tools::world_gen
 		for (const World* w : cells)
 		{
 			// Chemins locaux de la cellule (les tronçons de routes globales y sont
-			// des découpes de g.roads, déjà exportées ci-dessus).
+			// des découpes de g.roads, déjà exportées ci-dessus ; v1.0.105 : les
+			// sentiers du lore, Road::loreId, aussi).
 			for (const Road& rd : w->roads)
-				if (rd.path)
+				if (rd.path && rd.loreId.empty())
 					addRoad(rd.points, mf::MapRoadKind::Path, rd.widthM);
 			// Rues : chaque arête du graphe (exportée une seule fois, a < b).
+			// Ville secrète (v1.0.107) : ni ses rues ni ses bâtiments sur la carte zoomée.
+			auto secretAt = [&](Vec2 p) {
+				for (const CityDef& c : w->cities)
+					if (c.secret && std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 60.0) return true;
+				return false;
+			};
 			for (const SettlementLayout& L : w->layouts)
 				for (size_t a = 0; a < L.nodes.size(); ++a)
+					if (const CityDef* lc = w->FindCity(L.cityId); !(lc && lc->secret))
 					for (int b : L.nodes[a].links)
 						if (b > static_cast<int>(a) && static_cast<size_t>(b) < L.nodes.size())
 							addRoad({ L.nodes[a].p, L.nodes[static_cast<size_t>(b)].p }, mf::MapRoadKind::Street, 3.0);
 			for (const BuildingPlacementDef& b : w->buildings)
 			{
+				if (secretAt(b.position)) continue;
 				mf::MapBuilding m;
 				m.x = static_cast<float>(b.position.x);
 				m.z = static_cast<float>(b.position.z);
@@ -1004,12 +1157,52 @@ namespace tools::world_gen
 		const double originX = g.minX, originZ = g.minZ;
 
 		// ---- places.json (UI client : carte, bannières, radar) — coordonnées GLOBALES.
+		//      v1.0.110 : villes et lieux SECRETS (clé `secret` du master) absents de ce
+		//      fichier, écrits à part dans secret_places.json (serveur seulement).
 		{
-			std::vector<const CityDef*> all;
-			for (const CityDef& c : g.cities) all.push_back(&c);
+			std::vector<const CityDef*> all, secrets;
+			for (const CityDef& c : g.cities) (c.secret ? secrets : all).push_back(&c);
 			for (const World* w : cells)
 				for (const CityDef& c : w->cities)
 					if (!c.procedural.empty()) all.push_back(&c);
+			std::vector<const PoiDef*> pois, secretPois;
+			for (const PoiDef& p : g.pois) (p.secret ? secretPois : pois).push_back(&p);
+			// Une ville (forme commune à places.json et secret_places.json).
+			auto cityJson = [&](const CityDef& c, bool last) {
+				std::string starts;
+				for (size_t q = 0; q < c.startFor.size(); ++q) starts += (q ? ", " : "") + Q(c.startFor[q]);
+				return "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.procedural.empty() ? c.kind : c.procedural) +
+					", \"race\": " + Q(c.race) + ", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) +
+					", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
+					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
+					", \"description\": " + Q(c.description) + " }" + (last ? "\n" : ",\n");
+			};
+			// Un lieu (forme commune aux deux fichiers).
+			auto poiJson = [&](const PoiDef& p, bool last) {
+				return "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"x\": " + Num(p.center.x) +
+					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (last ? "\n" : ",\n");
+			};
+
+			// secret_places.json : même schéma que places.json (villes, lieux), lu par
+			// l'annuaire des MJ du shard ; retiré du paquet client (package-windows.ps1).
+			// Supprimé s'il n'y a aucun secret (pas de fichier périmé).
+			if (!secrets.empty() || !secretPois.empty())
+			{
+				std::string sj = "{\n  \"_comment\": \"GENERE par tools/world_gen — villes et lieux SECRETS (gouffre, grottes des dragons, entrees ophidiennes). RESERVE AU SERVEUR : jamais livre au client (retire par .github/scripts/package-windows.ps1). Coordonnees GLOBALES.\",\n";
+				sj += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"secret\": true,\n";
+				sj += "  \"city_count\": " + std::to_string(secrets.size()) + ",\n  \"cities\": [\n";
+				for (size_t k = 0; k < secrets.size(); ++k) sj += cityJson(*secrets[k], k + 1 == secrets.size());
+				sj += "  ],\n  \"poi_count\": " + std::to_string(secretPois.size()) + ",\n  \"pois\": [\n";
+				for (size_t k = 0; k < secretPois.size(); ++k) sj += poiJson(*secretPois[k], k + 1 == secretPois.size());
+				sj += "  ]\n}\n";
+				if (!WriteFile(g.outputRoot, g.report, dir + "secret_places.json", sj, err)) return false;
+			}
+			else
+			{
+				std::error_code ec;
+				fs::remove(fs::path(g.outputRoot) / (dir + "secret_places.json"), ec);
+			}
+
 			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lieux du monde pour l'interface (carte du monde, bannieres d'entree, radar). Coordonnees GLOBALES (cellules de 10 km, origine = centre de cell_n000_e000).\",\n";
 			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"display_name\": " + Q(g.master.displayName) + ",\n";
 			j += "  \"map_image\": " + Q(dir + "world_map.png") + ",\n";
@@ -1025,24 +1218,10 @@ namespace tools::world_gen
 					" }" + (k + 1 < cells.size() ? ",\n" : "\n");
 			}
 			j += "  ],\n  \"city_count\": " + std::to_string(all.size()) + ",\n  \"cities\": [\n";
-			for (size_t k = 0; k < all.size(); ++k)
-			{
-				const CityDef& c = *all[k];
-				std::string starts;
-				for (size_t q = 0; q < c.startFor.size(); ++q) starts += (q ? ", " : "") + Q(c.startFor[q]);
-				j += "    { \"id\": " + Q(c.id) + ", \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.procedural.empty() ? c.kind : c.procedural) +
-					", \"race\": " + Q(c.race) + ", \"state\": " + Q(c.state) + ", \"faction\": " + Q(c.faction) +
-					", \"x\": " + Num(c.center.x) + ", \"z\": " + Num(c.center.z) +
-					", \"radius_m\": " + Num(c.radiusM) + ", \"start_for\": [" + starts + "], \"source\": " + Q(c.source) +
-					", \"description\": " + Q(c.description) + " }" + (k + 1 < all.size() ? ",\n" : "\n");
-			}
-			j += "  ],\n  \"poi_count\": " + std::to_string(g.pois.size()) + ",\n  \"pois\": [\n";
-			for (size_t k = 0; k < g.pois.size(); ++k)
-			{
-				const PoiDef& p = g.pois[k];
-				j += "    { \"id\": " + Q(p.id) + ", \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"x\": " + Num(p.center.x) +
-					", \"z\": " + Num(p.center.z) + ", \"description\": " + Q(p.description) + " }" + (k + 1 < g.pois.size() ? ",\n" : "\n");
-			}
+			for (size_t k = 0; k < all.size(); ++k) j += cityJson(*all[k], k + 1 == all.size());
+			j += "  ],\n";
+			j += "  \"poi_count\": " + std::to_string(pois.size()) + ",\n  \"pois\": [\n";
+			for (size_t k = 0; k < pois.size(); ++k) j += poiJson(*pois[k], k + 1 == pois.size());
 			j += "  ],\n  \"region_count\": " + std::to_string(g.master.regions.size()) + ",\n  \"regions\": [\n";
 			const double C = engine::world::cells::kCellSizeMeters;
 			for (size_t k = 0; k < g.master.regions.size(); ++k)

@@ -7555,8 +7555,8 @@
     },
     {
       "id": "city_kendrhir_vale",
-      "name": "Kendrhir Vale",
-      "alias": "",
+      "name": "Kendrhir",
+      "alias": "Kendrhir Vale",
       "type": "training_city",
       "anchor_tile": "R120C210",
       "importance": "capitale stratégique",
@@ -8700,7 +8700,7 @@
     },
     {
       "id": "leviathan_jungle",
-      "name": "Leviathan Jungle",
+      "name": "Ghulvathan",
       "alias": "",
       "type": "",
       "anchor_tile": "R100C310",
@@ -9378,7 +9378,7 @@
     },
     {
       "id": "town_0100",
-      "name": "Crossroads",
+      "name": "Khrozrad",
       "alias": "Crossroads",
       "type": "town",
       "anchor_tile": "R320C400",
@@ -9410,7 +9410,7 @@
     },
     {
       "id": "town_0102",
-      "name": "Highfall",
+      "name": "Hagfhal",
       "alias": "Highfall",
       "type": "town",
       "anchor_tile": "R010C400",
@@ -9442,7 +9442,7 @@
     },
     {
       "id": "town_0104",
-      "name": "Farwatch",
+      "name": "Farvhenn",
       "alias": "Farwatch",
       "type": "town",
       "anchor_tile": "R080C400",
@@ -9458,7 +9458,7 @@
     },
     {
       "id": "town_0105",
-      "name": "Shadowfen",
+      "name": "Shaddrek",
       "alias": "Shadowfen",
       "type": "town",
       "anchor_tile": "R300C380",
@@ -9490,7 +9490,7 @@
     },
     {
       "id": "town_0107",
-      "name": "Clearwater",
+      "name": "Klehrwath",
       "alias": "Clearwater",
       "type": "town",
       "anchor_tile": "R330C350",
@@ -9506,7 +9506,7 @@
     },
     {
       "id": "town_0108",
-      "name": "Darkwater",
+      "name": "Mhordaal",
       "alias": "Darkwater",
       "type": "town",
       "anchor_tile": "R300C400",
@@ -9570,7 +9570,7 @@
     },
     {
       "id": "town_0112",
-      "name": "Westmoor",
+      "name": "Vestmhor",
       "alias": "Westmoor",
       "type": "town",
       "anchor_tile": "R050C380",
@@ -9586,7 +9586,7 @@
     },
     {
       "id": "town_0113",
-      "name": "Northgate",
+      "name": "Nhorgast",
       "alias": "Northgate",
       "type": "town",
       "anchor_tile": "R010C380",
@@ -9602,7 +9602,7 @@
     },
     {
       "id": "town_0114",
-      "name": "Southport",
+      "name": "Suthvarn",
       "alias": "Southport",
       "type": "town",
       "anchor_tile": "R330C260",
@@ -9618,7 +9618,7 @@
     },
     {
       "id": "town_0115",
-      "name": "Ebonvale",
+      "name": "Ebhrazul",
       "alias": "Ebonvale",
       "type": "town",
       "anchor_tile": "R140C400",
@@ -9650,7 +9650,7 @@
     },
     {
       "id": "town_0117",
-      "name": "Greyhaven",
+      "name": "Grhaevan",
       "alias": "Greyhaven",
       "type": "town",
       "anchor_tile": "R030C380",
@@ -9666,7 +9666,7 @@
     },
     {
       "id": "town_0118",
-      "name": "Saltwick",
+      "name": "Saelvik",
       "alias": "Saltwick",
       "type": "town",
       "anchor_tile": "R330C330",
@@ -9682,7 +9682,7 @@
     },
     {
       "id": "town_0119",
-      "name": "Verdansur",
+      "name": "Vaerdhun",
       "alias": "Verdansur",
       "type": "market_town",
       "anchor_tile": "R090C050",
@@ -9698,7 +9698,7 @@
     },
     {
       "id": "town_0120",
-      "name": "Coldport",
+      "name": "Kholdvar",
       "alias": "Coldport",
       "type": "town",
       "anchor_tile": "R280C240",
@@ -9730,7 +9730,7 @@
     },
     {
       "id": "town_0122",
-      "name": "Harrowdale",
+      "name": "Harrodh",
       "alias": "Harrowdale",
       "type": "town",
       "anchor_tile": "R300C250",
@@ -9746,7 +9746,7 @@
     },
     {
       "id": "town_0123",
-      "name": "Ashwick",
+      "name": "Askhvir",
       "alias": "Ashwick",
       "type": "market_town",
       "anchor_tile": "R090C250",
@@ -9762,7 +9762,7 @@
     },
     {
       "id": "town_0124",
-      "name": "Stonehaven",
+      "name": "Stohnvar",
       "alias": "Stonehaven",
       "type": "town",
       "anchor_tile": "R260C250",
@@ -9778,7 +9778,7 @@
     },
     {
       "id": "town_0125",
-      "name": "Voidmark",
+      "name": "Vozmarkh",
       "alias": "Voidmark",
       "type": "town",
       "anchor_tile": "R280C400",
@@ -9794,7 +9794,7 @@
     },
     {
       "id": "town_0126",
-      "name": "Duskmere",
+      "name": "Dhazkmer",
       "alias": "Duskmere",
       "type": "town",
       "anchor_tile": "R180C400",
@@ -9810,7 +9810,7 @@
     },
     {
       "id": "town_0127",
-      "name": "Nightward",
+      "name": "Nakhtvar",
       "alias": "Nightward",
       "type": "town",
       "anchor_tile": "R180C310",
@@ -9842,7 +9842,7 @@
     },
     {
       "id": "town_0129",
-      "name": "Justfall",
+      "name": "Iustarn",
       "alias": "Justfall",
       "type": "market_town",
       "anchor_tile": "R120C090",
@@ -9858,7 +9858,7 @@
     },
     {
       "id": "town_0130",
-      "name": "Moorgate",
+      "name": "Mhorgad",
       "alias": "Moorgate",
       "type": "town",
       "anchor_tile": "R280C220",
@@ -9874,7 +9874,7 @@
     },
     {
       "id": "town_0131",
-      "name": "Blackmoor",
+      "name": "Vlakmorh",
       "alias": "Blackmoor",
       "type": "town",
       "anchor_tile": "R150C380",
@@ -9890,7 +9890,7 @@
     },
     {
       "id": "town_0132",
-      "name": "Rivercross",
+      "name": "Rhivkhar",
       "alias": "Rivercross",
       "type": "town",
       "anchor_tile": "R110C380",
@@ -9906,7 +9906,7 @@
     },
     {
       "id": "town_0133",
-      "name": "Hillwatch",
+      "name": "Hilvakh",
       "alias": "Hillwatch",
       "type": "town",
       "anchor_tile": "R090C360",
@@ -9922,7 +9922,7 @@
     },
     {
       "id": "town_0134",
-      "name": "Deepmoor",
+      "name": "Dhemorr",
       "alias": "Deepmoor",
       "type": "town",
       "anchor_tile": "R050C360",
@@ -9954,7 +9954,7 @@
     },
     {
       "id": "town_0136",
-      "name": "Shadehold",
+      "name": "Shezhold",
       "alias": "Shadehold",
       "type": "town",
       "anchor_tile": "R160C310",
@@ -9986,7 +9986,7 @@
     },
     {
       "id": "town_0138",
-      "name": "Equiton",
+      "name": "Ekvhitorn",
       "alias": "Equiton",
       "type": "port_town",
       "anchor_tile": "R080C030",
@@ -10018,7 +10018,7 @@
     },
     {
       "id": "hamlet_0140",
-      "name": "Millford",
+      "name": "Melvhord",
       "alias": "Millford",
       "type": "farm_hamlet",
       "anchor_tile": "R250C050",
@@ -10034,7 +10034,7 @@
     },
     {
       "id": "hamlet_0141",
-      "name": "Draketon",
+      "name": "Dhraegtun",
       "alias": "Draketon",
       "type": "farm_hamlet",
       "anchor_tile": "R210C120",
@@ -10050,7 +10050,7 @@
     },
     {
       "id": "hamlet_0142",
-      "name": "Haywick",
+      "name": "Hayvekh",
       "alias": "Haywick",
       "type": "farm_hamlet",
       "anchor_tile": "R190C130",
@@ -10066,7 +10066,7 @@
     },
     {
       "id": "hamlet_0143",
-      "name": "Dunfold",
+      "name": "Dhunfal",
       "alias": "Dunfold",
       "type": "farm_hamlet",
       "anchor_tile": "R170C130",
@@ -10082,7 +10082,7 @@
     },
     {
       "id": "hamlet_0144",
-      "name": "Ashcroft",
+      "name": "Askhrof",
       "alias": "Ashcroft",
       "type": "farm_hamlet",
       "anchor_tile": "R150C120",
@@ -10098,7 +10098,7 @@
     },
     {
       "id": "hamlet_0145",
-      "name": "Claybury",
+      "name": "Khlaybur",
       "alias": "Claybury",
       "type": "farm_hamlet",
       "anchor_tile": "R240C050",
@@ -10114,7 +10114,7 @@
     },
     {
       "id": "hamlet_0146",
-      "name": "Millend",
+      "name": "Mhillenz",
       "alias": "Millend",
       "type": "farm_hamlet",
       "anchor_tile": "R220C230",
@@ -10130,7 +10130,7 @@
     },
     {
       "id": "hamlet_0147",
-      "name": "Runecroft",
+      "name": "Runhkar",
       "alias": "Runecroft",
       "type": "farm_hamlet",
       "anchor_tile": "R160C130",
@@ -10146,7 +10146,7 @@
     },
     {
       "id": "hamlet_0148",
-      "name": "Trueford",
+      "name": "Treuvhal",
       "alias": "Trueford",
       "type": "farm_hamlet",
       "anchor_tile": "R080C060",
@@ -10162,7 +10162,7 @@
     },
     {
       "id": "hamlet_0149",
-      "name": "Fernhill",
+      "name": "Vernhild",
       "alias": "Fernhill",
       "type": "fishing_hamlet",
       "anchor_tile": "R250C040",
@@ -10178,7 +10178,7 @@
     },
     {
       "id": "hamlet_0150",
-      "name": "Brookend",
+      "name": "Brokhendt",
       "alias": "Brookend",
       "type": "fishing_hamlet",
       "anchor_tile": "R230C040",
@@ -10194,7 +10194,7 @@
     },
     {
       "id": "hamlet_0151",
-      "name": "Coldhollow",
+      "name": "Khaldhol",
       "alias": "Coldhollow",
       "type": "fishing_hamlet",
       "anchor_tile": "R280C120",
@@ -10210,7 +10210,7 @@
     },
     {
       "id": "hamlet_0152",
-      "name": "Stonebridge",
+      "name": "Shtenbrak",
       "alias": "Stonebridge",
       "type": "fishing_hamlet",
       "anchor_tile": "R240C040",
@@ -10226,7 +10226,7 @@
     },
     {
       "id": "hamlet_0153",
-      "name": "Hayfen",
+      "name": "Haevrin",
       "alias": "Hayfen",
       "type": "fishing_hamlet",
       "anchor_tile": "R070C160",
@@ -10242,7 +10242,7 @@
     },
     {
       "id": "hamlet_0154",
-      "name": "Greypool",
+      "name": "Ghrepol",
       "alias": "Greypool",
       "type": "farm_hamlet",
       "anchor_tile": "R270C070",
@@ -10258,7 +10258,7 @@
     },
     {
       "id": "hamlet_0155",
-      "name": "Dustfield",
+      "name": "Dhuzvelt",
       "alias": "Dustfield",
       "type": "farm_hamlet",
       "anchor_tile": "R260C060",
@@ -10290,7 +10290,7 @@
     },
     {
       "id": "hamlet_0157",
-      "name": "Scalebrook",
+      "name": "Skhaldrach",
       "alias": "Scalebrook",
       "type": "farm_hamlet",
       "anchor_tile": "R220C120",
@@ -10354,7 +10354,7 @@
     },
     {
       "id": "hamlet_0161",
-      "name": "Clearfen",
+      "name": "Klaerhin",
       "alias": "Clearfen",
       "type": "farm_hamlet",
       "anchor_tile": "R160C220",
@@ -10370,7 +10370,7 @@
     },
     {
       "id": "hamlet_0162",
-      "name": "Deepbrook",
+      "name": "Dyprokh",
       "alias": "Deepbrook",
       "type": "farm_hamlet",
       "anchor_tile": "R160C120",
@@ -10434,7 +10434,7 @@
     },
     {
       "id": "hamlet_0166",
-      "name": "Northfen",
+      "name": "Nhorvaël",
       "alias": "Northfen",
       "type": "farm_hamlet",
       "anchor_tile": "R010C290",
@@ -10466,7 +10466,7 @@
     },
     {
       "id": "hamlet_0168",
-      "name": "Fairbrook",
+      "name": "Faervosk",
       "alias": "Fairbrook",
       "type": "farm_hamlet",
       "anchor_tile": "R090C060",
@@ -10498,7 +10498,7 @@
     },
     {
       "id": "hamlet_0170",
-      "name": "Ironbrook",
+      "name": "Ghrondak",
       "alias": "Ironbrook",
       "type": "fishing_hamlet",
       "anchor_tile": "R260C050",
@@ -10514,7 +10514,7 @@
     },
     {
       "id": "hamlet_0171",
-      "name": "Greyfield",
+      "name": "Grhavelt",
       "alias": "Greyfield",
       "type": "fishing_hamlet",
       "anchor_tile": "R070C150",
@@ -10530,7 +10530,7 @@
     },
     {
       "id": "hamlet_0172",
-      "name": "Saltfen",
+      "name": "Zaltheim",
       "alias": "Saltfen",
       "type": "farm_hamlet",
       "anchor_tile": "R270C100",
@@ -10562,7 +10562,7 @@
     },
     {
       "id": "hamlet_0174",
-      "name": "Harrowbrook",
+      "name": "Harndrecht",
       "alias": "Harrowbrook",
       "type": "farm_hamlet",
       "anchor_tile": "R250C120",
@@ -10578,7 +10578,7 @@
     },
     {
       "id": "hamlet_0175",
-      "name": "Ashhollow",
+      "name": "Aeskhol",
       "alias": "Ashhollow",
       "type": "farm_hamlet",
       "anchor_tile": "R250C060",
@@ -10658,7 +10658,7 @@
     },
     {
       "id": "hamlet_0180",
-      "name": "Riverfold",
+      "name": "Ryvaldh",
       "alias": "Riverfold",
       "type": "farm_hamlet",
       "anchor_tile": "R190C140",
@@ -10802,7 +10802,7 @@
     },
     {
       "id": "hamlet_0189",
-      "name": "Orderfen",
+      "name": "Ostrevan",
       "alias": "Orderfen",
       "type": "farm_hamlet",
       "anchor_tile": "R080C120",
@@ -10866,7 +10866,7 @@
     },
     {
       "id": "hamlet_0193",
-      "name": "Frosthollow",
+      "name": "Frhozhol",
       "alias": "Frosthollow",
       "type": "farm_hamlet",
       "anchor_tile": "R240C280",
@@ -10898,7 +10898,7 @@
     },
     {
       "id": "hamlet_0195",
-      "name": "Thistle Creek",
+      "name": "Thysskar",
       "alias": "Thistle Creek",
       "type": "farm_hamlet",
       "anchor_tile": "R240C060",
@@ -10914,7 +10914,7 @@
     },
     {
       "id": "hamlet_0196",
-      "name": "Grimfen",
+      "name": "Ghrimfeth",
       "alias": "Grimfen",
       "type": "farm_hamlet",
       "anchor_tile": "R210C310",
@@ -10930,7 +10930,7 @@
     },
     {
       "id": "hamlet_0197",
-      "name": "Dustfen",
+      "name": "Dhuzmar",
       "alias": "Dustfen",
       "type": "farm_hamlet",
       "anchor_tile": "R210C090",
@@ -10994,7 +10994,7 @@
     },
     {
       "id": "hamlet_0201",
-      "name": "Nightfield",
+      "name": "Nykhfeld",
       "alias": "Nightfield",
       "type": "farm_hamlet",
       "anchor_tile": "R170C350",
@@ -11058,7 +11058,7 @@
     },
     {
       "id": "hamlet_0205",
-      "name": "Arcanefield",
+      "name": "Arkhanyra",
       "alias": "Arcanefield",
       "type": "farm_hamlet",
       "anchor_tile": "R150C210",
@@ -11074,7 +11074,7 @@
     },
     {
       "id": "hamlet_0206",
-      "name": "Mossy Rock",
+      "name": "Mhozrak",
       "alias": "Mossy Rock",
       "type": "farm_hamlet",
       "anchor_tile": "R130C310",

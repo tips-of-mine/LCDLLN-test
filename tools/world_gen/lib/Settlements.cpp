@@ -214,6 +214,161 @@ namespace tools::world_gen
 			return hi - lo < 1.6;
 		}
 
+		/// Gouffre (v1.0.107) : torches au pied des parois du fond et le long de la
+		/// galerie (mesh Torch_Metal, vrai décor de scatter.bin, flamme orientée vers
+		/// l'espace libre), éboulis qui dissimulent l'entrée de la galerie (rochers,
+		/// passage laissé libre dans l'axe), lumière de chaque torche et zone
+		/// d'ambiance « sombre » du gouffre en DONNÉES (w.pointLights, w.ambianceZones,
+		/// écrites dans zone.json ; le client ne les lit pas encore). Déterministe.
+		/// Effet de bord : w.scatter, w.pointLights, w.ambianceZones, occupation fine.
+		/// À appeler après les agglomérations (les torches évitent le bâti).
+		/// Cimetière ISOLÉ (v1.0.111) : si `graveyards.fill_empty_cells` est vrai et que la
+		/// cellule n'a aucun cimetière (ni agglomération qui en a un, ni cimetière importé),
+		/// en pose un sans ville : au bord de la route la plus proche du centre de la case
+		/// (14 m de l'axe, côté sec et libre), sinon sur le premier point praticable d'une
+		/// spirale depuis le centre (pas de 150 m, jusqu'à 4300 m). Décor : cercle de
+		/// pierres et chandelier, comme les cimetières des villes. Déterministe.
+		/// Effet de bord : w.isolatedGraveyard, w.scatter, occupation fine ; une cellule
+		/// sans terre (pleine mer) n'en reçoit pas : avertissement seulement (le choix de
+		/// `without_graveyard` en tient compte pour garder `graveyards.target`).
+		void BuildIsolatedGraveyard(World& w)
+		{
+			if (!w.master.graveyardFillEmptyCells) return;
+			for (const SettlementLayout& L : w.layouts)
+				if (L.hasGraveyard && L.cityId != w.master.importAnchorCity) return;
+			for (const std::string& l : w.importedRespawnLines)
+				if (l.find(" graveyard ") != std::string::npos) return;
+			const double sea = w.master.scale.seaLevelM;
+			// Site valable : terre ferme, dans la zone jouable, libre.
+			auto ok = [&](Vec2 p) {
+				return w.InPlayableBounds(p, 80.0) && !w.IsWater(p) && w.HeightAt(p) > sea + 2.0 && !w.IsOccupied(p, 6.0);
+			};
+			const Vec2 ctr{ w.terrainOriginX + w.terrainSizeM * 0.5, w.terrainOriginZ + w.terrainSizeM * 0.5 };
+			bool found = false;
+			Vec2 site;
+			double best = 1e18;
+			for (const Road& r : w.roads)
+				for (size_t i = 1; i + 1 < r.points.size(); i += 4)
+				{
+					const Vec2 p = r.points[i];
+					const double d = std::hypot(p.x - ctr.x, p.z - ctr.z);
+					if (d >= best) continue;
+					const Vec2 dir = r.points[i + 1] - r.points[i - 1];
+					const double len = std::hypot(dir.x, dir.z);
+					if (len < 1e-6) continue;
+					const Vec2 nrm{ -dir.z / len, dir.x / len };
+					const double off = r.widthM * 0.5 + 12.0;
+					for (const double side : { 1.0, -1.0 })
+					{
+						const Vec2 q = p + nrm * (off * side);
+						if (ok(q)) { best = d; site = q; found = true; break; }
+					}
+				}
+			for (double rad = 0.0; !found && rad <= 4300.0; rad += 150.0)
+			{
+				const int steps = rad < 1.0 ? 1 : static_cast<int>(rad / 150.0) * 6;
+				for (int k = 0; k < steps && !found; ++k)
+				{
+					const double a = k * 2.0 * kPi / steps;
+					const Vec2 q = ctr + Vec2{ std::cos(a), std::sin(a) } * rad;
+					if (ok(q)) { site = q; found = true; }
+				}
+			}
+			// Cellule de pleine mer (ex. mer autour de l'Île de la Trêve) : pas de cimetière.
+			if (!found) { w.Warn("aucun site a terre pour le cimetiere isole (cellule de mer)"); return; }
+			w.hasIsolatedGraveyard = true;
+			w.isolatedGraveyard = site;
+			w.Occupy(site, 6.0);
+			Rng rng(Hash(w.master.seed, HashString(w.cellName.c_str()), 6666));
+			for (int k = 0; k < 8; ++k)
+			{
+				const Vec2 p = site + Dir(k * kPi / 4.0 + 0.2) * 4.0;
+				AddProp(w, (k % 2) ? "Pebble_Square_3" : "Rock_Medium_2", p, rng.Range(0, 360), (k % 2) ? 2.2 : 0.45, 0, 1);
+			}
+			AddProp(w, "CandleStick_Stand", site, 0.0, 1.0, 0, 1);
+		}
+
+		void BuildGouffreProps(World& w)
+		{
+			for (const ReliefDef& r : w.master.reliefs)
+			{
+				if (r.type != "gouffre" || r.n != w.cell.n || r.e != w.cell.e || r.gallery.size() < 2) continue;
+				const CityDef* host = w.FindCity(r.cityId);
+				int lightIndex = 0;
+				// Torche plantée en \p p, flamme tournée vers \p open (direction unitaire
+				// de l'espace libre) ; lumière enregistrée à 2 m du sol.
+				auto torch = [&](Vec2 p, Vec2 open) {
+					if (!w.OwnsPoint(p) || w.IsOccupied(p, 0.6)) return;
+					AddProp(w, "Torch_Metal", p, YawFacing(open * -1.0), 1.0, 0, 1, 0.0, 1.4);
+					w.Occupy(p, 0.6);
+					PointLightDef l;
+					l.id = r.id + "_torche_" + std::to_string(lightIndex++);
+					l.position = p + open * 0.3;
+					l.y = w.HeightAt(p) + 1.8;
+					w.pointLights.push_back(std::move(l));
+				};
+				// 1) Pied des parois du fond : une torche tous les ~140 m de pourtour, sauf à
+				//    l'embouchure de la galerie (elle a les siennes).
+				const double perim = 2.0 * kPi * r.floorRadiusM;
+				const int ring = std::max(8, static_cast<int>(std::lround(perim / 140.0)));
+				for (int k = 0; k < ring; ++k)
+				{
+					const double a = r.phase + k * 2.0 * kPi / ring;
+					const Vec2 p = r.center + Dir(a) * (GouffreFloorRadiusAt(r, a) + 2.0);
+					if (GouffreGalleryDistance(r, p, nullptr) < r.galleryHalfWidthM + r.galleryWallM + 20.0) continue;
+					torch(p, Dir(a) * -1.0);
+				}
+				// 2) Galerie : une torche tous les 70 m, en quinconce sur les deux parois,
+				//    depuis la sortie du fond jusqu'à 60 m de l'entrée (pas de lueur dehors).
+				const double total = r.galleryAlong.back();
+				int side = 1;
+				for (double along = 35.0; along < total - 60.0; along += 70.0)
+				{
+					size_t k = 0;
+					while (k + 2 < r.gallery.size() && r.galleryAlong[k + 1] < along) ++k;
+					const double seg = r.galleryAlong[k + 1] - r.galleryAlong[k];
+					const double t = seg > 0.0 ? (along - r.galleryAlong[k]) / seg : 0.0;
+					const Vec2 a = r.gallery[k], b = r.gallery[k + 1];
+					const Vec2 axis = a + (b - a) * t;
+					if (std::hypot(axis.x - r.center.x, axis.z - r.center.z) < GouffreFloorRadiusAt(r, std::atan2(axis.z - r.center.z, axis.x - r.center.x)) + r.wallM)
+						continue; // encore dans le fond
+					const double len = std::max(1e-6, std::hypot(b.x - a.x, b.z - a.z));
+					const Vec2 dir{ (b.x - a.x) / len, (b.z - a.z) / len };
+					const Vec2 nrm{ -dir.z, dir.x };
+					torch(axis + nrm * (side * (r.galleryHalfWidthM + 1.0)), nrm * static_cast<double>(-side));
+					side = -side;
+				}
+				// 3) Éboulis de l'entrée cachée : blocs de part et d'autre de l'axe et en
+				//    travers, qui laissent un passage (≥ 2 m) ; aucune torche dehors.
+				{
+					const Vec2 e = r.gallery.back(), q = r.gallery[r.gallery.size() - 2];
+					const double len = std::max(1e-6, std::hypot(e.x - q.x, e.z - q.z));
+					const Vec2 dir{ (e.x - q.x) / len, (e.z - q.z) / len };
+					const Vec2 nrm{ -dir.z, dir.x };
+					Rng rng(Hash(w.master.seed, HashString(r.id.c_str()), 1107));
+					const char* rocks[] = { "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3" };
+					for (int k = 0; k < 9; ++k)
+					{
+						const double lateral = (k % 2 ? 1.0 : -1.0) * rng.Range(r.galleryHalfWidthM * 0.45, r.galleryHalfWidthM + 6.0);
+						const Vec2 p = e + dir * rng.Range(-18.0, 10.0) + nrm * lateral;
+						if (!w.OwnsPoint(p) || w.IsOccupied(p, 1.0)) continue;
+						AddProp(w, rocks[rng.Below(3)], p, rng.Range(0.0, 360.0), rng.Range(1.8, 3.2), kSolid, 0, 1.2);
+						w.Occupy(p, 1.0);
+					}
+				}
+				// 4) Ambiance « sombre » du fond (donnée) : jusqu'au bord le plus bas.
+				AmbianceZoneDef z;
+				z.id = r.id;
+				z.label = host ? host->name : r.id;
+				z.center = r.center;
+				z.radiusM = r.floorRadiusM * 1.13 + r.wallM;
+				z.floorY = r.floorY;
+				z.topY = r.floorY + r.depthM;
+				z.darkness = 0.65;
+				w.ambianceZones.push_back(std::move(z));
+			}
+		}
+
 		int AddNode(SettlementLayout& L, Vec2 p)
 		{
 			L.nodes.push_back({ p, {} });
@@ -747,9 +902,11 @@ namespace tools::world_gen
 			}
 
 			// --- Cimetière / point de résurrection : hors les murs, près d'une route
-			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines).
-			if (c.procedural.empty() || c.procedural == "hameau")
+			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines ;
+			//     v1.0.111 : ni pour un hameau de `graveyards.without_graveyard`).
+			if ((c.procedural.empty() || c.procedural == "hameau") && !w.master.graveyardExcluded.count(c.id))
 			{
+				L.hasGraveyard = true;
 				const double a = angles.empty() ? 0.0 : angles[0] + 0.5;
 				Vec2 gy = c.center + Dir(a) * (R + 12.0);
 				for (int attempt = 0; attempt < 16; ++attempt)
@@ -831,6 +988,8 @@ namespace tools::world_gen
 				w.Warn("aucun lot bati pour " + c.id + " (terrain contraint)");
 			w.layouts.push_back(std::move(L));
 		}
+		BuildGouffreProps(w); // v1.0.107 : torches, éboulis et ambiance du gouffre
+		BuildIsolatedGraveyard(w); // v1.0.111 : cellule sans cimetière
 		w.report.buildings = w.buildings.size();
 	}
 }

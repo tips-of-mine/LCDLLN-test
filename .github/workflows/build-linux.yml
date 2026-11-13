@@ -193,6 +193,12 @@ jobs:
           test -s "$STARTS" || { echo "[FAIL] $STARTS absent"; exit 1; }
           grep -q generated_cells "$STARTS" || { echo "[FAIL] generated_cells absent de $STARTS"; exit 1; }
           grep -q start_factions "$STARTS" || { echo "[FAIL] start_factions (departs par faction) absent de $STARTS"; exit 1; }
+          # Décision du propriétaire (lore v1.0.111) : toujours exactement 666 cimetières dans
+          # les Royaumes (exploit « Pèlerin des 666 tombes ») ; tout ajout ou retrait doit
+          # garder ce nombre.
+          GRAVES=$(cat "$GITHUB_WORKSPACE"/game/data/zones/cell_*/respawn_points.txt | awk '$2 == "graveyard"' | wc -l)
+          test "$GRAVES" -eq 666 || { echo "[FAIL] $GRAVES cimetiere(s) dans les Royaumes, 666 attendus (lore v1.0.111)"; exit 1; }
+          echo "[OK] 666 cimetieres dans les Royaumes"
           "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }

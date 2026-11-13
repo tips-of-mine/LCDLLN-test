@@ -1047,6 +1047,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.35](#1635-routes-manquantes-après-le-passage-aux-routes-du-lore-v10106) | v1.0.106 | Routes manquantes après le passage aux routes du lore | Routes manquantes recréées (11), 4 tracés corrigés, balises replacées, 68 cases ouvertes (481 jouables). |
 | [16.36](#1636-le-gouffre-caché-de-deathtrap-canyon-et-sa-ville-v10107) | v1.0.107 | Le gouffre caché de Deathtrap Canyon et sa ville | Gouffre caché de Deathtrap Canyon et Thurvhal, point de réapparition secret ; torches et ambiance en données. |
 | [16.37](#1637-lieux-secrets-cachés-aux-joueurs-v10110) | v1.0.110 | Lieux secrets cachés aux joueurs | Drapeau `secret` des POI, `secret_places.json` réservé au serveur et retiré du paquet client, case « Secret » de l'éditeur, `check_secrets.py`. |
+| [16.38](#1638-666-cimetières-et-exploit-du-pèlerin-v10111) | v1.0.111 | 666 cimetières et exploit du pèlerin | Toujours 666 cimetières dans les Royaumes (contrôle CI) ; exploit [GD] pour les avoir tous visités. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4383,6 +4384,24 @@ décochée, export identique).
 
 **Reste à faire** : un mécanisme de **lieu découvert** (le serveur révèle un secret au joueur qui l'a trouvé,
 par exemple en entrant dans son rayon) ; sans lui, un lieu secret n'apparaît jamais sur la carte du joueur.
+
+### 16.38 666 cimetières et exploit du pèlerin (v1.0.111)
+
+**Décision du propriétaire (13/11/2026)** : le monde des Royaumes compte **toujours exactement 666 cimetières**
+(points de réapparition `graveyard` des `respawn_points.txt` des cellules jouables, un par ville du lore et par
+hameau procédural, dont celui de Thurvhal au fond du Gouffre des Revenus). Ce nombre est celui de la génération
+v1.0.110 (481 cellules). Tout ajout de cimetière (par exemple des cimetières isolés pour les cases qui n'en ont
+pas) doit être compensé ailleurs.
+
+**Contrôle** : la CI `build-linux` compte les cimetières après la génération du monde et **échoue** s'il n'y en a
+pas exactement 666.
+
+**Exploit** `exploit_pelerin_des_666_tombes` [GD] « Le Pèlerin des Six Cent Soixante-Six Tombes », type
+`exploration`, titre « Pèlerin des Tombes » : visiter les 666 cimetières. Mécanique serveur à créer (cimetières
+visités mémorisés par personnage, réapparition forcée non comptée, cimetière secret de Thurvhal compris).
+
+**État mesuré (v1.0.110)** : 81 cases jouables sans cimetière ; par endroits le cimetière le plus proche est à
+une vingtaine de kilomètres. Répartition à revoir avec le propriétaire, à nombre constant.
 
 ## 17. Questions ouvertes
 

@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.110)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.111)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -75,7 +75,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.107 | `2c1aba0` | gouffre caché de Deathtrap Canyon et Thurvhal (réapparition secrète) | R (dont `respawn_points.txt` du shard) | noms `[GD]` ; rendu des torches et du fond sombre ; mécanisme de découverte |
 | v1.0.108 | `bb469af` | documentation complète : guide de l'éditeur, outils, monde, synthèse ; commentaires de code | — | — |
 | v1.0.109 | `f939b0b` | vérification finale : champ `territory.ville_id` au formulaire de faction (deux éditeurs), `test_editor_fiches.py` calculé depuis les données (point 57) | — | lieux secrets dans `places.json` (point 65) |
-| v1.0.110 | (ce commit) | **lieux secrets cachés aux joueurs** (point 65, option a) : `secret` des POI au master (11 grottes des dragons, Puits des Lianes), `secret_places.json` réservé au serveur et retiré du paquet client, annuaire MJ du shard, case « Secret » de l'éditeur, `check_secrets.py` en CI ([LORE_BD §16.37](LORE_BD.md)) | — | — |
+| v1.0.110 | `1b72856` | **lieux secrets cachés aux joueurs** (point 65, option a) : `secret` des POI au master (11 grottes des dragons, Puits des Lianes), `secret_places.json` réservé au serveur et retiré du paquet client, annuaire MJ du shard, case « Secret » de l'éditeur, `check_secrets.py` en CI ([LORE_BD §16.37](LORE_BD.md)) | — | — |
+| v1.0.111 | (ce commit) | **666 cimetières** : nombre fixe (contrôle bloquant de la CI build-linux), exploit [GD] « Pèlerin des 666 tombes » ([LORE_BD §16.38](LORE_BD.md)) | — | répartition des cimetières (81 cases sans), mécanique de l'exploit |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -196,14 +197,14 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ## 5. Description de PR proposée
 
-**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.110)`
+**Titre** : `Carte : corrections et ajouts du propriétaire, éditeur sans perte, routes du lore en jeu (lore v1.0.72 → v1.0.111)`
 
 **Corps** :
 
 ```markdown
 ## Résumé
 
-Branche `carte/corrections-v1.0.72` : 39 commits, lore v1.0.72 → v1.0.110 (un lot du propriétaire par commit).
+Branche `carte/corrections-v1.0.72` : 39 commits, lore v1.0.72 → v1.0.111 (un lot du propriétaire par commit).
 
 - **Monde jouable** : 191 → 481 cellules jouables (Marche de l'Est, routes de Vozmarkh et de Rhivkhar, passages
   des routes du lore, Vaerdhun, Île de la Trêve) ; lieux du lore 88 → 408 (dont les lieux [GD] des cases ouvertes, avec POI réels) ; 3 villes moyennes ; gouffre

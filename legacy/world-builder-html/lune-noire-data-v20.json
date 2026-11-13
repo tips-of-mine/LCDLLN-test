@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.110",
+    "version": "1.0.111",
     "notes": [
+      "v1.0.111 : [DÉCISION] 666 cimetières (propriétaire, 13/11/2026) : le monde jouable des Royaumes compte toujours exactement 666 cimetières (points de réapparition `graveyard` des cellules générées, état mesuré à la v1.0.110) ; tout ajout ou retrait doit garder ce nombre (contrôle bloquant de la CI build-linux). Nouvel exploit d'exploration exploit_pelerin_des_666_tombes [GD] : visiter les 666 cimetières.",
       "v1.0.110 : [DÉCISION] Lieux secrets cachés aux joueurs (point 65, choix « option a » du propriétaire, 13/11/2026) : champ `secret: true` posé sur les 11 grottes des dragons de Xygga et le Puits des Lianes (Ophidiens), en plus du Gouffre des Revenus, de la Fente des Revenus et de Thurvhal (v1.0.107). Au master, les POI et villes secrets ne figurent plus dans places.json (carte du jeu, bannières, radar, annuaire public) : ils sont écrits dans world/<monde>/secret_places.json, lu seulement par l'annuaire des MJ du shard et retiré du paquet client par la CI. Le lieu reste généré sur le terrain : seul son affichage est caché. Case « Secret » ajoutée aux formulaires lieu et ville de l'éditeur ; tools/lore/check_secrets.py vérifie que le lore et le master concordent.",
       "v1.0.109 : Vérification finale de la branche carte v1.0.72 → v1.0.108 : formulaire de faction de l'éditeur complété (champ territory.ville_id, « Ville du territoire », jusque-là conservé sans champ : Thurvhal des Ghaurdes) ; test_editor_fiches.py rendu robuste (mines et quêtes ancrées calculées depuis les données au lieu des chiffres du v1.0.103). Aucune fiche de lore modifiée.",
       "v1.0.108 : Documentation complète de la branche carte v1.0.72 → v1.0.107 (lot 31 du propriétaire, 12/11/2026) : guide de l'éditeur (docs/world/EDITEUR_LORE.md), outils du lore et CI (docs/world/OUTILS_LORE.md), état du monde (docs/world/ROYAUMES.md §11, docs/world/ENFERS.md §7), table des matières de LORE_BD.md §16, synthèse par version et points ouverts (docs/world/CHANGELOG_CARTE_v1.0.72-v1.0.108.md), index docs/world/README.md. Aucune fiche de lore modifiée.",
@@ -29962,6 +29963,32 @@
         "power": ""
       },
       "notes": []
+    },
+    {
+      "id": "exploit_pelerin_des_666_tombes",
+      "name": "Le Pèlerin des Six Cent Soixante-Six Tombes",
+      "type": "exploration",
+      "death_cause_detail": "",
+      "how_to_obtain": "Visiter les 666 cimetières du monde (les Royaumes), y compris celui de Thurvhal au fond du Gouffre des Revenus.",
+      "eligible": {
+        "races": [],
+        "factions": [],
+        "classes": []
+      },
+      "location": {
+        "ville_id": "",
+        "details": "Les 666 cimetières des Royaumes (points de réapparition des cellules jouables)."
+      },
+      "rewards": {
+        "title": "Pèlerin des Tombes",
+        "reward": "",
+        "power": ""
+      },
+      "notes": [
+        "[DÉCISION] (v1.0.111, 13/11/2026) : le monde compte toujours exactement 666 cimetières ; l'exploit est obtenu quand un joueur les a tous visités.",
+        "[GD] Nom, titre et récompense à valider par le propriétaire.",
+        "[GD] Mécanique à créer côté serveur : mémoriser par personnage chaque cimetière visité (entrée dans son rayon), sans compter la réapparition forcée ; le cimetière secret de Thurvhal compte."
+      ]
     }
   ],
   "quests": [
@@ -242931,6 +242958,13 @@
           "nom": "Lieux secrets hors de la sortie publique",
           "decision": "Option a du propriétaire (13/11/2026) : un lieu ou une ville `secret: true` est caché aux joueurs — absent de places.json et de la carte du jeu, recopié dans secret_places.json (réservé au serveur, annuaire des MJ, jamais livré au client). Secrets : 11 grottes des dragons, Puits des Lianes, Gouffre et Fente des Revenus, Thurvhal. Les entrées ophidiennes de la Bouche des Roseaux et de la Faille des Mues, et l'Entrée des Abysses, restent publiques (sans POI ou non secrètes au lore). Un portail relié ou une extrémité de route ne peut pas être secret.",
           "version": "1.0.110"
+        },
+        {
+          "collection": "exploits",
+          "id": "exploit_pelerin_des_666_tombes",
+          "nom": "666 cimetières et exploit du pèlerin",
+          "decision": "Décision du propriétaire (13/11/2026) : il faut toujours 666 cimetières dans le monde (Royaumes, points de réapparition graveyard des cellules jouables, nombre atteint à la v1.0.110) ; un exploit récompense le joueur qui les a tous visités. La CI build-linux échoue si la génération du monde ne donne pas exactement 666 cimetières.",
+          "version": "1.0.111"
         }
       ]
     },

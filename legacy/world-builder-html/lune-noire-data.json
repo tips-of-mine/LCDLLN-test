@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.115",
+    "version": "1.0.116",
     "notes": [
+      "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 53 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
       "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
       "v1.0.114 : [DÉCISION] Exploit des 666 cimetières et lieux secrets découverts mis en jeu (décisions du propriétaire du 13/11/2026, affichage « message discret + compteur ») : par personnage, un cimetière des Royaumes est visité en y entrant vivant (rayon de 15 m) ou en y réapparaissant ; l'exploit exploit_pelerin_des_666_tombes est débloqué au 666e ; un lieu secret est révélé pour toujours sur la carte du seul personnage qui entre dans son rayon (radius_m d'une ville, 40 m pour un lieu) ; messages système dans le chat (« Cimetière visité (124/666) », « Lieu découvert : <nom> », « Exploit débloqué : <titre> »), compteur « Cimetières visités : N/666 » dans l'onglet Exploits. Identifiant stable gy=<id> des cimetières écrit par tools/world_gen ; serveur : migration 0086, messages UDP 105/106, kProtocolVersion 21 (LORE_BD §16.41).",
       "v1.0.113 : [DÉCISION] Réponses du propriétaire du 13/11/2026 : noms [GD] validés en bloc ; Xygga femelle et noms [GD] des 10 premiers-nés ; année de jeu 3417 AO ; niveaux confirmés (Kendrhir 38-56, raids de fin 45/50/55/60, faction +5 seuil 20) ; balisage par la couleur du nom de zone ; Harrodh à l'Empire ; « la Légion » de l'Île de la Trêve = les deux ; contre-quêtes Lune Noire ; Ghulvathan en N009_E011 ; faction_demons → Légion infernale ; demi-elfe noir → elfe noir ; race des Menthats créée (Lune Noire) ; îles par bateau ; arbitrages de l'Oracle, d'Heusgly et du Palais du Maître des Dragons ; règles de l'exploit des 666 cimetières et des lieux secrets découverts ; ouverture des routes coupées décidée (LORE_BD §16.40).",
@@ -30636,7 +30637,12 @@
         "Si révélation : convaincre Greldinard avec une preuve concrète — il est sceptique.",
         "Conséquence : rupture du pacte Dzorak/Lune Noire, ou trahison du joueur si utilisé à des fins personnelles."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre Greldinard et les Dzorak à Tbarak. [GD]",
+          "ville_id": "ville_tbarak"
+        }
+      ],
       "source_lore": [
         "dzorak_orcs",
         "faction_black_moon",
@@ -30653,7 +30659,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -30741,7 +30749,12 @@
         "Trouver la question précise qui force Methrhton à répondre sans 'intervenir'.",
         "Repartir avant le coucher du soleil — la pyramide disparaît et ne reviendra pas avant longtemps."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Atteindre la pyramide volante de Methrhton par la voie des airs (Haawling Spines). [GD]",
+          "lieu_id": "lieu_haawling_spines"
+        }
+      ],
       "source_lore": [
         "zone_flying_pyramid",
         "char_serpent_methraton"
@@ -30757,7 +30770,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -31076,7 +31091,12 @@
         "Séance 3 — Révélation : le joueur perçoit une présence étrangère dans l'esprit de la succube.",
         "Décision : continuer l'apprentissage (Haazheel observe) ou trouver une autre voie plus lente."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Retrouver la succube à Sauken Glude de Magistrya. [GD]",
+          "ville_id": "sauken_glude_of_magistrya"
+        }
+      ],
       "source_lore": [
         "char_succubus",
         "char_haazheel_thorn",
@@ -31093,7 +31113,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -31273,7 +31295,12 @@
         "Si intervention : lui offrir une alternative concrète — une cible à combattre qui vaut davantage.",
         "Sceller la loyauté par un combat commun — Ghorghor teste toujours par la force."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Retrouver Ghorghor Bey au fief de Garundel, base de Wismerhill. [GD]",
+          "ville_id": "ville_garundel_fief"
+        }
+      ],
       "source_lore": [
         "char_ghorghor_bey",
         "faction_black_moon"
@@ -31289,7 +31316,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -31324,7 +31353,12 @@
         "Trouver ce qu'il cherchait : une lettre d'un ami mort depuis longtemps.",
         "Décider de la lui remettre telle quelle ou de la brûler pour l'épargner."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Trouver Iaun Reith dans la forêt des Lutins. [GD]",
+          "lieu_id": "lieu_souche_creuse_des_lutins"
+        }
+      ],
       "source_lore": [
         "char_iaun_reith",
         "zone_cursed_forest",
@@ -31341,7 +31375,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -31701,7 +31737,8 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Entrer dans la forêt — les lutins commencent leurs farces (boue, vol d'objets, pièges)."
+          "texte": "Entrer dans la forêt — les lutins commencent leurs farces (boue, vol d'objets, pièges).",
+          "lieu_id": "lieu_souche_creuse_des_lutins"
         },
         {
           "texte": "Résister aux farces sans perdre patience (combattre les lutins est inutile — trop nombreux)."
@@ -31714,7 +31751,8 @@
           "texte": "Accepter son offre de guide — 'Mauvaise idée, après s'étend un terrible marais maudit.'"
         },
         {
-          "texte": "Traverser le marais avec sa mante géante comme guide."
+          "texte": "Traverser le marais avec sa mante géante comme guide.",
+          "ville_id": "ville_village_fantome"
         }
       ],
       "source_lore": [
@@ -31747,7 +31785,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T3] pages 26-27"
+        "[BD-T3] pages 26-27",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33028,7 +33067,12 @@
         "Traverser les rangs sous les regards des géants ('Hé! Ils sont plus gros que moi!').",
         "Sortir de l'armée sain et sauf — 'J'ai jamais eu aussi peur de ma vie!'."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Croiser l'armée de Haazheel en marche vers Lhynn, dans la plaine de l'Oracle. [GD]",
+          "lieu_id": "lieu_menhirs_plaine_oracle"
+        }
+      ],
       "source_lore": [
         "faction_black_moon",
         "char_haazheel_thorn",
@@ -33052,7 +33096,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T3] pages 15-17"
+        "[BD-T3] pages 15-17",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33178,7 +33223,8 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Localiser le château loué par Haazheel sur le chemin du retour."
+          "texte": "Localiser le château loué par Haazheel sur le chemin du retour.",
+          "lieu_id": "lieu_mas_abandonne_de_la_plaine"
         },
         {
           "texte": "Infiltrer ou approcher le château en profitant de la confusion de la punition."
@@ -33216,7 +33262,8 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[BD-T3] pages 40-41"
+        "[BD-T3] pages 40-41",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33548,7 +33595,8 @@
       "etapes_struct": [
         {
           "texte": "Accepter l'offre d'Hellaynnea",
-          "pnj_id": "char_hellaynnea_t12"
+          "pnj_id": "char_hellaynnea_t12",
+          "ville_id": "ville_moork"
         },
         {
           "texte": "Rencontrer les 9 femmes (guerrières, prêtresses, mages, nobles — l'une était reine)"
@@ -33560,7 +33608,8 @@
           "texte": "Confirmer les grossesses"
         },
         {
-          "texte": "Organiser leur escorte vers la forteresse naine abandonnée"
+          "texte": "Organiser leur escorte vers la forteresse naine abandonnée",
+          "ville_id": "ville_forteresse_naine_heureux_t11"
         }
       ],
       "source_lore": [],
@@ -33602,7 +33651,8 @@
       "notes": [
         "[BD-T9] Hellaynnea porte elle-même un enfant : 'POUR QU'IL POSSÈDE NOTRE PUISSANCE CONJUGUÉE.'",
         "[BD-T9] L'une des femmes était reine d'un pays lointain.",
-        "[BD-T9] Les 10 femmes seront recluses 9 mois dans la forteresse naine abandonnée."
+        "[BD-T9] Les 10 femmes seront recluses 9 mois dans la forteresse naine abandonnée.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33640,7 +33690,12 @@
         "Recevoir investiture : armure métal étoiles, épée hors-monde, heaume/couronne, opale de feu émeraude",
         "Recevoir monture : Sombre Chevaucheur des Ténèbres"
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre Haazheel Thorn à Moork pour le rituel de la Négation. [GD]",
+          "ville_id": "ville_moork"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 50000,
@@ -33706,7 +33761,8 @@
         "[BD-T9] 'CE QUI VA SUIVRE SERA UN PEU DÉSAGRÉABLE, MON ENFANT...' — Haazheel prévient Wismerhill.",
         "[BD-T9] 'PLONGEANT WISMERHILL DANS UN OCÉAN DE SOUFFRANCE' — le texte décrit la violence du rituel.",
         "[BD-T9] Le mot 'NON...' de Wismerhill dans l'obscurité totale est le tournant — refus de disparaître.",
-        "[BD-T9] 'EN TOI COULENT TOUTES LES ÉNERGIES. DONT CERTAINES MÊME QUE JE N'AI JAMAIS PU MAÎTRISER.' — Haazheel reconnaît une puissance supérieure en lui."
+        "[BD-T9] 'EN TOI COULENT TOUTES LES ÉNERGIES. DONT CERTAINES MÊME QUE JE N'AI JAMAIS PU MAÎTRISER.' — Haazheel reconnaît une puissance supérieure en lui.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33745,7 +33801,8 @@
       "etapes_struct": [
         {
           "texte": "Présenter le rapport militaire au conseil de guerre (Haazeel, Wismerhill, Greldinard)",
-          "pnj_id": "char_wismerhill"
+          "pnj_id": "char_wismerhill",
+          "ville_id": "ville_moork"
         },
         {
           "texte": "Rencontrer l'armée de Fratus Sinister et l'intégrer",
@@ -33804,7 +33861,8 @@
       "notes": [
         "[BD-T9] Forces assemblées : 20K gardes + Juggernauth + 100K+ orcs + 80K réguliers + légions infernales + armada tharque.",
         "[BD-T9] 'JAMAIS UNE ARMÉE N'AVAIT ÉTÉ AUSSI NOMBREUSE ET PUISSANTE, NI AUSSI DISPARATE.'",
-        "[BD-T9] Les Chevaliers-Dragons n'ont pas encore répondu formellement en fin de T9."
+        "[BD-T9] Les Chevaliers-Dragons n'ont pas encore répondu formellement en fin de T9.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -33842,7 +33900,8 @@
       "etapes_struct": [
         {
           "texte": "1. Suivre Pile-ou-Face dans la forêt de la Rencontre.",
-          "pnj_id": "char_pile_ou_face"
+          "pnj_id": "char_pile_ou_face",
+          "lieu_id": "lieu_foret_rencontre_t1"
         },
         {
           "texte": "2. Identifier les traces de 3 types d'animaux différents (pistage)."
@@ -33895,7 +33954,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T1] 'Le gros gibier, c'est pour les débutants !' — Pile-ou-Face enseigne la chasse à Wismerhill.",
-        "[BD-T1] Aventure montage pages 9-16 — séquences d'apprentissage variées."
+        "[BD-T1] Aventure montage pages 9-16 — séquences d'apprentissage variées.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -34724,7 +34784,8 @@
       "notes": [
         "[BD-T7] Séquence de voyage pp.21-29 — plusieurs pleine pages narratives illustrant le voyage mystique.",
         "Chronologie : premier acte du Tome 7.",
-        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade.",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -34828,7 +34889,8 @@
         "[BD-T7] Pages 7-10 — invocation et confrontation avec Methraton.",
         "Quête unique — ne peut être accomplie qu'une seule fois par serveur.",
         "Chronologie : acte 2 du Tome 7.",
-        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -34922,7 +34984,8 @@
       "notes": [
         "[BD-T7] Pages 29, 33-36 — interactions politiques avec le Seigneur du Jade.",
         "Chronologie : parallèle à l'acte 2 du Tome 7.",
-        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade."
+        "[GD] (v1.0.54) Contenu d'extension : l'Empire du Jade est un territoire à ouvrir plus tard (ouverture au monde, décision du propriétaire) ; l'album T7 n'en montre rien, son titre seul évoque le jade.",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -34990,7 +35053,8 @@
         "[BD-T7] Pages 14-15 — apparition des Grands Vents dans la tempête de neige.",
         "Quête solo uniquement — révélation personnelle de Wismerhill.",
         "Chronologie : acte 3 du Tome 7.",
-        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35064,7 +35128,8 @@
       "notes": [
         "[BD-T7] Pages 25-28 — séquence rituelle en 4 pleine pages.",
         "Chronologie : parallèle à l'acte 3 du Tome 7.",
-        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35155,7 +35220,8 @@
         "[BD-T7] Pages 50-53 — grande salle aux lions, conseil de guerre, alliance scellée.",
         "Chronologie : acte final du Tome 7 — ouvre la voie au Tome 8.",
         "Dépendances : requiert d'avoir accompli TOUTES les quêtes T7 principales.",
-        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52)."
+        "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35232,7 +35298,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Pénétrer dans la nécropole de Der Hem Shelbem jusqu'à la salle du trône du Prince. [GD]",
+          "lieu_id": "lieu_der_hem_shelbem"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -35259,7 +35330,8 @@
       "notes": [
         "[BD-T8] Ghorghor à demi dévoré — ne régénère plus.",
         "[BD-T8] 'Il ne pourra jamais le ramener à la vie !' — les compagnons s'inquiètent.",
-        "[BD-T8] Haazheel arrive en urgence et aide à finaliser le combat."
+        "[BD-T8] Haazheel arrive en urgence et aide à finaliser le combat.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35282,7 +35354,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Assister au rituel dans la nécropole de Der Hem Shelbem, avec le crâne du Prince Hors-Vivant. [GD]",
+          "lieu_id": "lieu_der_hem_shelbem"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -35312,7 +35389,8 @@
       "notes": [
         "[BD-T8] 'Vous autres, sortez !' — Haazheel chasse les témoins.",
         "[BD-T8] Cris terribles entendus derrière les portes. 'Rien que de très normal.' — Haazheel à la sortie.",
-        "[BD-T8] 'Le pouvoir a toujours un prix.' — Haazheel."
+        "[BD-T8] 'Le pouvoir a toujours un prix.' — Haazheel.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35386,7 +35464,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Assister au conseil de guerre de l'Empereur au palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 3000,
@@ -35409,7 +35492,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T8] 'Le plan de Fratus est simple, il espère avec la citadelle de Northind verrouiller la province et faire sécession de l'Empire.' — informateur.",
-        "[BD-T8] 'Faites préparez mon dragon !' — Haghendorf."
+        "[BD-T8] 'Faites préparez mon dragon !' — Haghendorf.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35592,7 +35676,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Accompagner Parsifal au palais de Lhynn pour remettre les Clefs de Northind. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 15000,
@@ -35622,7 +35711,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T8] 'Voici les clefs de Northind, Sire !' — Parsifal.",
-        "[BD-T8] 'Je ne sers que Dieu, Majesté. Dieu, et les hommes justes.' — Parsifal."
+        "[BD-T8] 'Je ne sers que Dieu, Majesté. Dieu, et les hommes justes.' — Parsifal.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35645,7 +35735,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir à Moork le chevalier masqué qui demande audience. [GD]",
+          "ville_id": "ville_moork"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 10000,
@@ -35675,7 +35770,8 @@
         "[BD-T8] 'Je veux me venger ! Je veux vous servir !' — Fratus.",
         "[BD-T8] 'Je veux tuer les porcs qui m'ont fait cela, je veux les saigner !' — Fratus.",
         "[BD-T8] Haazheel approuve : 'C'est parfait, il fera une excellente recrue, mon enfant.'",
-        "[BD-T8] Les ennemis d'hier jurèrent fidélité par une haine commune."
+        "[BD-T8] Les ennemis d'hier jurèrent fidélité par une haine commune.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35752,7 +35848,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre au Palais des Maîtres des Dragons. [GD]",
+          "ville_id": "city_dragon_palace"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 20000,
@@ -35794,7 +35895,8 @@
       "notes": [
         "[BD-T9] Le vote n'est pas encore conclu en fin de T9 — suspense.",
         "[BD-T9] Le Grand Prince rappelle que 'NOTRE ALLIANCE AVEC FRATUS FUT MISÉRABLE ET VAINE.'",
-        "[LORE_ETENDU] Résultat conditionnel selon les choix du joueur — impact sur T10."
+        "[LORE_ETENDU] Résultat conditionnel selon les choix du joueur — impact sur T10.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -35831,7 +35933,8 @@
       "etapes_struct": [
         {
           "texte": "Découvrir le Pari Cosmique entre Lucifer et Pazuzu aux Enfers.",
-          "pnj_id": "char_pazuzu"
+          "pnj_id": "char_pazuzu",
+          "cell": "enfers:N001_E000"
         },
         {
           "texte": "Assister aux joutes d'échecs démoniaques et à l'accord conclu."
@@ -35857,7 +35960,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43). Case des Enfers (palais de Lucifer) : non dessinée par l'éditeur, qui n'a pas la carte des Enfers."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -36373,7 +36478,12 @@
         "Recevoir leur réponse diplomatique",
         "Prendre en charge les dix dragons offerts"
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre le Juggernaut de Haazheel Thorn, stationné devant Moork. [GD]",
+          "ville_id": "ville_moork"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -36386,7 +36496,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -36462,7 +36574,12 @@
         "Participer au rituel d'incantation",
         "Amplifier la puissance de la Lune Noire pour la bataille"
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre le pentacle tracé dans la Plaine des Cendres. [GD]",
+          "lieu_id": "lieu_plaine_des_cendres"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 5,
@@ -36475,7 +36592,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -36502,7 +36621,12 @@
         "Prendre un Menthat",
         "Prendre position sur la plaine"
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Prendre position avec l'armée : rassemblement au fief de Garundel, entrée de la Grande Plaine. [GD]",
+          "ville_id": "ville_garundel_fief"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -36515,7 +36639,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -36916,7 +37042,8 @@
       "etapes_struct": [
         {
           "texte": "Assister au dîner privé avec les compagnons de Wismerhill.",
-          "pnj_id": "char_wismerhill"
+          "pnj_id": "char_wismerhill",
+          "ville_id": "ville_lhynn"
         },
         {
           "texte": "Observer Wismerhill 'scanner' les âmes de ses compagnons.",
@@ -36948,7 +37075,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T11] Pages 22-28.",
-        "[BD-T11] Cadeaux : Dragon bleu (Pilou), parures (Hellaynea), Lame Feu Solaire (Murata), Goum restauré (Pépette), Sceptre Archimage (Shamballeau), Anneau taille (Ghorghor), Filles ressuscitées (Ghorghor)."
+        "[BD-T11] Cadeaux : Dragon bleu (Pilou), parures (Hellaynea), Lame Feu Solaire (Murata), Goum restauré (Pépette), Sceptre Archimage (Shamballeau), Anneau taille (Ghorghor), Filles ressuscitées (Ghorghor).",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -36991,7 +37119,8 @@
           "texte": "Préparer une escorte de démons pour la cérémonie officielle."
         },
         {
-          "texte": "Assister à la cérémonie — démons visibles comme 'gardes d'honneur'."
+          "texte": "Assister à la cérémonie — démons visibles comme 'gardes d'honneur'.",
+          "ville_id": "ville_lhynn"
         },
         {
           "texte": "Observer la déconfiture de Meldrim.",
@@ -37019,7 +37148,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T11] Pages 16-17.",
-        "[BD-T11] Wismerhill : 'Ha, ha, ha, ha! Ils ont dû être très déçus! Ils nous prenaient pour des lapereaux de quinze jours ou quoi?!'"
+        "[BD-T11] Wismerhill : 'Ha, ha, ha, ha! Ils ont dû être très déçus! Ils nous prenaient pour des lapereaux de quinze jours ou quoi?!'",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37042,7 +37172,12 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre au palais impérial de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37057,7 +37192,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T12] Declenche quest_t12_02_vengeance_urmacht.",
-        "[BD-T12] Revele char_hellaynnea_t12 comme personnage officiel."
+        "[BD-T12] Revele char_hellaynnea_t12 comme personnage officiel.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37080,7 +37216,12 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre au palais impérial de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37095,7 +37236,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T12] Boss: creature_urmacht (niveau 35-45, difficulte boss).",
-        "[BD-T12] Cette vengeance est consommee, cette haine est eteinte!"
+        "[BD-T12] Cette vengeance est consommee, cette haine est eteinte!",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37118,7 +37260,12 @@
       "repeatable": false,
       "type": "quete_secondaire_fief",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre au palais impérial de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37133,7 +37280,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T12] Inspire de l arc de Murata dans son fief.",
-        "[BD-T12] Declenche un avertissement de Haazheel si trop de pretres expulses."
+        "[BD-T12] Declenche un avertissement de Haazheel si trop de pretres expulses.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37156,7 +37304,12 @@
       "repeatable": false,
       "type": "story_principale",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre le camp de l'Oracle assiégé. [GD]",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37172,7 +37325,8 @@
       "notes": [
         "[BD-T12] Boss: char_prince_oghin_t12 -- ne peut etre tue que par skill_flux_divin_t12.",
         "[BD-T12] L Oracle revele ensuite : 6 legions en route, vrai dessein des demons.",
-        "[BD-T12] Wismerhill, c est l Oracle qui te parle. Je suis assiege. J ai besoin de ton aide, viens!"
+        "[BD-T12] Wismerhill, c est l Oracle qui te parle. Je suis assiege. J ai besoin de ton aide, viens!",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37194,7 +37348,12 @@
       "repeatable": false,
       "tags": [],
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Suivre la Route Noire jusqu'à la Porte des Enfers, au cœur de l'Empire. [GD]",
+          "cell": "N000_W009"
+        }
+      ],
       "min_players": 1,
       "required_classes": [],
       "for_factions": [],
@@ -37207,7 +37366,8 @@
         "[BD-T12] Quete mondiale -- declenche event serveur.",
         "[BD-T12] Necessite obligatoirement la presence de Parsifal (PNJ) pour le rituel.",
         "[BD-T12] Ne me remerciez pas, vous savez bien que je n ai pas fait cela pour vous! -- Parsifal.",
-        "[BD-T12] Post-completion : zone_porte_des_enfers_t12 est scellee."
+        "[BD-T12] Post-completion : zone_porte_des_enfers_t12 est scellee.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "type": "",
       "quest_kind": "",
@@ -37233,7 +37393,12 @@
       "repeatable": false,
       "type": "quete_epique_cachee",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre au temple de Methraton à Lhynn. [GD]",
+          "lieu_id": "lieu_temple_methraton_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37248,7 +37413,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T12] Quete cachee -- storyline T13+ en preparation.",
-        "[BD-T12] L heure de la revanche a sonne! Les dieux vont maintenant payer!"
+        "[BD-T12] L heure de la revanche a sonne! Les dieux vont maintenant payer!",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37271,7 +37437,12 @@
       "repeatable": false,
       "type": "quete_gouvernance",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Siéger au conseil impérial, au palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37286,7 +37457,8 @@
       "counter_quest_races": [],
       "notes": [
         "[BD-T12] Je veux que vous m etablissiez un rapport sur la maniere dont les demons affectent le bon fonctionnement de l Empire.",
-        "[BD-T12] Ne me cachez surtout rien! Ne tirez aucune conclusion."
+        "[BD-T12] Ne me cachez surtout rien! Ne tirez aucune conclusion.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37401,7 +37573,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre Shamballeau dans son atelier du palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 40000,
@@ -37423,7 +37600,8 @@
       "notes": [
         "[BD-T13] 'Shamballeau, peux-tu fabriquer des anneaux qui permettront d annuler le sort de controle des Seigneurs de la Negation?'",
         "[BD-T13] 'Heuuuu oui... ca devrait etre possible!'",
-        "[BD-T13] 'Parfait, tu as douze heures devant toi!' -- 'Hein! Douze heures mais...' -- 'Fais-le! Fais-le!'"
+        "[BD-T13] 'Parfait, tu as douze heures devant toi!' -- 'Hein! Douze heures mais...' -- 'Fais-le! Fais-le!'",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37446,7 +37624,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Consulter l'Oracle à l'Aérolithe. [GD]",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 25000,
@@ -37466,7 +37649,8 @@
       "notes": [
         "[BD-T13] 'Oracle! Je t ai aide alors aide-moi! De combien de temps dispose-je?'",
         "[BD-T13] 'Il attaquera demain a l apogee de la Lune vers minuit! Je te previendrai de son arrivee.'",
-        "[BD-T13] Information transmise au Serpent : 'Ce sera demain a minuit!' -- 'Bien, nous agirons donc a minuit cinq!'"
+        "[BD-T13] Information transmise au Serpent : 'Ce sera demain a minuit!' -- 'Bien, nous agirons donc a minuit cinq!'",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37489,7 +37673,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Invoquer Methraton dans son temple de Lhynn. [GD]",
+          "lieu_id": "lieu_temple_methraton_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 50000,
@@ -37510,7 +37699,8 @@
         "[BD-T13] Methraton : 'Je suis neutre, protecteur des hommes, et je n agis que lorsque la balance penche trop d un cote.'",
         "[BD-T13] 'Je prepare un petit quelque chose qui pourrait t aider. Je ne pourrai l activer que lorsqu il sera face a toi.'",
         "[BD-T13] 'Mais ce sera enorme!'",
-        "[BD-T13] Wismerhill : 'Merci o Methraton!'"
+        "[BD-T13] Wismerhill : 'Merci o Methraton!'",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37533,7 +37723,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rencontrer les Seigneurs de la Négation dans leurs appartements du palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 30000,
@@ -37553,7 +37748,8 @@
       "notes": [
         "[BD-T13] 'Seigneurs, il se peut que la Lune Noire dans les heures qui viennent se dresse contre moi -- puis-je etre sur de votre fidelite?'",
         "[BD-T13] 'Nous sommes avec vous, Haut Seigneur! Et nous vous defendrons!'",
-        "[BD-T13] 'Nous te servirons o Prince de la Negation!' -- apres reception des anneaux de liberation."
+        "[BD-T13] 'Nous te servirons o Prince de la Negation!' -- apres reception des anneaux de liberation.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37576,7 +37772,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Passer la dernière nuit au palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {
         "xp": 10000,
@@ -37596,7 +37797,8 @@
       "notes": [
         "[BD-T13] 'C est peut-etre notre derniere nuit! Profitez-en. Demain la journee sera longue, tres longue, mes amis!'",
         "[BD-T13] Pile-ou-face avec son dragon, Ghorghor et compagnons aux cartes, Murata meditant.",
-        "[BD-T13] 'Demain vous les descendrez dans les appartements fortifies!' (Wismerhill aux demons gardes -- pour proteger les compagnons)."
+        "[BD-T13] 'Demain vous les descendrez dans les appartements fortifies!' (Wismerhill aux demons gardes -- pour proteger les compagnons).",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37661,7 +37863,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Recevoir l'Écho d'Haazheel Thorn au palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37677,7 +37884,8 @@
       "notes": [
         "[BD-T14] 'L'Écho d'Haazheel Thorn murmura longuement à l'oreille de Wismerhill, dont les yeux s'écarquillaient démesurément au fur et à mesure de la transmission du terrible secret.'",
         "[BD-T14] Secret directement lié à l'Opus II -- Wismerhill est le seul dépositaire.",
-        "[BD-T14] 'Tout est consommé...' -- dernières paroles de l'Écho avant de disparaître."
+        "[BD-T14] 'Tout est consommé...' -- dernières paroles de l'Écho avant de disparaître.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37700,7 +37908,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Se rendre auprès de l'Oracle. [GD]",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37716,7 +37929,8 @@
       "notes": [
         "[BD-T14] 'Mes, nos chaînes se détruisent! Cela répond-il à la question que tu n'as pas encore posée?'",
         "[BD-T14] 'Tu ne peux pas savoir depuis combien de temps j'ai été enchaînée dans cette masse immonde...'",
-        "[BD-T14] L'Oracle est libre pour la première fois -- 'Enfin libre! De sentir le vent sur ma peau, de pouvoir enfin bouger, enfin revivre!'"
+        "[BD-T14] L'Oracle est libre pour la première fois -- 'Enfin libre! De sentir le vent sur ma peau, de pouvoir enfin bouger, enfin revivre!'",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37739,7 +37953,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Organiser l'exode depuis le palais de Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37752,7 +37971,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -37774,7 +37995,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Activer le passage final au Seuil de Lhynn. [GD]",
+          "lieu_id": "lieu_seuil_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37791,7 +38017,8 @@
         "[BD-T14] 'Regardez, c'est le dernier coucher de soleil que nous contemplerons jamais sur ce monde! Le dernier!' -- Wismerhill.",
         "[BD-T14] 'Et ce monde allait disparaître à jamais.'",
         "[BD-T14] 'Que... s'active... le... passage!' -- dernières paroles dans ce monde.",
-        "[BD-T14] Fin affichée: 'FIN' -- clôture narrative de l'Opus I."
+        "[BD-T14] Fin affichée: 'FIN' -- clôture narrative de l'Opus I.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37814,7 +38041,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Ouvrir le passage aux dragons au Seuil de Lhynn. [GD]",
+          "lieu_id": "lieu_seuil_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": {},
       "min_players": 1,
@@ -37830,7 +38062,8 @@
       "notes": [
         "[BD-T14] 'L'interminable, magnifique et terrifiant défilé dura plusieurs heures!'",
         "[BD-T14] 'Les premières créatures du monde le quittaient le grandiosé spectacle glaçait et pétrifiait ceux qui le contemplaient.'",
-        "[BD-T14] Pilou (dragon compagnon) retrouve sa famille adoptive pendant cet événement."
+        "[BD-T14] Pilou (dragon compagnon) retrouve sa famille adoptive pendant cet événement.",
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -37964,7 +38197,12 @@
       "repeatable": false,
       "type": "",
       "steps": [],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Interroger l'armurier de l'Empereur à Lhynn. [GD]",
+          "ville_id": "ville_lhynn"
+        }
+      ],
       "source_lore": [],
       "rewards": [
         "Connaissance détaillée de chaque épée (encyclopédie in-game)",
@@ -37981,7 +38219,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38009,7 +38249,12 @@
         "Poser sa question — une seule",
         "Recevoir la réponse (parfois sibylline)"
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Atteindre le rocher de l'Oracle et attendre d'être convoqué. [GD]",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
       "source_lore": [],
       "rewards": [
         "Une réponse cosmique à une question",
@@ -38025,7 +38270,9 @@
       "counter_quest_id": "",
       "counter_quest_factions": [],
       "counter_quest_races": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38185,7 +38432,8 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Infiltrer les ruines du château du vieux seigneur."
+          "texte": "Infiltrer les ruines du château du vieux seigneur.",
+          "lieu_id": "lieu_ruines_wismerhill"
         },
         {
           "texte": "Retrouver les indices du passage de Pazuzu (forme de fumée, traces d'orage).",
@@ -38228,7 +38476,9 @@
         "chevaliers_de_la_lumiere",
         "chevaliers_de_la_justice"
       ],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": true,
       "estimated_duration": {
@@ -38480,7 +38730,12 @@
         "Rapporter 20 unités de vivres au camp.",
         "Éviter les patrouilles des Ordres."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Écumer les fermes autour de Whispers Hill. [GD]",
+          "ville_id": "ville_whispers_hill"
+        }
+      ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38504,7 +38759,9 @@
       "region_id": "region_terres_nord_t00",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38536,7 +38793,12 @@
         "Traquer et tuer un sanglier (loot_viande_sanglier_t00).",
         "Rapporter la venaison au foyer."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Chasser dans la forêt de la Rencontre. [GD]",
+          "lieu_id": "lieu_foret_rencontre_t1"
+        }
+      ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38562,7 +38824,9 @@
       "region_id": "region_terres_nord_t00",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38594,7 +38858,12 @@
         "Accepter la joute montée (3 passes de lance).",
         "Vaincre ou désarçonner l'adversaire."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Croiser le chevalier errant dans la forêt de la Rencontre. [GD]",
+          "lieu_id": "lieu_foret_rencontre_t1"
+        }
+      ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38620,7 +38889,9 @@
       "region_id": "region_terres_nord_t00",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "duel",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38653,7 +38924,12 @@
         "Invoquer 3 démons mineurs ('apparais !').",
         "Les lier ou les bannir selon la voie choisie."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Retourner aux ruines du château où Pazuzu enseignait l'invocation. [GD]",
+          "lieu_id": "lieu_ruines_wismerhill"
+        }
+      ],
       "source_lore": [
         "[BD-T0] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38680,7 +38956,9 @@
       "region_id": "region_terres_nord_t00",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -38852,7 +39130,12 @@
         "Repousser la première vague de pillards.",
         "Couvrir l'évacuation des habitants."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Rejoindre Hazol, cité libre sur la route de la horde. [GD]",
+          "ville_id": "ville_hazol"
+        }
+      ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38885,7 +39168,9 @@
         "faction_legions_imperiales",
         "Hors-La-Loi"
       ],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "group",
       "has_counter_quest": true,
       "estimated_duration": {
@@ -38917,7 +39202,12 @@
         "Repérer les mouvements de la horde.",
         "Transmettre la carte mise à jour."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Partir de Tbarak, première cité-étape de la carte de campagne. [GD]",
+          "ville_id": "ville_tbarak"
+        }
+      ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -38941,7 +39231,9 @@
       "region_id": "region_marches",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -39201,7 +39493,12 @@
         "Réussir 3 exercices de projection mentale.",
         "Canaliser un premier rayon offensif."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Trouver un maître de la magie psychique à Dhunfal. [GD]",
+          "ville_id": "ville_dunfold"
+        }
+      ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -39227,7 +39524,9 @@
       "region_id": "region_marches",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -39260,7 +39559,12 @@
         "Réussir l'enchaînement à deux armes contre 5 adversaires.",
         "Valider la technique auprès d'un maître d'armes."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "S'entraîner auprès des bretteurs de la forteresse de Klindor. [GD]",
+          "ville_id": "ville_klindor"
+        }
+      ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -39285,7 +39589,9 @@
       "region_id": "region_marches",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -39317,7 +39623,12 @@
         "Présenter une offrande / résoudre l'épreuve d'accès.",
         "Poser sa question et recevoir une prophétie énigmatique."
       ],
-      "etapes_struct": [],
+      "etapes_struct": [
+        {
+          "texte": "Gravir jusqu'à l'Oracle aux voix multiples. [GD]",
+          "ville_id": "ville_oracle_camp"
+        }
+      ],
       "source_lore": [
         "[BD-T1] arc dérivé — joueur non-héros, événements périphériques"
       ],
@@ -39338,7 +39649,9 @@
       "region_id": "region_marches",
       "counter_quest_id": "",
       "counter_quest_factions": [],
-      "notes": [],
+      "notes": [
+        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
+      ],
       "quest_kind": "solo",
       "has_counter_quest": false,
       "estimated_duration": {
@@ -44187,7 +44500,8 @@
         "Methraton est unkillable — la victoire = survivre 10 minutes à sa présence.",
         "Phase finale : explosion 'FOOOOO BOOSH' — zone de damage massive, 80% mortalité normale.",
         "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
-        "[GD] (v1.0.103) Contenu d'extension (Empire du Jade, hors du monde jouable) : niveau_ref laissé à null (LORE_BD §16.32)."
+        "[GD] (v1.0.103) Contenu d'extension (Empire du Jade, hors du monde jouable) : niveau_ref laissé à null (LORE_BD §16.32).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": null
     },
@@ -44218,7 +44532,8 @@
         "Machine de siège 'W' de Wismerhill — mécanisme d'attaque des murailles.",
         "'La bataille est terminée?' — condition de victoire : détruire le nécromancien gardien.",
         "[GD] (v1.0.54) Contenu d'extension (Empire du Jade, territoire futur) ; aucun « Jade » dans l'album : Methraton est rencontré dans son temple de Lhynn (p.7-11), l'initiation a lieu sous une colline en forêt d'hiver (p.22-31) et la nécropole est celle de Der Hem Shelbem (p.47-52).",
-        "[GD] (v1.0.103) Contenu d'extension (Empire du Jade, hors du monde jouable) : niveau_ref laissé à null (LORE_BD §16.32)."
+        "[GD] (v1.0.103) Contenu d'extension (Empire du Jade, hors du monde jouable) : niveau_ref laissé à null (LORE_BD §16.32).",
+        "[GD] (v1.0.116) Empire du Jade laissé hors carte : contenu d'extension, non placé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": null
     },
@@ -44330,7 +44645,7 @@
       "for_factions": [],
       "for_races": [],
       "difficulty": "Mythique",
-      "location_ville_id": "",
+      "location_ville_id": "ville_garundel_fief",
       "rewards": [
         "exploit_victoire_grande_plaine_t10",
         "exploit_mort_iaun_reith_t10",
@@ -44339,7 +44654,8 @@
       ],
       "notes": [
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Grande Plaine (region_grande_plaine_bataille_t10) n'a ni case ni lieu ; sa description la situe seulement entre deux villes éloignées.",
-        "[GD] (v1.0.103) Niveau conseillé 55-60 proposé : zone La Grande Plaine 45-55, difficulté 'Mythique', 2 équipe(s) ; plancher 55 des raids « Mythique » (contenu fort balisé, décision v1.0.78) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32)."
+        "[GD] (v1.0.103) Niveau conseillé 55-60 proposé : zone La Grande Plaine 45-55, difficulté 'Mythique', 2 équipe(s) ; plancher 55 des raids « Mythique » (contenu fort balisé, décision v1.0.78) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32).",
+        "[GD] (v1.0.116) Instance : entrée de la Grande Plaine au fief de Garundel, à mi-chemin de Lhynn et de la Baronnie de Moork ; la Plaine reste hors de la carte (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": {
         "min": 55,
@@ -44484,7 +44800,8 @@
         "[BD-T12] Post-raid : zone_porte_des_enfers_t12 modifiee, porte scellee, moins de demons actifs.",
         "[BD-T12] Parsifal est un PNJ allie obligatoire pour la phase 5.",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Porte des Enfers du T12 (zone_porte_des_enfers_t12) est « au cœur de l'Empire », au bout de la Route Noire, sans case ; distincte des 5 Portes des enfers.",
-        "[GD] (v1.0.103) Niveau conseillé 65-70 proposé : boss creature_hecatoncheire_t12 (raid_id ou boss qui cite le raid) niveau 70 (lot 28 ; LORE_BD §16.32)."
+        "[GD] (v1.0.103) Niveau conseillé 65-70 proposé : boss creature_hecatoncheire_t12 (raid_id ou boss qui cite le raid) niveau 70 (lot 28 ; LORE_BD §16.32).",
+        "[GD] (v1.0.116) Entrée de l'instance au bout de la Route Noire, case N000_W009, au cœur de l'Empire (note de la case) (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": {
         "min": 65,
@@ -44567,7 +44884,7 @@
       "for_factions": [],
       "for_races": [],
       "difficulty": "",
-      "location_ville_id": "",
+      "location_ville_id": "lieu_champ_de_bataille_de_la_conquete",
       "rewards": {
         "title": "",
         "reward": "",
@@ -44580,7 +44897,8 @@
         "[BD-T14] 'Les survivants ne seraient plus un problème, le flot de l'Exode ne serait pas troublé.'",
         "[DÉCISION] (v1.0.56) Rattaché à la région « Marche de l'Est » (region_marche_est, Q15).",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la Marche de l'Est (region_marche_est) compte 56 cases ; le lieu du duel n'est pas situé.",
-        "[GD] (v1.0.103) Niveau conseillé 17-22 proposé : zone Marche de l'Est 15-28, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32)."
+        "[GD] (v1.0.103) Niveau conseillé 17-22 proposé : zone Marche de l'Est 15-28, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32).",
+        "[GD] (v1.0.116) Rattaché au Champ de bataille de la conquête (Marche de l'Est, 18-22) (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": {
         "min": 17,
@@ -44598,7 +44916,7 @@
       "for_factions": [],
       "for_races": [],
       "difficulty": "",
-      "location_ville_id": "",
+      "location_ville_id": "lieu_camp_des_rabatteurs_orcs",
       "rewards": {
         "title": "",
         "reward": "",
@@ -44610,7 +44928,8 @@
         "[BD-T14] Les Nains regardent depuis les montagnes sans intervenir.",
         "[BD-T14] Les Orques se retirent dans la forêt -- plus un problème.",
         "[INFÉRÉ] (v1.0.85) Aucune case déductible du lore sans inventer (LORE_BD §16.14) : la horde « déferle du Nord » sous le regard des nains des montagnes ; aucun lieu nommé.",
-        "[GD] (v1.0.103) Niveau conseillé 27-32 proposé : zone Territoires orcques 18-45, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32)."
+        "[GD] (v1.0.103) Niveau conseillé 27-32 proposé : zone Territoires orcques 18-45, difficulté '', 2 équipe(s) (raid sans case : zone déduite du nom ou de la région) (lot 28 ; LORE_BD §16.32).",
+        "[GD] (v1.0.116) Rattaché au Camp des rabatteurs orcs (Territoires orcques, 28-32), au pied des monts des nains (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "niveau_ref": {
         "min": 27,
@@ -216975,7 +217294,8 @@
       "visual_elements": [],
       "notes": [
         "[DÉCISION] (v1.0.106) Case générée (jouable) : passage d'une route du lore entre deux zones jouables (lot 30b du propriétaire (12/11/2026) ; LORE_BD §16.35) ; motif : Via Magna Lhynn - Kholvard (000120) et route Lhynn - Dhuzmar (000064).",
-        "[GD] (v1.0.106) Bornes milliaires de la Via Magna (lieu_bornes_milliaires_de_la_via_magna, POI poi_bornes_milliaires_de_la_via_magna, monolithe, 10-14) : première occupation de cette case devenue jouable (LORE_BD §16.35)."
+        "[GD] (v1.0.106) Bornes milliaires de la Via Magna (lieu_bornes_milliaires_de_la_via_magna, POI poi_bornes_milliaires_de_la_via_magna, monolithe, 10-14) : première occupation de cette case devenue jouable (LORE_BD §16.35).",
+        "[GD] (v1.0.116) Porte des Enfers du T12 (raid_t12_01_porte_des_enfers, zone_porte_des_enfers_t12) : entrée de l'instance au bout de la Route Noire, au cœur de l'Empire ; contenu de haut niveau balisé (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -243525,6 +243845,34 @@
           "nom": "Corrections évidentes des références",
           "decision": "Décision du propriétaire (13/11/2026) : Appliquées en bloc : zone_garundel_fief → ville_garundel_fief, race_orc → race_orkh, race_half_demon → demi-demon_elfique, class_pretre → prêtres de Grâce et de Jugement, race_elfe → hauts elfes et elfes des bois, faction_gods → Église de Lumière et panthéon d'Erypt, conditions de quête → exploits, quest_fermer_porte_enfers_hs → quest_t12_05_fermer_la_porte ; references orphelines 42 → 0, check_references.py passe en --strict à la CI.",
           "version": "1.0.115"
+        },
+        {
+          "collection": "quests",
+          "id": "quetes_sans_case",
+          "nom": "Quêtes sans case",
+          "decision": "Décision du propriétaire (14/11/2026) : Proposer une case par quête d'après la BD et la fiche ([GD], liste à relire) ; les régions connues (Marches, Terres du Nord, forêt des Lutins, Enfers) sont placées en bloc. 53 quêtes ancrées par leurs étapes situées.",
+          "version": "1.0.116"
+        },
+        {
+          "collection": "quests",
+          "id": "region_empire_jade",
+          "nom": "Empire du Jade",
+          "decision": "Décision du propriétaire (14/11/2026) : Laisser hors carte : 6 quêtes et 2 raids du T7, contenu d'extension non placé.",
+          "version": "1.0.116"
+        },
+        {
+          "collection": "raids",
+          "id": "raid_grande_bataille_plaine_t10",
+          "nom": "Grande Bataille de la Plaine",
+          "decision": "Décision du propriétaire (14/11/2026) : Instance dont l'entrée est au fief de Garundel (ville la plus proche, entre Lhynn et Moork) ; la Grande Plaine reste hors carte.",
+          "version": "1.0.116"
+        },
+        {
+          "collection": "raids",
+          "id": "raids_sans_case",
+          "nom": "Raids sans case",
+          "decision": "Décision du propriétaire (14/11/2026) : Placés en bloc : Porte des Enfers du T12 en N000_W009 (note de la case), Marche de l'Est au Champ de bataille de la conquête, orques de Greldinard au Camp des rabatteurs orcs.",
+          "version": "1.0.116"
         }
       ]
     },

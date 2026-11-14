@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.115)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.116)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -81,7 +81,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.112 (outil) | #1128 | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
 | v1.0.113 | `1dd004e` | **décisions du 13/11** : noms [GD] validés, Xygga femelle et noms des dragons, année 3417 AO, niveaux et balisage, Harrodh, Légion, contre-quêtes, Ghulvathan, références orphelines 89 → 42, Menthats, arbitrages de lore ([LORE_BD §16.40](LORE_BD.md)) | — | contre-quêtes à écrire, mécanismes serveur (exploit, lieux découverts), routes à ouvrir |
 | v1.0.114 | `a7df2f9` | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
-| v1.0.115 | (ce commit) | **références orphelines 42 → 0** : 8 classes PNJ non jouables, 9 butins [GD], dragon adulte générique, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé `monde_entier`, corrections en bloc ; `check_references.py --strict` à la CI ([LORE_BD §16.42](LORE_BD.md)) | — | — |
+| v1.0.115 | `2b1a929` | **références orphelines 42 → 0** : 8 classes PNJ non jouables, 9 butins [GD], dragon adulte générique, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé `monde_entier`, corrections en bloc ; `check_references.py --strict` à la CI ([LORE_BD §16.42](LORE_BD.md)) | — | — |
+| v1.0.116 | (ce commit) | **quêtes et raids sans case ancrés** : 53 quêtes par des étapes situées [GD], 4 raids (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade hors carte ([LORE_BD §16.43](LORE_BD.md)) | — | ancrages [GD] à relire |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -154,7 +155,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 ### 4.4 Données incomplètes et références
 
 32. ~~**89 → 42 références orphelines** (v1.0.113 : `faction_demons`, `race_half_dark_elf`, `race_menthat` traités ; 33 identifiants restants ; au départ 36) : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` / `forest_poi`, classes inexistantes, 9 butins, `citadelle_legion`… (16.32).~~ **Tranché en v1.0.115** : 0 orpheline (LORE_BD §16.42).
-33. 59 quêtes non plaçables (étapes à situer) et 6 raids sans case (16.32).
+33. ~~59 quêtes non plaçables (étapes à situer) et 6 raids sans case (16.32).~~ **Tranché en v1.0.116** : ancrés sauf l'Empire du Jade (6 quêtes, 2 raids, hors carte) et la quête des Enfers (case des Enfers) (LORE_BD §16.43).
 34. 32 dialogues `dial_t10_NN` vides à écrire ; 45 dialogues sans réplique (16.32).
 35. Krak de Jhenner, citadelle impériale et Passe de Heniak sans case (16.15, R).
 36. Palais des Maîtres des Dragons et Tsaroth sans entrée au master (routes finies au point praticable de la case) (16.34, 16.35).

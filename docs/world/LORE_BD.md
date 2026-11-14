@@ -1052,6 +1052,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.40](#1640-décisions-du-131126-v10113) | v1.0.113 | Décisions du 13/11/2026 | Noms [GD] validés, Xygga femelle et noms des dragons, année de jeu, niveaux, balisage, factions, Ghulvathan, références orphelines, arbitrages de lore. |
 | [16.41](#1641-exploit-des-666-cimetières-et-lieux-secrets-découverts-v10114) | v1.0.114 | Exploit des 666 cimetières et lieux secrets découverts | Mécanique serveur par personnage : cimetières visités (rayon ou réapparition), lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits. |
 | [16.42](#1642-références-orphelines-tranchées-v10115) | v1.0.115 | Références orphelines tranchées | 42 → 0 : classes PNJ, butins [GD], dragon adulte, exploit de la mort d'Haghendorf, types de lieu, corrections en bloc ; `--strict` à la CI. |
+| [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 53 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4518,13 +4519,45 @@ régénération du monde n'est plus compté pour les personnages qui l'avaient v
 | `citadelle_legion` | ville du master des Enfers : `check_references.py` lit aussi les villes et lieux de `game/data/world/enfers/world_master.json` |
 | Corrections évidentes | `zone_garundel_fief` → `ville_garundel_fief` ; `race_orc` → `race_orkh` ; `race_half_demon` → `demi-demon_elfique` (Wismerhill) ; `class_pretre` → prêtres de Grâce et de Jugement ; `race_elfe` → hauts elfes et elfes des bois ; `faction_gods` → Église de Lumière et panthéon d'Erypt (bouclier de Methraton) ; 2 conditions de quête « quête » → « exploit » (`exploit_brule_le_passe_t4`, `exploit_premier_jour_baron_t6`) ; `quest_fermer_porte_enfers_hs` → `quest_t12_05_fermer_la_porte` ; race du Serpent Héraut de Methrhton vidée (créature mystique, pas une race) |
 
+### 16.43 Quêtes et raids sans case ancrés (v1.0.116)
+
+**Décisions du propriétaire (14/11/2026)** : je propose une case par quête d'après la BD et la fiche (**[GD], à relire**) ;
+l'Empire du Jade reste hors carte ; la Grande Bataille de la Plaine est une instance dont l'entrée est dans une ville ;
+les quêtes et raids de région connue sont placés en bloc. Restent sans case : les 6 quêtes et 2 raids de l'Empire du Jade
+(contenu d'extension) et `quest_t00_jeu_cruel_intro`, ancrée dans la case `enfers:N001_E000` (palais de Lucifer) que
+l'éditeur ne dessine pas (pas de carte des Enfers). Ancrage = `etapes_struct` (nouvelle étape `[GD]` quand la quête n'en
+avait pas, sinon ville, lieu ou case ajouté à l'étape existante).
+
+| Ancrage | Quêtes |
+|---|---|
+| Lhynn (palais impérial) | conseil de guerre impérial et Clefs de Northind (T8) ; dîner des compagnons et complot tharque, étape 3 (T11) ; T12 01, 02, 03, 07 ; T13 03, 06, 07 ; secret de la divinité, préparation de l'exode (T14) ; Sept Épées de l'Empereur |
+| Temple de Methraton (Lhynn) | Éveil de Methraton (T12 06), alliance avec Methraton (T13 05) |
+| Seuil de Lhynn | dernier passage et nuée des dragons (exode, T14) |
+| Camp de l'Oracle | Oracle assiégé (T12 04), heure de l'attaque (T13 04), Oracle libéré (T14), audience de Netzharine (HS), consultation de l'Oracle (Marches) |
+| Moork | Neuf Mères (étape 1 ; étape 5 : forteresse naine d'Heusgly), rituel de la Négation, Grande Coalition (étape 1) (T9) ; Fratus vassal (T8) ; réponse des Princes Dragons, Juggernaut stationné devant Moork (T10) |
+| Fief de Garundel | loyauté de Ghorghor ; Veille du Destin (T10, rassemblement avant la Grande Plaine) |
+| Autres villes | Pacte des Dzorak : Tbarak ; téléportation démoniaque : Sauken Glude de Magistrya (succube) ; Chevaliers-Dragons (T9) : Palais des Maîtres des Dragons |
+| Autres lieux | Pyramide volante : Haawling Spines ; Prince Hors-Vivant et transfert de puissance (T8) : Der Hem Shelbem ; Gemme des Sombres Splendeurs (T10) : Plaine des Cendres ; Urmarcht (T3, château loué) : Mas abandonné de la plaine ; traversée de l'armée de Haazheel (T3) : Menhirs de la plaine de l'Oracle |
+| Forêt des Lutins | Iaun Reith ; forêt des Lutins (T3, étape 1 ; étape 5 : Village fantôme du marais) |
+| Porte des Enfers du T12 | Fermer la Porte : case N000_W009 (bout de la Route Noire, cœur de l'Empire) |
+| Territoires des Marches | Tenir les Marches : Hazol ; éclaireur : Tbarak ; voie psychique : Dhunfal ; deux lames : Klindor ; art de la chasse (T1, étape 1) : Forêt de la Rencontre |
+| Terres du Nord (1-15) | origines du seigneur et leçon démoniaque : Ruines de Wismerhill ; butin du Bey : Whispers Hill ; chasse et joute errante : Forêt de la Rencontre |
+
+| Raid | Ancrage |
+|---|---|
+| Grande Bataille de la Plaine (T10) | instance, entrée au **fief de Garundel** (à mi-chemin de Lhynn et de Moork) ; la Plaine reste hors carte |
+| Porte des Enfers (T12) | note de la case **N000_W009** (bout de la Route Noire), contenu de haut niveau balisé |
+| Défense des Marches de l'Est (T14) | **Champ de bataille de la conquête** (Marche de l'Est, 18-22) |
+| Orques de Greldinard (T14) | **Camp des rabatteurs orcs** (Territoires orcques, 28-32) |
+| Methraton et Nécropole du désert (T7) | hors carte (Empire du Jade) |
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
 - Albums hors série (v1.0.56) : points ouverts listés en 10.5.
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
-- Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, 4 raids et 52 quêtes sans case (16.14).
+- Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, ~~4 raids et 52 quêtes sans case~~ (ancrés en v1.0.116, 16.43) (16.14).
 - Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
 - Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shezhold, Horkher et Nykhfeld (16.17 ; tracée en v1.0.105, 16.34).
@@ -4564,7 +4597,7 @@ régénération du monde n'est plus compté pour les personnages qui l'avaient v
   (v1.0.78, §16.7).
 - Forteresse naine d'Heusgly (S006_E004) : la zone `zone_forteresse_naine_abandonnee_t9` la disait
   « proche de Moork » (S002_E015), sans appui BD.
-- Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, 59 quêtes et 6 raids sans case, 89 références orphelines à trancher (16.32).
+- Niveaux et orphelines (v1.0.103) : niveaux [GD] des régions et des raids, règle des niveaux par faction, faction d'Harrodh, ~~59 quêtes et 6 raids sans case~~ (ancrés en v1.0.116 sauf l'Empire du Jade, 16.43), ~~89 références orphelines~~ (0 en v1.0.115, 16.42).
 - Routes de Vozmarkh et de Rhivkhar (v1.0.104) : noms et niveaux [GD] des 48 lieux et des 3 quêtes, niveaux 12-15 au nord de Farvhenn, routes Farvhenn – Vestmhor et Shaddrek – Klehrwath encore coupées (16.33).
 - Routes du jeu d'après le lore (v1.0.105) : routes maritimes et pontons non tracés (16.34) ; 000017, cellules et villes sans route, balises et passages hors zone traités en v1.0.106 (16.35).
 - Routes manquantes (v1.0.106) : tracés [GD] des 11 routes créées, noms et niveaux des 64 lieux, baie de l'Île de la Trêve sans route, Piste des Morts en double de 000074 (16.35).

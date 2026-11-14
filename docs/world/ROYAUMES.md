@@ -125,6 +125,8 @@ données de rendu restent dans le paquet client. En local (Windows) :
 # --output <dir>              : écrire ailleurs que dans --content
 # --dry-run                   : générer en mémoire, sans rien écrire
 # --jobs N                    : cellules générées en même temps (défaut : nombre de cœurs, 4 au plus)
+# --graveyard-report <fich.>  : v1.0.121, recensement des cimetières par cellule (« cellule nombre id@x:z … »),
+#                               écrit avant le contrôle des 666 (sert à choisir les hameaux de without_graveyard)
 ```
 
 Durée (v1.0.112, 2 cœurs) : ≈ 12 s pour la couche macro, puis ≈ 5,3 s par cellule
@@ -293,7 +295,9 @@ voisines raccord au mètre près :
    **666** aux Royaumes (`target`, génération en échec sinon) ; une cellule sans
    cimetière en reçoit un **isolé**, sans ville, au bord d'une route
    (`fill_empty_cells` ; aucun dans une cellule de pleine mer) ; les hameaux de `without_graveyard` n'en ont pas (auberge
-   seule) pour garder le total (LORE_BD §16.38-16.39).
+   seule) pour garder le total (LORE_BD §16.38-16.39). **v1.0.121** : dans les cellules de
+   `village_only_cells` (cases ouvertes par les lots de routes, LORE_BD §16.48), seuls les villes et villages du
+   lore ont un cimetière : ni cimetière isolé ni cimetière de hameau, une telle case peut n'en avoir aucun.
    Champs clôturés hors les murs (`FieldsFor`) : 2 à 4 petits champs (16 × 10 m)
    par hameau ou village, 4 à 6 grandes parcelles (24 × 14 m à 32 × 18 m) par
    ville, grande ville, forteresse ou capitale ; aucun pour les camps, les

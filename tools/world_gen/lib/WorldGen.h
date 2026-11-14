@@ -30,6 +30,13 @@ namespace tools::world_gen
 		/// (fichiers identiques octet pour octet) : chaque cellule est indépendante et
 		/// les bilans sont fusionnés dans l'ordre des cellules.
 		int jobs = 0;
+		/// v1.0.121 — option --graveyard-report <fichier> : recensement des cimetières
+		/// par cellule (une ligne « cellule nombre id1@x:z id2@x:z … », position monde en m, « @? » pour
+		/// une ligne importée), écrit APRÈS la
+		/// génération des cellules et AVANT le contrôle de `graveyards.target` (il existe
+		/// donc aussi quand le total est faux : il sert à choisir les hameaux de
+		/// `without_graveyard`). Écrit même en --dry-run. Vide = pas de rapport.
+		std::string graveyardReport;
 	};
 
 	/// Exécute le pipeline complet. \return false + \p err en cas d'échec

@@ -1053,6 +1053,8 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.41](#1641-exploit-des-666-cimetières-et-lieux-secrets-découverts-v10114) | v1.0.114 | Exploit des 666 cimetières et lieux secrets découverts | Mécanique serveur par personnage : cimetières visités (rayon ou réapparition), lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits. |
 | [16.42](#1642-références-orphelines-tranchées-v10115) | v1.0.115 | Références orphelines tranchées | 42 → 0 : classes PNJ, butins [GD], dragon adulte, exploit de la mort d'Haghendorf, types de lieu, corrections en bloc ; `--strict` à la CI. |
 | [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 52 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
+| [16.44](#1644-dialogues-contre-quêtes-lune-noire-et-lieux-du-t5-v10117) | v1.0.117 | Dialogues, contre-quêtes Lune Noire et lieux du T5 | 77 dialogues remplis, 4 contre-quêtes, Krak de Jhenner, citadelle et Passe de Heniak placés. |
+| [16.45](#1645-couleur-du-nom-de-zone-torches-et-fond-sombre-du-gouffre-v10118) | v1.0.118 | Couleur du nom de zone, torches et fond sombre du gouffre | Niveaux des régions recopiés au master, teinte de la bannière ; lumières et ambiance des cellules lues par le client. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4553,6 +4555,82 @@ existante qui s'y passe et qui ne cite pas déjà un PNJ (une seule référence 
 | Orques de Greldinard (T14) | **Camp des rabatteurs orcs** (Territoires orcques, 28-32) |
 | Methraton et Nécropole du désert (T7) | hors carte (Empire du Jade) |
 
+### 16.44 Dialogues, contre-quêtes Lune Noire et lieux du T5 (v1.0.117)
+
+**Décision du propriétaire (14/11/2026)** : avancer en autonomie sur les données restantes. Tout est `[GD]`, à relire.
+
+**Dialogues** : plus aucun dialogue vide (220 dialogues).
+- Les 32 `dial_t10_NN` sont écrits, 4 par quête du tome 10 (Prophétie de l'Archer, Voie tracée, Refus du Commandeur,
+  Don des Princes Dragons, Armada tharque, Gemme des Sombres Splendeurs, Veille du Destin, Incompétence providentielle),
+  avec nom, PNJ, faction, race et ville ; la note donne la quête liée.
+- Les 45 dialogues sans réplique (T6, T8, T9, T13) sont remplis d'après leur titre et leurs notes `[BD]`.
+- Répliques **originales** écrites pour le jeu : aucune réplique de la BD n'est recopiée. `Vous` désigne le joueur.
+
+**Contre-quêtes Lune Noire** (décision du 13/11, 16.40) : 15 quêtes ouvertes à tous sont ancrées dans les zones de la
+Lune Noire (Baronnie de Moork, Territoires orcques). Une contre-quête n'a de sens que si la quête va contre les intérêts
+de la Lune Noire : 4 contre-quêtes, pour le bloc Lune Noire (`faction_black_moon`, `dzorak_orcs`), liées dans les deux
+sens (`counter_quest_id`, `counter_quest_factions`, `has_counter_quest`) ; la quête d'origine reste ouverte à tous.
+
+| Quête ouverte à tous | Contre-quête Lune Noire |
+|---|---|
+| Le Registre du fortin (rendre le registre des terres à Horkher) | `quest_marche_est_gd_terres_des_capitaines` : le registre va aux scribes de Moork |
+| La Laine d'Horkher (laine vers Harrodh, terre d'Empire) | `quest_marche_est_gd_droit_de_laine` : faire payer le droit de passage de la Via Magna |
+| Le Péage de la Via Magna (démasquer les péagers) | `quest_marche_est_gd_silence_du_peage` : effacer les preuves, faire taire le témoin |
+| Le Convoi de Khurden (libérer les captifs) | `quest_orcs_gd_le_convoi_doit_passer` : escorter le convoi jusqu'à Khurden |
+
+Les 11 autres servent la baronnie (convois et contrats de Moork, soufre, acier, grain, trolls de la forêt, fortin des
+pilleurs) ou relèvent du gouffre secret de Thurvhal : pas de contre-quête.
+
+**Lieux du T5** (lore seulement, pas d'entrée au master) : sur la route de Moork à Tsaroth, Krak de Jhenner en S006_E012
+(première place impériale tombée), citadelle impériale en S008_E011 (dernière place forte avant la Faille), Passe de
+Heniak en S008_E009 (tenue par les impériaux, évitée par Greldinard). Restent volontairement sans entrée au master :
+Tsaroth (camp retiré du continent, test « Tsaroth sans POI ni ville », 16.15) et le Palais des Maîtres des Dragons (la
+route 000017 finit au point praticable de S003_W004, où se trouve le Sanctuaire des Chevaliers Dragons, 16.35).
+
+### 16.45 Couleur du nom de zone, torches et fond sombre du gouffre (v1.0.118)
+
+**Décisions du propriétaire** (13/11/2026, 16.40) : le balisage de niveau passe par la seule **couleur du nom de zone** ;
+priorité au rendu après les données. Code client et générateur : **⚠️ client à redéployer** (pas de changement
+serveur ni de protocole).
+
+**Couleur du nom de zone.**
+- `tools/lore/sync_levels.py` recopie `regions[].niveau_par_faction` du lore dans le master
+  (`regions[].levels` = `{ "<faction de jeu>": [min, max] }`, factions de `game/data/races/factions.json`), par
+  édition chirurgicale ; `--check` dans la CI `lore-city-services`. 17 régions sur 19 ont des niveaux (Forêt
+  occidentale et Rivage des Géants n'ont pas de région au lore) ; correspondances de régions et de factions en tête
+  du script (ex. `marche_de_lest` → `region_marche_est`, `empire_hynn` → `faction_legions_imperiales`).
+- `tools/world_gen` lit `levels` (refus si hors de 1..70 ou min > max) et l'écrit dans `places.json`
+  (`regions[i].levels[j] = { faction, min, max }`) ; la CI Linux vérifie 17 régions avec niveaux.
+- Client : la bannière « Vous entrez à … » colore le titre selon l'écart entre le niveau du personnage (XP courante,
+  sinon niveau d'entrée) et la bande de la région affichée pour sa faction (`ZoneLevelToneFor`, seuil de 5 niveaux,
+  le même que la règle des niveaux par faction) :
+
+| Teinte | Condition |
+|---|---|
+| Rouge | niveau < min − 5 (dangereuse) |
+| Orange | min − 5 ≤ niveau < min (difficile) |
+| Jaune | min ≤ niveau ≤ max (à son niveau) |
+| Vert | max < niveau ≤ max + 5 (facile) |
+| Gris | niveau > max + 5 (sans intérêt) |
+| Or pâle (habituel) | niveaux de la région inconnus, ou personnage sans faction |
+
+**Torches du gouffre** (`world.point_lights`, 16.36). Le client ajoute les lumières de chaque cellule chargée à
+`DynamicLightSystem` (repère de rendu, décalées au rebase, retirées au changement de carte) ; une torche permanente
+est allumée dès l'arrivée. L'UBO de la passe Lighting n'a que 64 places : on garde les 64 lumières les plus proches de
+la caméra (distance moins rayon).
+
+**Fond sombre du gouffre** (`world.ambiance_zones`, 16.36). Assombrissement au point du joueur (cylindre entre
+`floor_y` et `top_y`, bord adouci sur le dernier quart du rayon et 4 m en hauteur), lissé sur ≈ 1,5 s : soleil
+atténué de 92 %, ambiant de 75 % et plafond d'auto-exposition ramené à celui de la nuit, à `darkness` = 1.
+
+**Tests** : `world_places_tests` (lecture des niveaux, seuils, cas inconnus, région figée à l'armement de la
+bannière), `dynamic_light_system_tests` (ajout, rebase, retrait, 64 plus proches), `world_gen_tests` (niveaux du
+master triés, 17 régions). **Non vérifié** : rendu à l'écran (pas de GPU dans l'environnement de développement), à
+regarder en jeu au fond du gouffre de Thurvhal.
+
+**Reste à faire** : lave des Enfers émissive et blessante (16.12) ; ouverture des 2 routes coupées et des routes
+arrêtées à une zone fermée ; lignes maritimes vers Hishtarland et Dyprokh.
+
 ## 17. Questions ouvertes
 
 - **Liste consolidée (v1.0.108)** de tous les points encore ouverts ou à valider, branche carte comprise : [`CHANGELOG_CARTE_v1.0.72-v1.0.108.md`](CHANGELOG_CARTE_v1.0.72-v1.0.108.md) §4.
@@ -4560,7 +4638,7 @@ existante qui s'y passe et qui ne cite pas déjà un PNJ (une seule référence 
 - Enfers et dragons (v1.0.81) : genre de Xygga, noms des dragons, combat contre Xygga endormi, instances des plans (16.10).
 - Peuples lointains et Ophidiens (v1.0.82) : noms [GD] à valider, directions, instances de la Cité-Nid, butin ophidien, lignes maritimes des comptoirs (16.11).
 - Balisage et ancrages (v1.0.85) : noms [GD] des balises, accès à la poche 1-15 de Whispers Hill, ~~4 raids et 52 quêtes sans case~~ (ancrés en v1.0.116, 16.43) (16.14).
-- Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie, Krak de Jhenner sans case (16.15).
+- Moork, Tsaroth, Oracle (v1.0.86) : noms [GD] des 36 lieux et 14 quêtes, repères de niveau proposés (Tsaroth 20-40, Oracle 10-25), factions des quêtes de la baronnie (contre-quêtes en v1.0.117, 16.44), ~~Krak de Jhenner sans case~~ (placé en v1.0.117, 16.44) (16.15).
 - Gigantomorphes, Via Magna, Marche de l'Est (v1.0.87) : noms [GD] des 11 lieux et 10 quêtes, repères proposés (lisière des Gigantomorphes 28-36, Via Magna détaillée, Marche de l'Est 15-28), Marche de l'Est sans case jouable (16.16 ; ouverte en v1.0.88).
 - Ouverture de la Marche de l'Est (v1.0.88) : noms [GD] des 40 lieux et 2 quêtes, gradient 15-28, marge et trous intérieurs, forêt du nord et confins du sud-est fermés, routes coupées vers Rhivkhar, Ryvaldh, Grhavelt et Dhuzvelt (ouvertes en v1.0.91), Via Magna non tracée par le générateur entre Shezhold, Horkher et Nykhfeld (16.17 ; tracée en v1.0.105, 16.34).
 - Royaume des nains de l'est (v1.0.89) : aucune case jouable vide, 5 quêtes [GD] de départ, gradient proposé (1-10 détaillé, 10-20 et 18-30 au-delà), ouverture de la région à décider (16.18 ; route Ysenkhal – Vozmarkh ouverte en v1.0.91).
@@ -4586,7 +4664,7 @@ existante qui s'y passe et qui ne cite pas déjà un PNJ (une seule référence 
 - ~~Ghulvathan~~ : **close** (v1.0.113, 16.40 : N009_E011) — N009_E011 dans le monde jouable (cellules générées) contre N012_E012 dans
   le lore (v1.0.40). Ce n'est plus une ville de départ (v1.0.61, section 14) ; le hameau
   dzorak Grakhul (N008_E012) est placé à côté de la position jouable.
-- Krak de Jhenner : sans cellule.
+- ~~Krak de Jhenner : sans cellule.~~ S006_E012 en v1.0.117 (16.44).
 - ~~Sysigie (N009_W011) : grand fleuve autour de la cellule~~ : **close** (v1.0.55) — fleuve
   `riv_fleuve_sysigie` à deux bras autour de l'île (section 8.2).
 - ~~Placements sans cellule (T7-T14)~~ : **close** (v1.0.55) — section 8.1.

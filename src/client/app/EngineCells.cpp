@@ -187,6 +187,9 @@ namespace engine
 		m_chestOpen = false;
 		m_chestInteractableIndex = -1;
 		m_respawnMarkers.clear();
+		m_dynamicLights.ClearZoneLights();
+		m_ambianceZones.clear();
+		m_ambianceDarkness = 0.0f;
 		m_cellsWithStaticContent.clear();
 		m_failedCells.clear();
 		m_remoteSmoothed.clear(); // entités de l'ancienne carte (retirées par les snapshots)
@@ -545,6 +548,7 @@ namespace engine
 			// Interactibles (PNJ, coffres) et marqueurs de respawn, en coordonnées de rendu.
 			const size_t before = m_interactables.size();
 			AppendInteractables(zcfg, m_renderFrame.OriginX(), m_renderFrame.OriginZ());
+			AppendCellLightsAndAmbiance(zcfg, id);
 			const std::string markersText = engine::platform::FileSystem::ReadAllTextContent(
 				m_cfg, "zones/" + dir + "/respawn_points.txt");
 			std::istringstream input(markersText);
@@ -892,6 +896,13 @@ namespace engine
 			m.x += dx;
 			m.z += dz;
 		}
+		// v1.0.118 — lumières et zones d'ambiance des cellules (repère de rendu).
+		m_dynamicLights.TranslateZoneLights(dx, dz);
+		for (AmbianceZone& az : m_ambianceZones)
+		{
+			az.x += dx;
+			az.z += dz;
+		}
 
 		// Eau (scène reconstruite depuis les positions globales), terrains et collisions.
 		// Le buffer d'eau est réécrit : la frame précédente ne doit plus le lire
@@ -903,6 +914,78 @@ namespace engine
 		// Les vecteurs de mouvement de cette frame compareraient deux repères
 		// différents (~10 km) : historique TAA invalidé.
 		m_taaHistoryInvalid = true;
+	}
+
+	void Engine::AppendCellLightsAndAmbiance(const engine::core::Config& cfg, uint32_t zoneId)
+	{
+		// Torches (générateur v1.0.107) : world.point_lights.<i>.{x, y, z, radius, intensity,
+		// color_r/g/b, type, auto_night_light}, positions GLOBALES.
+		std::vector<engine::render::PointLightDefinition> lights;
+		const int lightCount = static_cast<int>(cfg.GetInt("world.point_lights.count", 0));
+		for (int i = 0; i < lightCount; ++i)
+		{
+			const std::string b = "world.point_lights." + std::to_string(i) + ".";
+			if (!cfg.Has(b + "x"))
+				break;
+			engine::render::PointLightDefinition d{};
+			d.id = cfg.GetString(b + "id", "zone_light_" + std::to_string(i));
+			const std::string type = cfg.GetString(b + "type", "torch");
+			d.type = (type == "window") ? engine::render::DynamicLightType::Window
+				: (type == "streetlamp") ? engine::render::DynamicLightType::Streetlamp
+				: engine::render::DynamicLightType::Torch;
+			d.position[0] = m_renderFrame.ToRenderX(cfg.GetDouble(b + "x", 0.0));
+			d.position[1] = static_cast<float>(cfg.GetDouble(b + "y", 0.0));
+			d.position[2] = m_renderFrame.ToRenderZ(cfg.GetDouble(b + "z", 0.0));
+			d.radius = static_cast<float>(std::clamp(cfg.GetDouble(b + "radius", 8.0), 0.5, 200.0));
+			d.baseIntensity = static_cast<float>(std::clamp(cfg.GetDouble(b + "intensity", 2.0), 0.0, 100.0));
+			d.color[0] = static_cast<float>(std::clamp(cfg.GetDouble(b + "color_r", 1.0), 0.0, 1.0));
+			d.color[1] = static_cast<float>(std::clamp(cfg.GetDouble(b + "color_g", 0.85), 0.0, 1.0));
+			d.color[2] = static_cast<float>(std::clamp(cfg.GetDouble(b + "color_b", 0.4), 0.0, 1.0));
+			d.autoNightLight = cfg.GetBool(b + "auto_night_light", false);
+			lights.push_back(std::move(d));
+		}
+		m_dynamicLights.AddZoneLights(zoneId, lights);
+
+		// Fond sombre (générateur v1.0.107) : world.ambiance_zones.<i>.{x, z, radius_m,
+		// floor_y, top_y, darkness}, positions GLOBALES.
+		const int zoneCount = static_cast<int>(cfg.GetInt("world.ambiance_zones.count", 0));
+		for (int i = 0; i < zoneCount; ++i)
+		{
+			const std::string b = "world.ambiance_zones." + std::to_string(i) + ".";
+			if (!cfg.Has(b + "x"))
+				break;
+			AmbianceZone az{};
+			az.zoneId = zoneId;
+			az.x = m_renderFrame.ToRenderX(cfg.GetDouble(b + "x", 0.0));
+			az.z = m_renderFrame.ToRenderZ(cfg.GetDouble(b + "z", 0.0));
+			az.radiusM = static_cast<float>(std::max(0.0, cfg.GetDouble(b + "radius_m", 0.0)));
+			az.floorY = static_cast<float>(cfg.GetDouble(b + "floor_y", -1.0e6));
+			az.topY = static_cast<float>(cfg.GetDouble(b + "top_y", 1.0e6));
+			az.darkness = static_cast<float>(std::clamp(cfg.GetDouble(b + "darkness", 0.0), 0.0, 1.0));
+			if (az.radiusM > 0.0f && az.topY > az.floorY && az.darkness > 0.0f)
+				m_ambianceZones.push_back(az);
+		}
+		if (!lights.empty() || zoneCount > 0)
+			LOG_INFO(Render, "[Cells] zone {} : {} lumiere(s), {} zone(s) d'ambiance", zoneId, lights.size(), zoneCount);
+	}
+
+	float Engine::AmbianceDarknessAt(float x, float y, float z) const
+	{
+		float best = 0.0f;
+		for (const AmbianceZone& az : m_ambianceZones)
+		{
+			const float d = std::hypot(x - az.x, z - az.z);
+			if (d >= az.radiusM || y <= az.floorY - 4.0f || y >= az.topY + 4.0f)
+				continue;
+			// Bord adouci : plein effet au cœur, nul au rayon (dernier quart) ; idem 4 m
+			// au-dessus du haut et au-dessous du fond.
+			const float edge = std::max(1.0f, 0.25f * az.radiusM);
+			const float radial = std::clamp((az.radiusM - d) / edge, 0.0f, 1.0f);
+			const float up = std::clamp((az.topY + 4.0f - y) / 4.0f, 0.0f, 1.0f);
+			const float down = std::clamp((y - (az.floorY - 4.0f)) / 4.0f, 0.0f, 1.0f);
+			best = std::max(best, az.darkness * radial * std::min(up, down));
+		}
+		return best;
 	}
 
 	void Engine::AppendInteractableProps(size_t firstIndex)

@@ -231,7 +231,8 @@
       "e_min": -12,
       "e_max": -6,
       "n_min": 0,
-      "n_max": 8
+      "n_max": 8,
+      "levels": {"lumiere": [10, 30], "justice": [10, 30], "lune_noire": [20, 35], "dzorak": [20, 35], "legion": [10, 30], "dragons": [10, 30], "serpent": [10, 30], "naine": [10, 30], "elfe": [10, 30], "empire_hynn": [10, 30]}
     },
     {
       "id": "via_magna",
@@ -239,7 +240,8 @@
       "e_min": -5,
       "e_max": 6,
       "n_min": 0,
-      "n_max": 8
+      "n_max": 8,
+      "levels": {"lumiere": [10, 30], "justice": [10, 30], "lune_noire": [10, 30], "dzorak": [10, 30], "legion": [10, 30], "dragons": [10, 30], "serpent": [10, 30], "naine": [10, 30], "elfe": [10, 30], "empire_hynn": [10, 30]}
     },
     {
       "id": "foret_elfique",
@@ -247,7 +249,8 @@
       "e_min": 3,
       "e_max": 12,
       "n_min": 5,
-      "n_max": 16
+      "n_max": 16,
+      "levels": {"lumiere": [10, 30], "justice": [10, 30], "lune_noire": [10, 30], "dzorak": [10, 30], "legion": [10, 30], "dragons": [20, 35], "serpent": [10, 30], "naine": [20, 35], "elfe": [10, 30], "empire_hynn": [10, 30]}
     },
     {
       "id": "territoires_orcques",
@@ -255,7 +258,8 @@
       "e_min": 9,
       "e_max": 15,
       "n_min": 6,
-      "n_max": 13
+      "n_max": 13,
+      "levels": {"lumiere": [23, 50], "justice": [23, 50], "lune_noire": [18, 45], "dzorak": [18, 45], "legion": [18, 45], "dragons": [18, 45], "serpent": [23, 50], "naine": [18, 45], "elfe": [18, 45], "empire_hynn": [18, 45]}
     },
     {
       "id": "marches_du_nord",
@@ -263,7 +267,8 @@
       "e_min": 13,
       "e_max": 20,
       "n_min": 9,
-      "n_max": 18
+      "n_max": 18,
+      "levels": {"lumiere": [1, 15], "justice": [1, 15], "lune_noire": [1, 15], "dzorak": [1, 15], "legion": [1, 15], "dragons": [1, 15], "serpent": [1, 15], "naine": [1, 15], "elfe": [1, 15], "empire_hynn": [1, 15]}
     },
     {
       "id": "marches_du_nord_ouest",
@@ -271,7 +276,8 @@
       "e_min": 9,
       "e_max": 12,
       "n_min": 17,
-      "n_max": 18
+      "n_max": 18,
+      "levels": {"lumiere": [1, 15], "justice": [1, 15], "lune_noire": [1, 15], "dzorak": [1, 15], "legion": [1, 15], "dragons": [1, 15], "serpent": [1, 15], "naine": [1, 15], "elfe": [1, 15], "empire_hynn": [1, 15]}
     },
     {
       "id": "foret_occidentale",
@@ -287,7 +293,8 @@
       "e_min": 11,
       "e_max": 20,
       "n_min": -3,
-      "n_max": 3
+      "n_max": 3,
+      "levels": {"lumiere": [23, 50], "justice": [23, 50], "lune_noire": [18, 45], "dzorak": [18, 45], "legion": [18, 45], "dragons": [18, 45], "serpent": [23, 50], "naine": [18, 45], "elfe": [18, 45], "empire_hynn": [18, 45]}
     },
     {
       "id": "royaume_des_nains_de_lest",
@@ -295,7 +302,8 @@
       "e_min": 15,
       "e_max": 24,
       "n_min": -16,
-      "n_max": -4
+      "n_max": -4,
+      "levels": {"lumiere": [10, 30], "justice": [10, 30], "lune_noire": [10, 30], "dzorak": [10, 30], "legion": [10, 30], "dragons": [10, 30], "serpent": [10, 30], "naine": [10, 30], "elfe": [20, 35], "empire_hynn": [10, 30]}
     },
     {
       "id": "royaumes_des_nains_du_sud",
@@ -303,7 +311,8 @@
       "e_min": -8,
       "e_max": -1,
       "n_min": -8,
-      "n_max": -1
+      "n_max": -1,
+      "levels": {"lumiere": [10, 30], "justice": [10, 30], "lune_noire": [10, 30], "dzorak": [10, 30], "legion": [10, 30], "dragons": [10, 30], "serpent": [10, 30], "naine": [10, 30], "elfe": [20, 35], "empire_hynn": [10, 30]}
     },
     {
       "id": "terres_desolees",
@@ -311,7 +320,8 @@
       "e_min": 8,
       "e_max": 15,
       "n_min": -11,
-      "n_max": -6
+      "n_max": -6,
+      "levels": {"lumiere": [20, 40], "justice": [20, 40], "lune_noire": [20, 40], "dzorak": [20, 40], "legion": [20, 40], "dragons": [20, 40], "serpent": [20, 40], "naine": [20, 40], "elfe": [25, 45], "empire_hynn": [20, 40]}
     },
     {
       "id": "hishtarland",
@@ -319,7 +329,8 @@
       "e_min": -12,
       "e_max": -2,
       "n_min": -16,
-      "n_max": -8
+      "n_max": -8,
+      "levels": {"lumiere": [25, 40], "justice": [25, 40], "lune_noire": [25, 40], "dzorak": [25, 40], "legion": [25, 40], "dragons": [25, 40], "serpent": [25, 40], "naine": [25, 40], "elfe": [25, 40], "empire_hynn": [25, 40]}
     },
     {
       "id": "desert_central",
@@ -327,7 +338,8 @@
       "e_min": -6,
       "e_max": 4,
       "n_min": -2,
-      "n_max": 3
+      "n_max": 3,
+      "levels": {"lumiere": [10, 25], "justice": [10, 25], "lune_noire": [10, 25], "dzorak": [10, 25], "legion": [10, 25], "dragons": [10, 25], "serpent": [10, 25], "naine": [10, 25], "elfe": [10, 25], "empire_hynn": [10, 25]}
     },
     {
       "id": "terres_des_gigantomorphes",
@@ -335,7 +347,8 @@
       "e_min": 8,
       "e_max": 24,
       "n_min": 19,
-      "n_max": 22
+      "n_max": 22,
+      "levels": {"lumiere": [30, 56], "justice": [30, 56], "lune_noire": [30, 56], "dzorak": [30, 56], "legion": [30, 56], "dragons": [30, 56], "serpent": [30, 56], "naine": [30, 56], "elfe": [30, 56], "empire_hynn": [30, 56]}
     },
     {
       "id": "rivage_des_geants",
@@ -351,7 +364,8 @@
       "e_min": -4,
       "e_max": 13,
       "n_min": -17,
-      "n_max": -15
+      "n_max": -15,
+      "levels": {"lumiere": [22, 34], "justice": [22, 34], "lune_noire": [22, 34], "dzorak": [22, 34], "legion": [22, 34], "dragons": [22, 34], "serpent": [22, 34], "naine": [22, 34], "elfe": [27, 39], "empire_hynn": [22, 34]}
     },
     {
       "id": "marche_de_lest",
@@ -359,7 +373,8 @@
       "e_min": 13,
       "e_max": 20,
       "n_min": 4,
-      "n_max": 7
+      "n_max": 7,
+      "levels": {"lumiere": [20, 33], "justice": [20, 33], "lune_noire": [15, 28], "dzorak": [15, 28], "legion": [15, 28], "dragons": [15, 28], "serpent": [20, 33], "naine": [15, 28], "elfe": [15, 28], "empire_hynn": [15, 28]}
     },
     {
       "id": "marais_maudits",
@@ -367,7 +382,8 @@
       "e_min": -5,
       "e_max": -3,
       "n_min": 10,
-      "n_max": 11
+      "n_max": 11,
+      "levels": {"lumiere": [40, 56], "justice": [40, 56], "lune_noire": [40, 56], "dzorak": [40, 56], "legion": [40, 56], "dragons": [40, 56], "serpent": [40, 56], "naine": [40, 56], "elfe": [40, 56], "empire_hynn": [40, 56]}
     },
     {
       "id": "ile_de_la_treve",
@@ -375,7 +391,8 @@
       "e_min": -15,
       "e_max": -9,
       "n_min": 16,
-      "n_max": 23
+      "n_max": 23,
+      "levels": {"lumiere": [45, 60], "justice": [45, 60], "lune_noire": [45, 60], "dzorak": [45, 60], "legion": [45, 60], "dragons": [45, 60], "serpent": [45, 60], "naine": [45, 60], "elfe": [45, 60], "empire_hynn": [45, 60]}
     }
   ],
   "cities": [

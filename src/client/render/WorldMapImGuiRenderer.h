@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; }
+namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; enum class ZoneLevelTone : uint8_t; }
 namespace engine::world::mapfeatures { struct MapFeatures; }
 struct ImDrawList;
 
@@ -75,5 +75,8 @@ namespace engine::render
 
 	/// Dessine la bannière « Vous entrez à … » (haut-centre, fondu) sur la draw
 	/// list \p fg (foreground). \param dw,dh taille du framebuffer (px).
-	void DrawPlaceBanner(ImDrawList* fg, float dw, float dh, const engine::client::PlaceBannerTracker& banner);
+	/// \param tone v1.0.118 — teinte du titre selon l'écart de niveau entre le personnage
+	/// et la région (ZoneLevelToneFor) ; Inconnu = or pâle habituel.
+	void DrawPlaceBanner(ImDrawList* fg, float dw, float dh, const engine::client::PlaceBannerTracker& banner,
+		engine::client::ZoneLevelTone tone);
 }

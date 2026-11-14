@@ -1349,6 +1349,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudNoiseGeneratorTests.cpp)
   lcdlln_add_simple_test(cloud_weather_mapper_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/clouds/CloudWeatherMapperTests.cpp)
+  # v1.0.118 — lumières des cellules du monde (torches du gouffre, zone.json
+  # world.point_lights) et choix des 64 plus proches pour l'UBO de la passe Lighting.
+  lcdlln_add_simple_test(dynamic_light_system_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/DynamicLightSystemTests.cpp)
   # WeatherKindMap : conversion WeatherKind serveur (wire 156) -> WeatherState client.
   lcdlln_add_simple_test(weather_kind_map_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/clouds/WeatherKindMapTests.cpp)

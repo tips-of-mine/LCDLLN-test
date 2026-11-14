@@ -155,6 +155,23 @@ namespace
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok, "master royaumes : chargement et validation");
 		Check(m.cities.size() >= 30, "master : au moins 30 agglomerations");
+		// v1.0.118 : niveaux de référence des régions par faction de jeu (sync_levels.py),
+		// triés par faction ; Terres de l'Empereur 10-30, Lune Noire et Dzorak 20-35.
+		{
+			size_t avecNiveaux = 0;
+			bool empereur = false;
+			for (const auto& r : m.regions)
+			{
+				if (!r.levels.empty()) ++avecNiveaux;
+				bool trie = true;
+				for (size_t b = 1; b < r.levels.size(); ++b) trie = trie && r.levels[b - 1].faction < r.levels[b].faction;
+				Check(trie, "master : niveaux de region tries par faction");
+				if (r.id != "terres_de_lempereur") continue;
+				for (const auto& b : r.levels)
+					empereur = empereur || (b.faction == "lune_noire" && b.minLevel == 20 && b.maxLevel == 35);
+			}
+			Check(avecNiveaux >= 17 && empereur, "master : niveaux des regions (v1.0.118, 17 regions, Empereur 20-35 pour la Lune Noire)");
+		}
 		// v1.0.61 : départs par FACTION (identifiants de game/data/races/factions.json) ;
 		// la Légion infernale naît aux Enfers (world/enfers/world_master.json).
 		std::set<std::string> factions;

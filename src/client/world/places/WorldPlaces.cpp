@@ -87,6 +87,18 @@ namespace engine::client
 			r.zMax = GetF(c, b + "z_max", 0.0f);
 			if (r.xMax < r.xMin) std::swap(r.xMin, r.xMax);
 			if (r.zMax < r.zMin) std::swap(r.zMin, r.zMax);
+			// v1.0.118 — niveaux de référence par faction de jeu (absents = inconnus).
+			for (int64_t j = 0; j < 64; ++j)
+			{
+				const std::string lb = std::format("{}levels[{}].", b, j);
+				if (!c.Has(lb + "faction")) break;
+				PlaceLevelBand band;
+				band.faction = c.GetString(lb + "faction", "");
+				band.minLevel = static_cast<int>(c.GetInt(lb + "min", 1));
+				band.maxLevel = static_cast<int>(c.GetInt(lb + "max", band.minLevel));
+				if (!band.faction.empty() && band.minLevel >= 1 && band.minLevel <= band.maxLevel)
+					r.levels.push_back(std::move(band));
+			}
 			m_regions.push_back(std::move(r));
 		}
 		// Cellules générées (monde « Royaumes ») : identifiants du lore (« N003_W009 »).
@@ -149,6 +161,53 @@ namespace engine::client
 		return best;
 	}
 
+	const PlaceRegion* WorldPlaces::RegionById(std::string_view id) const
+	{
+		if (id.empty()) return nullptr;
+		for (const PlaceRegion& r : m_regions)
+			if (r.id == id) return &r;
+		return nullptr;
+	}
+
+	const PlaceLevelBand* PlaceRegion::LevelsFor(std::string_view faction) const
+	{
+		for (const PlaceLevelBand& b : levels)
+			if (b.faction == faction) return &b;
+		return nullptr;
+	}
+
+	ZoneLevelTone ZoneLevelToneFor(int playerLevel, int minLevel, int maxLevel)
+	{
+		constexpr int kEcart = 5; // seuil de la règle des niveaux par faction (LORE_BD §16.32)
+		if (minLevel < 1 || maxLevel < minLevel || playerLevel < 1) return ZoneLevelTone::Inconnu;
+		if (playerLevel > maxLevel + kEcart) return ZoneLevelTone::Gris;
+		if (playerLevel > maxLevel) return ZoneLevelTone::Vert;
+		if (playerLevel >= minLevel) return ZoneLevelTone::Jaune;
+		if (playerLevel >= minLevel - kEcart) return ZoneLevelTone::Orange;
+		return ZoneLevelTone::Rouge;
+	}
+
+	ZoneLevelTone ZoneLevelToneFor(const PlaceRegion* region, std::string_view faction, int playerLevel)
+	{
+		if (region == nullptr) return ZoneLevelTone::Inconnu;
+		const PlaceLevelBand* b = region->LevelsFor(faction);
+		return b ? ZoneLevelToneFor(playerLevel, b->minLevel, b->maxLevel) : ZoneLevelTone::Inconnu;
+	}
+
+	void ZoneLevelToneRgb(ZoneLevelTone tone, uint8_t& r, uint8_t& g, uint8_t& b)
+	{
+		switch (tone)
+		{
+		case ZoneLevelTone::Gris:   r = 168; g = 168; b = 168; return;
+		case ZoneLevelTone::Vert:   r = 120; g = 214; b = 110; return;
+		case ZoneLevelTone::Jaune:  r = 250; g = 222; b = 92;  return;
+		case ZoneLevelTone::Orange: r = 245; g = 150; b = 60;  return;
+		case ZoneLevelTone::Rouge:  r = 232; g = 72;  b = 60;  return;
+		case ZoneLevelTone::Inconnu:
+		default:                    r = 246; g = 226; b = 172; return; // or pâle historique
+		}
+	}
+
 	const PlaceCity* WorldPlaces::StartCityFor(std::string_view faction) const
 	{
 		for (const PlaceCity& c : m_cities)
@@ -159,10 +218,11 @@ namespace engine::client
 
 	// ------------------------------------------------------------ bannière
 
-	void PlaceBannerTracker::Show(std::string title, std::string subtitle)
+	void PlaceBannerTracker::Show(std::string title, std::string subtitle, std::string regionId)
 	{
 		m_title = std::move(title);
 		m_subtitle = std::move(subtitle);
+		m_shownRegionId = std::move(regionId);
 		m_timerSec = kDurationSec;
 	}
 
@@ -188,7 +248,7 @@ namespace engine::client
 			m_cityId = cityId;
 			m_regionId = regionId;
 			if (city != nullptr)
-				Show(city->name, region ? region->name : PlaceKindLabel(city->kind));
+				Show(city->name, region ? region->name : PlaceKindLabel(city->kind), regionId);
 			return;
 		}
 		if (cityId != m_cityId)
@@ -200,7 +260,7 @@ namespace engine::client
 				if (city->state == "ruine") sub += " en ruine";
 				else if (city->state == "reconstruction") sub += " en reconstruction";
 				if (region != nullptr) sub += " - " + region->name;
-				Show(city->name, std::move(sub));
+				Show(city->name, std::move(sub), regionId);
 			}
 		}
 		if (regionId != m_regionId)
@@ -208,7 +268,7 @@ namespace engine::client
 			m_regionId = regionId;
 			// Une entrée de ville vient d'armer la bannière : elle prime.
 			if (region != nullptr && city == nullptr)
-				Show(region->name, "Region");
+				Show(region->name, "Region", regionId);
 		}
 	}
 

@@ -3,7 +3,9 @@
 #include "src/shared/core/Log.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
+#include <utility>
 
 namespace engine::render
 {
@@ -167,6 +169,81 @@ namespace engine::render
 		m_windowEmissive = (windowCount > 0)
 		                 ? windowFadeSum / static_cast<float>(windowCount)
 		                 : 0.0f;
+	}
+
+	// -------------------------------------------------------------------------
+	// v1.0.118 — lumières des cellules du monde (zone.json, world.point_lights)
+	// -------------------------------------------------------------------------
+
+	void DynamicLightSystem::AddZoneLights(uint32_t zoneId, const std::vector<PointLightDefinition>& defs)
+	{
+		if (!m_initialized || zoneId == 0 || defs.empty())
+			return;
+		for (const PointLightDefinition& d : defs)
+		{
+			LightRuntime lr{};
+			lr.def = d;
+			lr.zoneId = zoneId;
+			// Une lumière allumée en permanence (torche d'un fond sans soleil) l'est déjà
+			// quand le joueur arrive ; une lumière de nuit suit le fondu habituel.
+			lr.currentFade = d.autoNightLight ? 0.0f : 1.0f;
+			lr.targetOn = !d.autoNightLight;
+			m_lights.push_back(std::move(lr));
+		}
+		m_activeLights.reserve(m_lights.size());
+		LOG_INFO(Render, "[DynamicLightSystem] Cellule {} : {} lumiere(s) ajoutee(s) (total {})",
+		         zoneId, defs.size(), m_lights.size());
+	}
+
+	void DynamicLightSystem::ClearZoneLights()
+	{
+		const size_t before = m_lights.size();
+		m_lights.erase(std::remove_if(m_lights.begin(), m_lights.end(),
+		                              [](const LightRuntime& lr) { return lr.zoneId != 0; }),
+		               m_lights.end());
+		if (m_lights.size() != before)
+			LOG_INFO(Render, "[DynamicLightSystem] {} lumiere(s) de cellule retiree(s)", before - m_lights.size());
+	}
+
+	void DynamicLightSystem::TranslateZoneLights(float dx, float dz)
+	{
+		for (LightRuntime& lr : m_lights)
+		{
+			if (lr.zoneId == 0)
+				continue;
+			lr.def.position[0] += dx;
+			lr.def.position[2] += dz;
+		}
+	}
+
+	size_t DynamicLightSystem::GetZoneLightCount() const
+	{
+		return static_cast<size_t>(std::count_if(m_lights.begin(), m_lights.end(),
+		                                         [](const LightRuntime& lr) { return lr.zoneId != 0; }));
+	}
+
+	/*static*/ std::vector<ActivePointLight> DynamicLightSystem::SelectNearest(
+		const std::vector<ActivePointLight>& lights, float x, float y, float z, size_t maxCount)
+	{
+		if (lights.size() <= maxCount)
+			return lights;
+		std::vector<std::pair<float, size_t>> order;
+		order.reserve(lights.size());
+		for (size_t i = 0; i < lights.size(); ++i)
+		{
+			const ActivePointLight& l = lights[i];
+			const float dx = l.position[0] - x, dy = l.position[1] - y, dz = l.position[2] - z;
+			order.emplace_back(std::sqrt(dx * dx + dy * dy + dz * dz) - l.radius, i);
+		}
+		std::stable_sort(order.begin(), order.end(),
+		                 [](const auto& a, const auto& b) { return a.first < b.first; });
+		order.resize(maxCount);
+		std::sort(order.begin(), order.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+		std::vector<ActivePointLight> out;
+		out.reserve(maxCount);
+		for (const auto& o : order)
+			out.push_back(lights[o.second]);
+		return out;
 	}
 
 	// -------------------------------------------------------------------------

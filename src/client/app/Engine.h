@@ -229,6 +229,9 @@ namespace engine
 		// lu dans le lambda Lighting → découple m_dynamicLights du thread de
 		// rendu (anti data-race).
 		std::vector<engine::render::ActivePointLight> pointLights;
+		/// v1.0.118 — assombrissement des zones d'ambiance locales [0, 1] (copie de
+		/// Engine::m_ambianceDarkness), appliqué au soleil et à l'ambiant de la passe Lighting.
+		float ambianceDarkness = 0.0f;
 		float objectModelMatrix[16] = {
 			1.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
@@ -1511,6 +1514,15 @@ namespace engine
 		/// retranchées de (\p originX, \p originZ) (0,0 = zone historique ; origine de
 		/// rendu pour une cellule dont le zone.json est en coordonnées globales).
 		void AppendInteractables(const engine::core::Config& cfg, double originX, double originZ);
+		/// v1.0.118 — ajoute les lumières ponctuelles (`world.point_lights`) et les zones
+		/// d'ambiance (`world.ambiance_zones`) du zone.json \p cfg d'une cellule, positions
+		/// GLOBALES converties dans le repère de rendu courant. \param zoneId cellule d'origine.
+		/// Effet de bord : m_dynamicLights et m_ambianceZones grandissent. Main thread.
+		void AppendCellLightsAndAmbiance(const engine::core::Config& cfg, uint32_t zoneId);
+		/// v1.0.118 — assombrissement cible des zones d'ambiance au point (x, y, z) du repère
+		/// de rendu (bord adouci sur le dernier quart du rayon et sur 4 m en hauteur) ; le
+		/// maximum des zones qui contiennent le point, 0 hors zone. Fonction pure de m_ambianceZones.
+		float AmbianceDarknessAt(float x, float y, float z) const;
 		/// Construit les props (meshes + collisions) des interactibles d'indice
 		/// \p firstIndex et suivants, SANS toucher aux props existants ni au cache de
 		/// matériaux (monde « Royaumes » : ajout incrémental à l'arrivée d'une cellule).
@@ -2146,6 +2158,22 @@ namespace engine
 			float z = 0.0f;
 		};
 		std::vector<RespawnMarker> m_respawnMarkers;
+
+		/// v1.0.118 — zone d'ambiance locale d'une cellule (zone.json `world.ambiance_zones`,
+		/// ex. fond sombre du gouffre de Thurvhal), en repère de RENDU : cylindre de centre
+		/// (x, z), de rayon radiusM, entre floorY et topY (m). darkness 0 = jour inchangé,
+		/// 1 = nuit noire (soleil, ambiant et plafond d'exposition atténués).
+		struct AmbianceZone
+		{
+			uint32_t zoneId = 0;
+			float x = 0.0f, z = 0.0f, radiusM = 0.0f;
+			float floorY = 0.0f, topY = 0.0f;
+			float darkness = 0.0f;
+		};
+		std::vector<AmbianceZone> m_ambianceZones;
+		/// Assombrissement courant [0, 1] (lissé dans le temps), lu par la passe Lighting via
+		/// le RenderState et par l'auto-exposition. Main thread.
+		float m_ambianceDarkness = 0.0f;
 
 		/// Charge les marqueurs de réapparition depuis le fichier data partagé.
 		/// Tolérant : fichier absent/ligne invalide = marqueurs vides + WARN

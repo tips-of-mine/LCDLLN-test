@@ -181,6 +181,33 @@ namespace tools::world_gen
 				d.eMin = static_cast<int>(GetNum(r, "e_min", 0)); d.eMax = static_cast<int>(GetNum(r, "e_max", 0));
 				d.nMin = static_cast<int>(GetNum(r, "n_min", 0)); d.nMax = static_cast<int>(GetNum(r, "n_max", 0));
 				if (d.id.empty() || d.eMin > d.eMax || d.nMin > d.nMax) { err = "master: region invalide '" + d.id + "'"; return false; }
+				// v1.0.118 — niveaux de référence par faction de jeu : { "lumiere": [10, 30], … }.
+				if (const JsonValue* lv = FindObjectMember(r, "levels"))
+				{
+					if (lv->type != JsonType::Object) { err = "master: region '" + d.id + "' : levels doit etre un objet"; return false; }
+					for (const auto& kv : lv->objectValue)
+					{
+						const JsonValue& b = kv.second;
+						if (kv.first.empty() || b.type != JsonType::Array || b.arrayValue.size() != 2
+							|| b.arrayValue[0].type != JsonType::Number || b.arrayValue[1].type != JsonType::Number)
+						{
+							err = "master: region '" + d.id + "' : levels." + kv.first + " doit etre [min, max]";
+							return false;
+						}
+						RegionLevelBand band;
+						band.faction = kv.first;
+						band.minLevel = static_cast<int>(b.arrayValue[0].numberValue);
+						band.maxLevel = static_cast<int>(b.arrayValue[1].numberValue);
+						if (band.minLevel < 1 || band.minLevel > band.maxLevel || band.maxLevel > 70)
+						{
+							err = "master: region '" + d.id + "' : levels." + kv.first + " hors de 1..70 ou min > max";
+							return false;
+						}
+						d.levels.push_back(std::move(band));
+					}
+					std::sort(d.levels.begin(), d.levels.end(),
+						[](const RegionLevelBand& a, const RegionLevelBand& b) { return a.faction < b.faction; });
+				}
 				out.regions.push_back(std::move(d));
 			}
 		}

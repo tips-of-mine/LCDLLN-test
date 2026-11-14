@@ -107,6 +107,32 @@ namespace engine::render
 		/// Total number of loaded light definitions.
 		size_t GetLightCount() const { return m_lights.size(); }
 
+		/// v1.0.118 — ajoute les lumières d'une cellule du monde (zone.json, clé
+		/// `world.point_lights`, ex. torches du gouffre de Thurvhal), déjà converties dans le
+		/// repère de RENDU. \param zoneId identifiant de cellule (≠ 0) : sert au retrait.
+		/// Sans effet si \p zoneId vaut 0 ou si le système n'est pas initialisé.
+		/// Effet de bord : m_lights grandit ; les lumières démarrent éteintes (fondu).
+		/// Main thread (comme Tick).
+		void AddZoneLights(uint32_t zoneId, const std::vector<PointLightDefinition>& defs);
+
+		/// v1.0.118 — retire toutes les lumières de cellule (changement de carte) ;
+		/// les lumières du fichier global restent. Main thread.
+		void ClearZoneLights();
+
+		/// v1.0.118 — décale les lumières de cellule de (\p dx, \p dz) mètres (rebase de
+		/// l'origine de rendu, même décalage que les interactibles). Main thread.
+		void TranslateZoneLights(float dx, float dz);
+
+		/// Nombre de lumières de cellule chargées (tests, journal).
+		size_t GetZoneLightCount() const;
+
+		/// v1.0.118 — garde les \p maxCount lumières les plus proches de (\p x, \p y, \p z)
+		/// (distance au centre moins le rayon : une grande lumière lointaine passe avant une
+		/// petite à la même distance), dans l'ordre de \p lights pour les ex aequo.
+		/// Fonction pure : l'UBO de la passe Lighting n'a que 64 places.
+		static std::vector<ActivePointLight> SelectNearest(const std::vector<ActivePointLight>& lights,
+			float x, float y, float z, size_t maxCount);
+
 	private:
 		/// Per-light runtime state.
 		struct LightRuntime
@@ -114,6 +140,7 @@ namespace engine::render
 			PointLightDefinition def{};
 			float  currentFade  = 0.0f; ///< [0, 1] current fade value.
 			bool   targetOn     = false; ///< true when night (light should be on).
+			uint32_t zoneId     = 0;     ///< v1.0.118 — 0 = fichier global, sinon cellule d'origine.
 		};
 
 		/// Returns true when \p timeOfDay is in the night window [18, 24) ∪ [0, 6).

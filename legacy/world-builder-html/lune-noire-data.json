@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.116",
+    "version": "1.0.117",
     "notes": [
+      "v1.0.117 : [DÉCISION] Dialogues : 32 dialogues du tome 10 écrits (4 par quête), 45 dialogues sans réplique remplis (T6, T8, T9, T13) ; répliques originales [GD], aucune réplique de la BD recopiée ; plus aucun dialogue vide. Contre-quêtes Lune Noire : 4 créées (registre, laine, péage, convoi de Khurden). Krak de Jhenner, citadelle impériale et Passe de Heniak placés au lore.",
       "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 52 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
       "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
       "v1.0.114 : [DÉCISION] Exploit des 666 cimetières et lieux secrets découverts mis en jeu (décisions du propriétaire du 13/11/2026, affichage « message discret + compteur ») : par personnage, un cimetière des Royaumes est visité en y entrant vivant (rayon de 15 m) ou en y réapparaissant ; l'exploit exploit_pelerin_des_666_tombes est débloqué au 666e ; un lieu secret est révélé pour toujours sur la carte du seul personnage qui entre dans son rayon (radius_m d'une ville, 40 m pour un lieu) ; messages système dans le chat (« Cimetière visité (124/666) », « Lieu découvert : <nom> », « Exploit débloqué : <titre> »), compteur « Cimetières visités : N/666 » dans l'onglet Exploits. Identifiant stable gy=<id> des cimetières écrit par tools/world_gen ; serveur : migration 0086, messages UDP 105/106, kProtocolVersion 21 (LORE_BD §16.41).",
@@ -13062,7 +13063,7 @@
       "alias": "",
       "type": "fortress_city",
       "importance": "",
-      "cell": "",
+      "cell": "S006_E012",
       "anchor_tile": "",
       "coord_x": null,
       "coord_y": null,
@@ -13149,7 +13150,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T5] p.18 : Fratus souhaite qu'il tienne en perdant « le moins d'hommes possible ».",
-        "[BD-T5] p.22 : « au grand désespoir de Fratus, le Krak de Jhenner était tombé »."
+        "[BD-T5] p.22 : « au grand désespoir de Fratus, le Krak de Jhenner était tombé ».",
+        "[GD] (v1.0.117) Case S006_E012 proposée sur la route de Moork à Tsaroth (première place impériale tombée [BD-T5 p.22], au débouché des plaines vers les coulées ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -42752,17 +42754,21 @@
         }
       ],
       "region_id": "region_marche_est",
-      "counter_quest_id": "",
-      "counter_quest_factions": [],
+      "counter_quest_id": "quest_marche_est_gd_droit_de_laine",
+      "counter_quest_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
         "[GD] (v1.0.87) Niveau 18 et plus ; cases : N006_E014, N004_E010, N004_E009. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
         "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées.",
-        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus."
+        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus.",
+        "[GD] (v1.0.117) Contre-quête Lune Noire : quest_marche_est_gd_droit_de_laine (le bloc Lune Noire reçoit la contre-quête ; LORE_BD §16.44)."
       ],
       "quest_kind": "solo",
-      "has_counter_quest": false
+      "has_counter_quest": true
     },
     {
       "id": "quest_marche_est_gd_registre_du_fortin",
@@ -42815,17 +42821,21 @@
         }
       ],
       "region_id": "region_marche_est",
-      "counter_quest_id": "",
-      "counter_quest_factions": [],
+      "counter_quest_id": "quest_marche_est_gd_terres_des_capitaines",
+      "counter_quest_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.87) Quête proposée, nom et étapes à valider ; lot 15 du propriétaire (12/11/2026) ; LORE_BD §16.16.",
         "[GD] (v1.0.87) Niveau 15 et plus ; cases : N006_E014, N007_E013. Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
         "[GD] (v1.0.87) Lore seulement : les villes de la Marche de l'Est ne sont pas dans des cellules générées.",
-        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus."
+        "[DÉCISION] (v1.0.88) Désormais jouable : toutes ses villes et lieux sont dans des cellules générées (ouverture de la Marche de l'Est, LORE_BD §16.17) ; la note « lore seulement » de la v1.0.87 ne s'applique plus.",
+        "[GD] (v1.0.117) Contre-quête Lune Noire : quest_marche_est_gd_terres_des_capitaines (le bloc Lune Noire reçoit la contre-quête ; LORE_BD §16.44)."
       ],
       "quest_kind": "solo",
-      "has_counter_quest": false
+      "has_counter_quest": true
     },
     {
       "id": "quest_marche_est_gd_peage_de_la_via_magna",
@@ -42884,15 +42894,19 @@
         }
       ],
       "region_id": "region_marche_est",
-      "counter_quest_id": "",
-      "counter_quest_factions": [],
+      "counter_quest_id": "quest_marche_est_gd_silence_du_peage",
+      "counter_quest_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.88) Quête proposée, nom et étapes à valider ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17.",
-        "[GD] (v1.0.88) Niveau 16 et plus ; cases : N006_E014, N004_E012, N005_E013 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir)."
+        "[GD] (v1.0.88) Niveau 16 et plus ; cases : N006_E014, N004_E012, N005_E013 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction ; contre-quêtes à définir).",
+        "[GD] (v1.0.117) Contre-quête Lune Noire : quest_marche_est_gd_silence_du_peage (le bloc Lune Noire reçoit la contre-quête ; LORE_BD §16.44)."
       ],
       "quest_kind": "solo",
-      "has_counter_quest": false
+      "has_counter_quest": true
     },
     {
       "id": "quest_marche_est_gd_trolls_de_la_foret",
@@ -43727,15 +43741,19 @@
         }
       ],
       "region_id": "territoires_orcques",
-      "counter_quest_id": "",
-      "counter_quest_factions": [],
+      "counter_quest_id": "quest_orcs_gd_le_convoi_doit_passer",
+      "counter_quest_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
       "counter_quest_races": [],
       "notes": [
         "[GD] (v1.0.104) Quête proposée, nom et étapes à valider ; lot 29 du propriétaire (12/11/2026) ; LORE_BD §16.33.",
-        "[GD] (v1.0.104) Niveau 22 et plus ; cases : N010_E016, N011_E016, N011_E017, N011_E015 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction, voir niveau_par_faction de la région ; contre-quêtes à définir)."
+        "[GD] (v1.0.104) Niveau 22 et plus ; cases : N010_E016, N011_E016, N011_E017, N011_E015 (toutes générées). Ouverte à toutes les factions (niveau relatif à la faction, voir niveau_par_faction de la région ; contre-quêtes à définir).",
+        "[GD] (v1.0.117) Contre-quête Lune Noire : quest_orcs_gd_le_convoi_doit_passer (le bloc Lune Noire reçoit la contre-quête ; LORE_BD §16.44)."
       ],
       "quest_kind": "group",
-      "has_counter_quest": false
+      "has_counter_quest": true
     },
     {
       "id": "quest_gd_les_revenus",
@@ -43945,6 +43963,287 @@
       ],
       "quest_kind": "group",
       "has_counter_quest": false
+    },
+    {
+      "id": "quest_marche_est_gd_terres_des_capitaines",
+      "name": "Les Terres des capitaines",
+      "description": "Le registre de l'ancien fortin impérial prouverait à qui appartenaient les terres de la Marche avant la conquête. Les capitaines de la Lune Noire veulent ces terres : le registre doit arriver à Moork, pas à Horkher.",
+      "category": "histoire",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "lune_noire",
+        "contre_quete",
+        "affrontement"
+      ],
+      "difficulty": 1,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.87)",
+      "steps": [
+        "Au Barrage de péage de la Lune Noire, recevoir l'ordre du capitaine.",
+        "Fouiller les Ruines du fortin des Marches avant l'envoyé de l'intendant d'Horkher.",
+        "Reprendre le registre à qui l'aurait trouvé avant vous (JcJ).",
+        "Remettre le registre aux scribes de Moork."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au Barrage de péage de la Lune Noire, recevoir l'ordre du capitaine.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        },
+        {
+          "texte": "Fouiller les Ruines du fortin des Marches avant l'envoyé de l'intendant d'Horkher.",
+          "lieu_id": "lieu_ruines_fortin_des_marches"
+        },
+        {
+          "texte": "Reprendre le registre à qui l'aurait trouvé avant vous (JcJ)."
+        },
+        {
+          "texte": "Remettre le registre aux scribes de Moork.",
+          "ville_id": "ville_moork"
+        }
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_ruines_fortin_des_marches"
+      ],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 15
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "quest_marche_est_gd_registre_du_fortin",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.117) Contre-quête Lune Noire de quest_marche_est_gd_registre_du_fortin (décision du propriétaire du 13/11/2026 : contre-quêtes Lune Noire pour les quêtes ouvertes à tous dans les zones de la Lune Noire ; LORE_BD §16.44)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_marche_est_gd_droit_de_laine",
+      "name": "Le Droit de laine",
+      "description": "La laine d'Horkher part vers Harrodh, en terre d'Empire, avec un laissez-passer impérial. La Lune Noire tient la Via Magna : chaque balle qui la traverse doit payer son droit.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "lune_noire",
+        "contre_quete",
+        "affrontement"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.87)",
+      "steps": [
+        "Au Barrage de péage de la Lune Noire, prendre la liste des convois à taxer.",
+        "Arrêter le convoi de laine au Poste de relais impérial et réclamer le droit de passage.",
+        "Saisir les balles si le marchand refuse ou si son escorte résiste (JcJ).",
+        "Rapporter le droit ou la laine au barrage."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au Barrage de péage de la Lune Noire, prendre la liste des convois à taxer.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        },
+        {
+          "texte": "Arrêter le convoi de laine au Poste de relais impérial et réclamer le droit de passage.",
+          "lieu_id": "lieu_poste_relais_imperial"
+        },
+        {
+          "texte": "Saisir les balles si le marchand refuse ou si son escorte résiste (JcJ)."
+        },
+        {
+          "texte": "Rapporter le droit ou la laine au barrage.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        }
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_poste_relais_imperial",
+        "horker"
+      ],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 18
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "quest_marche_est_gd_laine_d_horkher",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.117) Contre-quête Lune Noire de quest_marche_est_gd_laine_d_horkher (décision du propriétaire du 13/11/2026 : contre-quêtes Lune Noire pour les quêtes ouvertes à tous dans les zones de la Lune Noire ; LORE_BD §16.44)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_marche_est_gd_silence_du_peage",
+      "name": "Le Silence du péage",
+      "description": "Les marchands d'Horkher cherchent qui rançonne leurs convois. Le capitaine du barrage préfère que personne ne sache ce que ses péagers partagent avec les maraudeurs du relais incendié.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "region_marche_est",
+        "lune_noire",
+        "contre_quete",
+        "affrontement"
+      ],
+      "difficulty": 2,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Marche de l'Est, v1.0.88)",
+      "steps": [
+        "Au Barrage de péage de la Lune Noire, écouter le capitaine inquiet.",
+        "Au Relais incendié de la Via Magna, faire disparaître les marchandises volées avant qu'on les retrouve.",
+        "À Horkher, acheter ou faire taire le témoin des marchands.",
+        "Rendre compte au capitaine du barrage."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au Barrage de péage de la Lune Noire, écouter le capitaine inquiet.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        },
+        {
+          "texte": "Au Relais incendié de la Via Magna, faire disparaître les marchandises volées avant qu'on les retrouve.",
+          "lieu_id": "lieu_relais_incendie_via_magna"
+        },
+        {
+          "texte": "À Horkher, acheter ou faire taire le témoin des marchands.",
+          "ville_id": "city_horkher"
+        },
+        {
+          "texte": "Rendre compte au capitaine du barrage.",
+          "lieu_id": "lieu_barrage_de_peage_lune_noire"
+        }
+      ],
+      "source_lore": [
+        "city_horkher",
+        "lieu_barrage_de_peage_lune_noire",
+        "lieu_relais_incendie_via_magna"
+      ],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 1,
+      "required_classes": [],
+      "for_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 16
+        }
+      ],
+      "region_id": "region_marche_est",
+      "counter_quest_id": "quest_marche_est_gd_peage_de_la_via_magna",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.117) Contre-quête Lune Noire de quest_marche_est_gd_peage_de_la_via_magna (décision du propriétaire du 13/11/2026 : contre-quêtes Lune Noire pour les quêtes ouvertes à tous dans les zones de la Lune Noire ; LORE_BD §16.44)."
+      ],
+      "quest_kind": "solo",
+      "has_counter_quest": true
+    },
+    {
+      "id": "quest_orcs_gd_le_convoi_doit_passer",
+      "name": "Le Convoi doit passer",
+      "description": "Le convoi de captifs des Marches doit atteindre Khurden. Des rôdeurs payés par un marchand de Hilvakh rôdent autour du camp : les Dzorak paient pour que le convoi arrive entier.",
+      "category": "exploration",
+      "tags": [
+        "[GD]",
+        "territoires_orcques",
+        "lune_noire",
+        "contre_quete",
+        "affrontement"
+      ],
+      "difficulty": 3,
+      "repeatable": false,
+      "type": "[GD] Quête de campagne (Territoires orcques, v1.0.104)",
+      "steps": [
+        "Au Camp des marchands d'esclaves, prendre l'escorte du convoi.",
+        "Éclairer la route en passant au large de la Tanière des loups de guerre.",
+        "Repousser l'attaque des rôdeurs sur la route de Khurden (JcJ).",
+        "Livrer le convoi aux portes de Khurden."
+      ],
+      "etapes_struct": [
+        {
+          "texte": "Au Camp des marchands d'esclaves, prendre l'escorte du convoi.",
+          "lieu_id": "lieu_camp_des_marchands_d_esclaves"
+        },
+        {
+          "texte": "Éclairer la route en passant au large de la Tanière des loups de guerre.",
+          "lieu_id": "lieu_taniere_des_loups_de_guerre"
+        },
+        {
+          "texte": "Repousser l'attaque des rôdeurs sur la route de Khurden (JcJ)."
+        },
+        {
+          "texte": "Livrer le convoi aux portes de Khurden.",
+          "lieu_id": "lieu_khurden"
+        }
+      ],
+      "source_lore": [
+        "town_0133",
+        "lieu_camp_des_marchands_d_esclaves",
+        "lieu_khurden",
+        "lieu_taniere_des_loups_de_guerre"
+      ],
+      "rewards": {
+        "xp_weight": "contre_quete"
+      },
+      "min_players": 2,
+      "required_classes": [],
+      "for_factions": [
+        "faction_black_moon",
+        "dzorak_orcs"
+      ],
+      "for_races": [],
+      "for_classes": [],
+      "unlock_conditions": [
+        {
+          "type": "niveau",
+          "valeur": 22
+        }
+      ],
+      "region_id": "territoires_orcques",
+      "counter_quest_id": "quest_orcs_gd_convoi_de_khurden",
+      "counter_quest_factions": [],
+      "counter_quest_races": [],
+      "notes": [
+        "[GD] (v1.0.117) Contre-quête Lune Noire de quest_orcs_gd_convoi_de_khurden (décision du propriétaire du 13/11/2026 : contre-quêtes Lune Noire pour les quêtes ouvertes à tous dans les zones de la Lune Noire ; LORE_BD §16.44)."
+      ],
+      "quest_kind": "group",
+      "has_counter_quest": true
     }
   ],
   "mounts": [
@@ -186450,127 +186749,277 @@
     {
       "id": "dial_greldinard_plan_wismerhill_t6",
       "name": "Dialogue — Greldinard expose son plan pour Wismerhill (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Greldinard",
+      "faction_id": "dzorak_orcs",
+      "race_id": "race_dzorak",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Greldinard",
+          "text": "Le Baron de Moork est jeune, ambitieux, et l'Empereur lui fait confiance. C'est exactement ce qu'il nous faut."
+        },
+        {
+          "speaker": "Conseiller",
+          "text": "Et s'il refuse de jouer notre jeu ?"
+        },
+        {
+          "speaker": "Greldinard",
+          "text": "Il ne saura même pas qu'il joue. On lui donnera des victoires, et chaque victoire le liera un peu plus à nous."
+        }
+      ],
       "notes": [
         "[BD-T6] Greldinard est entouré de son jester/conseiller Greldinard et d'un troisième personnage non nommé.",
-        "[BD-T6] Ce plan est la base narrative de tout le tome 6."
+        "[BD-T6] Ce plan est la base narrative de tout le tome 6.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_wismerhill_throne_guildes_t6",
       "name": "Dialogue — Wismerhill reçoit les guildes de Moork sur son trône (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Maître de guilde",
+          "text": "Les guildes de Moork saluent leur nouveau baron et… espèrent que les taxes resteront raisonnables."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Elles resteront ce qu'elles sont tant que les routes resteront sûres et les caisses honnêtes."
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "Les accords dont nous avons parlé sont signés, Monseigneur. Tous."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Alors la séance est levée. Messieurs, Moork vous écoute — tant que vous parlez utile."
+        }
+      ],
       "notes": [
         "[BD-T6] Hellaynnea agit déjà comme conseillère discrète dès le premier jour.",
-        "[BD-T6] Le dialogue cryptique de Hellaynnea ('sur ce que vous savez...') est sa façon de lui rapporter les accords avec les agents de la Lune Noire."
+        "[BD-T6] Le dialogue cryptique de Hellaynnea ('sur ce que vous savez...') est sa façon de lui rapporter les accords avec les agents de la Lune Noire.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_haghendorf_solitude_t6",
       "name": "Dialogue — La solitude de l'Empereur Haghendorf (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Haghendorf",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haghendorf",
+          "text": "Ils repartent tous. Les uns pour me servir, les autres pour me trahir, et je ne sais plus lesquels sont lesquels."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Seul au milieu de la cour, l'Empereur regarde trois armées s'éloigner dans trois directions."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Un trône, c'est la place la plus haute… et la plus froide."
+        }
+      ],
       "notes": [
         "[BD-T6] La page 14 (grande illustration) montre les trois armées s'éloignant dans des directions opposées.",
         "[BD-T6] Haghendorf est au centre, seul, regardant partir ses vassaux et ennemis.",
-        "[BD-T6] Ce moment clé définit la vulnérabilité de l'Empire — il est techniquement victorieux mais politiquement seul."
+        "[BD-T6] Ce moment clé définit la vulnérabilité de l'Empire — il est techniquement victorieux mais politiquement seul.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_parsifal_depart_sysigie_t6",
       "name": "Dialogue — Parsifal repart vers Syzygie, Fratus se retire à Altenberg (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haghendorf",
+          "text": "Prenez ces présents, Commandeur. L'Empire n'oublie pas ceux qui le servent."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "C'est plus que généreux, Majesté. Syzygie en fera bon usage."
+        },
+        {
+          "speaker": "Fratus",
+          "text": "Quant à moi, je me retire à Altenberg. L'Empire saura où me trouver… s'il me cherche encore."
+        }
+      ],
       "notes": [
         "[BD-T6] Haghendorf donne quand même à Parsifal des honneurs et des richesses (non précisés) — 'plus que généreux'.",
         "[BD-T6] Fratus annonce son retrait à Altenberg — début de sa disgrâce personnelle.",
-        "[BD-T6] Le Comte d'Horkher reçoit la Baronnie de Moork dans cette même scène."
+        "[BD-T6] Le Comte d'Horkher reçoit la Baronnie de Moork dans cette même scène.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_wismerhill_emissaire_imperial_t6",
       "name": "Dialogue — Wismerhill reçoit l'émissaire impérial (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Émissaire impérial",
+          "text": "Sa Majesté exige des comptes sur la gestion de la baronnie, et une baronne pour Moork, choisie au Palais."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Une baronne… Il trouvera une épouse très obéissante, ne vous inquiétez pas."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Une lueur dorée envahit la salle ; il ne reste de l'émissaire qu'une odeur de brûlé."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Écrivez au Palais que l'émissaire s'est égaré en chemin. Les routes sont si dangereuses."
+        }
+      ],
       "notes": [
         "[BD-T6] L'émissaire est littéralement anéanti par une explosion magique dorée.",
         "[BD-T6] Wismerhill dit 'Il trouvera une baronne soumise' — ironie sur Hellaynnea qui est tout sauf soumise.",
-        "[BD-T6] 'Ho quel gâchis !' — commentaire cynique d'un convive sur le corps de l'émissaire."
+        "[BD-T6] 'Ho quel gâchis !' — commentaire cynique d'un convive sur le corps de l'émissaire.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_esmeralda_seduit_fratus_t6",
       "name": "Dialogue — Esmeralda (Hellaynnea) séduit Fratus (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Esmeralda (Hellaynnea)",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_demon",
+      "location_ville_id": "ville_altenberg",
+      "lines": [
+        {
+          "speaker": "Esmeralda",
+          "text": "Le Grand Maître Fratus, seul dans son exil… Quel gâchis, pour un homme de votre rang."
+        },
+        {
+          "speaker": "Fratus",
+          "text": "Qui êtes-vous ? Je n'ai demandé aucune compagnie."
+        },
+        {
+          "speaker": "Esmeralda",
+          "text": "Personne ne demande jamais ce dont il a le plus besoin. Laissez-moi vous servir un verre, et oubliez Lhynn pour ce soir."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Quand la porte se referme, le reflet du miroir n'est plus celui d'une jeune femme."
+        }
+      ],
       "notes": [
         "[BD-T6] p.22-24 : Esmeralda (cheveux noirs à tresses, robe rouge) est l'apparence que prend Hellaynnea ; elle reprend ensuite sa vraie forme.",
         "[BD-T6] La scène montre clairement sa vraie forme démoniaque après le drain (page 24).",
         "[BD-T6] Fratus est ivre et affaibli — sa disgrâce l'a rendu vulnérable.",
-        "[BD-T6] p.25 : « Dors petit elfe » s'adresse à Wismerhill endormi, au retour de la succube au palais. La victime n'est pas Fratus."
+        "[BD-T6] p.25 : « Dors petit elfe » s'adresse à Wismerhill endormi, au retour de la succube au palais. La victime n'est pas Fratus.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_noblesse_hellavnnea_t6",
       "name": "Dialogue — Hellaynnea chasse les nobles héraldistes de la bibliothèque (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Hellaynnea",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_demon",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Héraldiste",
+          "text": "Madame, cette bibliothèque est réservée aux archives des lignées nobles de la baronnie."
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "Elle l'était. Mes dames de compagnie en ont désormais l'usage. Sortez."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Ha ! Excellent ! Vous pourriez faire pareil avec les percepteurs ?"
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "Chaque chose en son temps, Ghorghor."
+        }
+      ],
       "notes": [
         "[BD-T6] Hellaynnea balaie les nobles héraldistes de la bibliothèque.",
         "[BD-T6] Ses 'dames de compagnie' portent des robes noires — probable coven de démons.",
         "[BD-T6] Ghorghor : 'Amusant ! Virez-moi toutes ces vieilles peaux !'",
-        "[BD-T6] Nasha participe avec enthousiasme : 'Whoa ! Super !'"
+        "[BD-T6] Nasha participe avec enthousiasme : 'Whoa ! Super !'",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_conseil_guerre_horkher_t6",
       "name": "Dialogue — Conseil de guerre de Moork : le piège pour Horkher (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Le comte d'Horkher croit que nous l'attaquerons de face. Nous le laisserons le croire jusqu'au dernier moment."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Et pendant qu'il regarde devant, je passe derrière ?"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Exactement. Nasha, Hellaynnea, vous pouvez disposer : la suite n'est qu'affaire de soldats."
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "Viens, Nasha. Laissons ces messieurs jouer avec leurs cartes."
+        }
+      ],
       "notes": [
         "[BD-T6] Le conseil se tient dans une grande salle avec Ghorghor qui occupe la moitié de l'espace.",
         "[BD-T6] Nasha et Hellaynnea partent à ce moment : 'Allez Nasha, viens on va s'occuper de nous.'",
-        "[BD-T6] Wismerhill a l'idée du piège de l'accueil festif — décorer Moork aux couleurs d'Horkher."
+        "[BD-T6] Wismerhill a l'idée du piège de l'accueil festif — décorer Moork aux couleurs d'Horkher.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dial_horkher_capitulation_t6",
       "name": "Dialogue — La capitulation du comte d'Horkher (T6)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
+      "npc_name": "Comte d'Horkher",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "city_horkher",
+      "lines": [
+        {
+          "speaker": "Comte d'Horkher",
+          "text": "Mes murs sont tombés, mes hommes sont dispersés… Quelles sont vos conditions ?"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Votre allégeance, signée ici, devant témoins. Votre famille vivra à Horkher comme avant."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Le scribe est prêt, Pépette tient l'encre. On n'attend plus que votre jolie signature."
+        },
+        {
+          "speaker": "Comte d'Horkher",
+          "text": "… Donnez-moi la plume."
+        }
+      ],
       "notes": [
         "[BD-T6] Ghorghor appelle Nasha 'Pépette' — term affectueux.",
         "[BD-T6] L'acte est rédigé séance tenante par un scribe.",
-        "[BD-T6] Wismerhill mentionne la famille d'Horkher pour le faire céder."
+        "[BD-T6] Wismerhill mentionne la famille d'Horkher pour le faire céder.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
@@ -188528,134 +188977,336 @@
     {
       "id": "dialogue_haazheel_reproche_t8",
       "name": "Dialogue — Les reproches d'Haazheel (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Je t'ai donné une baronnie, une armée, des alliés. Et tu agis comme si tu n'avais pas de maître."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "J'ai gagné toutes les batailles que vous m'avez confiées."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Gagner n'est pas obéir. Le jour où tu confondras les deux, je te le rappellerai… autrement."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_haazheel_rituel_fin_t8",
       "name": "Dialogue — Haazheel à la fin du rituel de transfert (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "C'est fait. La puissance du Prince Hors-Vivant coule maintenant dans tes veines."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je sens… tout. Chaque mort de cette nécropole, chaque murmure."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Habitue-toi. Et n'oublie pas qui t'a ouvert cette porte."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_narrateur_wismerhill_puissance_t8",
       "name": "Dialogue — Le narrateur : la nouvelle puissance de Wismerhill (T8)",
-      "npc_name": "",
+      "npc_name": "Narrateur",
       "faction_id": "",
       "race_id": "",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Narrateur",
+          "text": "Wismerhill sort de la nécropole sans un regard en arrière. Ses pas ne laissent plus de trace dans la poussière."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Ceux qui le croisent ce jour-là baissent les yeux sans savoir pourquoi. Le jeune baron n'est plus tout à fait un homme."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_parsifal_empereur_fin_t8",
       "name": "Dialogue — Parsifal et l'Empereur après Northind (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Parsifal",
+          "text": "Northind est libérée, Majesté. Voici ses clefs."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Vous auriez pu les garder. Peu d'hommes m'auraient rendu une forteresse."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Northind appartient à l'Empire. Mon Ordre n'a besoin que de la Lumière."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_fratus_wismerhill_t8",
       "name": "Dialogue — Fratus se présente à Wismerhill (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Fratus",
+      "faction_id": "chevaliers_de_la_justice",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Fratus",
+          "text": "Baron Wismerhill. On m'a ôté mon Ordre, mon rang et l'oreille de l'Empereur. Il me reste mon épée."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Et vous venez l'offrir à celui qui a causé votre chute ?"
+        },
+        {
+          "speaker": "Fratus",
+          "text": "Je viens l'offrir à celui qui gagne. C'est une vertu que j'ai apprise tard."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_serment_fratus_t8",
       "name": "Dialogue — Le serment de vassalité de Fratus (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Fratus",
+      "faction_id": "chevaliers_de_la_justice",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Fratus",
+          "text": "Moi, Fratus, je jure d'être votre vassal, de tenir vos terres et de lever mon épée sur votre ordre."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "J'accepte ton serment. Relève-toi, et ne me fais jamais regretter ce jour."
+        },
+        {
+          "speaker": "Fratus",
+          "text": "Vous ne le regretterez pas, Monseigneur. L'Empereur, lui, le regrettera."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_gabriel_soldat_t8",
       "name": "Dialogue — L'Archange Gabriel visite un soldat de Fratus (T8)",
-      "npc_name": "",
-      "faction_id": "",
+      "npc_name": "Gabriel",
+      "faction_id": "chevaliers_de_la_lumiere",
       "race_id": "",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Gabriel",
+          "text": "N'aie pas peur, soldat. Je ne viens pas te juger."
+        },
+        {
+          "speaker": "Soldat de Fratus",
+          "text": "Un ange… pour moi ? J'ai suivi mon maître chez l'ennemi. Je suis damné."
+        },
+        {
+          "speaker": "Gabriel",
+          "text": "Tu as suivi ton maître. Le jour venu, souviens-toi que tu peux encore choisir le tien."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_venerable_excommunication_t8",
       "name": "Dialogue — Le Vénérable excommunie Gunthar (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Vénérable",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_sysigie",
+      "lines": [
+        {
+          "speaker": "Vénérable",
+          "text": "Maître Gunthar, vous avez prêté votre art à l'ennemi de la Foi."
+        },
+        {
+          "speaker": "Gunthar",
+          "text": "J'ai prêté mon art à qui le payait, comme toujours."
+        },
+        {
+          "speaker": "Vénérable",
+          "text": "Alors l'Église vous retire sa protection et ses sacrements. Qu'aucun de ses enfants ne vous ouvre sa porte."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dialogue_haazheel_lucifer_t8",
       "name": "Dialogue — Haazheel et Lucifer : le « fils » attendu (fin du T8)",
-      "npc_name": "",
+      "npc_name": "Lucifer",
       "faction_id": "",
-      "race_id": "",
+      "race_id": "race_demon",
       "location_ville_id": "",
-      "lines": [],
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Le rituel est accompli. Ton champion est prêt, Prince des Ténèbres."
+        },
+        {
+          "speaker": "Lucifer",
+          "text": "Mon champion ? Tu parles de lui comme d'un outil. Tu ne sais pas encore ce qu'il est."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Qu'est-il donc, sinon ma créature ?"
+        },
+        {
+          "speaker": "Lucifer",
+          "text": "Le fils que j'attendais."
+        }
+      ],
       "notes": [
-        "[BD-T8] Fin du tome — cliffhanger. L'identité du 'fils' est à révéler en T9."
+        "[BD-T8] Fin du tome — cliffhanger. L'identité du 'fils' est à révéler en T9.",
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
       ]
     },
     {
       "id": "dialogue_parsifal_altenberg_victoire_t8",
       "name": "Dialogue — Victoire de Parsifal à Altenberg (T8)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_altenberg",
+      "lines": [
+        {
+          "speaker": "Parsifal",
+          "text": "Altenberg est reprise. Que l'on soigne les blessés des deux camps."
+        },
+        {
+          "speaker": "Chevalier de la Lumière",
+          "text": "Même ceux de Fratus, Commandeur ?"
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Surtout ceux-là. Ils ont été trompés ; ils n'ont pas cessé d'être des hommes."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_conseil_guerre_forces_t9",
       "name": "Dialogue — Conseil de guerre : les forces de la coalition (T9)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Faisons le compte : les Dzorak de Greldinard, les géants, les démons d'Haazheel et nos propres troupes."
+        },
+        {
+          "speaker": "Greldinard",
+          "text": "Et les chevaliers de Fratus, si l'on peut appeler ça des chevaliers."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Assez pour écraser l'Empire, si chacun tient sa place."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Alors chacun tiendra sa place. Ceux qui en doutent peuvent le dire maintenant."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_fratus_presentation_armee_t9",
       "name": "Dialogue — Fratus présente son armée (T9)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Fratus",
+      "faction_id": "chevaliers_de_la_justice",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Fratus",
+          "text": "Voici mes hommes, Monseigneur : quatre mille lances, fidèles et disciplinées."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Fidèles à qui, Fratus ?"
+        },
+        {
+          "speaker": "Fratus",
+          "text": "À celui qui les paie et qui les mène à la victoire. Vous, aujourd'hui."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_wismerhill_revele_transformation_t9",
       "name": "Dialogue — Wismerhill révèle sa transformation (T9)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Avant la bataille, vous devez savoir. Je ne suis plus celui que vous avez suivi depuis le premier jour."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Tu as toujours deux bras, deux jambes et une sale tête. Ça me suffit."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Il y a autre chose en moi maintenant. Si un jour je change trop, arrêtez-moi."
+        },
+        {
+          "speaker": "Pile-ou-Face",
+          "text": "On essaiera. Mais on ne promet pas de réussir."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_lucifer_delegueson_legion_wismerhill_t9",
@@ -189075,323 +189726,847 @@
     },
     {
       "id": "dial_t10_01",
-      "name": "Dialogue du tome 10 n° 01 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Les astrologues de l'Empereur interrogés (T10)",
+      "npc_name": "Astrologue impérial",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Astrologue impérial",
+          "text": "Les cartes du ciel ne mentent pas : l'Archer monte à l'horizon de l'est, et sa flèche vise le trône."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Un nom. L'Empereur ne se contentera pas d'une constellation."
+        },
+        {
+          "speaker": "Astrologue impérial",
+          "text": "Trois nuits de calcul nous mènent au même homme : le baron de Moork."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Wismerhill… Le vassal même que Sa Majesté a anobli."
+        },
+        {
+          "speaker": "Astrologue impérial",
+          "text": "Les étoiles ont de l'ironie. Portez-lui ces relevés, et priez qu'il les lise jusqu'au bout."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_prophetie_archer_t10."
+      ]
     },
     {
       "id": "dial_t10_02",
-      "name": "Dialogue du tome 10 n° 02 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La conjonction confirmée (T10)",
+      "npc_name": "Maître des astres",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Maître des astres",
+          "text": "Regardez par la lunette : la Lune Noire couvre l'Archer cette nuit, comme une main sur une épaule."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Cela confirme la prophétie ?"
+        },
+        {
+          "speaker": "Maître des astres",
+          "text": "Cela confirme qu'il a un maître. Reste à savoir lequel des deux guidera la flèche."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Je note l'heure et la position. Le Palais voudra des preuves."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_prophetie_archer_t10."
+      ]
     },
     {
       "id": "dial_t10_03",
-      "name": "Dialogue du tome 10 n° 03 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La nouvelle portée à l'Empereur (T10)",
+      "npc_name": "Haghendorf",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haghendorf",
+          "text": "Alors c'est lui. L'homme à qui j'ai donné Moork de mes propres mains."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Les astrologues sont unanimes, Majesté."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Les astrologues sont toujours unanimes quand la nouvelle est mauvaise."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Faites doubler la garde des portes et taisez ce nom dans les couloirs. Un Empire tombe d'abord par la rumeur."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_prophetie_archer_t10."
+      ]
     },
     {
       "id": "dial_t10_04",
-      "name": "Dialogue du tome 10 n° 04 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Les espions de la Lune Noire (T10)",
+      "npc_name": "Agent de la Lune Noire",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Agent de la Lune Noire",
+          "text": "Le Palais sait. Les astrologues ont parlé trop fort au marché des herbes."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Que fait-on de la fuite ?"
+        },
+        {
+          "speaker": "Agent de la Lune Noire",
+          "text": "Rien. Qu'ils aient peur de l'Archer : la peur nous ouvrira les portes plus sûrement que les béliers."
+        },
+        {
+          "speaker": "Agent de la Lune Noire",
+          "text": "Porte ce message au Juggernaut. Personne ne doit te voir quitter la ville."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_prophetie_archer_t10."
+      ]
     },
     {
       "id": "dial_t10_05",
-      "name": "Dialogue du tome 10 n° 05 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La prière de Parsifal (T10)",
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_sysigie",
+      "lines": [
+        {
+          "speaker": "Parsifal",
+          "text": "Restez au fond de la nef. Ce que je vais demander ne regarde que l'Ange et moi."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et si l'Ange ne répond pas ?"
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Il répond toujours. Le plus dur est d'accepter la réponse."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "La lumière des vitraux se fige ; pendant un long moment, plus rien ne bouge dans la cathédrale."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_directive_ange_parsifal_t10."
+      ]
     },
     {
       "id": "dial_t10_06",
-      "name": "Dialogue du tome 10 n° 06 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
+      "name": "Dialogue — La vision angélique (T10)",
+      "npc_name": "L'Ange",
+      "faction_id": "chevaliers_de_la_lumiere",
       "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "location_ville_id": "ville_sysigie",
+      "lines": [
+        {
+          "speaker": "L'Ange",
+          "text": "Cette guerre n'est pas la tienne, Commandeur. Les fidèles ne verseront pas leur sang pour un trône."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Et l'Empire ? Le laisserai-je aux démons ?"
+        },
+        {
+          "speaker": "L'Ange",
+          "text": "Rassemble les croyants derrière les murs de Syzygie. Ce qui doit tomber tombera."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Que Ta volonté soit faite… même quand elle me déchire."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_directive_ange_parsifal_t10."
+      ]
     },
     {
       "id": "dial_t10_07",
-      "name": "Dialogue du tome 10 n° 07 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — L'ordre d'évacuation (T10)",
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_sysigie",
+      "lines": [
+        {
+          "speaker": "Parsifal",
+          "text": "Toutes les forteresses, toutes les églises, toutes les cathédrales : on vide tout, vers Syzygie."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Les commandeurs des places fortes vont protester."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Qu'ils protestent en marchant. Je préfère des murs vides à des chapelles en cendres."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Prenez les reliques en premier. Les pierres, on les rebâtira."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_directive_ange_parsifal_t10."
+      ]
     },
     {
       "id": "dial_t10_08",
-      "name": "Dialogue du tome 10 n° 08 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — L'escorte des croyants (T10)",
+      "npc_name": "Prêtre de la Lumière",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_sysigie",
+      "lines": [
+        {
+          "speaker": "Prêtre de la Lumière",
+          "text": "Ils sont plus de mille sur la route, avec leurs enfants et leurs chèvres. Nous n'avancerons pas vite."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Je reste à l'arrière-garde. Rien ne touchera la colonne."
+        },
+        {
+          "speaker": "Prêtre de la Lumière",
+          "text": "Que la Lumière vous garde. Et si elle tarde, gardez-vous vous-même."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_directive_ange_parsifal_t10."
+      ]
     },
     {
       "id": "dial_t10_09",
-      "name": "Dialogue du tome 10 n° 09 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Parsifal arrive à Lhynn (T10)",
+      "npc_name": "Capitaine de la garde impériale",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Capitaine de la garde impériale",
+          "text": "Le Commandeur Parsifal ! Enfin les chevaliers de la Lumière viennent à notre aide."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Conduisez-moi à l'Empereur, capitaine. Je ne viens pas pour ce que vous croyez."
+        },
+        {
+          "speaker": "Capitaine de la garde impériale",
+          "text": "Seigneur ?"
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Faites vite. Ce que j'ai à dire, Sa Majesté doit l'entendre avant ses conseillers."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_audience_parsifal_emperor_t10."
+      ]
     },
     {
       "id": "dial_t10_10",
-      "name": "Dialogue du tome 10 n° 10 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le refus du Commandeur (T10)",
+      "npc_name": "Haghendorf",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haghendorf",
+          "text": "Vos chevaliers, Parsifal. Je ne vous demande rien d'autre."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "L'Ange me l'interdit, Majesté. Pas une épée de la Foi ne sortira du fourreau."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Votre Ange choisit bien son moment pour se taire sur l'honneur."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Il ne se tait pas. Il me demande de sauver ce qui peut l'être."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_audience_parsifal_emperor_t10."
+      ]
     },
     {
       "id": "dial_t10_11",
-      "name": "Dialogue du tome 10 n° 11 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — L'offre de Syzygie (T10)",
+      "npc_name": "Parsifal",
+      "faction_id": "chevaliers_de_la_lumiere",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Parsifal",
+          "text": "Laissez-moi emmener l'Impératrice et vos enfants à Syzygie. Là-bas, aucune armée n'entrera."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "Vous me proposez de sauver ma famille et de perdre mon Empire."
+        },
+        {
+          "speaker": "Parsifal",
+          "text": "Je vous propose qu'il reste quelqu'un pour le reconstruire."
+        },
+        {
+          "speaker": "Haghendorf",
+          "text": "… Préparez les voitures. Mais ne leur dites pas pourquoi."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_audience_parsifal_emperor_t10."
+      ]
     },
     {
       "id": "dial_t10_12",
-      "name": "Dialogue du tome 10 n° 12 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La famille impériale en route (T10)",
+      "npc_name": "Impératrice",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Impératrice",
+          "text": "Il n'est pas monté dans la voiture. Il n'a même pas regardé par la fenêtre."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Sa Majesté a voulu épargner vos adieux, Madame."
+        },
+        {
+          "speaker": "Impératrice",
+          "text": "Il a voulu s'épargner les siens. Avancez, soldat : je ne veux pas que les enfants voient la ville s'éloigner."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_audience_parsifal_emperor_t10."
+      ]
     },
     {
       "id": "dial_t10_13",
-      "name": "Dialogue du tome 10 n° 13 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Les Princes Dragons au Juggernaut (T10)",
+      "npc_name": "Prince Dragon",
+      "faction_id": "faction_dragon_knights",
+      "race_id": "dragon",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Prince Dragon",
+          "text": "Nous sommes venus parler à Haazheel Thorn, pas à ses portiers."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Le Maître vous attend dans la salle haute. Suivez-moi, et gardez vos ailes repliées : les couloirs sont étroits."
+        },
+        {
+          "speaker": "Prince Dragon",
+          "text": "Ce sont les couloirs qui devraient s'élargir devant nous, petit homme."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_dragons_princes_reponse_t10."
+      ]
     },
     {
       "id": "dial_t10_14",
-      "name": "Dialogue du tome 10 n° 14 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La réponse des Princes Dragons (T10)",
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Prince Dragon",
+          "text": "Les dragons ne combattront ni pour l'Empire ni pour la Lune Noire."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "La neutralité est un luxe de vainqueurs. Vous ne m'avez pas fait venir pour si peu."
+        },
+        {
+          "speaker": "Prince Dragon",
+          "text": "Non. En gage de bonne foi, dix des nôtres voleront sous ta bannière."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Dix dragons… Vous savez marchander votre silence."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_dragons_princes_reponse_t10."
+      ]
     },
     {
       "id": "dial_t10_15",
-      "name": "Dialogue du tome 10 n° 15 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Les dix dragons offerts (T10)",
+      "npc_name": "Dresseur de la Lune Noire",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Dresseur de la Lune Noire",
+          "text": "Dix bêtes, dix caractères. Celui-là a déjà mordu deux palefreniers."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Comment les tient-on ?"
+        },
+        {
+          "speaker": "Dresseur de la Lune Noire",
+          "text": "On ne les tient pas. On les nourrit, on les flatte, et on prie pour qu'ils se souviennent du pacte au moment de la charge."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_dragons_princes_reponse_t10."
+      ]
     },
     {
       "id": "dial_t10_16",
-      "name": "Dialogue du tome 10 n° 16 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le doute de Wismerhill sur les dragons (T10)",
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_moork",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Dix dragons pour une neutralité… Les Princes paient pour rester hors du jeu."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Ou pour être du côté du vainqueur, quel qu'il soit."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "C'est pareil. Fais-les loger loin des écuries : nos chevaux n'y survivraient pas."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_dragons_princes_reponse_t10."
+      ]
     },
     {
       "id": "dial_t10_17",
-      "name": "Dialogue du tome 10 n° 17 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — L'Armada tharque en vue (T10)",
+      "npc_name": "Vigie du port",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Vigie du port",
+          "text": "Des voiles noires à perte de vue ! Ce n'est pas une flotte, c'est une marée !"
+        },
+        {
+          "speaker": "Vous",
+          "text": "Combien de navires ?"
+        },
+        {
+          "speaker": "Vigie du port",
+          "text": "J'ai cessé de compter à deux cents. Les tours du port ne tiendront pas."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_flotte_tharque_siege_t10."
+      ]
     },
     {
       "id": "dial_t10_18",
-      "name": "Dialogue du tome 10 n° 18 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — L'amiral impérial (T10)",
+      "npc_name": "Amiral impérial",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Amiral impérial",
+          "text": "Nous sortirons quand même. Une flotte qui reste au port est déjà coulée."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Vous serez un contre dix."
+        },
+        {
+          "speaker": "Amiral impérial",
+          "text": "Alors chaque navire devra en emporter dix avec lui. Montez à bord, ou restez sur le quai, mais décidez vite."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_flotte_tharque_siege_t10."
+      ]
     },
     {
       "id": "dial_t10_19",
-      "name": "Dialogue du tome 10 n° 19 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le capitaine tharque (T10)",
+      "npc_name": "Capitaine tharque",
+      "faction_id": "empire_tharque",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Capitaine tharque",
+          "text": "La flotte impériale brûle. Fermez la baie : plus un bateau n'entre ni ne sort de Lhynn."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et les pêcheurs ?"
+        },
+        {
+          "speaker": "Capitaine tharque",
+          "text": "Les pêcheurs mangeront ce qu'ils ont pêché hier. Un siège se gagne à la faim."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_flotte_tharque_siege_t10."
+      ]
     },
     {
       "id": "dial_t10_20",
-      "name": "Dialogue du tome 10 n° 20 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Les cendres de la flotte (T10)",
+      "npc_name": "Marin rescapé",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Marin rescapé",
+          "text": "Il n'en reste rien… Rien que des planches et des noms qu'on criera ce soir sur le port."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Tu peux encore marcher ?"
+        },
+        {
+          "speaker": "Marin rescapé",
+          "text": "Je peux encore tenir une arbalète. Montrez-moi un rempart, ça me suffira."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_flotte_tharque_siege_t10."
+      ]
     },
     {
       "id": "dial_t10_21",
-      "name": "Dialogue du tome 10 n° 21 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — La plaine du pentacle (T10)",
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Chacun à sa branche du pentacle. Ne posez pas le pied sur les lignes, elles ne pardonnent pas."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Que se passe-t-il si l'un de nous faiblit ?"
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Alors la Gemme le dévorera, et nous recommencerons avec un de moins."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_rituel_gemme_negation_t10."
+      ]
     },
     {
       "id": "dial_t10_22",
-      "name": "Dialogue du tome 10 n° 22 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — Les Seigneurs de la Négation au rituel (T10)",
+      "npc_name": "Seigneur de la Négation",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Seigneur de la Négation",
+          "text": "Je sens la Gemme boire ma force, goutte après goutte."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Tiens bon. L'aube est encore loin."
+        },
+        {
+          "speaker": "Seigneur de la Négation",
+          "text": "Ce n'est pas l'aube qui m'inquiète. C'est ce qu'il fera de tout ce pouvoir."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_rituel_gemme_negation_t10."
+      ]
     },
     {
       "id": "dial_t10_23",
-      "name": "Dialogue du tome 10 n° 23 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — Wismerhill au cœur du rituel (T10)",
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Ce n'est pas de la magie… C'est une faim. Elle cherche quelque chose en moi."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Elle cherche ce qui est déjà à moi. Laisse-la faire."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Rien en moi n'est à vous, Haazheel. Souvenez-vous-en quand tout ceci sera fini."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_rituel_gemme_negation_t10."
+      ]
     },
     {
       "id": "dial_t10_24",
-      "name": "Dialogue du tome 10 n° 24 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — La Gemme rassasiée (T10)",
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Sentez-vous ? La Lune Noire n'a jamais été aussi proche de ce monde."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et les morts du rituel ?"
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Ils ont l'honneur d'avoir servi avant les autres. Rangez les corps et rejoignez vos troupes."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_rituel_gemme_negation_t10."
+      ]
     },
     {
       "id": "dial_t10_25",
-      "name": "Dialogue du tome 10 n° 25 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le conseil de la veille (T10)",
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_garundel_fief",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Demain, chacun tient sa place et rien d'autre. Pas d'exploit, pas de charge héroïque."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Même pas une petite ?"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Surtout pas une petite, Ghorghor. Ce sont les petites qui finissent en grandes."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_preparation_grande_bataille_t10."
+      ]
     },
     {
       "id": "dial_t10_26",
-      "name": "Dialogue du tome 10 n° 26 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le Menthat de liaison (T10)",
+      "npc_name": "Menthat",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_menthat",
+      "location_ville_id": "ville_garundel_fief",
+      "lines": [
+        {
+          "speaker": "Menthat",
+          "text": "Je serai votre voix et vos oreilles sur la plaine. Pensez à moi, et l'état-major vous entendra."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et si je suis blessé ?"
+        },
+        {
+          "speaker": "Menthat",
+          "text": "Alors je le saurai avant vous. Essayez de penser clairement : la douleur brouille les messages."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_preparation_grande_bataille_t10."
+      ]
     },
     {
       "id": "dial_t10_27",
-      "name": "Dialogue du tome 10 n° 27 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — Le camp impérial la veille (T10)",
+      "npc_name": "Général impérial",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_garundel_fief",
+      "lines": [
+        {
+          "speaker": "Général impérial",
+          "text": "Nous sommes plus nombreux, mieux armés, et sur notre terre. Pourquoi ai-je l'impression d'avoir déjà perdu ?"
+        },
+        {
+          "speaker": "Vous",
+          "text": "Parce que l'ennemi a choisi le terrain."
+        },
+        {
+          "speaker": "Général impérial",
+          "text": "Alors nous changerons de terrain au premier coup de corne. Tenez-vous prêts à vous replier sur ma bannière."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_preparation_grande_bataille_t10."
+      ]
     },
     {
       "id": "dial_t10_28",
-      "name": "Dialogue du tome 10 n° 28 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "name": "Dialogue — La nuit avant la bataille (T10)",
+      "npc_name": "Soldat impérial",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_garundel_fief",
+      "lines": [
+        {
+          "speaker": "Soldat impérial",
+          "text": "On dit qu'ils ont des géants, des dragons, et des hommes qui parlent sans ouvrir la bouche."
+        },
+        {
+          "speaker": "Vous",
+          "text": "On dit beaucoup de choses la veille d'une bataille."
+        },
+        {
+          "speaker": "Soldat impérial",
+          "text": "Et le lendemain, il ne reste personne pour dire si c'était vrai. Partagez mon feu, au moins."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_preparation_grande_bataille_t10."
+      ]
     },
     {
       "id": "dial_t10_29",
-      "name": "Dialogue du tome 10 n° 29 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — Fratus égaré dans la nuit (T10)",
+      "npc_name": "Fratus",
+      "faction_id": "chevaliers_de_la_justice",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Fratus",
+          "text": "Mes éclaireurs jurent que l'ennemi est à l'ouest. Nous marchons à l'ouest."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Seigneur, ces feux devant nous ne sont pas ceux de la Lune Noire."
+        },
+        {
+          "speaker": "Fratus",
+          "text": "Tout ce qui bouge dans le noir est l'ennemi. Sonnez la charge !"
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_repli_reste_empire_t10."
+      ]
     },
     {
       "id": "dial_t10_30",
-      "name": "Dialogue du tome 10 n° 30 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — Le massacre des rescapés (T10)",
+      "npc_name": "Officier impérial rescapé",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Officier impérial rescapé",
+          "text": "Arrêtez ! Nous sommes de l'Empire ! Nous sommes de l'Empire !"
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Dans la nuit, personne n'entend. Au matin, il ne reste rien des troupes qui avaient échappé à la plaine."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_repli_reste_empire_t10."
+      ]
     },
     {
       "id": "dial_t10_31",
-      "name": "Dialogue du tome 10 n° 31 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — Wismerhill apprend la méprise (T10)",
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Vous",
+          "text": "Fratus a chargé les rescapés impériaux. Il n'en reste aucun."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "L'incompétence de nos ennemis nous sert mieux que dix dragons."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Plus rien ne se dresse entre nous et Lhynn. Préparez la marche."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_repli_reste_empire_t10."
+      ]
     },
     {
       "id": "dial_t10_32",
-      "name": "Dialogue du tome 10 n° 32 (vide, à écrire)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "name": "Dialogue — La route de Lhynn ouverte (T10)",
+      "npc_name": "Éclaireur de la Lune Noire",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Éclaireur de la Lune Noire",
+          "text": "J'ai poussé jusqu'aux collines : pas une patrouille, pas un poste. Les villages sont vides."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et la capitale ?"
+        },
+        {
+          "speaker": "Éclaireur de la Lune Noire",
+          "text": "Elle nous attend, toutes portes closes, avec la mer pleine de voiles tharques. Elle ne tiendra pas une saison."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie). Quête liée : quest_repli_reste_empire_t10."
+      ]
     },
     {
       "id": "dialogue_archange_destruction_altenberg_t11",
@@ -190006,232 +191181,581 @@
     {
       "id": "dial_t13_haazheel_rage",
       "name": "Dialogue — La rage d'Haazheel (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Il ose ! Ce bâtard que j'ai élevé au trône ose me tenir tête !"
+        },
+        {
+          "speaker": "Seigneur de la Négation",
+          "text": "Maître, l'Empire entier lui obéit désormais."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "L'Empire entier pourrira sous mes pieds. Préparez l'assaut sur Lhynn."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_wismerhill_briefing",
       "name": "Dialogue — Wismerhill prépare la défense (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Il viendra par la plaine et par les airs. Doublez les archers sur les murs et éteignez les feux de la ville basse."
+        },
+        {
+          "speaker": "Ghorghor",
+          "text": "Et nous, on fait quoi ?"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Vous restez près de moi. Quand Haazheel apparaîtra, je veux mes amis à mes côtés, pas mes généraux."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_hellaynnea_pire",
       "name": "Dialogue — Hellaynnea craint le pire (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Hellaynnea",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_demon",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Hellaynnea",
+          "text": "Je connais Haazheel depuis plus longtemps que toi. Il ne vient pas pour gagner une bataille."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Pour quoi, alors ?"
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "Pour reprendre tout ce qu'il t'a donné. Y compris ce que tu es devenu."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_methraton_neutralite",
       "name": "Dialogue — Methraton et la neutralité (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Methraton",
+      "faction_id": "les_archimages",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Methraton",
+          "text": "Les Archimages ne prennent pas parti dans les querelles de rois."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Ce n'est pas une querelle de rois. C'est la Lune Noire qui revient."
+        },
+        {
+          "speaker": "Methraton",
+          "text": "Alors c'est une querelle de dieux, et nous nous en tenons encore plus loin."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_methraton_aide",
       "name": "Dialogue — Methraton accepte d'aider (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Methraton",
+      "faction_id": "les_archimages",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Methraton",
+          "text": "J'ai consulté les pyramides. Si Haazheel l'emporte, il n'y aura plus de neutralité possible pour personne."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Vous nous aiderez donc ?"
+        },
+        {
+          "speaker": "Methraton",
+          "text": "J'aiderai ce monde. Il se trouve que, cette nuit, ce monde est de ton côté."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_baron_ambition",
       "name": "Dialogue — L'ambition d'un baron (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Baron impérial",
+      "faction_id": "faction_empire",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Baron impérial",
+          "text": "Haazheel me promet la moitié de l'Empire si j'ouvre la porte nord."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Et vous le croyez ?"
+        },
+        {
+          "speaker": "Baron impérial",
+          "text": "Je crois que la moitié d'un Empire vaut mieux qu'une tombe. Gardez ça pour vous… ou partagez le gâteau."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_greldinard_gachis",
       "name": "Dialogue — Greldinard : « Quel gâchis » (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
+      "npc_name": "Greldinard",
+      "faction_id": "dzorak_orcs",
+      "race_id": "race_dzorak",
       "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "lines": [
+        {
+          "speaker": "Greldinard",
+          "text": "Des années à bâtir cette alliance, et voilà qu'ils s'entretuent pour un trône."
+        },
+        {
+          "speaker": "Vous",
+          "text": "Vous choisissez quel camp ?"
+        },
+        {
+          "speaker": "Greldinard",
+          "text": "Celui qui laissera vivre mon peuple. Quel gâchis, vraiment."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_oracle_minuit",
       "name": "Dialogue — L'Oracle à minuit (T13)",
-      "npc_name": "",
-      "faction_id": "",
+      "npc_name": "Oracle",
+      "faction_id": "faction_neutral",
       "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "location_ville_id": "ville_oracle_camp",
+      "lines": [
+        {
+          "speaker": "Oracle",
+          "text": "Il frappera à minuit, quand la Lune Noire sera la plus haute."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Et l'issue ?"
+        },
+        {
+          "speaker": "Oracle",
+          "text": "L'issue dépend d'un vœu que tu n'as pas encore prononcé."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_seigneurs_fidelite",
       "name": "Dialogue — La fidélité des Seigneurs de la Négation (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Seigneur de la Négation",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Seigneur de la Négation",
+          "text": "Haazheel nous a faits ce que nous sommes. Mais c'est toi qui nous as menés à la victoire."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je ne vous demande pas de trahir votre maître. Je vous demande de choisir."
+        },
+        {
+          "speaker": "Seigneur de la Négation",
+          "text": "Nous avons choisi. Nos épées sont à toi cette nuit."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_hellaynnea_succube_loi",
       "name": "Dialogue — Hellaynnea et la loi des succubes (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Hellaynnea",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_demon",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Hellaynnea",
+          "text": "Une succube appartient à celui qui l'a invoquée. C'est la loi des Enfers."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Alors tu appartiens à Haazheel ?"
+        },
+        {
+          "speaker": "Hellaynnea",
+          "text": "J'appartenais. Les lois ont des failles, et j'ai passé des siècles à chercher celle-ci."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_vents_depart",
       "name": "Dialogue — Le départ des Vents (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Vents confidants",
+      "faction_id": "faction_neutral",
+      "race_id": "esprit_du_vent",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Vents confidants",
+          "text": "Nous t'avons soufflé nos conseils depuis le premier jour. Ce soir, nous devons partir."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Maintenant ? Alors que j'en ai le plus besoin ?"
+        },
+        {
+          "speaker": "Vents confidants",
+          "text": "C'est parce que tu n'en as plus besoin que nous partons. Écoute-toi, désormais."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_haazheel_vrai_but",
       "name": "Dialogue — Le vrai but d'Haazheel (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Tu crois que je voulais l'Empire ? L'Empire n'était que le pentacle."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Le pentacle de quoi ?"
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Du retour de la Lune Noire dans ce monde. Et toi, tu en étais la clef."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_wismerhill_non",
       "name": "Dialogue — Le refus de Wismerhill (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Agenouille-toi, et je te laisserai régner sur les ruines."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Non."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Un seul mot ? Après tout ce que je t'ai donné ?"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Un seul suffit, quand on le pense vraiment."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_wismerhill_je_le_sais",
       "name": "Dialogue — Wismerhill : « Je le sais » (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Tu ne sais pas ce que tu affrontes."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je le sais. Je l'ai porté en moi depuis Der Hem Shelbem."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "C'est pour ça que je n'ai plus peur de vous."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_greldinard_trahison",
       "name": "Dialogue — La trahison de Greldinard (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Greldinard",
+      "faction_id": "dzorak_orcs",
+      "race_id": "race_dzorak",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Greldinard",
+          "text": "Les Dzorak se retirent du combat. Nous ne mourrons pas pour vos querelles."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Tu me dois tout, Greldinard !"
+        },
+        {
+          "speaker": "Greldinard",
+          "text": "Je te devais une alliance. Elle s'arrête là où commence la folie."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_haazheel_voeu_briser",
       "name": "Dialogue — Haazheel veut briser le vœu (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Le vœu qui te protège, je le briserai de mes mains s'il le faut."
+        },
+        {
+          "speaker": "Oracle",
+          "text": "Un vœu prononcé de bon cœur ne se brise pas, Haazheel. Il se respecte ou il te brise."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Alors voyons lequel de nous deux cédera."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_wismerhill_voeu_contre",
       "name": "Dialogue — Le contre-vœu de Wismerhill (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Wismerhill",
+      "faction_id": "faction_black_moon",
+      "race_id": "demi-demon_elfique",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Wismerhill",
+          "text": "Je fais le vœu que la puissance qui m'a été donnée retourne contre celui qui me l'a donnée."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Tu n'oserais pas…"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "C'est fait."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_haazheel_forme_demon",
       "name": "Dialogue — Haazheel prend sa forme démoniaque (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_demon",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Narrateur",
+          "text": "La peau d'Haazheel se fend ; des cornes percent son front, et son ombre couvre la moitié de la salle du trône."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Regarde ce que tu affrontes vraiment, mon fils !"
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je ne suis pas ton fils."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_wismerhill_lucifer",
       "name": "Dialogue — Wismerhill, fils de Lucifer (T13)",
-      "npc_name": "",
+      "npc_name": "Lucifer",
       "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "race_id": "race_demon",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Lucifer",
+          "text": "Il a raison. Tu n'es pas son fils, Wismerhill. Tu es le mien."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je ne suis le fils de personne. Je me suis fait moi-même."
+        },
+        {
+          "speaker": "Lucifer",
+          "text": "C'est bien pour cela que je suis fier de toi."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_oracle_releve_toi",
       "name": "Dialogue — L'Oracle : « Relève-toi » (T13)",
-      "npc_name": "",
-      "faction_id": "",
+      "npc_name": "Oracle",
+      "faction_id": "faction_neutral",
       "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Oracle",
+          "text": "Relève-toi. Ce n'est pas à genoux que l'on achève une prophétie."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Je n'ai plus de force."
+        },
+        {
+          "speaker": "Oracle",
+          "text": "Tu en as encore pour un pas. C'est tout ce qu'il faut."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_methraton_pyramides",
       "name": "Dialogue — Methraton et les pyramides (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Methraton",
+      "faction_id": "les_archimages",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Methraton",
+          "text": "Les soixante-douze pyramides s'allument. Le bouclier se referme sur le monde."
+        },
+        {
+          "speaker": "Archimage",
+          "text": "Haazheel ne pourra plus puiser dans la Lune Noire."
+        },
+        {
+          "speaker": "Methraton",
+          "text": "Ni lui, ni personne. Pour un temps."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_haazheel_perd_pouvoirs",
       "name": "Dialogue — Haazheel perd ses pouvoirs (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Qu'avez-vous fait ? Je ne la sens plus… La Lune Noire se tait !"
+        },
+        {
+          "speaker": "Methraton",
+          "text": "Elle n'est pas morte. Elle est seulement hors de ta portée."
+        },
+        {
+          "speaker": "Haazheel",
+          "text": "Sans elle, je ne suis… qu'un homme."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_t13_haazheel_mort",
       "name": "Dialogue — La mort d'Haazheel (T13)",
-      "npc_name": "",
-      "faction_id": "",
-      "race_id": "",
-      "location_ville_id": "",
-      "lines": [],
-      "notes": []
+      "npc_name": "Haazheel",
+      "faction_id": "faction_black_moon",
+      "race_id": "race_human",
+      "location_ville_id": "ville_lhynn",
+      "lines": [
+        {
+          "speaker": "Haazheel",
+          "text": "Tout ce que j'ai bâti… pour finir sous la lame de ma propre créature."
+        },
+        {
+          "speaker": "Wismerhill",
+          "text": "Tu ne m'as pas créé. Tu m'as seulement trouvé."
+        },
+        {
+          "speaker": "Narrateur",
+          "text": "Le dernier souffle d'Haazheel Thorn s'éteint ; au-dessus de Lhynn, la Lune Noire pâlit."
+        }
+      ],
+      "notes": [
+        "[GD] (v1.0.117) Répliques originales écrites pour le jeu d'après la scène du tome (aucune réplique de la BD recopiée) ; décision du propriétaire du 14/11/2026 (avancer en autonomie)."
+      ]
     },
     {
       "id": "dial_xygga_wismerhill_t14",
@@ -244103,6 +245627,27 @@
           "nom": "Raids sans case",
           "decision": "Décision du propriétaire (14/11/2026) : Placés en bloc : Porte des Enfers du T12 en N000_W009 (note de la case), Marche de l'Est au Champ de bataille de la conquête, orques de Greldinard au Camp des rabatteurs orcs.",
           "version": "1.0.116"
+        },
+        {
+          "collection": "dialogues",
+          "id": "dialogues_vides",
+          "nom": "Dialogues vides ou sans réplique",
+          "decision": "Décision du propriétaire (14/11/2026, avancer en autonomie) : 32 dialogues dial_t10_NN écrits (4 par quête du tome 10) et 45 dialogues sans réplique remplis ; répliques originales [GD], aucune réplique de la BD recopiée.",
+          "version": "1.0.117"
+        },
+        {
+          "collection": "quests",
+          "id": "contre_quetes_lune_noire",
+          "nom": "Contre-quêtes Lune Noire",
+          "decision": "Décision du propriétaire (13/11/2026) appliquée en v1.0.117 : 4 contre-quêtes pour le bloc Lune Noire (Lune Noire, Dzorak) là où la quête ouverte à tous va contre ses intérêts (registre du fortin, laine d'Horkher, péage de la Via Magna, convoi de Khurden) ; les 11 autres quêtes ouvertes à tous des zones de la Lune Noire servent la baronnie (convois et contrats de Moork, trolls, gouffre secret) et restent sans contre-quête.",
+          "version": "1.0.117"
+        },
+        {
+          "collection": "villes",
+          "id": "lieux_du_t5_sans_case",
+          "nom": "Krak de Jhenner, citadelle impériale, Passe de Heniak",
+          "decision": "Décision du propriétaire (14/11/2026, avancer en autonomie) : cases [GD] proposées sur la route de Moork à Tsaroth (Krak S006_E012, citadelle S008_E011, passe S008_E009), au lore seulement ; Tsaroth reste sans POI ni ville au master (camp retiré, v1.0.86) ; le Palais des Maîtres des Dragons reste sans entrée (route finie au point praticable, v1.0.106 ; le Sanctuaire des Chevaliers Dragons tient la case S003_W004).",
+          "version": "1.0.117"
         }
       ]
     },
@@ -253235,7 +254780,7 @@
       "alias": "",
       "type": "passage_poi",
       "importance": "",
-      "cell": "",
+      "cell": "S008_E009",
       "position_x_m": null,
       "position_z_m": null,
       "region_id": "",
@@ -253307,7 +254852,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T5] p.11 : « Tu éviteras la passe de Heniak, elle est tenue par les impériaux » (Haazheel à Greldinard), sur la route de Tsaroth."
+        "[BD-T5] p.11 : « Tu éviteras la passe de Heniak, elle est tenue par les impériaux » (Haazheel à Greldinard), sur la route de Tsaroth.",
+        "[GD] (v1.0.117) Case S008_E009 proposée sur la route de Moork à Tsaroth (passe tenue par les impériaux, évitée par Greldinard [BD-T5 p.11], à l'ouest de la route directe ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
       ]
     },
     {
@@ -253316,7 +254862,7 @@
       "alias": "",
       "type": "battlefield_poi",
       "importance": "",
-      "cell": "",
+      "cell": "S008_E011",
       "position_x_m": null,
       "position_z_m": null,
       "region_id": "",
@@ -253390,7 +254936,8 @@
       "prompt_image_ultra_detaille": "",
       "footprint_tiles": [],
       "notes": [
-        "[BD-T5] p.22-23 : prise par la Lune Noire après le Krak de Jhenner. Non nommée dans la BD."
+        "[BD-T5] p.22-23 : prise par la Lune Noire après le Krak de Jhenner. Non nommée dans la BD.",
+        "[GD] (v1.0.117) Case S008_E011 proposée sur la route de Moork à Tsaroth (dernière place forte avant la Faille [BD-T5 p.23], case de montagne au nord de S009_E011 ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
       ]
     },
     {

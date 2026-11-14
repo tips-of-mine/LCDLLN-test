@@ -206,6 +206,11 @@ jobs:
           DUP=$(printf '%s\n' "$GYIDS" | sort | uniq -d)
           test -z "$DUP" || { echo "[FAIL] identifiants de cimetiere en double : $DUP"; exit 1; }
           echo "[OK] 666 identifiants de cimetiere uniques"
+          # v1.0.118 : niveaux de référence des régions (couleur du nom de zone côté client),
+          # recopiés du lore par tools/lore/sync_levels.py et écrits dans places.json.
+          LV=$(grep -c '"levels": \[' "$GITHUB_WORKSPACE"/game/data/world/royaumes/places.json || true)
+          test "$LV" -ge 17 || { echo "[FAIL] $LV region(s) avec niveaux dans places.json, 17 attendues (lore v1.0.118)"; exit 1; }
+          echo "[OK] $LV regions avec niveaux dans places.json"
           "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }

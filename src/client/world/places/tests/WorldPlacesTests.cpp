@@ -28,7 +28,8 @@ int main()
 	  "poi_count": 1, "pois": [ { "id": "p", "name": "Oracle", "kind": "monolithe", "x": 10, "z": 10, "description": "" } ],
 	  "region_count": 2, "regions": [
 	    { "id": "big", "name": "Grande", "x_min": -100, "x_max": 300, "z_min": -200, "z_max": 200 },
-	    { "id": "small", "name": "Petite", "x_min": 100, "x_max": 200, "z_min": 0, "z_max": 100 } ],
+	    { "id": "small", "name": "Petite", "x_min": 100, "x_max": 200, "z_min": 0, "z_max": 100,
+	      "levels": [ { "faction": "lumiere", "min": 10, "max": 30 }, { "faction": "lune_noire", "min": 20, "max": 35 } ] } ],
 	  "cell_count": 2, "cells": [ { "name": "cell_n003_w009", "lore": "N003_W009" }, { "name": "cell_s009_e011", "lore": "S009_E011" } ] })";
 	WorldPlaces w;
 	std::string err;
@@ -53,6 +54,31 @@ int main()
 	Check(w.RegionAt(150, 50) && w.RegionAt(150, 50)->id == "small", "region la plus specifique");
 	Check(w.RegionAt(0, 0) && w.RegionAt(0, 0)->id == "big", "grande region");
 	Check(w.RegionAt(1000, 0) == nullptr, "aucune region");
+
+	// v1.0.118 — niveaux des régions et couleur du nom de zone.
+	{
+		const PlaceRegion* small = w.RegionById("small");
+		Check(small && small->levels.size() == 2 && w.RegionById("big") && w.RegionById("big")->levels.empty()
+			&& w.RegionById("") == nullptr && w.RegionById("nope") == nullptr, "niveaux : lecture et RegionById");
+		Check(small && small->LevelsFor("lune_noire") && small->LevelsFor("lune_noire")->minLevel == 20
+			&& small->LevelsFor("lune_noire")->maxLevel == 35 && small->LevelsFor("dzorak") == nullptr, "niveaux : LevelsFor");
+		Check(ZoneLevelToneFor(4, 10, 30) == ZoneLevelTone::Rouge && ZoneLevelToneFor(5, 10, 30) == ZoneLevelTone::Orange
+			&& ZoneLevelToneFor(9, 10, 30) == ZoneLevelTone::Orange && ZoneLevelToneFor(10, 10, 30) == ZoneLevelTone::Jaune
+			&& ZoneLevelToneFor(30, 10, 30) == ZoneLevelTone::Jaune && ZoneLevelToneFor(31, 10, 30) == ZoneLevelTone::Vert
+			&& ZoneLevelToneFor(35, 10, 30) == ZoneLevelTone::Vert && ZoneLevelToneFor(36, 10, 30) == ZoneLevelTone::Gris,
+			"couleur du nom de zone : seuils a 5 niveaux");
+		Check(ZoneLevelToneFor(0, 10, 30) == ZoneLevelTone::Inconnu && ZoneLevelToneFor(10, 30, 10) == ZoneLevelTone::Inconnu
+			&& ZoneLevelToneFor(nullptr, "lumiere", 10) == ZoneLevelTone::Inconnu
+			&& ZoneLevelToneFor(small, "dzorak", 10) == ZoneLevelTone::Inconnu
+			&& ZoneLevelToneFor(small, "lune_noire", 18) == ZoneLevelTone::Orange, "couleur du nom de zone : cas inconnus et par faction");
+		uint8_t r = 0, g = 0, b = 0;
+		ZoneLevelToneRgb(ZoneLevelTone::Inconnu, r, g, b);
+		Check(r == 246 && g == 226 && b == 172, "couleur inconnue = or pale historique de la banniere");
+		PlaceBannerTracker t;
+		t.Update(w, 150, 50, 0.016f);  // apparition hors ville : pas de banniere
+		t.Update(w, 125, 50, 0.016f);  // entre dans Beta (rayon 10), region « small »
+		Check(t.Visible() && t.ShownRegionId() == "small", "banniere : region affichee figee a l'armement");
+	}
 	Check(engine::client::PlaceKindLabel("volcan") == "Volcan" && engine::client::PlaceKindLabel("gouffre") == "Gouffre",
 		"PlaceKindLabel : genres de POI volcan et gouffre (v1.0.52)");
 	Check(engine::client::PlaceKindLabel("temple") == "Temple" && engine::client::PlaceKindLabel("cite") == "Cit\xC3\xA9"

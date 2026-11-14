@@ -142,10 +142,9 @@ namespace tools::world_gen
 	};
 
 	/// Lumière ponctuelle posée par le générateur (v1.0.107 : torches du gouffre).
-	/// DONNÉE seulement : écrite dans zone.json (`world.point_lights`), pas encore lue
-	/// par le client (DynamicLightSystem ne lit qu'un fichier global,
-	/// lights/dynamic_lights.json) ; le mesh de la torche, lui, est un vrai décor
-	/// (scatter.bin).
+	/// Écrite dans zone.json (`world.point_lights`) ; lue par le client depuis v1.0.118
+	/// (lumières de cellule de DynamicLightSystem, 64 plus proches de la caméra dans
+	/// l'UBO) ; le mesh de la torche, lui, est un vrai décor (scatter.bin).
 	struct PointLightDef
 	{
 		std::string id;
@@ -157,9 +156,9 @@ namespace tools::world_gen
 		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
 	};
 
-	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre). DONNÉE
-	/// seulement (zone.json, `world.ambiance_zones`) : le client n'a pas de réglage
-	/// d'ambiance par zone ; à brancher (assombrissement, brouillard bas) côté rendu.
+	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre), écrite dans
+	/// zone.json (`world.ambiance_zones`) ; lue par le client depuis v1.0.118 (soleil,
+	/// ambiant et plafond d'exposition atténués dans le cylindre).
 	struct AmbianceZoneDef
 	{
 		std::string id;               ///< identifiant du relief (gouffre)
@@ -593,7 +592,7 @@ namespace tools::world_gen
 	/// Écriture des sorties d'une cellule. Output.cpp
 	/// Effet de bord : écrit zones/<c>/ et instances/zone_<c>/ (sauf dryRun) ; v1.0.107 :
 	/// `world.point_lights` et `world.ambiance_zones` du zone.json pour un gouffre
-	/// (clés absentes ailleurs ; pas encore lues par le client).
+	/// (clés absentes ailleurs ; lues par le client depuis v1.0.118).
 	/// \return false + \p err si une écriture échoue.
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Test (v1.0.112) : nombre d'échantillons du splat (centres de texels pris tous

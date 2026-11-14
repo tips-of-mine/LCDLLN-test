@@ -6,6 +6,8 @@
 #   les deux copies du fichier identiques ;
 # - generate_city_services.py --check : le fichier est bien à jour par rapport
 #   au générateur (à relancer après toute modification de la grille) ;
+# - sync_levels.py --check (v1.0.118) : niveaux de référence des régions du lore
+#   recopiés au master (clé levels des regions, couleur du nom de zone) ;
 # - sync_positions.py --check (v1.0.95) : les positions posées à la main dans
 #   l'éditeur (position_x_m / position_z_m des villes et lieux) sont recopiées
 #   dans game/data/world/royaumes/world_master.json (clé position) ;
@@ -30,6 +32,7 @@ on:
       - 'tools/lore/**'
       - 'game/data/world/royaumes/world_master.json'
       - 'game/data/world/enfers/world_master.json'
+      - 'game/data/races/factions.json'
       - '.github/workflows/lore-city-services.yml'
   pull_request:
     branches: [develop, main]
@@ -38,6 +41,7 @@ on:
       - 'tools/lore/**'
       - 'game/data/world/royaumes/world_master.json'
       - 'game/data/world/enfers/world_master.json'
+      - 'game/data/races/factions.json'
       - '.github/workflows/lore-city-services.yml'
 
 permissions:
@@ -64,6 +68,9 @@ jobs:
 
       - name: Positions manuelles recopiées au master
         run: python tools/lore/sync_positions.py --check
+
+      - name: Niveaux des régions recopiés au master
+        run: python tools/lore/sync_levels.py --check
 
       - name: Routes du lore recopiées au master
         run: python tools/lore/sync_routes.py --check

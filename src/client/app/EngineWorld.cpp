@@ -598,7 +598,15 @@ namespace engine
 			pos.z = static_cast<float>(m_renderFrame.ToGlobalZ(pos.z));
 		}
 		m_placeBanner.Update(m_worldPlaces, pos.x, pos.z, dtSec);
-		engine::render::DrawPlaceBanner(fg, dw, dh, m_placeBanner);
+		// v1.0.118 — couleur du nom de zone : écart entre le niveau courant du personnage
+		// (XP live, sinon niveau d'entrée) et la bande de niveaux de la région pour sa faction.
+		{
+			const engine::client::UIModel& model = m_uiModelBinding.GetModel();
+			const int level = static_cast<int>(model.playerStats.hasXp ? model.playerStats.level : m_activeCharacterLevel);
+			const engine::client::ZoneLevelTone tone = engine::client::ZoneLevelToneFor(
+				m_worldPlaces.RegionById(m_placeBanner.ShownRegionId()), m_localFactionId, level);
+			engine::render::DrawPlaceBanner(fg, dw, dh, m_placeBanner, tone);
+		}
 		if (!m_worldMapVisible)
 			return;
 		engine::render::WorldMapHudInput in;

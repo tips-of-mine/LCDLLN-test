@@ -599,7 +599,8 @@ namespace engine::render
 		ImGui::End();
 	}
 
-	void DrawPlaceBanner(ImDrawList* fg, float dw, float /*dh*/, const engine::client::PlaceBannerTracker& banner)
+	void DrawPlaceBanner(ImDrawList* fg, float dw, float /*dh*/, const engine::client::PlaceBannerTracker& banner,
+		engine::client::ZoneLevelTone tone)
 	{
 		if (fg == nullptr || !banner.Visible())
 			return;
@@ -617,7 +618,10 @@ namespace engine::render
 		const float cx = dw * 0.5f;
 		fg->AddLine(ImVec2(cx - lineW, y + ts.y + 4.0f), ImVec2(cx + lineW, y + ts.y + 4.0f), IM_COL32(214, 180, 104, ia * 3 / 4), 1.5f);
 		fg->AddText(font, titleSize, ImVec2(x + 2.0f, y + 2.0f), IM_COL32(0, 0, 0, ia * 4 / 5), banner.Title().c_str());
-		fg->AddText(font, titleSize, ImVec2(x, y), IM_COL32(246, 226, 172, ia), banner.Title().c_str());
+		// v1.0.118 — couleur du nom de zone selon l'écart de niveau (gris, vert, jaune, orange, rouge).
+		uint8_t tr = 246, tg = 226, tb = 172;
+		engine::client::ZoneLevelToneRgb(tone, tr, tg, tb);
+		fg->AddText(font, titleSize, ImVec2(x, y), IM_COL32(tr, tg, tb, ia), banner.Title().c_str());
 		if (!banner.Subtitle().empty())
 		{
 			const ImVec2 sp((dw - ss.x) * 0.5f, y + ts.y + 10.0f);
@@ -632,7 +636,7 @@ namespace engine::render
 namespace engine::render
 {
 	void DrawWorldMapWindow(bool*, const WorldMapHudInput&, WorldMapViewState&) {}
-	void DrawPlaceBanner(ImDrawList*, float, float, const engine::client::PlaceBannerTracker&) {}
+	void DrawPlaceBanner(ImDrawList*, float, float, const engine::client::PlaceBannerTracker&, engine::client::ZoneLevelTone) {}
 }
 
 #endif

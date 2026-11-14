@@ -194,11 +194,24 @@ namespace tools::world_gen
 	};
 
 	/// Région nommée (rectangle de cellules, section `regions`).
+	/// v1.0.118 — bande de niveaux de référence d'une région pour une faction de jeu
+	/// (identifiant de game/data/races/factions.json), recopiée du lore par
+	/// tools/lore/sync_levels.py (master : `regions[].levels`).
+	struct RegionLevelBand
+	{
+		std::string faction; ///< faction de jeu (« lumiere », « lune_noire »…)
+		int minLevel = 1;    ///< niveau minimal de référence (1..70)
+		int maxLevel = 1;    ///< niveau maximal de référence (minLevel..70)
+	};
+
 	struct RegionDef
 	{
 		std::string id;
 		std::string name;
 		int eMin = 0, eMax = 0, nMin = 0, nMax = 0;
+		/// v1.0.118 — niveaux de référence par faction, triés par faction (vide = inconnu) ;
+		/// écrits dans places.json pour la couleur du nom de zone côté client.
+		std::vector<RegionLevelBand> levels;
 	};
 
 	/// PNJ statique interactif importé ou déclaré (donneur de quête, garde…).

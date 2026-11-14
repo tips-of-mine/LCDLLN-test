@@ -4528,21 +4528,21 @@ les quêtes et raids de région connue sont placés en bloc. Restent sans case :
 écrite en note : l'éditeur refuse une case des Enfers dans une étape située). Ancrage = `etapes_struct` : une quête qui
 n'en avait pas reçoit les étapes de `steps` (mêmes textes, règle de l'éditeur) et la ville, le lieu ou la case sur sa
 première étape ; une quête sans `steps` reçoit une étape `[GD]` écrite dans les deux ; sinon le lieu est ajouté à l'étape
-existante qui s'y passe.
+existante qui s'y passe et qui ne cite pas déjà un PNJ (une seule référence par étape).
 
 | Ancrage | Quêtes |
 |---|---|
-| Lhynn (palais impérial) | conseil de guerre impérial et Clefs de Northind (T8) ; dîner des compagnons et complot tharque, étape 3 (T11) ; T12 01, 02, 03, 07 ; T13 03, 06, 07 ; secret de la divinité, préparation de l'exode (T14) ; Sept Épées de l'Empereur |
+| Lhynn (palais impérial) | conseil de guerre impérial et Clefs de Northind (T8) ; dîner des compagnons, étape 4, et complot tharque, étape 3 (T11) ; T12 01, 02, 03, 07 ; T13 03, 06, 07 ; secret de la divinité, préparation de l'exode (T14) ; Sept Épées de l'Empereur |
 | Temple de Methraton (Lhynn) | Éveil de Methraton (T12 06), alliance avec Methraton (T13 05) |
 | Seuil de Lhynn | dernier passage et nuée des dragons (exode, T14) |
 | Camp de l'Oracle | Oracle assiégé (T12 04), heure de l'attaque (T13 04), Oracle libéré (T14), audience de Netzharine (HS), consultation de l'Oracle (Marches) |
-| Moork | Neuf Mères (étape 1 ; étape 5 : forteresse naine d'Heusgly), rituel de la Négation, Grande Coalition (étape 1) (T9) ; Fratus vassal (T8) ; réponse des Princes Dragons, Juggernaut stationné devant Moork (T10) |
+| Moork | Neuf Mères (étape 2 ; étape 5 : forteresse naine d'Heusgly), rituel de la Négation, Grande Coalition (étape 5) (T9) ; Fratus vassal (T8) ; réponse des Princes Dragons, Juggernaut stationné devant Moork (T10) |
 | Fief de Garundel | loyauté de Ghorghor ; Veille du Destin (T10, rassemblement avant la Grande Plaine) |
 | Autres villes | Pacte des Dzorak : Tbarak ; téléportation démoniaque : Sauken Glude de Magistrya (succube) ; Chevaliers-Dragons (T9) : Palais des Maîtres des Dragons |
 | Autres lieux | Pyramide volante : Haawling Spines ; Prince Hors-Vivant et transfert de puissance (T8) : Der Hem Shelbem ; Gemme des Sombres Splendeurs (T10) : Plaine des Cendres ; Urmarcht (T3, château loué) : Mas abandonné de la plaine ; traversée de l'armée de Haazheel (T3) : Menhirs de la plaine de l'Oracle |
 | Forêt des Lutins | Iaun Reith ; forêt des Lutins (T3, étape 1 ; étape 5 : Village fantôme du marais) |
 | Porte des Enfers du T12 | Fermer la Porte : case N000_W009 (bout de la Route Noire, cœur de l'Empire) |
-| Territoires des Marches | Tenir les Marches : Hazol ; éclaireur : Tbarak ; voie psychique : Dhunfal ; deux lames : Klindor ; art de la chasse (T1, étape 1) : Forêt de la Rencontre |
+| Territoires des Marches | Tenir les Marches : Hazol ; éclaireur : Tbarak ; voie psychique : Dhunfal ; deux lames : Klindor ; art de la chasse (T1, étape 2) : Forêt de la Rencontre |
 | Terres du Nord (1-15) | origines du seigneur et leçon démoniaque : Ruines de Wismerhill ; butin du Bey : Whispers Hill ; chasse et joute errante : Forêt de la Rencontre |
 
 | Raid | Ancrage |

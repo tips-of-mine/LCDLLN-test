@@ -33667,11 +33667,11 @@
       "etapes_struct": [
         {
           "texte": "Accepter l'offre d'Hellaynnea",
-          "pnj_id": "char_hellaynnea_t12",
-          "ville_id": "ville_moork"
+          "pnj_id": "char_hellaynnea_t12"
         },
         {
-          "texte": "Rencontrer les 9 femmes (guerrières, prêtresses, mages, nobles — l'une était reine)"
+          "texte": "Rencontrer les 9 femmes (guerrières, prêtresses, mages, nobles — l'une était reine)",
+          "ville_id": "ville_moork"
         },
         {
           "texte": "Passer plusieurs jours enfermé avec elles"
@@ -33894,8 +33894,7 @@
       "etapes_struct": [
         {
           "texte": "Présenter le rapport militaire au conseil de guerre (Haazeel, Wismerhill, Greldinard)",
-          "pnj_id": "char_wismerhill",
-          "ville_id": "ville_moork"
+          "pnj_id": "char_wismerhill"
         },
         {
           "texte": "Rencontrer l'armée de Fratus Sinister et l'intégrer",
@@ -33908,7 +33907,8 @@
           "texte": "Recevoir la confirmation de l'alliance Tharque"
         },
         {
-          "texte": "Passer en revue les troupes depuis le Juggernauth"
+          "texte": "Passer en revue les troupes depuis le Juggernauth",
+          "ville_id": "ville_moork"
         },
         {
           "texte": "Lancer la grande marche : EN AVANT!"
@@ -33993,11 +33993,11 @@
       "etapes_struct": [
         {
           "texte": "1. Suivre Pile-ou-Face dans la forêt de la Rencontre.",
-          "pnj_id": "char_pile_ou_face",
-          "lieu_id": "lieu_foret_rencontre_t1"
+          "pnj_id": "char_pile_ou_face"
         },
         {
-          "texte": "2. Identifier les traces de 3 types d'animaux différents (pistage)."
+          "texte": "2. Identifier les traces de 3 types d'animaux différents (pistage).",
+          "lieu_id": "lieu_foret_rencontre_t1"
         },
         {
           "texte": "3. Tendre un piège à gibier sous les instructions de Pile-ou-Face.",
@@ -37167,8 +37167,7 @@
       "etapes_struct": [
         {
           "texte": "Assister au dîner privé avec les compagnons de Wismerhill.",
-          "pnj_id": "char_wismerhill",
-          "ville_id": "ville_lhynn"
+          "pnj_id": "char_wismerhill"
         },
         {
           "texte": "Observer Wismerhill 'scanner' les âmes de ses compagnons.",
@@ -37179,7 +37178,8 @@
           "pnj_id": "char_wismerhill"
         },
         {
-          "texte": "Être présent lors de la distribution des cadeaux."
+          "texte": "Être présent lors de la distribution des cadeaux.",
+          "ville_id": "ville_lhynn"
         }
       ],
       "source_lore": [],

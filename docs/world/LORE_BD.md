@@ -1055,6 +1055,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 52 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
 | [16.44](#1644-dialogues-contre-quêtes-lune-noire-et-lieux-du-t5-v10117) | v1.0.117 | Dialogues, contre-quêtes Lune Noire et lieux du T5 | 77 dialogues remplis, 4 contre-quêtes, Krak de Jhenner, citadelle et Passe de Heniak placés. |
 | [16.45](#1645-couleur-du-nom-de-zone-torches-et-fond-sombre-du-gouffre-v10118) | v1.0.118 | Couleur du nom de zone, torches et fond sombre du gouffre | Niveaux des régions recopiés au master, teinte de la bannière ; lumières et ambiance des cellules lues par le client. |
+| [16.46](#1646-routes-coupées-farvhenn--vestmhor-et-shaddrek--klehrwath-v10119) | v1.0.119 | Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath | 18 cases ouvertes, 4 villages jouables, 13 lieux [GD], 29 cimetières compensés (666 gardés). |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4425,7 +4426,7 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 |---|---|---|
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
-| `without_graveyard` | 71 hameaux | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+| `without_graveyard` | 71 hameaux (100 depuis v1.0.119, 16.46) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4630,6 +4631,52 @@ regarder en jeu au fond du gouffre de Thurvhal.
 
 **Reste à faire** : lave des Enfers émissive et blessante (16.12) ; ouverture des 2 routes coupées et des routes
 arrêtées à une zone fermée ; lignes maritimes vers Hishtarland et Dyprokh.
+
+### 16.46 Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath (v1.0.119)
+
+**Décisions du propriétaire (14/11/2026)** : ouvrir d'abord les **2 routes coupées seulement** (les autres par lots ensuite) ;
+un lieu `[GD]` par case vide ; cimetières compensés en retirant ceux d'autres hameaux (666 gardés). Même méthode qu'au
+lot 29 (16.33) : cases du tracé lore (ligne droite entre les cases du tracé), case d'arrivée et une case de marge (terre)
+autour de la ville devenue jouable.
+
+**Cases** (`generated_cells`, 2 nouvelles dernières lignes ; 412 → 430 listées, 481 → 499 jouables avec les corridors) :
+
+| Route | Cases ouvertes | Villages devenus jouables |
+|---|---|---|
+| 000106 Farvhenn – Vestmhor | N013_E017 à N015_E019 (9 cases, Territoires des Marches) | Vestmhor (`town_0112`, N014_E018), Dhemorr (`town_0134`, N014_E017), Mhorgad (`ville_moorgate`, N015_E017) |
+| 000071 Shaddrek – Klehrwath | S013_E014 à S015_E016 (9 cases, Désert des Sels et montagnes des nains de l'est) | Klehrwath (`clearwater`, S014_E015) |
+
+**Lieux `[GD]`** (lore + POI du master, même identifiant `lieu_x` / `poi_x`, à relire) :
+
+| Case | Lieu | Genre | Niveaux |
+|---|---|---|---|
+| N013_E018 | Pâturages de Dhemorr | élevage | 13-15 |
+| N013_E019 | Tour de guet effondrée | ruine | 13-15 |
+| N014_E019 | Charbonnière de Vestmhor | camp | 14-15 |
+| N015_E018 | Bauge des sangliers | camp | 14-15 |
+| N015_E019 | Chapelle sylvestre | sanctuaire | 14-15 |
+| S013_E014 | Relais du sel de Klehrwath | camp | 22-24 |
+| S014_E014 | Étang salé | étang | 22-24 |
+| S013_E015 | Mine de cuivre abandonnée | salle | 22-26 |
+| S013_E016 | Col de Klehrwath | défilé | 22-24 |
+| S014_E016 | Ermitage de pierre | sanctuaire | 24-26 |
+| S015_E014 | Tour naine effondrée | ruine | 24-28 |
+| S015_E015 | Salle des ancêtres | salle | 25-28 |
+| S015_E016 | Cairn des mineurs | monolithe | 25-28 |
+
+N013_E017 garde la grotte secrète de l'hydre (16.10) : pas de nouveau lieu.
+
+**Cimetières** : les 18 cases en apportent 29 (4 villages, 19 hameaux, 6 cimetières isolés en montagne). 29 hameaux de
+plus passent dans `without_graveyard` (71 → 100), choisis par la règle du 16.39 (un à un, celui dont le cimetière est
+le plus proche d'un autre, dans une cellule qui en garde au moins un) appliquée aux 18 cases et aux cases générées à
+4 cases au plus (64 cases, 100 cimetières) ; le reste du monde est inchangé. Total vérifié par une génération complète.
+
+**Restent à ouvrir** : les 43 routes qui s'arrêtent à une zone fermée. Ouvertes toutes en cascade (même méthode, sans
+limite de distance), elles ajouteraient 316 cases de plus et une quarantaine de villes (815 cases jouables au lieu de
+499) : à faire par lots.
+
+**Tests** : `world_gen_tests` (`TestRoutesCoupeesV1119` : 18 cases, 4 villages, 13 lieux, extrémités des routes
+jouables ; 499 cellules jouables ; 100 hameaux sans cimetière).
 
 ## 17. Questions ouvertes
 

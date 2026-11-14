@@ -112,8 +112,9 @@ plus — `connect_start_cities: true` — les cellules traversées par les route
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
 routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
-suivant la route. **Depuis la v1.0.106 : 412 cellules listées dans `generated_cells`, 481 cellules
-jouables avec les corridors** (détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
+suivant la route. **Depuis la v1.0.119 : 430 cellules listées dans `generated_cells`, 499 cellules
+jouables avec les corridors** (v1.0.106 : 412 et 481 ; +18 cases des routes Farvhenn – Vestmhor et Shaddrek –
+Klehrwath, LORE_BD §16.46 ; détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
 données de rendu restent dans le paquet client. En local (Windows) :
 

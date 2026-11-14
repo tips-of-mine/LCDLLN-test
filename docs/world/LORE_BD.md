@@ -1057,6 +1057,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.45](#1645-couleur-du-nom-de-zone-torches-et-fond-sombre-du-gouffre-v10118) | v1.0.118 | Couleur du nom de zone, torches et fond sombre du gouffre | Niveaux des régions recopiés au master, teinte de la bannière ; lumières et ambiance des cellules lues par le client. |
 | [16.46](#1646-routes-coupées-farvhenn--vestmhor-et-shaddrek--klehrwath-v10119) | v1.0.119 | Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath | 16 cases ouvertes, 3 villages jouables, 12 lieux [GD], 24 cimetières compensés (666 gardés). |
 | [16.47](#1647-falaises-de-craie-de-la-côte-ouest-v10120) | v1.0.120 | Falaises de craie de la côte ouest | 7 cases (et leurs voisines côtières) en falaises blanches type Douvres : paroi d'environ 90 m, plateau herbeux, plage au pied. |
+| [16.48](#1648-toutes-les-routes-coupées-ouvertes-en-deux-lots-v10121-v10122) | v1.0.121-v1.0.122 | Toutes les routes coupées ouvertes, en deux lots | 245 cases ouvertes (742 jouables), 34 villes et villages, 207 lieux [GD], cases « villages seulement » pour les cimetières (666 gardés). |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4427,7 +4428,8 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 |---|---|---|
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
-| `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+| `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46 ; 129 depuis v1.0.122, 16.48) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4680,7 +4682,7 @@ plus passent dans `without_graveyard` (71 → 95), choisis par la règle du 16.3
 le plus proche d'un autre, dans une cellule qui en garde au moins un) appliquée aux 16 cases et aux cases générées à
 4 cases au plus (64 cases) ; le reste du monde est inchangé. **Total vérifié** : génération complète, 666 cimetières.
 
-**Restent à ouvrir** : les 43 routes qui s'arrêtent à une zone fermée (dont celles de Mhorgad). Ouvertes toutes en
+**Restent à ouvrir** (ouvertes en v1.0.121-v1.0.122, 16.48) : les 43 routes qui s'arrêtent à une zone fermée (dont celles de Mhorgad). Ouvertes toutes en
 cascade (même méthode, sans limite de distance), elles ajouteraient environ 316 cases et une quarantaine de villes
 (plus de 800 cases jouables) : à faire par lots.
 
@@ -4711,6 +4713,111 @@ proche ont aussi leurs falaises ; non vérifié à l'écran (pas de GPU dans l'e
 **Tests** : `world_gen_tests` (`TestFalaiseV1120` : relief chargé, paroi raide et bande de craie en N007_W013, aucun
 effet loin des cases, relief déterministe) ; génération des cellules N004_W012, N005_W012, N006_W012 et N010_W016 ;
 génération complète (666 cimetières).
+
+### 16.48 Toutes les routes coupées ouvertes, en deux lots (v1.0.121-v1.0.122)
+
+**Décisions du propriétaire (14/11/2026)** : ouvrir **toutes** les routes coupées (les routes du lore qui allaient
+d'une zone jouable à une zone fermée), lot par lot : par région, routes courtes d'abord, puis le reste ; un lieu
+`[GD]` par case vide ; **cases sans cimetière admises** : les cimetières restent **666** ; au-delà, une case
+nouvellement ouverte n'a de cimetière que si un village du lore en a un.
+
+**Méthode** (même règle qu'en 16.33 et 16.46, appliquée en cascade) : pour chaque route dont une seule extrémité
+est jouable, cases du tracé du lore (balises comprises), case d'arrivée et une case de marge (terre) autour d'elle ;
+la ville d'arrivée devenue jouable peut à son tour ouvrir ses routes. Les cellules des corridors des villes de départ
+(jouables sans être listées) comptent comme jouables. Puis les contrôles de `world_gen_tests` (routes v1.0.106 (a) et
+(c)) : une route du lore jouable aux deux bouts ne doit plus traverser de case fermée (cases ajoutées au besoin),
+chaque ville jouable doit être reliée à pied aux départs.
+
+**Générateur** (`tools/world_gen`) :
+
+| Élément | Effet |
+|---|---|
+| `graveyards.village_only_cells` (master) | cellules où **seuls les villes et villages du lore** ont un cimetière : ni cimetière isolé (`fill_empty_cells`), ni cimetière de hameau procédural ; une telle case peut n'en avoir aucun. Les 245 cases ouvertes par les deux lots y sont |
+| `--graveyard-report <fichier>` | recensement des cimetières par cellule (`cellule nombre id@x:z …`), écrit avant le contrôle des 666 : sert à choisir les hameaux de `without_graveyard` |
+
+**Lot 1 — routes courtes (v1.0.121)** : 15 routes de 2 cases au plus, plus 3 routes devenues jouables aux deux bouts
+qui passaient par des cases fermées (000053, 000080, 000208).
+
+| Route | Cases |
+|---|---|
+| 000021 Syzygie – Iustarn | 4 |
+| 000025 Klehrwath – Saelvik | 7 |
+| 000038 Vestmhor – Grhaevan | 7 |
+| 000040 Nhorgast – Grhaevan | 6 |
+| 000041 Nhorgast – Runhkar | 6 |
+| 000053 Zaltheim – Harndrecht | 8 (+ S006_W009) |
+| 000055 Feyhin Lokcthat – Askhvir | 8 |
+| 000142 Mhozrak – Grakhul | 7 |
+| 000154 Hoengardt – Mhorgad | 6 |
+| 000165 Thysskar – Saelvik | 7 |
+| 000198 Thydmar – Ostrevan | 7 |
+| 000211 Kholvard – Skhaldrach | 5 |
+| 000028 Hagfhal – Nhorgast | 6 |
+| 000054 Harrodh – Mhozrak | 6 |
+| 000157 Vernhild – Hagfhal | 7 |
+| 000080 Der Hem Shelbem – Saelvik | S011_E010, S011_E011, S012_E011, S012_E012 |
+| 000208 Hazhaëlin – Askhvir | N008_E003 |
+
+103 cases listées dans `generated_cells`, dont **11 déjà jouables** par les corridors de départ (N004_E009, N004_E010,
+N005_E010, N005_E011, N006_E011, N006_E012, N007_W011, S003_W008, S003_W009, S004_W007, S004_W008 : elles gardent
+leurs cimetières, hors `village_only_cells`) ; **92 cases nouvelles**. **82 lieux `[GD]`** (un par case vide, 6 d'entre
+eux sur des cases de corridor restées vides).
+
+**Lot 2 — le reste (v1.0.122)** : les 17 dernières routes coupées, plus 7 cases de routes devenues jouables aux deux
+bouts (N016_E008 et N017_E008 de 000069 Stohnvar – Nhorvaël, N009_W005 de 000077, S006_E006 de 000079, N010_W006 de
+000095 Ostrevan – Haevrin, N010_W001 et N010_W002 de 000210 Fhelvakt – Haevrin).
+
+| Route | Cases | Route | Cases |
+|---|---|---|---|
+| 000057 Ghrepol – Zaltheim | 8 | 000158 Dhraegtun – Hagfhal | 9 |
+| 000073 Dhuzmar – Klaerhin | 9 | 000159 Shtenbrak – Hagfhal | 9 |
+| 000076 Askhvir – Stohnvar | 9 | 000048 Ghrepol – Aeskhol | 5 |
+| 000077 Northind – Haevrin | 8 | 000068 Kholdvar – Khlaybur | 10 |
+| 000079 Kholdvar – Frhozhol | 11 | 000078 Khlaybur – Melvhord | 10 |
+| 000116 Mhorgad – Dhunfal | 11 | 000164 Faervosk – Khlaybur | 8 |
+| 000143 Kendrhir – Whispers Hill | 8 | 000062 Brokhendt – Melvhord | 6 |
+| 000145 Tbarak – Dhunfal | 9 | 000063 Suthvarn – Khlaybur | 9 |
+| 000156 Khaldhol – Tbarak | 7 | | |
+
+**153 cases nouvelles**, **125 lieux `[GD]`**.
+
+**Bilan** : 428 → **684** cases listées, 497 → **742** cases jouables (avec les 58 cellules de corridor) ; **34 villes
+et villages** du lore deviennent jouables (Aeskhol, Askhrof, Askhvir, Brokhendt, Dhraegtun, Dhunfal, Faervosk, Ghrepol,
+Grhaevan, Haevrin, Hagfhal, Hayvekh, Hazol, Hoengardt, Kendrhir, Khaldhol, Khlaybur, Kholdvar, Klaerhin, Klindor,
+Melvhord, Mhorgad, Nhorgast, Nhorvaël, Ostrevan, Runhkar, Saelvik, Shtenbrak, Stohnvar, Suthvarn, Tbarak, Thysskar,
+Vernhild, Zaltheim) ; **plus aucune route du lore coupée** (hors routes maritimes).
+
+**Cases sensibles** : la règle des lots de trous intérieurs (jamais une case de grotte de dragon ou d'entrée ophidienne
+ni ses 8 voisines, 16.35) n'a pas été appliquée aux cases **sur le tracé d'une route ou en marge d'une ville** (comme en
+16.46 pour la grotte de l'hydre) : ouvrir toutes les routes l'impose. Cases concernées : N010_W003, case de la **Bouche
+des Roseaux** (entrée ophidienne, toujours lore seul : aucun POI, la route Fhelvakt – Haevrin traverse la case ; le
+lieu `[GD]` « Tourbière aux feux follets » y est placé) et ses voisines N009_W004, N010_W002, N010_W004, N011_W004
+(Haevrin) ; N011_W005 (grotte du premier-né tricératops, sous le POI déjà existant « Grotte des racines du marais ») et
+ses voisines autour de Haevrin ; voisines de la grotte de l'hydre (N013_E016, N014_E016), du premier-né blanc
+(S007_W001, S007_W002) et du premier-né oriental (N005_E008). Les grottes restent secrètes (`entree_cachee`), sans
+route qui y mène.
+
+**Lieux `[GD]`** (207, lore + POI du master, même identifiant `lieu_x` / `poi_x`, à relire) : choisis selon le terrain
+et la région de chaque case (fermes et élevages en plaine, camps de chasseurs et charbonniers en lisière, ruines et
+tours sur la côte, cols et grottes en montagne, camps orcs dans les Territoires orcques, ouvrages nains dans les
+royaumes nains, sites des géants dans les Terres des Gigantomorphes). Niveaux : moyenne des lieux existants à 3 cases
+au plus, bornée par la région (repère `niveau_ref`) ; à défaut, bas de la région. Liste complète : `lieux` du lore
+(notes « v1.0.121 » / « v1.0.122 ») et `pois` du master (`[GD v1.0.121` / `[GD v1.0.122`). Six noms proposés d'abord
+reprenaient des mots interdits par le contrôle des noms de PNJ (`validate_city_services` : pierre, rouge, pic,
+marteau) ou un identifiant de POI déjà pris : renommés (Dalle du serment, Menhirs dansants, Halte du sable ocre,
+Coupe de bois de Hazhaëlin, Auberge de la Chope d'or, Sommet des neiges éternelles).
+
+**Cimetières** : les 245 cases nouvelles sont dans `graveyards.village_only_cells` : seuls les villes et villages du
+lore y ont un cimetière ; les cases vides n'en ont aucun (plus de cimetière isolé), les hameaux procéduraux non plus
+(auberge seule). Les 11 cases de corridor listées au lot 1 en sont exclues (elles gardent les leurs). Recensement
+(`--graveyard-report`) après les deux lots : 700 cimetières, soit 34 de trop (les villages devenus jouables) ;
+**34 hameaux** de plus passent dans `without_graveyard` (95 → **129**), choisis par la règle du 16.39 (un à un, celui
+dont le cimetière est le plus proche d'un autre, dans une cellule qui en garde au moins un) parmi les cellules à
+4 cases au plus des lots. **Total vérifié** : génération complète, 666 cimetières.
+
+**Tests** : `world_gen_tests` (`TestRoutesLotsV1121` : 245 cases villages seulement, 82 + 125 lieux, plus aucune route
+coupée, N019_E018 sans cimetière, S014_E013 avec celui de Saelvik ; 742 cellules jouables ; routes v1.0.106 (a) et
+(c)) ; génération complète (666 cimetières).
 
 ## 17. Questions ouvertes
 

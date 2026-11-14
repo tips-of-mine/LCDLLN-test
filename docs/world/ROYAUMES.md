@@ -112,9 +112,10 @@ plus — `connect_start_cities: true` — les cellules traversées par les route
 relient les villes de départ (arbre couvrant de plus courts chemins sur le réseau
 routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
-suivant la route. **Depuis la v1.0.119 : 428 cellules listées dans `generated_cells`, 497 cellules
-jouables avec les corridors** (v1.0.106 : 412 et 481 ; +16 cases des routes Farvhenn – Vestmhor et Shaddrek –
-Klehrwath, LORE_BD §16.46 ; détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
+suivant la route. **Depuis la v1.0.122 : 684 cellules listées dans `generated_cells`, 742 cellules
+jouables avec les corridors** (v1.0.106 : 412 et 481 ; v1.0.119 : 428 et 497, +16 cases des routes Farvhenn – Vestmhor
+et Shaddrek – Klehrwath, LORE_BD §16.46 ; v1.0.121-v1.0.122 : +245 cases, toutes les routes coupées ouvertes en deux
+lots, LORE_BD §16.48 ; détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
 données de rendu restent dans le paquet client. En local (Windows) :
 
@@ -128,6 +129,10 @@ données de rendu restent dans le paquet client. En local (Windows) :
 # --graveyard-report <fich.>  : v1.0.121, recensement des cimetières par cellule (« cellule nombre id@x:z … »),
 #                               écrit avant le contrôle des 666 (sert à choisir les hameaux de without_graveyard)
 ```
+
+Total des cimetières à corriger (v1.0.122) : `lcdlln_world_gen … --dry-run --graveyard-report recensement.txt`, puis
+`python3 tools/world_gen/choose_graveyards.py recensement.txt --cells <cases du lot>` donne les hameaux à ajouter à
+`graveyards.without_graveyard` (règle du plus proche voisin, LORE_BD §16.39).
 
 Durée (v1.0.112, 2 cœurs) : ≈ 12 s pour la couche macro, puis ≈ 5,3 s par cellule
 (≈ 9,4 s avant l'accélération) ; résultat identique quel que soit le nombre de cœurs ou
@@ -621,6 +626,8 @@ ordinaire du lore.
 | v1.0.74 (Île de la Trêve) | — | 245 |
 | v1.0.104 (routes de Vozmarkh et de Rhivkhar) | — | 413 |
 | v1.0.106 (passages des routes du lore) | 412 | **481** |
+| v1.0.119 (routes Farvhenn – Vestmhor, Shaddrek – Klehrwath) | 428 | 497 |
+| v1.0.122 (toutes les routes coupées, 2 lots) | 684 | **742** |
 
 - Une cellule est jouable si elle est dans `generated_cells` **ou** dans un corridor des villes
   de départ (`AddStartCorridors`, calculé sur le réseau du générateur, inchangé par les routes du
@@ -628,8 +635,10 @@ ordinaire du lore.
 - Méthode des lots d'ouverture (v1.0.88, v1.0.91, v1.0.104, v1.0.106) : cases du tracé des routes
   à ouvrir, case de la ville d'arrivée, une case de marge (terre) autour de chaque ville devenue
   jouable, puis **trous intérieurs** (case bordée sur au moins 3 côtés par des cases jouables) ;
-  jamais une case de grotte de dragon, d'entrée ophidienne ni leurs 8 voisines ; chaque case vide
-  reçoit un lieu `[GD]` avec un POI réel.
+  jamais une case de grotte de dragon, d'entrée ophidienne ni leurs 8 voisines (sauf, depuis
+  v1.0.119, une case sur le tracé d'une route ou en marge d'une ville : LORE_BD §16.48) ; chaque case vide
+  reçoit un lieu `[GD]` avec un POI réel. v1.0.121 : les cases ouvertes par les lots de routes sont
+  « villages seulement » pour les cimetières (`graveyards.village_only_cells`).
 - Ajouter une case : l'inscrire dans `generated_cells` (nouvelle ligne en fin de liste) ; la CI la
   génère au build suivant ([§4](#4-générer-le-monde)).
 

@@ -399,6 +399,15 @@ namespace tools::world_gen
 			const double rockK = SmoothStep(26.0, 40.0, slope + n * 4.0);
 			t.rock = std::max(t.rock, rockK);
 			t.grassMask *= 1.0 - rockK;
+			// v1.0.120 — paroi des falaises de craie : blanche (couche « neige », la seule
+			// couche claire du client) au lieu de la roche, sur la bande de la paroi.
+			if (const double wall = FalaiseWallAt(w.master, p.x, p.z); wall > 0.0)
+			{
+				const double chalk = wall * SmoothStep(22.0, 38.0, slope + n * 4.0);
+				t.snow = std::max(t.snow, chalk);
+				t.rock *= 1.0 - chalk; t.grass *= 1.0 - chalk; t.dirt *= 1.0 - chalk;
+				t.grassMask *= 1.0 - chalk;
+			}
 			// Routes (bord légèrement diffus).
 			const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 			if (w.roadDist.InBounds(ri, rj))
@@ -507,6 +516,12 @@ namespace tools::world_gen
 						const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * px) * 2.5, 0.55, 1.35);
 						r *= shade; gg *= shade; b *= shade;
 					}
+					// v1.0.120 : liseré blanc des falaises de craie (non ombré).
+					if (!infernal && !outside && h >= sea)
+						if (const double wall = FalaiseWallAt(g.master, p.x, p.z, 1.5 * px); wall > 0.0)
+						{
+							r = Lerp(r, 236, wall); gg = Lerp(gg, 234, wall); b = Lerp(b, 222, wall);
+						}
 					// v1.0.83 : lave jaune-orange NON ombrée (lumineuse), cœur jaune, bord orange-rouge.
 					if (infernal && !outside)
 					{

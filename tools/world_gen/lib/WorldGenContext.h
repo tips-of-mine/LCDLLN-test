@@ -313,6 +313,19 @@ namespace tools::world_gen
 	/// Crevasse : largeur (m) de la pente douce extérieure du massif, de part et
 	/// d'autre de `foot_radius_m` (au moins `wall_m`, 40 % du rayon). Terrain.cpp
 	double CrevasseOuterSlopeM(const ReliefDef& r);
+	/// v1.0.120 — écart d'altitude (m) d'une falaise `r` en (x, z), × poids des cases :
+	/// côté mer (côte nette tirée d'un masque lissé), les îlots du marais côtier sont noyés
+	/// à 1,5 m sous la mer ; côté terre, plage et mares sont comblées au niveau du rivage,
+	/// puis la paroi monte de height_m (± 15 %) sur wall_m après beach_m. \param baseH
+	/// altitude sans les reliefs locaux (m). Construit au besoin les grilles de distance
+	/// signée à la côte (thread-safe). Fonction pure. Terrain.cpp
+	double FalaiseOffset(const WorldMaster& m, const ReliefDef& r, double x, double z, double baseH);
+	/// v1.0.120 — part de paroi de falaise en (x, z), dans [0, 1] (max des falaises du
+	/// master) : 1 sur la bande de la paroi (de beach_m à beach_m + wall_m de la mer)
+	/// des cases de falaise, 0 ailleurs ; sert au splat (craie blanche) et à la carte.
+	/// \param extraM élargit la bande vers l'intérieur des terres (m) : la carte du monde,
+	///        dont un pixel fait plus que la paroi, la dessine ainsi en liseré blanc. Terrain.cpp
+	double FalaiseWallAt(const WorldMaster& m, double x, double z, double extraM = 0.0);
 	/// Somme des reliefs locaux du master en (x, z) ; incluse dans MacroHeight.
 	/// \param baseH altitude (m) du relief sans les reliefs locaux : les massifs
 	///        (v1.0.77) ne s'appliquent que là où elle dépasse la mer (côte inchangée). Terrain.cpp

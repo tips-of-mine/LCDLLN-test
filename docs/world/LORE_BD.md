@@ -1055,6 +1055,8 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 52 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
 | [16.44](#1644-dialogues-contre-quêtes-lune-noire-et-lieux-du-t5-v10117) | v1.0.117 | Dialogues, contre-quêtes Lune Noire et lieux du T5 | 77 dialogues remplis, 4 contre-quêtes, Krak de Jhenner, citadelle et Passe de Heniak placés. |
 | [16.45](#1645-couleur-du-nom-de-zone-torches-et-fond-sombre-du-gouffre-v10118) | v1.0.118 | Couleur du nom de zone, torches et fond sombre du gouffre | Niveaux des régions recopiés au master, teinte de la bannière ; lumières et ambiance des cellules lues par le client. |
+| [16.46](#1646-routes-coupées-farvhenn--vestmhor-et-shaddrek--klehrwath-v10119) | v1.0.119 | Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath | 16 cases ouvertes, 3 villages jouables, 12 lieux [GD], 24 cimetières compensés (666 gardés). |
+| [16.47](#1647-falaises-de-craie-de-la-côte-ouest-v10120) | v1.0.120 | Falaises de craie de la côte ouest | 7 cases (et leurs voisines côtières) en falaises blanches type Douvres : paroi d'environ 90 m, plateau herbeux, plage au pied. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4425,7 +4427,7 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 |---|---|---|
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
-| `without_graveyard` | 71 hameaux | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+| `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4630,6 +4632,85 @@ regarder en jeu au fond du gouffre de Thurvhal.
 
 **Reste à faire** : lave des Enfers émissive et blessante (16.12) ; ouverture des 2 routes coupées et des routes
 arrêtées à une zone fermée ; lignes maritimes vers Hishtarland et Dyprokh.
+
+### 16.46 Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath (v1.0.119)
+
+**Décisions du propriétaire (14/11/2026)** : ouvrir d'abord les **2 routes coupées seulement** (les autres par lots ensuite) ;
+un lieu `[GD]` par case vide ; cimetières compensés en retirant ceux d'autres hameaux (666 gardés). Même méthode qu'au
+lot 29 (16.33) : cases du tracé lore, case d'arrivée et une case de marge (terre) autour de la ville devenue jouable ;
+puis les contrôles de `world_gen_tests` (routes v1.0.106 (a) et (c)) écartent ce qui ferait une ville jouable sans
+route vers les départs ou une route qui ressort puis rentre dans la zone jouable.
+
+**Cases** (`generated_cells`, 2 nouvelles dernières lignes ; 412 → 428 listées, 481 → 497 jouables avec les corridors) :
+
+| Route | Cases ouvertes | Villages devenus jouables |
+|---|---|---|
+| 000106 Farvhenn – Vestmhor | N013_E017 à N015_E019 sauf N015_E017 (8 cases, Territoires des Marches) | Vestmhor (`town_0112`, N014_E018), Dhemorr (`town_0134`, N014_E017) |
+| 000071 Shaddrek – Klehrwath | S013_E015 à S015_E016 et S014_E014 (8 cases, Désert des Sels et montagnes des nains de l'est) | Klehrwath (`clearwater`, S014_E015) |
+
+**Écartées après contrôle** : N015_E017 (Mhorgad, `ville_moorgate`, case de marge) : ses deux routes (000116 vers Dhunfal,
+000154 vers Hoengardt) mènent à des zones fermées, Mhorgad aurait été jouable sans route vers les départs ; S013_E014
+(marge ouest de Klehrwath) : la route 000080 (Der Hem Shelsem – Ville 0118) y passait entre deux cases fermées.
+**Tracé imposé** : 000071 passe par S012_E017 et S013_E016 (col de Klehrwath) au lieu de couper par S012_E016 et
+S013_E017 (haute montagne, restées fermées) ; tracé du lore modifié, recopié au master par `sync_routes.py`.
+
+**Lieux `[GD]`** (lore + POI du master, même identifiant `lieu_x` / `poi_x`, à relire) :
+
+| Case | Lieu | Genre | Niveaux |
+|---|---|---|---|
+| N013_E018 | Pâturages de Dhemorr | élevage | 13-15 |
+| N013_E019 | Tour de guet effondrée | ruine | 13-15 |
+| N014_E019 | Charbonnière de Vestmhor | camp | 14-15 |
+| N015_E018 | Bauge des sangliers | camp | 14-15 |
+| N015_E019 | Chapelle sylvestre | sanctuaire | 14-15 |
+| S014_E014 | Étang salé | étang | 22-24 |
+| S013_E015 | Galeries effondrées | salle | 22-26 |
+| S013_E016 | Col de Klehrwath | défilé | 22-24 |
+| S014_E016 | Ermitage de la falaise | sanctuaire | 24-26 |
+| S015_E014 | Tour naine effondrée | ruine | 24-28 |
+| S015_E015 | Salle des ancêtres | salle | 25-28 |
+| S015_E016 | Cairn des mineurs | monolithe | 25-28 |
+
+N013_E017 garde la grotte secrète de l'hydre (16.10) : pas de nouveau lieu. Deux noms proposés d'abord (« Mine de cuivre
+abandonnée », « Ermitage de pierre ») reprenaient des mots interdits par le contrôle des noms de PNJ (`validate_city_services`) :
+renommés.
+
+**Cimetières** : les 16 cases en apportent 24 (3 villages, 15 hameaux, 6 cimetières isolés en montagne). 24 hameaux de
+plus passent dans `without_graveyard` (71 → 95), choisis par la règle du 16.39 (un à un, celui dont le cimetière est
+le plus proche d'un autre, dans une cellule qui en garde au moins un) appliquée aux 16 cases et aux cases générées à
+4 cases au plus (64 cases) ; le reste du monde est inchangé. **Total vérifié** : génération complète, 666 cimetières.
+
+**Restent à ouvrir** : les 43 routes qui s'arrêtent à une zone fermée (dont celles de Mhorgad). Ouvertes toutes en
+cascade (même méthode, sans limite de distance), elles ajouteraient environ 316 cases et une quarantaine de villes
+(plus de 800 cases jouables) : à faire par lots.
+
+**Tests** : `world_gen_tests` (`TestRoutesCoupeesV1119` : 16 cases, 3 villages, 12 lieux, extrémités des routes
+jouables, tracé par le col ; 497 cellules jouables ; 58 cases dans la boîte des nains de l'est ; 95 hameaux sans
+cimetière ; N013_E019 ouverte).
+
+### 16.47 Falaises de craie de la côte ouest (v1.0.120)
+
+**Décision du propriétaire (14/11/2026)** : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016 et
+N011_W015 sont des falaises, au rendu de falaises de craie comme celles de Douvres (photo de référence : paroi blanche
+presque verticale, prairie au sommet, plage de galets étroite au pied, mer turquoise).
+
+**Réalisation** (générateur, relief `falaise` `falaises_de_craie_ouest` du master ; dimensions `[GD]`) :
+
+| Élément | Valeur | Effet |
+|---|---|---|
+| Cases | les 7 cases + leurs voisines côtières (`,` `_`), 21 au total | le rivage réel, déformé par le bruit, tombe souvent dans la case côtière voisine |
+| Côte | masque « sous la mer » lissé sur 408 m, mer reliée au large | les marais côtiers piquetés d'îlots deviennent une côte nette ; les îlots sont noyés, les mares comblées |
+| Plage | `beach_m` = 30 m | au niveau du rivage, au pied de la paroi |
+| Paroi | `height_m` = 90 m (± 15 % le long de la côte) sur `wall_m` = 24 m | pente d'environ 75° (heightmap de 4,9 m) |
+| Plateau | prairie relevée de 90 m | s'éteint en pente douce sur `fade_m` = 1,5 km hors des cases ; Altenberg (N005_W012) est sur le plateau |
+| Couleur | paroi blanche | couche « neige » du splat (seule couche claire du client), liseré blanc sur la carte du monde |
+
+**Limites** : la craie utilise la texture de neige du client (pas de texture de craie dédiée) ; les îles au large
+proche ont aussi leurs falaises ; non vérifié à l'écran (pas de GPU dans l'environnement de développement).
+
+**Tests** : `world_gen_tests` (`TestFalaiseV1120` : relief chargé, paroi raide et bande de craie en N007_W013, aucun
+effet loin des cases, relief déterministe) ; génération des cellules N004_W012, N005_W012, N006_W012 et N010_W016 ;
+génération complète (666 cimetières).
 
 ## 17. Questions ouvertes
 

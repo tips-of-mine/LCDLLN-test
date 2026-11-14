@@ -14,11 +14,11 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici.",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici. ; v1.0.119 : 16 cases des routes Farvhenn - Vestmhor (000106, N013-N015 x E017-E019 sauf N015_E017) et Shaddrek - Klehrwath (000071, S013-S015 x E014-E016 sauf S013_E014), villages de Vestmhor, Dhemorr et Klehrwath et une case de marge",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
-  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres.",
+  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus).",
   "graveyards": {
     "target": 666,
     "fill_empty_cells": true,
@@ -93,7 +93,31 @@
       "cell_s011_e018_hameau_1",
       "cell_s011_e019_hameau_0",
       "cell_s011_e020_hameau_1",
-      "cell_s012_e019_hameau_0"
+      "cell_s012_e019_hameau_0",
+      "cell_n014_e017_hameau_0",
+      "cell_n012_e019_hameau_0",
+      "cell_s014_e015_hameau_1",
+      "cell_n012_e020_hameau_0",
+      "cell_s013_e020_hameau_0",
+      "cell_n014_e018_hameau_0",
+      "cell_s010_e020_hameau_1",
+      "cell_n011_e019_hameau_0",
+      "cell_n011_e020_hameau_1",
+      "cell_s014_e014_hameau_1",
+      "cell_n011_e021_hameau_0",
+      "cell_n009_e016_hameau_0",
+      "cell_s010_e019_hameau_0",
+      "cell_n009_e019_hameau_1",
+      "cell_n010_e016_hameau_1",
+      "cell_n009_e017_hameau_0",
+      "cell_n011_e017_hameau_0",
+      "cell_s014_e015_hameau_0",
+      "cell_n010_e019_hameau_1",
+      "cell_n013_e019_hameau_0",
+      "cell_n010_e017_hameau_0",
+      "cell_n014_e017_hameau_1",
+      "cell_s009_e020_hameau_0",
+      "cell_s013_e020_hameau_1"
     ]
   },
   "generated_cells": [
@@ -152,7 +176,9 @@
     "N009_E007", "N008_E008", "N008_E009", "N002_E012", "N002_W001", "N003_W001", "N003_E000", "N004_E000", "N004_E001",
     "N005_E001", "N005_E002", "N006_E002", "N000_E003", "N000_W002", "N001_W004", "N003_E012", "N003_W002", "N006_E001",
     "N009_E008", "S001_E005", "S002_W009", "S003_E005", "S003_E014", "S003_W007", "S004_E011", "S005_E015", "S003_W006",
-    "S004_E012", "S004_E014", "S004_E015", "S005_E010", "S005_E012"
+    "S004_E012", "S004_E014", "S004_E015", "S005_E010", "S005_E012",
+    "N013_E017", "N013_E018", "N013_E019", "N014_E017", "N014_E018", "N014_E019", "N015_E018", "N015_E019",
+    "S013_E015", "S013_E016", "S014_E014", "S014_E015", "S014_E016", "S015_E014", "S015_E015", "S015_E016"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -4903,6 +4929,90 @@
       "offset_x_m": -1000,
       "offset_z_m": 0,
       "description": "Cabane du garde-forestier de Hazhaëlin, qui surveille la route d'Arkhanyra et chasse les braconniers. Niveaux 18-22. [GD v1.0.106, lieu_cabane_du_garde_forestier]."
+    },
+    {
+      "id": "poi_paturages_de_dhemorr",
+      "name": "Pâturages de Dhemorr",
+      "cell": "N013_E018",
+      "kind": "elevage",
+      "description": "Prés clos de haies où les bergers de Dhemorr mènent leurs moutons ; les loups des Marches descendent la nuit jusqu'aux bergeries. Niveaux 13-15. [GD v1.0.119, lieu_paturages_de_dhemorr]."
+    },
+    {
+      "id": "poi_tour_de_guet_effondree",
+      "name": "Tour de guet effondrée",
+      "cell": "N013_E019",
+      "kind": "ruine",
+      "description": "Ancienne tour de guet des Marches, effondrée sur sa colline ; des pillards y guettent les charrettes de la route de Vestmhor. Niveaux 13-15. [GD v1.0.119, lieu_tour_de_guet_effondree]."
+    },
+    {
+      "id": "poi_charbonniere_de_vestmhor",
+      "name": "Charbonnière de Vestmhor",
+      "cell": "N014_E019",
+      "kind": "camp",
+      "description": "Meules fumantes à la lisière : les charbonniers de Vestmhor y cuisent le bois de la forêt pour les forges des Marches. Niveaux 14-15. [GD v1.0.119, lieu_charbonniere_de_vestmhor]."
+    },
+    {
+      "id": "poi_bauge_des_sangliers",
+      "name": "Bauge des sangliers",
+      "cell": "N015_E018",
+      "kind": "camp",
+      "description": "Clairière boueuse retournée par une harde de sangliers ; les chasseurs de Mhorgad y tendent leurs pièges. Niveaux 14-15. [GD v1.0.119, lieu_bauge_des_sangliers]."
+    },
+    {
+      "id": "poi_chapelle_sylvestre",
+      "name": "Chapelle sylvestre",
+      "cell": "N015_E019",
+      "kind": "sanctuaire",
+      "description": "Petite chapelle de bois au cœur de la forêt, où un ermite garde une source et soigne les voyageurs égarés. Niveaux 14-15. [GD v1.0.119, lieu_chapelle_sylvestre]."
+    },
+    {
+      "id": "poi_etang_sale",
+      "name": "Étang salé",
+      "cell": "S014_E014",
+      "kind": "etang",
+      "description": "Étang aux rives blanchies de sel au bord du désert ; les sauniers de Klehrwath y raclent le sel en été. Niveaux 22-24. [GD v1.0.119, lieu_etang_sale]."
+    },
+    {
+      "id": "poi_mine_de_cuivre_abandonnee",
+      "name": "Galeries effondrées",
+      "cell": "S013_E015",
+      "kind": "salle",
+      "description": "Galeries naines abandonnées après un éboulement ; des araignées géantes ont pris les salles basses. Niveaux 22-26. [GD v1.0.119, lieu_mine_de_cuivre_abandonnee]."
+    },
+    {
+      "id": "poi_col_de_klehrwath",
+      "name": "Col de Klehrwath",
+      "cell": "S013_E016",
+      "kind": "defile",
+      "description": "Passage étroit entre deux crêtes, sur la route de Shaddrek à Klehrwath ; des vautours guettent les bêtes tombées. Niveaux 22-24. [GD v1.0.119, lieu_col_de_klehrwath]."
+    },
+    {
+      "id": "poi_ermitage_de_pierre",
+      "name": "Ermitage de la falaise",
+      "cell": "S014_E016",
+      "kind": "sanctuaire",
+      "description": "Cellule creusée dans la falaise où vit un prêtre nain retiré du monde ; il garde les tombes de sa lignée. Niveaux 24-26. [GD v1.0.119, lieu_ermitage_de_pierre]."
+    },
+    {
+      "id": "poi_tour_naine_effondree",
+      "name": "Tour naine effondrée",
+      "cell": "S015_E014",
+      "kind": "ruine",
+      "description": "Ancienne tour de guet naine sur un éperon, à moitié écroulée ; des trolls des montagnes s'y abritent. Niveaux 24-28. [GD v1.0.119, lieu_tour_naine_effondree]."
+    },
+    {
+      "id": "poi_salle_des_ancetres",
+      "name": "Salle des ancêtres",
+      "cell": "S015_E015",
+      "kind": "salle",
+      "description": "Salle souterraine où les nains de Klehrwath gardaient les statues de leurs ancêtres ; des spectres errent entre les piliers. Niveaux 25-28. [GD v1.0.119, lieu_salle_des_ancetres]."
+    },
+    {
+      "id": "poi_cairn_des_mineurs",
+      "name": "Cairn des mineurs",
+      "cell": "S015_E016",
+      "kind": "monolithe",
+      "description": "Haut cairn de pierres dressé en mémoire des mineurs morts dans la montagne ; on y laisse un outil en offrande. Niveaux 25-28. [GD v1.0.119, lieu_cairn_des_mineurs]."
     }
   ],
   "imports": {
@@ -4940,7 +5050,7 @@
       "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun, vers l'est puis le nord, contourne Treuvhal (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
     }
   ],
-  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36).",
+  "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36). falaise (v1.0.120) : cote en falaise de craie sur les cases 'cells' (sans ville) : a beach_m de la mer (mer reliee au large), la terre monte de height_m (+/- 15 %) sur wall_m, puis plateau ; plage au pied ; extinction sur fade_m hors des cases ; paroi blanche dans le splat et sur la carte du monde.",
   "reliefs": [
     {
       "id": "colline_verdansur",
@@ -5076,6 +5186,16 @@
       "gallery_wall_m": 10,
       "gallery": [ { "x_m": -250, "z_m": 60 }, { "x_m": -700, "z_m": 350 }, { "x_m": -1150, "z_m": 650 }, { "x_m": -1550, "z_m": 850 } ],
       "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026) : gouffre caché de Deathtrap Canyon (S008_E010), fosse latérale à l'est de la gorge de la route 000074, sans route ni sentier ; fond plat 85 m sous le point le plus bas du pourtour (environ 140 m sous le pourtour moyen) ; Thurvhal au fond, cimetière neutre = point de résurrection du canyon ; galerie de la Fente qui remonte vers l'entrée cachée (éboulis), environ 730 m à l'est de la route ; torches au fond et dans la galerie [GD]"
+    },
+    {
+      "id": "falaises_de_craie_ouest",
+      "type": "falaise",
+      "cells": ["N005_W012", "N006_W012", "N007_W013", "N008_W013", "N009_W016", "N010_W016", "N011_W015"],
+      "height_m": 90,
+      "beach_m": 30,
+      "wall_m": 24,
+      "fade_m": 1500,
+      "source": "[DÉCISION] v1.0.120 (proprietaire, 14/11/2026) : ces cases sont des falaises ; rendu de falaise de craie blanche comme celles de Douvres (paroi presque verticale, plateau herbeux, plage etroite au pied) [GD pour les dimensions]"
     }
   ],
   "_comment_lore_roads": "Routes du lore (v1.0.105), recopiees de legacy/world-builder-html/lune-noire-data.json (collection routes) par tools/lore/sync_routes.py : NE PAS EDITER A LA MAIN, tracer dans l'editeur (mode Tracer) puis relancer le script. type : road | imperial_road | path (routes maritimes non recopiees) ; from / to : ville ou POI du master, vide = jonction (embranchement sur une autre route de la case) ou extremite sans entree au master ; waypoints : cases du trace, extremites comprises. tools/world_gen (Roads.cpp) trace chaque route en passant par chaque case (ville de la case, sinon point praticable le plus proche du centre) et cherche son chemin sur le terrain entre deux cases ; les routes de son propre reseau ne sont gardees que pour relier les villes de depart sans equivalent au lore (docs/world/LORE_BD.md section 16.34).",
@@ -5112,7 +5232,7 @@
     { "id": "000068", "type": "road", "from": "town_0120", "to": "hamlet_0217", "waypoints": ["S009_E004", "S013_E003"] },
     { "id": "000069", "type": "road", "from": "town_0139", "to": "hamlet_0166", "waypoints": ["N014_E008", "N018_E009"] },
     { "id": "000070", "type": "road", "from": "hamlet_0193", "to": "hamlet_0196", "waypoints": ["S005_E008", "S002_E011"] },
-    { "id": "000071", "type": "road", "from": "shadowfen", "to": "clearwater", "waypoints": ["S011_E018", "S014_E015"] },
+    { "id": "000071", "type": "road", "from": "shadowfen", "to": "clearwater", "waypoints": ["S011_E018", "S012_E017", "S013_E016", "S014_E015"] },
     { "id": "000072", "type": "road", "from": "ville_oracle_camp", "to": "hamlet_0146", "waypoints": ["N000_E000", "N000_E001", "S001_E002", "S001_E003", "S002_E003", "S003_E003"] },
     { "id": "000073", "type": "road", "from": "hamlet_0197", "to": "hamlet_0214", "waypoints": ["S002_W011", "S003_W012", "S003_W013", "S004_W014", "S004_W015"] },
     { "id": "000074", "type": "road", "from": "ville_der_hem_shelsem", "to": "hamlet_0193", "waypoints": ["S010_E010", "S009_E010", "S008_E010", "S007_E009", "S006_E008", "S005_E008"] },

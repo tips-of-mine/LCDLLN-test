@@ -14,8 +14,11 @@
 // (src/shared/world/WorldCells.h).
 
 #include <cstdint>
+#include <memory>
+#include <mutex>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <zone_builder/JsonDocument.h>
@@ -157,10 +160,35 @@ namespace tools::world_gen
 	///    ne le franchissent pas (Roads.cpp), les lieux procéduraux et la faune l'évitent
 	///    (Places.cpp, Population.cpp) ; torches posées au fond et le long de la galerie
 	///    (Settlements.cpp). Tout reste dans la case de la ville.
+	///  - `falaise` (v1.0.120) : côte en falaise de craie (type falaises de Douvres) sur
+	///    les cases `cells` : à `beach_m` de la mer, la terre monte d'un coup de `height_m`
+	///    sur `wall_m` (paroi presque verticale), puis reste en plateau herbeux ; au pied,
+	///    une plage étroite garde l'altitude du rivage. Hors des cases, l'effet s'éteint
+	///    sur `fade_m`. La distance à la mer vient d'une grille calculée une fois
+	///    (FalaiseCache, à la première demande) sur le relief SANS les falaises : la mer
+	///    ne gagne ni ne perd un mètre. Paroi blanche dans le splat (couche « neige »,
+	///    seule couche blanche du client) et sur la carte du monde.
+	/// v1.0.120 — grille de distance signée à la côte d'une falaise (pas de 24 m, une par falaise).
+	struct FalaiseGrid
+	{
+		double x0 = 0.0, z0 = 0.0;  ///< coin min (m, repère global)
+		double step = 24.0;         ///< pas (m)
+		int nx = 0, nz = 0;         ///< nombre d'échantillons
+		std::vector<float> dist;    ///< distance signée (m) à la côte : > 0 à terre, < 0 en mer
+		bool hasOcean = false;      ///< faux : aucune mer dans la grille (grille ignorée)
+	};
+	/// v1.0.120 — cache paresseux de la grille d'une falaise, construit une
+	/// seule fois et de façon sûre entre threads (std::call_once), partagé par les copies
+	/// du ReliefDef.
+	struct FalaiseCache
+	{
+		std::once_flag once;
+		std::vector<FalaiseGrid> grids;
+	};
 	struct ReliefDef
 	{
 		std::string id;
-		std::string type;          ///< colline|crevasse|massif|gouffre
+		std::string type;          ///< colline|crevasse|massif|gouffre|falaise
 		std::string cityId;        ///< ville ancrée (posée au centre de sa case) ; vide pour un massif
 		std::string cell;          ///< massif : case d'ancrage (identifiant N019_W013)
 		double offsetXM = 0.0;     ///< massif : décalage du centre vers l'est (m)
@@ -177,6 +205,10 @@ namespace tools::world_gen
 		double floorRadiusM = 0.0; ///< gouffre : rayon du fond plat (m, avant lobes)
 		double galleryHalfWidthM = 0.0; ///< gouffre : demi-largeur du sol de la galerie (m)
 		double galleryWallM = 0.0; ///< gouffre : largeur horizontale des parois de la galerie (m)
+		double beachM = 0.0;       ///< falaise : largeur de la plage au pied (m, depuis la mer)
+		double fadeM = 0.0;        ///< falaise : extinction hors des cases (m)
+		std::vector<std::pair<int, int>> cells; ///< falaise : cases (n, e) du master, puis leurs voisines côtières (',' '_')
+		std::shared_ptr<FalaiseCache> falaise;  ///< falaise : grilles de distance à la mer (paresseuses)
 		/// Gouffre : tracé de la galerie de sortie, du fond vers l'entrée cachée. Au
 		/// chargement : décalages (m, X est / Z sud) depuis le centre du gouffre ; résolu
 		/// en positions GLOBALES (le premier point est dans le fond plat).

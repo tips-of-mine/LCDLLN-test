@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.118)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.120)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -83,8 +83,10 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.114 | `a7df2f9` | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
 | v1.0.115 | `2b1a929` | **références orphelines 42 → 0** : 8 classes PNJ non jouables, 9 butins [GD], dragon adulte générique, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé `monde_entier`, corrections en bloc ; `check_references.py --strict` à la CI ([LORE_BD §16.42](LORE_BD.md)) | — | — |
 | v1.0.116 | `f2d0214` | **quêtes et raids sans case ancrés** : 52 quêtes par des étapes situées [GD], 4 raids (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade hors carte ([LORE_BD §16.43](LORE_BD.md)) | — | ancrages [GD] à relire |
-| v1.0.117 | (ce commit) | **dialogues, contre-quêtes, lieux du T5** : 77 dialogues remplis (répliques originales), 4 contre-quêtes Lune Noire, Krak de Jhenner, citadelle impériale et Passe de Heniak placés ([LORE_BD §16.44](LORE_BD.md)) | — | répliques et cases [GD] à relire |
-| v1.0.118 | (ce commit) | **couleur du nom de zone, torches et fond sombre du gouffre** : niveaux des régions recopiés au master (`sync_levels.py`), teinte de la bannière d'entrée ; lumières et zones d'ambiance des cellules lues par le client ([LORE_BD §16.45](LORE_BD.md)) | R (`places.json`) + client | rendu à vérifier en jeu |
+| v1.0.117 | `d18f33b` | **dialogues, contre-quêtes, lieux du T5** : 77 dialogues remplis (répliques originales), 4 contre-quêtes Lune Noire, Krak de Jhenner, citadelle impériale et Passe de Heniak placés ([LORE_BD §16.44](LORE_BD.md)) | — | répliques et cases [GD] à relire |
+| v1.0.118 | `d18f33b` | **couleur du nom de zone, torches et fond sombre du gouffre** : niveaux des régions recopiés au master (`sync_levels.py`), teinte de la bannière d'entrée ; lumières et zones d'ambiance des cellules lues par le client ([LORE_BD §16.45](LORE_BD.md)) | R (`places.json`) + client | rendu à vérifier en jeu |
+| v1.0.119 | `7515702` | **routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath ouvertes** : 16 cases, 3 villages, 12 lieux [GD], 24 cimetières compensés ([LORE_BD §16.46](LORE_BD.md)) | R | lieux [GD] à relire ; 43 routes restantes |
+| v1.0.120 | (ce commit) | **falaises de craie de la côte ouest** (type Douvres) : relief `falaise` du générateur, 7 cases et leurs voisines côtières, paroi d'environ 90 m, plateau, plage, paroi blanche ([LORE_BD §16.47](LORE_BD.md)) | R | rendu à vérifier en jeu |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -164,7 +166,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.5 Routes et monde jouable
 
-37. **Routes encore coupées** au mur invisible : Farvhenn – Vestmhor (000106), Shaddrek – Klehrwath (000071) ; 43 routes du lore qui s'arrêtent à une zone fermée (16.33, 16.35).
+37. **Routes encore coupées** au mur invisible : Farvhenn – Vestmhor (000106), Shaddrek – Klehrwath (000071) ; 43 routes du lore qui s'arrêtent à une zone fermée (16.33, 16.35). **v1.0.119** : les 2 routes coupées ouvertes (LORE_BD §16.46) ; restent les 43 routes, 316 cases en cascade, par lots.
 38. Tracés `[GD]` des 11 routes créées en v1.0.106 (dont Orkh, Marn) ; Piste des Morts (000236) en double de 000074 (16.35).
 39. Baie de l'Île de la Trêve sans route (5 cases de haut-fond ; une chaussée demanderait un changement de terrain) (16.35).
 40. Routes maritimes et pontons non tracés en jeu ; lignes maritimes non jouées (16.3, 16.34).

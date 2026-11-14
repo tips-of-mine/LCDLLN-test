@@ -1989,7 +1989,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 52, "lieux v1.0.89 : 52 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, trous de la route de Ghrunke Dash, v1.0.106)");
+		Check(inBox == 58, "lieux v1.0.89 : 58 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, trous de la route de Ghrunke Dash, v1.0.106, + 6 de la route de Klehrwath, v1.0.119)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -2259,8 +2259,10 @@ namespace
 			land += (code != ' ' && code != '-') ? 1 : 0;
 		}
 		Check(inList == 55 && land == 55, "cellules et lieux v1.0.104 : 55 cases generees, toutes terrestres");
-		Check(!listed.count("S008_E022") && !listed.count("S012_E016") && !listed.count("N013_E019"),
-			"cellules et lieux v1.0.104 : S008_E022, S012_E016 et N013_E019 restent fermees");
+		// N013_E019 est ouverte en v1.0.119 (route Farvhenn – Vestmhor) ; S012_E016 reste fermée
+		// (le tracé de Shaddrek – Klehrwath passe par le col de S013_E016).
+		Check(!listed.count("S008_E022") && !listed.count("S012_E016") && listed.count("N013_E019"),
+			"cellules et lieux v1.0.104 : S008_E022 et S012_E016 restent fermees (N013_E019 ouverte en v1.0.119)");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
@@ -2531,8 +2533,9 @@ namespace
 		const CityDef* orh = g0.FindCity("hameau_dawnmere");
 		Check(lhynn && near(lhynn->center, -99750.0, -10250.0, 1e-4) && std::fabs(lhynn->plateauY - 55.419153) < 1e-4,
 			"placement v1.0.95 : sans position, Lhynn au site choisi en v1.0.94");
-		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 63.038415) < 1e-4,
-			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94");
+		// v1.0.120 : Altenberg (N005_W012) est sur le plateau des falaises de craie (≈ +87 m).
+		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 150.155075) < 1e-4,
+			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94 (plateau des falaises, v1.0.120)");
 		Check(ver && near(ver->center, -150000.0, -100000.0, 1e-4), "placement v1.0.95 : Vaerdhun (colline) au centre de sa case");
 		Check(orh && near(orh->center, -110000.0, -50000.0, 1e-4), "placement v1.0.95 : Orhendal (depart) au centre de sa case");
 		const PoiDef* temple0 = nullptr;
@@ -2678,7 +2681,7 @@ namespace
 		std::vector<std::string> ids = g.master.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
-		Check(playable.size() == 481, "routes du lore v1.0.105 : 481 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106)");
+		Check(playable.size() == 497, "routes du lore v1.0.105 : 497 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
 		int viaOk = 0;
@@ -3073,8 +3076,95 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// v1.0.120 (décision du 14/11/2026) : falaises de craie (type Douvres) sur 7 cases de
+	/// la côte ouest, relief `falaise` du master : cases et voisines côtières, paroi raide au
+	/// bord de la mer (plus de 10 m de dénivelé sur 5 m quelque part en N007_W013), bande de
+	/// paroi pour le splat, aucun effet loin des cases, relief identique d'un appel à l'autre.
+	void TestFalaiseV1120()
+	{
+		using namespace tools::world_gen;
+		WorldMaster m, plain;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", m, err)
+			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", plain, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "falaises v1.0.120 : master charge");
+		if (!ok) return;
+		const ReliefDef* f = nullptr;
+		for (const ReliefDef& r : m.reliefs) if (r.type == "falaise") f = &r;
+		Check(f && f->id == "falaises_de_craie_ouest" && f->cells.size() > 7 && f->falaise
+			&& std::fabs(f->heightM - 90.0) < 1e-9 && std::fabs(f->wallM - 24.0) < 1e-9,
+			"falaises v1.0.120 : relief falaise (7 cases et leurs voisines cotieres, 90 m, paroi de 24 m)");
+		plain.reliefs.erase(std::remove_if(plain.reliefs.begin(), plain.reliefs.end(),
+			[](const ReliefDef& r) { return r.type == "falaise"; }), plain.reliefs.end());
+		const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ 7, -13 });
+		bool paroi = false, bande = false, stable = true;
+		for (double z = c.z - 5000.0; z < c.z + 5000.0 && !(paroi && bande); z += 40.0)
+		{
+			double prev = MacroHeight(m, c.x - 5000.0, z);
+			for (double x = c.x - 4995.0; x < c.x + 5000.0; x += 5.0)
+			{
+				const double h = MacroHeight(m, x, z);
+				paroi = paroi || std::fabs(h - prev) > 10.0;
+				bande = bande || FalaiseWallAt(m, x, z) > 0.9;
+				prev = h;
+			}
+		}
+		const engine::world::cells::CellPoint far = engine::world::cells::CellCenter({ 7, -9 });
+		for (int k = 0; k < 50; ++k)
+		{
+			const double x = far.x - 4000.0 + 160.0 * k, z = far.z + 37.0 * k;
+			stable = stable && MacroHeight(m, x, z) == MacroHeight(plain, x, z) && MacroHeight(m, x, z) == MacroHeight(m, x, z);
+		}
+		Check(paroi && bande, "falaises v1.0.120 : paroi raide et bande de craie en N007_W013");
+		Check(stable, "falaises v1.0.120 : aucun effet loin des cases (N007_W009), relief deterministe");
+	}
+
+	/// v1.0.119 (décision du 14/11/2026) : routes coupées Farvhenn – Vestmhor (000106) et
+	/// Shaddrek – Klehrwath (000071) ouvertes : 16 cases générées en plus, villages de
+	/// Vestmhor, Dhemorr et Klehrwath jouables (Mhorgad reste fermé : ses routes mènent à des
+	/// zones fermées), un lieu [GD] (POI) par case vide (12), tracé de 000071 imposé par le col.
+	void TestRoutesCoupeesV1119()
+	{
+		using namespace tools::world_gen;
+		WorldMaster m;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", m, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "routes coupees v1.0.119 : master charge");
+		if (!ok) return;
+		const std::set<std::string> gen(m.generatedCells.begin(), m.generatedCells.end());
+		const char* cases[] = { "N013_E017", "N013_E018", "N013_E019", "N014_E017", "N014_E018", "N014_E019",
+			"N015_E018", "N015_E019", "S013_E015", "S013_E016", "S014_E014",
+			"S014_E015", "S014_E016", "S015_E014", "S015_E015", "S015_E016" };
+		size_t ouvertes = 0;
+		for (const char* c : cases) ouvertes += gen.count(c);
+		Check(ouvertes == 16u && !gen.count("N015_E017") && !gen.count("S013_E014"),
+			"routes coupees v1.0.119 : 16 cases generees (Mhorgad N015_E017 et S013_E014 fermees)");
+		size_t villages = 0;
+		for (const CityDef& c : m.cities)
+			if (c.id == "town_0112" || c.id == "town_0134" || c.id == "clearwater")
+				villages += gen.count(c.cell);
+		Check(villages == 3u, "routes coupees v1.0.119 : Vestmhor, Dhemorr et Klehrwath jouables");
+		size_t lieux = 0;
+		for (const PoiDef& p : m.pois)
+			if (p.description.find("[GD v1.0.119") != std::string::npos && gen.count(p.cell)) ++lieux;
+		Check(lieux == 12u, "routes coupees v1.0.119 : 12 lieux [GD] (POI) sur les cases vides");
+		std::map<std::string, std::string> cellOf;
+		for (const CityDef& c : m.cities) cellOf[c.id] = c.cell;
+		bool routes = true;
+		for (const LoreRoadDef& r : m.loreRoads)
+			if (r.id == "000106" || r.id == "000071")
+				routes = routes && gen.count(cellOf[r.fromId]) && gen.count(cellOf[r.toId]);
+		bool col = false;
+		for (const LoreRoadDef& r : m.loreRoads)
+			if (r.id == "000071")
+				col = r.waypoints.size() == 4 && r.waypoints[1] == "S012_E017" && r.waypoints[2] == "S013_E016";
+		Check(routes && col, "routes coupees v1.0.119 : extremites jouables, 000071 par le col de Klehrwath (S012_E017, S013_E016)");
+	}
+
 	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
-	/// Master (`graveyards` : target 666, fill_empty_cells, 71 hameaux sans cimetière) ;
+	/// Master (`graveyards` : target 666, fill_empty_cells, 95 hameaux sans cimetière depuis v1.0.119) ;
 	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
 	/// dans la case, au sec ; sans fill_empty_cells elle n'en a aucun ; un hameau de
 	/// without_graveyard (N001_E011) n'a pas de cimetière mais la cellule en garde un.
@@ -3090,8 +3180,9 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 71u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 71 hameaux sans cimetiere)");
+			&& g.master.graveyardExcluded.size() == 95u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
+			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 95 hameaux sans cimetiere depuis v1.0.119)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
@@ -3541,6 +3632,8 @@ int main()
 	TestPlacementManuelV1095();
 	TestGouffreV1107();
 	TestCimetieresV1111();
+	TestRoutesCoupeesV1119();
+	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();
 	TestGenerationEnfers();

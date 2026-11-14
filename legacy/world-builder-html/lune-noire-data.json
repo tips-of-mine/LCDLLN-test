@@ -1,8 +1,10 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.117",
+    "version": "1.0.120",
     "notes": [
+      "v1.0.120 : [DÉCISION] Falaises de craie blanche (type Douvres) sur la côte ouest : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016, N011_W015 (relief falaises_de_craie_ouest du master).",
+      "v1.0.119 : [DÉCISION] Routes coupées Farvhenn – Vestmhor (000106) et Shaddrek – Klehrwath (000071) ouvertes : 16 cases jouables, 3 villages, 12 lieux [GD] ; 24 cimetières compensés (666).",
       "v1.0.117 : [DÉCISION] Dialogues : 32 dialogues du tome 10 écrits (4 par quête), 45 dialogues sans réplique remplis (T6, T8, T9, T13) ; répliques originales [GD], aucune réplique de la BD recopiée ; plus aucun dialogue vide. Contre-quêtes Lune Noire : 4 créées (registre, laine, péage, convoi de Khurden). Krak de Jhenner, citadelle impériale et Passe de Heniak placés au lore.",
       "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 52 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
       "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
@@ -204758,7 +204760,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -204778,7 +204782,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -205648,7 +205654,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -205668,7 +205676,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -205688,7 +205698,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -206561,7 +206573,8 @@
       "visual_elements": [],
       "notes": [
         "[DÉCISION] (v1.0.81) Grotte cachée du premier-né de Xygga (l'hydre, 66-70), POI poi_grotte_premier_ne_hydre ; LORE_BD §16.10.",
-        "[DÉCISION] (v1.0.85) Balisage du danger (lot 13, correction validée par le propriétaire le 12/11/2026 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78 ; LORE_BD §16.14) : premier-né de Xygga, l'hydre (66-70). À Dhemorr (town_0134, N014_E017), les anciens racontent la légende de la « bête aux têtes de toutes les couleurs » du marais du sud et en interdisent l'approche ; sur la lisière du marais, carcasses de bétail et de cerfs rongées jusqu'à l'os. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81)."
+        "[DÉCISION] (v1.0.85) Balisage du danger (lot 13, correction validée par le propriétaire le 12/11/2026 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78 ; LORE_BD §16.14) : premier-né de Xygga, l'hydre (66-70). À Dhemorr (town_0134, N014_E017), les anciens racontent la légende de la « bête aux têtes de toutes les couleurs » du marais du sud et en interdisent l'approche ; sur la lisière du marais, carcasses de bétail et de cerfs rongées jusqu'à l'os. [GD] Le balisage avertit du danger sans désigner l'entrée, qui reste cachée (regle_dragons_de_xygga, v1.0.81).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -206582,7 +206595,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -206602,7 +206617,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -207793,7 +207810,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208765,7 +208784,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.72) Sanctuaire des Brisants (lieu_sanctuaire_des_brisants) contre les falaises ouest, lieu de la Veillée des Feux des Brisants ; route depuis Vaerdhun ; LORE_BD §16."
+        "[DÉCISION] (v1.0.72) Sanctuaire des Brisants (lieu_sanctuaire_des_brisants) contre les falaises ouest, lieu de la Veillée des Feux des Brisants ; route depuis Vaerdhun ; LORE_BD §16.",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209791,7 +209811,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -210879,7 +210901,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) La Passe de Syzygie et sa muraille (lieu_passe_syzygie) placé dans la cellule ; monde jouable : POI poi_passe_syzygie."
+        "[INFÉRÉ] (v1.0.59) La Passe de Syzygie et sa muraille (lieu_passe_syzygie) placé dans la cellule ; monde jouable : POI poi_passe_syzygie.",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -211917,7 +211940,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (carte du hors-série ; avant : Syzygie, `syzygie`, dont le rattachement HS est Syzygie) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (carte du hors-série ; avant : Syzygie, `syzygie`, dont le rattachement HS est Syzygie) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -212976,7 +213000,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.64) Calvaire des pèlerins (lieu_calvaire_des_pelerins) de la région de départ d'Orhendal (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Calvaire des pèlerins (lieu_calvaire_des_pelerins) de la région de départ d'Orhendal (LORE_BD §15.2).",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -213999,7 +214024,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -232336,7 +232363,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -232357,7 +232385,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -233267,7 +233296,8 @@
       "visual_elements": [],
       "notes": [
         "[GD] (v1.0.90) Rattachée à la région « Désert des Sels » (desert_des_sels) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -233288,7 +233318,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -233309,7 +233340,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -234289,7 +234321,8 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
-        "[INFÉRÉ] (v1.0.90) Rattachée à la région « Royaume des nains de l'est » (royaume_des_nains_de_lest) ; la case n'avait aucune région (LORE_BD §16.19)."
+        "[INFÉRÉ] (v1.0.90) Rattachée à la région « Royaume des nains de l'est » (royaume_des_nains_de_lest) ; la case n'avait aucune région (LORE_BD §16.19).",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -234310,7 +234343,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -234331,7 +234365,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte."
+        "[INFÉRÉ] v1.0.52 : cellule ajoutée par l'agrandissement de la carte.",
+        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
       ],
       "coord_x": null,
       "coord_y": null
@@ -237943,7 +237978,15 @@
       "to_ville_id": "clearwater",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[GD] (v1.0.119) Tracé imposé par S012_E017 et S013_E016 (col de Klehrwath) : la route reste dans les cases ouvertes (S012_E016 et S013_E017, haute montagne, restent fermées) ; LORE_BD §16.46."
+      ],
+      "waypoints": [
+        "S011_E018",
+        "S012_E017",
+        "S013_E016",
+        "S014_E015"
+      ]
     },
     {
       "id": "000072",
@@ -245648,6 +245691,20 @@
           "nom": "Krak de Jhenner, citadelle impériale, Passe de Heniak",
           "decision": "Décision du propriétaire (14/11/2026, avancer en autonomie) : cases [GD] proposées sur la route de Moork à Tsaroth (Krak S006_E012, citadelle S008_E011, passe S008_E009), au lore seulement ; Tsaroth reste sans POI ni ville au master (camp retiré, v1.0.86) ; le Palais des Maîtres des Dragons reste sans entrée (route finie au point praticable, v1.0.106 ; le Sanctuaire des Chevaliers Dragons tient la case S003_W004).",
           "version": "1.0.117"
+        },
+        {
+          "collection": "cells",
+          "id": "routes_coupees_v1119",
+          "nom": "Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath",
+          "decision": "Décision du propriétaire (14/11/2026) : ouvrir les 2 routes coupées seulement (16 cases, villages de Vestmhor, Dhemorr et Klehrwath jouables ; Mhorgad reste fermé, ses routes menant à des zones fermées), un lieu [GD] par case vide (12), cimetières compensés en retirant ceux d'autres hameaux (24, 666 gardés) ; tracé de 000071 imposé par le col de Klehrwath ; les 43 autres routes (316 cases en cascade) par lots ensuite.",
+          "version": "1.0.119"
+        },
+        {
+          "collection": "cells",
+          "id": "falaises_de_craie_ouest",
+          "nom": "Falaises de craie de la côte ouest",
+          "decision": "Décision du propriétaire (14/11/2026) : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016 et N011_W015 sont des falaises, au rendu de falaises de craie blanche comme celles de Douvres ; dimensions [GD] : paroi d'environ 90 m sur 24 m, plage de 30 m au pied.",
+          "version": "1.0.120"
         }
       ]
     },
@@ -288546,6 +288603,1038 @@
       ],
       "entree_cachee": true,
       "secret": true
+    },
+    {
+      "id": "lieu_paturages_de_dhemorr",
+      "name": "Pâturages de Dhemorr",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N013_E018",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "territoires_orcques",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "prés clos",
+        "bergerie de pierre sèche",
+        "chiens de berger"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "13-15"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N013_E018"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Prés clos de haies où les bergers de Dhemorr mènent leurs moutons ; les loups des Marches descendent la nuit jusqu'aux bergeries. Niveaux 13-15.",
+        "Réel en jeu : POI poi_paturages_de_dhemorr (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_de_guet_effondree",
+      "name": "Tour de guet effondrée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "N013_E019",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "territoires_orcques",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour ronde éventrée",
+        "colline nue",
+        "feu de camp des pillards"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "13-15"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N013_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Ancienne tour de guet des Marches, effondrée sur sa colline ; des pillards y guettent les charrettes de la route de Vestmhor. Niveaux 13-15.",
+        "Réel en jeu : POI poi_tour_de_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_charbonniere_de_vestmhor",
+      "name": "Charbonnière de Vestmhor",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N014_E019",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "territoires_orcques",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "meules de charbon",
+        "huttes des charbonniers",
+        "bois empilé"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-15"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N014_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Meules fumantes à la lisière : les charbonniers de Vestmhor y cuisent le bois de la forêt pour les forges des Marches. Niveaux 14-15.",
+        "Réel en jeu : POI poi_charbonniere_de_vestmhor (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_bauge_des_sangliers",
+      "name": "Bauge des sangliers",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "N015_E018",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "territoires_orcques",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "boue retournée",
+        "souille",
+        "pièges de chasseurs"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-15"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N015_E018"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Clairière boueuse retournée par une harde de sangliers ; les chasseurs de Mhorgad y tendent leurs pièges. Niveaux 14-15.",
+        "Réel en jeu : POI poi_bauge_des_sangliers (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_chapelle_sylvestre",
+      "name": "Chapelle sylvestre",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "N015_E019",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "territoires_orcques",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chapelle de bois",
+        "source",
+        "cabane de l'ermite"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "14-15"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N015_E019"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Petite chapelle de bois au cœur de la forêt, où un ermite garde une source et soigne les voyageurs égarés. Niveaux 14-15.",
+        "Réel en jeu : POI poi_chapelle_sylvestre (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_etang_sale",
+      "name": "Étang salé",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S014_E014",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "rives blanches de sel",
+        "râteaux des sauniers",
+        "oiseaux d'eau"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S014_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Étang aux rives blanchies de sel au bord du désert ; les sauniers de Klehrwath y raclent le sel en été. Niveaux 22-24.",
+        "Réel en jeu : POI poi_etang_sale (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_mine_de_cuivre_abandonnee",
+      "name": "Galeries effondrées",
+      "alias": "",
+      "type": "mine_poi",
+      "importance": "",
+      "cell": "S013_E015",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "entrée étayée",
+        "wagonnets renversés",
+        "toiles d'araignée"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S013_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Galeries naines abandonnées après un éboulement ; des araignées géantes ont pris les salles basses. Niveaux 22-26.",
+        "Réel en jeu : POI poi_mine_de_cuivre_abandonnee (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_col_de_klehrwath",
+      "name": "Col de Klehrwath",
+      "alias": "",
+      "type": "passage_poi",
+      "importance": "",
+      "cell": "S013_E016",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "sentier taillé dans la roche",
+        "cairns de balisage",
+        "vautours"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "22-24"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S013_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Passage étroit entre deux crêtes, sur la route de Shaddrek à Klehrwath ; des vautours guettent les bêtes tombées. Niveaux 22-24.",
+        "Réel en jeu : POI poi_col_de_klehrwath (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_ermitage_de_pierre",
+      "name": "Ermitage de la falaise",
+      "alias": "",
+      "type": "shrine_poi",
+      "importance": "",
+      "cell": "S014_E016",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cellule troglodyte",
+        "escalier taillé",
+        "tombes naines"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-26"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S014_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Cellule creusée dans la falaise où vit un prêtre nain retiré du monde ; il garde les tombes de sa lignée. Niveaux 24-26.",
+        "Réel en jeu : POI poi_ermitage_de_pierre (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_tour_naine_effondree",
+      "name": "Tour naine effondrée",
+      "alias": "",
+      "type": "ruins_settlement",
+      "importance": "",
+      "cell": "S015_E014",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "éperon rocheux",
+        "tour éventrée",
+        "os rongés"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "24-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S015_E014"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Ancienne tour de guet naine sur un éperon, à moitié écroulée ; des trolls des montagnes s'y abritent. Niveaux 24-28.",
+        "Réel en jeu : POI poi_tour_naine_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_salle_des_ancetres",
+      "name": "Salle des ancêtres",
+      "alias": "",
+      "type": "open_dungeon_poi",
+      "importance": "",
+      "cell": "S015_E015",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "statues d'ancêtres",
+        "piliers sculptés",
+        "lueurs spectrales"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "25-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S015_E015"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Salle souterraine où les nains de Klehrwath gardaient les statues de leurs ancêtres ; des spectres errent entre les piliers. Niveaux 25-28.",
+        "Réel en jeu : POI poi_salle_des_ancetres (salle) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_cairn_des_mineurs",
+      "name": "Cairn des mineurs",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S015_E016",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "royaume_des_nains_de_lest",
+      "province": "region_marches",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cairn de pierres",
+        "outils en offrande",
+        "vue sur les crêtes"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "25-28"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S015_E016"
+      ],
+      "notes": [
+        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Haut cairn de pierres dressé en mémoire des mineurs morts dans la montagne ; on y laisse un outil en offrande. Niveaux 25-28.",
+        "Réel en jeu : POI poi_cairn_des_mineurs (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
     }
   ],
   "route_types": [

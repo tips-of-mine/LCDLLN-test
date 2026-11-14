@@ -2533,8 +2533,9 @@ namespace
 		const CityDef* orh = g0.FindCity("hameau_dawnmere");
 		Check(lhynn && near(lhynn->center, -99750.0, -10250.0, 1e-4) && std::fabs(lhynn->plateauY - 55.419153) < 1e-4,
 			"placement v1.0.95 : sans position, Lhynn au site choisi en v1.0.94");
-		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 63.038415) < 1e-4,
-			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94");
+		// v1.0.120 : Altenberg (N005_W012) est sur le plateau des falaises de craie (≈ +87 m).
+		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 150.155075) < 1e-4,
+			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94 (plateau des falaises, v1.0.120)");
 		Check(ver && near(ver->center, -150000.0, -100000.0, 1e-4), "placement v1.0.95 : Vaerdhun (colline) au centre de sa case");
 		Check(orh && near(orh->center, -110000.0, -50000.0, 1e-4), "placement v1.0.95 : Orhendal (depart) au centre de sa case");
 		const PoiDef* temple0 = nullptr;

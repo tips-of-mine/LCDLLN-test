@@ -3,7 +3,7 @@
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
     "version": "1.0.119",
     "notes": [
-      "v1.0.119 : [DÉCISION] Routes coupées Farvhenn – Vestmhor (000106) et Shaddrek – Klehrwath (000071) ouvertes : 18 cases jouables, 4 villages, 13 lieux [GD] ; cimetières compensés (666).",
+      "v1.0.119 : [DÉCISION] Routes coupées Farvhenn – Vestmhor (000106) et Shaddrek – Klehrwath (000071) ouvertes : 16 cases jouables, 3 villages, 12 lieux [GD] ; 24 cimetières compensés (666).",
       "v1.0.117 : [DÉCISION] Dialogues : 32 dialogues du tome 10 écrits (4 par quête), 45 dialogues sans réplique remplis (T6, T8, T9, T13) ; répliques originales [GD], aucune réplique de la BD recopiée ; plus aucun dialogue vide. Contre-quêtes Lune Noire : 4 créées (registre, laine, péage, convoi de Khurden). Krak de Jhenner, citadelle impériale et Passe de Heniak placés au lore.",
       "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 52 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
       "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
@@ -204739,9 +204739,7 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [
-        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000106 Farvhenn – Vestmhor) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
-      ],
+      "notes": [],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -232333,8 +232331,7 @@
       "visual_elements": [],
       "notes": [
         "[GD] (v1.0.90) Rattachée à la région « Désert des Sels » (desert_des_sels) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.119) Case ouverte au jeu (route 000071 Shaddrek – Klehrwath) ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46."
+        "[INFÉRÉ] (v1.0.92) Sud sans frontière sur la carte du hors-série : rattachée à la région HS la plus proche parmi Nains du Sud, Drach, Nains de l'Est et Baronnie de Moork (Royaume des nains de l'est) (LORE_BD §16.21)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -237970,7 +237967,15 @@
       "to_ville_id": "clearwater",
       "to_lieu_id": "",
       "description": "",
-      "notes": []
+      "notes": [
+        "[GD] (v1.0.119) Tracé imposé par S012_E017 et S013_E016 (col de Klehrwath) : la route reste dans les cases ouvertes (S012_E016 et S013_E017, haute montagne, restent fermées) ; LORE_BD §16.46."
+      ],
+      "waypoints": [
+        "S011_E018",
+        "S012_E017",
+        "S013_E016",
+        "S014_E015"
+      ]
     },
     {
       "id": "000072",
@@ -245680,7 +245685,7 @@
           "collection": "cells",
           "id": "routes_coupees_v1119",
           "nom": "Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath",
-          "decision": "Décision du propriétaire (14/11/2026) : ouvrir les 2 routes coupées seulement (18 cases, villages de Vestmhor, Dhemorr, Mhorgad et Klehrwath jouables), un lieu [GD] par case vide (13), cimetières compensés en retirant ceux d'autres hameaux (666 gardés) ; les 43 autres routes (316 cases en cascade) par lots ensuite.",
+          "decision": "Décision du propriétaire (14/11/2026) : ouvrir les 2 routes coupées seulement (16 cases, villages de Vestmhor, Dhemorr et Klehrwath jouables ; Mhorgad reste fermé, ses routes menant à des zones fermées), un lieu [GD] par case vide (12), cimetières compensés en retirant ceux d'autres hameaux (24, 666 gardés) ; tracé de 000071 imposé par le col de Klehrwath ; les 43 autres routes (316 cases en cascade) par lots ensuite.",
           "version": "1.0.119"
         }
       ]
@@ -289012,92 +289017,6 @@
       ]
     },
     {
-      "id": "lieu_relais_du_sel_de_klehrwath",
-      "name": "Relais du sel de Klehrwath",
-      "alias": "",
-      "type": "camp_poi",
-      "importance": "",
-      "cell": "S013_E014",
-      "position_x_m": null,
-      "position_z_m": null,
-      "region_id": "royaume_des_nains_de_lest",
-      "province": "region_marches",
-      "zone_id": "",
-      "faction_control": "",
-      "features": [
-        "enclos des bêtes",
-        "sacs de sel",
-        "abri de toile"
-      ],
-      "dimensions_estimees": {
-        "hauteur": "",
-        "largeur": "",
-        "diametre": "",
-        "zone_visible": ""
-      },
-      "topographie": {
-        "forme_generale": "",
-        "relief": "",
-        "implantation": "",
-        "pentes": "",
-        "gorge": ""
-      },
-      "elements_principaux": [],
-      "architecture": {
-        "presence": "",
-        "style": "",
-        "etat": ""
-      },
-      "hydrographie": {
-        "type": "",
-        "eau": "",
-        "couleur": "",
-        "elements": ""
-      },
-      "vegetation": {
-        "densite": "",
-        "type": "",
-        "repartition": "",
-        "couleur": "",
-        "champs": "",
-        "arbres": "",
-        "herbe": ""
-      },
-      "couleurs_dominantes": [],
-      "ambiance": {
-        "atmosphere": "",
-        "sentiment": "",
-        "niveau_menace": "22-24"
-      },
-      "ciel_climat": {
-        "ciel": "",
-        "nuages": "",
-        "luminosite": "",
-        "meteo": ""
-      },
-      "style_artistique": {
-        "medium": "",
-        "traits": "",
-        "texture": "",
-        "inspiration": ""
-      },
-      "niveau_occupation": "",
-      "acces": {
-        "route_principale": "",
-        "distance_visuelle": "",
-        "dominance_paysage": ""
-      },
-      "remarques_visuelles": [],
-      "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [
-        "S013_E014"
-      ],
-      "notes": [
-        "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Halte des caravanes qui montent le sel du désert jusqu'à Klehrwath ; les pillards du Désert des Sels rôdent autour des chameaux. Niveaux 22-24.",
-        "Réel en jeu : POI poi_relais_du_sel_de_klehrwath (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
-      ]
-    },
-    {
       "id": "lieu_etang_sale",
       "name": "Étang salé",
       "alias": "",
@@ -289185,7 +289104,7 @@
     },
     {
       "id": "lieu_mine_de_cuivre_abandonnee",
-      "name": "Mine de cuivre abandonnée",
+      "name": "Galeries effondrées",
       "alias": "",
       "type": "mine_poi",
       "importance": "",
@@ -289357,7 +289276,7 @@
     },
     {
       "id": "lieu_ermitage_de_pierre",
-      "name": "Ermitage de pierre",
+      "name": "Ermitage de la falaise",
       "alias": "",
       "type": "shrine_poi",
       "importance": "",

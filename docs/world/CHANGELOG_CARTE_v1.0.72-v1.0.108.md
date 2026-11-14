@@ -85,7 +85,7 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.116 | `f2d0214` | **quêtes et raids sans case ancrés** : 52 quêtes par des étapes situées [GD], 4 raids (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade hors carte ([LORE_BD §16.43](LORE_BD.md)) | — | ancrages [GD] à relire |
 | v1.0.117 | `d18f33b` | **dialogues, contre-quêtes, lieux du T5** : 77 dialogues remplis (répliques originales), 4 contre-quêtes Lune Noire, Krak de Jhenner, citadelle impériale et Passe de Heniak placés ([LORE_BD §16.44](LORE_BD.md)) | — | répliques et cases [GD] à relire |
 | v1.0.118 | `d18f33b` | **couleur du nom de zone, torches et fond sombre du gouffre** : niveaux des régions recopiés au master (`sync_levels.py`), teinte de la bannière d'entrée ; lumières et zones d'ambiance des cellules lues par le client ([LORE_BD §16.45](LORE_BD.md)) | R (`places.json`) + client | rendu à vérifier en jeu |
-| v1.0.119 | (ce commit) | **routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath ouvertes** : 18 cases, 4 villages, 13 lieux [GD], 29 cimetières compensés ([LORE_BD §16.46](LORE_BD.md)) | R | lieux [GD] à relire ; 43 routes restantes |
+| v1.0.119 | (ce commit) | **routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath ouvertes** : 16 cases, 3 villages, 12 lieux [GD], 24 cimetières compensés ([LORE_BD §16.46](LORE_BD.md)) | R | lieux [GD] à relire ; 43 routes restantes |
 
 ## 3. Impact sur le jeu et déploiement
 

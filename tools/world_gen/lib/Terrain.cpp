@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <queue>
 
 namespace tools::world_gen
@@ -286,7 +287,7 @@ namespace tools::world_gen
 		const double dx = x - r.center.x, dz = z - r.center.z;
 		// Gouffre (v1.0.107) : il creuse jusqu'à une altitude absolue (GouffreHeight,
 		// appliqué par ReliefOffset), il n'ajoute aucune élévation.
-		if (r.type == "gouffre") return 0.0;
+		if (r.type == "gouffre" || r.type == "falaise") return 0.0;
 		if (r.type == "massif")
 		{
 			// Dôme au contour lobé (pied entre 0,76 et 1,24 × foot_radius_m), découpé par
@@ -324,6 +325,212 @@ namespace tools::world_gen
 		return r.heightM * massif * wall;
 	}
 
+	namespace
+	{
+		/// Vrai pendant la construction des grilles de falaise : MacroHeight y rend le
+		/// relief SANS les falaises (la distance à la mer ne dépend pas d'elle-même).
+		thread_local bool g_falaiseBuilding = false;
+
+		/// Distance (m) du point au rectangle de la case (n, e) ; 0 dedans.
+		double DistToCellRect(int n, int e, double x, double z)
+		{
+			const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ n, e });
+			const double h = engine::world::cells::kCellSizeMeters * 0.5;
+			const double dx = std::max(0.0, std::fabs(x - c.x) - h), dz = std::max(0.0, std::fabs(z - c.z) - h);
+			return std::hypot(dx, dz);
+		}
+
+		/// Poids des cases d'une falaise en (x, z) : 1 dans une case, s'éteint sur fade_m.
+		double FalaiseCellWeight(const ReliefDef& r, double x, double z)
+		{
+			double d = 1e18;
+			for (const auto& [n, e] : r.cells) d = std::min(d, DistToCellRect(n, e, x, z));
+			return 1.0 - SmoothStep(0.0, r.fadeM, d);
+		}
+
+		/// Construit la grille de distance SIGNÉE à la côte de la falaise : relief sans
+		/// falaises échantillonné tous les 24 m ; masque « sous la mer » lissé par un
+		/// filtre majoritaire de 408 m (les marais côtiers piquetés d'îlots et de mares
+		/// deviennent une côte nette) ; la mer « reliée au large » part des échantillons du
+		/// masque lissé dont le code du lore est marin (' ', '-') et se propage (4 voisins) dans le masque ; le reste (mares intérieures) compte comme
+		/// terre. Distances par chanfrein 3-4 (deux passes) : positive à terre (distance au
+		/// large), négative en mer (distance à la terre), côte au passage par zéro.
+		FalaiseGrid BuildFalaiseGrid(const WorldMaster& m, const ReliefDef& r)
+		{
+			FalaiseGrid g;
+			g.step = 24.0;
+			// Une seule grille sur l'emprise des cases (et de leurs voisines côtières), plus
+			// la marge d'extinction : une seule côte, aucun raccord entre grilles.
+			const double margin = r.fadeM + r.beachM + r.wallM + 300.0;
+			const double half = engine::world::cells::kCellSizeMeters * 0.5;
+			double x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18;
+			for (const auto& [n, e] : r.cells)
+			{
+				const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ n, e });
+				x0 = std::min(x0, c.x - half - margin); x1 = std::max(x1, c.x + half + margin);
+				z0 = std::min(z0, c.z - half - margin); z1 = std::max(z1, c.z + half + margin);
+			}
+			g.x0 = x0; g.z0 = z0;
+			g.nx = static_cast<int>(std::ceil((x1 - x0) / g.step)) + 1;
+			g.nz = static_cast<int>(std::ceil((z1 - z0) / g.step)) + 1;
+			const size_t count = static_cast<size_t>(g.nx) * static_cast<size_t>(g.nz);
+			const double sea = m.scale.seaLevelM;
+			const double cs = engine::world::cells::kCellSizeMeters;
+			std::vector<uint8_t> under(count, 0), ocean(count, 0);
+			for (int j = 0; j < g.nz; ++j)
+				for (int i = 0; i < g.nx; ++i)
+					under[static_cast<size_t>(j) * g.nx + i] = MacroHeight(m, g.x0 + i * g.step, g.z0 + j * g.step) < sea ? 1 : 0;
+			// Filtre majoritaire (fenêtre de 17 × 17 échantillons) par image intégrale.
+			std::vector<int> integral(static_cast<size_t>(g.nx + 1) * (g.nz + 1), 0);
+			for (int j = 0; j < g.nz; ++j)
+				for (int i = 0; i < g.nx; ++i)
+					integral[static_cast<size_t>(j + 1) * (g.nx + 1) + i + 1] = under[static_cast<size_t>(j) * g.nx + i]
+						+ integral[static_cast<size_t>(j) * (g.nx + 1) + i + 1] + integral[static_cast<size_t>(j + 1) * (g.nx + 1) + i]
+						- integral[static_cast<size_t>(j) * (g.nx + 1) + i];
+			const int R = 8;
+			std::vector<uint8_t> smooth(count, 0);
+			std::vector<size_t> stack;
+			for (int j = 0; j < g.nz; ++j)
+				for (int i = 0; i < g.nx; ++i)
+				{
+					const int i0 = std::max(0, i - R), i1 = std::min(g.nx, i + R + 1), j0 = std::max(0, j - R), j1 = std::min(g.nz, j + R + 1);
+					const int sum = integral[static_cast<size_t>(j1) * (g.nx + 1) + i1] - integral[static_cast<size_t>(j0) * (g.nx + 1) + i1]
+						- integral[static_cast<size_t>(j1) * (g.nx + 1) + i0] + integral[static_cast<size_t>(j0) * (g.nx + 1) + i0];
+					const size_t k = static_cast<size_t>(j) * g.nx + i;
+					if (2 * sum <= (i1 - i0) * (j1 - j0)) continue;
+					smooth[k] = 1;
+					const double x = g.x0 + i * g.step, z = g.z0 + j * g.step;
+					const char code = LoreCode(m, static_cast<int>(std::lround(-z / cs)), static_cast<int>(std::lround(x / cs)));
+					if (code == ' ' || code == '-') { ocean[k] = 1; stack.push_back(k); }
+				}
+			while (!stack.empty())
+			{
+				const size_t k = stack.back(); stack.pop_back();
+				const int i = static_cast<int>(k % g.nx), j = static_cast<int>(k / g.nx);
+				const int ni[4] = { i - 1, i + 1, i, i }, nj[4] = { j, j, j - 1, j + 1 };
+				for (int q = 0; q < 4; ++q)
+				{
+					if (ni[q] < 0 || nj[q] < 0 || ni[q] >= g.nx || nj[q] >= g.nz) continue;
+					const size_t kk = static_cast<size_t>(nj[q]) * g.nx + ni[q];
+					if (smooth[kk] && !ocean[kk]) { ocean[kk] = 1; stack.push_back(kk); }
+				}
+			}
+			// Aucune mer dans la grille : grille sans information (ignorée à la lecture).
+			g.hasOcean = std::find(ocean.begin(), ocean.end(), uint8_t{ 1 }) != ocean.end();
+			if (!g.hasOcean) return g;
+			g.dist.assign(count, 0.0f);
+			// Chanfrein 3-4 (unités de pas / 3) vers les échantillons « cible ».
+			const float inf = std::numeric_limits<float>::max() / 4.0f;
+			auto chamfer = [&](uint8_t target) {
+				std::vector<float> d(count, inf);
+				for (size_t k = 0; k < count; ++k) if (ocean[k] == target) d[k] = 0.0f;
+				auto relax = [&](int i, int j, int di, int dj, float w)
+				{
+					const int a2 = i + di, b2 = j + dj;
+					if (a2 < 0 || b2 < 0 || a2 >= g.nx || b2 >= g.nz) return;
+					float& cur = d[static_cast<size_t>(j) * g.nx + i];
+					cur = std::min(cur, d[static_cast<size_t>(b2) * g.nx + a2] + w);
+				};
+				for (int j = 0; j < g.nz; ++j)
+					for (int i = 0; i < g.nx; ++i)
+					{ relax(i, j, -1, 0, 3.f); relax(i, j, 0, -1, 3.f); relax(i, j, -1, -1, 4.f); relax(i, j, 1, -1, 4.f); }
+				for (int j = g.nz - 1; j >= 0; --j)
+					for (int i = g.nx - 1; i >= 0; --i)
+					{ relax(i, j, 1, 0, 3.f); relax(i, j, 0, 1, 3.f); relax(i, j, 1, 1, 4.f); relax(i, j, -1, 1, 4.f); }
+				return d;
+			};
+			const std::vector<float> toOcean = chamfer(1), toLand = chamfer(0);
+			const float toM = static_cast<float>(g.step / 3.0), halfStep = static_cast<float>(g.step * 0.5);
+			for (size_t k = 0; k < count; ++k)
+			{
+				// Côte à mi-chemin entre un échantillon de mer et un de terre.
+				if (ocean[k]) g.dist[k] = (toLand[k] >= inf) ? -1e9f : -(toLand[k] * toM - halfStep);
+				else g.dist[k] = (toOcean[k] >= inf) ? 1e9f : toOcean[k] * toM - halfStep;
+			}
+			return g;
+		}
+
+		/// Grilles de la falaise, construites à la première demande (une fois, thread-safe).
+		const std::vector<FalaiseGrid>& FalaiseGrids(const WorldMaster& m, const ReliefDef& r)
+		{
+			std::call_once(r.falaise->once, [&]()
+			{
+				const bool prev = g_falaiseBuilding;
+				g_falaiseBuilding = true;
+				r.falaise->grids.push_back(BuildFalaiseGrid(m, r));
+				g_falaiseBuilding = prev;
+			});
+			return r.falaise->grids;
+		}
+
+		/// Distance signée (m) à la côte en (x, z) (positive à terre), bilinéaire, moyenne
+		/// des grilles qui couvrent le point pondérée par l'éloignement de leur bord (fondu
+		/// de 600 m) : les grilles voisines, échantillonnées aux mêmes points, se raccordent
+		/// sans marche ; très grande hors des grilles. \param coverage somme des poids,
+		/// bornée à 1 : la falaise s'éteint avec elle au bord des grilles qui voient la mer.
+		double FalaiseDistToSea(const WorldMaster& m, const ReliefDef& r, double x, double z, double& coverage)
+		{
+			double sum = 0.0, wsum = 0.0;
+			for (const FalaiseGrid& g : FalaiseGrids(m, r))
+			{
+				const double fx = (x - g.x0) / g.step, fz = (z - g.z0) / g.step;
+				if (!g.hasOcean || fx < 0.0 || fz < 0.0 || fx > g.nx - 1.0 || fz > g.nz - 1.0) continue;
+				const double edge = std::min({ fx, fz, g.nx - 1.0 - fx, g.nz - 1.0 - fz }) * g.step;
+				const double wg = SmoothStep(0.0, 600.0, edge);
+				if (wg <= 0.0) continue;
+				const int i = std::min(static_cast<int>(fx), g.nx - 2), j = std::min(static_cast<int>(fz), g.nz - 2);
+				const double tx = fx - i, tz = fz - j;
+				auto at = [&](int a, int b) { return static_cast<double>(g.dist[static_cast<size_t>(b) * g.nx + a]); };
+				const double v = (at(i, j) * (1 - tx) + at(i + 1, j) * tx) * (1 - tz) + (at(i, j + 1) * (1 - tx) + at(i + 1, j + 1) * tx) * tz;
+				sum += wg * Clamp(v, -5000.0, 5000.0);
+				wsum += wg;
+			}
+			coverage = std::min(1.0, wsum);
+			return wsum > 0.0 ? sum / wsum : 1e9;
+		}
+	}
+
+	double FalaiseOffset(const WorldMaster& m, const ReliefDef& r, double x, double z, double baseH)
+	{
+		if (g_falaiseBuilding || !r.falaise) return 0.0;
+		const double w = FalaiseCellWeight(r, x, z);
+		if (w <= 0.0) return 0.0;
+		const double sea = m.scale.seaLevelM;
+		double coverage = 0.0;
+		const double dist = FalaiseDistToSea(m, r, x, z, coverage);
+		if (dist >= 1e8) return 0.0; // aucune côte connue ici
+		if (dist <= 0.0)
+		{
+			// Côté mer : les îlots du marais côtier s'enfoncent sous l'eau (8 m de fondu).
+			const double target = sea - 1.5;
+			return (baseH > target) ? w * coverage * SmoothStep(0.0, -8.0, dist) * (target - baseH) : 0.0;
+		}
+		// Côté terre : plage comblée au niveau du rivage (mares comprises), puis la paroi.
+		const double fill = (baseH < sea + 0.5) ? (sea + 0.5 - baseH) * SmoothStep(0.0, 4.0, dist) : 0.0;
+		const double prof = SmoothStep(r.beachM, r.beachM + r.wallM, dist);
+		// Hauteur variable le long de la côte (± 15 %, ondulation de ≈ 1,8 km).
+		const double var = 1.0 + 0.3 * Clamp(Fbm(x, z, 1800.0, 2, r.noiseSeed), -0.5, 0.5);
+		return w * coverage * (fill + r.heightM * var * prof);
+	}
+
+	double FalaiseWallAt(const WorldMaster& m, double x, double z, double extraM)
+	{
+		double best = 0.0;
+		for (const ReliefDef& r : m.reliefs)
+		{
+			if (r.type != "falaise" || !r.falaise) continue;
+			const double w = FalaiseCellWeight(r, x, z);
+			if (w <= 0.0) continue;
+			double coverage = 0.0;
+			const double dist = FalaiseDistToSea(m, r, x, z, coverage);
+			if (dist >= 1e8) continue;
+			const double band = SmoothStep(r.beachM - 6.0, r.beachM + 4.0, dist)
+				* (1.0 - SmoothStep(r.beachM + r.wallM + 4.0 + extraM, r.beachM + r.wallM + 20.0 + extraM, dist));
+			best = std::max(best, w * coverage * band);
+		}
+		return best;
+	}
+
 	double ReliefOffset(const WorldMaster& m, double x, double z, double baseH)
 	{
 		double h = 0.0, massif = 0.0;
@@ -331,6 +538,9 @@ namespace tools::world_gen
 		for (const ReliefDef& r : m.reliefs)
 		{
 			if (r.type == "gouffre") { gouffre = true; continue; }
+			// Falaise (v1.0.120) : côte nette tirée du masque lissé ; îlots du marais noyés côté
+			// mer, plage et mares comblées côté terre, puis paroi et plateau (FalaiseOffset).
+			if (r.type == "falaise") { h += FalaiseOffset(m, r, x, z, baseH); continue; }
 			(r.type == "massif" ? massif : h) += ReliefContribution(r, x, z);
 		}
 		// Massifs (v1.0.77) : seulement sur les terres émergées (0,5 à 3 m au-dessus de

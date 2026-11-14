@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.119",
+    "version": "1.0.120",
     "notes": [
+      "v1.0.120 : [DÉCISION] Falaises de craie blanche (type Douvres) sur la côte ouest : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016, N011_W015 (relief falaises_de_craie_ouest du master).",
       "v1.0.119 : [DÉCISION] Routes coupées Farvhenn – Vestmhor (000106) et Shaddrek – Klehrwath (000071) ouvertes : 16 cases jouables, 3 villages, 12 lieux [GD] ; 24 cimetières compensés (666).",
       "v1.0.117 : [DÉCISION] Dialogues : 32 dialogues du tome 10 écrits (4 par quête), 45 dialogues sans réplique remplis (T6, T8, T9, T13) ; répliques originales [GD], aucune réplique de la BD recopiée ; plus aucun dialogue vide. Contre-quêtes Lune Noire : 4 créées (registre, laine, péage, convoi de Khurden). Krak de Jhenner, citadelle impériale et Passe de Heniak placés au lore.",
       "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 52 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
@@ -207809,7 +207810,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -208781,7 +208784,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.72) Sanctuaire des Brisants (lieu_sanctuaire_des_brisants) contre les falaises ouest, lieu de la Veillée des Feux des Brisants ; route depuis Vaerdhun ; LORE_BD §16."
+        "[DÉCISION] (v1.0.72) Sanctuaire des Brisants (lieu_sanctuaire_des_brisants) contre les falaises ouest, lieu de la Veillée des Feux des Brisants ; route depuis Vaerdhun ; LORE_BD §16.",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -209807,7 +209811,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -210895,7 +210901,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[INFÉRÉ] (v1.0.59) La Passe de Syzygie et sa muraille (lieu_passe_syzygie) placé dans la cellule ; monde jouable : POI poi_passe_syzygie."
+        "[INFÉRÉ] (v1.0.59) La Passe de Syzygie et sa muraille (lieu_passe_syzygie) placé dans la cellule ; monde jouable : POI poi_passe_syzygie.",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -211933,7 +211940,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (carte du hors-série ; avant : Syzygie, `syzygie`, dont le rattachement HS est Syzygie) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (carte du hors-série ; avant : Syzygie, `syzygie`, dont le rattachement HS est Syzygie) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null
@@ -212992,7 +213000,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.64) Calvaire des pèlerins (lieu_calvaire_des_pelerins) de la région de départ d'Orhendal (LORE_BD §15.2)."
+        "[GD] (v1.0.64) Calvaire des pèlerins (lieu_calvaire_des_pelerins) de la région de départ d'Orhendal (LORE_BD §15.2).",
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -214015,7 +214024,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+      ],
       "coord_x": null,
       "coord_y": null,
       "points_of_interest": []
@@ -245687,6 +245698,13 @@
           "nom": "Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath",
           "decision": "Décision du propriétaire (14/11/2026) : ouvrir les 2 routes coupées seulement (16 cases, villages de Vestmhor, Dhemorr et Klehrwath jouables ; Mhorgad reste fermé, ses routes menant à des zones fermées), un lieu [GD] par case vide (12), cimetières compensés en retirant ceux d'autres hameaux (24, 666 gardés) ; tracé de 000071 imposé par le col de Klehrwath ; les 43 autres routes (316 cases en cascade) par lots ensuite.",
           "version": "1.0.119"
+        },
+        {
+          "collection": "cells",
+          "id": "falaises_de_craie_ouest",
+          "nom": "Falaises de craie de la côte ouest",
+          "decision": "Décision du propriétaire (14/11/2026) : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016 et N011_W015 sont des falaises, au rendu de falaises de craie blanche comme celles de Douvres ; dimensions [GD] : paroi d'environ 90 m sur 24 m, plage de 30 m au pied.",
+          "version": "1.0.120"
         }
       ]
     },

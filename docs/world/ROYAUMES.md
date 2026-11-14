@@ -220,6 +220,17 @@ voisines raccord au mètre près :
    `places.json`, recopié dans `world/<monde>/secret_places.json` (annuaire des MJ du
    shard, retiré du paquet client par la CI) ; interdit pour un portail relié et une
    extrémité de route du lore (LORE_BD §16.37).
+   Depuis la v1.0.120, `falaise` pose une **côte en falaise de craie** (type falaises de
+   Douvres) sur une liste de cases (`cells`, sans ville) et leurs voisines côtières
+   (codes `,` et `_`, où tombe souvent le rivage réel) : grille de distance signée à la
+   côte (pas de 24 m, calculée une fois, à la première demande, sur le relief sans la
+   falaise) ; masque « sous la mer » lissé (filtre majoritaire de 408 m : le marais côtier
+   piqueté devient une côte nette), mer reliée au large (codes ` ` et `-`). Côté mer, les
+   îlots du marais sont noyés à 1,5 m sous la mer ; côté terre, plage et mares comblées au
+   niveau du rivage sur `beach_m`, puis paroi de `height_m` (± 15 %) sur `wall_m`, plateau
+   au-dessus ; extinction sur `fade_m` hors des cases. Paroi blanche : couche « neige » du
+   splat (la seule couche claire du client) et liseré blanc sur la carte du monde
+   (LORE_BD §16.47).
 2. Grille grossière 250 m du relief ; **sites des villes** (meilleur
    emplacement plat et sec de la case ; centre de la case pour une ville de
    départ ou ancrée sur un relief ; **position manuelle** `position`

@@ -413,6 +413,51 @@ namespace tools::world_gen
 					out.reliefs.push_back(std::move(d));
 					continue;
 				}
+				// Falaise (v1.0.120) : côte en falaise de craie sur une liste de cases, sans
+				// ville ; grilles de distance à la mer calculées à la première demande.
+				if (d.type == "falaise")
+				{
+					d.beachM = GetNum(v, "beach_m", 30.0);
+					d.fadeM = GetNum(v, "fade_m", 1500.0);
+					bool cellsOk = true;
+					std::set<std::string> seen;
+					for (const std::string& c : GetStrArray(v, "cells"))
+					{
+						int cn = 0, ce = 0;
+						cellsOk = cellsOk && ParseCellId(c, cn, ce) && seen.insert(c).second;
+						d.cells.emplace_back(cn, ce);
+					}
+					if (d.id.empty() || !reliefIds.insert(d.id).second || !d.cityId.empty() || d.cells.empty() || !cellsOk)
+					{
+						err = "master: relief invalide '" + d.id + "' (id unique, falaise : cases valides et distinctes, pas de ville)"; return false;
+					}
+					if (!(d.heightM >= 20.0 && d.heightM <= 200.0 && d.beachM >= 0.0 && d.beachM <= 200.0
+						&& d.wallM >= 8.0 && d.wallM <= 100.0 && d.fadeM >= 300.0 && d.fadeM <= 4000.0))
+					{
+						err = "master: relief '" + d.id + "' : dimensions de falaise invalides"; return false;
+					}
+					// Le rivage réel (côte déformée par le bruit) tombe souvent dans la case
+					// côtière voisine (code ',' ou '_') : elle porte la falaise elle aussi.
+					{
+						std::set<std::pair<int, int>> have(d.cells.begin(), d.cells.end());
+						const size_t listed = d.cells.size();
+						for (size_t k = 0; k < listed; ++k)
+							for (int dn = -1; dn <= 1; ++dn)
+								for (int de = -1; de <= 1; ++de)
+								{
+									const std::pair<int, int> nb{ d.cells[k].first + dn, d.cells[k].second + de };
+									const char code = LoreCode(out, nb.first, nb.second);
+									if ((code == ',' || code == '_') && have.insert(nb).second) d.cells.push_back(nb);
+								}
+					}
+					d.n = d.cells.front().first; d.e = d.cells.front().second;
+					const engine::world::cells::CellPoint c0 = engine::world::cells::CellCenter({ d.n, d.e });
+					d.center = { c0.x, c0.z };
+					d.noiseSeed = HashString(d.id.c_str());
+					d.falaise = std::make_shared<FalaiseCache>();
+					out.reliefs.push_back(std::move(d));
+					continue;
+				}
 				const auto city = std::find_if(out.cities.begin(), out.cities.end(), [&](const CityDef& c) { return c.id == d.cityId; });
 				if (d.id.empty() || !reliefIds.insert(d.id).second || city == out.cities.end() || !anchored.insert(d.cityId).second)
 				{

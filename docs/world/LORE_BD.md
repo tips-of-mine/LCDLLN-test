@@ -1056,6 +1056,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.44](#1644-dialogues-contre-quêtes-lune-noire-et-lieux-du-t5-v10117) | v1.0.117 | Dialogues, contre-quêtes Lune Noire et lieux du T5 | 77 dialogues remplis, 4 contre-quêtes, Krak de Jhenner, citadelle et Passe de Heniak placés. |
 | [16.45](#1645-couleur-du-nom-de-zone-torches-et-fond-sombre-du-gouffre-v10118) | v1.0.118 | Couleur du nom de zone, torches et fond sombre du gouffre | Niveaux des régions recopiés au master, teinte de la bannière ; lumières et ambiance des cellules lues par le client. |
 | [16.46](#1646-routes-coupées-farvhenn--vestmhor-et-shaddrek--klehrwath-v10119) | v1.0.119 | Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath | 16 cases ouvertes, 3 villages jouables, 12 lieux [GD], 24 cimetières compensés (666 gardés). |
+| [16.47](#1647-falaises-de-craie-de-la-côte-ouest-v10120) | v1.0.120 | Falaises de craie de la côte ouest | 7 cases (et leurs voisines côtières) en falaises blanches type Douvres : paroi d'environ 90 m, plateau herbeux, plage au pied. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4686,6 +4687,30 @@ cascade (même méthode, sans limite de distance), elles ajouteraient environ 31
 **Tests** : `world_gen_tests` (`TestRoutesCoupeesV1119` : 16 cases, 3 villages, 12 lieux, extrémités des routes
 jouables, tracé par le col ; 497 cellules jouables ; 58 cases dans la boîte des nains de l'est ; 95 hameaux sans
 cimetière ; N013_E019 ouverte).
+
+### 16.47 Falaises de craie de la côte ouest (v1.0.120)
+
+**Décision du propriétaire (14/11/2026)** : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016 et
+N011_W015 sont des falaises, au rendu de falaises de craie comme celles de Douvres (photo de référence : paroi blanche
+presque verticale, prairie au sommet, plage de galets étroite au pied, mer turquoise).
+
+**Réalisation** (générateur, relief `falaise` `falaises_de_craie_ouest` du master ; dimensions `[GD]`) :
+
+| Élément | Valeur | Effet |
+|---|---|---|
+| Cases | les 7 cases + leurs voisines côtières (`,` `_`), 21 au total | le rivage réel, déformé par le bruit, tombe souvent dans la case côtière voisine |
+| Côte | masque « sous la mer » lissé sur 408 m, mer reliée au large | les marais côtiers piquetés d'îlots deviennent une côte nette ; les îlots sont noyés, les mares comblées |
+| Plage | `beach_m` = 30 m | au niveau du rivage, au pied de la paroi |
+| Paroi | `height_m` = 90 m (± 15 % le long de la côte) sur `wall_m` = 24 m | pente d'environ 75° (heightmap de 4,9 m) |
+| Plateau | prairie relevée de 90 m | s'éteint en pente douce sur `fade_m` = 1,5 km hors des cases ; Altenberg (N005_W012) est sur le plateau |
+| Couleur | paroi blanche | couche « neige » du splat (seule couche claire du client), liseré blanc sur la carte du monde |
+
+**Limites** : la craie utilise la texture de neige du client (pas de texture de craie dédiée) ; les îles au large
+proche ont aussi leurs falaises ; non vérifié à l'écran (pas de GPU dans l'environnement de développement).
+
+**Tests** : `world_gen_tests` (`TestFalaiseV1120` : relief chargé, paroi raide et bande de craie en N007_W013, aucun
+effet loin des cases, relief déterministe) ; génération des cellules N004_W012, N005_W012, N006_W012 et N010_W016 ;
+génération complète (666 cimetières).
 
 ## 17. Questions ouvertes
 

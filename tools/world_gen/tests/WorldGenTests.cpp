@@ -3075,6 +3075,50 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// v1.0.120 (décision du 14/11/2026) : falaises de craie (type Douvres) sur 7 cases de
+	/// la côte ouest, relief `falaise` du master : cases et voisines côtières, paroi raide au
+	/// bord de la mer (plus de 10 m de dénivelé sur 5 m quelque part en N007_W013), bande de
+	/// paroi pour le splat, aucun effet loin des cases, relief identique d'un appel à l'autre.
+	void TestFalaiseV1120()
+	{
+		using namespace tools::world_gen;
+		WorldMaster m, plain;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", m, err)
+			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", plain, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "falaises v1.0.120 : master charge");
+		if (!ok) return;
+		const ReliefDef* f = nullptr;
+		for (const ReliefDef& r : m.reliefs) if (r.type == "falaise") f = &r;
+		Check(f && f->id == "falaises_de_craie_ouest" && f->cells.size() > 7 && f->falaise
+			&& std::fabs(f->heightM - 90.0) < 1e-9 && std::fabs(f->wallM - 24.0) < 1e-9,
+			"falaises v1.0.120 : relief falaise (7 cases et leurs voisines cotieres, 90 m, paroi de 24 m)");
+		plain.reliefs.erase(std::remove_if(plain.reliefs.begin(), plain.reliefs.end(),
+			[](const ReliefDef& r) { return r.type == "falaise"; }), plain.reliefs.end());
+		const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ 7, -13 });
+		bool paroi = false, bande = false, stable = true;
+		for (double z = c.z - 5000.0; z < c.z + 5000.0 && !(paroi && bande); z += 40.0)
+		{
+			double prev = MacroHeight(m, c.x - 5000.0, z);
+			for (double x = c.x - 4995.0; x < c.x + 5000.0; x += 5.0)
+			{
+				const double h = MacroHeight(m, x, z);
+				paroi = paroi || std::fabs(h - prev) > 10.0;
+				bande = bande || FalaiseWallAt(m, x, z) > 0.9;
+				prev = h;
+			}
+		}
+		const engine::world::cells::CellPoint far = engine::world::cells::CellCenter({ 7, -9 });
+		for (int k = 0; k < 50; ++k)
+		{
+			const double x = far.x - 4000.0 + 160.0 * k, z = far.z + 37.0 * k;
+			stable = stable && MacroHeight(m, x, z) == MacroHeight(plain, x, z) && MacroHeight(m, x, z) == MacroHeight(m, x, z);
+		}
+		Check(paroi && bande, "falaises v1.0.120 : paroi raide et bande de craie en N007_W013");
+		Check(stable, "falaises v1.0.120 : aucun effet loin des cases (N007_W009), relief deterministe");
+	}
+
 	/// v1.0.119 (décision du 14/11/2026) : routes coupées Farvhenn – Vestmhor (000106) et
 	/// Shaddrek – Klehrwath (000071) ouvertes : 16 cases générées en plus, villages de
 	/// Vestmhor, Dhemorr et Klehrwath jouables (Mhorgad reste fermé : ses routes mènent à des
@@ -3588,6 +3632,7 @@ int main()
 	TestGouffreV1107();
 	TestCimetieresV1111();
 	TestRoutesCoupeesV1119();
+	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();
 	TestGenerationEnfers();

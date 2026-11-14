@@ -3,7 +3,7 @@
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
     "version": "1.0.116",
     "notes": [
-      "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 53 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
+      "v1.0.116 : [DÉCISION] Quêtes et raids sans case (décisions du propriétaire du 14/11/2026) : 52 quêtes ancrées par des étapes situées [GD], 4 raids placés (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade (6 quêtes, 2 raids) laissé hors carte.",
       "v1.0.115 : [DÉCISION] Références orphelines 42 → 0 (décisions du propriétaire du 13/11/2026) : 8 classes PNJ non jouables, 9 butins [GD], créature générique du dragon adulte, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé monde_entier, corrections évidentes en bloc ; check_references.py --strict à la CI.",
       "v1.0.114 : [DÉCISION] Exploit des 666 cimetières et lieux secrets découverts mis en jeu (décisions du propriétaire du 13/11/2026, affichage « message discret + compteur ») : par personnage, un cimetière des Royaumes est visité en y entrant vivant (rayon de 15 m) ou en y réapparaissant ; l'exploit exploit_pelerin_des_666_tombes est débloqué au 666e ; un lieu secret est révélé pour toujours sur la carte du seul personnage qui entre dans son rayon (radius_m d'une ville, 40 m pour un lieu) ; messages système dans le chat (« Cimetière visité (124/666) », « Lieu découvert : <nom> », « Exploit débloqué : <titre> »), compteur « Cimetières visités : N/666 » dans l'onglet Exploits. Identifiant stable gy=<id> des cimetières écrit par tools/world_gen ; serveur : migration 0086, messages UDP 105/106, kProtocolVersion 21 (LORE_BD §16.41).",
       "v1.0.113 : [DÉCISION] Réponses du propriétaire du 13/11/2026 : noms [GD] validés en bloc ; Xygga femelle et noms [GD] des 10 premiers-nés ; année de jeu 3417 AO ; niveaux confirmés (Kendrhir 38-56, raids de fin 45/50/55/60, faction +5 seuil 20) ; balisage par la couleur du nom de zone ; Harrodh à l'Empire ; « la Légion » de l'Île de la Trêve = les deux ; contre-quêtes Lune Noire ; Ghulvathan en N009_E011 ; faction_demons → Légion infernale ; demi-elfe noir → elfe noir ; race des Menthats créée (Lune Noire) ; îles par bateau ; arbitrages de l'Oracle, d'Heusgly et du Palais du Maître des Dragons ; règles de l'exploit des 666 cimetières et des lieux secrets découverts ; ouverture des routes coupées décidée (LORE_BD §16.40).",
@@ -30639,8 +30639,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Rejoindre Greldinard et les Dzorak à Tbarak. [GD]",
+          "texte": "Accéder au campement principal Dzorak en prouvant sa valeur au combat.",
           "ville_id": "ville_tbarak"
+        },
+        {
+          "texte": "Fouiller les archives de la Lune Noire pour trouver les termes réels du pacte."
+        },
+        {
+          "texte": "Décision : révéler la vérité à Greldinard ou l'utiliser comme monnaie d'échange."
+        },
+        {
+          "texte": "Si révélation : convaincre Greldinard avec une preuve concrète — il est sceptique."
+        },
+        {
+          "texte": "Conséquence : rupture du pacte Dzorak/Lune Noire, ou trahison du joueur si utilisé à des fins personnelles."
         }
       ],
       "source_lore": [
@@ -30751,8 +30763,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Atteindre la pyramide volante de Methrhton par la voie des airs (Haawling Spines). [GD]",
+          "texte": "Obtenir une monture volante (dragon, mante géante ou sort de vol).",
           "lieu_id": "lieu_haawling_spines"
+        },
+        {
+          "texte": "Localiser la pyramide en observant sa trajectoire depuis trois points différents."
+        },
+        {
+          "texte": "Convaincre le Serpent Héraut d'accorder une audience — il est intransigeant sur le protocole."
+        },
+        {
+          "texte": "Trouver la question précise qui force Methrhton à répondre sans 'intervenir'."
+        },
+        {
+          "texte": "Repartir avant le coucher du soleil — la pyramide disparaît et ne reviendra pas avant longtemps."
         }
       ],
       "source_lore": [
@@ -31093,8 +31117,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Retrouver la succube à Sauken Glude de Magistrya. [GD]",
+          "texte": "Convaincre la succube de partager la technique — elle résiste, c'est une révélation dangereuse.",
           "ville_id": "sauken_glude_of_magistrya"
+        },
+        {
+          "texte": "Séance 1 — Fusion mentale : visualiser le symbole du lieu de destination."
+        },
+        {
+          "texte": "Séance 2 — Premier essai : téléportation de 10 mètres, épuisement total pendant 1 heure de jeu."
+        },
+        {
+          "texte": "Séance 3 — Révélation : le joueur perçoit une présence étrangère dans l'esprit de la succube."
+        },
+        {
+          "texte": "Décision : continuer l'apprentissage (Haazheel observe) ou trouver une autre voie plus lente."
         }
       ],
       "source_lore": [
@@ -31297,8 +31333,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Retrouver Ghorghor Bey au fief de Garundel, base de Wismerhill. [GD]",
+          "texte": "Détecter l'agent de la Lune Noire qui approche Ghorghor dans une taverne.",
           "ville_id": "ville_garundel_fief"
+        },
+        {
+          "texte": "Surveiller la négociation sans intervenir — comprendre exactement ce qui est offert."
+        },
+        {
+          "texte": "Choisir : convaincre Ghorghor avant qu'il accepte, ou laisser la trahison se produire."
+        },
+        {
+          "texte": "Si intervention : lui offrir une alternative concrète — une cible à combattre qui vaut davantage."
+        },
+        {
+          "texte": "Sceller la loyauté par un combat commun — Ghorghor teste toujours par la force."
         }
       ],
       "source_lore": [
@@ -31355,8 +31403,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Trouver Iaun Reith dans la forêt des Lutins. [GD]",
+          "texte": "Le rencontrer dans la forêt des lutins — il est le seul à ne pas se faire jouer de tours.",
           "lieu_id": "lieu_souche_creuse_des_lutins"
+        },
+        {
+          "texte": "Découvrir qu'il cherche depuis longtemps quelque chose perdu dans le marais."
+        },
+        {
+          "texte": "L'accompagner dans le marais malgré le danger — sa mante connaît les passages sûrs."
+        },
+        {
+          "texte": "Trouver ce qu'il cherchait : une lettre d'un ami mort depuis longtemps."
+        },
+        {
+          "texte": "Décider de la lui remettre telle quelle ou de la brûler pour l'épargner."
         }
       ],
       "source_lore": [
@@ -33069,8 +33129,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Croiser l'armée de Haazheel en marche vers Lhynn, dans la plaine de l'Oracle. [GD]",
+          "texte": "Tomber sur l'armée de Haazheel — immense, avec Menthats, géants et créatures démoniaques.",
           "lieu_id": "lieu_menhirs_plaine_oracle"
+        },
+        {
+          "texte": "Décider de traverser calmement au lieu de fuir (fuir = mort certaine)."
+        },
+        {
+          "texte": "Maintenir le groupe calme — Pilou fait du bruit, Ghorghor veut se battre."
+        },
+        {
+          "texte": "Traverser les rangs sous les regards des géants ('Hé! Ils sont plus gros que moi!')."
+        },
+        {
+          "texte": "Sortir de l'armée sain et sauf — 'J'ai jamais eu aussi peur de ma vie!'."
         }
       ],
       "source_lore": [
@@ -33692,8 +33764,29 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Rejoindre Haazheel Thorn à Moork pour le rituel de la Négation. [GD]",
+          "texte": "Accepter l'invitation de Haazheel",
           "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Consulter les Vents confidants (choix difficile)"
+        },
+        {
+          "texte": "Accomplir quest_neuf_femmes_avant_transformation_t9 (si descendance souhaitée)"
+        },
+        {
+          "texte": "Se présenter à Haazheel (se dévêtir de son armure)"
+        },
+        {
+          "texte": "Endurer le rituel des Seigneurs de la Négation (danse + lames — extrêmement douloureux)"
+        },
+        {
+          "texte": "Résister à l'extinction (jet de survie narrative)"
+        },
+        {
+          "texte": "Recevoir investiture : armure métal étoiles, épée hors-monde, heaume/couronne, opale de feu émeraude"
+        },
+        {
+          "texte": "Recevoir monture : Sombre Chevaucheur des Ténèbres"
         }
       ],
       "source_lore": [],
@@ -35297,7 +35390,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Pénétrer dans la nécropole de Der Hem Shelbem jusqu'à la salle du trône du Prince. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Pénétrer dans la nécropole de Der Hem Shelbem jusqu'à la salle du trône du Prince. [GD]",
@@ -35353,7 +35448,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Assister au rituel dans la nécropole de Der Hem Shelbem, avec le crâne du Prince Hors-Vivant. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Assister au rituel dans la nécropole de Der Hem Shelbem, avec le crâne du Prince Hors-Vivant. [GD]",
@@ -35463,7 +35560,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Assister au conseil de guerre de l'Empereur au palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Assister au conseil de guerre de l'Empereur au palais de Lhynn. [GD]",
@@ -35675,7 +35774,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Accompagner Parsifal au palais de Lhynn pour remettre les Clefs de Northind. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Accompagner Parsifal au palais de Lhynn pour remettre les Clefs de Northind. [GD]",
@@ -35734,7 +35835,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Recevoir à Moork le chevalier masqué qui demande audience. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Recevoir à Moork le chevalier masqué qui demande audience. [GD]",
@@ -35847,7 +35950,9 @@
       "difficulty": 3,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Se rendre au Palais des Maîtres des Dragons. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre au Palais des Maîtres des Dragons. [GD]",
@@ -35933,8 +36038,7 @@
       "etapes_struct": [
         {
           "texte": "Découvrir le Pari Cosmique entre Lucifer et Pazuzu aux Enfers.",
-          "pnj_id": "char_pazuzu",
-          "cell": "enfers:N001_E000"
+          "pnj_id": "char_pazuzu"
         },
         {
           "texte": "Assister aux joutes d'échecs démoniaques et à l'accord conclu."
@@ -35961,7 +36065,7 @@
       "counter_quest_factions": [],
       "counter_quest_races": [],
       "notes": [
-        "[GD] (v1.0.116) Étapes situées (ancrage sur la carte) proposées (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43). Case des Enfers (palais de Lucifer) : non dessinée par l'éditeur, qui n'a pas la carte des Enfers."
+        "[GD] (v1.0.116) Se passe aux Enfers (palais de Lucifer, case enfers:N001_E000) : sans étape située, l'éditeur refusant une case des Enfers (Décision du propriétaire (14/11/2026) ; LORE_BD §16.43)."
       ],
       "quest_kind": "",
       "has_counter_quest": false,
@@ -36480,8 +36584,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Rejoindre le Juggernaut de Haazheel Thorn, stationné devant Moork. [GD]",
+          "texte": "Accueillir les Princes Dragons au Juggernaut",
           "ville_id": "ville_moork"
+        },
+        {
+          "texte": "Recevoir leur réponse diplomatique"
+        },
+        {
+          "texte": "Prendre en charge les dix dragons offerts"
         }
       ],
       "source_lore": [],
@@ -36576,8 +36686,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Rejoindre le pentacle tracé dans la Plaine des Cendres. [GD]",
+          "texte": "Rejoindre Haazheel et les Seigneurs sur la plaine du pentacle",
           "lieu_id": "lieu_plaine_des_cendres"
+        },
+        {
+          "texte": "Participer au rituel d'incantation"
+        },
+        {
+          "texte": "Amplifier la puissance de la Lune Noire pour la bataille"
         }
       ],
       "source_lore": [],
@@ -36623,8 +36739,17 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Prendre position avec l'armée : rassemblement au fief de Garundel, entrée de la Grande Plaine. [GD]",
+          "texte": "Rejoindre le Juggernaut ou l'armée impériale",
           "ville_id": "ville_garundel_fief"
+        },
+        {
+          "texte": "Recevoir les ordres stratégiques"
+        },
+        {
+          "texte": "Prendre un Menthat"
+        },
+        {
+          "texte": "Prendre position sur la plaine"
         }
       ],
       "source_lore": [],
@@ -37171,7 +37296,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "story_principale",
-      "steps": [],
+      "steps": [
+        "Se rendre au palais impérial de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
@@ -37215,7 +37342,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "story_principale",
-      "steps": [],
+      "steps": [
+        "Se rendre au palais impérial de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
@@ -37259,7 +37388,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "quete_secondaire_fief",
-      "steps": [],
+      "steps": [
+        "Se rendre au palais impérial de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre au palais impérial de Lhynn. [GD]",
@@ -37303,7 +37434,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "story_principale",
-      "steps": [],
+      "steps": [
+        "Rejoindre le camp de l'Oracle assiégé. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Rejoindre le camp de l'Oracle assiégé. [GD]",
@@ -37347,7 +37480,9 @@
       "difficulty": 1,
       "repeatable": false,
       "tags": [],
-      "steps": [],
+      "steps": [
+        "Suivre la Route Noire jusqu'à la Porte des Enfers, au cœur de l'Empire. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Suivre la Route Noire jusqu'à la Porte des Enfers, au cœur de l'Empire. [GD]",
@@ -37392,7 +37527,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "quete_epique_cachee",
-      "steps": [],
+      "steps": [
+        "Se rendre au temple de Methraton à Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre au temple de Methraton à Lhynn. [GD]",
@@ -37436,7 +37573,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "quete_gouvernance",
-      "steps": [],
+      "steps": [
+        "Siéger au conseil impérial, au palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Siéger au conseil impérial, au palais de Lhynn. [GD]",
@@ -37572,7 +37711,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Rejoindre Shamballeau dans son atelier du palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Rejoindre Shamballeau dans son atelier du palais de Lhynn. [GD]",
@@ -37623,7 +37764,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Consulter l'Oracle à l'Aérolithe. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Consulter l'Oracle à l'Aérolithe. [GD]",
@@ -37672,7 +37815,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Invoquer Methraton dans son temple de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Invoquer Methraton dans son temple de Lhynn. [GD]",
@@ -37722,7 +37867,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Rencontrer les Seigneurs de la Négation dans leurs appartements du palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Rencontrer les Seigneurs de la Négation dans leurs appartements du palais de Lhynn. [GD]",
@@ -37771,7 +37918,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Passer la dernière nuit au palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Passer la dernière nuit au palais de Lhynn. [GD]",
@@ -37862,7 +38011,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Recevoir l'Écho d'Haazheel Thorn au palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Recevoir l'Écho d'Haazheel Thorn au palais de Lhynn. [GD]",
@@ -37907,7 +38058,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Se rendre auprès de l'Oracle. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Se rendre auprès de l'Oracle. [GD]",
@@ -37952,7 +38105,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Organiser l'exode depuis le palais de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Organiser l'exode depuis le palais de Lhynn. [GD]",
@@ -37994,7 +38149,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Activer le passage final au Seuil de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Activer le passage final au Seuil de Lhynn. [GD]",
@@ -38040,7 +38197,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Ouvrir le passage aux dragons au Seuil de Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Ouvrir le passage aux dragons au Seuil de Lhynn. [GD]",
@@ -38196,7 +38355,9 @@
       "difficulty": 1,
       "repeatable": false,
       "type": "",
-      "steps": [],
+      "steps": [
+        "Interroger l'armurier de l'Empereur à Lhynn. [GD]"
+      ],
       "etapes_struct": [
         {
           "texte": "Interroger l'armurier de l'Empereur à Lhynn. [GD]",
@@ -38251,8 +38412,20 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Atteindre le rocher de l'Oracle et attendre d'être convoqué. [GD]",
+          "texte": "Rejoindre le rocher de l'Oracle",
           "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Attendre la convocation mentale"
+        },
+        {
+          "texte": "Entrer par la porte (s'ouvre seule quand appelé)"
+        },
+        {
+          "texte": "Poser sa question — une seule"
+        },
+        {
+          "texte": "Recevoir la réponse (parfois sibylline)"
         }
       ],
       "source_lore": [],
@@ -38732,8 +38905,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Écumer les fermes autour de Whispers Hill. [GD]",
+          "texte": "Fouiller les fermes isolées de la vallée.",
           "ville_id": "ville_whispers_hill"
+        },
+        {
+          "texte": "Rapporter 20 unités de vivres au camp."
+        },
+        {
+          "texte": "Éviter les patrouilles des Ordres."
         }
       ],
       "source_lore": [
@@ -38795,8 +38974,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Chasser dans la forêt de la Rencontre. [GD]",
+          "texte": "Pister et abattre 5 lapins (loot_viande_lapin_t00).",
           "lieu_id": "lieu_foret_rencontre_t1"
+        },
+        {
+          "texte": "Traquer et tuer un sanglier (loot_viande_sanglier_t00)."
+        },
+        {
+          "texte": "Rapporter la venaison au foyer."
         }
       ],
       "source_lore": [
@@ -38860,8 +39045,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Croiser le chevalier errant dans la forêt de la Rencontre. [GD]",
+          "texte": "Croiser le chevalier errant sur le chemin forestier.",
           "lieu_id": "lieu_foret_rencontre_t1"
+        },
+        {
+          "texte": "Accepter la joute montée (3 passes de lance)."
+        },
+        {
+          "texte": "Vaincre ou désarçonner l'adversaire."
         }
       ],
       "source_lore": [
@@ -38926,8 +39117,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Retourner aux ruines du château où Pazuzu enseignait l'invocation. [GD]",
+          "texte": "Trouver le cercle d'invocation résiduel en forêt.",
           "lieu_id": "lieu_ruines_wismerhill"
+        },
+        {
+          "texte": "Invoquer 3 démons mineurs ('apparais !')."
+        },
+        {
+          "texte": "Les lier ou les bannir selon la voie choisie."
         }
       ],
       "source_lore": [
@@ -39132,8 +39329,17 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Rejoindre Hazol, cité libre sur la route de la horde. [GD]",
+          "texte": "Atteindre la cité menacée des Marches.",
           "ville_id": "ville_hazol"
+        },
+        {
+          "texte": "Renforcer les portes et poster les archers."
+        },
+        {
+          "texte": "Repousser la première vague de pillards."
+        },
+        {
+          "texte": "Couvrir l'évacuation des habitants."
         }
       ],
       "source_lore": [
@@ -39204,8 +39410,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Partir de Tbarak, première cité-étape de la carte de campagne. [GD]",
+          "texte": "Relever 5 points d'intérêt des Marches.",
           "ville_id": "ville_tbarak"
+        },
+        {
+          "texte": "Repérer les mouvements de la horde."
+        },
+        {
+          "texte": "Transmettre la carte mise à jour."
         }
       ],
       "source_lore": [
@@ -39495,8 +39707,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Trouver un maître de la magie psychique à Dhunfal. [GD]",
+          "texte": "Trouver un maître de la voie psychique.",
           "ville_id": "ville_dunfold"
+        },
+        {
+          "texte": "Réussir 3 exercices de projection mentale."
+        },
+        {
+          "texte": "Canaliser un premier rayon offensif."
         }
       ],
       "source_lore": [
@@ -39561,8 +39779,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "S'entraîner auprès des bretteurs de la forteresse de Klindor. [GD]",
+          "texte": "Acquérir une seconde lame.",
           "ville_id": "ville_klindor"
+        },
+        {
+          "texte": "Réussir l'enchaînement à deux armes contre 5 adversaires."
+        },
+        {
+          "texte": "Valider la technique auprès d'un maître d'armes."
         }
       ],
       "source_lore": [
@@ -39625,8 +39849,14 @@
       ],
       "etapes_struct": [
         {
-          "texte": "Gravir jusqu'à l'Oracle aux voix multiples. [GD]",
+          "texte": "Atteindre le sanctuaire de l'Oracle.",
           "ville_id": "ville_oracle_camp"
+        },
+        {
+          "texte": "Présenter une offrande / résoudre l'épreuve d'accès."
+        },
+        {
+          "texte": "Poser sa question et recevoir une prophétie énigmatique."
         }
       ],
       "source_lore": [
@@ -243850,7 +244080,7 @@
           "collection": "quests",
           "id": "quetes_sans_case",
           "nom": "Quêtes sans case",
-          "decision": "Décision du propriétaire (14/11/2026) : Proposer une case par quête d'après la BD et la fiche ([GD], liste à relire) ; les régions connues (Marches, Terres du Nord, forêt des Lutins, Enfers) sont placées en bloc. 53 quêtes ancrées par leurs étapes situées.",
+          "decision": "Décision du propriétaire (14/11/2026) : Proposer une case par quête d'après la BD et la fiche ([GD], liste à relire) ; les régions connues (Marches, Terres du Nord, forêt des Lutins, Enfers) sont placées en bloc. 52 quêtes ancrées par leurs étapes situées.",
           "version": "1.0.116"
         },
         {

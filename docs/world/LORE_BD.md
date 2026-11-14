@@ -1052,7 +1052,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.40](#1640-décisions-du-131126-v10113) | v1.0.113 | Décisions du 13/11/2026 | Noms [GD] validés, Xygga femelle et noms des dragons, année de jeu, niveaux, balisage, factions, Ghulvathan, références orphelines, arbitrages de lore. |
 | [16.41](#1641-exploit-des-666-cimetières-et-lieux-secrets-découverts-v10114) | v1.0.114 | Exploit des 666 cimetières et lieux secrets découverts | Mécanique serveur par personnage : cimetières visités (rayon ou réapparition), lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits. |
 | [16.42](#1642-références-orphelines-tranchées-v10115) | v1.0.115 | Références orphelines tranchées | 42 → 0 : classes PNJ, butins [GD], dragon adulte, exploit de la mort d'Haghendorf, types de lieu, corrections en bloc ; `--strict` à la CI. |
-| [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 53 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
+| [16.43](#1643-quêtes-et-raids-sans-case-ancrés-v10116) | v1.0.116 | Quêtes et raids sans case ancrés | 52 quêtes ancrées par des étapes situées [GD], 4 raids placés, Empire du Jade hors carte. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4524,9 +4524,11 @@ régénération du monde n'est plus compté pour les personnages qui l'avaient v
 **Décisions du propriétaire (14/11/2026)** : je propose une case par quête d'après la BD et la fiche (**[GD], à relire**) ;
 l'Empire du Jade reste hors carte ; la Grande Bataille de la Plaine est une instance dont l'entrée est dans une ville ;
 les quêtes et raids de région connue sont placés en bloc. Restent sans case : les 6 quêtes et 2 raids de l'Empire du Jade
-(contenu d'extension) et `quest_t00_jeu_cruel_intro`, ancrée dans la case `enfers:N001_E000` (palais de Lucifer) que
-l'éditeur ne dessine pas (pas de carte des Enfers). Ancrage = `etapes_struct` (nouvelle étape `[GD]` quand la quête n'en
-avait pas, sinon ville, lieu ou case ajouté à l'étape existante).
+(contenu d'extension) et `quest_t00_jeu_cruel_intro`, qui se passe aux Enfers (palais de Lucifer, case `enfers:N001_E000`,
+écrite en note : l'éditeur refuse une case des Enfers dans une étape située). Ancrage = `etapes_struct` : une quête qui
+n'en avait pas reçoit les étapes de `steps` (mêmes textes, règle de l'éditeur) et la ville, le lieu ou la case sur sa
+première étape ; une quête sans `steps` reçoit une étape `[GD]` écrite dans les deux ; sinon le lieu est ajouté à l'étape
+existante qui s'y passe.
 
 | Ancrage | Quêtes |
 |---|---|

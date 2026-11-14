@@ -14,14 +14,50 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici. ; v1.0.119 : 16 cases des routes Farvhenn - Vestmhor (000106, N013-N015 x E017-E019 sauf N015_E017) et Shaddrek - Klehrwath (000071, S013-S015 x E014-E016 sauf S013_E014), villages de Vestmhor, Dhemorr et Klehrwath et une case de marge",
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici. ; v1.0.119 : 16 cases des routes Farvhenn - Vestmhor (000106, N013-N015 x E017-E019 sauf N015_E017) et Shaddrek - Klehrwath (000071, S013-S015 x E014-E016 sauf S013_E014), villages de Vestmhor, Dhemorr et Klehrwath et une case de marge ; v1.0.121 : lot 1 (routes courtes), 103 cases dont 11 deja jouables par les corridors de depart (routes 000053 000080 000208 000021 000025 000038 000040 000041 000053 000055 000142 000154 000165 000198 000211 000028 000054 000157), un lieu [GD] par case vide ; v1.0.122 : lot 2 (routes longues, le reste), 146 cases (routes 000057 000073 000076 000077 000079 000116 000143 000145 000156 000158 000159 000048 000068 000078 000164 000062 000063), un lieu [GD] par case vide",
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
-  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus).",
+  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus). v1.0.121-v1.0.122 : les 245 cases ouvertes par les lots de routes sont dans village_only_cells (seuls les villes et villages du lore y ont un cimetiere : ni cimetiere isole ni cimetiere de hameau) ; leurs 34 cimetieres de villages en plus compenses par 34 hameaux ajoutes (129 au total), meme choix glouton (recensement --graveyard-report).",
   "graveyards": {
     "target": 666,
     "fill_empty_cells": true,
+    "village_only_cells": [
+      "N007_W010", "N007_W012", "N008_W012", "S013_E012", "S013_E013", "S013_E014", "S014_E012", "S014_E013",
+      "S015_E012", "S015_E013", "N015_E017", "N016_E017", "N016_E018", "N016_E019", "N017_E017", "N017_E018",
+      "N017_E019", "N018_E017", "N018_E018", "N018_E019", "N019_E017", "N019_E018", "N019_E019", "N017_E015",
+      "N017_E016", "N018_E015", "N018_E016", "N019_E015", "N019_E016", "S007_W009", "S007_W010", "S007_W011",
+      "S008_W009", "S008_W010", "S008_W011", "S009_W010", "S009_W011", "N009_E004", "N009_E005", "N009_E006",
+      "N010_E004", "N010_E005", "N010_E006", "N011_E005", "N011_E006", "N005_E012", "N006_E010", "N007_E010",
+      "N013_E015", "N013_E016", "N014_E015", "N014_E016", "N015_E015", "N015_E016", "S015_E011", "S016_E011",
+      "S016_E012", "S016_E013", "S017_E011", "S017_E012", "S017_E013", "N010_W007", "N010_W008", "N011_W007",
+      "N011_W008", "N011_W009", "N012_W008", "N012_W009", "S004_W009", "N017_E020", "N017_E021", "N018_E020",
+      "N018_E021", "N019_E020", "N019_E021", "N003_E009", "N003_E010", "N005_E008", "N005_E009", "N018_E022",
+      "N018_E023", "N019_E022", "N019_E023", "N020_E021", "N020_E022", "N020_E023",
+      "S011_E011", "S012_E012", "N008_E003",
+      "S006_W009", "S011_E010",
+      "S012_E011",
+      "S007_W012", "S007_W013", "S007_W014", "S008_W012", "S008_W013", "S008_W014", "S009_W012", "S009_W013",
+      "S003_W012", "S003_W013", "S003_W014", "S004_W014", "S004_W015", "S004_W016", "S005_W014", "S005_W015",
+      "S005_W016", "N013_E007", "N013_E008", "N013_E009", "N014_E007", "N014_E008", "N014_E009", "N015_E007",
+      "N015_E008", "N015_E009", "N009_W004", "N010_W003", "N010_W004", "N010_W005", "N011_W004", "N011_W005",
+      "N012_W004", "N012_W005", "S006_E007", "S007_E006", "S008_E003", "S008_E004", "S008_E005", "S009_E003",
+      "S009_E004", "S009_E005", "S010_E003", "S010_E004", "S010_E005", "N016_E012", "N016_E013", "N016_E014",
+      "N016_E015", "N016_E016", "N017_E012", "N017_E013", "N017_E014", "N018_E012", "N018_E013", "N018_E014",
+      "N013_E010", "N014_E011", "N014_E012", "N014_E013", "N015_E011", "N015_E012", "N015_E013", "N016_E011",
+      "N017_E009", "N017_E010", "N017_E011", "N018_E009", "N018_E010", "N018_E011", "N019_E009", "N019_E010",
+      "N019_E011", "N019_E012", "N020_E010", "N020_E011", "N020_E012", "N021_E010", "N021_E011", "N021_E012",
+      "N020_E018", "N020_E019", "N020_E020", "N021_E018", "N021_E019", "N021_E020", "N022_E018", "N022_E019",
+      "N022_E020", "N015_E022", "N015_E023", "N015_E024", "N016_E022", "N016_E023", "N016_E024", "N017_E022",
+      "N017_E023", "N017_E024", "S005_W013", "S006_W013", "S006_W014", "S006_W015", "S007_W015", "S011_E004",
+      "S012_E002", "S012_E003", "S012_E004", "S013_E002", "S013_E003", "S013_E004", "S014_E002", "S014_E003",
+      "S014_E004", "S010_W001", "S010_W002", "S011_W001", "S011_W002", "S011_W003", "S012_E000", "S012_E001",
+      "S012_W001", "S012_W002", "S012_W003", "S014_E000", "S014_E001", "S015_E000", "S015_E001", "S015_E002",
+      "S016_E000", "S016_E001", "S016_E002", "S007_W001", "S007_W002", "S008_W001", "S008_W002", "S009_W001",
+      "S009_W002", "S013_E005", "S013_E006", "S013_E007", "S014_E005", "S014_E006", "S014_E007", "S015_E005",
+      "S015_E006", "S015_E007",
+      "N016_E008", "N017_E008", "N009_W005", "S006_E006", "N010_W006", "N010_W001", "N010_W002"
+    ],
     "without_graveyard": [
       "cell_n000_e002_hameau_0",
       "cell_n000_w006_hameau_0",
@@ -117,7 +153,41 @@
       "cell_n010_e017_hameau_0",
       "cell_n014_e017_hameau_1",
       "cell_s009_e020_hameau_0",
-      "cell_s013_e020_hameau_1"
+      "cell_s013_e020_hameau_1",
+      "cell_n004_w012_hameau_0",
+      "cell_n010_w010_hameau_0",
+      "cell_n010_w010_hameau_1",
+      "cell_s001_w011_hameau_0",
+      "cell_n010_w015_hameau_1",
+      "cell_n001_e015_hameau_0",
+      "cell_n000_w003_hameau_0",
+      "cell_s001_e011_hameau_0",
+      "cell_n006_w006_hameau_0",
+      "cell_n001_w008_hameau_1",
+      "cell_n005_e014_hameau_0",
+      "cell_n003_e014_hameau_0",
+      "cell_n003_e016_hameau_0",
+      "cell_n001_w010_hameau_0",
+      "cell_n006_e014_hameau_0",
+      "cell_n002_e016_hameau_0",
+      "cell_s005_e008_hameau_0",
+      "cell_n003_w008_hameau_0",
+      "cell_n007_e012_hameau_1",
+      "cell_n008_e012_hameau_0",
+      "cell_n011_w014_hameau_0",
+      "cell_n007_w007_hameau_0",
+      "cell_s003_e011_hameau_0",
+      "cell_n001_w011_hameau_0",
+      "cell_n004_w011_hameau_1",
+      "cell_n007_w005_hameau_0",
+      "cell_n010_w011_hameau_0",
+      "cell_n009_w012_hameau_0",
+      "cell_n004_e000_hameau_1",
+      "cell_s002_e011_hameau_0",
+      "cell_s001_w007_hameau_1",
+      "cell_n009_w010_hameau_0",
+      "cell_s006_e008_hameau_0",
+      "cell_s003_w010_hameau_0"
     ]
   },
   "generated_cells": [
@@ -178,7 +248,36 @@
     "N009_E008", "S001_E005", "S002_W009", "S003_E005", "S003_E014", "S003_W007", "S004_E011", "S005_E015", "S003_W006",
     "S004_E012", "S004_E014", "S004_E015", "S005_E010", "S005_E012",
     "N013_E017", "N013_E018", "N013_E019", "N014_E017", "N014_E018", "N014_E019", "N015_E018", "N015_E019",
-    "S013_E015", "S013_E016", "S014_E014", "S014_E015", "S014_E016", "S015_E014", "S015_E015", "S015_E016"
+    "S013_E015", "S013_E016", "S014_E014", "S014_E015", "S014_E016", "S015_E014", "S015_E015", "S015_E016",
+    "N007_W010", "N007_W011", "N007_W012", "N008_W012", "S013_E012", "S013_E013", "S013_E014", "S014_E012", "S014_E013", "S015_E012",
+    "S015_E013", "N015_E017", "N016_E017", "N016_E018", "N016_E019", "N017_E017", "N017_E018", "N017_E019", "N018_E017", "N018_E018",
+    "N018_E019", "N019_E017", "N019_E018", "N019_E019", "N017_E015", "N017_E016", "N018_E015", "N018_E016", "N019_E015", "N019_E016",
+    "S007_W009", "S007_W010", "S007_W011", "S008_W009", "S008_W010", "S008_W011", "S009_W010", "S009_W011", "N009_E004", "N009_E005",
+    "N009_E006", "N010_E004", "N010_E005", "N010_E006", "N011_E005", "N011_E006", "N005_E010", "N005_E011", "N005_E012", "N006_E010",
+    "N006_E011", "N006_E012", "N007_E010", "N013_E015", "N013_E016", "N014_E015", "N014_E016", "N015_E015", "N015_E016", "S015_E011",
+    "S016_E011", "S016_E012", "S016_E013", "S017_E011", "S017_E012", "S017_E013", "N010_W007", "N010_W008", "N011_W007", "N011_W008",
+    "N011_W009", "N012_W008", "N012_W009", "S003_W008", "S003_W009", "S004_W007", "S004_W008", "S004_W009", "N017_E020", "N017_E021",
+    "N018_E020", "N018_E021", "N019_E020", "N019_E021", "N003_E009", "N003_E010", "N004_E009", "N004_E010", "N005_E008", "N005_E009",
+    "N018_E022", "N018_E023", "N019_E022", "N019_E023", "N020_E021", "N020_E022", "N020_E023",
+    "S011_E011", "S012_E012", "N008_E003",
+    "S006_W009", "S011_E010",
+    "S012_E011",
+    "S007_W012", "S007_W013", "S007_W014", "S008_W012", "S008_W013", "S008_W014", "S009_W012", "S009_W013", "S003_W012", "S003_W013",
+    "S003_W014", "S004_W014", "S004_W015", "S004_W016", "S005_W014", "S005_W015", "S005_W016", "N013_E007", "N013_E008", "N013_E009",
+    "N014_E007", "N014_E008", "N014_E009", "N015_E007", "N015_E008", "N015_E009", "N009_W004", "N010_W003", "N010_W004", "N010_W005",
+    "N011_W004", "N011_W005", "N012_W004", "N012_W005", "S006_E007", "S007_E006", "S008_E003", "S008_E004", "S008_E005", "S009_E003",
+    "S009_E004", "S009_E005", "S010_E003", "S010_E004", "S010_E005", "N016_E012", "N016_E013", "N016_E014", "N016_E015", "N016_E016",
+    "N017_E012", "N017_E013", "N017_E014", "N018_E012", "N018_E013", "N018_E014", "N013_E010", "N014_E011", "N014_E012", "N014_E013",
+    "N015_E011", "N015_E012", "N015_E013", "N016_E011", "N017_E009", "N017_E010", "N017_E011", "N018_E009", "N018_E010", "N018_E011",
+    "N019_E009", "N019_E010", "N019_E011", "N019_E012", "N020_E010", "N020_E011", "N020_E012", "N021_E010", "N021_E011", "N021_E012",
+    "N020_E018", "N020_E019", "N020_E020", "N021_E018", "N021_E019", "N021_E020", "N022_E018", "N022_E019", "N022_E020", "N015_E022",
+    "N015_E023", "N015_E024", "N016_E022", "N016_E023", "N016_E024", "N017_E022", "N017_E023", "N017_E024", "S005_W013", "S006_W013",
+    "S006_W014", "S006_W015", "S007_W015", "S011_E004", "S012_E002", "S012_E003", "S012_E004", "S013_E002", "S013_E003", "S013_E004",
+    "S014_E002", "S014_E003", "S014_E004", "S010_W001", "S010_W002", "S011_W001", "S011_W002", "S011_W003", "S012_E000", "S012_E001",
+    "S012_W001", "S012_W002", "S012_W003", "S014_E000", "S014_E001", "S015_E000", "S015_E001", "S015_E002", "S016_E000", "S016_E001",
+    "S016_E002", "S007_W001", "S007_W002", "S008_W001", "S008_W002", "S009_W001", "S009_W002", "S013_E005", "S013_E006", "S013_E007",
+    "S014_E005", "S014_E006", "S014_E007", "S015_E005", "S015_E006", "S015_E007",
+    "N016_E008", "N017_E008", "N009_W005", "S006_E006", "N010_W006", "N010_W001", "N010_W002"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -5013,6 +5112,1455 @@
       "cell": "S015_E016",
       "kind": "monolithe",
       "description": "Haut cairn de pierres dressé en mémoire des mineurs morts dans la montagne ; on y laisse un outil en offrande. Niveaux 25-28. [GD v1.0.119, lieu_cairn_des_mineurs]."
+    },
+    {
+      "id": "poi_moulin_de_la_riviere_d_iustarn",
+      "name": "Moulin de la rivière d'Iustarn",
+      "cell": "N007_W010",
+      "kind": "elevage",
+      "description": "Moulin à eau sous les arbres, au bord de la rivière ; le meunier moud le grain des fermes impériales et se plaint des loups. Niveaux 10-14. [GD v1.0.121, lieu_moulin_de_la_riviere_d_iustarn]."
+    },
+    {
+      "id": "poi_borne_milliaire_imperiale",
+      "name": "Borne milliaire impériale",
+      "cell": "N007_W012",
+      "kind": "monolithe",
+      "description": "Haute borne de la route impériale, gravée du nom des cités voisines et des lieues qui les séparent ; des brigands guettent les voyageurs qui s'y arrêtent. Niveaux 10-14. [GD v1.0.121, lieu_borne_milliaire_imperiale]."
+    },
+    {
+      "id": "poi_observatoire_des_astrologues",
+      "name": "Observatoire des astrologues",
+      "cell": "N008_W012",
+      "kind": "sanctuaire",
+      "description": "Tour basse où les astrologues de Syzygie notent le passage des lunes ; on y vient demander l'heure propice d'un mariage ou d'un départ. Niveaux 10-14. [GD v1.0.121, lieu_observatoire_des_astrologues]."
+    },
+    {
+      "id": "poi_puits_des_caravaniers",
+      "name": "Puits des caravaniers",
+      "cell": "S013_E012",
+      "kind": "camp",
+      "description": "Puits profond au bord du désert, gardé par une famille naine qui fait payer l'eau aux caravanes. Niveaux 26-30. [GD v1.0.121, lieu_puits_des_caravaniers]."
+    },
+    {
+      "id": "poi_ferme_fortifiee_naine",
+      "name": "Ferme fortifiée naine",
+      "cell": "S013_E013",
+      "kind": "elevage",
+      "description": "Ferme aux murs épais où une lignée naine élève des chèvres ; la porte se ferme à la nuit tombée à cause des pillards. Niveaux 25-29. [GD v1.0.121, lieu_ferme_fortifiee_naine]."
+    },
+    {
+      "id": "poi_poste_de_douane_de_klehrwath",
+      "name": "Poste de douane de Klehrwath",
+      "cell": "S013_E014",
+      "kind": "camp",
+      "description": "Petit poste de la route où les douaniers nains pèsent les marchandises qui montent vers Klehrwath. Niveaux 23-27. [GD v1.0.121, lieu_poste_de_douane_de_klehrwath]."
+    },
+    {
+      "id": "poi_dunes_du_vent_sec",
+      "name": "Dunes du vent sec",
+      "cell": "S014_E012",
+      "kind": "monolithe",
+      "description": "Dunes basses balayées par le vent ; une colonne naine à demi ensevelie y sert de repère aux caravanes. Niveaux 23-26. [GD v1.0.121, lieu_dunes_du_vent_sec]."
+    },
+    {
+      "id": "poi_champ_des_menhirs_nains",
+      "name": "Champ des menhirs nains",
+      "cell": "S015_E012",
+      "kind": "monolithe",
+      "description": "Alignement de pierres levées par les anciens nains pour marquer la frontière de leur royaume. Niveaux 23-26. [GD v1.0.121, lieu_champ_des_menhirs_nains]."
+    },
+    {
+      "id": "poi_carriere_de_saelvik",
+      "name": "Carrière de Saelvik",
+      "cell": "S015_E013",
+      "kind": "salle",
+      "description": "Carrière à ciel ouvert d'où les nains de Saelvik tirent leurs blocs ; des golems de roche s'y réveillent parfois. Niveaux 23-26. [GD v1.0.121, lieu_carriere_de_saelvik]."
+    },
+    {
+      "id": "poi_oasis_des_tamaris",
+      "name": "Oasis des tamaris",
+      "cell": "S015_E011",
+      "kind": "etang",
+      "description": "Mare entourée de tamaris au bord du désert, où les bêtes des caravanes viennent boire ; des scorpions géants rôdent la nuit. Niveaux 23-26. [GD v1.0.121, lieu_oasis_des_tamaris]."
+    },
+    {
+      "id": "poi_bergerie_de_thysskar",
+      "name": "Bergerie de Thysskar",
+      "cell": "S016_E011",
+      "kind": "elevage",
+      "description": "Grande bergerie de pierre sèche où les bergers de Thysskar rentrent leurs moutons à l'abri des chacals. Niveaux 23-26. [GD v1.0.121, lieu_bergerie_de_thysskar]."
+    },
+    {
+      "id": "poi_relais_de_la_route_de_saelvik",
+      "name": "Relais de la route de Saelvik",
+      "cell": "S016_E013",
+      "kind": "camp",
+      "description": "Relais tenu par un nain bourru, à mi-chemin entre Thysskar et Saelvik ; bière épaisse et lits durs. Niveaux 23-26. [GD v1.0.121, lieu_relais_de_la_route_de_saelvik]."
+    },
+    {
+      "id": "poi_epave_du_marchand_de_saelvik",
+      "name": "Épave du marchand de Saelvik",
+      "cell": "S017_E011",
+      "kind": "ruine",
+      "description": "Carcasse d'un navire marchand échoué sur la plage ; les pilleurs d'épaves et les crabes géants se disputent ce qu'il reste de la cargaison. Niveaux 23-26. [GD v1.0.121, lieu_epave_du_marchand_de_saelvik]."
+    },
+    {
+      "id": "poi_cabanes_des_pecheurs_nains",
+      "name": "Cabanes des pêcheurs nains",
+      "cell": "S017_E012",
+      "kind": "camp",
+      "description": "Quelques cabanes sur la plage où des nains, chose rare, pêchent en mer ; ils sèchent le poisson sur des claies. Niveaux 24-27. [GD v1.0.121, lieu_cabanes_des_pecheurs_nains]."
+    },
+    {
+      "id": "poi_phare_nain",
+      "name": "Phare nain",
+      "cell": "S017_E013",
+      "kind": "ruine",
+      "description": "Tour de veille naine sur la côte, dont le feu est éteint depuis longtemps ; des contrebandiers y allument de faux signaux. Niveaux 24-27. [GD v1.0.121, lieu_phare_nain]."
+    },
+    {
+      "id": "poi_camp_des_chasseurs_d_esclaves",
+      "name": "Camp des chasseurs d'esclaves",
+      "cell": "N016_E017",
+      "kind": "camp",
+      "description": "Camp orc de tentes de peaux où les chasseurs d'esclaves enchaînent leurs prises avant la vente. Niveaux 18-20. [GD v1.0.121, lieu_camp_des_chasseurs_d_esclaves]."
+    },
+    {
+      "id": "poi_cercle_des_totems",
+      "name": "Cercle des totems",
+      "cell": "N016_E019",
+      "kind": "sanctuaire",
+      "description": "Clairière où les orcs ont planté des totems sculptés de crânes ; leurs chamans y appellent les esprits de la guerre. Niveaux 18-20. [GD v1.0.121, lieu_cercle_des_totems]."
+    },
+    {
+      "id": "poi_champ_des_lances_brisees",
+      "name": "Champ des lances brisées",
+      "cell": "N017_E017",
+      "kind": "champ_bataille",
+      "description": "Plaine où une armée humaine fut taillée en pièces par les orcs ; les lances brisées pourrissent encore dans l'herbe. Niveaux 18-20. [GD v1.0.121, lieu_champ_des_lances_brisees]."
+    },
+    {
+      "id": "poi_repaire_des_wargs",
+      "name": "Repaire des wargs",
+      "cell": "N017_E018",
+      "kind": "camp",
+      "description": "Terriers creusés sous les racines, à la lisière ; les wargs y élèvent leurs petits et chassent jusqu'aux routes. Niveaux 18-20. [GD v1.0.121, lieu_repaire_des_wargs]."
+    },
+    {
+      "id": "poi_forge_orque_a_ciel_ouvert",
+      "name": "Forge orque à ciel ouvert",
+      "cell": "N018_E019",
+      "kind": "camp",
+      "description": "Forge rudimentaire où les orcs de Nhorgast martèlent des lames grossières pour les bandes de guerre. Niveaux 18-20. [GD v1.0.121, lieu_forge_orque_a_ciel_ouvert]."
+    },
+    {
+      "id": "poi_tertre_des_chefs_orcs",
+      "name": "Tertre des chefs orcs",
+      "cell": "N017_E015",
+      "kind": "monolithe",
+      "description": "Tertre où les clans enterrent leurs chefs avec leurs armes ; le pillage en est puni de mort. Niveaux 18-20. [GD v1.0.121, lieu_tertre_des_chefs_orcs]."
+    },
+    {
+      "id": "poi_dressage_des_sangliers_de_runhkar",
+      "name": "Dressage des sangliers de Runhkar",
+      "cell": "N017_E016",
+      "kind": "elevage",
+      "description": "Grand enclos où les orcs dressent des sangliers de guerre pour leurs cavaliers. Niveaux 18-20. [GD v1.0.121, lieu_dressage_des_sangliers_de_runhkar]."
+    },
+    {
+      "id": "poi_grotte_du_geant_endormi",
+      "name": "Grotte du géant endormi",
+      "cell": "N019_E017",
+      "kind": "salle",
+      "description": "Grotte immense dans la montagne où dort, dit-on, un géant ; les orcs n'y entrent jamais. Niveaux 30-34. [GD v1.0.121, lieu_grotte_du_geant_endormi]."
+    },
+    {
+      "id": "poi_escalier_des_titans",
+      "name": "Escalier des titans",
+      "cell": "N019_E018",
+      "kind": "defile",
+      "description": "Marches colossales taillées dans la montagne par une race oubliée, trop hautes pour un homme. Niveaux 30-34. [GD v1.0.121, lieu_escalier_des_titans]."
+    },
+    {
+      "id": "poi_aire_des_rocs",
+      "name": "Aire des rocs",
+      "cell": "N019_E019",
+      "kind": "camp",
+      "description": "Nid d'oiseaux rocs sur une crête ; leurs plumes valent une fortune, leurs serres une vie. Niveaux 30-34. [GD v1.0.121, lieu_aire_des_rocs]."
+    },
+    {
+      "id": "poi_bois_des_pendus",
+      "name": "Bois des pendus",
+      "cell": "N019_E015",
+      "kind": "foret",
+      "description": "Bois sombre où les orcs pendent les déserteurs ; les corbeaux y sont plus nombreux que les feuilles. Niveaux 30-34. [GD v1.0.121, lieu_bois_des_pendus]."
+    },
+    {
+      "id": "poi_cabane_du_trappeur",
+      "name": "Cabane du trappeur",
+      "cell": "N019_E016",
+      "kind": "camp",
+      "description": "Cabane d'un trappeur solitaire qui vend des peaux aux orcs comme aux humains, sans poser de questions. Niveaux 30-34. [GD v1.0.121, lieu_cabane_du_trappeur]."
+    },
+    {
+      "id": "poi_relais_de_chasse_imperial",
+      "name": "Relais de chasse impérial",
+      "cell": "S007_W009",
+      "kind": "ruine",
+      "description": "Pavillon de chasse d'un ancien gouverneur, abandonné à la lisière ; les sangliers ont envahi les salles. Niveaux 10-14. [GD v1.0.121, lieu_relais_de_chasse_imperial]."
+    },
+    {
+      "id": "poi_clairiere_des_bucherons",
+      "name": "Clairière des bûcherons",
+      "cell": "S007_W010",
+      "kind": "camp",
+      "description": "Coupe de bois où les bûcherons de l'Empire abattent les chênes pour la flotte. Niveaux 10-14. [GD v1.0.121, lieu_clairiere_des_bucherons]."
+    },
+    {
+      "id": "poi_source_de_la_dame_blanche",
+      "name": "Source de la Dame blanche",
+      "cell": "S007_W011",
+      "kind": "sanctuaire",
+      "description": "Source sous les arbres où les paysans voient parfois une dame vêtue de blanc ; on y laisse des rubans. Niveaux 10-14. [GD v1.0.121, lieu_source_de_la_dame_blanche]."
+    },
+    {
+      "id": "poi_crique_des_passeurs_drach",
+      "name": "Crique des passeurs drach",
+      "cell": "S008_W009",
+      "kind": "camp",
+      "description": "Crique cachée sous la falaise où les contrebandiers drach débarquent leurs marchandises la nuit. Niveaux 30-34. [GD v1.0.121, lieu_crique_des_passeurs_drach]."
+    },
+    {
+      "id": "poi_vignes_de_zaltheim",
+      "name": "Vignes de Zaltheim",
+      "cell": "S008_W011",
+      "kind": "elevage",
+      "description": "Coteaux de vignes où l'on fait un vin noir et âpre ; les vendangeurs y travaillent sous la garde d'archers. Niveaux 30-34. [GD v1.0.121, lieu_vignes_de_zaltheim]."
+    },
+    {
+      "id": "poi_tour_des_signaux_drach",
+      "name": "Tour des signaux drach",
+      "cell": "S009_W010",
+      "kind": "ruine",
+      "description": "Tour de signaux sur la côte, d'où les Drach annonçaient les flottes ennemies ; des harpies y nichent. Niveaux 30-34. [GD v1.0.121, lieu_tour_des_signaux_drach]."
+    },
+    {
+      "id": "poi_salines_drach",
+      "name": "Salines drach",
+      "cell": "S009_W011",
+      "kind": "etang",
+      "description": "Bassins de sel au bord de la mer, exploités par des serfs drach sous le fouet des contremaîtres. Niveaux 30-34. [GD v1.0.121, lieu_salines_drach]."
+    },
+    {
+      "id": "poi_camp_des_marchands_d_askhvir",
+      "name": "Camp des marchands d'Askhvir",
+      "cell": "N009_E004",
+      "kind": "camp",
+      "description": "Camp de marchands à la lisière, où l'on troque peaux et ambre avant de reprendre la route d'Askhvir. Niveaux 30-32. [GD v1.0.121, lieu_camp_des_marchands_d_askhvir]."
+    },
+    {
+      "id": "poi_gue_aux_trolls",
+      "name": "Gué aux trolls",
+      "cell": "N009_E005",
+      "kind": "defile",
+      "description": "Gué de la rivière sous les arbres, gardé par un troll qui exige un péage en viande. Niveaux 30-32. [GD v1.0.121, lieu_gue_aux_trolls]."
+    },
+    {
+      "id": "poi_chene_des_gigantomorphes",
+      "name": "Chêne des gigantomorphes",
+      "cell": "N009_E006",
+      "kind": "foret",
+      "description": "Chêne si vaste que des créatures géantes y ont creusé leur gîte dans le tronc. Niveaux 30-33. [GD v1.0.121, lieu_chene_des_gigantomorphes]."
+    },
+    {
+      "id": "poi_greve_aux_ambres",
+      "name": "Grève aux ambres",
+      "cell": "N010_E004",
+      "kind": "etang",
+      "description": "Plage où la mer rejette de l'ambre après les tempêtes ; les ramasseurs s'y battent pour les meilleurs morceaux. Niveaux 30-32. [GD v1.0.121, lieu_greve_aux_ambres]."
+    },
+    {
+      "id": "poi_village_abandonne_d_askhvir",
+      "name": "Village abandonné d'Askhvir",
+      "cell": "N010_E006",
+      "kind": "ruine",
+      "description": "Village vidé par les attaques des géants ; les maisons écrasées portent encore l'empreinte de leurs pieds. Niveaux 30-33. [GD v1.0.121, lieu_village_abandonne_d_askhvir]."
+    },
+    {
+      "id": "poi_falaise_aux_nids",
+      "name": "Falaise aux nids",
+      "cell": "N011_E005",
+      "kind": "monolithe",
+      "description": "Falaise couverte de nids d'oiseaux de mer ; les ramasseurs d'œufs y risquent leur vie au bout d'une corde. Niveaux 30-32. [GD v1.0.121, lieu_falaise_aux_nids]."
+    },
+    {
+      "id": "poi_port_de_peche_abandonne",
+      "name": "Port de pêche abandonné",
+      "cell": "N011_E006",
+      "kind": "ruine",
+      "description": "Port de pêche déserté après le passage d'un monstre marin ; les barques pourrissent au bout de la jetée. Niveaux 30-33. [GD v1.0.121, lieu_port_de_peche_abandonne]."
+    },
+    {
+      "id": "poi_affut_des_chasseurs_gobelins",
+      "name": "Affût des chasseurs gobelins",
+      "cell": "N005_E010",
+      "kind": "camp",
+      "description": "Plates-formes dans les arbres d'où les gobelins tirent sur le gibier et sur les voyageurs. Niveaux 19-23. [GD v1.0.121, lieu_affut_des_chasseurs_gobelins]."
+    },
+    {
+      "id": "poi_puits_empoisonne",
+      "name": "Puits empoisonné",
+      "cell": "N005_E011",
+      "kind": "monolithe",
+      "description": "Puits que les orcs ont empoisonné pour chasser un village humain ; personne n'y boit plus. Niveaux 19-23. [GD v1.0.121, lieu_puits_empoisonne]."
+    },
+    {
+      "id": "poi_camp_de_mhozrak",
+      "name": "Camp de guerre de Mhozrak",
+      "cell": "N005_E012",
+      "kind": "camp",
+      "description": "Camp avancé des guerriers de Mhozrak, d'où partent les raids vers la Via Magna. Niveaux 18-23. [GD v1.0.121, lieu_camp_de_mhozrak]."
+    },
+    {
+      "id": "poi_fosse_aux_combats",
+      "name": "Fosse aux combats",
+      "cell": "N006_E010",
+      "kind": "camp",
+      "description": "Fosse où les orcs font combattre leurs esclaves et leurs bêtes ; les paris se règlent au couteau. Niveaux 20-24. [GD v1.0.121, lieu_fosse_aux_combats]."
+    },
+    {
+      "id": "poi_ruines_du_hameau_humain",
+      "name": "Ruines du hameau humain",
+      "cell": "N006_E012",
+      "kind": "ruine",
+      "description": "Hameau humain brûlé par les orcs lors de leur avancée ; un survivant s'y cache encore. Niveaux 18-22. [GD v1.0.121, lieu_ruines_du_hameau_humain]."
+    },
+    {
+      "id": "poi_clairiere_des_chamans",
+      "name": "Clairière des chamans",
+      "cell": "N007_E010",
+      "kind": "sanctuaire",
+      "description": "Clairière où les chamans de Grakhul font sécher leurs herbes et lisent l'avenir dans les entrailles. Niveaux 22-26. [GD v1.0.121, lieu_clairiere_des_chamans]."
+    },
+    {
+      "id": "poi_rucher_de_hoengardt",
+      "name": "Rucher de Hoengardt",
+      "cell": "N013_E015",
+      "kind": "elevage",
+      "description": "Ruches de paille à la lisière, où les gens de Hoengardt récoltent un miel sombre ; les ours rôdent autour. Niveaux 19-22. [GD v1.0.121, lieu_rucher_de_hoengardt]."
+    },
+    {
+      "id": "poi_col_de_hoengardt",
+      "name": "Col de Hoengardt",
+      "cell": "N014_E015",
+      "kind": "defile",
+      "description": "Col étroit entre deux crêtes, sur la route de Hoengardt à Mhorgad ; une barricade orc le ferme parfois. Niveaux 18-20. [GD v1.0.121, lieu_col_de_hoengardt]."
+    },
+    {
+      "id": "poi_moulin_a_vent_brule",
+      "name": "Moulin à vent brûlé",
+      "cell": "N015_E015",
+      "kind": "ruine",
+      "description": "Moulin à vent incendié lors d'un raid ; ses ailes calcinées tournent encore par grand vent. Niveaux 18-20. [GD v1.0.121, lieu_moulin_a_vent_brule]."
+    },
+    {
+      "id": "poi_pont_de_mhorgad",
+      "name": "Pont de Mhorgad",
+      "cell": "N015_E016",
+      "kind": "defile",
+      "description": "Vieux pont de bois sur un torrent, entre Hoengardt et Mhorgad ; des bandits y prélèvent un péage. Niveaux 18-20. [GD v1.0.121, lieu_pont_de_mhorgad]."
+    },
+    {
+      "id": "poi_cascade_des_ondines",
+      "name": "Cascade des ondines",
+      "cell": "N010_W007",
+      "kind": "sanctuaire",
+      "description": "Cascade sous les arbres, où les gens d'Ostrevan disent entendre chanter des ondines. Niveaux 30-34. [GD v1.0.121, lieu_cascade_des_ondines]."
+    },
+    {
+      "id": "poi_taniere_de_l_ours_geant",
+      "name": "Tanière de l'ours géant",
+      "cell": "N010_W008",
+      "kind": "camp",
+      "description": "Tanière d'un ours monstrueux, au cœur de la forêt ; les chasseurs qui l'ont traqué ne sont pas revenus. Niveaux 30-34. [GD v1.0.121, lieu_taniere_de_l_ours_geant]."
+    },
+    {
+      "id": "poi_fumerie_d_ostrevan",
+      "name": "Fumerie d'Ostrevan",
+      "cell": "N011_W007",
+      "kind": "camp",
+      "description": "Cabanes sur la côte où l'on fume le hareng d'Ostrevan ; l'odeur se sent à une lieue. Niveaux 30-34. [GD v1.0.121, lieu_fumerie_d_ostrevan]."
+    },
+    {
+      "id": "poi_menhirs_dansants",
+      "name": "Menhirs dansants",
+      "cell": "N011_W009",
+      "kind": "monolithe",
+      "description": "Cercle de pierres dressées dans la plaine ; les paysans disent qu'elles changent de place les nuits de pleine lune. Niveaux 30-34. [GD v1.0.121, lieu_menhirs_dansants]."
+    },
+    {
+      "id": "poi_anse_aux_phoques",
+      "name": "Anse aux phoques",
+      "cell": "N012_W008",
+      "kind": "etang",
+      "description": "Anse rocheuse où les phoques viennent mettre bas ; les chasseurs d'Ostrevan y viennent au printemps. Niveaux 30-34. [GD v1.0.121, lieu_anse_aux_phoques]."
+    },
+    {
+      "id": "poi_tour_du_naufrageur",
+      "name": "Tour du naufrageur",
+      "cell": "N012_W009",
+      "kind": "ruine",
+      "description": "Tour sur la côte où un naufrageur allumait de faux feux pour briser les navires sur les récifs. Niveaux 30-34. [GD v1.0.121, lieu_tour_du_naufrageur]."
+    },
+    {
+      "id": "poi_grange_dimiere",
+      "name": "Grange dîmière",
+      "cell": "S003_W009",
+      "kind": "elevage",
+      "description": "Grande grange où les collecteurs impériaux entassent la dîme des paysans ; elle attire les voleurs. Niveaux 13-17. [GD v1.0.121, lieu_grange_dimiere]."
+    },
+    {
+      "id": "poi_mine_d_argent_imperiale",
+      "name": "Mine d'argent impériale",
+      "cell": "S004_W007",
+      "kind": "salle",
+      "description": "Mine d'argent de l'Empire, creusée par des forçats ; une révolte y gronde. Niveaux 13-17. [GD v1.0.121, lieu_mine_d_argent_imperiale]."
+    },
+    {
+      "id": "poi_hutte_de_la_sorciere",
+      "name": "Hutte de la sorcière",
+      "cell": "S004_W008",
+      "kind": "sanctuaire",
+      "description": "Hutte à la lisière où vit une sorcière que les paysans craignent et consultent en secret. Niveaux 13-17. [GD v1.0.121, lieu_hutte_de_la_sorciere]."
+    },
+    {
+      "id": "poi_refuge_des_legionnaires_deserteurs",
+      "name": "Refuge des légionnaires déserteurs",
+      "cell": "S004_W009",
+      "kind": "camp",
+      "description": "Camp caché sous les arbres où des déserteurs de la légion vivent de braconnage et de rapines. Niveaux 13-17. [GD v1.0.121, lieu_refuge_des_legionnaires_deserteurs]."
+    },
+    {
+      "id": "poi_palissade_abandonnee",
+      "name": "Palissade abandonnée",
+      "cell": "N017_E020",
+      "kind": "ruine",
+      "description": "Fortin de pieux abandonné à la lisière, ancien avant-poste humain face aux orcs. Niveaux 18-20. [GD v1.0.121, lieu_palissade_abandonnee]."
+    },
+    {
+      "id": "poi_sentier_des_pisteurs",
+      "name": "Sentier des pisteurs",
+      "cell": "N017_E021",
+      "kind": "defile",
+      "description": "Sentier balisé d'entailles dans l'écorce, que seuls les pisteurs de Hagfhal savent suivre. Niveaux 30-32. [GD v1.0.121, lieu_sentier_des_pisteurs]."
+    },
+    {
+      "id": "poi_haras_de_hagfhal",
+      "name": "Haras de Hagfhal",
+      "cell": "N018_E021",
+      "kind": "elevage",
+      "description": "Haras où les éleveurs de Hagfhal dressent de petits chevaux robustes, très recherchés. Niveaux 30-32. [GD v1.0.121, lieu_haras_de_hagfhal]."
+    },
+    {
+      "id": "poi_glacier_des_geants",
+      "name": "Glacier des géants",
+      "cell": "N019_E020",
+      "kind": "monolithe",
+      "description": "Langue de glace dans la montagne, où l'on voit des formes géantes prises dans la glace. Niveaux 30-34. [GD v1.0.121, lieu_glacier_des_geants]."
+    },
+    {
+      "id": "poi_camp_des_geants_du_givre",
+      "name": "Camp des géants du givre",
+      "cell": "N019_E021",
+      "kind": "camp",
+      "description": "Camp de géants du givre dans la montagne ; ils descendent piller les fermes l'hiver. Niveaux 30-34. [GD v1.0.121, lieu_camp_des_geants_du_givre]."
+    },
+    {
+      "id": "poi_ferme_des_vernhild",
+      "name": "Ferme des Vernhild",
+      "cell": "N018_E022",
+      "kind": "elevage",
+      "description": "Ferme isolée d'une famille de Vernhild, qui élève des bœufs à longues cornes. Niveaux 30-32. [GD v1.0.121, lieu_ferme_des_vernhild]."
+    },
+    {
+      "id": "poi_dalle_du_serment",
+      "name": "Dalle du serment",
+      "cell": "N018_E023",
+      "kind": "monolithe",
+      "description": "Pierre plate où les chefs de clans de la plaine prêtaient serment ; elle porte des empreintes de mains. Niveaux 30-34. [GD v1.0.121, lieu_dalle_du_serment]."
+    },
+    {
+      "id": "poi_tumulus_des_rois_de_la_plaine",
+      "name": "Tumulus des rois de la plaine",
+      "cell": "N019_E023",
+      "kind": "salle",
+      "description": "Tumulus où reposent d'anciens rois de la plaine ; des morts-vivants en gardent l'entrée. Niveaux 30-34. [GD v1.0.121, lieu_tumulus_des_rois_de_la_plaine]."
+    },
+    {
+      "id": "poi_mine_des_geants",
+      "name": "Mine des géants",
+      "cell": "N020_E021",
+      "kind": "salle",
+      "description": "Galeries trop vastes pour des nains, creusées par des géants pour un minerai qu'on ne connaît plus. Niveaux 30-34. [GD v1.0.121, lieu_mine_des_geants]."
+    },
+    {
+      "id": "poi_campement_des_nomades",
+      "name": "Campement des nomades",
+      "cell": "N020_E022",
+      "kind": "camp",
+      "description": "Campement de nomades qui suivent leurs troupeaux dans la plaine ; ils accueillent les voyageurs pour une histoire. Niveaux 30-34. [GD v1.0.121, lieu_campement_des_nomades]."
+    },
+    {
+      "id": "poi_baie_des_baleiniers",
+      "name": "Baie des baleiniers",
+      "cell": "N020_E023",
+      "kind": "camp",
+      "description": "Baie où des baleiniers dépècent leurs prises sur la grève ; les os de baleine servent de charpente. Niveaux 30-34. [GD v1.0.121, lieu_baie_des_baleiniers]."
+    },
+    {
+      "id": "poi_ruines_du_caravanserail",
+      "name": "Ruines du caravansérail",
+      "cell": "N003_E009",
+      "kind": "ruine",
+      "description": "Caravansérail abandonné au bord du désert, sur l'ancien tracé de la Via Magna ; les pillards s'y abritent. Niveaux 18-23. [GD v1.0.121, lieu_ruines_du_caravanserail]."
+    },
+    {
+      "id": "poi_bornes_de_la_via_magna",
+      "name": "Bornes de la Via Magna",
+      "cell": "N003_E010",
+      "kind": "monolithe",
+      "description": "Alignement de bornes impériales à la lisière, dont les inscriptions comptent les lieues jusqu'à la capitale. Niveaux 18-22. [GD v1.0.121, lieu_bornes_de_la_via_magna]."
+    },
+    {
+      "id": "poi_lac_des_brumes",
+      "name": "Lac des brumes",
+      "cell": "N005_E008",
+      "kind": "etang",
+      "description": "Lac en forêt souvent noyé de brume, où les pêcheurs disparaissent parfois. Niveaux 20-25. [GD v1.0.121, lieu_lac_des_brumes]."
+    },
+    {
+      "id": "poi_bivouac_des_legionnaires",
+      "name": "Bivouac des légionnaires",
+      "cell": "N005_E009",
+      "kind": "camp",
+      "description": "Bivouac d'une patrouille impériale qui surveille la route de Harrodh contre les raids orcs. Niveaux 19-24. [GD v1.0.121, lieu_bivouac_des_legionnaires]."
+    },
+    {
+      "id": "poi_halte_du_sable_ocre",
+      "name": "Halte du sable ocre",
+      "cell": "S011_E011",
+      "kind": "camp",
+      "description": "Abri de toile et de pierres sèches au milieu du désert ocre, où les caravanes de Der Hem Shelbem attendent la fraîcheur du soir. Niveaux 18-22. [GD v1.0.121, lieu_halte_du_sable_ocre]."
+    },
+    {
+      "id": "poi_squelette_du_ver_des_sables",
+      "name": "Squelette du ver des sables",
+      "cell": "S012_E012",
+      "kind": "monolithe",
+      "description": "Ossements d'un ver des sables colossal, à demi enterrés ; les caravaniers passent dessous comme sous une arche et y laissent une offrande. Niveaux 18-22. [GD v1.0.121, lieu_squelette_du_ver_des_sables]."
+    },
+    {
+      "id": "poi_coupe_de_hazhaelin",
+      "name": "Coupe de bois de Hazhaëlin",
+      "cell": "N008_E003",
+      "kind": "camp",
+      "description": "Coupe de bois à la lisière où les gens de Hazhaëlin abattent les arbres sous la garde d'archers, par crainte des géants. Niveaux 30-34. [GD v1.0.121, lieu_coupe_de_hazhaelin]."
+    },
+    {
+      "id": "poi_hutte_des_charbonniers_imperiaux",
+      "name": "Hutte des charbonniers impériaux",
+      "cell": "S006_W009",
+      "kind": "camp",
+      "description": "Hutte de charbonniers au cœur de la forêt, sur la route de Zaltheim à Harndrecht ; ils fournissent le charbon des forges de la légion. Niveaux 28-30. [GD v1.0.121, lieu_hutte_des_charbonniers_imperiaux]."
+    },
+    {
+      "id": "poi_puits_de_la_piste_de_saelvik",
+      "name": "Puits de la piste de Saelvik",
+      "cell": "S011_E010",
+      "kind": "camp",
+      "description": "Puits maçonné au bord de la piste du désert, où les caravaniers de Der Hem Shelbem remplissent leurs outres avant la traversée. Niveaux 18-22. [GD v1.0.121, lieu_puits_de_la_piste_de_saelvik]."
+    },
+    {
+      "id": "poi_tombe_du_caravanier",
+      "name": "Tombe du caravanier",
+      "cell": "S012_E011",
+      "kind": "monolithe",
+      "description": "Tombe de pierres sèches d'un caravanier mort de soif sur la piste ; les voyageurs y versent quelques gouttes d'eau en passant. Niveaux 18-22. [GD v1.0.121, lieu_tombe_du_caravanier]."
+    },
+    {
+      "id": "poi_champs_de_ble_de_ghrepol",
+      "name": "Champs de blé de Ghrepol",
+      "cell": "S007_W012",
+      "kind": "elevage",
+      "description": "Grandes pièces de blé où les moissonneurs de Ghrepol travaillent sous la garde d'une milice ; les corbeaux et les maraudeurs s'y invitent. Niveaux 21-25. [GD v1.0.122, lieu_champs_de_ble_de_ghrepol]."
+    },
+    {
+      "id": "poi_colonne_de_la_victoire",
+      "name": "Colonne de la victoire",
+      "cell": "S007_W013",
+      "kind": "monolithe",
+      "description": "Colonne impériale élevée après une victoire sur les Drach ; ses bas-reliefs montrent des légions en marche. Niveaux 22-26. [GD v1.0.122, lieu_colonne_de_la_victoire]."
+    },
+    {
+      "id": "poi_villa_imperiale_abandonnee",
+      "name": "Villa impériale abandonnée",
+      "cell": "S007_W014",
+      "kind": "ruine",
+      "description": "Villa d'un sénateur pillée pendant une révolte ; des mosaïques brisées affleurent sous les ronces. Niveaux 23-27. [GD v1.0.122, lieu_villa_imperiale_abandonnee]."
+    },
+    {
+      "id": "poi_poste_frontiere_drach",
+      "name": "Poste-frontière drach",
+      "cell": "S008_W012",
+      "kind": "camp",
+      "description": "Poste fortifié où les Drach contrôlent la route de Zaltheim et font payer les marchands de l'Empire. Niveaux 30-32. [GD v1.0.122, lieu_poste_frontiere_drach]."
+    },
+    {
+      "id": "poi_falaise_aux_mouettes",
+      "name": "Falaise aux mouettes",
+      "cell": "S008_W014",
+      "kind": "monolithe",
+      "description": "Falaise basse au-dessus de la mer, couverte de mouettes ; un sentier y descend vers une grotte marine. Niveaux 23-27. [GD v1.0.122, lieu_falaise_aux_mouettes]."
+    },
+    {
+      "id": "poi_pecherie_drach",
+      "name": "Pêcherie drach",
+      "cell": "S009_W012",
+      "kind": "camp",
+      "description": "Pêcherie sur la côte où des serfs drach salent le poisson pour les garnisons. Niveaux 30-32. [GD v1.0.122, lieu_pecherie_drach]."
+    },
+    {
+      "id": "poi_anse_des_galeres",
+      "name": "Anse des galères",
+      "cell": "S009_W013",
+      "kind": "etang",
+      "description": "Anse abritée où les galères impériales viennent se ravitailler en eau douce ; les épaves de deux d'entre elles affleurent à marée basse. Niveaux 22-26. [GD v1.0.122, lieu_anse_des_galeres]."
+    },
+    {
+      "id": "poi_relais_de_poste_de_dhuzmar",
+      "name": "Relais de poste de Dhuzmar",
+      "cell": "S003_W012",
+      "kind": "camp",
+      "description": "Relais de la poste impériale où les courriers changent de cheval sur la route de Klaerhin. Niveaux 14-18. [GD v1.0.122, lieu_relais_de_poste_de_dhuzmar]."
+    },
+    {
+      "id": "poi_greve_des_naufrages",
+      "name": "Grève des naufragés",
+      "cell": "S003_W014",
+      "kind": "etang",
+      "description": "Plage où la mer rejette les corps et les débris des navires perdus au large ; des pilleurs la fouillent après chaque tempête. Niveaux 10-14. [GD v1.0.122, lieu_greve_des_naufrages]."
+    },
+    {
+      "id": "poi_dunes_de_klaerhin",
+      "name": "Dunes de Klaerhin",
+      "cell": "S004_W014",
+      "kind": "monolithe",
+      "description": "Dunes hautes derrière la plage, plantées d'oyats ; une statue de dieu marin y émerge du sable. Niveaux 10-14. [GD v1.0.122, lieu_dunes_de_klaerhin]."
+    },
+    {
+      "id": "poi_phare_de_klaerhin",
+      "name": "Phare de Klaerhin",
+      "cell": "S004_W016",
+      "kind": "ruine",
+      "description": "Phare impérial sur un rocher, abandonné depuis qu'un gardien y a été retrouvé mort ; on dit sa lanterne hantée. Niveaux 10-14. [GD v1.0.122, lieu_phare_de_klaerhin]."
+    },
+    {
+      "id": "poi_ferme_du_legionnaire",
+      "name": "Ferme du légionnaire",
+      "cell": "S005_W014",
+      "kind": "elevage",
+      "description": "Ferme donnée à un vétéran des légions ; il y élève des mules pour l'armée et garde son glaive à portée de main. Niveaux 20-24. [GD v1.0.122, lieu_ferme_du_legionnaire]."
+    },
+    {
+      "id": "poi_camp_des_bohemiens",
+      "name": "Camp des bohémiens",
+      "cell": "S005_W015",
+      "kind": "camp",
+      "description": "Campement de roulottes de voyageurs, diseurs de bonne aventure et montreurs d'ours. Niveaux 10-14. [GD v1.0.122, lieu_camp_des_bohemiens]."
+    },
+    {
+      "id": "poi_tour_des_garde_cotes",
+      "name": "Tour des garde-côtes",
+      "cell": "S005_W016",
+      "kind": "camp",
+      "description": "Tour où une poignée de garde-côtes impériaux guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 10-14. [GD v1.0.122, lieu_tour_des_garde_cotes]."
+    },
+    {
+      "id": "poi_cabane_des_charbonniers_d_askhvir",
+      "name": "Cabane des charbonniers d'Askhvir",
+      "cell": "N013_E007",
+      "kind": "camp",
+      "description": "Cabane de charbonniers à la lisière ; les meules fument jour et nuit pour les forges d'Askhvir. Niveaux 30-33. [GD v1.0.122, lieu_cabane_des_charbonniers_d_askhvir]."
+    },
+    {
+      "id": "poi_sentier_des_elans",
+      "name": "Sentier des élans",
+      "cell": "N013_E008",
+      "kind": "defile",
+      "description": "Sentier creusé par les élans à travers la forêt, que suivent chasseurs et contrebandiers. Niveaux 30-33. [GD v1.0.122, lieu_sentier_des_elans]."
+    },
+    {
+      "id": "poi_arbre_aux_pendeloques",
+      "name": "Arbre aux pendeloques",
+      "cell": "N013_E009",
+      "kind": "sanctuaire",
+      "description": "Grand frêne où les gens de Stohnvar suspendent des os et des clochettes pour éloigner les géants. Niveaux 30-34. [GD v1.0.122, lieu_arbre_aux_pendeloques]."
+    },
+    {
+      "id": "poi_pointe_des_phoques",
+      "name": "Pointe des phoques",
+      "cell": "N014_E007",
+      "kind": "etang",
+      "description": "Pointe rocheuse où les phoques se chauffent au soleil ; des harpies plongent sur les petits. Niveaux 30-34. [GD v1.0.122, lieu_pointe_des_phoques]."
+    },
+    {
+      "id": "poi_repaire_des_ours_bruns",
+      "name": "Repaire des ours bruns",
+      "cell": "N014_E009",
+      "kind": "camp",
+      "description": "Grottes peu profondes où les ours bruns passent l'hiver ; les chasseurs de Stohnvar y viennent au printemps. Niveaux 30-34. [GD v1.0.122, lieu_repaire_des_ours_bruns]."
+    },
+    {
+      "id": "poi_village_de_pecheurs_brule",
+      "name": "Village de pêcheurs brûlé",
+      "cell": "N015_E007",
+      "kind": "ruine",
+      "description": "Village de pêcheurs incendié par des pillards venus de la mer ; seuls restent les fours et les barques échouées. Niveaux 30-34. [GD v1.0.122, lieu_village_de_pecheurs_brule]."
+    },
+    {
+      "id": "poi_menhirs_de_stohnvar",
+      "name": "Menhirs de Stohnvar",
+      "cell": "N015_E008",
+      "kind": "monolithe",
+      "description": "Trois menhirs dans la plaine, que les anciens de Stohnvar disent plantés par un géant pour marquer sa terre. Niveaux 30-34. [GD v1.0.122, lieu_menhirs_de_stohnvar]."
+    },
+    {
+      "id": "poi_camp_des_trappeurs_de_stohnvar",
+      "name": "Camp des trappeurs de Stohnvar",
+      "cell": "N015_E009",
+      "kind": "camp",
+      "description": "Camp de trappeurs à la lisière, où l'on fait sécher les peaux de martre et de loup. Niveaux 30-34. [GD v1.0.122, lieu_camp_des_trappeurs_de_stohnvar]."
+    },
+    {
+      "id": "poi_tourbiere_aux_feux_follets",
+      "name": "Tourbière aux feux follets",
+      "cell": "N010_W003",
+      "kind": "etang",
+      "description": "Tourbière où dansent des feux follets la nuit ; ceux qui les suivent se noient dans la tourbe. Niveaux 30-34. [GD v1.0.122, lieu_tourbiere_aux_feux_follets]."
+    },
+    {
+      "id": "poi_passerelles_du_marais",
+      "name": "Passerelles du marais",
+      "cell": "N010_W004",
+      "kind": "defile",
+      "description": "Passerelles de rondins à travers le marais et la rivière, entretenues par les gens de Haevrin. Niveaux 30-34. [GD v1.0.122, lieu_passerelles_du_marais]."
+    },
+    {
+      "id": "poi_hutte_du_passeur_des_marais",
+      "name": "Hutte du passeur des marais",
+      "cell": "N010_W005",
+      "kind": "camp",
+      "description": "Hutte sur pilotis d'un passeur qui guide les voyageurs à travers le marais, contre une pièce d'argent. Niveaux 30-34. [GD v1.0.122, lieu_hutte_du_passeur_des_marais]."
+    },
+    {
+      "id": "poi_epave_du_baleinier",
+      "name": "Épave du baleinier",
+      "cell": "N012_W004",
+      "kind": "ruine",
+      "description": "Carcasse d'un baleinier échoué dans la vase de la côte ; des crabes géants s'y sont installés. Niveaux 30-34. [GD v1.0.122, lieu_epave_du_baleinier]."
+    },
+    {
+      "id": "poi_roselieres_de_haevrin",
+      "name": "Roselières de Haevrin",
+      "cell": "N012_W005",
+      "kind": "elevage",
+      "description": "Roselières où les gens de Haevrin coupent les roseaux pour leurs toits et chassent le canard. Niveaux 30-34. [GD v1.0.122, lieu_roselieres_de_haevrin]."
+    },
+    {
+      "id": "poi_borne_des_nains_du_sud",
+      "name": "Borne des nains du sud",
+      "cell": "S006_E007",
+      "kind": "monolithe",
+      "description": "Borne runique qui marque l'entrée du royaume des nains du sud ; on y jure de respecter la loi des nains. Niveaux 22-27. [GD v1.0.122, lieu_borne_des_nains_du_sud]."
+    },
+    {
+      "id": "poi_auberge_de_la_chope_d_or",
+      "name": "Auberge de la Chope d'or",
+      "cell": "S007_E006",
+      "kind": "camp",
+      "description": "Auberge naine sur la route de Frhozhol, réputée pour sa bière brune et ses bagarres. Niveaux 23-28. [GD v1.0.122, lieu_auberge_de_la_chope_d_or]."
+    },
+    {
+      "id": "poi_ferme_aux_chevres_de_kholdvar",
+      "name": "Ferme aux chèvres de Kholdvar",
+      "cell": "S008_E003",
+      "kind": "elevage",
+      "description": "Ferme naine qui élève des chèvres de montagne ; leur fromage se vend jusqu'à Frhozhol. Niveaux 10-14. [GD v1.0.122, lieu_ferme_aux_chevres_de_kholdvar]."
+    },
+    {
+      "id": "poi_tumulus_nain",
+      "name": "Tumulus nain",
+      "cell": "S008_E004",
+      "kind": "salle",
+      "description": "Tumulus où repose un roi nain oublié ; des gardiens de fer veillent encore sur son trésor. Niveaux 10-14. [GD v1.0.122, lieu_tumulus_nain]."
+    },
+    {
+      "id": "poi_moulin_nain",
+      "name": "Moulin nain",
+      "cell": "S008_E005",
+      "kind": "elevage",
+      "description": "Moulin à vent trapu où les nains moulent l'orge de leur bière. Niveaux 22-27. [GD v1.0.122, lieu_moulin_nain]."
+    },
+    {
+      "id": "poi_carrefour_des_caravanes_naines",
+      "name": "Carrefour des caravanes naines",
+      "cell": "S009_E003",
+      "kind": "camp",
+      "description": "Carrefour où les caravanes naines de Kholdvar se forment avant de partir vers le nord. Niveaux 10-14. [GD v1.0.122, lieu_carrefour_des_caravanes_naines]."
+    },
+    {
+      "id": "poi_champ_des_enclumes",
+      "name": "Champ des enclumes",
+      "cell": "S009_E005",
+      "kind": "champ_bataille",
+      "description": "Plaine où les nains ont repoussé une horde orque ; des enclumes de pierre y marquent les tombes des héros. Niveaux 22-27. [GD v1.0.122, lieu_champ_des_enclumes]."
+    },
+    {
+      "id": "poi_cabane_du_forestier_nain",
+      "name": "Cabane du forestier nain",
+      "cell": "S010_E003",
+      "kind": "camp",
+      "description": "Cabane d'un forestier nain qui choisit les arbres pour les étais des mines. Niveaux 10-14. [GD v1.0.122, lieu_cabane_du_forestier_nain]."
+    },
+    {
+      "id": "poi_source_chaude_naine",
+      "name": "Source chaude naine",
+      "cell": "S010_E004",
+      "kind": "sanctuaire",
+      "description": "Source chaude à la lisière, captée par les nains dans un bassin de pierre ; on y soigne les rhumatismes des mineurs. Niveaux 10-14. [GD v1.0.122, lieu_source_chaude_naine]."
+    },
+    {
+      "id": "poi_four_a_chaux_nain",
+      "name": "Four à chaux nain",
+      "cell": "S010_E005",
+      "kind": "camp",
+      "description": "Four où les nains cuisent la chaux pour leurs mortiers ; la fumée blanche se voit de loin. Niveaux 23-28. [GD v1.0.122, lieu_four_a_chaux_nain]."
+    },
+    {
+      "id": "poi_camp_de_la_horde_de_dhunfal",
+      "name": "Camp de la horde de Dhunfal",
+      "cell": "N016_E014",
+      "kind": "camp",
+      "description": "Camp de guerre d'une horde orque qui se rassemble avant un raid vers les Marches. Niveaux 21-24. [GD v1.0.122, lieu_camp_de_la_horde_de_dhunfal]."
+    },
+    {
+      "id": "poi_cimetiere_des_betes",
+      "name": "Cimetière des bêtes",
+      "cell": "N016_E015",
+      "kind": "monolithe",
+      "description": "Plaine jonchée d'os de bêtes de guerre, où les orcs abandonnent leurs montures mortes ; les charognards y abondent. Niveaux 21-23. [GD v1.0.122, lieu_cimetiere_des_betes]."
+    },
+    {
+      "id": "poi_puits_des_orcs",
+      "name": "Puits des orcs",
+      "cell": "N016_E016",
+      "kind": "camp",
+      "description": "Puits gardé par des orcs qui font payer l'eau à tous ceux qui passent, orcs compris. Niveaux 20-22. [GD v1.0.122, lieu_puits_des_orcs]."
+    },
+    {
+      "id": "poi_arene_de_dhunfal",
+      "name": "Arène de Dhunfal",
+      "cell": "N017_E014",
+      "kind": "camp",
+      "description": "Arène de terre battue où les orcs de Dhunfal font combattre champions et prisonniers. Niveaux 22-24. [GD v1.0.122, lieu_arene_de_dhunfal]."
+    },
+    {
+      "id": "poi_marche_aux_esclaves_de_dhunfal",
+      "name": "Marché aux esclaves de Dhunfal",
+      "cell": "N018_E014",
+      "kind": "camp",
+      "description": "Marché en plein air où les orcs vendent leurs captifs aux marchands de la Lune Noire. Niveaux 22-25. [GD v1.0.122, lieu_marche_aux_esclaves_de_dhunfal]."
+    },
+    {
+      "id": "poi_clairiere_aux_murmures",
+      "name": "Clairière aux murmures",
+      "cell": "N013_E010",
+      "kind": "sanctuaire",
+      "description": "Clairière où l'on entend des voix sans voir personne ; les gens de Kendrhir y laissent du pain pour les esprits. Niveaux 30-34. [GD v1.0.122, lieu_clairiere_aux_murmures]."
+    },
+    {
+      "id": "poi_chene_creux_des_brigands",
+      "name": "Chêne creux des brigands",
+      "cell": "N014_E011",
+      "kind": "camp",
+      "description": "Chêne creux où une bande de brigands cache son butin et guette la route de Kendrhir. Niveaux 32-36. [GD v1.0.122, lieu_chene_creux_des_brigands]."
+    },
+    {
+      "id": "poi_pature_des_aurochs",
+      "name": "Pâture des aurochs",
+      "cell": "N014_E012",
+      "kind": "elevage",
+      "description": "Pâture où paissent des aurochs sauvages ; les jeunes de Kendrhir prouvent leur courage en leur arrachant un poil de la queue. Niveaux 30-32. [GD v1.0.122, lieu_pature_des_aurochs]."
+    },
+    {
+      "id": "poi_cabane_de_l_herboriste",
+      "name": "Cabane de l'herboriste",
+      "cell": "N014_E013",
+      "kind": "sanctuaire",
+      "description": "Cabane d'une herboriste au fond des bois ; elle vend remèdes et poisons à qui sait payer. Niveaux 30-32. [GD v1.0.122, lieu_cabane_de_l_herboriste]."
+    },
+    {
+      "id": "poi_nid_des_araignees_geantes",
+      "name": "Nid des araignées géantes",
+      "cell": "N015_E011",
+      "kind": "camp",
+      "description": "Bois tendu de toiles où des araignées géantes gardent des cocons qui bougent encore. Niveaux 32-36. [GD v1.0.122, lieu_nid_des_araignees_geantes]."
+    },
+    {
+      "id": "poi_ruines_du_rendez_vous_de_chasse",
+      "name": "Ruines du rendez-vous de chasse",
+      "cell": "N015_E013",
+      "kind": "ruine",
+      "description": "Pavillon de chasse d'un ancien seigneur, envahi par la forêt et par les loups. Niveaux 30-32. [GD v1.0.122, lieu_ruines_du_rendez_vous_de_chasse]."
+    },
+    {
+      "id": "poi_col_des_murmures",
+      "name": "Col des murmures",
+      "cell": "N016_E011",
+      "kind": "defile",
+      "description": "Col venteux où le vent siffle entre les rochers comme une foule qui chuchote. Niveaux 30-34. [GD v1.0.122, lieu_col_des_murmures]."
+    },
+    {
+      "id": "poi_tertre_de_tbarak",
+      "name": "Tertre de Tbarak",
+      "cell": "N017_E009",
+      "kind": "monolithe",
+      "description": "Tertre où les orcs de Tbarak plantent les têtes de leurs ennemis sur des piques. Niveaux 18-22. [GD v1.0.122, lieu_tertre_de_tbarak]."
+    },
+    {
+      "id": "poi_enclos_des_loups_de_tbarak",
+      "name": "Enclos des loups de Tbarak",
+      "cell": "N017_E010",
+      "kind": "elevage",
+      "description": "Enclos où les dresseurs de Tbarak élèvent les loups de guerre des chevaucheurs. Niveaux 18-22. [GD v1.0.122, lieu_enclos_des_loups_de_tbarak]."
+    },
+    {
+      "id": "poi_frontiere_des_geants",
+      "name": "Frontière des géants",
+      "cell": "N019_E009",
+      "kind": "monolithe",
+      "description": "Rangée de rochers énormes que les géants ont posés pour marquer leur terre ; les orcs ne la franchissent qu'en nombre. Niveaux 30-34. [GD v1.0.122, lieu_frontiere_des_geants]."
+    },
+    {
+      "id": "poi_campement_des_chasseurs_de_geants",
+      "name": "Campement des chasseurs de géants",
+      "cell": "N019_E010",
+      "kind": "camp",
+      "description": "Campement d'une bande qui chasse le géant pour ses os et sa graisse ; on y voit des arbalètes énormes. Niveaux 30-34. [GD v1.0.122, lieu_campement_des_chasseurs_de_geants]."
+    },
+    {
+      "id": "poi_mare_des_aurochs",
+      "name": "Mare des aurochs",
+      "cell": "N019_E011",
+      "kind": "etang",
+      "description": "Grande mare dans la plaine où les aurochs viennent boire au crépuscule ; des chasseurs s'y embusquent. Niveaux 30-34. [GD v1.0.122, lieu_mare_des_aurochs]."
+    },
+    {
+      "id": "poi_lisiere_des_chasseurs_de_khaldhol",
+      "name": "Lisière des chasseurs de Khaldhol",
+      "cell": "N019_E012",
+      "kind": "camp",
+      "description": "Abris de chasse à la lisière, où les chasseurs de Khaldhol fument la viande. Niveaux 30-32. [GD v1.0.122, lieu_lisiere_des_chasseurs_de_khaldhol]."
+    },
+    {
+      "id": "poi_ferme_de_khaldhol",
+      "name": "Ferme de Khaldhol",
+      "cell": "N020_E010",
+      "kind": "elevage",
+      "description": "Ferme fortifiée de Khaldhol où l'on élève des moutons à laine noire. Niveaux 30-34. [GD v1.0.122, lieu_ferme_de_khaldhol]."
+    },
+    {
+      "id": "poi_autel_du_dieu_cerf",
+      "name": "Autel du dieu-cerf",
+      "cell": "N020_E012",
+      "kind": "sanctuaire",
+      "description": "Autel de bois de cerf à la lisière, où les chasseurs demandent pardon pour le gibier abattu. Niveaux 30-32. [GD v1.0.122, lieu_autel_du_dieu_cerf]."
+    },
+    {
+      "id": "poi_port_des_contrebandiers_du_nord",
+      "name": "Port des contrebandiers du nord",
+      "cell": "N021_E010",
+      "kind": "camp",
+      "description": "Crique cachée où des contrebandiers débarquent les armes vendues aux orcs. Niveaux 30-34. [GD v1.0.122, lieu_port_des_contrebandiers_du_nord]."
+    },
+    {
+      "id": "poi_champ_des_cairns",
+      "name": "Champ des cairns",
+      "cell": "N021_E011",
+      "kind": "monolithe",
+      "description": "Plaine semée de cairns, chacun pour un voyageur mort de froid ; on ajoute une pierre en passant. Niveaux 30-34. [GD v1.0.122, lieu_champ_des_cairns]."
+    },
+    {
+      "id": "poi_ruines_du_fortin_de_khaldhol",
+      "name": "Ruines du fortin de Khaldhol",
+      "cell": "N021_E012",
+      "kind": "ruine",
+      "description": "Fortin de pierre abandonné après un siège des géants ; une brèche immense ouvre son mur. Niveaux 30-34. [GD v1.0.122, lieu_ruines_du_fortin_de_khaldhol]."
+    },
+    {
+      "id": "poi_sommet_des_neiges_eternelles",
+      "name": "Sommet des neiges éternelles",
+      "cell": "N020_E018",
+      "kind": "monolithe",
+      "description": "Sommet enneigé où les géants du givre font, dit-on, leurs sacrifices. Niveaux 30-32. [GD v1.0.122, lieu_sommet_des_neiges_eternelles]."
+    },
+    {
+      "id": "poi_grotte_de_glace",
+      "name": "Grotte de glace",
+      "cell": "N020_E019",
+      "kind": "salle",
+      "description": "Grotte aux parois de glace bleue, où des créatures gelées attendent le dégel. Niveaux 30-32. [GD v1.0.122, lieu_grotte_de_glace]."
+    },
+    {
+      "id": "poi_refuge_des_montagnards",
+      "name": "Refuge des montagnards",
+      "cell": "N020_E020",
+      "kind": "camp",
+      "description": "Refuge de pierre où les montagnards de Hagfhal passent la nuit avant le col. Niveaux 30-32. [GD v1.0.122, lieu_refuge_des_montagnards]."
+    },
+    {
+      "id": "poi_col_de_dhraegtun",
+      "name": "Col de Dhraegtun",
+      "cell": "N021_E018",
+      "kind": "defile",
+      "description": "Col entre deux montagnes, sur la route de Dhraegtun à Hagfhal ; les avalanches y emportent les imprudents. Niveaux 30-32. [GD v1.0.122, lieu_col_de_dhraegtun]."
+    },
+    {
+      "id": "poi_pature_d_ete_de_dhraegtun",
+      "name": "Pâture d'été de Dhraegtun",
+      "cell": "N021_E020",
+      "kind": "elevage",
+      "description": "Pâture où les bergers de Dhraegtun mènent leurs troupeaux l'été, sous la menace des géants. Niveaux 30-33. [GD v1.0.122, lieu_pature_d_ete_de_dhraegtun]."
+    },
+    {
+      "id": "poi_baie_des_glaces",
+      "name": "Baie des glaces",
+      "cell": "N022_E018",
+      "kind": "etang",
+      "description": "Baie où dérivent des glaces flottantes ; des morses s'y prélassent. Niveaux 30-34. [GD v1.0.122, lieu_baie_des_glaces]."
+    },
+    {
+      "id": "poi_cale_de_dhraegtun",
+      "name": "Cale de Dhraegtun",
+      "cell": "N022_E019",
+      "kind": "camp",
+      "description": "Cale de halage où les gens de Dhraegtun tirent leurs bateaux de pêche hors de l'eau. Niveaux 30-34. [GD v1.0.122, lieu_cale_de_dhraegtun]."
+    },
+    {
+      "id": "poi_phare_des_geants",
+      "name": "Phare des géants",
+      "cell": "N022_E020",
+      "kind": "ruine",
+      "description": "Tour colossale au bord de la mer, construite par des géants ; nul ne sait pour quels navires. Niveaux 30-34. [GD v1.0.122, lieu_phare_des_geants]."
+    },
+    {
+      "id": "poi_bois_des_sangliers_de_shtenbrak",
+      "name": "Bois des sangliers de Shtenbrak",
+      "cell": "N015_E022",
+      "kind": "foret",
+      "description": "Bois épais où les sangliers pullulent ; les seigneurs de Shtenbrak y chassent à l'automne. Niveaux 30-32. [GD v1.0.122, lieu_bois_des_sangliers_de_shtenbrak]."
+    },
+    {
+      "id": "poi_camp_des_bucherons_de_shtenbrak",
+      "name": "Camp des bûcherons de Shtenbrak",
+      "cell": "N015_E023",
+      "kind": "camp",
+      "description": "Camp de bûcherons à la lisière, qui flottent les troncs jusqu'à la mer. Niveaux 30-32. [GD v1.0.122, lieu_camp_des_bucherons_de_shtenbrak]."
+    },
+    {
+      "id": "poi_stele_aux_runes",
+      "name": "Stèle aux runes",
+      "cell": "N015_E024",
+      "kind": "monolithe",
+      "description": "Stèle couverte de runes que personne ne sait plus lire ; les chamans disent qu'elle retient un géant sous terre. Niveaux 30-32. [GD v1.0.122, lieu_stele_aux_runes]."
+    },
+    {
+      "id": "poi_haras_de_shtenbrak",
+      "name": "Haras de Shtenbrak",
+      "cell": "N016_E022",
+      "kind": "elevage",
+      "description": "Haras où l'on élève les grands chevaux de guerre de Shtenbrak. Niveaux 30-32. [GD v1.0.122, lieu_haras_de_shtenbrak]."
+    },
+    {
+      "id": "poi_tour_de_guet_de_shtenbrak",
+      "name": "Tour de guet de Shtenbrak",
+      "cell": "N016_E024",
+      "kind": "camp",
+      "description": "Tour de guet de bois qui surveille la plaine contre les géants ; un cor y est toujours prêt. Niveaux 30-33. [GD v1.0.122, lieu_tour_de_guet_de_shtenbrak]."
+    },
+    {
+      "id": "poi_champ_de_bataille_des_geants",
+      "name": "Champ de bataille des géants",
+      "cell": "N017_E022",
+      "kind": "champ_bataille",
+      "description": "Plaine où une armée humaine affronta des géants ; leurs os et ceux des soldats s'y mêlent. Niveaux 30-32. [GD v1.0.122, lieu_champ_de_bataille_des_geants]."
+    },
+    {
+      "id": "poi_ferme_des_trois_tours",
+      "name": "Ferme des trois tours",
+      "cell": "N017_E023",
+      "kind": "elevage",
+      "description": "Ferme fortifiée flanquée de trois tours, où une famille garde ses bœufs à l'abri des géants. Niveaux 30-32. [GD v1.0.122, lieu_ferme_des_trois_tours]."
+    },
+    {
+      "id": "poi_camp_des_nomades_du_nord",
+      "name": "Camp des nomades du nord",
+      "cell": "N017_E024",
+      "kind": "camp",
+      "description": "Camp de nomades à cheval qui troquent des fourrures contre du fer. Niveaux 30-33. [GD v1.0.122, lieu_camp_des_nomades_du_nord]."
+    },
+    {
+      "id": "poi_aqueduc_imperial",
+      "name": "Aqueduc impérial",
+      "cell": "S005_W013",
+      "kind": "monolithe",
+      "description": "Arches d'un aqueduc impérial qui portait l'eau à Aeskhol ; une partie s'est effondrée. Niveaux 17-21. [GD v1.0.122, lieu_aqueduc_imperial]."
+    },
+    {
+      "id": "poi_vergers_d_aeskhol",
+      "name": "Vergers d'Aeskhol",
+      "cell": "S006_W013",
+      "kind": "elevage",
+      "description": "Vergers de pommiers et de poiriers ; le cidre d'Aeskhol se boit jusqu'à la capitale. Niveaux 22-26. [GD v1.0.122, lieu_vergers_d_aeskhol]."
+    },
+    {
+      "id": "poi_temple_en_ruine_d_aeskhol",
+      "name": "Temple en ruine d'Aeskhol",
+      "cell": "S006_W015",
+      "kind": "ruine",
+      "description": "Temple d'un dieu oublié, aux colonnes renversées ; des cultistes s'y réunissent la nuit. Niveaux 10-14. [GD v1.0.122, lieu_temple_en_ruine_d_aeskhol]."
+    },
+    {
+      "id": "poi_parc_a_huitres_d_aeskhol",
+      "name": "Parc à huîtres d'Aeskhol",
+      "cell": "S007_W015",
+      "kind": "camp",
+      "description": "Parcs à huîtres sur la côte, gardés par des pêcheurs méfiants envers les voleurs. Niveaux 10-14. [GD v1.0.122, lieu_parc_a_huitres_d_aeskhol]."
+    },
+    {
+      "id": "poi_lisiere_des_bucherons_nains",
+      "name": "Lisière des bûcherons nains",
+      "cell": "S011_E004",
+      "kind": "camp",
+      "description": "Coupe de bois où les nains abattent les sapins pour les étais de leurs mines. Niveaux 10-14. [GD v1.0.122, lieu_lisiere_des_bucherons_nains]."
+    },
+    {
+      "id": "poi_foret_des_sentinelles",
+      "name": "Forêt des sentinelles",
+      "cell": "S012_E002",
+      "kind": "foret",
+      "description": "Forêt où les nains ont dressé des statues de sentinelles pour effrayer les intrus ; la mousse les recouvre. Niveaux 10-14. [GD v1.0.122, lieu_foret_des_sentinelles]."
+    },
+    {
+      "id": "poi_cabane_du_charbonnier_nain",
+      "name": "Cabane du charbonnier nain",
+      "cell": "S012_E003",
+      "kind": "camp",
+      "description": "Cabane d'un charbonnier nain et de ses meules, au cœur de la forêt. Niveaux 10-14. [GD v1.0.122, lieu_cabane_du_charbonnier_nain]."
+    },
+    {
+      "id": "poi_source_aux_salamandres",
+      "name": "Source aux salamandres",
+      "cell": "S012_E004",
+      "kind": "sanctuaire",
+      "description": "Source tiède où vivent des salamandres de feu ; les nains y trempent leurs lames. Niveaux 10-14. [GD v1.0.122, lieu_source_aux_salamandres]."
+    },
+    {
+      "id": "poi_poste_avance_drach",
+      "name": "Poste avancé drach",
+      "cell": "S013_E002",
+      "kind": "camp",
+      "description": "Poste avancé drach à la lisière, qui surveille la frontière des nains. Niveaux 30-34. [GD v1.0.122, lieu_poste_avance_drach]."
+    },
+    {
+      "id": "poi_mine_abandonnee_de_khlaybur",
+      "name": "Mine abandonnée de Khlaybur",
+      "cell": "S013_E004",
+      "kind": "salle",
+      "description": "Mine naine abandonnée après qu'on y eut réveillé quelque chose ; l'entrée est murée à moitié. Niveaux 10-14. [GD v1.0.122, lieu_mine_abandonnee_de_khlaybur]."
+    },
+    {
+      "id": "poi_champ_de_la_frontiere",
+      "name": "Champ de la frontière",
+      "cell": "S014_E002",
+      "kind": "monolithe",
+      "description": "Plaine où une borne drach et une borne naine se font face, à dix pas l'une de l'autre. Niveaux 30-34. [GD v1.0.122, lieu_champ_de_la_frontiere]."
+    },
+    {
+      "id": "poi_relais_de_khlaybur",
+      "name": "Relais de Khlaybur",
+      "cell": "S014_E003",
+      "kind": "camp",
+      "description": "Relais où les caravanes naines font étape avant Khlaybur. Niveaux 10-14. [GD v1.0.122, lieu_relais_de_khlaybur]."
+    },
+    {
+      "id": "poi_ferme_des_brasseurs",
+      "name": "Ferme des brasseurs",
+      "cell": "S014_E004",
+      "kind": "elevage",
+      "description": "Ferme naine où l'on cultive l'orge et le houblon de la bière de Khlaybur. Niveaux 10-14. [GD v1.0.122, lieu_ferme_des_brasseurs]."
+    },
+    {
+      "id": "poi_ferme_des_serfs_drach",
+      "name": "Ferme des serfs drach",
+      "cell": "S010_W001",
+      "kind": "elevage",
+      "description": "Ferme où des serfs drach travaillent la terre pour un seigneur cruel ; certains rêvent de fuir. Niveaux 30-34. [GD v1.0.122, lieu_ferme_des_serfs_drach]."
+    },
+    {
+      "id": "poi_greve_des_drach",
+      "name": "Grève des Drach",
+      "cell": "S010_W002",
+      "kind": "etang",
+      "description": "Plage où les Drach tirent leurs bateaux de pêche ; des squelettes de bateaux pourrissent dans les dunes. Niveaux 30-34. [GD v1.0.122, lieu_greve_des_drach]."
+    },
+    {
+      "id": "poi_gibets_de_melvhord",
+      "name": "Gibets de Melvhord",
+      "cell": "S011_W001",
+      "kind": "monolithe",
+      "description": "Gibets plantés au bord de la route par les seigneurs de Melvhord pour les voleurs et les rebelles. Niveaux 30-34. [GD v1.0.122, lieu_gibets_de_melvhord]."
+    },
+    {
+      "id": "poi_falaise_des_naufrageurs",
+      "name": "Falaise des naufrageurs",
+      "cell": "S011_W003",
+      "kind": "camp",
+      "description": "Falaise d'où des naufrageurs hishtarlandais attirent les navires sur les rochers. Niveaux 25-29. [GD v1.0.122, lieu_falaise_des_naufrageurs]."
+    },
+    {
+      "id": "poi_lisiere_des_braconniers",
+      "name": "Lisière des braconniers",
+      "cell": "S012_E000",
+      "kind": "camp",
+      "description": "Abris de braconniers à la lisière, qui chassent sur les terres des seigneurs drach. Niveaux 30-34. [GD v1.0.122, lieu_lisiere_des_braconniers]."
+    },
+    {
+      "id": "poi_foret_des_loups_noirs",
+      "name": "Forêt des loups noirs",
+      "cell": "S012_E001",
+      "kind": "foret",
+      "description": "Forêt sombre où vit une meute de loups noirs ; les Drach disent qu'ils obéissent à une sorcière. Niveaux 30-34. [GD v1.0.122, lieu_foret_des_loups_noirs]."
+    },
+    {
+      "id": "poi_monastere_hishtarlandais",
+      "name": "Monastère hishtarlandais",
+      "cell": "S012_W001",
+      "kind": "sanctuaire",
+      "description": "Monastère de moines hishtarlandais qui copient des livres et soignent les pèlerins. Niveaux 25-29. [GD v1.0.122, lieu_monastere_hishtarlandais]."
+    },
+    {
+      "id": "poi_marche_aux_chevaux",
+      "name": "Marché aux chevaux",
+      "cell": "S012_W002",
+      "kind": "camp",
+      "description": "Foire aux chevaux où marchands hishtarlandais et drach marchandent bruyamment. Niveaux 25-29. [GD v1.0.122, lieu_marche_aux_chevaux]."
+    },
+    {
+      "id": "poi_salines_du_hishtarland",
+      "name": "Salines du Hishtarland",
+      "cell": "S012_W003",
+      "kind": "etang",
+      "description": "Marais salants de la côte où les sauniers récoltent le sel blanc du Hishtarland. Niveaux 25-29. [GD v1.0.122, lieu_salines_du_hishtarland]."
+    },
+    {
+      "id": "poi_domaine_viticole_du_hishtarland",
+      "name": "Domaine viticole du Hishtarland",
+      "cell": "S014_E000",
+      "kind": "elevage",
+      "description": "Domaine viticole du Hishtarland dont le vin doré se vend jusqu'à l'Empire. Niveaux 25-29. [GD v1.0.122, lieu_domaine_viticole_du_hishtarland]."
+    },
+    {
+      "id": "poi_tour_du_seigneur_errant",
+      "name": "Tour du seigneur errant",
+      "cell": "S014_E001",
+      "kind": "ruine",
+      "description": "Tour d'un seigneur parti en croisade et jamais revenu ; des pillards l'occupent. Niveaux 25-29. [GD v1.0.122, lieu_tour_du_seigneur_errant]."
+    },
+    {
+      "id": "poi_champ_de_foire_drach",
+      "name": "Champ de foire drach",
+      "cell": "S015_E000",
+      "kind": "camp",
+      "description": "Champ où se tient une foire drach à chaque saison ; jongleurs, marchands et voleurs s'y pressent. Niveaux 30-34. [GD v1.0.122, lieu_champ_de_foire_drach]."
+    },
+    {
+      "id": "poi_moulin_de_faervosk",
+      "name": "Moulin de Faervosk",
+      "cell": "S015_E002",
+      "kind": "elevage",
+      "description": "Moulin à vent de Faervosk ; le meunier y entend tout ce qui se dit au village. Niveaux 30-34. [GD v1.0.122, lieu_moulin_de_faervosk]."
+    },
+    {
+      "id": "poi_cromlech_drach",
+      "name": "Cromlech drach",
+      "cell": "S016_E000",
+      "kind": "monolithe",
+      "description": "Cercle de grandes pierres où les anciens Drach faisaient leurs sacrifices. Niveaux 30-34. [GD v1.0.122, lieu_cromlech_drach]."
+    },
+    {
+      "id": "poi_fermes_de_faervosk",
+      "name": "Fermes de Faervosk",
+      "cell": "S016_E001",
+      "kind": "elevage",
+      "description": "Fermes dispersées dans la plaine, aux murs bas, où l'on élève porcs et volailles. Niveaux 30-34. [GD v1.0.122, lieu_fermes_de_faervosk]."
+    },
+    {
+      "id": "poi_camp_des_mercenaires_drach",
+      "name": "Camp des mercenaires drach",
+      "cell": "S016_E002",
+      "kind": "camp",
+      "description": "Camp de mercenaires drach qui louent leurs épées au plus offrant. Niveaux 30-34. [GD v1.0.122, lieu_camp_des_mercenaires_drach]."
+    },
+    {
+      "id": "poi_mine_de_fer_drach",
+      "name": "Mine de fer drach",
+      "cell": "S007_W001",
+      "kind": "salle",
+      "description": "Mine de fer creusée par des esclaves dans la montagne ; le fer y sert aux armes des Drach. Niveaux 30-34. [GD v1.0.122, lieu_mine_de_fer_drach]."
+    },
+    {
+      "id": "poi_nid_des_wivernes",
+      "name": "Nid des wivernes",
+      "cell": "S007_W002",
+      "kind": "camp",
+      "description": "Nid de wivernes sur un piton ; les Drach en volent les œufs pour les dresser. Niveaux 30-34. [GD v1.0.122, lieu_nid_des_wivernes]."
+    },
+    {
+      "id": "poi_forteresse_ruinee_de_brokhendt",
+      "name": "Forteresse ruinée de Brokhendt",
+      "cell": "S008_W001",
+      "kind": "ruine",
+      "description": "Forteresse drach détruite dans une guerre de seigneurs ; ses souterrains n'ont pas été fouillés. Niveaux 30-34. [GD v1.0.122, lieu_forteresse_ruinee_de_brokhendt]."
+    },
+    {
+      "id": "poi_col_de_brokhendt",
+      "name": "Col de Brokhendt",
+      "cell": "S009_W001",
+      "kind": "defile",
+      "description": "Col de montagne sur la route de Brokhendt à Melvhord, tenu par un péage drach. Niveaux 30-34. [GD v1.0.122, lieu_col_de_brokhendt]."
+    },
+    {
+      "id": "poi_anse_de_brokhendt",
+      "name": "Anse de Brokhendt",
+      "cell": "S009_W002",
+      "kind": "etang",
+      "description": "Anse au pied des montagnes, où les Drach chargent le fer sur leurs navires. Niveaux 30-34. [GD v1.0.122, lieu_anse_de_brokhendt]."
+    },
+    {
+      "id": "poi_ferme_de_suthvarn",
+      "name": "Ferme de Suthvarn",
+      "cell": "S013_E005",
+      "kind": "elevage",
+      "description": "Ferme de la plaine de Suthvarn, où l'on élève des chevaux de trait. Niveaux 10-14. [GD v1.0.122, lieu_ferme_de_suthvarn]."
+    },
+    {
+      "id": "poi_gue_de_suthvarn",
+      "name": "Gué de Suthvarn",
+      "cell": "S013_E006",
+      "kind": "defile",
+      "description": "Gué de la rivière de Suthvarn ; un passeur y tend une corde pour les jours de crue. Niveaux 10-14. [GD v1.0.122, lieu_gue_de_suthvarn]."
+    },
+    {
+      "id": "poi_forteresse_naine_effondree",
+      "name": "Forteresse naine effondrée",
+      "cell": "S013_E007",
+      "kind": "ruine",
+      "description": "Forteresse naine dans la montagne, effondrée par un tremblement de terre ; on y entend encore des marteaux. Niveaux 18-22. [GD v1.0.122, lieu_forteresse_naine_effondree]."
+    },
+    {
+      "id": "poi_foire_de_suthvarn",
+      "name": "Foire de Suthvarn",
+      "cell": "S014_E005",
+      "kind": "camp",
+      "description": "Champ de foire de Suthvarn, où nains et humains échangent métal contre grain. Niveaux 10-14. [GD v1.0.122, lieu_foire_de_suthvarn]."
+    },
+    {
+      "id": "poi_gorge_des_echos",
+      "name": "Gorge des échos",
+      "cell": "S014_E007",
+      "kind": "defile",
+      "description": "Gorge étroite où le moindre bruit roule longtemps ; des trolls des montagnes y guettent. Niveaux 18-22. [GD v1.0.122, lieu_gorge_des_echos]."
+    },
+    {
+      "id": "poi_rucher_de_suthvarn",
+      "name": "Rucher de Suthvarn",
+      "cell": "S015_E005",
+      "kind": "elevage",
+      "description": "Ruches alignées dans la plaine de Suthvarn ; l'hydromel qu'on en tire est célèbre. Niveaux 10-14. [GD v1.0.122, lieu_rucher_de_suthvarn]."
+    },
+    {
+      "id": "poi_moulin_a_eau_de_suthvarn",
+      "name": "Moulin à eau de Suthvarn",
+      "cell": "S015_E006",
+      "kind": "elevage",
+      "description": "Moulin à eau sur la rivière de Suthvarn, où l'on moud le grain de toute la plaine. Niveaux 10-14. [GD v1.0.122, lieu_moulin_a_eau_de_suthvarn]."
+    },
+    {
+      "id": "poi_observatoire_nain",
+      "name": "Observatoire nain",
+      "cell": "S015_E007",
+      "kind": "sanctuaire",
+      "description": "Tour naine au sommet d'un pic, d'où les sages nains observaient les étoiles et les cristaux du ciel. Niveaux 10-14. [GD v1.0.122, lieu_observatoire_nain]."
+    },
+    {
+      "id": "poi_anse_des_loutres",
+      "name": "Anse des loutres",
+      "cell": "N016_E008",
+      "kind": "etang",
+      "description": "Anse tranquille où vivent des loutres ; les trappeurs de Stohnvar en vendent les peaux à prix d'or. Niveaux 31-34. [GD v1.0.122, lieu_anse_des_loutres]."
+    },
+    {
+      "id": "poi_cairn_du_marin",
+      "name": "Cairn du marin",
+      "cell": "N017_E008",
+      "kind": "monolithe",
+      "description": "Haut cairn sur la côte, élevé à la mémoire des marins perdus ; il sert d'amer aux bateaux. Niveaux 31-34. [GD v1.0.122, lieu_cairn_du_marin]."
+    },
+    {
+      "id": "poi_clairiere_du_bucheron_pendu",
+      "name": "Clairière du bûcheron pendu",
+      "cell": "N009_W005",
+      "kind": "foret",
+      "description": "Clairière où l'on a retrouvé un bûcheron pendu à son propre chêne ; on dit qu'il y revient chaque nuit. Niveaux 30-33. [GD v1.0.122, lieu_clairiere_du_bucheron_pendu]."
+    },
+    {
+      "id": "poi_pont_des_nains_du_sud",
+      "name": "Pont des nains du sud",
+      "cell": "S006_E006",
+      "kind": "defile",
+      "description": "Pont de pierre bâti par les nains sur la route de Frhozhol ; un péage nain y est tenu par deux frères bourrus. Niveaux 18-22. [GD v1.0.122, lieu_pont_des_nains_du_sud]."
+    },
+    {
+      "id": "poi_moulin_de_la_riviere_noire",
+      "name": "Moulin de la rivière noire",
+      "cell": "N010_W006",
+      "kind": "elevage",
+      "description": "Moulin à eau sous les arbres, sur une rivière aux eaux sombres ; le meunier ne travaille jamais la nuit. Niveaux 30-33. [GD v1.0.122, lieu_moulin_de_la_riviere_noire]."
+    },
+    {
+      "id": "poi_village_de_pecheurs_de_fhelvakt",
+      "name": "Hameau de pêcheurs de Fhelvakt",
+      "cell": "N010_W001",
+      "kind": "camp",
+      "description": "Quelques cabanes de pêcheurs sur la côte, rattachées à Fhelvakt ; on y fume l'anguille. Niveaux 30-33. [GD v1.0.122, lieu_village_de_pecheurs_de_fhelvakt]."
+    },
+    {
+      "id": "poi_dunes_des_marais",
+      "name": "Dunes des marais",
+      "cell": "N010_W002",
+      "kind": "monolithe",
+      "description": "Dunes entre la mer et les marais de Haevrin, où un menhir penché sert de repère. Niveaux 30-33. [GD v1.0.122, lieu_dunes_des_marais]."
     }
   ],
   "imports": {

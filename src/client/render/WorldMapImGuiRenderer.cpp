@@ -481,6 +481,37 @@ namespace engine::render
 					myStart ? IM_COL32(255, 222, 120, 255) : IM_COL32(245, 240, 228, 255), c.name.c_str());
 		}
 
+		// Lore v1.0.114 — lieux secrets découverts par le joueur : étoile à quatre
+		// branches turquoise cerclée de noir (distincte des losanges violets et des
+		// disques des villes), visible même sous le voile (le joueur y est allé).
+		const engine::server::DiscoveredPlaceWire* hoveredSecret = nullptr;
+		if (in.secretPlaces != nullptr)
+			for (const engine::server::DiscoveredPlaceWire& p : *in.secretPlaces)
+			{
+				if (p.map != in.currentMap)
+					continue;
+				float u = 0, v = 0;
+				places.WorldToMapUv(p.x, p.z, u, v);
+				const ImVec2 s = toScreen(u, v);
+				const float r = 6.0f + markerZoom * 0.4f, k = r * 0.35f;
+				const ImVec2 star[8] = { ImVec2(s.x, s.y - r), ImVec2(s.x + k, s.y - k), ImVec2(s.x + r, s.y), ImVec2(s.x + k, s.y + k),
+					ImVec2(s.x, s.y + r), ImVec2(s.x - k, s.y + k), ImVec2(s.x - r, s.y), ImVec2(s.x - k, s.y - k) };
+				// Étoile (concave) remplie en éventail depuis le centre.
+				for (int i = 0; i < 8; ++i)
+					dl->AddTriangleFilled(s, star[i], star[(i + 1) % 8], IM_COL32(64, 224, 208, 245));
+				dl->AddPolyline(star, 8, IM_COL32(10, 30, 30, 255), ImDrawFlags_Closed, 1.5f);
+				if (view.zoom >= 2.0f)
+					ShadowText(dl, ImVec2(s.x + r + 3.0f, s.y - 7.0f), IM_COL32(150, 255, 240, 255), p.name.c_str());
+				const float d2 = (io.MousePos.x - s.x) * (io.MousePos.x - s.x) + (io.MousePos.y - s.y) * (io.MousePos.y - s.y);
+				if (hovered && d2 < std::max(bestHover, (r + 2.0f) * (r + 2.0f)))
+				{
+					bestHover = d2;
+					hoveredSecret = &p;
+					hoveredCity = nullptr;
+					hoveredPoi = nullptr;
+				}
+			}
+
 		// Joueur : flèche orientée selon son cap (avant = (sin yaw, cos yaw), +Z = bas).
 		if (playerOnMap)
 		{
@@ -497,7 +528,16 @@ namespace engine::render
 		dl->PopClipRect();
 
 		// Info-bulle du lieu survolé.
-		if (hoveredCity != nullptr)
+		if (hoveredSecret != nullptr)
+		{
+			// Lore v1.0.114 — lieu secret découvert : nom, genre, mention « découvert ».
+			ImGui::BeginTooltip();
+			ImGui::TextUnformatted(hoveredSecret->name.c_str());
+			ImGui::TextDisabled("%s", engine::client::PlaceKindLabel(hoveredSecret->kind).c_str());
+			ImGui::TextColored(ImVec4(0.4f, 0.95f, 0.85f, 1.0f), "Lieu secret decouvert");
+			ImGui::EndTooltip();
+		}
+		else if (hoveredCity != nullptr)
 		{
 			ImGui::BeginTooltip();
 			ImGui::TextUnformatted(hoveredCity->name.c_str());
@@ -559,7 +599,8 @@ namespace engine::render
 		ImGui::End();
 	}
 
-	void DrawPlaceBanner(ImDrawList* fg, float dw, float /*dh*/, const engine::client::PlaceBannerTracker& banner)
+	void DrawPlaceBanner(ImDrawList* fg, float dw, float /*dh*/, const engine::client::PlaceBannerTracker& banner,
+		engine::client::ZoneLevelTone tone)
 	{
 		if (fg == nullptr || !banner.Visible())
 			return;
@@ -577,7 +618,10 @@ namespace engine::render
 		const float cx = dw * 0.5f;
 		fg->AddLine(ImVec2(cx - lineW, y + ts.y + 4.0f), ImVec2(cx + lineW, y + ts.y + 4.0f), IM_COL32(214, 180, 104, ia * 3 / 4), 1.5f);
 		fg->AddText(font, titleSize, ImVec2(x + 2.0f, y + 2.0f), IM_COL32(0, 0, 0, ia * 4 / 5), banner.Title().c_str());
-		fg->AddText(font, titleSize, ImVec2(x, y), IM_COL32(246, 226, 172, ia), banner.Title().c_str());
+		// v1.0.118 — couleur du nom de zone selon l'écart de niveau (gris, vert, jaune, orange, rouge).
+		uint8_t tr = 246, tg = 226, tb = 172;
+		engine::client::ZoneLevelToneRgb(tone, tr, tg, tb);
+		fg->AddText(font, titleSize, ImVec2(x, y), IM_COL32(tr, tg, tb, ia), banner.Title().c_str());
 		if (!banner.Subtitle().empty())
 		{
 			const ImVec2 sp((dw - ss.x) * 0.5f, y + ts.y + 10.0f);
@@ -592,7 +636,7 @@ namespace engine::render
 namespace engine::render
 {
 	void DrawWorldMapWindow(bool*, const WorldMapHudInput&, WorldMapViewState&) {}
-	void DrawPlaceBanner(ImDrawList*, float, float, const engine::client::PlaceBannerTracker&) {}
+	void DrawPlaceBanner(ImDrawList*, float, float, const engine::client::PlaceBannerTracker&, engine::client::ZoneLevelTone) {}
 }
 
 #endif

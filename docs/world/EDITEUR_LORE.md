@@ -251,8 +251,8 @@ déroulantes est gardée ; un formulaire refuse une fiche sans nom.
   change rien.
 - Les références **ne sont pas nettoyées** : supprimer une fiche citée crée des références
   orphelines. Les lister ensuite avec `python3 tools/lore/check_references.py`
-  ([`OUTILS_LORE.md`](OUTILS_LORE.md)). Au v1.0.108 : **89 références orphelines** (36 identifiants),
-  à trancher par le propriétaire.
+  ([`OUTILS_LORE.md`](OUTILS_LORE.md)). Depuis le v1.0.115 : **0 référence orpheline**,
+  contrôle bloquant en CI (LORE_BD §16.42).
 - Une route supprimée garde ses embranchements (signalés).
 - Ctrl+Z ne concerne que la carte (Déplacer, Tracer), pas les formulaires ni les suppressions.
 
@@ -305,7 +305,7 @@ game/data/zones/cell_*, world/royaumes/*  (non versionné)  → paquet client + 
    python3 tools/lore/sync_positions.py --check
    python3 tools/lore/sync_routes.py --check
    python3 tools/lore/test_sync_routes.py
-   python3 tools/lore/check_references.py          # rapport (non bloquant)
+   python3 tools/lore/check_references.py --strict # aucune orpheline (bloquant en CI)
    ```
 
    Sans Python installé sur le poste : lancer les mêmes commandes dans un conteneur ponctuel,

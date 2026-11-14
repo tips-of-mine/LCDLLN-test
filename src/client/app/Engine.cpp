@@ -6417,6 +6417,20 @@ namespace engine
 														lp.ambientColor[i] *= ambFactor;
 													}
 												}
+												// v1.0.118 — zone d'ambiance locale (fond du gouffre, zone.json
+												// world.ambiance_zones) : soleil presque éteint, ambiant réduit ;
+												// les torches (point lights) éclairent alors le fond.
+												if (rs.ambianceDarkness > 0.0f)
+												{
+													const float dk = std::clamp(rs.ambianceDarkness, 0.0f, 1.0f);
+													const float sunK = 1.0f - 0.92f * dk;
+													const float ambK = 1.0f - 0.75f * dk;
+													for (int i = 0; i < 3; ++i)
+													{
+														lp.lightColor[i]   *= sunK;
+														lp.ambientColor[i] *= ambK;
+													}
+												}
 												// Couleur du ciel utilisée par lighting.frag pour les pixels
 												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
 												// rendre le cycle jour/nuit visible sans skybox dédié.
@@ -8665,6 +8679,8 @@ namespace engine
 				// au presenter m_exploitsUi ; la requête part au toggle F1).
 				m_exploitsImGui = std::make_unique<engine::render::ExploitsImGuiRenderer>();
 				m_exploitsImGui->Bind(&m_exploitsUi);
+				// Lore v1.0.114 — compteur « Cimetières visités : N/666 » de l'onglet Exploits.
+				m_exploitsImGui->BindDiscovery(&m_uiModelBinding.GetModel().discovery);
 				m_characterWindowImGui->SetExploitsRenderer(m_exploitsImGui.get());
 				// Chantier 2 SP-A — catalogue d'objets client (noms/slots/bonus pour le
 				// panneau équipement + tooltips). Source d'affichage ; le serveur reste
@@ -8966,6 +8982,21 @@ namespace engine
 	{
 		const float timeOfDay = m_dayNight.GetState().timeOfDay;
 		m_dynamicLights.Tick(timeOfDay, static_cast<float>(dt));
+	}
+
+	// v1.0.118 — zones d'ambiance locales (fond du gouffre) : assombrissement au point du
+	// joueur, lissé (≈ 1,5 s) pour qu'une descente ou une remontée ne « claque » pas.
+	{
+		float target = 0.0f;
+		if (!m_ambianceZones.empty())
+		{
+			const engine::math::Vec3 p = m_characterController.GetPosition();
+			target = AmbianceDarknessAt(p.x, p.y, p.z);
+		}
+		const float k = 1.0f - std::exp(-static_cast<float>(dt) / 1.5f);
+		m_ambianceDarkness += (target - m_ambianceDarkness) * k;
+		if (std::fabs(m_ambianceDarkness - target) < 1e-3f)
+			m_ambianceDarkness = target;
 	}
 
 	const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
@@ -14308,7 +14339,11 @@ namespace engine
 		// Snapshot des point lights actives dans le RenderState (anti data-race).
 		// COPIE ici (assemblage de `out`) ; le lambda Lighting lit rs.pointLights
 		// et ne touche jamais m_dynamicLights. Tick() déjà appelé plus tôt (Update).
-		out.pointLights = m_dynamicLights.GetActiveLights();
+		// v1.0.118 — l'UBO n'a que 64 places : avec les torches des cellules, on garde les
+		// 64 lumières les plus proches de la caméra.
+		out.pointLights = engine::render::DynamicLightSystem::SelectNearest(m_dynamicLights.GetActiveLights(),
+			out.camera.position.x, out.camera.position.y, out.camera.position.z, 64);
+		out.ambianceDarkness = m_ambianceDarkness;
 
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);
@@ -14378,7 +14413,10 @@ namespace engine
 	        const float dayMax    = static_cast<float>(m_cfg.GetDouble("exposure.max", 3.0));
 	        const float nightMax  = static_cast<float>(m_cfg.GetDouble("exposure.night_max", 0.8));
 	        const float dayFactor = m_dayNight.GetState().dayFactor; // 0=nuit, 1=jour
-	        const float effectiveMax = nightMax + (dayMax - nightMax) * dayFactor;
+	        float effectiveMax = nightMax + (dayMax - nightMax) * dayFactor;
+	        // v1.0.118 — dans une zone d'ambiance sombre (fond du gouffre), plafond de nuit :
+	        // l'auto-exposition ne doit pas « rallumer » un fond que l'on veut sombre.
+	        effectiveMax += (std::min(effectiveMax, nightMax) - effectiveMax) * std::clamp(m_ambianceDarkness, 0.0f, 1.0f);
 	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, minExp, effectiveMax, frameIndex);
 	    }
 	
@@ -17519,6 +17557,22 @@ namespace engine
 				}
 			}
 			(void)m_uiModelBinding.ApplyPacket(packet);
+		}
+
+		// Lore v1.0.114 — exploration : message système discret dans le chat (cimetière
+		// visité avec compteur, lieu secret découvert, exploit débloqué). Un exploit
+		// débloqué relance la liste du master pour l'onglet Exploits.
+		for (const engine::server::DiscoveryEventMessage& event : m_uiModelBinding.TakeDiscoveryEvents())
+		{
+			engine::net::ChatMessage line{};
+			line.timestampUnixMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+			line.channel = engine::net::ChatChannel::Server;
+			line.sender = "Système";
+			line.text = engine::client::FormatDiscoveryEventLine(event);
+			m_chatUi.PushNetworkLine(line);
+			if (event.kind == engine::server::DiscoveryEventKind::ExploitUnlocked)
+				m_exploitsUi.RequestExploitList();
 		}
 
 		// ETAPE3.4 — canal fiable en échec (aucun accusé du shard depuis 30 s) : les

@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.112)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.118)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -78,13 +78,24 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.110 | `1b72856` | **lieux secrets cachés aux joueurs** (point 65, option a) : `secret` des POI au master (11 grottes des dragons, Puits des Lianes), `secret_places.json` réservé au serveur et retiré du paquet client, annuaire MJ du shard, case « Secret » de l'éditeur, `check_secrets.py` en CI ([LORE_BD §16.37](LORE_BD.md)) | — | — |
 | v1.0.111 | `83aa9fc` | **666 cimetières** : nombre fixe (contrôle bloquant de la CI build-linux), exploit [GD] « Pèlerin des 666 tombes » ([LORE_BD §16.38](LORE_BD.md)) | — | répartition des cimetières (81 cases sans), mécanique de l'exploit |
 | v1.0.112 | `b6f3fa1` | **répartition des 666 cimetières** : un cimetière au moins par cellule à terre (71 isolés ; 10 cellules de mer sans), 71 hameaux sans cimetière, total vérifié par le générateur ([LORE_BD §16.39](LORE_BD.md)) | — | — |
-| v1.0.112 (outil) | (ce commit) | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
+| v1.0.112 (outil) | #1128 | **génération du monde accélérée, données identiques au bit près** : cache du bruit de gradient, grille des biomes du splat, cellules en parallèle (`--jobs`), temps par étape affiché ([ROYAUMES.md §4](ROYAUMES.md)) | — | — |
+| v1.0.113 | `1dd004e` | **décisions du 13/11** : noms [GD] validés, Xygga femelle et noms des dragons, année 3417 AO, niveaux et balisage, Harrodh, Légion, contre-quêtes, Ghulvathan, références orphelines 89 → 42, Menthats, arbitrages de lore ([LORE_BD §16.40](LORE_BD.md)) | — | contre-quêtes à écrire, mécanismes serveur (exploit, lieux découverts), routes à ouvrir |
+| v1.0.114 | `a7df2f9` | **exploit des 666 cimetières et lieux secrets découverts** (mécanique serveur, par personnage) : cimetière visité en y entrant vivant (15 m) ou en y réapparaissant, lieux secrets révélés sur la carte du joueur, messages dans le chat, compteur de l'onglet Exploits ; identifiant `gy=<id>` des cimetières (générateur), migration 0086, UDP 105/106, `kProtocolVersion` 21 ([LORE_BD §16.41](LORE_BD.md)) | **R** + code | titre de joueur sans colonne au catalogue |
+| v1.0.115 | `2b1a929` | **références orphelines 42 → 0** : 8 classes PNJ non jouables, 9 butins [GD], dragon adulte générique, exploit de la mort d'Haghendorf, types de lieu forêt et champ de bataille, mot-clé `monde_entier`, corrections en bloc ; `check_references.py --strict` à la CI ([LORE_BD §16.42](LORE_BD.md)) | — | — |
+| v1.0.116 | `f2d0214` | **quêtes et raids sans case ancrés** : 52 quêtes par des étapes situées [GD], 4 raids (Grande Plaine en instance depuis Garundel, Porte des Enfers du T12, Marche de l'Est, orques de Greldinard) ; Empire du Jade hors carte ([LORE_BD §16.43](LORE_BD.md)) | — | ancrages [GD] à relire |
+| v1.0.117 | (ce commit) | **dialogues, contre-quêtes, lieux du T5** : 77 dialogues remplis (répliques originales), 4 contre-quêtes Lune Noire, Krak de Jhenner, citadelle impériale et Passe de Heniak placés ([LORE_BD §16.44](LORE_BD.md)) | — | répliques et cases [GD] à relire |
+| v1.0.118 | (ce commit) | **couleur du nom de zone, torches et fond sombre du gouffre** : niveaux des régions recopiés au master (`sync_levels.py`), teinte de la bannière d'entrée ; lumières et zones d'ambiance des cellules lues par le client ([LORE_BD §16.45](LORE_BD.md)) | R (`places.json`) + client | rendu à vérifier en jeu |
 
 ## 3. Impact sur le jeu et déploiement
 
 - **Code du shard** : seul l'annuaire des MJ (`src/shardd/gameplay/gm/GmPlaceDirectory`, v1.0.110)
   change — il lit en plus `world/<monde>/secret_places.json` (lieux secrets pour `/tp` et `/places`).
   Pas de nouvel opcode, pas de migration, pas de nouvelle clé de `config.json`, `kProtocolVersion` inchangé.
+- **v1.0.114 (exploit des 666 cimetières, lieux secrets découverts)** : **code serveur et client**
+  modifiés — migration `0086_character_graveyards_secret_places.sql`, messages UDP `DiscoveryState` (105)
+  et `DiscoveryEvent` (106), `kProtocolVersion` 20 → 21, exploits de portée personnage dans la liste du
+  master (206/207), jeton `gy=<id>` dans `respawn_points.txt` (monde régénéré). **Master, shard et client
+  en lock-step** ([LORE_BD §16.41](LORE_BD.md)).
 - **Paquet client** : `secret_places.json` en est retiré par `.github/scripts/package-windows.ps1`
   (`Copy-GameData -StripServerOnly`, v1.0.110) ; il reste dans le paquet serveur (deploy/docker).
 - Mais les **données** changent : `game/data/world/royaumes/world_master.json` (cases, villes,
@@ -105,51 +116,51 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.1 Noms `[GD]` à valider
 
-1. Mine de Vharholdt, Sanctuaire des Brisants, Veillée des Feux des Brisants (16.1).
-2. Les 3 villes moyennes (Fhelvakt, Hazhaëlin, Kholvard), leurs races et factions ; Elfes des bois neutres (16.2).
-3. Île de la Trêve : région, villes, lieux, raids, créatures, tailles et contrôle des villes (16.3).
-4. Hwakhari : peuple, culte, temples, PNJ, quêtes, tailles ; rameau humain plutôt que race existante (16.6).
-5. Noms des dragons de Xygga (« pas de noms pour l'instant ») et genre de Xygga (16.10).
-6. Peuples lointains et leurs dirigeants ; directions exactes ; peuple turc ou persan unique ou double (16.11).
-7. Noms des balises de danger (16.14).
-8. Lieux et quêtes `[GD]` des lots d'ouverture : 36 lieux et 14 quêtes (16.15), 11 et 10 (16.16), 40 et 2 (16.17), 5 quêtes (16.18), 52 et 3 (16.20), 48 et 3 (16.33), 64 lieux (16.35).
-9. Noms des régions et provinces du sud-centre (Forêt des Lutins, Val de Suthvarn, Désert des Sels, Confins du Midi) (16.19).
+1. ~~Mine de Vharholdt, Sanctuaire des Brisants, Veillée des Feux des Brisants (16.1).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+2. ~~Les 3 villes moyennes (Fhelvakt, Hazhaëlin, Kholvard), leurs races et factions ; Elfes des bois neutres (16.2).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+3. ~~Île de la Trêve : région, villes, lieux, raids, créatures, tailles et contrôle des villes (16.3).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+4. ~~Hwakhari : peuple, culte, temples, PNJ, quêtes, tailles ; rameau humain plutôt que race existante (16.6).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+5. ~~Noms des dragons de Xygga (« pas de noms pour l'instant ») et genre de Xygga (16.10).~~ **Tranché en v1.0.113** : Xygga femelle, noms donnés (LORE_BD §16.40).
+6. ~~Peuples lointains et leurs dirigeants ; directions exactes ; peuple turc ou persan unique ou double (16.11).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+7. ~~Noms des balises de danger (16.14).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+8. ~~Lieux et quêtes `[GD]` des lots d'ouverture : 36 lieux et 14 quêtes (16.15), 11 et 10 (16.16), 40 et 2 (16.17), 5 quêtes (16.18), 52 et 3 (16.20), 48 et 3 (16.33), 64 lieux (16.35).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
+9. ~~Noms des régions et provinces du sud-centre (Forêt des Lutins, Val de Suthvarn, Désert des Sels, Confins du Midi) (16.19).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
 10. Noms du lore différents des noms du hors-série (« Territoires orcques », « Baronnie de Moorks », « Royaumes des nains du sud ») : renommage à décider (`nom_hs`) (16.21).
-11. Gouffre : Gouffre des Revenus, Fente, Thurvhal, Ghaurdes, Mhaldra, Kerreth, 3 quêtes (16.36).
+11. ~~Gouffre : Gouffre des Revenus, Fente, Thurvhal, Ghaurdes, Mhaldra, Kerreth, 3 quêtes (16.36).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
 12. Noms des fleuves, rivières et lacs (R).
-13. Calendrier : noms des lunes, année de jeu à fixer (§0).
+13. ~~Calendrier : noms des lunes, année de jeu à fixer (§0).~~ **Tranché en v1.0.113** : année 3417 AO (LORE_BD §16.40).
 
 ### 4.2 Niveaux
 
-14. Tous les niveaux de référence `[GD]` des régions et provinces, en particulier Hishtarland 25-40, Grande Plaine 45-55, Nains du sud 10-30, 1ère Province 10-22, Northind 12-24 (16.32).
-15. **Raids de Kendrhir 38-56** dans les Terres des Gigantomorphes (sac 38-43, grande bataille 51-56, défense 38-43, contre-bataille 51-56) alors que l'histoire du T1 est un début (16.32).
-16. Planchers des raids de fin d'histoire (Héroïque 45, Légendaire 50, Mythique 55, Apocalyptique 60), dont les raids Légendaires de Lhynn à 50-55 (16.32).
-17. Règle des niveaux par faction : décalage +5 et seuil 20 en territoire ennemi ; Marches, Hishtarland, Via Magna sans maître (16.32).
+14. ~~Tous les niveaux de référence `[GD]` des régions et provinces, en particulier Hishtarland 25-40, Grande Plaine 45-55, Nains du sud 10-30, 1ère Province 10-22, Northind 12-24 (16.32).~~ **Tranché en v1.0.113** : niveaux gardés (LORE_BD §16.40).
+15. ~~**Raids de Kendrhir 38-56** dans les Terres des Gigantomorphes (sac 38-43, grande bataille 51-56, défense 38-43, contre-bataille 51-56) alors que l'histoire du T1 est un début (16.32).~~ **Tranché en v1.0.113** : 38-56 gardé (LORE_BD §16.40).
+16. ~~Planchers des raids de fin d'histoire (Héroïque 45, Légendaire 50, Mythique 55, Apocalyptique 60), dont les raids Légendaires de Lhynn à 50-55 (16.32).~~ **Tranché en v1.0.113** : gardés (LORE_BD §16.40).
+17. ~~Règle des niveaux par faction : décalage +5 et seuil 20 en territoire ennemi ; Marches, Hishtarland, Via Magna sans maître (16.32).~~ **Tranché en v1.0.113** : règle gardée (LORE_BD §16.40).
 18. 2 raids de l'Empire du Jade et 3 régions d'extension sans niveau (16.32).
 19. Repères des lots : Tsaroth 20-40, Oracle 10-25 (16.15) ; lisière des Gigantomorphes 28-36 (16.16) ; gradient 15-28 de la Marche de l'Est (16.17) ; côte orientale 24-30 (16.20) ; nord de Farvhenn 12-15 contre 20-26 sur la route de Rhivkhar (16.33) ; Fhelvakt – Hazhaëlin 30-35 contre 20-26 côté elfe (16.35).
 20. Poche 1-15 de Whispers Hill accessible seulement par des cases 30-56 (16.14).
 21. Niveau des abords des Portes des enfers du continent (16.19).
-22. Forme du balisage en jeu (panneaux, avertissements de PNJ, couleur du nom de zone) et seuil (16.7).
+22. ~~Forme du balisage en jeu (panneaux, avertissements de PNJ, couleur du nom de zone) et seuil (16.7).~~ **Tranché en v1.0.113** : couleur du nom de zone (LORE_BD §16.40).
 23. Niveaux, niveaux par faction et niveaux de raid ne sont lus par **aucun** code du jeu : intégration à décider (16.32).
 
 ### 4.3 Factions, régions, quêtes
 
-24. **Faction d'Harrodh** : Empire (`[GD]`, master `empire_hynn`) (16.23, 16.32).
+24. ~~**Faction d'Harrodh** : Empire (`[GD]`, master `empire_hynn`) (16.23, 16.32).~~ **Tranché en v1.0.113** : Empire (LORE_BD §16.40).
 25. Régions HS : Marche de l'Est éclatée (18 cases dans la province), tracés au sud (Tsaroth à la Baronnie, Der Hem Shelbem aux Nains du Sud, Harndrecht et Zaltheim au Drach), Hishtarland exclu des candidats du sud, Désert des Sels coupé en deux, cœur des Nains de l'Est étendu (16.21).
 26. Boîtes `regions` du master non recalées sur les régions HS (16.19, 16.21).
 27. Limites du sud-centre (S001-S002 de la forêt, colonne E007, côte sud de Lhynn, côtes S015-S017) ; Faervosk garde `region_id = royaume_drach` (16.19).
-28. Quêtes ouvertes à toutes les factions dans des zones tenues par la Lune Noire : contre-quêtes à définir (16.15 à 16.20, 16.33).
-29. « La Légion » de l'Île de la Trêve (Légion infernale ou Légions impériales) ; règle de formation des équipes mêlées (16.3).
+28. ~~Quêtes ouvertes à toutes les factions dans des zones tenues par la Lune Noire : contre-quêtes à définir (16.15 à 16.20, 16.33).~~ **Tranché en v1.0.117** : 4 contre-quêtes, les 11 autres servent la baronnie (LORE_BD §16.44).
+29. ~~« La Légion » de l'Île de la Trêve (Légion infernale ou Légions impériales) ; règle de formation des équipes mêlées (16.3).~~ **Tranché en v1.0.113** : les deux Légions (LORE_BD §16.40).
 30. Ombhral et Gredhaim quittent la région 3 × 3 de Haeldorf (16.1).
 31. Vozmarkh, ville de la Lune Noire au cœur du royaume nain, comme suite du départ nain (16.20).
 
 ### 4.4 Données incomplètes et références
 
-32. **89 références orphelines** (36 identifiants) : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` / `forest_poi`, classes inexistantes, 9 butins, `citadelle_legion`… (16.32).
-33. 59 quêtes non plaçables (étapes à situer) et 6 raids sans case (16.32).
-34. 32 dialogues `dial_t10_NN` vides à écrire ; 45 dialogues sans réplique (16.32).
-35. Krak de Jhenner, citadelle impériale et Passe de Heniak sans case (16.15, R).
-36. Palais des Maîtres des Dragons et Tsaroth sans entrée au master (routes finies au point praticable de la case) (16.34, 16.35).
+32. ~~**89 → 42 références orphelines** (v1.0.113 : `faction_demons`, `race_half_dark_elf`, `race_menthat` traités ; 33 identifiants restants ; au départ 36) : `faction_demons` ×30, `race_menthat` ×11, `race_half_dark_elf` ×6, `battlefield_poi` / `forest_poi`, classes inexistantes, 9 butins, `citadelle_legion`… (16.32).~~ **Tranché en v1.0.115** : 0 orpheline (LORE_BD §16.42).
+33. ~~59 quêtes non plaçables (étapes à situer) et 6 raids sans case (16.32).~~ **Tranché en v1.0.116** : ancrés sauf l'Empire du Jade (6 quêtes, 2 raids, hors carte) et la quête des Enfers (case des Enfers) (LORE_BD §16.43).
+34. ~~32 dialogues `dial_t10_NN` vides à écrire ; 45 dialogues sans réplique (16.32).~~ **Fait en v1.0.117** : plus aucun dialogue vide (LORE_BD §16.44).
+35. ~~Krak de Jhenner, citadelle impériale et Passe de Heniak sans case (16.15, R).~~ **Fait en v1.0.117** : cases au lore (LORE_BD §16.44).
+36. ~~Palais des Maîtres des Dragons et Tsaroth sans entrée au master (routes finies au point praticable de la case) (16.34, 16.35).~~ **Tranché en v1.0.117** : restent sans entrée, volontairement (LORE_BD §16.44).
 
 ### 4.5 Routes et monde jouable
 
@@ -165,10 +176,10 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.6 Rendu client et mécanismes à faire
 
-46. **Lumière des torches** du gouffre (`world.point_lights` du zone.json) non lue par le client (un seul fichier global de 64 lumières) (16.36).
-47. **Fond sombre** du gouffre (`world.ambiance_zones`) : aucun réglage d'ambiance par zone au client (16.36).
+46. ~~**Lumière des torches** du gouffre (`world.point_lights` du zone.json) non lue par le client (un seul fichier global de 64 lumières) (16.36).~~ **Fait en v1.0.118** : lumières de cellule, 64 plus proches (LORE_BD §16.45).
+47. ~~**Fond sombre** du gouffre (`world.ambiance_zones`) : aucun réglage d'ambiance par zone au client (16.36).~~ **Fait en v1.0.118** : assombrissement local (LORE_BD §16.45).
 48. **Lave** des Enfers non émissive, sans dégâts (4 couches de sol à couleur fixe) (16.12).
-49. Ville et lieux secrets : absents de `places.json` (v1.0.110 : bannière, radar, son de ville et carte du jeu sans eux) ; mécanisme de « lieu découvert » (révéler un secret au joueur qui l'a trouvé) à définir (16.36, 16.37).
+49. ~~Ville et lieux secrets : absents de `places.json` (v1.0.110 : bannière, radar, son de ville et carte du jeu sans eux) ; mécanisme de « lieu découvert » (révéler un secret au joueur qui l'a trouvé) à définir (16.36, 16.37).~~ **Fait en v1.0.114** : lieu révélé sur la carte du personnage qui entre dans son rayon (LORE_BD §16.41) ; bannière, radar et son de ville toujours sans lieux secrets.
 50. Gouffre : galerie à ciel ouvert (pas de tunnel dans la heightmap), écurie générée au fond, part de S008_E011 renvoyée au cimetière du gouffre (16.36).
 51. Modèles 3D absents : temples incas, palais de Lucifer, viaduc, grottes, croix et brasier du sanctuaire ; le générateur ne modèle pas de falaises côtières (16.1, 16.6, 16.10).
 52. Instances, boss et récompenses absents : raids de l'Île, Mine de la Traverse, Cité-Nid ophidienne, plans infernaux (Seuil des Plans sans transfert), combat contre Xygga endormi (16.2, 16.3, 16.10, 16.11).
@@ -177,7 +188,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 ### 4.7 Outillage
 
 54. Tests Playwright de l'éditeur hors CI (à lancer à la main) (16.25 à 16.29).
-55. `check_references.py` non bloquant : passer à `--strict` quand les orphelines seront tranchées (16.32).
+55. ~~`check_references.py` non bloquant : passer à `--strict` quand les orphelines seront tranchées (16.32).~~ **Fait en v1.0.115** : `--strict` à la CI.
 56. Éditeur : carte des Enfers absente ; `description` / `notes` d'une route non éditables en mode Tracer ; fusion de fiches et import « BD » peu testés ; `secret` et `entree_cachee` sans champ de formulaire (16.26 à 16.29, 16.36).
 57. ~~`test_editor_fiches.py` : 3 échecs déjà présents au v1.0.107 (attentes figées au v1.0.103 : 5 lieux `mine_poi` ajoutés depuis, 96 quêtes ancrées sans `etapes_struct` au lieu de 90, champ `territory.ville_id` sans champ de formulaire).~~ **Corrigé en v1.0.109** : attentes calculées depuis les données, champ « Ville du territoire » ajouté au formulaire de faction des deux éditeurs.
 
@@ -185,11 +196,11 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 58. Albums hors série : points de 10.5.
 59. Identité de « l'amant » vengé par la succube ; sort de Feidreiva ; nom de la fille de Wismerhill (T12).
-60. `race_half_dark_elf` absente de `races` (voir aussi point 32).
-61. Escaliers de l'Oracle (BD-T2 contre BD-T3, lacs du destin, colline à sanctuaire, antre souterrain).
-62. Palais du Maître des Dragons « au-delà des sept régions » mais visible depuis le pont de la Passe.
-63. Ghulvathan : N009_E011 en jeu contre N012_E012 au lore.
-64. Forteresse naine d'Heusgly dite « proche de Moork » sans appui BD.
+60. ~~`race_half_dark_elf` absente de `races` (voir aussi point 32).~~ **Tranché en v1.0.113** : elfe noir (LORE_BD §16.40).
+61. ~~Escaliers de l'Oracle (BD-T2 contre BD-T3, lacs du destin, colline à sanctuaire, antre souterrain).~~ **Tranché en v1.0.113** : tranché (LORE_BD §16.40).
+62. ~~Palais du Maître des Dragons « au-delà des sept régions » mais visible depuis le pont de la Passe.~~ **Tranché en v1.0.113** : tranché (LORE_BD §16.40).
+63. ~~Ghulvathan : N009_E011 en jeu contre N012_E012 au lore.~~ **Tranché en v1.0.113** : N009_E011 (LORE_BD §16.40).
+64. ~~Forteresse naine d'Heusgly dite « proche de Moork » sans appui BD.~~ **Tranché en v1.0.113** : tranché (LORE_BD §16.40).
 
 ### 4.9 Vérification finale (v1.0.109)
 
@@ -229,7 +240,7 @@ Branche `carte/corrections-v1.0.72` : 39 commits, lore v1.0.72 → v1.0.112 (un 
 ## Contrôles
 
 - `validate_city_services.py` (122 villes, 1264 PNJ), `generate_city_services.py --check`,
-  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py` (89 orphelines, rapport)
+  `sync_positions.py --check`, `sync_routes.py --check`, `test_sync_routes.py`, `check_secrets.py`, `check_references.py --strict` (0 orpheline depuis v1.0.115)
 - `world_gen_tests` (un test par lot), `world_places_tests`, `start_locations_tests`, `respawn_rules_tests`, `gm_place_directory_tests`
 - Tests de l'éditeur (Playwright, à la main) : roundtrip, routes, forms, layers et fiches, tous verts sur les deux copies
   (v1.0.110)

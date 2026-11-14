@@ -699,6 +699,28 @@ namespace tools::world_gen
 		return bad;
 	}
 
+	std::string RespawnPointsText(const World& w)
+	{
+		std::string t = "# GENERE par tools/world_gen — points de reapparition de la cellule " + w.cellName + " (positions GLOBALES).\n"
+			"# Format : zone_id type x y z [faction] [neutral_radius_m] [gy=<id>] (cf. ServerApp::InitRespawnPoints).\n"
+			"# gy=<id> (cimetieres, v1.0.114) : identifiant stable du cimetiere (exploit des 666 cimetieres).\n"
+			"# zone_id = identifiant numerique de la cellule (" + std::to_string(w.zoneId) + ", WorldCells::CellZoneId).\n";
+		for (const std::string& l : w.importedRespawnLines) t += l + "\n";
+		for (const RespawnDef& r : w.respawns)
+		{
+			t += std::to_string(w.zoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z);
+			if (r.type == "graveyard")
+			{
+				// Faction toujours écrite avant gy= : l'ancien parseur (faction puis rayon
+				// flottant) ignore alors le jeton final sans erreur.
+				t += " " + (r.faction.empty() ? std::string("-") : r.faction);
+				if (!r.graveyardId.empty()) t += " gy=" + r.graveyardId;
+			}
+			t += "\n";
+		}
+		return t;
+	}
+
 	bool WriteCellOutputs(World& w, std::string& err)
 	{
 		const std::string wid = w.master.worldId;
@@ -994,13 +1016,14 @@ namespace tools::world_gen
 				}
 				its.objectValue[std::to_string(k)] = e;
 			}
-			// v1.0.107 — torches et ambiance du gouffre : DONNÉES pour le client (pas encore
-			// lues : l'éclairage ponctuel du client vient d'un fichier global, et il n'a pas
-			// de réglage d'ambiance par zone). Clés absentes des autres cellules.
+			// v1.0.107 — torches et ambiance du gouffre : DONNÉES pour le client, lues depuis
+			// v1.0.118 (Engine::AppendCellLightsAndAmbiance : lumières de cellule de
+			// DynamicLightSystem, assombrissement local de la passe Lighting). Clés absentes
+			// des autres cellules.
 			if (!w.pointLights.empty())
 			{
 				JsonValue& pl = Child(world, "point_lights");
-				pl.objectValue["_comment"] = JStr("v1.0.107 — lumieres ponctuelles posees par le generateur (torches du gouffre), positions GLOBALES, couleur RGB 0-1. Donnee non lue par le client a ce jour (DynamicLightSystem lit lights/dynamic_lights.json).");
+				pl.objectValue["_comment"] = JStr("v1.0.107 — lumieres ponctuelles posees par le generateur (torches du gouffre), positions GLOBALES, couleur RGB 0-1. Lue par le client depuis v1.0.118 (lumieres de cellule de DynamicLightSystem, 64 plus proches de la camera).");
 				pl.objectValue["count"] = JNum(static_cast<double>(w.pointLights.size()));
 				for (size_t k = 0; k < w.pointLights.size(); ++k)
 				{
@@ -1019,7 +1042,7 @@ namespace tools::world_gen
 			if (!w.ambianceZones.empty())
 			{
 				JsonValue& az = Child(world, "ambiance_zones");
-				az.objectValue["_comment"] = JStr("v1.0.107 — zones d'ambiance locales (fond du gouffre : sombre). darkness 0 = jour, 1 = nuit noire ; la zone couvre le disque (x, z, radius_m) entre floor_y et top_y. Donnee non lue par le client a ce jour.");
+				az.objectValue["_comment"] = JStr("v1.0.107 — zones d'ambiance locales (fond du gouffre : sombre). darkness 0 = jour, 1 = nuit noire ; la zone couvre le disque (x, z, radius_m) entre floor_y et top_y. Lue par le client depuis v1.0.118 (soleil, ambiant et plafond d'exposition attenues).");
 				az.objectValue["count"] = JNum(static_cast<double>(w.ambianceZones.size()));
 				for (size_t k = 0; k < w.ambianceZones.size(); ++k)
 				{
@@ -1090,17 +1113,8 @@ namespace tools::world_gen
 			if (!WriteFile(w, zoneDir + "spawners.json", j, err)) return false;
 		}
 
-		// ---- respawn_points.txt.
-		{
-			std::string t = "# GENERE par tools/world_gen — points de reapparition de la cellule " + w.cellName + " (positions GLOBALES).\n"
-				"# Format : zone_id type x y z [faction] [neutral_radius_m] (cf. ServerApp::InitRespawnPoints).\n"
-				"# zone_id = identifiant numerique de la cellule (" + std::to_string(w.zoneId) + ", WorldCells::CellZoneId).\n";
-			for (const std::string& l : w.importedRespawnLines) t += l + "\n";
-			for (const RespawnDef& r : w.respawns)
-				t += std::to_string(w.zoneId) + " " + r.type + " " + Num(r.position.x) + " " + Num(r.y) + " " + Num(r.position.z) +
-					(r.type == "graveyard" ? " " + r.faction : std::string()) + "\n";
-			if (!WriteFile(w, zoneDir + "respawn_points.txt", t, err)) return false;
-		}
+		// ---- respawn_points.txt (v1.0.114 : identifiant stable gy=<id> des cimetières).
+		if (!WriteFile(w, zoneDir + "respawn_points.txt", RespawnPointsText(w), err)) return false;
 
 		// ---- runtime_manifest.json.
 		{
@@ -1335,8 +1349,19 @@ namespace tools::world_gen
 			{
 				const RegionDef& r = g.master.regions[k];
 				// Rectangle de cases : x de e_min à e_max, z de -n_max à -n_min (nord = -Z).
+				// v1.0.118 — niveaux de référence par faction de jeu (couleur du nom de zone) :
+				// tableau d'objets (lisible par l'API indexée du client), absent si inconnu.
+				std::string levels;
+				if (!r.levels.empty())
+				{
+					levels = ", \"levels\": [";
+					for (size_t b = 0; b < r.levels.size(); ++b)
+						levels += std::string(b ? ", " : "") + "{ \"faction\": " + Q(r.levels[b].faction) + ", \"min\": " +
+							std::to_string(r.levels[b].minLevel) + ", \"max\": " + std::to_string(r.levels[b].maxLevel) + " }";
+					levels += "]";
+				}
 				j += "    { \"id\": " + Q(r.id) + ", \"name\": " + Q(r.name) + ", \"x_min\": " + Num((r.eMin - 0.5) * C) + ", \"x_max\": " + Num((r.eMax + 0.5) * C) +
-					", \"z_min\": " + Num(-(r.nMax + 0.5) * C) + ", \"z_max\": " + Num(-(r.nMin - 0.5) * C) + " }" + (k + 1 < g.master.regions.size() ? ",\n" : "\n");
+					", \"z_min\": " + Num(-(r.nMax + 0.5) * C) + ", \"z_max\": " + Num(-(r.nMin - 0.5) * C) + levels + " }" + (k + 1 < g.master.regions.size() ? ",\n" : "\n");
 			}
 			j += "  ]\n}\n";
 			if (!WriteFile(g.outputRoot, g.report, dir + "places.json", j, err)) return false;

@@ -215,6 +215,17 @@ RenderModel
 > (position autoritaire, `MapDiscoveryTracker`) ; le master ne fait que la lire
 > (opcodes 208/209), l'opcode 210 du client est ignoré.
 >
+> **Règle (lore v1.0.114)** : cimetières visités (exploit des 666 cimetières) et lieux
+> secrets découverts sont calculés par le shard, PAR PERSONNAGE
+> (`src/shardd/world/DiscoveryProgress`, même tranche 4 Hz que la carte, réapparition
+> au cimetière comptée dans `HandleRespawnRequest`) ; écrits en INSERT IGNORE dans la
+> transaction de sauvegarde (`character_graveyard_visits`, `character_secret_discoveries`,
+> `character_exploit_unlocks`, migration 0086) ; envoyés au seul joueur concerné
+> (UDP `DiscoveryState` 105, `DiscoveryEvent` 106, `kProtocolVersion` 21). Les
+> cimetières sont identifiés par le jeton `gy=<id>` de `respawn_points.txt`
+> (`tools/world_gen`). Le master ajoute les exploits de portée personnage du
+> personnage en jeu à la liste 206/207.
+>
 > **Règle (ETAPE2.6)** : instantané complet à chaque déconnexion
 > (`character_snapshots`, 20 gardés) ; `/snapshots` et `/restore` (MJ, master)
 > posent une demande appliquée par le shard à la connexion suivante (migration 0080).
@@ -2637,7 +2648,8 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/client/world/instances/ScatterInstances.h` | Format `scatter.bin` « LCSC » v1/v2 (décor instancié ; v2 = table de chunks de 500 m pour le streaming). |
 | `src/client/world/scatter/ScatterField.{h,cpp}` | Grille 32 m + frustum + culling par classe des instances de décor. |
 | `src/client/app/EngineWorld.cpp` | Chargement / rendu instancié du décor et des bâtiments, collisions, carte & bannière. |
-| `src/client/world/places/WorldPlaces.{h,cpp}` | `places.json` : villes, POI, régions ; bannière « Vous entrez à … » (pur, `world_places_tests`). |
+| `src/client/world/places/WorldPlaces.{h,cpp}` | `places.json` : villes, POI, régions ; bannière « Vous entrez à … » ; v1.0.118 : niveaux des régions par faction (`regions[].levels`, recopiés du lore par `tools/lore/sync_levels.py`) et couleur du nom de zone selon l'écart de niveau (`ZoneLevelToneFor`, seuil 5) (pur, `world_places_tests`). |
+| `src/client/render/DynamicLightSystem.{h,cpp}` | Lumières ponctuelles : fichier global `lights/dynamic_lights.json` + v1.0.118 lumières des cellules (zone.json `world.point_lights`, torches du gouffre ; `AddZoneLights` / `ClearZoneLights` / `TranslateZoneLights`) ; `SelectNearest` garde les 64 plus proches de la caméra pour l'UBO (`dynamic_light_system_tests`). Zones d'ambiance (`world.ambiance_zones`) : `Engine::AppendCellLightsAndAmbiance`, assombrissement lissé appliqué au soleil, à l'ambiant et au plafond d'exposition. |
 | `src/client/render/WorldMapImGuiRenderer.{h,cpp}` | Fenêtre Carte du monde (touche M) + bannière (ImGui, `_WIN32`). |
 | `src/client/gameplay/CompositeWorldCollider.{h,cpp}` | Index spatial 16 m des collisions (bâtiments, décor). |
 | `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |

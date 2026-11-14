@@ -13,9 +13,12 @@
 // (ImGui n'est lié que dans le client Windows) ; ailleurs les fonctions sont
 // des no-op.
 
-#include <cstdint>
+#include "src/shared/network/ServerProtocol.h"
 
-namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; }
+#include <cstdint>
+#include <vector>
+
+namespace engine::client { class WorldPlaces; class PlaceBannerTracker; class MapDiscoveryClient; enum class ZoneLevelTone : uint8_t; }
 namespace engine::world::mapfeatures { struct MapFeatures; }
 struct ImDrawList;
 
@@ -57,6 +60,12 @@ namespace engine::render
 		/// FIX.12 — routes, rues et bâtiments en vectoriel (map_features.bin),
 		/// dessinés sous le voile des zones non découvertes. nullptr = absents.
 		const engine::world::mapfeatures::MapFeatures* features = nullptr;
+		/// Lore v1.0.114 — lieux secrets découverts PAR CE personnage (UIModel.discovery,
+		/// reçus du shard ; jamais dans places.json). Seuls ceux de \ref currentMap sont
+		/// dessinés (icône distincte, nom au survol). nullptr = aucun.
+		const std::vector<engine::server::DiscoveredPlaceWire>* secretPlaces = nullptr;
+		/// Carte affichée (engine::world::cells::CellMap : 0 Royaumes, 1 Enfers).
+		uint8_t currentMap = 0;
 	};
 
 	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le
@@ -66,5 +75,8 @@ namespace engine::render
 
 	/// Dessine la bannière « Vous entrez à … » (haut-centre, fondu) sur la draw
 	/// list \p fg (foreground). \param dw,dh taille du framebuffer (px).
-	void DrawPlaceBanner(ImDrawList* fg, float dw, float dh, const engine::client::PlaceBannerTracker& banner);
+	/// \param tone v1.0.118 — teinte du titre selon l'écart de niveau entre le personnage
+	/// et la région (ZoneLevelToneFor) ; Inconnu = or pâle habituel.
+	void DrawPlaceBanner(ImDrawList* fg, float dw, float dh, const engine::client::PlaceBannerTracker& banner,
+		engine::client::ZoneLevelTone tone);
 }

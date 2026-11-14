@@ -142,10 +142,9 @@ namespace tools::world_gen
 	};
 
 	/// Lumière ponctuelle posée par le générateur (v1.0.107 : torches du gouffre).
-	/// DONNÉE seulement : écrite dans zone.json (`world.point_lights`), pas encore lue
-	/// par le client (DynamicLightSystem ne lit qu'un fichier global,
-	/// lights/dynamic_lights.json) ; le mesh de la torche, lui, est un vrai décor
-	/// (scatter.bin).
+	/// Écrite dans zone.json (`world.point_lights`) ; lue par le client depuis v1.0.118
+	/// (lumières de cellule de DynamicLightSystem, 64 plus proches de la caméra dans
+	/// l'UBO) ; le mesh de la torche, lui, est un vrai décor (scatter.bin).
 	struct PointLightDef
 	{
 		std::string id;
@@ -157,9 +156,9 @@ namespace tools::world_gen
 		double r = 1.0, g = 0.55, b = 0.18; ///< couleur (flamme orangée)
 	};
 
-	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre). DONNÉE
-	/// seulement (zone.json, `world.ambiance_zones`) : le client n'a pas de réglage
-	/// d'ambiance par zone ; à brancher (assombrissement, brouillard bas) côté rendu.
+	/// Zone d'ambiance locale (v1.0.107 : « sombre » au fond du gouffre), écrite dans
+	/// zone.json (`world.ambiance_zones`) ; lue par le client depuis v1.0.118 (soleil,
+	/// ambiant et plafond d'exposition atténués dans le cylindre).
 	struct AmbianceZoneDef
 	{
 		std::string id;               ///< identifiant du relief (gouffre)
@@ -228,6 +227,11 @@ namespace tools::world_gen
 		Vec2 position;
 		double y = 0.0;
 		std::string faction;                ///< "-" = neutre
+		/// v1.0.114 — identifiant STABLE d'un cimetière (vide pour une auberge), écrit en
+		/// jeton final `gy=<id>` de respawn_points.txt : id de la ville ou du hameau
+		/// (`CityDef::id`), `isole_<cellule>` pour un cimetière isolé. Le shard s'en sert
+		/// pour l'exploit des 666 cimetières (visites mémorisées par personnage).
+		std::string graveyardId;
 	};
 
 	/// Point de départ d'une faction de jeu (consommé par le master à la création,
@@ -414,7 +418,8 @@ namespace tools::world_gen
 
 		/// Réglages `world.*` importés (brouillard, props, DOF…) recopiés dans zone.json.
 		tools::zone_builder::JsonValue importedWorldConfig;
-		/// Lignes de respawn importées (déjà au format serveur, zone id corrigé).
+		/// Lignes de respawn importées (déjà au format serveur, zone id corrigé ;
+		/// v1.0.114 : un cimetière porte une faction, '-' au besoin, puis `gy=<id>`).
 		std::vector<std::string> importedRespawnLines;
 		/// v1.0.111 — cimetière isolé (sans ville) posé par BuildSettlements quand la
 		/// cellule n'en a aucun et que `graveyards.fill_empty_cells` est vrai.
@@ -563,6 +568,21 @@ namespace tools::world_gen
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp
 	bool ImportLegacyContent(World& w, std::string& err);
+	/// v1.0.114 — identifiant stable du \p index-ième cimetière (0, 1, …) des lignes de
+	/// respawn importées de la cellule : id de la ville d'ancrage (`imports.anchor_city`),
+	/// puis `<ancrage>_2`, `<ancrage>_3`… ; `import_<cellule>_<n>` sans ville d'ancrage.
+	/// Déterministe (ne dépend que du master, de la cellule et de l'ordre du fichier).
+	std::string ImportedGraveyardId(const World& w, int index);
+	/// v1.0.114 — réécrit une ligne de cimetière importée au format courant : jetons
+	/// optionnels conservés (faction, rayon neutre), faction '-' ajoutée si absente (un
+	/// ancien parseur lirait sinon l'identifiant comme faction), ancien `gy=` retiré,
+	/// puis ` gy=<id>` ajouté en dernier. \param rest jetons après « x y z » (avec espace
+	/// initial ou vide). \return la suite de la ligne à concaténer après « x y z ».
+	std::string GraveyardLineTail(const std::string& rest, const std::string& graveyardId);
+	/// v1.0.114 — texte complet de zones/<c>/respawn_points.txt (en-tête, lignes
+	/// importées, puis cimetières et auberges générés ; jeton final `gy=<id>` pour
+	/// chaque cimetière). Pur : utilisé par WriteCellOutputs et par les tests.
+	std::string RespawnPointsText(const World& w);
 	/// SND.4 — côté de la grille de biomes exportée dans zone.json (40 → blocs de 250 m).
 	inline constexpr int kBiomeGridSize = 40;
 	/// SND.4 — codes de biome du lore (grid.legend) échantillonnés au centre de
@@ -572,7 +592,7 @@ namespace tools::world_gen
 	/// Écriture des sorties d'une cellule. Output.cpp
 	/// Effet de bord : écrit zones/<c>/ et instances/zone_<c>/ (sauf dryRun) ; v1.0.107 :
 	/// `world.point_lights` et `world.ambiance_zones` du zone.json pour un gouffre
-	/// (clés absentes ailleurs ; pas encore lues par le client).
+	/// (clés absentes ailleurs ; lues par le client depuis v1.0.118).
 	/// \return false + \p err si une écriture échoue.
 	bool WriteCellOutputs(World& w, std::string& err);
 	/// Test (v1.0.112) : nombre d'échantillons du splat (centres de texels pris tous

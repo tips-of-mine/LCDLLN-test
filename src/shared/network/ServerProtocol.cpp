@@ -1027,6 +1027,128 @@ namespace engine::server
 			&& outMessage.speedMultiplier <= 100.0f;
 	}
 
+	namespace
+	{
+		/// Lore v1.0.114 — tronque \p text à \p maxBytes octets sans couper un caractère
+		/// UTF-8 (recule jusqu'au début du caractère coupé).
+		std::string_view TruncateUtf8(std::string_view text, size_t maxBytes)
+		{
+			if (text.size() <= maxBytes)
+				return text;
+			size_t n = maxBytes;
+			while (n > 0u && (static_cast<uint8_t>(text[n]) & 0xC0u) == 0x80u)
+				--n;
+			return text.substr(0, n);
+		}
+
+		/// Lore v1.0.114 — ajoute un lieu découvert (id, nom, genre, x, z, carte).
+		void WriteDiscoveredPlace(std::vector<std::byte>& out, const DiscoveredPlaceWire& place)
+		{
+			WriteSizedString(out, TruncateUtf8(place.id, 96u));
+			WriteSizedString(out, TruncateUtf8(place.name, 128u));
+			WriteSizedString(out, TruncateUtf8(place.kind, 48u));
+			WriteF32(out, place.x);
+			WriteF32(out, place.z);
+			WriteU8(out, place.map);
+		}
+
+		/// Lore v1.0.114 — lit un lieu découvert à \p offset (avancé). \return false si
+		/// le paquet est trop court, si une coordonnée n'est pas finie ou si la carte est
+		/// inconnue (> 1).
+		bool ReadDiscoveredPlace(std::span<const std::byte> payload, size_t& offset, DiscoveredPlaceWire& out)
+		{
+			if (!ReadSizedString(payload, offset, out.id) || !ReadSizedString(payload, offset, out.name)
+				|| !ReadSizedString(payload, offset, out.kind) || offset + 9u > payload.size())
+				return false;
+			out.x = ReadF32(payload, offset);
+			out.z = ReadF32(payload, offset + 4u);
+			out.map = ReadU8(payload, offset + 8u);
+			offset += 9u;
+			return std::isfinite(out.x) && std::isfinite(out.z) && out.map <= 1u && !out.id.empty();
+		}
+	}
+
+	std::vector<std::vector<std::byte>> EncodeDiscoveryStatePackets(uint16_t graveyardsVisited,
+		uint16_t graveyardsTotal, const std::vector<DiscoveredPlaceWire>& places)
+	{
+		std::vector<std::vector<std::byte>> packets;
+		size_t next = 0;
+		do
+		{
+			const size_t count = std::min(kMaxDiscoveryPlacesPerPacket, places.size() - next);
+			uint8_t flags = 0;
+			if (next == 0u)
+				flags |= kDiscoveryStateFlagFirst;
+			if (next + count >= places.size())
+				flags |= kDiscoveryStateFlagLast;
+			std::vector<std::byte> packet = BeginPacket(MessageKind::DiscoveryState, 6u + count * 64u);
+			WriteU8(packet, flags);
+			WriteU16(packet, graveyardsVisited);
+			WriteU16(packet, graveyardsTotal);
+			WriteU8(packet, static_cast<uint8_t>(count));
+			for (size_t i = 0; i < count; ++i)
+				WriteDiscoveredPlace(packet, places[next + i]);
+			packets.push_back(std::move(packet));
+			next += count;
+		} while (next < places.size());
+		return packets;
+	}
+
+	bool DecodeDiscoveryState(std::span<const std::byte> packet, DiscoveryStateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::DiscoveryState, payload) || payload.size() < 6u)
+			return false;
+		outMessage.flags = ReadU8(payload, 0);
+		outMessage.graveyardsVisited = ReadU16(payload, 1);
+		outMessage.graveyardsTotal = ReadU16(payload, 3);
+		const uint8_t count = ReadU8(payload, 5);
+		if (count > kMaxDiscoveryPlacesPerPacket)
+			return false;
+		outMessage.places.clear();
+		outMessage.places.resize(count);
+		size_t offset = 6u;
+		for (DiscoveredPlaceWire& place : outMessage.places)
+			if (!ReadDiscoveredPlace(payload, offset, place))
+				return false;
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeDiscoveryEvent(const DiscoveryEventMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::DiscoveryEvent, 64u);
+		WriteU8(packet, static_cast<uint8_t>(message.kind));
+		WriteU16(packet, message.graveyardsVisited);
+		WriteU16(packet, message.graveyardsTotal);
+		WriteSizedString(packet, TruncateUtf8(message.id, 96u));
+		WriteSizedString(packet, TruncateUtf8(message.title, 256u));
+		if (message.kind == DiscoveryEventKind::PlaceDiscovered)
+			WriteDiscoveredPlace(packet, message.place);
+		return packet;
+	}
+
+	bool DecodeDiscoveryEvent(std::span<const std::byte> packet, DiscoveryEventMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::DiscoveryEvent, payload) || payload.size() < 5u)
+			return false;
+		const uint8_t kind = ReadU8(payload, 0);
+		if (kind < static_cast<uint8_t>(DiscoveryEventKind::GraveyardVisited)
+			|| kind > static_cast<uint8_t>(DiscoveryEventKind::ExploitUnlocked))
+			return false;
+		outMessage.kind = static_cast<DiscoveryEventKind>(kind);
+		outMessage.graveyardsVisited = ReadU16(payload, 1);
+		outMessage.graveyardsTotal = ReadU16(payload, 3);
+		size_t offset = 5u;
+		if (!ReadSizedString(payload, offset, outMessage.id) || !ReadSizedString(payload, offset, outMessage.title))
+			return false;
+		outMessage.place = DiscoveredPlaceWire{};
+		if (outMessage.kind == DiscoveryEventKind::PlaceDiscovered
+			&& !ReadDiscoveredPlace(payload, offset, outMessage.place))
+			return false;
+		return offset == payload.size();
+	}
+
 	std::vector<std::byte> EncodeMoveCorrection(const MoveCorrectionMessage& message)
 	{
 		// ETAPE3.3 — payload fixe : clientId (4) + moveEpoch (2) + inputSequence (4)

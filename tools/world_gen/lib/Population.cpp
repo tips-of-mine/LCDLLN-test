@@ -301,6 +301,7 @@ namespace tools::world_gen
 			std::ifstream f(root + "/" + w.master.importRespawn);
 			if (!f.good()) { err = "import respawn introuvable : " + w.master.importRespawn; return false; }
 			std::string line;
+			int importedGraves = 0;
 			while (std::getline(f, line))
 			{
 				if (line.empty() || line[0] == '#') continue;
@@ -309,6 +310,9 @@ namespace tools::world_gen
 				double x = 0, y = 0, z = 0;
 				if (!(ls >> zid >> type >> x >> y >> z)) continue;
 				std::getline(ls, rest);
+				// v1.0.114 : identifiant stable du cimetière importé (jeton final gy=).
+				if (type == "graveyard")
+					rest = GraveyardLineTail(rest, ImportedGraveyardId(w, importedGraves++));
 				const Vec2 p{ x + off.x, z + off.z };
 				char buf[160];
 				std::snprintf(buf, sizeof buf, "%u %s %.3f %.3f %.3f", w.zoneId, type.c_str(), p.x, w.HeightAt(p) + 1.0, p.z);
@@ -640,6 +644,7 @@ namespace tools::world_gen
 			if (L.hasGraveyard) // v1.0.111 : hameau de graveyards.without_graveyard : auberge seule
 			{
 				RespawnDef g; g.type = "graveyard"; g.position = L.graveyard; g.y = w.HeightAt(L.graveyard) + 1.0; g.faction = "-";
+				g.graveyardId = c->id; // v1.0.114 : id stable = id de la ville ou du hameau
 				w.respawns.push_back(g);
 			}
 			if (c->state != "ruine" && c->kind != "camp")
@@ -652,6 +657,7 @@ namespace tools::world_gen
 		if (w.hasIsolatedGraveyard)
 		{
 			RespawnDef g; g.type = "graveyard"; g.position = w.isolatedGraveyard; g.y = w.HeightAt(w.isolatedGraveyard) + 1.0; g.faction = "-";
+			g.graveyardId = "isole_" + w.cellName; // v1.0.114 : un seul cimetière isolé par cellule
 			w.respawns.push_back(g);
 		}
 		w.report.respawnPoints = w.respawns.size() + w.importedRespawnLines.size();
@@ -675,5 +681,28 @@ namespace tools::world_gen
 			}
 		}
 		w.report.spawners = w.spawners.size();
+	}
+
+	std::string ImportedGraveyardId(const World& w, int index)
+	{
+		// v1.0.114 — le hameau d'ancrage n'a pas de cimetière généré (BuildPopulation
+		// le saute) : son id est libre pour le cimetière importé.
+		const std::string base = w.master.importAnchorCity.empty()
+			? "import_" + w.cellName : w.master.importAnchorCity;
+		if (w.master.importAnchorCity.empty())
+			return base + "_" + std::to_string(index + 1);
+		return index == 0 ? base : base + "_" + std::to_string(index + 1);
+	}
+
+	std::string GraveyardLineTail(const std::string& rest, const std::string& graveyardId)
+	{
+		std::istringstream ts(rest);
+		std::vector<std::string> tokens;
+		for (std::string t; ts >> t;)
+			if (t.rfind("gy=", 0) != 0) tokens.push_back(t); // ancien identifiant : remplacé
+		if (tokens.empty()) tokens.push_back("-"); // faction neutre explicite (ancien parseur)
+		std::string out;
+		for (const std::string& t : tokens) out += " " + t;
+		return out + " gy=" + graveyardId;
 	}
 }

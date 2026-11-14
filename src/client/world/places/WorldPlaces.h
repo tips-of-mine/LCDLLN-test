@@ -46,15 +46,47 @@ namespace engine::client
 		float z = 0.0f;
 	};
 
+	/// v1.0.118 — niveaux de référence d'une région pour une faction de jeu
+	/// (places.json `regions[i].levels[j]`, recopiés du lore par tools/lore/sync_levels.py).
+	struct PlaceLevelBand
+	{
+		std::string faction; ///< faction de jeu (game/data/races/factions.json, ex. « lumiere »)
+		int minLevel = 1;
+		int maxLevel = 1;
+	};
+
 	/// Région (rectangle aligné sur les axes, en m).
 	struct PlaceRegion
 	{
 		std::string id;
 		std::string name;
 		float xMin = 0.0f, xMax = 0.0f, zMin = 0.0f, zMax = 0.0f;
+		std::vector<PlaceLevelBand> levels; ///< v1.0.118 — vide = niveaux inconnus
 		bool Contains(float x, float z) const { return x >= xMin && x <= xMax && z >= zMin && z <= zMax; }
 		float Area() const { return (xMax - xMin) * (zMax - zMin); }
+		/// Bande de niveaux de la faction de jeu \p faction, ou nullptr si inconnue.
+		const PlaceLevelBand* LevelsFor(std::string_view faction) const;
 	};
+
+	/// v1.0.118 — teinte du nom de zone selon l'écart entre le niveau du personnage et la
+	/// bande de niveaux de la région pour sa faction (décision du 13/11/2026).
+	enum class ZoneLevelTone : uint8_t
+	{
+		Inconnu = 0, ///< niveaux de la région inconnus : couleur habituelle de la bannière
+		Gris,        ///< niveau > max + 5 : zone sans intérêt
+		Vert,        ///< max < niveau <= max + 5 : zone facile
+		Jaune,       ///< min <= niveau <= max : zone à son niveau
+		Orange,      ///< min - 5 <= niveau < min : zone difficile
+		Rouge,       ///< niveau < min - 5 : zone dangereuse
+	};
+
+	/// Teinte pour un personnage de niveau \p playerLevel dans la bande [\p minLevel, \p maxLevel].
+	/// Écart de 5 niveaux (même seuil que la règle des niveaux par faction, LORE_BD §16.32).
+	ZoneLevelTone ZoneLevelToneFor(int playerLevel, int minLevel, int maxLevel);
+	/// Teinte pour la région \p region (nullptr → Inconnu) et la faction de jeu \p faction.
+	ZoneLevelTone ZoneLevelToneFor(const PlaceRegion* region, std::string_view faction, int playerLevel);
+	/// Couleur RGB (0-255, sans alpha) d'une teinte ; Inconnu → or pâle de la bannière.
+	void ZoneLevelToneRgb(ZoneLevelTone tone, uint8_t& r, uint8_t& g, uint8_t& b);
 
 	class WorldPlaces final
 	{
@@ -92,6 +124,8 @@ namespace engine::client
 		/// Région la plus PETITE contenant (x, z) (les régions peuvent se
 		/// chevaucher : la plus spécifique gagne) ; nullptr sinon.
 		const PlaceRegion* RegionAt(float x, float z) const;
+		/// Région d'identifiant \p id, ou nullptr.
+		const PlaceRegion* RegionById(std::string_view id) const;
 		/// Ville de départ de la faction de jeu \p faction (identifiant exact de
 		/// game/data/races/factions.json, ex. "lumiere" ; v1.0.61), ou nullptr.
 		const PlaceCity* StartCityFor(std::string_view faction) const;
@@ -131,15 +165,19 @@ namespace engine::client
 		const std::string& Subtitle() const { return m_subtitle; }
 		const std::string& CurrentCityId() const { return m_cityId; }
 		const std::string& CurrentRegionId() const { return m_regionId; }
+		/// v1.0.118 — région du lieu affiché par la bannière (celle de la ville ou la région
+		/// elle-même), figée à l'armement : sert à la couleur du titre. Vide = aucune.
+		const std::string& ShownRegionId() const { return m_shownRegionId; }
 
 	private:
-		void Show(std::string title, std::string subtitle);
+		void Show(std::string title, std::string subtitle, std::string regionId);
 
 		bool m_initialized = false;
 		std::string m_cityId;
 		std::string m_regionId;
 		std::string m_title;
 		std::string m_subtitle;
+		std::string m_shownRegionId;
 		float m_timerSec = 0.0f;
 	};
 

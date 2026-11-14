@@ -598,7 +598,15 @@ namespace engine
 			pos.z = static_cast<float>(m_renderFrame.ToGlobalZ(pos.z));
 		}
 		m_placeBanner.Update(m_worldPlaces, pos.x, pos.z, dtSec);
-		engine::render::DrawPlaceBanner(fg, dw, dh, m_placeBanner);
+		// v1.0.118 — couleur du nom de zone : écart entre le niveau courant du personnage
+		// (XP live, sinon niveau d'entrée) et la bande de niveaux de la région pour sa faction.
+		{
+			const engine::client::UIModel& model = m_uiModelBinding.GetModel();
+			const int level = static_cast<int>(model.playerStats.hasXp ? model.playerStats.level : m_activeCharacterLevel);
+			const engine::client::ZoneLevelTone tone = engine::client::ZoneLevelToneFor(
+				m_worldPlaces.RegionById(m_placeBanner.ShownRegionId()), m_localFactionId, level);
+			engine::render::DrawPlaceBanner(fg, dw, dh, m_placeBanner, tone);
+		}
 		if (!m_worldMapVisible)
 			return;
 		engine::render::WorldMapHudInput in;
@@ -617,6 +625,9 @@ namespace engine
 		in.defaultViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.default_view_m", 2000.0)));
 		in.minViewM = static_cast<float>(std::max(10.0, m_cfg.GetDouble("client.world_map.min_view_m", 250.0)));
 		in.features = &m_worldMapFeatures;
+		// Lore v1.0.114 — lieux secrets découverts par CE personnage (reçus du shard).
+		in.secretPlaces = &m_uiModelBinding.GetModel().discovery.places;
+		in.currentMap = static_cast<uint8_t>(m_cellWorld ? m_activeCellMap : engine::world::cells::CellMap::Royaumes);
 		engine::render::DrawWorldMapWindow(&m_worldMapVisible, in, m_worldMapView);
 	}
 }

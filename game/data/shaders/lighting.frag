@@ -547,6 +547,12 @@ void main()
     // ---- Combine & output HDR ------------------------------------------
     vec3  color = ambient + Lo;
 
+    // ---- v1.0.123 — émission (GBufferC.a = 1 − émission ; 1 pour toutes les
+    // géométries sauf la lave des Enfers, terrain.frag). Ajoutée après l'éclairage :
+    // la lave brille de jour comme de nuit (pas assombrie par l'ambiance).
+    const float kEmissiveIntensity = 6.0;
+    color += albedo * (1.0 - orm.a) * kEmissiveIntensity;
+
     // ---- M45.1 — Perspective aerienne (extinction + inscattering) ------
     // Upgrade du brouillard de distance : zone CLAIRE autour du joueur
     // (< fogStart), puis EXTINCTION EXPONENTIELLE vers une teinte

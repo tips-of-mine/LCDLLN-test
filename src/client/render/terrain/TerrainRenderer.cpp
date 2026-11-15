@@ -7,6 +7,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <functional>
@@ -88,6 +89,8 @@ namespace engine::render::terrain
     {
         m_grassMaskVisualStrength =
             static_cast<float>(config.GetDouble("render.terrain.grass_mask_visual_strength", 0.35));
+        // v1.0.123 — Enfers : canal A du splat = lave lumineuse (zone.json générée).
+        m_lavaLayer = config.GetBool("render.terrain.lava_layer", false);
 
         LOG_INFO(Render,
                  "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' grassmask='{}' holemask='{}' cliffs={})",
@@ -1588,8 +1591,13 @@ namespace engine::render::terrain
             ubo.terrainParams[3] = m_grassMaskVisualStrength;
             ubo.terrainOrigin[0] = m_terrainOriginX;
             ubo.terrainOrigin[1] = m_terrainOriginZ;
-            ubo.terrainOrigin[2] = 0.0f;
-            ubo.terrainOrigin[3] = 0.0f;
+            // v1.0.123 — z = 1 si le canal A est la lave (Enfers), w = temps (s, cycle de
+            // 600 s) pour l'animation de la croûte ; 0 / 0 ailleurs (rendu inchangé).
+            ubo.terrainOrigin[2] = m_lavaLayer ? 1.0f : 0.0f;
+            ubo.terrainOrigin[3] = m_lavaLayer
+                ? static_cast<float>(std::fmod(std::chrono::duration<double>(
+                    std::chrono::steady_clock::now().time_since_epoch()).count(), 600.0))
+                : 0.0f;
             ubo.layerTiling[0]   = m_splatting.GetLayerTiling(0); // grass
             ubo.layerTiling[1]   = m_splatting.GetLayerTiling(1); // dirt
             ubo.layerTiling[2]   = m_splatting.GetLayerTiling(2); // rock

@@ -1058,6 +1058,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.46](#1646-routes-coupées-farvhenn--vestmhor-et-shaddrek--klehrwath-v10119) | v1.0.119 | Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath | 16 cases ouvertes, 3 villages jouables, 12 lieux [GD], 24 cimetières compensés (666 gardés). |
 | [16.47](#1647-falaises-de-craie-de-la-côte-ouest-v10120) | v1.0.120 | Falaises de craie de la côte ouest | 7 cases (et leurs voisines côtières) en falaises blanches type Douvres : paroi d'environ 90 m, plateau herbeux, plage au pied. |
 | [16.48](#1648-toutes-les-routes-coupées-ouvertes-en-deux-lots-v10121-v10122) | v1.0.121-v1.0.122 | Toutes les routes coupées ouvertes, en deux lots | 245 cases ouvertes (742 jouables), 34 villes et villages, 207 lieux [GD], cases « villages seulement » pour les cimetières (666 gardés). |
+| [16.49](#1649-lave-des-enfers-lumineuse-et-mortelle-v10123) | v1.0.123 | Lave des Enfers lumineuse et mortelle | Canal A du splat = lave émissive (shader), masque serveur `lava_mask.lvmk`, mort en 3 s. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -1977,7 +1978,7 @@ tenus à 0,55-0,95 km des villes et des lieux (Citadelle, portails, palais reste
 n'a ni couche ni matériau de lave (4 couches fixes herbe, terre, roche, neige ; aucune couleur par zone) : en jeu, la
 lave est un sol de terre rouge-brun, sans lueur ni dégâts ; le basalte noir et la cendre grise ne sont visibles que
 sur la carte du monde. Une couche émissive de lave (shader, 5e canal ou palette par zone) reste à faire côté client,
-non faite ici.
+non faite ici. **Fait en v1.0.123** (16.49) : lave lumineuse (canal A du splat) et mortelle en 3 s (serveur).
 
 **Monde des Royaumes inchangé** : toutes les branches sont gardées par `IsInfernalMap` (carte `enfers`). Preuve : les
 34 fichiers générés de trois cellules des Royaumes (N003_W009 forêt, N021_E015 sommets enneigés, S006_E013
@@ -4632,7 +4633,7 @@ bannière), `dynamic_light_system_tests` (ajout, rebase, retrait, 64 plus proche
 master triés, 17 régions). **Non vérifié** : rendu à l'écran (pas de GPU dans l'environnement de développement), à
 regarder en jeu au fond du gouffre de Thurvhal.
 
-**Reste à faire** : lave des Enfers émissive et blessante (16.12) ; ouverture des 2 routes coupées et des routes
+**Reste à faire** : ~~lave des Enfers émissive et blessante (16.12)~~ (fait en v1.0.123, 16.49) ; ouverture des 2 routes coupées et des routes
 arrêtées à une zone fermée ; lignes maritimes vers Hishtarland et Dyprokh.
 
 ### 16.46 Routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath (v1.0.119)
@@ -4818,6 +4819,28 @@ dont le cimetière est le plus proche d'un autre, dans une cellule qui en garde 
 **Tests** : `world_gen_tests` (`TestRoutesLotsV1121` : 245 cases villages seulement, 82 + 125 lieux, plus aucune route
 coupée, N019_E018 sans cimetière, S014_E013 avec celui de Saelvik ; 742 cellules jouables ; routes v1.0.106 (a) et
 (c)) ; génération complète (666 cimetières).
+
+### 16.49 Lave des Enfers lumineuse et mortelle (v1.0.123)
+
+**Décisions du propriétaire (15/11/2026)** : la lave tue en **3 secondes** (comme le simulateur client existant), le
+serveur fait foi ; rendu « lueur pulsante » : lave en fusion orange-jaune émissive, croûte sombre qui dérive
+lentement, non assombrie la nuit. Fin de la limite notée en 16.12 (lave = sol de terre, sans lueur ni dégâts).
+
+| Côté | Élément | Effet |
+|---|---|---|
+| Générateur (`tools/world_gen`, carte `enfers`) | splat `terrain_splat.slap` | la lave (`InfernalLavaAt`) passe dans le **canal A** (neige, toujours vide aux Enfers) au lieu de teinter la terre ; un chemin ou l'emprise d'un lieu bâti efface la lave (croûte refroidie : les routes restent praticables, comme le viaduc) |
+| | `zone.json` | `render.terrain.lava_layer = true` |
+| | `lava_mask.lvmk` (nouveau, `src/shared/world/LavaMask.h`) | canal A en blocs de ≈ 20 m (512² au plus, moyenne) et altitude la plus haute du sol du bloc ; écrit seulement si la cellule a de la lave (les 9 en ont, ≈ 1,3 Mo chacune) ; inclus dans le paquet serveur (extension non exclue) |
+| Client (`TerrainRenderer`, `terrain.frag`, `lighting.frag`) | rendu | `lava_layer` → UBO `terrainOrigin.z = 1`, `terrainOrigin.w` = temps ; le canal A n'échantillonne plus la neige : couleur procédurale (bruit fractal qui dérive, croûte noire fendue, lave rouge à jaune), normale lisse, rugosité 0,45-0,85 ; émission écrite dans **GBufferC.a = 1 − émission** (toutes les autres géométries écrivent 1) ; `lighting.frag` ajoute `albedo × émission × 6` après l'éclairage, avant le brouillard (la lave brille de jour comme de nuit, le bloom l'auréole) |
+| Serveur (`LavaHazard`, `ServerApp::TickLava`) | dégâts | masques chargés au démarrage (`InitLavaHazard`) ; à chaque tick, un joueur vivant des Enfers est « dans la lave » si le bloc sous lui vaut au moins 0,5 et qu'il n'est pas à plus de 1,5 m au-dessus du sol ; message « La lave vous brûle : sortez-en, elle tue en 3 secondes ! » à l'entrée ; **mort après 3 s cumulées** (sortir remet à zéro) : PV à 0, état mort, menace et auras retirées, événement de combat sans attaquant (comme `/kill`), sauvegarde, « Vous avez péri dans la lave. » ; MJ invincible épargné |
+
+**Vérifié** : portails, départs et point de réapparition des Enfers hors de la lave (masque à 0) ; lave ≥ 0,5 sur
+13 % de N000_W001 (mer de lave), 0,2 à 6 % des autres cellules (fleuves). Tests : `lava_hazard_tests` (format,
+seuils, hauteur, mort à 3 s, sortie, mort, hors Enfers), `world_gen_tests` (« lave v1.0.123 » : canal A, masque =
+blocs moyennés du splat, `lava_layer`). **Limites** : les pas sur la lave sonnent comme sur la neige (carte des sols
+du client = couche dominante) ; les mobs ne brûlent pas ; pas de particules ni de lumières de rive.
+
+**Aucun opcode ni migration** : la mort passe par l'événement de combat existant.
 
 ## 17. Questions ouvertes
 

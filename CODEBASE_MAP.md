@@ -2646,6 +2646,8 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/shared/world/WorldCells.{h,cpp}` | **Convention des cellules de 10 km** : position ↔ cellule ↔ nom `cell_nXXX_eYYY` ↔ id de zone serveur (pur, `world_cells_tests`). |
 | `tools/world_gen/lib/{Terrain,Places,Roads,Settlements,Vegetation,Population,Output}.cpp` | Étapes du générateur : couche macro (continent) puis cellules 2049² (déterministe, seed du master). |
 | `tools/world_gen/choose_graveyards.py` | v1.0.122 : hameaux à priver de cimetière pour garder les 666, à partir du recensement `lcdlln_world_gen --graveyard-report` (règle du plus proche voisin) ; cellules « villages seulement » du master : `graveyards.village_only_cells` (cases des lots de routes, `Settlements.cpp`). |
+| `src/shared/world/LavaMask.h` | v1.0.123 : format `lava_mask.lvmk` (masque de lave d'une cellule des Enfers, en-tête seul) : écrit par `tools/world_gen`, lu par le serveur. |
+| `src/shardd/world/LavaHazard.{h,cpp}` | v1.0.123 : lave mortelle des Enfers (mort après 3 s, seuil 0,5, 1,5 m au-dessus du sol) ; branché par `ServerApp::InitLavaHazard` / `TickLava` ; tests `lava_hazard_tests`. Rendu : `terrain.frag` (canal A = lave si `render.terrain.lava_layer`), émission dans GBufferC.a, ajoutée par `lighting.frag`. |
 | `src/client/world/instances/ScatterInstances.h` | Format `scatter.bin` « LCSC » v1/v2 (décor instancié ; v2 = table de chunks de 500 m pour le streaming). |
 | `src/client/world/scatter/ScatterField.{h,cpp}` | Grille 32 m + frustum + culling par classe des instances de décor. |
 | `src/client/app/EngineWorld.cpp` | Chargement / rendu instancié du décor et des bâtiments, collisions, carte & bannière. |

@@ -48,6 +48,7 @@
 #include "src/shardd/world/RegionActivity.h"
 #include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/PortalNetwork.h"
+#include "src/shardd/world/LavaHazard.h"
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/LoadShedding.h"
 #include "src/shared/core/StallGuard.h"
@@ -286,6 +287,8 @@ namespace engine::server
 		/// Seconde carte (Les Enfers) — état de passage des portails entre cartes
 		/// (réarmement 5 s après la sortie du rayon). Désarmé à la connexion.
 		PortalTravelState portalTravel;
+		/// v1.0.123 — temps passé dans la lave des Enfers (mort à 3 s, LavaHazard).
+		LavaExposureState lavaExposure;
 		/// ETAPE2.6 — instantané restauré à la connexion (0 = aucun) ; recopié dans
 		/// chaque sauvegarde (marque la demande appliquée, sans effet ensuite).
 		uint64_t restoreSnapshotId = 0;
@@ -1032,6 +1035,15 @@ namespace engine::server
 		/// vivant et armé, est dans le rayon d'un portail relié, il est transféré sur
 		/// l'autre carte (TransferToMap). No-op hors monde en cellules.
 		void MaybeApplyPortal(ConnectedClient& client);
+
+		/// v1.0.123 — charge les masques de lave des cellules des Enfers
+		/// (zones/enfers_*/lava_mask.lvmk ; absents = pas de lave). Non bloquant.
+		void InitLavaHazard();
+
+		/// v1.0.123 — lave des Enfers, à chaque tick : un joueur vivant (hors MJ
+		/// invincible) qui reste 3 s dans la lave meurt (événement de combat sans
+		/// attaquant, message système). Décision du 15/11/2026, LORE_BD §16.49.
+		void TickLava();
 
 		/// Seconde carte (Les Enfers) — transfère le joueur sur la carte \p map au point
 		/// GLOBAL (x, z) de cette carte : retrait de la grille d'intérêt de l'ancienne
@@ -1928,6 +1940,8 @@ namespace engine::server
 		RegionActivity m_regionActivity;
 		/// Seconde carte (Les Enfers) — portails entre cartes (world/<monde>/portals.json).
 		PortalNetwork m_portalNetwork;
+		/// v1.0.123 — masques de lave des Enfers (InitLavaHazard).
+		LavaHazard m_lavaHazard;
 		/// ETAPE4.3 (chantier 2.1) — cycle de vie des régions (Active / Loaded / Idle /
 		/// Removal, délais world.region_idle_s et world.region_unload_s), mis à jour par
 		/// RefreshRegionActivity (1 Hz).

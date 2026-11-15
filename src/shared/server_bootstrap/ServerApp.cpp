@@ -602,6 +602,7 @@ namespace engine::server
 		// Validation v12 (wire v13) — points de réapparition (non bloquant).
 		InitRespawnPoints();
 		InitDiscoveryCatalog(); // lore v1.0.114 — après les points de réapparition
+		InitLavaHazard();       // v1.0.123 — lave mortelle des Enfers
 
 		if (!InitQuests())
 		{
@@ -3820,6 +3821,7 @@ namespace engine::server
 		RegenerateResources();
 		TickActiveCasts();
 		TickAuras();
+		TickLava();
 		// Anniversaires SP3 (2026-07-18) — buffs de gâteau (entretien 1 Hz) +
 		// purge de minuit UTC des gâteaux expirés.
 		TickCakeBuffs(NowMonotonicMs());
@@ -6231,6 +6233,78 @@ namespace engine::server
 		{
 			LOG_WARN(Net, "[ServerApp] Portail '{}' : arrivee '{}' hors des cellules generees (passage annule, client_id={})",
 				destination->fromId, destination->toId, client.clientId);
+		}
+	}
+
+	void ServerApp::InitLavaHazard()
+	{
+		namespace cells = engine::world::cells;
+		m_lavaHazard.Clear();
+		if (!m_cellWorld)
+			return;
+		for (const cells::CellCoord& cell : m_worldStarts.GeneratedCells(cells::CellMap::Enfers))
+		{
+			const std::string path = "zones/" + cells::CellDirName(cell, cells::CellMap::Enfers) + "/lava_mask.lvmk";
+			const std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_config, path);
+			if (bytes.empty())
+				continue; // cellule sans lave
+			engine::world::LavaMask mask;
+			std::string err;
+			if (!engine::world::LoadLavaMask(bytes, mask, err))
+			{
+				LOG_WARN(Net, "[ServerApp] Masque de lave ignore ({}) : {}", path, err);
+				continue;
+			}
+			m_lavaHazard.AddMask(std::move(mask));
+		}
+		LOG_INFO(Net, "[ServerApp] Lave des Enfers : {} masque(s), mort apres {} s", m_lavaHazard.Count(),
+			LavaHazard::kDeathSeconds);
+	}
+
+	void ServerApp::TickLava()
+	{
+		if (m_lavaHazard.Count() == 0u)
+			return;
+		const float dt = 1.0f / static_cast<float>((std::max)(static_cast<unsigned>(m_tickHz), 1u));
+		for (ConnectedClient& client : m_clients)
+		{
+			const bool onEnfers = engine::world::cells::IsCellZoneId(client.zoneId)
+				&& ClientCellMap(client) == engine::world::cells::CellMap::Enfers;
+			// MJ invincible (/invincible) : jamais brûlé, comme pour les autres dégâts.
+			const bool alive = client.stats.currentHealth > 0u && (client.stateFlags & kEntityStateDead) == 0u
+				&& !client.gm.invincible;
+			const LavaEvent ev = m_lavaHazard.Update(client.lavaExposure, onEnfers, alive,
+				client.positionMetersX, client.positionMetersY, client.positionMetersZ, dt);
+			if (ev == LavaEvent::Entered)
+			{
+				SendChatSystemNotice(client, "La lave vous brûle : sortez-en, elle tue en 3 secondes !");
+				continue;
+			}
+			if (ev != LavaEvent::Killed)
+				continue;
+			const uint32_t lost = client.stats.currentHealth;
+			client.stats.currentHealth = 0;
+			client.stateFlags |= kEntityStateDead;
+			LOG_INFO(Net, "[ServerApp] Player died in lava (entity_id={}, x={:.1f}, z={:.1f})",
+				client.entityId, client.positionMetersX, client.positionMetersZ);
+			PurgeThreatForEntity(client.entityId);
+			if (!client.auras.empty())
+			{
+				client.auras.clear();
+				BroadcastAuraUpdate(client.entityId, client.auras);
+			}
+			// Événement de combat sans attaquant (0) : le client affiche la mort comme
+			// pour tout autre dégât (même chemin que /kill).
+			CombatEventMessage event{};
+			event.attackerEntityId = 0;
+			event.targetEntityId = client.entityId;
+			event.damage = lost;
+			event.targetCurrentHealth = 0;
+			event.targetMaxHealth = client.stats.maxHealth;
+			event.targetStateFlags = client.stateFlags;
+			BroadcastCombatEvent(event);
+			SaveConnectedClient(client, "lava_death");
+			SendChatSystemNotice(client, "Vous avez péri dans la lave.");
 		}
 	}
 

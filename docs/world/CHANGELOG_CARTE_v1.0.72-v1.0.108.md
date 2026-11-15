@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.122)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.123)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -88,7 +88,8 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.119 | `7515702` | **routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath ouvertes** : 16 cases, 3 villages, 12 lieux [GD], 24 cimetières compensés ([LORE_BD §16.46](LORE_BD.md)) | R | lieux [GD] à relire ; 43 routes restantes |
 | v1.0.120 | `2696859` | **falaises de craie de la côte ouest** (type Douvres) : relief `falaise` du générateur, 7 cases et leurs voisines côtières, paroi d'environ 90 m, plateau, plage, paroi blanche ([LORE_BD §16.47](LORE_BD.md)) | R | rendu à vérifier en jeu |
 | v1.0.121 | `a699c23` | **routes coupées, lot 1 (routes courtes)** : 18 routes, 92 cases nouvelles (103 listées), 82 lieux [GD] ; cases « villages seulement » (`graveyards.village_only_cells`) et recensement `--graveyard-report` du générateur ([LORE_BD §16.48](LORE_BD.md)) | R | lieux [GD] à relire |
-| v1.0.122 | (ce commit) | **routes coupées, lot 2 (le reste)** : 17 routes + 7 cases, 153 cases nouvelles, 125 lieux [GD] ; plus aucune route du lore coupée ; 742 cases jouables, 34 villes et villages ouverts ; 666 cimetières gardés ([LORE_BD §16.48](LORE_BD.md)) | R | lieux [GD] à relire |
+| v1.0.122 | `8185e8b` | **routes coupées, lot 2 (le reste)** : 17 routes + 7 cases, 153 cases nouvelles, 125 lieux [GD] ; plus aucune route du lore coupée ; 742 cases jouables, 34 villes et villages ouverts ; 666 cimetières gardés ([LORE_BD §16.48](LORE_BD.md)) | R | lieux [GD] à relire |
+| v1.0.123 | (ce commit) | **lave des Enfers lumineuse et mortelle** : canal A du splat = lave, shader du terrain émissif (GBufferC.a), masque serveur `lava_mask.lvmk`, mort en 3 s (`LavaHazard`) ([LORE_BD §16.49](LORE_BD.md)) | R | rendu à vérifier en jeu |
 
 ## 3. Impact sur le jeu et déploiement
 

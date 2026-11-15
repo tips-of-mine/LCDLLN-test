@@ -56,7 +56,7 @@ par la Légion (race `demons`, `Places.cpp`), pas par des nains. POI `[GD]` (gen
 **Palette (v1.0.83)** : le générateur applique aux Enfers une palette infernale (T15-22) : ni herbe, ni forêt,
 ni broussaille, ni neige ; sol de terre rouge-brun et de roche (splat), arbres morts et rochers ; sur la carte du
 monde, roche rouge striée, basalte noir, cendre grise et lave jaune-orange (mer de lave autour de la Mer de lave de
-N000_W001, fleuves de lave dans la croix). La lave n'est pas émissive en jeu (pas de couche dédiée côté client).
+N000_W001, fleuves de lave dans la croix). **Depuis la v1.0.123** la lave est lumineuse en jeu et tue en 3 s (LORE_BD §16.49).
 Détail : [`LORE_BD.md`](LORE_BD.md) §16.12.
 
 Aucune route : une seule ville, donc rien à relier pour le générateur, et le réseau routier du lore
@@ -212,7 +212,8 @@ plan prison. Accès prévu par le **Seuil des Plans** (N000_W001) ; ce n'est pas
 
 | Sortie de `tools/world_gen` (carte `enfers`) | Rendu |
 |---|---|
-| Splat `terrain_splat.slap` | terre rouge-brun (plaines, lave, chemins) et roche (pentes, coins `M`, sommets) ; ni herbe ni neige |
+| Splat `terrain_splat.slap` | terre rouge-brun (plaines, chemins) et roche (pentes, coins `M`, sommets) ; canal A (neige) = **lave** depuis v1.0.123 (rendue lumineuse : `zone.json` `render.terrain.lava_layer`) ; pas d'herbe |
+| Masque de lave `lava_mask.lvmk` (v1.0.123) | canal A du splat en blocs de ≈ 20 m (512², moyenne) et altitude la plus haute du sol du bloc ; lu par le serveur (mort en 3 s) ; seulement les cellules avec de la lave |
 | Masque d'herbe, densité forestière | vides |
 | Décor `scatter.bin` | arbres morts (calcinés) et rochers seulement |
 | Carte du monde `world_map.png` | roche rouge striée par l'altitude, basalte noir, cendre grise au sommet, lave jaune-orange non ombrée |
@@ -224,4 +225,4 @@ Toutes les branches sont gardées par `IsInfernalMap` : le continent n'est pas t
 
 | Réel en jeu | Lore seulement (à faire) |
 |---|---|
-| 9 cellules, Citadelle, cimetière neutre, 5 portails appariés, POI (repère, nom, aplanissement), palette, faune procédurale, hostilité des démons envers les humains | lave **émissive** et dégâts (le client n'a que 4 couches de sol à couleur fixe), palais / viaduc / plateaux modélisés, PNJ et boss (Lucifer, princes), instances des plans, carte des Enfers dans l'éditeur de lore |
+| 9 cellules, Citadelle, cimetière neutre, 5 portails appariés, lave lumineuse et mortelle (3 s, v1.0.123), POI (repère, nom, aplanissement), palette, faune procédurale, hostilité des démons envers les humains | palais / viaduc / plateaux modélisés, PNJ et boss (Lucifer, princes), instances des plans, carte des Enfers dans l'éditeur de lore |

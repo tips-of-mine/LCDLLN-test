@@ -100,6 +100,7 @@ namespace engine::network::reliable
 		case MessageKind::EquipRequest:
 		case MessageKind::UnequipRequest:
 		case MessageKind::SetBeltLayout:
+		case MessageKind::SeaTravelRequest: // v1.0.124 — passeur au ponton
 		// Shard -> client : résultats et états qui ne sont envoyés qu'au changement (une
 		// perte laisserait le client faux jusqu'au changement suivant).
 		case MessageKind::ZoneChange:

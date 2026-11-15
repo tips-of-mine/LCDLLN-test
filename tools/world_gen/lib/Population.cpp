@@ -150,6 +150,73 @@ namespace tools::world_gen
 		}
 	}
 
+	// ------------------------------------------------------------------ pontons
+
+	void BuildSeaPontons(World& w)
+	{
+		const double sea = w.master.scale.seaLevelM;
+		for (const SeaLineDef& line : w.master.seaLines)
+			for (size_t k = 0; k < line.stops.size(); ++k)
+			{
+				const SeaLineStopDef& stop = line.stops[k];
+				if (stop.n != w.cell.n || stop.e != w.cell.e) continue;
+				// Cible : la ville desservie (même cellule ou voisine), sinon le centre de la cellule.
+				const double x0 = w.terrainOriginX, z0 = w.terrainOriginZ, x1 = x0 + w.terrainSizeM, z1 = z0 + w.terrainSizeM;
+				Vec2 target{ (x0 + x1) * 0.5, (z0 + z1) * 0.5 };
+				if (const CityDef* c = w.FindCity(stop.cityId)) target = c->center;
+				double best = 1e30, bestYaw = 0.0;
+				Vec2 bestP{};
+				for (double z = z0 + 80.0; z < z1 - 80.0; z += 16.0)
+					for (double x = x0 + 80.0; x < x1 - 80.0; x += 16.0)
+					{
+						const Vec2 p{ x, z };
+						const double d = std::hypot(p.x - target.x, p.z - target.z);
+						if (d >= best) continue;
+						const double h = w.HeightAt(p);
+						if (h < sea + 0.8 || h > sea + 12.0 || w.IsWater(p) || w.SlopeDegAt(p) > 18.0 || w.IsOccupied(p, 3.0)) continue;
+						// Mer franche (sous le niveau de la mer, pas une rivière) dans une direction.
+						for (int a = 0; a < 16; ++a)
+						{
+							const double ang = a * (3.14159265358979323846 / 8.0);
+							const Vec2 dir{ std::cos(ang), std::sin(ang) };
+							bool seaOk = true;
+							for (double r : { 20.0, 45.0, 70.0 })
+								seaOk = seaOk && w.HeightAt({ p.x + dir.x * r, p.z + dir.z * r }) < sea - 0.8;
+							if (!seaOk) continue;
+							best = d; bestP = p;
+							bestYaw = std::atan2(dir.x, dir.z) * 180.0 / 3.14159265358979323846;
+							break;
+						}
+					}
+				if (best >= 1e29)
+				{
+					w.Warn("ligne maritime " + line.id + " : aucun ponton possible pour " + stop.cityId);
+					continue;
+				}
+				World::SeaPonton sp;
+				sp.lineId = line.id; sp.stopIndex = k;
+				sp.position = bestP; sp.y = w.HeightAt(bestP); sp.yawDeg = bestYaw;
+				w.seaPontons.push_back(sp);
+				// Le capitaine se tient à 3 m du bord (côté terre), face à la mer.
+				const double yr = bestYaw * 3.14159265358979323846 / 180.0;
+				InteractableDef cap;
+				cap.x = bestP.x - std::sin(yr) * 3.0;
+				cap.z = bestP.z - std::cos(yr) * 3.0;
+				cap.radius = 2.0;
+				cap.npc = true;
+				cap.label = "Capitaine du port";
+				cap.role = line.name;
+				cap.message = "Capitaine : Embarquez, la mer est calme aujourd'hui.";
+				cap.mesh = "models/characters/humains/Male_Ranger/Male_Ranger.glb";
+				cap.scale = 95.0; cap.rotXDeg = -90.0; cap.yawDeg = bestYaw;
+				cap.dialogueId = "passeur_" + line.id + "_" + std::to_string(k);
+				cap.npcTargetId = "npc:passeur_" + line.id + "_" + std::to_string(k);
+				w.Occupy({ cap.x, cap.z }, 2.0);
+				w.Occupy(bestP, 2.0);
+				w.interactables.push_back(std::move(cap));
+			}
+	}
+
 	// ------------------------------------------------------------------ imports
 
 	bool ImportLegacyContent(World& w, std::string& err)

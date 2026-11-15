@@ -2714,7 +2714,7 @@ namespace
 		std::vector<std::string> ids = g.master.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
-		Check(playable.size() == 742, "routes du lore v1.0.105 : 742 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122)");
+		Check(playable.size() == 749, "routes du lore v1.0.105 : 749 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122 + 7 des iles v1.0.124)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
 		int viaOk = 0;
@@ -2857,10 +2857,12 @@ namespace
 			bool t = false;
 			for (const auto& [id, rs] : byLore)
 				for (const Road* r : rs) t = t || r->fromId == c.id || r->toId == c.id || distTo(*r, c.center) < 400.0;
+			// v1.0.124 — Hishtarland et Dyprokh : îles desservies par une ligne maritime.
+			t = t || c.id == "hishtarland" || c.id == "town_ile_ashwick";
 			if (!t) std::fprintf(stderr, "  ville jouable sans route du lore : %s\n", c.id.c_str());
 			touched += t ? 1 : 0;
 		}
-		Check(villes > 70 && touched == villes, "routes v1.0.106 : (a) chaque ville et hameau jouable touche une route du lore tracee");
+		Check(villes > 70 && touched == villes, "routes v1.0.106 : (a) chaque ville et hameau jouable touche une route du lore tracee (iles de Hishtarland et Dyprokh : ligne maritime)");
 		// Réseau à pied : routes entièrement dans des cellules jouables, liées par une extrémité
 		// commune (ville) ou une extrémité à moins de 120 m d'une autre route.
 		std::vector<const Road*> net;
@@ -2890,19 +2892,22 @@ namespace
 		for (size_t i = 0; i < net.size(); ++i)
 			for (const CityDef& c : g.cities)
 				if (!c.startFor.empty() && (net[i]->fromId == c.id || net[i]->toId == c.id)) startRoots.insert(root(i));
-		int reliees = 0, ile = 0;
+		int reliees = 0, ile = 0, iles = 0;
 		for (const CityDef& c : g.cities)
 		{
 			if (!c.procedural.empty() || !playable.count(c.cell) || c.secret) continue;
 			if (c.n >= 17 && c.e <= -9) { ++ile; continue; } // Île de la Trêve
+			// v1.0.124 — îles de Hishtarland et de Dyprokh : desservies par une ligne
+			// maritime (passeur au ponton), pas par la route.
+			if (c.id == "hishtarland" || c.id == "town_ile_ashwick") { ++iles; continue; }
 			bool r = false;
 			for (size_t i = 0; i < net.size(); ++i)
 				r = r || ((net[i]->fromId == c.id || net[i]->toId == c.id) && startRoots.count(root(i)));
 			if (!r) std::fprintf(stderr, "  ville jouable hors du reseau des departs : %s\n", c.id.c_str());
 			reliees += r ? 1 : 0;
 		}
-		Check(startRoots.size() == 1 && reliees + ile == villes && ile == 4,
-			"routes v1.0.106 : (a) villes jouables reliees a pied aux departs (Orkh, Marn, Fhelvakt, Hazhaelin, Feyhin, Kholvard compris ; ile a part)");
+		Check(startRoots.size() == 1 && reliees + ile + iles == villes && ile == 4 && iles == 2,
+			"routes v1.0.106 : (a) villes jouables reliees a pied aux departs (Orkh, Marn, Fhelvakt, Hazhaelin, Feyhin, Kholvard compris ; Ile de la Treve, Hishtarland et Dyprokh a part)");
 
 		// (b) Balises de route.
 		int balises = 0;
@@ -3221,8 +3226,8 @@ namespace
 			ParseCellId(c, n, e);
 			vo += m.graveyardVillageOnlyCells.count({ n, e });
 		}
-		Check(m.graveyardVillageOnlyCells.size() == 245u && vo == 245u && gen.count("N015_E017") && gen.count("S013_E014"),
-			"routes lots v1.0.121 : 245 cases villages seulement, toutes generees (Mhorgad N015_E017 et S013_E014 ouvertes)");
+		Check(m.graveyardVillageOnlyCells.size() == 252u && vo == 252u && gen.count("N015_E017") && gen.count("S013_E014"),
+			"routes lots v1.0.121 : 245 + 7 (iles v1.0.124) cases villages seulement, toutes generees (Mhorgad N015_E017 et S013_E014 ouvertes)");
 		size_t lieux1 = 0, lieux2 = 0;
 		std::set<std::string> poiCells;
 		for (const PoiDef& p : m.pois)
@@ -3289,8 +3294,83 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// v1.0.124 (décision du 15/11/2026 : passeur au ponton, les 4 lignes, îles générées) —
+	/// master : 4 lignes maritimes, 11 escales dans des cellules générées, un dialogue de
+	/// passeur par escale (game/data/dialogues/passeur_<ligne>_<k>.json, action sea_travel) ;
+	/// îles de Hishtarland (5 cases) et de Dyprokh (2) générées. Génération : le ponton de
+	/// Hishtarland (S011_W006) est sur la terre au bord de la mer, avec son capitaine ; la
+	/// case de Brenhaval (N017_W010) a les pontons de ses 2 lignes.
+	void TestSeaLinesV1124()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "lignes maritimes v1.0.124 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		const std::set<std::string> gen(m.generatedCells.begin(), m.generatedCells.end());
+		size_t stops = 0, inGen = 0, dialogues = 0;
+		for (const SeaLineDef& l : m.seaLines)
+			for (size_t k = 0; k < l.stops.size(); ++k)
+			{
+				++stops;
+				inGen += gen.count(l.stops[k].cell);
+				const std::string txt = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "dialogues" / ("passeur_" + l.id + "_" + std::to_string(k) + ".json"));
+				dialogues += txt.find("\"sea_travel\"") != std::string::npos && txt.find("\"seaLine\": \"" + l.id + "\"") != std::string::npos;
+			}
+		Check(m.seaLines.size() == 4u && stops == 11u && inGen == 11u && dialogues == 11u,
+			"lignes maritimes v1.0.124 : 4 lignes, 11 escales en cellules generees, 11 dialogues de passeur");
+		bool iles = true;
+		for (const char* c : { "S010_W006", "S010_W007", "S011_W005", "S011_W006", "S011_W007", "N012_E002", "N012_E003" })
+			iles = iles && gen.count(c);
+		Check(iles, "lignes maritimes v1.0.124 : iles de Hishtarland et de Dyprokh generees");
+		g.contentRoot = LCDLLN_CONTENT_DIR;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1124";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		g.outputRoot = tmp.string();
+		auto cell = [&](const std::string& id) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildSeaPontons(*w);
+			return w;
+		};
+		const double sea = m.scale.seaLevelM;
+		{
+			auto w = cell("S011_W006");
+			bool okP = w->seaPontons.size() == 1u && w->seaPontons[0].lineId == "ligne_maritime_sud" && w->seaPontons[0].stopIndex == 2u;
+			if (okP)
+			{
+				const World::SeaPonton& sp = w->seaPontons[0];
+				const double yr = sp.yawDeg * 3.14159265358979323846 / 180.0;
+				okP = sp.y > sea + 0.5 && !w->IsWater(sp.position)
+					&& w->HeightAt({ sp.position.x + std::sin(yr) * 45.0, sp.position.z + std::cos(yr) * 45.0 }) < sea - 0.5;
+			}
+			bool captain = false;
+			for (const InteractableDef& d : w->interactables) captain = captain || d.dialogueId == "passeur_ligne_maritime_sud_2";
+			Check(okP && captain, "lignes maritimes v1.0.124 : ponton de Hishtarland au bord de la mer, capitaine pose");
+		}
+		{
+			auto w = cell("N017_W010");
+			std::set<std::string> lines;
+			for (const World::SeaPonton& sp : w->seaPontons) lines.insert(sp.lineId);
+			Check(w->seaPontons.size() == 2u && lines.count("ligne_maritime_du_nord") && lines.count("navette_brinehaven_truceholm"),
+				"lignes maritimes v1.0.124 : Brenhaval a les pontons de ses 2 lignes");
+		}
+		fs::remove_all(tmp, ec);
+	}
+
 	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
-	/// Master (`graveyards` : target 666, fill_empty_cells, 129 hameaux sans cimetière depuis v1.0.122) ;
+	/// Master (`graveyards` : target 666, fill_empty_cells, 131 hameaux sans cimetière depuis v1.0.124) ;
 	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
 	/// dans la case, au sec ; sans fill_empty_cells elle n'en a aucun ; un hameau de
 	/// without_graveyard (N001_E011) n'a pas de cimetière mais la cellule en garde un.
@@ -3306,7 +3386,7 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 129u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
+			&& g.master.graveyardExcluded.size() == 131u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
 			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
 			"cimetieres v1.0.111 : master (666, cellules vides remplies, 129 hameaux sans cimetiere depuis v1.0.122)");
 		if (!ok) return;
@@ -3760,6 +3840,7 @@ int main()
 	TestCimetieresV1111();
 	TestRoutesCoupeesV1119();
 	TestRoutesLotsV1121();
+	TestSeaLinesV1124();
 	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();

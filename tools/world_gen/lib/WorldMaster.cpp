@@ -591,6 +591,35 @@ namespace tools::world_gen
 			}
 		}
 
+		// --- lignes maritimes (v1.0.124, tools/lore/sync_sea_lines.py) ---
+		if (const JsonValue* sl = FindObjectMember(root, "sea_lines"); sl && sl->type == JsonType::Array)
+		{
+			std::set<std::string> lineIds;
+			for (const JsonValue& v : sl->arrayValue)
+			{
+				SeaLineDef d;
+				d.id = GetStr(v, "id"); d.name = GetStr(v, "name", d.id);
+				d.loop = GetBool(v, "loop", false);
+				d.priceGoldPerLeg = static_cast<int>(GetNum(v, "price_gold_per_leg", 10.0));
+				if (const JsonValue* st = FindObjectMember(v, "stops"); st && st->type == JsonType::Array)
+					for (const JsonValue& s2 : st->arrayValue)
+					{
+						SeaLineStopDef stop;
+						stop.cityId = GetStr(s2, "city"); stop.cell = GetStr(s2, "cell");
+						if (!ParseCellId(stop.cell, stop.n, stop.e) || !ids.count(stop.cityId))
+						{
+							err = "master: sea_lines '" + d.id + "' : escale invalide (" + stop.cityId + ", " + stop.cell + ")"; return false;
+						}
+						d.stops.push_back(std::move(stop));
+					}
+				if (d.id.empty() || !lineIds.insert(d.id).second || d.stops.size() < 2 || d.priceGoldPerLeg < 0)
+				{
+					err = "master: sea_lines invalide '" + d.id + "' (id unique, 2 escales au moins, prix >= 0)"; return false;
+				}
+				out.seaLines.push_back(std::move(d));
+			}
+		}
+
 		// --- routes du lore (v1.0.105, tools/lore/sync_routes.py) ---
 		if (const JsonValue* lr = FindObjectMember(root, "lore_roads"); lr && lr->type == JsonType::Array)
 		{

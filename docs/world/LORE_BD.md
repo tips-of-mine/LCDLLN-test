@@ -1059,6 +1059,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.47](#1647-falaises-de-craie-de-la-côte-ouest-v10120) | v1.0.120 | Falaises de craie de la côte ouest | 7 cases (et leurs voisines côtières) en falaises blanches type Douvres : paroi d'environ 90 m, plateau herbeux, plage au pied. |
 | [16.48](#1648-toutes-les-routes-coupées-ouvertes-en-deux-lots-v10121-v10122) | v1.0.121-v1.0.122 | Toutes les routes coupées ouvertes, en deux lots | 245 cases ouvertes (742 jouables), 34 villes et villages, 207 lieux [GD], cases « villages seulement » pour les cimetières (666 gardés). |
 | [16.49](#1649-lave-des-enfers-lumineuse-et-mortelle-v10123) | v1.0.123 | Lave des Enfers lumineuse et mortelle | Canal A du splat = lave émissive (shader), masque serveur `lava_mask.lvmk`, mort en 3 s. |
+| [16.50](#1650-lignes-maritimes-jouées-passeur-au-ponton-et-îles-ouvertes-v10124) | v1.0.124 | Lignes maritimes jouées, îles ouvertes | Passeur au ponton (4 lignes, 11 escales, traversée payante téléportée), îles de Hishtarland et de Dyprokh générées. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4429,8 +4430,8 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 |---|---|---|
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
-| `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46 ; 129 depuis v1.0.122, 16.48) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
-| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
+| `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46 ; 129 depuis v1.0.122, 16.48 ; 131 depuis v1.0.124, 16.50) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
+| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) + 7 des îles (16.50) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4841,6 +4842,40 @@ blocs moyennés du splat, `lava_layer`). **Limites** : les pas sur la lave sonne
 du client = couche dominante) ; les mobs ne brûlent pas ; pas de particules ni de lumières de rive.
 
 **Aucun opcode ni migration** : la mort passe par l'événement de combat existant.
+
+### 16.50 Lignes maritimes jouées (passeur au ponton) et îles ouvertes (v1.0.124)
+
+**Décisions du propriétaire (15/11/2026)** : traversée « 1 + 2 » (d'abord un **passeur au ponton**, puis un bateau
+visible dans un lot suivant) ; **les 4 lignes** du lore ; **îles générées** (Hishtarland, Dyprokh).
+
+| Ligne (lore `sea_lines`) | Escales (ville, case du ponton) | Prix |
+|---|---|---|
+| Ligne maritime du sud (boucle) | Ekvhitorn S006_W004, Brokhendt S008_W002, Hishtarland S011_W006, Zaltheim S008_W010 | 10 or par étape (plus court sens) |
+| Ligne maritime du Nord (aller-retour) | Brenhaval N017_W010, Haevrin N011_W004, Ostrevan N011_W008 | 10 or par étape |
+| Navette Askhvir – Dyprokh | Askhvir N010_E005, Dyprokh N012_E002 | 5 or |
+| Navette Brenhaval – Thrival | Brenhaval N017_W010, Thrival N019_W010 | 5 or |
+
+Prix `[GD]` à valider. **Ponton d'Ekvhitorn** : déplacé `[GD]` de S005_W004 (plaine fermée par les montagnes, sans
+mer) à S006_W004, la case de côte juste au sud.
+
+**Chaîne** :
+
+| Étape | Élément | Effet |
+|---|---|---|
+| Lore → master | `tools/lore/sync_sea_lines.py` (CI : `--check`) | section `sea_lines` du master (escales : ville, case ; boucle ; prix d'une étape) ; un dialogue de passeur par escale `game/data/dialogues/passeur_<ligne>_<k>.json` (un choix « Embarquer pour X (N or) » par autre escale, action `sea_travel`, `seaLine`, `seaStop` ; « Pas aujourd'hui. ») |
+| Générateur (`BuildSeaPontons`, après les agglomérations) | ponton | dans la case du ponton, le point de terre ferme le plus proche de la ville (pente < 18°, 0,8 à 12 m au-dessus de la mer, libre) qui a la mer franche à 20, 45 et 70 m dans une direction ; le **capitaine du port** (PNJ, dialogue du passeur) se tient à 3 m côté terre, face à la mer ; génération complète refusée si une escale n'a pas son ponton |
+| | `world/royaumes/sea_lines.json` (nouveau, serveur) | lignes, escales (ville, nom, point d'arrivée x, y, z, regard), prix |
+| Client | dialogue | action `sea_travel` → `SeaTravelRequest` (nouveau message 107, client → shard, canal fiable, rétro-additif) puis fin du dialogue |
+| Serveur (`SeaLines`, `ServerApp::HandleSeaTravelRequest`) | traversée | joueur vivant, à 30 m au plus du ponton d'une escale de la ligne (escale de départ), escale d'arrivée différente ; prix = étapes × prix (or) ; débarquement au ponton d'arrivée (`TransferToMap`, même carte) ; messages système (refus, or manquant, « vous débarquez à X ») ; or rendu si le débarquement échoue |
+
+**Îles** : Hishtarland (S010_W006, S010_W007, S011_W005, S011_W006, S011_W007) et Dyprokh (N012_E002, N012_E003),
+7 cases ajoutées à `generated_cells` et à `graveyards.village_only_cells` ; **5 lieux `[GD]`** sur les cases vides
+(Arsenal de Hishtarland, Phare du cap Hishtar, Criques des pêcheurs de corail, Vignes du Hishtarland, Forêt de l'île
+de Dyprokh). Pas de route terrestre : test des routes (a) adapté (Hishtarland et Dyprokh desservies par la mer, comme
+l'Île de la Trêve a son réseau). Cimetières : Hishtarland et Dyprokh gardent le leur (villes du lore), les cases vides n'en ont pas ; recensement à 668, **2 hameaux** de plus sans cimetière (`choose_graveyards.py`, 129 → 131) ; **666** vérifiés.
+
+**Bilan** : 691 cases listées, 749 jouables. **Reste** : bateau visible (lot suivant : entité mobile serveur,
+escales de 30 s, 2 bateaux par ligne, embarquement).
 
 ## 17. Questions ouvertes
 

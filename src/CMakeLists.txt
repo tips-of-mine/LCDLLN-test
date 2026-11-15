@@ -131,6 +131,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
+    # v1.0.124 : lignes maritimes (passeur au ponton).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.
@@ -666,6 +668,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(lava_hazard_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/LavaHazardTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp)
+
+  # v1.0.124 — lignes maritimes (sea_lines.json, prix, ponton de départ).
+  lcdlln_add_simple_test(sea_lines_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/SeaLinesTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
   # Monde « Royaumes » (client) : repère de rendu, cellules résidentes, mur invisible.
   lcdlln_add_simple_test(cell_world_frame_tests
@@ -1628,6 +1636,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
+    # v1.0.124 : lignes maritimes (passeur au ponton).
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
     # ETAPE4.5 : délestage avec hystérésis.

@@ -10,6 +10,7 @@ namespace engine::client
 		if (s == "accept_quest")   return DialogueAction::AcceptQuest;
 		if (s == "complete_quest") return DialogueAction::CompleteQuest;
 		if (s == "end")            return DialogueAction::End;
+		if (s == "sea_travel")     return DialogueAction::SeaTravel; // v1.0.124 (passeurs)
 		return DialogueAction::Continue;
 	}
 
@@ -52,6 +53,8 @@ namespace engine::client
 					choice.questId    = static_cast<int>(cfg.GetInt(cb + "questId", -1));
 					choice.questKey   = cfg.GetString(cb + "questKey", ""); // SP2 : id texte pour QuestAccept/TurnInRequest.
 					choice.icon       = cfg.GetString(cb + "icon", "");
+					choice.seaLineId  = cfg.GetString(cb + "seaLine", "");                    // v1.0.124
+					choice.seaStop    = static_cast<int>(cfg.GetInt(cb + "seaStop", -1));     // v1.0.124
 					node.choices.push_back(std::move(choice));
 				}
 

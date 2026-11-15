@@ -359,7 +359,13 @@ namespace engine::server
 		DiscoveryState = 105,
 		/// Lore v1.0.114 — shard → client : un événement d'exploration (cimetière visité,
 		/// lieu secret découvert, exploit débloqué). Jamais envoyé à un autre joueur.
-		DiscoveryEvent = 106
+		DiscoveryEvent = 106,
+		/// v1.0.124 — client → shard : traversée maritime demandée au passeur d'un ponton
+		/// (ligne `lineId`, escale d'arrivée `toStop`). Le shard vérifie que le joueur est
+		/// vivant, au ponton d'une escale de la ligne, et qu'il a l'or ; il le débarque au
+		/// ponton d'arrivée (changement de position imposé). Ajout rétro-additif : un vieux
+		/// shard l'ignore (pas de bump de kProtocolVersion), le client ne reçoit alors rien.
+		SeaTravelRequest = 107
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -512,6 +518,14 @@ namespace engine::server
 	/// Combat SP2 — demande de réapparition d'un joueur mort (client → shard).
 	/// Le serveur ne l'honore que si le joueur porte kEntityStateDead.
 	/// Wire v13 : + destination (1 octet, kRespawnDestination*) — payload 4 → 5.
+	/// v1.0.124 — client → shard : traversée maritime (passeur au ponton).
+	struct SeaTravelRequestMessage
+	{
+		uint32_t clientId = 0;
+		std::string lineId;  ///< ligne maritime (sea_lines.json), 64 caractères au plus
+		uint8_t toStop = 0;  ///< escale d'arrivée (index dans la ligne)
+	};
+
 	struct RespawnRequestMessage
 	{
 		uint32_t clientId = 0;
@@ -940,6 +954,10 @@ namespace engine::server
 
 	/// Combat SP2 — encode a respawn request packet (client → server).
 	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message);
+	/// v1.0.124 — encode SeaTravelRequest : clientId (4) + lineId (2 + N) + toStop (1).
+	std::vector<std::byte> EncodeSeaTravelRequest(const SeaTravelRequestMessage& message);
+	/// v1.0.124 — décode SeaTravelRequest ; faux si tronqué, trop long ou ligne vide / > 64.
+	bool DecodeSeaTravelRequest(std::span<const std::byte> packet, SeaTravelRequestMessage& outMessage);
 
 	/// Combat SP2 — decode a respawn request packet and validate the protocol header.
 	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage);

@@ -91,6 +91,12 @@ namespace engine::client
 		{
 			m_questActionCb = std::move(cb);
 		}
+		/// v1.0.124 — appelé quand un choix porte SeaTravel (passeur au ponton) : ligne et
+		/// escale d'arrivée ; le dialogue se ferme ensuite. Le moteur envoie SeaTravelRequest.
+		void SetSeaTravelCallback(std::function<void(const std::string& /*seaLineId*/, int /*seaStop*/)> cb)
+		{
+			m_seaTravelCb = std::move(cb);
+		}
 		/// Puits de journalisation (non possédé). Peut être nullptr (pas de journal).
 		void SetJournalSink(IQuestConversationSink* sink) { m_journalSink = sink; }
 
@@ -110,6 +116,7 @@ namespace engine::client
 		bool  m_autoScroll    = true;
 
 		std::function<void(DialogueAction, int, const std::string&)> m_questActionCb;
+		std::function<void(const std::string&, int)> m_seaTravelCb; ///< v1.0.124 (SetSeaTravelCallback)
 		IQuestConversationSink*                  m_journalSink = nullptr;
 	};
 

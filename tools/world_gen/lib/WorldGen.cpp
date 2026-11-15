@@ -314,6 +314,7 @@ namespace tools::world_gen
 			timed("cellule : import", [&] { imported = ImportLegacyContent(*w, cerr); }); // occupe la place des objets historiques
 			if (!imported) return cerr.empty() ? std::string("import du contenu historique impossible") : cerr;
 			timed("cellule : agglomerations", [&] { BuildSettlements(*w); }); // rues, bâtiments, remparts, mobilier, graphe PNJ
+			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
 			timed("cellule : vegetation", [&] { BuildVegetation(*w); });      // décor naturel (respecte l'occupation)
 			timed("cellule : population", [&] { BuildPopulation(*w); });      // spawners, respawns, départs
@@ -445,6 +446,23 @@ namespace tools::world_gen
 					}
 			}
 		}
+		// v1.0.124 — génération complète : chaque escale des lignes maritimes a son ponton
+		// (sinon le serveur ne saurait pas où débarquer le joueur).
+		if (opt.cells.empty())
+			for (const SeaLineDef& line : g.master.seaLines)
+				for (size_t k = 0; k < line.stops.size(); ++k)
+				{
+					size_t found = 0;
+					for (const World* w : cells)
+						for (const World::SeaPonton& sp : w->seaPontons)
+							found += sp.lineId == line.id && sp.stopIndex == k;
+					if (found != 1)
+					{
+						err = "ligne maritime " + line.id + " : escale " + line.stops[k].cityId + " (" + line.stops[k].cell + ") : "
+							+ std::to_string(found) + " ponton(s) au lieu de 1 (case non generee ou sans cote)";
+						return false;
+					}
+				}
 		bool anyStart = false;
 		for (const World* w : cells) anyStart = anyStart || !w->starts.empty();
 		if (!anyStart && opt.cells.empty()) { err = "aucun point de depart genere"; return false; }

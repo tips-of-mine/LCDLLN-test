@@ -581,6 +581,33 @@ namespace engine::server
 		return outMessage.destination <= kRespawnDestinationInn;
 	}
 
+	std::vector<std::byte> EncodeSeaTravelRequest(const SeaTravelRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::SeaTravelRequest, 4u + 2u + message.lineId.size() + 1u);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.lineId);
+		WriteU8(packet, message.toStop);
+		return packet;
+	}
+
+	bool DecodeSeaTravelRequest(std::span<const std::byte> packet, SeaTravelRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::SeaTravelRequest, payload) || payload.size() < 7)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.lineId) || offset + 1 != payload.size())
+		{
+			return false;
+		}
+		outMessage.toStop = ReadU8(payload, offset);
+		return !outMessage.lineId.empty() && outMessage.lineId.size() <= 64;
+	}
+
 	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message)
 	{
 		// Combat SP3 — payload : clientId (4) + targetEntityId (8) + spellId (2 + N).

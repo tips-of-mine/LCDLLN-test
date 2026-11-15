@@ -273,6 +273,17 @@ namespace engine::client
 
 	/// Correction SP1 — position imposée par le serveur (ForcePosition) en
 	/// attente d'application par Engine (téléport du CharacterController).
+	/// v1.0.125 — à bord d'un bateau (BoatAboard) : position dans le repère du bateau,
+	/// nouvelle époque de mouvement. Consommé par Engine (mode « à bord »).
+	struct UIBoatAboard
+	{
+		bool pending = false;
+		uint64_t boatEntityId = 0;
+		float localX = 0.0f, localY = 0.0f, localZ = 0.0f; ///< repère du bateau (m)
+		float localYaw = 0.0f;  ///< cap du joueur dans le repère du bateau (rad)
+		uint16_t moveEpoch = 0;
+	};
+
 	struct UIForcedPosition
 	{
 		bool pending = false;
@@ -518,6 +529,8 @@ namespace engine::client
 		std::vector<UIRemoteEntity> remoteEntities;
 		/// Correction SP1 — position imposée par le serveur (consommée par Engine).
 		UIForcedPosition forcedPosition{};
+		/// v1.0.125 — embarquement sur un bateau à appliquer (BoatAboard).
+		UIBoatAboard boatAboard{};
 		/// ADM.1 — pouvoirs de maître de jeu de la session (vol, gel, vitesse).
 		UIGmState gmState{};
 		/// Lore v1.0.114 — cimetières visités et lieux secrets découverts.
@@ -654,6 +667,8 @@ namespace engine::client
 		/// Correction SP1 — consomme la position imposée (après application par
 		/// Engine au CharacterController). Main thread uniquement.
 		void ClearForcedPosition();
+		/// v1.0.125 — consomme l'embarquement (après application par Engine). Thread principal.
+		void ClearBoatAboard() { m_model.boatAboard = UIBoatAboard{}; }
 		/// ADM.1 — oublie l'état « maître de jeu » (nouveau Welcome : le shard repart de
 		/// l'état neutre). Thread principal.
 		void ClearGmState() { m_model.gmState = UIGmState{}; }
@@ -739,6 +754,9 @@ namespace engine::client
 
 		/// Correction SP1 — position imposée par le serveur (ForcePosition).
 		bool ApplyForcePosition(std::span<const std::byte> packet);
+		/// v1.0.125 — BoatAboard : m_model.boatAboard (annule un ForcePosition en attente,
+		/// le plus récent des deux fait foi).
+		bool ApplyBoatAboard(std::span<const std::byte> packet);
 		/// ETAPE3.3 — position officielle après une commande de mouvement (MoveCorrection).
 		bool ApplyMoveCorrection(std::span<const std::byte> packet);
 		/// ADM.1 — GmStateUpdate : met à jour m_model.gmState.

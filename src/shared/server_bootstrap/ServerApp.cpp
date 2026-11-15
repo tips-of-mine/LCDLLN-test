@@ -1085,11 +1085,11 @@ namespace engine::server
 			return;
 		}
 
-		// v1.0.124 — passeur au ponton (traversée maritime).
-		SeaTravelRequestMessage seaTravel{};
-		if (DecodeSeaTravelRequest(packetBytes, seaTravel))
+		// v1.0.125 — embarquer sur un bateau à quai / en débarquer.
+		BoatBoardRequestMessage boatBoard{};
+		if (DecodeBoatBoardRequest(packetBytes, boatBoard))
 		{
-			HandleSeaTravelRequest(datagram.endpoint, seaTravel);
+			HandleBoatBoardRequest(datagram.endpoint, boatBoard);
 			return;
 		}
 
@@ -2832,6 +2832,41 @@ namespace engine::server
 			return;
 		}
 
+		// v1.0.125 — à bord d'un bateau : la commande est dans le REPÈRE DU BATEAU (marche
+		// sur le pont). Mêmes règles de mouvement (vitesse, saut, budget de temps), puis le
+		// point est ramené sur le pont ; la position monde suit la pose du bateau.
+		if (client->boatIndex >= 0 && static_cast<size_t>(client->boatIndex) < m_boatPoses.size())
+		{
+			engine::movement::MoveCommand deckCommand{};
+			deckCommand.sequence = input.inputSequence;
+			deckCommand.clientTimeMs = input.clientTimeMs;
+			deckCommand.lastJumpMs = input.lastJumpMs;
+			deckCommand.lastDodgeMs = input.lastDodgeMs;
+			deckCommand.x = input.positionMetersX;
+			deckCommand.y = input.positionMetersY;
+			deckCommand.z = input.positionMetersZ;
+			const engine::movement::MoveResult deckResult =
+				engine::movement::ApplyMoveCommand(client->movement, deckCommand, client->maxMoveSpeed, nowMs);
+			if (deckResult.verdict == engine::movement::MoveVerdict::Stale)
+				return;
+			float deckX = client->movement.x, deckZ = client->movement.z;
+			const bool offDeck = BoatFleet::ClampToDeck(deckX, deckZ);
+			client->movement.x = deckX;
+			client->movement.z = deckZ;
+			client->movement.y = std::clamp(client->movement.y, BoatFleet::kDeckY + BoatFleet::kStandHeight,
+				BoatFleet::kDeckY + BoatFleet::kStandHeight + 2.0f);
+			client->lastInputSequence = input.inputSequence;
+			if (std::isfinite(input.yawRadians))
+				client->yawRadians = input.yawRadians;
+			client->animationState = input.animationState;
+			client->hasReplicatedState = true;
+			UpdatePassengerWorldPosition(*client);
+			if (deckResult.verdict == engine::movement::MoveVerdict::Corrected || offDeck)
+				SendMoveCorrection(*client, input.inputSequence);
+			UpdateClientInterest(*client);
+			return;
+		}
+
 		// Monde « Royaumes » — mur invisible côté serveur : une position dans une cellule
 		// non générée (ou NaN) est refusée ; le client est recalé (ForcePosition,
 		// ≤ 1 / 500 ms) sur la dernière position officielle.
@@ -2915,6 +2950,13 @@ namespace engine::server
 		message.positionX = client.positionMetersX;
 		message.positionY = client.positionMetersY;
 		message.positionZ = client.positionMetersZ;
+		if (client.boatIndex >= 0)
+		{
+			// v1.0.125 — à bord : position officielle dans le repère du bateau.
+			message.positionX = client.movement.x;
+			message.positionY = client.movement.y;
+			message.positionZ = client.movement.z;
+		}
 		message.yawRadians = client.yawRadians;
 		if (SendDatagram(client.endpoint, EncodeMoveCorrection(message)))
 			client.lastMoveCorrectionSentMs = nowMs;
@@ -2922,6 +2964,8 @@ namespace engine::server
 
 	void ServerApp::ResetClientMovement(ConnectedClient& client)
 	{
+		// v1.0.125 — toute position imposée (téléport, réapparition, débarquement) laisse à terre.
+		client.boatIndex = -1;
 		engine::movement::ResetMovement(client.movement, client.positionMetersX, client.positionMetersY,
 			client.positionMetersZ);
 		++client.moveEpoch;
@@ -3831,6 +3875,7 @@ namespace engine::server
 		TickActiveCasts();
 		TickAuras();
 		TickLava();
+		TickBoats(); // v1.0.125 — bateaux et passagers
 		// Anniversaires SP3 (2026-07-18) — buffs de gâteau (entretien 1 Hz) +
 		// purge de minuit UTC des gâteaux expirés.
 		TickCakeBuffs(NowMonotonicMs());
@@ -4555,6 +4600,18 @@ namespace engine::server
 		state.positionMetersX = client.positionMetersX;
 		state.positionMetersY = client.positionMetersY;
 		state.positionMetersZ = client.positionMetersZ;
+		// v1.0.125 — passager d'un bateau : sauvegardé au ponton de l'escale (à quai : celle du
+		// quai ; en mer : celle d'arrivée), jamais au milieu de la mer.
+		if (client.boatIndex >= 0 && static_cast<size_t>(client.boatIndex) < m_boatPoses.size())
+		{
+			const BoatPose& p = m_boatPoses[static_cast<size_t>(client.boatIndex)];
+			const SeaLine& line = m_boatFleet.LineOf(static_cast<size_t>(client.boatIndex));
+			const SeaLineStop& st = line.stops[(std::min)(p.stop, line.stops.size() - 1)];
+			state.positionMetersX = static_cast<float>(st.x);
+			state.positionMetersY = static_cast<float>(st.y);
+			state.positionMetersZ = static_cast<float>(st.z);
+			state.zoneId = engine::world::cells::CellZoneId(engine::world::cells::CellFromPosition(st.x, st.z), line.map);
+		}
 		state.experiencePoints = client.experiencePoints;
 		state.level = client.level;
 		state.gold = client.gold;
@@ -6591,60 +6648,215 @@ namespace engine::server
 		BroadcastCombatEvent(combatEvent);
 	}
 
-	void ServerApp::HandleSeaTravelRequest(const Endpoint& endpoint, const SeaTravelRequestMessage& request)
+	// -------------------------------------------------------------------------
+	// v1.0.125 — bateaux des lignes maritimes (décision du 15/11/2026 : « à bord en temps
+	// réel », LORE_BD §16.51). Horaire pur (BoatFleet) ; les passagers marchent sur le pont
+	// dans le repère du bateau, le shard en déduit leur position monde à chaque tick.
+	// -------------------------------------------------------------------------
+
+	void ServerApp::InitBoats()
+	{
+		m_boatFleet.Build(m_seaLines, m_config.GetDouble("boats.speed_mps", 8.0));
+		m_boatEntityIds.clear();
+		m_boatPoses.assign(m_boatFleet.Count(), BoatPose{});
+		m_boatClockSec = 0.0;
+		for (size_t b = 0; b < m_boatFleet.Count(); ++b)
+		{
+			m_boatEntityIds.push_back(m_nextServerEntityId++);
+			m_boatPoses[b] = m_boatFleet.Evaluate(b, m_boatClockSec);
+			if (CellGrid* grid = GetOrCreateZoneGrid(engine::world::cells::MapIdOf(m_boatFleet.LineOf(b).map)))
+			{
+				CellCoord cell{};
+				(void)grid->UpsertEntity(m_boatEntityIds[b], static_cast<float>(m_boatPoses[b].x),
+					static_cast<float>(m_boatPoses[b].z), cell);
+			}
+			LOG_INFO(Net, "[ServerApp] Bateau {} de la ligne {} (entity_id={}, cycle {:.0f} s)",
+				m_boatFleet.RankOf(b), m_boatFleet.LineOf(b).id, m_boatEntityIds[b], m_boatFleet.CycleSeconds(b));
+		}
+		if (m_boatFleet.Count() > 0u)
+			LOG_INFO(Net, "[ServerApp] Bateaux : {} sur les lignes maritimes", m_boatFleet.Count());
+	}
+
+	int32_t ServerApp::FindBoatByEntityId(EntityId entityId) const
+	{
+		for (size_t b = 0; b < m_boatEntityIds.size(); ++b)
+			if (m_boatEntityIds[b] == entityId) return static_cast<int32_t>(b);
+		return -1;
+	}
+
+	void ServerApp::UpdatePassengerWorldPosition(ConnectedClient& client)
+	{
+		if (client.boatIndex < 0 || static_cast<size_t>(client.boatIndex) >= m_boatPoses.size())
+			return;
+		const BoatPose& p = m_boatPoses[static_cast<size_t>(client.boatIndex)];
+		double wx = 0.0, wz = 0.0;
+		BoatFleet::LocalToWorld(p, client.movement.x, client.movement.z, wx, wz);
+		client.positionMetersX = static_cast<float>(wx);
+		client.positionMetersY = static_cast<float>(p.y) + client.movement.y;
+		client.positionMetersZ = static_cast<float>(wz);
+		client.velocityMetersPerSecondX = std::sin(p.yawRad) * p.speed;
+		client.velocityMetersPerSecondY = 0.0f;
+		client.velocityMetersPerSecondZ = std::cos(p.yawRad) * p.speed;
+	}
+
+	void ServerApp::EmitBoatAboard(ConnectedClient& client)
+	{
+		if (client.boatIndex < 0 || static_cast<size_t>(client.boatIndex) >= m_boatPoses.size())
+			return;
+		const BoatPose& p = m_boatPoses[static_cast<size_t>(client.boatIndex)];
+		BoatAboardMessage message{};
+		message.clientId = client.clientId;
+		message.moveEpoch = client.moveEpoch;
+		message.boatEntityId = m_boatEntityIds[static_cast<size_t>(client.boatIndex)];
+		message.localX = client.movement.x;
+		message.localY = client.movement.y;
+		message.localZ = client.movement.z;
+		message.localYaw = std::remainder(client.yawRadians - p.yawRad, 6.28318530718f);
+		if (!SendDatagram(client.endpoint, EncodeBoatAboard(message)))
+		{
+			LOG_WARN(Net, "[ServerApp] BoatAboard send failed (client_id={})", client.clientId);
+			return;
+		}
+		client.lastForcePositionSentMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count());
+	}
+
+	void ServerApp::DisembarkAtPonton(ConnectedClient& client, size_t stop, std::string_view notice)
+	{
+		if (client.boatIndex < 0 || static_cast<size_t>(client.boatIndex) >= m_boatPoses.size())
+			return;
+		const SeaLine& line = m_boatFleet.LineOf(static_cast<size_t>(client.boatIndex));
+		const SeaLineStop& st = line.stops[(std::min)(stop, line.stops.size() - 1)];
+		client.boatIndex = -1;
+		client.positionMetersX = static_cast<float>(st.x);
+		client.positionMetersY = static_cast<float>(st.y);
+		client.positionMetersZ = static_cast<float>(st.z);
+		client.velocityMetersPerSecondX = 0.0f;
+		client.velocityMetersPerSecondY = 0.0f;
+		client.velocityMetersPerSecondZ = 0.0f;
+		client.yawRadians = (st.yawDeg + 180.0f) * 3.14159265f / 180.0f; // dos à la mer
+		SendForcePosition(client, kForcePositionReasonTeleport);
+		UpdateClientInterest(client);
+		if (!notice.empty())
+			SendChatSystemNotice(client, std::string(notice));
+		LOG_INFO(Net, "[ServerApp] Passager debarque (client_id={}, ligne={}, escale={})", client.clientId, line.id, st.cityId);
+	}
+
+	void ServerApp::TickBoats()
+	{
+		if (m_boatFleet.Count() == 0u)
+			return;
+		m_boatClockSec += 1.0 / static_cast<double>((std::max)(static_cast<unsigned>(m_tickHz), 1u));
+		for (size_t b = 0; b < m_boatFleet.Count(); ++b)
+		{
+			m_boatPoses[b] = m_boatFleet.Evaluate(b, m_boatClockSec);
+			if (CellGrid* grid = GetOrCreateZoneGrid(engine::world::cells::MapIdOf(m_boatFleet.LineOf(b).map)))
+			{
+				CellCoord cell{};
+				(void)grid->UpsertEntity(m_boatEntityIds[b], static_cast<float>(m_boatPoses[b].x),
+					static_cast<float>(m_boatPoses[b].z), cell);
+			}
+		}
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.boatIndex < 0)
+				continue;
+			if (static_cast<size_t>(client.boatIndex) >= m_boatPoses.size())
+			{
+				client.boatIndex = -1;
+				continue;
+			}
+			const BoatPose& p = m_boatPoses[static_cast<size_t>(client.boatIndex)];
+			if (p.departures > client.boatDeparturesPaid)
+			{
+				// Départ d'un quai : l'étape se paie (sinon le passager reste à terre).
+				const SeaLine& line = m_boatFleet.LineOf(static_cast<size_t>(client.boatIndex));
+				const uint32_t price = line.priceGoldPerLeg;
+				std::string err;
+				if (price == 0u || (client.gold >= price && TrySubtractCurrency(client.clientId, kCurrencyGold, price, err)))
+				{
+					client.boatDeparturesPaid = p.departures;
+					SendChatSystemNotice(client, std::format("Le navire appareille pour {} ({} or pour l'étape).",
+						line.stops[p.stop].name, price));
+				}
+				else
+				{
+					DisembarkAtPonton(client, p.fromStop,
+						std::format("Sans les {} or de l'étape, le capitaine vous fait descendre à quai.", price));
+					continue;
+				}
+			}
+			UpdatePassengerWorldPosition(client);
+			UpdateClientInterest(client);
+		}
+	}
+
+	void ServerApp::HandleBoatBoardRequest(const Endpoint& endpoint, const BoatBoardRequestMessage& request)
 	{
 		ConnectedClient* client = FindClient(endpoint);
 		if (client == nullptr || client->clientId != request.clientId)
 		{
-			LOG_WARN(Net, "[ServerApp] SeaTravelRequest ignored (unknown endpoint or client_id mismatch)");
+			LOG_WARN(Net, "[ServerApp] BoatBoardRequest ignored (unknown endpoint or client_id mismatch)");
 			return;
 		}
+		const int32_t b = FindBoatByEntityId(request.boatEntityId);
+		if (b < 0)
+		{
+			SendChatSystemNotice(*client, "Ce navire n'est plus là.");
+			return;
+		}
+		const BoatPose& p = m_boatPoses[static_cast<size_t>(b)];
+		const SeaLine& line = m_boatFleet.LineOf(static_cast<size_t>(b));
+		if (request.board == 0u)
+		{
+			if (client->boatIndex != b)
+				return;
+			if (!p.docked)
+			{
+				SendChatSystemNotice(*client, "Le navire est en mer : attendez l'escale pour débarquer.");
+				return;
+			}
+			DisembarkAtPonton(*client, p.stop, std::format("Vous débarquez à {}.", line.stops[p.stop].name));
+			return;
+		}
+		if (client->boatIndex >= 0)
+			return; // déjà à bord
 		if ((client->stateFlags & kEntityStateDead) != 0u || client->stats.currentHealth == 0u)
 		{
 			SendChatSystemNotice(*client, "Le capitaine ne prend pas les morts à bord.");
 			return;
 		}
-		if (!engine::world::cells::IsCellZoneId(client->zoneId))
+		if (!engine::world::cells::IsCellZoneId(client->zoneId) || ClientCellMap(*client) != line.map)
+			return;
+		if (!p.docked)
 		{
+			SendChatSystemNotice(*client, "Le navire n'est pas à quai.");
 			return;
 		}
-		SeaTravelPlan plan;
-		const SeaTravelRefusal refusal = m_seaLines.Plan(request.lineId, request.toStop, ClientCellMap(*client),
-			client->positionMetersX, client->positionMetersZ, plan);
-		if (refusal != SeaTravelRefusal::None)
+		const double dist = std::hypot(client->positionMetersX - p.x, client->positionMetersZ - p.z);
+		if (!(dist <= BoatFleet::kBoardRadiusM))
 		{
-			const char* why = refusal == SeaTravelRefusal::NotAtPonton ? "Approchez-vous du ponton pour embarquer."
-				: refusal == SeaTravelRefusal::SameStop ? "Vous êtes déjà à cette escale."
-				: "Cette traversée n'existe pas.";
-			SendChatSystemNotice(*client, why);
-			LOG_INFO(Net, "[ServerApp] SeaTravelRequest refused (client_id={}, line={}, to={}, reason={})",
-				client->clientId, request.lineId, request.toStop, static_cast<int>(refusal));
+			SendChatSystemNotice(*client, "Approchez-vous du quai pour embarquer.");
 			return;
 		}
-		if (client->gold < plan.priceGold)
-		{
-			SendChatSystemNotice(*client, std::format("Il vous faut {} or pour cette traversée.", plan.priceGold));
-			return;
-		}
-		std::string err;
-		if (plan.priceGold > 0u && !TrySubtractCurrency(client->clientId, kCurrencyGold, plan.priceGold, err))
-		{
-			SendChatSystemNotice(*client, "Paiement refusé.");
-			return;
-		}
-		const std::string arrivalName = plan.arrival->name;
-		client->yawRadians = plan.arrival->yawDeg * 3.14159265f / 180.0f;
-		if (!TransferToMap(*client, plan.line->map, static_cast<float>(plan.arrival->x), static_cast<float>(plan.arrival->y),
-			static_cast<float>(plan.arrival->z), "sea_travel"))
-		{
-			if (plan.priceGold > 0u) (void)TryAddCurrency(client->clientId, kCurrencyGold, plan.priceGold, err);
-			SendChatSystemNotice(*client, "Le navire ne peut pas accoster là-bas pour l'instant.");
-			LOG_WARN(Net, "[ServerApp] SeaTravel transfer failed (line={}, to={})", plan.line->id, plan.toStop);
-			return;
-		}
-		SendChatSystemNotice(*client, std::format("Après la traversée ({} or), vous débarquez à {}.", plan.priceGold, arrivalName));
-		LOG_INFO(Net, "[ServerApp] SeaTravel (client_id={}, line={}, {} -> {}, legs={}, gold={})",
-			client->clientId, plan.line->id, plan.fromStop, plan.toStop, plan.legs, plan.priceGold);
+		// Place sur le pont : le point du pont le plus proche du joueur, 0,5 m en retrait du bord.
+		double lx = 0.0, lz = 0.0;
+		BoatFleet::WorldToLocal(p, client->positionMetersX, client->positionMetersZ, lx, lz);
+		float deckX = std::clamp(static_cast<float>(lx), -BoatFleet::kDeckHalfX + 0.5f, BoatFleet::kDeckHalfX - 0.5f);
+		float deckZ = std::clamp(static_cast<float>(lz), BoatFleet::kDeckMinZ + 0.5f, BoatFleet::kDeckMaxZ - 0.5f);
+		(void)BoatFleet::ClampToDeck(deckX, deckZ);
+		client->boatIndex = b;
+		client->boatDeparturesPaid = p.departures;
+		engine::movement::ResetMovement(client->movement, deckX, BoatFleet::kDeckY + BoatFleet::kStandHeight, deckZ);
+		++client->moveEpoch;
+		client->lastForcePositionReason = kForcePositionReasonTeleport;
+		UpdatePassengerWorldPosition(*client);
+		UpdateClientInterest(*client);
+		EmitBoatAboard(*client);
+		SendChatSystemNotice(*client, std::format("Vous montez à bord ({}). Chaque étape se paie {} or au départ ; "
+			"départ dans {} s.", line.name, line.priceGoldPerLeg, static_cast<int>(std::ceil(p.secondsLeft))));
+		LOG_INFO(Net, "[ServerApp] Passager a bord (client_id={}, ligne={}, bateau={}, escale={})",
+			client->clientId, line.id, m_boatFleet.RankOf(static_cast<size_t>(b)), line.stops[p.stop].cityId);
 	}
 
 	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t destination)
@@ -6779,6 +6991,12 @@ namespace engine::server
 
 	void ServerApp::EmitForcePosition(ConnectedClient& client, uint8_t reason)
 	{
+		// v1.0.125 — à bord, la position imposée est celle sur le pont (repère du bateau).
+		if (client.boatIndex >= 0)
+		{
+			EmitBoatAboard(client);
+			return;
+		}
 		ForcePositionMessage message{};
 		message.clientId = client.clientId;
 		message.moveEpoch = client.moveEpoch;
@@ -10512,6 +10730,25 @@ namespace engine::server
 			}
 		}
 
+		// v1.0.125 — bateaux des lignes maritimes : pose du tick, archétype réservé, drapeau
+		// « à quai » (embarquement possible côté client).
+		if (const int32_t boat = FindBoatByEntityId(entityId); boat >= 0)
+		{
+			const BoatPose& p = m_boatPoses[static_cast<size_t>(boat)];
+			outEntity.entityId = entityId;
+			outEntity.state.positionX = static_cast<float>(p.x);
+			outEntity.state.positionY = static_cast<float>(p.y);
+			outEntity.state.positionZ = static_cast<float>(p.z);
+			outEntity.state.yawRadians = p.yawRad;
+			outEntity.state.velocityX = std::sin(p.yawRad) * p.speed;
+			outEntity.state.velocityZ = std::cos(p.yawRad) * p.speed;
+			outEntity.state.currentHealth = 1u;
+			outEntity.state.maxHealth = 1u;
+			outEntity.state.stateFlags = p.docked ? kEntityStateBoatDocked : 0u;
+			outEntity.archetypeId = kBoatArchetypeId;
+			return true;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Snapshot build ignored: unknown entity_id={}", entityId);
 		return false;
 	}
@@ -10979,7 +11216,7 @@ namespace engine::server
 			LOG_INFO(Net, "[ServerApp] Seconde carte 'enfers' : {} cellule(s) generee(s)",
 				m_worldStarts.GeneratedCells(cells::CellMap::Enfers).size());
 		}
-		// v1.0.124 — lignes maritimes : absentes = aucun passeur (non bloquant) ; invalides = refus.
+		// v1.0.124 — lignes maritimes : absentes = aucun bateau (non bloquant) ; invalides = refus.
 		{
 			std::string seaError;
 			if (!m_seaLines.LoadForCellWorld(m_config, seaError))
@@ -10988,6 +11225,7 @@ namespace engine::server
 				return false;
 			}
 			LOG_INFO(Net, "[ServerApp] Lignes maritimes : {} ligne(s) chargee(s)", m_seaLines.Count());
+			InitBoats(); // v1.0.125 — bateaux visibles qui suivent les lignes
 		}
 		// Portails entre cartes : absents = aucun passage (non bloquant) ; invalides = refus.
 		std::string portalError;

@@ -128,9 +128,10 @@ namespace engine::client
 		/// serveur). Wire v13 : \p destination = kRespawnDestination* (cimetière
 		/// ou auberge le plus proche du lieu de mort).
 		bool SendRespawnRequest(uint32_t clientId, uint8_t destination);
-		/// v1.0.124 — passeur au ponton : demande de traversée (ligne, escale d'arrivée).
-		/// Le shard vérifie le ponton et l'or et répond par un changement de position.
-		bool SendSeaTravelRequest(uint32_t clientId, const std::string& lineId, uint8_t toStop);
+		/// v1.0.125 — bateaux : embarquer (\p board = true) sur le bateau \p boatEntityId à
+		/// quai, ou en débarquer (false). Le shard répond par BoatAboard (à bord) ou
+		/// ForcePosition (débarqué au ponton) ; refus = message système dans le chat.
+		bool SendBoatBoardRequest(uint32_t clientId, uint64_t boatEntityId, bool board);
 
 		/// Combat SP3 — cast d'un sort du kit du profil. targetEntityId = 0 pour
 		/// les sorts sans cible (le serveur revalide tout : kit, cooldown, coût,

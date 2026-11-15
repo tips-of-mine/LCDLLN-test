@@ -310,14 +310,17 @@ namespace tools::world_gen
 
 	/// Ligne maritime (section `sea_lines`, v1.0.124), recopiée du lore par
 	/// tools/lore/sync_sea_lines.py. Le générateur pose un ponton (point de terre au bord
-	/// de la mer, au plus près de la ville) et un PNJ capitaine (passeur) à chaque escale,
-	/// et écrit world/<monde>/sea_lines.json (positions) pour le serveur.
+	/// de la mer, au plus près de la ville), son quai et un PNJ capitaine du port à chaque
+	/// escale, trace les trajets des bateaux (v1.0.125) et écrit world/<monde>/sea_lines.json
+	/// pour le serveur.
 	struct SeaLineDef
 	{
 		std::string id;                    ///< "ligne_maritime_sud"
 		std::string name;                  ///< nom affiché
 		bool loop = false;                 ///< boucle (sinon aller-retour)
-		int priceGoldPerLeg = 10;          ///< or par étape
+		int priceGoldPerLeg = 10;          ///< or par étape (payé au départ du quai, v1.0.125)
+		int boats = 2;                     ///< v1.0.125 — bateaux sur la ligne (1..4)
+		int stopSeconds = 30;              ///< v1.0.125 — arrêt à quai (s)
 		std::vector<SeaLineStopDef> stops; ///< ≥ 2 escales
 	};
 
@@ -344,7 +347,7 @@ namespace tools::world_gen
 		/// Routes du lore (v1.0.105, `lore_roads`). Vide (ex. Enfers) : le générateur
 		/// garde son seul réseau calculé (comportement historique).
 		std::vector<LoreRoadDef> loreRoads;
-		/// Lignes maritimes (v1.0.124, `sea_lines`) : pontons et passeurs. Vide = aucune.
+		/// Lignes maritimes (v1.0.124, `sea_lines`) : pontons, capitaines du port, bateaux (v1.0.125). Vide = aucune.
 		std::vector<SeaLineDef> seaLines;
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;

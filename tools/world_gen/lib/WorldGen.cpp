@@ -264,11 +264,15 @@ namespace tools::world_gen
 		timed("macro : relief", [&] { BuildMacroTerrain(g); });   // relief grossier, sites des villes, lacs
 		timed("macro : rivieres", [&] { BuildMacroRivers(g); });  // rivières (contournent les villes)
 		timed("macro : routes", [&] { BuildMacroRoads(g); });     // routes du lore + corridors du générateur, profils en long
+		timed("macro : lignes maritimes", [&] { BuildMacroSeaRoutes(g); }); // v1.0.125 : trajets des bateaux (cellules de mer)
 
 		std::vector<std::string> ids = opt.cells.empty() ? g.master.generatedCells : opt.cells;
 		// Monde complet : cellules des routes reliant les villes de départ.
 		if (opt.cells.empty() && g.master.connectStartCities)
 			AddStartCorridors(g, ids);
+		// v1.0.125 — monde complet : cellules de mer sous les trajets des bateaux.
+		if (opt.cells.empty() && !g.master.seaLines.empty())
+			AddSeaRouteCells(g, ids);
 		// Doublons retirés (ordre conservé) : une cellule n'est générée qu'une fois.
 		{
 			std::vector<std::string> uniq;
@@ -463,6 +467,13 @@ namespace tools::world_gen
 						return false;
 					}
 				}
+		// v1.0.125 — quais et trajets des bateaux (de quai à quai, dans les cellules générées).
+		if (!g.master.seaLines.empty())
+		{
+			bool seaOk = true;
+			timed("lignes maritimes : trajets", [&] { seaOk = BuildSeaLegPaths(g, cells, opt.cells.empty(), err); });
+			if (!seaOk) return false;
+		}
 		bool anyStart = false;
 		for (const World* w : cells) anyStart = anyStart || !w->starts.empty();
 		if (!anyStart && opt.cells.empty()) { err = "aucun point de depart genere"; return false; }

@@ -38,6 +38,7 @@
 #include "src/shared/network/LootPayloads.h"
 #include "src/shared/network/LunarPayloads.h"
 #include "src/shared/network/WorldClockPayloads.h"
+#include "src/shared/world/BoatDeck.h"
 #include "src/shared/world/WorldClock.h"
 #include "src/shared/network/AdminCommandPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
@@ -5920,6 +5921,8 @@ namespace engine
 												RecordRemoteAvatars(cmd, reg, rs);
 												// Coffre anime (ouverture/fermeture a l'interaction).
 												RecordAnimatedChest(cmd, reg, rs);
+												// v1.0.125 — bateaux des lignes maritimes.
+												RecordBoats(cmd, reg, rs);
 
 												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
 												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
@@ -7943,6 +7946,7 @@ namespace engine
 			}
 			m_raceMeshes.clear();
 			m_chestMesh.Destroy(m_vkDeviceContext.GetDevice());
+			m_boatMesh.Destroy(m_vkDeviceContext.GetDevice()); // v1.0.125
 			m_currentSkinnedMesh = nullptr;
 			m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
 			m_skinnedAvatarReady = false;
@@ -9319,15 +9323,6 @@ namespace engine
 								(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questKey, npcTargetId);
 						}
 					});
-				// v1.0.124 — passeur au ponton : le choix « Embarquer pour … » demande la
-				// traversée au shard (qui vérifie le ponton et l'or, puis impose la position).
-				m_dialogue.SetSeaTravelCallback(
-					[this](const std::string& seaLineId, int seaStop)
-					{
-						if (m_gameplayNetInitialized && seaStop >= 0 && seaStop < 256)
-							(void)m_gameplayUdp.SendSeaTravelRequest(m_gameplayUdp.ServerClientId(), seaLineId,
-								static_cast<uint8_t>(seaStop));
-					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
@@ -9515,7 +9510,9 @@ namespace engine
 			// frequente. Quand le perso a bouge de plus de 0.5 m depuis la derniere
 			// synchro, on declenche immediatement (rate-limite a 1.0 s entre 2 saves).
 			// Si statique, on revient a l'intervalle long (m_savePositionIntervalSec).
-			if (m_currentCharacterId != 0u)
+			// v1.0.125 — à bord, pas de sauvegarde de position (le shard sauvegarde le
+			// passager au ponton de l'escale ; jamais au milieu de la mer).
+			if (m_currentCharacterId != 0u && m_aboardBoatEntityId == 0u)
 			{
 				const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
 				const float dx = playerPos.x - m_lastSyncedPosition.x;
@@ -10013,6 +10010,37 @@ namespace engine
 				// Collisionneur composite : terrain (sol + eau) + cylindres des props/décor.
 				// Monde « Royaumes » : + collisionneurs des cellules résidentes (décalés).
 				const engine::math::Vec3 ccPrevPos = m_characterController.GetPosition();
+				// v1.0.125 — à bord d'un bateau : marche sur le pont dans le repère du bateau
+				// (direction de la caméra ramenée dans ce repère, vitesse de course ou de
+				// sprint, pas de saut), puis le personnage suit la pose lissée du bateau.
+				const bool aboard = m_aboardBoatEntityId != 0u;
+				if (aboard)
+				{
+					float bx = m_aboardLastX, by = m_aboardLastY, bz = m_aboardLastZ, byaw = m_aboardLastYaw;
+					bool bdocked = m_aboardLastDocked;
+					if (BoatRenderPose(m_aboardBoatEntityId, bx, by, bz, byaw, bdocked))
+					{
+						m_aboardLastX = bx; m_aboardLastY = by; m_aboardLastZ = bz; m_aboardLastYaw = byaw;
+						m_aboardLastDocked = bdocked;
+					}
+					const auto& ps = m_uiModelBinding.GetModel().playerStats;
+					const float runSpeed = ps.speedRun > 0.1f ? ps.speedRun : 6.0f;
+					const float sprintSpeed = ps.speedSprint > 0.1f ? ps.speedSprint : 9.0f;
+					const float walkSpeed = ps.speedWalk > 0.1f ? ps.speedWalk : 3.0f;
+					const float speed = (moveInput.crouch ? walkSpeed * 0.5f : (moveInput.sprint ? sprintSpeed : (moveInput.run ? runSpeed : walkSpeed)))
+						* (gmState.Frozen() ? 0.0f : gmState.speedMultiplier);
+					double ldx = 0.0, ldz = 0.0;
+					engine::world::boat::WorldToLocal(0.0, 0.0, byaw, moveInput.moveDirXZ.x, moveInput.moveDirXZ.z, ldx, ldz);
+					float lx = m_aboardLocal.x + static_cast<float>(ldx) * speed * static_cast<float>(dt);
+					float lz = m_aboardLocal.z + static_cast<float>(ldz) * speed * static_cast<float>(dt);
+					(void)engine::world::boat::ClampToDeck(lx, lz);
+					m_aboardLocal = engine::math::Vec3{ lx, engine::world::boat::kDeckY + engine::world::boat::kStandHeight, lz };
+					double wx = 0.0, wz = 0.0;
+					engine::world::boat::LocalToWorld(bx, bz, byaw, lx, lz, wx, wz);
+					m_characterController.PlaceOnPlatform(engine::math::Vec3{ static_cast<float>(wx), by + m_aboardLocal.y, static_cast<float>(wz) });
+					moveInput.jumpPressed = false;
+				}
+				else
 				{
 					PROFILE_SCOPE("CharacterController");
 					if (m_cellWorld)
@@ -10033,7 +10061,7 @@ namespace engine
 					// Mur invisible : on ne sort pas des cellules générées (le shard
 					// refuse aussi la position et recale le client).
 					const engine::math::Vec3 moved = m_characterController.GetPosition();
-					if (!engine::world::cells::IsMoveAllowed(m_generatedCells,
+					if (!aboard && !engine::world::cells::IsMoveAllowed(m_generatedCells,
 							m_renderFrame.ToGlobalX(ccPrevPos.x), m_renderFrame.ToGlobalZ(ccPrevPos.z),
 							m_renderFrame.ToGlobalX(moved.x), m_renderFrame.ToGlobalZ(moved.z)))
 						m_characterController.BlockHorizontalAt(ccPrevPos.x, ccPrevPos.z);
@@ -11926,7 +11954,10 @@ namespace engine
 						// Combat SP1 fix — mobs/nodes : Y de spawn brut (souvent 0, jamais
 						// collé au terrain par le serveur) → snap visuel au sol client,
 						// sinon la plaque flotte au ras du sol (cf. ResolveRemoteDisplayCenterY).
-						wy = ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
+						// v1.0.125 — bateau : plaque au-dessus du pont (Y = flottaison répliquée).
+						wy = engine::server::IsBoatArchetype(re.archetypeId)
+							? wy + 6.0f
+							: ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
 						float sxp = 0.0f, syp = 0.0f;
 						if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
 							continue;
@@ -11954,6 +11985,16 @@ namespace engine
 						{
 							// Validation v12 — sac de butin au sol.
 							label = "Butin [F]";
+						}
+						else if (engine::server::IsBoatArchetype(re.archetypeId))
+						{
+							// v1.0.125 — bateau : « Navire à quai [E] Embarquer / Débarquer ».
+							const bool docked = (re.stateFlags & engine::server::kEntityStateBoatDocked) != 0u;
+							label = docked ? "Navire a quai" : "Navire";
+							if (docked && m_aboardBoatEntityId == re.entityId)
+								label += " [E] Debarquer";
+							else if (docked && m_boardableBoatEntityId == re.entityId)
+								label += " [E] Embarquer";
 						}
 						else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
 						{
@@ -13431,6 +13472,39 @@ namespace engine
 						}
 					}
 
+					// --- v1.0.125 : bateaux — touche E près d'un navire à quai (embarquer), ou à
+					// bord quand il est à quai (débarquer) ; les interactibles locaux (capitaine
+					// du port…) gardent la priorité. Le shard tranche (quai, distance, or).
+					{
+						m_boardableBoatEntityId = 0;
+						const engine::math::Vec3 pBoat = m_characterController.GetPosition();
+						float bestBoat = static_cast<float>(engine::world::boat::kBoardRadiusM - 5.0);
+						bestBoat *= bestBoat;
+						bool aboardDocked = false;
+						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+						{
+							if (!engine::server::IsBoatArchetype(re.archetypeId)
+								|| (re.stateFlags & engine::server::kEntityStateBoatDocked) == 0u)
+								continue;
+							if (re.entityId == m_aboardBoatEntityId) { aboardDocked = true; continue; }
+							const float dxb = re.positionX - pBoat.x, dzb = re.positionZ - pBoat.z;
+							if (m_aboardBoatEntityId == 0u && dxb * dxb + dzb * dzb < bestBoat)
+							{
+								bestBoat = dxb * dxb + dzb * dzb;
+								m_boardableBoatEntityId = re.entityId;
+							}
+						}
+						if (keysAllowed && m_interactableInRange < 0 && m_gameplayNetInitialized
+							&& m_input.WasPressed(engine::platform::Key::E))
+						{
+							const uint32_t boatClientId = m_gameplayUdp.ServerClientId();
+							if (boatClientId != 0u && m_aboardBoatEntityId != 0u && aboardDocked)
+								(void)m_gameplayUdp.SendBoatBoardRequest(boatClientId, m_aboardBoatEntityId, false);
+							else if (boatClientId != 0u && m_boardableBoatEntityId != 0u)
+								(void)m_gameplayUdp.SendBoatBoardRequest(boatClientId, m_boardableBoatEntityId, true);
+						}
+					}
+
 					// --- Métiers SP1 : récolte — touche E sur le node disponible le
 					// plus proche (~5 m) ; les interactibles locaux gardent la priorité.
 					{
@@ -13439,7 +13513,7 @@ namespace engine
 						float nearestNodeDistSq = 25.0f; // 5 m de portée de récolte V1.
 						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
 						{
-							if (re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
+							if (!engine::server::IsGatheringNodeArchetype(re.archetypeId))
 								continue;
 							if ((re.stateFlags & 1u) != 0u)
 								continue; // épuisé
@@ -15092,6 +15166,100 @@ namespace engine
 					m_chestMesh, finals, materialCache.GetDescriptorSet(),
 					model.m, m_chestMatFurniture, subMat, m_chestMatMetal, 0.0f, 0.0f);
 			});
+	}
+
+	void Engine::LoadBoatMesh()
+	{
+		if (m_boatMeshTried || !m_pipeline) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (!materialCache.IsValid()) return;
+		m_boatMeshTried = true;
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		const std::string meshDir = "models/props/ships/dromon/";
+		auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
+			m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), contentRoot + "/" + meshDir + "dromon.glb");
+		if (!loaded)
+		{
+			LOG_WARN(Render, "[Boats] dromon introuvable ou illisible ({}dromon.glb) : bateaux invisibles", meshDir);
+			return;
+		}
+		m_boatMesh = std::move(*loaded);
+		engine::render::Material mat{};
+		mat.baseColor = m_assetRegistry.LoadTexture(meshDir + "dromon_basecolor.png", true);
+		if (const engine::render::TextureHandle n = m_assetRegistry.LoadTexture(meshDir + "dromon_normal.png", false); n.IsValid())
+			mat.normal = n;
+		if (const engine::render::TextureHandle o = m_assetRegistry.LoadTexture(meshDir + "dromon_orm.png", false); o.IsValid())
+			mat.orm = o;
+		const uint32_t material = mat.baseColor.IsValid()
+			? materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), mat)
+			: materialCache.GetDefaultMaterialIndex();
+		m_boatSubmeshMat.assign(m_boatMesh.submeshes.size(), material);
+		m_boatMeshLoaded = true;
+		LOG_INFO(Render, "[Boats] dromon charge ({} sous-maillage(s), {} os)",
+			m_boatMesh.submeshes.size(), m_boatMesh.skeleton.bones.size());
+	}
+
+	bool Engine::BoatRenderPose(uint64_t boatEntityId, float& outX, float& outY, float& outZ, float& outYaw, bool& outDocked) const
+	{
+		for (const engine::client::UIRemoteEntity& re : m_uiModelBinding.GetModel().remoteEntities)
+		{
+			if (re.entityId != boatEntityId || !engine::server::IsBoatArchetype(re.archetypeId))
+				continue;
+			outX = re.positionX; outY = re.positionY; outZ = re.positionZ; outYaw = re.yawRadians;
+			const auto it = m_remoteSmoothed.find(re.entityId);
+			if (it != m_remoteSmoothed.end() && it->second.valid)
+			{
+				outX = it->second.x; outY = it->second.y; outZ = it->second.z; outYaw = it->second.yaw;
+			}
+			outDocked = (re.stateFlags & engine::server::kEntityStateBoatDocked) != 0u;
+			return true;
+		}
+		return false;
+	}
+
+	void Engine::RecordBoats(VkCommandBuffer cmd, engine::render::Registry& reg, const engine::RenderState& rs)
+	{
+		if (!m_pipeline || !m_skinnedRenderer.IsValid()) return;
+		const std::vector<engine::client::UIRemoteEntity>& remotes = m_uiModelBinding.GetModel().remoteEntities;
+		bool any = false;
+		for (const engine::client::UIRemoteEntity& re : remotes)
+			any = any || engine::server::IsBoatArchetype(re.archetypeId);
+		if (!any) return;
+		LoadBoatMesh();
+		if (!m_boatMeshLoaded) return;
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		const float maxDist = static_cast<float>(m_cfg.GetDouble("client.boats.render_distance_m", 2500.0));
+		const engine::world::scatter::Frustum frustum = engine::world::scatter::Frustum::FromViewProj(rs.viewProjMatrix.m);
+		// Un os, pose de repos : matrices finales identité (os et liaison à l'identité).
+		const std::vector<engine::math::Mat4> finals((std::max)(m_boatMesh.skeleton.bones.size(), static_cast<size_t>(1)),
+			engine::math::Mat4::Identity());
+		for (const engine::client::UIRemoteEntity& re : remotes)
+		{
+			if (!engine::server::IsBoatArchetype(re.archetypeId)) continue;
+			float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
+			bool docked = false;
+			if (!BoatRenderPose(re.entityId, x, y, z, yaw, docked)) continue;
+			const float dx = x - rs.camera.position.x, dz = z - rs.camera.position.z;
+			if (dx * dx + dz * dz > maxDist * maxDist) continue;
+			// Sphère englobante du dromon (30 m de long, mât de 19 m).
+			if (!frustum.SphereVisible(engine::math::Vec3{ x, y + 6.0f, z }, 20.0f)) continue;
+			const engine::math::Mat4 model =
+				engine::math::Mat4::Translate(engine::math::Vec3{ x, y, z }) *
+				engine::math::Mat4::RotateY(yaw) *
+				m_boatMesh.importTransform;
+			std::vector<uint32_t> subMat = m_boatSubmeshMat;
+			m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+				m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				[this, &rs, finals, &materialCache, model, subMat = std::move(subMat)](VkCommandBuffer innerCmd) {
+					m_skinnedRenderer.Record(
+						m_vkDeviceContext.GetDevice(), innerCmd, m_vkSwapchain.GetExtent(),
+						m_pipeline->GetGeometryPass().GetRenderPassLoad(), VK_NULL_HANDLE,
+						rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+						m_boatMesh, finals, materialCache.GetDescriptorSet(),
+						model.m, subMat.empty() ? 0u : subMat.front(), subMat, subMat.empty() ? 0u : subMat.front(), 0.0f, 0.0f);
+				});
+		}
 	}
 
 	// Charge un mesh statique (prop/décor), CUIT sa transformation monde dans les
@@ -17341,6 +17509,8 @@ namespace engine
 		m_moveHistory.Clear();
 		m_moveLastCorrectedSeq = m_gameplayInputSeq;
 		m_uiModelBinding.ClearMoveCorrection();
+		m_aboardBoatEntityId = 0; // v1.0.125 : nouvelle session, à terre
+		m_uiModelBinding.ClearBoatAboard();
 		m_reliableFailureNotified = false; // ETAPE3.4 : nouvelle session, nouveau canal
 		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
 
@@ -17646,9 +17816,39 @@ namespace engine
 				LOG_INFO(Core, "[Engine] Changement de carte : arrivee ({:.1f}, {:.1f}, {:.1f})",
 					arrival.spawnPositionX, arrival.spawnPositionY, arrival.spawnPositionZ);
 			}
+			// v1.0.125 — embarquement (BoatAboard) : le joueur est sur le pont du bateau, en
+			// (x, y, z) dans le repère du bateau ; nouvelle époque de mouvement (comme un
+			// ForcePosition). Le personnage suit ensuite la pose du bateau (bloc de mouvement).
+			const engine::client::UIBoatAboard& boarding = m_uiModelBinding.GetModel().boatAboard;
+			if (boarding.pending)
+			{
+				m_aboardBoatEntityId = boarding.boatEntityId;
+				float lx = boarding.localX, lz = boarding.localZ;
+				(void)engine::world::boat::ClampToDeck(lx, lz);
+				m_aboardLocal = engine::math::Vec3{ lx, engine::world::boat::kDeckY + engine::world::boat::kStandHeight, lz };
+				float bx = 0.0f, by = 0.0f, bz = 0.0f, byaw = 0.0f;
+				bool bdocked = true;
+				if (BoatRenderPose(m_aboardBoatEntityId, bx, by, bz, byaw, bdocked))
+				{
+					m_aboardLastX = bx; m_aboardLastY = by; m_aboardLastZ = bz; m_aboardLastYaw = byaw;
+					m_aboardLastDocked = bdocked;
+					double wx = 0.0, wz = 0.0;
+					engine::world::boat::LocalToWorld(bx, bz, byaw, lx, lz, wx, wz);
+					m_characterController.PlaceOnPlatform(engine::math::Vec3{ static_cast<float>(wx), by + m_aboardLocal.y, static_cast<float>(wz) });
+					m_orbitalCameraController.SetTargetPosition(m_characterController.GetPosition());
+				}
+				m_avatarYaw = std::remainder(m_aboardLastYaw + boarding.localYaw, 6.28318530718f);
+				m_moveEpoch = boarding.moveEpoch;
+				m_moveHistory.Clear();
+				m_moveLastCorrectedSeq = m_gameplayInputSeq;
+				LOG_INFO(Core, "[Engine] A bord du bateau {} (pont=({:.1f},{:.1f}))", m_aboardBoatEntityId, lx, lz);
+				m_uiModelBinding.ClearBoatAboard();
+			}
 			const engine::client::UIForcedPosition& forced = m_uiModelBinding.GetModel().forcedPosition;
 			if (forced.pending)
 			{
+				// v1.0.125 — une position imposée (monde) signifie « à terre » (débarquement).
+				m_aboardBoatEntityId = 0;
 				// Validation v12 — collage au sol : le Y des points de réapparition
 				// (data) ou du serveur (sans heightfield) peut être SOUS le terrain
 				// local → le joueur réapparaissait sous la carte. On garantit au
@@ -17701,7 +17901,23 @@ namespace engine
 			if (correction.pending)
 			{
 				m_uiModelBinding.ClearMoveCorrection();
-				if (correction.moveEpoch == m_moveEpoch && correction.inputSequence > m_moveLastCorrectedSeq)
+				if (correction.moveEpoch == m_moveEpoch && correction.inputSequence > m_moveLastCorrectedSeq
+					&& m_aboardBoatEntityId != 0u)
+				{
+					// v1.0.125 — à bord : position officielle sur le pont (repère du bateau).
+					m_moveLastCorrectedSeq = correction.inputSequence;
+					engine::gameplay::MoveReconciler::Offset offset{};
+					float lx = correction.x, lz = correction.z;
+					if (m_moveHistory.ApplyCorrection(correction.inputSequence, correction.x, correction.z, offset))
+					{
+						lx = m_aboardLocal.x + static_cast<float>(offset.dx);
+						lz = m_aboardLocal.z + static_cast<float>(offset.dz);
+					}
+					(void)engine::world::boat::ClampToDeck(lx, lz);
+					m_aboardLocal.x = lx;
+					m_aboardLocal.z = lz;
+				}
+				else if (correction.moveEpoch == m_moveEpoch && correction.inputSequence > m_moveLastCorrectedSeq)
 				{
 					m_moveLastCorrectedSeq = correction.inputSequence;
 					engine::gameplay::MoveReconciler::Offset offset{};
@@ -17750,8 +17966,13 @@ namespace engine
 				m_gameplayInputAccumSec = 0.0f;
 				const engine::math::Vec3 avatarPos = m_characterController.GetPosition();
 				// Monde « Royaumes » : le shard attend des positions GLOBALES.
-				const float wireX = m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalX(avatarPos.x)) : avatarPos.x;
-				const float wireZ = m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(avatarPos.z)) : avatarPos.z;
+				// v1.0.125 — à bord : position sur le pont, dans le repère du bateau.
+				const bool wireAboard = m_aboardBoatEntityId != 0u;
+				const float wireX = wireAboard ? m_aboardLocal.x
+					: (m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalX(avatarPos.x)) : avatarPos.x);
+				const float wireZ = wireAboard ? m_aboardLocal.z
+					: (m_cellWorld ? static_cast<float>(m_renderFrame.ToGlobalZ(avatarPos.z)) : avatarPos.z);
+				const float wireY = wireAboard ? m_aboardLocal.y : avatarPos.y;
 				// TD.8 — propage l'état d'animation local pour que les autres joueurs voient
 				// emotes/roulades/run/sprint/etc. (pas seulement Idle/Walk dérivé de la vélocité).
 				// ETAPE3.2 — chaque Input acquitte le dernier snapshot reconstruit.
@@ -17763,7 +17984,7 @@ namespace engine
 				move.lastDodgeMs = m_moveLastDodgeMs;
 				move.moveEpoch = m_moveEpoch;
 				(void)m_gameplayUdp.SendInput(clientId, ++m_gameplayInputSeq,
-					wireX, avatarPos.y, wireZ, m_avatarYaw,
+					wireX, wireY, wireZ, m_avatarYaw,
 					ToWireAnimState(m_avatarLocoState), m_uiModelBinding.LatestSnapshotSeq(), move);
 				// ETAPE3.3 — position envoyée, pour mesurer l'écart d'une correction.
 				m_moveHistory.RecordCommand(m_gameplayInputSeq, wireX, wireZ);

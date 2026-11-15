@@ -2898,7 +2898,7 @@ namespace
 			if (!c.procedural.empty() || !playable.count(c.cell) || c.secret) continue;
 			if (c.n >= 17 && c.e <= -9) { ++ile; continue; } // Île de la Trêve
 			// v1.0.124 — îles de Hishtarland et de Dyprokh : desservies par une ligne
-			// maritime (passeur au ponton), pas par la route.
+			// maritime (bateau au quai, v1.0.125), pas par la route.
 			if (c.id == "hishtarland" || c.id == "town_ile_ashwick") { ++iles; continue; }
 			bool r = false;
 			for (size_t i = 0; i < net.size(); ++i)
@@ -3294,13 +3294,17 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
-	/// v1.0.124 (décision du 15/11/2026 : passeur au ponton, les 4 lignes, îles générées) —
-	/// master : 4 lignes maritimes, 11 escales dans des cellules générées, un dialogue de
-	/// passeur par escale (game/data/dialogues/passeur_<ligne>_<k>.json, action sea_travel) ;
-	/// îles de Hishtarland (5 cases) et de Dyprokh (2) générées. Génération : le ponton de
-	/// Hishtarland (S011_W006) est sur la terre au bord de la mer, avec son capitaine ; la
-	/// case de Brenhaval (N017_W010) a les pontons de ses 2 lignes.
-	void TestSeaLinesV1124()
+	/// v1.0.124 (décision du 15/11/2026 : les 4 lignes, îles générées) puis v1.0.125 (« à bord
+	/// en temps réel », bateaux visibles, passeur retiré) — master : 4 lignes maritimes,
+	/// 11 escales, boats (2 par ligne, 1 par navette) et 30 s d'arrêt, un dialogue de capitaine
+	/// du port par escale (game/data/dialogues/capitaine_port_<ligne>_<k>.json, sans action) et
+	/// plus aucun fichier passeur_* ; îles de Hishtarland (5 cases) et de Dyprokh (2) générées.
+	/// Macro : chaque étape a un trajet en mer ; les cellules de mer sous les trajets (46)
+	/// s'ajoutent aux 749 cellules jouables, « villages seulement », et couvrent les 11 escales
+	/// (dont les ports [GD] de Zaltheim S009_W010 et d'Ostrevan N012_W007). Génération : le
+	/// ponton de Hishtarland (S011_W006) est sur la terre au bord de la mer, son quai rejoint la
+	/// pleine mer, capitaine posé ; la case de Brenhaval (N017_W010) a les pontons de ses 2 lignes.
+	void TestSeaLinesV1125()
 	{
 		using namespace tools::world_gen;
 		namespace fs = std::filesystem;
@@ -3308,28 +3312,50 @@ namespace
 		std::string err;
 		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
-		Check(ok, "lignes maritimes v1.0.124 : master charge");
+		Check(ok, "lignes maritimes v1.0.125 : master charge");
 		if (!ok) return;
 		const WorldMaster& m = g.master;
-		const std::set<std::string> gen(m.generatedCells.begin(), m.generatedCells.end());
-		size_t stops = 0, inGen = 0, dialogues = 0;
+		size_t stops = 0, dialogues = 0, boats = 0;
+		bool arrets = true;
 		for (const SeaLineDef& l : m.seaLines)
+		{
+			boats += static_cast<size_t>(l.boats);
+			arrets = arrets && l.stopSeconds == 30;
 			for (size_t k = 0; k < l.stops.size(); ++k)
 			{
 				++stops;
-				inGen += gen.count(l.stops[k].cell);
-				const std::string txt = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "dialogues" / ("passeur_" + l.id + "_" + std::to_string(k) + ".json"));
-				dialogues += txt.find("\"sea_travel\"") != std::string::npos && txt.find("\"seaLine\": \"" + l.id + "\"") != std::string::npos;
+				const std::string txt = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "dialogues" / ("capitaine_port_" + l.id + "_" + std::to_string(k) + ".json"));
+				dialogues += !txt.empty() && txt.find("\"sea_travel\"") == std::string::npos && txt.find("au quai") != std::string::npos;
 			}
-		Check(m.seaLines.size() == 4u && stops == 11u && inGen == 11u && dialogues == 11u,
-			"lignes maritimes v1.0.124 : 4 lignes, 11 escales en cellules generees, 11 dialogues de passeur");
+		}
+		size_t passeurs = 0;
+		for (const auto& f : fs::directory_iterator(fs::path(LCDLLN_CONTENT_DIR) / "dialogues"))
+			passeurs += f.path().filename().string().rfind("passeur_", 0) == 0;
+		Check(m.seaLines.size() == 4u && stops == 11u && dialogues == 11u && passeurs == 0u && boats == 6u && arrets,
+			"lignes maritimes v1.0.125 : 4 lignes, 11 escales, 6 bateaux, 30 s d'arret, 11 dialogues de capitaine du port, plus de passeur");
+		const std::set<std::string> master(m.generatedCells.begin(), m.generatedCells.end());
 		bool iles = true;
 		for (const char* c : { "S010_W006", "S010_W007", "S011_W005", "S011_W006", "S011_W007", "N012_E002", "N012_E003" })
-			iles = iles && gen.count(c);
+			iles = iles && master.count(c);
 		Check(iles, "lignes maritimes v1.0.124 : iles de Hishtarland et de Dyprokh generees");
 		g.contentRoot = LCDLLN_CONTENT_DIR;
-		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
-		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1124";
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g);
+		bool trajets = g.seaRoutes.size() == 8u;
+		for (const GlobalWorld::SeaRoute& r : g.seaRoutes) trajets = trajets && r.points.size() >= 2u;
+		Check(trajets, "lignes maritimes v1.0.125 : 8 etapes, chacune avec un trajet en mer");
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const size_t before = ids.size();
+		const size_t vo = g.master.graveyardVillageOnlyCells.size();
+		const size_t added = AddSeaRouteCells(g, ids);
+		const std::set<std::string> gen(ids.begin(), ids.end());
+		size_t inGen = 0;
+		for (const SeaLineDef& l : m.seaLines)
+			for (const SeaLineStopDef& st : l.stops) inGen += gen.count(st.cell);
+		Check(before == 749u && added == 46u && ids.size() == 795u && g.master.graveyardVillageOnlyCells.size() == vo + 46u
+				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W007"),
+			"lignes maritimes v1.0.125 : 46 cellules de mer ajoutees (795 jouables, villages seulement), les 11 escales y sont");
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1125";
 		std::error_code ec;
 		fs::remove_all(tmp, ec);
 		g.outputRoot = tmp.string();
@@ -3352,12 +3378,15 @@ namespace
 			{
 				const World::SeaPonton& sp = w->seaPontons[0];
 				const double yr = sp.yawDeg * 3.14159265358979323846 / 180.0;
+				Vec2 open{};
 				okP = sp.y > sea + 0.5 && !w->IsWater(sp.position)
-					&& w->HeightAt({ sp.position.x + std::sin(yr) * 45.0, sp.position.z + std::cos(yr) * 45.0 }) < sea - 0.5;
+					&& w->HeightAt({ sp.position.x + std::sin(yr) * 45.0, sp.position.z + std::cos(yr) * 45.0 }) < sea - 0.5
+					&& std::fabs(std::hypot(sp.dock.x - sp.position.x, sp.dock.z - sp.position.z) - 30.0) < 0.01
+					&& NearestOpenSea(g, sp.openSea, 1.0, open);
 			}
 			bool captain = false;
-			for (const InteractableDef& d : w->interactables) captain = captain || d.dialogueId == "passeur_ligne_maritime_sud_2";
-			Check(okP && captain, "lignes maritimes v1.0.124 : ponton de Hishtarland au bord de la mer, capitaine pose");
+			for (const InteractableDef& d : w->interactables) captain = captain || d.dialogueId == "capitaine_port_ligne_maritime_sud_2";
+			Check(okP && captain, "lignes maritimes v1.0.125 : ponton de Hishtarland au bord de la mer, quai vers la pleine mer, capitaine pose");
 		}
 		{
 			auto w = cell("N017_W010");
@@ -3840,7 +3869,7 @@ int main()
 	TestCimetieresV1111();
 	TestRoutesCoupeesV1119();
 	TestRoutesLotsV1121();
-	TestSeaLinesV1124();
+	TestSeaLinesV1125();
 	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();

@@ -581,31 +581,57 @@ namespace engine::server
 		return outMessage.destination <= kRespawnDestinationInn;
 	}
 
-	std::vector<std::byte> EncodeSeaTravelRequest(const SeaTravelRequestMessage& message)
+	std::vector<std::byte> EncodeBoatBoardRequest(const BoatBoardRequestMessage& message)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::SeaTravelRequest, 4u + 2u + message.lineId.size() + 1u);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::BoatBoardRequest, 13u);
 		WriteU32(packet, message.clientId);
-		WriteSizedString(packet, message.lineId);
-		WriteU8(packet, message.toStop);
+		WriteU64(packet, message.boatEntityId);
+		WriteU8(packet, message.board);
 		return packet;
 	}
 
-	bool DecodeSeaTravelRequest(std::span<const std::byte> packet, SeaTravelRequestMessage& outMessage)
+	bool DecodeBoatBoardRequest(std::span<const std::byte> packet, BoatBoardRequestMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::SeaTravelRequest, payload) || payload.size() < 7)
+		if (!DecodeHeader(packet, MessageKind::BoatBoardRequest, payload) || payload.size() != 13u)
 		{
 			return false;
 		}
-		size_t offset = 0;
-		outMessage.clientId = ReadU32(payload, offset);
-		offset += 4;
-		if (!ReadSizedString(payload, offset, outMessage.lineId) || offset + 1 != payload.size())
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.boatEntityId = ReadU64(payload, 4);
+		outMessage.board = ReadU8(payload, 12);
+		return outMessage.board <= 1u;
+	}
+
+	std::vector<std::byte> EncodeBoatAboard(const BoatAboardMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::BoatAboard, 30u);
+		WriteU32(packet, message.clientId);
+		WriteU16(packet, message.moveEpoch);
+		WriteU64(packet, message.boatEntityId);
+		WriteF32(packet, message.localX);
+		WriteF32(packet, message.localY);
+		WriteF32(packet, message.localZ);
+		WriteF32(packet, message.localYaw);
+		return packet;
+	}
+
+	bool DecodeBoatAboard(std::span<const std::byte> packet, BoatAboardMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::BoatAboard, payload) || payload.size() != 30u)
 		{
 			return false;
 		}
-		outMessage.toStop = ReadU8(payload, offset);
-		return !outMessage.lineId.empty() && outMessage.lineId.size() <= 64;
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.moveEpoch = ReadU16(payload, 4);
+		outMessage.boatEntityId = ReadU64(payload, 6);
+		outMessage.localX = ReadF32(payload, 14);
+		outMessage.localY = ReadF32(payload, 18);
+		outMessage.localZ = ReadF32(payload, 22);
+		outMessage.localYaw = ReadF32(payload, 26);
+		return outMessage.boatEntityId != 0u && std::isfinite(outMessage.localX) && std::isfinite(outMessage.localY)
+			&& std::isfinite(outMessage.localZ) && std::isfinite(outMessage.localYaw);
 	}
 
 	std::vector<std::byte> EncodeCastRequest(const CastRequestMessage& message)

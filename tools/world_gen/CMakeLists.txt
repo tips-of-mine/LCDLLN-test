@@ -17,6 +17,7 @@ add_library(world_gen_lib STATIC
   lib/Settlements.cpp
   lib/Vegetation.cpp
   lib/Population.cpp
+  lib/SeaRoutes.cpp
   lib/Output.cpp
   lib/PngWriter.cpp
   lib/WorldGen.cpp

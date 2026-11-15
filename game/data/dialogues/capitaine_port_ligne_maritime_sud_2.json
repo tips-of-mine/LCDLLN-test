@@ -1,0 +1,30 @@
+{
+    "_comment": "GENERE par tools/lore/sync_sea_lines.py (v1.0.125) — capitaine du port de l'escale 2 de la ligne ligne_maritime_sud (Hishtarland) : renseignements seulement (les bateaux sont visibles, on embarque au quai). Ne pas editer a la main.",
+    "start": "accueil",
+    "nodes": {
+        "count": 1,
+        "0": {
+            "id": "accueil",
+            "lines": {
+                "count": 3,
+                "0": {
+                    "text": "Ici le port de Hishtarland. La ligne maritime du sud y fait escale (2 bateaux), vers Ekvhitorn, Brokhendt et Zaltheim."
+                },
+                "1": {
+                    "text": "Montez à bord quand le navire attend au quai, il repart au bout de 30 secondes. Chaque étape se paie 10 or au départ ; débarquez à l'escale qui vous plaît."
+                },
+                "2": {
+                    "text": "(Le capitaine montre du menton le quai, au bout du ponton.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 1,
+                "0": {
+                    "text": "Merci, capitaine.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

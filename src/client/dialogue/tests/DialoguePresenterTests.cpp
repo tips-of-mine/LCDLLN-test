@@ -311,32 +311,26 @@ namespace
 		REQUIRE(t.FindNode("intro")->choices[2].questKey.empty());
 	}
 
-	// v1.0.124 — passeur au ponton : le VRAI dialogue généré (tools/lore/sync_sea_lines.py)
-	// porte des choix sea_travel (ligne, escale) ; choisir l'un d'eux appelle le callback
-	// de traversée puis ferme le dialogue.
-	void Test_SeaTravelChoice()
+	// v1.0.125 — capitaine du port : le VRAI dialogue généré (tools/lore/sync_sea_lines.py)
+	// ne porte qu'un choix « Merci, capitaine. » (fin) ; le passeur téléporteur est retiré
+	// (on embarque sur le bateau visible au quai).
+	void Test_HarbourCaptainDialogue()
 	{
 		engine::core::Config world;
 		world.SetDefault("paths.content", std::string("game/data"));
-		world.SetDefault("npc.dialogue_id", std::string("passeur_ligne_maritime_sud_0"));
+		world.SetDefault("npc.dialogue_id", std::string("capitaine_port_ligne_maritime_sud_0"));
 		const DialogueTree t = engine::client::LoadDialogueTree(world, "npc.", {});
 		const engine::client::DialogueNode* n = t.FindNode("accueil");
 		REQUIRE(n != nullptr);
 		if (n == nullptr) return;
-		REQUIRE(n->choices.size() == 4);
-		REQUIRE(n->choices[0].action == DialogueAction::SeaTravel);
-		REQUIRE(n->choices[0].seaLineId == "ligne_maritime_sud");
-		REQUIRE(n->choices[0].seaStop == 1);
-		REQUIRE(n->choices[3].action == DialogueAction::End);
+		REQUIRE(n->lines.size() == 3);
+		REQUIRE(n->choices.size() == 1);
+		REQUIRE(n->choices[0].action == DialogueAction::End);
+		REQUIRE(n->lines[0].text.find("Ekvhitorn") != std::string::npos);
 
-		std::string line;
-		int stop = -1;
 		DialoguePresenter p;
-		p.SetSeaTravelCallback([&](const std::string& l, int s) { line = l; stop = s; });
 		p.OpenDialogue(t, DialogueNpcRef{"Capitaine du port", "Ligne maritime du sud", 0});
-		p.SelectChoice(1);
-		REQUIRE(line == "ligne_maritime_sud");
-		REQUIRE(stop == 2);
+		p.SelectChoice(0);
 		REQUIRE(!p.IsActive());
 	}
 
@@ -383,7 +377,7 @@ int main()
 	// Task 8 (relocalisation : fichiers de dialogue dédiés)
 	Test_LoadDialogueFromDedicatedFile();
 	Test_NoDialogueIdFallsBackToLegacy();
-	Test_SeaTravelChoice(); // v1.0.124
+	Test_HarbourCaptainDialogue(); // v1.0.125
 
 	// SP2 — Task 4 : parsing du champ questKey
 	Test_QuestKeyDefaultsToEmptyWhenAbsent();

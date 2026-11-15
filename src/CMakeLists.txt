@@ -131,7 +131,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
-    # v1.0.124 : lignes maritimes (passeur au ponton).
+    # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp
@@ -669,7 +669,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/LavaHazardTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp)
 
-  # v1.0.124 — lignes maritimes (sea_lines.json, prix, ponton de départ).
+  # v1.0.124 — lignes maritimes (sea_lines.json) ; v1.0.125 — horaire et pose des bateaux (BoatFleet).
   lcdlln_add_simple_test(sea_lines_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/world/tests/SeaLinesTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
@@ -1636,7 +1636,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/PortalNetwork.cpp
     # v1.0.123 : lave mortelle des Enfers (mort en 3 s).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LavaHazard.cpp
-    # v1.0.124 : lignes maritimes (passeur au ponton).
+    # v1.0.124 : lignes maritimes ; v1.0.125 : bateaux (BoatFleet).
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SeaLines.cpp
     # ETAPE4.1 : sommeil et classes de fréquence des mobs.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/MobActivity.cpp

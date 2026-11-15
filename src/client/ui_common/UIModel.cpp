@@ -652,6 +652,9 @@ namespace engine::client
 		// Correction SP1 — position imposée par le serveur (respawn/anti-triche).
 		case engine::server::MessageKind::ForcePosition:
 			return ApplyForcePosition(packet);
+		// v1.0.125 — embarquement sur un bateau (position dans le repère du bateau).
+		case engine::server::MessageKind::BoatAboard:
+			return ApplyBoatAboard(packet);
 		// ETAPE3.3 — position officielle pour une commande de mouvement.
 		case engine::server::MessageKind::MoveCorrection:
 			return ApplyMoveCorrection(packet);
@@ -1106,6 +1109,7 @@ namespace engine::client
 		}
 
 		m_model.forcedPosition.pending = true;
+		m_model.boatAboard = UIBoatAboard{}; // v1.0.125 : le plus récent fait foi (débarqué)
 		// Position GLOBALE conservée telle quelle (le client peut devoir changer
 		// d'origine de rendu avant de l'appliquer, cf. Engine::UpdateGameplayNet).
 		m_model.forcedPosition.x = m_forcePositionMessage.positionX;
@@ -1117,6 +1121,28 @@ namespace engine::client
 		LOG_INFO(Net, "[UIModelBinding] ForcePosition received (pos=({:.1f},{:.1f},{:.1f}), reason={})",
 			m_model.forcedPosition.x, m_model.forcedPosition.y, m_model.forcedPosition.z,
 			m_model.forcedPosition.reason);
+		NotifyObservers(UIModelChangeWorld);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyBoatAboard(std::span<const std::byte> packet)
+	{
+		engine::server::BoatAboardMessage message{};
+		if (!engine::server::DecodeBoatAboard(packet, message))
+		{
+			LOG_WARN(Net, "[UIModelBinding] BoatAboard FAILED: decode error");
+			return false;
+		}
+		m_model.forcedPosition = UIForcedPosition{}; // le plus récent fait foi (à bord)
+		m_model.boatAboard.pending = true;
+		m_model.boatAboard.boatEntityId = message.boatEntityId;
+		m_model.boatAboard.localX = message.localX;
+		m_model.boatAboard.localY = message.localY;
+		m_model.boatAboard.localZ = message.localZ;
+		m_model.boatAboard.localYaw = message.localYaw;
+		m_model.boatAboard.moveEpoch = message.moveEpoch;
+		LOG_INFO(Net, "[UIModelBinding] BoatAboard received (boat={}, local=({:.1f},{:.1f},{:.1f}))",
+			message.boatEntityId, message.localX, message.localY, message.localZ);
 		NotifyObservers(UIModelChangeWorld);
 		return true;
 	}

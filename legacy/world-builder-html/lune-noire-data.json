@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.123",
+    "version": "1.0.124",
     "notes": [
+      "v1.0.124 : [DÉCISION] Lignes maritimes jouées (passeur au ponton, 4 lignes, 11 escales) ; îles de Hishtarland et de Dyprokh ouvertes (7 cases, 5 lieux [GD]).",
       "v1.0.123 : [DÉCISION] Lave des Enfers lumineuse (shader du terrain) et mortelle en 3 s (serveur) ; chemins et lieux bâtis sans lave.",
       "v1.0.122 : [DÉCISION] Routes coupées, lot 2 (routes longues, le reste) : 17 routes ouvertes, 146 cases jouables, 118 lieux [GD] ; cases sans cimetière admises (666 gardés).",
       "v1.0.121 : [DÉCISION] Routes coupées, lot 1 (routes courtes) : 15 routes ouvertes, 97 cases jouables, 76 lieux [GD] ; cases sans cimetière admises (666 gardés).",
@@ -207359,7 +207360,8 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.90) Rattachée à la région « Forêt elfique » (foret_elfique) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[DÉCISION] (v1.0.92) Région HS : Terres des Gigantomorphes (carte du hors-série ; avant : Forêt elfique, `foret_elfique`, dont le rattachement HS est Forêt elfique) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Terres des Gigantomorphes (carte du hors-série ; avant : Forêt elfique, `foret_elfique`, dont le rattachement HS est Forêt elfique) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.124) Case de l'île de Dyprokh ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -207379,7 +207381,9 @@
       "connects_to": [],
       "creature_ids": [],
       "visual_elements": [],
-      "notes": [],
+      "notes": [
+        "[DÉCISION] (v1.0.124) Case de l'île de Dyprokh ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+      ],
       "coord_x": null,
       "coord_y": null
     },
@@ -229285,7 +229289,8 @@
       "notes": [
         "grand ïle de 5 cellules",
         "Présence d'un île qui continu sur R290C140",
-        "Présence d'un île qui continu sur R300C130"
+        "Présence d'un île qui continu sur R300C130",
+        "[DÉCISION] (v1.0.124) Case de l'île de Hishtarland ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -229308,7 +229313,8 @@
       "notes": [
         "grand ïle de 5 cellules",
         "Présence d'un île qui continu sur R290C130",
-        "Présence d'un île qui continu sur R300C140"
+        "Présence d'un île qui continu sur R300C140",
+        "[DÉCISION] (v1.0.124) Case de l'île de Hishtarland ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -230265,7 +230271,8 @@
       "notes": [
         "grand ïle de 5 cellules",
         "Présence d'un île qui continu sur R290C130",
-        "Présence d'un île qui continu sur R300C140"
+        "Présence d'un île qui continu sur R300C140",
+        "[DÉCISION] (v1.0.124) Case de l'île de Hishtarland ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -230289,7 +230296,8 @@
         "grand ïle de 5 cellules",
         "Présence d'un île qui continu sur R290C140",
         "Présence d'un île qui continu sur R300C130",
-        "Présence d'un île qui continu sur R300C150"
+        "Présence d'un île qui continu sur R300C150",
+        "[DÉCISION] (v1.0.124) Case de l'île de Hishtarland ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -230311,7 +230319,8 @@
       "visual_elements": [],
       "notes": [
         "grand ïle de 5 cellules",
-        "Présence d'un île qui continu sur R300C140"
+        "Présence d'un île qui continu sur R300C140",
+        "[DÉCISION] (v1.0.124) Case de l'île de Hishtarland ouverte au jeu (desservie par la ligne maritime, sans route terrestre) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
       ],
       "coord_x": null,
       "coord_y": null
@@ -246075,6 +246084,13 @@
           "nom": "Lave des Enfers lumineuse et mortelle",
           "decision": "Décision du propriétaire (15/11/2026) : la lave des Enfers tue en 3 secondes (serveur, comme le simulateur client) et brille d'une lueur pulsante (croûte sombre qui dérive, lave en fusion orange-jaune, non assombrie la nuit). Les chemins et les lieux bâtis restent sans lave (croûte refroidie). LORE_BD §16.49.",
           "version": "1.0.123"
+        },
+        {
+          "collection": "sea_lines",
+          "id": "lignes_maritimes_v1124",
+          "nom": "Lignes maritimes jouées (passeur au ponton) et îles ouvertes",
+          "decision": "Décision du propriétaire (15/11/2026) : les 4 lignes maritimes (ligne du sud, ligne du Nord, navettes Askhvir – Dyprokh et Brenhaval – Thrival) sont jouées par un passeur au ponton de chaque escale : dialogue, traversée payante en or ([GD] 10 or par étape, 5 pour une navette), arrivée au ponton d'en face ; un bateau visible viendra dans un lot suivant. Îles de Hishtarland (5 cases) et de Dyprokh (2 cases) ouvertes au jeu, un lieu [GD] par case vide (5), cimetières villages seulement (666 gardés). LORE_BD §16.50.",
+          "version": "1.0.124"
         }
       ]
     },
@@ -307807,6 +307823,436 @@
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000210 Fhelvakt – Haevrin. Dunes entre la mer et les marais de Haevrin, où un menhir penché sert de repère. Niveaux 30-33.",
         "Réel en jeu : POI poi_dunes_des_marais (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
+    },
+    {
+      "id": "lieu_arsenal_de_hishtarland",
+      "name": "Arsenal de Hishtarland",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S010_W006",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_hishtarland",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "cales sèches",
+        "coques en chantier",
+        "réserves de bois"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S010_W006"
+      ],
+      "notes": [
+        "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Cales sèches et chantiers où le Hishtarland construit ses navires de guerre ; les charpentiers y travaillent jour et nuit sous bonne garde. Niveaux 28-32.",
+        "Réel en jeu : POI poi_arsenal_de_hishtarland (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_phare_du_cap_hishtar",
+      "name": "Phare du cap Hishtar",
+      "alias": "",
+      "type": "camp_poi",
+      "importance": "",
+      "cell": "S010_W007",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_hishtarland",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "tour du phare",
+        "brasier",
+        "longue-vue"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "28-32"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S010_W007"
+      ],
+      "notes": [
+        "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Grand phare de pierre à la pointe nord de l'île ; ses gardiens guettent les flottes de l'Empire et les pirates. Niveaux 28-32.",
+        "Réel en jeu : POI poi_phare_du_cap_hishtar (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_criques_des_pecheurs_de_corail",
+      "name": "Criques des pêcheurs de corail",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S011_W005",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_hishtarland",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "eaux claires",
+        "barques plates",
+        "corail rouge"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-30"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S011_W005"
+      ],
+      "notes": [
+        "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Criques aux eaux claires où des plongeurs ramassent le corail rouge, vendu jusqu'à la capitale de l'Empire. Niveaux 26-30.",
+        "Réel en jeu : POI poi_criques_des_pecheurs_de_corail (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_vignes_du_hishtarland",
+      "name": "Vignes du Hishtarland",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "S011_W007",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_hishtarland",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "rangs de vignes",
+        "pressoir",
+        "tonneaux"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "26-30"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "S011_W007"
+      ],
+      "notes": [
+        "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Coteaux de vignes face à la mer, dont le vin doré fait la fortune des marchands du royaume. Niveaux 26-30.",
+        "Réel en jeu : POI poi_vignes_du_hishtarland (elevage) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
+    },
+    {
+      "id": "lieu_foret_de_l_ile_de_dyprokh",
+      "name": "Forêt de l'île de Dyprokh",
+      "alias": "",
+      "type": "forest_poi",
+      "importance": "",
+      "cell": "N012_E003",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_des_gigantomorphes",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "chênes",
+        "sentiers de chasse",
+        "cabane de garde"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": "30-34"
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [
+        "N012_E003"
+      ],
+      "notes": [
+        "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Forêt épaisse qui couvre l'est de l'île ; les gens de Dyprokh y chassent le cerf et y craignent les géants venus du continent. Niveaux 30-34.",
+        "Réel en jeu : POI poi_foret_de_l_ile_de_dyprokh (foret) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+      ]
     }
   ],
   "route_types": [
@@ -308151,7 +308597,7 @@
       "stops": [
         {
           "ville_id": "ville_equiton",
-          "ponton_cell": "S005_W004",
+          "ponton_cell": "S006_W004",
           "stop_seconds": 30
         },
         {
@@ -308180,7 +308626,11 @@
         "deep_sea",
         "shallow_sea"
       ],
-      "order": "loop"
+      "order": "loop",
+      "notes": [
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50.",
+        "[GD] (v1.0.124) Ponton d'Ekvhitorn déplacé de S005_W004 (plaine fermée par les montagnes, sans mer) à S006_W004, la case de côte juste au sud, où le générateur trouve la mer ; LORE_BD §16.50."
+      ]
     },
     {
       "id": "navette_ashwick_ile",
@@ -308206,7 +308656,10 @@
         "deep_sea",
         "shallow_sea"
       ],
-      "rule_id": "rule_navette_ashwick_ile"
+      "rule_id": "rule_navette_ashwick_ile",
+      "notes": [
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+      ]
     },
     {
       "id": "ligne_maritime_du_nord",
@@ -308238,7 +308691,10 @@
         "deep_sea",
         "shallow_sea"
       ],
-      "rule_id": "rule_ligne_maritime_du_nord"
+      "rule_id": "rule_ligne_maritime_du_nord",
+      "notes": [
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+      ]
     },
     {
       "id": "navette_brinehaven_truceholm",
@@ -308264,7 +308720,10 @@
         "deep_sea",
         "shallow_sea"
       ],
-      "rule_id": "rule_navette_brinehaven_truceholm"
+      "rule_id": "rule_navette_brinehaven_truceholm",
+      "notes": [
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+      ]
     }
   ],
   "scenarios": [

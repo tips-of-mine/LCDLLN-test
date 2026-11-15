@@ -49,6 +49,7 @@
 #include <filesystem>
 #include <limits>
 #include <sstream>
+#include <format>
 #include <functional>
 #include <sstream>
 #include <span>
@@ -1081,6 +1082,14 @@ namespace engine::server
 		if (DecodeAttackRequest(packetBytes, attackRequest))
 		{
 			HandleAttackRequest(datagram.endpoint, attackRequest.clientId, attackRequest.targetEntityId);
+			return;
+		}
+
+		// v1.0.124 — passeur au ponton (traversée maritime).
+		SeaTravelRequestMessage seaTravel{};
+		if (DecodeSeaTravelRequest(packetBytes, seaTravel))
+		{
+			HandleSeaTravelRequest(datagram.endpoint, seaTravel);
 			return;
 		}
 
@@ -6582,6 +6591,62 @@ namespace engine::server
 		BroadcastCombatEvent(combatEvent);
 	}
 
+	void ServerApp::HandleSeaTravelRequest(const Endpoint& endpoint, const SeaTravelRequestMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != request.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] SeaTravelRequest ignored (unknown endpoint or client_id mismatch)");
+			return;
+		}
+		if ((client->stateFlags & kEntityStateDead) != 0u || client->stats.currentHealth == 0u)
+		{
+			SendChatSystemNotice(*client, "Le capitaine ne prend pas les morts à bord.");
+			return;
+		}
+		if (!engine::world::cells::IsCellZoneId(client->zoneId))
+		{
+			return;
+		}
+		SeaTravelPlan plan;
+		const SeaTravelRefusal refusal = m_seaLines.Plan(request.lineId, request.toStop, ClientCellMap(*client),
+			client->positionMetersX, client->positionMetersZ, plan);
+		if (refusal != SeaTravelRefusal::None)
+		{
+			const char* why = refusal == SeaTravelRefusal::NotAtPonton ? "Approchez-vous du ponton pour embarquer."
+				: refusal == SeaTravelRefusal::SameStop ? "Vous êtes déjà à cette escale."
+				: "Cette traversée n'existe pas.";
+			SendChatSystemNotice(*client, why);
+			LOG_INFO(Net, "[ServerApp] SeaTravelRequest refused (client_id={}, line={}, to={}, reason={})",
+				client->clientId, request.lineId, request.toStop, static_cast<int>(refusal));
+			return;
+		}
+		if (client->gold < plan.priceGold)
+		{
+			SendChatSystemNotice(*client, std::format("Il vous faut {} or pour cette traversée.", plan.priceGold));
+			return;
+		}
+		std::string err;
+		if (plan.priceGold > 0u && !TrySubtractCurrency(client->clientId, kCurrencyGold, plan.priceGold, err))
+		{
+			SendChatSystemNotice(*client, "Paiement refusé.");
+			return;
+		}
+		const std::string arrivalName = plan.arrival->name;
+		client->yawRadians = plan.arrival->yawDeg * 3.14159265f / 180.0f;
+		if (!TransferToMap(*client, plan.line->map, static_cast<float>(plan.arrival->x), static_cast<float>(plan.arrival->y),
+			static_cast<float>(plan.arrival->z), "sea_travel"))
+		{
+			if (plan.priceGold > 0u) (void)TryAddCurrency(client->clientId, kCurrencyGold, plan.priceGold, err);
+			SendChatSystemNotice(*client, "Le navire ne peut pas accoster là-bas pour l'instant.");
+			LOG_WARN(Net, "[ServerApp] SeaTravel transfer failed (line={}, to={})", plan.line->id, plan.toStop);
+			return;
+		}
+		SendChatSystemNotice(*client, std::format("Après la traversée ({} or), vous débarquez à {}.", plan.priceGold, arrivalName));
+		LOG_INFO(Net, "[ServerApp] SeaTravel (client_id={}, line={}, {} -> {}, legs={}, gold={})",
+			client->clientId, plan.line->id, plan.fromStop, plan.toStop, plan.legs, plan.priceGold);
+	}
+
 	void ServerApp::HandleRespawnRequest(const Endpoint& endpoint, uint32_t clientId, uint8_t destination)
 	{
 		ConnectedClient* client = FindClient(endpoint);
@@ -10913,6 +10978,16 @@ namespace engine::server
 		{
 			LOG_INFO(Net, "[ServerApp] Seconde carte 'enfers' : {} cellule(s) generee(s)",
 				m_worldStarts.GeneratedCells(cells::CellMap::Enfers).size());
+		}
+		// v1.0.124 — lignes maritimes : absentes = aucun passeur (non bloquant) ; invalides = refus.
+		{
+			std::string seaError;
+			if (!m_seaLines.LoadForCellWorld(m_config, seaError))
+			{
+				LOG_ERROR(Net, "[ServerApp] Lignes maritimes : {}", seaError);
+				return false;
+			}
+			LOG_INFO(Net, "[ServerApp] Lignes maritimes : {} ligne(s) chargee(s)", m_seaLines.Count());
 		}
 		// Portails entre cartes : absents = aucun passage (non bloquant) ; invalides = refus.
 		std::string portalError;

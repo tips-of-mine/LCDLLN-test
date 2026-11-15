@@ -1,0 +1,39 @@
+{
+    "_comment": "GENERE par tools/lore/sync_sea_lines.py (v1.0.124) — passeur de l'escale 0 de la ligne ligne_maritime_du_nord (Brenhaval). Le serveur verifie la proximite du ponton et l'or, puis debarque le joueur au ponton d'arrivee. Ne pas editer a la main.",
+    "start": "accueil",
+    "nodes": {
+        "count": 1,
+        "0": {
+            "id": "accueil",
+            "lines": {
+                "count": 2,
+                "0": {
+                    "text": "Ici le port de Brenhaval. Où voulez-vous aller avec la ligne maritime du Nord ?"
+                },
+                "1": {
+                    "text": "(Le capitaine montre du menton une barque qui attend au bout du ponton.)",
+                    "cue": true
+                }
+            },
+            "choices": {
+                "count": 3,
+                "0": {
+                    "text": "Embarquer pour Haevrin (10 or).",
+                    "action": "sea_travel",
+                    "seaLine": "ligne_maritime_du_nord",
+                    "seaStop": 1
+                },
+                "1": {
+                    "text": "Embarquer pour Ostrevan (20 or).",
+                    "action": "sea_travel",
+                    "seaLine": "ligne_maritime_du_nord",
+                    "seaStop": 2
+                },
+                "2": {
+                    "text": "Pas aujourd'hui.",
+                    "action": "end"
+                }
+            }
+        }
+    }
+}

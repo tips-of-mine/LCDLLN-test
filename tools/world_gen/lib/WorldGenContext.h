@@ -423,6 +423,16 @@ namespace tools::world_gen
 		std::vector<SettlementLayout> layouts;
 		std::vector<SpawnerDef> spawners;
 		std::vector<RespawnDef> respawns;
+		/// v1.0.124 — pontons des lignes maritimes posés dans CETTE cellule (BuildSeaPontons).
+		struct SeaPonton
+		{
+			std::string lineId;   ///< ligne maritime
+			size_t stopIndex = 0; ///< escale dans la ligne
+			Vec2 position;        ///< point d'arrivée (terre, au bord de l'eau), m
+			double y = 0.0;       ///< altitude du sol au point d'arrivée, m
+			double yawDeg = 0.0;  ///< regard vers la mer
+		};
+		std::vector<SeaPonton> seaPontons;
 		std::vector<StartLocationDef> starts;
 		std::vector<InteractableDef> interactables; ///< résolus (positions absolues)
 		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
@@ -581,6 +591,13 @@ namespace tools::world_gen
 	void BuildPopulation(World& w);
 	/// Import du contenu historique (si la ville d'ancrage est dans la cellule). Population.cpp
 	bool ImportLegacyContent(World& w, std::string& err);
+	/// v1.0.124 — pontons des lignes maritimes (master `sea_lines`) dont la case est CETTE
+	/// cellule : point de terre ferme au bord de la mer (mer à 20-70 m, pente < 18°, libre),
+	/// au plus près de la ville desservie ; y pose le PNJ capitaine (interactible, dialogue
+	/// `passeur_<ligne>_<escale>`) et note le point d'arrivée (w.seaPontons, écrit ensuite
+	/// dans world/<monde>/sea_lines.json). Après BuildSettlements, avant la végétation.
+	/// Effet de bord : w.interactables, w.seaPontons, grille d'occupation. Population.cpp
+	void BuildSeaPontons(World& w);
 	/// v1.0.114 — identifiant stable du \p index-ième cimetière (0, 1, …) des lignes de
 	/// respawn importées de la cellule : id de la ville d'ancrage (`imports.anchor_city`),
 	/// puis `<ancrage>_2`, `<ancrage>_3`… ; `import_<cellule>_<n>` sans ville d'ancrage.

@@ -9319,6 +9319,15 @@ namespace engine
 								(void)m_gameplayUdp.SendQuestTurnInRequest(gameplayClientId, questKey, npcTargetId);
 						}
 					});
+				// v1.0.124 — passeur au ponton : le choix « Embarquer pour … » demande la
+				// traversée au shard (qui vérifie le ponton et l'or, puis impose la position).
+				m_dialogue.SetSeaTravelCallback(
+					[this](const std::string& seaLineId, int seaStop)
+					{
+						if (m_gameplayNetInitialized && seaStop >= 0 && seaStop < 256)
+							(void)m_gameplayUdp.SendSeaTravelRequest(m_gameplayUdp.ServerClientId(), seaLineId,
+								static_cast<uint8_t>(seaStop));
+					});
 				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;

@@ -300,6 +300,27 @@ namespace tools::world_gen
 		std::vector<std::pair<int, int>> cellNE; ///< (n, e) résolus de chaque case
 	};
 
+	/// Escale d'une ligne maritime (v1.0.124) : ville du master et case du ponton.
+	struct SeaLineStopDef
+	{
+		std::string cityId;   ///< ville desservie (identifiant du master)
+		std::string cell;     ///< case du ponton ("S005_W004")
+		int n = 0, e = 0;     ///< case résolue
+	};
+
+	/// Ligne maritime (section `sea_lines`, v1.0.124), recopiée du lore par
+	/// tools/lore/sync_sea_lines.py. Le générateur pose un ponton (point de terre au bord
+	/// de la mer, au plus près de la ville) et un PNJ capitaine (passeur) à chaque escale,
+	/// et écrit world/<monde>/sea_lines.json (positions) pour le serveur.
+	struct SeaLineDef
+	{
+		std::string id;                    ///< "ligne_maritime_sud"
+		std::string name;                  ///< nom affiché
+		bool loop = false;                 ///< boucle (sinon aller-retour)
+		int priceGoldPerLeg = 10;          ///< or par étape
+		std::vector<SeaLineStopDef> stops; ///< ≥ 2 escales
+	};
+
 	/// Contenu complet du master après chargement + validation.
 	struct WorldMaster
 	{
@@ -323,6 +344,8 @@ namespace tools::world_gen
 		/// Routes du lore (v1.0.105, `lore_roads`). Vide (ex. Enfers) : le générateur
 		/// garde son seul réseau calculé (comportement historique).
 		std::vector<LoreRoadDef> loreRoads;
+		/// Lignes maritimes (v1.0.124, `sea_lines`) : pontons et passeurs. Vide = aucune.
+		std::vector<SeaLineDef> seaLines;
 		/// Réglages fusionnés PAR-DESSUS zone.json (ex. distances de brouillard).
 		tools::zone_builder::JsonValue zoneOverrides;
 		// Imports du contenu existant (chemins relatifs au content root).

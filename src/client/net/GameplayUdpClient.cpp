@@ -523,6 +523,18 @@ namespace engine::client
 		return ok;
 	}
 
+	bool GameplayUdpClient::SendSeaTravelRequest(uint32_t clientId, const std::string& lineId, uint8_t toStop)
+	{
+		engine::server::SeaTravelRequestMessage msg{};
+		msg.clientId = clientId;
+		msg.lineId = lineId;
+		msg.toStop = toStop;
+		const bool ok = SendBytes(engine::server::EncodeSeaTravelRequest(msg));
+		LOG_INFO(Net, "[GameplayUdpClient] SeaTravelRequest {} (client_id={}, line={}, to={})",
+			ok ? "sent" : "FAILED", clientId, lineId, toStop);
+		return ok;
+	}
+
 	bool GameplayUdpClient::SendRespawnRequest(uint32_t clientId, uint8_t destination)
 	{
 		engine::server::RespawnRequestMessage msg{};

@@ -49,6 +49,7 @@
 #include "src/shardd/world/RegionLifecycle.h"
 #include "src/shardd/world/PortalNetwork.h"
 #include "src/shardd/world/LavaHazard.h"
+#include "src/shardd/world/SeaLines.h"
 #include "src/shardd/world/MobActivity.h"
 #include "src/shardd/world/LoadShedding.h"
 #include "src/shared/core/StallGuard.h"
@@ -1036,6 +1037,11 @@ namespace engine::server
 		/// l'autre carte (TransferToMap). No-op hors monde en cellules.
 		void MaybeApplyPortal(ConnectedClient& client);
 
+		/// v1.0.124 — traversée maritime demandée au passeur d'un ponton (SeaTravelRequest) :
+		/// joueur vivant au ponton d'une escale de la ligne, or suffisant, puis débarquement
+		/// au ponton d'arrivée (TransferToMap, même carte). Refus : message système.
+		void HandleSeaTravelRequest(const Endpoint& endpoint, const SeaTravelRequestMessage& request);
+
 		/// v1.0.123 — charge les masques de lave des cellules des Enfers
 		/// (zones/enfers_*/lava_mask.lvmk ; absents = pas de lave). Non bloquant.
 		void InitLavaHazard();
@@ -1942,6 +1948,8 @@ namespace engine::server
 		PortalNetwork m_portalNetwork;
 		/// v1.0.123 — masques de lave des Enfers (InitLavaHazard).
 		LavaHazard m_lavaHazard;
+		/// v1.0.124 — lignes maritimes (world/<monde>/sea_lines.json, passeurs).
+		SeaLines m_seaLines;
 		/// ETAPE4.3 (chantier 2.1) — cycle de vie des régions (Active / Loaded / Idle /
 		/// Removal, délais world.region_idle_s et world.region_unload_s), mis à jour par
 		/// RefreshRegionActivity (1 Hz).

@@ -78,6 +78,9 @@ jobs:
       - name: Test du script de recopie des routes
         run: python tools/lore/test_sync_routes.py
 
+      - name: Lignes maritimes du lore recopiées au master (v1.0.124)
+        run: python tools/lore/sync_sea_lines.py --check
+
       - name: Lieux secrets concordants (lore ↔ master)
         run: python tools/lore/check_secrets.py
 

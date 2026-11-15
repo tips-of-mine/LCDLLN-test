@@ -600,6 +600,25 @@ namespace
 		std::puts("[OK] TestQuestAcceptRequestRoundTrip");
 	}
 
+	/// v1.0.124 — round-trip SeaTravelRequest (client→serveur) + rejets.
+	void TestSeaTravelRequestRoundTrip()
+	{
+		engine::server::SeaTravelRequestMessage in{};
+		in.clientId = 9u;
+		in.lineId = "ligne_maritime_sud";
+		in.toStop = 2;
+		const std::vector<std::byte> packet = engine::server::EncodeSeaTravelRequest(in);
+		engine::server::SeaTravelRequestMessage out{};
+		assert(engine::server::DecodeSeaTravelRequest(packet, out));
+		assert(out.clientId == 9u && out.lineId == "ligne_maritime_sud" && out.toStop == 2);
+		std::vector<std::byte> truncated = packet;
+		truncated.resize(truncated.size() - 1u);
+		assert(!engine::server::DecodeSeaTravelRequest(truncated, out));
+		in.lineId.clear();
+		assert(!engine::server::DecodeSeaTravelRequest(engine::server::EncodeSeaTravelRequest(in), out));
+		std::puts("[OK] TestSeaTravelRequestRoundTrip");
+	}
+
 	/// SP1 quêtes — round-trip QuestTurnInRequest (client→serveur) + rejet tronqué.
 	void TestQuestTurnInRequestRoundTrip()
 	{
@@ -844,6 +863,7 @@ int main()
 	TestForcePositionRoundTrip();
 	TestMoveCorrectionRoundTrip();
 	TestLootNotifyRoundTrip();
+	TestSeaTravelRequestRoundTrip();
 	TestQuestAcceptRequestRoundTrip();
 	TestQuestTurnInRequestRoundTrip();
 	TestQuestGiverListRoundTrip();

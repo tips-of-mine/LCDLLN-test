@@ -1060,6 +1060,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.48](#1648-toutes-les-routes-coupées-ouvertes-en-deux-lots-v10121-v10122) | v1.0.121-v1.0.122 | Toutes les routes coupées ouvertes, en deux lots | 245 cases ouvertes (742 jouables), 34 villes et villages, 207 lieux [GD], cases « villages seulement » pour les cimetières (666 gardés). |
 | [16.49](#1649-lave-des-enfers-lumineuse-et-mortelle-v10123) | v1.0.123 | Lave des Enfers lumineuse et mortelle | Canal A du splat = lave émissive (shader), masque serveur `lava_mask.lvmk`, mort en 3 s. |
 | [16.50](#1650-lignes-maritimes-jouées-passeur-au-ponton-et-îles-ouvertes-v10124) | v1.0.124 | Lignes maritimes jouées, îles ouvertes | Passeur au ponton (4 lignes, 11 escales, traversée payante téléportée), îles de Hishtarland et de Dyprokh générées. |
+| [16.51](#1651-bateaux-des-lignes-maritimes-à-bord-en-temps-réel-v10125) | v1.0.125 | Bateaux des lignes maritimes | Dromons visibles qui suivent les lignes (2 par ligne, 1 par navette, 8 m/s, 30 s à quai), embarquement au quai, marche libre sur le pont, étape payée au départ ; passeur retiré ; 46 cases de mer ouvertes. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4431,7 +4432,7 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
 | `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46 ; 129 depuis v1.0.122, 16.48 ; 131 depuis v1.0.124, 16.50) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
-| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) + 7 des îles (16.50) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
+| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) + 7 des îles (16.50) ; + 46 cases de mer sous les trajets des bateaux, ajoutées par le générateur (16.51) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4874,8 +4875,53 @@ mer) à S006_W004, la case de côte juste au sud.
 de Dyprokh). Pas de route terrestre : test des routes (a) adapté (Hishtarland et Dyprokh desservies par la mer, comme
 l'Île de la Trêve a son réseau). Cimetières : Hishtarland et Dyprokh gardent le leur (villes du lore), les cases vides n'en ont pas ; recensement à 668, **2 hameaux** de plus sans cimetière (`choose_graveyards.py`, 129 → 131) ; **666** vérifiés.
 
-**Bilan** : 691 cases listées, 749 jouables. **Reste** : bateau visible (lot suivant : entité mobile serveur,
-escales de 30 s, 2 bateaux par ligne, embarquement).
+**Bilan** : 691 cases listées, 749 jouables. ~~**Reste** : bateau visible~~ (fait en v1.0.125, 16.51 : le passeur est
+retiré au profit des bateaux).
+
+### 16.51 Bateaux des lignes maritimes, à bord en temps réel (v1.0.125)
+
+**Décisions du propriétaire (15/11/2026)** : traversée **« à bord en temps réel »** (le bateau suit la ligne, on
+voyage dessus) ; **2 bateaux par ligne, 8 m/s** (30 s d'arrêt à chaque quai) ; **« bateau seul »** : le passeur
+téléporteur de la v1.0.124 est retiré ; modèle **Sketchfab via Blender** : le **dromon** (« Dromon medieval ship »
+de Mitro123, licence CC BY 4.0, crédit dans `game/data/models/props/ships/dromon/CREDITS.md`) ; à bord :
+**libre sur le pont**.
+
+| Ligne | Bateaux (lore `boats`) | Escales (ville, case du ponton) | Étapes (trajet du générateur) |
+|---|---|---|---|
+| Ligne maritime du sud (boucle) | 2 | Ekvhitorn S006_W004, Brokhendt S008_W002, Hishtarland S011_W006, **Zaltheim S009_W010** | 4 (≈ 26, 68, 48, 80 km) |
+| Ligne maritime du Nord (aller-retour) | 2 | Brenhaval N017_W010, Haevrin N011_W004, **Ostrevan N012_W007** | 2 (≈ 104, 63 km) |
+| Navette Askhvir – Dyprokh | 1 | Askhvir N010_E005, Dyprokh N012_E002 | 1 (≈ 48 km) |
+| Navette Brenhaval – Thrival | 1 | Brenhaval N017_W010, Thrival N019_W010 | 1 (≈ 19 km) |
+
+Le lore donne 1 bateau aux deux navettes (`boats`) : gardé (« 2 par ligne » vaut pour les lignes). Longueurs
+mesurées sur le trajet macro (le trajet final, de quai à quai, en diffère de peu). À 8 m/s, une étape de 26 km dure
+≈ 55 min, celle de 104 km ≈ 3 h 40 : la vitesse est un réglage du shard (`boats.speed_mps`, défaut 8).
+
+`[GD]` **Ports de Zaltheim et d'Ostrevan** : leurs cases (S008_W010, N011_W008) n'ont pas de pleine mer, seulement
+des mares sous le niveau de la mer ; ports posés sur la côte la plus proche (S009_W010, ≈ 7 km au sud du hameau ;
+N012_W007, ≈ 8 km au nord-est). `[GD]` **Prix** : l'étape (10 or, 5 pour une navette) est payée **au départ du
+quai** ; un passager sans l'or est débarqué avant le départ.
+
+**Chaîne** :
+
+| Étape | Élément | Effet |
+|---|---|---|
+| Lore → master | `tools/lore/sync_sea_lines.py` (CI `--check`) | `sea_lines` du master + `boats`, `stop_seconds` ; dialogues `capitaine_port_<ligne>_<k>.json` (renseignements : escales, nombre de bateaux, prix, « montez à bord quand le navire attend au quai » ; un choix de fin) ; les 11 dialogues `passeur_*` sont supprimés |
+| Générateur (macro, `BuildMacroSeaRoutes`) | trajets grossiers | pleine mer = relief grossier (250 m) à 3 m sous la mer au moins, dans une composante d'au moins 500 nœuds (les mares en sont exclues) ; A* (8 voisins, large préféré : coût majoré près des côtes) entre les eaux les plus proches des deux villes |
+| Générateur (`AddSeaRouteCells`, génération complète) | cases de mer | cases traversées par les trajets et voisines à moins de 1,5 km : **46 cases** ajoutées (749 → **795 jouables**), « villages seulement » (pas de cimetière : 666 gardés) — sans elles le client n'aurait ni eau ni décor sous le bateau |
+| Générateur (`BuildSeaPontons`) | ponton et quai | le ponton doit avoir, en plus de la mer à 20, 45 et 70 m, un **quai** (30 m au large) relié à la pleine mer en ligne droite (eau sur tout le segment) : jamais une mare ni une lagune fermée ; capitaine du port (dialogue `capitaine_port_*`) |
+| Générateur (`BuildSeaLegPaths`) | trajets définitifs | de quai à quai : quai → pleine mer → A* restreint aux cases générées → pleine mer → quai, simplifié en lignes droites (6 km au plus) qui restent en mer ; génération complète refusée si une étape n'a pas de trajet |
+| | `world/royaumes/sea_lines.json` (schéma 2) | par escale : ponton (débarquement) et quai (`dock_x`, `dock_z`, `dock_yaw_deg`, bateau parallèle à la côte) ; par ligne : `boats`, `stop_seconds`, étapes `legs` (sens aller) ; `sea_level_m` |
+| Serveur (`BoatFleet`, `sea_lines_tests`) | horaire | cycle par ligne (boucle 0 → … → n-1 → 0, aller-retour 0 → … → n-1 → … → 0), 30 s à chaque quai, vitesse constante, bateaux espacés d'une fraction égale du cycle ; pose = fonction pure du temps ; virages de 40 m aux sommets, sortie et entrée de quai |
+| Serveur (`ServerApp`) | bateaux répliqués | une entité par bateau (archétype réservé `kBoatArchetypeId` = 2 000 000, drapeau `kEntityStateBoatDocked`), dans la grille d'intérêt de sa carte, pose mise à jour à chaque tick |
+| Protocole | `BoatBoardRequest` (108, client → shard, canal fiable) | embarquer (bateau à quai, joueur vivant à 45 m au plus du bateau) ou débarquer (bateau à quai) ; refus : message système |
+| | `BoatAboard` (109, shard → client) | « vous êtes à bord » : bateau, position sur le pont dans le **repère du bateau**, nouvelle époque de mouvement ; renvoyé comme un ForcePosition ; un ForcePosition ultérieur = débarqué |
+| Serveur (passagers) | marche sur le pont | à bord, les Input et MoveCorrection sont dans le repère du bateau (mêmes règles de mouvement, point ramené sur le pont : 5 × 22 m) ; la position monde suit la pose du bateau à chaque tick ; toute position imposée (réapparition, téléport) laisse à terre ; sauvegarde au ponton de l'escale (à quai : celle du quai ; en mer : celle d'arrivée), jamais en mer |
+| Client | rendu et à bord | dromon rendu par le pipeline skinné (un os, matrice modèle par bateau, pose lissée) ; plaque « Navire à quai [E] Embarquer / Débarquer » ; touche E (après les interactibles) ; à bord : le personnage marche sur le pont (direction de la caméra ramenée dans le repère du bateau, course, sprint, pas de saut), suit la pose lissée du bateau, pas de sauvegarde de position au master |
+
+**Bilan** : 691 cases listées, 749 jouables par les corridors, **795** avec les cases de mer. **Reste** : vitesse et
+durée des traversées à juger en jeu ; collisions sur le pont (mât, rambardes) non modélisées (surface plate) ;
+caméra qui ne tourne pas avec le bateau.
 
 ## 17. Questions ouvertes
 

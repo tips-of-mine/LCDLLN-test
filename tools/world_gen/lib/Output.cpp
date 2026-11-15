@@ -24,7 +24,7 @@
 //   world/<w>/start_locations.json     points de départ par faction, repli par race (master, shard)
 //   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
 //   world/<w>/portals.json             portails reliés à une autre carte (shard)
-//   world/<w>/sea_lines.json           lignes maritimes, position des pontons (shard, v1.0.124)
+//   world/<w>/sea_lines.json           lignes maritimes : pontons, quais, trajets des bateaux (shard, v1.0.125)
 
 #include "WorldGenContext.h"
 #include "HouseCatalog.h"
@@ -1493,31 +1493,52 @@ namespace tools::world_gen
 			if (!WriteFile(g.outputRoot, g.report, dir + "start_locations.json", j, err)) return false;
 		}
 
-		// ---- sea_lines.json (v1.0.124) : lignes maritimes jouées par un passeur au ponton ;
-		//      pour chaque escale, le point d'arrivée (terre, au bord de l'eau) et le regard.
-		//      Lu par le shard (traversée payante, téléportation). Écrit si le master a des lignes.
+		// ---- sea_lines.json (v1.0.124, v1.0.125 schéma 2) : lignes maritimes servies par des
+		//      bateaux (LORE_BD 16.51) ; pour chaque escale, le ponton (point de débarquement,
+		//      terre au bord de l'eau, regard vers la mer) et le quai (bateau à l'arrêt, cap) ;
+		//      pour chaque étape, le trajet du bateau de quai à quai (polyligne, m). Lu par le
+		//      shard. Écrit si le master a des lignes.
 		if (!g.master.seaLines.empty())
 		{
-			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lignes maritimes (passeur au ponton, LORE_BD 16.50) : escales, point d'arrivee (positions GLOBALES, m), prix en or par etape. Lu par le shard.\",\n";
-			j += "  \"schema_version\": 1,\n  \"world\": " + Q(wid) + ",\n  \"lines\": [\n";
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen — lignes maritimes servies par des bateaux (LORE_BD 16.51) : escales (ponton = debarquement, quai = bateau a l'arret, positions GLOBALES, m), trajets de quai a quai (legs, sens aller), prix en or par etape. Lu par le shard.\",\n";
+			j += "  \"schema_version\": 2,\n  \"world\": " + Q(wid) + ",\n  \"sea_level_m\": " + Num(g.master.scale.seaLevelM) + ",\n  \"lines\": [\n";
+			auto r1 = [&](double v) { return Num(std::round(v * 10.0) / 10.0); };
 			for (size_t li = 0; li < g.master.seaLines.size(); ++li)
 			{
 				const SeaLineDef& line = g.master.seaLines[li];
 				j += "    { \"id\": " + Q(line.id) + ", \"name\": " + Q(line.name) + ", \"loop\": " + (line.loop ? "true" : "false")
-					+ ", \"price_gold_per_leg\": " + std::to_string(line.priceGoldPerLeg) + ", \"stops\": [\n";
+					+ ", \"price_gold_per_leg\": " + std::to_string(line.priceGoldPerLeg) + ", \"boats\": " + std::to_string(line.boats)
+					+ ", \"stop_seconds\": " + std::to_string(line.stopSeconds) + ", \"stops\": [\n";
 				for (size_t k = 0; k < line.stops.size(); ++k)
 				{
 					const World::SeaPonton* sp = nullptr;
 					for (const World* w : cells)
 						for (const World::SeaPonton& s : w->seaPontons)
 							if (s.lineId == line.id && s.stopIndex == k) sp = &s;
+					const GlobalWorld::SeaDock* dock = nullptr;
+					for (const GlobalWorld::SeaDock& d : g.seaDocks)
+						if (d.lineId == line.id && d.stop == k) dock = &d;
 					const CityDef* c = g.FindCity(line.stops[k].cityId);
 					j += "      { \"city\": " + Q(line.stops[k].cityId) + ", \"name\": " + Q(c ? c->name : line.stops[k].cityId)
 						+ ", \"cell\": " + Q(line.stops[k].cell);
 					if (sp)
-						j += ", \"x\": " + Num(std::round(sp->position.x * 10.0) / 10.0) + ", \"y\": " + Num(std::round(sp->y * 10.0) / 10.0)
-							+ ", \"z\": " + Num(std::round(sp->position.z * 10.0) / 10.0) + ", \"yaw_deg\": " + Num(std::round(sp->yawDeg));
+						j += ", \"x\": " + r1(sp->position.x) + ", \"y\": " + r1(sp->y)
+							+ ", \"z\": " + r1(sp->position.z) + ", \"yaw_deg\": " + Num(std::round(sp->yawDeg));
+					if (dock)
+						j += ", \"dock_x\": " + r1(dock->position.x) + ", \"dock_z\": " + r1(dock->position.z)
+							+ ", \"dock_yaw_deg\": " + Num(std::round(dock->yawDeg));
 					j += std::string(" }") + (k + 1 < line.stops.size() ? ",\n" : "\n");
+				}
+				j += "    ], \"legs\": [\n";
+				std::vector<const GlobalWorld::SeaRoute*> legs;
+				for (const GlobalWorld::SeaRoute& r : g.seaLegs)
+					if (r.lineId == line.id) legs.push_back(&r);
+				for (size_t k = 0; k < legs.size(); ++k)
+				{
+					j += "      { \"from\": " + std::to_string(legs[k]->from) + ", \"to\": " + std::to_string(legs[k]->to) + ", \"points\": [";
+					for (size_t p = 0; p < legs[k]->points.size(); ++p)
+						j += (p ? ", [" : "[") + r1(legs[k]->points[p].x) + ", " + r1(legs[k]->points[p].z) + "]";
+					j += std::string("] }") + (k + 1 < legs.size() ? ",\n" : "\n");
 				}
 				j += std::string("    ] }") + (li + 1 < g.master.seaLines.size() ? ",\n" : "\n");
 			}

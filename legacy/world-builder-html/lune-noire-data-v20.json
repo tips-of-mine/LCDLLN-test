@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.124",
+    "version": "1.0.125",
     "notes": [
       "v1.0.124 : [DÉCISION] Lignes maritimes jouées (passeur au ponton, 4 lignes, 11 escales) ; îles de Hishtarland et de Dyprokh ouvertes (7 cases, 5 lieux [GD]).",
       "v1.0.123 : [DÉCISION] Lave des Enfers lumineuse (shader du terrain) et mortelle en 3 s (serveur) ; chemins et lieux bâtis sans lave.",
@@ -246091,6 +246091,13 @@
           "nom": "Lignes maritimes jouées (passeur au ponton) et îles ouvertes",
           "decision": "Décision du propriétaire (15/11/2026) : les 4 lignes maritimes (ligne du sud, ligne du Nord, navettes Askhvir – Dyprokh et Brenhaval – Thrival) sont jouées par un passeur au ponton de chaque escale : dialogue, traversée payante en or ([GD] 10 or par étape, 5 pour une navette), arrivée au ponton d'en face ; un bateau visible viendra dans un lot suivant. Îles de Hishtarland (5 cases) et de Dyprokh (2 cases) ouvertes au jeu, un lieu [GD] par case vide (5), cimetières villages seulement (666 gardés). LORE_BD §16.50.",
           "version": "1.0.124"
+        },
+        {
+          "collection": "sea_lines",
+          "id": "bateaux_v1125",
+          "nom": "Bateaux des lignes maritimes (à bord en temps réel)",
+          "decision": "Décision du propriétaire (15/11/2026) : les lignes maritimes sont servies par des bateaux visibles qui suivent la ligne en temps réel (dromon de 30 m, modèle « Dromon medieval ship » de Mitro123, CC BY) : 2 bateaux par ligne et 1 par navette (champ boats), 8 m/s, 30 s d'arrêt à chaque quai ; embarquement au quai, marche libre sur le pont, débarquement à quai ; [GD] l'étape (10 or, 5 pour une navette) est payée au départ du quai, un passager sans l'or est débarqué avant le départ ; le passeur (traversée téléportée de la v1.0.124) est retiré, le capitaine du port renseigne. [GD] Ports de Zaltheim (S009_W010) et d'Ostrevan (N012_W007) posés sur la côte, leurs cases n'ayant pas de pleine mer. Cases de mer sous les trajets ouvertes au jeu (villages seulement, 666 cimetières gardés). LORE_BD §16.51.",
+          "version": "1.0.125"
         }
       ]
     },
@@ -308612,7 +308619,7 @@
         },
         {
           "ville_id": "hamlet_0172",
-          "ponton_cell": "S008_W010",
+          "ponton_cell": "S009_W010",
           "stop_seconds": 30
         }
       ],
@@ -308629,7 +308636,9 @@
       "order": "loop",
       "notes": [
         "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50.",
-        "[GD] (v1.0.124) Ponton d'Ekvhitorn déplacé de S005_W004 (plaine fermée par les montagnes, sans mer) à S006_W004, la case de côte juste au sud, où le générateur trouve la mer ; LORE_BD §16.50."
+        "[GD] (v1.0.124) Ponton d'Ekvhitorn déplacé de S005_W004 (plaine fermée par les montagnes, sans mer) à S006_W004, la case de côte juste au sud, où le générateur trouve la mer ; LORE_BD §16.50.",
+        "[GD] (v1.0.125) Port de Zaltheim posé en S009_W010, sur la côte à ~7 km au sud du hameau : la case S008_W010 n'a pas de pleine mer (seulement des mares), aucun bateau ne peut y accoster ; LORE_BD §16.51.",
+        "[DÉCISION] (v1.0.125) Servie en jeu par des bateaux visibles (dromon) qui suivent la ligne en temps réel : on embarque au quai quand le bateau y attend (30 s), on marche librement sur le pont pendant la traversée, on débarque à l'escale de son choix ; l'étape est payée au départ du quai ; le passeur (téléportation) est retiré. Décision du propriétaire du 15/11/2026 ; LORE_BD §16.51."
       ]
     },
     {
@@ -308658,7 +308667,8 @@
       ],
       "rule_id": "rule_navette_ashwick_ile",
       "notes": [
-        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50.",
+        "[DÉCISION] (v1.0.125) Servie en jeu par des bateaux visibles (dromon) qui suivent la ligne en temps réel : on embarque au quai quand le bateau y attend (30 s), on marche librement sur le pont pendant la traversée, on débarque à l'escale de son choix ; l'étape est payée au départ du quai ; le passeur (téléportation) est retiré. Décision du propriétaire du 15/11/2026 ; LORE_BD §16.51."
       ]
     },
     {
@@ -308677,7 +308687,7 @@
         },
         {
           "ville_id": "hamlet_0189",
-          "ponton_cell": "N011_W008",
+          "ponton_cell": "N012_W007",
           "stop_seconds": 30
         }
       ],
@@ -308693,7 +308703,9 @@
       ],
       "rule_id": "rule_ligne_maritime_du_nord",
       "notes": [
-        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50.",
+        "[GD] (v1.0.125) Port d'Ostrevan posé en N012_W007, sur la côte à ~8 km au nord-est du hameau : la case N011_W008 n'a pas de pleine mer (seulement des mares), aucun bateau ne peut y accoster ; LORE_BD §16.51.",
+        "[DÉCISION] (v1.0.125) Servie en jeu par des bateaux visibles (dromon) qui suivent la ligne en temps réel : on embarque au quai quand le bateau y attend (30 s), on marche librement sur le pont pendant la traversée, on débarque à l'escale de son choix ; l'étape est payée au départ du quai ; le passeur (téléportation) est retiré. Décision du propriétaire du 15/11/2026 ; LORE_BD §16.51."
       ]
     },
     {
@@ -308722,7 +308734,8 @@
       ],
       "rule_id": "rule_navette_brinehaven_truceholm",
       "notes": [
-        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50."
+        "[DÉCISION] (v1.0.124) Jouée en jeu par un passeur au ponton de chaque escale (traversée payante, arrivée au ponton d'en face) ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50.",
+        "[DÉCISION] (v1.0.125) Servie en jeu par des bateaux visibles (dromon) qui suivent la ligne en temps réel : on embarque au quai quand le bateau y attend (30 s), on marche librement sur le pont pendant la traversée, on débarque à l'escale de son choix ; l'étape est payée au départ du quai ; le passeur (téléportation) est retiré. Décision du propriétaire du 15/11/2026 ; LORE_BD §16.51."
       ]
     }
   ],

@@ -17,6 +17,21 @@ namespace engine::server
 	/// combat les ignore. `kEntityStateDead` sur un node = épuisé (grisé).
 	inline constexpr uint32_t kGatheringNodeArchetypeBase = 1000000u;
 
+	/// v1.0.125 — archetypeId réservé aux BATEAUX des lignes maritimes (dromon), au-dessus
+	/// de la plage des nodes de récolte : jamais une créature ni un node (pas de plaque,
+	/// pas de ciblage, pas de récolte) ; le client le rend avec son mesh de bateau.
+	inline constexpr uint32_t kBoatArchetypeId = 2000000u;
+	/// v1.0.125 — bateau répliqué à l'arrêt à un quai (embarquement / débarquement possibles).
+	inline constexpr uint32_t kEntityStateBoatDocked = 1u << 1;
+
+	/// Vrai si \p archetypeId est celui d'un bateau (v1.0.125).
+	inline constexpr bool IsBoatArchetype(uint32_t archetypeId) { return archetypeId == kBoatArchetypeId; }
+	/// Vrai si \p archetypeId est celui d'un node de récolte (plage Métiers SP1, bateaux exclus).
+	inline constexpr bool IsGatheringNodeArchetype(uint32_t archetypeId)
+	{
+		return archetypeId >= kGatheringNodeArchetypeBase && archetypeId < kBoatArchetypeId;
+	}
+
 	/// Minimal authoritative stats component shared by players and mobs.
 	struct StatsComponent
 	{

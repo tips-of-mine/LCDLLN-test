@@ -12,6 +12,7 @@
 #include "src/shared/network/ServerProtocol.h"
 
 #include <cassert>
+#include <limits>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -600,23 +601,42 @@ namespace
 		std::puts("[OK] TestQuestAcceptRequestRoundTrip");
 	}
 
-	/// v1.0.124 — round-trip SeaTravelRequest (client→serveur) + rejets.
-	void TestSeaTravelRequestRoundTrip()
+	/// v1.0.125 — round-trip BoatBoardRequest (client→serveur) et BoatAboard (serveur→client)
+	/// + rejets (taille, board hors 0..1, bateau 0, valeur non finie) ; les deux genres sont
+	/// distincts (un BoatAboard n'est pas décodé comme une demande).
+	void TestBoatMessagesRoundTrip()
 	{
-		engine::server::SeaTravelRequestMessage in{};
+		engine::server::BoatBoardRequestMessage in{};
 		in.clientId = 9u;
-		in.lineId = "ligne_maritime_sud";
-		in.toStop = 2;
-		const std::vector<std::byte> packet = engine::server::EncodeSeaTravelRequest(in);
-		engine::server::SeaTravelRequestMessage out{};
-		assert(engine::server::DecodeSeaTravelRequest(packet, out));
-		assert(out.clientId == 9u && out.lineId == "ligne_maritime_sud" && out.toStop == 2);
+		in.boatEntityId = 0x200000123ull;
+		in.board = 1;
+		std::vector<std::byte> packet = engine::server::EncodeBoatBoardRequest(in);
+		engine::server::BoatBoardRequestMessage out{};
+		assert(engine::server::DecodeBoatBoardRequest(packet, out));
+		assert(out.clientId == 9u && out.boatEntityId == 0x200000123ull && out.board == 1);
 		std::vector<std::byte> truncated = packet;
 		truncated.resize(truncated.size() - 1u);
-		assert(!engine::server::DecodeSeaTravelRequest(truncated, out));
-		in.lineId.clear();
-		assert(!engine::server::DecodeSeaTravelRequest(engine::server::EncodeSeaTravelRequest(in), out));
-		std::puts("[OK] TestSeaTravelRequestRoundTrip");
+		assert(!engine::server::DecodeBoatBoardRequest(truncated, out));
+		in.board = 2;
+		assert(!engine::server::DecodeBoatBoardRequest(engine::server::EncodeBoatBoardRequest(in), out));
+
+		engine::server::BoatAboardMessage a{};
+		a.clientId = 4u;
+		a.moveEpoch = 77;
+		a.boatEntityId = 0x200000123ull;
+		a.localX = 1.5f; a.localY = 2.5f; a.localZ = -8.0f; a.localYaw = 0.25f;
+		packet = engine::server::EncodeBoatAboard(a);
+		engine::server::BoatAboardMessage b{};
+		assert(engine::server::DecodeBoatAboard(packet, b));
+		assert(b.clientId == 4u && b.moveEpoch == 77 && b.boatEntityId == 0x200000123ull
+			&& b.localX == 1.5f && b.localY == 2.5f && b.localZ == -8.0f && b.localYaw == 0.25f);
+		assert(!engine::server::DecodeBoatBoardRequest(packet, out));
+		a.boatEntityId = 0;
+		assert(!engine::server::DecodeBoatAboard(engine::server::EncodeBoatAboard(a), b));
+		a.boatEntityId = 1;
+		a.localX = std::numeric_limits<float>::quiet_NaN();
+		assert(!engine::server::DecodeBoatAboard(engine::server::EncodeBoatAboard(a), b));
+		std::puts("[OK] TestBoatMessagesRoundTrip");
 	}
 
 	/// SP1 quêtes — round-trip QuestTurnInRequest (client→serveur) + rejet tronqué.
@@ -863,7 +883,7 @@ int main()
 	TestForcePositionRoundTrip();
 	TestMoveCorrectionRoundTrip();
 	TestLootNotifyRoundTrip();
-	TestSeaTravelRequestRoundTrip();
+	TestBoatMessagesRoundTrip();
 	TestQuestAcceptRequestRoundTrip();
 	TestQuestTurnInRequestRoundTrip();
 	TestQuestGiverListRoundTrip();

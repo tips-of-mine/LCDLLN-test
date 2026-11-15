@@ -174,6 +174,16 @@ namespace engine::gameplay
 		/// Mur invisible : replace le personnage en (x, z) en gardant Y et l'état
 		/// vertical ; la vitesse horizontale est annulée.
 		void BlockHorizontalAt(float x, float z) { m_positionCenter.x = x; m_positionCenter.z = z; m_velocity.x = 0.0f; m_velocity.z = 0.0f; }
+		/// v1.0.125 — à bord d'un bateau : pose le personnage en \p center (centre de la
+		/// capsule, repère de rendu) SUR le pont, immobile et au sol (l'Engine déplace le
+		/// personnage dans le repère du bateau ; aucune physique terrain / eau à bord).
+		void PlaceOnPlatform(const engine::math::Vec3& center)
+		{
+			m_positionCenter = center;
+			m_velocity = engine::math::Vec3(0.0f, 0.0f, 0.0f);
+			m_isGrounded = true;
+			m_mode = MovementMode::Ground;
+		}
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
 

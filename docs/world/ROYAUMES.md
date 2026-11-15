@@ -113,7 +113,8 @@ relient les villes de départ (arbre couvrant de plus courts chemins sur le rés
 routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
 suivant la route. **Depuis la v1.0.124 : 691 cellules listées dans `generated_cells`, 749 cellules
-jouables avec les corridors** (v1.0.124 : +7 cases des îles de Hishtarland et de Dyprokh, LORE_BD §16.50) (v1.0.106 : 412 et 481 ; v1.0.119 : 428 et 497, +16 cases des routes Farvhenn – Vestmhor
+jouables avec les corridors ; depuis la v1.0.125, 795 avec les 46 cases de mer sous les trajets des bateaux**
+(`AddSeaRouteCells`, « villages seulement », LORE_BD §16.51) (v1.0.124 : +7 cases des îles de Hishtarland et de Dyprokh, LORE_BD §16.50) (v1.0.106 : 412 et 481 ; v1.0.119 : 428 et 497, +16 cases des routes Farvhenn – Vestmhor
 et Shaddrek – Klehrwath, LORE_BD §16.46 ; v1.0.121-v1.0.122 : +245 cases, toutes les routes coupées ouvertes en deux
 lots, LORE_BD §16.48 ; détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
 lus par le master et le shard (exclus dès la copie) ; les
@@ -182,7 +183,8 @@ routes, chemins, rues et emprises des bâtiments en vectoriel pour la carte zoom
 format `src/shared/world/MapFeatures.h`), `start_locations.json`
 (départs par race + `generated_cells`, lus par le master et le shard),
 `quest_poi.json`, `portals.json` (portails reliés à une autre carte, lus par le shard),
-`sea_lines.json` (v1.0.124 : pontons des lignes maritimes, lus par le shard).
+`sea_lines.json` (v1.0.124 : pontons des lignes maritimes ; v1.0.125, schéma 2 : quais et trajets des bateaux,
+lus par le shard).
 
 La seconde carte se génère de la même façon : `--world enfers` (9 cellules,
 ~2 min ; sorties `zones/enfers_*`, `world/enfers/`). La CI génère les deux.
@@ -264,7 +266,7 @@ voisines raccord au mètre près :
    lore** (`lore_roads` du master, recopiées de la collection `routes` du lore par
    `tools/lore/sync_routes.py`, voir LORE_BD §16.34) :
    - chaque route du lore (`road`, `imperial_road`, `path` ; les routes maritimes ne
-     sont pas tracées ; depuis v1.0.124 elles sont jouées par un passeur au ponton,
+     sont pas tracées ; depuis v1.0.125 elles sont servies par des bateaux visibles,
      voir plus bas) passe par chaque case de ses `waypoints` : la
      ville du lore de la case (la route y est coupée en tronçons ville à ville), sinon
      le point praticable le plus proche du centre ; un pas en diagonale entre deux
@@ -427,8 +429,12 @@ Les instances d'un chunk sont contiguës. Écrit en v1 si aucune table (rétro-c
   Routes maritimes non tracées. **v1.0.124 — lignes maritimes** (`sea_lines` du master,
   `tools/lore/sync_sea_lines.py`) : `BuildSeaPontons` pose à chaque escale un ponton
   (terre au bord de la mer, au plus près de la ville) et le PNJ capitaine (dialogue
-  `passeur_<ligne>_<k>`) ; `world/royaumes/sea_lines.json` donne au shard les points
-  d'arrivée ; la traversée est payante et téléportée (LORE_BD §16.50).
+  `capitaine_port_<ligne>_<k>` depuis v1.0.125) ; **v1.0.125 — bateaux** : trajets macro en
+  pleine mer (`BuildMacroSeaRoutes`, A* sur le relief grossier), cases de mer ajoutées
+  (`AddSeaRouteCells`), quai à 30 m au large du ponton relié à la pleine mer, trajets de
+  quai à quai (`BuildSeaLegPaths`) ; `world/royaumes/sea_lines.json` (schéma 2) donne au shard
+  pontons, quais et trajets ; le shard fait naviguer les bateaux (`BoatFleet`), on embarque au
+  quai et on marche sur le pont (LORE_BD §16.50, §16.51).
 - Ville secrète (v1.0.107, Thurvhal) : hors de `places.json` `cities`, donc sans
   bannière d'entrée, sans radar ni ambiance sonore de ville ; depuis v1.0.110, les villes
   et lieux secrets (dont les 11 grottes des dragons et le Puits des Lianes) ne sont plus du
@@ -634,7 +640,8 @@ ordinaire du lore.
 | v1.0.106 (passages des routes du lore) | 412 | **481** |
 | v1.0.119 (routes Farvhenn – Vestmhor, Shaddrek – Klehrwath) | 428 | 497 |
 | v1.0.122 (toutes les routes coupées, 2 lots) | 684 | 742 |
-| v1.0.124 (îles de Hishtarland et de Dyprokh) | 691 | **749** |
+| v1.0.124 (îles de Hishtarland et de Dyprokh) | 691 | 749 |
+| v1.0.125 (cases de mer des bateaux) | 691 | **795** |
 
 - Une cellule est jouable si elle est dans `generated_cells` **ou** dans un corridor des villes
   de départ (`AddStartCorridors`, calculé sur le réseau du générateur, inchangé par les routes du

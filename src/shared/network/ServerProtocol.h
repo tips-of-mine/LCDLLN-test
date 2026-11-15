@@ -360,12 +360,20 @@ namespace engine::server
 		/// Lore v1.0.114 — shard → client : un événement d'exploration (cimetière visité,
 		/// lieu secret découvert, exploit débloqué). Jamais envoyé à un autre joueur.
 		DiscoveryEvent = 106,
-		/// v1.0.124 — client → shard : traversée maritime demandée au passeur d'un ponton
-		/// (ligne `lineId`, escale d'arrivée `toStop`). Le shard vérifie que le joueur est
-		/// vivant, au ponton d'une escale de la ligne, et qu'il a l'or ; il le débarque au
-		/// ponton d'arrivée (changement de position imposé). Ajout rétro-additif : un vieux
-		/// shard l'ignore (pas de bump de kProtocolVersion), le client ne reçoit alors rien.
-		SeaTravelRequest = 107
+		// 107 : SeaTravelRequest (v1.0.124, passeur au ponton) — RETIRÉ en v1.0.125 (bateaux
+		// visibles) ; valeur réservée, jamais réutilisée (un vieux client l'envoie dans le vide).
+		/// v1.0.125 — client → shard : embarquer sur un bateau à quai (`board` = 1) ou en
+		/// débarquer (`board` = 0, bateau à quai). Le shard vérifie que le bateau existe, qu'il
+		/// est à quai, que le joueur est vivant et assez près (embarquement) puis répond par
+		/// BoatAboard (à bord) ou ForcePosition (débarqué au ponton). Ajout rétro-additif.
+		BoatBoardRequest = 108,
+		/// v1.0.125 — shard → client : le joueur est À BORD du bateau `boatEntityId`, en
+		/// (x, y, z) dans le REPÈRE DU BATEAU (m ; origine au centre de la coque à la ligne de
+		/// flottaison, +Z = proue, +Y = haut), nouvelle époque de mouvement. Tant qu'il est à
+		/// bord, ses Input et les MoveCorrection du shard sont dans ce repère. Renvoyé comme un
+		/// ForcePosition (≤ 1 / 500 ms) tant que le client reste dans l'ancienne époque. Un
+		/// ForcePosition ultérieur signifie « débarqué » (position monde).
+		BoatAboard = 109
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -518,12 +526,22 @@ namespace engine::server
 	/// Combat SP2 — demande de réapparition d'un joueur mort (client → shard).
 	/// Le serveur ne l'honore que si le joueur porte kEntityStateDead.
 	/// Wire v13 : + destination (1 octet, kRespawnDestination*) — payload 4 → 5.
-	/// v1.0.124 — client → shard : traversée maritime (passeur au ponton).
-	struct SeaTravelRequestMessage
+	/// v1.0.125 — client → shard : embarquer (board = 1) / débarquer (board = 0).
+	struct BoatBoardRequestMessage
 	{
 		uint32_t clientId = 0;
-		std::string lineId;  ///< ligne maritime (sea_lines.json), 64 caractères au plus
-		uint8_t toStop = 0;  ///< escale d'arrivée (index dans la ligne)
+		uint64_t boatEntityId = 0; ///< entité répliquée du bateau
+		uint8_t board = 1;         ///< 1 = embarquer, 0 = débarquer
+	};
+
+	/// v1.0.125 — shard → client : à bord du bateau, position dans le repère du bateau.
+	struct BoatAboardMessage
+	{
+		uint32_t clientId = 0;
+		uint16_t moveEpoch = 0;    ///< nouvelle époque de mouvement (comme ForcePosition)
+		uint64_t boatEntityId = 0;
+		float localX = 0.0f, localY = 0.0f, localZ = 0.0f; ///< repère du bateau (m)
+		float localYaw = 0.0f;     ///< cap du joueur dans le repère du bateau (rad)
 	};
 
 	struct RespawnRequestMessage
@@ -954,10 +972,15 @@ namespace engine::server
 
 	/// Combat SP2 — encode a respawn request packet (client → server).
 	std::vector<std::byte> EncodeRespawnRequest(const RespawnRequestMessage& message);
-	/// v1.0.124 — encode SeaTravelRequest : clientId (4) + lineId (2 + N) + toStop (1).
-	std::vector<std::byte> EncodeSeaTravelRequest(const SeaTravelRequestMessage& message);
-	/// v1.0.124 — décode SeaTravelRequest ; faux si tronqué, trop long ou ligne vide / > 64.
-	bool DecodeSeaTravelRequest(std::span<const std::byte> packet, SeaTravelRequestMessage& outMessage);
+	/// v1.0.125 — encode BoatBoardRequest : clientId (4) + boatEntityId (8) + board (1) = 13 o.
+	std::vector<std::byte> EncodeBoatBoardRequest(const BoatBoardRequestMessage& message);
+	/// v1.0.125 — décode BoatBoardRequest ; faux si taille ≠ 13 ou board > 1.
+	bool DecodeBoatBoardRequest(std::span<const std::byte> packet, BoatBoardRequestMessage& outMessage);
+	/// v1.0.125 — encode BoatAboard : clientId (4) + moveEpoch (2) + boatEntityId (8)
+	/// + x/y/z/yaw (4×4) = 30 o.
+	std::vector<std::byte> EncodeBoatAboard(const BoatAboardMessage& message);
+	/// v1.0.125 — décode BoatAboard ; faux si taille ≠ 30, bateau 0 ou valeur non finie.
+	bool DecodeBoatAboard(std::span<const std::byte> packet, BoatAboardMessage& outMessage);
 
 	/// Combat SP2 — decode a respawn request packet and validate the protocol header.
 	bool DecodeRespawnRequest(std::span<const std::byte> packet, RespawnRequestMessage& outMessage);

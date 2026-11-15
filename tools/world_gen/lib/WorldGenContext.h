@@ -375,6 +375,33 @@ namespace tools::world_gen
 		std::vector<Road> generatorRoads;
 		std::vector<Vec2> startCenters; ///< centres des villes de départ
 
+		/// v1.0.125 — trajet d'un bateau pour une étape (escale from → to) d'une ligne
+		/// maritime : polyligne monde (m). Les étapes d'un aller-retour ne sont stockées
+		/// que dans le sens aller.
+		struct SeaRoute
+		{
+			std::string lineId;
+			size_t from = 0, to = 0;
+			std::vector<Vec2> points;
+		};
+		/// v1.0.125 — quai d'une escale : 30 m au large du ponton, cap du bateau à quai.
+		struct SeaDock
+		{
+			std::string lineId;
+			size_t stop = 0;
+			Vec2 position;
+			double yawDeg = 0.0; ///< cap (0 = +Z, sens horaire vu de dessus comme le regard du ponton)
+		};
+		/// v1.0.125 — pleine mer sur la grille grossière (1 par nœud de `coarse`) : nœuds sous
+		/// la mer de 3 m au moins, dans une composante connexe de 500 nœuds au moins (les
+		/// cuvettes du relief sous le niveau de la mer n'en sont pas). BuildMacroSeaRoutes.
+		std::vector<uint8_t> openSea;
+		/// Trajets grossiers (macro, avant les cellules) : servent à ajouter les cellules de mer.
+		std::vector<SeaRoute> seaRoutes;
+		/// Trajets définitifs de quai à quai (après les cellules) et quais : sea_lines.json.
+		std::vector<SeaRoute> seaLegs;
+		std::vector<SeaDock> seaDocks;
+
 		GenReport report;
 
 		const CityDef* FindCity(const std::string& id) const;
@@ -431,6 +458,10 @@ namespace tools::world_gen
 			Vec2 position;        ///< point d'arrivée (terre, au bord de l'eau), m
 			double y = 0.0;       ///< altitude du sol au point d'arrivée, m
 			double yawDeg = 0.0;  ///< regard vers la mer
+			/// v1.0.125 — quai (bateau à l'arrêt, 30 m au large dans le regard du ponton) et
+			/// point de pleine mer (nœud de g.openSea) relié au quai par une ligne droite en eau.
+			Vec2 dock;
+			Vec2 openSea;
 		};
 		std::vector<SeaPonton> seaPontons;
 		std::vector<StartLocationDef> starts;
@@ -593,11 +624,31 @@ namespace tools::world_gen
 	bool ImportLegacyContent(World& w, std::string& err);
 	/// v1.0.124 — pontons des lignes maritimes (master `sea_lines`) dont la case est CETTE
 	/// cellule : point de terre ferme au bord de la mer (mer à 20-70 m, pente < 18°, libre),
-	/// au plus près de la ville desservie ; y pose le PNJ capitaine (interactible, dialogue
-	/// `passeur_<ligne>_<escale>`) et note le point d'arrivée (w.seaPontons, écrit ensuite
+	/// au plus près de la ville desservie, dont le quai (30 m au large) rejoint la pleine mer
+	/// en ligne droite (v1.0.125 : jamais une mare ni une lagune fermée) ; y pose le PNJ capitaine (interactible, dialogue
+	/// `capitaine_port_<ligne>_<escale>`, v1.0.125) et note le ponton et le quai (w.seaPontons, écrits ensuite
 	/// dans world/<monde>/sea_lines.json). Après BuildSettlements, avant la végétation.
 	/// Effet de bord : w.interactables, w.seaPontons, grille d'occupation. Population.cpp
 	void BuildSeaPontons(World& w);
+	/// v1.0.125 — nœud de pleine mer (g.openSea) le plus proche de \p p, à \p radiusM au plus.
+	/// \return false si aucun (ou si g.openSea n'est pas encore calculé). SeaRoutes.cpp
+	bool NearestOpenSea(const GlobalWorld& g, Vec2 p, double radiusM, Vec2& out);
+	/// v1.0.125 — trajets MACRO des bateaux : pour chaque étape des lignes maritimes, plus
+	/// court chemin en mer (grille grossière, 3 m de fond au moins, large préféré) entre les
+	/// eaux les plus proches des deux villes. Remplit g.seaRoutes (avertissement si une étape
+	/// n'a pas de chemin). Après BuildMacroRoads. SeaRoutes.cpp
+	void BuildMacroSeaRoutes(GlobalWorld& g);
+	/// v1.0.125 — ajoute à \p ids les cellules traversées par g.seaRoutes (et leurs voisines à
+	/// moins de 1,5 km du trajet), dans l'ordre de parcours ; elles deviennent « villages
+	/// seulement » (g.master.graveyardVillageOnlyCells : ni cimetière isolé ni de hameau).
+	/// Génération complète seulement. \return nombre de cellules ajoutées. SeaRoutes.cpp
+	size_t AddSeaRouteCells(GlobalWorld& g, std::vector<std::string>& ids);
+	/// v1.0.125 — quais (30 m au large de chaque ponton) et trajets définitifs des bateaux
+	/// de quai à quai, restreints aux cellules générées \p cells, simplifiés en lignes
+	/// droites qui restent en mer (g.seaDocks, g.seaLegs, écrits dans sea_lines.json).
+	/// \param complete génération complète : une étape sans trajet est une erreur (\p err) ;
+	///        sinon un avertissement. Après la génération des cellules (pontons connus). SeaRoutes.cpp
+	bool BuildSeaLegPaths(GlobalWorld& g, const std::vector<World*>& cells, bool complete, std::string& err);
 	/// v1.0.114 — identifiant stable du \p index-ième cimetière (0, 1, …) des lignes de
 	/// respawn importées de la cellule : id de la ville d'ancrage (`imports.anchor_city`),
 	/// puis `<ancrage>_2`, `<ancrage>_3`… ; `import_<cellule>_<n>` sans ville d'ancrage.

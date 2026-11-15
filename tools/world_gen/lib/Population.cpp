@@ -165,7 +165,22 @@ namespace tools::world_gen
 				Vec2 target{ (x0 + x1) * 0.5, (z0 + z1) * 0.5 };
 				if (const CityDef* c = w.FindCity(stop.cityId)) target = c->center;
 				double best = 1e30, bestYaw = 0.0;
-				Vec2 bestP{};
+				Vec2 bestP{}, bestDock{}, bestOpen{};
+				// Eau sur tout le segment [a, b] (tous les 10 m) : relief de la cellule dedans,
+				// relief grossier au-dehors.
+				const auto waterLine = [&](Vec2 a, Vec2 b) {
+					const double len = std::hypot(b.x - a.x, b.z - a.z);
+					const int n = std::max(1, static_cast<int>(std::ceil(len / 10.0)));
+					for (int s = 0; s <= n; ++s)
+					{
+						const double t = static_cast<double>(s) / n;
+						const Vec2 q{ a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t };
+						const bool inside = q.x >= x0 && q.x <= x1 && q.z >= z0 && q.z <= z1;
+						const double h = inside ? w.HeightAt(q) : SampleBilinear(w.g->coarse, q.x, q.z);
+						if (h >= sea - 1.0) return false;
+					}
+					return true;
+				};
 				for (double z = z0 + 80.0; z < z1 - 80.0; z += 16.0)
 					for (double x = x0 + 80.0; x < x1 - 80.0; x += 16.0)
 					{
@@ -183,7 +198,12 @@ namespace tools::world_gen
 							for (double r : { 20.0, 45.0, 70.0 })
 								seaOk = seaOk && w.HeightAt({ p.x + dir.x * r, p.z + dir.z * r }) < sea - 0.8;
 							if (!seaOk) continue;
-							best = d; bestP = p;
+							// v1.0.125 — le quai (30 m au large) doit rejoindre la pleine mer en
+							// ligne droite : un bateau y accoste (jamais une mare ni une lagune).
+							const Vec2 dock{ p.x + dir.x * 30.0, p.z + dir.z * 30.0 };
+							Vec2 open{};
+							if (!NearestOpenSea(*w.g, dock, 1500.0, open) || !waterLine(dock, open)) continue;
+							best = d; bestP = p; bestDock = dock; bestOpen = open;
 							bestYaw = std::atan2(dir.x, dir.z) * 180.0 / 3.14159265358979323846;
 							break;
 						}
@@ -196,6 +216,7 @@ namespace tools::world_gen
 				World::SeaPonton sp;
 				sp.lineId = line.id; sp.stopIndex = k;
 				sp.position = bestP; sp.y = w.HeightAt(bestP); sp.yawDeg = bestYaw;
+				sp.dock = bestDock; sp.openSea = bestOpen;
 				w.seaPontons.push_back(sp);
 				// Le capitaine se tient à 3 m du bord (côté terre), face à la mer.
 				const double yr = bestYaw * 3.14159265358979323846 / 180.0;
@@ -206,11 +227,11 @@ namespace tools::world_gen
 				cap.npc = true;
 				cap.label = "Capitaine du port";
 				cap.role = line.name;
-				cap.message = "Capitaine : Embarquez, la mer est calme aujourd'hui.";
+				cap.message = "Capitaine : Le bateau accoste au bout du ponton.";
 				cap.mesh = "models/characters/humains/Male_Ranger/Male_Ranger.glb";
 				cap.scale = 95.0; cap.rotXDeg = -90.0; cap.yawDeg = bestYaw;
-				cap.dialogueId = "passeur_" + line.id + "_" + std::to_string(k);
-				cap.npcTargetId = "npc:passeur_" + line.id + "_" + std::to_string(k);
+				cap.dialogueId = "capitaine_port_" + line.id + "_" + std::to_string(k);
+				cap.npcTargetId = "npc:capitaine_port_" + line.id + "_" + std::to_string(k);
 				w.Occupy({ cap.x, cap.z }, 2.0);
 				w.Occupy(bestP, 2.0);
 				w.interactables.push_back(std::move(cap));

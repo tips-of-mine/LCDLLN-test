@@ -290,6 +290,12 @@ namespace engine::server
 		PortalTravelState portalTravel;
 		/// v1.0.123 — temps passé dans la lave des Enfers (mort à 3 s, LavaHazard).
 		LavaExposureState lavaExposure;
+		/// v1.0.125 — bateau à bord duquel est le joueur (index BoatFleet), -1 = à terre.
+		/// À bord, `movement` (et donc les Input / MoveCorrection) est dans le REPÈRE DU
+		/// BATEAU ; position* = position monde recalculée à chaque tick (TickBoats).
+		int32_t boatIndex = -1;
+		/// v1.0.125 — départs du bateau déjà payés par ce passager (BoatPose::departures).
+		int64_t boatDeparturesPaid = 0;
 		/// ETAPE2.6 — instantané restauré à la connexion (0 = aucun) ; recopié dans
 		/// chaque sauvegarde (marque la demande appliquée, sans effet ensuite).
 		uint64_t restoreSnapshotId = 0;
@@ -1037,10 +1043,27 @@ namespace engine::server
 		/// l'autre carte (TransferToMap). No-op hors monde en cellules.
 		void MaybeApplyPortal(ConnectedClient& client);
 
-		/// v1.0.124 — traversée maritime demandée au passeur d'un ponton (SeaTravelRequest) :
-		/// joueur vivant au ponton d'une escale de la ligne, or suffisant, puis débarquement
-		/// au ponton d'arrivée (TransferToMap, même carte). Refus : message système.
-		void HandleSeaTravelRequest(const Endpoint& endpoint, const SeaTravelRequestMessage& request);
+		/// v1.0.125 — bateaux des lignes maritimes : horaire (m_boatFleet, vitesse
+		/// `boats.speed_mps`, défaut 8 m/s) et identifiants d'entité répliquée, une fois les
+		/// lignes chargées (InitCellWorld). No-op sans ligne à bateaux.
+		void InitBoats();
+		/// v1.0.125 — à chaque tick : avance l'horloge des bateaux, met leur pose à jour dans
+		/// la grille d'intérêt de leur carte, recale les passagers (repère du bateau → monde)
+		/// et, au départ d'un quai, fait payer l'étape (sinon débarque le passager au ponton).
+		void TickBoats();
+		/// v1.0.125 — BoatBoardRequest : embarquer (bateau à quai, joueur vivant à
+		/// BoatFleet::kBoardRadiusM au plus) ou débarquer (bateau à quai). Refus : message système.
+		void HandleBoatBoardRequest(const Endpoint& endpoint, const BoatBoardRequestMessage& request);
+		/// v1.0.125 — index BoatFleet du bateau d'entité \p entityId, -1 si ce n'en est pas un.
+		int32_t FindBoatByEntityId(EntityId entityId) const;
+		/// v1.0.125 — envoie BoatAboard (position dans le repère du bateau, époque courante).
+		void EmitBoatAboard(ConnectedClient& client);
+		/// v1.0.125 — débarque \p client au ponton de l'escale \p stop de la ligne du bateau
+		/// (position imposée, nouvelle époque, ForcePosition). \p notice : message système (vide = aucun).
+		void DisembarkAtPonton(ConnectedClient& client, size_t stop, std::string_view notice);
+		/// v1.0.125 — position monde du passager recalculée depuis sa position sur le pont et
+		/// la pose courante de son bateau (position*, vitesse, cap). Sans effet à terre.
+		void UpdatePassengerWorldPosition(ConnectedClient& client);
 
 		/// v1.0.123 — charge les masques de lave des cellules des Enfers
 		/// (zones/enfers_*/lava_mask.lvmk ; absents = pas de lave). Non bloquant.
@@ -1948,8 +1971,13 @@ namespace engine::server
 		PortalNetwork m_portalNetwork;
 		/// v1.0.123 — masques de lave des Enfers (InitLavaHazard).
 		LavaHazard m_lavaHazard;
-		/// v1.0.124 — lignes maritimes (world/<monde>/sea_lines.json, passeurs).
+		/// v1.0.124 — lignes maritimes (world/<monde>/sea_lines.json : pontons, quais, trajets).
 		SeaLines m_seaLines;
+		/// v1.0.125 — bateaux : horaire, entités répliquées, poses du tick courant.
+		BoatFleet m_boatFleet;
+		std::vector<EntityId> m_boatEntityIds;
+		std::vector<BoatPose> m_boatPoses;
+		double m_boatClockSec = 0.0; ///< horloge des bateaux (s, avance d'un tick à chaque tick)
 		/// ETAPE4.3 (chantier 2.1) — cycle de vie des régions (Active / Loaded / Idle /
 		/// Removal, délais world.region_idle_s et world.region_unload_s), mis à jour par
 		/// RefreshRegionActivity (1 Hz).

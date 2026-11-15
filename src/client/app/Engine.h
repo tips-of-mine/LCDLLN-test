@@ -1218,6 +1218,19 @@ namespace engine
 		void RecordAnimatedChest(VkCommandBuffer cmd, engine::render::Registry& reg,
 		                         const engine::RenderState& rs);
 
+		/// v1.0.125 — charge (une fois, au premier bateau répliqué) le dromon des lignes
+		/// maritimes (models/props/ships/dromon/dromon.glb, un os) et son matériau
+		/// (textures PNG à côté du .glb). Effet de bord : m_boatMesh, matériau GPU créé.
+		/// Thread principal, pipeline prêt.
+		void LoadBoatMesh();
+		/// v1.0.125 — dessine les bateaux répliqués (archetype kBoatArchetypeId) dans la passe
+		/// Geometry, à leur pose lissée (m_remoteSmoothed), jusqu'à client.boats.render_distance_m.
+		void RecordBoats(VkCommandBuffer cmd, engine::render::Registry& reg, const engine::RenderState& rs);
+		/// v1.0.125 — pose de rendu (repère de rendu, lissée) du bateau \p boatEntityId :
+		/// centre à la ligne de flottaison et cap ; \p outDocked = drapeau « à quai ».
+		/// \return false si le bateau n'est pas répliqué (hors intérêt).
+		bool BoatRenderPose(uint64_t boatEntityId, float& outX, float& outY, float& outZ, float& outYaw, bool& outDocked) const;
+
 		/// Helper partagé : charge un mesh statique, cuit sa transformation monde dans les
 		/// sommets, l'ancre au sol, crée ses matériaux (texture trim OU couleur de sommet si
 		/// pas de texture), l'ajoute à m_props et, si \p solid, enregistre un cylindre de
@@ -1646,6 +1659,19 @@ namespace engine
 		// Coffre anime (Chest_Wood) : rendu via le pipeline skinne pour jouer
 		// Chest_Open/Chest_Close a l'interaction (remplace le rendu statique du coffre).
 		engine::render::skinned::SkinnedMesh                      m_chestMesh;
+		// v1.0.125 — bateaux des lignes maritimes (dromon) et mode « à bord ».
+		engine::render::skinned::SkinnedMesh                      m_boatMesh;
+		bool                                                     m_boatMeshTried = false;
+		bool                                                     m_boatMeshLoaded = false;
+		std::vector<uint32_t>                                    m_boatSubmeshMat;
+		/// Bateau à bord duquel est le joueur (0 = à terre) ; position sur le pont dans le
+		/// repère du bateau (m) ; dernière pose connue du bateau (si hors intérêt un instant).
+		uint64_t                                                 m_aboardBoatEntityId = 0;
+		engine::math::Vec3                                       m_aboardLocal{ 0.0f, 0.0f, 0.0f };
+		float                                                    m_aboardLastX = 0.0f, m_aboardLastY = 0.0f, m_aboardLastZ = 0.0f, m_aboardLastYaw = 0.0f;
+		bool                                                     m_aboardLastDocked = false;
+		/// Bateau à quai le plus proche à portée d'embarquement (0 = aucun), calculé chaque frame.
+		uint64_t                                                 m_boardableBoatEntityId = 0;
 		engine::render::skinned::AnimationCrossfade               m_chestCrossfade;
 		bool                                                     m_chestLoaded = false;
 		bool                                                     m_chestOpen = false;

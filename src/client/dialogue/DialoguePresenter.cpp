@@ -57,16 +57,6 @@ namespace engine::client
 			m_questActionCb(choice.action, choice.questId, choice.questKey);
 		}
 
-		// v1.0.124 — passeur : demande de traversée (le serveur vérifie le ponton et l'or)
-		// puis fin du dialogue.
-		if (choice.action == DialogueAction::SeaTravel)
-		{
-			if (m_seaTravelCb && !choice.seaLineId.empty() && choice.seaStop >= 0)
-				m_seaTravelCb(choice.seaLineId, choice.seaStop);
-			Close(DialogueCloseReason::EndNode);
-			return;
-		}
-
 		// Navigation / fermeture.
 		if (choice.action == DialogueAction::End)
 		{

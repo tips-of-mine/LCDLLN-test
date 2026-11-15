@@ -11,8 +11,8 @@ namespace engine::client
 		Continue,      ///< Navigue vers \c nextNodeId.
 		AcceptQuest,   ///< Accepte la quête \c questId puis navigue/ferme.
 		CompleteQuest, ///< Complète la quête \c questId puis navigue/ferme.
-		End,           ///< Termine le dialogue.
-		SeaTravel      ///< v1.0.124 : traversée maritime (ligne \c seaLineId, escale \c seaStop) puis fin.
+		End            ///< Termine le dialogue.
+		// v1.0.124 SeaTravel (passeur au ponton) retiré en v1.0.125 : bateaux visibles.
 	};
 
 	/// Une ligne prononcée par le PNJ (ou une didascalie).
@@ -35,10 +35,6 @@ namespace engine::client
 		// (text, nextNodeId, action, questId, icon) ; insérer un champ avant `icon` aurait
 		// silencieusement décalé la valeur "icon" fournie dans ce nouveau champ.
 		std::string    questKey;                          ///< SP2 : id texte de la quête (wire QuestAccept/TurnInRequest) ; vide si non lié.
-		// v1.0.124 — passeur au ponton (action SeaTravel) ; placés en fin de struct pour la
-		// même raison que questKey (init agrégat positionnel).
-		std::string    seaLineId;                         ///< ligne maritime (dialogues passeur_*)
-		int            seaStop = -1;                      ///< escale d'arrivée dans la ligne
 	};
 
 	/// Un nœud de dialogue : lignes du PNJ + 1..5 choix.

@@ -523,15 +523,15 @@ namespace engine::client
 		return ok;
 	}
 
-	bool GameplayUdpClient::SendSeaTravelRequest(uint32_t clientId, const std::string& lineId, uint8_t toStop)
+	bool GameplayUdpClient::SendBoatBoardRequest(uint32_t clientId, uint64_t boatEntityId, bool board)
 	{
-		engine::server::SeaTravelRequestMessage msg{};
+		engine::server::BoatBoardRequestMessage msg{};
 		msg.clientId = clientId;
-		msg.lineId = lineId;
-		msg.toStop = toStop;
-		const bool ok = SendBytes(engine::server::EncodeSeaTravelRequest(msg));
-		LOG_INFO(Net, "[GameplayUdpClient] SeaTravelRequest {} (client_id={}, line={}, to={})",
-			ok ? "sent" : "FAILED", clientId, lineId, toStop);
+		msg.boatEntityId = boatEntityId;
+		msg.board = board ? 1u : 0u;
+		const bool ok = SendBytes(engine::server::EncodeBoatBoardRequest(msg));
+		LOG_INFO(Net, "[GameplayUdpClient] BoatBoardRequest {} (client_id={}, boat={}, board={})",
+			ok ? "sent" : "FAILED", clientId, boatEntityId, board ? 1 : 0);
 		return ok;
 	}
 

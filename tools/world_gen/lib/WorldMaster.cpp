@@ -601,6 +601,8 @@ namespace tools::world_gen
 				d.id = GetStr(v, "id"); d.name = GetStr(v, "name", d.id);
 				d.loop = GetBool(v, "loop", false);
 				d.priceGoldPerLeg = static_cast<int>(GetNum(v, "price_gold_per_leg", 10.0));
+				d.boats = static_cast<int>(GetNum(v, "boats", 2.0));             // v1.0.125
+				d.stopSeconds = static_cast<int>(GetNum(v, "stop_seconds", 30.0)); // v1.0.125
 				if (const JsonValue* st = FindObjectMember(v, "stops"); st && st->type == JsonType::Array)
 					for (const JsonValue& s2 : st->arrayValue)
 					{
@@ -612,9 +614,10 @@ namespace tools::world_gen
 						}
 						d.stops.push_back(std::move(stop));
 					}
-				if (d.id.empty() || !lineIds.insert(d.id).second || d.stops.size() < 2 || d.priceGoldPerLeg < 0)
+				if (d.id.empty() || !lineIds.insert(d.id).second || d.stops.size() < 2 || d.priceGoldPerLeg < 0
+					|| d.boats < 1 || d.boats > 4 || d.stopSeconds < 10 || d.stopSeconds > 300)
 				{
-					err = "master: sea_lines invalide '" + d.id + "' (id unique, 2 escales au moins, prix >= 0)"; return false;
+					err = "master: sea_lines invalide '" + d.id + "' (id unique, 2 escales au moins, prix >= 0, boats 1..4, stop_seconds 10..300)"; return false;
 				}
 				out.seaLines.push_back(std::move(d));
 			}

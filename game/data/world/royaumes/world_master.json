@@ -6785,6 +6785,13 @@
       "source": "[DÉCISION] v1.0.120 (proprietaire, 14/11/2026) : ces cases sont des falaises ; rendu de falaise de craie blanche comme celles de Douvres (paroi presque verticale, plateau herbeux, plage etroite au pied) [GD pour les dimensions]"
     }
   ],
+  "_comment_sea_lines": "GENERE par tools/lore/sync_sea_lines.py depuis le lore (sea_lines) — v1.0.124 : lignes maritimes jouees par un passeur au ponton (capitaine, dialogue, traversee payante et teleportee d'un ponton a l'autre, LORE_BD 16.50). stops : ville et case du ponton ; loop : boucle (sinon aller-retour) ; price_gold_per_leg : or par etape. Ne pas editer a la main.",
+  "sea_lines": [
+    {"id": "ligne_maritime_sud", "name": "Ligne maritime du sud", "loop": true, "price_gold_per_leg": 10, "stops": [{"city": "ville_equiton", "cell": "S006_W004"}, {"city": "town_0137", "cell": "S008_W002"}, {"city": "hishtarland", "cell": "S011_W006"}, {"city": "hamlet_0172", "cell": "S008_W010"}]},
+    {"id": "navette_ashwick_ile", "name": "Navette Askhvir – Dyprokh", "loop": false, "price_gold_per_leg": 5, "stops": [{"city": "town_0123", "cell": "N010_E005"}, {"city": "town_ile_ashwick", "cell": "N012_E002"}]},
+    {"id": "ligne_maritime_du_nord", "name": "Ligne maritime du Nord", "loop": false, "price_gold_per_leg": 10, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "hamlet_0153", "cell": "N011_W004"}, {"city": "hamlet_0189", "cell": "N011_W008"}]},
+    {"id": "navette_brinehaven_truceholm", "name": "Navette Brenhaval – Thrival", "loop": false, "price_gold_per_leg": 5, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "town_truceholm", "cell": "N019_W010"}]}
+  ],
   "_comment_lore_roads": "Routes du lore (v1.0.105), recopiees de legacy/world-builder-html/lune-noire-data.json (collection routes) par tools/lore/sync_routes.py : NE PAS EDITER A LA MAIN, tracer dans l'editeur (mode Tracer) puis relancer le script. type : road | imperial_road | path (routes maritimes non recopiees) ; from / to : ville ou POI du master, vide = jonction (embranchement sur une autre route de la case) ou extremite sans entree au master ; waypoints : cases du trace, extremites comprises. tools/world_gen (Roads.cpp) trace chaque route en passant par chaque case (ville de la case, sinon point praticable le plus proche du centre) et cherche son chemin sur le terrain entre deux cases ; les routes de son propre reseau ne sont gardees que pour relier les villes de depart sans equivalent au lore (docs/world/LORE_BD.md section 16.34).",
   "lore_roads": [
     { "id": "000010", "type": "road", "from": "sauken_glude_of_magistrya", "to": "poi_atmosphere", "waypoints": ["N003_W003", "S001_W003"] },
@@ -6952,13 +6959,6 @@
     { "id": "000236", "type": "path", "from": "", "to": "ville_der_hem_shelsem", "waypoints": ["S006_E008", "S007_E008", "S008_E008", "S009_E009", "S010_E010"] },
     { "id": "000237", "type": "road", "from": "hameau_eaglewatch", "to": "hameau_marn", "waypoints": ["N002_W010", "N003_W009"] },
     { "id": "000238", "type": "road", "from": "ville_whispers_hill", "to": "ville_feyhin_lokcthat", "waypoints": ["N011_E008", "N010_E008", "N009_E007", "N008_E007"] }
-  ],
-  "_comment_sea_lines": "GENERE par tools/lore/sync_sea_lines.py depuis le lore (sea_lines) — v1.0.124 : lignes maritimes jouees par un passeur au ponton (capitaine, dialogue, traversee payante et teleportee d'un ponton a l'autre, LORE_BD 16.50). stops : ville et case du ponton ; loop : boucle (sinon aller-retour) ; price_gold_per_leg : or par etape. Ne pas editer a la main.",
-  "sea_lines": [
-    {"id": "ligne_maritime_sud", "name": "Ligne maritime du sud", "loop": true, "price_gold_per_leg": 10, "stops": [{"city": "ville_equiton", "cell": "S006_W004"}, {"city": "town_0137", "cell": "S008_W002"}, {"city": "hishtarland", "cell": "S011_W006"}, {"city": "hamlet_0172", "cell": "S008_W010"}]},
-    {"id": "navette_ashwick_ile", "name": "Navette Askhvir – Dyprokh", "loop": false, "price_gold_per_leg": 5, "stops": [{"city": "town_0123", "cell": "N010_E005"}, {"city": "town_ile_ashwick", "cell": "N012_E002"}]},
-    {"id": "ligne_maritime_du_nord", "name": "Ligne maritime du Nord", "loop": false, "price_gold_per_leg": 10, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "hamlet_0153", "cell": "N011_W004"}, {"city": "hamlet_0189", "cell": "N011_W008"}]},
-    {"id": "navette_brinehaven_truceholm", "name": "Navette Brenhaval – Thrival", "loop": false, "price_gold_per_leg": 5, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "town_truceholm", "cell": "N019_W010"}]}
   ],
   "extra_lakes": [
     {

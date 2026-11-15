@@ -21,7 +21,8 @@
 #   - Le lore est la source : la section est réécrite entièrement ;
 #   - Refus (code 2) : escale sans ville du master, case invalide, ligne de moins de 2 escales ;
 #   - Édition CHIRURGICALE du texte du master : seules `_comment_sea_lines` et `sea_lines`
-#     changent (insérées avant `extra_lakes` la première fois) ; contrôle avant écriture.
+#     changent (insérées avant `_comment_lore_roads`, sinon avant `extra_lakes`, la première
+#     fois) ; contrôle avant écriture.
 #
 # Dialogues des passeurs (v1.0.124) : un fichier game/data/dialogues/passeur_<ligne>_<k>.json
 # par escale k (dialogue_id du PNJ capitaine posé par tools/world_gen au ponton), avec un
@@ -129,7 +130,11 @@ def appliquer(texte, lignes):
     i_com = next((i for i, t in enumerate(ls) if t.startswith('  "_comment_sea_lines":')), None)
     i_deb = next((i for i, t in enumerate(ls) if t.startswith('  "sea_lines": [')), None)
     if i_deb is None:
-        i = next(i for i, t in enumerate(ls) if t.startswith('  "extra_lakes":'))
+        # Avant les routes du lore (sync_routes.py réinsère les siennes avant extra_lakes :
+        # les deux sections ne se croisent pas), sinon avant extra_lakes.
+        i = next((i for i, t in enumerate(ls) if t.startswith('  "_comment_lore_roads":')), None)
+        if i is None:
+            i = next(i for i, t in enumerate(ls) if t.startswith('  "extra_lakes":'))
         return "\n".join(ls[:i] + texte_section(lignes) + ls[i:])
     i_fin = next(i for i in range(i_deb, len(ls)) if ls[i] == "  ],")
     debut = i_com if i_com is not None else i_deb

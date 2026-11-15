@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.122",
+    "version": "1.0.123",
     "notes": [
+      "v1.0.123 : [DÉCISION] Lave des Enfers lumineuse (shader du terrain) et mortelle en 3 s (serveur) ; chemins et lieux bâtis sans lave.",
       "v1.0.122 : [DÉCISION] Routes coupées, lot 2 (routes longues, le reste) : 17 routes ouvertes, 146 cases jouables, 118 lieux [GD] ; cases sans cimetière admises (666 gardés).",
       "v1.0.121 : [DÉCISION] Routes coupées, lot 1 (routes courtes) : 15 routes ouvertes, 97 cases jouables, 76 lieux [GD] ; cases sans cimetière admises (666 gardés).",
       "v1.0.120 : [DÉCISION] Falaises de craie blanche (type Douvres) sur la côte ouest : N005_W012, N006_W012, N007_W013, N008_W013, N009_W016, N010_W016, N011_W015 (relief falaises_de_craie_ouest du master).",
@@ -178517,7 +178518,8 @@
         "[DÉCISION] (v1.0.81) Hiérarchie (regle_hierarchie_enfers) et lieux des tomes 15-22 : le palais de Lucifer, la mer de lave, le canyon et les plateaux des légions sont sur la carte jouable des Enfers ; les plans par le Seuil des Plans (regle_plans_infernaux). Les Enfers hors carte des préquelles restent inchangés (décision du propriétaire du 11/11/2026 ; LORE_BD §16.10).",
         "[DÉCISION] (v1.0.83) Palette de la carte jouable des Enfers d'après les tomes 15-22 : roche rouge striée (falaises du canyon), basalte noir, cendre grise sur les hauts sommets, lave jaune-orange (mer de lave autour du lieu « volcan » de N000_W001, fleuves de lave dans la croix volcanique) ; ni herbe, ni forêt, ni broussaille, ni neige. Générée par tools/world_gen (v1.0.83, LORE_BD §16.12). Sources : [BD-T16 p.16] ; [BD-T17 p.16] ; [BD-T20 p.30-31] ; [BD-T21 p.6, 36] ; [BD-T22 p.22]. La lave n'est qu'une couleur (carte du monde) et un sol de terre rouge-brun (splat) : pas de matériau émissif ni de dégâts côté client (à venir).",
         "[DÉCISION] (v1.0.92) Hors de la carte du continent : région sans case ni province, inchangée (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.103) Niveau 1-10 confirmé : « Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails » (décision du propriétaire du 09/11/2026, v1.0.71, LORE_BD §15.8) (LORE_BD §16.32)."
+        "[DÉCISION] (v1.0.103) Niveau 1-10 confirmé : « Région de départ des Enfers (Légion infernale) : 9 cellules, niveau 1 à 10 sauf boss et abords des portails » (décision du propriétaire du 09/11/2026, v1.0.71, LORE_BD §15.8) (LORE_BD §16.32).",
+        "[DÉCISION] (v1.0.123) Lave lumineuse et mortelle en jeu : mort après 3 s dans la lave, chemins et lieux bâtis épargnés (décision du propriétaire du 15/11/2026 ; LORE_BD §16.49)."
       ],
       "niveau_ref": {
         "min": 1,
@@ -246066,6 +246068,13 @@
           "nom": "Routes coupées — lot 2 (routes longues, le reste)",
           "decision": "Décision du propriétaire (14/11/2026) : ouvrir toutes les routes coupées par lots (par région, routes courtes d'abord, puis le reste) ; un lieu [GD] par case vide ; cases sans cimetière admises (seuls les villages du lore y ont un cimetière, graveyards.village_only_cells), 666 cimetières gardés en retirant ceux d'autres hameaux. lot 2 (routes longues, le reste) : 17 routes (000057, 000073, 000076, 000077, 000079, 000116, 000143, 000145, 000156, 000158, 000159, 000048, 000068, 000078, 000164, 000062, 000063), 146 cases, 118 lieux [GD]. Plus 7 case(s) (N016_E008, N017_E008, N009_W005, S006_E006, N010_W006, N010_W001, N010_W002) de routes devenues jouables aux deux bouts.",
           "version": "1.0.122"
+        },
+        {
+          "collection": "regions",
+          "id": "lave_des_enfers",
+          "nom": "Lave des Enfers lumineuse et mortelle",
+          "decision": "Décision du propriétaire (15/11/2026) : la lave des Enfers tue en 3 secondes (serveur, comme le simulateur client) et brille d'une lueur pulsante (croûte sombre qui dérive, lave en fusion orange-jaune, non assombrie la nuit). Les chemins et les lieux bâtis restent sans lave (croûte refroidie). LORE_BD §16.49.",
+          "version": "1.0.123"
         }
       ]
     },

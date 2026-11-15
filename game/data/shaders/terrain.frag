@@ -9,6 +9,11 @@
 // M34.3 addition: samples hole mask (R8_UNORM, binding 7). Fragments where the
 // mask value < 0.5 are discarded (holes / cave entrances).
 // Ticket 010: grass / surface-detail mask (R8_UNORM, binding 8), UV = splat UV.
+// v1.0.123: Enfers — quand ubo.terrainOrigin.z > 0.5, le canal A (neige) est la LAVE :
+//   couleur procédurale (croûte sombre + lave en fusion qui coule lentement, temps =
+//   ubo.terrainOrigin.w) et émission écrite dans GBufferC.a = 1 − émission (1 = rien,
+//   valeur de toutes les autres géométries) ; lighting.frag l'ajoute après l'éclairage
+//   (la lave n'est pas assombrie la nuit).
 //
 // Outputs into 4 GBuffer attachments compatible with GeometryPass layout:
 //   location 0 (GBufferA)        : albedo RGBA8
@@ -28,7 +33,7 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     mat4  prevViewProj;
     vec4  cameraPos;
     vec4  terrainParams;
-    vec4  terrainOrigin;
+    vec4  terrainOrigin; // x=originX, y=originZ, z=1 si canal A = lave (v1.0.123), w=temps (s)
     vec4  layerTiling; // x=grass, y=dirt, z=rock, w=snow (metres per tile)
     vec4  texOffsetX;  // décalage X du pavage par couche (m) : pavage en coordonnées globales
     vec4  texOffsetZ;  // décalage Z du pavage par couche (m)
@@ -90,6 +95,45 @@ vec4 triplanarSample(sampler2DArray arr, float layer,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// v1.0.123 — lave procédurale (Enfers)
+// ─────────────────────────────────────────────────────────────────────────────
+float lavaHash(vec2 p)
+{
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float lavaNoise(vec2 p)
+{
+    vec2 i = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(lavaHash(i), lavaHash(i + vec2(1.0, 0.0)), u.x),
+               mix(lavaHash(i + vec2(0.0, 1.0)), lavaHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float lavaFbm(vec2 p)
+{
+    float s = 0.0, a = 0.5;
+    for (int k = 0; k < 4; ++k) { s += a * lavaNoise(p); p = p * 2.03 + vec2(17.1, 9.7); a *= 0.5; }
+    return s;
+}
+
+// Couleur de la lave au point (m, repère de rendu) et part en fusion (0..1, émissive).
+// La croûte noire se fend et dérive lentement ; la lave en fusion va du rouge au jaune.
+vec3 lavaColor(vec2 xz, float t, out float molten)
+{
+    vec2 flow = vec2(t * 0.35, t * 0.22);
+    float warp = lavaFbm(xz * 0.015 + vec2(t * 0.01));
+    float n = lavaFbm(xz * 0.06 + flow * 0.06 + warp * 2.0);
+    molten = smoothstep(0.42, 0.62, n);
+    float heat = lavaFbm(xz * 0.2 - flow * 0.1);
+    vec3 hot = mix(vec3(0.95, 0.25, 0.03), vec3(1.0, 0.72, 0.18), heat);
+    vec3 crust = vec3(0.07, 0.045, 0.035);
+    return mix(crust, hot, molten);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 void main()
 {
     // ── M34.3: Hole mask discard ──────────────────────────────────────────────
@@ -114,13 +158,18 @@ void main()
     float tilingDirt  = ubo.layerTiling.y;
     float tilingRock  = ubo.layerTiling.z;
     float tilingSnow  = ubo.layerTiling.w;
+    // v1.0.123 — canal A = lave (Enfers) : couleur procédurale au lieu de la neige.
+    bool  lavaMode = ubo.terrainOrigin.z > 0.5;
+    float molten   = 0.0;
+    vec3  lavaAlb  = lavaMode ? lavaColor(vWorldPos.xz, ubo.terrainOrigin.w, molten) : vec3(0.0);
 
     // ── Sample and blend albedo (triplanar per layer) ─────────────────────────
     vec3 albedo = vec3(0.0);
     albedo += triplanarSample(uAlbedoArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass).rgb * w.r;
     albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ).rgb * w.g;
     albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ).rgb * w.b;
-    albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ).rgb * w.a;
+    albedo += (lavaMode ? lavaAlb
+                        : triplanarSample(uAlbedoArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow).rgb) * w.a;
     float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
     vec3 grassHue = vec3(0.88, 1.04, 0.82);
     albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
@@ -139,7 +188,8 @@ void main()
     detailN += triplanarSample(uNormalArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass).rgb * w.r;
     detailN += triplanarSample(uNormalArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ).rgb * w.g;
     detailN += triplanarSample(uNormalArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ).rgb * w.b;
-    detailN += triplanarSample(uNormalArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ).rgb * w.a;
+    detailN += (lavaMode ? macroN * 0.5 + 0.5
+                         : triplanarSample(uNormalArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow).rgb) * w.a;
     // Decode blended detail normal and combine with macro normal
     vec3 detailNWorld = normalize(detailN * 2.0 - 1.0);
     vec3 blendedN     = normalize(macroN + detailNWorld);
@@ -150,8 +200,13 @@ void main()
     orm += triplanarSample(uORMArray, 0.0, vWorldPos + vec3(ubo.texOffsetX.x, 0.0, ubo.texOffsetZ.x), macroN, tilingGrass) * w.r;
     orm += triplanarSample(uORMArray, 1.0, vWorldPos + vec3(ubo.texOffsetX.y, 0.0, ubo.texOffsetZ.y), macroN, tilingDirt ) * w.g;
     orm += triplanarSample(uORMArray, 2.0, vWorldPos + vec3(ubo.texOffsetX.z, 0.0, ubo.texOffsetZ.z), macroN, tilingRock ) * w.b;
-    orm += triplanarSample(uORMArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow ) * w.a;
-    outORM = orm;
+    orm += (lavaMode ? vec4(1.0, mix(0.85, 0.45, molten), 0.0, 1.0)
+                     : triplanarSample(uORMArray, 3.0, vWorldPos + vec3(ubo.texOffsetX.w, 0.0, ubo.texOffsetZ.w), macroN, tilingSnow)) * w.a;
+    // GBufferC.a = 1 − émission (1 partout sauf la lave en fusion, v1.0.123), avec une
+    // lente pulsation de la lueur.
+    float pulse    = 0.85 + 0.15 * sin(ubo.terrainOrigin.w * 1.7 + molten * 6.2831);
+    float emissive = lavaMode ? clamp(w.a * molten * pulse, 0.0, 1.0) : 0.0;
+    outORM = vec4(orm.rgb, 1.0 - emissive);
 
     // ── Velocity for TAA reprojection ─────────────────────────────────────────
     vec2 prevNDC = vPrevClip.xy / max(vPrevClip.w, 1e-6);

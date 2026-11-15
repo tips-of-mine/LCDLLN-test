@@ -44,6 +44,7 @@
 #include "lib/WorldGen.h"
 #include "lib/WorldGenContext.h"
 
+#include "src/shared/world/LavaMask.h"
 #include "src/shared/world/RespawnRules.h"
 #include "src/shared/world/WorldCells.h"
 
@@ -302,12 +303,16 @@ namespace
 	}
 
 	/// v1.0.83 — palette infernale (T15-22) des 9 cellules générées dans \p out :
-	/// splat sans canal herbe (R) ni neige (A), masque d'herbe et densité forestière
+	/// splat sans canal herbe (R) ; canal A (neige) = lave depuis v1.0.123, présent dans
+	/// la mer de lave (N000_W001) et repris (blocs moyennés) par `lava_mask.lvmk` ; zone.json avec
+	/// `lava_layer` ; masque d'herbe et densité forestière
 	/// nuls, décor sans broussaille, fleur, herbe ni arbre vivant ; carte du monde
 	/// avec de la lave jaune-orange (mer de lave de N000_W001) et sans vert.
 	void TestPaletteEnfersV1083(const std::filesystem::path& out)
 	{
 		bool noGrassSnow = true, noGrassMask = true, noForest = true, noGreenProps = true, rockAndDirt = true;
+		bool lavaMaskOk = true, lavaLayer = true;
+		uint64_t lavaMer = 0;
 		for (const char* c : { "n000_e000", "n001_e000", "n000_e001", "s001_e000", "n000_w001",
 			"n001_w001", "n001_e001", "s001_w001", "s001_e001" })
 		{
@@ -315,12 +320,38 @@ namespace
 			const std::vector<uint8_t> splat = ReadBytes(out / "zones" / cell / "terrain_splat.slap");
 			uint64_t dirt = 0, rock = 0;
 			noGrassSnow = noGrassSnow && splat.size() > 12;
+			uint64_t lava = 0;
 			for (size_t k = 12; k + 3 < splat.size(); k += 4)
 			{
-				if (splat[k] != 0 || splat[k + 3] != 0) { noGrassSnow = false; break; }
-				dirt += splat[k + 1]; rock += splat[k + 2];
+				if (splat[k] != 0) { noGrassSnow = false; break; }
+				dirt += splat[k + 1]; rock += splat[k + 2]; lava += splat[k + 3];
 			}
 			rockAndDirt = rockAndDirt && dirt > 0 && rock > 0;
+			if (std::string(c) == "n000_w001") lavaMer = lava;
+			// v1.0.123 — masque de lave du serveur : présent ssi la cellule a de la lave,
+			// mêmes valeurs que le canal A du splat.
+			const std::vector<uint8_t> lm = ReadBytes(out / "zones" / cell / "lava_mask.lvmk");
+			if (lava == 0) lavaMaskOk = lavaMaskOk && lm.empty();
+			else
+			{
+				// Blocs de F×F texels du splat (moyenne arrondie), 512² au plus.
+				engine::world::LavaMask mask; std::string e2;
+				uint32_t T = 0;
+				std::memcpy(&T, splat.data() + 4, 4);
+				const uint32_t F = std::max(1u, T / 512u);
+				bool same = engine::world::LoadLavaMask(lm, mask, e2) && mask.size == T / F && mask.size <= 512u;
+				for (uint32_t bj = 0; same && bj < mask.size; ++bj)
+					for (uint32_t bi = 0; same && bi < mask.size; ++bi)
+					{
+						double s = 0.0;
+						for (uint32_t dj = 0; dj < F; ++dj)
+							for (uint32_t di = 0; di < F; ++di)
+								s += splat[12 + ((static_cast<size_t>(bj * F + dj)) * T + bi * F + di) * 4 + 3];
+						same = mask.lava[static_cast<size_t>(bj) * mask.size + bi] == static_cast<uint8_t>(std::lround(s / (F * F)));
+					}
+				lavaMaskOk = lavaMaskOk && same;
+			}
+			lavaLayer = lavaLayer && ReadText(out / "zones" / cell / "zone.json").find("\"lava_layer\": true") != std::string::npos;
 			const std::vector<uint8_t> grass = ReadBytes(out / "zones" / cell / "terrain_grass.grms");
 			noGrassMask = noGrassMask && grass.size() > 12
 				&& std::all_of(grass.begin() + 12, grass.end(), [](uint8_t v) { return v == 0; });
@@ -334,7 +365,9 @@ namespace
 				for (const char* green : { "Bush_", "Fern_", "Flower_", "Grass_", "Clover_", "Mushroom_", "Plant_1", "Pine_", "CommonTree_", "TwistedTree_" })
 					if (m.find(green) != std::string::npos) noGreenProps = false;
 		}
-		Check(noGrassSnow && rockAndDirt, "palette v1.0.83 : splat des Enfers sans herbe ni neige (terre et roche)");
+		Check(noGrassSnow && rockAndDirt, "palette v1.0.83 : splat des Enfers sans herbe (terre et roche)");
+		Check(lavaMer > 255u * 5000u && lavaMaskOk && lavaLayer,
+			"lave v1.0.123 : canal A = lave (mer de lave), lava_mask.lvmk = blocs moyennes, zone.json lava_layer");
 		Check(noGrassMask && noForest, "palette v1.0.83 : Enfers sans masque d'herbe ni foret");
 		Check(noGreenProps, "palette v1.0.83 : decor des Enfers sans broussaille, herbe ni arbre vivant");
 		// Carte du monde : lave jaune-orange dans la mer de lave, aucun pixel vert dans le carré 3×3.

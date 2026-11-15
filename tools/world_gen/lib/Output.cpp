@@ -35,6 +35,7 @@
 #include "src/client/world/instances/ForestMask.h"
 #include "src/client/world/instances/ScatterInstances.h"
 #include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/LavaMask.h"
 
 #include <algorithm>
 #include <cmath>
@@ -258,24 +259,28 @@ namespace tools::world_gen
 			// Pentes fortes et hauts sommets (cendre grise au lieu de neige) : roche.
 			const double rockK = std::max(SmoothStep(26.0, 40.0, slope + n * 4.0), SmoothStep(480.0, 580.0, h + n * 25.0));
 			rock = std::max(rock, rockK);
-			// Lave (mers et fleuves) : terre, la couche la plus chaude disponible.
-			const double lava = InfernalLavaAt(w.master, p.x, p.z);
-			dirt = Lerp(dirt, 1.0, lava); rock *= 1.0 - lava;
-			// Chemins et emprise urbaine (Citadelle, mines, camps) : terre battue.
+			// v1.0.123 — lave (mers et fleuves) dans le canal A (« neige », toujours vide aux
+			// Enfers) : le client la rend lumineuse (zone.json `render.terrain.lava_layer`) et
+			// le serveur y tue en 3 s (lava_mask.lvmk, même valeur).
+			double lava = InfernalLavaAt(w.master, p.x, p.z);
+			// Chemins et emprise urbaine (Citadelle, mines, camps) : terre battue ; un chemin
+			// passe la lave sur une croûte refroidie (pas de lave sous la route).
 			const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 			if (w.roadDist.InBounds(ri, rj))
 			{
 				const double k = SmoothStep(2.2, -0.8, w.roadDist.At(ri, rj));
 				rock *= 1 - k; dirt = Lerp(dirt, 1.0, k);
+				lava *= 1.0 - SmoothStep(6.0, 2.0, w.roadDist.At(ri, rj));
 			}
 			const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
 			if (w.urban.InBounds(ui, uj))
 			{
 				const uint8_t u = w.urban.At(ui, uj);
-				if (u == 2) { dirt = 0.95; rock = 0.05; }
+				if (u == 2) { dirt = 0.95; rock = 0.05; lava = 0.0; }
 				else if (u == 1) dirt += 0.35;
 			}
-			return { 0.0, dirt, rock, 0.0, 0.0 };
+			const double sum = std::max(1e-6, dirt + rock);
+			return { 0.0, dirt / sum * (1.0 - lava), rock / sum * (1.0 - lava), lava, 0.0 };
 		}
 
 		/// Biome effectif (EffectiveCover(MacroBiome)) des échantillons du splat, calculé
@@ -807,6 +812,45 @@ namespace tools::world_gen
 			grass.insert(grass.end(), grassPx.begin(), grassPx.end());
 			if (!WriteBytes(w, zoneDir + "terrain_splat.slap", splat, err)) return false;
 			if (!WriteBytes(w, zoneDir + "terrain_grass.grms", grass, err)) return false;
+			// v1.0.123 — masque de lave des Enfers (serveur : mort en 3 s ; LORE_BD §16.49) :
+			// canal A du splat réduit en blocs de F×F texels (moyenne, ≈ 20 m, 512² au plus :
+			// ≈ 1,3 Mo par cellule au lieu de 20 Mo), plus l'altitude la plus haute du sol du bloc
+			// (un joueur debout n'importe où dans le bloc est à moins de 1,5 m au-dessus).
+			if (IsInfernalMap(w.master))
+			{
+				const int F = std::max(1, T / 512), S = T / F;
+				std::vector<uint8_t> lavaPx(static_cast<size_t>(S) * S);
+				std::vector<float> ground(lavaPx.size());
+				bool any = false;
+				ParallelRows(S, [&](int bj) {
+					for (int bi = 0; bi < S; ++bi)
+					{
+						double sumL = 0.0, maxH = -1e30;
+						for (int dj = 0; dj < F; ++dj)
+							for (int di = 0; di < F; ++di)
+							{
+								const int i = bi * F + di, j = bj * F + dj;
+								sumL += splatPx[(static_cast<size_t>(j) * T + i) * 4 + 3];
+								maxH = std::max(maxH, w.HeightAt({ w.terrainOriginX + (i + 0.5) * px, w.terrainOriginZ + (j + 0.5) * px }));
+							}
+						const size_t q = static_cast<size_t>(bj) * S + bi;
+						lavaPx[q] = static_cast<uint8_t>(std::lround(sumL / (F * F)));
+						ground[q] = static_cast<float>(maxH);
+					}
+				});
+				for (uint8_t v : lavaPx) any = any || v != 0;
+				if (any)
+				{
+					engine::world::LavaMask lm;
+					lm.size = static_cast<uint32_t>(S);
+					lm.originX = w.terrainOriginX;
+					lm.originZ = w.terrainOriginZ;
+					lm.texelM = px * F;
+					lm.lava = std::move(lavaPx);
+					lm.groundY = std::move(ground);
+					if (!WriteBytes(w, zoneDir + "lava_mask.lvmk", engine::world::SaveLavaMask(lm), err)) return false;
+				}
+			}
 		}
 		// ---- FORET.1 : densité forestière (le client y pose arbres et sous-bois).
 		{
@@ -962,6 +1006,8 @@ namespace tools::world_gen
 			rt.objectValue["forest_mask"] = JStr(zoneDir + "terrain_forest.frms");
 			rt.objectValue["hole_mask"] = JStr("");
 			rt.objectValue["grass_mask_visual_strength"] = JNum(0.35);
+			// v1.0.123 — Enfers : le canal A du splat est la lave (rendu lumineux, client).
+			if (IsInfernalMap(w.master)) rt.objectValue["lava_layer"] = JBool(true);
 			JsonValue& tr = Child(root, "terrain");
 			tr.objectValue["_comment"] = JStr("Cadrage de la cellule : world_size (m) couvert par la heightmap, origine = coin min (x, z) GLOBAL, altitude max encodee, resolution de la heightmap.");
 			tr.objectValue["world_size"] = JNum(w.terrainSizeM);

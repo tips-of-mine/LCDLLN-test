@@ -82,6 +82,8 @@ namespace engine::render::terrain
         ///
         /// Config keys read:
         ///   render.terrain.grass_mask_visual_strength (float, default 0.35) — multiplie le masque herbe en fragment (0 = off).
+        ///   render.terrain.lava_layer (bool, default false) — v1.0.123 : le canal A du splat est
+        ///     la lave lumineuse (cellules des Enfers, zone.json générée par tools/world_gen).
         ///   terrain.world_size             (float, default 1024.0) – total terrain world extent (metres)
         ///   terrain.height_scale           (float, default 200.0)  – max height in world units
         ///   terrain.origin_x               (float, default -512.0) – world X of terrain corner
@@ -276,7 +278,7 @@ namespace engine::render::terrain
         //   mat4  prevViewProj    offset  64  (64 bytes)
         //   vec4  cameraPos       offset 128  (xyz = position, w = unused)
         //   vec4  terrainParams   offset 144  (x=terrainSize, y=heightScale, z=vertStepWorld, w=grassMaskVisualStrength)
-        //   vec4  terrainOrigin   offset 160  (x=originX, y=originZ, z=unused, w=unused)
+        //   vec4  terrainOrigin   offset 160  (x=originX, y=originZ, z=1 si canal A = lave (v1.0.123), w=temps s)
         //   vec4  layerTiling     offset 176  (x=grass, y=dirt, z=rock, w=snow tiling metres/tile)
         //                         total  192
         struct FrameUbo
@@ -285,7 +287,7 @@ namespace engine::render::terrain
             float prevViewProj[16];  // offset  64
             float cameraPos[4];      // offset 128  (xyz + w=0)
             float terrainParams[4];  // offset 144  (x=size, y=heightScale, z=vertStepWorld, w=grassMaskStrength)
-            float terrainOrigin[4];  // offset 160  (x=originX, y=originZ, z=0, w=0)
+            float terrainOrigin[4];  // offset 160  (x=originX, y=originZ, z=lave 0/1, w=temps s)
             float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
             float texOffsetX[4];     // offset 192  (décalage X du pavage par couche, m, < tiling)
             float texOffsetZ[4];     // offset 208  (décalage Z du pavage par couche, m, < tiling)
@@ -351,6 +353,7 @@ namespace engine::render::terrain
         HoleMaskGpu           m_holeMaskGpu;  ///< GPU R8_UNORM texture (binding 7)
 
         float                 m_grassMaskVisualStrength = 0.0f; ///< `render.terrain.grass_mask_visual_strength` (0 = off)
+        bool                  m_lavaLayer = false;              ///< `render.terrain.lava_layer` : canal A = lave (Enfers)
 
         // ── M34.3: Cliff pipeline ─────────────────────────────────────────────────
         VkDescriptorSetLayout m_cliffDescSetLayout = VK_NULL_HANDLE;

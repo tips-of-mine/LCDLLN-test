@@ -673,6 +673,15 @@ namespace tools::world_gen
 				{
 					err = "master: graveyards.without_graveyard vide ou duplique '" + id + "'"; return false;
 				}
+			// v1.0.121 : cellules « villages seulement » (pas de cimetière isolé ni de hameau).
+			for (const std::string& id : GetStrArray(*gv, "village_only_cells"))
+			{
+				int n = 0, e = 0;
+				if (!ParseCellId(id, n, e) || !out.graveyardVillageOnlyCells.insert({ n, e }).second)
+				{
+					err = "master: graveyards.village_only_cells invalide ou duplique '" + id + "'"; return false;
+				}
+			}
 		}
 		{
 			std::set<std::string> seen;

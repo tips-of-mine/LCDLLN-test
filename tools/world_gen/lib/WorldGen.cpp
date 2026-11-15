@@ -374,6 +374,36 @@ namespace tools::world_gen
 			++total.cells;
 			cells.push_back(w.get());
 		}
+		// v1.0.121 — recensement des cimetières par cellule (--graveyard-report), écrit
+		// avant le contrôle du total pour aider à le corriger.
+		if (!opt.graveyardReport.empty())
+		{
+			std::FILE* f = std::fopen(opt.graveyardReport.c_str(), "wb");
+			if (!f) { err = "rapport des cimetieres impossible a ecrire : " + opt.graveyardReport; return false; }
+			for (const World* w : cells)
+			{
+				// Jeton « id@x:z » (position monde en m, pour choisir les hameaux les plus
+				// proches d'un autre cimetière) ; « id@? » pour une ligne importée.
+				std::vector<std::string> gy;
+				char pos[64];
+				for (const RespawnDef& r : w->respawns)
+					if (r.type == "graveyard")
+					{
+						std::snprintf(pos, sizeof(pos), "@%.0f:%.0f", r.position.x, r.position.z);
+						gy.push_back(r.graveyardId + pos);
+					}
+				for (const std::string& l : w->importedRespawnLines)
+					if (l.find(" graveyard ") != std::string::npos)
+					{
+						const size_t at = l.rfind(" gy=");
+						gy.push_back((at == std::string::npos ? std::string("?") : l.substr(at + 4)) + "@?");
+					}
+				std::fprintf(f, "%s %zu", w->cellName.c_str(), gy.size());
+				for (const std::string& id : gy) std::fprintf(f, " %s", id.c_str());
+				std::fprintf(f, "\n");
+			}
+			std::fclose(f);
+		}
 		// v1.0.111 — nombre exact de cimetières (graveyards.target du master, 666 aux
 		// Royaumes) : contrôlé seulement sur une génération complète (sans --cells).
 		if (opt.cells.empty() && g.master.graveyardTarget > 0)

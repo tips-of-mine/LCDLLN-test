@@ -35,6 +35,13 @@ namespace tools::world_gen
 		/// Bits ScatterInstance::flags (cf. src/client/world/instances/ScatterInstances.h).
 		constexpr uint8_t kSolid = 1u, kPiece = 2u, kOccluder = 4u;
 
+		/// v1.0.121 — la cellule est-elle dans `graveyards.village_only_cells` du master ?
+		/// (seuls les villes et villages du lore y ont un cimetière). Sans effet de bord.
+		bool VillageOnlyCell(const World& w)
+		{
+			return w.master.graveyardVillageOnlyCells.count({ w.cell.n, w.cell.e }) != 0;
+		}
+
 		/// Modèle de bâtiment candidat (référence de bibliothèque + encombrement).
 		struct TemplateRef
 		{
@@ -233,7 +240,7 @@ namespace tools::world_gen
 		/// `without_graveyard` en tient compte pour garder `graveyards.target`).
 		void BuildIsolatedGraveyard(World& w)
 		{
-			if (!w.master.graveyardFillEmptyCells) return;
+			if (!w.master.graveyardFillEmptyCells || VillageOnlyCell(w)) return;
 			for (const SettlementLayout& L : w.layouts)
 				if (L.hasGraveyard && L.cityId != w.master.importAnchorCity) return;
 			for (const std::string& l : w.importedRespawnLines)
@@ -904,7 +911,9 @@ namespace tools::world_gen
 			// --- Cimetière / point de résurrection : hors les murs, près d'une route
 			//     (villes du lore et hameaux ; pas pour les fermes, camps et ruines ;
 			//     v1.0.111 : ni pour un hameau de `graveyards.without_graveyard`).
-			if ((c.procedural.empty() || c.procedural == "hameau") && !w.master.graveyardExcluded.count(c.id))
+			//     v1.0.121 : dans une cellule `graveyards.village_only_cells`, seules les
+			//     villes et villages du lore en ont un (pas les hameaux procéduraux).
+			if ((c.procedural.empty() || (c.procedural == "hameau" && !VillageOnlyCell(w))) && !w.master.graveyardExcluded.count(c.id))
 			{
 				L.hasGraveyard = true;
 				const double a = angles.empty() ? 0.0 : angles[0] + 0.5;

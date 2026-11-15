@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 		else if (a == "--world" && i + 1 < argc) opt.worldId = argv[++i];
 		else if (a == "--output" && i + 1 < argc) opt.outputRoot = argv[++i];
 		else if (a == "--dry-run") opt.dryRun = true;
+		else if (a == "--graveyard-report" && i + 1 < argc) opt.graveyardReport = argv[++i];
 		else if (a == "--jobs" && i + 1 < argc) opt.jobs = std::max(0, std::atoi(argv[++i]));
 		else if (a == "--cells" && i + 1 < argc)
 		{
@@ -41,7 +42,7 @@ int main(int argc, char** argv)
 		}
 		else if (a == "-h" || a == "--help")
 		{
-			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--jobs N] [--dry-run]\n");
+			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--jobs N] [--dry-run] [--graveyard-report <fichier>]\n");
 			return 0;
 		}
 		else

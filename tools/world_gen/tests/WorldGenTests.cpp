@@ -2681,7 +2681,7 @@ namespace
 		std::vector<std::string> ids = g.master.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
-		Check(playable.size() == 497, "routes du lore v1.0.105 : 497 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119)");
+		Check(playable.size() == 742, "routes du lore v1.0.105 : 742 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
 		int viaOk = 0;
@@ -3139,8 +3139,7 @@ namespace
 			"S014_E015", "S014_E016", "S015_E014", "S015_E015", "S015_E016" };
 		size_t ouvertes = 0;
 		for (const char* c : cases) ouvertes += gen.count(c);
-		Check(ouvertes == 16u && !gen.count("N015_E017") && !gen.count("S013_E014"),
-			"routes coupees v1.0.119 : 16 cases generees (Mhorgad N015_E017 et S013_E014 fermees)");
+		Check(ouvertes == 16u, "routes coupees v1.0.119 : 16 cases generees (Mhorgad N015_E017 et S013_E014 ouvertes ensuite, lot 1 v1.0.121)");
 		size_t villages = 0;
 		for (const CityDef& c : m.cities)
 			if (c.id == "town_0112" || c.id == "town_0134" || c.id == "clearwater")
@@ -3163,8 +3162,102 @@ namespace
 		Check(routes && col, "routes coupees v1.0.119 : extremites jouables, 000071 par le col de Klehrwath (S012_E017, S013_E016)");
 	}
 
+	/// v1.0.121-v1.0.122 (décision du 14/11/2026 : toutes les routes coupées ouvertes par lots,
+	/// cases sans cimetière admises). Lot 1 (routes courtes, v1.0.121) et lot 2 (le reste,
+	/// v1.0.122) : 245 cases ouvertes, toutes dans `graveyards.village_only_cells` et dans
+	/// `generated_cells` ; un lieu [GD] (POI) par case vide (82 au lot 1, 125 au lot 2) ;
+	/// plus aucune route du lore (hors routes maritimes) entre une zone jouable et une zone
+	/// fermée. Génération : une case vide « villages seulement » (N019_E018) n'a aucun
+	/// cimetière ; celle de Saelvik (S014_E013) garde celui du village, aucun hameau n'en a.
+	void TestRoutesLotsV1121()
+	{
+		using namespace tools::world_gen;
+		namespace fs = std::filesystem;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "routes lots v1.0.121 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		const std::set<std::string> gen(m.generatedCells.begin(), m.generatedCells.end());
+		size_t vo = 0;
+		for (const std::string& c : m.generatedCells)
+		{
+			int n = 0, e = 0;
+			ParseCellId(c, n, e);
+			vo += m.graveyardVillageOnlyCells.count({ n, e });
+		}
+		Check(m.graveyardVillageOnlyCells.size() == 245u && vo == 245u && gen.count("N015_E017") && gen.count("S013_E014"),
+			"routes lots v1.0.121 : 245 cases villages seulement, toutes generees (Mhorgad N015_E017 et S013_E014 ouvertes)");
+		size_t lieux1 = 0, lieux2 = 0;
+		std::set<std::string> poiCells;
+		for (const PoiDef& p : m.pois)
+		{
+			const bool l1 = p.description.find("[GD v1.0.121") != std::string::npos, l2 = p.description.find("[GD v1.0.122") != std::string::npos;
+			if ((l1 || l2) && gen.count(p.cell)) { lieux1 += l1; lieux2 += l2; poiCells.insert(p.cell); }
+		}
+		Check(lieux1 == 82u && lieux2 == 125u && poiCells.size() == 207u,
+			"routes lots v1.0.121 : 82 + 125 lieux [GD] (POI), un par case vide");
+		g.contentRoot = LCDLLN_CONTENT_DIR;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		std::map<std::string, std::string> cellOf;
+		for (const CityDef& c : m.cities) cellOf[c.id] = c.cell;
+		for (const PoiDef& p : m.pois) cellOf[p.id] = p.cell;
+		size_t coupees = 0, vues = 0;
+		for (const LoreRoadDef& r : m.loreRoads)
+		{
+			const auto a = cellOf.find(r.fromId), b = cellOf.find(r.toId);
+			if (a == cellOf.end() || b == cellOf.end()) continue;
+			++vues;
+			if (playable.count(a->second) != playable.count(b->second))
+			{
+				std::fprintf(stderr, "  route coupee : %s (%s - %s)\n", r.id.c_str(), r.fromId.c_str(), r.toId.c_str());
+				++coupees;
+			}
+		}
+		Check(vues > 150 && coupees == 0, "routes lots v1.0.121 : plus aucune route du lore entre zone jouable et zone fermee");
+		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_routes_v1121";
+		std::error_code ec;
+		fs::remove_all(tmp, ec);
+		g.outputRoot = tmp.string();
+		// Pipeline complet d'une cellule (sans écriture).
+		auto cell = [&](const std::string& id) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			return w;
+		};
+		auto graves = [](const World& w) {
+			std::vector<std::string> v;
+			for (const RespawnDef& r : w.respawns) if (r.type == "graveyard") v.push_back(r.graveyardId);
+			return v;
+		};
+		{
+			auto w = cell("N019_E018");
+			Check(!w->hasIsolatedGraveyard && graves(*w).empty(), "routes lots v1.0.121 : N019_E018 (case vide) sans cimetiere");
+		}
+		{
+			auto w = cell("S014_E013");
+			const std::vector<std::string> v = graves(*w);
+			bool hamlet = false;
+			for (const SettlementLayout& L : w->layouts) hamlet = hamlet || (L.hasGraveyard && L.cityId.find("_hameau_") != std::string::npos);
+			Check(!hamlet && !w->hasIsolatedGraveyard && std::count(v.begin(), v.end(), std::string("town_0118")) == 1,
+				"routes lots v1.0.121 : S014_E013 garde le cimetiere de Saelvik, aucun hameau n'en a");
+		}
+		fs::remove_all(tmp, ec);
+	}
+
 	/// v1.0.111 : toujours 666 cimetières (décision du propriétaire, exploit du pèlerin).
-	/// Master (`graveyards` : target 666, fill_empty_cells, 95 hameaux sans cimetière depuis v1.0.119) ;
+	/// Master (`graveyards` : target 666, fill_empty_cells, 129 hameaux sans cimetière depuis v1.0.122) ;
 	/// une cellule sans agglomération à cimetière (N011_E018) reçoit un cimetière isolé
 	/// dans la case, au sec ; sans fill_empty_cells elle n'en a aucun ; un hameau de
 	/// without_graveyard (N001_E011) n'a pas de cimetière mais la cellule en garde un.
@@ -3180,9 +3273,9 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 95u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
+			&& g.master.graveyardExcluded.size() == 129u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
 			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 95 hameaux sans cimetiere depuis v1.0.119)");
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 129 hameaux sans cimetiere depuis v1.0.122)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
@@ -3633,6 +3726,7 @@ int main()
 	TestGouffreV1107();
 	TestCimetieresV1111();
 	TestRoutesCoupeesV1119();
+	TestRoutesLotsV1121();
 	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();

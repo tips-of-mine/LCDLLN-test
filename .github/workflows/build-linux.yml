@@ -189,6 +189,8 @@ jobs:
           GEN=$(find "$GITHUB_WORKSPACE/build/linux-x64-release/pkg" -type f -name lcdlln_world_gen -print -quit)
           if [ -z "$GEN" ]; then echo "[FAIL] lcdlln_world_gen introuvable"; exit 1; fi
           "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world royaumes
+          # v1.0.122 : 742 cellules jouables (≈ 30 Mo de sorties chacune) : place disque restante.
+          df -h "$GITHUB_WORKSPACE" | tail -1
           STARTS="$GITHUB_WORKSPACE/game/data/world/royaumes/start_locations.json"
           test -s "$STARTS" || { echo "[FAIL] $STARTS absent"; exit 1; }
           grep -q generated_cells "$STARTS" || { echo "[FAIL] generated_cells absent de $STARTS"; exit 1; }

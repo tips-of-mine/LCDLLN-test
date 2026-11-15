@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.120)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.122)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -86,7 +86,9 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.117 | `d18f33b` | **dialogues, contre-quêtes, lieux du T5** : 77 dialogues remplis (répliques originales), 4 contre-quêtes Lune Noire, Krak de Jhenner, citadelle impériale et Passe de Heniak placés ([LORE_BD §16.44](LORE_BD.md)) | — | répliques et cases [GD] à relire |
 | v1.0.118 | `d18f33b` | **couleur du nom de zone, torches et fond sombre du gouffre** : niveaux des régions recopiés au master (`sync_levels.py`), teinte de la bannière d'entrée ; lumières et zones d'ambiance des cellules lues par le client ([LORE_BD §16.45](LORE_BD.md)) | R (`places.json`) + client | rendu à vérifier en jeu |
 | v1.0.119 | `7515702` | **routes coupées Farvhenn – Vestmhor et Shaddrek – Klehrwath ouvertes** : 16 cases, 3 villages, 12 lieux [GD], 24 cimetières compensés ([LORE_BD §16.46](LORE_BD.md)) | R | lieux [GD] à relire ; 43 routes restantes |
-| v1.0.120 | (ce commit) | **falaises de craie de la côte ouest** (type Douvres) : relief `falaise` du générateur, 7 cases et leurs voisines côtières, paroi d'environ 90 m, plateau, plage, paroi blanche ([LORE_BD §16.47](LORE_BD.md)) | R | rendu à vérifier en jeu |
+| v1.0.120 | `2696859` | **falaises de craie de la côte ouest** (type Douvres) : relief `falaise` du générateur, 7 cases et leurs voisines côtières, paroi d'environ 90 m, plateau, plage, paroi blanche ([LORE_BD §16.47](LORE_BD.md)) | R | rendu à vérifier en jeu |
+| v1.0.121 | `a699c23` | **routes coupées, lot 1 (routes courtes)** : 18 routes, 92 cases nouvelles (103 listées), 82 lieux [GD] ; cases « villages seulement » (`graveyards.village_only_cells`) et recensement `--graveyard-report` du générateur ([LORE_BD §16.48](LORE_BD.md)) | R | lieux [GD] à relire |
+| v1.0.122 | (ce commit) | **routes coupées, lot 2 (le reste)** : 17 routes + 7 cases, 153 cases nouvelles, 125 lieux [GD] ; plus aucune route du lore coupée ; 742 cases jouables, 34 villes et villages ouverts ; 666 cimetières gardés ([LORE_BD §16.48](LORE_BD.md)) | R | lieux [GD] à relire |
 
 ## 3. Impact sur le jeu et déploiement
 
@@ -131,6 +133,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 11. ~~Gouffre : Gouffre des Revenus, Fente, Thurvhal, Ghaurdes, Mhaldra, Kerreth, 3 quêtes (16.36).~~ **Tranché en v1.0.113** : noms validés (LORE_BD §16.40).
 12. Noms des fleuves, rivières et lacs (R).
 13. ~~Calendrier : noms des lunes, année de jeu à fixer (§0).~~ **Tranché en v1.0.113** : année 3417 AO (LORE_BD §16.40).
+13 bis. Lieux `[GD]` des routes coupées : 12 (16.46) et 207 (16.48), noms et niveaux à relire.
 
 ### 4.2 Niveaux
 
@@ -166,7 +169,7 @@ Tout ce qui est marqué `[GD]` est une proposition à valider. Les numéros renv
 
 ### 4.5 Routes et monde jouable
 
-37. **Routes encore coupées** au mur invisible : Farvhenn – Vestmhor (000106), Shaddrek – Klehrwath (000071) ; 43 routes du lore qui s'arrêtent à une zone fermée (16.33, 16.35). **v1.0.119** : les 2 routes coupées ouvertes (LORE_BD §16.46) ; restent les 43 routes, 316 cases en cascade, par lots.
+37. ~~**Routes encore coupées** au mur invisible : Farvhenn – Vestmhor (000106), Shaddrek – Klehrwath (000071) ; 43 routes du lore qui s'arrêtent à une zone fermée (16.33, 16.35). **v1.0.119** : les 2 routes coupées ouvertes (LORE_BD §16.46) ; restent les 43 routes, 316 cases en cascade, par lots.~~ **Tranché en v1.0.121-v1.0.122** : toutes ouvertes en deux lots, 245 cases, cases sans cimetière admises (LORE_BD §16.48).
 38. Tracés `[GD]` des 11 routes créées en v1.0.106 (dont Orkh, Marn) ; Piste des Morts (000236) en double de 000074 (16.35).
 39. Baie de l'Île de la Trêve sans route (5 cases de haut-fond ; une chaussée demanderait un changement de terrain) (16.35).
 40. Routes maritimes et pontons non tracés en jeu ; lignes maritimes non jouées (16.3, 16.34).

@@ -351,9 +351,15 @@ namespace tools::world_gen
 		///    ISOLÉ (sans ville), au bord d'une route si possible.
 		///  - `without_graveyard` : hameaux procéduraux (id) privés de cimetière pour
 		///    compenser les cimetières isolés (le total reste `target`).
+		///  - `village_only_cells` (v1.0.121, décision du 14/11/2026 « cases sans
+		///    cimetière admises ») : cellules ouvertes par les lots de routes où SEULES
+		///    les villes et villages du lore ont un cimetière — ni cimetière isolé, ni
+		///    cimetière de hameau procédural ; une telle cellule peut n'en avoir aucun.
+		///    Paires (nord, est) des identifiants `N013_E017`.
 		int graveyardTarget = 0;
 		bool graveyardFillEmptyCells = false;
 		std::set<std::string> graveyardExcluded;
+		std::set<std::pair<int, int>> graveyardVillageOnlyCells;
 	};
 
 	/// Bilan d'une génération (journalisé par la CLI, vérifié par les tests).

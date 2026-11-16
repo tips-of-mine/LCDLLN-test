@@ -629,6 +629,7 @@ add_library(engine_core
   src/client/app/EngineWorld.cpp
   src/client/app/EngineAudio.cpp
   src/client/app/EngineCells.cpp
+  src/client/app/EngineEditor.cpp
   src/client/world/scatter/ScatterField.cpp
   src/client/world/places/WorldPlaces.cpp
   src/client/world/discovery/MapDiscoveryClient.cpp   # carte à découvrir (client)

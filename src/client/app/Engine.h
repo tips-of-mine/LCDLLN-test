@@ -395,7 +395,12 @@ namespace engine
 		/// du UBO caméra. Doit être appelé avant `RenderVisibleChunks` chaque frame.
 		void UpdateTerrainChunkCameraUbo(const float* viewProjMat4);
 #if defined(_WIN32)
-		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
+		/// World editor : (re)construit le terrain GPU (heightmap, splat, herbe) et
+		/// les outils de sculpture à partir du document ouvert dans la session.
+		/// No-op hors --world-editor, sans device Vulkan ou sans session, et si le
+		/// document n'a pas de heightmap. Effet de bord : vkDeviceWaitIdle, puis
+		/// destruction / recréation de m_terrain et m_worldEditorTerrainTools.
+		/// Main thread uniquement (définie dans EngineEditor.cpp).
 		void RebuildWorldEditorTerrainGpu();
 
 		/// M100.46+ — Pont CPU TerrainDocument → GPU HeightmapData.

@@ -336,6 +336,67 @@ namespace engine
 
 		void BeginFrame();
 		void Update();
+		// --- Sous-étapes d'Update() (découpage, aucun changement de comportement) ---
+#if defined(_WIN32)
+		/// World editor : traite les demandes de la session d'édition en début de frame
+		/// (zone neuve : chunks plats + rebuild GPU, changement de carte : undo vidé,
+		/// documents réinitialisés). No-op hors --world-editor. Main thread, appelée par Update().
+		void UpdateWorldEditorSession();
+#endif
+#if defined(_WIN32)
+		/// World editor : recrée la cible offscreen du viewport si le ScenePanel a changé
+		/// de taille à la frame précédente. Effet de bord : vkDeviceWaitIdle + destruction /
+		/// recréation de m_editorViewportTarget. Main thread, appelée par Update().
+		void ResizeWorldEditorViewportTarget();
+#endif
+#if defined(_WIN32)
+		/// World editor : rend la coquille de l'éditeur (panneaux ImGui) pour la frame.
+		/// Doit être appelée après ImGui::NewFrame et avant ImGui::Render.
+		/// \param out état de rendu de la frame en cours d'écriture. Main thread.
+		void RenderWorldEditorShell(engine::RenderState& out);
+#endif
+		/// World editor : caméra libre de l'éditeur (rotation au clic droit, déplacement
+		/// clavier) quand l'overlay de l'éditeur est prêt.
+		/// \param out état de rendu de la frame (caméra écrite). \param dt pas de temps (s).
+		/// \param mouseSensitivity,invertY,movementLayout réglages de contrôle. Main thread.
+		void UpdateWorldEditorCamera(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout);
+#if defined(_WIN32)
+		/// World editor : overlay du viewport (grille, gizmos, picking, outils terrain)
+		/// et entrées souris dans la vue 3D de l'éditeur.
+		/// \param out état de rendu de la frame en cours d'écriture. Main thread.
+		void UpdateWorldEditorViewportOverlay(engine::RenderState& out);
+#endif
+#if defined(_WIN32)
+		/// Crée et initialise paresseusement l'overlay ImGui (contexte partagé par
+		/// l'éditeur et les fenêtres de jeu : guilde, hôtel des ventes, loot…) dès que
+		/// Vulkan, la swapchain et la fenêtre sont prêts. Effet de bord : alloue
+		/// m_worldEditorImGui et les renderers ImGui. Main thread, appelée par Update().
+		void InitImGuiOverlayIfNeeded();
+#endif
+#if defined(_WIN32)
+		/// Écrans de connexion en ImGui (render.auth_ui.imgui.enabled) : construit la frame
+		/// ImGui des écrans d'authentification et appelle ImGui::Render. Main thread, appelée
+		/// par Update() après NewFrame.
+		void RenderAuthImGuiFrame();
+#endif
+#if defined(_WIN32)
+		/// Fenêtres de jeu en ImGui (après authentification, hors éditeur) : chat, HUD,
+		/// inventaire, guilde, hôtel des ventes, menus Pause / Options… puis ImGui::Render.
+		/// \param out état de rendu de la frame en cours d'écriture. Main thread.
+		void RenderInGameImGuiFrame(engine::RenderState& out);
+#endif
+		/// Branche « en jeu » (écran d'authentification fermé) : entrée dans le monde
+		/// (EnterWorldCommand, connexion gameplay), événements et reconnexion de la session
+		/// master, sauvegarde périodique de position, texte de surimpression (bannière, chat).
+		/// \param out état de rendu de la frame en cours d'écriture. Main thread.
+		void UpdateInWorldSession(engine::RenderState& out);
+		/// Gameplay hors éditeur (--editor inactif) : entrées joueur, déplacement du personnage
+		/// (CharacterController, collisions, bateau), caméra orbitale, machine à états de
+		/// locomotion et actions. \param out état de rendu (caméra, avatar) ; \param dt pas (s) ;
+		/// \param mouseSensitivity,invertY,movementLayout réglages de contrôle ;
+		/// \param authGateActive écran d'authentification affiché (gèle l'input). Main thread.
+		void UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive);
+		// --- fin des sous-étapes d'Update() ---
 		void Render();
 		void EndFrame();
 

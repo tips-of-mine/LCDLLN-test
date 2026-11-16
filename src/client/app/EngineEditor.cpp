@@ -14,12 +14,19 @@
 #include "src/client/app/Engine.h"
 
 #include "src/world_editor/panels/BuildingEditorPanel.h"
+#include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
+#include "src/world_editor/ui/WorldMapIo.h" // lot B3 : SanitizeZoneId (namespacing zone)
 #include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/core/CompositeCommand.h"            // Roadmap-6 : undo groupé du gizmo
 #include "src/world_editor/inspector/SetEntityTransformCommand.h" // Roadmap-6 : undo du drag de gizmo
+#include "src/world_editor/HazardCommand.h"                    // Roadmap-8 : pose de danger undoable
+#include "src/world_editor/scene/LayoutPlacementCommands.h"    // Roadmap-6 : placement undoable
+#include "src/world_editor/panels/ScenePanel.h"
 
 #include <vulkan/vulkan.h>
+
+// vk_mem_alloc.h removed: VMA is disabled (STAB.7) — all subsystems use raw Vulkan allocations.
 
 #include <algorithm>
 #include <cmath>
@@ -36,6 +43,159 @@
 
 namespace engine
 {
+	// Picking terrain du viewport éditeur (déplacé d'Engine.cpp avec les sous-étapes
+	// d'Update() qui l'utilisent ; seul l'éditeur s'en sert).
+	namespace
+	{
+		constexpr float kWorldEditorPickPi = 3.14159265f;
+
+		bool CameraViewportWorldDirection(const engine::render::Camera& camera, int viewportWidth, int viewportHeight,
+			int mouseX, int mouseY, engine::math::Vec3& outDirection)
+		{
+			if (viewportWidth <= 0 || viewportHeight <= 0)
+			{
+				return false;
+			}
+			const float aspect = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+			const float halfTan = std::tan((camera.fovYDeg * kWorldEditorPickPi / 180.0f) * 0.5f);
+			const float ndcX = ((static_cast<float>(mouseX) + 0.5f) / static_cast<float>(viewportWidth)) * 2.0f - 1.0f;
+			const float ndcY = 1.0f - ((static_cast<float>(mouseY) + 0.5f) / static_cast<float>(viewportHeight)) * 2.0f;
+
+			const float cy = std::cos(camera.yaw);
+			const float sy = std::sin(camera.yaw);
+			const float cp = std::cos(camera.pitch);
+			const float sp = std::sin(camera.pitch);
+
+			engine::math::Vec3 forward(-sy * cp, -sp, -cy * cp);
+			// PR26.5 (M??.?) : alignement avec le fix Camera.cpp:22. La fonction
+			// CameraViewportWorldDirection sert a calculer la direction du ray
+			// pour le raycast camera->terrain (RaycastTerrainFromCamera). Doit
+			// utiliser exactement les memes conventions que ComputeViewMatrix
+			// pour que le raycast aligne avec ce que la camera voit a l'ecran.
+			// Sans ce fix, le raycast utilisait un right_inverse alors que la
+			// matrice view (post-PR26.5) a un right_standard, donc le pickX/Z
+			// retourne par le raycast etait decale en X (souris a droite ->
+			// pickX a gauche du sol). Possible cause partielle des items 6+7
+			// (sculpt + splat ne fonctionnent pas) — a confirmer en PR27.
+			engine::math::Vec3 right(-forward.z, 0.0f, forward.x);
+			const float rightLen = right.Length();
+			right = rightLen > 0.0f ? right * (1.0f / rightLen) : engine::math::Vec3(1.0f, 0.0f, 0.0f);
+
+			engine::math::Vec3 up(
+				right.y * forward.z - right.z * forward.y,
+				right.z * forward.x - right.x * forward.z,
+				right.x * forward.y - right.y * forward.x);
+			const float upLen = up.Length();
+			up = upLen > 0.0f ? up * (1.0f / upLen) : engine::math::Vec3(0.0f, 1.0f, 0.0f);
+
+			outDirection = (forward + right * (ndcX * aspect * halfTan) + up * (ndcY * halfTan)).Normalized();
+			return outDirection.LengthSq() > 1e-8f;
+		}
+
+		bool TryTerrainWorldY(const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale, float wx, float wz, float& yOut)
+		{
+			if (hm.width == 0 || hm.height == 0 || ws <= 0.0f)
+			{
+				return false;
+			}
+			const float u = (wx - ox) / ws;
+			const float v = (wz - oz) / ws;
+			if (u < 0.0f || u > 1.0f || v < 0.0f || v > 1.0f)
+			{
+				return false;
+			}
+			yOut = hm.SampleBilinearNorm(u, v) * hScale;
+			return true;
+		}
+
+		bool RaycastTerrainHeightmap(const engine::math::Vec3& O, const engine::math::Vec3& D,
+			const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale, float maxDistance,
+			float& outHitX, float& outHitZ)
+		{
+			if (hm.width == 0 || maxDistance <= 0.0f)
+			{
+				return false;
+			}
+			constexpr int kSegments = 192;
+			float prevT = 0.0f;
+			float prevDiff = 0.0f;
+			bool prevValid = false;
+			{
+				float h0 = 0.0f;
+				const bool ok0 = TryTerrainWorldY(hm, ox, oz, ws, hScale, O.x, O.z, h0);
+				if (ok0)
+				{
+					prevDiff = O.y - h0;
+					prevValid = true;
+				}
+			}
+			for (int i = 1; i <= kSegments; ++i)
+			{
+				const float t = maxDistance * (static_cast<float>(i) / static_cast<float>(kSegments));
+				const float px = O.x + D.x * t;
+				const float py = O.y + D.y * t;
+				const float pz = O.z + D.z * t;
+				float h = 0.0f;
+				if (!TryTerrainWorldY(hm, ox, oz, ws, hScale, px, pz, h))
+				{
+					prevValid = false;
+					continue;
+				}
+				const float diff = py - h;
+				if (prevValid && prevDiff > 0.015f && diff <= 0.015f)
+				{
+					float t0 = prevT;
+					float t1 = t;
+					for (int b = 0; b < 14; ++b)
+					{
+						const float tm = 0.5f * (t0 + t1);
+						const float mxp = O.x + D.x * tm;
+						const float myp = O.y + D.y * tm;
+						const float mzp = O.z + D.z * tm;
+						float mh = 0.0f;
+						if (!TryTerrainWorldY(hm, ox, oz, ws, hScale, mxp, mzp, mh))
+						{
+							t1 = tm;
+							continue;
+						}
+						if (myp > mh)
+						{
+							t0 = tm;
+						}
+						else
+						{
+							t1 = tm;
+						}
+					}
+					const float tf = 0.5f * (t0 + t1);
+					outHitX = O.x + D.x * tf;
+					outHitZ = O.z + D.z * tf;
+					return true;
+				}
+				prevT = t;
+				prevDiff = diff;
+				prevValid = true;
+			}
+			return false;
+		}
+
+		bool RaycastTerrainFromCamera(const engine::render::Camera& camera, int vw, int vh, int mx, int my,
+			const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale,
+			float& outX, float& outZ)
+		{
+			engine::math::Vec3 dir{};
+			if (!CameraViewportWorldDirection(camera, vw, vh, mx, my, dir))
+			{
+				return false;
+			}
+			const float maxDist = std::max(ws * 4.0f, 8192.0f);
+			return RaycastTerrainHeightmap(camera.position, dir, hm, ox, oz, ws, hScale, maxDist, outX, outZ);
+		}
+	}
+
 	void Engine::SyncEditorBuildingPreview()
 	{
 		if (!m_worldEditorShell || !m_pipeline) return;
@@ -1172,6 +1332,858 @@ namespace engine
 				m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
 		{
 			LOG_ERROR(Render, "[Engine] ProcessSplatRefsDirty: splat array rebuild failed");
+		}
+	}
+#endif
+#if defined(_WIN32)
+	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
+	void Engine::UpdateWorldEditorSession()
+	{
+		// Sous-projet 1 (boucle d'edition d'une zone) — Zone NEUVE : initialise
+		// les chunks plats (source de verite) AVANT le rebuild GPU. L'empreinte
+		// N (chunks par axe) se deduit de la resolution r16h : apres l'alignement
+		// A2, 1 texel = 1 m, et un chunk fait 256 m, donc N = max(1, res/256).
+		if (m_worldEditorSession->ConsumeNewZoneChunkInitRequest()
+			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			const uint32_t hmRes = m_worldEditorSession->Doc().heightmapResolution;
+			const int chunksPerAxis = static_cast<int>(std::max<uint32_t>(1u, hmRes / 256u));
+			// Accord de hauteur chunk <-> heightmap (corrige le "terrain qui
+			// chute hors champ a la 1ere edition"). ActionNewMap ecrit la
+			// heightmap r16h a la valeur 32768 (milieu). Le chunk plat
+			// (source de verite) doit demarrer a la MEME hauteur physique,
+			// sinon la 1ere SyncWorldEditorHeightmapFromDocument reecrit
+			// toute la heightmap a la hauteur du chunk et fait chuter le sol.
+			// height_scale est lue avec la meme cle/le meme defaut que
+			// TerrainRenderer::Init (terrain.height_scale, defaut 200).
+			const float heightScale =
+				static_cast<float>(m_cfg.GetDouble("terrain.height_scale", 200.0));
+			const float flatHeightMeters = (32768.0f / 65535.0f) * heightScale;
+			// Lot B3 (audit 2026-06-10 §4.2, correctifs 1-2-4) — Nouvelle carte
+			// = changement de monde : vide la pile undo, reinitialise les 4
+			// documents (terrain/eau/mesh/portails) et propage le zoneId
+			// (namespacing disque chunks/zone_<id>/...) AVANT l'init des
+			// chunks plats. Pas de LoadZoneDocuments ici : une zone neuve
+			// demarre avec des documents vides.
+			m_worldEditorShell->ResetForZoneChange(
+				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
+			m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+			// Réorganisation UI 2026-07-17 — une zone fraîchement créée
+			// (fichiers déjà écrits par ActionNewMap) repart d'un état
+			// « tout enregistré » : sans ce NoteSaved, le Clear de la
+			// pile undo (ResetForZoneChange) marquerait la carte neuve
+			// « non sauvegardée » dans la barre de statut.
+			m_worldEditorShell->NoteSaved();
+			// Nouvelle carte = la caméra est replacée sur la nouvelle zone :
+			// l'origine STABLE du brouillon (mémorisée pour le gizmo/picking)
+			// pointe encore sur l'ANCIENNE carte. On l'invalide pour que le
+			// brouillon (auberge en cours) se recentre sur la vue de la
+			// nouvelle carte au prochain rebuild — sinon il reste hors-champ
+			// et « ne se charge plus ». On force aussi le rebuild.
+			m_editorPreviewValid = false;
+			if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+				bp->MarkPreviewDirty();
+		}
+		// Lot B3 (correctifs 1+3) — Chargement d'une carte EXISTANTE :
+		// reinitialise les documents (les chunks de la carte precedente
+		// restaient en RAM et reecrivaient la heightmap de la nouvelle via
+		// SyncWorldEditorHeightmapFromDocument), vide l'undo, propage le
+		// zoneId, puis recharge eau / mesh inserts / portails depuis les
+		// chemins namespaces (fallback legacy plat en lecture). Place AVANT
+		// la consommation du reload GPU pour que le rebuild parte d'un
+		// etat document coherent.
+		if (m_worldEditorSession->ConsumeZoneDocumentsReloadRequest()
+			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			m_worldEditorShell->ResetForZoneChange(
+				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
+			m_worldEditorShell->LoadZoneDocuments(m_cfg);
+			// Réorganisation UI 2026-07-17 — une carte fraîchement
+			// chargée repart d'un état « tout enregistré » (cf. barre de
+			// statut / modale Quitter) : le Clear de la pile undo fait
+			// par ResetForZoneChange incrémente le sériel du CommandStack.
+			m_worldEditorShell->NoteSaved();
+			// Force la reconstruction de l'aperçu 3D des bâtiments de la
+			// nouvelle zone (placements chargés depuis buildings.bin).
+			if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+				bp->MarkPreviewDirty();
+			// Changement de zone : l'origine STABLE du brouillon (mémorisée pour
+			// le picking) n'est plus pertinente — la prochaine apparition se
+			// recentre sur la caméra de la nouvelle carte.
+			m_editorPreviewValid = false;
+		}
+		if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+		{
+			RebuildWorldEditorTerrainGpu();
+		}
+		// Sous-projet 1 — Sauvegarde des chunks (source de verite) demandee par
+		// ActionSaveCurrentMap / ActionSaveEditJson. Le r16h est ecrit par le
+		// terrainSaveHook ; ici on persiste en plus les chunks terrain/splat.
+		if (m_worldEditorSession->ConsumeTerrainChunksSaveRequest()
+			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			// Lot B3 (correctif 4) — re-propage le zoneId courant avant la
+			// persistance : couvre le « save sous un autre nom de zone »
+			// (ActionSaveCurrentMap re-sanitize m_doc.zoneId depuis le
+			// buffer UI juste avant d'armer la requete de save).
+			m_worldEditorShell->PropagateZoneIdToDocuments(
+				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
+			const size_t nWritten = m_worldEditorShell->SaveTerrainChunks(m_cfg);
+			// Lot B3 (correctif 3) — persiste aussi les documents annexes
+			// (eau, mesh inserts, portails de donjon) : avant ce fix, aucun
+			// SaveToDisk n'etait appele hors tests -> lacs/rivieres/grottes/
+			// arches/portails places etaient perdus a la fermeture.
+			const size_t nDocs = m_worldEditorShell->SaveZoneDocuments(m_cfg);
+			LOG_INFO(EditorWorld,
+				"[Engine] Persisted {} terrain chunk file(s) + {} zone document(s)",
+				nWritten, nDocs);
+		}
+	}
+#endif
+
+#if defined(_WIN32)
+	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
+	void Engine::ResizeWorldEditorViewportTarget()
+	{
+		auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
+			m_worldEditorShell->MutablePanels()[0].get());
+		if (scenePanel != nullptr)
+		{
+			const int wRaw = scenePanel->GetViewportWidth();
+			const int hRaw = scenePanel->GetViewportHeight();
+			const uint32_t w = (wRaw > 0) ? static_cast<uint32_t>(wRaw) : 0u;
+			const uint32_t h = (hRaw > 0) ? static_cast<uint32_t>(hRaw) : 0u;
+			if (w > 0u && h > 0u
+				&& (w != m_editorViewportTarget.GetWidth()
+				 || h != m_editorViewportTarget.GetHeight()))
+			{
+				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+				if (!m_editorViewportTarget.Resize(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetPhysicalDevice(),
+					m_vkDeviceContext.GetGraphicsQueue(),
+					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					w, h))
+				{
+					LOG_WARN(Render,
+						"[Engine] EditorViewportRenderTarget::Resize({}x{}) failed",
+						w, h);
+				}
+			}
+		}
+	}
+#endif
+
+#if defined(_WIN32)
+	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
+	void Engine::RenderWorldEditorShell(engine::RenderState& out)
+	{
+		// M100.34 incrément 1 — pousse le texture ID de l'image offscreen
+		// du viewport au ScenePanel (premier panel du Shell, ordre stable
+		// garanti par WorldEditorShell::Init). PR 1 : image noire, pas
+		// encore branchée au FrameGraph. PR 2 : copie SceneColor_LDR
+		// dedans et la cible devient visible.
+		if (m_editorViewportTarget.IsValid()
+			&& !m_worldEditorShell->Panels().empty()
+			&& m_worldEditorShell->Panels()[0])
+		{
+			auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
+				m_worldEditorShell->MutablePanels()[0].get());
+			if (scenePanel != nullptr)
+			{
+				scenePanel->SetEditorViewportTextureId(
+					m_editorViewportTarget.GetImguiTextureId());
+			}
+		}
+		// Sous-projet 1, bloc B/C — alimente l'Outliner / l'Inspector : lie le
+		// modèle de scène aux documents sources (layout = session, mesh/donjon
+		// = shell) puis le reconstruit. Coût négligeable (quelques clears +
+		// push de vecteurs) ; fait chaque frame pour refléter les placements/
+		// suppressions immédiatement.
+		if (m_worldEditorSession)
+		{
+			m_worldEditorShell->MutableSceneModel().Bind(
+				&m_worldEditorSession->Doc(),
+				&m_worldEditorShell->GetMeshInsertDocument(),
+				&m_worldEditorShell->GetDungeonPortalDocument());
+			m_worldEditorShell->MutableSceneModel().Rebuild();
+
+			// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
+			// par l'Inspector (SetEntityTransformCommand). Écrit dans le
+			// document concret par EntityId.index (= position dans la liste
+			// source au moment du Rebuild de cette frame). Capture [this] :
+			// l'Engine survit aux commandes (undo/redo différé OK).
+			m_worldEditorShell->SetTransformWriter(
+				[this](engine::editor::scene::EntityId id,
+					const engine::editor::scene::EntityTransform& t)
+				{
+					using K = engine::editor::scene::EntityKind;
+					if (id.kind == K::LayoutInstance && m_worldEditorSession)
+					{
+						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						if (id.index < insts.size())
+						{
+							auto& inst = insts[id.index];
+							inst.worldX = static_cast<double>(t.position.x);
+							inst.worldY = static_cast<double>(t.position.y);
+							inst.worldZ = static_cast<double>(t.position.z);
+							inst.yawDegrees = static_cast<double>(t.eulerDeg.y);
+							inst.uniformScale = static_cast<double>(t.uniformScale);
+						}
+					}
+					else if (id.kind == K::MeshInsert && m_worldEditorShell)
+					{
+						auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+						const auto& all = doc.All();
+						if (id.index < all.size())
+						{
+							auto updated = all[id.index];
+							updated.worldPosition = t.position;
+							updated.eulerRotationDeg = t.eulerDeg;
+							updated.uniformScale = t.uniformScale;
+							doc.Update(updated.guid, updated);
+						}
+					}
+					else if (id.kind == K::DungeonPortal && m_worldEditorShell)
+					{
+						auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+						const auto& all = doc.All();
+						if (id.index < all.size())
+						{
+							auto updated = all[id.index];
+							updated.worldPosition = t.position;
+							updated.eulerRotationDeg = t.eulerDeg;
+							doc.Update(updated.guid, updated);
+						}
+					}
+				});
+
+			// Lot 5 (2026-07-18) — Foncteurs d'édition STRUCTURELLE des
+			// entités (Dupliquer/Supprimer undoables). Même pattern que le
+			// TransformWriter ci-dessus : l'Engine capture [this] pour
+			// atteindre le doc layout (session) que le shell ne possède
+			// pas. Réinstallés chaque frame (comme le writer) — les
+			// commandes gardent leur PROPRE copie des foncteurs au Push.
+			{
+				using engine::editor::scene::EntityId;
+				using engine::editor::scene::EntityKind;
+				using engine::editor::scene::EntitySnapshot;
+				engine::editor::scene::EntityEditOps ops;
+
+				// Copie l'entité (kind+index scène) en snapshot à guid
+				// stable, sans la retirer. false si index hors bornes ou
+				// kind non éditable.
+				ops.capture = [this](EntityId id, EntitySnapshot& out) -> bool
+				{
+					if (id.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					{
+						const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+						if (id.index >= insts.size()) return false;
+						out.kind = id.kind;
+						out.layout = insts[id.index];
+						out.layoutIndex = id.index;
+						return true;
+					}
+					if (id.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					{
+						const auto& all = m_worldEditorShell->GetMeshInsertDocument().All();
+						if (id.index >= all.size()) return false;
+						out.kind = id.kind;
+						out.meshInsert = all[id.index];
+						return true;
+					}
+					if (id.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					{
+						const auto& all = m_worldEditorShell->GetDungeonPortalDocument().All();
+						if (id.index >= all.size()) return false;
+						out.kind = id.kind;
+						out.portal = all[id.index];
+						return true;
+					}
+					return false;
+				};
+
+				// Retire l'entité du snapshot — par guid (stable), jamais
+				// par index (instable après édition structurelle).
+				ops.remove = [this](const EntitySnapshot& s) -> bool
+				{
+					if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					{
+						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						for (size_t i = 0; i < insts.size(); ++i)
+						{
+							if (insts[i].guid == s.layout.guid)
+							{
+								insts.erase(insts.begin() + static_cast<ptrdiff_t>(i));
+								return true;
+							}
+						}
+						return false;
+					}
+					if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
+						return m_worldEditorShell->MutableMeshInsertDocument().Remove(s.meshInsert.guid);
+					if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+						return m_worldEditorShell->MutableDungeonPortalDocument().Remove(s.portal.guid);
+					return false;
+				};
+
+				// Réinsère le snapshot : au rang d'origine (borné) pour le
+				// layout, par Add (guid conservé, compteur resynchronisé)
+				// pour les volumes.
+				ops.restore = [this](const EntitySnapshot& s) -> bool
+				{
+					if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					{
+						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						const size_t at = std::min<size_t>(s.layoutIndex, insts.size());
+						insts.insert(insts.begin() + static_cast<ptrdiff_t>(at), s.layout);
+						return true;
+					}
+					if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					{
+						(void)m_worldEditorShell->MutableMeshInsertDocument().Add(s.meshInsert);
+						return true;
+					}
+					if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					{
+						(void)m_worldEditorShell->MutableDungeonPortalDocument().Add(s.portal);
+						return true;
+					}
+					return false;
+				};
+
+				// Ajoute une COPIE de src (nouveau guid + décalage +1,5 m
+				// en X pour que la copie soit visible à côté de
+				// l'original) et renvoie son snapshot dans outCopy.
+				ops.duplicate = [this](const EntitySnapshot& src, EntitySnapshot& outCopy) -> bool
+				{
+					constexpr double kDupOffsetM = 1.5;
+					outCopy = src;
+					if (src.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					{
+						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						// Préfixe "we_dup_" distinct du "we_inst_" de la
+						// session : aucun risque de collision de guid.
+						static uint64_t s_dupSeq = 1u;
+						char buf[48];
+						std::snprintf(buf, sizeof(buf), "we_dup_%llu",
+							static_cast<unsigned long long>(s_dupSeq++));
+						outCopy.layout.guid = buf;
+						outCopy.layout.worldX += kDupOffsetM;
+						outCopy.layoutIndex = static_cast<uint32_t>(insts.size());
+						insts.push_back(outCopy.layout);
+						return true;
+					}
+					if (src.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					{
+						auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+						outCopy.meshInsert.guid = 0u; // Add() assigne un nouveau guid
+						outCopy.meshInsert.worldPosition.x += static_cast<float>(kDupOffsetM);
+						outCopy.meshInsert.guid = doc.Add(outCopy.meshInsert);
+						return true;
+					}
+					if (src.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					{
+						auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+						outCopy.portal.guid = 0u; // Add() assigne un nouveau guid
+						outCopy.portal.worldPosition.x += static_cast<float>(kDupOffsetM);
+						outCopy.portal.guid = doc.Add(outCopy.portal);
+						return true;
+					}
+					return false;
+				};
+
+				m_worldEditorShell->SetEntityEditOps(std::move(ops));
+			}
+		}
+		// Aperçu 3D live des bâtiments (brouillon + placements) dans la vue
+		// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».
+		SyncEditorBuildingPreview();
+		m_worldEditorShell->RenderFrame();
+		// Gizmo (axes/anneaux X=rouge/Y=vert/Z=bleu) sur la pièce active,
+		// en overlay sur la 3D (sous les panneaux). Visuel seul pour l'instant.
+		DrawEditorBuildingGizmo();
+		// Roadmap-6 — gizmo des entités de scène sélectionnées (E/T/C) +
+		// marqueurs de multi-sélection. No-op en mode édition bâtiment.
+		DrawEditorSceneGizmo();
+	}
+#endif
+
+	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
+	void Engine::UpdateWorldEditorCamera(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout)
+	{
+		// Ne pas lier souris et clavier : un InputText actif mettait WantCaptureKeyboard à true et bloquait
+		// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
+		[[maybe_unused]] const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
+		const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
+		// Convention UX standard (Unity/Unreal/Blender) : la rotation de la
+		// caméra free-fly de l'éditeur n'est active QUE pendant que le clic
+		// droit est maintenu. Sinon le moindre déplacement de la souris fait
+		// dériver la caméra et l'utilisateur perd le terrain. Avant ce fix,
+		// `applyLook = !capMouse || rmbLook` faisait tourner la caméra dès
+		// que la souris survolait la zone 3D — UX cassée.
+		const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+		const bool applyLook = rmbLook;
+		const bool applyKb = !capKb;
+		float terrainWorldM = 0.f;
+		if (m_terrain.IsValid())
+		{
+			terrainWorldM = m_terrain.GetTerrainWorldSize();
+		}
+		const float editorSpeedMult = static_cast<float>(
+			m_cfg.GetDouble("controls.editor_camera_speed_multiplier", 1.0));
+		m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, applyLook, applyKb,
+			terrainWorldM, out.camera, editorSpeedMult);
+	}
+
+#if defined(_WIN32)
+	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
+	void Engine::UpdateWorldEditorViewportOverlay(engine::RenderState& out)
+	{
+		float dw = static_cast<float>(std::max(1, m_width));
+		float dh = static_cast<float>(std::max(1, m_height));
+		int vw = std::max(1, m_width);
+		int vh = std::max(1, m_height);
+		if (m_vkSwapchain.IsValid())
+		{
+			const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+			if (extUi.width > 0 && extUi.height > 0)
+			{
+				dw = static_cast<float>(extUi.width);
+				dh = static_cast<float>(extUi.height);
+				vw = static_cast<int>(extUi.width);
+				vh = static_cast<int>(extUi.height);
+			}
+		}
+
+		engine::editor::WorldEditorViewportOverlayDesc overlay{};
+		overlay.viewProjColMajor = out.viewProjMatrix.m;
+		overlay.cameraWorldX = out.camera.position.x;
+		overlay.cameraWorldY = out.camera.position.y;
+		overlay.cameraWorldZ = out.camera.position.z;
+		overlay.cameraYawDeg = out.camera.yaw * (180.0f / 3.14159265f);
+		overlay.cameraPitchDeg = out.camera.pitch * (180.0f / 3.14159265f);
+		overlay.viewportWidth = vw;
+		overlay.viewportHeight = vh;
+
+		bool terrainPick = false;
+		float pickX = 0.f;
+		float pickZ = 0.f;
+		if (m_terrain.IsValid() && m_worldEditorSession)
+		{
+			const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
+			if (hm.width > 0u && hm.height > 0u)
+			{
+				overlay.heightmap = &hm;
+				overlay.terrainOriginX = m_terrain.GetTerrainOriginX();
+				overlay.terrainOriginZ = m_terrain.GetTerrainOriginZ();
+				overlay.terrainWorldSize = m_terrain.GetTerrainWorldSize();
+				overlay.heightScale = m_terrain.GetHeightScale();
+				overlay.showGrid = m_worldEditorSession->ShowGrid();
+				overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
+				overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
+				const bool capBeforeUi = m_worldEditorImGui->WantsCaptureMouse();
+				terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
+					overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
+					pickX, pickZ);
+				overlay.showBrushPreview =
+					terrainPick && !capBeforeUi && m_worldEditorSession->TerrainEditMode() != 3
+					&& m_worldEditorSession->TerrainEditMode() != 4;
+				if (terrainPick)
+				{
+					overlay.brushWorldX = pickX;
+					overlay.brushWorldZ = pickZ;
+				}
+			}
+			overlay.layoutInstancesOverlay = &m_worldEditorSession->MutableDoc().layoutInstances;
+			overlay.selectedLayoutInstanceOverlay = m_worldEditorSession->SelectedLayoutInstanceIndex();
+		}
+
+		m_worldEditorImGui->BuildUi(&overlay);
+
+		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
+			&& m_worldEditorSession->ConsumeRouteApplyDraftRequest())
+		{
+			engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+			if (ws.RouteDraftPoints().size() < 2u)
+			{
+				ws.SetStatus("Routes: au moins 2 points dans le brouillon (clics gauche sur le sol).");
+			}
+			else
+			{
+				engine::editor::WorldMapRoutePolyline rp{};
+				rp.pointsXz = ws.RouteDraftPoints();
+				rp.widthM = static_cast<double>(ws.RouteStripWidthM());
+				rp.splatLayer = static_cast<uint32_t>(std::clamp(ws.RouteSplatLayer(), 0, 3));
+				engine::render::terrain::BrushParams bp{};
+				bp.radius = ws.BrushRadius();
+				bp.strength = ws.BrushStrength();
+				bp.falloff = 1.f;
+				bp.flattenTarget = 0.5f;
+				if (m_worldEditorTerrainTools.PaintSplatAlongPolyline(rp.pointsXz, rp.widthM, rp.splatLayer, bp))
+				{
+					(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+					ws.MutableDoc().routes.push_back(std::move(rp));
+					ws.ClearRouteDraft();
+					ws.SetStatus("Routes: bande splat appliquée — sauvegardez l’édition pour persister SLAP + JSON.");
+				}
+				else
+				{
+					ws.SetStatus("Routes: peinture splat impossible (vérifier le terrain / la splat).");
+				}
+			}
+		}
+
+		// Sous-projet 1, bloc G — pipeline d'edition unifie : quand un outil
+		// MODERNE du Shell est actif (Sculpt ou Stamp), on le pilote depuis
+		// l'input viewport (il edite les CHUNKS -> sync 1:1 vers le GPU via
+		// A2/A3 + undo/redo via CommandStack) et on NEUTRALISE le pinceau
+		// legacy (garde `!modernEditActive` sur le bloc legacy plus bas). Sans
+		// outil moderne d'edition actif, le legacy reste le chemin par defaut.
+		// Ctrl+clic gauche reste reserve au picking B3 (donc exclu ici).
+		// Mode « édition bâtiment » : quand actif (case à cocher du Building
+		// Editor), le clic gauche dans la vue NE modifie PAS le terrain (ni
+		// outils modernes ni brush legacy) — il est réservé à la
+		// sélection/édition des pièces de bâtiment. Évite de sculpter le
+		// terrain par réflexe en voulant choisir une pièce.
+		const bool buildingEditMode =
+			(m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel())
+				? m_worldEditorShell->GetBuildingEditorPanel()->EditModeActive()
+				: false;
+
+		bool modernEditActive = false;
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
+			const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& !buildingEditMode;
+			if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
+			{
+				modernEditActive = true;
+				if (freeClick)
+				{
+					engine::editor::world::TerrainSculptTool& sculpt =
+						m_worldEditorShell->MutableSculptTool();
+					const int mx = m_input.MouseX();
+					const int my = m_input.MouseY();
+					if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
+						sculpt.OnMouseDown(out.camera, mx, my, vw, vh, m_cfg);
+					else if (m_input.IsMouseDown(engine::platform::MouseButton::Left))
+						sculpt.OnMouseMove(out.camera, mx, my, vw, vh, m_cfg);
+					if (m_input.WasMouseReleased(engine::platform::MouseButton::Left))
+						sculpt.OnMouseUp();
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::TerrainStamp)
+			{
+				modernEditActive = true;
+				// Stamp one-shot : clic gauche au point de sol cliqué (pickX,pickZ)
+				// -> calcule la preview puis l'applique (push command -> sync +
+				// persistance + undo). terrainPick garantit un point valide.
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					engine::editor::world::TerrainStampTool& stamp =
+						m_worldEditorShell->MutableStampTool();
+					stamp.OnClickAt(m_cfg, pickX, pickZ);
+					stamp.Apply();
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::MountainRange)
+			{
+				modernEditActive = true;
+				// Macro polyline : chaque clic gauche ajoute un sommet ; la
+				// generation (rasterisation -> command -> sync validee) se fait
+				// via le bouton "Apply" du ToolPropertiesPanel.
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					m_worldEditorShell->MutableMountainRangeTool().AddVertex(pickX, pickZ);
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::ValleyChain)
+			{
+				modernEditActive = true;
+				// Jumeau soustractif de MountainRange (vallees). Meme entree :
+				// clic = ajout de sommet, "Apply" (panneau) genere.
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::Spline)
+			{
+				modernEditActive = true;
+				// Roadmap-8 — spline (routes/chemins) : chaque clic ajoute un
+				// noeud au trace en cours (largeur = defaut du panneau) ; le
+				// bouton « Ajouter la spline » du ToolPropertiesPanel pousse
+				// l'AddSplineCommand undoable.
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					engine::editor::world::SplineTool& spline =
+						m_worldEditorShell->MutableSplineTool();
+					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+					spline.AddNode(engine::math::Vec3{ pickX, wy, pickZ },
+						spline.DefaultWidthMeters());
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::GameplayZone)
+			{
+				modernEditActive = true;
+				// Roadmap-8 — zone de gameplay : chaque clic ajoute un sommet
+				// au polygone en cours ; « Ajouter la zone » (panneau) pousse
+				// l'AddGameplayZoneCommand undoable.
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+					m_worldEditorShell->MutableZoneTool().AddPoint(
+						engine::math::Vec3{ pickX, wy, pickZ });
+				}
+			}
+			else if (tool == engine::editor::world::ActiveTool::Hazard)
+			{
+				modernEditActive = true;
+				// Roadmap-8 — danger : pose one-shot au point clique, undoable
+				// immediatement (AddHazardCommand aux parametres courants du
+				// panneau — type, forme, profondeur...).
+				if (freeClick && terrainPick
+					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
+					m_worldEditorShell->MutableCommandStack().Push(
+						std::make_unique<engine::editor::world::AddHazardCommand>(
+							m_worldEditorShell->MutableHazardDocument(),
+							m_worldEditorShell->GetHazardTool().CreateAt(
+								engine::math::Vec3{ pickX, wy, pickZ })));
+				}
+			}
+		}
+
+		// Gizmo étape 3.2 — cliquer-glisser : en mode « édition bâtiment », on
+		// tente d'abord de saisir/glisser un handle du gizmo (axe = translation,
+		// anneau = rotation) sur la pièce sélectionnée. S'il capture la souris,
+		// on N'enchaîne PAS sur la sélection de pièce ci-dessous.
+		bool gizmoGrabbed = false;
+		if (buildingEditMode && !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_input.IsDown(engine::platform::Key::Control))
+		{
+			gizmoGrabbed = UpdateEditorBuildingGizmoDrag(m_input.MouseX(), m_input.MouseY());
+		}
+
+		// Gizmo étape 3.1 — picking de pièce de bâtiment : en mode « édition
+		// bâtiment », un clic gauche dans la vue (hors ImGui, sans Ctrl)
+		// sélectionne la pièce du brouillon dont la position monde (XZ) est la
+		// plus proche du point de sol cliqué. Réutilise la transform du groupe
+		// mémorisée au dernier rendu (m_editorPreview*), pour que le picking
+		// corresponde à ce qui est affiché. Remplace la saisie de valeurs « à
+		// l'aveugle » : on clique la pièce, le gizmo s'y replace.
+		if (!gizmoGrabbed && buildingEditMode && m_editorPreviewValid && terrainPick
+			&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
+			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_input.IsDown(engine::platform::Key::Control)
+			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+		{
+			engine::editor::world::panels::BuildingEditorPanel* bpanel =
+				m_worldEditorShell->GetBuildingEditorPanel();
+			const auto& parts = bpanel->DraftParts();
+			constexpr float kDeg2Rad = 3.14159265f / 180.f;
+			const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
+			const float s = std::sin(m_editorPreviewYaw * kDeg2Rad);
+			int best = -1;
+			float bestDist2 = 36.0f; // (6 m)^2 : seuil de tolérance autour de la pièce
+			for (size_t i = 0; i < parts.size(); ++i)
+			{
+				const float sx = m_editorPreviewScale * parts[i].localPosition.x;
+				const float sz = m_editorPreviewScale * parts[i].localPosition.z;
+				const float wx = m_editorPreviewOriginX + (c * sx + s * sz);
+				const float wz = m_editorPreviewOriginZ + (-s * sx + c * sz);
+				const float dx = wx - pickX;
+				const float dz = wz - pickZ;
+				const float d2 = dx * dx + dz * dz;
+				if (d2 < bestDist2) { bestDist2 = d2; best = static_cast<int>(i); }
+			}
+			if (best >= 0)
+			{
+				bpanel->SetSelectedDraft(best);
+				LOG_INFO(EditorWorld, "[Buildings][editeur] piece selectionnee par clic: #{} (dist={:.1f} m)",
+					best, std::sqrt(bestDist2));
+			}
+		}
+
+		// Roadmap-6 (2026-07-19) — gizmo de scène : cliquer-glisser sur les
+		// handles (axes / anneau yaw / poignée d'échelle) de la sélection.
+		// Hors mode bâtiment (le gizmo bâtiment garde la main) et sans Ctrl
+		// (Ctrl = picking d'entité ci-dessous). S'il capture la souris, le
+		// clic ne doit alimenter NI le picking NI les outils terrain.
+		bool sceneGizmoGrabbed = false;
+		if (!buildingEditMode && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_input.IsDown(engine::platform::Key::Control))
+		{
+			sceneGizmoGrabbed = UpdateEditorSceneGizmoDrag(m_input.MouseX(), m_input.MouseY());
+		}
+
+		// Sous-projet 1, bloc B3 — picking d'entite : Ctrl+clic gauche dans la
+		// vue 3D (hors ImGui) selectionne l'entite dont la position (XZ) est la
+		// plus proche du point de sol cliqué (seuil ~3 m), via EditorSceneModel
+		// + EditorSelection. Geste Ctrl+clic distinct du clic d'edition
+		// (sculpt/placement) pour ne pas interferer avec les deux systemes.
+		// Roadmap-6 : Ctrl+Maj+clic BASCULE l'entité dans la multi-sélection ;
+		// Ctrl+clic dans le vide vide la sélection.
+		if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& m_input.IsDown(engine::platform::Key::Control)
+			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
+		{
+			const std::vector<engine::editor::scene::SceneEntity>& entities =
+				m_worldEditorShell->GetSceneModel().Entities();
+			const engine::editor::scene::SceneEntity* best = nullptr;
+			float bestDist2 = 9.0f; // (3 m)^2
+			for (const engine::editor::scene::SceneEntity& e : entities)
+			{
+				if (!e.hasTransform) continue;
+				const float dx = e.transform.position.x - pickX;
+				const float dz = e.transform.position.z - pickZ;
+				const float d2 = dx * dx + dz * dz;
+				if (d2 < bestDist2) { bestDist2 = d2; best = &e; }
+			}
+			const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
+			if (best != nullptr)
+			{
+				if (shiftHeld)
+					m_worldEditorShell->MutableSelection().Toggle(best->id);
+				else
+					m_worldEditorShell->MutableSelection().Select(best->id);
+				LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic{}): {} ({} au total)",
+					shiftHeld ? "+Maj" : "", best->label,
+					m_worldEditorShell->GetSelection().Count());
+			}
+			else if (!shiftHeld)
+			{
+				m_worldEditorShell->MutableSelection().Clear();
+			}
+		}
+
+		if (!modernEditActive && !buildingEditMode && !sceneGizmoGrabbed && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+		{
+			const bool cap = m_worldEditorImGui->WantsCaptureMouse();
+			engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+			if (!cap && ws.TerrainEditMode() == 4 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				const float ox = m_terrain.GetTerrainOriginX();
+				const float oz = m_terrain.GetTerrainOriginZ();
+				const float wsiz = m_terrain.GetTerrainWorldSize();
+				const float eps = wsiz * 1e-5f;
+				const float px = std::clamp(pickX, ox + eps, ox + wsiz - eps);
+				const float pz = std::clamp(pickZ, oz + eps, oz + wsiz - eps);
+				ws.AddRouteDraftPoint(static_cast<double>(px), static_cast<double>(pz));
+			}
+			else if (!cap && ws.TerrainEditMode() == 3 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
+				float wy = 0.f;
+				if (TryTerrainWorldY(hm, overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
+						pickX, pickZ, wy))
+				{
+					// Roadmap-6 (2026-07-19) — placement/déplacement UNDOABLE :
+					// le clic passe par des commandes sur la pile du shell
+					// (adressage par guid stable). Fallback direct historique
+					// si le shell n'est pas initialisé (pas de pile undo).
+					if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+					{
+						// Foncteurs capturant [this] : l'Engine survit aux
+						// commandes dans la pile undo (même pattern Lot 5).
+						engine::editor::scene::LayoutPlacementOps ops;
+						ops.add = [this](const engine::editor::WorldMapEditLayoutInstance& inst) -> bool
+						{
+							return m_worldEditorSession ? m_worldEditorSession->AddLayoutInstance(inst) : false;
+						};
+						ops.removeByGuid = [this](const std::string& guid) -> bool
+						{
+							return m_worldEditorSession ? m_worldEditorSession->RemoveLayoutInstanceByGuid(guid) : false;
+						};
+						ops.setPositionByGuid = [this](const std::string& guid, double x, double y, double z) -> bool
+						{
+							return m_worldEditorSession
+								? m_worldEditorSession->SetLayoutInstancePositionByGuid(guid, x, y, z) : false;
+						};
+						const int selIdx = ws.SelectedLayoutInstanceIndex();
+						if (selIdx >= 0 && selIdx < static_cast<int>(ws.Doc().layoutInstances.size()))
+						{
+							const engine::editor::WorldMapEditLayoutInstance& inst =
+								ws.Doc().layoutInstances[static_cast<size_t>(selIdx)];
+							m_worldEditorShell->MutableCommandStack().Push(
+								std::make_unique<engine::editor::scene::MoveLayoutInstanceCommand>(
+									inst.guid, inst.worldX, inst.worldY, inst.worldZ,
+									static_cast<double>(pickX), static_cast<double>(wy), static_cast<double>(pickZ),
+									ops));
+							ws.Status() = "Instance deplacee.";
+						}
+						else
+						{
+							engine::editor::WorldMapEditLayoutInstance inst{};
+							if (ws.BuildLayoutInstanceForPlacement(m_cfg, static_cast<double>(pickX),
+									static_cast<double>(wy), static_cast<double>(pickZ), inst))
+							{
+								m_worldEditorShell->MutableCommandStack().Push(
+									std::make_unique<engine::editor::scene::PlaceLayoutInstanceCommand>(
+										std::move(inst), ops));
+							}
+						}
+					}
+					else
+					{
+						ws.PlaceOrMoveLayoutInstanceAtTerrainHit(m_cfg, static_cast<double>(pickX), static_cast<double>(wy),
+							static_cast<double>(pickZ));
+					}
+				}
+			}
+			else if (m_worldEditorTerrainTools.IsValid() && !cap && m_input.IsMouseDown(engine::platform::MouseButton::Left)
+				&& ws.TerrainEditMode() != 3 && ws.TerrainEditMode() != 4)
+			{
+				engine::render::terrain::BrushParams bp;
+				bp.radius = ws.BrushRadius();
+				bp.strength = ws.BrushStrength();
+				bp.falloff = 1.f;
+				bp.flattenTarget = 0.5f;
+				if (ws.TerrainEditMode() == 1)
+				{
+					const uint32_t layer = static_cast<uint32_t>(std::clamp(ws.SplatLayer(), 0, 3));
+					m_worldEditorTerrainTools.PaintSplat(pickX, pickZ, layer, bp);
+					(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+				}
+				else if (ws.TerrainEditMode() == 2)
+				{
+					m_worldEditorTerrainTools.PaintGrassMask(pickX, pickZ, bp, ws.GrassMaskEraseBrush());
+					(void)m_worldEditorTerrainTools.FlushGrassMask(m_terrain,
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+				}
+				else
+				{
+					engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
+					switch (ws.BrushOp())
+					{
+					case 1: op = engine::render::terrain::BrushOp::Lower; break;
+					case 2: op = engine::render::terrain::BrushOp::Smooth; break;
+					case 3: op = engine::render::terrain::BrushOp::Flatten; break;
+					default: break;
+					}
+					m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+				}
+			}
 		}
 	}
 #endif

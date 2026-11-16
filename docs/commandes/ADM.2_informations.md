@@ -38,7 +38,7 @@ guilde, pouvoirs MJ actifs (vitesse, vol, gel…).
 
 | Fichier | Rôle |
 |---|---|
-| `src/shared/server_bootstrap/ServerAppGmInfo.cpp` | /pos, /where, /info (partie shard), /target, /zone, /nearby |
+| `src/shardd/app/ServerAppGmInfo.cpp` | /pos, /where, /info (partie shard), /target, /zone, /nearby |
 | `src/masterd/admin/MasterGmCommands.cpp` (`RegisterInformation`) | /online, /ping, /serverstats, /info (partie master) |
 | `src/shardd/gameplay/gm/GmPlaceDirectory.{h,cpp}` | `RegionAt`, `Nearest` |
 

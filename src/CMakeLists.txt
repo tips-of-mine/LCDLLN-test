@@ -40,25 +40,25 @@ add_custom_target(lcdlln_gen_character_data DEPENDS ${STATS_HDR} ${FACTIONS_HDR}
 if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerApp.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmInfo.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmCharacter.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmItems.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmAppearance.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmWorld.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmQuests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGm.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmMovement.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmInfo.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmCharacter.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmItems.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmAppearance.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmWorld.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmQuests.cpp
     # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
-    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/items/ConsumableEffectLibrary.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
@@ -271,7 +271,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/LunarPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/WorldClockPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AdminCommandPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatChannelRegistry.cpp
@@ -487,8 +487,8 @@ elseif(UNIX)
 
   # CMANGOS.01 (Phase 2.01a) : ChatSanitizer pure unit tests (no DB)
   add_executable(chat_sanitizer_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizerTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSanitizerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSanitizer.cpp
   )
   target_include_directories(chat_sanitizer_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(chat_sanitizer_tests PRIVATE engine_core spdlog::spdlog pthread)
@@ -780,8 +780,8 @@ elseif(UNIX)
   # TA.3 (replication des joueurs) : registre des personnages admis (gate de la
   # session UDP, lié au character_id authentifié du ticket). Pure logique testable.
   lcdlln_add_simple_test(admitted_character_registry_tests
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistryTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shared/world/AdmittedCharacterRegistryTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/AdmittedCharacterRegistry.cpp)
 
   # ETAPE1.2 : règle « un seul propriétaire par personnage » (verrou master → shard).
   lcdlln_add_simple_test(character_ownership_tests
@@ -1597,20 +1597,20 @@ elseif(UNIX)
     # engine_core (uniquement la cible security_tests) et ServerApp l'utilise
     # (membre m_moderationAuditLog) → on l'ajoute ici.
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerApp.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGm.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmMovement.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmInfo.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmCharacter.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmItems.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmAppearance.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmWorld.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerAppGmQuests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGm.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmMovement.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmInfo.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmCharacter.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmItems.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmAppearance.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmWorld.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmQuests.cpp
     # ADM.1 : annuaire des lieux pour /tp <lieu> et /places.
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gm/GmPlaceDirectory.cpp
     # ETAPE5.1 : le shard nettoie le chat de proximité avec le même sanitizer que le master.
-    ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSanitizer.cpp
     # SP3 anniversaires (2026-07-18) : buffs de gateau (utilise par ServerApp).
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/anniversary/CakeBuffLibrary.cpp
     # Roadmap-3 (2026-07-19) : effets des consommables de ceinture.
@@ -1618,7 +1618,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     # ETAPE3.1 : sessions UDP chiffrées du shard.
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpSessionTable.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/world/AdmittedCharacterRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/AdmittedCharacterRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ShardPresenceService.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp

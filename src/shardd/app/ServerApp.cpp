@@ -1,4 +1,4 @@
-#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shardd/app/ServerApp.h"
 #include "src/shared/mail/MailTransfer.h"
 
 #include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
@@ -8,9 +8,9 @@
 #include "src/shared/net/ChatSystem.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shardd/gameplay/chat/ChatCommandParser.h"
-#include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/world/AdmittedCharacterRegistry.h"
 #include "src/shared/db/CharacterOwnership.h" // ETAPE1.2 — un seul propriétaire par personnage
-#include "src/masterd/chat/ChatSanitizer.h" // ETAPE5.1 — nettoyage du chat de proximité
+#include "src/shared/net/ChatSanitizer.h" // ETAPE5.1 — nettoyage du chat de proximité
 #include "src/shardd/gameplay/character/AutosaveSchedule.h" // ETAPE2.3 — sauvegardes étalées
 #include "src/shardd/gameplay/character/CharacterOperationId.h" // ETAPE2.4 — opérations à deux personnages
 #include "src/shared/network/ServerProtocol.h"

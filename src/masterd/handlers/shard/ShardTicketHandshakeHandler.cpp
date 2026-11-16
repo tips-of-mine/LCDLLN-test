@@ -3,7 +3,7 @@
 #include "src/masterd/handlers/shard/ShardTicketValidator.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
-#include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/world/AdmittedCharacterRegistry.h"
 #include "src/shared/core/Log.h"
 
 #include <chrono>

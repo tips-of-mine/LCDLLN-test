@@ -6,7 +6,7 @@
 // d'objet « monture » : le personnage garde son apparence (chantier de contenu
 // séparé, cf. docs/commandes/ADM.5_monture_apparence.md). /dismount = /mount off.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include <algorithm>
 

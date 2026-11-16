@@ -1,4 +1,4 @@
-#include "src/masterd/chat/ChatSanitizer.h"
+#include "src/shared/net/ChatSanitizer.h"
 
 #include <array>
 #include <cstdint>

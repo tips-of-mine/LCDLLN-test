@@ -80,8 +80,8 @@ réponse le signale).
 
 | Fichier | Rôle |
 |---|---|
-| `src/shared/server_bootstrap/ServerAppGmMovement.cpp` | les 19 commandes |
-| `src/shared/server_bootstrap/GmCommandExecutor.h` | déclaration de l'exécuteur (handlers répartis par fichier) |
+| `src/shardd/app/ServerAppGmMovement.cpp` | les 19 commandes |
+| `src/shardd/app/GmCommandExecutor.h` | déclaration de l'exécuteur (handlers répartis par fichier) |
 | `src/shardd/gameplay/gm/GmPlayerState.h` | état MJ (vitesse, vol, gel, positions mémorisées) |
 | `src/shardd/gameplay/gm/GmPlaceDirectory.{h,cpp}` | annuaire des lieux |
 | `src/shared/movement/MovementRules.{h,cpp}` | `verticalFree`, `trustNextHeight` |

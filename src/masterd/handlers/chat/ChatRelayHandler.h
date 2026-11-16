@@ -3,7 +3,7 @@
 #include "src/masterd/chat/ChatChannelRegistry.h"
 #include "src/masterd/chat/ChatCommandRouter.h"
 #include "src/masterd/chat/ChatGate.h"
-#include "src/masterd/chat/ChatSanitizer.h"
+#include "src/shared/net/ChatSanitizer.h"
 
 #include <cstddef>
 #include <cstdint>

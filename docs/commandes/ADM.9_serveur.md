@@ -36,7 +36,7 @@ master.
 | Fichier | Rôle |
 |---|---|
 | `src/masterd/admin/MasterGmServer.cpp` | /serverinfo, /motd, /setmotd, /closed |
-| `src/shared/server_bootstrap/ServerAppGm.cpp` | /saveall |
+| `src/shardd/app/ServerAppGm.cpp` | /saveall |
 | `src/masterd/handlers/character/CharacterEnterWorldHandler.{h,cpp}` | refus par compte, rappel d'entrée en jeu |
 | `src/masterd/handlers/shard/ShardTicketHandler.{h,cpp}` | refus de ticket par compte |
 

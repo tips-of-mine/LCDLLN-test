@@ -1,4 +1,4 @@
-#include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/world/AdmittedCharacterRegistry.h"
 
 namespace engine::server
 {

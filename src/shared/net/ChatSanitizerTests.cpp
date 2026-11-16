@@ -1,7 +1,7 @@
 // CMANGOS.01 (Phase 2.01a) — Tests ChatSanitizer.
 // Pure : aucune dépendance DB / pool / réseau.
 
-#include "src/masterd/chat/ChatSanitizer.h"
+#include "src/shared/net/ChatSanitizer.h"
 #include "src/shared/core/Log.h"
 
 #include <string>

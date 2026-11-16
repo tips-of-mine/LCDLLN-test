@@ -12,7 +12,7 @@
 //     ProfessionUpdate ; pouvoirs : GmStateUpdate (ADM.1).
 // Chaque changement durable (niveau, XP, compétences, métiers) est sauvegardé.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shardd/gameplay/character/CharacterStatsEngine.h"
 #include "src/shared/core/Log.h"

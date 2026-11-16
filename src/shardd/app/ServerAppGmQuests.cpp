@@ -11,7 +11,7 @@
 // récompense (mobs de phase retirés, recharge normale) ; complete le termine
 // AVEC récompense des participants.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shardd/gameplay/gm/GmPlaceDirectory.h"
 

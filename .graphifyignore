@@ -1,0 +1,29 @@
+# Graphify — fichiers exclus du graphe de connaissances (tips-of-mine/LCDLLN-graphity).
+# Syntaxe .gitignore. Seul le JSON maître du lore est conservé dans legacy/.
+
+# Code tiers et pipeline d'assets
+external/
+tools/asset_pipeline/
+
+# legacy/ : archive — on ne garde que lune-noire-data.json
+legacy/*
+!legacy/world-builder-html/
+legacy/world-builder-html/*
+!legacy/world-builder-html/lune-noire-data.json
+
+# Images (droit d'auteur : aucune planche ni PNG), modèles 3D, audio, shaders compilés
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.fbx
+*.gltf
+*.glb
+*.bin
+*.wav
+*.ogg
+*.spv
+
+# Sauvegardes et anciennes versions
+*.old
+*.bak

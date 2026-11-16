@@ -1,0 +1,112 @@
+# Graphe de connaissances Graphify (https://github.com/Graphify-Labs/graphify).
+#
+# À chaque push sur main, analyse le code du dépôt (tree-sitter, local, SANS LLM
+# ni clé API : coût nul) et publie le graphe dans le dépôt privé séparé
+# tips-of-mine/LCDLLN-graphity, lu ensuite par Claude Code pour naviguer dans
+# le projet (graphify query / path / explain / affected).
+#
+# - Exclusions : .graphifyignore à la racine (code tiers, pipeline d'assets,
+#   legacy/ sauf lune-noire-data.json, et AUCUNE image — droit d'auteur).
+# - --code-only : la passe sémantique (docs, JSON du lore) n'est pas faite ici
+#   (elle exigerait une clé API) ; elle se fait ponctuellement en session
+#   Claude Code.
+# - Publication : un seul commit orphelin poussé en force sur main de
+#   LCDLLN-graphity (graph.json ≈ 45 Mo : garder l'historique ferait grossir le
+#   dépôt à chaque push ; seul le graphe le plus récent est utile).
+# - Secret requis : GRAPHITY_TOKEN (fine-grained, LCDLLN-graphity seul,
+#   Contents: Read and write).
+#
+# Indépendant des builds : tourne sur Linux, ~2-3 min.
+name: Graphify — graphe de connaissances
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un seul calcul à la fois : un push plus récent annule le précédent
+# (seul le graphe du dernier commit est publié).
+concurrency:
+  group: graphify
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Version figée : une nouvelle version de Graphify se teste avant d'être adoptée.
+  GRAPHIFY_VERSION: '0.9.111'
+  GRAPHITY_REPO: tips-of-mine/LCDLLN-graphity
+
+jobs:
+  graphify:
+    name: Graphify (graphe du code -> LCDLLN-graphity)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérification du secret GRAPHITY_TOKEN
+        env:
+          GRAPHITY_TOKEN: ${{ secrets.GRAPHITY_TOKEN }}
+        run: |
+          if [ -z "$GRAPHITY_TOKEN" ]; then
+            echo "::error::Secret GRAPHITY_TOKEN absent (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installation de Graphify
+        run: pip install --quiet "graphifyy[sql]==${GRAPHIFY_VERSION}"
+
+      # Sortie hors du checkout : le dossier porte le nom du dépôt, repris
+      # dans le titre de GRAPH_REPORT.md.
+      - name: Extraction du code (AST, sans LLM)
+        run: graphify extract . --code-only --out "$RUNNER_TEMP/LCDLLN-test"
+
+      # --no-viz : graph.html inutilisable au-delà de ~5000 nœuds ;
+      # --no-label : le nommage des communautés demanderait un LLM.
+      - name: Regroupement et rapport
+        run: graphify cluster-only "$RUNNER_TEMP/LCDLLN-test" --no-viz --no-label
+
+      - name: Publication vers LCDLLN-graphity
+        env:
+          GRAPHITY_TOKEN: ${{ secrets.GRAPHITY_TOKEN }}
+          SRC_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/LCDLLN-test/graphify-out"
+          PUB="$RUNNER_TEMP/graphity"
+          mkdir -p "$PUB/graphify-out"
+          # .graphify_root, manifest.json et cache/ contiennent des chemins
+          # du runner : seuls le graphe, son analyse et le rapport sont publiés.
+          cp "$OUT/graph.json" "$OUT/.graphify_analysis.json" "$OUT/GRAPH_REPORT.md" \
+             "$PUB/graphify-out/"
+          cat > "$PUB/README.md" <<EOF
+          # LCDLLN-graphity
+
+          Graphe de connaissances Graphify du dépôt
+          [tips-of-mine/LCDLLN-test](https://github.com/tips-of-mine/LCDLLN-test),
+          généré automatiquement — **ne pas modifier à la main** (écrasé à chaque push sur main).
+
+          - Commit source : \`${SRC_SHA}\`
+          - Graphify : ${GRAPHIFY_VERSION} (\`--code-only\`, sans LLM)
+          - Généré le : $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          Exemples : \`graphify query "..."\`, \`graphify explain "X"\`,
+          \`graphify affected "X"\` (lancés à la racine de ce dépôt).
+          EOF
+          cd "$PUB"
+          git init --quiet --initial-branch=main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "Graphe LCDLLN-test ${SRC_SHA::8}"
+          git push --quiet --force \
+            "https://x-access-token:${GRAPHITY_TOKEN}@github.com/${GRAPHITY_REPO}.git" main
+          echo "Graphe publié : ${GRAPHITY_REPO} (source ${SRC_SHA::8})"

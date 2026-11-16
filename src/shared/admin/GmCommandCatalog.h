@@ -15,7 +15,7 @@
 //
 // Pour ajouter une commande shard : (1) une ligne ici, (2) l'entrée JSON avec
 // "status": "shard_command" et le même "minRole", (3) le handler dans
-// src/shared/server_bootstrap/ServerAppGm.cpp (table kGmHandlers).
+// src/shardd/app/ServerAppGm.cpp (table kGmHandlers).
 
 #include <cstdint>
 #include <string_view>

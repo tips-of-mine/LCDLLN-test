@@ -1,6 +1,6 @@
 #include "src/shardd/gameplay/gathering/GatheringSystem.h"
 
-#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shardd/app/ServerApp.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/world/WorldCells.h"

@@ -8,7 +8,7 @@
 #	undef NDEBUG
 #endif
 
-#include "src/shardd/world/AdmittedCharacterRegistry.h"
+#include "src/shared/world/AdmittedCharacterRegistry.h"
 
 #include <array>
 #include <cassert>

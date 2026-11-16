@@ -1,6 +1,6 @@
 #include "src/shardd/gameplay/economy/PlayerWalletService.h"
 
-#include "src/shared/server_bootstrap/ServerApp.h" // ConnectedClient layout (defined here; header only forward-declares).
+#include "src/shardd/app/ServerApp.h" // ConnectedClient layout (defined here; header only forward-declares).
 
 #include "src/shared/core/Log.h"
 

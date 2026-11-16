@@ -119,11 +119,11 @@ Rien à renseigner pour le fonctionnement normal.
 |---|---|
 | `src/shared/network/UdpSecureChannel.h/.cpp` | Enveloppe : dérivation HKDF, scellement/ouverture ChaCha20-Poly1305, fenêtre anti-rejeu |
 | `src/shardd/world/UdpSessionTable.h/.cpp` | Sessions du shard par adresse (une adresse = un personnage), purge |
-| `src/shardd/world/AdmittedCharacterRegistry` | Garde la clé de session reçue avec l'admission et ses sels déjà utilisés |
+| `src/shared/world/AdmittedCharacterRegistry` | Garde la clé de session reçue avec l'admission et ses sels déjà utilisés |
 | `src/shared/network/CharacterPayloads` / `ShardPayloads` | Clé en queue de l'EnterWorld (47) et de l'admission (199) |
 | `src/client/net/GameplayUdpClient` | Sel par socket, scelle tout ce qui part, refuse ce qui ne s'ouvre pas, répète le Hello |
 | `src/client/app/Engine.cpp`, `src/client/auth/AuthUi` | Tire la clé à chaque EnterWorld, une clé neuve à la reconnexion master, l'efface à la déconnexion |
-| `src/shared/server_bootstrap/ServerApp` | `ProcessPacket` (ouverture), `SendDatagram` (scellement, remplace `m_transport.Send`), `ProcessSecureHandshake` |
+| `src/shardd/app/ServerApp` | `ProcessPacket` (ouverture), `SendDatagram` (scellement, remplace `m_transport.Send`), `ProcessSecureHandshake` |
 
 ### Tests
 
@@ -219,7 +219,7 @@ de 25 à 29 octets.
 | Fichier | Rôle |
 |---|---|
 | `src/shared/network/SnapshotDelta.h/.cpp` | Quantification, codec delta, `SnapshotSender` (shard), `SnapshotReceiver` (client) |
-| `src/shared/server_bootstrap/ServerApp` | `SendSnapshot` (état quantifié, PNJ d'ambiance à mi-fréquence), acquittement dans l'Input, plafond avec priorités, fin de Spawn / Despawn |
+| `src/shardd/app/ServerApp` | `SendSnapshot` (état quantifié, PNJ d'ambiance à mi-fréquence), acquittement dans l'Input, plafond avec priorités, fin de Spawn / Despawn |
 | `src/client/ui_common/UIModel` | `ApplySnapshot` via `SnapshotReceiver`, `LatestSnapshotSeq` |
 | `src/client/net/GameplayUdpClient`, `src/client/app/Engine.cpp` | `ackSnapshotSeq` dans chaque Input |
 
@@ -329,7 +329,7 @@ moveEpoch u16 · x, y, z, yaw f32 · animationState u8 · ackSnapshotSeq u32`.
 |---|---|
 | `src/shared/movement/MovementRules.h/.cpp` | Règles partagées : budget de temps, distance, hauteur, saut, esquive |
 | `src/client/gameplay/MoveReconciler.h/.cpp` | Positions envoyées par commande, écart d'une correction |
-| `src/shared/server_bootstrap/ServerApp` | `HandleInput` (règles, position officielle, vitesse, renvoi du ForcePosition), `SendMoveCorrection`, `SendForcePosition` / `EmitForcePosition`, `ResetClientMovement`, `RefreshMaxMoveSpeed` |
+| `src/shardd/app/ServerApp` | `HandleInput` (règles, position officielle, vitesse, renvoi du ForcePosition), `SendMoveCorrection`, `SendForcePosition` / `EmitForcePosition`, `ResetClientMovement`, `RefreshMaxMoveSpeed` |
 | `src/client/app/Engine.cpp` | Horloge de simulation, historique, instants de saut / esquive, application des corrections |
 | `src/client/ui_common/UIModel`, `src/client/net/GameplayUdpClient` | Réception de MoveCorrection, champs de la commande |
 
@@ -420,7 +420,7 @@ Client                                       Shard
 |---|---|
 | `src/shared/network/ReliableChannel.h/.cpp` | Canal fiable : numérotation, renvois, accusés groupés, ordre, échec ; liste des types fiables |
 | `src/shared/network/ServerProtocol.h` | Kinds `Reliable` (102) et `ReliableAck` (103), `kProtocolVersion` 19 |
-| `src/shared/server_bootstrap/ServerApp` | `SendDatagram` (emballage), `SendDatagramRaw`, `HandleReliableEnvelope`, `PumpReliableChannels` |
+| `src/shardd/app/ServerApp` | `SendDatagram` (emballage), `SendDatagramRaw`, `HandleReliableEnvelope`, `PumpReliableChannels` |
 | `src/client/net/GameplayUdpClient` | `SendBytes` (emballage), `SendUnreliable`, ouverture des enveloppes dans `PollIncoming` |
 
 ### Tests

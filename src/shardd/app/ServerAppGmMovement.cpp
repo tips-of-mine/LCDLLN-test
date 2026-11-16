@@ -13,7 +13,7 @@
 // applique le multiplicateur à la vitesse autoritaire, GmStateUpdate (kind 104)
 // prévient le client (vitesse locale, vol, gel).
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shared/core/Log.h"
 

@@ -8,7 +8,7 @@
 // au client (InventoryDelta = instantané complet) ; la bourse par WalletUpdate.
 // Chaque changement est sauvegardé.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shardd/gameplay/economy/PlayerWalletService.h"
 #include "src/shardd/gameplay/gm/GmPlaceDirectory.h"

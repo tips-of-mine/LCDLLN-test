@@ -30,7 +30,7 @@ partent au client (QuestDelta) et le personnage est sauvegardé.
 
 ## Fichiers
 
-`src/shared/server_bootstrap/ServerAppGmQuests.cpp`,
+`src/shardd/app/ServerAppGmQuests.cpp`,
 `src/shardd/gameplay/quest/QuestRuntime.h` (`Definitions()`).
 
 ## Déploiement

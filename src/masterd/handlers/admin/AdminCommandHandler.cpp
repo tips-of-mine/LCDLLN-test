@@ -15,7 +15,7 @@
 #include "src/masterd/ops/ClusterShutdown.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
-#include "src/shardd/world/LunarCalendar.h"
+#include "src/shared/world/LunarCalendar.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"

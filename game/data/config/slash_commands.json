@@ -83,7 +83,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGm.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGm.cpp"
     },
     {
       "command": "/tp",
@@ -97,7 +97,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/goto",
@@ -111,7 +111,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/summon",
@@ -125,7 +125,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/recall",
@@ -139,7 +139,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/back",
@@ -153,7 +153,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/places",
@@ -167,7 +167,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/mark",
@@ -181,7 +181,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/marks",
@@ -195,7 +195,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/gomark",
@@ -209,7 +209,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/unmark",
@@ -223,7 +223,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/forward",
@@ -237,7 +237,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/up",
@@ -251,7 +251,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/down",
@@ -265,7 +265,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/ground",
@@ -279,7 +279,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/spawn",
@@ -293,7 +293,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/speed",
@@ -307,7 +307,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/fly",
@@ -321,7 +321,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/freeze",
@@ -335,7 +335,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/unfreeze",
@@ -349,7 +349,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmMovement.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmMovement.cpp"
     },
     {
       "command": "/pos",
@@ -363,7 +363,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmInfo.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmInfo.cpp"
     },
     {
       "command": "/where",
@@ -377,7 +377,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmInfo.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmInfo.cpp"
     },
     {
       "command": "/online",
@@ -447,7 +447,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmInfo.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmInfo.cpp"
     },
     {
       "command": "/zone",
@@ -461,7 +461,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmInfo.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmInfo.cpp"
     },
     {
       "command": "/nearby",
@@ -475,7 +475,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmInfo.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmInfo.cpp"
     },
     {
       "command": "/level",
@@ -489,7 +489,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/xp",
@@ -503,7 +503,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/heal",
@@ -517,7 +517,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/revive",
@@ -531,7 +531,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/kill",
@@ -545,7 +545,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/hp",
@@ -559,7 +559,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/mana",
@@ -573,7 +573,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/invincible",
@@ -587,7 +587,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/invisible",
@@ -601,7 +601,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/nocost",
@@ -615,7 +615,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/cooldown",
@@ -629,7 +629,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/learn",
@@ -643,7 +643,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/unlearn",
@@ -657,7 +657,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/resetskills",
@@ -671,7 +671,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/profession",
@@ -685,7 +685,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmCharacter.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmCharacter.cpp"
     },
     {
       "command": "/setrep",
@@ -713,7 +713,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/removeitem",
@@ -727,7 +727,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/money",
@@ -741,7 +741,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/inventory",
@@ -755,7 +755,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/equipment",
@@ -769,7 +769,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/clearbag",
@@ -783,7 +783,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/itemsearch",
@@ -797,7 +797,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmItems.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmItems.cpp"
     },
     {
       "command": "/mount",
@@ -811,7 +811,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmAppearance.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmAppearance.cpp"
     },
     {
       "command": "/dismount",
@@ -825,7 +825,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmAppearance.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmAppearance.cpp"
     },
     {
       "command": "/npc",
@@ -839,7 +839,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmWorld.cpp"
     },
     {
       "command": "/npcsearch",
@@ -853,7 +853,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmWorld.cpp"
     },
     {
       "command": "/cleanup",
@@ -867,7 +867,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmWorld.cpp"
     },
     {
       "command": "/respawn",
@@ -881,7 +881,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmWorld.cpp"
     },
     {
       "command": "/revealmap",
@@ -895,7 +895,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmWorld.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmWorld.cpp"
     },
     {
       "command": "/gmquest",
@@ -909,7 +909,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmQuests.cpp"
     },
     {
       "command": "/questsearch",
@@ -923,7 +923,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmQuests.cpp"
     },
     {
       "command": "/event",
@@ -937,7 +937,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGmQuests.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGmQuests.cpp"
     },
     {
       "command": "/unmute",
@@ -1133,7 +1133,7 @@
       "serverInteraction": true,
       "serverLogged": true,
       "status": "shard_command",
-      "implementation_file": "src/shared/server_bootstrap/ServerAppGm.cpp"
+      "implementation_file": "src/shardd/app/ServerAppGm.cpp"
     },
     {
       "command": "/reload",

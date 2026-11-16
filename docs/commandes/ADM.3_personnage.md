@@ -49,7 +49,7 @@ l'appelant. Le joueur visé est prévenu par un message système.
 
 | Fichier | Rôle |
 |---|---|
-| `src/shared/server_bootstrap/ServerAppGmCharacter.cpp` | 15 commandes shard |
+| `src/shardd/app/ServerAppGmCharacter.cpp` | 15 commandes shard |
 | `src/masterd/admin/MasterGmCommands.cpp` (`RegisterCharacter`) | `/setrep` |
 | `src/masterd/reputation/ReputationManager.h` | `SetReputation` |
 

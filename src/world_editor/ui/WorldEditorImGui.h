@@ -46,6 +46,7 @@ namespace engine::render
 {
 	class VkDeviceContext;
 	class DayNightCycle;
+	class ImGuiOverlay;
 }
 namespace engine::render::terrain
 {
@@ -93,8 +94,9 @@ namespace engine::editor
 		int selectedLayoutInstanceOverlay = -1;
 	};
 
-	/// ImGui + Vulkan (rendu dynamique) pour \c lcdlln_world_editor.exe uniquement (Windows).
-	/// Sur les autres plateformes, les appels sont des no-op.
+	/// Panneaux ImGui de l'éditeur monde (\c lcdlln_world_editor.exe, Windows), dessinés
+	/// dans le contexte de l'overlay commun engine::render::ImGuiOverlay (cf. SetOverlay).
+	/// Sur les autres plateformes, BuildUi est un no-op.
 	class WorldEditorImGui final
 	{
 	public:
@@ -128,28 +130,12 @@ namespace engine::editor
 		/// « Quitter » est grisée.
 		void SetQuitCallback(std::function<void()> cb) { m_onQuitRequested = std::move(cb); }
 
-		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
-		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
-		/// l'atlas ImGui avant la création de la texture de fonts par ImGui_ImplVulkan_Init.
-		/// \param isWorldEditorExe \c true pour \c lcdlln_world_editor.exe : la police par defaut
-		/// devient Arial (lisible, neutre pour un editeur de carte) au lieu de Windlass (decorative,
-		/// reservee a l'UI auth/in-game). Cf. \c editor.font.arial_path / \c editor.font.arial_pixel_height
-		/// dans config.json. Aucun effet si \c false (UI auth garde Windlass).
-		bool Init(VkInstance instance,
-			const engine::render::VkDeviceContext& deviceContext,
-			VkFormat swapchainFormat,
-			uint32_t swapchainImageCount,
-			uint32_t vulkanApiVersion,
-			void* hwndNative,
-			const engine::core::Config* cfg = nullptr,
-			bool isWorldEditorExe = false);
+		/// Branche l'overlay ImGui commun (possédé par Engine) qui fournit le
+		/// contexte ImGui, les polices et le rendu. Pointeur non possédé ; BuildUi
+		/// est un no-op tant qu'il est nul ou pas prêt.
+		void SetOverlay(engine::render::ImGuiOverlay* overlay) { m_imguiOverlay = overlay; }
 
-		void Shutdown(VkDevice device);
-
-		void OnSwapchainRecreate(uint32_t swapchainImageCount);
-
-		/// À appeler chaque frame avant \ref RecordToBackbuffer (côté CPU).
-		void NewFrame(float deltaSeconds, float displayWidth, float displayHeight);
+		/// Panneaux de l'éditeur pour la frame courante (après ImGuiOverlay::NewFrame).
 		void BuildUi(const WorldEditorViewportOverlayDesc* viewportOverlay = nullptr);
 
 		/// Contexte données éditeur (\c lcdlln_world_editor uniquement). Peut être nul.
@@ -165,24 +151,8 @@ namespace engine::editor
 		/// (ImGui::Dummy 48x48) — l'UI reste fonctionnelle, juste sans previews.
 		void SetTexturePreviewCache(engine::editor::TexturePreviewCache* cache) { m_texturePreviewCache = cache; }
 
-		/// Win32 : branche \c ImGui_ImplWin32_WndProcHandler avant le traitement LCDLLN.
-		void AttachPlatformWindow(void* hwndNative, engine::platform::Window& window);
-		void DetachPlatformWindow(engine::platform::Window& window);
-
-		[[nodiscard]] bool IsReady() const { return m_ready; }
-		[[nodiscard]] bool WantsCaptureMouse() const;
-		[[nodiscard]] bool WantsCaptureKeyboard() const;
-
-		/// Image swapchain en \c TRANSFER_DST_OPTIMAL → présentation. Dessine ImGui par-dessus la scène copiée.
-		bool RecordToBackbuffer(VkCommandBuffer cmd,
-			VkImage backbufferImage,
-			VkImageView backbufferView,
-			VkExtent2D extent,
-			const engine::render::VkDeviceContext& deviceContext);
-
 	private:
-		bool m_ready = false;
-		void* m_hwnd = nullptr;
+		engine::render::ImGuiOverlay* m_imguiOverlay = nullptr;
 		WorldEditorSession* m_session = nullptr;
 		engine::core::Config* m_cfg = nullptr;
 		engine::render::DayNightCycle* m_dayNight = nullptr;
@@ -515,7 +485,6 @@ namespace engine::editor
 		void RunWizardGeneration();
 
 #if defined(_WIN32)
-		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif
 	};
 

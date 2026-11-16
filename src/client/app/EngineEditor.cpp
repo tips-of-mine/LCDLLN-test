@@ -1714,8 +1714,8 @@ namespace engine
 	{
 		// Ne pas lier souris et clavier : un InputText actif mettait WantCaptureKeyboard à true et bloquait
 		// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
-		[[maybe_unused]] const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
-		const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
+		[[maybe_unused]] const bool capMouse = m_imguiOverlay->WantsCaptureMouse();
+		const bool capKb = m_imguiOverlay->WantsCaptureKeyboard();
 		// Convention UX standard (Unity/Unreal/Blender) : la rotation de la
 		// caméra free-fly de l'éditeur n'est active QUE pendant que le clic
 		// droit est maintenu. Sinon le moindre déplacement de la souris fait
@@ -1782,7 +1782,7 @@ namespace engine
 				overlay.showGrid = m_worldEditorSession->ShowGrid();
 				overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
 				overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
-				const bool capBeforeUi = m_worldEditorImGui->WantsCaptureMouse();
+				const bool capBeforeUi = m_imguiOverlay->WantsCaptureMouse();
 				terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
 					overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 					pickX, pickZ);
@@ -1858,7 +1858,7 @@ namespace engine
 		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
 		{
 			const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
-			const bool freeClick = !m_worldEditorImGui->WantsCaptureMouse()
+			const bool freeClick = !m_imguiOverlay->WantsCaptureMouse()
 				&& !m_input.IsDown(engine::platform::Key::Control)
 				&& !buildingEditMode;
 			if (tool == engine::editor::world::ActiveTool::TerrainSculpt)
@@ -1971,7 +1971,7 @@ namespace engine
 		// anneau = rotation) sur la pièce sélectionnée. S'il capture la souris,
 		// on N'enchaîne PAS sur la sélection de pièce ci-dessous.
 		bool gizmoGrabbed = false;
-		if (buildingEditMode && !m_worldEditorImGui->WantsCaptureMouse()
+		if (buildingEditMode && !m_imguiOverlay->WantsCaptureMouse()
 			&& !m_input.IsDown(engine::platform::Key::Control))
 		{
 			gizmoGrabbed = UpdateEditorBuildingGizmoDrag(m_input.MouseX(), m_input.MouseY());
@@ -1986,7 +1986,7 @@ namespace engine
 		// l'aveugle » : on clique la pièce, le gizmo s'y replace.
 		if (!gizmoGrabbed && buildingEditMode && m_editorPreviewValid && terrainPick
 			&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
-			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& !m_input.IsDown(engine::platform::Key::Control)
 			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 		{
@@ -2024,7 +2024,7 @@ namespace engine
 		// clic ne doit alimenter NI le picking NI les outils terrain.
 		bool sceneGizmoGrabbed = false;
 		if (!buildingEditMode && m_worldEditorShell && m_worldEditorShell->IsInitialized()
-			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& !m_input.IsDown(engine::platform::Key::Control))
 		{
 			sceneGizmoGrabbed = UpdateEditorSceneGizmoDrag(m_input.MouseX(), m_input.MouseY());
@@ -2038,7 +2038,7 @@ namespace engine
 		// Roadmap-6 : Ctrl+Maj+clic BASCULE l'entité dans la multi-sélection ;
 		// Ctrl+clic dans le vide vide la sélection.
 		if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
-			&& !m_worldEditorImGui->WantsCaptureMouse()
+			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& m_input.IsDown(engine::platform::Key::Control)
 			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 		{
@@ -2073,7 +2073,7 @@ namespace engine
 
 		if (!modernEditActive && !buildingEditMode && !sceneGizmoGrabbed && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 		{
-			const bool cap = m_worldEditorImGui->WantsCaptureMouse();
+			const bool cap = m_imguiOverlay->WantsCaptureMouse();
 			engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
 			if (!cap && ws.TerrainEditMode() == 4 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 			{

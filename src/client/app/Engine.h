@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/client/render/ImGuiOverlay.h"
 #include "src/client/gameplay/NameplateVisibility.h"
 #include "src/client/gameplay/PerceptionModel.h"
 #include "src/shared/core/Config.h"
@@ -711,6 +712,9 @@ namespace engine
 
 		engine::render::AssetRegistry m_assetRegistry;
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
+		/// Overlay ImGui commun (contexte, polices, rendu) : fenêtres de jeu ET éditeur.
+		std::unique_ptr<engine::render::ImGuiOverlay> m_imguiOverlay;
+		/// Panneaux de l'éditeur monde (créé seulement avec --world-editor), dessinés via m_imguiOverlay.
 		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
 		/// Overlay auth Dear ImGui (cycle de vie ImGui partagé avec \ref m_worldEditorImGui sur Windows).
 		std::unique_ptr<engine::render::AuthImGuiRenderer> m_authImGui;

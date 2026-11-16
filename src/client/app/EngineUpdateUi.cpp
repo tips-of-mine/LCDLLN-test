@@ -7,6 +7,8 @@
 
 #include "src/client/app/Engine.h"
 #include "src/client/app/EngineHelpers.h"
+#include "src/client/render/ImGuiOverlay.h"
+#include "src/world_editor/ui/EditorTheme.h"
 
 #include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/shared/platform/FileSystem.h"
@@ -68,8 +70,8 @@ namespace engine
 	// Sous-étape d'Engine::Update() — voir la documentation dans Engine.h.
 	void Engine::InitImGuiOverlayIfNeeded()
 	{
-		m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
-		if (m_worldEditorImGui->Init(
+		m_imguiOverlay = std::make_unique<engine::render::ImGuiOverlay>();
+		if (m_imguiOverlay->Init(
 			m_vkInstance.GetHandle(),
 			m_vkDeviceContext,
 			m_vkSwapchain.GetImageFormat(),
@@ -77,10 +79,14 @@ namespace engine
 			VK_API_VERSION_1_1,
 			m_window.GetNativeHandle(),
 			&m_cfg,
-			m_worldEditorExe))
+			m_worldEditorExe,
+			[] { engine::editor::world::ApplyWorldEditorTheme(); }))
 		{
 			if (m_worldEditorExe)
 			{
+				// Panneaux de l'éditeur monde, dessinés dans le contexte de l'overlay.
+				m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
+				m_worldEditorImGui->SetOverlay(m_imguiOverlay.get());
 				m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
 				// M100.46 incrément 3 — branche le Shell pour que le
 				// dialog Zone Presets puisse résoudre documents et
@@ -128,7 +134,7 @@ namespace engine
 			// Sous-projet C MVP (Task 12) — Initialise le viewport
 			// offscreen 512x512 dedie a l'apercu race dans l'ecran
 			// ImGui AuthImGuiCharacterCreate. Doit etre fait apres
-			// ImGui_ImplVulkan_Init (couvert par m_worldEditorImGui->Init
+			// ImGui_ImplVulkan_Init (couvert par m_imguiOverlay->Init
 			// plus haut, qui appelle ImGui_ImplVulkan_Init dans tous les
 			// cas — meme en mode client/jeu, le contexte ImGui partage
 			// est utilise par AuthImGui). En cas d'echec, AuthImGui
@@ -196,8 +202,11 @@ namespace engine
 			}
 			// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 			// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
-			m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
-			m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
+			if (m_worldEditorImGui)
+			{
+				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
+			}
+			m_imguiOverlay->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 			m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 			m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
 			// Sous-projet C MVP (Task 12) — passe le viewport offscreen
@@ -213,7 +222,7 @@ namespace engine
 			// par AuthImGuiCharacterCreate quand l'utilisateur change
 			// la race selectionnee dans le combo.
 			m_authUi.SetEngineForRaceMeshLookup(this);
-			// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
+			// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_imguiOverlay).
 			m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 			m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
 			// Cellule de dialogue PNJ : renderer ImGui dédié (fenêtre centrale).
@@ -281,7 +290,7 @@ namespace engine
 			m_classSkillTreeImGui = std::make_unique<engine::render::ClassSkillTreeImGuiRenderer>();
 			m_classSkillTreeImGui->SetPresenter(&m_classSkillTreeUi);
 			// SP-E — Cache d'icônes de compétences (PNG icons/skills/<classId>/...).
-			// Init APRÈS ImGui_ImplVulkan_Init (assuré par m_worldEditorImGui->Init
+			// Init APRÈS ImGui_ImplVulkan_Init (assuré par m_imguiOverlay->Init
 			// plus haut). Idempotent. Partagé avec le Grimoire / la barre d'action.
 			if (!m_skillIconCache.IsInitialized())
 			{
@@ -379,7 +388,7 @@ namespace engine
 		}
 		else
 		{
-			m_worldEditorImGui.reset();
+			m_imguiOverlay.reset();
 		}
 	}
 #endif

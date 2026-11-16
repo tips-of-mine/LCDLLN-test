@@ -16,7 +16,7 @@ namespace engine::render
 {
 	/// SP2 Task 5 — Rendu ImGui in-game des quêtes : journal (liste + détail),
 	/// tracker HUD compact et panneau donneur (offer/turn-in du PNJ ciblé).
-	/// Windows uniquement (contexte ImGui porté par WorldEditorImGui, cf.
+	/// Windows uniquement (contexte ImGui porté par ImGuiOverlay, cf.
 	/// \ref ChatImGuiRenderer). Affichage seul : toute la logique de sélection
 	/// de quête reste dans \ref engine::client::QuestUiPresenter ; ce renderer
 	/// ne fait que lire \c QuestUiPresenter::GetState() et \c UIModelBinding::GetModel()

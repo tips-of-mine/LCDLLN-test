@@ -1,12 +1,12 @@
 #pragma once
 
-// Partage de pointeurs ImFont entre WorldEditorImGui (loader) et les renderers
+// Partage de pointeurs ImFont entre ImGuiOverlay (loader) et les renderers
 // auth/HUD (consommateurs). Variable statique inline pour eviter les problemes
 // de linkage et garantir l'unicite. Type opaque pour ne pas obliger les headers
 // non-Windows a inclure imgui.h.
 //
 // Usage :
-//   * WorldEditorImGui.cpp (apres AddFontFromMemoryTTF) :
+//   * ImGuiOverlay.cpp (apres AddFontFromMemoryTTF) :
 //       g_largePasswordFont = font_ptr;
 //   * AuthImGuiRenderer.cpp (autour InputText password) :
 //       if (g_largePasswordFont) ImGui::PushFont(g_largePasswordFont);

@@ -339,6 +339,7 @@ add_library(engine_core
   src/shared/net/ChatEmotes.cpp
   src/world_editor/ui/EditorMode.cpp
   src/world_editor/ui/WorldEditorImGui.cpp
+  src/client/render/ImGuiOverlay.cpp
   src/world_editor/ui/WorldMapIo.cpp
   src/world_editor/ui/TreeSpeciesCatalog.cpp
   src/world_editor/ui/WorldEditorSession.cpp

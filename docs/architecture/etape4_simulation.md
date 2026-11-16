@@ -76,7 +76,7 @@ Loin des joueurs, les mobs endormis doivent dominer.
 | Fichier | Rôle |
 |---|---|
 | `src/shardd/world/MobActivity.h/.cpp` | Classes de fréquence, rattrapage du temps, sommeil, étalement de la vérification |
-| `src/shared/server_bootstrap/ServerApp` | `UpdateMobAi` (boucle), `IsPlayerNearMob`, `MoveMobTowards` (pas = temps couvert), lecture des réglages dans `InitSpawners` |
+| `src/shardd/app/ServerApp` | `UpdateMobAi` (boucle), `IsPlayerNearMob`, `MoveMobTowards` (pas = temps couvert), lecture des réglages dans `InitSpawners` |
 
 ### Tests
 
@@ -130,7 +130,7 @@ Un fréquence ≥ celle du tick (ou ≤ 0) revient à traiter chaque objet à ch
 | Fichier | Rôle |
 |---|---|
 | `src/shardd/world/TickSlicing.h` | `PeriodTicks`, `IsSliceTurn` |
-| `src/shared/server_bootstrap/ServerApp` | `UpdateSpawners`, `UpdateMapDiscovery`, `ProcessAuctionHouseTick` ; périodes lues dans `InitSpawners` |
+| `src/shardd/app/ServerApp` | `UpdateSpawners`, `UpdateMapDiscovery`, `ProcessAuctionHouseTick` ; périodes lues dans `InitSpawners` |
 | `src/shardd/world/MobActivity.cpp` | La vérification de voisinage (4.1) passe par le même étalement |
 
 ### Tests
@@ -198,7 +198,7 @@ Journal du shard : `Region froide : N003_W009 (plus parcourue)`, `Region decharg
 |---|---|
 | `src/shardd/world/RegionLifecycle.h/.cpp` | États des régions, régions devenues froides, déchargement |
 | `src/shardd/world/RegionActivity` | `ActiveCells()` : liste des régions actives |
-| `src/shared/server_bootstrap/ServerApp` | Index par région (`InitSpawners`), `RebuildEvaluatedSpawners`, `RefreshRegionActivity` (cycle de vie, déchargement), `UpdateSpawners` (liste évaluée, délai de grâce) |
+| `src/shardd/app/ServerApp` | Index par région (`InitSpawners`), `RebuildEvaluatedSpawners`, `RefreshRegionActivity` (cycle de vie, déchargement), `UpdateSpawners` (liste évaluée, délai de grâce) |
 
 ### Tests
 
@@ -319,7 +319,7 @@ s'y prêtera avec des métiers dédiés.
 |---|---|
 | `src/shardd/gameplay/ambient/DailyAgenda.h/.cpp` | Métiers, variante par graine, `EvaluateAgenda`, `StrollPoint` |
 | `src/shardd/gameplay/spawner/SpawnerRuntime` | `agenda` du JSON (`ParseAgenda`) |
-| `src/shared/server_bootstrap/ServerApp` | Apparition à la place de l'agenda, `IsAgendaSlotIndoors`, `UpdateAgendaMob`, horloge de jeu |
+| `src/shardd/app/ServerApp` | Apparition à la place de l'agenda, `IsAgendaSlotIndoors`, `UpdateAgendaMob`, horloge de jeu |
 | `tools/world_gen/lib/Population.cpp`, `Output.cpp` | Agendas des villageois, marchands et aubergistes |
 
 ### Tests
@@ -387,7 +387,7 @@ false`.
 | Fichier | Rôle |
 |---|---|
 | `src/shardd/world/LoadShedding.h/.cpp` | Charge lissée, seuils, maintien, délai minimal |
-| `src/shared/server_bootstrap/ServerApp` | Mesure du tick dans `Run`, `ApplyLoadShedding`, apparitions d'ambiance suspendues dans `UpdateSpawners`, réglages lus dans `InitSpawners` |
+| `src/shardd/app/ServerApp` | Mesure du tick dans `Run`, `ApplyLoadShedding`, apparitions d'ambiance suspendues dans `UpdateSpawners`, réglages lus dans `InitSpawners` |
 
 ### Tests
 

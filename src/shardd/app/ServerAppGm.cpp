@@ -15,7 +15,7 @@
 // Ce fichier est compilé dans les deux binaires du shard (server_app WIN32 et
 // shard_app Linux) : aucun appel aux fonctions de ShardPayloads.cpp ici.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shared/core/Log.h"
 

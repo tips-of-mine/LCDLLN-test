@@ -1382,7 +1382,7 @@ target_link_libraries(admin_command_payloads_tests PRIVATE engine_core)
 add_test(NAME admin_command_payloads_tests COMMAND admin_command_payloads_tests)
 
 # Phase 5 Lunar — calendar deterministe tests (header-only).
-add_executable(lunar_calendar_tests src/shardd/world/LunarCalendarTests.cpp)
+add_executable(lunar_calendar_tests src/shared/world/LunarCalendarTests.cpp)
 target_link_libraries(lunar_calendar_tests PRIVATE engine_core)
 add_test(NAME lunar_calendar_tests COMMAND lunar_calendar_tests)
 

@@ -3,7 +3,7 @@
 // Le binaire est enregistre dans CMakeLists.txt comme cible CTest
 // `lunar_calendar_tests`.
 
-#include "src/shardd/world/LunarCalendar.h"
+#include "src/shared/world/LunarCalendar.h"
 
 #include <cassert>
 #include <cmath>

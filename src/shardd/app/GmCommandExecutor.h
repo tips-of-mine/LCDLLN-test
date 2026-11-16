@@ -9,9 +9,9 @@
 //   - … un fichier par catégorie dans les tickets suivants.
 // En-tête INTERNE au shard : à n'inclure que depuis ces fichiers.
 
-#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shardd/app/ServerApp.h"
 
-#include "src/shardd/gameplay/gm/GmCommandCatalog.h"
+#include "src/shared/admin/GmCommandCatalog.h"
 #include "src/shared/admin/GmCommandText.h"
 
 #include <optional>

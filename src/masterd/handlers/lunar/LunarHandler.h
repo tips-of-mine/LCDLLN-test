@@ -20,7 +20,7 @@
 //     le shardd peut recalculer la phase via LunarCalendar (header-only).
 //   - Pas de override admin (parametre fixe au boot via SetCycleParams).
 
-#include "src/shardd/world/LunarCalendar.h"
+#include "src/shared/world/LunarCalendar.h"
 
 #include <cstdint>
 #include <mutex>

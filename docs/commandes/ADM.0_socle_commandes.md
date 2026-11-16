@@ -61,7 +61,7 @@ Client ◄── lignes « system » ──────┘
 ```
 
 - Le master **vérifie le rôle** ; le shard le **revérifie** (catalogue
-  `src/shardd/gameplay/gm/GmCommandCatalog.h`).
+  `src/shared/admin/GmCommandCatalog.h`).
 - La réponse 217 n'est acceptée que sur la connexion d'un shard enregistré, pour
   une demande en attente adressée à **ce** shard et à **ce** compte (pas
   d'écriture dans le chat d'un autre joueur).
@@ -88,7 +88,7 @@ techniques gardent aussi une trace : `[GmAudit]` (master) et `[GmCommand]`
    - l'entrée JSON avec `"status": "shard_command"`, le **même** `minRole`, une
      description, un `usage`, une aide (`help`) et un exemple ;
    - la méthode `Cmd…()` de `GmCommandExecutor` et sa ligne dans `kGmHandlers`
-     (`src/shared/server_bootstrap/ServerAppGm.cpp`).
+     (`src/shardd/app/ServerAppGm.cpp`).
    Le relais master est automatique (aucun code master à écrire).
 2. **Commande exécutée par le master** : l'entrée JSON `"status": "server_route"`
    et l'enregistrement dans `MasterGmCommands` (`RegisterEx`).
@@ -109,8 +109,8 @@ entrée ADM n'a pas d'aide complète.
 | `src/masterd/admin/GmShardRelay.{h,cpp}` | corrélation 216/217, délais, anti-rafale |
 | `src/masterd/admin/GmAuditStore.{h,cpp}` | lecture / écriture de `gm_command_audit` |
 | `src/shared/network/ShardPayloads.{h,cpp}` | paquets 216 / 217 |
-| `src/shardd/gameplay/gm/GmCommandCatalog.h` | commandes connues du shard + rôle |
-| `src/shared/server_bootstrap/ServerAppGm.cpp` | exécuteur des commandes au tick du shard |
+| `src/shared/admin/GmCommandCatalog.h` | commandes connues du shard + rôle |
+| `src/shardd/app/ServerAppGm.cpp` | exécuteur des commandes au tick du shard |
 
 ## Tests
 

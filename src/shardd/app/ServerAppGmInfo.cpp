@@ -7,7 +7,7 @@
 // Repère du monde : +X = est, +Z = sud (carte du monde) ; l'orientation d'un
 // personnage suit la convention du client (avant = (sin yaw, cos yaw)).
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shared/world/WorldCells.h"
 

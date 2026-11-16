@@ -30,7 +30,7 @@ modèle affiché d'une entité) : elles sont déclarées « prévues » dans le 
 
 ## Fichiers
 
-`src/shared/server_bootstrap/ServerAppGmAppearance.cpp`.
+`src/shardd/app/ServerAppGmAppearance.cpp`.
 
 ## Déploiement
 

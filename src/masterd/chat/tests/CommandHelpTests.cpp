@@ -6,7 +6,7 @@
 
 #include "src/masterd/admin/SlashCommandRegistry.h"
 #include "src/masterd/chat/CommandHelp.h"
-#include "src/shardd/gameplay/gm/GmCommandCatalog.h"
+#include "src/shared/admin/GmCommandCatalog.h"
 #include "src/shared/admin/GmCommandText.h"
 
 #include <iostream>

@@ -31,7 +31,7 @@ numéro.
 
 ## Fichiers
 
-`src/shared/server_bootstrap/ServerAppGmItems.cpp` (7 commandes).
+`src/shardd/app/ServerAppGmItems.cpp` (7 commandes).
 
 ## Déploiement
 

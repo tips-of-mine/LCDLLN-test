@@ -8,7 +8,7 @@
 // autres, et disparaît à sa mort sans réapparaître. /cleanup les retire. Un mob de
 // spawner supprimé par /npc delete réapparaît après le délai de son spawner.
 
-#include "src/shared/server_bootstrap/GmCommandExecutor.h"
+#include "src/shardd/app/GmCommandExecutor.h"
 
 #include "src/shardd/gameplay/gm/GmPlaceDirectory.h"
 #include "src/shared/world/WorldCells.h"

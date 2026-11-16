@@ -35,8 +35,8 @@ pas proposé : la fusion en base est un OU (ce qui est découvert le reste).
 
 | Fichier | Rôle |
 |---|---|
-| `src/shared/server_bootstrap/ServerAppGmWorld.cpp` | 5 commandes |
-| `src/shared/server_bootstrap/ServerApp.cpp` | `SpawnGmMob`, `RemoveMobByGm`, `PurgeDeadGmMobs` |
+| `src/shardd/app/ServerAppGmWorld.cpp` | 5 commandes |
+| `src/shardd/app/ServerApp.cpp` | `SpawnGmMob`, `RemoveMobByGm`, `PurgeDeadGmMobs` |
 | `src/shardd/world/MapDiscoveryTracker.{h,cpp}` | `RevealWholeCell` (+ test) |
 | `src/shardd/gameplay/creature/CreatureArchetypeLibrary.h` | `All()` |
 

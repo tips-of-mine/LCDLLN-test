@@ -115,7 +115,10 @@ Chaque écran est découpé en **deux fichiers** :
 | Fichier | Rôle |
 |---|---|
 | `src/client/auth/AuthUi.h` | Déclaration complète d'`AuthUiPresenter` : toutes les phases, membres, méthodes. **Lire en premier pour comprendre la structure.** |
-| `src/client/auth/AuthUiPresenterCore.cpp` | Init, `Update()` global, dispatch des phases, `SubmitCurrentPhase()`, gestion async. |
+| `src/client/auth/AuthUiPresenterCore.cpp` | Init / arrêt, préférences mémorisées, titre de fenêtre, `SubmitCurrentPhase()`. |
+| `src/client/auth/AuthUiPresenterWorkers.cpp` | Threads réseau (connexion, inscription, flux master, vérification d'e-mail, sondage d'état) et `PollAsyncResult()` (Windows). |
+| `src/client/auth/AuthUiPresenterUpdate.cpp` | `Update()` par frame (saisie, navigation, clics), `BuildRenderModel()`, `BuildPanelText()`, `OnEscape()`, `RequestReturnToLogin()`. |
+| `src/client/auth/AuthUiPresenterInternal.h` | En-tête interne : inclusions et utilitaires communs (JSON des réglages, HTTP d'état, dates, pays) des trois fichiers ci-dessus. |
 | `src/client/auth/AuthUiPresenterSettings.cpp` | Persistance locale : remember-me, locale, settings JSON. |
 | `src/client/auth/AuthUiPresenterNative.cpp` | Auth native Windows (hors ImGui). |
 | `src/client/render/AuthUiRenderer.h` | Interface du renderer (méthode `Render(RenderModel)`). |
@@ -1165,7 +1168,7 @@ Touche **Échap** post-EnterWorld toggle un menu ImGui centré au-dessus du mond
 |---|---|
 | `src/client/app/Engine.h` | Membre `m_inGamePauseMenuVisible` + méthodes `ToggleInGamePauseMenu()`, `RequestLogoutToLoginScreen()`. |
 | `src/client/app/Engine.cpp` (branche Échap in-game) | Toggle au lieu de `OnQuit()` ; rendu ImGui inline dans la branche du chat HUD (même `ImGui::Render` final). |
-| `src/client/auth/AuthUi.h` + `AuthUiPresenterCore.cpp` | Méthode publique `RequestReturnToLogin()` : reset `m_flowComplete=false`, repasse en `Phase::Login`. |
+| `src/client/auth/AuthUi.h` + `AuthUiPresenterUpdate.cpp` | Méthode publique `RequestReturnToLogin()` : reset `m_flowComplete=false`, repasse en `Phase::Login`. |
 
 ### Actions
 - **Reprendre** → ferme le menu.

@@ -1,11 +1,11 @@
 /// M22.6 — Shard server entry point: accepts client connections; first packet must be PRESENT_SHARD_TICKET; validates and responds TICKET_ACCEPTED/REJECTED.
 
-#include "src/masterd/metrics/HealthEndpoint.h"
-#include "src/masterd/metrics/PrometheusMetrics.h"
+#include "src/shared/metric/HealthEndpoint.h"
+#include "src/shared/metric/PrometheusMetrics.h"
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/PacketLog.h"
-#include "src/masterd/handlers/shard/ShardTicketValidator.h"
-#include "src/masterd/handlers/shard/ShardTicketHandshakeHandler.h"
+#include "src/shardd/net/ShardTicketValidator.h"
+#include "src/shardd/net/ShardTicketHandshakeHandler.h"
 #include "src/shared/world/AdmittedCharacterRegistry.h"
 #include "src/shardd/app/ServerApp.h"
 #include "src/shared/db/ConnectionPool.h"

@@ -12,7 +12,7 @@
 // retourne le PlayerId gagnant pour CE drop. Le caller (LootHandler ou
 // equivalent) execute ensuite la mutation persistente (insert mail / item).
 
-#include "src/masterd/Groups/GroupTypes.h"
+#include "src/shared/groups/GroupTypes.h"
 
 #include <cstddef>
 #include <cstdint>

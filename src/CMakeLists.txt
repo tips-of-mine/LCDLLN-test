@@ -313,12 +313,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/world/ZoneNameRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ServerRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardRegisterHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/ShardTicketCrypto.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/metrics/HealthEndpoint.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/metrics/PrometheusMetrics.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/metric/HealthEndpoint.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/metric/PrometheusMetrics.cpp
     # Wave 7 Entities foundation : Object base (header-only en pratique, .cpp
     # garde un translation unit nomme pour futures methodes out-of-line).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
@@ -920,7 +919,7 @@ elseif(UNIX)
 
   # CMANGOS.30 (Phase 5.30a) : CinematicSequence (header-only, camera keyframe interp).
   lcdlln_add_simple_test(cinematic_sequence_tests
-    ${CMAKE_SOURCE_DIR}/src/shardd/cinematics/CinematicSequenceTests.cpp)
+    ${CMAKE_SOURCE_DIR}/src/shared/cinematics/CinematicSequenceTests.cpp)
 
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
@@ -1423,9 +1422,9 @@ elseif(UNIX)
 
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/net/ShardTicketTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/net/ShardTicketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/ShardTicketCrypto.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
@@ -1559,11 +1558,11 @@ elseif(UNIX)
   add_executable(shard_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_linux.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketHandshakeHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/metrics/HealthEndpoint.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/metrics/PrometheusMetrics.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/net/ShardTicketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/net/ShardTicketHandshakeHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/security/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/metric/HealthEndpoint.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/metric/PrometheusMetrics.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardToMasterClient.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp

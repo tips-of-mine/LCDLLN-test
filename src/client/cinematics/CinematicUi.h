@@ -20,7 +20,7 @@
 // Receive : Engine::SetMasterPushHandler dispatche les opcodes 108/110/112
 // vers les OnXxx du presenter.
 
-#include "src/shardd/cinematics/CinematicSequence.h"
+#include "src/shared/cinematics/CinematicSequence.h"
 #include "src/shared/network/CinematicPayloads.h"
 
 #include <cstdint>

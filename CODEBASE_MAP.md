@@ -1305,7 +1305,12 @@ Le shard est le binaire qui exécute le **gameplay temps réel** (combat, mouvem
 | `src/shardd/arena/` | Arena runtime côté shard (proposition match, écho score). Master gère le team/MMR persistant. |
 | `src/shardd/auction/` | Hooks shard pour création/expiration listings (master gère le tick global). |
 | `src/shardd/battleground/` | BG runtime (score, objectifs in-game). Master gère queue + history. |
-| `src/shardd/cinematics/` | `CinematicSequence` validation client-side parsing + anticheat skip detection. |
+| `src/shared/cinematics/` | `CinematicSequence` validation client-side parsing + anticheat skip detection (partagé client / shard). |
+| `src/shared/metric/{HealthEndpoint,PrometheusMetrics}.{h,cpp}` | `/healthz`, `/readyz`, `/metrics` du master et du shard. |
+| `src/shared/security/ShardTicketCrypto.{h,cpp}` | HMAC des tickets de connexion shard (émis par le master, vérifiés par le shard). |
+| `src/shardd/net/ShardTicket{Validator,HandshakeHandler}.{h,cpp}` | Côté shard : validation du ticket (anti-rejeu) et handshake de connexion ; tests `shard_ticket_tests`. |
+| `src/shared/groups/GroupTypes.h` | Types de groupe (master `Groups/`, règles de butin du shard). |
+| `src/shared/world/WorldGrid.h` | Taille de zone / chunk / cellule spatiale, partagée client, serveurs et outils (`WorldModel.h` l'inclut). |
 | `src/shardd/combat/` | `ThreatList` + Runtime, calcul threat, current target. **Manque** : `HostileRefManager` bidirectionnel (Wave 19 roadmap). |
 | `src/shardd/dbscripts/` | `DBScript.h/cpp` + Runtime — DSL data-driven 30 commandes (Say/Yell/Move/Spawn/etc.) hot-reload via `/reload`. |
 | `src/shardd/entities/` | Base `Object.h/cpp`, `ObjectGuid.h`, `UpdateField.h`, `UpdateMask.h` (Wave 7 #575). **Manque** : Unit/Player/WorldObject/Creature (Wave 17 roadmap). |

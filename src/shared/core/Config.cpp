@@ -726,7 +726,7 @@ namespace engine::core
 
 	bool Config::Has(std::string_view key) const
 	{
-		return m_values.find(ToOwnedKey(key)) != m_values.end();
+		return m_values.find(key) != m_values.end();
 	}
 
 	size_t Config::EraseUnderPrefix(std::string_view prefix)
@@ -794,7 +794,7 @@ namespace engine::core
 
 	std::string Config::GetString(std::string_view key, std::string_view fallback) const
 	{
-		const auto it = m_values.find(ToOwnedKey(key));
+		const auto it = m_values.find(key);
 		if (it == m_values.end())
 		{
 			return std::string(fallback);
@@ -841,7 +841,7 @@ namespace engine::core
 
 	int64_t Config::GetInt(std::string_view key, int64_t fallback) const
 	{
-		const auto it = m_values.find(ToOwnedKey(key));
+		const auto it = m_values.find(key);
 		if (it == m_values.end())
 		{
 			return fallback;
@@ -874,7 +874,7 @@ namespace engine::core
 
 	double Config::GetDouble(std::string_view key, double fallback) const
 	{
-		const auto it = m_values.find(ToOwnedKey(key));
+		const auto it = m_values.find(key);
 		if (it == m_values.end())
 		{
 			return fallback;
@@ -906,7 +906,7 @@ namespace engine::core
 
 	bool Config::GetBool(std::string_view key, bool fallback) const
 	{
-		const auto it = m_values.find(ToOwnedKey(key));
+		const auto it = m_values.find(key);
 		if (it == m_values.end())
 		{
 			return fallback;

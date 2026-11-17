@@ -337,66 +337,17 @@ add_library(engine_core
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
   src/shared/net/ChatEmotes.cpp
-  src/world_editor/ui/EditorMode.cpp
-  src/world_editor/ui/WorldEditorImGui.cpp
   src/client/render/ImGuiOverlay.cpp
-  src/world_editor/ui/WorldMapIo.cpp
-  src/world_editor/ui/TreeSpeciesCatalog.cpp
-  src/world_editor/ui/WorldEditorSession.cpp
-  src/world_editor/ui/TexturePreviewCache.cpp
-  src/world_editor/ui/TextureLibraryPanel.cpp
-  # M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
-  # éditeur, exposée à ImGui pour affichage dans le ScenePanel.
-  # L'image est créée + transitionnée SHADER_READ_ONLY mais reste noire
-  # tant que la PR 2 ne branche pas la copie depuis SceneColor_LDR.
-  src/world_editor/render/EditorViewportRenderTarget.cpp
-  # M100.1 — World editor "couche au-dessus" (engine::editor::world).
-  # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
-  # editor.world.enabled. Pas référencé par engine/server/.
-  src/world_editor/core/WorldEditorShell.cpp
-  src/world_editor/core/CommandStack.cpp
-  # Réorganisation UI 2026-07-17 — registre central des actions (menus,
-  # barre d'actions, palette de commandes, fenêtre raccourcis) + modèle pur
-  # de la palette d'outils (familles + libellés FR).
-  src/world_editor/actions/EditorActionRegistry.cpp
-  src/world_editor/ui/ToolPaletteModel.cpp
-  src/world_editor/ui/ToolGlyphs.cpp
-  src/world_editor/panels/ToolPalettePanel.cpp
-  src/world_editor/ui/CommandPaletteModel.cpp
-  src/world_editor/ui/EditorTheme.cpp
-  # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
-  src/world_editor/routine/RoutineGraphCommands.cpp
-  src/world_editor/routine/RoutineGraphPanel.cpp
-  src/world_editor/routine/RoutineNodePalette.cpp
-  src/world_editor/routine/RoutineNodeInspector.cpp
   # M100.16 — Hazard volumes (simulateur client + outil editeur ; format header-only).
   src/client/world/hazard/HazardSimulator.cpp
-  src/world_editor/HazardTool.cpp
-  # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
-  src/world_editor/PlacementGeometry.cpp
-  src/world_editor/PlacementTool.cpp
   # M100.32 — Interactive Props (simulateur d'animation pur + panneau editeur ;
   # types/format/relais header-only ; payloads reseau partages).
   src/client/world/interactive/InteractiveSimulator.cpp
-  src/world_editor/InteractivePanel.cpp
-  # M100.34 — Selection/Layers/Minimap/Export zone (geometrie + calques + export
-  # via Save*Bin header-only ; panneau minimap ImGui guarde).
-  src/world_editor/SelectionTool.cpp
-  src/world_editor/LayersDocument.cpp
-  src/world_editor/DeleteCommand.cpp
-  src/world_editor/WorldEditorExporter.cpp
-  src/world_editor/panels/MinimapPanel.cpp
   # M100.18 — Vegetation library + density painting (library JSON + Poisson-disk + outil).
   src/client/world/foliage/FoliageLibrary.cpp
   src/client/world/foliage/PoissonDiskSampler.cpp
-  src/world_editor/FoliagePaintTool.cpp
-  # M100.19 — Forest & Field procedural tools (generateurs purs + outils).
-  src/world_editor/ForestFieldGen.cpp
-  src/world_editor/ForestTool.cpp
-  src/world_editor/FieldTool.cpp
   # M100.20 — Vegetation wind (WindSystem eval + zones + outil).
   src/client/world/wind/WindSystem.cpp
-  src/world_editor/WindZoneTool.cpp
   # M100.21 — Player interaction (collecteur d'influences d'entites).
   src/client/world/foliage/EntityInfluenceCollector.cpp
   # M100.27 — Shade map + thermal (ComputeTemperature + builder).
@@ -404,233 +355,22 @@ add_library(engine_core
   src/client/world/thermal/ShadeMapBuilder.cpp
   # M100.28 — Gameplay zones (requetes + outil).
   src/client/world/zones/ZoneQuery.cpp
-  src/world_editor/ZoneTool.cpp
   # M100.29 — Spline tool & roads (sampler pur + outil).
   src/client/world/spline/SplineSampler.cpp
-  src/world_editor/SplineTool.cpp
   # M100.30 — Bridges & modular walls (structures pures ; outils header-only).
   src/client/world/structures/Structures.cpp
   # M100.31 — Hamlet generator (generation pure + kit JSON ; outil header-only).
   src/client/world/structures/HamletKitLibrary.cpp
-  src/world_editor/HamletGen.cpp
   # M100.33 — Footstep audio (resolution pure ; PlaytestMode header-only).
   src/client/audio/FootstepAudioSurfaceHook.cpp
-  # Sous-projet 1, bloc B — modele de scene + selection partagee.
-  src/world_editor/scene/EditorSelection.cpp
-  src/world_editor/scene/EditorSceneModel.cpp
-  # Sous-projet 1, bloc D — commande undoable d'edition de transform.
-  src/world_editor/inspector/SetEntityTransformCommand.cpp
-  # Lot 5 (2026-07-18) — dupliquer/supprimer la selection (undoables).
-  src/world_editor/scene/DeleteEntityCommand.cpp
-  src/world_editor/scene/DuplicateEntityCommand.cpp
-  src/world_editor/terrain/TerrainDocument.cpp
-  src/world_editor/terrain/TerrainBrush.cpp
-  src/world_editor/terrain/TerrainRaycast.cpp
-  src/world_editor/terrain/TerrainSculptCommand.cpp
-  src/world_editor/terrain/TerrainSculptTool.cpp
-  src/world_editor/terrain/TerrainStampCommand.cpp
-  src/world_editor/terrain/TerrainStampTool.cpp
-  src/world_editor/terrain/StampLibrary.cpp
-  src/world_editor/terrain/ProceduralStampGenerators.cpp
-  # M100.35 — Toolbar à icônes + outils macros terrain (Mountain Range &
-  # Valley Chain). Pas de Vulkan, pas de PNG d'icônes embarqués : la toolbar
-  # rend des placeholders procéduraux (carré coloré + lettre) via
-  # ImDrawList. Voir game/data/icons/editor/tools/README.md.
-  src/world_editor/ui/EditorToolbar.cpp
-  src/world_editor/ui/ToolbarIconAtlas.cpp
-  src/world_editor/terrain/PolylineMacroCore.cpp
-  src/world_editor/terrain/MacroPolylineCommandBase.cpp
-  src/world_editor/terrain/MountainRangeCommand.cpp
-  src/world_editor/terrain/MountainRangeTool.cpp
-  src/world_editor/terrain/ValleyChainCommand.cpp
-  src/world_editor/terrain/ValleyChainTool.cpp
-  src/world_editor/splat/SplatPaintCommand.cpp
-  src/world_editor/splat/SplatPaintTool.cpp
-  src/world_editor/splat/SplatRules.cpp
-  src/world_editor/camera/EditorCameraController.cpp
-  src/world_editor/camera/CollisionPreviewCamera.cpp
-  src/world_editor/water/WaterDocument.cpp
-  src/world_editor/water/AddLakeCommand.cpp
-  src/world_editor/water/AddRiverCommand.cpp
-  src/world_editor/water/LakeTool.cpp
-  src/world_editor/water/RiverTool.cpp
-  # M100.36 — River Network Generator (watershed D8 + OceanSettings)
-  src/world_editor/water/ConsolidatedHeightGrid.cpp
-  # M100.46 — helper partagé qui assemble un grid 2x2 chunks depuis le
-  # TerrainDocument (anciennement dupliqué dans CoastlineEditorTool,
-  # ThermalWindErosionTool et OperationDispatcher).
-  src/world_editor/water/HeightGridAssembly.cpp
-  src/world_editor/water/D8FlowDirection.cpp
-  src/world_editor/water/FlowAccumulation.cpp
-  src/world_editor/water/PathSimplifyDouglasPeucker.cpp
-  src/world_editor/water/WatershedSimulation.cpp
-  src/world_editor/water/RiverNetworkCommand.cpp
-  src/world_editor/water/RiverNetworkTool.cpp
-  # M100.37 — Coastline & Sea Level Editor (marching squares + smoothing
-  # + cliffs ; étend `OceanSettings` v3 + `LakeInstance::isOcean`).
-  src/world_editor/water/CoastlineSegmentExtractor.cpp
-  src/world_editor/water/CoastlineStats.cpp
-  src/world_editor/water/CoastlineSmoothing.cpp
-  src/world_editor/water/CoastlineCliffs.cpp
-  src/world_editor/water/CoastlineCommand.cpp
-  src/world_editor/water/CoastlineEditorTool.cpp
-  # M100.38 — Hydraulic Erosion (particle-based, réutilise grid
-  # consolidé + D8 + flow accumulation de M100.36).
-  src/world_editor/terrain/erosion/BilinearGradientSample.cpp
-  src/world_editor/terrain/erosion/DropletInitDistribution.cpp
-  src/world_editor/terrain/erosion/DropletKernel.cpp
-  src/world_editor/terrain/erosion/HydraulicSimulation.cpp
-  src/world_editor/terrain/erosion/HydraulicErosionCommand.cpp
-  src/world_editor/terrain/erosion/HydraulicErosionTool.cpp
-  # M100.39 — Thermal & Wind Erosion (clôt Phase 2.5 terrain naturaliste).
-  src/world_editor/terrain/erosion/ThermalSimulation.cpp
-  src/world_editor/terrain/erosion/WindSimulation.cpp
-  src/world_editor/terrain/erosion/ThermalWindErosionCommand.cpp
-  src/world_editor/terrain/erosion/ThermalWindErosionTool.cpp
-  # M100.40 — Mesh Insert Foundation + Cave Tool (démarre Phase 11
-  # « Volumes 3D »). MVP éditeur-side : data model + IO binaire LCMI v1 +
-  # CRUD document + outil Cave avec catalog JSON + camouflage splat.
-  # Rendu glTF runtime + gizmo + auto-props reportés en follow-ups.
-  src/world_editor/volumes/MeshInsertIo.cpp
-  src/world_editor/volumes/MeshInsertDocument.cpp
-  src/world_editor/volumes/caves/CaveCatalog.cpp
-  src/world_editor/volumes/caves/CaveCamouflage.cpp
-  src/world_editor/volumes/caves/PlaceCaveCommand.cpp
-  src/world_editor/volumes/caves/CaveTool.cpp
-  # M100.41 — Overhang Cliff Tool (Phase 11, réutilise MeshInsertSystem).
-  # Pas de nouveau format binaire ; instances avec
-  # `insertCategory = "overhang"` partagent `instances/mesh_inserts.bin`
-  # avec les grottes de M100.40.
-  src/world_editor/volumes/overhangs/OverhangCatalog.cpp
-  src/world_editor/volumes/overhangs/PlaceOverhangCommand.cpp
-  src/world_editor/volumes/overhangs/OverhangTool.cpp
-  # M100.42 — Natural Arch Tool (Phase 11, réutilise MeshInsertSystem).
-  # Pas de nouveau format binaire ; instances avec
-  # `insertCategory = "arch"` partagent `instances/mesh_inserts.bin`.
-  src/world_editor/volumes/arches/ArchCatalog.cpp
-  src/world_editor/volumes/arches/PlaceArchCommand.cpp
-  src/world_editor/volumes/arches/ArchTool.cpp
-  # M100.43 — Dungeon Portal System (Phase 11). Premier ticket Phase 11
-  # qui touche au serveur : opcodes 197/198 + migration 0063 +
-  # nouveau format binaire LCDP v1 dans `instances/dungeon_portals.bin`
-  # (distinct de LCMI car porte des metadata gameplay).
-  src/world_editor/volumes/dungeons/DungeonCatalog.cpp
-  src/world_editor/volumes/dungeons/DungeonPortalDocument.cpp
-  src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
-  src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
-  src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
-  # Auberge éditable — entité « Building » : grappe d'éléments existants
-  # (murs/toits/portes/mobilier) regroupée en une entité logique éditable.
-  # Format buildings.bin (LCBD v1) header-only dans Buildings.h ; document
-  # CRUD calqué sur MeshInsertDocument. Cf.
-  # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
-  src/world_editor/buildings/BuildingDocument.cpp
   # Auberge éditable — Bibliothèque de types de bâtiments (un fichier JSON par
   # type dans buildings/templates/ ; variantes + pièces). Partagée client
   # (résolution au rendu) et éditeur (création/sauvegarde de variantes).
   src/client/world/instances/BuildingTemplateLibrary.cpp
-  # Auberge éditable — Catalogue d'assets de l'éditeur (parse
-  # meshes/props/catalog.json via le parseur Config). Alimente
-  # l'AssetBrowserPanel et le BuildingTool.
-  src/world_editor/assets/AssetCatalog.cpp
-  # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
-  # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
-  # documents de volumes. Phase11Validator : checks de cohérence
-  # cross-fichiers avant export.
-  src/world_editor/volumes/bridge/VMapBridge.cpp
-  src/world_editor/volumes/bridge/Phase11Validator.cpp
-  # M100.48 — Zone Validation Service (Phase 12). Registre de règles + service
-  # ZoneValidator (lecture seule sur les données de zone) + règles MVP
-  # (heightmap/splat/mesh inserts). Éditeur-only, pas de validation runtime.
-  src/world_editor/validation/ValidationRuleRegistry.cpp
-  src/world_editor/validation/ZoneValidator.cpp
-  src/world_editor/validation/rules/HeightmapRules.cpp
-  src/world_editor/validation/rules/SplatRules.cpp
-  src/world_editor/validation/rules/MeshInsertRules.cpp
-  # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
-  # (Phase A) : registry de mode Simple/Advanced, registry de presets
-  # d'outils (JSON), store de préférences utilisateur persistées.
-  src/world_editor/modes/EditorModeRegistry.cpp
-  src/world_editor/presets/ToolPresetIo.cpp
-  src/world_editor/presets/ToolPresetRegistry.cpp
-  src/world_editor/prefs/UserPrefsStore.cpp
-  # M100.49 — Tutorial & Overlay guidance (coeur pur ; diagnostic differe car
-  # depend de M100.48). OverlayGuidanceSystem = moteur de sequence ;
-  # TutorialSystem = pilotage + flags ; TutorialIo = tutoriel "first_launch" code.
-  src/world_editor/help/OverlayGuidanceSystem.cpp
-  src/world_editor/tutorial/TutorialSystem.cpp
-  src/world_editor/tutorial/TutorialIo.cpp
-  # M100.49 partie 2 — Système de diagnostic « Pourquoi ça ne marche pas ? »
-  # (registre + système + 10 règles workflow). S'appuie sur le ValidationContext
-  # de M100.48. Cœur pur ; UI panel/one-click = passe séparée.
-  src/world_editor/diagnostic/DiagnosticRuleRegistry.cpp
-  src/world_editor/diagnostic/DiagnosticSystem.cpp
-  src/world_editor/diagnostic/rules/WorkflowRules.cpp
-  # M100.50 — Quick Start Wizard (cœur pur : FSM 5 étapes + résolution choix →
-  # ZonePreset M100.46 + conditions/substitution + auto-gen déterministe).
-  # UI (cartes, aperçu 3D) + exécution = passe séparée.
-  src/world_editor/wizard/QuickStartWizard.cpp
-  src/world_editor/wizard/ConditionEvaluator.cpp
-  src/world_editor/wizard/AutoGenerators.cpp
-  src/world_editor/wizard/WizardTemplateResolver.cpp
-  # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
-  # JSON + parsing + registry + validation). Incrément 2a : couche de
-  # paramètres typés (OperationParams) + customisation (relief/eau/
-  # sécheresse). Le dispatcher + l'exécuteur + le reset viennent ensuite.
-  src/world_editor/zone_presets/ZonePreset.cpp
-  src/world_editor/zone_presets/ZonePresetIo.cpp
-  src/world_editor/zone_presets/ZonePresetRegistry.cpp
-  src/world_editor/zone_presets/OperationParams.cpp
-  src/world_editor/zone_presets/CustomizationApplier.cpp
-  # Incrément 2b : Reset des documents + dispatcher + exécuteur.
-  # Incrément 2c : place_arch câblé. Incrément 2d : mountain_macro /
-  # valley_macro / lake_polygon / river_manual câblés. Au total 8/14
-  # types câblés ; les 4 restants (coastline, river_network,
-  # hydraulic_erosion, thermal_wind_erosion) demandent d'extraire la
-  # simulation des Tools UI (incrément 2e+).
-  src/world_editor/zone_presets/WorldMapEditDocumentReset.cpp
-  src/world_editor/zone_presets/OperationDispatcher.cpp
-  src/world_editor/zone_presets/ZonePresetExecutor.cpp
-  # Incrément 3 : dialog modal ImGui pour appliquer un preset à la
-  # carte courante (entrée menu Fichier > "Appliquer un preset de
-  # zone..."). Single-thread : bloque le main thread pendant Execute.
-  src/world_editor/zone_presets/ZonePresetDialog.cpp
-  # M100.47 incrément 1 — HelpContentStore : socle data des tooltips
-  # riches (chargement editor/tooltips/*.json, lookup par id, hot-reload).
-  src/world_editor/help/HelpContentStore.cpp
-  # M100.47 incrément 3 — RichTooltipWidget : popup ImGui au survol d'un
-  # widget. Consomme HelpContentStore. Mode Simple/Advanced piloté par
-  # EditorModeRegistry. Hooké dans ToolPropertiesPanel (sliders macro
-  # polyline en démo). HelpWindow F1 viendra en incrément suivant.
-  src/world_editor/ui/RichTooltipWidget.cpp
-  # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
-  # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
-  # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
-  src/world_editor/presets/ToolPresetApply.cpp
-  src/world_editor/ui/PresetDropdownWidget.cpp
-  src/world_editor/panels/ScenePanel.cpp
-  src/world_editor/panels/InspectorPanel.cpp
-  src/world_editor/panels/AssetBrowserPanel.cpp
-  src/world_editor/panels/BuildingEditorPanel.cpp
-  # SP4 (authoring quêtes) : QuestEditIo.cpp + QuestEditorPanel.cpp doivent être
-  # dans engine_core (pas seulement world_editor_app) car WorldEditorShell.cpp
-  # (ci-dessus) instancie QuestEditorPanel et est lui-même compilé dans
-  # engine_core, lié par engine_app (flag runtime --editor-world) : sans ça,
-  # engine_app ne résout pas le vtable/Render() au link. Même pattern que
-  # QuestTextCatalog.cpp / QuestGiverTable.cpp plus haut.
-  src/world_editor/quests/QuestEditIo.cpp
-  src/world_editor/panels/QuestEditorPanel.cpp
-  src/world_editor/panels/OutlinerPanel.cpp
-  src/world_editor/panels/ConsolePanel.cpp
-  src/world_editor/panels/ToolPropertiesPanel.cpp
-  src/world_editor/panels/HistoryPanel.cpp
-  src/world_editor/panels/SurfaceTablePanel.cpp
-  src/world_editor/panels/CollisionEditorPanel.cpp
   src/client/app/Engine.cpp
   src/client/app/EngineWorld.cpp
   src/client/app/EngineAudio.cpp
   src/client/app/EngineCells.cpp
-  src/client/app/EngineEditor.cpp
   src/client/app/EngineUpdateUi.cpp
   src/client/app/EngineUpdateGameplay.cpp
   src/client/app/EngineHelpers.cpp
@@ -704,7 +444,6 @@ add_library(engine_core
   src/client/render/ClassSkillTreeImGuiRenderer.cpp
   src/client/render/CharacterWindowImGuiRenderer.cpp
   src/client/render/SkillIconCache.cpp
-  src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp
   src/client/render/ParticleSystem.cpp
@@ -927,8 +666,288 @@ else()
   )
 endif()
 
+# Éditeur monde — bibliothèque liée UNIQUEMENT par lcdlln_world_editor.exe
+# (world_editor_app) et par les tests de l'éditeur. Le jeu (engine_app /
+# lcdlln.exe) n'embarque aucun de ces fichiers : les crochets d'intégration
+# d'Engine y sont fournis par src/client/app/EngineEditorStubs.cpp, et
+# src/client/app/EngineEditor.cpp (implémentation réelle) est compilé dans
+# world_editor_app. Aucune source d'engine_core ne doit dépendre de src/world_editor.
+add_library(engine_editor STATIC
+  src/world_editor/ui/EditorMode.cpp
+  src/world_editor/ui/WorldEditorImGui.cpp
+  src/world_editor/ui/WorldMapIo.cpp
+  src/world_editor/ui/TreeSpeciesCatalog.cpp
+  src/world_editor/ui/WorldEditorSession.cpp
+  src/world_editor/ui/TexturePreviewCache.cpp
+  src/world_editor/ui/TextureLibraryPanel.cpp
+  # M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
+  # éditeur, exposée à ImGui pour affichage dans le ScenePanel.
+  # L'image est créée + transitionnée SHADER_READ_ONLY mais reste noire
+  # tant que la PR 2 ne branche pas la copie depuis SceneColor_LDR.
+  src/world_editor/render/EditorViewportRenderTarget.cpp
+  # M100.1 — World editor "couche au-dessus" (engine::editor::world).
+  # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
+  # editor.world.enabled. Pas référencé par engine/server/.
+  src/world_editor/core/WorldEditorShell.cpp
+  src/world_editor/core/CommandStack.cpp
+  # Réorganisation UI 2026-07-17 — registre central des actions (menus,
+  # barre d'actions, palette de commandes, fenêtre raccourcis) + modèle pur
+  # de la palette d'outils (familles + libellés FR).
+  src/world_editor/actions/EditorActionRegistry.cpp
+  src/world_editor/ui/ToolPaletteModel.cpp
+  src/world_editor/ui/ToolGlyphs.cpp
+  src/world_editor/panels/ToolPalettePanel.cpp
+  src/world_editor/ui/CommandPaletteModel.cpp
+  src/world_editor/ui/EditorTheme.cpp
+  # M101.4 / M101.5 — editeur de routines nodal (panel + commandes + palette/inspecteur).
+  src/world_editor/routine/RoutineGraphCommands.cpp
+  src/world_editor/routine/RoutineGraphPanel.cpp
+  src/world_editor/routine/RoutineNodePalette.cpp
+  src/world_editor/routine/RoutineNodeInspector.cpp
+  src/world_editor/HazardTool.cpp
+  # M100.17 — Easy Placement Tool (geometrie pure + outil ; format/commande header-only).
+  src/world_editor/PlacementGeometry.cpp
+  src/world_editor/PlacementTool.cpp
+  src/world_editor/InteractivePanel.cpp
+  # M100.34 — Selection/Layers/Minimap/Export zone (geometrie + calques + export
+  # via Save*Bin header-only ; panneau minimap ImGui guarde).
+  src/world_editor/SelectionTool.cpp
+  src/world_editor/LayersDocument.cpp
+  src/world_editor/DeleteCommand.cpp
+  src/world_editor/WorldEditorExporter.cpp
+  src/world_editor/panels/MinimapPanel.cpp
+  src/world_editor/FoliagePaintTool.cpp
+  # M100.19 — Forest & Field procedural tools (generateurs purs + outils).
+  src/world_editor/ForestFieldGen.cpp
+  src/world_editor/ForestTool.cpp
+  src/world_editor/FieldTool.cpp
+  src/world_editor/WindZoneTool.cpp
+  src/world_editor/ZoneTool.cpp
+  src/world_editor/SplineTool.cpp
+  src/world_editor/HamletGen.cpp
+  # Sous-projet 1, bloc B — modele de scene + selection partagee.
+  src/world_editor/scene/EditorSelection.cpp
+  src/world_editor/scene/EditorSceneModel.cpp
+  # Sous-projet 1, bloc D — commande undoable d'edition de transform.
+  src/world_editor/inspector/SetEntityTransformCommand.cpp
+  # Lot 5 (2026-07-18) — dupliquer/supprimer la selection (undoables).
+  src/world_editor/scene/DeleteEntityCommand.cpp
+  src/world_editor/scene/DuplicateEntityCommand.cpp
+  src/world_editor/terrain/TerrainDocument.cpp
+  src/world_editor/terrain/TerrainBrush.cpp
+  src/world_editor/terrain/TerrainRaycast.cpp
+  src/world_editor/terrain/TerrainSculptCommand.cpp
+  src/world_editor/terrain/TerrainSculptTool.cpp
+  src/world_editor/terrain/TerrainStampCommand.cpp
+  src/world_editor/terrain/TerrainStampTool.cpp
+  src/world_editor/terrain/StampLibrary.cpp
+  src/world_editor/terrain/ProceduralStampGenerators.cpp
+  # M100.35 — Toolbar à icônes + outils macros terrain (Mountain Range &
+  # Valley Chain). Pas de Vulkan, pas de PNG d'icônes embarqués : la toolbar
+  # rend des placeholders procéduraux (carré coloré + lettre) via
+  # ImDrawList. Voir game/data/icons/editor/tools/README.md.
+  src/world_editor/ui/EditorToolbar.cpp
+  src/world_editor/ui/ToolbarIconAtlas.cpp
+  src/world_editor/terrain/PolylineMacroCore.cpp
+  src/world_editor/terrain/MacroPolylineCommandBase.cpp
+  src/world_editor/terrain/MountainRangeCommand.cpp
+  src/world_editor/terrain/MountainRangeTool.cpp
+  src/world_editor/terrain/ValleyChainCommand.cpp
+  src/world_editor/terrain/ValleyChainTool.cpp
+  src/world_editor/splat/SplatPaintCommand.cpp
+  src/world_editor/splat/SplatPaintTool.cpp
+  src/world_editor/splat/SplatRules.cpp
+  src/world_editor/camera/EditorCameraController.cpp
+  src/world_editor/camera/CollisionPreviewCamera.cpp
+  src/world_editor/water/WaterDocument.cpp
+  src/world_editor/water/AddLakeCommand.cpp
+  src/world_editor/water/AddRiverCommand.cpp
+  src/world_editor/water/LakeTool.cpp
+  src/world_editor/water/RiverTool.cpp
+  # M100.36 — River Network Generator (watershed D8 + OceanSettings)
+  src/world_editor/water/ConsolidatedHeightGrid.cpp
+  # M100.46 — helper partagé qui assemble un grid 2x2 chunks depuis le
+  # TerrainDocument (anciennement dupliqué dans CoastlineEditorTool,
+  # ThermalWindErosionTool et OperationDispatcher).
+  src/world_editor/water/HeightGridAssembly.cpp
+  src/world_editor/water/D8FlowDirection.cpp
+  src/world_editor/water/FlowAccumulation.cpp
+  src/world_editor/water/PathSimplifyDouglasPeucker.cpp
+  src/world_editor/water/WatershedSimulation.cpp
+  src/world_editor/water/RiverNetworkCommand.cpp
+  src/world_editor/water/RiverNetworkTool.cpp
+  # M100.37 — Coastline & Sea Level Editor (marching squares + smoothing
+  # + cliffs ; étend `OceanSettings` v3 + `LakeInstance::isOcean`).
+  src/world_editor/water/CoastlineSegmentExtractor.cpp
+  src/world_editor/water/CoastlineStats.cpp
+  src/world_editor/water/CoastlineSmoothing.cpp
+  src/world_editor/water/CoastlineCliffs.cpp
+  src/world_editor/water/CoastlineCommand.cpp
+  src/world_editor/water/CoastlineEditorTool.cpp
+  # M100.38 — Hydraulic Erosion (particle-based, réutilise grid
+  # consolidé + D8 + flow accumulation de M100.36).
+  src/world_editor/terrain/erosion/BilinearGradientSample.cpp
+  src/world_editor/terrain/erosion/DropletInitDistribution.cpp
+  src/world_editor/terrain/erosion/DropletKernel.cpp
+  src/world_editor/terrain/erosion/HydraulicSimulation.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionCommand.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionTool.cpp
+  # M100.39 — Thermal & Wind Erosion (clôt Phase 2.5 terrain naturaliste).
+  src/world_editor/terrain/erosion/ThermalSimulation.cpp
+  src/world_editor/terrain/erosion/WindSimulation.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionCommand.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionTool.cpp
+  # M100.40 — Mesh Insert Foundation + Cave Tool (démarre Phase 11
+  # « Volumes 3D »). MVP éditeur-side : data model + IO binaire LCMI v1 +
+  # CRUD document + outil Cave avec catalog JSON + camouflage splat.
+  # Rendu glTF runtime + gizmo + auto-props reportés en follow-ups.
+  src/world_editor/volumes/MeshInsertIo.cpp
+  src/world_editor/volumes/MeshInsertDocument.cpp
+  src/world_editor/volumes/caves/CaveCatalog.cpp
+  src/world_editor/volumes/caves/CaveCamouflage.cpp
+  src/world_editor/volumes/caves/PlaceCaveCommand.cpp
+  src/world_editor/volumes/caves/CaveTool.cpp
+  # M100.41 — Overhang Cliff Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "overhang"` partagent `instances/mesh_inserts.bin`
+  # avec les grottes de M100.40.
+  src/world_editor/volumes/overhangs/OverhangCatalog.cpp
+  src/world_editor/volumes/overhangs/PlaceOverhangCommand.cpp
+  src/world_editor/volumes/overhangs/OverhangTool.cpp
+  # M100.42 — Natural Arch Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "arch"` partagent `instances/mesh_inserts.bin`.
+  src/world_editor/volumes/arches/ArchCatalog.cpp
+  src/world_editor/volumes/arches/PlaceArchCommand.cpp
+  src/world_editor/volumes/arches/ArchTool.cpp
+  # M100.43 — Dungeon Portal System (Phase 11). Premier ticket Phase 11
+  # qui touche au serveur : opcodes 197/198 + migration 0063 +
+  # nouveau format binaire LCDP v1 dans `instances/dungeon_portals.bin`
+  # (distinct de LCMI car porte des metadata gameplay).
+  src/world_editor/volumes/dungeons/DungeonCatalog.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalDocument.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
+  src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
+  # Auberge éditable — entité « Building » : grappe d'éléments existants
+  # (murs/toits/portes/mobilier) regroupée en une entité logique éditable.
+  # Format buildings.bin (LCBD v1) header-only dans Buildings.h ; document
+  # CRUD calqué sur MeshInsertDocument. Cf.
+  # docs/superpowers/specs/2026-06-17-auberge-building-editor-design.md.
+  src/world_editor/buildings/BuildingDocument.cpp
+  # Auberge éditable — Catalogue d'assets de l'éditeur (parse
+  # meshes/props/catalog.json via le parseur Config). Alimente
+  # l'AssetBrowserPanel et le BuildingTool.
+  src/world_editor/assets/AssetCatalog.cpp
+  # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
+  # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
+  # documents de volumes. Phase11Validator : checks de cohérence
+  # cross-fichiers avant export.
+  src/world_editor/volumes/bridge/VMapBridge.cpp
+  src/world_editor/volumes/bridge/Phase11Validator.cpp
+  # M100.48 — Zone Validation Service (Phase 12). Registre de règles + service
+  # ZoneValidator (lecture seule sur les données de zone) + règles MVP
+  # (heightmap/splat/mesh inserts). Éditeur-only, pas de validation runtime.
+  src/world_editor/validation/ValidationRuleRegistry.cpp
+  src/world_editor/validation/ZoneValidator.cpp
+  src/world_editor/validation/rules/HeightmapRules.cpp
+  src/world_editor/validation/rules/SplatRules.cpp
+  src/world_editor/validation/rules/MeshInsertRules.cpp
+  # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
+  # (Phase A) : registry de mode Simple/Advanced, registry de presets
+  # d'outils (JSON), store de préférences utilisateur persistées.
+  src/world_editor/modes/EditorModeRegistry.cpp
+  src/world_editor/presets/ToolPresetIo.cpp
+  src/world_editor/presets/ToolPresetRegistry.cpp
+  src/world_editor/prefs/UserPrefsStore.cpp
+  # M100.49 — Tutorial & Overlay guidance (coeur pur ; diagnostic differe car
+  # depend de M100.48). OverlayGuidanceSystem = moteur de sequence ;
+  # TutorialSystem = pilotage + flags ; TutorialIo = tutoriel "first_launch" code.
+  src/world_editor/help/OverlayGuidanceSystem.cpp
+  src/world_editor/tutorial/TutorialSystem.cpp
+  src/world_editor/tutorial/TutorialIo.cpp
+  # M100.49 partie 2 — Système de diagnostic « Pourquoi ça ne marche pas ? »
+  # (registre + système + 10 règles workflow). S'appuie sur le ValidationContext
+  # de M100.48. Cœur pur ; UI panel/one-click = passe séparée.
+  src/world_editor/diagnostic/DiagnosticRuleRegistry.cpp
+  src/world_editor/diagnostic/DiagnosticSystem.cpp
+  src/world_editor/diagnostic/rules/WorkflowRules.cpp
+  # M100.50 — Quick Start Wizard (cœur pur : FSM 5 étapes + résolution choix →
+  # ZonePreset M100.46 + conditions/substitution + auto-gen déterministe).
+  # UI (cartes, aperçu 3D) + exécution = passe séparée.
+  src/world_editor/wizard/QuickStartWizard.cpp
+  src/world_editor/wizard/ConditionEvaluator.cpp
+  src/world_editor/wizard/AutoGenerators.cpp
+  src/world_editor/wizard/WizardTemplateResolver.cpp
+  # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
+  # JSON + parsing + registry + validation). Incrément 2a : couche de
+  # paramètres typés (OperationParams) + customisation (relief/eau/
+  # sécheresse). Le dispatcher + l'exécuteur + le reset viennent ensuite.
+  src/world_editor/zone_presets/ZonePreset.cpp
+  src/world_editor/zone_presets/ZonePresetIo.cpp
+  src/world_editor/zone_presets/ZonePresetRegistry.cpp
+  src/world_editor/zone_presets/OperationParams.cpp
+  src/world_editor/zone_presets/CustomizationApplier.cpp
+  # Incrément 2b : Reset des documents + dispatcher + exécuteur.
+  # Incrément 2c : place_arch câblé. Incrément 2d : mountain_macro /
+  # valley_macro / lake_polygon / river_manual câblés. Au total 8/14
+  # types câblés ; les 4 restants (coastline, river_network,
+  # hydraulic_erosion, thermal_wind_erosion) demandent d'extraire la
+  # simulation des Tools UI (incrément 2e+).
+  src/world_editor/zone_presets/WorldMapEditDocumentReset.cpp
+  src/world_editor/zone_presets/OperationDispatcher.cpp
+  src/world_editor/zone_presets/ZonePresetExecutor.cpp
+  # Incrément 3 : dialog modal ImGui pour appliquer un preset à la
+  # carte courante (entrée menu Fichier > "Appliquer un preset de
+  # zone..."). Single-thread : bloque le main thread pendant Execute.
+  src/world_editor/zone_presets/ZonePresetDialog.cpp
+  # M100.47 incrément 1 — HelpContentStore : socle data des tooltips
+  # riches (chargement editor/tooltips/*.json, lookup par id, hot-reload).
+  src/world_editor/help/HelpContentStore.cpp
+  # M100.47 incrément 3 — RichTooltipWidget : popup ImGui au survol d'un
+  # widget. Consomme HelpContentStore. Mode Simple/Advanced piloté par
+  # EditorModeRegistry. Hooké dans ToolPropertiesPanel (sliders macro
+  # polyline en démo). HelpWindow F1 viendra en incrément suivant.
+  src/world_editor/ui/RichTooltipWidget.cpp
+  # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
+  # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
+  # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
+  src/world_editor/presets/ToolPresetApply.cpp
+  src/world_editor/ui/PresetDropdownWidget.cpp
+  src/world_editor/panels/ScenePanel.cpp
+  src/world_editor/panels/InspectorPanel.cpp
+  src/world_editor/panels/AssetBrowserPanel.cpp
+  src/world_editor/panels/BuildingEditorPanel.cpp
+  # SP4 (authoring quêtes) : QuestEditIo.cpp + QuestEditorPanel.cpp doivent être
+  # dans engine_core (pas seulement world_editor_app) car WorldEditorShell.cpp
+  # (ci-dessus) instancie QuestEditorPanel et est lui-même compilé dans
+  # engine_core, lié par engine_app (flag runtime --editor-world) : sans ça,
+  # engine_app ne résout pas le vtable/Render() au link. Même pattern que
+  # QuestTextCatalog.cpp / QuestGiverTable.cpp plus haut.
+  src/world_editor/quests/QuestEditIo.cpp
+  src/world_editor/panels/QuestEditorPanel.cpp
+  src/world_editor/panels/OutlinerPanel.cpp
+  src/world_editor/panels/ConsolePanel.cpp
+  src/world_editor/panels/ToolPropertiesPanel.cpp
+  src/world_editor/panels/HistoryPanel.cpp
+  src/world_editor/panels/SurfaceTablePanel.cpp
+  src/world_editor/panels/CollisionEditorPanel.cpp
+  src/client/render/EditorHubImGuiRenderer.cpp
+)
+target_link_libraries(engine_editor PUBLIC engine_core)
+if(WIN32)
+  target_link_libraries(engine_editor PUBLIC imgui_lcdlln)
+endif()
+if(MSVC)
+  target_compile_options(engine_editor PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(engine_editor PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 add_executable(engine_app
   src/client/main.cpp
+  # Crochets d'intégration éditeur neutres : l'éditeur n'est pas dans le jeu.
+  src/client/app/EngineEditorStubs.cpp
 )
 if(WIN32)
   target_sources(engine_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_client.rc")
@@ -948,12 +967,11 @@ if(WIN32)
 endif()
 
 # World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
-# SP4 (authoring quêtes) — QuestEditIo.cpp + QuestEditorPanel.cpp sont désormais
-# dans engine_core (CMakeLists racine, requis par WorldEditorShell::Init lié
-# aussi dans engine_app) -> ne pas les re-lister ici, world_editor_app les
-# obtient via engine_core.
+# Seul binaire à lier engine_editor (src/world_editor/*) et EngineEditor.cpp
+# (crochets d'intégration éditeur d'Engine).
 add_executable(world_editor_app
   src/world_editor/main.cpp
+  src/client/app/EngineEditor.cpp
 )
 if(WIN32)
   target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")
@@ -968,7 +986,7 @@ target_include_directories(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}")
 if(MSVC)
   target_compile_options(world_editor_app PRIVATE /Zc:preprocessor)
 endif()
-target_link_libraries(world_editor_app PRIVATE engine_core)
+target_link_libraries(world_editor_app PRIVATE engine_editor engine_core)
 if(WIN32)
   target_link_libraries(world_editor_app PRIVATE user32 shell32)
 endif()
@@ -1103,19 +1121,19 @@ add_test(NAME routine_to_eventai_tests COMMAND routine_to_eventai_tests)
 
 # M101.4 / M101.5 — Tests des commandes d'edition de graphe (apply/undo).
 add_executable(routine_graph_commands_tests src/world_editor/routine/tests/RoutineGraphCommandsTests.cpp)
-target_link_libraries(routine_graph_commands_tests PRIVATE engine_core)
+target_link_libraries(routine_graph_commands_tests PRIVATE engine_editor)
 add_test(NAME routine_graph_commands_tests COMMAND routine_graph_commands_tests)
 
 # M101.11 — Test de parsing du contenu d'aide des routines (format M100.47).
 add_executable(routine_help_content_tests src/world_editor/routine/tests/RoutineHelpContentTests.cpp)
-target_link_libraries(routine_help_content_tests PRIVATE engine_core)
+target_link_libraries(routine_help_content_tests PRIVATE engine_editor)
 add_test(NAME routine_help_content_tests COMMAND routine_help_content_tests)
 
 # M100.48 — Tests Zone Validation Service (registre + regles MVP + ZoneValidator
 # + incremental). Pure logique dans engine_core. (Ancrage distinct d'interactive_tests
 # pour eviter un conflit CMake avec d'autres PR M100 en vol.)
 add_executable(zone_validation_tests src/world_editor/tests/ZoneValidationTests.cpp)
-target_link_libraries(zone_validation_tests PRIVATE engine_core)
+target_link_libraries(zone_validation_tests PRIVATE engine_editor)
 add_test(NAME zone_validation_tests COMMAND zone_validation_tests)
 
 # M100.16 — Tests hazards (round-trip binaire + simulateur). Format header-only,
@@ -1135,12 +1153,12 @@ add_test(NAME interactive_tests COMMAND interactive_tests)
 # Tout est dans engine_core (Save*Bin header-only) ; on lie zone_builder_lib
 # comme le demande le ticket (writers offline partages, pas de doublon de format).
 add_executable(export_zone_tests src/world_editor/tests/ExportZoneTests.cpp)
-target_link_libraries(export_zone_tests PRIVATE engine_core zone_builder_lib)
+target_link_libraries(export_zone_tests PRIVATE engine_editor zone_builder_lib)
 add_test(NAME export_zone_tests COMMAND export_zone_tests)
 
 # M100.17 — Tests placement (geometrie pure + format props.bin + commande).
 add_executable(placement_tests src/world_editor/tests/PlacementTests.cpp)
-target_link_libraries(placement_tests PRIVATE engine_core)
+target_link_libraries(placement_tests PRIVATE engine_editor)
 add_test(NAME placement_tests COMMAND placement_tests)
 
 # M100.18 — Tests foliage (library JSON + Poisson-disk + regles + round-trip).
@@ -1150,7 +1168,7 @@ add_test(NAME foliage_tests COMMAND foliage_tests)
 
 # M100.19 — Tests Forest & Field (generateurs purs : densite, regles, spacing).
 add_executable(forest_field_tests src/world_editor/tests/ForestFieldTests.cpp)
-target_link_libraries(forest_field_tests PRIVATE engine_core)
+target_link_libraries(forest_field_tests PRIVATE engine_editor)
 add_test(NAME forest_field_tests COMMAND forest_field_tests)
 
 # M100.20 — Tests vent (sway proportionnel hauteur, override zone, round-trip).
@@ -1177,13 +1195,13 @@ add_test(NAME height_field_tests COMMAND height_field_tests)
 # registre widgets). Diagnostic differe (depend de M100.48). Ancrage distinct
 # pour eviter les conflits CMake avec d'autres PR M100 en vol.
 add_executable(tutorial_diagnostic_tests src/world_editor/tests/TutorialDiagnosticTests.cpp)
-target_link_libraries(tutorial_diagnostic_tests PRIVATE engine_core)
+target_link_libraries(tutorial_diagnostic_tests PRIVATE engine_editor)
 add_test(NAME tutorial_diagnostic_tests COMMAND tutorial_diagnostic_tests)
 
 # M100.49 partie 2 — Tests du système de diagnostic (registre + 10 règles +
 # tri par importance). Pure logique dans engine_core.
 add_executable(diagnostic_tests src/world_editor/tests/DiagnosticTests.cpp)
-target_link_libraries(diagnostic_tests PRIVATE engine_core)
+target_link_libraries(diagnostic_tests PRIVATE engine_editor)
 add_test(NAME diagnostic_tests COMMAND diagnostic_tests)
 
 # M100.21 — Tests collecteur d'influences (portee, troncature, flexion).
@@ -1209,7 +1227,7 @@ add_test(NAME zones_tests COMMAND zones_tests)
 # M100.50 — Tests Quick Start Wizard (FSM + resolver 192 combinaisons + conditions
 # + substitution + determinisme auto-gen). Pure logique dans engine_core.
 add_executable(quick_start_wizard_tests src/world_editor/tests/QuickStartWizardTests.cpp)
-target_link_libraries(quick_start_wizard_tests PRIVATE engine_core)
+target_link_libraries(quick_start_wizard_tests PRIVATE engine_editor)
 add_test(NAME quick_start_wizard_tests COMMAND quick_start_wizard_tests)
 
 # M100.29 — Tests spline (Catmull-Rom, ground-fit, splat sum=255, round-trip).
@@ -1225,12 +1243,12 @@ add_test(NAME structures_tests COMMAND structures_tests)
 
 # M100.31 — Tests hameau (kit JSON, determinisme, min_spacing, snap route, 1 entree historique).
 add_executable(hamlet_tests src/world_editor/tests/HamletTests.cpp)
-target_link_libraries(hamlet_tests PRIVATE engine_core)
+target_link_libraries(hamlet_tests PRIVATE engine_editor)
 add_test(NAME hamlet_tests COMMAND hamlet_tests)
 
 # M100.33 — Tests footstep audio + machine d'etat playtest.
 add_executable(playtest_tests src/world_editor/tests/PlaytestTests.cpp)
-target_link_libraries(playtest_tests PRIVATE engine_core)
+target_link_libraries(playtest_tests PRIVATE engine_editor)
 add_test(NAME playtest_tests COMMAND playtest_tests)
 
 # M45.6: structure DDGI (indexation grille + layout atlas) — tests CPU purs (pas de device Vulkan)
@@ -1498,7 +1516,7 @@ add_test(NAME catalog_parity_tests COMMAND catalog_parity_tests ${CMAKE_SOURCE_D
 # Pas de dependance Vulkan : tournables en CI sans GPU.
 add_executable(texture_preview_cache_tests src/world_editor/tests/TexturePreviewCacheTests.cpp)
 target_include_directories(texture_preview_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(texture_preview_cache_tests PRIVATE engine_core)
+target_link_libraries(texture_preview_cache_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(texture_preview_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1510,7 +1528,7 @@ add_test(NAME texture_preview_cache_tests COMMAND texture_preview_cache_tests)
 # Pas de dependance Vulkan : ActionNewMap utilise uniquement la couche fichiers.
 add_executable(world_editor_session_tests src/world_editor/tests/WorldEditorSessionTests.cpp)
 target_include_directories(world_editor_session_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(world_editor_session_tests PRIVATE engine_core)
+target_link_libraries(world_editor_session_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(world_editor_session_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1522,7 +1540,7 @@ add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
 # pour tourner sous ctest Linux comme world_editor_session_tests.
 add_executable(terrain_document_roundtrip_tests src/world_editor/tests/TerrainDocumentRoundTripTests.cpp)
 target_include_directories(terrain_document_roundtrip_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(terrain_document_roundtrip_tests PRIVATE engine_core)
+target_link_libraries(terrain_document_roundtrip_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(terrain_document_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1532,7 +1550,7 @@ add_test(NAME terrain_document_roundtrip_tests COMMAND terrain_document_roundtri
 # changement, idempotence Clear). Pur CPU, non gate WIN32 (ctest Linux).
 add_executable(editor_selection_tests src/world_editor/tests/EditorSelectionTests.cpp)
 target_include_directories(editor_selection_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(editor_selection_tests PRIVATE engine_core)
+target_link_libraries(editor_selection_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(editor_selection_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1542,7 +1560,7 @@ add_test(NAME editor_selection_tests COMMAND editor_selection_tests)
 # layout + mesh inserts + dungeon portals, libelles, Find). Pur CPU, non gate.
 add_executable(editor_scene_model_tests src/world_editor/tests/EditorSceneModelTests.cpp)
 target_include_directories(editor_scene_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(editor_scene_model_tests PRIVATE engine_core)
+target_link_libraries(editor_scene_model_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(editor_scene_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1552,7 +1570,7 @@ add_test(NAME editor_scene_model_tests COMMAND editor_scene_model_tests)
 # TryMerge meme entite, coalescing via CommandStack). Pur CPU, non gate.
 add_executable(set_entity_transform_command_tests src/world_editor/tests/SetEntityTransformCommandTests.cpp)
 target_include_directories(set_entity_transform_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(set_entity_transform_command_tests PRIVATE engine_core)
+target_link_libraries(set_entity_transform_command_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(set_entity_transform_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1563,7 +1581,7 @@ add_test(NAME set_entity_transform_command_tests COMMAND set_entity_transform_co
 # non gate WIN32 (execute aussi par le ctest de build-linux).
 add_executable(entity_edit_commands_tests src/world_editor/tests/EntityEditCommandsTests.cpp)
 target_include_directories(entity_edit_commands_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(entity_edit_commands_tests PRIVATE engine_core)
+target_link_libraries(entity_edit_commands_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(entity_edit_commands_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1574,7 +1592,7 @@ add_test(NAME entity_edit_commands_tests COMMAND entity_edit_commands_tests)
 # Pur CPU + E/S temporaires, non gate WIN32.
 add_executable(gameplay_docs_round_trip_tests src/world_editor/tests/GameplayDocsRoundTripTests.cpp)
 target_include_directories(gameplay_docs_round_trip_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(gameplay_docs_round_trip_tests PRIVATE engine_core)
+target_link_libraries(gameplay_docs_round_trip_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(gameplay_docs_round_trip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1585,7 +1603,7 @@ add_test(NAME gameplay_docs_round_trip_tests COMMAND gameplay_docs_round_trip_te
 # Pur CPU, non gate WIN32 (execute aussi par le ctest de build-linux).
 add_executable(composite_command_tests src/world_editor/tests/CompositeCommandTests.cpp)
 target_include_directories(composite_command_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(composite_command_tests PRIVATE engine_core)
+target_link_libraries(composite_command_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(composite_command_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1596,7 +1614,7 @@ add_test(NAME composite_command_tests COMMAND composite_command_tests)
 # Pur CPU, non gate WIN32.
 add_executable(layout_placement_commands_tests src/world_editor/tests/LayoutPlacementCommandsTests.cpp)
 target_include_directories(layout_placement_commands_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(layout_placement_commands_tests PRIVATE engine_core)
+target_link_libraries(layout_placement_commands_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(layout_placement_commands_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1606,7 +1624,7 @@ add_test(NAME layout_placement_commands_tests COMMAND layout_placement_commands_
 # plat des 4 types scalaires + echappement). Pur CPU + E/S, non gate WIN32.
 add_executable(config_save_to_file_tests src/world_editor/tests/ConfigSaveToFileTests.cpp)
 target_include_directories(config_save_to_file_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(config_save_to_file_tests PRIVATE engine_core)
+target_link_libraries(config_save_to_file_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(config_save_to_file_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1662,7 +1680,7 @@ add_test(NAME respawn_rules_tests COMMAND respawn_rules_tests)
 if(WIN32)
   add_executable(world_editor_shell_tests src/world_editor/tests/WorldEditorShellTests.cpp)
   target_include_directories(world_editor_shell_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(world_editor_shell_tests PRIVATE engine_core imgui_lcdlln)
+  target_link_libraries(world_editor_shell_tests PRIVATE engine_editor imgui_lcdlln)
   if(MSVC)
     target_compile_options(world_editor_shell_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1676,7 +1694,7 @@ endif()
 if(WIN32)
   add_executable(command_stack_tests src/world_editor/tests/CommandStackTests.cpp)
   target_include_directories(command_stack_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(command_stack_tests PRIVATE engine_core)
+  target_link_libraries(command_stack_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(command_stack_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1799,7 +1817,7 @@ endif()
 if(WIN32)
   add_executable(editor_camera_controller_tests src/world_editor/tests/EditorCameraControllerTests.cpp)
   target_include_directories(editor_camera_controller_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(editor_camera_controller_tests PRIVATE engine_core)
+  target_link_libraries(editor_camera_controller_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(editor_camera_controller_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1814,7 +1832,7 @@ endif()
 if(WIN32)
   add_executable(terrain_sculpt_tests src/world_editor/tests/TerrainSculptTests.cpp)
   target_include_directories(terrain_sculpt_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(terrain_sculpt_tests PRIVATE engine_core)
+  target_link_libraries(terrain_sculpt_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(terrain_sculpt_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1828,7 +1846,7 @@ endif()
 if(WIN32)
   add_executable(terrain_stamp_tests src/world_editor/tests/TerrainStampTests.cpp)
   target_include_directories(terrain_stamp_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(terrain_stamp_tests PRIVATE engine_core)
+  target_link_libraries(terrain_stamp_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1843,7 +1861,7 @@ endif()
 if(WIN32)
   add_executable(macro_terrain_tests src/world_editor/tests/MacroTerrainTests.cpp)
   target_include_directories(macro_terrain_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(macro_terrain_tests PRIVATE engine_core)
+  target_link_libraries(macro_terrain_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(macro_terrain_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1856,7 +1874,7 @@ endif()
 if(WIN32)
   add_executable(editor_toolbar_tests src/world_editor/tests/EditorToolbarTests.cpp)
   target_include_directories(editor_toolbar_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(editor_toolbar_tests PRIVATE engine_core)
+  target_link_libraries(editor_toolbar_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(editor_toolbar_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1870,7 +1888,7 @@ endif()
 # build-linux (le seul workflow à lancer ctest) l'exécute réellement.
 add_executable(editor_action_registry_tests src/world_editor/tests/EditorActionRegistryTests.cpp)
 target_include_directories(editor_action_registry_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(editor_action_registry_tests PRIVATE engine_core)
+target_link_libraries(editor_action_registry_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(editor_action_registry_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
@@ -1883,7 +1901,7 @@ add_test(NAME editor_action_registry_tests COMMAND editor_action_registry_tests)
 # unicité des titres et libellés FR. NON gaté WIN32 (ctest Linux).
 add_executable(tool_palette_model_tests src/world_editor/tests/ToolPaletteModelTests.cpp)
 target_include_directories(tool_palette_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(tool_palette_model_tests PRIVATE engine_core)
+target_link_libraries(tool_palette_model_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(tool_palette_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
@@ -1896,7 +1914,7 @@ add_test(NAME tool_palette_model_tests COMMAND tool_palette_model_tests)
 # de mot > sous-chaîne, match catégorie, stabilité. NON gaté WIN32.
 add_executable(command_palette_model_tests src/world_editor/tests/CommandPaletteModelTests.cpp)
 target_include_directories(command_palette_model_tests PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(command_palette_model_tests PRIVATE engine_core)
+target_link_libraries(command_palette_model_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(command_palette_model_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
@@ -1910,7 +1928,7 @@ add_test(NAME command_palette_model_tests COMMAND command_palette_model_tests)
 if(WIN32)
   add_executable(river_network_tests src/world_editor/tests/RiverNetworkTests.cpp)
   target_include_directories(river_network_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(river_network_tests PRIVATE engine_core)
+  target_link_libraries(river_network_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(river_network_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1924,7 +1942,7 @@ endif()
 if(WIN32)
   add_executable(coastline_tests src/world_editor/tests/CoastlineTests.cpp)
   target_include_directories(coastline_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(coastline_tests PRIVATE engine_core)
+  target_link_libraries(coastline_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(coastline_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1937,7 +1955,7 @@ endif()
 if(WIN32)
   add_executable(hydraulic_erosion_tests src/world_editor/tests/HydraulicErosionTests.cpp)
   target_include_directories(hydraulic_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(hydraulic_erosion_tests PRIVATE engine_core)
+  target_link_libraries(hydraulic_erosion_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(hydraulic_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1951,7 +1969,7 @@ endif()
 if(WIN32)
   add_executable(thermal_wind_erosion_tests src/world_editor/tests/ThermalWindErosionTests.cpp)
   target_include_directories(thermal_wind_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(thermal_wind_erosion_tests PRIVATE engine_core)
+  target_link_libraries(thermal_wind_erosion_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(thermal_wind_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1965,7 +1983,7 @@ endif()
 if(WIN32)
   add_executable(mesh_insert_tests src/world_editor/tests/MeshInsertTests.cpp)
   target_include_directories(mesh_insert_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(mesh_insert_tests PRIVATE engine_core)
+  target_link_libraries(mesh_insert_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(mesh_insert_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -1978,7 +1996,7 @@ endif()
 # cross-platform pour être RÉELLEMENT exécutée par le ctest Linux de la CI
 # (engine_core expose ${CMAKE_SOURCE_DIR} en include PUBLIC).
 add_executable(building_tests src/world_editor/tests/BuildingTests.cpp)
-target_link_libraries(building_tests PRIVATE engine_core)
+target_link_libraries(building_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(building_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1988,7 +2006,7 @@ add_test(NAME building_tests COMMAND building_tests)
 # (BuildingTemplateLibrary) : parse JSON, Resolve, SaveVariant round-trip.
 # Pure CPU, cross-platform (ctest Linux).
 add_executable(building_template_tests src/world_editor/tests/BuildingTemplateLibraryTests.cpp)
-target_link_libraries(building_template_tests PRIVATE engine_core)
+target_link_libraries(building_template_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(building_template_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -1997,7 +2015,7 @@ add_test(NAME building_template_tests COMMAND building_template_tests)
 # Auberge éditable — Tests unitaires CPU pour AssetCatalog (parsing JSON,
 # FindById, ByCategory, Categories). Pure CPU, cross-platform (ctest Linux).
 add_executable(asset_catalog_tests src/world_editor/tests/AssetCatalogTests.cpp)
-target_link_libraries(asset_catalog_tests PRIVATE engine_core)
+target_link_libraries(asset_catalog_tests PRIVATE engine_editor)
 if(MSVC)
   target_compile_options(asset_catalog_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
@@ -2009,7 +2027,7 @@ add_test(NAME asset_catalog_tests COMMAND asset_catalog_tests)
 if(WIN32)
   add_executable(overhang_tool_tests src/world_editor/tests/OverhangToolTests.cpp)
   target_include_directories(overhang_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(overhang_tool_tests PRIVATE engine_core)
+  target_link_libraries(overhang_tool_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(overhang_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2022,7 +2040,7 @@ endif()
 if(WIN32)
   add_executable(arch_tool_tests src/world_editor/tests/ArchToolTests.cpp)
   target_include_directories(arch_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(arch_tool_tests PRIVATE engine_core)
+  target_link_libraries(arch_tool_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(arch_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2035,7 +2053,7 @@ endif()
 if(WIN32)
   add_executable(dungeon_portal_tests src/world_editor/tests/DungeonPortalTests.cpp)
   target_include_directories(dungeon_portal_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(dungeon_portal_tests PRIVATE engine_core)
+  target_link_libraries(dungeon_portal_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(dungeon_portal_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2062,7 +2080,7 @@ endif()
 if(WIN32)
   add_executable(phase11_bridge_tests src/world_editor/tests/Phase11BridgeTests.cpp)
   target_include_directories(phase11_bridge_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(phase11_bridge_tests PRIVATE engine_core)
+  target_link_libraries(phase11_bridge_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(phase11_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2077,7 +2095,7 @@ endif()
 if(WIN32)
   add_executable(editor_modes_tests src/world_editor/tests/EditorModesTests.cpp)
   target_include_directories(editor_modes_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(editor_modes_tests PRIVATE engine_core)
+  target_link_libraries(editor_modes_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(editor_modes_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2091,7 +2109,7 @@ endif()
 if(WIN32)
   add_executable(tool_migration_tests src/world_editor/tests/ToolMigrationTests.cpp)
   target_include_directories(tool_migration_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(tool_migration_tests PRIVATE engine_core)
+  target_link_libraries(tool_migration_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(tool_migration_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2105,7 +2123,7 @@ endif()
 if(WIN32)
   add_executable(zone_presets_tests src/world_editor/tests/ZonePresetsTests.cpp)
   target_include_directories(zone_presets_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(zone_presets_tests PRIVATE engine_core)
+  target_link_libraries(zone_presets_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(zone_presets_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2118,7 +2136,7 @@ endif()
 if(WIN32)
   add_executable(help_content_tests src/world_editor/tests/HelpContentTests.cpp)
   target_include_directories(help_content_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(help_content_tests PRIVATE engine_core)
+  target_link_libraries(help_content_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(help_content_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
@@ -2132,7 +2150,7 @@ endif()
 if(WIN32)
   add_executable(splat_paint_tests src/world_editor/tests/SplatPaintTests.cpp)
   target_include_directories(splat_paint_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(splat_paint_tests PRIVATE engine_core)
+  target_link_libraries(splat_paint_tests PRIVATE engine_editor)
   if(MSVC)
     target_compile_options(splat_paint_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()

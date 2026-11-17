@@ -135,12 +135,7 @@
 #include "src/client/world/BuildingCollisionCatalog.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
-#include "src/world_editor/ui/TexturePreviewCache.h"
 #endif
-// Roadmap-6 : gizmo scène (EntityId/EntityTransform). Pur CPU, HORS du bloc
-// _WIN32 — Engine.h est aussi compilé sous Linux (via engine_core).
-#include "src/world_editor/scene/EditorSceneModel.h"
-#include "src/world_editor/render/EditorViewportRenderTarget.h"
 // Sous-projet C MVP (Task 12) — viewport offscreen pour l'apercu race
 // dans l'ecran ImGui de creation de personnage.
 #include "src/client/render/race/RacePreviewViewport.h"
@@ -177,19 +172,7 @@ namespace engine::render
 	class GuildImGuiRenderer;
 	class AuctionImGuiRenderer;
 	class LootRollImGuiRenderer;
-	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
-}
-namespace engine::editor
-{
-	class EditorMode;
-	class WorldEditorImGui;
-	class WorldEditorSession;
-}
-namespace engine::editor::world
-{
-	/// M100.1 — Coquille du nouvel éditeur monde, indépendante du shell M43.x.
-	class WorldEditorShell;
 }
 
 #include <array>
@@ -398,7 +381,17 @@ namespace engine
 		/// \param authGateActive écran d'authentification affiché (gèle l'input). Main thread.
 		void UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive);
 		// --- fin des sous-étapes d'Update() ---
-		// --- Intégration éditeur (définies dans EngineEditor.cpp) ---
+		// --- Intégration éditeur ---
+		// Définies dans EngineEditor.cpp, compilé UNIQUEMENT dans lcdlln_world_editor.exe
+		// (avec la bibliothèque engine_editor). Le jeu (lcdlln.exe) lie à la place
+		// EngineEditorStubs.cpp : versions neutres, l'éditeur n'y est pas embarqué.
+		/// Lit les options de lancement de l'éditeur (--world-editor, --editor,
+		/// --editor-world, editor.enabled, editor.world.enabled) et renseigne
+		/// \ref m_worldEditorExe / \ref m_editorEnabled. Dans le jeu, ces options sont
+		/// ignorées (avertissement dans le journal) et tout reste à false.
+		/// \param worldEditorWorldFlag [out] true si la coquille WorldEditorShell doit être créée.
+		/// Appelée par le constructeur, main thread, après le chargement de la config.
+		void ResolveEditorLaunchFlags(int argc, char** argv, bool& worldEditorWorldFlag);
 		/// World editor : crée la session d'édition (--world-editor) et branche le crochet
 		/// de sauvegarde terrain (heightmap / splat / herbe). Appelée par le constructeur.
 		void InitWorldEditorSession();
@@ -781,11 +774,9 @@ namespace engine
 		engine::render::DynamicLightSystem m_dynamicLights;
 
 		engine::render::AssetRegistry m_assetRegistry;
-		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
 		/// Overlay ImGui commun (contexte, polices, rendu) : fenêtres de jeu ET éditeur.
 		std::unique_ptr<engine::render::ImGuiOverlay> m_imguiOverlay;
 		/// Panneaux de l'éditeur monde (créé seulement avec --world-editor), dessinés via m_imguiOverlay.
-		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
 		/// Overlay auth Dear ImGui (cycle de vie ImGui partagé avec \ref m_worldEditorImGui sur Windows).
 		std::unique_ptr<engine::render::AuthImGuiRenderer> m_authImGui;
 		/// Phase 3.11.1 — Panneau chat Dear ImGui (post-auth, partage le même contexte ImGui que m_authImGui).
@@ -867,7 +858,6 @@ namespace engine
 		/// dernier RollResult reçu est rendu independamment du flag.
 		std::unique_ptr<engine::render::LootRollImGuiRenderer> m_lootRollImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
-		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 
 		// --- Dialogue PNJ (cellule dédiée) ---
 		engine::client::DialoguePresenter m_dialogue;                                        ///< Logique runtime du dialogue.
@@ -881,22 +871,21 @@ namespace engine
 		/// ouvert sans Talk préalable). Vidé à la fermeture du dialogue.
 		std::string m_currentDialogueNpcTargetId;
 
-		/// Données carte / import (uniquement si \c m_worldEditorExe).
-		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
-		/// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
-		/// Instancié si `--editor-world` ou `editor.world.enabled = true`.
-		/// Cohabite avec WorldEditorImGui (les deux peuvent être actifs).
-		/// Le shell appelle ImGui (Windows-only) — toujours nul sur Linux.
-		std::unique_ptr<engine::editor::world::WorldEditorShell> m_worldEditorShell;
-
-		/// M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
-		/// éditeur. Possédée par Engine, init après VkDeviceContext valide
-		/// + ImGui_ImplVulkan_Init OK, détruite avant le shutdown Vulkan.
-		/// Le `ScenePanel` lit `GetImguiTextureId()` chaque frame pour
-		/// l'afficher via `ImGui::Image`. L'image est créée mais reste
-		/// noire en PR 1 (rendu réel branché en PR 2 via passe FrameGraph
-		/// qui copie `SceneColor_LDR`).
-		engine::editor::world::EditorViewportRenderTarget m_editorViewportTarget;
+		/// État propre à l'éditeur (EditorMode, panneaux ImGui de l'éditeur, Editor Hub,
+		/// session, coquille WorldEditorShell, cible offscreen du viewport, cache de
+		/// vignettes, état du drag de gizmo de scène). Type opaque : défini dans
+		/// EngineEditor.cpp (lcdlln_world_editor.exe) ; toujours nul dans le jeu.
+		/// Créé à la première utilisation (Engine::Ed()), détruit avec l'Engine.
+		struct EditorState;
+		/// Destructeur de \ref EditorState, défini là où le type est complet.
+		struct EditorStateDeleter
+		{
+			void operator()(EditorState* state) const noexcept;
+		};
+		std::unique_ptr<EditorState, EditorStateDeleter> m_editorState;
+		/// Accès à l'état éditeur, créé à la première utilisation. Défini uniquement
+		/// dans EngineEditor.cpp (n'existe pas dans le jeu). Main thread.
+		EditorState& Ed();
 
 		/// Sous-projet C MVP (Task 12) — Viewport offscreen Vulkan dedie
 		/// a l'apercu 3D du mesh skinned d'une race dans l'ecran ImGui
@@ -912,13 +901,6 @@ namespace engine
 		/// l'échantillonnage d'animation. 0 = pas encore tické.
 		float m_racePreviewLastNowSec = 0.0f;
 
-#if defined(_WIN32)
-		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
-
-		/// Nombre de frames en vol pour le purge differé du TexturePreviewCache.
-		/// Aligne sur HiZ/GpuDrivenCulling kDefaultFramesInFlight = 2.
-		static constexpr uint32_t kEditorTexCacheFramesInFlight = 2u;
-#endif
 		/// Sous-projet A (Task 15) — Runtime skinned avatar humanoide (Y Bot Mixamo).
 		/// Remplace le cube `avatar_placeholder.mesh` post-EnterWorld lorsque le glb
 		/// est chargeable et que le pipeline Vulkan s'initialise correctement.
@@ -1358,9 +1340,7 @@ namespace engine
 		float m_sceneGizmoDragLastX = 0.0f; ///< dernière position souris X (pixels)
 		float m_sceneGizmoDragLastY = 0.0f; ///< dernière position souris Y (pixels)
 		float m_sceneGizmoDragLastAngle = 0.0f; ///< dernier angle souris/centre (rad, mode rotation)
-		/// Transforms des entités éditables de la sélection AU DÉBUT du drag
-		/// (ancien état des SetEntityTransformCommand poussées au relâchement).
-		std::vector<std::pair<engine::editor::scene::EntityId, engine::editor::scene::EntityTransform>> m_sceneGizmoDragStart;
+		// (Les transforms de la sélection au début du drag sont dans EditorState.)
 
 		/// Charge le coffre (Chest_Wood) en mesh SKINNE (squelette + clips Open/Close)
 		/// pour l'animer a l'interaction. A appeler au boot apres LoadInteractableProps.

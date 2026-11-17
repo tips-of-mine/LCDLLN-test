@@ -9,8 +9,6 @@
 #include "src/client/app/Engine.h"
 #include "src/client/app/EngineHelpers.h"
 
-#include "src/world_editor/ui/WorldEditorImGui.h"
-#include "src/world_editor/core/WorldEditorShell.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/client/render/clouds/CloudWeatherMapper.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -3107,9 +3105,8 @@ namespace engine
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												const engine::world::water::WaterScene* scene = nullptr;
-												if (m_worldEditorExe && m_worldEditorShell)
-													scene = &m_worldEditorShell->GetWaterDocument().Get();
-												else if (m_clientWaterScene)
+												bool editorWaterDirty = false; // seule la scène sert ici
+												if (!(m_worldEditorExe && TryGetEditorWaterScene(scene, editorWaterDirty)) && m_clientWaterScene)
 													scene = m_clientWaterScene.get();
 												if (!scene || !m_waterMeshGpu.IsValid()) return;
 
@@ -4232,7 +4229,7 @@ namespace engine
 													&& !m_worldEditorExe
 													&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 												// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
-												const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
+												const bool editorHubActive = HasEditorHubImGui() && m_editorEnabled && !m_worldEditorExe;
 												if (m_imguiOverlay && m_imguiOverlay->IsReady()
 													&& (m_worldEditorExe
 														|| (m_authImGui && authVisualState.active

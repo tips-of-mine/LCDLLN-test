@@ -12,6 +12,7 @@
 #include "src/client/app/Engine.h"
 
 #include <string>
+#include <string_view>
 
 namespace engine::helpers
 {
@@ -106,4 +107,7 @@ namespace engine::helpers
 	/// state machine transite hors de l'etat avant la fin du clip dans le cas
 	/// normal ; le clamp evite un wrap visuel si la transition tarde).
 	bool ClipLoops(engine::Engine::AvatarLocomotionState s);
+
+	/// true si \p flag figure tel quel parmi argv[1..argc-1] (options de ligne de commande).
+	bool HasCliFlag(int argc, char** argv, std::string_view flag);
 } // namespace engine::helpers

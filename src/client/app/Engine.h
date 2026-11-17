@@ -398,6 +398,76 @@ namespace engine
 		/// \param authGateActive écran d'authentification affiché (gèle l'input). Main thread.
 		void UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive);
 		// --- fin des sous-étapes d'Update() ---
+		// --- Intégration éditeur (définies dans EngineEditor.cpp) ---
+		/// World editor : crée la session d'édition (--world-editor) et branche le crochet
+		/// de sauvegarde terrain (heightmap / splat / herbe). Appelée par le constructeur.
+		void InitWorldEditorSession();
+		/// Modes éditeur au démarrage : EditorMode (--editor) et coquille WorldEditorShell
+		/// (--editor-world / --world-editor). En cas d'échec, l'éditeur est désactivé.
+		/// Appelée par le constructeur.
+		void InitEditorModes(int argc, char** argv, bool worldEditorWorldFlag);
+		/// World editor : libère la cible offscreen du viewport (vkDeviceWaitIdle déjà fait).
+		void ShutdownEditorViewportTarget();
+#if defined(_WIN32)
+		/// World editor : libère le cache de vignettes et persiste le layout du shell
+		/// AVANT l'arrêt du contexte ImGui (cf. commentaires d'origine).
+		void ShutdownEditorUiBeforeImGui();
+#endif
+#if defined(_WIN32)
+		/// World editor : détruit les panneaux ImGui de l'éditeur (après l'arrêt de l'overlay).
+		void ReleaseWorldEditorImGui();
+#endif
+		/// Arrêt de l'EditorMode et de la coquille WorldEditorShell (layout persisté).
+		/// Appelée en fin de Run().
+		void ShutdownEditorComponents();
+		/// World editor : raccourcis clavier du shell (undo/redo, dupliquer, supprimer,
+		/// mode du gizmo E/T/C), hors saisie de texte ImGui.
+		void HandleWorldEditorShortcuts();
+#if defined(_WIN32)
+		/// World editor, début de frame : session, synchro terrain document → GPU,
+		/// vignettes de textures importées, références de splat, cache de vignettes.
+		void TickWorldEditor();
+#endif
+#if defined(_WIN32)
+		/// World editor : redimensionne la cible du viewport si le ScenePanel existe.
+		void ResizeWorldEditorViewportTargetIfNeeded();
+#endif
+#if defined(_WIN32)
+		/// World editor : rend la coquille si elle et l'overlay ImGui sont prêts.
+		void RenderWorldEditorShellIfReady(engine::RenderState& out);
+#endif
+		/// World editor : copie SceneColor_LDR (avant ImGui) dans la cible offscreen du
+		/// viewport (blit + barrières). \param fr ressources de la frame ; \param extent taille du backbuffer.
+		void CopySceneToEditorViewport(engine::render::FrameResources& fr, VkExtent2D extent);
+#if defined(_WIN32)
+		/// World editor : crée les panneaux ImGui de l'éditeur (branchés sur l'overlay,
+		/// la session, le shell), le cache de vignettes de textures et la cible offscreen
+		/// du viewport. Appelée une fois l'overlay ImGui initialisé, avec --world-editor.
+		void InitWorldEditorImGuiPanels();
+#endif
+		/// true si l'EditorMode (--editor) est actif.
+		[[nodiscard]] bool HasEditorMode() const;
+		/// --editor : mise à jour de l'EditorMode (caméra éditeur). Prérequis : HasEditorMode().
+		void UpdateEditorModeFrame(engine::RenderState& out, double dt);
+		/// true si le panneau Editor Hub (--editor) a été créé.
+		[[nodiscard]] bool HasEditorHubImGui() const;
+		/// World editor : scène d'eau du document de l'éditeur. \return false (sans
+		/// toucher \p scene / \p dirty) si la coquille de l'éditeur n'existe pas.
+		bool TryGetEditorWaterScene(const engine::world::water::WaterScene*& scene, bool& dirty) const;
+		/// World editor : marque la scène d'eau du document comme à jour.
+		/// \return false si la coquille de l'éditeur n'existe pas.
+		bool ClearEditorWaterDirty();
+#if defined(_WIN32)
+		/// World editor : thème ImGui de l'éditeur (crochet styleHook d'ImGuiOverlay::Init).
+		void ApplyWorldEditorImGuiTheme();
+		/// World editor : branche le cycle jour/nuit sur le panneau Atmosphère.
+		void BindWorldEditorDayNight();
+		/// --editor : crée le panneau Editor Hub (lié à l'EditorMode s'il existe).
+		void CreateEditorHubImGui();
+		/// --editor : rend le panneau Editor Hub (\p dw, \p dh : taille d'affichage en pixels).
+		void RenderEditorHubImGui(float dw, float dh);
+#endif
+		// --- fin de l'intégration éditeur ---
 		/// Envoie une ligne saisie dans le chat (canal, cible, texte) : commandes slash
 		bool HandleChatSend(uint8_t channel, std::string_view targetToken, std::string_view text);
 		// --- Étapes du constructeur (anciens lambdas et blocs, aucun changement de comportement) ---

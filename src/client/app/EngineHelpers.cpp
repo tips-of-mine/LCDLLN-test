@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cmath>
 #include <string>
+#include <string_view>
 
 namespace engine::helpers
 {
@@ -203,5 +204,17 @@ namespace engine::helpers
 			|| s == engine::Engine::AvatarLocomotionState::Fall
 			|| s == engine::Engine::AvatarLocomotionState::SwimIdle
 			|| s == engine::Engine::AvatarLocomotionState::SwimForward;
+	}
+
+	bool HasCliFlag(int argc, char** argv, std::string_view flag)
+	{
+		for (int i = 1; i < argc; ++i)
+		{
+			if (argv[i] && std::string_view(argv[i]) == flag)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 } // namespace engine::helpers

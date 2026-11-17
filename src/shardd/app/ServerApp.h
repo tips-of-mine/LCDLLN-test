@@ -2125,6 +2125,10 @@ namespace engine::server
 		EntityId m_nextServerEntityId = 0x200000000ull;
 		uint16_t m_listenPort = 0;
 		uint16_t m_tickHz = 0;
+		/// Cache de ResolveMobAiIntervalTicks() (ticks entre deux pas d'IA de mob) et
+		/// fréquence de tick pour laquelle il a été calculé (recalcul si elle change).
+		mutable uint32_t m_mobAiIntervalTicksCache = 0;
+		mutable uint16_t m_mobAiIntervalTicksCacheHz = 0;
 		uint16_t m_snapshotHz = 0;
 		uint32_t m_nextClientId = 1;
 		uint32_t m_currentTick = 0;

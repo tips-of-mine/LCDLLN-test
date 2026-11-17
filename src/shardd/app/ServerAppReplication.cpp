@@ -52,7 +52,11 @@ namespace engine::server
 		// son type (client / mob / loot bag) : évite un second lookup à l'application du cap.
 		// Capacité 0 (défaut) = comportement historique (pas de cap).
 		struct Candidate { EntityId entityId; float distSq; };
-		std::vector<Candidate> candidates;
+		// Perf : tampon réutilisé d'un appel à l'autre (appelé pour chaque client à
+		// chaque rafraîchissement de la réplication) au lieu d'être réalloué. Le tick
+		// est mono-thread et la fonction non réentrante.
+		static thread_local std::vector<Candidate> candidates;
+		candidates.clear();
 		candidates.reserve(client.interestEntityIds.size());
 		const float cx = client.positionMetersX;
 		const float cy = client.positionMetersY;

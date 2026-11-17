@@ -13,11 +13,17 @@ namespace engine::server
 
 	uint32_t ServerApp::ResolveMobAiIntervalTicks() const
 	{
+		// Perf : appelée pour chaque mob à chaque pas d'IA ; la config et m_tickHz ne
+		// changent plus après Init -> valeur calculée une fois puis mise en cache.
+		if (m_mobAiIntervalTicksCache != 0u && m_mobAiIntervalTicksCacheHz == m_tickHz)
+			return m_mobAiIntervalTicksCache;
 		const uint32_t configuredAiHz = static_cast<uint32_t>(std::clamp<int64_t>(
 			m_config.GetInt("server.mob_ai_hz", 10),
 			1,
 			static_cast<int64_t>(m_tickHz)));
-		return std::max<uint32_t>(1u, static_cast<uint32_t>(m_tickHz) / configuredAiHz);
+		m_mobAiIntervalTicksCache = std::max<uint32_t>(1u, static_cast<uint32_t>(m_tickHz) / configuredAiHz);
+		m_mobAiIntervalTicksCacheHz = m_tickHz;
+		return m_mobAiIntervalTicksCache;
 	}
 
 	void ServerApp::UpdateMobAi()

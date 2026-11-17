@@ -1102,11 +1102,12 @@ namespace engine
 			// SP-E — Libère les descripteurs d'icônes (ImGui_ImplVulkan_RemoveTexture)
 			// AVANT la destruction du backend ImGui Vulkan ci-dessous.
 			m_skillIconCache.Shutdown();
-			if (m_worldEditorImGui)
+			if (m_imguiOverlay)
 			{
-				m_worldEditorImGui->DetachPlatformWindow(m_window);
-				m_worldEditorImGui->Shutdown(m_vkDeviceContext.GetDevice());
+				m_imguiOverlay->DetachPlatformWindow(m_window);
+				m_imguiOverlay->Shutdown(m_vkDeviceContext.GetDevice());
 				m_worldEditorImGui.reset();
+				m_imguiOverlay.reset();
 			}
 			m_authImGui.reset();
 			m_worldEditorTerrainTools.Shutdown();
@@ -1626,9 +1627,9 @@ namespace engine
 					m_suboptimalWidth = m_width;
 					m_suboptimalHeight = m_height;
 					LOG_INFO(Platform, "[Resize] Swapchain recreated OK ({}x{})", m_width, m_height);
-					if (m_worldEditorImGui)
+					if (m_imguiOverlay)
 					{
-						m_worldEditorImGui->OnSwapchainRecreate(m_vkSwapchain.GetImageCount());
+						m_imguiOverlay->OnSwapchainRecreate(m_vkSwapchain.GetImageCount());
 					}
 				}
 				else
@@ -1683,7 +1684,7 @@ namespace engine
 		auto& out               = m_renderStates[writeIdx];
 
 #if defined(_WIN32)
-		if (!m_worldEditorImGui && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
+		if (!m_imguiOverlay && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
 			&& m_window.GetNativeHandle() != nullptr && m_vkDeviceContext.SupportsDynamicRendering())
 		{
 			InitImGuiOverlayIfNeeded();
@@ -1951,7 +1952,7 @@ namespace engine
 			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
-		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
+		if (m_imguiOverlay && m_imguiOverlay->IsReady()
 			&& (m_worldEditorExe || authImguiOverlayNewFrame || chatImguiOverlayNewFrame || editorHubOverlayNewFrame))
 		{
 			float imguiDw = static_cast<float>(std::max(1, m_width));
@@ -1965,7 +1966,7 @@ namespace engine
 					imguiDh = static_cast<float>(extImg.height);
 				}
 			}
-			m_worldEditorImGui->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
+			m_imguiOverlay->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
 		}
 
 		// M100.34 incrément 3 — Resize de la cible offscreen viewport sur la
@@ -1993,7 +1994,7 @@ namespace engine
 		// ImGui::Render. RenderFrame est no-op si Init() n'a pas été appelé
 		// avec succès. Pas thread : main thread uniquement.
 		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
-			&& m_worldEditorImGui && m_worldEditorImGui->IsReady())
+			&& m_imguiOverlay && m_imguiOverlay->IsReady())
 		{
 			RenderWorldEditorShell(out);
 		}
@@ -2003,7 +2004,7 @@ namespace engine
 		{
 			UpdateGameplay(out, dt, mouseSensitivity, invertY, movementLayout, authGateActive);
 		}
-		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		else if (m_worldEditorExe && m_imguiOverlay && m_imguiOverlay->IsReady())
 		{
 			UpdateWorldEditorCamera(out, dt, mouseSensitivity, invertY, movementLayout);
 		}
@@ -2186,16 +2187,16 @@ namespace engine
 		}
 
 #if defined(_WIN32)
-		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		if (m_worldEditorExe && m_imguiOverlay && m_imguiOverlay->IsReady())
 		{
 			UpdateWorldEditorViewportOverlay(out);
 		}
-		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_authImGui
+		else if (m_imguiOverlay && m_imguiOverlay->IsReady() && m_authImGui
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false) && m_authUi.GetVisualState().active)
 		{
 			RenderAuthImGuiFrame();
 		}
-		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
+		else if (m_imguiOverlay && m_imguiOverlay->IsReady() && m_chatImGui
 			&& m_chatUi.IsInitialized()
 			&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe
@@ -2203,7 +2204,7 @@ namespace engine
 		{
 			RenderInGameImGuiFrame(out);
 		}
-		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui
+		else if (m_imguiOverlay && m_imguiOverlay->IsReady() && m_editorHubImGui
 			&& m_editorEnabled && !m_worldEditorExe)
 		{
 			// M43.4 — Rendu du panneau Editor Hub overlay quand --editor (sans world-editor).

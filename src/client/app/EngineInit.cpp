@@ -4233,7 +4233,7 @@ namespace engine
 													&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 												// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 												const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
-												if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
+												if (m_imguiOverlay && m_imguiOverlay->IsReady()
 													&& (m_worldEditorExe
 														|| (m_authImGui && authVisualState.active
 															&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false))
@@ -4242,7 +4242,7 @@ namespace engine
 													&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
 													&& !presentSolidColorDebug)
 												{
-													worldEditorUiToPresent = m_worldEditorImGui->RecordToBackbuffer(
+													worldEditorUiToPresent = m_imguiOverlay->RecordToBackbuffer(
 														cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
 												}
 #endif

@@ -10,7 +10,7 @@ namespace engine::render
 	/// ancré en haut-gauche. Lit `EditorMode::GetHubTitle()` (déjà composé par
 	/// `RefreshShell`) et `EditorMode::IsDirty()`.
 	///
-	/// Windows uniquement — le contexte ImGui est porté par `WorldEditorImGui` qui
+	/// Windows uniquement — le contexte ImGui est porté par `ImGuiOverlay` qui
 	/// n'existe que sous WIN32 (cf. `ChatImGuiRenderer` pour le pattern).
 	///
 	/// Pas de mutation de l'état éditeur : panneau strictement read-only.

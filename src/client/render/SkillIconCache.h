@@ -20,7 +20,7 @@ namespace engine::client
 	/// retourne 0 (l'appelant retombe sur le libellé texte). Plafond strict
 	/// (kMaxIcons) **sans éviction** : évite tout bug de durée de vie de descripteur ;
 	/// au-delà, GetOrLoad renvoie 0 (repli texte). Dimensionné sous le pool de
-	/// descripteurs ImGui (cf. WorldEditorImGui, 1024 sets).
+	/// descripteurs ImGui (cf. ImGuiOverlay, 1024 sets).
 	///
 	/// Thread / timing : main thread uniquement. Init() doit être appelé APRÈS
 	/// ImGui_ImplVulkan_Init (le backend Vulkan doit exister pour AddTexture).

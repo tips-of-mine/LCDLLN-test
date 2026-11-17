@@ -8,7 +8,7 @@ namespace engine::core   { class Config; }
 namespace engine::render
 {
 	/// Phase 3.11.1 — Rendu ImGui du panneau chat post-auth (Windows uniquement,
-	/// car le contexte ImGui est porté par WorldEditorImGui qui n'existe que sous WIN32).
+	/// car le contexte ImGui est porté par ImGuiOverlay qui n'existe que sous WIN32).
 	/// Affichage seul : la logique d'input (focus '/', filtres 1-0, scroll, submit Enter)
 	/// reste dans \ref engine::client::ChatUiPresenter::Update. Le renderer lit l'historique,
 	/// la ligne en cours et le mask de filtres via les accesseurs publics const ajoutés en 3.11.1.

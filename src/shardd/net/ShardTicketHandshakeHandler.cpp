@@ -1,6 +1,6 @@
-#include "src/masterd/handlers/shard/ShardTicketHandshakeHandler.h"
+#include "src/shardd/net/ShardTicketHandshakeHandler.h"
 #include "src/shared/network/NetServer.h"
-#include "src/masterd/handlers/shard/ShardTicketValidator.h"
+#include "src/shardd/net/ShardTicketValidator.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/world/AdmittedCharacterRegistry.h"

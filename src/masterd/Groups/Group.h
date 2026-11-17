@@ -11,7 +11,7 @@
 // utilise un GroupReference doubly-linked, on simplifie en set hash-based
 // car nos lookups sont domines par "is X in group ?" et "list members").
 
-#include "src/masterd/Groups/GroupTypes.h"
+#include "src/shared/groups/GroupTypes.h"
 
 #include <cstdint>
 #include <unordered_map>

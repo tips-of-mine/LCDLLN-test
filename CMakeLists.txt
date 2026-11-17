@@ -1365,7 +1365,7 @@ target_link_libraries(weather_payloads_tests PRIVATE engine_core)
 add_test(NAME weather_payloads_tests COMMAND weather_payloads_tests)
 
 # CMANGOS.31 (Phase 5.31 step 3+4) — GameEvent payloads round-trip tests (no DB / no network).
-add_executable(gameevent_payloads_tests src/shared/network/GameEventPayloadsTests.cpp)
+add_executable(gameevent_payloads_tests src/masterd/events/GameEventPayloadsTests.cpp)
 target_link_libraries(gameevent_payloads_tests PRIVATE engine_core)
 add_test(NAME gameevent_payloads_tests COMMAND gameevent_payloads_tests)
 

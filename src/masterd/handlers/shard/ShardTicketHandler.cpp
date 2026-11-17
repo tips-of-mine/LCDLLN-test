@@ -6,7 +6,7 @@
 #include "src/masterd/account/AccountStore.h"
 #include "src/masterd/handlers/terms/TermsRepository.h"
 #include "src/masterd/session/SessionCharacterMap.h"
-#include "src/masterd/handlers/shard/ShardTicketCrypto.h"
+#include "src/shared/security/ShardTicketCrypto.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/ErrorPacket.h"

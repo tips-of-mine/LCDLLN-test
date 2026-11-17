@@ -839,205 +839,7 @@ namespace engine
 		// Sinon on log le refus.
 		case kOpcodeAdminCommandResponse:
 		{
-			engine::network::admin::AdminCommandResponse parsed;
-			if (!engine::network::admin::ParseAdminCommandResponsePayload(payload, payloadSize, parsed))
-			{
-				LOG_WARN(Net, "[Engine] ADMIN_COMMAND_RESPONSE parse failed (size={})", payloadSize);
-				return;
-			}
-			// Helper inline pour pousser une ligne SRV dans le chat in-game
-			// (cf. pattern pushSkyChatLine du send callback).
-			auto pushAdminChatLine = [this](const char* sender, const char* fmt, auto... args) {
-				char buf[256];
-				std::snprintf(buf, sizeof(buf), fmt, args...);
-				engine::net::ChatMessage chatMsg;
-				chatMsg.timestampUnixMs = static_cast<uint64_t>(
-					std::chrono::duration_cast<std::chrono::milliseconds>(
-						std::chrono::system_clock::now().time_since_epoch()).count());
-				chatMsg.channel = engine::net::ChatChannel::Server;
-				chatMsg.sender  = sender;
-				chatMsg.text    = buf;
-				m_chatUi.PushNetworkLine(chatMsg);
-			};
-			if (parsed.status == engine::network::admin::AdminCommandStatus::Ok)
-			{
-				if (parsed.command == "/sky moon")
-				{
-					// Parse echoed args : ["phase=7", "illumination=1.000"]
-					uint8_t phase = 0;
-					float illumination = 0.0f;
-					for (const auto& kv : parsed.result)
-					{
-						if (kv.starts_with("phase="))
-						{
-							try { phase = static_cast<uint8_t>(std::stoi(kv.substr(6))); }
-							catch (...) { phase = 0; }
-						}
-						else if (kv.starts_with("illumination="))
-						{
-							try { illumination = std::stof(kv.substr(13)); }
-							catch (...) { illumination = 0.0f; }
-						}
-					}
-					m_dayNight.OnLunarPhaseChange(phase, illumination);
-					LOG_INFO(Render, "[Sky] /sky moon ACK applied : phase={} illumination={:.3f}",
-						static_cast<unsigned>(phase), illumination);
-					pushAdminChatLine("[Sky]",
-						"OK : moon phase %u illumination=%.0f%% (master autorise)",
-						static_cast<unsigned>(phase),
-						static_cast<double>(illumination * 100.0f));
-				}
-				else if (parsed.command == "/sky time")
-				{
-					float hours = 12.0f;
-					for (const auto& kv : parsed.result)
-					{
-						if (kv.starts_with("hours="))
-						{
-							try { hours = std::stof(kv.substr(6)); }
-							catch (...) { hours = 12.0f; }
-						}
-					}
-					m_dayNight.SetTime(hours);
-					LOG_INFO(Render, "[Sky] /sky time ACK applied : {:.2f}h",
-						static_cast<double>(hours));
-				}
-				else if (parsed.command == "/sky info")
-				{
-					const auto& s = m_dayNight.GetState();
-					static const char* kMoonName[16] = {
-						"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
-						"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
-						"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
-						"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
-					};
-					LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}",
-						s.timeOfDay, s.isDaytime);
-					LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})",
-						s.lightDir[0], s.lightDir[1], s.lightDir[2]);
-					LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
-						static_cast<unsigned>(s.moonPhase),
-						kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
-						s.moonIllumination * 100.0f);
-
-					// Affichage chat in-game : sans ce push, l'utilisateur ne voit
-					// l'info que dans les logs. Cf. pattern identique pour /sky moon
-					// (pushAdminChatLine plus haut) et /who/report/kick/ban/announce.
-					pushAdminChatLine("[Sky]", "timeOfDay=%.2fh isDaytime=%d",
-						static_cast<double>(s.timeOfDay),
-						static_cast<int>(s.isDaytime));
-					pushAdminChatLine("[Sky]", "sunDir=(%.2f,%.2f,%.2f)",
-						static_cast<double>(s.lightDir[0]),
-						static_cast<double>(s.lightDir[1]),
-						static_cast<double>(s.lightDir[2]));
-					pushAdminChatLine("[Sky]", "moonPhase=%u (%s) illumination=%.0f%%",
-						static_cast<unsigned>(s.moonPhase),
-						kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
-						static_cast<double>(s.moonIllumination * 100.0f));
-				}
-				else if (parsed.command == "/loot")
-				{
-					LOG_INFO(Core, "[Admin] /loot ACK : {}", parsed.message);
-				}
-				else if (parsed.command == "/promote")
-				{
-					LOG_INFO(Core, "[Admin] /promote ACK : {}", parsed.message);
-				}
-				else if (parsed.command == "/who"
-				      || parsed.command == "/report"
-				      || parsed.command == "/kick"
-				      || parsed.command == "/mute"
-				      || parsed.command == "/ban"
-				      || parsed.command == "/announce"
-				      || parsed.command == "/shutdown")
-				{
-					// Wave 2 : reponses moderation. Affiche le resultat
-					// dans le chat (canal Server) pour feedback joueur.
-					std::string body;
-					if (parsed.command == "/who")
-					{
-						std::string countStr;
-						std::string loginsStr;
-						for (const auto& kv : parsed.result)
-						{
-							if (kv.starts_with("count="))
-								countStr = kv.substr(6);
-							else if (kv.starts_with("logins="))
-								loginsStr = kv.substr(7);
-						}
-						body = "[Who] " + countStr + " joueurs connectes";
-						if (!loginsStr.empty())
-							body += " : " + loginsStr;
-					}
-					else if (parsed.command == "/report")
-					{
-						body = "[Report] " + parsed.message;
-					}
-					else if (parsed.command == "/kick")
-					{
-						body = "[Kick] " + parsed.message;
-					}
-					else if (parsed.command == "/mute")
-					{
-						body = "[Mute] " + parsed.message;
-					}
-					else if (parsed.command == "/ban")
-					{
-						body = "[Ban] " + parsed.message;
-					}
-					else if (parsed.command == "/announce")
-					{
-						body = "[Announce] " + parsed.message;
-					}
-					else if (parsed.command == "/shutdown")
-					{
-						body = "[Shutdown] " + parsed.message; // ETAPE5.3
-					}
-
-					if (!body.empty() && m_chatUi.IsInitialized())
-					{
-						engine::net::ChatMessage line;
-						line.timestampUnixMs = 0;
-						line.channel = engine::net::ChatChannel::Server;
-						line.sender = "system";
-						line.text = std::move(body);
-						m_chatUi.PushNetworkLine(line);
-					}
-					LOG_INFO(Net, "[AdminCommand] OK command={} message={}",
-						parsed.command, parsed.message);
-				}
-				else
-				{
-					LOG_INFO(Net, "[AdminCommand] OK : command={} (no client effect V1)", parsed.command);
-					pushAdminChatLine("[AdminCommand]", "OK : %s", parsed.command.c_str());
-				}
-			}
-			else
-			{
-				// Tout refus (Denied, InvalidArgs, Unauthorized, ServerError,
-				// UnknownCommand) est trace cote client. L'audit cote master
-				// a deja ete emis avec result=DENIED/INVALID_ARGS/etc.
-				LOG_WARN(Net, "[AdminCommand] REFUSED command={} status={} message={}",
-					parsed.command,
-					static_cast<unsigned>(parsed.status),
-					parsed.message);
-				const char* statusName = "ERROR";
-				switch (parsed.status)
-				{
-					case engine::network::admin::AdminCommandStatus::Unauthorized:
-						statusName = "UNAUTHORIZED"; break;
-					case engine::network::admin::AdminCommandStatus::Denied:
-						statusName = "DENIED (role insuffisant)"; break;
-					case engine::network::admin::AdminCommandStatus::UnknownCommand:
-						statusName = "UNKNOWN_COMMAND"; break;
-					case engine::network::admin::AdminCommandStatus::InvalidArgs:
-						statusName = "INVALID_ARGS"; break;
-					default: break;
-				}
-				pushAdminChatLine("[AdminCommand]",
-					"REFUSE %s : %s -- %s",
-					statusName, parsed.command.c_str(), parsed.message.c_str());
-			}
+			HandleAdminCommandResponsePush(payload, payloadSize);
 			return;
 		}
 		// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -1221,6 +1023,212 @@ namespace engine
 		msg.text = std::move(parsed->text);
 		m_chatUi.PushNetworkLine(msg);
 	}
+
+	// Sous-étape extraite de HandleMasterPush — voir la documentation dans Engine.h.
+	void Engine::HandleAdminCommandResponsePush(const uint8_t* payload, size_t payloadSize)
+	{
+		using namespace engine::network;
+		engine::network::admin::AdminCommandResponse parsed;
+		if (!engine::network::admin::ParseAdminCommandResponsePayload(payload, payloadSize, parsed))
+		{
+			LOG_WARN(Net, "[Engine] ADMIN_COMMAND_RESPONSE parse failed (size={})", payloadSize);
+			return;
+		}
+		// Helper inline pour pousser une ligne SRV dans le chat in-game
+		// (cf. pattern pushSkyChatLine du send callback).
+		auto pushAdminChatLine = [this](const char* sender, const char* fmt, auto... args) {
+			char buf[256];
+			std::snprintf(buf, sizeof(buf), fmt, args...);
+			engine::net::ChatMessage chatMsg;
+			chatMsg.timestampUnixMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			chatMsg.channel = engine::net::ChatChannel::Server;
+			chatMsg.sender  = sender;
+			chatMsg.text    = buf;
+			m_chatUi.PushNetworkLine(chatMsg);
+		};
+		if (parsed.status == engine::network::admin::AdminCommandStatus::Ok)
+		{
+			if (parsed.command == "/sky moon")
+			{
+				// Parse echoed args : ["phase=7", "illumination=1.000"]
+				uint8_t phase = 0;
+				float illumination = 0.0f;
+				for (const auto& kv : parsed.result)
+				{
+					if (kv.starts_with("phase="))
+					{
+						try { phase = static_cast<uint8_t>(std::stoi(kv.substr(6))); }
+						catch (...) { phase = 0; }
+					}
+					else if (kv.starts_with("illumination="))
+					{
+						try { illumination = std::stof(kv.substr(13)); }
+						catch (...) { illumination = 0.0f; }
+					}
+				}
+				m_dayNight.OnLunarPhaseChange(phase, illumination);
+				LOG_INFO(Render, "[Sky] /sky moon ACK applied : phase={} illumination={:.3f}",
+					static_cast<unsigned>(phase), illumination);
+				pushAdminChatLine("[Sky]",
+					"OK : moon phase %u illumination=%.0f%% (master autorise)",
+					static_cast<unsigned>(phase),
+					static_cast<double>(illumination * 100.0f));
+			}
+			else if (parsed.command == "/sky time")
+			{
+				float hours = 12.0f;
+				for (const auto& kv : parsed.result)
+				{
+					if (kv.starts_with("hours="))
+					{
+						try { hours = std::stof(kv.substr(6)); }
+						catch (...) { hours = 12.0f; }
+					}
+				}
+				m_dayNight.SetTime(hours);
+				LOG_INFO(Render, "[Sky] /sky time ACK applied : {:.2f}h",
+					static_cast<double>(hours));
+			}
+			else if (parsed.command == "/sky info")
+			{
+				const auto& s = m_dayNight.GetState();
+				static const char* kMoonName[16] = {
+					"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
+					"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
+					"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
+					"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
+				};
+				LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}",
+					s.timeOfDay, s.isDaytime);
+				LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})",
+					s.lightDir[0], s.lightDir[1], s.lightDir[2]);
+				LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
+					static_cast<unsigned>(s.moonPhase),
+					kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
+					s.moonIllumination * 100.0f);
+
+				// Affichage chat in-game : sans ce push, l'utilisateur ne voit
+				// l'info que dans les logs. Cf. pattern identique pour /sky moon
+				// (pushAdminChatLine plus haut) et /who/report/kick/ban/announce.
+				pushAdminChatLine("[Sky]", "timeOfDay=%.2fh isDaytime=%d",
+					static_cast<double>(s.timeOfDay),
+					static_cast<int>(s.isDaytime));
+				pushAdminChatLine("[Sky]", "sunDir=(%.2f,%.2f,%.2f)",
+					static_cast<double>(s.lightDir[0]),
+					static_cast<double>(s.lightDir[1]),
+					static_cast<double>(s.lightDir[2]));
+				pushAdminChatLine("[Sky]", "moonPhase=%u (%s) illumination=%.0f%%",
+					static_cast<unsigned>(s.moonPhase),
+					kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
+					static_cast<double>(s.moonIllumination * 100.0f));
+			}
+			else if (parsed.command == "/loot")
+			{
+				LOG_INFO(Core, "[Admin] /loot ACK : {}", parsed.message);
+			}
+			else if (parsed.command == "/promote")
+			{
+				LOG_INFO(Core, "[Admin] /promote ACK : {}", parsed.message);
+			}
+			else if (parsed.command == "/who"
+			      || parsed.command == "/report"
+			      || parsed.command == "/kick"
+			      || parsed.command == "/mute"
+			      || parsed.command == "/ban"
+			      || parsed.command == "/announce"
+			      || parsed.command == "/shutdown")
+			{
+				// Wave 2 : reponses moderation. Affiche le resultat
+				// dans le chat (canal Server) pour feedback joueur.
+				std::string body;
+				if (parsed.command == "/who")
+				{
+					std::string countStr;
+					std::string loginsStr;
+					for (const auto& kv : parsed.result)
+					{
+						if (kv.starts_with("count="))
+							countStr = kv.substr(6);
+						else if (kv.starts_with("logins="))
+							loginsStr = kv.substr(7);
+					}
+					body = "[Who] " + countStr + " joueurs connectes";
+					if (!loginsStr.empty())
+						body += " : " + loginsStr;
+				}
+				else if (parsed.command == "/report")
+				{
+					body = "[Report] " + parsed.message;
+				}
+				else if (parsed.command == "/kick")
+				{
+					body = "[Kick] " + parsed.message;
+				}
+				else if (parsed.command == "/mute")
+				{
+					body = "[Mute] " + parsed.message;
+				}
+				else if (parsed.command == "/ban")
+				{
+					body = "[Ban] " + parsed.message;
+				}
+				else if (parsed.command == "/announce")
+				{
+					body = "[Announce] " + parsed.message;
+				}
+				else if (parsed.command == "/shutdown")
+				{
+					body = "[Shutdown] " + parsed.message; // ETAPE5.3
+				}
+
+				if (!body.empty() && m_chatUi.IsInitialized())
+				{
+					engine::net::ChatMessage line;
+					line.timestampUnixMs = 0;
+					line.channel = engine::net::ChatChannel::Server;
+					line.sender = "system";
+					line.text = std::move(body);
+					m_chatUi.PushNetworkLine(line);
+				}
+				LOG_INFO(Net, "[AdminCommand] OK command={} message={}",
+					parsed.command, parsed.message);
+			}
+			else
+			{
+				LOG_INFO(Net, "[AdminCommand] OK : command={} (no client effect V1)", parsed.command);
+				pushAdminChatLine("[AdminCommand]", "OK : %s", parsed.command.c_str());
+			}
+		}
+		else
+		{
+			// Tout refus (Denied, InvalidArgs, Unauthorized, ServerError,
+			// UnknownCommand) est trace cote client. L'audit cote master
+			// a deja ete emis avec result=DENIED/INVALID_ARGS/etc.
+			LOG_WARN(Net, "[AdminCommand] REFUSED command={} status={} message={}",
+				parsed.command,
+				static_cast<unsigned>(parsed.status),
+				parsed.message);
+			const char* statusName = "ERROR";
+			switch (parsed.status)
+			{
+				case engine::network::admin::AdminCommandStatus::Unauthorized:
+					statusName = "UNAUTHORIZED"; break;
+				case engine::network::admin::AdminCommandStatus::Denied:
+					statusName = "DENIED (role insuffisant)"; break;
+				case engine::network::admin::AdminCommandStatus::UnknownCommand:
+					statusName = "UNKNOWN_COMMAND"; break;
+				case engine::network::admin::AdminCommandStatus::InvalidArgs:
+					statusName = "INVALID_ARGS"; break;
+				default: break;
+			}
+			pushAdminChatLine("[AdminCommand]",
+				"REFUSE %s : %s -- %s",
+				statusName, parsed.command.c_str(), parsed.message.c_str());
+		}
+	}
+
 	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
 	bool Engine::HandleChatSend(uint8_t channel, std::string_view targetToken, std::string_view text)
 	{

@@ -1160,106 +1160,7 @@ namespace engine
 								// STAB.7 (VMA disabled), m_vmaAllocator == nullptr → Init échoue par
 								// design : la passe restera invalide et le fallback Water_Passthrough
 								// (vkCmdCopyImage) prendra le relais en runtime.
-								if (pipelineOk)
-								{
-									// Crée le command pool long-lived pour les uploads water (RESET entre Rebuilds).
-									// Le pool est créé indépendamment du succès de WaterMeshGpu::Init : si VMA
-									// est absent (STAB.7) Init échouera et le pool ne sera jamais utilisé,
-									// mais il restera valide pour les builds qui réactivent VMA ultérieurement.
-									{
-										VkCommandPoolCreateInfo poolInfo{};
-										poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-										poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-										                          | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-										poolInfo.queueFamilyIndex = m_vkDeviceContext.GetGraphicsQueueFamilyIndex();
-										if (vkCreateCommandPool(m_vkDeviceContext.GetDevice(), &poolInfo, nullptr, &m_waterTransferPool) != VK_SUCCESS)
-										{
-											LOG_WARN(Render, "[Boot] WaterMeshGpu transfer pool creation failed — water rendering will be disabled");
-											m_waterTransferPool = VK_NULL_HANDLE;
-										}
-									}
-
-									if (!m_waterMeshGpu.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice()))
-									{
-										LOG_WARN(Render, "[Boot] WaterMeshGpu::Init failed — Water_Passthrough fallback");
-									}
-
-									// Init WaterPass : shaders + textures muettes 1×1.
-									// normalMap  = (128,128,255,255) = normale plate vers le haut.
-									// skybox cube = (15,30,80,255)   = bleu ciel sombre (fallback réfl.).
-									std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
-									std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
-
-									if (m_waterTransferPool != VK_NULL_HANDLE
-										&& CreateSolidColorTexture(
-											m_vkDeviceContext.GetDevice(),
-											m_vkDeviceContext.GetPhysicalDevice(),
-											m_waterTransferPool,
-											m_vkDeviceContext.GetGraphicsQueue(),
-											1u, VK_IMAGE_VIEW_TYPE_2D,
-											128, 128, 255, 255,
-											m_waterNormalMapImg, m_waterNormalMapMem,
-											m_waterNormalMapView, m_waterNormalMapSampler))
-									{
-										LOG_INFO(Render, "[Boot] WaterPass: normalMap muette créée");
-									}
-									else
-									{
-										LOG_WARN(Render, "[Boot] WaterPass: création normalMap muette échouée");
-									}
-
-									if (m_waterTransferPool != VK_NULL_HANDLE
-										&& CreateSolidColorTexture(
-											m_vkDeviceContext.GetDevice(),
-											m_vkDeviceContext.GetPhysicalDevice(),
-											m_waterTransferPool,
-											m_vkDeviceContext.GetGraphicsQueue(),
-											6u, VK_IMAGE_VIEW_TYPE_CUBE,
-											15, 30, 80, 255,
-											m_waterSkyboxImg, m_waterSkyboxMem,
-											m_waterSkyboxView, m_waterSkyboxSampler))
-									{
-										LOG_INFO(Render, "[Boot] WaterPass: skybox muette créée");
-									}
-									else
-									{
-										LOG_WARN(Render, "[Boot] WaterPass: création skybox muette échouée");
-									}
-
-									if (!waterVert.empty() && !waterFrag.empty()
-										&& m_waterNormalMapView != VK_NULL_HANDLE
-										&& m_waterNormalMapSampler != VK_NULL_HANDLE
-										&& m_waterSkyboxView != VK_NULL_HANDLE
-										&& m_waterSkyboxSampler != VK_NULL_HANDLE
-										&& m_waterMeshGpu.IsInitialized())
-									{
-										if (m_waterPass.Init(
-												m_vkDeviceContext.GetDevice(),
-												m_vkDeviceContext.GetPhysicalDevice(),
-												VK_FORMAT_R16G16B16A16_SFLOAT,
-												waterVert.data(), waterVert.size(),
-												waterFrag.data(), waterFrag.size(),
-												m_waterNormalMapView, m_waterNormalMapSampler,
-												m_waterSkyboxView,    m_waterSkyboxSampler,
-												2u))
-										{
-											LOG_INFO(Render, "[Boot] WaterPass init OK");
-										}
-										else
-										{
-											LOG_WARN(Render, "[Boot] WaterPass::Init failed — Water_Passthrough fallback");
-										}
-									}
-									else
-									{
-										LOG_WARN(Render,
-											"[Boot] WaterPass : prerequisites missing (vert={} frag={} normalMap={} skybox={}) — Water_Passthrough fallback",
-											!waterVert.empty(),
-											!waterFrag.empty(),
-											m_waterNormalMapView != VK_NULL_HANDLE,
-											m_waterSkyboxView != VK_NULL_HANDLE);
-									}
-								}
+								InitWaterPassResources(loadSpirv, pipelineOk);
 
 								// Phase 5 Lunar + M38.1 Sky : init du SkyPass (charge sky.vert.spv +
 								// sky.frag.spv depuis game/data/shaders, compile pipeline avec push
@@ -1351,124 +1252,7 @@ namespace engine
 										}
 									}
 
-									if (m_vkDeviceContext.SupportsDynamicRendering())
-									{
-										std::vector<uint32_t> authGlyphVert = loadSpirv("shaders/auth_glyph.vert.spv");
-										std::vector<uint32_t> authGlyphFrag = loadSpirv("shaders/auth_glyph.frag.spv");
-										std::vector<uint32_t> authTtfFrag = loadSpirv("shaders/auth_ttf.frag.spv");
-										if (!authGlyphVert.empty() && !authGlyphFrag.empty())
-										{
-											const uint32_t* ttfFragPtr = authTtfFrag.empty() ? nullptr : authTtfFrag.data();
-											const size_t ttfFragWords = authTtfFrag.size();
-											if (m_authGlyphPass.Init(
-													m_vkDeviceContext.GetDevice(),
-													m_vkDeviceContext.GetPhysicalDevice(),
-													m_vkSwapchain.GetImageFormat(),
-													authGlyphVert.data(), authGlyphVert.size(),
-													authGlyphFrag.data(), authGlyphFrag.size(),
-													8192u,
-													VK_NULL_HANDLE,
-													ttfFragPtr,
-													ttfFragWords))
-											{
-												LOG_INFO(Render, "[Boot] AuthGlyphPass OK");
-												const std::string uiFontPath = m_cfg.GetString("render.auth_ui.font_path", "");
-												if (!uiFontPath.empty() && ttfFragPtr != nullptr)
-												{
-													std::vector<uint8_t> fontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, uiFontPath);
-													if (!fontBytes.empty())
-													{
-														const float fontPx = static_cast<float>(std::clamp<int64_t>(
-															m_cfg.GetInt("render.auth_ui.font_pixel_height", 28), 12, 96));
-														if (m_authGlyphPass.UploadUiFontFromTtf(
-																m_vkDeviceContext.GetDevice(),
-																m_vkDeviceContext.GetPhysicalDevice(),
-																m_vkDeviceContext.GetGraphicsQueue(),
-																m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-																fontBytes.data(),
-																fontBytes.size(),
-																fontPx))
-														{
-															LOG_INFO(Render, "[Boot] Auth UI font loaded: {}", uiFontPath);
-														}
-														else
-														{
-															LOG_WARN(Render, "[Boot] Auth UI font upload failed: {}", uiFontPath);
-														}
-													}
-													else
-													{
-														LOG_WARN(Render, "[Boot] Auth UI font file missing or empty: {}", uiFontPath);
-													}
-												}
-												else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
-												{
-													LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
-												}
-												// --- Second atlas: valeurs de champs (ex. Morpheus.ttf) ---
-												const std::string valueFontPath = m_cfg.GetString("render.auth_ui.value_font_path", "");
-												if (!valueFontPath.empty() && ttfFragPtr != nullptr)
-												{
-													std::vector<uint8_t> valueFontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, valueFontPath);
-													if (!valueFontBytes.empty())
-													{
-														const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
-															m_cfg.GetInt("render.auth_ui.value_font_pixel_height", 24), 12, 96));
-														if (m_authGlyphPass.UploadValueFontFromTtf(
-															m_vkDeviceContext.GetDevice(),
-															m_vkDeviceContext.GetPhysicalDevice(),
-															m_vkDeviceContext.GetGraphicsQueue(),
-															m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-															valueFontBytes.data(),
-															valueFontBytes.size(),
-															valueFontPx))
-														{
-															LOG_INFO(Render, "[Boot] Auth UI value font loaded: {}", valueFontPath);
-														}
-														else
-														{
-															LOG_WARN(Render, "[Boot] Auth UI value font upload failed: {}", valueFontPath);
-														}
-													}
-													else
-													{
-														LOG_WARN(Render, "[Boot] Auth UI value font file missing or empty: {}", valueFontPath);
-													}
-												}
-											}
-											else
-											{
-												LOG_WARN(Render, "[Boot] AuthGlyphPass init failed");
-											}
-										}
-										else
-										{
-											LOG_WARN(Render, "[Boot] AuthGlyphPass shaders missing");
-										}
-										std::vector<uint32_t> authLogoVert = loadSpirv("shaders/auth_logo.vert.spv");
-										std::vector<uint32_t> authLogoFrag = loadSpirv("shaders/auth_logo.frag.spv");
-										if (!authLogoVert.empty() && !authLogoFrag.empty())
-										{
-											if (m_authLogoPass.Init(
-													m_vkDeviceContext.GetDevice(),
-													m_vkSwapchain.GetImageFormat(),
-													authLogoVert.data(),
-													authLogoVert.size(),
-													authLogoFrag.data(),
-													authLogoFrag.size()))
-											{
-												LOG_INFO(Render, "[Boot] AuthLogoPass OK");
-											}
-											else
-											{
-												LOG_WARN(Render, "[Boot] AuthLogoPass init failed");
-											}
-										}
-										else
-										{
-											LOG_WARN(Render, "[Boot] AuthLogoPass shaders missing");
-										}
-									}
+									InitAuthGlyphAndLogoPasses(loadSpirv);
 
 									m_frameGraph.addPass("Clear",
 										[this](engine::render::PassBuilder& b) {
@@ -1629,310 +1413,7 @@ namespace engine
 									// instance) cote SkinnedRenderer + 2 VkBuffer/VkDeviceMemory cote mesh
 									// (vertex/index). Tout est libere au Shutdown (cf. bloc Destroy plus bas,
 									// juste avant m_pipeline->Destroy).
-									if (!m_skinnedAvatarReady && m_pipeline)
-									{
-										auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-										const std::vector<uint32_t> skinnedVertSpv = loadSpirv("shaders/skinned_gbuffer.vert.spv");
-										const std::vector<uint32_t> skinnedFragSpv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
-										if (!skinnedVertSpv.empty() && !skinnedFragSpv.empty() && materialCache.IsValid())
-										{
-											// Memes formats GBuffer / depth que DeferredPipeline.cpp:135-140 :
-											// formatA = R8G8B8A8_SRGB (albedo), formatB = A2B10G10R10 (normal),
-											// formatC = R8G8B8A8_UNORM (ORM), formatVelocity = R16G16_SFLOAT,
-											// depthFormat = D32_SFLOAT. Necessaire pour que le pipeline skinne
-											// soit compatible avec le render pass LOAD de GeometryPass (que nous
-											// utiliserons via RecordTerrainChunkBatch pour eviter de nested-passer).
-											const bool skinnedInitOk = m_skinnedRenderer.Init(
-												m_vkDeviceContext.GetDevice(),
-												m_vkDeviceContext.GetPhysicalDevice(),
-												VK_FORMAT_R8G8B8A8_SRGB,
-												VK_FORMAT_A2B10G10R10_UNORM_PACK32,
-												VK_FORMAT_R8G8B8A8_UNORM,
-												VK_FORMAT_R16G16_SFLOAT,
-												VK_FORMAT_D32_SFLOAT,
-												skinnedVertSpv.data(), skinnedVertSpv.size(),
-												skinnedFragSpv.data(), skinnedFragSpv.size(),
-												materialCache.GetLayout(),
-												/*maxBonesPerSkeleton*/ 256u);
-											if (skinnedInitOk)
-											{
-												// Sous-projet C MVP — Charge les 3 races MVP (humains, nains, orc)
-												// dans m_raceMeshes. Chaque race partage le meme jeu de 7 clips
-												// d'animation (Idle/StartWalking/WalkBack/Run/Jump/Fall/Land)
-												// charges en animation-only depuis y_bot_* et retargetes par nom
-												// de bone sur le squelette de la race.
-												//
-												// Lookup du meshPath via un CharacterCreationPresenter local
-												// (instanciation legere : juste un parse de races.json, pas de
-												// pipeline GPU). Cela evite d'ajouter une dependance permanente
-												// dans Engine entre Engine et CharacterCreationPresenter.
-												const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
-												// IDs doivent matcher exactement les race_str de races.json :
-												// "humains", "nains", "orcs" (au pluriel). Note : le dossier disk
-												// game/data/models/avatars/orc/orc.glb est singulier (heritage de
-												// l'upload utilisateur inbox/orc/), mais c'est OK car le meshPath
-												// dans races.json pointe vers le bon chemin singulier — seule la
-												// cle de map (race_str) doit etre pluriel pour matcher la DB.
-												constexpr const char* kMvpRaces[] = { "humains", "nains", "orcs" };
-
-												engine::client::CharacterCreationPresenter racesPresenter;
-												racesPresenter.Init(m_cfg);
-
-												// meshKey : clef de stockage dans m_raceMeshes ("raceId|gender",
-												// ex. "humains|female"). raceId reste utilise pour les logs et la
-												// detection de rig. Cf. RaceMeshKey() / GetRaceMesh().
-												auto loadOneRace = [&](const std::string& meshKey, const std::string& raceId,
-												                       const std::string& meshPath,
-												                       float importScale, float importRotXDeg) -> bool {
-													const std::string fullMeshPath = contentRoot + "/" + meshPath;
-													auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
-														m_vkDeviceContext.GetDevice(),
-														m_vkDeviceContext.GetPhysicalDevice(),
-														fullMeshPath);
-													if (!loaded) {
-														LOG_WARN(Render, "[Engine] Race '{}' : mesh load FAIL '{}'", raceId, fullMeshPath);
-														return false;
-													}
-													// Renomme le clip de marche embarque dans le mesh (Mixamo
-													// exporte tous ses clips sous le nom "mixamo.com") en "Walk".
-													for (auto& c : loaded->clips) {
-														if (c.name == "mixamo.com") { c.name = "Walk"; break; }
-													}
-													// Detection du rig : UE5 (pelvis, pas de mixamorig:*) vs Mixamo.
-													// Bascule la source d'animations sans casser les races Mixamo (additif + repli).
-													const bool isUe5Rig =
-														loaded->skeleton.FindBoneIndex("pelvis") >= 0 &&
-														loaded->skeleton.FindBoneIndex("mixamorig:Hips") < 0;
-													if (isUe5Rig)
-													{
-														// Migration UE5 — clips depuis la library UE5 (45 takes "Armature|<Clip>"),
-														// copies vers les noms de role attendus par la state machine. Retarget par
-														// nom d'os (memes os que le corps UE5, cf. SkinnedMeshLoaderTests).
-														const std::string ue5LibPath = contentRoot +
-															"/models/animations/humanoid_base/Humanoid_Base_Standard/Humanoid_Base_Standard.glb";
-														auto ue5Clips = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
-															ue5LibPath, loaded->skeleton);
-														auto addRole = [&](const char* role, const char* ualName) {
-															const std::string want = std::string("Armature|") + ualName;
-															for (const auto& c : ue5Clips) {
-																if (c.name == want && c.duration > 0.0f) {
-																	engine::render::skinned::AnimationClip copy = c;
-																	copy.name = role;
-																	loaded->clips.push_back(std::move(copy));
-																	return;
-																}
-															}
-															LOG_WARN(Render, "[Engine] UE5 race '{}' : take '{}' introuvable (role '{}')", raceId, ualName, role);
-														};
-														addRole("Idle", "Idle_Loop");
-														addRole("Walk", "Walk_Loop");
-														addRole("StartWalking", "Walk_Loop");
-														addRole("WalkBack", "Walk_Loop");
-														addRole("Run", "Jog_Fwd_Loop");
-														addRole("Sprint", "Sprint_Loop");
-														addRole("CrouchIdle", "Crouch_Idle_Loop");
-														addRole("CrouchWalk", "Crouch_Fwd_Loop");
-														addRole("Roll", "Roll");
-														addRole("Dance", "Dance_Loop");
-														addRole("Sit", "Sitting_Idle_Loop");
-														addRole("Talk", "Idle_Talking_Loop");
-														addRole("Torch", "Idle_Torch_Loop");
-														addRole("Kneel", "Fixing_Kneeling");
-														addRole("SitTalk", "Sitting_Talking_Loop");
-														addRole("Push", "Push_Loop");
-														addRole("Attack", "Sword_Attack");
-														addRole("Cast", "Spell_Simple_Enter");
-														addRole("CastShoot", "Spell_Simple_Shoot");
-														addRole("CastExit", "Spell_Simple_Exit");
-														addRole("Interact", "Interact");
-														addRole("Punch", "Punch_Jab");
-														addRole("PunchCross", "Punch_Cross");
-														addRole("Jump", "Jump_Start");
-														addRole("Fall", "Jump_Loop");
-														addRole("Land", "Jump_Land");
-														addRole("SwimIdle", "Swim_Idle_Loop");
-														addRole("SwimForward", "Swim_Fwd_Loop");
-
-														// Expose AUSSI tous les autres clips UE5 par leur nom brut (sans
-														// prefixe "Armature|"), disponibles pour les futurs systemes
-														// (sprint, crouch, roll, combat, emotes, nage...). Exclus : armes
-														// a feu (pas dans le jeu) + conduite (pas de vehicule) + A_TPose
-														// (pose de reference, pas une anim de jeu). Aucun declencheur ici :
-														// les clips sont seulement rendus accessibles via FindClip(<nom>).
-														auto isExcludedUe5Clip = [](const std::string& n) {
-															return n == "Pistol_Aim_Up" || n == "Pistol_Aim_Neutral"
-																|| n == "Pistol_Aim_Down" || n == "Pistol_Idle_Loop"
-																|| n == "Pistol_Reload" || n == "Pistol_Shoot"
-																|| n == "Driving_Loop" || n == "A_TPose";
-														};
-														int ue5Exposed = 0;
-														for (const auto& c : ue5Clips) {
-															if (c.duration <= 0.0f) continue;
-															std::string name = c.name;
-															const auto bar = name.rfind('|');
-															if (bar != std::string::npos) name = name.substr(bar + 1);
-															if (isExcludedUe5Clip(name)) continue;
-															bool exists = false;
-															for (const auto& existing : loaded->clips) {
-																if (existing.name == name) { exists = true; break; }
-															}
-															if (exists) continue;
-															engine::render::skinned::AnimationClip copy = c;
-															copy.name = name;
-															loaded->clips.push_back(std::move(copy));
-															++ue5Exposed;
-														}
-														LOG_INFO(Render, "[Engine] UE5 race '{}' : {} clips additionnels exposes (total {})",
-															raceId, ue5Exposed, loaded->clips.size());
-													}
-													else
-													{
-													// Retarget les clips d'anim partages sur le squelette de cette
-													// race. Convention herite de B.1 (LoadClipsAnimOnly matche par
-													// nom de bone mixamorig:*). Si la race a un squelette
-													// non-Mixamo, ces calls renvoient des clips vides -> animation
-													// identite (la state machine fallback gracieusement).
-													auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
-														auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
-															path, loaded->skeleton);
-														for (auto& c : clipsLoaded) {
-															if (c.duration > 0.0f && c.name == "mixamo.com") {
-																c.name = renameTo;
-																loaded->clips.push_back(std::move(c));
-																return true;
-															}
-														}
-														return false;
-													};
-													const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
-													const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
-													const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
-													const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
-													const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
-													const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
-													const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
-													loadAnimOnly(idlePath, "Idle");
-													loadAnimOnly(startWalkPath, "StartWalking");
-													loadAnimOnly(walkBackPath, "WalkBack");
-													loadAnimOnly(runPath, "Run");
-													loadAnimOnly(jumpPath, "Jump");
-													loadAnimOnly(fallPath, "Fall");
-													loadAnimOnly(landPath, "Land");
-													}
-													// Migration UE5 — transform d'import (echelle/orientation) reglable via races.json.
-													{
-														const float th = importRotXDeg * 3.14159265358979f / 180.0f;
-														const float cx = std::cos(th);
-														const float sx = std::sin(th);
-														engine::math::Mat4 imp;
-														imp.m[0]  = importScale;
-														imp.m[5]  = importScale * cx;
-														imp.m[6]  = importScale * sx;
-														imp.m[9]  = importScale * -sx;
-														imp.m[10] = importScale * cx;
-														loaded->importTransform = imp;
-													}
-													LOG_INFO(Render, "[Engine] Race '{}' loaded as '{}' ({} bones, {} clips) from '{}'",
-														raceId, meshKey, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
-													m_raceMeshes.emplace(meshKey, std::move(*loaded));
-													return true;
-												};
-
-												// Charge les 3 races MVP, pour les DEUX genres (selecteur de genre).
-												// Le male est toujours charge sous "raceId|male". Le femelle (chemin
-												// derive Male_ -> Female_, ex. Female_Ranger) est charge sous
-												// "raceId|female" UNIQUEMENT si une variante distincte existe ET se
-												// charge ; sinon GetRaceMesh(race,"female") retombe sur le male.
-												auto deriveFemaleMesh = [](std::string p) {
-													std::string::size_type gp = 0;
-													while ((gp = p.find("Male_", gp)) != std::string::npos) { p.replace(gp, 5, "Female_"); gp += 7; }
-													return p;
-												};
-												for (const char* raceId : kMvpRaces) {
-													const auto& races = racesPresenter.GetRaces();
-													const engine::client::RaceDefinition* def = nullptr;
-													for (const auto& r : races) if (r.id == raceId) { def = &r; break; }
-													if (!def || def->meshPath.empty()) {
-														LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
-														continue;
-													}
-													const std::string maleMesh = def->meshPath;
-													loadOneRace(RaceMeshKey(raceId, "male"), raceId, maleMesh, def->importScale, def->importRotXDeg);
-													const std::string femaleMesh = deriveFemaleMesh(maleMesh);
-													if (femaleMesh != maleMesh) {
-														loadOneRace(RaceMeshKey(raceId, "female"), raceId, femaleMesh, def->importScale, def->importRotXDeg);
-													}
-												}
-												// Genre courant depuis config (mergee avec le fichier de persistance au boot).
-												m_avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
-												if (m_avatarGender != "male" && m_avatarGender != "female")
-													m_avatarGender = "male";
-
-												// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
-												// catalogue absent/corrompu = mobs rendus en fallback humains).
-												m_creatureCatalog.Init(m_cfg);
-												// FIX.10 — Perception du personnage (rayon des plaques).
-												m_perceptionModel.Init(m_cfg);
-												// Validation v12 (wire v13) — marqueurs cimetière/auberge.
-												LoadRespawnMarkers();
-												// Combat SP3 — catalogue d'affichage des kits de sorts (non
-												// bloquant : absent = barre d'action masquée).
-												m_spellCatalog.Init(m_cfg);
-												// SP-D — catalogue des compétences par-classe (non bloquant :
-												// catalogue vide si les fichiers sont absents).
-												if (m_classSkillCatalog.Init(m_cfg))
-												{
-													LOG_INFO(Core, "[Boot] ClassSkillCatalog chargé ({} classe(s))",
-														m_classSkillCatalog.ClassCount());
-												}
-												else
-												{
-													LOG_WARN(Core, "[Boot] ClassSkillCatalog init échoué — arbre de compétences désactivé");
-												}
-
-												// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
-												// perso n'est pas encore "in world" avant EnterWorld, mais Engine
-												// peut etre questionne sur ce mesh pour des previews/tests).
-												engine::render::skinned::SkinnedMesh* defaultMesh = GetRaceMesh("humains", m_avatarGender);
-												if (defaultMesh != nullptr) {
-													m_currentSkinnedMesh = defaultMesh;
-													m_playerAnimStartTime = std::chrono::steady_clock::now();
-													m_avatarLocoStateEnterTime = m_playerAnimStartTime;
-													m_skinnedAvatarReady = true;
-													LOG_INFO(Render, "[Engine] Default avatar = humains ({} bones, {} clips)",
-														m_currentSkinnedMesh->skeleton.bones.size(),
-														m_currentSkinnedMesh->clips.size());
-
-													// Etat initial : Idle. On lance la premiere animation explicitement
-													// pour eviter d'afficher la pose bind au tout premier frame avant
-													// que la state machine n'enclenche un Play (cf. lambda Geometry
-													// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
-													// Defensif : si Idle a echoue au load, on garde l'init existante
-													// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
-													// plus haut), la state machine fera son fallback (Task 11).
-													const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle");
-													if (idleClip) {
-														const float nowSec = EngineNowSec();
-														m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
-														m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
-														m_avatarLocoState = AvatarLocomotionState::Idle;
-													}
-												} else {
-													LOG_WARN(Render, "[Engine] Race humains absente du m_raceMeshes -- avatar fallback cube");
-													// Aucun mesh humain : libere le pipeline (Destroy idempotent).
-													m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
-												}
-											}
-											else
-											{
-												LOG_WARN(Render, "[Engine] SkinnedRenderer::Init failed; fallback cube placeholder");
-											}
-										}
-										else
-										{
-											LOG_WARN(Render, "[Engine] Skinned shaders not loaded or material cache not ready; fallback cube placeholder");
-										}
-									}
+									InitSkinnedAvatarRenderer(loadSpirv);
 
 									// Sous-projet B.1 (Task 9) — Bind TerrainCollider sur le TerrainRenderer
 									// et instancie le CharacterController du joueur. Doit imperativement
@@ -1950,175 +1431,7 @@ namespace engine
 									//
 									// La position de spawn est posee au centre du terrain (0,0 en monde) en
 									// echantillonnant le sol + half-capsule (0.9 m = height/2) pour eviter
-									// que la sphere du bas de la capsule traverse le sol au premier sweep.
-									{
-										// Phase 2 (chantier C) — construire les IHeightField et les
-										// injecter dans le collider. Chunk (terrain.bin residents,
-										// grille 256) prioritaire si resident ; repli heightmap
-										// (m_terrain) sinon. m_streamCache (Init ~ligne 1365) et
-										// m_terrain (Init ~ligne 3538) deja initialises a ce point.
-										m_heightmapField = std::make_unique<engine::world::terrain::HeightmapHeightField>(&m_terrain);
-										m_chunkField     = std::make_unique<engine::world::terrain::ChunkHeightField>(&m_streamCache, &m_cfg);
-										m_terrainCollider.BindHeightFields(m_chunkField.get(), m_heightmapField.get());
-										// Monde « Royaumes » en cellules : hauteurs des cellules (CPU) et eau
-										// de toutes les cellules générées, en coordonnées de rendu.
-										if (m_cellWorld)
-											InitCellWorldBoot();
-
-										// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
-										// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
-										// mecanique de nage (a remplacer par une vraie etendue d'eau via le
-										// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
-										// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
-										// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
-										if (m_cellWorld)
-										{
-											// Eau déjà posée par InitCellWorldBoot (cellules générées).
-										}
-										else if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
-										{
-											m_clientWaterScene = realWater;
-											m_waterClientSceneDirty = true;
-											LOG_INFO(Render, "[Nage] water.bin charge ({} lac(s))", static_cast<int>(realWater->lakes.size()));
-										}
-										else if (m_cfg.GetBool("world.test_water.enabled", true))
-										{
-											const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
-											const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
-											const float half = static_cast<float>(m_cfg.GetDouble("world.test_water.half_size_m", 15.0));
-											const float depth = static_cast<float>(m_cfg.GetDouble("world.test_water.depth_m", 2.5));
-											const float lvl = m_terrainCollider.GroundHeightAt(cx, cz) + depth;
-											auto waterScene = std::make_shared<engine::world::water::WaterScene>();
-											engine::world::water::LakeInstance lake;
-											lake.name = "test_pool";
-											lake.waterLevelY = lvl;
-											// Polygone XZ (SW->SE->NE->NW). Si la surface est cullee a l'affichage,
-											// inverser l'ordre (winding) ; la nage (QueryWater) marche dans les 2 cas.
-											lake.polygon = {
-												engine::math::Vec3{ cx - half, lvl, cz - half },
-												engine::math::Vec3{ cx + half, lvl, cz - half },
-												engine::math::Vec3{ cx + half, lvl, cz + half },
-												engine::math::Vec3{ cx - half, lvl, cz + half },
-											};
-											waterScene->lakes.push_back(std::move(lake));
-											m_clientWaterScene = std::move(waterScene);
-											m_waterClientSceneDirty = true;
-											LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
-										}
-										m_terrainCollider.BindWater(m_clientWaterScene.get());
-										// REBUILD SYNCHRONE du mesh d'eau ICI (avant la 1ere construction du
-										// FrameGraph). Sinon le gating de la passe water voit m_waterMeshGpu.IsValid()
-										// == false (le rebuild paresseux n'arrive qu'APRES, plus tard dans la frame)
-										// -> il grave la branche PASSTHROUGH et l'eau n'est JAMAIS dessinee
-										// (diagnostic [WaterDiag] gating: meshValid=false). On force donc le rebuild
-										// des maintenant pour que IsValid()==true quand le graphe choisit la branche.
-										if (m_clientWaterScene && m_waterMeshGpu.IsInitialized()
-											&& m_waterTransferPool != VK_NULL_HANDLE)
-										{
-											vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
-											if (m_waterMeshGpu.Rebuild(m_waterTransferPool,
-													m_vkDeviceContext.GetGraphicsQueue(), *m_clientWaterScene))
-											{
-												m_waterClientSceneDirty = false;
-												LOG_INFO(Render, "[Nage] Mesh d'eau reconstruit (synchrone, avant FrameGraph) -> IsValid={}",
-													m_waterMeshGpu.IsValid());
-											}
-										}
-										// Interaction : interactibles declares en config (world.interactables.N.*).
-										// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
-										// Monde en cellules : les interactibles viennent des cellules
-										// (EnsureCellHeights), chargées plus bas.
-										if (!m_cellWorld)
-										{
-											m_interactables.clear();
-											AppendInteractables(m_cfg, 0.0, 0.0);
-										}
-										// Pas de cibles de test à l'origine dans le monde en cellules.
-										if (m_interactables.empty() && !m_cellWorld)
-										{
-											InteractableEntity npc;
-											npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
-											npc.radius = 2.5f; npc.isNpc = true; npc.label = "Villageois";
-											npc.message = "Villageois : Bienvenue ! L'eau de test est a l'est.";
-											m_interactables.push_back(npc);
-											InteractableEntity chest;
-											chest.position = engine::math::Vec3{ -4.0f, 0.0f, 0.0f };
-											chest.radius = 2.0f; chest.isNpc = false; chest.label = "Coffre";
-											chest.message = "Vous fouillez le coffre... vide pour l'instant.";
-											chest.meshPath = "meshes/props/Chest_Wood.gltf";
-											m_interactables.push_back(chest);
-										}
-										m_interactableInRange = -1;
-										// Coffre anime (Chest_Wood) : charge en skinne AVANT les props statiques
-										// pour que LoadInteractableProps sache s'il doit sauter le rendu statique
-										// du coffre (m_chestLoaded). Si le chargement skinne echoue, le coffre
-										// retombe sur le rendu statique (pas de disparition).
-										LoadAnimatedChest();
-										// M45.5 — flag global impostors végétation (défaut OFF). Lu une fois ici ;
-										// quand false, RecordPropsGeometry s'exécute exactement comme l'historique.
-										m_impostorEnabled = m_cfg.GetBool("world.impostor.enabled", false);
-										if (m_impostorEnabled)
-											LOG_INFO(Render, "[Impostor] M45.5 activé (world.impostor.enabled=true)");
-										// fix/hiz-gate-off — flag global Hi-Z occlusion (défaut OFF). Lu une fois
-										// ici. Quand false : la passe HiZ_Build n'est pas enregistrée (plus de
-										// réécriture de descriptor en vol => plus de violation de validation), et
-										// le GpuDrivenCullingPass reçoit un view Hi-Z nul => fallback conservateur.
-										m_hiZEnabled = m_cfg.GetBool("render.hiz.enabled", false);
-										if (m_hiZEnabled)
-											LOG_INFO(Render, "[Boot] Hi-Z occlusion enabled (render.hiz.enabled=true)");
-										else
-											LOG_INFO(Render, "[Boot] Hi-Z occlusion disabled (render.hiz.enabled=false)");
-										// Chantier B : charge les meshes statiques des props (coffre si non anime + interactibles).
-										LoadInteractableProps();
-										// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
-										// LoadInteractableProps (qui réinitialise le collisionneur composite).
-										LoadScenery();
-										// Monde ouvert (chantier « Royaumes ») : décor instancié de la zone
-										// (scatter.bin). Après le terrain (ancrage au sol) et le collisionneur.
-										// Le catalogue de collision des pièces doit précéder le décor
-										// instancié : ses murs/arches enregistrent leurs boîtes au chargement.
-										LoadBuildingCollisionCatalog();
-										if (m_cellWorld)
-										{
-											// Monde en cellules : première cellule générée chargée
-											// synchronement (monde visible avant l'EnterWorld) ; le
-											// streaming prend ensuite le relais autour du joueur.
-											EnterCellWorldAt(m_cellBootGlobalX, m_cellBootGlobalZ);
-										}
-										else
-										{
-											LoadScatterWorld();
-											// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
-											// rendus eux aussi en instancié (pièces partagées entre bâtiments).
-											LoadBuildings();
-										}
-										// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
-										// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
-										// le brouillon par-dessus, sans toucher au monde chargé ici.
-										m_editorBaselinePropCount = m_props.size();
-
-										engine::gameplay::CharacterController::Config ccCfg{};
-										ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
-										ccCfg.runSpeed      = static_cast<float>(m_cfg.GetDouble("player.movement.run_speed",       9.0));
-										ccCfg.gravity       = static_cast<float>(m_cfg.GetDouble("player.movement.gravity",       -20.0));
-										ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      9.0));
-										ccCfg.coyoteTimeSec = static_cast<float>(m_cfg.GetDouble("player.movement.coyote_time_s",   0.1));
-										ccCfg.jumpBufferSec = static_cast<float>(m_cfg.GetDouble("player.movement.jump_buffer_s",   0.1));
-										ccCfg.capsule.radius = 0.3f;
-										ccCfg.capsule.height = 1.8f;
-										m_characterController = engine::gameplay::CharacterController(ccCfg);
-
-										// Spawn au centre map (XZ = 0,0), pose au-dessus du sol echantillonne
-										// + halfHeight de capsule pour que le bas de la capsule effleure le sol.
-										// Monde en cellules : point d'arrivée du boot (repère de rendu).
-										const float spawnX = m_cellWorld ? m_renderFrame.ToRenderX(m_cellBootGlobalX) : 0.0f;
-										const float spawnZ = m_cellWorld ? m_renderFrame.ToRenderZ(m_cellBootGlobalZ) : 0.0f;
-										const float spawnY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ) + 0.9f;
-										m_characterController.Init(engine::math::Vec3{ spawnX, spawnY, spawnZ });
-										LOG_INFO(Render,
-											"[Engine] B.1 CharacterController spawn=({:.2f}, {:.2f}, {:.2f}) capsule r={:.2f} h={:.2f}",
-											spawnX, spawnY, spawnZ, ccCfg.capsule.radius, ccCfg.capsule.height);
-									}
+									InitPlayerSpawnPlacement();
 
 									m_frameGraph.addPass("GPU_Cull",
 										[](engine::render::PassBuilder&) {},
@@ -2191,392 +1504,7 @@ namespace engine
 											b.write(m_fgDepthId,           engine::render::ImageUsage::DepthWrite);
 										},
 										[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-											const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-											const engine::RenderState& rs = m_renderStates[readIdx];
-											// Phase 0 (chantier C) : rendu exclusif. On ne dessine le terrain
-											// heightmap legacy que si les chunks n'ont pas couvert la scène à la
-											// frame précédente -> supprime le z-fighting du double terrain.
-											// Monde « Royaumes » : terrains des cellules résidentes (le
-											// premier efface le GBuffer) à la place du terrain unique.
-											const bool terrainBeforeGeometry = engine::render::ShouldDrawLegacyTerrain(
-												m_cellWorld ? HasCellTerrainToDraw() : m_terrain.IsValid(),
-												m_pipeline->GetGeometryPass().HasLoadPass(),
-												m_lastFrameChunkDrawCount);
-											if (terrainBeforeGeometry && m_cellWorld)
-											{
-												(void)RecordCellTerrains(cmd, reg, rs);
-											}
-											else if (terrainBeforeGeometry)
-											{
-												m_terrain.Record(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-													m_fgGBufferVelocityId, m_fgDepthId,
-													rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-													rs.camera.position, rs.frustum);
-											}
-											// Sous-projet A (Task 15) : meme regle que GPU_Cull -- si l'avatar skinne
-											// est pret, on passe mesh = nullptr pour que GeometryPass::Record/Indirect
-											// ouvre/ferme le render pass GBuffer (necessaire pour les layouts) sans
-											// dessiner le cube. L'avatar skinne est ajoute juste apres via
-											// RecordTerrainChunkBatch (meme render pass LOAD compatible).
-											engine::render::MeshAsset* mesh = (rs.objectVisible && !m_skinnedAvatarReady)
-												? m_geometryMeshHandle.Get() : nullptr;
-											const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
-											const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
-											const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
-											m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
-											// Provisoire pour le mesh de test unique a l'origine monde; un ticket dedie
-											// remplacera ce calcul par une distance par instance/objet.
-											const float distCam = GetTestMeshDistanceMeters(rs, m_chunkDrawDecisions);
-											const int lodLevel = m_lodConfig.GetLodLevel(distCam);
-											static int s_lastLoggedLod = -1;
-											if (lodLevel != s_lastLoggedLod)
-											{
-												LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
-												s_lastLoggedLod = lodLevel;
-											}
-											auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
-											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-											if (cullingPass.IsValid())
-											{
-												m_pipeline->GetGeometryPass().RecordIndirect(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-													rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-													cullingPass.GetIndirectBuffer(m_currentFrame),
-													cullingPass.GetDrawItemCount(m_currentFrame),
-													materialCache.GetDescriptorSet(),
-													rs.objectModelMatrix,
-													(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
-													terrainBeforeGeometry);
-											}
-											else
-											{
-												m_pipeline->GetGeometryPass().Record(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-													rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-													static_cast<uint32_t>(lodLevel),
-													materialCache.GetDescriptorSet(),
-													rs.objectModelMatrix,
-													(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
-													terrainBeforeGeometry);
-											}
-
-											// Sous-projet A (Task 15) : draw call skinned Y Bot.
-											// Apres l'ouverture/fermeture de la passe Geometry par Record/RecordIndirect,
-											// on superpose la draw skinned via RecordTerrainChunkBatch qui (re)ouvre le
-											// render pass LOAD du GeometryPass (formats compatibles -- meme GBuffer A/B/C
-											// + Velocity + Depth). Idempotent : si m_skinnedAvatarReady reste false (init
-											// echouee ou .glb manquant), on saute et le cube placeholder a deja ete
-											// dessine par Record/RecordIndirect ci-dessus.
-											if (m_skinnedAvatarReady && m_currentSkinnedMesh && m_skinnedRenderer.IsValid())
-											{
-												// B.1 / Task 11 : la state machine 7 etats + le Play du crossfade
-												// vivent desormais dans Engine::Update (driven par signaux gameplay
-												// propres : grounded, jumpPressed, run, moveDirXZ). Le lambda
-												// Geometry ne fait plus que sampler la pose du crossfade au temps
-												// courant et l'envoyer au SkinnedRenderer.
-												//
-												// nowSec doit utiliser la meme horloge que celle passee a
-												// `m_avatarCrossfade.Play(...)` dans Update : meme reference de temps
-												// via `EngineNowSec()` (normalise par le boot du jeu, evite la perte
-												// de precision float qui faisait trembler le mesh — anim.startTime
-												// stocke par Play etait < now mais la difference etait noyee dans la
-												// precision float 32, donc l'echantillonnage progressait par sauts).
-												const float nowSec = EngineNowSec();
-
-												auto locals  = m_avatarCrossfade.Sample(
-													m_currentSkinnedMesh->skeleton, nowSec);
-												auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
-													m_currentSkinnedMesh->skeleton, locals);
-												auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
-													m_currentSkinnedMesh->skeleton, globals);
-
-												// Chantier 2 SP1 — le corps de base de l'avatar modulaire = le mesh
-												// courant (idempotent chaque frame ; suit un éventuel changement de
-												// race). Les parties équipées (placeholder) persistent via /modular.
-												m_modularAvatar.SetBody(m_currentSkinnedMesh);
-
-												// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
-												// On lit la position monde directement depuis le CC (deja appele
-												// dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
-												// et on compose la matrice T(feetPos) * R_y(m_avatarYaw).
-												//   - `feetPos.y = ccPos.y - 0.9` : la position du CC est le CENTRE de la
-												//     capsule ; le mesh Y Bot va de Y=0 (pieds) a Y=1.8 (tete) -> on
-												//     redescend de halfHeight (0.9 m) pour poser les pieds au sol.
-												//   - `m_avatarYaw` : aligne le mesh sur la direction de mouvement.
-												//     Init a pi pour que le spawn (avant tout input) ait le perso dos
-												//     a la camera (Mixamo Y Bot face +Z intrinseque ; cam yaw=0 forward
-												//     = -Z ; R_y(pi) tourne le mesh face -> -Z = loin de la camera).
-												//     Avant le fix d'orientation : on appliquait R_y(yaw + pi) avec un
-												//     `+ pi` redondant qui s'additionnait au pi deja contenu dans
-												//     atan2(forward.x, forward.z) -> inversion W/S et Q/D en jeu.
-												//
-												// La matrice rs.objectModelMatrix reste utilisee par le cube fallback
-												// (RecordIndirect plus haut) ; chaque chemin a desormais sa propre source.
-												const engine::math::Vec3 ccPos = m_characterController.GetPosition();
-												const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
-												const engine::math::Mat4 finalModelMat =
-													engine::math::Mat4::Translate(feetPos) *
-													engine::math::Mat4::RotateY(m_avatarYaw) *
-													(m_currentSkinnedMesh ? m_currentSkinnedMesh->importTransform : engine::math::Mat4::Identity());
-
-												// La matrice modele est desormais calculee a partir de cc.GetPosition()
-												// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
-												// rs.objectModelMatrix construit dans Update).
-												// materialDescriptorSet + materialIndex : meme set bindless que le
-												// cube draw. skinnedMaterialIndex = HABIT (defaut).
-												const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
-													? m_avatarMaterialId
-													: materialCache.GetDefaultMaterialIndex();
-
-												// Multi-materiaux : un index par sous-maillage. Les sous-maillages
-												// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
-												// recoivent la PEAU (selon genre x teinte), les autres l'habit.
-												// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
-												// l'habit -> comportement identique a l'ancien mono-draw.
-												// Teinte foncee (m_avatarSkinTone==1) avec repli sur claire si absente.
-												uint32_t bodyMaterialId;
-												if (m_avatarGender == "female")
-													bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdFemaleDark != 0u)
-														? m_avatarBodyMaterialIdFemaleDark : m_avatarBodyMaterialIdFemale;
-												else
-													bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdMaleDark != 0u)
-														? m_avatarBodyMaterialIdMaleDark : m_avatarBodyMaterialIdMale;
-												// Routage peau/habit par sous-maillage (fonction pure partagee
-												// avec l'apercu de creation). Vide si pas de materiau peau ou pas
-												// de sous-maillages -> mono-draw habit (comportement identique
-												// a l'ancien code).
-												std::vector<uint32_t> submeshMaterialIndices =
-													engine::render::skinned::BuildSubmeshMaterialIndices(
-														m_currentSkinnedMesh->submeshes,
-														m_avatarBodyMaterialNames,
-														bodyMaterialId,
-														skinnedMaterialIndex);
-												// Diagnostic peau/genre (#1/#2) : logge une seule fois par changement de
-												// genre. Revele en clair l'etat runtime (ids materiaux, nb de sous-maillages
-												// peau vs habit, noms de materiaux reellement charges).
-												if (m_avatarSkinDiagLoggedGender != m_avatarGender)
-												{
-													m_avatarSkinDiagLoggedGender = m_avatarGender;
-													std::size_t bodyCount = 0;
-													for (uint32_t matId : submeshMaterialIndices)
-														if (matId == bodyMaterialId) ++bodyCount;
-													std::string noms;
-													for (const auto& sub : m_currentSkinnedMesh->submeshes)
-													{
-														if (!noms.empty()) noms += ", ";
-														noms += sub.materialName.empty() ? "<vide>" : sub.materialName;
-													}
-													LOG_INFO(Render,
-														"[AvatarSkinDiag] genre={} idMale={} idFemale={} bodyId={} habitId={} submeshes={} peau={} noms=[{}]",
-														m_avatarGender, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale,
-														bodyMaterialId, skinnedMaterialIndex, m_currentSkinnedMesh->submeshes.size(),
-														bodyCount, noms);
-													if (bodyMaterialId == 0u)
-														LOG_ERROR(Render, "[AvatarSkinDiag] bodyMaterialId=0 -> peau NON routee (texture peau non chargee ?)");
-													else if (!submeshMaterialIndices.empty() && bodyCount == 0)
-														LOG_WARN(Render, "[AvatarSkinDiag] 0 sous-maillage peau (noms ne matchent pas body_material_names)");
-												}
-
-												m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-													m_fgGBufferVelocityId, m_fgDepthId,
-													[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat, bodyMaterialId,
-													 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
-														// Chantier 2 SP1 — avatar modulaire : dessine chaque partie active
-														// avec les MÊMES matrices d'os (squelette partagé). Le Body garde son
-														// routage matériau (habit/peau) ; les parties placeholder utilisent le
-														// chemin mono-draw (materialIndex 0). ActiveParts() = Body seul tant
-														// qu'aucune partie n'est équipée -> rendu identique à avant.
-														// Matrices d'os IDENTITÉ pour les parties placeholder : le rig UE5
-														// a des os inexploitables (bind-globales à l'origine) -> peser une
-														// boîte a un os la projette n'importe ou. Avec une pose identité, la
-														// partie n'est plus deformee par le squelette : posee en espace
-														// MODELE (~1.6 m = tete) puis placee par finalModelMat (la meme
-														// matrice qui positionne tout l'avatar), elle se pose sur la tete et
-														// suit position + orientation du perso. Suivi fin par os -> rig propre.
-														std::vector<engine::math::Mat4> identityFinals(
-															finals.size(), engine::math::Mat4::Identity());
-														for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
-														{
-															const bool isBody = (part == m_currentSkinnedMesh);
-															m_skinnedRenderer.Record(
-																m_vkDeviceContext.GetDevice(), innerCmd,
-																m_vkSwapchain.GetExtent(),
-																m_pipeline->GetGeometryPass().GetRenderPassLoad(),
-																VK_NULL_HANDLE,
-																rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-																*part,
-																isBody ? finals : identityFinals,
-																materialCache.GetDescriptorSet(),
-																finalModelMat.m,
-																isBody ? skinnedMaterialIndex : 0u,
-																isBody ? submeshMaterialIndices : std::vector<uint32_t>{},
-																isBody ? bodyMaterialId : 0u,
-																m_avatarSkinDepthBiasConstant,
-																m_avatarSkinDepthBiasSlope);
-														}
-													});
-											}
-
-											// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
-											RecordPropsGeometry(cmd, reg, rs);
-											// Monde ouvert : décor + bâtiments instanciés (une passe, lots par mesh).
-											RecordScatterGeometry(cmd, reg, rs);
-
-											// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
-											RecordRemoteAvatars(cmd, reg, rs);
-											// Coffre anime (ouverture/fermeture a l'interaction).
-											RecordAnimatedChest(cmd, reg, rs);
-											// v1.0.125 — bateaux des lignes maritimes.
-											RecordBoats(cmd, reg, rs);
-
-											// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
-											// Dessine les chunks visibles qui ont terrain.bin + splat.bin
-											// dans une passe de chargement (loadOp=LOAD) après la geometry
-											// principale. Skip strict si fichiers absents (legacy
-											// TerrainRenderer continue à les dessiner). PAS de branche
-											// m_editorEnabled — parité jeu/éditeur garantie par le format
-											// binaire identique (cf. critère M100.5/.9).
-											std::uint32_t chunksDrawnThisFrame = 0u;
-											if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
-											{
-												UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
-												// Phase 1 (chantier C) : les chunks terrain sont sur la grille 256 m,
-												// pas sur la grille 500 m de m_world (instances/zone). On dérive donc
-												// l'ensemble visible directement de la position caméra sur la grille
-												// terrain, pour charger/placer les bons terrain.bin (alignés éditeur).
-												const std::vector<engine::world::GlobalChunkCoord> visibleChunks =
-													engine::world::ComputeVisibleTerrainChunks(
-														rs.camera.position.x, rs.camera.position.z);
-												if (!visibleChunks.empty())
-												{
-													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
-														m_vkDeviceContext.GetDevice(), cmd, reg,
-														m_vkSwapchain.GetExtent(),
-														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-														m_fgGBufferVelocityId, m_fgDepthId,
-														[this, &visibleChunks](VkCommandBuffer innerCmd) {
-															m_terrainChunkRenderer->RenderVisibleChunks(
-																innerCmd,
-																m_terrainChunkCameraSet,
-																m_world,
-																visibleChunks);
-														});
-													chunksDrawnThisFrame = m_terrainChunkRenderer->GetLastDrawnChunkCount();
-												}
-											}
-											// Phase 0 : mémorise pour le gating legacy de la frame SUIVANTE.
-											// Remis à 0 chaque frame (carte heightmap-only / chunks non visibles
-											// -> le legacy redevient visible sans rester "collé" éteint).
-											m_lastFrameChunkDrawCount = chunksDrawnThisFrame;
-
-											// Phase 5 Lunar + M38.1 Sky : enregistre le draw fullscreen-quad
-											// du SkyPass (ciel + disque lunaire procedural) dans le render
-											// pass loadOp=LOAD du GeometryPass. SkyPass a ete Init contre
-											// `GetRenderPassLoad()` au boot, donc on doit etre dans ce
-											// render pass actif pour que vkCmdDraw soit valide. On reuse
-											// `RecordTerrainChunkBatch` (qui ouvre exactement ce render
-											// pass + framebuffer GBuffer + viewport/scissor) comme
-											// wrapper. La pass est emise en fin de lambda Geometry pour
-											// que le clear initial du GeometryPass ne l'ecrase pas. Avec
-											// le pipeline SkyPass (depthTest=FALSE, depthWrite=FALSE), le
-											// fullscreen-quad couvre tout le champ de vision ; les pixels
-											// reels de geometrie ont deja ete ecrits dans GBuffer
-											// avant. La consommation finale par LightingPass se fait via
-											// les autres attachments (depth, normal, ORM) — Sky ne
-											// renseigne que GBuffer A (albedo).
-											if (m_skyPassReady)
-											{
-												engine::render::SkyPass::PushConstants skyPc{};
-
-												// Calcul invViewProj inline (meme pattern que Decals/Lighting plus bas
-												// dans le fichier — pas de helper Mat4::Inverse global pour l'instant).
-												const float* vp = rs.viewProjMatrix.m;
-												const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
-												const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
-												const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
-												const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
-												const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
-												const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
-												const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
-												const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
-												const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
-												if (det > 1e-7f || det < -1e-7f)
-												{
-													const float invDet = 1.0f / det;
-													skyPc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*invDet;
-													skyPc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*invDet;
-													skyPc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*invDet;
-													skyPc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*invDet;
-													skyPc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*invDet;
-													skyPc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*invDet;
-													skyPc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*invDet;
-													skyPc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*invDet;
-													skyPc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*invDet;
-													skyPc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*invDet;
-													skyPc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*invDet;
-													skyPc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*invDet;
-													skyPc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*invDet;
-													skyPc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*invDet;
-													skyPc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*invDet;
-													skyPc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*invDet;
-												}
-												else
-												{
-													// Identity fallback — l'invViewProj sera approximatif mais le
-													// shader continuera a tourner sans NaN.
-													skyPc.invViewProj[0] = skyPc.invViewProj[5] =
-														skyPc.invViewProj[10] = skyPc.invViewProj[15] = 1.0f;
-												}
-
-												const auto& dn = m_dayNight.GetState();
-												skyPc.lightDir[0]      = dn.sunDir[0];
-												skyPc.lightDir[1]      = dn.sunDir[1];
-												skyPc.lightDir[2]      = dn.sunDir[2];
-												skyPc.zenithColor[0]   = dn.skyZenith[0];
-												skyPc.zenithColor[1]   = dn.skyZenith[1];
-												skyPc.zenithColor[2]   = dn.skyZenith[2];
-												skyPc.horizonColor[0]  = dn.skyHorizon[0];
-												skyPc.horizonColor[1]  = dn.skyHorizon[1];
-												skyPc.horizonColor[2]  = dn.skyHorizon[2];
-												// Lune : direction réelle de la lune (jour comme nuit).
-												skyPc.moonDir[0]       = dn.moonDir[0];
-												skyPc.moonDir[1]       = dn.moonDir[1];
-												skyPc.moonDir[2]       = dn.moonDir[2];
-												skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
-												skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
-												skyPc.moonIllumination = dn.moonIllumination;
-												// Chantier ciel 2026-07-17 — modèle de ciel :
-												// analytique (Rayleigh+Mie) par défaut ; la clé
-												// client.sky.analytic=false rebascule sur le
-												// dégradé legacy sans rebuild (filet visuel).
-												skyPc.skyModel =
-													m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
-												// Position caméra : sert au sky.frag à reconstruire un vrai
-												// rayon de vue (sinon ciel uniforme, soleil/lune invisibles).
-												skyPc.cameraPos[0]     = rs.camera.position.x;
-												skyPc.cameraPos[1]     = rs.camera.position.y;
-												skyPc.cameraPos[2]     = rs.camera.position.z;
-												skyPc.cameraPos[3]     = 0.0f;
-
-												m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-													m_fgGBufferVelocityId, m_fgDepthId,
-													[this, &skyPc](VkCommandBuffer innerCmd) {
-														m_skyPass.Record(innerCmd, skyPc);
-													});
-											}
+											RecordGeometryFramePass(cmd, reg);
 										});
 
 									// fix/hiz-gate-off — la passe HiZ_Build n'est enregistrée QUE si la Hi-Z
@@ -2855,212 +1783,7 @@ namespace engine
 											b.write(m_fgSceneColorHDRId, engine::render::ImageUsage::ColorWrite);
 										},
 										[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-											if (!m_pipeline->GetLightingPass().IsValid()) return;
-											const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-											const engine::RenderState& rs = m_renderStates[readIdx];
-											engine::render::LightingPass::LightParams lp{};
-											const float* vp = rs.viewProjMatrix.m;
-											const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
-											const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
-											const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
-											const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
-											const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
-											const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
-											const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
-											const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
-											const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
-											if (det > 1e-7f || det < -1e-7f)
-											{
-												const float inv = 1.0f / det;
-												lp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
-												lp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
-												lp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
-												lp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
-												lp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
-												lp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
-												lp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
-												lp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
-												lp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
-												lp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
-												lp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
-												lp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
-												lp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
-												lp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
-												lp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
-												lp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
-											}
-											lp.cameraPos[0] = rs.camera.position.x;
-											lp.cameraPos[1] = rs.camera.position.y;
-											lp.cameraPos[2] = rs.camera.position.z;
-											// Brouillard atmospherique LINEAIRE a distance. fogStart (cameraPos.w) :
-											// rayon CLAIR autour du joueur ; fogEnd (lightDir.w) : distance ou tout
-											// est fondu vers l'horizon. Le joueur n'est plus noye dans le brouillard.
-											// Regler fogEnd ~ world.props.cull_distance_m pour que les arbres se
-											// fondent dans le ciel juste avant d'etre cull. Desactive si end<=start.
-											// Slots .w libres -> pas de redimensionnement de LightParams. Lu chaque
-											// frame (reglage a chaud via config.json).
-											lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
-											lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
-											lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
-											lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2];
-											// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
-											// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).
-											lp.lightColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", static_cast<double>(m_zoneAtmosphere.aerialDensity)));
-											const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
-											lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
-											lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
-											lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
-											// M45.1 — force d'inscattering directionnel (slot ambientColor.w).
-											// Override config.json (world.fog.inscatter) sinon valeur per-zone.
-											lp.ambientColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.inscatter", static_cast<double>(m_zoneAtmosphere.aerialInscatter)));
-
-											// Nuages (Phase 3) — assombrissement "ciel couvert" : module le
-											// soleil directionnel / l'ambiant selon la couverture nuageuse
-											// courante (dérivée du WeatherSystem, même source que CloudPass).
-											// Modulation scalaire pure (aucun changement de pipeline/descriptor) ;
-											// couplée au flag nuages, désactivable via overcast_strength = 0.
-											if (m_cfg.GetBool("render.clouds.enabled", true))
-											{
-												const float overcastStrength = static_cast<float>(m_cfg.GetDouble("render.clouds.overcast_strength", 0.6));
-												engine::render::CloudParams ocCur = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
-												engine::render::CloudParams ocTgt = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
-												engine::render::CloudParams ocp   = engine::render::CloudParams::Lerp(ocCur, ocTgt, m_weatherSystem.GetIntensity());
-												float overcast = ocp.coverage * (ocp.density * 0.5f) * overcastStrength;
-												overcast = overcast < 0.0f ? 0.0f : (overcast > 1.0f ? 1.0f : overcast);
-												const float sunFactor = 1.0f - 0.7f * overcast; // soleil atténué (jusqu'à -70%)
-												const float ambFactor = 1.0f + 0.4f * overcast; // ambiant diffus renforcé
-												for (int i = 0; i < 3; ++i)
-												{
-													lp.lightColor[i]   *= sunFactor;
-													lp.ambientColor[i] *= ambFactor;
-												}
-											}
-											// v1.0.118 — zone d'ambiance locale (fond du gouffre, zone.json
-											// world.ambiance_zones) : soleil presque éteint, ambiant réduit ;
-											// les torches (point lights) éclairent alors le fond.
-											if (rs.ambianceDarkness > 0.0f)
-											{
-												const float dk = std::clamp(rs.ambianceDarkness, 0.0f, 1.0f);
-												const float sunK = 1.0f - 0.92f * dk;
-												const float ambK = 1.0f - 0.75f * dk;
-												for (int i = 0; i < 3; ++i)
-												{
-													lp.lightColor[i]   *= sunK;
-													lp.ambientColor[i] *= ambK;
-												}
-											}
-											// Couleur du ciel utilisée par lighting.frag pour les pixels
-											// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
-											// rendre le cycle jour/nuit visible sans skybox dédié.
-											// Phase 5 Lunar (PR #561 fix Concern 3) : skyColor.w sert de
-											// flag "SkyPass ready". Quand m_skyPassReady=true, le SkyPass
-											// a ecrit la sky procedurale (gradient + sun glow + moon disk
-											// avec phase) dans GBufferA pour les pixels depth==1.0 ;
-											// lighting.frag lit alors GBufferA. Sinon (SkyPass.Init failed
-											// ou shaders absents) on tombe sur la flat skyColor pour
-											// preserver le rendu jour/nuit.
-											{
-												const engine::render::DayNightCycle::State& dnLight = m_dayNight.GetState();
-												lp.skyColor[0] = dnLight.skyHorizon[0];
-												lp.skyColor[1] = dnLight.skyHorizon[1];
-												lp.skyColor[2] = dnLight.skyHorizon[2];
-												lp.skyColor[3] = m_skyPassReady ? 1.0f : 0.0f;
-												// Chantier perspective aérienne 2026-07-20 — quand le ciel
-												// analytique est actif (même clé que sky.frag), la teinte de
-												// la perspective aérienne est évaluée par lighting.frag DANS
-												// la direction du rayon (fond de ciel analytique) au lieu de
-												// la couleur d'horizon legacy uniforme ci-dessus.
-												lp.aerialSkyModel =
-													m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
-											}
-											VkImageView irrView       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetImageView() : VK_NULL_HANDLE;
-											VkSampler   irrSamp       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetSampler()   : VK_NULL_HANDLE;
-											VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;
-											VkSampler   prefilterSamp = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetSampler()    : VK_NULL_HANDLE;
-											VkImageView brdfView      = m_pipeline->GetBrdfLutPass().GetImageView();
-											VkSampler   brdfSamp      = m_pipeline->GetBrdfLutPass().GetSampler();
-											lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
-
-											// M45.7 — DDGI dynamique. Par défaut (m_ddgiEnabled=false ou volume
-											// non alloué) : useDdgi reste 0 et la vue DDGI reste VK_NULL_HANDLE
-											// (LightingPass lie alors un fallback valide mais non lu) => rendu
-											// strictement identique au chemin probes statiques.
-											VkImageView ddgiView = VK_NULL_HANDLE;
-											VkSampler   ddgiSamp = VK_NULL_HANDLE;
-											if (m_ddgiEnabled && m_ddgiVolume.IsAllocated())
-											{
-												lp.useDdgi = 1.0f;
-												const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
-												lp.ddgiOrigin[0] = gc.origin[0]; lp.ddgiOrigin[1] = gc.origin[1]; lp.ddgiOrigin[2] = gc.origin[2];
-												lp.ddgiSpacing[0] = gc.spacing[0]; lp.ddgiSpacing[1] = gc.spacing[1]; lp.ddgiSpacing[2] = gc.spacing[2];
-												lp.ddgiCounts[0] = static_cast<float>(gc.counts[0]);
-												lp.ddgiCounts[1] = static_cast<float>(gc.counts[1]);
-												lp.ddgiCounts[2] = static_cast<float>(gc.counts[2]);
-												lp.ddgiCounts[3] = static_cast<float>(gc.irradianceTexels);
-												lp.ddgiAtlas[0] = static_cast<float>(m_ddgiVolume.AtlasCols());
-												lp.ddgiAtlas[1] = static_cast<float>(m_ddgiVolume.AtlasRows());
-												lp.ddgiAtlas[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
-												// M45.8 — intensité pilotée par le niveau de qualité (DynamicLow=0.5,
-												// DynamicHigh=1.0). Remplace l'ancienne lecture de gi.ddgi.intensity.
-												lp.ddgiAtlas[3] = m_ddgiIntensity;
-												ddgiView = m_ddgiVolume.IrradianceView();
-												ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
-											}
-
-											// ---- CSM — Ombres cascades --------------------------------------
-											// Récupère les 4 vues shadow maps et remplit l'UBO cascades
-											// (binding 11). shadowParams : x=useShadows(0/1), y=texelSize
-											// (1/résolution), z=biasConstant, w=biasSlopeMax. Si une vue est
-											// invalide, useShadows tombe à 0 (le shader ignore alors le fallback).
-											engine::render::LightingPass::ShadowUbo shadowUbo{};
-											VkImageView shadowViews[engine::render::kCascadeCount] = {};
-											bool shadowViewsOk = true;
-											for (uint32_t i = 0; i < engine::render::kCascadeCount; ++i)
-											{
-												shadowViews[i] = reg.getImageView(m_fgShadowMapIds[i]);
-												if (shadowViews[i] == VK_NULL_HANDLE) shadowViewsOk = false;
-												std::memcpy(&shadowUbo.lightViewProj[i * 16],
-													rs.cascades.lightViewProj[i].m, sizeof(float) * 16);
-											}
-											const bool shadowsEnabled = m_cfg.GetBool("shadows.enabled", true);
-											const uint32_t shadowRes  = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
-											shadowUbo.shadowParams[0] = (shadowsEnabled && shadowViewsOk) ? 1.0f : 0.0f;
-											shadowUbo.shadowParams[1] = (shadowRes > 0) ? (1.0f / static_cast<float>(shadowRes)) : 0.0f;
-											shadowUbo.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("shadows.bias_constant", 0.0015));
-											shadowUbo.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("shadows.bias_slope_max", 0.005));
-
-											// UBO point lights (binding 12). Snapshot rs.pointLights (anti
-											// data-race) ; clamp 64 ; intensité globale world.point_lights.intensity_scale
-											// (défaut 1.0, garde-fou anti sur-exposition HDR).
-											engine::render::LightingPass::PointLightUbo pointLightUbo{};
-											const float intensityScale =
-												static_cast<float>(m_cfg.GetDouble("world.point_lights.intensity_scale", 1.0));
-											const size_t activeCount = std::min<size_t>(rs.pointLights.size(), 64);
-											pointLightUbo.count[0] = static_cast<uint32_t>(activeCount);
-											for (size_t i = 0; i < activeCount; ++i)
-											{
-												const engine::render::ActivePointLight& pl = rs.pointLights[i];
-												pointLightUbo.lights[i].posRadius[0] = pl.position[0];
-												pointLightUbo.lights[i].posRadius[1] = pl.position[1];
-												pointLightUbo.lights[i].posRadius[2] = pl.position[2];
-												pointLightUbo.lights[i].posRadius[3] = pl.radius;
-												pointLightUbo.lights[i].colorIntensity[0] = pl.color[0];
-												pointLightUbo.lights[i].colorIntensity[1] = pl.color[1];
-												pointLightUbo.lights[i].colorIntensity[2] = pl.color[2];
-												pointLightUbo.lights[i].colorIntensity[3] = pl.intensity * intensityScale;
-											}
-
-											const uint32_t frameIdx = m_currentFrame % 2;
-											m_pipeline->GetLightingPass().Record(
-												m_vkDeviceContext.GetDevice(), cmd, reg,
-												m_vkSwapchain.GetExtent(),
-												m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
-												m_fgSceneColorHDRId, m_fgSsaoBlurId, m_fgDecalOverlayId,
-												irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
-												ddgiView, ddgiSamp,
-												shadowViews, shadowUbo,
-												pointLightUbo,
-												lp, frameIdx);
+											RecordLightingFramePass(cmd, reg);
 										});
 
 									// M100.14 — Water render pass FG-intégré (ping-pong SceneColor_HDR → SceneColor_HDR_PostWater).
@@ -3104,84 +1827,7 @@ namespace engine
 												b.write(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												const engine::world::water::WaterScene* scene = nullptr;
-												bool editorWaterDirty = false; // seule la scène sert ici
-												if (!(m_worldEditorExe && TryGetEditorWaterScene(scene, editorWaterDirty)) && m_clientWaterScene)
-													scene = m_clientWaterScene.get();
-												if (!scene || !m_waterMeshGpu.IsValid()) return;
-
-												VkImage src = reg.getImage(m_fgSceneColorHDRId);
-												VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
-												if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
-
-												// (1) Copie SceneColor (SHADER_READ) -> PostWater (COLOR_ATTACHMENT).
-												//     On passe les deux en layouts transfer, on copie, on restaure.
-												auto barrier = [&](VkImage img, VkImageLayout oldL, VkImageLayout newL,
-												                   VkAccessFlags srcA, VkAccessFlags dstA,
-												                   VkPipelineStageFlags srcS, VkPipelineStageFlags dstS) {
-													VkImageMemoryBarrier bar{};
-													bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													bar.srcAccessMask = srcA;
-													bar.dstAccessMask = dstA;
-													bar.oldLayout = oldL;
-													bar.newLayout = newL;
-													bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.image = img;
-													bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd, srcS, dstS, 0, 0, nullptr, 0, nullptr, 1, &bar);
-												};
-
-												barrier(src, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-												        VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT,
-												        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-												barrier(dst, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-												        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
-												        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-												VkImageCopy copy{};
-												copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-												copy.srcSubresource.layerCount = 1;
-												copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-												copy.dstSubresource.layerCount = 1;
-												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												copy.extent = { ext.width, ext.height, 1 };
-												vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-													dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
-
-												// Restaure : SceneColor -> SHADER_READ (lu par le shader eau),
-												//            PostWater  -> COLOR_ATTACHMENT (cible du renderpass LOAD).
-												barrier(src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-												        VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
-												        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-												barrier(dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-												        VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-												        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-												// (2) Dessine l'eau PAR-DESSUS la scene copiee (loadOp=LOAD).
-												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-												const engine::RenderState& rs = m_renderStates[readIdx];
-
-												engine::render::WaterPassPushConstants base{};
-												std::memcpy(base.viewProj, rs.viewProjMatrix.m, sizeof(float) * 16);
-												base.cameraPos[0] = rs.camera.position.x;
-												base.cameraPos[1] = rs.camera.position.y;
-												base.cameraPos[2] = rs.camera.position.z;
-												// TODO(M100.x): vraie source de temps wall-clock. Note : perte de précision
-												// float après ~78h (uint32_t > 2^24 = 16.7 M frames @ 60Hz).
-												base.timeSeconds   = static_cast<float>(m_currentFrame) / 60.0f;
-												base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
-												base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
-
-												// EAU.3 — l'eau reflète le vrai ciel (capturé + préfiltré,
-												// suit l'heure et la météo) au lieu du cubemap uni de repli.
-												if (m_pipeline && m_pipeline->GetSpecularPrefilterPass().IsValid())
-													m_waterPass.SetSkyboxCube(m_pipeline->GetSpecularPrefilterPass().GetImageView(),
-														m_pipeline->GetSpecularPrefilterPass().GetSampler());
-												const uint32_t frameIdx = m_currentFrame % 2;
-												m_waterPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
-													m_fgSceneColorHDRId, m_fgDepthId, m_fgSceneColorHDRPostWaterId,
-													m_waterMeshGpu, base, *scene, frameIdx);
+												RecordWaterFramePass(cmd, reg);
 											});
 									}
 									else
@@ -3226,71 +1872,7 @@ namespace engine
 												b.write(m_fgSceneColorFoggedId,      engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												if (!m_pipeline->GetVolumetricFogPass().IsValid()) return;
-												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-												const engine::RenderState& rs = m_renderStates[readIdx];
-												engine::render::VolumetricFogPass::FogParams fp{};
-												// invViewProj = inverse de rs.viewProjMatrix (meme routine que Lighting).
-												const float* vp = rs.viewProjMatrix.m;
-												const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
-												const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
-												const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
-												const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
-												const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
-												const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
-												const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
-												const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
-												const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
-												if (det > 1e-7f || det < -1e-7f)
-												{
-													const float inv = 1.0f / det;
-													fp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
-													fp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
-													fp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
-													fp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
-													fp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
-													fp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
-													fp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
-													fp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
-													fp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
-													fp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
-													fp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
-													fp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
-													fp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
-													fp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
-													fp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
-													fp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
-												}
-												// sunViewProj = lightViewProj de la cascade 0.
-												std::memcpy(fp.sunViewProj, rs.cascades.lightViewProj[0].m, sizeof(float) * 16);
-												fp.cameraPos[0] = rs.camera.position.x;
-												fp.cameraPos[1] = rs.camera.position.y;
-												fp.cameraPos[2] = rs.camera.position.z;
-												// densite fog (defaut 0 = desactive ; gating runtime dans le shader).
-												fp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.density", 0.0));
-												// direction VERS le soleil (normalisee).
-												{
-													float sx = m_zoneAtmosphere.sunDirection[0];
-													float sy = m_zoneAtmosphere.sunDirection[1];
-													float sz = m_zoneAtmosphere.sunDirection[2];
-													float sl = std::sqrt(sx*sx + sy*sy + sz*sz);
-													if (sl > 1e-6f) { sx /= sl; sy /= sl; sz /= sl; }
-													fp.sunDir[0] = sx; fp.sunDir[1] = sy; fp.sunDir[2] = sz;
-												}
-												fp.sunDir[3]   = static_cast<float>(m_cfg.GetDouble("world.volfog.anisotropy", 0.6));
-												fp.sunColor[0] = m_zoneAtmosphere.sunColor[0];
-												fp.sunColor[1] = m_zoneAtmosphere.sunColor[1];
-												fp.sunColor[2] = m_zoneAtmosphere.sunColor[2];
-												fp.sunColor[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.inscatter", 1.0));
-												fp.fogParams[0] = static_cast<float>(m_cfg.GetDouble("world.volfog.steps", 32.0));
-												fp.fogParams[1] = static_cast<float>(m_cfg.GetDouble("world.volfog.max_dist_m", 120.0));
-												fp.fogParams[2] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_m", 10.0));
-												fp.fogParams[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_falloff", 0.1));
-												m_pipeline->GetVolumetricFogPass().Record(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorHDRPostWaterId, m_fgDepthId, m_fgShadowMapIds[0],
-													m_fgSceneColorFoggedId, fp, m_currentFrame % 2);
+												RecordVolumetricFogFramePass(cmd, reg);
 											});
 									}
 									else
@@ -3352,116 +1934,7 @@ namespace engine
 												b.write(m_fgCloudsHalfId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												if (!m_pipeline->GetCloudPass().IsValid()) return;
-												const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
-												engine::render::CloudParams target =
-													engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
-												engine::render::CloudParams current =
-													engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
-												engine::render::CloudParams cp =
-													engine::render::CloudParams::Lerp(current, target, m_weatherSystem.GetIntensity());
-
-												// Surcharges LIVE (config.json, sans rebuild) pour le réglage visuel :
-												// échelle de couverture/densité + altitude/épaisseur de la couche.
-												float cloudCoverage = cp.coverage * static_cast<float>(m_cfg.GetDouble("render.clouds.coverage_scale", 1.0));
-												cloudCoverage = cloudCoverage < 0.0f ? 0.0f : (cloudCoverage > 1.0f ? 1.0f : cloudCoverage);
-												float cloudDensityV = cp.density * static_cast<float>(m_cfg.GetDouble("render.clouds.density_scale", 1.0));
-												if (cloudDensityV < 0.0f) cloudDensityV = 0.0f;
-												const double baseAltCfg = m_cfg.GetDouble("render.clouds.base_altitude_m", 0.0); // 0 = auto (météo)
-												const double thickCfg   = m_cfg.GetDouble("render.clouds.thickness_m", 0.0);     // 0 = auto
-												float cloudBaseAlt = baseAltCfg > 0.0 ? static_cast<float>(baseAltCfg) : cp.baseAltMeters;
-												float cloudTopAlt  = thickCfg   > 0.0 ? (cloudBaseAlt + static_cast<float>(thickCfg)) : cp.topAltMeters;
-												if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
-
-												engine::render::CloudPass::CloudPushConstants pc{};
-												// invViewProj + cameraPos. On utilise la matrice NON-jitterée
-												// (viewProjMatrixUnjittered) : le raymarch nuages doit être stable
-												// temporellement, sinon le jitter TAA fait scintiller les nuages
-												// (haute fréquence, non reprojetables faute de vecteurs de mouvement).
-												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-												const engine::RenderState& rs = m_renderStates[readIdx];
-												const float* vp = rs.viewProjMatrixUnjittered.m;
-												const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
-												const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
-												const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
-												const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
-												const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
-												const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
-												const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
-												const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
-												const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
-												if (det > 1e-7f || det < -1e-7f)
-												{
-													const float inv = 1.0f / det;
-													pc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
-													pc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
-													pc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
-													pc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
-													pc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
-													pc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
-													pc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
-													pc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
-													pc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
-													pc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
-													pc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
-													pc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
-													pc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
-													pc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
-													pc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
-													pc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
-												}
-												pc.cameraPos[0] = rs.camera.position.x;
-												pc.cameraPos[1] = rs.camera.position.y;
-												pc.cameraPos[2] = rs.camera.position.z;
-												// w = temps réel cumulé (s) : advection des nuages par le vent.
-												pc.cameraPos[3] = m_cloudTimeSeconds;
-
-												for (int i = 0; i < 3; ++i)
-												{
-													pc.sunDir[i]       = dn.lightDir[i];
-													pc.sunColor[i]     = dn.lightColor[i];
-													const float tint   = (i == 0 ? cp.tintR : (i == 1 ? cp.tintG : cp.tintB));
-													pc.zenithColor[i]  = dn.skyZenith[i]  * tint;
-													pc.horizonColor[i] = dn.skyHorizon[i] * tint;
-												}
-												pc.sunDir[3]       = cloudCoverage;
-												pc.sunColor[3]     = cloudDensityV;
-												pc.zenithColor[3]  = cloudBaseAlt;
-												pc.horizonColor[3] = cloudTopAlt;
-
-												pc.windParams[0] = 1.0f;
-												pc.windParams[1] = 0.3f;
-												pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.wind_scale", 6.0));
-												pc.windParams[3] = 0.2f;
-
-												pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarch_steps", 64));
-												pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.light_steps", 6));
-												pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_distance_meters", 60000.0));
-												pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambient_strength", 0.4));
-
-												// Phase 2 — force des ombres de nuages au sol (0 = désactivé).
-												pc.shadowParams[0] = static_cast<float>(m_cfg.GetDouble("render.clouds.shadow_strength", 0.5));
-												// y = plafond de luminosité des nuages (anti-blowout vers le soleil) ; 0 = off.
-												pc.shadowParams[1] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_luminance", 1.3));
-												// z = distance (m) de début d'estompage des nuages lointains (perspective
-												// aérienne) ; évite le mur blanc à l'horizon. 0 = désactivé.
-												pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));
-												// w = tuile (m) de la weather map 2D de couverture (chantier
-												// weather map 2026-07-20) : fronts nuageux par position monde.
-												// <= 1 = carte neutre (bascule de secours sans rebuild).
-												pc.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.weather_tile_m", 40000.0));
-
-												// Extent réduit — même calcul que FrameGraph pour Clouds_Half
-												// (shift + clamp à 1) afin que viewport == framebuffer.
-												const VkExtent2D fullExt = m_vkSwapchain.GetExtent();
-												VkExtent2D scaledExt{
-													fullExt.width  >> m_cloudsExtentPower,
-													fullExt.height >> m_cloudsExtentPower };
-												if (scaledExt.width  < 1u) scaledExt.width  = 1u;
-												if (scaledExt.height < 1u) scaledExt.height = 1u;
-												m_pipeline->GetCloudPass().RecordMarch(
-													m_vkDeviceContext.GetDevice(), cmd, reg, scaledExt,
-													m_fgDepthId, m_fgCloudsHalfId, pc, m_currentFrame % 2);
+												RecordCloudsFramePass(cmd, reg);
 											});
 
 										// Composition pleine résolution : upsample bilinéaire de Clouds_Half
@@ -3714,106 +2187,7 @@ namespace engine
 											b.write(m_fgHistoryBId,       engine::render::ImageUsage::ColorWrite);
 										},
 										[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-											// Bootstrap the history on first use, even if Update() already cleared
-											// m_taaHistoryInvalid for this frame.
-											if (!m_taaHistoryEverFilled || m_taaHistoryInvalid)
-											{
-												VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
-												if (srcImg != VK_NULL_HANDLE)
-												{
-													VkExtent2D ext = m_vkSwapchain.GetExtent();
-													VkImageCopy region{};
-													region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-													region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-													region.extent        = { ext.width, ext.height, 1 };
-
-													// Helper: COLOR_ATTACHMENT_OPTIMAL -> TRANSFER_DST_OPTIMAL
-												auto toTransferDst = [&](VkImage img) {
-													VkImageMemoryBarrier bar{};
-													bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													bar.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													bar.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-													bar.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													bar.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.image = img;
-													bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-														VK_PIPELINE_STAGE_TRANSFER_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &bar);
-												};
-												// Helper: TRANSFER_DST_OPTIMAL -> COLOR_ATTACHMENT_OPTIMAL
-												auto toColorAttachment = [&](VkImage img) {
-													VkImageMemoryBarrier bar{};
-													bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-													bar.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													bar.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bar.image = img;
-													bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_TRANSFER_BIT,
-														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &bar);
-												};
-
-												if (!m_taaHistoryEverFilled)
-												{
-													VkImage dstA = reg.getImage(m_fgHistoryAId);
-													VkImage dstB = reg.getImage(m_fgHistoryBId);
-													if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
-													{
-														toTransferDst(dstA);
-														toTransferDst(dstB);
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-														               dstA,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-														               1, &region);
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-														               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-														               1, &region);
-														toColorAttachment(dstA);
-														toColorAttachment(dstB);
-														m_taaHistoryEverFilled = true;
-														m_taaHistoryInvalid = false;
-														return;
-													}
-												}
-												else
-												{
-													engine::render::ResourceId nextId = GetTaaHistoryNextId();
-													VkImage dstNext = reg.getImage(nextId);
-													if (dstNext != VK_NULL_HANDLE)
-													{
-														toTransferDst(dstNext);
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-														               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-														               1, &region);
-														toColorAttachment(dstNext);
-														m_taaHistoryInvalid = false;
-														return;
-													}
-												}
-												}
-											}
-
-											if (!m_pipeline->GetTaaPass().IsValid()) return;
-											engine::render::TaaPass::TaaParams tp{};
-											tp.alpha = 0.9f; tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
-											const uint32_t frameIdx = m_currentFrame % 2u;
-											m_pipeline->GetTaaPass().Record(
-												m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
-												m_fgSceneColorLDRId,
-												GetTaaHistoryPrevId(),
-												m_fgGBufferVelocityId,
-												m_fgDepthId,
-												GetTaaHistoryNextId(),
-												tp,
-												frameIdx);
+											RecordTaaFramePass(cmd, reg);
 										});
 
 									m_frameGraph.addPass("CopyPresent",
@@ -3824,443 +2198,7 @@ namespace engine
 											b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
 										},
 										[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-											engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
-											VkImage srcImg = reg.getImage(srcId);
-											VkImage dstImg = reg.getImage(m_fgBackbufferId);
-											if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
-											VkExtent2D ext = m_vkSwapchain.GetExtent();
-											bool authPhotoBackdrop = false;
-											const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
-											if (presentSolidColorDebug)
-											{
-												LOG_DEBUG(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
-												const VkClearColorValue debugColor = { { 0.9f, 0.0f, 0.9f, 1.0f } };
-												VkImageSubresourceRange clearRange{};
-												clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-												clearRange.baseMipLevel = 0;
-												clearRange.levelCount = 1;
-												clearRange.baseArrayLayer = 0;
-												clearRange.layerCount = 1;
-												vkCmdClearColorImage(cmd, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &debugColor, 1, &clearRange);
-												LOG_DEBUG(Render, "[CopyPresent] debug clear color applied");
-											}
-											else
-											{
-												LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage begin");
-												// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
-												// with vkCmdBlitImage here even when source and destination extents match.
-												VkImageCopy region{};
-												region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.srcOffset = { 0, 0, 0 };
-												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.dstOffset = { 0, 0, 0 };
-												region.extent = { ext.width, ext.height, 1 };
-												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-												LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage done");
-											}
-											const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
-											const bool authBgBlitWanted = authVisualState.active && m_authUiBackgroundTexture.IsValid()
-												&& m_cfg.GetBool("render.auth_ui.background_blit.enabled", true) && !presentSolidColorDebug;
-											if (authBgBlitWanted)
-											{
-												engine::render::TextureAsset* bgTex = m_authUiBackgroundTexture.Get();
-												if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
-												{
-													const AuthBackgroundBlitFit authBgFit = ParseAuthBackgroundBlitFit(
-														m_cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
-													static bool s_authBgBlitLogOnce = false;
-													if (!s_authBgBlitLogOnce)
-													{
-														s_authBgBlitLogOnce = true;
-														const char* fitName = "cover_height";
-														switch (authBgFit)
-														{
-														case AuthBackgroundBlitFit::Stretch:
-															fitName = "stretch";
-															break;
-														case AuthBackgroundBlitFit::Contain:
-															fitName = "contain";
-															break;
-														case AuthBackgroundBlitFit::Cover:
-															fitName = "cover";
-															break;
-														case AuthBackgroundBlitFit::CoverHeight:
-														default:
-															fitName = "cover_height";
-															break;
-														}
-														LOG_INFO(Render,
-															"[CopyPresent] auth fond: blit {}x{} -> {}x{} fit={} (log unique; blit chaque frame)",
-															bgTex->width,
-															bgTex->height,
-															ext.width,
-															ext.height,
-															fitName);
-													}
-													VkImageMemoryBarrier bgSrc{};
-													bgSrc.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													bgSrc.srcAccessMask = m_authUiBackgroundLayoutReady ? VK_ACCESS_TRANSFER_READ_BIT : 0;
-													bgSrc.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-													bgSrc.oldLayout = m_authUiBackgroundLayoutReady ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PREINITIALIZED;
-													bgSrc.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-													bgSrc.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bgSrc.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													bgSrc.image = bgTex->image;
-													bgSrc.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													const VkPipelineStageFlags bgSrcStages = m_authUiBackgroundLayoutReady ? VK_PIPELINE_STAGE_TRANSFER_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-													vkCmdPipelineBarrier(cmd, bgSrcStages, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &bgSrc);
-													VkImageBlit blit{};
-													BuildAuthBackgroundBlit(authBgFit, bgTex->width, bgTex->height, ext.width, ext.height, blit);
-													vkCmdBlitImage(cmd, bgTex->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-													m_authUiBackgroundLayoutReady = true;
-													authPhotoBackdrop = true;
-												}
-											}
-											const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
-											const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
-
-											bool renderedAuthUi = false;
-											const bool authImguiSkipsVkOverlay = m_authImGui != nullptr
-												&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
-											if (authVisualState.active
-												&& authUiDynamicRenderingEnabled
-												&& !authImguiSkipsVkOverlay
-												&& backbufferView != VK_NULL_HANDLE
-												&& m_vkDeviceContext.SupportsDynamicRendering())
-											{
-												LOG_DEBUG(Render, "[CopyPresent] auth overlay enabled; building model");
-												const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
-												LOG_DEBUG(Render, "[CopyPresent] auth render model built; loading theme");
-												const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
-												LOG_DEBUG(Render, "[CopyPresent] auth theme loaded; issuing barriers");
-												VkImageMemoryBarrier toColor{};
-												toColor.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-												toColor.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-												toColor.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-												toColor.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-												toColor.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-												toColor.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-												toColor.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-												toColor.image = dstImg;
-												toColor.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-												vkCmdPipelineBarrier(cmd,
-													VK_PIPELINE_STAGE_TRANSFER_BIT,
-													VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-													0, 0, nullptr, 0, nullptr, 1, &toColor);
-
-												LOG_DEBUG(Render, "[CopyPresent] begin rendering attachment");
-												// IMPORTANT: If we end up calling the KHR entrypoints, we must pass the KHR
-												// structs/sType values (some drivers crash if you mix core structs with KHR fns).
-												VkRenderingAttachmentInfo colorAttachment{};
-												colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-												colorAttachment.imageView = backbufferView;
-												colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-												colorAttachment.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-												colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-												colorAttachment.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-
-												VkRenderingAttachmentInfoKHR colorAttachmentKHR{};
-												colorAttachmentKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-												colorAttachmentKHR.imageView = backbufferView;
-												colorAttachmentKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-												colorAttachmentKHR.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-												colorAttachmentKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-												colorAttachmentKHR.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-												LOG_DEBUG(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
-
-												VkRenderingInfo renderingInfo{};
-												renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-												renderingInfo.renderArea.offset = { 0, 0 };
-												renderingInfo.renderArea.extent = ext;
-												renderingInfo.layerCount = 1;
-												renderingInfo.colorAttachmentCount = 1;
-												renderingInfo.pColorAttachments = &colorAttachment;
-
-												VkRenderingInfoKHR renderingInfoKHR{};
-												renderingInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-												renderingInfoKHR.renderArea.offset = { 0, 0 };
-												renderingInfoKHR.renderArea.extent = ext;
-												renderingInfoKHR.layerCount = 1;
-												renderingInfoKHR.colorAttachmentCount = 1;
-												renderingInfoKHR.pColorAttachments = &colorAttachmentKHR;
-												LOG_INFO(Render,
-													"[CopyPresent] renderingInfo renderArea.extent width={} height={}",
-													ext.width,
-													ext.height);
-												LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
-
-												// Pointeurs résolus à la création du device (VkDeviceContext) — évite les nullptr
-												// du loader et les incohérences avec une instance Vulkan < 1.3.
-												const PFN_vkCmdBeginRendering pfnBeginCore = m_vkDeviceContext.GetCmdBeginRenderingCore();
-												const PFN_vkCmdEndRendering pfnEndCoreStored = m_vkDeviceContext.GetCmdEndRenderingCore();
-												const PFN_vkCmdBeginRenderingKHR pfnBeginKHR = m_vkDeviceContext.GetCmdBeginRenderingKHR();
-												const PFN_vkCmdEndRenderingKHR pfnEndKHRStored = m_vkDeviceContext.GetCmdEndRenderingKHR();
-												LOG_INFO(Render,
-													"[CopyPresent] proc addresses (device ctx): beginCore={} endCore={} beginKHR={} endKHR={}",
-													(void*)pfnBeginCore, (void*)pfnEndCoreStored, (void*)pfnBeginKHR, (void*)pfnEndKHRStored);
-
-												bool didBeginRendering = false;
-												bool beganWithKHR = false;
-												PFN_vkCmdEndRendering pfnEndCore = nullptr;
-												PFN_vkCmdEndRenderingKHR pfnEndKHR = nullptr;
-												// Préférer KHR si les deux paires sont présentes (certains loaders / ICD).
-												if (pfnBeginKHR && pfnEndKHRStored)
-												{
-													pfnBeginKHR(cmd, &renderingInfoKHR);
-													didBeginRendering = true;
-													beganWithKHR = true;
-													pfnEndKHR = pfnEndKHRStored;
-												}
-												else if (pfnBeginCore && pfnEndCoreStored)
-												{
-													pfnBeginCore(cmd, &renderingInfo);
-													didBeginRendering = true;
-													beganWithKHR = false;
-													pfnEndCore = pfnEndCoreStored;
-												}
-												else
-												{
-													LOG_ERROR(Render, "[CopyPresent] dynamic rendering entrypoints not found; skipping auth UI overlay");
-												}
-
-												if (!didBeginRendering)
-												{
-													// No active rendering: do not clear attachments / do not end rendering.
-												}
-												else
-												{
-													LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering returned");
-
-													LOG_DEBUG(Render, "[CopyPresent] building UI layers");
-													const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
-													const std::vector<engine::render::AuthUiLayer> layers =
-														engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay, authPhotoBackdrop);
-													LOG_DEBUG(Render, "[CopyPresent] UI layers built; clearing attachments");
-													for (const engine::render::AuthUiLayer& layer : layers)
-													{
-														VkClearAttachment clearAttachment{};
-														clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-														clearAttachment.colorAttachment = 0;
-														clearAttachment.clearValue.color = layer.color;
-														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
-													}
-													LOG_DEBUG(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
-													// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
-													// Logo statut : affiche pendant la requete HTTP (spin) ET ensuite, des qu'un
-													// resultat de sonde est connu, pour montrer success/error. Sans cette seconde
-													// condition, l'utilisateur perd tout retour visuel quand le master est down.
-													const bool showAuthStatusLogo = authVisualState.login
-														&& (authVisualState.authLogoSpin || authVisualState.authStatusKnown);
-													if (m_authLogoPass.IsValid() && showAuthStatusLogo)
-													{
-														engine::render::TextureAsset* logoTex = nullptr;
-														if (authVisualState.authLogoSpin && m_authLogoTexture.IsValid())
-														{
-															logoTex = m_authLogoTexture.Get();
-														}
-														else if (authVisualState.authStatusKnown && authVisualState.authStatusOk
-															&& m_authLogoSuccessTexture.IsValid())
-														{
-															logoTex = m_authLogoSuccessTexture.Get();
-														}
-														else if (authVisualState.authStatusKnown && !authVisualState.authStatusOk
-															&& m_authLogoErrorTexture.IsValid())
-														{
-															logoTex = m_authLogoErrorTexture.Get();
-														}
-														else if (m_authLogoTexture.IsValid())
-														{
-															logoTex = m_authLogoTexture.Get();
-														}
-														if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)
-														{
-															const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
-															const float margin =
-																static_cast<float>(engine::render::kAuthUiStatusLogoCornerMarginPx);
-															const float cx = margin + half;
-															// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
-															// alors que le rendu actuel le place en bas-gauche.
-															const float cy = static_cast<float>(ext.height) - (margin + half);
-															// L’orientation 180° est appliquée dans AuthLogoPass ; ici uniquement l’angle de spin chargement.
-															const float spin = authVisualState.authLogoSpin ? m_authUi.GetAuthLogoRotationRadians() : 0.f;
-															m_authLogoPass.Record(
-																m_vkDeviceContext.GetDevice(),
-																cmd,
-																ext,
-																logoTex->image,
-																logoTex->view,
-																m_authLogoImageLayoutReady,
-																cx,
-																cy,
-																half,
-																spin);
-														}
-													}
-													{
-														const std::vector<engine::render::AuthFieldInfoIconLayout> infoLayouts =
-															engine::render::BuildAuthFieldInfoIconLayouts(ext, authVisualState, authRenderModel);
-														for (const engine::render::AuthFieldInfoIconLayout& iconLay : infoLayouts)
-														{
-															if (!iconLay.valid)
-															{
-																continue;
-															}
-															engine::render::TextureHandle& infoTex = authVisualState.registerMode
-																? m_authUiInfoRegisterTexture
-																: m_authUiInfoLoginTexture;
-															bool& infoLayoutReady = authVisualState.registerMode
-																? m_authUiInfoRegisterLayoutReady
-																: m_authUiInfoLoginLayoutReady;
-															engine::render::TextureAsset* it = infoTex.Get();
-															if (!it || it->image == VK_NULL_HANDLE || it->view == VK_NULL_HANDLE)
-															{
-																continue;
-															}
-															m_authLogoPass.Record(
-																m_vkDeviceContext.GetDevice(),
-																cmd,
-																ext,
-																it->image,
-																it->view,
-																infoLayoutReady,
-																iconLay.centerXPx,
-																iconLay.centerYPx,
-																iconLay.halfExtentPx,
-																0.f,
-																0.f);
-														}
-													}
-													{
-														if (authRenderModel.languageFirstRunLayout && m_authLogoPass.IsValid())
-														{
-															const engine::render::AuthUiLayoutMetrics layLang =
-																engine::render::BuildAuthUiLayoutMetrics(ext, authVisualState, authRenderModel);
-															for (int32_t ci = 0; ci < layLang.languageCardCount; ++ci)
-															{
-																if (static_cast<size_t>(ci) >= authRenderModel.languageFirstRunCards.size())
-																{
-																	break;
-																}
-																const std::string& tag =
-																	authRenderModel.languageFirstRunCards[static_cast<size_t>(ci)].localeTag;
-																engine::render::TextureAsset* flagTex = nullptr;
-																bool* flagLayoutReady = nullptr;
-																if (tag == "fr")
-																{
-																	flagTex = m_authFlagFrTexture.Get();
-																	flagLayoutReady = &m_authFlagFrLayoutReady;
-																}
-																else if (tag == "en")
-																{
-																	flagTex = m_authFlagEnTexture.Get();
-																	flagLayoutReady = &m_authFlagEnLayoutReady;
-																}
-																if (flagTex == nullptr || flagTex->image == VK_NULL_HANDLE || flagTex->view == VK_NULL_HANDLE
-																	|| flagLayoutReady == nullptr)
-																{
-																	continue;
-																}
-																m_authLogoPass.Record(
-																	m_vkDeviceContext.GetDevice(),
-																	cmd,
-																	ext,
-																	flagTex->image,
-																	flagTex->view,
-																	*flagLayoutReady,
-																	static_cast<float>(layLang.languageFlagCenterX[ci]),
-																	static_cast<float>(layLang.languageFlagCenterY[ci]),
-																	static_cast<float>(layLang.languageFlagHalfExtentPx[ci]),
-																	0.f,
-																	0.f);
-															}
-														}
-													}
-													if (m_authGlyphPass.IsValid())
-													{
-														m_authGlyphPass.RecordModel(
-															m_vkDeviceContext.GetDevice(),
-															cmd,
-															ext,
-															authVisualState,
-															authRenderModel,
-															authTheme);
-													}
-
-													if (beganWithKHR && pfnEndKHR)
-														pfnEndKHR(cmd);
-													else if (!beganWithKHR && pfnEndCore)
-														pfnEndCore(cmd);
-													LOG_DEBUG(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
-
-													VkImageMemoryBarrier toPresent{};
-													toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													toPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													toPresent.dstAccessMask = 0;
-													toPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-													toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toPresent.image = dstImg;
-													toPresent.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &toPresent);
-													renderedAuthUi = true;
-												}
-											}
-
-											if (!renderedAuthUi)
-											{
-												if (authVisualState.active && !authUiDynamicRenderingEnabled)
-													LOG_DEBUG(Render, "[CopyPresent] auth dynamic rendering disabled by config; using present-only path");
-												if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
-													LOG_DEBUG(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
-
-												bool worldEditorUiToPresent = false;
-#if defined(_WIN32)
-												// Phase 3.11.1 — RecordToBackbuffer fire aussi quand le panneau chat est actif post-auth
-												// (le draw list ImGui contient alors la fenêtre chat émise par ChatImGuiRenderer).
-												// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE.
-												// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
-												// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
-												const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
-													&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
-													&& !m_worldEditorExe
-													&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
-												// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
-												const bool editorHubActive = HasEditorHubImGui() && m_editorEnabled && !m_worldEditorExe;
-												if (m_imguiOverlay && m_imguiOverlay->IsReady()
-													&& (m_worldEditorExe
-														|| (m_authImGui && authVisualState.active
-															&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false))
-														|| chatImguiActive
-														|| editorHubActive)
-													&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
-													&& !presentSolidColorDebug)
-												{
-													worldEditorUiToPresent = m_imguiOverlay->RecordToBackbuffer(
-														cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
-												}
-#endif
-												if (!worldEditorUiToPresent)
-												{
-													VkImageMemoryBarrier barrier{};
-													barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-													barrier.dstAccessMask = 0;
-													barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-													barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.image = dstImg;
-													barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_TRANSFER_BIT,
-														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &barrier);
-												}
-											}
+											RecordPresentFramePass(cmd, reg);
 										});
 
 									m_frameGraph.addPass("PostRead",
@@ -4287,6 +2225,2128 @@ namespace engine
 				LOG_WARN(Platform, "[Boot] VkInstance::Create failed");
 			else
 				LOG_WARN(Platform, "[Boot] Vulkan instance or GLFW window for surface failed");
+		}
+	}
+
+	// Sous-étape extraite de InitGraphicsAndScene — voir la documentation dans Engine.h.
+	void Engine::InitWaterPassResources(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv, bool& pipelineOk)
+	{
+		if (pipelineOk)
+		{
+			// Crée le command pool long-lived pour les uploads water (RESET entre Rebuilds).
+			// Le pool est créé indépendamment du succès de WaterMeshGpu::Init : si VMA
+			// est absent (STAB.7) Init échouera et le pool ne sera jamais utilisé,
+			// mais il restera valide pour les builds qui réactivent VMA ultérieurement.
+			{
+				VkCommandPoolCreateInfo poolInfo{};
+				poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+				                          | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+				poolInfo.queueFamilyIndex = m_vkDeviceContext.GetGraphicsQueueFamilyIndex();
+				if (vkCreateCommandPool(m_vkDeviceContext.GetDevice(), &poolInfo, nullptr, &m_waterTransferPool) != VK_SUCCESS)
+				{
+					LOG_WARN(Render, "[Boot] WaterMeshGpu transfer pool creation failed — water rendering will be disabled");
+					m_waterTransferPool = VK_NULL_HANDLE;
+				}
+			}
+
+			if (!m_waterMeshGpu.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice()))
+			{
+				LOG_WARN(Render, "[Boot] WaterMeshGpu::Init failed — Water_Passthrough fallback");
+			}
+
+			// Init WaterPass : shaders + textures muettes 1×1.
+			// normalMap  = (128,128,255,255) = normale plate vers le haut.
+			// skybox cube = (15,30,80,255)   = bleu ciel sombre (fallback réfl.).
+			std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
+			std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
+
+			if (m_waterTransferPool != VK_NULL_HANDLE
+				&& CreateSolidColorTexture(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetPhysicalDevice(),
+					m_waterTransferPool,
+					m_vkDeviceContext.GetGraphicsQueue(),
+					1u, VK_IMAGE_VIEW_TYPE_2D,
+					128, 128, 255, 255,
+					m_waterNormalMapImg, m_waterNormalMapMem,
+					m_waterNormalMapView, m_waterNormalMapSampler))
+			{
+				LOG_INFO(Render, "[Boot] WaterPass: normalMap muette créée");
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] WaterPass: création normalMap muette échouée");
+			}
+
+			if (m_waterTransferPool != VK_NULL_HANDLE
+				&& CreateSolidColorTexture(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetPhysicalDevice(),
+					m_waterTransferPool,
+					m_vkDeviceContext.GetGraphicsQueue(),
+					6u, VK_IMAGE_VIEW_TYPE_CUBE,
+					15, 30, 80, 255,
+					m_waterSkyboxImg, m_waterSkyboxMem,
+					m_waterSkyboxView, m_waterSkyboxSampler))
+			{
+				LOG_INFO(Render, "[Boot] WaterPass: skybox muette créée");
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] WaterPass: création skybox muette échouée");
+			}
+
+			if (!waterVert.empty() && !waterFrag.empty()
+				&& m_waterNormalMapView != VK_NULL_HANDLE
+				&& m_waterNormalMapSampler != VK_NULL_HANDLE
+				&& m_waterSkyboxView != VK_NULL_HANDLE
+				&& m_waterSkyboxSampler != VK_NULL_HANDLE
+				&& m_waterMeshGpu.IsInitialized())
+			{
+				if (m_waterPass.Init(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						VK_FORMAT_R16G16B16A16_SFLOAT,
+						waterVert.data(), waterVert.size(),
+						waterFrag.data(), waterFrag.size(),
+						m_waterNormalMapView, m_waterNormalMapSampler,
+						m_waterSkyboxView,    m_waterSkyboxSampler,
+						2u))
+				{
+					LOG_INFO(Render, "[Boot] WaterPass init OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] WaterPass::Init failed — Water_Passthrough fallback");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render,
+					"[Boot] WaterPass : prerequisites missing (vert={} frag={} normalMap={} skybox={}) — Water_Passthrough fallback",
+					!waterVert.empty(),
+					!waterFrag.empty(),
+					m_waterNormalMapView != VK_NULL_HANDLE,
+					m_waterSkyboxView != VK_NULL_HANDLE);
+			}
+		}
+	}
+
+	// Sous-étape extraite de InitGraphicsAndScene — voir la documentation dans Engine.h.
+	void Engine::InitAuthGlyphAndLogoPasses(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv)
+	{
+		if (m_vkDeviceContext.SupportsDynamicRendering())
+		{
+			std::vector<uint32_t> authGlyphVert = loadSpirv("shaders/auth_glyph.vert.spv");
+			std::vector<uint32_t> authGlyphFrag = loadSpirv("shaders/auth_glyph.frag.spv");
+			std::vector<uint32_t> authTtfFrag = loadSpirv("shaders/auth_ttf.frag.spv");
+			if (!authGlyphVert.empty() && !authGlyphFrag.empty())
+			{
+				const uint32_t* ttfFragPtr = authTtfFrag.empty() ? nullptr : authTtfFrag.data();
+				const size_t ttfFragWords = authTtfFrag.size();
+				if (m_authGlyphPass.Init(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkSwapchain.GetImageFormat(),
+						authGlyphVert.data(), authGlyphVert.size(),
+						authGlyphFrag.data(), authGlyphFrag.size(),
+						8192u,
+						VK_NULL_HANDLE,
+						ttfFragPtr,
+						ttfFragWords))
+				{
+					LOG_INFO(Render, "[Boot] AuthGlyphPass OK");
+					const std::string uiFontPath = m_cfg.GetString("render.auth_ui.font_path", "");
+					if (!uiFontPath.empty() && ttfFragPtr != nullptr)
+					{
+						std::vector<uint8_t> fontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, uiFontPath);
+						if (!fontBytes.empty())
+						{
+							const float fontPx = static_cast<float>(std::clamp<int64_t>(
+								m_cfg.GetInt("render.auth_ui.font_pixel_height", 28), 12, 96));
+							if (m_authGlyphPass.UploadUiFontFromTtf(
+									m_vkDeviceContext.GetDevice(),
+									m_vkDeviceContext.GetPhysicalDevice(),
+									m_vkDeviceContext.GetGraphicsQueue(),
+									m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+									fontBytes.data(),
+									fontBytes.size(),
+									fontPx))
+							{
+								LOG_INFO(Render, "[Boot] Auth UI font loaded: {}", uiFontPath);
+							}
+							else
+							{
+								LOG_WARN(Render, "[Boot] Auth UI font upload failed: {}", uiFontPath);
+							}
+						}
+						else
+						{
+							LOG_WARN(Render, "[Boot] Auth UI font file missing or empty: {}", uiFontPath);
+						}
+					}
+					else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
+					{
+						LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
+					}
+					// --- Second atlas: valeurs de champs (ex. Morpheus.ttf) ---
+					const std::string valueFontPath = m_cfg.GetString("render.auth_ui.value_font_path", "");
+					if (!valueFontPath.empty() && ttfFragPtr != nullptr)
+					{
+						std::vector<uint8_t> valueFontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, valueFontPath);
+						if (!valueFontBytes.empty())
+						{
+							const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
+								m_cfg.GetInt("render.auth_ui.value_font_pixel_height", 24), 12, 96));
+							if (m_authGlyphPass.UploadValueFontFromTtf(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								m_vkDeviceContext.GetGraphicsQueue(),
+								m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+								valueFontBytes.data(),
+								valueFontBytes.size(),
+								valueFontPx))
+							{
+								LOG_INFO(Render, "[Boot] Auth UI value font loaded: {}", valueFontPath);
+							}
+							else
+							{
+								LOG_WARN(Render, "[Boot] Auth UI value font upload failed: {}", valueFontPath);
+							}
+						}
+						else
+						{
+							LOG_WARN(Render, "[Boot] Auth UI value font file missing or empty: {}", valueFontPath);
+						}
+					}
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] AuthGlyphPass init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] AuthGlyphPass shaders missing");
+			}
+			std::vector<uint32_t> authLogoVert = loadSpirv("shaders/auth_logo.vert.spv");
+			std::vector<uint32_t> authLogoFrag = loadSpirv("shaders/auth_logo.frag.spv");
+			if (!authLogoVert.empty() && !authLogoFrag.empty())
+			{
+				if (m_authLogoPass.Init(
+						m_vkDeviceContext.GetDevice(),
+						m_vkSwapchain.GetImageFormat(),
+						authLogoVert.data(),
+						authLogoVert.size(),
+						authLogoFrag.data(),
+						authLogoFrag.size()))
+				{
+					LOG_INFO(Render, "[Boot] AuthLogoPass OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] AuthLogoPass init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] AuthLogoPass shaders missing");
+			}
+		}
+	}
+
+	// Sous-étape extraite de InitGraphicsAndScene — voir la documentation dans Engine.h.
+	void Engine::InitSkinnedAvatarRenderer(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv)
+	{
+		if (!m_skinnedAvatarReady && m_pipeline)
+		{
+			auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+			const std::vector<uint32_t> skinnedVertSpv = loadSpirv("shaders/skinned_gbuffer.vert.spv");
+			const std::vector<uint32_t> skinnedFragSpv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
+			if (!skinnedVertSpv.empty() && !skinnedFragSpv.empty() && materialCache.IsValid())
+			{
+				// Memes formats GBuffer / depth que DeferredPipeline.cpp:135-140 :
+				// formatA = R8G8B8A8_SRGB (albedo), formatB = A2B10G10R10 (normal),
+				// formatC = R8G8B8A8_UNORM (ORM), formatVelocity = R16G16_SFLOAT,
+				// depthFormat = D32_SFLOAT. Necessaire pour que le pipeline skinne
+				// soit compatible avec le render pass LOAD de GeometryPass (que nous
+				// utiliserons via RecordTerrainChunkBatch pour eviter de nested-passer).
+				const bool skinnedInitOk = m_skinnedRenderer.Init(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetPhysicalDevice(),
+					VK_FORMAT_R8G8B8A8_SRGB,
+					VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+					VK_FORMAT_R8G8B8A8_UNORM,
+					VK_FORMAT_R16G16_SFLOAT,
+					VK_FORMAT_D32_SFLOAT,
+					skinnedVertSpv.data(), skinnedVertSpv.size(),
+					skinnedFragSpv.data(), skinnedFragSpv.size(),
+					materialCache.GetLayout(),
+					/*maxBonesPerSkeleton*/ 256u);
+				if (skinnedInitOk)
+				{
+					// Sous-projet C MVP — Charge les 3 races MVP (humains, nains, orc)
+					// dans m_raceMeshes. Chaque race partage le meme jeu de 7 clips
+					// d'animation (Idle/StartWalking/WalkBack/Run/Jump/Fall/Land)
+					// charges en animation-only depuis y_bot_* et retargetes par nom
+					// de bone sur le squelette de la race.
+					//
+					// Lookup du meshPath via un CharacterCreationPresenter local
+					// (instanciation legere : juste un parse de races.json, pas de
+					// pipeline GPU). Cela evite d'ajouter une dependance permanente
+					// dans Engine entre Engine et CharacterCreationPresenter.
+					const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+					// IDs doivent matcher exactement les race_str de races.json :
+					// "humains", "nains", "orcs" (au pluriel). Note : le dossier disk
+					// game/data/models/avatars/orc/orc.glb est singulier (heritage de
+					// l'upload utilisateur inbox/orc/), mais c'est OK car le meshPath
+					// dans races.json pointe vers le bon chemin singulier — seule la
+					// cle de map (race_str) doit etre pluriel pour matcher la DB.
+					constexpr const char* kMvpRaces[] = { "humains", "nains", "orcs" };
+
+					engine::client::CharacterCreationPresenter racesPresenter;
+					racesPresenter.Init(m_cfg);
+
+					// meshKey : clef de stockage dans m_raceMeshes ("raceId|gender",
+					// ex. "humains|female"). raceId reste utilise pour les logs et la
+					// detection de rig. Cf. RaceMeshKey() / GetRaceMesh().
+					auto loadOneRace = [&](const std::string& meshKey, const std::string& raceId,
+					                       const std::string& meshPath,
+					                       float importScale, float importRotXDeg) -> bool {
+						const std::string fullMeshPath = contentRoot + "/" + meshPath;
+						auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
+							m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							fullMeshPath);
+						if (!loaded) {
+							LOG_WARN(Render, "[Engine] Race '{}' : mesh load FAIL '{}'", raceId, fullMeshPath);
+							return false;
+						}
+						// Renomme le clip de marche embarque dans le mesh (Mixamo
+						// exporte tous ses clips sous le nom "mixamo.com") en "Walk".
+						for (auto& c : loaded->clips) {
+							if (c.name == "mixamo.com") { c.name = "Walk"; break; }
+						}
+						// Detection du rig : UE5 (pelvis, pas de mixamorig:*) vs Mixamo.
+						// Bascule la source d'animations sans casser les races Mixamo (additif + repli).
+						const bool isUe5Rig =
+							loaded->skeleton.FindBoneIndex("pelvis") >= 0 &&
+							loaded->skeleton.FindBoneIndex("mixamorig:Hips") < 0;
+						if (isUe5Rig)
+						{
+							// Migration UE5 — clips depuis la library UE5 (45 takes "Armature|<Clip>"),
+							// copies vers les noms de role attendus par la state machine. Retarget par
+							// nom d'os (memes os que le corps UE5, cf. SkinnedMeshLoaderTests).
+							const std::string ue5LibPath = contentRoot +
+								"/models/animations/humanoid_base/Humanoid_Base_Standard/Humanoid_Base_Standard.glb";
+							auto ue5Clips = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+								ue5LibPath, loaded->skeleton);
+							auto addRole = [&](const char* role, const char* ualName) {
+								const std::string want = std::string("Armature|") + ualName;
+								for (const auto& c : ue5Clips) {
+									if (c.name == want && c.duration > 0.0f) {
+										engine::render::skinned::AnimationClip copy = c;
+										copy.name = role;
+										loaded->clips.push_back(std::move(copy));
+										return;
+									}
+								}
+								LOG_WARN(Render, "[Engine] UE5 race '{}' : take '{}' introuvable (role '{}')", raceId, ualName, role);
+							};
+							addRole("Idle", "Idle_Loop");
+							addRole("Walk", "Walk_Loop");
+							addRole("StartWalking", "Walk_Loop");
+							addRole("WalkBack", "Walk_Loop");
+							addRole("Run", "Jog_Fwd_Loop");
+							addRole("Sprint", "Sprint_Loop");
+							addRole("CrouchIdle", "Crouch_Idle_Loop");
+							addRole("CrouchWalk", "Crouch_Fwd_Loop");
+							addRole("Roll", "Roll");
+							addRole("Dance", "Dance_Loop");
+							addRole("Sit", "Sitting_Idle_Loop");
+							addRole("Talk", "Idle_Talking_Loop");
+							addRole("Torch", "Idle_Torch_Loop");
+							addRole("Kneel", "Fixing_Kneeling");
+							addRole("SitTalk", "Sitting_Talking_Loop");
+							addRole("Push", "Push_Loop");
+							addRole("Attack", "Sword_Attack");
+							addRole("Cast", "Spell_Simple_Enter");
+							addRole("CastShoot", "Spell_Simple_Shoot");
+							addRole("CastExit", "Spell_Simple_Exit");
+							addRole("Interact", "Interact");
+							addRole("Punch", "Punch_Jab");
+							addRole("PunchCross", "Punch_Cross");
+							addRole("Jump", "Jump_Start");
+							addRole("Fall", "Jump_Loop");
+							addRole("Land", "Jump_Land");
+							addRole("SwimIdle", "Swim_Idle_Loop");
+							addRole("SwimForward", "Swim_Fwd_Loop");
+
+							// Expose AUSSI tous les autres clips UE5 par leur nom brut (sans
+							// prefixe "Armature|"), disponibles pour les futurs systemes
+							// (sprint, crouch, roll, combat, emotes, nage...). Exclus : armes
+							// a feu (pas dans le jeu) + conduite (pas de vehicule) + A_TPose
+							// (pose de reference, pas une anim de jeu). Aucun declencheur ici :
+							// les clips sont seulement rendus accessibles via FindClip(<nom>).
+							auto isExcludedUe5Clip = [](const std::string& n) {
+								return n == "Pistol_Aim_Up" || n == "Pistol_Aim_Neutral"
+									|| n == "Pistol_Aim_Down" || n == "Pistol_Idle_Loop"
+									|| n == "Pistol_Reload" || n == "Pistol_Shoot"
+									|| n == "Driving_Loop" || n == "A_TPose";
+							};
+							int ue5Exposed = 0;
+							for (const auto& c : ue5Clips) {
+								if (c.duration <= 0.0f) continue;
+								std::string name = c.name;
+								const auto bar = name.rfind('|');
+								if (bar != std::string::npos) name = name.substr(bar + 1);
+								if (isExcludedUe5Clip(name)) continue;
+								bool exists = false;
+								for (const auto& existing : loaded->clips) {
+									if (existing.name == name) { exists = true; break; }
+								}
+								if (exists) continue;
+								engine::render::skinned::AnimationClip copy = c;
+								copy.name = name;
+								loaded->clips.push_back(std::move(copy));
+								++ue5Exposed;
+							}
+							LOG_INFO(Render, "[Engine] UE5 race '{}' : {} clips additionnels exposes (total {})",
+								raceId, ue5Exposed, loaded->clips.size());
+						}
+						else
+						{
+						// Retarget les clips d'anim partages sur le squelette de cette
+						// race. Convention herite de B.1 (LoadClipsAnimOnly matche par
+						// nom de bone mixamorig:*). Si la race a un squelette
+						// non-Mixamo, ces calls renvoient des clips vides -> animation
+						// identite (la state machine fallback gracieusement).
+						auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
+							auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+								path, loaded->skeleton);
+							for (auto& c : clipsLoaded) {
+								if (c.duration > 0.0f && c.name == "mixamo.com") {
+									c.name = renameTo;
+									loaded->clips.push_back(std::move(c));
+									return true;
+								}
+							}
+							return false;
+						};
+						const std::string idlePath      = contentRoot + "/models/avatars/y_bot_idle/y_bot_idle.glb";
+						const std::string startWalkPath = contentRoot + "/models/avatars/y_bot_start_walking/y_bot_start_walking.glb";
+						const std::string walkBackPath  = contentRoot + "/models/avatars/y_bot_walk_back/y_bot_walk_back.glb";
+						const std::string runPath       = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
+						const std::string jumpPath      = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
+						const std::string fallPath      = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
+						const std::string landPath      = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
+						loadAnimOnly(idlePath, "Idle");
+						loadAnimOnly(startWalkPath, "StartWalking");
+						loadAnimOnly(walkBackPath, "WalkBack");
+						loadAnimOnly(runPath, "Run");
+						loadAnimOnly(jumpPath, "Jump");
+						loadAnimOnly(fallPath, "Fall");
+						loadAnimOnly(landPath, "Land");
+						}
+						// Migration UE5 — transform d'import (echelle/orientation) reglable via races.json.
+						{
+							const float th = importRotXDeg * 3.14159265358979f / 180.0f;
+							const float cx = std::cos(th);
+							const float sx = std::sin(th);
+							engine::math::Mat4 imp;
+							imp.m[0]  = importScale;
+							imp.m[5]  = importScale * cx;
+							imp.m[6]  = importScale * sx;
+							imp.m[9]  = importScale * -sx;
+							imp.m[10] = importScale * cx;
+							loaded->importTransform = imp;
+						}
+						LOG_INFO(Render, "[Engine] Race '{}' loaded as '{}' ({} bones, {} clips) from '{}'",
+							raceId, meshKey, loaded->skeleton.bones.size(), loaded->clips.size(), fullMeshPath);
+						m_raceMeshes.emplace(meshKey, std::move(*loaded));
+						return true;
+					};
+
+					// Charge les 3 races MVP, pour les DEUX genres (selecteur de genre).
+					// Le male est toujours charge sous "raceId|male". Le femelle (chemin
+					// derive Male_ -> Female_, ex. Female_Ranger) est charge sous
+					// "raceId|female" UNIQUEMENT si une variante distincte existe ET se
+					// charge ; sinon GetRaceMesh(race,"female") retombe sur le male.
+					auto deriveFemaleMesh = [](std::string p) {
+						std::string::size_type gp = 0;
+						while ((gp = p.find("Male_", gp)) != std::string::npos) { p.replace(gp, 5, "Female_"); gp += 7; }
+						return p;
+					};
+					for (const char* raceId : kMvpRaces) {
+						const auto& races = racesPresenter.GetRaces();
+						const engine::client::RaceDefinition* def = nullptr;
+						for (const auto& r : races) if (r.id == raceId) { def = &r; break; }
+						if (!def || def->meshPath.empty()) {
+							LOG_WARN(Render, "[Engine] Race '{}' : RaceDefinition introuvable ou meshPath vide", raceId);
+							continue;
+						}
+						const std::string maleMesh = def->meshPath;
+						loadOneRace(RaceMeshKey(raceId, "male"), raceId, maleMesh, def->importScale, def->importRotXDeg);
+						const std::string femaleMesh = deriveFemaleMesh(maleMesh);
+						if (femaleMesh != maleMesh) {
+							loadOneRace(RaceMeshKey(raceId, "female"), raceId, femaleMesh, def->importScale, def->importRotXDeg);
+						}
+					}
+					// Genre courant depuis config (mergee avec le fichier de persistance au boot).
+					m_avatarGender = m_cfg.GetString("client.character_creation.gender", "male");
+					if (m_avatarGender != "male" && m_avatarGender != "female")
+						m_avatarGender = "male";
+
+					// Combat SP1 — catalogue d'apparences de creatures (non bloquant :
+					// catalogue absent/corrompu = mobs rendus en fallback humains).
+					m_creatureCatalog.Init(m_cfg);
+					// FIX.10 — Perception du personnage (rayon des plaques).
+					m_perceptionModel.Init(m_cfg);
+					// Validation v12 (wire v13) — marqueurs cimetière/auberge.
+					LoadRespawnMarkers();
+					// Combat SP3 — catalogue d'affichage des kits de sorts (non
+					// bloquant : absent = barre d'action masquée).
+					m_spellCatalog.Init(m_cfg);
+					// SP-D — catalogue des compétences par-classe (non bloquant :
+					// catalogue vide si les fichiers sont absents).
+					if (m_classSkillCatalog.Init(m_cfg))
+					{
+						LOG_INFO(Core, "[Boot] ClassSkillCatalog chargé ({} classe(s))",
+							m_classSkillCatalog.ClassCount());
+					}
+					else
+					{
+						LOG_WARN(Core, "[Boot] ClassSkillCatalog init échoué — arbre de compétences désactivé");
+					}
+
+					// Pointe m_currentSkinnedMesh vers le mesh humain par defaut (le
+					// perso n'est pas encore "in world" avant EnterWorld, mais Engine
+					// peut etre questionne sur ce mesh pour des previews/tests).
+					engine::render::skinned::SkinnedMesh* defaultMesh = GetRaceMesh("humains", m_avatarGender);
+					if (defaultMesh != nullptr) {
+						m_currentSkinnedMesh = defaultMesh;
+						m_playerAnimStartTime = std::chrono::steady_clock::now();
+						m_avatarLocoStateEnterTime = m_playerAnimStartTime;
+						m_skinnedAvatarReady = true;
+						LOG_INFO(Render, "[Engine] Default avatar = humains ({} bones, {} clips)",
+							m_currentSkinnedMesh->skeleton.bones.size(),
+							m_currentSkinnedMesh->clips.size());
+
+						// Etat initial : Idle. On lance la premiere animation explicitement
+						// pour eviter d'afficher la pose bind au tout premier frame avant
+						// que la state machine n'enclenche un Play (cf. lambda Geometry
+						// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
+						// Defensif : si Idle a echoue au load, on garde l'init existante
+						// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
+						// plus haut), la state machine fera son fallback (Task 11).
+						const engine::render::skinned::AnimationClip* idleClip = m_currentSkinnedMesh->FindClip("Idle");
+						if (idleClip) {
+							const float nowSec = EngineNowSec();
+							m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
+							m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
+							m_avatarLocoState = AvatarLocomotionState::Idle;
+						}
+					} else {
+						LOG_WARN(Render, "[Engine] Race humains absente du m_raceMeshes -- avatar fallback cube");
+						// Aucun mesh humain : libere le pipeline (Destroy idempotent).
+						m_skinnedRenderer.Destroy(m_vkDeviceContext.GetDevice());
+					}
+				}
+				else
+				{
+					LOG_WARN(Render, "[Engine] SkinnedRenderer::Init failed; fallback cube placeholder");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Engine] Skinned shaders not loaded or material cache not ready; fallback cube placeholder");
+			}
+		}
+	}
+
+	// Sous-étape extraite de InitGraphicsAndScene — voir la documentation dans Engine.h.
+	void Engine::InitPlayerSpawnPlacement()
+	{
+		// que la sphere du bas de la capsule traverse le sol au premier sweep.
+		{
+			// Phase 2 (chantier C) — construire les IHeightField et les
+			// injecter dans le collider. Chunk (terrain.bin residents,
+			// grille 256) prioritaire si resident ; repli heightmap
+			// (m_terrain) sinon. m_streamCache (Init ~ligne 1365) et
+			// m_terrain (Init ~ligne 3538) deja initialises a ce point.
+			m_heightmapField = std::make_unique<engine::world::terrain::HeightmapHeightField>(&m_terrain);
+			m_chunkField     = std::make_unique<engine::world::terrain::ChunkHeightField>(&m_streamCache, &m_cfg);
+			m_terrainCollider.BindHeightFields(m_chunkField.get(), m_heightmapField.get());
+			// Monde « Royaumes » en cellules : hauteurs des cellules (CPU) et eau
+			// de toutes les cellules générées, en coordonnées de rendu.
+			if (m_cellWorld)
+				InitCellWorldBoot();
+
+			// Nage (v1) : eau-test procedurale. La zone demo est plate et sans
+			// eau ; on pose un BASSIN DE TEST au-dessus du sol pour valider la
+			// mecanique de nage (a remplacer par une vraie etendue d'eau via le
+			// pipeline water.bin / level-design). Desactivable : world.test_water.enabled=false.
+			// Nage : tenter d'abord une VRAIE eau (instances/water.bin via StreamCache) ;
+			// repli sur l'eau-test procedurale si absente (zone demo plate, sans water.bin).
+			if (m_cellWorld)
+			{
+				// Eau déjà posée par InitCellWorldBoot (cellules générées).
+			}
+			else if (auto realWater = m_streamCache.LoadWater(m_cfg, ""))
+			{
+				m_clientWaterScene = realWater;
+				m_waterClientSceneDirty = true;
+				LOG_INFO(Render, "[Nage] water.bin charge ({} lac(s))", static_cast<int>(realWater->lakes.size()));
+			}
+			else if (m_cfg.GetBool("world.test_water.enabled", true))
+			{
+				const float cx = static_cast<float>(m_cfg.GetDouble("world.test_water.center_x", 25.0));
+				const float cz = static_cast<float>(m_cfg.GetDouble("world.test_water.center_z", 0.0));
+				const float half = static_cast<float>(m_cfg.GetDouble("world.test_water.half_size_m", 15.0));
+				const float depth = static_cast<float>(m_cfg.GetDouble("world.test_water.depth_m", 2.5));
+				const float lvl = m_terrainCollider.GroundHeightAt(cx, cz) + depth;
+				auto waterScene = std::make_shared<engine::world::water::WaterScene>();
+				engine::world::water::LakeInstance lake;
+				lake.name = "test_pool";
+				lake.waterLevelY = lvl;
+				// Polygone XZ (SW->SE->NE->NW). Si la surface est cullee a l'affichage,
+				// inverser l'ordre (winding) ; la nage (QueryWater) marche dans les 2 cas.
+				lake.polygon = {
+					engine::math::Vec3{ cx - half, lvl, cz - half },
+					engine::math::Vec3{ cx + half, lvl, cz - half },
+					engine::math::Vec3{ cx + half, lvl, cz + half },
+					engine::math::Vec3{ cx - half, lvl, cz + half },
+				};
+				waterScene->lakes.push_back(std::move(lake));
+				m_clientWaterScene = std::move(waterScene);
+				m_waterClientSceneDirty = true;
+				LOG_INFO(Render, "[Nage] Eau-test posee (centre=({:.1f},{:.1f}) half={:.1f} niveauY={:.2f})", cx, cz, half, lvl);
+			}
+			m_terrainCollider.BindWater(m_clientWaterScene.get());
+			// REBUILD SYNCHRONE du mesh d'eau ICI (avant la 1ere construction du
+			// FrameGraph). Sinon le gating de la passe water voit m_waterMeshGpu.IsValid()
+			// == false (le rebuild paresseux n'arrive qu'APRES, plus tard dans la frame)
+			// -> il grave la branche PASSTHROUGH et l'eau n'est JAMAIS dessinee
+			// (diagnostic [WaterDiag] gating: meshValid=false). On force donc le rebuild
+			// des maintenant pour que IsValid()==true quand le graphe choisit la branche.
+			if (m_clientWaterScene && m_waterMeshGpu.IsInitialized()
+				&& m_waterTransferPool != VK_NULL_HANDLE)
+			{
+				vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
+				if (m_waterMeshGpu.Rebuild(m_waterTransferPool,
+						m_vkDeviceContext.GetGraphicsQueue(), *m_clientWaterScene))
+				{
+					m_waterClientSceneDirty = false;
+					LOG_INFO(Render, "[Nage] Mesh d'eau reconstruit (synchrone, avant FrameGraph) -> IsValid={}",
+						m_waterMeshGpu.IsValid());
+				}
+			}
+			// Interaction : interactibles declares en config (world.interactables.N.*).
+			// Repli sur 2 cibles de TEST pres du spawn si aucun n'est declare.
+			// Monde en cellules : les interactibles viennent des cellules
+			// (EnsureCellHeights), chargées plus bas.
+			if (!m_cellWorld)
+			{
+				m_interactables.clear();
+				AppendInteractables(m_cfg, 0.0, 0.0);
+			}
+			// Pas de cibles de test à l'origine dans le monde en cellules.
+			if (m_interactables.empty() && !m_cellWorld)
+			{
+				InteractableEntity npc;
+				npc.position = engine::math::Vec3{ 4.0f, 0.0f, 0.0f };
+				npc.radius = 2.5f; npc.isNpc = true; npc.label = "Villageois";
+				npc.message = "Villageois : Bienvenue ! L'eau de test est a l'est.";
+				m_interactables.push_back(npc);
+				InteractableEntity chest;
+				chest.position = engine::math::Vec3{ -4.0f, 0.0f, 0.0f };
+				chest.radius = 2.0f; chest.isNpc = false; chest.label = "Coffre";
+				chest.message = "Vous fouillez le coffre... vide pour l'instant.";
+				chest.meshPath = "meshes/props/Chest_Wood.gltf";
+				m_interactables.push_back(chest);
+			}
+			m_interactableInRange = -1;
+			// Coffre anime (Chest_Wood) : charge en skinne AVANT les props statiques
+			// pour que LoadInteractableProps sache s'il doit sauter le rendu statique
+			// du coffre (m_chestLoaded). Si le chargement skinne echoue, le coffre
+			// retombe sur le rendu statique (pas de disparition).
+			LoadAnimatedChest();
+			// M45.5 — flag global impostors végétation (défaut OFF). Lu une fois ici ;
+			// quand false, RecordPropsGeometry s'exécute exactement comme l'historique.
+			m_impostorEnabled = m_cfg.GetBool("world.impostor.enabled", false);
+			if (m_impostorEnabled)
+				LOG_INFO(Render, "[Impostor] M45.5 activé (world.impostor.enabled=true)");
+			// fix/hiz-gate-off — flag global Hi-Z occlusion (défaut OFF). Lu une fois
+			// ici. Quand false : la passe HiZ_Build n'est pas enregistrée (plus de
+			// réécriture de descriptor en vol => plus de violation de validation), et
+			// le GpuDrivenCullingPass reçoit un view Hi-Z nul => fallback conservateur.
+			m_hiZEnabled = m_cfg.GetBool("render.hiz.enabled", false);
+			if (m_hiZEnabled)
+				LOG_INFO(Render, "[Boot] Hi-Z occlusion enabled (render.hiz.enabled=true)");
+			else
+				LOG_INFO(Render, "[Boot] Hi-Z occlusion disabled (render.hiz.enabled=false)");
+			// Chantier B : charge les meshes statiques des props (coffre si non anime + interactibles).
+			LoadInteractableProps();
+			// Décor solide (arbres, props nature) depuis world.scenery. Doit suivre
+			// LoadInteractableProps (qui réinitialise le collisionneur composite).
+			LoadScenery();
+			// Monde ouvert (chantier « Royaumes ») : décor instancié de la zone
+			// (scatter.bin). Après le terrain (ancrage au sol) et le collisionneur.
+			// Le catalogue de collision des pièces doit précéder le décor
+			// instancié : ses murs/arches enregistrent leurs boîtes au chargement.
+			LoadBuildingCollisionCatalog();
+			if (m_cellWorld)
+			{
+				// Monde en cellules : première cellule générée chargée
+				// synchronement (monde visible avant l'EnterWorld) ; le
+				// streaming prend ensuite le relais autour du joueur.
+				EnterCellWorldAt(m_cellBootGlobalX, m_cellBootGlobalZ);
+			}
+			else
+			{
+				LoadScatterWorld();
+				// Bâtiments éditables (auberge…) depuis instances/.../buildings.bin,
+				// rendus eux aussi en instancié (pièces partagées entre bâtiments).
+				LoadBuildings();
+			}
+			// Aperçu éditeur : mémorise le nombre de props « monde » (décor +
+			// bâtiments posés) pour que SyncEditorBuildingPreview n'efface QUE
+			// le brouillon par-dessus, sans toucher au monde chargé ici.
+			m_editorBaselinePropCount = m_props.size();
+
+			engine::gameplay::CharacterController::Config ccCfg{};
+			ccCfg.walkSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.walk_speed",      5.0));
+			ccCfg.runSpeed      = static_cast<float>(m_cfg.GetDouble("player.movement.run_speed",       9.0));
+			ccCfg.gravity       = static_cast<float>(m_cfg.GetDouble("player.movement.gravity",       -20.0));
+			ccCfg.jumpSpeed     = static_cast<float>(m_cfg.GetDouble("player.movement.jump_speed",      9.0));
+			ccCfg.coyoteTimeSec = static_cast<float>(m_cfg.GetDouble("player.movement.coyote_time_s",   0.1));
+			ccCfg.jumpBufferSec = static_cast<float>(m_cfg.GetDouble("player.movement.jump_buffer_s",   0.1));
+			ccCfg.capsule.radius = 0.3f;
+			ccCfg.capsule.height = 1.8f;
+			m_characterController = engine::gameplay::CharacterController(ccCfg);
+
+			// Spawn au centre map (XZ = 0,0), pose au-dessus du sol echantillonne
+			// + halfHeight de capsule pour que le bas de la capsule effleure le sol.
+			// Monde en cellules : point d'arrivée du boot (repère de rendu).
+			const float spawnX = m_cellWorld ? m_renderFrame.ToRenderX(m_cellBootGlobalX) : 0.0f;
+			const float spawnZ = m_cellWorld ? m_renderFrame.ToRenderZ(m_cellBootGlobalZ) : 0.0f;
+			const float spawnY = m_terrainCollider.GroundHeightAt(spawnX, spawnZ) + 0.9f;
+			m_characterController.Init(engine::math::Vec3{ spawnX, spawnY, spawnZ });
+			LOG_INFO(Render,
+				"[Engine] B.1 CharacterController spawn=({:.2f}, {:.2f}, {:.2f}) capsule r={:.2f} h={:.2f}",
+				spawnX, spawnY, spawnZ, ccCfg.capsule.radius, ccCfg.capsule.height);
+		}
+	}
+
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordPresentFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
+		VkImage srcImg = reg.getImage(srcId);
+		VkImage dstImg = reg.getImage(m_fgBackbufferId);
+		if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+		VkExtent2D ext = m_vkSwapchain.GetExtent();
+		bool authPhotoBackdrop = false;
+		const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
+		if (presentSolidColorDebug)
+		{
+			LOG_DEBUG(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
+			const VkClearColorValue debugColor = { { 0.9f, 0.0f, 0.9f, 1.0f } };
+			VkImageSubresourceRange clearRange{};
+			clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			clearRange.baseMipLevel = 0;
+			clearRange.levelCount = 1;
+			clearRange.baseArrayLayer = 0;
+			clearRange.layerCount = 1;
+			vkCmdClearColorImage(cmd, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &debugColor, 1, &clearRange);
+			LOG_DEBUG(Render, "[CopyPresent] debug clear color applied");
+		}
+		else
+		{
+			LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage begin");
+			// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
+			// with vkCmdBlitImage here even when source and destination extents match.
+			VkImageCopy region{};
+			region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+			region.srcOffset = { 0, 0, 0 };
+			region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+			region.dstOffset = { 0, 0, 0 };
+			region.extent = { ext.width, ext.height, 1 };
+			vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage done");
+		}
+		const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
+		const bool authBgBlitWanted = authVisualState.active && m_authUiBackgroundTexture.IsValid()
+			&& m_cfg.GetBool("render.auth_ui.background_blit.enabled", true) && !presentSolidColorDebug;
+		if (authBgBlitWanted)
+		{
+			engine::render::TextureAsset* bgTex = m_authUiBackgroundTexture.Get();
+			if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
+			{
+				const AuthBackgroundBlitFit authBgFit = ParseAuthBackgroundBlitFit(
+					m_cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
+				static bool s_authBgBlitLogOnce = false;
+				if (!s_authBgBlitLogOnce)
+				{
+					s_authBgBlitLogOnce = true;
+					const char* fitName = "cover_height";
+					switch (authBgFit)
+					{
+					case AuthBackgroundBlitFit::Stretch:
+						fitName = "stretch";
+						break;
+					case AuthBackgroundBlitFit::Contain:
+						fitName = "contain";
+						break;
+					case AuthBackgroundBlitFit::Cover:
+						fitName = "cover";
+						break;
+					case AuthBackgroundBlitFit::CoverHeight:
+					default:
+						fitName = "cover_height";
+						break;
+					}
+					LOG_INFO(Render,
+						"[CopyPresent] auth fond: blit {}x{} -> {}x{} fit={} (log unique; blit chaque frame)",
+						bgTex->width,
+						bgTex->height,
+						ext.width,
+						ext.height,
+						fitName);
+				}
+				VkImageMemoryBarrier bgSrc{};
+				bgSrc.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				bgSrc.srcAccessMask = m_authUiBackgroundLayoutReady ? VK_ACCESS_TRANSFER_READ_BIT : 0;
+				bgSrc.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				bgSrc.oldLayout = m_authUiBackgroundLayoutReady ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PREINITIALIZED;
+				bgSrc.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				bgSrc.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bgSrc.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bgSrc.image = bgTex->image;
+				bgSrc.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				const VkPipelineStageFlags bgSrcStages = m_authUiBackgroundLayoutReady ? VK_PIPELINE_STAGE_TRANSFER_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				vkCmdPipelineBarrier(cmd, bgSrcStages, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &bgSrc);
+				VkImageBlit blit{};
+				BuildAuthBackgroundBlit(authBgFit, bgTex->width, bgTex->height, ext.width, ext.height, blit);
+				vkCmdBlitImage(cmd, bgTex->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+				m_authUiBackgroundLayoutReady = true;
+				authPhotoBackdrop = true;
+			}
+		}
+		const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
+		const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
+
+		bool renderedAuthUi = false;
+		const bool authImguiSkipsVkOverlay = m_authImGui != nullptr
+			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
+		if (authVisualState.active
+			&& authUiDynamicRenderingEnabled
+			&& !authImguiSkipsVkOverlay
+			&& backbufferView != VK_NULL_HANDLE
+			&& m_vkDeviceContext.SupportsDynamicRendering())
+		{
+			LOG_DEBUG(Render, "[CopyPresent] auth overlay enabled; building model");
+			const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
+			LOG_DEBUG(Render, "[CopyPresent] auth render model built; loading theme");
+			const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
+			LOG_DEBUG(Render, "[CopyPresent] auth theme loaded; issuing barriers");
+			VkImageMemoryBarrier toColor{};
+			toColor.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			toColor.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			toColor.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			toColor.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			toColor.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			toColor.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			toColor.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			toColor.image = dstImg;
+			toColor.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			vkCmdPipelineBarrier(cmd,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				0, 0, nullptr, 0, nullptr, 1, &toColor);
+
+			LOG_DEBUG(Render, "[CopyPresent] begin rendering attachment");
+			// IMPORTANT: If we end up calling the KHR entrypoints, we must pass the KHR
+			// structs/sType values (some drivers crash if you mix core structs with KHR fns).
+			VkRenderingAttachmentInfo colorAttachment{};
+			colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+			colorAttachment.imageView = backbufferView;
+			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colorAttachment.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+
+			VkRenderingAttachmentInfoKHR colorAttachmentKHR{};
+			colorAttachmentKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+			colorAttachmentKHR.imageView = backbufferView;
+			colorAttachmentKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colorAttachmentKHR.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachmentKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachmentKHR.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+			LOG_DEBUG(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
+
+			VkRenderingInfo renderingInfo{};
+			renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+			renderingInfo.renderArea.offset = { 0, 0 };
+			renderingInfo.renderArea.extent = ext;
+			renderingInfo.layerCount = 1;
+			renderingInfo.colorAttachmentCount = 1;
+			renderingInfo.pColorAttachments = &colorAttachment;
+
+			VkRenderingInfoKHR renderingInfoKHR{};
+			renderingInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+			renderingInfoKHR.renderArea.offset = { 0, 0 };
+			renderingInfoKHR.renderArea.extent = ext;
+			renderingInfoKHR.layerCount = 1;
+			renderingInfoKHR.colorAttachmentCount = 1;
+			renderingInfoKHR.pColorAttachments = &colorAttachmentKHR;
+			LOG_INFO(Render,
+				"[CopyPresent] renderingInfo renderArea.extent width={} height={}",
+				ext.width,
+				ext.height);
+			LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
+
+			// Pointeurs résolus à la création du device (VkDeviceContext) — évite les nullptr
+			// du loader et les incohérences avec une instance Vulkan < 1.3.
+			const PFN_vkCmdBeginRendering pfnBeginCore = m_vkDeviceContext.GetCmdBeginRenderingCore();
+			const PFN_vkCmdEndRendering pfnEndCoreStored = m_vkDeviceContext.GetCmdEndRenderingCore();
+			const PFN_vkCmdBeginRenderingKHR pfnBeginKHR = m_vkDeviceContext.GetCmdBeginRenderingKHR();
+			const PFN_vkCmdEndRenderingKHR pfnEndKHRStored = m_vkDeviceContext.GetCmdEndRenderingKHR();
+			LOG_INFO(Render,
+				"[CopyPresent] proc addresses (device ctx): beginCore={} endCore={} beginKHR={} endKHR={}",
+				(void*)pfnBeginCore, (void*)pfnEndCoreStored, (void*)pfnBeginKHR, (void*)pfnEndKHRStored);
+
+			bool didBeginRendering = false;
+			bool beganWithKHR = false;
+			PFN_vkCmdEndRendering pfnEndCore = nullptr;
+			PFN_vkCmdEndRenderingKHR pfnEndKHR = nullptr;
+			// Préférer KHR si les deux paires sont présentes (certains loaders / ICD).
+			if (pfnBeginKHR && pfnEndKHRStored)
+			{
+				pfnBeginKHR(cmd, &renderingInfoKHR);
+				didBeginRendering = true;
+				beganWithKHR = true;
+				pfnEndKHR = pfnEndKHRStored;
+			}
+			else if (pfnBeginCore && pfnEndCoreStored)
+			{
+				pfnBeginCore(cmd, &renderingInfo);
+				didBeginRendering = true;
+				beganWithKHR = false;
+				pfnEndCore = pfnEndCoreStored;
+			}
+			else
+			{
+				LOG_ERROR(Render, "[CopyPresent] dynamic rendering entrypoints not found; skipping auth UI overlay");
+			}
+
+			if (!didBeginRendering)
+			{
+				// No active rendering: do not clear attachments / do not end rendering.
+			}
+			else
+			{
+				LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering returned");
+
+				LOG_DEBUG(Render, "[CopyPresent] building UI layers");
+				const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
+				const std::vector<engine::render::AuthUiLayer> layers =
+					engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay, authPhotoBackdrop);
+				LOG_DEBUG(Render, "[CopyPresent] UI layers built; clearing attachments");
+				for (const engine::render::AuthUiLayer& layer : layers)
+				{
+					VkClearAttachment clearAttachment{};
+					clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					clearAttachment.colorAttachment = 0;
+					clearAttachment.clearValue.color = layer.color;
+					vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
+				}
+				LOG_DEBUG(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
+				// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
+				// Logo statut : affiche pendant la requete HTTP (spin) ET ensuite, des qu'un
+				// resultat de sonde est connu, pour montrer success/error. Sans cette seconde
+				// condition, l'utilisateur perd tout retour visuel quand le master est down.
+				const bool showAuthStatusLogo = authVisualState.login
+					&& (authVisualState.authLogoSpin || authVisualState.authStatusKnown);
+				if (m_authLogoPass.IsValid() && showAuthStatusLogo)
+				{
+					engine::render::TextureAsset* logoTex = nullptr;
+					if (authVisualState.authLogoSpin && m_authLogoTexture.IsValid())
+					{
+						logoTex = m_authLogoTexture.Get();
+					}
+					else if (authVisualState.authStatusKnown && authVisualState.authStatusOk
+						&& m_authLogoSuccessTexture.IsValid())
+					{
+						logoTex = m_authLogoSuccessTexture.Get();
+					}
+					else if (authVisualState.authStatusKnown && !authVisualState.authStatusOk
+						&& m_authLogoErrorTexture.IsValid())
+					{
+						logoTex = m_authLogoErrorTexture.Get();
+					}
+					else if (m_authLogoTexture.IsValid())
+					{
+						logoTex = m_authLogoTexture.Get();
+					}
+					if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)
+					{
+						const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
+						const float margin =
+							static_cast<float>(engine::render::kAuthUiStatusLogoCornerMarginPx);
+						const float cx = margin + half;
+						// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
+						// alors que le rendu actuel le place en bas-gauche.
+						const float cy = static_cast<float>(ext.height) - (margin + half);
+						// L’orientation 180° est appliquée dans AuthLogoPass ; ici uniquement l’angle de spin chargement.
+						const float spin = authVisualState.authLogoSpin ? m_authUi.GetAuthLogoRotationRadians() : 0.f;
+						m_authLogoPass.Record(
+							m_vkDeviceContext.GetDevice(),
+							cmd,
+							ext,
+							logoTex->image,
+							logoTex->view,
+							m_authLogoImageLayoutReady,
+							cx,
+							cy,
+							half,
+							spin);
+					}
+				}
+				{
+					const std::vector<engine::render::AuthFieldInfoIconLayout> infoLayouts =
+						engine::render::BuildAuthFieldInfoIconLayouts(ext, authVisualState, authRenderModel);
+					for (const engine::render::AuthFieldInfoIconLayout& iconLay : infoLayouts)
+					{
+						if (!iconLay.valid)
+						{
+							continue;
+						}
+						engine::render::TextureHandle& infoTex = authVisualState.registerMode
+							? m_authUiInfoRegisterTexture
+							: m_authUiInfoLoginTexture;
+						bool& infoLayoutReady = authVisualState.registerMode
+							? m_authUiInfoRegisterLayoutReady
+							: m_authUiInfoLoginLayoutReady;
+						engine::render::TextureAsset* it = infoTex.Get();
+						if (!it || it->image == VK_NULL_HANDLE || it->view == VK_NULL_HANDLE)
+						{
+							continue;
+						}
+						m_authLogoPass.Record(
+							m_vkDeviceContext.GetDevice(),
+							cmd,
+							ext,
+							it->image,
+							it->view,
+							infoLayoutReady,
+							iconLay.centerXPx,
+							iconLay.centerYPx,
+							iconLay.halfExtentPx,
+							0.f,
+							0.f);
+					}
+				}
+				{
+					if (authRenderModel.languageFirstRunLayout && m_authLogoPass.IsValid())
+					{
+						const engine::render::AuthUiLayoutMetrics layLang =
+							engine::render::BuildAuthUiLayoutMetrics(ext, authVisualState, authRenderModel);
+						for (int32_t ci = 0; ci < layLang.languageCardCount; ++ci)
+						{
+							if (static_cast<size_t>(ci) >= authRenderModel.languageFirstRunCards.size())
+							{
+								break;
+							}
+							const std::string& tag =
+								authRenderModel.languageFirstRunCards[static_cast<size_t>(ci)].localeTag;
+							engine::render::TextureAsset* flagTex = nullptr;
+							bool* flagLayoutReady = nullptr;
+							if (tag == "fr")
+							{
+								flagTex = m_authFlagFrTexture.Get();
+								flagLayoutReady = &m_authFlagFrLayoutReady;
+							}
+							else if (tag == "en")
+							{
+								flagTex = m_authFlagEnTexture.Get();
+								flagLayoutReady = &m_authFlagEnLayoutReady;
+							}
+							if (flagTex == nullptr || flagTex->image == VK_NULL_HANDLE || flagTex->view == VK_NULL_HANDLE
+								|| flagLayoutReady == nullptr)
+							{
+								continue;
+							}
+							m_authLogoPass.Record(
+								m_vkDeviceContext.GetDevice(),
+								cmd,
+								ext,
+								flagTex->image,
+								flagTex->view,
+								*flagLayoutReady,
+								static_cast<float>(layLang.languageFlagCenterX[ci]),
+								static_cast<float>(layLang.languageFlagCenterY[ci]),
+								static_cast<float>(layLang.languageFlagHalfExtentPx[ci]),
+								0.f,
+								0.f);
+						}
+					}
+				}
+				if (m_authGlyphPass.IsValid())
+				{
+					m_authGlyphPass.RecordModel(
+						m_vkDeviceContext.GetDevice(),
+						cmd,
+						ext,
+						authVisualState,
+						authRenderModel,
+						authTheme);
+				}
+
+				if (beganWithKHR && pfnEndKHR)
+					pfnEndKHR(cmd);
+				else if (!beganWithKHR && pfnEndCore)
+					pfnEndCore(cmd);
+				LOG_DEBUG(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
+
+				VkImageMemoryBarrier toPresent{};
+				toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				toPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				toPresent.dstAccessMask = 0;
+				toPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				toPresent.image = dstImg;
+				toPresent.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &toPresent);
+				renderedAuthUi = true;
+			}
+		}
+
+		if (!renderedAuthUi)
+		{
+			if (authVisualState.active && !authUiDynamicRenderingEnabled)
+				LOG_DEBUG(Render, "[CopyPresent] auth dynamic rendering disabled by config; using present-only path");
+			if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
+				LOG_DEBUG(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
+
+			bool worldEditorUiToPresent = false;
+#if defined(_WIN32)
+			// Phase 3.11.1 — RecordToBackbuffer fire aussi quand le panneau chat est actif post-auth
+			// (le draw list ImGui contient alors la fenêtre chat émise par ChatImGuiRenderer).
+			// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE.
+			// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
+			// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
+			const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
+				&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
+				&& !m_worldEditorExe
+				&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
+			// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
+			const bool editorHubActive = HasEditorHubImGui() && m_editorEnabled && !m_worldEditorExe;
+			if (m_imguiOverlay && m_imguiOverlay->IsReady()
+				&& (m_worldEditorExe
+					|| (m_authImGui && authVisualState.active
+						&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false))
+					|| chatImguiActive
+					|| editorHubActive)
+				&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
+				&& !presentSolidColorDebug)
+			{
+				worldEditorUiToPresent = m_imguiOverlay->RecordToBackbuffer(
+					cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
+			}
+#endif
+			if (!worldEditorUiToPresent)
+			{
+				VkImageMemoryBarrier barrier{};
+				barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				barrier.dstAccessMask = 0;
+				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.image = dstImg;
+				barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &barrier);
+			}
+		}
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordTaaFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		// Bootstrap the history on first use, even if Update() already cleared
+		// m_taaHistoryInvalid for this frame.
+		if (!m_taaHistoryEverFilled || m_taaHistoryInvalid)
+		{
+			VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
+			if (srcImg != VK_NULL_HANDLE)
+			{
+				VkExtent2D ext = m_vkSwapchain.GetExtent();
+				VkImageCopy region{};
+				region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+				region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+				region.extent        = { ext.width, ext.height, 1 };
+
+				// Helper: COLOR_ATTACHMENT_OPTIMAL -> TRANSFER_DST_OPTIMAL
+			auto toTransferDst = [&](VkImage img) {
+				VkImageMemoryBarrier bar{};
+				bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				bar.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				bar.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				bar.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				bar.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.image = img;
+				bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &bar);
+			};
+			// Helper: TRANSFER_DST_OPTIMAL -> COLOR_ATTACHMENT_OPTIMAL
+			auto toColorAttachment = [&](VkImage img) {
+				VkImageMemoryBarrier bar{};
+				bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				bar.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				bar.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar.image = img;
+				bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				vkCmdPipelineBarrier(cmd,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					0, 0, nullptr, 0, nullptr, 1, &bar);
+			};
+
+			if (!m_taaHistoryEverFilled)
+			{
+				VkImage dstA = reg.getImage(m_fgHistoryAId);
+				VkImage dstB = reg.getImage(m_fgHistoryBId);
+				if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
+				{
+					toTransferDst(dstA);
+					toTransferDst(dstB);
+					vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					               dstA,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					               1, &region);
+					vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					               1, &region);
+					toColorAttachment(dstA);
+					toColorAttachment(dstB);
+					m_taaHistoryEverFilled = true;
+					m_taaHistoryInvalid = false;
+					return;
+				}
+			}
+			else
+			{
+				engine::render::ResourceId nextId = GetTaaHistoryNextId();
+				VkImage dstNext = reg.getImage(nextId);
+				if (dstNext != VK_NULL_HANDLE)
+				{
+					toTransferDst(dstNext);
+					vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					               1, &region);
+					toColorAttachment(dstNext);
+					m_taaHistoryInvalid = false;
+					return;
+				}
+			}
+			}
+		}
+
+		if (!m_pipeline->GetTaaPass().IsValid()) return;
+		engine::render::TaaPass::TaaParams tp{};
+		tp.alpha = 0.9f; tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
+		const uint32_t frameIdx = m_currentFrame % 2u;
+		m_pipeline->GetTaaPass().Record(
+			m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+			m_fgSceneColorLDRId,
+			GetTaaHistoryPrevId(),
+			m_fgGBufferVelocityId,
+			m_fgDepthId,
+			GetTaaHistoryNextId(),
+			tp,
+			frameIdx);
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordCloudsFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		if (!m_pipeline->GetCloudPass().IsValid()) return;
+		const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+		engine::render::CloudParams target =
+			engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+		engine::render::CloudParams current =
+			engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+		engine::render::CloudParams cp =
+			engine::render::CloudParams::Lerp(current, target, m_weatherSystem.GetIntensity());
+
+		// Surcharges LIVE (config.json, sans rebuild) pour le réglage visuel :
+		// échelle de couverture/densité + altitude/épaisseur de la couche.
+		float cloudCoverage = cp.coverage * static_cast<float>(m_cfg.GetDouble("render.clouds.coverage_scale", 1.0));
+		cloudCoverage = cloudCoverage < 0.0f ? 0.0f : (cloudCoverage > 1.0f ? 1.0f : cloudCoverage);
+		float cloudDensityV = cp.density * static_cast<float>(m_cfg.GetDouble("render.clouds.density_scale", 1.0));
+		if (cloudDensityV < 0.0f) cloudDensityV = 0.0f;
+		const double baseAltCfg = m_cfg.GetDouble("render.clouds.base_altitude_m", 0.0); // 0 = auto (météo)
+		const double thickCfg   = m_cfg.GetDouble("render.clouds.thickness_m", 0.0);     // 0 = auto
+		float cloudBaseAlt = baseAltCfg > 0.0 ? static_cast<float>(baseAltCfg) : cp.baseAltMeters;
+		float cloudTopAlt  = thickCfg   > 0.0 ? (cloudBaseAlt + static_cast<float>(thickCfg)) : cp.topAltMeters;
+		if (cloudTopAlt <= cloudBaseAlt) cloudTopAlt = cloudBaseAlt + 100.0f;
+
+		engine::render::CloudPass::CloudPushConstants pc{};
+		// invViewProj + cameraPos. On utilise la matrice NON-jitterée
+		// (viewProjMatrixUnjittered) : le raymarch nuages doit être stable
+		// temporellement, sinon le jitter TAA fait scintiller les nuages
+		// (haute fréquence, non reprojetables faute de vecteurs de mouvement).
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::RenderState& rs = m_renderStates[readIdx];
+		const float* vp = rs.viewProjMatrixUnjittered.m;
+		const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+		const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+		const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+		const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+		const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+		const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+		const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+		const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+		const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+		if (det > 1e-7f || det < -1e-7f)
+		{
+			const float inv = 1.0f / det;
+			pc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+			pc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+			pc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+			pc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+			pc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+			pc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+			pc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+			pc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+			pc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+			pc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+			pc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+			pc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+			pc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+			pc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+			pc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+			pc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+		}
+		pc.cameraPos[0] = rs.camera.position.x;
+		pc.cameraPos[1] = rs.camera.position.y;
+		pc.cameraPos[2] = rs.camera.position.z;
+		// w = temps réel cumulé (s) : advection des nuages par le vent.
+		pc.cameraPos[3] = m_cloudTimeSeconds;
+
+		for (int i = 0; i < 3; ++i)
+		{
+			pc.sunDir[i]       = dn.lightDir[i];
+			pc.sunColor[i]     = dn.lightColor[i];
+			const float tint   = (i == 0 ? cp.tintR : (i == 1 ? cp.tintG : cp.tintB));
+			pc.zenithColor[i]  = dn.skyZenith[i]  * tint;
+			pc.horizonColor[i] = dn.skyHorizon[i] * tint;
+		}
+		pc.sunDir[3]       = cloudCoverage;
+		pc.sunColor[3]     = cloudDensityV;
+		pc.zenithColor[3]  = cloudBaseAlt;
+		pc.horizonColor[3] = cloudTopAlt;
+
+		pc.windParams[0] = 1.0f;
+		pc.windParams[1] = 0.3f;
+		pc.windParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.wind_scale", 6.0));
+		pc.windParams[3] = 0.2f;
+
+		pc.stepParams[0] = static_cast<float>(m_cfg.GetInt("render.clouds.raymarch_steps", 64));
+		pc.stepParams[1] = static_cast<float>(m_cfg.GetInt("render.clouds.light_steps", 6));
+		pc.stepParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_distance_meters", 60000.0));
+		pc.stepParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.ambient_strength", 0.4));
+
+		// Phase 2 — force des ombres de nuages au sol (0 = désactivé).
+		pc.shadowParams[0] = static_cast<float>(m_cfg.GetDouble("render.clouds.shadow_strength", 0.5));
+		// y = plafond de luminosité des nuages (anti-blowout vers le soleil) ; 0 = off.
+		pc.shadowParams[1] = static_cast<float>(m_cfg.GetDouble("render.clouds.max_luminance", 1.3));
+		// z = distance (m) de début d'estompage des nuages lointains (perspective
+		// aérienne) ; évite le mur blanc à l'horizon. 0 = désactivé.
+		pc.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("render.clouds.fade_distance_m", 2500.0));
+		// w = tuile (m) de la weather map 2D de couverture (chantier
+		// weather map 2026-07-20) : fronts nuageux par position monde.
+		// <= 1 = carte neutre (bascule de secours sans rebuild).
+		pc.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("render.clouds.weather_tile_m", 40000.0));
+
+		// Extent réduit — même calcul que FrameGraph pour Clouds_Half
+		// (shift + clamp à 1) afin que viewport == framebuffer.
+		const VkExtent2D fullExt = m_vkSwapchain.GetExtent();
+		VkExtent2D scaledExt{
+			fullExt.width  >> m_cloudsExtentPower,
+			fullExt.height >> m_cloudsExtentPower };
+		if (scaledExt.width  < 1u) scaledExt.width  = 1u;
+		if (scaledExt.height < 1u) scaledExt.height = 1u;
+		m_pipeline->GetCloudPass().RecordMarch(
+			m_vkDeviceContext.GetDevice(), cmd, reg, scaledExt,
+			m_fgDepthId, m_fgCloudsHalfId, pc, m_currentFrame % 2);
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordVolumetricFogFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		if (!m_pipeline->GetVolumetricFogPass().IsValid()) return;
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::RenderState& rs = m_renderStates[readIdx];
+		engine::render::VolumetricFogPass::FogParams fp{};
+		// invViewProj = inverse de rs.viewProjMatrix (meme routine que Lighting).
+		const float* vp = rs.viewProjMatrix.m;
+		const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+		const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+		const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+		const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+		const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+		const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+		const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+		const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+		const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+		if (det > 1e-7f || det < -1e-7f)
+		{
+			const float inv = 1.0f / det;
+			fp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+			fp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+			fp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+			fp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+			fp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+			fp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+			fp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+			fp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+			fp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+			fp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+			fp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+			fp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+			fp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+			fp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+			fp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+			fp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+		}
+		// sunViewProj = lightViewProj de la cascade 0.
+		std::memcpy(fp.sunViewProj, rs.cascades.lightViewProj[0].m, sizeof(float) * 16);
+		fp.cameraPos[0] = rs.camera.position.x;
+		fp.cameraPos[1] = rs.camera.position.y;
+		fp.cameraPos[2] = rs.camera.position.z;
+		// densite fog (defaut 0 = desactive ; gating runtime dans le shader).
+		fp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.density", 0.0));
+		// direction VERS le soleil (normalisee).
+		{
+			float sx = m_zoneAtmosphere.sunDirection[0];
+			float sy = m_zoneAtmosphere.sunDirection[1];
+			float sz = m_zoneAtmosphere.sunDirection[2];
+			float sl = std::sqrt(sx*sx + sy*sy + sz*sz);
+			if (sl > 1e-6f) { sx /= sl; sy /= sl; sz /= sl; }
+			fp.sunDir[0] = sx; fp.sunDir[1] = sy; fp.sunDir[2] = sz;
+		}
+		fp.sunDir[3]   = static_cast<float>(m_cfg.GetDouble("world.volfog.anisotropy", 0.6));
+		fp.sunColor[0] = m_zoneAtmosphere.sunColor[0];
+		fp.sunColor[1] = m_zoneAtmosphere.sunColor[1];
+		fp.sunColor[2] = m_zoneAtmosphere.sunColor[2];
+		fp.sunColor[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.inscatter", 1.0));
+		fp.fogParams[0] = static_cast<float>(m_cfg.GetDouble("world.volfog.steps", 32.0));
+		fp.fogParams[1] = static_cast<float>(m_cfg.GetDouble("world.volfog.max_dist_m", 120.0));
+		fp.fogParams[2] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_m", 10.0));
+		fp.fogParams[3] = static_cast<float>(m_cfg.GetDouble("world.volfog.height_falloff", 0.1));
+		m_pipeline->GetVolumetricFogPass().Record(
+			m_vkDeviceContext.GetDevice(), cmd, reg,
+			m_vkSwapchain.GetExtent(),
+			m_fgSceneColorHDRPostWaterId, m_fgDepthId, m_fgShadowMapIds[0],
+			m_fgSceneColorFoggedId, fp, m_currentFrame % 2);
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordWaterFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		const engine::world::water::WaterScene* scene = nullptr;
+		bool editorWaterDirty = false; // seule la scène sert ici
+		if (!(m_worldEditorExe && TryGetEditorWaterScene(scene, editorWaterDirty)) && m_clientWaterScene)
+			scene = m_clientWaterScene.get();
+		if (!scene || !m_waterMeshGpu.IsValid()) return;
+
+		VkImage src = reg.getImage(m_fgSceneColorHDRId);
+		VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
+		if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+
+		// (1) Copie SceneColor (SHADER_READ) -> PostWater (COLOR_ATTACHMENT).
+		//     On passe les deux en layouts transfer, on copie, on restaure.
+		auto barrier = [&](VkImage img, VkImageLayout oldL, VkImageLayout newL,
+		                   VkAccessFlags srcA, VkAccessFlags dstA,
+		                   VkPipelineStageFlags srcS, VkPipelineStageFlags dstS) {
+			VkImageMemoryBarrier bar{};
+			bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			bar.srcAccessMask = srcA;
+			bar.dstAccessMask = dstA;
+			bar.oldLayout = oldL;
+			bar.newLayout = newL;
+			bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			bar.image = img;
+			bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+			vkCmdPipelineBarrier(cmd, srcS, dstS, 0, 0, nullptr, 0, nullptr, 1, &bar);
+		};
+
+		barrier(src, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		        VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+		        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+		barrier(dst, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
+		        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		VkImageCopy copy{};
+		copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy.srcSubresource.layerCount = 1;
+		copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy.dstSubresource.layerCount = 1;
+		VkExtent2D ext = m_vkSwapchain.GetExtent();
+		copy.extent = { ext.width, ext.height, 1 };
+		vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+		// Restaure : SceneColor -> SHADER_READ (lu par le shader eau),
+		//            PostWater  -> COLOR_ATTACHMENT (cible du renderpass LOAD).
+		barrier(src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		        VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
+		        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		barrier(dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		        VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+		// (2) Dessine l'eau PAR-DESSUS la scene copiee (loadOp=LOAD).
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::RenderState& rs = m_renderStates[readIdx];
+
+		engine::render::WaterPassPushConstants base{};
+		std::memcpy(base.viewProj, rs.viewProjMatrix.m, sizeof(float) * 16);
+		base.cameraPos[0] = rs.camera.position.x;
+		base.cameraPos[1] = rs.camera.position.y;
+		base.cameraPos[2] = rs.camera.position.z;
+		// TODO(M100.x): vraie source de temps wall-clock. Note : perte de précision
+		// float après ~78h (uint32_t > 2^24 = 16.7 M frames @ 60Hz).
+		base.timeSeconds   = static_cast<float>(m_currentFrame) / 60.0f;
+		base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
+		base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
+
+		// EAU.3 — l'eau reflète le vrai ciel (capturé + préfiltré,
+		// suit l'heure et la météo) au lieu du cubemap uni de repli.
+		if (m_pipeline && m_pipeline->GetSpecularPrefilterPass().IsValid())
+			m_waterPass.SetSkyboxCube(m_pipeline->GetSpecularPrefilterPass().GetImageView(),
+				m_pipeline->GetSpecularPrefilterPass().GetSampler());
+		const uint32_t frameIdx = m_currentFrame % 2;
+		m_waterPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+			m_fgSceneColorHDRId, m_fgDepthId, m_fgSceneColorHDRPostWaterId,
+			m_waterMeshGpu, base, *scene, frameIdx);
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordLightingFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		if (!m_pipeline->GetLightingPass().IsValid()) return;
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::RenderState& rs = m_renderStates[readIdx];
+		engine::render::LightingPass::LightParams lp{};
+		const float* vp = rs.viewProjMatrix.m;
+		const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+		const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+		const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+		const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+		const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+		const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+		const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+		const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+		const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+		if (det > 1e-7f || det < -1e-7f)
+		{
+			const float inv = 1.0f / det;
+			lp.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+			lp.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+			lp.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+			lp.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+			lp.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+			lp.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+			lp.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+			lp.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+			lp.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+			lp.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+			lp.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+			lp.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+			lp.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+			lp.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+			lp.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+			lp.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+		}
+		lp.cameraPos[0] = rs.camera.position.x;
+		lp.cameraPos[1] = rs.camera.position.y;
+		lp.cameraPos[2] = rs.camera.position.z;
+		// Brouillard atmospherique LINEAIRE a distance. fogStart (cameraPos.w) :
+		// rayon CLAIR autour du joueur ; fogEnd (lightDir.w) : distance ou tout
+		// est fondu vers l'horizon. Le joueur n'est plus noye dans le brouillard.
+		// Regler fogEnd ~ world.props.cull_distance_m pour que les arbres se
+		// fondent dans le ciel juste avant d'etre cull. Desactive si end<=start.
+		// Slots .w libres -> pas de redimensionnement de LightParams. Lu chaque
+		// frame (reglage a chaud via config.json).
+		lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
+		lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
+		lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
+		lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2];
+		// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
+		// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).
+		lp.lightColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.density", static_cast<double>(m_zoneAtmosphere.aerialDensity)));
+		const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
+		lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
+		lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
+		lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
+		// M45.1 — force d'inscattering directionnel (slot ambientColor.w).
+		// Override config.json (world.fog.inscatter) sinon valeur per-zone.
+		lp.ambientColor[3] = static_cast<float>(m_cfg.GetDouble("world.fog.inscatter", static_cast<double>(m_zoneAtmosphere.aerialInscatter)));
+
+		// Nuages (Phase 3) — assombrissement "ciel couvert" : module le
+		// soleil directionnel / l'ambiant selon la couverture nuageuse
+		// courante (dérivée du WeatherSystem, même source que CloudPass).
+		// Modulation scalaire pure (aucun changement de pipeline/descriptor) ;
+		// couplée au flag nuages, désactivable via overcast_strength = 0.
+		if (m_cfg.GetBool("render.clouds.enabled", true))
+		{
+			const float overcastStrength = static_cast<float>(m_cfg.GetDouble("render.clouds.overcast_strength", 0.6));
+			engine::render::CloudParams ocCur = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetCurrentState());
+			engine::render::CloudParams ocTgt = engine::render::CloudWeatherMapper::ParamsFor(m_weatherSystem.GetTargetState());
+			engine::render::CloudParams ocp   = engine::render::CloudParams::Lerp(ocCur, ocTgt, m_weatherSystem.GetIntensity());
+			float overcast = ocp.coverage * (ocp.density * 0.5f) * overcastStrength;
+			overcast = overcast < 0.0f ? 0.0f : (overcast > 1.0f ? 1.0f : overcast);
+			const float sunFactor = 1.0f - 0.7f * overcast; // soleil atténué (jusqu'à -70%)
+			const float ambFactor = 1.0f + 0.4f * overcast; // ambiant diffus renforcé
+			for (int i = 0; i < 3; ++i)
+			{
+				lp.lightColor[i]   *= sunFactor;
+				lp.ambientColor[i] *= ambFactor;
+			}
+		}
+		// v1.0.118 — zone d'ambiance locale (fond du gouffre, zone.json
+		// world.ambiance_zones) : soleil presque éteint, ambiant réduit ;
+		// les torches (point lights) éclairent alors le fond.
+		if (rs.ambianceDarkness > 0.0f)
+		{
+			const float dk = std::clamp(rs.ambianceDarkness, 0.0f, 1.0f);
+			const float sunK = 1.0f - 0.92f * dk;
+			const float ambK = 1.0f - 0.75f * dk;
+			for (int i = 0; i < 3; ++i)
+			{
+				lp.lightColor[i]   *= sunK;
+				lp.ambientColor[i] *= ambK;
+			}
+		}
+		// Couleur du ciel utilisée par lighting.frag pour les pixels
+		// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
+		// rendre le cycle jour/nuit visible sans skybox dédié.
+		// Phase 5 Lunar (PR #561 fix Concern 3) : skyColor.w sert de
+		// flag "SkyPass ready". Quand m_skyPassReady=true, le SkyPass
+		// a ecrit la sky procedurale (gradient + sun glow + moon disk
+		// avec phase) dans GBufferA pour les pixels depth==1.0 ;
+		// lighting.frag lit alors GBufferA. Sinon (SkyPass.Init failed
+		// ou shaders absents) on tombe sur la flat skyColor pour
+		// preserver le rendu jour/nuit.
+		{
+			const engine::render::DayNightCycle::State& dnLight = m_dayNight.GetState();
+			lp.skyColor[0] = dnLight.skyHorizon[0];
+			lp.skyColor[1] = dnLight.skyHorizon[1];
+			lp.skyColor[2] = dnLight.skyHorizon[2];
+			lp.skyColor[3] = m_skyPassReady ? 1.0f : 0.0f;
+			// Chantier perspective aérienne 2026-07-20 — quand le ciel
+			// analytique est actif (même clé que sky.frag), la teinte de
+			// la perspective aérienne est évaluée par lighting.frag DANS
+			// la direction du rayon (fond de ciel analytique) au lieu de
+			// la couleur d'horizon legacy uniforme ci-dessus.
+			lp.aerialSkyModel =
+				m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
+		}
+		VkImageView irrView       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetImageView() : VK_NULL_HANDLE;
+		VkSampler   irrSamp       = m_pipeline->GetIrradiancePass().IsValid() ? m_pipeline->GetIrradiancePass().GetSampler()   : VK_NULL_HANDLE;
+		VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;
+		VkSampler   prefilterSamp = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetSampler()    : VK_NULL_HANDLE;
+		VkImageView brdfView      = m_pipeline->GetBrdfLutPass().GetImageView();
+		VkSampler   brdfSamp      = m_pipeline->GetBrdfLutPass().GetSampler();
+		lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
+
+		// M45.7 — DDGI dynamique. Par défaut (m_ddgiEnabled=false ou volume
+		// non alloué) : useDdgi reste 0 et la vue DDGI reste VK_NULL_HANDLE
+		// (LightingPass lie alors un fallback valide mais non lu) => rendu
+		// strictement identique au chemin probes statiques.
+		VkImageView ddgiView = VK_NULL_HANDLE;
+		VkSampler   ddgiSamp = VK_NULL_HANDLE;
+		if (m_ddgiEnabled && m_ddgiVolume.IsAllocated())
+		{
+			lp.useDdgi = 1.0f;
+			const engine::render::gi::DdgiGridConfig& gc = m_ddgiVolume.Config();
+			lp.ddgiOrigin[0] = gc.origin[0]; lp.ddgiOrigin[1] = gc.origin[1]; lp.ddgiOrigin[2] = gc.origin[2];
+			lp.ddgiSpacing[0] = gc.spacing[0]; lp.ddgiSpacing[1] = gc.spacing[1]; lp.ddgiSpacing[2] = gc.spacing[2];
+			lp.ddgiCounts[0] = static_cast<float>(gc.counts[0]);
+			lp.ddgiCounts[1] = static_cast<float>(gc.counts[1]);
+			lp.ddgiCounts[2] = static_cast<float>(gc.counts[2]);
+			lp.ddgiCounts[3] = static_cast<float>(gc.irradianceTexels);
+			lp.ddgiAtlas[0] = static_cast<float>(m_ddgiVolume.AtlasCols());
+			lp.ddgiAtlas[1] = static_cast<float>(m_ddgiVolume.AtlasRows());
+			lp.ddgiAtlas[2] = static_cast<float>(m_ddgiVolume.IrradianceTileSize());
+			// M45.8 — intensité pilotée par le niveau de qualité (DynamicLow=0.5,
+			// DynamicHigh=1.0). Remplace l'ancienne lecture de gi.ddgi.intensity.
+			lp.ddgiAtlas[3] = m_ddgiIntensity;
+			ddgiView = m_ddgiVolume.IrradianceView();
+			ddgiSamp = m_ddgiUpdatePass.GetShadowSampler(); // sampler linéaire-équivalent (NEAREST clamp) interne
+		}
+
+		// ---- CSM — Ombres cascades --------------------------------------
+		// Récupère les 4 vues shadow maps et remplit l'UBO cascades
+		// (binding 11). shadowParams : x=useShadows(0/1), y=texelSize
+		// (1/résolution), z=biasConstant, w=biasSlopeMax. Si une vue est
+		// invalide, useShadows tombe à 0 (le shader ignore alors le fallback).
+		engine::render::LightingPass::ShadowUbo shadowUbo{};
+		VkImageView shadowViews[engine::render::kCascadeCount] = {};
+		bool shadowViewsOk = true;
+		for (uint32_t i = 0; i < engine::render::kCascadeCount; ++i)
+		{
+			shadowViews[i] = reg.getImageView(m_fgShadowMapIds[i]);
+			if (shadowViews[i] == VK_NULL_HANDLE) shadowViewsOk = false;
+			std::memcpy(&shadowUbo.lightViewProj[i * 16],
+				rs.cascades.lightViewProj[i].m, sizeof(float) * 16);
+		}
+		const bool shadowsEnabled = m_cfg.GetBool("shadows.enabled", true);
+		const uint32_t shadowRes  = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
+		shadowUbo.shadowParams[0] = (shadowsEnabled && shadowViewsOk) ? 1.0f : 0.0f;
+		shadowUbo.shadowParams[1] = (shadowRes > 0) ? (1.0f / static_cast<float>(shadowRes)) : 0.0f;
+		shadowUbo.shadowParams[2] = static_cast<float>(m_cfg.GetDouble("shadows.bias_constant", 0.0015));
+		shadowUbo.shadowParams[3] = static_cast<float>(m_cfg.GetDouble("shadows.bias_slope_max", 0.005));
+
+		// UBO point lights (binding 12). Snapshot rs.pointLights (anti
+		// data-race) ; clamp 64 ; intensité globale world.point_lights.intensity_scale
+		// (défaut 1.0, garde-fou anti sur-exposition HDR).
+		engine::render::LightingPass::PointLightUbo pointLightUbo{};
+		const float intensityScale =
+			static_cast<float>(m_cfg.GetDouble("world.point_lights.intensity_scale", 1.0));
+		const size_t activeCount = std::min<size_t>(rs.pointLights.size(), 64);
+		pointLightUbo.count[0] = static_cast<uint32_t>(activeCount);
+		for (size_t i = 0; i < activeCount; ++i)
+		{
+			const engine::render::ActivePointLight& pl = rs.pointLights[i];
+			pointLightUbo.lights[i].posRadius[0] = pl.position[0];
+			pointLightUbo.lights[i].posRadius[1] = pl.position[1];
+			pointLightUbo.lights[i].posRadius[2] = pl.position[2];
+			pointLightUbo.lights[i].posRadius[3] = pl.radius;
+			pointLightUbo.lights[i].colorIntensity[0] = pl.color[0];
+			pointLightUbo.lights[i].colorIntensity[1] = pl.color[1];
+			pointLightUbo.lights[i].colorIntensity[2] = pl.color[2];
+			pointLightUbo.lights[i].colorIntensity[3] = pl.intensity * intensityScale;
+		}
+
+		const uint32_t frameIdx = m_currentFrame % 2;
+		m_pipeline->GetLightingPass().Record(
+			m_vkDeviceContext.GetDevice(), cmd, reg,
+			m_vkSwapchain.GetExtent(),
+			m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
+			m_fgSceneColorHDRId, m_fgSsaoBlurId, m_fgDecalOverlayId,
+			irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
+			ddgiView, ddgiSamp,
+			shadowViews, shadowUbo,
+			pointLightUbo,
+			lp, frameIdx);
+	}
+	// Ancien corps de lambda du constructeur — voir la documentation dans Engine.h.
+	void Engine::RecordGeometryFramePass(VkCommandBuffer cmd, engine::render::Registry& reg)
+	{
+		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+		const engine::RenderState& rs = m_renderStates[readIdx];
+		// Phase 0 (chantier C) : rendu exclusif. On ne dessine le terrain
+		// heightmap legacy que si les chunks n'ont pas couvert la scène à la
+		// frame précédente -> supprime le z-fighting du double terrain.
+		// Monde « Royaumes » : terrains des cellules résidentes (le
+		// premier efface le GBuffer) à la place du terrain unique.
+		const bool terrainBeforeGeometry = engine::render::ShouldDrawLegacyTerrain(
+			m_cellWorld ? HasCellTerrainToDraw() : m_terrain.IsValid(),
+			m_pipeline->GetGeometryPass().HasLoadPass(),
+			m_lastFrameChunkDrawCount);
+		if (terrainBeforeGeometry && m_cellWorld)
+		{
+			(void)RecordCellTerrains(cmd, reg, rs);
+		}
+		else if (terrainBeforeGeometry)
+		{
+			m_terrain.Record(
+				m_vkDeviceContext.GetDevice(), cmd, reg,
+				m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+				m_fgGBufferVelocityId, m_fgDepthId,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+				rs.camera.position, rs.frustum);
+		}
+		// Sous-projet A (Task 15) : meme regle que GPU_Cull -- si l'avatar skinne
+		// est pret, on passe mesh = nullptr pour que GeometryPass::Record/Indirect
+		// ouvre/ferme le render pass GBuffer (necessaire pour les layouts) sans
+		// dessiner le cube. L'avatar skinne est ajoute juste apres via
+		// RecordTerrainChunkBatch (meme render pass LOAD compatible).
+		engine::render::MeshAsset* mesh = (rs.objectVisible && !m_skinnedAvatarReady)
+			? m_geometryMeshHandle.Get() : nullptr;
+		const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
+		const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
+		const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
+		m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
+		// Provisoire pour le mesh de test unique a l'origine monde; un ticket dedie
+		// remplacera ce calcul par une distance par instance/objet.
+		const float distCam = GetTestMeshDistanceMeters(rs, m_chunkDrawDecisions);
+		const int lodLevel = m_lodConfig.GetLodLevel(distCam);
+		static int s_lastLoggedLod = -1;
+		if (lodLevel != s_lastLoggedLod)
+		{
+			LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
+			s_lastLoggedLod = lodLevel;
+		}
+		auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		if (cullingPass.IsValid())
+		{
+			m_pipeline->GetGeometryPass().RecordIndirect(
+				m_vkDeviceContext.GetDevice(), cmd, reg,
+				m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+				cullingPass.GetIndirectBuffer(m_currentFrame),
+				cullingPass.GetDrawItemCount(m_currentFrame),
+				materialCache.GetDescriptorSet(),
+				rs.objectModelMatrix,
+				(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
+				terrainBeforeGeometry);
+		}
+		else
+		{
+			m_pipeline->GetGeometryPass().Record(
+				m_vkDeviceContext.GetDevice(), cmd, reg,
+				m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+				rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+				static_cast<uint32_t>(lodLevel),
+				materialCache.GetDescriptorSet(),
+				rs.objectModelMatrix,
+				(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
+				terrainBeforeGeometry);
+		}
+
+		// Sous-projet A (Task 15) : draw call skinned Y Bot.
+		// Apres l'ouverture/fermeture de la passe Geometry par Record/RecordIndirect,
+		// on superpose la draw skinned via RecordTerrainChunkBatch qui (re)ouvre le
+		// render pass LOAD du GeometryPass (formats compatibles -- meme GBuffer A/B/C
+		// + Velocity + Depth). Idempotent : si m_skinnedAvatarReady reste false (init
+		// echouee ou .glb manquant), on saute et le cube placeholder a deja ete
+		// dessine par Record/RecordIndirect ci-dessus.
+		if (m_skinnedAvatarReady && m_currentSkinnedMesh && m_skinnedRenderer.IsValid())
+		{
+			// B.1 / Task 11 : la state machine 7 etats + le Play du crossfade
+			// vivent desormais dans Engine::Update (driven par signaux gameplay
+			// propres : grounded, jumpPressed, run, moveDirXZ). Le lambda
+			// Geometry ne fait plus que sampler la pose du crossfade au temps
+			// courant et l'envoyer au SkinnedRenderer.
+			//
+			// nowSec doit utiliser la meme horloge que celle passee a
+			// `m_avatarCrossfade.Play(...)` dans Update : meme reference de temps
+			// via `EngineNowSec()` (normalise par le boot du jeu, evite la perte
+			// de precision float qui faisait trembler le mesh — anim.startTime
+			// stocke par Play etait < now mais la difference etait noyee dans la
+			// precision float 32, donc l'echantillonnage progressait par sauts).
+			const float nowSec = EngineNowSec();
+
+			auto locals  = m_avatarCrossfade.Sample(
+				m_currentSkinnedMesh->skeleton, nowSec);
+			auto globals = engine::render::skinned::AnimationSampler::ComputeGlobalMatrices(
+				m_currentSkinnedMesh->skeleton, locals);
+			auto finals  = engine::render::skinned::AnimationSampler::ComputeFinalMatrices(
+				m_currentSkinnedMesh->skeleton, globals);
+
+			// Chantier 2 SP1 — le corps de base de l'avatar modulaire = le mesh
+			// courant (idempotent chaque frame ; suit un éventuel changement de
+			// race). Les parties équipées (placeholder) persistent via /modular.
+			m_modularAvatar.SetBody(m_currentSkinnedMesh);
+
+			// --- B.1 / Task 9 : model matrix depuis CharacterController + m_avatarYaw ---
+			// On lit la position monde directement depuis le CC (deja appele
+			// dans Update *avant* OrbitalCameraController, cf. ligne ~6580),
+			// et on compose la matrice T(feetPos) * R_y(m_avatarYaw).
+			//   - `feetPos.y = ccPos.y - 0.9` : la position du CC est le CENTRE de la
+			//     capsule ; le mesh Y Bot va de Y=0 (pieds) a Y=1.8 (tete) -> on
+			//     redescend de halfHeight (0.9 m) pour poser les pieds au sol.
+			//   - `m_avatarYaw` : aligne le mesh sur la direction de mouvement.
+			//     Init a pi pour que le spawn (avant tout input) ait le perso dos
+			//     a la camera (Mixamo Y Bot face +Z intrinseque ; cam yaw=0 forward
+			//     = -Z ; R_y(pi) tourne le mesh face -> -Z = loin de la camera).
+			//     Avant le fix d'orientation : on appliquait R_y(yaw + pi) avec un
+			//     `+ pi` redondant qui s'additionnait au pi deja contenu dans
+			//     atan2(forward.x, forward.z) -> inversion W/S et Q/D en jeu.
+			//
+			// La matrice rs.objectModelMatrix reste utilisee par le cube fallback
+			// (RecordIndirect plus haut) ; chaque chemin a desormais sa propre source.
+			const engine::math::Vec3 ccPos = m_characterController.GetPosition();
+			const engine::math::Vec3 feetPos{ ccPos.x, ccPos.y - 0.9f, ccPos.z };
+			const engine::math::Mat4 finalModelMat =
+				engine::math::Mat4::Translate(feetPos) *
+				engine::math::Mat4::RotateY(m_avatarYaw) *
+				(m_currentSkinnedMesh ? m_currentSkinnedMesh->importTransform : engine::math::Mat4::Identity());
+
+			// La matrice modele est desormais calculee a partir de cc.GetPosition()
+			// + m_avatarYaw ; le cube placeholder garde sa matrice d'origine (cf.
+			// rs.objectModelMatrix construit dans Update).
+			// materialDescriptorSet + materialIndex : meme set bindless que le
+			// cube draw. skinnedMaterialIndex = HABIT (defaut).
+			const uint32_t skinnedMaterialIndex = (m_avatarMaterialId != 0u)
+				? m_avatarMaterialId
+				: materialCache.GetDefaultMaterialIndex();
+
+			// Multi-materiaux : un index par sous-maillage. Les sous-maillages
+			// dont le nom de materiau glTF figure dans m_avatarBodyMaterialNames
+			// recoivent la PEAU (selon genre x teinte), les autres l'habit.
+			// Si aucune texture de peau n'est chargee (id 0), tout retombe sur
+			// l'habit -> comportement identique a l'ancien mono-draw.
+			// Teinte foncee (m_avatarSkinTone==1) avec repli sur claire si absente.
+			uint32_t bodyMaterialId;
+			if (m_avatarGender == "female")
+				bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdFemaleDark != 0u)
+					? m_avatarBodyMaterialIdFemaleDark : m_avatarBodyMaterialIdFemale;
+			else
+				bodyMaterialId = (m_avatarSkinTone == 1 && m_avatarBodyMaterialIdMaleDark != 0u)
+					? m_avatarBodyMaterialIdMaleDark : m_avatarBodyMaterialIdMale;
+			// Routage peau/habit par sous-maillage (fonction pure partagee
+			// avec l'apercu de creation). Vide si pas de materiau peau ou pas
+			// de sous-maillages -> mono-draw habit (comportement identique
+			// a l'ancien code).
+			std::vector<uint32_t> submeshMaterialIndices =
+				engine::render::skinned::BuildSubmeshMaterialIndices(
+					m_currentSkinnedMesh->submeshes,
+					m_avatarBodyMaterialNames,
+					bodyMaterialId,
+					skinnedMaterialIndex);
+			// Diagnostic peau/genre (#1/#2) : logge une seule fois par changement de
+			// genre. Revele en clair l'etat runtime (ids materiaux, nb de sous-maillages
+			// peau vs habit, noms de materiaux reellement charges).
+			if (m_avatarSkinDiagLoggedGender != m_avatarGender)
+			{
+				m_avatarSkinDiagLoggedGender = m_avatarGender;
+				std::size_t bodyCount = 0;
+				for (uint32_t matId : submeshMaterialIndices)
+					if (matId == bodyMaterialId) ++bodyCount;
+				std::string noms;
+				for (const auto& sub : m_currentSkinnedMesh->submeshes)
+				{
+					if (!noms.empty()) noms += ", ";
+					noms += sub.materialName.empty() ? "<vide>" : sub.materialName;
+				}
+				LOG_INFO(Render,
+					"[AvatarSkinDiag] genre={} idMale={} idFemale={} bodyId={} habitId={} submeshes={} peau={} noms=[{}]",
+					m_avatarGender, m_avatarBodyMaterialIdMale, m_avatarBodyMaterialIdFemale,
+					bodyMaterialId, skinnedMaterialIndex, m_currentSkinnedMesh->submeshes.size(),
+					bodyCount, noms);
+				if (bodyMaterialId == 0u)
+					LOG_ERROR(Render, "[AvatarSkinDiag] bodyMaterialId=0 -> peau NON routee (texture peau non chargee ?)");
+				else if (!submeshMaterialIndices.empty() && bodyCount == 0)
+					LOG_WARN(Render, "[AvatarSkinDiag] 0 sous-maillage peau (noms ne matchent pas body_material_names)");
+			}
+
+			m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+				m_vkDeviceContext.GetDevice(), cmd, reg,
+				m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+				m_fgGBufferVelocityId, m_fgDepthId,
+				[this, &rs, &finals, skinnedMaterialIndex, &materialCache, finalModelMat, bodyMaterialId,
+				 submeshMaterialIndices = std::move(submeshMaterialIndices)](VkCommandBuffer innerCmd) {
+					// Chantier 2 SP1 — avatar modulaire : dessine chaque partie active
+					// avec les MÊMES matrices d'os (squelette partagé). Le Body garde son
+					// routage matériau (habit/peau) ; les parties placeholder utilisent le
+					// chemin mono-draw (materialIndex 0). ActiveParts() = Body seul tant
+					// qu'aucune partie n'est équipée -> rendu identique à avant.
+					// Matrices d'os IDENTITÉ pour les parties placeholder : le rig UE5
+					// a des os inexploitables (bind-globales à l'origine) -> peser une
+					// boîte a un os la projette n'importe ou. Avec une pose identité, la
+					// partie n'est plus deformee par le squelette : posee en espace
+					// MODELE (~1.6 m = tete) puis placee par finalModelMat (la meme
+					// matrice qui positionne tout l'avatar), elle se pose sur la tete et
+					// suit position + orientation du perso. Suivi fin par os -> rig propre.
+					std::vector<engine::math::Mat4> identityFinals(
+						finals.size(), engine::math::Mat4::Identity());
+					for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
+					{
+						const bool isBody = (part == m_currentSkinnedMesh);
+						m_skinnedRenderer.Record(
+							m_vkDeviceContext.GetDevice(), innerCmd,
+							m_vkSwapchain.GetExtent(),
+							m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+							VK_NULL_HANDLE,
+							rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+							*part,
+							isBody ? finals : identityFinals,
+							materialCache.GetDescriptorSet(),
+							finalModelMat.m,
+							isBody ? skinnedMaterialIndex : 0u,
+							isBody ? submeshMaterialIndices : std::vector<uint32_t>{},
+							isBody ? bodyMaterialId : 0u,
+							m_avatarSkinDepthBiasConstant,
+							m_avatarSkinDepthBiasSlope);
+					}
+				});
+		}
+
+		// Chantier B : dessine les props statiques (coffre, etc.) par-dessus le GBuffer.
+		RecordPropsGeometry(cmd, reg, rs);
+		// Monde ouvert : décor + bâtiments instanciés (une passe, lots par mesh).
+		RecordScatterGeometry(cmd, reg, rs);
+
+		// TD.2 : dessine les avatars des joueurs distants (réplication AoI).
+		RecordRemoteAvatars(cmd, reg, rs);
+		// Coffre anime (ouverture/fermeture a l'interaction).
+		RecordAnimatedChest(cmd, reg, rs);
+		// v1.0.125 — bateaux des lignes maritimes.
+		RecordBoats(cmd, reg, rs);
+
+		// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
+		// Dessine les chunks visibles qui ont terrain.bin + splat.bin
+		// dans une passe de chargement (loadOp=LOAD) après la geometry
+		// principale. Skip strict si fichiers absents (legacy
+		// TerrainRenderer continue à les dessiner). PAS de branche
+		// m_editorEnabled — parité jeu/éditeur garantie par le format
+		// binaire identique (cf. critère M100.5/.9).
+		std::uint32_t chunksDrawnThisFrame = 0u;
+		if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
+		{
+			UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
+			// Phase 1 (chantier C) : les chunks terrain sont sur la grille 256 m,
+			// pas sur la grille 500 m de m_world (instances/zone). On dérive donc
+			// l'ensemble visible directement de la position caméra sur la grille
+			// terrain, pour charger/placer les bons terrain.bin (alignés éditeur).
+			const std::vector<engine::world::GlobalChunkCoord> visibleChunks =
+				engine::world::ComputeVisibleTerrainChunks(
+					rs.camera.position.x, rs.camera.position.z);
+			if (!visibleChunks.empty())
+			{
+				m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+					m_vkDeviceContext.GetDevice(), cmd, reg,
+					m_vkSwapchain.GetExtent(),
+					m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+					m_fgGBufferVelocityId, m_fgDepthId,
+					[this, &visibleChunks](VkCommandBuffer innerCmd) {
+						m_terrainChunkRenderer->RenderVisibleChunks(
+							innerCmd,
+							m_terrainChunkCameraSet,
+							m_world,
+							visibleChunks);
+					});
+				chunksDrawnThisFrame = m_terrainChunkRenderer->GetLastDrawnChunkCount();
+			}
+		}
+		// Phase 0 : mémorise pour le gating legacy de la frame SUIVANTE.
+		// Remis à 0 chaque frame (carte heightmap-only / chunks non visibles
+		// -> le legacy redevient visible sans rester "collé" éteint).
+		m_lastFrameChunkDrawCount = chunksDrawnThisFrame;
+
+		// Phase 5 Lunar + M38.1 Sky : enregistre le draw fullscreen-quad
+		// du SkyPass (ciel + disque lunaire procedural) dans le render
+		// pass loadOp=LOAD du GeometryPass. SkyPass a ete Init contre
+		// `GetRenderPassLoad()` au boot, donc on doit etre dans ce
+		// render pass actif pour que vkCmdDraw soit valide. On reuse
+		// `RecordTerrainChunkBatch` (qui ouvre exactement ce render
+		// pass + framebuffer GBuffer + viewport/scissor) comme
+		// wrapper. La pass est emise en fin de lambda Geometry pour
+		// que le clear initial du GeometryPass ne l'ecrase pas. Avec
+		// le pipeline SkyPass (depthTest=FALSE, depthWrite=FALSE), le
+		// fullscreen-quad couvre tout le champ de vision ; les pixels
+		// reels de geometrie ont deja ete ecrits dans GBuffer
+		// avant. La consommation finale par LightingPass se fait via
+		// les autres attachments (depth, normal, ORM) — Sky ne
+		// renseigne que GBuffer A (albedo).
+		if (m_skyPassReady)
+		{
+			engine::render::SkyPass::PushConstants skyPc{};
+
+			// Calcul invViewProj inline (meme pattern que Decals/Lighting plus bas
+			// dans le fichier — pas de helper Mat4::Inverse global pour l'instant).
+			const float* vp = rs.viewProjMatrix.m;
+			const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+			const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+			const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+			const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+			const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+			const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+			const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+			const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+			const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+			if (det > 1e-7f || det < -1e-7f)
+			{
+				const float invDet = 1.0f / det;
+				skyPc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*invDet;
+				skyPc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*invDet;
+				skyPc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*invDet;
+				skyPc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*invDet;
+				skyPc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*invDet;
+				skyPc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*invDet;
+				skyPc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*invDet;
+				skyPc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*invDet;
+				skyPc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*invDet;
+				skyPc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*invDet;
+				skyPc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*invDet;
+				skyPc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*invDet;
+				skyPc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*invDet;
+				skyPc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*invDet;
+				skyPc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*invDet;
+				skyPc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*invDet;
+			}
+			else
+			{
+				// Identity fallback — l'invViewProj sera approximatif mais le
+				// shader continuera a tourner sans NaN.
+				skyPc.invViewProj[0] = skyPc.invViewProj[5] =
+					skyPc.invViewProj[10] = skyPc.invViewProj[15] = 1.0f;
+			}
+
+			const auto& dn = m_dayNight.GetState();
+			skyPc.lightDir[0]      = dn.sunDir[0];
+			skyPc.lightDir[1]      = dn.sunDir[1];
+			skyPc.lightDir[2]      = dn.sunDir[2];
+			skyPc.zenithColor[0]   = dn.skyZenith[0];
+			skyPc.zenithColor[1]   = dn.skyZenith[1];
+			skyPc.zenithColor[2]   = dn.skyZenith[2];
+			skyPc.horizonColor[0]  = dn.skyHorizon[0];
+			skyPc.horizonColor[1]  = dn.skyHorizon[1];
+			skyPc.horizonColor[2]  = dn.skyHorizon[2];
+			// Lune : direction réelle de la lune (jour comme nuit).
+			skyPc.moonDir[0]       = dn.moonDir[0];
+			skyPc.moonDir[1]       = dn.moonDir[1];
+			skyPc.moonDir[2]       = dn.moonDir[2];
+			skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
+			skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
+			skyPc.moonIllumination = dn.moonIllumination;
+			// Chantier ciel 2026-07-17 — modèle de ciel :
+			// analytique (Rayleigh+Mie) par défaut ; la clé
+			// client.sky.analytic=false rebascule sur le
+			// dégradé legacy sans rebuild (filet visuel).
+			skyPc.skyModel =
+				m_cfg.GetBool("client.sky.analytic", true) ? 1.0f : 0.0f;
+			// Position caméra : sert au sky.frag à reconstruire un vrai
+			// rayon de vue (sinon ciel uniforme, soleil/lune invisibles).
+			skyPc.cameraPos[0]     = rs.camera.position.x;
+			skyPc.cameraPos[1]     = rs.camera.position.y;
+			skyPc.cameraPos[2]     = rs.camera.position.z;
+			skyPc.cameraPos[3]     = 0.0f;
+
+			m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+				m_vkDeviceContext.GetDevice(), cmd, reg,
+				m_vkSwapchain.GetExtent(),
+				m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+				m_fgGBufferVelocityId, m_fgDepthId,
+				[this, &skyPc](VkCommandBuffer innerCmd) {
+					m_skyPass.Record(innerCmd, skyPc);
+				});
 		}
 	}
 } // namespace engine

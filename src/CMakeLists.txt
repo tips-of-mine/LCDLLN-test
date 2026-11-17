@@ -41,6 +41,23 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerApp.cpp
+    # ServerApp découpé par domaine (code déplacé, cf. ServerAppInternal.h).
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppConnection.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppMasterLink.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppContent.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppPersistence.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppMobs.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppWorld.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppCombat.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppBoats.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppItems.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppChat.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppSpells.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppQuests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppReplication.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppSocial.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppEconomy.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppCrafting.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGm.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmMovement.cpp
@@ -1599,6 +1616,23 @@ elseif(UNIX)
     # (membre m_moderationAuditLog) → on l'ajoute ici.
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerApp.cpp
+    # ServerApp découpé par domaine (code déplacé, cf. ServerAppInternal.h).
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppConnection.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppMasterLink.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppContent.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppPersistence.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppMobs.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppWorld.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppCombat.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppBoats.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppItems.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppChat.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppSpells.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppQuests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppReplication.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppSocial.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppEconomy.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppCrafting.cpp
     # ADM.0 : exécution des commandes de jeu (MJ) relayées par le master.
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGm.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/app/ServerAppGmMovement.cpp

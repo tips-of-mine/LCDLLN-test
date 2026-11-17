@@ -348,7 +348,7 @@ RenderModel
 | Fichier | Rôle |
 |---|---|
 | `src/shared/network/NetServer.h/.cpp` | Serveur TCP/UDP : accept, dispatch paquets entrants. |
-| `src/shardd/app/ServerApp.h/.cpp` | Application serveur principale (init, boucle, shutdown). |
+| `src/shardd/app/ServerApp.h/.cpp` | Application serveur principale (init, boucle, shutdown, aiguillage des paquets `DispatchGamePacket`, tick). Les méthodes sont réparties par domaine dans `ServerApp<Domaine>.cpp` : `Connection` (Hello, chargement/sauvegarde, mouvement, UDP), `MasterLink` (courrier, commandes MJ, métriques), `Content` (chargement des spawners, butin, quêtes…), `Persistence`, `Mobs` (IA, spawners, événements dynamiques), `World` (intérêt, zones, portails, lave, cellules), `Combat`, `Boats`, `Items`, `Chat` (chat, modération, commandes slash), `Spells`, `Quests`, `Replication` (instantanés, envois), `Social` (amis, groupe), `Economy` (boutiques, enchères, échanges), `Crafting` ; plus `ServerAppGm*.cpp` (commandes MJ). Constantes et utilitaires communs : `ServerAppInternal.h` (interne). |
 | `src/masterd/session/SessionManager.h/.cpp` | Gestion des sessions actives (session_id ↔ account). |
 | `src/shared/security/RateLimitAndBan.h/.cpp` | Rate limiting par IP + bannissements. |
 | `src/masterd/shards/ShardRegistry.h/.cpp` | Registre des shards connectés au master. |
@@ -2667,7 +2667,7 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/client/render/WorldMapImGuiRenderer.{h,cpp}` | Fenêtre Carte du monde (touche M) + bannière (ImGui, `_WIN32`). |
 | `src/client/gameplay/CompositeWorldCollider.{h,cpp}` | Index spatial 16 m des collisions (bâtiments, décor). |
 | `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |
-| `src/shardd/app/ServerApp.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
+| `src/shardd/app/ServerAppMobs.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
 | `src/shared/world/StartLocations.{h,cpp}` | Points de départ par faction (repli par race) + cellules générées (`world/<monde>/start_locations.json`), lus par `CharacterCreateHandler` (master) et le shard (pur, `start_locations_tests`). |
 | `src/client/world/cells/CellWorldFrame.{h,cpp}` | Client : repère de RENDU centré sur la cellule du joueur (rebase), cellules générées, sélection par rayon, mur invisible (pur, `cell_world_frame_tests`). |
 | `src/client/world/cells/CellHeightFields.{h,cpp}` | Client : heightmaps CPU des cellules proches (collision, pose au sol), interrogées en coordonnées de rendu. |

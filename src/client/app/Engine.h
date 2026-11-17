@@ -397,6 +397,17 @@ namespace engine
 		/// \param authGateActive écran d'authentification affiché (gèle l'input). Main thread.
 		void UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive);
 		// --- fin des sous-étapes d'Update() ---
+		/// Envoie une ligne saisie dans le chat (canal, cible, texte) : commandes slash
+		bool HandleChatSend(uint8_t channel, std::string_view targetToken, std::string_view text);
+		// --- Étapes du constructeur (anciens lambdas et blocs, aucun changement de comportement) ---
+		/// Démarrage graphique, appelé par le constructeur une fois glfwInit() réussi :
+		/// fenêtre de surface, instance / device / swapchain Vulkan, pipeline différé,
+		/// ressources de la scène (terrain, eau, avatar, ciel, nuages…) et passes du FrameGraph.
+		/// Chaque échec est journalisé (LOG_WARN) et laisse le moteur sans rendu, comme avant.
+		/// Effet de bord : crée l'essentiel des ressources GPU membres. Main thread.
+		void InitGraphicsAndScene();
+		/// Traite un message poussé par le master (connexion maître post-auth) : chat,
+		void HandleMasterPush(uint16_t opcode, const uint8_t* payload, size_t payloadSize);
 		void Render();
 		void EndFrame();
 

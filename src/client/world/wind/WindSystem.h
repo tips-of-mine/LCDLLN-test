@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "src/client/world/wind/WindParams.h"
-#include "src/client/world/wind/WindZones.h"
+#include "src/shared/world/wind/WindZones.h"
 
 namespace engine::world::wind
 {

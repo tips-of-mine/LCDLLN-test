@@ -1,6 +1,6 @@
 #include "src/world_editor/volumes/caves/CaveCamouflage.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <cmath>

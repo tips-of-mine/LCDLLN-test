@@ -1,6 +1,6 @@
 #include "src/world_editor/water/CoastlineEditorTool.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/water/CoastlineCliffs.h"
 #include "src/world_editor/water/CoastlineCommand.h"

@@ -6,7 +6,7 @@
 /// wind flat (deltas négligeables), wind déterminisme, ThermalWindErosionCommand
 /// Apply/Undo restaure bit-à-bit.
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/shared/core/Config.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"

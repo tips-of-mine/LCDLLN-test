@@ -1,6 +1,6 @@
 #include "src/client/world/StreamingScheduler.h"
 #include "src/client/world/StreamCache.h"
-#include "src/client/world/ChunkPackageLayout.h"
+#include "src/shared/world/ChunkPackageLayout.h"
 #include "src/shared/core/Log.h"
 
 #include <algorithm>

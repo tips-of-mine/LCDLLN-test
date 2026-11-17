@@ -2,7 +2,7 @@
 
 #include "src/client/render/FrameGraph.h"
 #include "src/client/render/WaterMeshGpu.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 #include <vulkan/vulkan_core.h>
 

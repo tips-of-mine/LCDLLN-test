@@ -4,8 +4,8 @@
 #include "src/world_editor/water/AddRiverCommand.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
-#include "src/client/world/WorldModel.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/WorldModel.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <memory>
 #include <string>

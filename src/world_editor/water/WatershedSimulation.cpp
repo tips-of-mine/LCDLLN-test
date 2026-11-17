@@ -1,6 +1,6 @@
 #include "src/world_editor/water/WatershedSimulation.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/water/D8FlowDirection.h"
 #include "src/world_editor/water/FlowAccumulation.h"

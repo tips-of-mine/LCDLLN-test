@@ -2,7 +2,7 @@
 
 #include "src/world_editor/terrain/TerrainRaycast.h"
 #include "src/world_editor/terrain/TerrainSculptCommand.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <atomic>

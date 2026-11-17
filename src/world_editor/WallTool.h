@@ -3,7 +3,7 @@
 // M100.30 — Outil Wall : transforme une spline en mur (kit + hauteur).
 // Header-only, rendu ImGui guardé Windows. Génération dans structures::* (pur).
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

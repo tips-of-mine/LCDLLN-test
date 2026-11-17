@@ -1,8 +1,8 @@
 #include "src/client/world/terrain/ChunkHeightField.h"
 
 #include "src/client/world/StreamCache.h"
-#include "src/client/world/WorldModel.h"                  // WorldToTerrainChunkCoord, kTerrainChunkSizeMeters
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/WorldModel.h"                  // WorldToTerrainChunkCoord, kTerrainChunkSizeMeters
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainChunkLoader.h"  // LoadFromCache, MakeTerrainCacheKey
 
 #include <string>

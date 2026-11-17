@@ -5,8 +5,8 @@
 #include "src/world_editor/validation/ValidationRuleRegistry.h"
 #include "src/world_editor/validation/ZoneValidator.h"
 
-#include "src/client/world/terrain/SplatMap.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/world_editor/volumes/MeshInsertInstance.h"
 
 #include <cmath>

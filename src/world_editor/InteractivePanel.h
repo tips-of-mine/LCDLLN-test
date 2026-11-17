@@ -11,7 +11,7 @@
 // sont disponibles sur toutes plateformes (testables headless via le simulateur).
 
 #include "src/client/world/interactive/InteractiveSimulator.h"
-#include "src/client/world/interactive/InteractiveTypes.h"
+#include "src/shared/world/interactive/InteractiveTypes.h"
 
 namespace engine::editor::world
 {

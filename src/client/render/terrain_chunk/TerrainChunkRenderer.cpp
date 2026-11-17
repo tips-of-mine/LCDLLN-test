@@ -24,8 +24,8 @@
 #include "src/client/render/vk/StagingAllocator.h"
 #include "src/client/world/StreamCache.h"
 #include "src/client/world/terrain/LayerPalette.h"
-#include "src/client/world/terrain/SplatMap.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainMeshBuilder.h"
 
 // stb_image: STB_IMAGE_IMPLEMENTATION est défini dans AssetRegistry.cpp.

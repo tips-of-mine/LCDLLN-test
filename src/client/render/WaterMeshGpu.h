@@ -1,7 +1,7 @@
 // src/client/render/WaterMeshGpu.h
 #pragma once
 
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 #include <vulkan/vulkan_core.h>
 

@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "src/client/world/foliage/FoliageInstances.h"
+#include "src/shared/world/foliage/FoliageInstances.h"
 
 namespace engine::editor::world
 {

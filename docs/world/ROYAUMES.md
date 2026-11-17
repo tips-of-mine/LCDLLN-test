@@ -324,7 +324,7 @@ voisines raccord au mètre près :
    forêt 1, lisière ≈ 0,38, nulle sur l'eau, les routes, le bâti, les champs, les
    pentes > 34° et la neige) et le client pose lui-même, autour du joueur, un arbre
    tous les 4 à 5 m en pleine forêt (~8 m en lisière) et le sous-bois (fougères,
-   buissons), à des positions déterministes (`src/client/world/instances/ForestMask.h`,
+   buissons), à des positions déterministes (`src/shared/world/instances/ForestMask.h`,
    reconstruites tous les `world.forest.rebuild_step_m` m). Troncs solides côté
    client ; le serveur ne lit pas le décor. Rayon : `world.forest.filler_radius_m`,
    par défaut `world.scatter.cull_large_m` × facteur du préréglage + 30 m (réglages

@@ -6,7 +6,7 @@
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/Window.h"
 #include "src/client/render/AssetRegistry.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <algorithm>
 #include <array>

@@ -4,7 +4,7 @@
 // guardé Windows. Standalone (l'intégration au système ActiveTool/ToolProperties
 // du shell est laissée à un câblage ultérieur, non couvert par les tests).
 
-#include "src/client/world/hazard/HazardVolumes.h"
+#include "src/shared/world/hazard/HazardVolumes.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::editor::world

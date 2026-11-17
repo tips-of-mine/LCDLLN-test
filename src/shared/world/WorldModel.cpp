@@ -1,4 +1,4 @@
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <algorithm>
 #include <cmath>

@@ -12,7 +12,7 @@
 // stockent leurs ressources GPU séparément et déclarent leur taille via
 // `AddResidentBytes`.
 
-#include "src/client/world/WorldModel.h" // GlobalChunkCoord, ChunkRing
+#include "src/shared/world/WorldModel.h" // GlobalChunkCoord, ChunkRing
 
 #include <cstdint>
 #include <list>

@@ -1,7 +1,7 @@
 // src/world_editor/water/WaterDocument.h
 #pragma once
 
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 #include "src/world_editor/water/OceanSettings.h"
 
 #include <string>

@@ -1,7 +1,7 @@
 // M100.31 — Tests hameau : kit JSON, déterminisme, min_spacing, snap route,
 // une entrée d'historique. Headless. Lié à engine_core.
 
-#include "src/client/world/instances/PropInstances.h"
+#include "src/shared/world/instances/PropInstances.h"
 #include "src/client/world/structures/HamletKitLibrary.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/HamletGen.h"

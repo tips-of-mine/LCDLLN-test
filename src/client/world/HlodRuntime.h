@@ -2,7 +2,7 @@
 
 #include "src/shared/math/Math.h"
 #include "src/shared/math/Frustum.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <cstddef>
 #include <string>

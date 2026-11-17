@@ -1,5 +1,5 @@
 // src/client/world/water/tests/WaterSurfacesTests.cpp
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 #include "src/client/world/water/WaterMeshBuilder.h"
 
 #include <cmath>

@@ -1,6 +1,6 @@
 #include "src/world_editor/volumes/caves/PlaceCaveCommand.h"
 
-#include "src/client/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/SplatMap.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
 

@@ -1,4 +1,4 @@
-// src/client/world/water/WaterSurfaces.h
+// src/shared/world/water/WaterSurfaces.h
 #pragma once
 
 #include "src/shared/math/Math.h"

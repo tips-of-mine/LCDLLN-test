@@ -33,7 +33,7 @@
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/TerrainSculptCommand.h"
 #include "src/world_editor/terrain/TerrainSculptTool.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <cmath>
 #include <cstdio>

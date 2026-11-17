@@ -22,7 +22,7 @@
 #include "src/client/dialogue/DialogueConfigLoader.h"
 #include "src/client/render/terrain/HeightmapLoader.h"
 #include "src/client/world/places/WorldPlaces.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/MapDiscoveryPayloads.h"
 #include "src/shared/network/ProtocolV1Constants.h"

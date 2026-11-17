@@ -16,9 +16,9 @@
 #include "src/client/world/cells/CellHeightFields.h"
 #include "src/client/world/cells/CellSurfaceMap.h"
 #include "src/client/world/instances/BuildingTemplateLibrary.h"
-#include "src/client/world/instances/Buildings.h"
-#include "src/client/world/instances/ForestMask.h"
-#include "src/client/world/instances/ScatterInstances.h"
+#include "src/shared/world/instances/Buildings.h"
+#include "src/shared/world/instances/ForestMask.h"
+#include "src/shared/world/instances/ScatterInstances.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/world/WorldCells.h"
 

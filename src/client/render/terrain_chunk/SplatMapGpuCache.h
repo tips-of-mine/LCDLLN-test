@@ -9,8 +9,8 @@
 // permettre des tests CPU avec un mock counter.
 
 #include "src/client/render/terrain_chunk/ChunkRuntime.h"
-#include "src/client/world/WorldModel.h"
-#include "src/client/world/terrain/SplatMap.h"
+#include "src/shared/world/WorldModel.h"
+#include "src/shared/world/terrain/SplatMap.h"
 
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>

@@ -8,7 +8,7 @@
 /// Framework de test : REQUIRE maison + main monolithique (pattern identique
 /// à TerrainSculptTests / TerrainStampTests).
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/shared/core/Config.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/MacroPolylineCommandBase.h"

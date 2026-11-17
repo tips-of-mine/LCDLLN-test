@@ -526,14 +526,14 @@ add_library(engine_core
   src/client/gameplay/PerceptionModel.cpp
   src/client/gameplay/ClientPrediction.cpp
   src/client/gameplay/StatusEffect.cpp
-  src/client/world/WorldModel.cpp
+  src/shared/world/WorldModel.cpp
   src/client/world/BuildingCollisionCatalog.cpp
-  src/client/world/OutputVersion.cpp
-  src/client/world/ProbeData.cpp
+  src/shared/world/OutputVersion.cpp
+  src/shared/world/ProbeData.cpp
   # Combat SP1 — apparences d'archétypes de créatures (rendu des mobs).
   src/client/world/CreatureCatalog.cpp
   src/client/world/PakReader.cpp
-  src/client/world/ChunkPackageLayout.cpp
+  src/shared/world/ChunkPackageLayout.cpp
   src/client/world/StreamingScheduler.cpp
   src/client/world/StreamCache.cpp
   src/client/world/ChunkBudgetStats.cpp
@@ -543,15 +543,15 @@ add_library(engine_core
   src/client/world/collision/CollisionProxy.cpp
   src/client/world/collision/AutoFitProxy.cpp
   src/client/world/collision/ProxyWireframe.cpp
-  src/client/world/water/WaterSurfaces.cpp
+  src/shared/world/water/WaterSurfaces.cpp
   src/client/world/water/WaterMeshBuilder.cpp
   src/client/world/terrain/LayerPalette.cpp
-  src/client/world/terrain/SplatMap.cpp
-  src/client/world/terrain/TerrainChunk.cpp
+  src/shared/world/terrain/SplatMap.cpp
+  src/shared/world/terrain/TerrainChunk.cpp
   src/client/world/terrain/TerrainChunkLoader.cpp
   src/client/world/terrain/HeightmapHeightField.cpp
   src/client/world/terrain/ChunkHeightField.cpp
-  src/client/world/terrain/TerrainLodChain.cpp
+  src/shared/world/terrain/TerrainLodChain.cpp
   src/client/world/terrain/TerrainLodWorker.cpp
   src/client/world/terrain/TerrainMeshBuilder.cpp
   src/client/render/vk/DeferredDestroyQueue.cpp

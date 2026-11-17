@@ -3,7 +3,7 @@
 // M100.29 — Outil spline (routes/chemins). Rendu ImGui guardé. L'échantillonnage
 // et la peinture vivent dans SplineSampler / TerrainDocument.
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::editor::world

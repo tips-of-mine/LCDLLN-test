@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/client/world/water/WaterSurfaces.h"        // RiverInstance, LakeInstance
+#include "src/shared/world/water/WaterSurfaces.h"        // RiverInstance, LakeInstance
 #include "src/world_editor/terrain/PolylineMacroCore.h"  // SparseChunkDeltas
 
 #include <cstdint>

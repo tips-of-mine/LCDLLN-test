@@ -2,7 +2,7 @@
 
 #include <zone_builder/JsonDocument.h>
 #include "src/shared/core/Log.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <cmath>
 #include <filesystem>

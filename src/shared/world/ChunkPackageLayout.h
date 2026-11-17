@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <array>
 #include <cstdint>

@@ -1,6 +1,6 @@
 // M100.27 — Tests thermal : shade round-trip/builder + ComputeTemperature + query.
 
-#include "src/client/world/thermal/ShadeMap.h"
+#include "src/shared/world/thermal/ShadeMap.h"
 #include "src/client/world/thermal/ShadeMapBuilder.h"
 #include "src/client/world/thermal/Thermal.h"
 #include "src/client/world/thermal/ThermalQueryService.h"

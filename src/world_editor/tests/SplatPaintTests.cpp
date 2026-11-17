@@ -23,8 +23,8 @@
 #include "src/world_editor/splat/SplatPaintCommand.h"
 #include "src/world_editor/splat/SplatRules.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
-#include "src/client/world/terrain/SplatMap.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <array>

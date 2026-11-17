@@ -215,7 +215,7 @@ nouvelle convention s'applique aux cellules **du monde de jeu** uniquement.
 Si la grille change (taille de cellule, dimensions, origine), mettre à jour
 ce document **et** :
 
-- `engine::world::kZoneSize` dans `src/client/world/WorldModel.h` si la
+- `engine::world::kZoneSize` dans `src/shared/world/WorldModel.h` si la
   taille de cellule bouge (impact streaming et chunk size).
 - Le tableau de mapping `R###C###` ↔ `cell_*` ci-dessus.
 - Toute documentation aval (`world_editor_zone_pipeline.md`,

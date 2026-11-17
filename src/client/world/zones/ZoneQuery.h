@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "src/client/world/zones/Zones.h"
+#include "src/shared/world/zones/Zones.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::world::zones

@@ -2,7 +2,7 @@
 
 #include "src/world_editor/ui/WorldMapIo.h"
 
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <array>
 #include <algorithm>

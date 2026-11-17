@@ -7,7 +7,7 @@
 // permettre des tests CPU avec un mock counter.
 
 #include "src/client/render/terrain_chunk/ChunkRuntime.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 #include "src/client/world/terrain/TerrainMeshBuilder.h" // TerrainMeshGpu, TerrainVertex, BuildLod0Mesh
 
 #include <unordered_map>

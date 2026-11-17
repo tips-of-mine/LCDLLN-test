@@ -1,7 +1,7 @@
 // M100.18 — Tests foliage : library JSON + Poisson-disk + règles + round-trip.
 // Headless. Lié à engine_core.
 
-#include "src/client/world/foliage/FoliageInstances.h"
+#include "src/shared/world/foliage/FoliageInstances.h"
 #include "src/client/world/foliage/FoliageLibrary.h"
 #include "src/client/world/foliage/PoissonDiskSampler.h"
 

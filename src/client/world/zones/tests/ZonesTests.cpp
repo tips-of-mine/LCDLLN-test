@@ -1,6 +1,6 @@
 // M100.28 — Tests zones : round-trip + transition météo au bord + champs quest.
 
-#include "src/client/world/zones/Zones.h"
+#include "src/shared/world/zones/Zones.h"
 #include "src/client/world/zones/ZoneQuery.h"
 
 #include <cmath>

@@ -3,7 +3,7 @@
 
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/water/WaterDocument.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 namespace engine::editor::world
 {

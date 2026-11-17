@@ -3,7 +3,7 @@
 #include "src/shared/core/Log.h"
 #include "src/client/world/StreamCache.h"
 #include "src/client/world/StreamingScheduler.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 namespace engine::client
 {

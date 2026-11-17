@@ -17,7 +17,7 @@
 #include "src/client/render/DeferredPipeline.h"
 #include "src/client/render/InstanceBatch.h"
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
-#include "src/client/world/instances/ScatterInstances.h"
+#include "src/shared/world/instances/ScatterInstances.h"
 #include "src/client/world/scatter/PropMaterialRules.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/core/ProfilerSummary.h"

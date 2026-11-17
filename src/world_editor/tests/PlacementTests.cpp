@@ -1,7 +1,7 @@
 // M100.17 — Tests placement : géométrie pure + format props.bin + commande.
 // Headless. Lié à engine_core.
 
-#include "src/client/world/instances/PropInstances.h"
+#include "src/shared/world/instances/PropInstances.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/PlacementCommand.h"
 #include "src/world_editor/PlacementDocument.h"

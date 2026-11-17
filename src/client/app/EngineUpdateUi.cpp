@@ -465,126 +465,7 @@ namespace engine
 				|| m_outdoorPvpVisible || m_guildVisible || m_lootRollVisible
 				|| m_craftingVisible || m_advancedCombatVisible
 				|| m_weatherVisible;
-			if (!worldOverlaysHidden)
-			for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
-			{
-				const InteractableEntity& e = m_interactables[ii];
-				// Pendant un dialogue PNJ : on masque le label flottant + badge « E » de
-					// l'interactible (le PNJ engagé est derrière la cellule, son label
-					// transparaîtrait au travers).
-					if (m_dialogueActive)
-						continue;
-					const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
-				float sx = 0.0f, sy = 0.0f;
-				if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
-					continue;
-				const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
-				const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
-				// Label du nom seul ; le "[E]" texte est remplace par un badge touche
-				// (chantier C) + la surbrillance 3D du prop signale l'interactivite.
-				// FIX.10 — le nom n'apparaît qu'à portée d'interaction (retour joueur
-				// 29/10/2026 : « Coffre », « Caisse en bois »… saturaient l'écran). Le
-				// marqueur de quête plus bas garde sa propre portée.
-				if (inRange)
-				{
-					const ImVec2 ts = ImGui::CalcTextSize(e.label.c_str());
-					fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, e.label.c_str());
-				}
-				// Repere d'interaction : badge "touche E" sous le label quand a portee.
-				if (inRange)
-				{
-					const ImVec2 keySz = ImGui::CalcTextSize("E");
-					const float pad = 6.0f;
-					const float bw = keySz.x + pad * 2.0f;
-					const float bh = keySz.y + pad * 2.0f;
-					const float bx = sx - bw * 0.5f;
-					const float by = sy + 4.0f;
-					fg->AddRectFilled(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(20, 20, 24, 220), 4.0f);
-					fg->AddRect(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(255, 220, 80, 255), 4.0f, 0, 2.0f);
-					fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
-				}
-				// SP2 Task 6 — Marqueur world-space donneur de quête : rune procédurale
-				// (losange + anneau) au-dessus des PNJ liés à une quête en cours de
-				// proposition ou de rendu. Source des liens PNJ<->quête : table
-				// data-driven chargée au boot (cf. Init, m_questGiverTable.Load).
-				// Statuts UIModel.quests miroir de engine::client::QuestStatus (wire
-				// uint8) — dupliqués en constantes locales comme QuestImGuiRenderer.cpp
-				// pour ne pas tirer de dépendance supplémentaire ici.
-				if (!e.npcTargetId.empty())
-				{
-					constexpr uint8_t kQuestStatusOffered = 1;
-					constexpr uint8_t kQuestStatusReadyToTurnIn = 3;
-					const std::vector<engine::client::QuestGiverLink>* links = m_questGiverTable.ForNpc(e.npcTargetId);
-					if (links != nullptr && !links->empty())
-					{
-						// Culling distance : seulement si le PNJ est à portée « visible »
-						// configurée (defaut 35 m), indépendamment du rayon d'interaction
-						// (e.radius, ~2.5 m) qui régit le badge "E".
-						const engine::math::Vec3 markerPlayerPos = m_characterController.GetPosition();
-						// Distance XZ uniquement (comme le rayon d'interaction / badge "E",
-						// cf. calcul dx²+dz² du "[E]") : la position des interactables est
-						// chargée avec y=0 (jamais collée au sol) alors que le joueur est
-						// ~100 m plus haut (plateau terrain). Inclure le Y ferait toujours
-						// dépasser markerMaxDist → le rune ne s'afficherait jamais.
-						const float mdx = e.position.x - markerPlayerPos.x;
-						const float mdz = e.position.z - markerPlayerPos.z;
-						const float markerDist = std::sqrt(mdx * mdx + mdz * mdz);
-						const float markerMaxDist = static_cast<float>(
-							m_cfg.GetDouble("client.quest.giver_marker_distance_m", 35.0));
-						if (markerDist <= markerMaxDist)
-						{
-							// Priorité d'affichage si plusieurs liens : rendre > proposer
-							// (un PNJ à la fois donneur ET receveur pour des quêtes
-							// différentes doit d'abord signaler ce qu'il attend du joueur).
-							bool hasOffer = false;
-							bool hasTurnIn = false;
-							const auto& questsModel = m_uiModelBinding.GetModel().quests;
-							for (const engine::client::QuestGiverLink& link : *links)
-							{
-								for (const engine::client::UIQuestEntry& q : questsModel)
-								{
-									if (q.questId != link.questId)
-										continue;
-									if (link.role == 0 && q.status == kQuestStatusOffered)
-										hasOffer = true;
-									else if (link.role == 1 && q.status == kQuestStatusReadyToTurnIn)
-										hasTurnIn = true;
-								}
-							}
-							if (hasOffer || hasTurnIn)
-							{
-								// Ancrage : ~2.2 m au-dessus de la tête (my = sol + 1.9, tête
-								// approx au-dessus -> on projette depuis le sol + 2.2 direct
-								// pour rester simple et stable si le mesh du PNJ varie).
-								const float runeWorldY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 2.2f;
-								float rsx = 0.0f, rsy = 0.0f;
-								if (WorldToScreenPx(out.viewProjMatrix.m, e.position.x, runeWorldY, e.position.z, ivw, ivh, rsx, rsy))
-								{
-									// Rendre prioritaire sur proposer si les deux sont vrais.
-									const bool turnInVariant = hasTurnIn;
-									const ImU32 runeFill = turnInVariant
-										? IM_COL32(120, 200, 255, 235)   // rendre : teinte bleu-glacé
-										: IM_COL32(255, 205, 60, 235);   // proposer : doré plein
-									const ImU32 runeRing = turnInVariant
-										? IM_COL32(230, 245, 255, 255)
-										: IM_COL32(255, 240, 190, 255);
-									const float runeR = 18.0f; // agrandie (retour joueur : trop petite a 11)
-									// Losange (4 sommets) rempli.
-									const ImVec2 diamond[4] = {
-										ImVec2(rsx, rsy - runeR),
-										ImVec2(rsx + runeR * 0.62f, rsy),
-										ImVec2(rsx, rsy + runeR),
-										ImVec2(rsx - runeR * 0.62f, rsy),
-									};
-									fg->AddConvexPolyFilled(diamond, 4, runeFill);
-									// Anneau autour du losange pour la lisibilité + signature "rune".
-									fg->AddCircle(ImVec2(rsx, rsy), runeR + 4.0f, runeRing, 24, 2.5f);
-								}
-							}
-						}
-					}
-				}
-			}
+			RenderInteractableMarkersImGui(out, ivw, ivh, fg, worldOverlaysHidden);
 			// TD.4 — Plaques de nom au-dessus des avatars joueurs distants.
 			// Source : `m_uiModelBinding.GetModel().remoteEntities` (peuple par
 			// ApplySnapshot, cf. TD.1) ; le serveur expose `playerClientId` ≠ 0
@@ -618,274 +499,7 @@ namespace engine
 					}
 				}
 			}
-			if (!worldOverlaysHidden)
-			{
-				const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
-				const engine::math::Vec3 platePlayerPos = m_characterController.GetPosition();
-				const engine::client::UIModel& plateSelModel = m_uiModelBinding.GetModel();
-					// Anti-chevauchement des plaques : boites deja posees cette frame
-					// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
-					// recouvre une est remontee d'une hauteur de plaque (empilement).
-					std::vector<ImVec4> placedLabelRects;
-				// Le Journal de quêtes (coin haut-gauche, toujours visible) est une
-				// fenêtre ImGui ; les plaques de mob passent par le foreground draw
-				// list, donc AU-DESSUS. On récupère son rectangle pour sauter toute
-				// plaque qui retomberait dessus (retour joueur 2026-07-09 : « Sanglier
-				// des collines » s'affichait par-dessus le journal).
-				ImVec4 journalRect(0.0f, 0.0f, 0.0f, 0.0f);
-				bool hasJournalRect = false;
-				{
-					const engine::client::QuestUiState& qs = m_questUi.GetState();
-					if (qs.layoutValid)
-					{
-						const engine::client::QuestUiRect& jb = qs.journalPanelBounds;
-						journalRect = ImVec4(jb.x, jb.y, jb.x + jb.width, jb.y + jb.height);
-						hasJournalRect = true;
-					}
-				}
-				for (const engine::client::UIRemoteEntity& re : remotes)
-				{
-					// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
-					// Validation v12 — les loot bags (les deux ids à 0) aussi :
-					// « Butin [F] » au sol (le serveur les répliquait depuis M28
-					// mais le client ne les montrait jamais — butin imperdable
-					// mais invisible). Ramassage : touche F, bloc combat plus bas.
-					// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
-					// Métiers SP1 — les nodes échappent à ce skip : un node épuisé
-					// garde sa plaque, grisée avec le suffixe « (epuise) ».
-					if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u
-						&& re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
-						continue;
-					// FIX.10 — plaques des créatures : animaux et mobs hostiles seulement
-					// s'ils sont sélectionnés (ou animaux pour un chasseur), PNJ dans le
-					// champ de vision ; joueurs, butin et nœuds inchangés.
-					{
-						const float pdx = re.positionX - platePlayerPos.x;
-						const float pdz = re.positionZ - platePlayerPos.z;
-						const bool plateSelected = plateSelModel.targetStats.hasTarget
-							&& plateSelModel.targetStats.entityId == re.entityId;
-						if (!engine::client::ShouldShowNameplate(ClassifyRemoteForNameplate(re), plateSelected,
-								std::sqrt(pdx * pdx + pdz * pdz), plateParams))
-							continue;
-					}
-					float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
-					const auto sit = m_remoteSmoothed.find(re.entityId);
-					if (sit != m_remoteSmoothed.end() && sit->second.valid)
-					{
-						wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
-					}
-					// Combat SP1 fix — mobs/nodes : Y de spawn brut (souvent 0, jamais
-					// collé au terrain par le serveur) → snap visuel au sol client,
-					// sinon la plaque flotte au ras du sol (cf. ResolveRemoteDisplayCenterY).
-					// v1.0.125 — bateau : plaque au-dessus du pont (Y = flottaison répliquée).
-					wy = engine::server::IsBoatArchetype(re.archetypeId)
-						? wy + 6.0f
-						: ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
-					float sxp = 0.0f, syp = 0.0f;
-					if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
-						continue;
-					// TD.5 : on affiche le vrai nom du perso s'il est connu (chargé depuis
-					// la DB serveur et propagé via le SnapshotEntity). Sinon, fallback sur
-					// "P<clientId>" — utile quand la DB serveur ne sert pas (Windows / DB
-					// indisponible) ou pour identifier l'entité dans un log.
-					// Combat SP1 : plaque mob "Nom (niv. N)  PV/PVmax" résolue via le
-					// CreatureCatalog ; fallback générique si l'archétype est inconnu
-					// du catalogue client (catalogue absent ou désynchronisé).
-					std::string label;
-					// SP — suffixe « (niv. N) » des mobs, rendu en plus petit a droite
-					// du nom. Vide pour joueurs/nodes/butin (pas de niveau affiche).
-					std::string levelSuffix;
-					// Validation v12 — armé par la branche mob ci-dessous : dessine la
-					// barre de vie sous la plaque (jamais pour joueurs/nodes).
-					bool drawMobHealthBar = false;
-					if (re.playerClientId != 0u)
-					{
-						label = !re.displayName.empty()
-							? re.displayName
-							: ("P" + std::to_string(re.playerClientId));
-					}
-					else if (re.archetypeId == 0u)
-					{
-						// Validation v12 — sac de butin au sol.
-						label = "Butin [F]";
-					}
-					else if (engine::server::IsBoatArchetype(re.archetypeId))
-					{
-						// v1.0.125 — bateau : « Navire à quai [E] Embarquer / Débarquer ».
-						const bool docked = (re.stateFlags & engine::server::kEntityStateBoatDocked) != 0u;
-						label = docked ? "Navire a quai" : "Navire";
-						if (docked && m_aboardBoatEntityId == re.entityId)
-							label += " [E] Debarquer";
-						else if (docked && m_boardableBoatEntityId == re.entityId)
-							label += " [E] Embarquer";
-					}
-					else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
-					{
-						// Métiers SP1 — label de node de récolte : nom FR par type
-						// (V1 : map locale ; les noms en data = amélioration future)
-						// + « [E] » si disponible et à portée de récolte (~5 m).
-						const uint32_t nodeTypeId =
-							re.archetypeId - engine::server::kGatheringNodeArchetypeBase;
-						const char* nodeName = "Ressource";
-						switch (nodeTypeId)
-						{
-						case 1u: nodeName = "Filon de minerai"; break;
-						case 2u: nodeName = "Herbes sauvages"; break;
-						case 3u: nodeName = "Arbre a abattre"; break;
-						case 4u: nodeName = "Carcasse"; break;
-						default: break;
-						}
-						label = nodeName;
-						if ((re.stateFlags & 1u) != 0u)
-						{
-							label += " (epuise)";
-						}
-						else
-						{
-							const engine::math::Vec3 playerPosNode = m_characterController.GetPosition();
-							const float dxNode = re.positionX - playerPosNode.x;
-							const float dzNode = re.positionZ - playerPosNode.z;
-							if ((dxNode * dxNode + dzNode * dzNode) <= 25.0f)
-							{
-								label += " [E]";
-							}
-						}
-					}
-					else if (const engine::client::CreatureAppearance* amb = m_creatureCatalog.Find(re.archetypeId);
-						amb != nullptr && amb->ambient)
-					{
-						// Monde vivant — PNJ d'ambiance : nom + rôle, sans PV ni niveau ;
-						// « [E] » quand il est assez près pour lui parler.
-						label = amb->name;
-						if (!amb->role.empty()) levelSuffix = " - " + amb->role;
-						if (!amb->dialogueId.empty() || !amb->talkTarget.empty())
-						{
-							const engine::math::Vec3 pp = m_characterController.GetPosition();
-							const float dxa = re.positionX - pp.x, dza = re.positionZ - pp.z;
-							if (dxa * dxa + dza * dza <= kAmbientTalkRadiusM * kAmbientTalkRadiusM)
-								label += " [E]";
-						}
-					}
-					else
-					{
-						const engine::client::CreatureAppearance* appearance =
-							m_creatureCatalog.Find(re.archetypeId);
-						const std::string mobName = (appearance != nullptr)
-							? appearance->name
-							: ("Creature " + std::to_string(re.archetypeId));
-						const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
-						// Validation v12 — les PV chiffrés quittent le label : ils sont
-						// désormais portés par la barre de vie dessinée sous la plaque.
-						label = mobName;
-						// FIX.10 — niveau révélé seulement au cœur du cercle de perception.
-						{
-							const float ldx = re.positionX - platePlayerPos.x;
-							const float ldz = re.positionZ - platePlayerPos.z;
-							if (engine::client::ShouldShowLevel(std::sqrt(ldx * ldx + ldz * ldz), plateParams))
-								levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
-						}
-						drawMobHealthBar = (re.maxHealth > 0u);
-					}
-					// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).
-					ImFont* plateFont = ImGui::GetFont();
-					const float nivFontSize = ImGui::GetFontSize() * 0.78f;
-					const ImVec2 nameTs = ImGui::CalcTextSize(label.c_str());
-					const ImVec2 nivTs = levelSuffix.empty()
-						? ImVec2(0.0f, 0.0f)
-						: plateFont->CalcTextSizeA(nivFontSize, FLT_MAX, 0.0f, levelSuffix.c_str());
-					const ImVec2 ts(nameTs.x + nivTs.x, nameTs.y);
-					// Empilement vertical : remonte la plaque tant qu'elle recouvre une
-					// plaque deja posee cette frame (mobs superposes -> textes lisibles).
-					const float plateHalfW = ts.x * 0.5f + 6.0f;
-					const float plateH = ts.y + 2.0f + (drawMobHealthBar ? 24.0f : 4.0f);
-					for (int attempt = 0; attempt < 12; ++attempt)
-					{
-						const float top = syp - ts.y - 2.0f;
-						const float bot = syp + (drawMobHealthBar ? 24.0f : 4.0f);
-						bool overlap = false;
-						for (const ImVec4& r : placedLabelRects)
-						{
-							if ((sxp - plateHalfW) < r.z && (sxp + plateHalfW) > r.x
-								&& top < r.w && bot > r.y)
-							{ overlap = true; break; }
-						}
-						if (!overlap) break;
-						syp -= (plateH + 3.0f);
-					}
-					// Ne pas dessiner la plaque si elle retombe sur le Journal de quêtes
-					// (elle serait masquée par la fenêtre de toute façon, mais le
-					// foreground la peindrait par-dessus -> illisible).
-					if (hasJournalRect
-						&& (sxp - plateHalfW) < journalRect.z && (sxp + plateHalfW) > journalRect.x
-						&& (syp - ts.y - 2.0f) < journalRect.w
-						&& (syp + (drawMobHealthBar ? 24.0f : 4.0f)) > journalRect.y)
-					{
-						continue;
-					}
-					placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
-						sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));
-					// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
-					fg->AddRectFilled(
-						ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
-						ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
-						IM_COL32(0, 0, 0, 140), 3.0f);
-					// Validation v12 — surbrillance de la CIBLE courante : avec
-					// plusieurs mobs au même nom et aux mêmes PV, la bascule Tab
-					// était invisible (le cadre cible affichait la même chose).
-					// Bordure dorée autour de la plaque du mob ciblé.
-					{
-						const engine::client::UIModel& plateModel = m_uiModelBinding.GetModel();
-						if (plateModel.targetStats.hasTarget
-							&& plateModel.targetStats.entityId == re.entityId)
-						{
-							fg->AddRect(
-								ImVec2(sxp - ts.x * 0.5f - 6.0f, syp - ts.y - 4.0f),
-								ImVec2(sxp + ts.x * 0.5f + 6.0f, syp + 4.0f),
-								IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
-						}
-					}
-					// Nom a taille normale, puis suffixe niveau plus petit, aligne en bas.
-					const float labelLeft = sxp - ts.x * 0.5f;
-					fg->AddText(ImVec2(labelLeft, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
-					if (!levelSuffix.empty())
-					{
-						fg->AddText(plateFont, nivFontSize,
-							ImVec2(labelLeft + nameTs.x, syp - nivTs.y),
-							IM_COL32(180, 195, 225, 230), levelSuffix.c_str());
-					}
-					// Validation v12 — barre de vie du mob sous la plaque, alimentée
-					// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
-					// donc en direct à chaque coup porté. Couleur par tiers de PV
-					// (vert > 50 %, orange > 25 %, rouge en dessous).
-					if (drawMobHealthBar)
-					{
-						const float hpFrac = std::clamp(
-							static_cast<float>(re.currentHealth) / static_cast<float>(re.maxHealth),
-							0.0f, 1.0f);
-						const float barW = std::max(64.0f, ts.x);
-						const float barH = 5.0f;
-						const float barLeft = sxp - barW * 0.5f;
-						const float barTop = syp + 4.0f;
-						const ImU32 fillColor = (hpFrac > 0.5f)
-							? IM_COL32(80, 200, 80, 230)
-							: ((hpFrac > 0.25f)
-								? IM_COL32(230, 160, 40, 230)
-								: IM_COL32(210, 60, 50, 230));
-						fg->AddRectFilled(ImVec2(barLeft, barTop),
-							ImVec2(barLeft + barW, barTop + barH), IM_COL32(20, 22, 26, 200), 2.0f);
-						fg->AddRectFilled(ImVec2(barLeft, barTop),
-							ImVec2(barLeft + barW * hpFrac, barTop + barH), fillColor, 2.0f);
-						fg->AddRect(ImVec2(barLeft, barTop),
-							ImVec2(barLeft + barW, barTop + barH), IM_COL32(0, 0, 0, 160), 2.0f);
-						// PV chiffrés compacts au-dessus de la barre, à droite.
-						const std::string hpText = std::to_string(re.currentHealth) + "/"
-							+ std::to_string(re.maxHealth);
-						const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
-						fg->AddText(ImVec2(barLeft + barW - hpTs.x, barTop + barH + 1.0f),
-							IM_COL32(200, 205, 215, 220), hpText.c_str());
-					}
-				}
-			}
+			RenderNameplatesImGui(out, ivw, ivh, fg, worldOverlaysHidden, plateParams);
 			// =============================================================
 			// Combat SP2 — ciblage (clic / Tab), attaque (T), cadre cible,
 			// log combat HUD, panneau avance (J) et ecran de mort. Touches
@@ -1082,89 +696,7 @@ namespace engine
 				}
 
 				// --- Tab : cycle des mobs vivants par distance croissante au joueur.
-				if (keysAllowed && m_input.WasPressed(engine::platform::Key::Tab))
-				{
-					const engine::math::Vec3 playerPos = m_characterController.GetPosition();
-					// Filtre de visibilite : seuls les ennemis a l'ecran (dans le
-					// frustum camera) sont ciblables au Tab — un mob dans le dos ou
-					// hors champ ne doit pas etre selectionne. On reutilise la MEME
-					// matrice view-projection que le rendu monde de cette frame
-					// (out.viewProjMatrix = out.projMatrix * out.viewMatrix, cf. ~9852),
-					// column-major (m[col*4+row], cf. Math.h). Pas d'operateur
-					// Mat4*Vec4 dans Math.h : on projette le point a la main, comme
-					// WorldToScreenPx plus haut. Retourne false si l'ennemi est
-					// derriere la camera (w <= ~0) ou hors du carre NDC [-1,1]^2.
-					// On vise le torse (y + 1.0 m) plutot que les pieds : un mob dont
-					// les pieds tombent juste sous le bord bas mais dont le corps est
-					// visible reste ciblable.
-					const float* tabVp = out.viewProjMatrix.m;
-					auto isOnScreen = [tabVp](float wx, float wy, float wz) -> bool
-					{
-						const float cx = tabVp[0] * wx + tabVp[4] * wy + tabVp[8] * wz + tabVp[12];
-						const float cy = tabVp[1] * wx + tabVp[5] * wy + tabVp[9] * wz + tabVp[13];
-						const float cw = tabVp[3] * wx + tabVp[7] * wy + tabVp[11] * wz + tabVp[15];
-						if (cw <= 1e-5f)
-							return false; // derriere la camera (ou plan near degenere)
-						const float invW = 1.0f / cw;
-						const float ndcX = cx * invW;
-						const float ndcY = cy * invW;
-						return ndcX >= -1.0f && ndcX <= 1.0f
-							&& ndcY >= -1.0f && ndcY <= 1.0f;
-					};
-					std::vector<std::pair<float, engine::server::EntityId>> candidates;
-					for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-					{
-						if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
-							|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
-							continue;
-						// Monde vivant : les PNJ d'ambiance (villageois, gardes…) ne sont
-						// pas des ennemis — jamais ciblés au Tab (le serveur refuse l'attaque).
-						// Seconde carte : sauf ceux hostiles à la race du joueur (Légion / humains).
-						if (const engine::client::CreatureAppearance* tabApp = m_creatureCatalog.Find(re.archetypeId);
-							tabApp != nullptr && tabApp->ambient && !tabApp->IsHostileToRace(m_localRaceId))
-							continue;
-						// Rejet des ennemis non visibles (hors frustum / dans le dos).
-						if (!isOnScreen(re.positionX, re.positionY + 1.0f, re.positionZ))
-							continue;
-						const float dxc = re.positionX - playerPos.x;
-						const float dzc = re.positionZ - playerPos.z;
-						// FIX.10 — pas de cible hors du champ de vision (elle serait
-						// désélectionnée à la frame suivante).
-						const float tabVision = CurrentNameplateParams().visionDistanceM;
-						if (dxc * dxc + dzc * dzc > tabVision * tabVision)
-							continue;
-						candidates.emplace_back(dxc * dxc + dzc * dzc, re.entityId);
-					}
-					// Diag (sur appui Tab uniquement, non spammy) : si l'utilisateur
-					// rapporte « Tab ne selectionne rien », ce log distingue les cas
-					// « aucune entite repliquee » / « aucun candidat visible » /
-					// « cible deja active ». L'analyse de code n'a revele aucun bug
-					// dans le filtre (archetype/mort/node) ni dans la propagation
-					// SetLocalTarget -> targetStats ; la cause racine d'une selection
-					// vide doit donc etre tranchee en jeu via ce compteur.
-					LOG_INFO(Core,
-						"[TabTarget] remoteEntities={} candidates_visibles={} hasTarget={}",
-						uiModel.remoteEntities.size(), candidates.size(),
-						uiModel.targetStats.hasTarget);
-					if (!candidates.empty())
-					{
-						std::sort(candidates.begin(), candidates.end());
-						// Suivant de la cible courante (wrap) ; sans cible : la plus proche.
-						size_t nextIndex = 0;
-						if (uiModel.targetStats.hasTarget)
-						{
-							for (size_t ci = 0; ci < candidates.size(); ++ci)
-							{
-								if (candidates[ci].second == uiModel.targetStats.entityId)
-								{
-									nextIndex = (ci + 1u) % candidates.size();
-									break;
-								}
-							}
-						}
-						(void)m_uiModelBinding.SetLocalTarget(candidates[nextIndex].second);
-					}
-				}
+				HandleTabTargetingImGui(out, uiModel, keysAllowed);
 
 				// --- T : attaque de la cible courante. Throttle local anti-spam
 				// uniquement : portee, cooldown reel et cible vivante sont
@@ -1228,80 +760,7 @@ namespace engine
 				// On masque le cadre dès que la cible est morte (bit 1 de stateFlags) :
 				// inutile de laisser traîner « (MORT) » tant qu'aucune autre cible n'est
 				// sélectionnée — ça encombrait le HUD (retour joueur 2026-07-04).
-				if (uiModel.targetStats.hasTarget
-					&& (uiModel.targetStats.stateFlags & 1u) == 0u)
-				{
-					const float frameW = 260.0f;
-					const float frameH = 54.0f;
-					const float fx = (dw - frameW) * 0.5f;
-					const float fy = 56.0f;
-					const bool targetDead = (uiModel.targetStats.stateFlags & 1u) != 0u;
-					// Nom : catalogue creatures (la cible V1 est toujours un mob).
-					std::string targetName = "Cible";
-					for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-					{
-						if (re.entityId != uiModel.targetStats.entityId)
-							continue;
-						const engine::client::CreatureAppearance* app = m_creatureCatalog.Find(re.archetypeId);
-						if (app != nullptr)
-							targetName = app->name;
-						break;
-					}
-					if (targetDead)
-						targetName += "  (MORT)";
-					fg->AddRectFilled(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH), IM_COL32(10, 12, 16, 200), 6.0f);
-					fg->AddRect(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH),
-						targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
-					fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
-						targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
-					// Distance XZ joueur→cible : affichée SOUS le cadre, centrée et en
-					// plus petit (0.8x). Avant elle etait en haut a droite DANS le cadre
-					// et chevauchait le nom (souvent long) -> illisible. Orange au-dela
-					// de 4 m (coherent avec « Hors de portee »), vert sinon.
-					{
-						const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
-						for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-						{
-							if (re.entityId != uiModel.targetStats.entityId)
-								continue;
-							const float dxf = re.positionX - playerPosFrame.x;
-							const float dzf = re.positionZ - playerPosFrame.z;
-							const float distM = std::sqrt(dxf * dxf + dzf * dzf);
-							const std::string distText =
-								std::to_string(static_cast<int>(std::lround(distM))) + " m";
-							ImFont* distFont = ImGui::GetFont();
-							const float distFontSize = ImGui::GetFontSize() * 0.8f;
-							const ImVec2 distTs =
-								distFont->CalcTextSizeA(distFontSize, FLT_MAX, 0.0f, distText.c_str());
-							fg->AddText(distFont, distFontSize,
-								ImVec2(fx + (frameW - distTs.x) * 0.5f, fy + frameH + 2.0f),
-								(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
-								distText.c_str());
-							break;
-						}
-					}
-					const float barX = fx + 10.0f, barY = fy + 30.0f, barW = frameW - 20.0f, barH = 14.0f;
-					const float hpFrac = (uiModel.targetStats.maxHealth > 0u)
-						? std::clamp(static_cast<float>(uiModel.targetStats.currentHealth)
-							/ static_cast<float>(uiModel.targetStats.maxHealth), 0.0f, 1.0f)
-						: 0.0f;
-					fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH), IM_COL32(40, 40, 44, 220), 3.0f);
-					fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * hpFrac, barY + barH),
-						targetDead ? IM_COL32(110, 110, 110, 230) : IM_COL32(190, 50, 40, 230), 3.0f);
-					const std::string hpText = std::to_string(uiModel.targetStats.currentHealth) + "/"
-						+ std::to_string(uiModel.targetStats.maxHealth);
-					const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
-					fg->AddText(ImVec2(barX + (barW - hpTs.x) * 0.5f, barY - 1.0f), IM_COL32(255, 255, 255, 255), hpText.c_str());
-					// Validation v12 — indication transitoire « Hors de portee »
-					// (cf. armement dans le bloc T ci-dessus).
-					if (m_outOfRangeHintSec > 0.0f)
-					{
-						const char* rangeHint = "Hors de portee  (approchez-vous)";
-						const ImVec2 hintTs = ImGui::CalcTextSize(rangeHint);
-						fg->AddText(ImVec2(fx + (frameW - hintTs.x) * 0.5f, fy + frameH + 6.0f),
-							IM_COL32(240, 170, 60, 255), rangeHint);
-					}
-				}
+				RenderTargetFrameImGui(dw, fg, uiModel);
 
 				const engine::client::CombatHudState& hudState = m_combatHud.GetState();
 
@@ -1329,68 +788,7 @@ namespace engine
 				}
 
 				// --- Panneau combat avance (J) : DPS meter + log filtrable (M39.4).
-				if (m_advancedCombatVisible)
-				{
-					const engine::client::AdvancedCombatState& acs = m_advancedCombat.GetState();
-					ImGui::SetNextWindowPos(ImVec2(dw - 420.0f, 90.0f), ImGuiCond_FirstUseEver);
-					ImGui::SetNextWindowSize(ImVec2(380.0f, 420.0f), ImGuiCond_FirstUseEver);
-					if (ImGui::Begin("Combat avance", &m_advancedCombatVisible))
-					{
-						ImGui::Text("Combat : %s  (%.1f s)", acs.inCombat ? "en cours" : "inactif", acs.fightElapsedSec);
-						ImGui::Separator();
-						ImGui::TextUnformatted("DPS");
-						for (const engine::client::DpsMeterEntry& row : acs.dpsMeter)
-						{
-							ImGui::Text("%u. %s", row.rank, row.displayName.c_str());
-							ImGui::SameLine(200.0f);
-							ImGui::Text("%.1f dps", row.dps);
-							ImGui::ProgressBar(row.barFraction, ImVec2(-1.0f, 6.0f), "");
-						}
-						// Combat SP4 — menace sur la cible courante (ThreatUpdate).
-						if (acs.threatMeterVisible && !acs.threatMeter.empty())
-						{
-							ImGui::Separator();
-							ImGui::TextUnformatted("Menace");
-							for (const engine::client::ThreatMeterEntry& threatRow : acs.threatMeter)
-							{
-								const ImVec4 rowColor = (threatRow.color == engine::client::ThreatColor::Red)
-									? ImVec4(0.9f, 0.3f, 0.25f, 1.0f)
-									: (threatRow.color == engine::client::ThreatColor::Yellow)
-										? ImVec4(0.9f, 0.8f, 0.3f, 1.0f)
-										: ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
-								ImGui::TextColored(rowColor, "%s", threatRow.displayName.c_str());
-								ImGui::SameLine(200.0f);
-								ImGui::TextColored(rowColor, "%.0f %%", threatRow.threatPercent);
-								ImGui::ProgressBar(threatRow.barFraction, ImVec2(-1.0f, 6.0f), "");
-							}
-						}
-						ImGui::Separator();
-						uint32_t filter = acs.activeFilter;
-						bool filterChanged = false;
-						auto toggleChip = [&filter, &filterChanged](const char* lbl, uint32_t mask)
-						{
-							bool on = (filter & mask) != 0u;
-							if (ImGui::Checkbox(lbl, &on))
-							{
-								filter = on ? (filter | mask) : (filter & ~mask);
-								filterChanged = true;
-							}
-							ImGui::SameLine();
-						};
-						toggleChip("Degats", engine::client::CombatLogFilterDamage);
-						toggleChip("Soins", engine::client::CombatLogFilterHealing);
-						toggleChip("Morts", engine::client::CombatLogFilterDeaths);
-						ImGui::NewLine();
-						if (filterChanged)
-							m_advancedCombat.SetLogFilter(filter);
-						ImGui::Separator();
-						ImGui::BeginChild("##ln_combat_log", ImVec2(0.0f, 0.0f), true);
-						for (const engine::client::CombatLogLine& logLine : acs.visibleLogLines)
-							ImGui::TextUnformatted(logLine.text.c_str());
-						ImGui::EndChild();
-					}
-					ImGui::End();
-				}
+				RenderAdvancedCombatPanelImGui(dw);
 
 				// --- Combat SP3 : barre d'action (touches 1-4, sorts du profil).
 				// Cooldowns affichés localement (cosmétique) ; le serveur revalide
@@ -1445,678 +843,15 @@ namespace engine
 				// compétences pas encore reçues du shard, ex. pas de Welcome UDP),
 				// ses 10 cases apparaissent vides avec leurs touches au lieu de
 				// disparaître. Les envois restent conditionnés à ServerClientId() != 0.
-				{
-					const float nowSec = EngineNowSec();
-					const float slotSize = 58.0f;
-					const float slotGap = 8.0f;
-					// Grimoire — layout effectif des 10 slots (slot i → spellId).
-					const std::array<std::string, 10> resolvedLayout =
-						engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, effectiveKit);
-					const size_t slotCount = resolvedLayout.size(); // 10
-					const float barWidth = slotSize * static_cast<float>(slotCount)
-						+ slotGap * static_cast<float>(slotCount - 1);
-					const float barX = (dw - barWidth) * 0.5f;
-					const float barY = dh - slotSize - 16.0f;
-					for (size_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
-					{
-						const std::string& slotSpellId = resolvedLayout[slotIndex];
-						const engine::client::SpellDisplay* spellPtr =
-							slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(effectiveKit, slotSpellId);
-						const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
-						// Touche du slot (remappable) : défaut Digit1..Digit9 puis Digit0.
-						const engine::platform::Key slotKey = KeyFromName(
-							m_cfg.GetString("controls.keybind.action_slot_" + std::to_string(slotIndex + 1),
-								(slotIndex < 9) ? std::string(1, static_cast<char>('1' + slotIndex)) : std::string("0")),
-							(slotIndex < 9)
-								? static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))
-								: engine::platform::Key::Digit0);
-						// SP3 anniversaires (2026-07-18) — slot occupé par un
-						// GÂTEAU (jeton "item:<id>") : case dédiée, la touche
-						// envoie un CastRequest avec le jeton (activation
-						// serveur : buff groupe/guilde tant que slotté).
-						uint32_t cakeItemId = 0u;
-						if (engine::anniversary::ParseCakeToken(slotSpellId, cakeItemId))
-						{
-							fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-								IM_COL32(58, 34, 52, 220), 6.0f);
-							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-								IM_COL32(220, 150, 190, 200), 6.0f, 0, 2.0f);
-							const engine::items::ItemDefinition* cakeDef = m_itemCatalog.Find(cakeItemId);
-							const char* cakeLabel = (cakeDef != nullptr && !cakeDef->name.empty())
-								? cakeDef->name.c_str() : "Gateau";
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize * 0.5f - 8.0f),
-								IM_COL32(255, 230, 245, 255), cakeLabel);
-							const std::string cakeKeyLabel = KeyGlyph(slotKey);
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f),
-								IM_COL32(255, 220, 240, 220), cakeKeyLabel.c_str());
-							if (keysAllowed && m_input.WasPressed(slotKey))
-							{
-								const uint32_t cakeClientId = m_gameplayUdp.ServerClientId();
-								if (cakeClientId != 0u)
-									(void)m_gameplayUdp.SendCastRequest(cakeClientId, 0ull, slotSpellId);
-							}
-							continue;
-						}
-						if (spellPtr == nullptr)
-						{
-							// Slot vide : case grisée + glyphe touche, pas d'action.
-							fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-								IM_COL32(14, 16, 22, 160), 6.0f);
-							fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-								IM_COL32(70, 70, 76, 160), 6.0f, 0, 2.0f);
-							const std::string emptyKeyLabel = KeyGlyph(slotKey);
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(150, 140, 110, 200), emptyKeyLabel.c_str());
-							continue;
-						}
-						const engine::client::SpellDisplay& spell = *spellPtr;
-						// Coût payable + cooldown : visuel grisé si indisponible.
-						const uint32_t cost = spell.resourceCostPercent
-							* uiModel.playerStats.secondaryResourceMax / 100u;
-						const bool affordable = uiModel.playerStats.secondaryResourceCurrent >= cost;
-						const auto cooldownIt = m_spellCooldownUiUntilSec.find(spell.spellId);
-						const float cooldownRemaining = (cooldownIt != m_spellCooldownUiUntilSec.end())
-							? std::max(0.0f, cooldownIt->second - nowSec)
-							: 0.0f;
-						const bool ready = affordable && cooldownRemaining <= 0.0f;
-						fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-							IM_COL32(14, 16, 22, 215), 6.0f);
-						fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
-							ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
-						// SP-E — icône du sort en fond du slot (compétences de classe).
-						// Repli sur le nom texte si pas d'icône (kit profil, fichier absent).
-						bool slotHasIcon = false;
-						if (!spell.iconPath.empty())
-						{
-							const uint64_t slotTexId = m_skillIconCache.GetOrLoad(spell.iconPath);
-							if (slotTexId != 0)
-							{
-								const float pad = 3.0f;
-								fg->AddImage(static_cast<ImTextureID>(slotTexId),
-									ImVec2(sx0 + pad, barY + pad),
-									ImVec2(sx0 + slotSize - pad, barY + slotSize - pad));
-								slotHasIcon = true;
-							}
-						}
-						// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué) si pas d'icône.
-						const std::string keyLabel = KeyGlyph(slotKey);
-						fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
-						if (!slotHasIcon)
-						{
-							std::string spellLabel = spell.name.substr(0, 9);
-							fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
-								ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
-								spellLabel.c_str());
-						}
-						// Voile + décompte pendant le cooldown affiché.
-						if (cooldownRemaining > 0.0f)
-						{
-							const float fillFraction = (spell.cooldownMs > 0u)
-								? std::clamp(cooldownRemaining / (static_cast<float>(spell.cooldownMs) / 1000.0f), 0.0f, 1.0f)
-								: 0.0f;
-							fg->AddRectFilled(
-								ImVec2(sx0, barY + slotSize * (1.0f - fillFraction)),
-								ImVec2(sx0 + slotSize, barY + slotSize),
-								IM_COL32(0, 0, 0, 150), 6.0f);
-							char cooldownText[16];
-							std::snprintf(cooldownText, sizeof(cooldownText), "%.0f", cooldownRemaining);
-							const ImVec2 cdTs = ImGui::CalcTextSize(cooldownText);
-							fg->AddText(ImVec2(sx0 + (slotSize - cdTs.x) * 0.5f, barY + (slotSize - cdTs.y) * 0.5f),
-								IM_COL32(255, 255, 255, 255), cooldownText);
-						}
-						// Touche remappable du slot : envoi du CastRequest.
-						if (keysAllowed && m_input.WasPressed(slotKey))
-						{
-							const bool targetOk = !spell.needsEnemyTarget
-								|| (uiModel.targetStats.hasTarget
-									&& (uiModel.targetStats.stateFlags & 1u) == 0u);
-							const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
-							if (targetOk && ready && gameplayClientId != 0u)
-							{
-								// Groupes SP1 — sorts d'allié : envoie l'allié sélectionné au
-								// cadre de groupe (0 = soi, défaut serveur).
-								uint64_t castTarget = 0ull;
-								if (spell.needsEnemyTarget)
-								{
-									castTarget = uiModel.targetStats.entityId;
-								}
-								else if (spell.targetsAlly)
-								{
-									castTarget = m_selectedAllyEntityId;
-								}
-								(void)m_gameplayUdp.SendCastRequest(gameplayClientId, castTarget, spell.spellId);
-								if (spell.cooldownMs > 0u)
-								{
-									m_spellCooldownUiUntilSec[spell.spellId] =
-										nowSec + static_cast<float>(spell.cooldownMs) / 1000.0f;
-								}
-							}
-						}
-					}
-
-					// Ceinture v2 (2026-07-20) — barre d'objets ACTIFS à taille
-					// DYNAMIQUE (4 par défaut, 12 max — capacité autoritaire
-					// = ceinture équipée en slot Waist, reçue via kind 100).
-					// Fenêtre ImGui invisible : chaque case est un vrai
-					// widget → drag & drop natif (sac → case, case → case),
-					// tooltips, clic droit pour vider. Activation : Maj+1..9
-					// ou clic complet (relâché sans drag) sur la case.
-					{
-						const std::vector<std::string>& beltLayout = uiModel.playerStats.beltLayout;
-						const size_t beltCount = beltLayout.size();
-						if (beltCount > 0u)
-						{
-							const float beltSlotSz = 48.0f;
-							const float beltGap = 6.0f;
-							// Retour de test 2026-07-20 — disposition : la
-							// rangée BASSE porte les slots 1..6 ; les slots
-							// 7..12 s'empilent sur une 2e rangée AU-DESSUS,
-							// alignés colonne par colonne (7 au-dessus du 1,
-							// 8 au-dessus du 2, etc.).
-							const size_t perRow = std::min<size_t>(beltCount, 6u);
-							const size_t rowCount = (beltCount + 5u) / 6u;
-							const float beltW = static_cast<float>(perRow) * beltSlotSz
-								+ static_cast<float>(perRow - 1u) * beltGap;
-							const float beltH = static_cast<float>(rowCount) * beltSlotSz
-								+ static_cast<float>(rowCount - 1u) * beltGap;
-							// Retour de test 2026-07-20 — séparation nette
-							// avec les icônes de pouvoir : écart élargi +
-							// trait séparateur vertical (dessiné plus bas).
-							const float beltX = barX + barWidth + 56.0f;
-							const float beltY = dh - beltH - 16.0f; // bord HAUT du bloc
-							const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
-							const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
-
-							ImGui::SetNextWindowPos(ImVec2(beltX - 34.0f, beltY - 20.0f));
-							ImGui::SetNextWindowSize(ImVec2(beltW + 40.0f, beltH + 26.0f));
-							ImGui::Begin("##belt_bar", nullptr,
-								ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
-								| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
-								| ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoFocusOnAppearing
-								| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings);
-							ImDrawList* bdl = ImGui::GetWindowDrawList();
-							// Retour de test 2026-07-20 — pas de libellé « Ceinture x/y »
-							// au-dessus de la barre : les cases se suffisent.
-							// Trait séparateur vertical entre la barre
-							// d'action (icônes de pouvoir) et la ceinture.
-							bdl->AddLine(ImVec2(beltX - 26.0f, dh - beltSlotSz - 20.0f),
-								ImVec2(beltX - 26.0f, dh - 12.0f),
-								IM_COL32(150, 170, 155, 120), 2.0f);
-
-							// Copie de travail : mutée par drop/échange/vidage,
-							// envoyée en une fois si changement.
-							std::vector<std::string> newBelt(beltLayout.begin(), beltLayout.end());
-							bool beltChanged = false;
-
-							for (size_t bi = 0; bi < beltCount; ++bi)
-							{
-								// row 0 = rangée BASSE (slots 1..6) ; les rangées
-								// suivantes montent AU-DESSUS, mêmes colonnes.
-								const size_t row = bi / 6u;
-								const size_t colIdx = bi % 6u;
-								const float bx0 = beltX + static_cast<float>(colIdx) * (beltSlotSz + beltGap);
-								const float by0 = beltY
-									+ static_cast<float>(rowCount - 1u - row) * (beltSlotSz + beltGap);
-								const std::string& beltTok = beltLayout[bi];
-								uint32_t beltItemId = 0u;
-								const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
-								const engine::items::ItemDefinition* bdef =
-									occupied ? m_itemCatalog.Find(beltItemId) : nullptr;
-
-								ImGui::SetCursorScreenPos(ImVec2(bx0, by0));
-								char beltBtnId[16];
-								std::snprintf(beltBtnId, sizeof(beltBtnId), "##belt%d", static_cast<int>(bi));
-								ImGui::InvisibleButton(beltBtnId, ImVec2(beltSlotSz, beltSlotSz));
-								const bool hovered = ImGui::IsItemHovered();
-
-								// Quantité restante en sac (somme des piles).
-								uint32_t beltQty = 0u;
-								if (occupied)
-								{
-									for (const engine::client::InventorySlotState& is : m_invUi.GetState().slots)
-										if (is.occupied && is.itemId == beltItemId)
-											beltQty += is.quantity;
-								}
-
-								// Visuel : fond, bordure (survol = doré), raccourci,
-								// initiale de l'objet en grand + quantité en bas-droite.
-								const ImU32 fillCol = occupied
-									? IM_COL32(32, 46, 36, 235) : IM_COL32(14, 16, 22, 170);
-								const ImU32 borderCol = hovered
-									? IM_COL32(235, 205, 120, 255)
-									: IM_COL32(120, 170, 130, occupied ? 220 : 110);
-								bdl->AddRectFilled(ImVec2(bx0, by0),
-									ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), fillCol, 6.0f);
-								bdl->AddRect(ImVec2(bx0, by0),
-									ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), borderCol, 6.0f, 0,
-									hovered ? 2.5f : 2.0f);
-								if (bi < 9u)
-								{
-									char beltKeyLabel[12];
-									std::snprintf(beltKeyLabel, sizeof(beltKeyLabel), "M+%d",
-										static_cast<int>(bi) + 1);
-									bdl->AddText(ImVec2(bx0 + 3.0f, by0 + 2.0f),
-										IM_COL32(200, 230, 205, 190), beltKeyLabel);
-								}
-								if (occupied)
-								{
-									// Initiale (2 lettres) au centre — lisible sans atlas d'icônes.
-									const char* bname = (bdef != nullptr && !bdef->name.empty())
-										? bdef->name.c_str() : "?";
-									char initials[3] = { bname[0], bname[1] != '\0' ? bname[1] : ' ', '\0' };
-									const ImVec2 initSz = ImGui::CalcTextSize(initials);
-									bdl->AddText(ImVec2(bx0 + (beltSlotSz - initSz.x) * 0.5f,
-										by0 + (beltSlotSz - initSz.y) * 0.5f),
-										IM_COL32(240, 250, 240, 255), initials);
-									char beltQtyTxt[12];
-									std::snprintf(beltQtyTxt, sizeof(beltQtyTxt), "%u", beltQty);
-									const ImVec2 qtySz = ImGui::CalcTextSize(beltQtyTxt);
-									bdl->AddText(ImVec2(bx0 + beltSlotSz - qtySz.x - 3.0f,
-										by0 + beltSlotSz - qtySz.y - 2.0f),
-										beltQty > 0u ? IM_COL32(255, 240, 190, 255)
-										             : IM_COL32(255, 120, 110, 255),
-										beltQtyTxt);
-								}
-
-								// Source de drag (réorganisation case → case).
-								if (occupied && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-								{
-									int fromIndex = static_cast<int>(bi);
-									ImGui::SetDragDropPayload("LN_BELT_MOVE", &fromIndex, sizeof(int));
-									ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
-										? bdef->name.c_str() : "Objet");
-									ImGui::EndDragDropSource();
-								}
-								// Cible de drop : échange interne OU objet du sac.
-								if (ImGui::BeginDragDropTarget())
-								{
-									if (const ImGuiPayload* mv = ImGui::AcceptDragDropPayload("LN_BELT_MOVE"))
-									{
-										if (mv->DataSize == static_cast<int>(sizeof(int)))
-										{
-											const int from = *static_cast<const int*>(mv->Data);
-											if (from >= 0 && from < static_cast<int>(newBelt.size())
-												&& from != static_cast<int>(bi))
-											{
-												std::swap(newBelt[static_cast<size_t>(from)], newBelt[bi]);
-												beltChanged = true;
-											}
-										}
-									}
-									if (const ImGuiPayload* it = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
-									{
-										if (it->DataSize == static_cast<int>(sizeof(uint32_t)))
-										{
-											const uint32_t droppedId = *static_cast<const uint32_t*>(it->Data);
-											const std::string droppedTok =
-												engine::anniversary::MakeItemToken(droppedId);
-											bool already = false;
-											for (const std::string& s : newBelt)
-												if (s == droppedTok) { already = true; break; }
-											if (!already)
-											{
-												newBelt[bi] = droppedTok;
-												beltChanged = true;
-											}
-										}
-									}
-									ImGui::EndDragDropTarget();
-								}
-								// Clic droit : vider la case.
-								if (occupied && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-								{
-									newBelt[bi].clear();
-									beltChanged = true;
-								}
-								// Tooltip riche.
-								if (hovered && occupied)
-								{
-									ImGui::BeginTooltip();
-									ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
-										? bdef->name.c_str() : "Objet");
-									if (bdef != nullptr && !bdef->description.empty())
-										ImGui::TextDisabled("%s", bdef->description.c_str());
-									ImGui::Separator();
-									if (bi < 9u)
-										ImGui::TextDisabled("Maj+%d ou clic : utiliser", static_cast<int>(bi) + 1);
-									else
-										ImGui::TextDisabled("Clic : utiliser");
-									ImGui::TextDisabled("Clic droit : retirer  |  Glisser : deplacer");
-									ImGui::TextDisabled("En sac : %u", beltQty);
-									ImGui::EndTooltip();
-								}
-
-								// Activation : Maj+1..9, ou clic COMPLET (press +
-								// release dans la case, sans drag en cours — permet
-								// de glisser sans consommer l'objet).
-								const bool beltKeyPressed = keysAllowed && shiftHeld && bi < 9u
-									&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(bi)));
-								const bool beltClickCompleted = ImGui::IsItemDeactivated()
-									&& hovered && ImGui::GetDragDropPayload() == nullptr;
-								if (occupied && (beltKeyPressed || beltClickCompleted)
-									&& beltClientId != 0u)
-								{
-									(void)m_gameplayUdp.SendCastRequest(beltClientId, 0ull, beltTok);
-								}
-							}
-							ImGui::End();
-
-							if (beltChanged && beltClientId != 0u)
-							{
-								(void)m_gameplayUdp.SendSetBeltLayout(beltClientId, newBelt);
-							}
-						}
-					}
-
-					// --- Barre de cast (au-dessus de la barre d'action) pilotée
-					// par CastBarUpdate ; progression calculée localement.
-					if (uiModel.castBar.active && uiModel.castBar.durationMs > 0u)
-					{
-						const uint64_t nowNs = static_cast<uint64_t>(
-							std::chrono::duration_cast<std::chrono::nanoseconds>(
-								std::chrono::steady_clock::now().time_since_epoch()).count());
-						const float elapsedSec = static_cast<float>(nowNs - uiModel.castBar.startedAtNs) / 1.0e9f;
-						const float durationSec = static_cast<float>(uiModel.castBar.durationMs) / 1000.0f;
-						const float progress = std::clamp(elapsedSec / durationSec, 0.0f, 1.0f);
-						const float castBarWidth = 260.0f;
-						const float castBarHeight = 18.0f;
-						const float cbx = (dw - castBarWidth) * 0.5f;
-						const float cby = barY - castBarHeight - 10.0f;
-						fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth, cby + castBarHeight),
-							IM_COL32(20, 22, 28, 220), 4.0f);
-						fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth * progress, cby + castBarHeight),
-							IM_COL32(120, 170, 230, 230), 4.0f);
-						const std::string castLabel = m_spellCatalog.ResolveSpellName(uiModel.castBar.spellId);
-						const ImVec2 castTs = ImGui::CalcTextSize(castLabel.c_str());
-						fg->AddText(ImVec2(cbx + (castBarWidth - castTs.x) * 0.5f, cby + 1.0f),
-							IM_COL32(255, 255, 255, 255), castLabel.c_str());
-					}
-				}
+				RenderActionBarAndBeltImGui(dw, dh, fg, uiModel, keysAllowed, effectiveKit);
 
 				// --- Combat SP3 : BuffBar (M31.2 enfin câblée) — auras du joueur
 				// (au-dessus de la barre d'action) et de la cible (sous le cadre).
-				{
-					const uint64_t nowNs = static_cast<uint64_t>(
-						std::chrono::duration_cast<std::chrono::nanoseconds>(
-							std::chrono::steady_clock::now().time_since_epoch()).count());
-					// Construit la liste StatusEffect d'une entité depuis le modèle
-					// (les timers décrémentent localement entre deux AuraUpdate).
-					auto buildEffects = [&uiModel, nowNs](engine::server::EntityId entityId,
-						std::list<engine::gameplay::StatusEffect>& outEffects)
-					{
-						const auto auraIt = uiModel.entityAuras.find(entityId);
-						if (auraIt == uiModel.entityAuras.end())
-						{
-							return;
-						}
-						for (const engine::client::UIAuraEntry& aura : auraIt->second)
-						{
-							engine::gameplay::StatusEffect effect{};
-							effect.effectId = aura.spellId;
-							effect.targetId = entityId;
-							effect.stacks = aura.stacks;
-							// Mapping wire (SpellEffectType serveur) → type client.
-							switch (aura.effectType)
-							{
-							case 1u: effect.type = engine::gameplay::StatusEffectType::DoT; break;
-							case 3u: effect.type = engine::gameplay::StatusEffectType::HoT; break;
-							case 5u: effect.type = engine::gameplay::StatusEffectType::Debuff; break;
-							case 7u: effect.type = engine::gameplay::StatusEffectType::Slow; break;
-							default: effect.type = engine::gameplay::StatusEffectType::Buff; break;
-							}
-							effect.startTimeNs = aura.receivedAtNs;
-							effect.durationSeconds = static_cast<float>(aura.remainingMs) / 1000.0f;
-							effect.expireTimeNs = aura.receivedAtNs
-								+ static_cast<uint64_t>(aura.remainingMs) * 1000000ull;
-							outEffects.push_back(std::move(effect));
-						}
-					};
-					std::list<engine::gameplay::StatusEffect> playerEffects;
-					buildEffects(static_cast<engine::server::EntityId>(uiModel.playerStats.playerEntityId), playerEffects);
-					m_buffBar.UpdatePlayer(playerEffects.empty() ? nullptr : &playerEffects, nowNs);
-					std::list<engine::gameplay::StatusEffect> targetEffects;
-					if (uiModel.targetStats.hasTarget)
-					{
-						buildEffects(uiModel.targetStats.entityId, targetEffects);
-					}
-					m_buffBar.UpdateTarget(targetEffects.empty() ? nullptr : &targetEffects, nowNs);
-
-					// Rendu en pastilles texte (icônes graphiques = chantier atlas).
-					auto drawBar = [this, fg](const engine::client::BuffBarWidget& bar, float x, float y, bool harmful)
-					{
-						if (!bar.visible)
-						{
-							return;
-						}
-						float cursorX = x;
-						for (const engine::client::BuffIconWidget& icon : bar.icons)
-						{
-							if (!icon.visible)
-							{
-								continue;
-							}
-							std::string chip = m_spellCatalog.ResolveSpellName(icon.effectId);
-							if (!icon.isPermanent && icon.remainingSeconds > 0.0f)
-							{
-								char timerText[16];
-								std::snprintf(timerText, sizeof(timerText), " %.0fs", icon.remainingSeconds);
-								chip += timerText;
-							}
-							if (icon.stacks > 1u)
-							{
-								chip += " x" + std::to_string(icon.stacks);
-							}
-							const ImVec2 chipTs = ImGui::CalcTextSize(chip.c_str());
-							fg->AddRectFilled(ImVec2(cursorX, y), ImVec2(cursorX + chipTs.x + 10.0f, y + chipTs.y + 6.0f),
-								harmful ? IM_COL32(70, 20, 20, 210) : IM_COL32(20, 50, 25, 210), 4.0f);
-							fg->AddText(ImVec2(cursorX + 5.0f, y + 3.0f), IM_COL32(230, 230, 230, 255), chip.c_str());
-							cursorX += chipTs.x + 16.0f;
-						}
-					};
-					const engine::client::BuffBarState& playerBuffState = m_buffBar.GetPlayerState();
-					drawBar(playerBuffState.buffBar, 18.0f, dh - 120.0f, false);
-					drawBar(playerBuffState.debuffBar, 18.0f, dh - 92.0f, true);
-					if (uiModel.targetStats.hasTarget)
-					{
-						const engine::client::BuffBarState& targetBuffState = m_buffBar.GetTargetState();
-						// Sous le cadre cible (haut-centre, cf. bloc SP2 : fy 56 + 54).
-						drawBar(targetBuffState.buffBar, (dw - 260.0f) * 0.5f, 118.0f, false);
-						drawBar(targetBuffState.debuffBar, (dw - 260.0f) * 0.5f, 144.0f, true);
-					}
-
-					// --- Combat SP4 : threat meter — alimente le présentateur pour la
-					// cible courante (rebuild complet, ≤ 5 entrées : coût négligeable).
-					if (uiModel.targetStats.hasTarget)
-					{
-						m_advancedCombat.ClearThreat(uiModel.targetStats.entityId);
-						const auto threatIt = uiModel.threatByMob.find(uiModel.targetStats.entityId);
-						if (threatIt != uiModel.threatByMob.end())
-						{
-							for (const engine::client::UIThreatEntry& threatEntry : threatIt->second)
-							{
-								std::string threatName = "Joueur";
-								if (threatEntry.playerEntityId == uiModel.playerStats.playerEntityId)
-								{
-									threatName = "Vous";
-								}
-								else
-								{
-									for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
-									{
-										if (re.entityId == threatEntry.playerEntityId)
-										{
-											threatName = !re.displayName.empty()
-												? re.displayName
-												: ("P" + std::to_string(re.playerClientId));
-											break;
-										}
-									}
-								}
-								m_advancedCombat.UpdateThreat(uiModel.targetStats.entityId,
-									threatEntry.playerEntityId, threatName, threatEntry.threatValue);
-							}
-						}
-					}
-
-					// --- Combat SP4 : FX d'auras — sync de la couche données
-					// (AuraFXSystem, M39.4 enfin câblé) puis halo écran-espace coloré
-					// aux pieds de chaque entité sous aura (couleur ResolveAuraVisuals).
-					{
-						const engine::math::Vec3 localFxPos = m_characterController.GetPosition();
-						std::list<engine::gameplay::StatusEffect> fxEffects;
-						for (const auto& auraPair : uiModel.entityAuras)
-						{
-							const engine::server::EntityId fxEntityId = auraPair.first;
-							float fxX = localFxPos.x, fxY = localFxPos.y, fxZ = localFxPos.z;
-							if (fxEntityId != uiModel.playerStats.playerEntityId)
-							{
-								const auto smoothedIt = m_remoteSmoothed.find(fxEntityId);
-								if (smoothedIt == m_remoteSmoothed.end() || !smoothedIt->second.valid)
-								{
-									continue; // entité sans position connue : pas de FX ce frame.
-								}
-								fxX = smoothedIt->second.x;
-								fxY = smoothedIt->second.y;
-								fxZ = smoothedIt->second.z;
-								// Combat SP1 fix — un halo de mob doit suivre le snap visuel
-								// au sol (sinon l'anneau se projette sous le terrain). On
-								// retrouve l'entité pour distinguer joueur (Y fiable) / mob.
-								for (const engine::client::UIRemoteEntity& fxRe : uiModel.remoteEntities)
-								{
-									if (fxRe.entityId != fxEntityId)
-										continue;
-									fxY = ResolveRemoteDisplayCenterY(
-										fxRe.playerClientId != 0u, fxY, fxX, fxZ);
-									break;
-								}
-							}
-							fxEffects.clear();
-							buildEffects(fxEntityId, fxEffects);
-							m_auraFx.Sync(fxEntityId, fxEffects.empty() ? nullptr : &fxEffects, fxX, fxY, fxZ);
-						}
-						// Purge des FX d'entités qui n'ont plus aucune aura répliquée.
-						std::vector<uint64_t> staleFxEntities;
-						for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
-						{
-							if (uiModel.entityAuras.find(fxAura.entityId) == uiModel.entityAuras.end())
-							{
-								staleFxEntities.push_back(fxAura.entityId);
-							}
-						}
-						for (const uint64_t staleEntityId : staleFxEntities)
-						{
-							m_auraFx.RemoveEntity(staleEntityId);
-						}
-						// Rendu : un anneau par aura, aux pieds de l'entité.
-						for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
-						{
-							if (!fxAura.alive)
-							{
-								continue;
-							}
-							float haloX = 0.0f, haloY = 0.0f;
-							if (!WorldToScreenPx(out.viewProjMatrix.m,
-								fxAura.positionX, fxAura.positionY - 0.85f, fxAura.positionZ,
-								ivw, ivh, haloX, haloY))
-							{
-								continue;
-							}
-							const ImU32 haloColor = IM_COL32(
-								static_cast<int>(fxAura.glowColor.r * 255.0f),
-								static_cast<int>(fxAura.glowColor.g * 255.0f),
-								static_cast<int>(fxAura.glowColor.b * 255.0f),
-								190);
-							fg->AddCircle(ImVec2(haloX, haloY), 20.0f, haloColor, 24, 2.5f);
-						}
-					}
-				}
+				RenderBuffBarsImGui(out, dw, dh, ivw, ivh, fg, uiModel);
 
 				// --- Groupes SP1 : cadres de groupe (PartyHudPresenter M32.2 enfin
 				// câblé) + ciblage allié au clic (consommé par les sorts SingleAlly).
-				if (uiModel.inParty)
-				{
-					const engine::client::PartyHudState& partyState = m_partyHud.GetState();
-					// Mapping cadre → membre : même ordre que le présentateur
-					// (slot 0 = joueur local, puis l'ordre de partyMembers).
-					std::vector<uint32_t> frameClientIds;
-					frameClientIds.push_back(uiModel.playerStats.clientId);
-					for (const engine::client::UIPartyMemberEntry& member : uiModel.partyMembers)
-					{
-						if (member.clientId != uiModel.playerStats.clientId)
-						{
-							frameClientIds.push_back(member.clientId);
-						}
-					}
-					const bool clickThisFrame = mouseAllowed
-						&& m_input.WasMousePressed(engine::platform::MouseButton::Left);
-					const ImVec2 mousePosParty = ImGui::GetIO().MousePos;
-					for (size_t frameIndex = 0; frameIndex < engine::client::kMaxPartyFrames; ++frameIndex)
-					{
-						const engine::client::PartyMemberFrame& frame = partyState.frames[frameIndex];
-						if (!frame.visible)
-						{
-							continue;
-						}
-						const engine::client::HudRect& fb = frame.frameBounds;
-						// entityId == clientId pour les joueurs (invariant HandleHello).
-						const uint64_t memberEntityId = (frameIndex < frameClientIds.size())
-							? static_cast<uint64_t>(frameClientIds[frameIndex])
-							: 0ull;
-						const bool isSelectedAlly = (memberEntityId != 0ull
-							&& memberEntityId == m_selectedAllyEntityId);
-						fg->AddRectFilled(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
-							IM_COL32(12, 14, 20, 205), 5.0f);
-						fg->AddRect(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
-							isSelectedAlly ? IM_COL32(220, 190, 90, 240) : IM_COL32(80, 84, 96, 200),
-							5.0f, 0, isSelectedAlly ? 2.5f : 1.5f);
-						std::string memberLabel = frame.displayName;
-						if (frame.isLeader)
-						{
-							memberLabel += "  [C]";
-						}
-						fg->AddText(ImVec2(fb.x + 6.0f, fb.y + 4.0f), IM_COL32(230, 230, 230, 255), memberLabel.c_str());
-						// Barres PV / mana depuis les widgets du présentateur.
-						auto drawMemberBar = [fg](const engine::client::HudBarWidget& bar, ImU32 fillColor)
-						{
-							if (!bar.visible || bar.bounds.width <= 0.0f)
-							{
-								return;
-							}
-							const float fillFraction = (bar.maxValue > 0u)
-								? std::clamp(static_cast<float>(bar.currentValue) / static_cast<float>(bar.maxValue), 0.0f, 1.0f)
-								: 0.0f;
-							fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
-								ImVec2(bar.bounds.x + bar.bounds.width, bar.bounds.y + bar.bounds.height),
-								IM_COL32(34, 36, 42, 220), 2.0f);
-							fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
-								ImVec2(bar.bounds.x + bar.bounds.width * fillFraction, bar.bounds.y + bar.bounds.height),
-								fillColor, 2.0f);
-						};
-						drawMemberBar(frame.hpBar, IM_COL32(70, 170, 80, 235));
-						drawMemberBar(frame.manaBar, IM_COL32(70, 110, 200, 235));
-						// Clic sur le cadre = sélection/désélection de l'allié (soins).
-						if (clickThisFrame && memberEntityId != 0ull
-							&& mousePosParty.x >= fb.x && mousePosParty.x <= fb.x + fb.width
-							&& mousePosParty.y >= fb.y && mousePosParty.y <= fb.y + fb.height)
-						{
-							m_selectedAllyEntityId = isSelectedAlly ? 0ull : memberEntityId;
-							LOG_INFO(Core, "[Engine] Allié sélectionné (entity_id={})", m_selectedAllyEntityId);
-						}
-					}
-					// Label du mode de loot sous les cadres.
-					if (partyState.visibleCount > 0u)
-					{
-						const engine::client::HudRect& lastFrame =
-							partyState.frames[partyState.visibleCount - 1u].frameBounds;
-						const std::string lootLabel = "Loot: " + partyState.lootModeLabel;
-						fg->AddText(ImVec2(lastFrame.x, lastFrame.y + lastFrame.height + 6.0f),
-							IM_COL32(190, 190, 190, 220), lootLabel.c_str());
-					}
-				}
-				else if (m_selectedAllyEntityId != 0ull)
-				{
-					// Sorti du groupe : plus d'allié sélectionnable.
-					m_selectedAllyEntityId = 0ull;
-				}
+				RenderPartyFramesImGui(fg, uiModel, mouseAllowed);
 
 				// --- Groupes SP1 : popup d'invitation (Accepter / Refuser).
 				// Modale souris : affichée même pendant un cast ou un menu.
@@ -2320,94 +1055,7 @@ namespace engine
 								uiModel.crafting.professions.front().professionKey);
 					}
 				}
-				if (m_craftingVisible)
-				{
-					ImGui::SetNextWindowPos(ImVec2(dw * 0.5f - 230.0f, 120.0f), ImGuiCond_FirstUseEver);
-					ImGui::SetNextWindowSize(ImVec2(460.0f, 430.0f), ImGuiCond_FirstUseEver);
-					if (ImGui::Begin("Artisanat", &m_craftingVisible))
-					{
-						const uint32_t craftClientId = m_gameplayUdp.ServerClientId();
-						if (uiModel.crafting.professions.empty())
-						{
-							ImGui::TextUnformatted("Aucun metier connu.");
-						}
-						// Onglets métiers → demande de liste de recettes.
-						for (size_t professionIndex = 0;
-							professionIndex < uiModel.crafting.professions.size(); ++professionIndex)
-						{
-							const engine::client::UIProfessionEntry& prof =
-								uiModel.crafting.professions[professionIndex];
-							if (professionIndex > 0)
-								ImGui::SameLine();
-							const std::string tabLabel = prof.professionKey
-								+ " (" + std::to_string(prof.skillLevel) + ")";
-							if (ImGui::SmallButton(tabLabel.c_str())
-								&& prof.professionKey != uiModel.crafting.activeProfessionKey
-								&& craftClientId != 0u)
-							{
-								(void)m_gameplayUdp.SendCraftRecipeListRequest(
-									craftClientId, prof.professionKey);
-							}
-						}
-						ImGui::Separator();
-						// Liste des recettes (clic = sélection).
-						ImGui::BeginChild("##ln_craft_recipes", ImVec2(0.0f, 220.0f), true);
-						for (size_t recipeIndex = 0;
-							recipeIndex < uiModel.crafting.recipes.size(); ++recipeIndex)
-						{
-							const engine::client::UICraftRecipeRow& recipe =
-								uiModel.crafting.recipes[recipeIndex];
-							const bool selected = (uiModel.crafting.selectedRecipeIndex
-								== static_cast<uint32_t>(recipeIndex));
-							const std::string rowLabel = recipe.recipeId
-								+ "  (comp. " + std::to_string(recipe.skillRequired)
-								+ ", x" + std::to_string(recipe.outputQuantity) + ")";
-							if (ImGui::Selectable(rowLabel.c_str(), selected))
-							{
-								(void)m_uiModelBinding.SelectCraftRecipe(
-									static_cast<uint32_t>(recipeIndex));
-							}
-						}
-						ImGui::EndChild();
-						// Fabrication : bouton + annulation + cast bar + qualité.
-						const bool craftInProgress = uiModel.crafting.craftFillFraction > 0.0f;
-						const bool canCraft = !craftInProgress
-							&& uiModel.crafting.selectedRecipeIndex < uiModel.crafting.recipes.size();
-						if (ImGui::Button("Fabriquer", ImVec2(150.0f, 32.0f))
-							&& canCraft && craftClientId != 0u)
-						{
-							(void)m_gameplayUdp.SendCraftRequest(craftClientId,
-								uiModel.crafting.recipes[uiModel.crafting.selectedRecipeIndex].recipeId);
-						}
-						if (craftInProgress)
-						{
-							ImGui::SameLine();
-							if (ImGui::Button("Annuler", ImVec2(110.0f, 32.0f)) && craftClientId != 0u)
-							{
-								(void)m_gameplayUdp.SendCraftCancelRequest(craftClientId);
-							}
-							ImGui::ProgressBar(uiModel.crafting.craftFillFraction, ImVec2(-1.0f, 10.0f), "");
-						}
-						else if (!canCraft)
-						{
-							ImGui::TextUnformatted("Selectionnez une recette.");
-						}
-						// Qualité du dernier craft (M36.3) via le présentateur câblé.
-						const engine::client::CraftingPanelState& craftState = m_craftingUi.GetState();
-						if (!craftState.lastQualityLabel.empty())
-						{
-							ImGui::TextColored(
-								ImVec4(craftState.lastQualityColor.r, craftState.lastQualityColor.g,
-									craftState.lastQualityColor.b, 1.0f),
-								"Derniere fabrication : %s", craftState.lastQualityLabel.c_str());
-						}
-						if (!craftState.statusText.empty())
-						{
-							ImGui::TextUnformatted(craftState.statusText.c_str());
-						}
-					}
-					ImGui::End();
-				}
+				RenderCraftingWindowImGui(dw, uiModel);
 
 				// --- FIX.1 : bandeau d'état de la session de jeu. Sans Welcome du
 				// shard (UDP bloqué, endpoint mal annoncé, shard arrêté), le HUD
@@ -2444,105 +1092,7 @@ namespace engine
 				// PV rafraîchis en temps réel par les CombatEvent (chaque coup reçu)
 				// et l'événement de résurrection. Avant le premier coup reçu,
 				// maxHealth vaut 0 → on affiche la feuille de stats (pleine).
-				{
-					const uint32_t playerMaxHp = (uiModel.playerStats.maxHealth > 0u)
-						? uiModel.playerStats.maxHealth
-						: uiModel.playerStats.sheetMaxHealth;
-					if (playerMaxHp > 0u)
-					{
-						const uint32_t playerCurHp = (uiModel.playerStats.maxHealth > 0u)
-							? uiModel.playerStats.currentHealth
-							: playerMaxHp;
-						const float hpFracPlayer = std::clamp(
-							static_cast<float>(playerCurHp) / static_cast<float>(playerMaxHp), 0.0f, 1.0f);
-						const float gaugeW = 320.0f;
-						const float gaugeH = 18.0f;
-						const float gaugeX = (dw - gaugeW) * 0.5f;
-						const float gaugeY = dh - 152.0f;
-						const ImU32 hpColor = (hpFracPlayer > 0.5f)
-							? IM_COL32(80, 200, 80, 235)
-							: ((hpFracPlayer > 0.25f)
-								? IM_COL32(230, 160, 40, 235)
-								: IM_COL32(210, 60, 50, 235));
-						fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
-							ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
-						fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
-							ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(35, 38, 44, 230), 3.0f);
-						fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
-							ImVec2(gaugeX + gaugeW * hpFracPlayer, gaugeY + gaugeH), hpColor, 3.0f);
-						const std::string playerHpText =
-							std::to_string(playerCurHp) + " / " + std::to_string(playerMaxHp);
-						const ImVec2 playerHpTs = ImGui::CalcTextSize(playerHpText.c_str());
-						fg->AddText(ImVec2(gaugeX + (gaugeW - playerHpTs.x) * 0.5f, gaugeY + 1.0f),
-							IM_COL32(255, 255, 255, 255), playerHpText.c_str());
-						// Ressource de classe (mana/énergie…) : barre fine dessous,
-						// alimentée par les ResourceUpdate (SP3).
-						if (uiModel.playerStats.secondaryResourceMax > 0u)
-						{
-							const float resFrac = std::clamp(
-								static_cast<float>(uiModel.playerStats.secondaryResourceCurrent)
-									/ static_cast<float>(uiModel.playerStats.secondaryResourceMax),
-								0.0f, 1.0f);
-							const float resY = gaugeY + gaugeH + 4.0f;
-							fg->AddRectFilled(ImVec2(gaugeX, resY),
-								ImVec2(gaugeX + gaugeW, resY + 8.0f), IM_COL32(35, 38, 44, 230), 3.0f);
-							fg->AddRectFilled(ImVec2(gaugeX, resY),
-								ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
-						}
-						// --- Barre d'XP (PR-C) : fine barre dorée sous la vie/ressource,
-						// alimentée par PlayerXpUpdate (serveur, enter-world + chaque gain).
-						// Niveau à gauche, progression xp/prochain niveau centrée dessous.
-						// hasXp faux tant qu'aucun PlayerXpUpdate reçu -> pas de barre.
-						if (uiModel.playerStats.hasXp)
-						{
-							const bool atCap = (uiModel.playerStats.xpForNextLevel == 0u);
-							const float xpFrac = atCap ? 1.0f : std::clamp(
-								static_cast<float>(uiModel.playerStats.xpIntoLevel)
-									/ static_cast<float>(uiModel.playerStats.xpForNextLevel),
-								0.0f, 1.0f);
-							const float xpY = gaugeY + gaugeH + 16.0f;
-							const float xpH = 6.0f;
-							fg->AddRectFilled(ImVec2(gaugeX, xpY),
-								ImVec2(gaugeX + gaugeW, xpY + xpH), IM_COL32(30, 26, 12, 230), 2.0f);
-							fg->AddRectFilled(ImVec2(gaugeX, xpY),
-								ImVec2(gaugeX + gaugeW * xpFrac, xpY + xpH), IM_COL32(220, 180, 60, 235), 2.0f);
-							// Niveau, à gauche de la barre.
-							char lvlBuf[32];
-							std::snprintf(lvlBuf, sizeof(lvlBuf), "Nv. %u", uiModel.playerStats.level);
-							const ImVec2 lvlTs = ImGui::CalcTextSize(lvlBuf);
-							fg->AddText(ImVec2(gaugeX - lvlTs.x - 8.0f, xpY - 4.0f),
-								IM_COL32(230, 210, 150, 255), lvlBuf);
-							// Progression xp/prochain niveau (ou « Niveau max ») centrée dessous.
-							char xpBuf[48];
-							if (atCap)
-								std::snprintf(xpBuf, sizeof(xpBuf), "Niveau max");
-							else
-								std::snprintf(xpBuf, sizeof(xpBuf), "%u / %u XP",
-									uiModel.playerStats.xpIntoLevel, uiModel.playerStats.xpForNextLevel);
-							const ImVec2 xpTs = ImGui::CalcTextSize(xpBuf);
-							fg->AddText(ImVec2(gaugeX + (gaugeW - xpTs.x) * 0.5f, xpY + xpH + 1.0f),
-								IM_COL32(200, 190, 160, 220), xpBuf);
-						}
-					}
-					else
-					{
-						// FIX.1 — stats pas encore reçues du shard : jauge grisée au même
-						// emplacement plutôt que rien (le HUD garde sa forme, le bandeau
-						// ci-dessus explique l'attente).
-						const float gaugeW = 320.0f;
-						const float gaugeH = 18.0f;
-						const float gaugeX = (dw - gaugeW) * 0.5f;
-						const float gaugeY = dh - 152.0f;
-						fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
-							ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
-						fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
-							ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(55, 58, 64, 230), 3.0f);
-						const char* waitText = "PV : en attente du serveur";
-						const ImVec2 waitTs = ImGui::CalcTextSize(waitText);
-						fg->AddText(ImVec2(gaugeX + (gaugeW - waitTs.x) * 0.5f, gaugeY + 1.0f),
-							IM_COL32(200, 200, 205, 230), waitText);
-					}
-				}
+				RenderPlayerGaugesImGui(dw, dh, fg, uiModel);
 
 				// --- Bourse : pièces or / argent / bronze du joueur, coin bas-droit.
 				// Alimentée par WalletUpdate (UIModel.wallet.gold), réinterprétée comme
@@ -2550,57 +1100,7 @@ namespace engine
 				// = 1 or ; retour joueur 2026-07-08). Chaque palier = une pastille teintée
 				// + son compte. On masque or/argent tant qu'ils sont nuls (bronze toujours
 				// visible). Non concernée par la bascule HUD carte (bourse toujours visible).
-				{
-					const engine::client::CoinBreakdown coins =
-						engine::client::SplitCoins(uiModel.wallet.gold);
-					struct CoinTier { uint32_t value; ImU32 fill; ImU32 ring; };
-					std::vector<CoinTier> tiers;
-					if (coins.gold > 0u)
-						tiers.push_back({coins.gold, IM_COL32(240, 200, 70, 255), IM_COL32(180, 140, 30, 255)});
-					if (coins.gold > 0u || coins.silver > 0u)
-						tiers.push_back({coins.silver, IM_COL32(214, 220, 228, 255), IM_COL32(150, 160, 172, 255)});
-					tiers.push_back({coins.bronze, IM_COL32(205, 125, 60, 255), IM_COL32(150, 80, 35, 255)});
-
-					const float padX = 11.0f;
-					const float padY = 6.0f;
-					const float coinR = 6.0f;
-					const float coinTextGap = 5.0f;
-					const float groupGap = 12.0f;
-					const float textH = ImGui::GetTextLineHeight();
-					std::vector<std::string> labels;
-					labels.reserve(tiers.size());
-					float contentW = 0.0f;
-					for (size_t i = 0; i < tiers.size(); ++i)
-					{
-						labels.push_back(std::to_string(tiers[i].value));
-						const ImVec2 ts = ImGui::CalcTextSize(labels[i].c_str());
-						contentW += coinR * 2.0f + coinTextGap + ts.x;
-						if (i + 1 < tiers.size())
-							contentW += groupGap;
-					}
-					const float pillW = padX * 2.0f + contentW;
-					const float pillH = padY * 2.0f + std::max(textH, coinR * 2.0f);
-					const float bourseMargin = 16.0f;
-					const float px1 = dw - bourseMargin;
-					const float py1 = dh - bourseMargin;
-					const float px0 = px1 - pillW;
-					const float py0 = py1 - pillH;
-					const float midY = (py0 + py1) * 0.5f;
-					fg->AddRectFilled(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(18, 20, 26, 215), 7.0f);
-					fg->AddRect(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(120, 100, 40, 220), 7.0f, 0, 1.5f);
-					float cursorX = px0 + padX;
-					for (size_t i = 0; i < tiers.size(); ++i)
-					{
-						const ImVec2 cc(cursorX + coinR, midY);
-						fg->AddCircleFilled(cc, coinR, tiers[i].fill);
-						fg->AddCircle(cc, coinR, tiers[i].ring, 14, 1.2f);
-						cursorX += coinR * 2.0f + coinTextGap;
-						const ImVec2 ts = ImGui::CalcTextSize(labels[i].c_str());
-						fg->AddText(ImVec2(cursorX, midY - ts.y * 0.5f),
-							IM_COL32(245, 235, 205, 255), labels[i].c_str());
-						cursorX += ts.x + groupGap;
-					}
-				}
+				RenderWalletImGui(dw, dh, fg, uiModel);
 
 
 				// --- Ecran de mort : overlay sombre + bouton Reapparaitre →
@@ -2656,61 +1156,7 @@ namespace engine
 		// GameEvents n'est plus accessible que par ce menu (touche E liberee).
 		// Chaque MenuItem reflete l'etat *Visible et reproduit le RequestList
 		// d'ouverture du toggle clavier correspondant.
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("Panneaux"))
-			{
-				if (ImGui::MenuItem("Personnage (F1)", nullptr,
-					m_characterWindowImGui && m_characterWindowImGui->IsVisible()))
-				{
-					// Ouvre la fenêtre Personnage unifiée (onglet Compétences).
-					if (m_characterWindowImGui)
-						m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
-					m_skillBookUi.RequestList();
-				}
-				if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
-				{
-					m_arenaVisible = !m_arenaVisible;
-					if (m_arenaVisible) m_arenaUi.RequestTeams();
-				}
-				if (ImGui::MenuItem("Champs de bataille", nullptr, m_battleGroundVisible))
-				{
-					m_battleGroundVisible = !m_battleGroundVisible;
-					if (m_battleGroundVisible) m_battleGroundUi.RequestList();
-				}
-				if (ImGui::MenuItem("PvP exterieur", nullptr, m_outdoorPvpVisible))
-				{
-					m_outdoorPvpVisible = !m_outdoorPvpVisible;
-					if (m_outdoorPvpVisible) m_outdoorPvpUi.RequestList();
-				}
-				if (ImGui::MenuItem("Meteo", nullptr, m_weatherVisible))
-				{
-					m_weatherVisible = !m_weatherVisible;
-					if (m_weatherVisible) m_weatherUi.RequestList();
-				}
-				if (ImGui::MenuItem("Evenements", nullptr, m_gameEventVisible))
-				{
-					m_gameEventVisible = !m_gameEventVisible;
-					if (m_gameEventVisible) m_gameEventUi.RequestList();
-				}
-				if (ImGui::MenuItem("Guilde", nullptr, m_guildVisible))
-				{
-					m_guildVisible = !m_guildVisible;
-					if (m_guildVisible) m_guildUi.RequestList();
-				}
-				if (ImGui::MenuItem("Hotel des ventes", nullptr, m_auctionHouseVisible))
-				{
-					m_auctionHouseVisible = !m_auctionHouseVisible;
-					if (m_auctionHouseVisible) m_auctionHouseUi.RequestList(0u);
-				}
-				if (ImGui::MenuItem("Jets de butin", nullptr, m_lootRollVisible))
-				{
-					m_lootRollVisible = !m_lootRollVisible;
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::EndMainMenuBar();
-		}
+		RenderMainMenuBarImGui();
 		// CMANGOS.18 (Phase 3.18 step 4) — Render du panneau Mail si visible.
 		// Le panneau partage la frame ImGui en cours (NewFrame deja appele
 		// par chatImguiOverlayNewFrame plus haut). Visible uniquement quand
@@ -2840,59 +1286,7 @@ namespace engine
 		// Sync du Grimoire et de l'arbre (leurs presenters embarqués lisent l'état à
 		// jour). Point single-pass (même bloc que les autres panneaux) -> pas de
 		// doublon d'inventaire.
-		if (m_characterWindowImGui)
-		{
-			m_characterWindowImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
-			m_characterWindowImGui->Render(m_uiModelBinding.GetModel());
-			// Chantier 2 SP-A — draine l'intention equip/unequip signalée au clic et
-			// l'envoie au serveur (le renderer n'a pas accès au socket). Le serveur
-			// revalide possession + slot.
-			engine::render::CharacterWindowImGuiRenderer::PendingEquipAction equipAction;
-			if (m_characterWindowImGui->ConsumeEquipAction(equipAction))
-			{
-				const uint32_t equipClientId = m_gameplayUdp.ServerClientId();
-				if (equipAction.kind ==
-					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Equip)
-					(void)m_gameplayUdp.SendEquipRequest(equipClientId, equipAction.itemId);
-				else if (equipAction.kind ==
-					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Unequip)
-					(void)m_gameplayUdp.SendUnequipRequest(equipClientId, equipAction.slot);
-			// Roadmap-3 (2026-07-19) — consommable cliqué dans le sac :
-			// placé au 1er slot LIBRE de la CEINTURE (slot 1 remplacé si
-			// pleine). Envoi kind 99 ; le serveur valide la possession et
-			// renvoie le layout autoritaire (kind 100).
-			else if (equipAction.kind ==
-				engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::SlotCake)
-			{
-				// Ceinture v2 — layout à taille dynamique (vector).
-				std::vector<std::string> belt = m_uiModelBinding.GetModel().playerStats.beltLayout;
-				const std::string beltToken = engine::anniversary::MakeItemToken(equipAction.itemId);
-				bool alreadySlotted = false;
-				for (const std::string& s : belt)
-					if (s == beltToken) { alreadySlotted = true; break; }
-				if (!alreadySlotted && !belt.empty())
-				{
-					size_t target = 0;
-					for (size_t i = 0; i < belt.size(); ++i)
-						if (belt[i].empty()) { target = i; break; }
-					belt[target] = beltToken;
-					(void)m_gameplayUdp.SendSetBeltLayout(equipClientId, belt);
-				}
-			}
-			}
-			// Retour joueur 2026-07-21 — rangée « Ceinture » de la fenêtre
-			// Personnage : nouveau layout demandé (drop depuis le sac,
-			// réorganisation, retrait au clic droit), envoyé kind 99 ; le
-			// serveur revalide la possession et renvoie le layout
-			// autoritaire (kind 100), qui rafraîchit fenêtre ET barre HUD.
-			std::vector<std::string> windowBeltLayout;
-			if (m_characterWindowImGui->ConsumeBeltLayout(windowBeltLayout))
-			{
-				const uint32_t beltWinClientId = m_gameplayUdp.ServerClientId();
-				if (beltWinClientId != 0u)
-					(void)m_gameplayUdp.SendSetBeltLayout(beltWinClientId, windowBeltLayout);
-			}
-		}
+		RenderCharacterWindowImGui(dw, dh);
 		// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
 		// visible. Le popup proposal s'affiche aussi quand pendingProposalId
 		// est set (meme si le panneau principal est masque), pour que le
@@ -2985,6 +1379,1716 @@ namespace engine
 		}
 		// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
 		// que le ImGui::Render() finalise les deux draw lists en une seule passe.
+		RenderPauseMenuImGui(dw, dh);
+		// Menu Options en jeu : on réutilise EXACTEMENT l'écran d'options de l'auth
+		// (source unique, spec B2). Le menu Pause (ESC) reste inchangé ; seul son lien
+		// « Options » mène ici. RenderOptionsOverlay renvoie false à la fermeture.
+		// Garde m_authImGui : aligne sur la défensive des autres panneaux in-game
+		// du même bloc (m_mailImGui &&, m_gmTicketImGui &&, …). m_authImGui null
+		// (shutdown) -> on referme proprement l'overlay plutôt que de déréférencer.
+		if (m_inGameOptionsPanelVisible)
+		{
+			const bool stillOpen = m_authImGui && m_authImGui->RenderOptionsOverlay(dw, dh);
+			if (!stillOpen)
+			{
+				m_inGameOptionsPanelVisible = false;
+				m_authUi.CloseLanguageOptionsInGame();
+				m_inGamePauseMenuVisible = true; // retour au menu Pause
+				ReloadKeybindsFromDisk(); // prise d'effet live des rebinds
+			}
+		}
+		UpdateUiAudio(/*inGame*/ true); // SND.3 — clics et évènements de jeu
+		ImGui::Render();
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::HandleTabTargetingImGui(engine::RenderState& out, const engine::client::UIModel& uiModel, const bool& keysAllowed)
+	{
+		if (keysAllowed && m_input.WasPressed(engine::platform::Key::Tab))
+		{
+			const engine::math::Vec3 playerPos = m_characterController.GetPosition();
+			// Filtre de visibilite : seuls les ennemis a l'ecran (dans le
+			// frustum camera) sont ciblables au Tab — un mob dans le dos ou
+			// hors champ ne doit pas etre selectionne. On reutilise la MEME
+			// matrice view-projection que le rendu monde de cette frame
+			// (out.viewProjMatrix = out.projMatrix * out.viewMatrix, cf. ~9852),
+			// column-major (m[col*4+row], cf. Math.h). Pas d'operateur
+			// Mat4*Vec4 dans Math.h : on projette le point a la main, comme
+			// WorldToScreenPx plus haut. Retourne false si l'ennemi est
+			// derriere la camera (w <= ~0) ou hors du carre NDC [-1,1]^2.
+			// On vise le torse (y + 1.0 m) plutot que les pieds : un mob dont
+			// les pieds tombent juste sous le bord bas mais dont le corps est
+			// visible reste ciblable.
+			const float* tabVp = out.viewProjMatrix.m;
+			auto isOnScreen = [tabVp](float wx, float wy, float wz) -> bool
+			{
+				const float cx = tabVp[0] * wx + tabVp[4] * wy + tabVp[8] * wz + tabVp[12];
+				const float cy = tabVp[1] * wx + tabVp[5] * wy + tabVp[9] * wz + tabVp[13];
+				const float cw = tabVp[3] * wx + tabVp[7] * wy + tabVp[11] * wz + tabVp[15];
+				if (cw <= 1e-5f)
+					return false; // derriere la camera (ou plan near degenere)
+				const float invW = 1.0f / cw;
+				const float ndcX = cx * invW;
+				const float ndcY = cy * invW;
+				return ndcX >= -1.0f && ndcX <= 1.0f
+					&& ndcY >= -1.0f && ndcY <= 1.0f;
+			};
+			std::vector<std::pair<float, engine::server::EntityId>> candidates;
+			for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+			{
+				if (re.archetypeId == 0u || (re.stateFlags & 1u) != 0u
+					|| re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+					continue;
+				// Monde vivant : les PNJ d'ambiance (villageois, gardes…) ne sont
+				// pas des ennemis — jamais ciblés au Tab (le serveur refuse l'attaque).
+				// Seconde carte : sauf ceux hostiles à la race du joueur (Légion / humains).
+				if (const engine::client::CreatureAppearance* tabApp = m_creatureCatalog.Find(re.archetypeId);
+					tabApp != nullptr && tabApp->ambient && !tabApp->IsHostileToRace(m_localRaceId))
+					continue;
+				// Rejet des ennemis non visibles (hors frustum / dans le dos).
+				if (!isOnScreen(re.positionX, re.positionY + 1.0f, re.positionZ))
+					continue;
+				const float dxc = re.positionX - playerPos.x;
+				const float dzc = re.positionZ - playerPos.z;
+				// FIX.10 — pas de cible hors du champ de vision (elle serait
+				// désélectionnée à la frame suivante).
+				const float tabVision = CurrentNameplateParams().visionDistanceM;
+				if (dxc * dxc + dzc * dzc > tabVision * tabVision)
+					continue;
+				candidates.emplace_back(dxc * dxc + dzc * dzc, re.entityId);
+			}
+			// Diag (sur appui Tab uniquement, non spammy) : si l'utilisateur
+			// rapporte « Tab ne selectionne rien », ce log distingue les cas
+			// « aucune entite repliquee » / « aucun candidat visible » /
+			// « cible deja active ». L'analyse de code n'a revele aucun bug
+			// dans le filtre (archetype/mort/node) ni dans la propagation
+			// SetLocalTarget -> targetStats ; la cause racine d'une selection
+			// vide doit donc etre tranchee en jeu via ce compteur.
+			LOG_INFO(Core,
+				"[TabTarget] remoteEntities={} candidates_visibles={} hasTarget={}",
+				uiModel.remoteEntities.size(), candidates.size(),
+				uiModel.targetStats.hasTarget);
+			if (!candidates.empty())
+			{
+				std::sort(candidates.begin(), candidates.end());
+				// Suivant de la cible courante (wrap) ; sans cible : la plus proche.
+				size_t nextIndex = 0;
+				if (uiModel.targetStats.hasTarget)
+				{
+					for (size_t ci = 0; ci < candidates.size(); ++ci)
+					{
+						if (candidates[ci].second == uiModel.targetStats.entityId)
+						{
+							nextIndex = (ci + 1u) % candidates.size();
+							break;
+						}
+					}
+				}
+				(void)m_uiModelBinding.SetLocalTarget(candidates[nextIndex].second);
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderPartyFramesImGui(ImDrawList* fg, const engine::client::UIModel& uiModel, const bool& mouseAllowed)
+	{
+		if (uiModel.inParty)
+		{
+			const engine::client::PartyHudState& partyState = m_partyHud.GetState();
+			// Mapping cadre → membre : même ordre que le présentateur
+			// (slot 0 = joueur local, puis l'ordre de partyMembers).
+			std::vector<uint32_t> frameClientIds;
+			frameClientIds.push_back(uiModel.playerStats.clientId);
+			for (const engine::client::UIPartyMemberEntry& member : uiModel.partyMembers)
+			{
+				if (member.clientId != uiModel.playerStats.clientId)
+				{
+					frameClientIds.push_back(member.clientId);
+				}
+			}
+			const bool clickThisFrame = mouseAllowed
+				&& m_input.WasMousePressed(engine::platform::MouseButton::Left);
+			const ImVec2 mousePosParty = ImGui::GetIO().MousePos;
+			for (size_t frameIndex = 0; frameIndex < engine::client::kMaxPartyFrames; ++frameIndex)
+			{
+				const engine::client::PartyMemberFrame& frame = partyState.frames[frameIndex];
+				if (!frame.visible)
+				{
+					continue;
+				}
+				const engine::client::HudRect& fb = frame.frameBounds;
+				// entityId == clientId pour les joueurs (invariant HandleHello).
+				const uint64_t memberEntityId = (frameIndex < frameClientIds.size())
+					? static_cast<uint64_t>(frameClientIds[frameIndex])
+					: 0ull;
+				const bool isSelectedAlly = (memberEntityId != 0ull
+					&& memberEntityId == m_selectedAllyEntityId);
+				fg->AddRectFilled(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
+					IM_COL32(12, 14, 20, 205), 5.0f);
+				fg->AddRect(ImVec2(fb.x, fb.y), ImVec2(fb.x + fb.width, fb.y + fb.height),
+					isSelectedAlly ? IM_COL32(220, 190, 90, 240) : IM_COL32(80, 84, 96, 200),
+					5.0f, 0, isSelectedAlly ? 2.5f : 1.5f);
+				std::string memberLabel = frame.displayName;
+				if (frame.isLeader)
+				{
+					memberLabel += "  [C]";
+				}
+				fg->AddText(ImVec2(fb.x + 6.0f, fb.y + 4.0f), IM_COL32(230, 230, 230, 255), memberLabel.c_str());
+				// Barres PV / mana depuis les widgets du présentateur.
+				auto drawMemberBar = [fg](const engine::client::HudBarWidget& bar, ImU32 fillColor)
+				{
+					if (!bar.visible || bar.bounds.width <= 0.0f)
+					{
+						return;
+					}
+					const float fillFraction = (bar.maxValue > 0u)
+						? std::clamp(static_cast<float>(bar.currentValue) / static_cast<float>(bar.maxValue), 0.0f, 1.0f)
+						: 0.0f;
+					fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
+						ImVec2(bar.bounds.x + bar.bounds.width, bar.bounds.y + bar.bounds.height),
+						IM_COL32(34, 36, 42, 220), 2.0f);
+					fg->AddRectFilled(ImVec2(bar.bounds.x, bar.bounds.y),
+						ImVec2(bar.bounds.x + bar.bounds.width * fillFraction, bar.bounds.y + bar.bounds.height),
+						fillColor, 2.0f);
+				};
+				drawMemberBar(frame.hpBar, IM_COL32(70, 170, 80, 235));
+				drawMemberBar(frame.manaBar, IM_COL32(70, 110, 200, 235));
+				// Clic sur le cadre = sélection/désélection de l'allié (soins).
+				if (clickThisFrame && memberEntityId != 0ull
+					&& mousePosParty.x >= fb.x && mousePosParty.x <= fb.x + fb.width
+					&& mousePosParty.y >= fb.y && mousePosParty.y <= fb.y + fb.height)
+				{
+					m_selectedAllyEntityId = isSelectedAlly ? 0ull : memberEntityId;
+					LOG_INFO(Core, "[Engine] Allié sélectionné (entity_id={})", m_selectedAllyEntityId);
+				}
+			}
+			// Label du mode de loot sous les cadres.
+			if (partyState.visibleCount > 0u)
+			{
+				const engine::client::HudRect& lastFrame =
+					partyState.frames[partyState.visibleCount - 1u].frameBounds;
+				const std::string lootLabel = "Loot: " + partyState.lootModeLabel;
+				fg->AddText(ImVec2(lastFrame.x, lastFrame.y + lastFrame.height + 6.0f),
+					IM_COL32(190, 190, 190, 220), lootLabel.c_str());
+			}
+		}
+		else if (m_selectedAllyEntityId != 0ull)
+		{
+			// Sorti du groupe : plus d'allié sélectionnable.
+			m_selectedAllyEntityId = 0ull;
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderWalletImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel)
+	{
+		{
+			const engine::client::CoinBreakdown coins =
+				engine::client::SplitCoins(uiModel.wallet.gold);
+			struct CoinTier { uint32_t value; ImU32 fill; ImU32 ring; };
+			std::vector<CoinTier> tiers;
+			if (coins.gold > 0u)
+				tiers.push_back({coins.gold, IM_COL32(240, 200, 70, 255), IM_COL32(180, 140, 30, 255)});
+			if (coins.gold > 0u || coins.silver > 0u)
+				tiers.push_back({coins.silver, IM_COL32(214, 220, 228, 255), IM_COL32(150, 160, 172, 255)});
+			tiers.push_back({coins.bronze, IM_COL32(205, 125, 60, 255), IM_COL32(150, 80, 35, 255)});
+
+			const float padX = 11.0f;
+			const float padY = 6.0f;
+			const float coinR = 6.0f;
+			const float coinTextGap = 5.0f;
+			const float groupGap = 12.0f;
+			const float textH = ImGui::GetTextLineHeight();
+			std::vector<std::string> labels;
+			labels.reserve(tiers.size());
+			float contentW = 0.0f;
+			for (size_t i = 0; i < tiers.size(); ++i)
+			{
+				labels.push_back(std::to_string(tiers[i].value));
+				const ImVec2 ts = ImGui::CalcTextSize(labels[i].c_str());
+				contentW += coinR * 2.0f + coinTextGap + ts.x;
+				if (i + 1 < tiers.size())
+					contentW += groupGap;
+			}
+			const float pillW = padX * 2.0f + contentW;
+			const float pillH = padY * 2.0f + std::max(textH, coinR * 2.0f);
+			const float bourseMargin = 16.0f;
+			const float px1 = dw - bourseMargin;
+			const float py1 = dh - bourseMargin;
+			const float px0 = px1 - pillW;
+			const float py0 = py1 - pillH;
+			const float midY = (py0 + py1) * 0.5f;
+			fg->AddRectFilled(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(18, 20, 26, 215), 7.0f);
+			fg->AddRect(ImVec2(px0, py0), ImVec2(px1, py1), IM_COL32(120, 100, 40, 220), 7.0f, 0, 1.5f);
+			float cursorX = px0 + padX;
+			for (size_t i = 0; i < tiers.size(); ++i)
+			{
+				const ImVec2 cc(cursorX + coinR, midY);
+				fg->AddCircleFilled(cc, coinR, tiers[i].fill);
+				fg->AddCircle(cc, coinR, tiers[i].ring, 14, 1.2f);
+				cursorX += coinR * 2.0f + coinTextGap;
+				const ImVec2 ts = ImGui::CalcTextSize(labels[i].c_str());
+				fg->AddText(ImVec2(cursorX, midY - ts.y * 0.5f),
+					IM_COL32(245, 235, 205, 255), labels[i].c_str());
+				cursorX += ts.x + groupGap;
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderMainMenuBarImGui()
+	{
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("Panneaux"))
+			{
+				if (ImGui::MenuItem("Personnage (F1)", nullptr,
+					m_characterWindowImGui && m_characterWindowImGui->IsVisible()))
+				{
+					// Ouvre la fenêtre Personnage unifiée (onglet Compétences).
+					if (m_characterWindowImGui)
+						m_characterWindowImGui->OpenAtTab(engine::render::CharacterWindowImGuiRenderer::Tab::Competences);
+					m_skillBookUi.RequestList();
+				}
+				if (ImGui::MenuItem("Arenes", nullptr, m_arenaVisible))
+				{
+					m_arenaVisible = !m_arenaVisible;
+					if (m_arenaVisible) m_arenaUi.RequestTeams();
+				}
+				if (ImGui::MenuItem("Champs de bataille", nullptr, m_battleGroundVisible))
+				{
+					m_battleGroundVisible = !m_battleGroundVisible;
+					if (m_battleGroundVisible) m_battleGroundUi.RequestList();
+				}
+				if (ImGui::MenuItem("PvP exterieur", nullptr, m_outdoorPvpVisible))
+				{
+					m_outdoorPvpVisible = !m_outdoorPvpVisible;
+					if (m_outdoorPvpVisible) m_outdoorPvpUi.RequestList();
+				}
+				if (ImGui::MenuItem("Meteo", nullptr, m_weatherVisible))
+				{
+					m_weatherVisible = !m_weatherVisible;
+					if (m_weatherVisible) m_weatherUi.RequestList();
+				}
+				if (ImGui::MenuItem("Evenements", nullptr, m_gameEventVisible))
+				{
+					m_gameEventVisible = !m_gameEventVisible;
+					if (m_gameEventVisible) m_gameEventUi.RequestList();
+				}
+				if (ImGui::MenuItem("Guilde", nullptr, m_guildVisible))
+				{
+					m_guildVisible = !m_guildVisible;
+					if (m_guildVisible) m_guildUi.RequestList();
+				}
+				if (ImGui::MenuItem("Hotel des ventes", nullptr, m_auctionHouseVisible))
+				{
+					m_auctionHouseVisible = !m_auctionHouseVisible;
+					if (m_auctionHouseVisible) m_auctionHouseUi.RequestList(0u);
+				}
+				if (ImGui::MenuItem("Jets de butin", nullptr, m_lootRollVisible))
+				{
+					m_lootRollVisible = !m_lootRollVisible;
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderCharacterWindowImGui(float& dw, float& dh)
+	{
+		if (m_characterWindowImGui)
+		{
+			m_characterWindowImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+			m_characterWindowImGui->Render(m_uiModelBinding.GetModel());
+			// Chantier 2 SP-A — draine l'intention equip/unequip signalée au clic et
+			// l'envoie au serveur (le renderer n'a pas accès au socket). Le serveur
+			// revalide possession + slot.
+			engine::render::CharacterWindowImGuiRenderer::PendingEquipAction equipAction;
+			if (m_characterWindowImGui->ConsumeEquipAction(equipAction))
+			{
+				const uint32_t equipClientId = m_gameplayUdp.ServerClientId();
+				if (equipAction.kind ==
+					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Equip)
+					(void)m_gameplayUdp.SendEquipRequest(equipClientId, equipAction.itemId);
+				else if (equipAction.kind ==
+					engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::Unequip)
+					(void)m_gameplayUdp.SendUnequipRequest(equipClientId, equipAction.slot);
+			// Roadmap-3 (2026-07-19) — consommable cliqué dans le sac :
+			// placé au 1er slot LIBRE de la CEINTURE (slot 1 remplacé si
+			// pleine). Envoi kind 99 ; le serveur valide la possession et
+			// renvoie le layout autoritaire (kind 100).
+			else if (equipAction.kind ==
+				engine::render::CharacterWindowImGuiRenderer::PendingEquipAction::Kind::SlotCake)
+			{
+				// Ceinture v2 — layout à taille dynamique (vector).
+				std::vector<std::string> belt = m_uiModelBinding.GetModel().playerStats.beltLayout;
+				const std::string beltToken = engine::anniversary::MakeItemToken(equipAction.itemId);
+				bool alreadySlotted = false;
+				for (const std::string& s : belt)
+					if (s == beltToken) { alreadySlotted = true; break; }
+				if (!alreadySlotted && !belt.empty())
+				{
+					size_t target = 0;
+					for (size_t i = 0; i < belt.size(); ++i)
+						if (belt[i].empty()) { target = i; break; }
+					belt[target] = beltToken;
+					(void)m_gameplayUdp.SendSetBeltLayout(equipClientId, belt);
+				}
+			}
+			}
+			// Retour joueur 2026-07-21 — rangée « Ceinture » de la fenêtre
+			// Personnage : nouveau layout demandé (drop depuis le sac,
+			// réorganisation, retrait au clic droit), envoyé kind 99 ; le
+			// serveur revalide la possession et renvoie le layout
+			// autoritaire (kind 100), qui rafraîchit fenêtre ET barre HUD.
+			std::vector<std::string> windowBeltLayout;
+			if (m_characterWindowImGui->ConsumeBeltLayout(windowBeltLayout))
+			{
+				const uint32_t beltWinClientId = m_gameplayUdp.ServerClientId();
+				if (beltWinClientId != 0u)
+					(void)m_gameplayUdp.SendSetBeltLayout(beltWinClientId, windowBeltLayout);
+			}
+		}
+	}
+
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderInteractableMarkersImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden)
+	{
+		if (!worldOverlaysHidden)
+		for (std::size_t ii = 0; ii < m_interactables.size(); ++ii)
+		{
+			const InteractableEntity& e = m_interactables[ii];
+			// Pendant un dialogue PNJ : on masque le label flottant + badge « E » de
+				// l'interactible (le PNJ engagé est derrière la cellule, son label
+				// transparaîtrait au travers).
+				if (m_dialogueActive)
+					continue;
+				const float my = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 1.9f;
+			float sx = 0.0f, sy = 0.0f;
+			if (!WorldToScreenPx(out.viewProjMatrix.m, e.position.x, my, e.position.z, ivw, ivh, sx, sy))
+				continue;
+			const bool inRange = (static_cast<int>(ii) == m_interactableInRange);
+			const ImU32 col = inRange ? IM_COL32(255, 220, 80, 255) : IM_COL32(210, 210, 210, 200);
+			// Label du nom seul ; le "[E]" texte est remplace par un badge touche
+			// (chantier C) + la surbrillance 3D du prop signale l'interactivite.
+			// FIX.10 — le nom n'apparaît qu'à portée d'interaction (retour joueur
+			// 29/10/2026 : « Coffre », « Caisse en bois »… saturaient l'écran). Le
+			// marqueur de quête plus bas garde sa propre portée.
+			if (inRange)
+			{
+				const ImVec2 ts = ImGui::CalcTextSize(e.label.c_str());
+				fg->AddText(ImVec2(sx - ts.x * 0.5f, sy - ts.y), col, e.label.c_str());
+			}
+			// Repere d'interaction : badge "touche E" sous le label quand a portee.
+			if (inRange)
+			{
+				const ImVec2 keySz = ImGui::CalcTextSize("E");
+				const float pad = 6.0f;
+				const float bw = keySz.x + pad * 2.0f;
+				const float bh = keySz.y + pad * 2.0f;
+				const float bx = sx - bw * 0.5f;
+				const float by = sy + 4.0f;
+				fg->AddRectFilled(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(20, 20, 24, 220), 4.0f);
+				fg->AddRect(ImVec2(bx, by), ImVec2(bx + bw, by + bh), IM_COL32(255, 220, 80, 255), 4.0f, 0, 2.0f);
+				fg->AddText(ImVec2(bx + pad, by + pad), IM_COL32(255, 220, 80, 255), "E");
+			}
+			// SP2 Task 6 — Marqueur world-space donneur de quête : rune procédurale
+			// (losange + anneau) au-dessus des PNJ liés à une quête en cours de
+			// proposition ou de rendu. Source des liens PNJ<->quête : table
+			// data-driven chargée au boot (cf. Init, m_questGiverTable.Load).
+			// Statuts UIModel.quests miroir de engine::client::QuestStatus (wire
+			// uint8) — dupliqués en constantes locales comme QuestImGuiRenderer.cpp
+			// pour ne pas tirer de dépendance supplémentaire ici.
+			if (!e.npcTargetId.empty())
+			{
+				constexpr uint8_t kQuestStatusOffered = 1;
+				constexpr uint8_t kQuestStatusReadyToTurnIn = 3;
+				const std::vector<engine::client::QuestGiverLink>* links = m_questGiverTable.ForNpc(e.npcTargetId);
+				if (links != nullptr && !links->empty())
+				{
+					// Culling distance : seulement si le PNJ est à portée « visible »
+					// configurée (defaut 35 m), indépendamment du rayon d'interaction
+					// (e.radius, ~2.5 m) qui régit le badge "E".
+					const engine::math::Vec3 markerPlayerPos = m_characterController.GetPosition();
+					// Distance XZ uniquement (comme le rayon d'interaction / badge "E",
+					// cf. calcul dx²+dz² du "[E]") : la position des interactables est
+					// chargée avec y=0 (jamais collée au sol) alors que le joueur est
+					// ~100 m plus haut (plateau terrain). Inclure le Y ferait toujours
+					// dépasser markerMaxDist → le rune ne s'afficherait jamais.
+					const float mdx = e.position.x - markerPlayerPos.x;
+					const float mdz = e.position.z - markerPlayerPos.z;
+					const float markerDist = std::sqrt(mdx * mdx + mdz * mdz);
+					const float markerMaxDist = static_cast<float>(
+						m_cfg.GetDouble("client.quest.giver_marker_distance_m", 35.0));
+					if (markerDist <= markerMaxDist)
+					{
+						// Priorité d'affichage si plusieurs liens : rendre > proposer
+						// (un PNJ à la fois donneur ET receveur pour des quêtes
+						// différentes doit d'abord signaler ce qu'il attend du joueur).
+						bool hasOffer = false;
+						bool hasTurnIn = false;
+						const auto& questsModel = m_uiModelBinding.GetModel().quests;
+						for (const engine::client::QuestGiverLink& link : *links)
+						{
+							for (const engine::client::UIQuestEntry& q : questsModel)
+							{
+								if (q.questId != link.questId)
+									continue;
+								if (link.role == 0 && q.status == kQuestStatusOffered)
+									hasOffer = true;
+								else if (link.role == 1 && q.status == kQuestStatusReadyToTurnIn)
+									hasTurnIn = true;
+							}
+						}
+						if (hasOffer || hasTurnIn)
+						{
+							// Ancrage : ~2.2 m au-dessus de la tête (my = sol + 1.9, tête
+							// approx au-dessus -> on projette depuis le sol + 2.2 direct
+							// pour rester simple et stable si le mesh du PNJ varie).
+							const float runeWorldY = m_terrainCollider.GroundHeightAt(e.position.x, e.position.z) + 2.2f;
+							float rsx = 0.0f, rsy = 0.0f;
+							if (WorldToScreenPx(out.viewProjMatrix.m, e.position.x, runeWorldY, e.position.z, ivw, ivh, rsx, rsy))
+							{
+								// Rendre prioritaire sur proposer si les deux sont vrais.
+								const bool turnInVariant = hasTurnIn;
+								const ImU32 runeFill = turnInVariant
+									? IM_COL32(120, 200, 255, 235)   // rendre : teinte bleu-glacé
+									: IM_COL32(255, 205, 60, 235);   // proposer : doré plein
+								const ImU32 runeRing = turnInVariant
+									? IM_COL32(230, 245, 255, 255)
+									: IM_COL32(255, 240, 190, 255);
+								const float runeR = 18.0f; // agrandie (retour joueur : trop petite a 11)
+								// Losange (4 sommets) rempli.
+								const ImVec2 diamond[4] = {
+									ImVec2(rsx, rsy - runeR),
+									ImVec2(rsx + runeR * 0.62f, rsy),
+									ImVec2(rsx, rsy + runeR),
+									ImVec2(rsx - runeR * 0.62f, rsy),
+								};
+								fg->AddConvexPolyFilled(diamond, 4, runeFill);
+								// Anneau autour du losange pour la lisibilité + signature "rune".
+								fg->AddCircle(ImVec2(rsx, rsy), runeR + 4.0f, runeRing, 24, 2.5f);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderNameplatesImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden, const engine::client::NameplateVisibilityParams& plateParams)
+	{
+		if (!worldOverlaysHidden)
+		{
+			const auto& remotes = m_uiModelBinding.GetModel().remoteEntities;
+			const engine::math::Vec3 platePlayerPos = m_characterController.GetPosition();
+			const engine::client::UIModel& plateSelModel = m_uiModelBinding.GetModel();
+				// Anti-chevauchement des plaques : boites deja posees cette frame
+				// (x,y,z,w = gauche,haut,droite,bas). Une nouvelle plaque qui en
+				// recouvre une est remontee d'une hauteur de plaque (empilement).
+				std::vector<ImVec4> placedLabelRects;
+			// Le Journal de quêtes (coin haut-gauche, toujours visible) est une
+			// fenêtre ImGui ; les plaques de mob passent par le foreground draw
+			// list, donc AU-DESSUS. On récupère son rectangle pour sauter toute
+			// plaque qui retomberait dessus (retour joueur 2026-07-09 : « Sanglier
+			// des collines » s'affichait par-dessus le journal).
+			ImVec4 journalRect(0.0f, 0.0f, 0.0f, 0.0f);
+			bool hasJournalRect = false;
+			{
+				const engine::client::QuestUiState& qs = m_questUi.GetState();
+				if (qs.layoutValid)
+				{
+					const engine::client::QuestUiRect& jb = qs.journalPanelBounds;
+					journalRect = ImVec4(jb.x, jb.y, jb.x + jb.width, jb.y + jb.height);
+					hasJournalRect = true;
+				}
+			}
+			for (const engine::client::UIRemoteEntity& re : remotes)
+			{
+				// Combat SP1 : les mobs (archetypeId != 0) ont leur plaque.
+				// Validation v12 — les loot bags (les deux ids à 0) aussi :
+				// « Butin [F] » au sol (le serveur les répliquait depuis M28
+				// mais le client ne les montrait jamais — butin imperdable
+				// mais invisible). Ramassage : touche F, bloc combat plus bas.
+				// Mob mort en attente de despawn : pas de plaque (kEntityStateDead).
+				// Métiers SP1 — les nodes échappent à ce skip : un node épuisé
+				// garde sa plaque, grisée avec le suffixe « (epuise) ».
+				if (re.playerClientId == 0u && (re.stateFlags & 1u) != 0u
+					&& re.archetypeId < engine::server::kGatheringNodeArchetypeBase)
+					continue;
+				// FIX.10 — plaques des créatures : animaux et mobs hostiles seulement
+				// s'ils sont sélectionnés (ou animaux pour un chasseur), PNJ dans le
+				// champ de vision ; joueurs, butin et nœuds inchangés.
+				{
+					const float pdx = re.positionX - platePlayerPos.x;
+					const float pdz = re.positionZ - platePlayerPos.z;
+					const bool plateSelected = plateSelModel.targetStats.hasTarget
+						&& plateSelModel.targetStats.entityId == re.entityId;
+					if (!engine::client::ShouldShowNameplate(ClassifyRemoteForNameplate(re), plateSelected,
+							std::sqrt(pdx * pdx + pdz * pdz), plateParams))
+						continue;
+				}
+				float wx = re.positionX, wy = re.positionY, wz = re.positionZ;
+				const auto sit = m_remoteSmoothed.find(re.entityId);
+				if (sit != m_remoteSmoothed.end() && sit->second.valid)
+				{
+					wx = sit->second.x; wy = sit->second.y; wz = sit->second.z;
+				}
+				// Combat SP1 fix — mobs/nodes : Y de spawn brut (souvent 0, jamais
+				// collé au terrain par le serveur) → snap visuel au sol client,
+				// sinon la plaque flotte au ras du sol (cf. ResolveRemoteDisplayCenterY).
+				// v1.0.125 — bateau : plaque au-dessus du pont (Y = flottaison répliquée).
+				wy = engine::server::IsBoatArchetype(re.archetypeId)
+					? wy + 6.0f
+					: ResolveRemoteDisplayCenterY(re.playerClientId != 0u, wy, wx, wz);
+				float sxp = 0.0f, syp = 0.0f;
+				if (!WorldToScreenPx(out.viewProjMatrix.m, wx, wy + 1.2f, wz, ivw, ivh, sxp, syp))
+					continue;
+				// TD.5 : on affiche le vrai nom du perso s'il est connu (chargé depuis
+				// la DB serveur et propagé via le SnapshotEntity). Sinon, fallback sur
+				// "P<clientId>" — utile quand la DB serveur ne sert pas (Windows / DB
+				// indisponible) ou pour identifier l'entité dans un log.
+				// Combat SP1 : plaque mob "Nom (niv. N)  PV/PVmax" résolue via le
+				// CreatureCatalog ; fallback générique si l'archétype est inconnu
+				// du catalogue client (catalogue absent ou désynchronisé).
+				std::string label;
+				// SP — suffixe « (niv. N) » des mobs, rendu en plus petit a droite
+				// du nom. Vide pour joueurs/nodes/butin (pas de niveau affiche).
+				std::string levelSuffix;
+				// Validation v12 — armé par la branche mob ci-dessous : dessine la
+				// barre de vie sous la plaque (jamais pour joueurs/nodes).
+				bool drawMobHealthBar = false;
+				if (re.playerClientId != 0u)
+				{
+					label = !re.displayName.empty()
+						? re.displayName
+						: ("P" + std::to_string(re.playerClientId));
+				}
+				else if (re.archetypeId == 0u)
+				{
+					// Validation v12 — sac de butin au sol.
+					label = "Butin [F]";
+				}
+				else if (engine::server::IsBoatArchetype(re.archetypeId))
+				{
+					// v1.0.125 — bateau : « Navire à quai [E] Embarquer / Débarquer ».
+					const bool docked = (re.stateFlags & engine::server::kEntityStateBoatDocked) != 0u;
+					label = docked ? "Navire a quai" : "Navire";
+					if (docked && m_aboardBoatEntityId == re.entityId)
+						label += " [E] Debarquer";
+					else if (docked && m_boardableBoatEntityId == re.entityId)
+						label += " [E] Embarquer";
+				}
+				else if (re.archetypeId >= engine::server::kGatheringNodeArchetypeBase)
+				{
+					// Métiers SP1 — label de node de récolte : nom FR par type
+					// (V1 : map locale ; les noms en data = amélioration future)
+					// + « [E] » si disponible et à portée de récolte (~5 m).
+					const uint32_t nodeTypeId =
+						re.archetypeId - engine::server::kGatheringNodeArchetypeBase;
+					const char* nodeName = "Ressource";
+					switch (nodeTypeId)
+					{
+					case 1u: nodeName = "Filon de minerai"; break;
+					case 2u: nodeName = "Herbes sauvages"; break;
+					case 3u: nodeName = "Arbre a abattre"; break;
+					case 4u: nodeName = "Carcasse"; break;
+					default: break;
+					}
+					label = nodeName;
+					if ((re.stateFlags & 1u) != 0u)
+					{
+						label += " (epuise)";
+					}
+					else
+					{
+						const engine::math::Vec3 playerPosNode = m_characterController.GetPosition();
+						const float dxNode = re.positionX - playerPosNode.x;
+						const float dzNode = re.positionZ - playerPosNode.z;
+						if ((dxNode * dxNode + dzNode * dzNode) <= 25.0f)
+						{
+							label += " [E]";
+						}
+					}
+				}
+				else if (const engine::client::CreatureAppearance* amb = m_creatureCatalog.Find(re.archetypeId);
+					amb != nullptr && amb->ambient)
+				{
+					// Monde vivant — PNJ d'ambiance : nom + rôle, sans PV ni niveau ;
+					// « [E] » quand il est assez près pour lui parler.
+					label = amb->name;
+					if (!amb->role.empty()) levelSuffix = " - " + amb->role;
+					if (!amb->dialogueId.empty() || !amb->talkTarget.empty())
+					{
+						const engine::math::Vec3 pp = m_characterController.GetPosition();
+						const float dxa = re.positionX - pp.x, dza = re.positionZ - pp.z;
+						if (dxa * dxa + dza * dza <= kAmbientTalkRadiusM * kAmbientTalkRadiusM)
+							label += " [E]";
+					}
+				}
+				else
+				{
+					const engine::client::CreatureAppearance* appearance =
+						m_creatureCatalog.Find(re.archetypeId);
+					const std::string mobName = (appearance != nullptr)
+						? appearance->name
+						: ("Creature " + std::to_string(re.archetypeId));
+					const uint32_t mobLevel = (appearance != nullptr) ? appearance->level : 1u;
+					// Validation v12 — les PV chiffrés quittent le label : ils sont
+					// désormais portés par la barre de vie dessinée sous la plaque.
+					label = mobName;
+					// FIX.10 — niveau révélé seulement au cœur du cercle de perception.
+					{
+						const float ldx = re.positionX - platePlayerPos.x;
+						const float ldz = re.positionZ - platePlayerPos.z;
+						if (engine::client::ShouldShowLevel(std::sqrt(ldx * ldx + ldz * ldz), plateParams))
+							levelSuffix = " (niv. " + std::to_string(mobLevel) + ")";
+					}
+					drawMobHealthBar = (re.maxHealth > 0u);
+				}
+				// Largeur TOTALE = nom (taille normale) + suffixe « (niv. N) » (0.78x).
+				ImFont* plateFont = ImGui::GetFont();
+				const float nivFontSize = ImGui::GetFontSize() * 0.78f;
+				const ImVec2 nameTs = ImGui::CalcTextSize(label.c_str());
+				const ImVec2 nivTs = levelSuffix.empty()
+					? ImVec2(0.0f, 0.0f)
+					: plateFont->CalcTextSizeA(nivFontSize, FLT_MAX, 0.0f, levelSuffix.c_str());
+				const ImVec2 ts(nameTs.x + nivTs.x, nameTs.y);
+				// Empilement vertical : remonte la plaque tant qu'elle recouvre une
+				// plaque deja posee cette frame (mobs superposes -> textes lisibles).
+				const float plateHalfW = ts.x * 0.5f + 6.0f;
+				const float plateH = ts.y + 2.0f + (drawMobHealthBar ? 24.0f : 4.0f);
+				for (int attempt = 0; attempt < 12; ++attempt)
+				{
+					const float top = syp - ts.y - 2.0f;
+					const float bot = syp + (drawMobHealthBar ? 24.0f : 4.0f);
+					bool overlap = false;
+					for (const ImVec4& r : placedLabelRects)
+					{
+						if ((sxp - plateHalfW) < r.z && (sxp + plateHalfW) > r.x
+							&& top < r.w && bot > r.y)
+						{ overlap = true; break; }
+					}
+					if (!overlap) break;
+					syp -= (plateH + 3.0f);
+				}
+				// Ne pas dessiner la plaque si elle retombe sur le Journal de quêtes
+				// (elle serait masquée par la fenêtre de toute façon, mais le
+				// foreground la peindrait par-dessus -> illisible).
+				if (hasJournalRect
+					&& (sxp - plateHalfW) < journalRect.z && (sxp + plateHalfW) > journalRect.x
+					&& (syp - ts.y - 2.0f) < journalRect.w
+					&& (syp + (drawMobHealthBar ? 24.0f : 4.0f)) > journalRect.y)
+				{
+					continue;
+				}
+				placedLabelRects.emplace_back(sxp - plateHalfW, syp - ts.y - 2.0f,
+					sxp + plateHalfW, syp + (drawMobHealthBar ? 24.0f : 4.0f));
+				// Halo noir derriere le texte pour la lisibilite sur fond clair (ciel).
+				fg->AddRectFilled(
+					ImVec2(sxp - ts.x * 0.5f - 4.0f, syp - ts.y - 2.0f),
+					ImVec2(sxp + ts.x * 0.5f + 4.0f, syp + 2.0f),
+					IM_COL32(0, 0, 0, 140), 3.0f);
+				// Validation v12 — surbrillance de la CIBLE courante : avec
+				// plusieurs mobs au même nom et aux mêmes PV, la bascule Tab
+				// était invisible (le cadre cible affichait la même chose).
+				// Bordure dorée autour de la plaque du mob ciblé.
+				{
+					const engine::client::UIModel& plateModel = m_uiModelBinding.GetModel();
+					if (plateModel.targetStats.hasTarget
+						&& plateModel.targetStats.entityId == re.entityId)
+					{
+						fg->AddRect(
+							ImVec2(sxp - ts.x * 0.5f - 6.0f, syp - ts.y - 4.0f),
+							ImVec2(sxp + ts.x * 0.5f + 6.0f, syp + 4.0f),
+							IM_COL32(235, 190, 60, 255), 3.0f, 0, 2.0f);
+					}
+				}
+				// Nom a taille normale, puis suffixe niveau plus petit, aligne en bas.
+				const float labelLeft = sxp - ts.x * 0.5f;
+				fg->AddText(ImVec2(labelLeft, syp - ts.y), IM_COL32(220, 230, 255, 255), label.c_str());
+				if (!levelSuffix.empty())
+				{
+					fg->AddText(plateFont, nivFontSize,
+						ImVec2(labelLeft + nameTs.x, syp - nivTs.y),
+						IM_COL32(180, 195, 225, 230), levelSuffix.c_str());
+				}
+				// Validation v12 — barre de vie du mob sous la plaque, alimentée
+				// par currentHealth/maxHealth du snapshot (10 Hz) : elle descend
+				// donc en direct à chaque coup porté. Couleur par tiers de PV
+				// (vert > 50 %, orange > 25 %, rouge en dessous).
+				if (drawMobHealthBar)
+				{
+					const float hpFrac = std::clamp(
+						static_cast<float>(re.currentHealth) / static_cast<float>(re.maxHealth),
+						0.0f, 1.0f);
+					const float barW = std::max(64.0f, ts.x);
+					const float barH = 5.0f;
+					const float barLeft = sxp - barW * 0.5f;
+					const float barTop = syp + 4.0f;
+					const ImU32 fillColor = (hpFrac > 0.5f)
+						? IM_COL32(80, 200, 80, 230)
+						: ((hpFrac > 0.25f)
+							? IM_COL32(230, 160, 40, 230)
+							: IM_COL32(210, 60, 50, 230));
+					fg->AddRectFilled(ImVec2(barLeft, barTop),
+						ImVec2(barLeft + barW, barTop + barH), IM_COL32(20, 22, 26, 200), 2.0f);
+					fg->AddRectFilled(ImVec2(barLeft, barTop),
+						ImVec2(barLeft + barW * hpFrac, barTop + barH), fillColor, 2.0f);
+					fg->AddRect(ImVec2(barLeft, barTop),
+						ImVec2(barLeft + barW, barTop + barH), IM_COL32(0, 0, 0, 160), 2.0f);
+					// PV chiffrés compacts au-dessus de la barre, à droite.
+					const std::string hpText = std::to_string(re.currentHealth) + "/"
+						+ std::to_string(re.maxHealth);
+					const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
+					fg->AddText(ImVec2(barLeft + barW - hpTs.x, barTop + barH + 1.0f),
+						IM_COL32(200, 205, 215, 220), hpText.c_str());
+				}
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderTargetFrameImGui(float& dw, ImDrawList* fg, const engine::client::UIModel& uiModel)
+	{
+		if (uiModel.targetStats.hasTarget
+			&& (uiModel.targetStats.stateFlags & 1u) == 0u)
+		{
+			const float frameW = 260.0f;
+			const float frameH = 54.0f;
+			const float fx = (dw - frameW) * 0.5f;
+			const float fy = 56.0f;
+			const bool targetDead = (uiModel.targetStats.stateFlags & 1u) != 0u;
+			// Nom : catalogue creatures (la cible V1 est toujours un mob).
+			std::string targetName = "Cible";
+			for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+			{
+				if (re.entityId != uiModel.targetStats.entityId)
+					continue;
+				const engine::client::CreatureAppearance* app = m_creatureCatalog.Find(re.archetypeId);
+				if (app != nullptr)
+					targetName = app->name;
+				break;
+			}
+			if (targetDead)
+				targetName += "  (MORT)";
+			fg->AddRectFilled(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH), IM_COL32(10, 12, 16, 200), 6.0f);
+			fg->AddRect(ImVec2(fx, fy), ImVec2(fx + frameW, fy + frameH),
+				targetDead ? IM_COL32(120, 120, 120, 200) : IM_COL32(200, 60, 50, 220), 6.0f, 0, 2.0f);
+			fg->AddText(ImVec2(fx + 10.0f, fy + 6.0f),
+				targetDead ? IM_COL32(150, 150, 150, 255) : IM_COL32(235, 235, 235, 255), targetName.c_str());
+			// Distance XZ joueur→cible : affichée SOUS le cadre, centrée et en
+			// plus petit (0.8x). Avant elle etait en haut a droite DANS le cadre
+			// et chevauchait le nom (souvent long) -> illisible. Orange au-dela
+			// de 4 m (coherent avec « Hors de portee »), vert sinon.
+			{
+				const engine::math::Vec3 playerPosFrame = m_characterController.GetPosition();
+				for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+				{
+					if (re.entityId != uiModel.targetStats.entityId)
+						continue;
+					const float dxf = re.positionX - playerPosFrame.x;
+					const float dzf = re.positionZ - playerPosFrame.z;
+					const float distM = std::sqrt(dxf * dxf + dzf * dzf);
+					const std::string distText =
+						std::to_string(static_cast<int>(std::lround(distM))) + " m";
+					ImFont* distFont = ImGui::GetFont();
+					const float distFontSize = ImGui::GetFontSize() * 0.8f;
+					const ImVec2 distTs =
+						distFont->CalcTextSizeA(distFontSize, FLT_MAX, 0.0f, distText.c_str());
+					fg->AddText(distFont, distFontSize,
+						ImVec2(fx + (frameW - distTs.x) * 0.5f, fy + frameH + 2.0f),
+						(distM > 4.0f) ? IM_COL32(240, 170, 60, 255) : IM_COL32(170, 220, 170, 255),
+						distText.c_str());
+					break;
+				}
+			}
+			const float barX = fx + 10.0f, barY = fy + 30.0f, barW = frameW - 20.0f, barH = 14.0f;
+			const float hpFrac = (uiModel.targetStats.maxHealth > 0u)
+				? std::clamp(static_cast<float>(uiModel.targetStats.currentHealth)
+					/ static_cast<float>(uiModel.targetStats.maxHealth), 0.0f, 1.0f)
+				: 0.0f;
+			fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH), IM_COL32(40, 40, 44, 220), 3.0f);
+			fg->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * hpFrac, barY + barH),
+				targetDead ? IM_COL32(110, 110, 110, 230) : IM_COL32(190, 50, 40, 230), 3.0f);
+			const std::string hpText = std::to_string(uiModel.targetStats.currentHealth) + "/"
+				+ std::to_string(uiModel.targetStats.maxHealth);
+			const ImVec2 hpTs = ImGui::CalcTextSize(hpText.c_str());
+			fg->AddText(ImVec2(barX + (barW - hpTs.x) * 0.5f, barY - 1.0f), IM_COL32(255, 255, 255, 255), hpText.c_str());
+			// Validation v12 — indication transitoire « Hors de portee »
+			// (cf. armement dans le bloc T ci-dessus).
+			if (m_outOfRangeHintSec > 0.0f)
+			{
+				const char* rangeHint = "Hors de portee  (approchez-vous)";
+				const ImVec2 hintTs = ImGui::CalcTextSize(rangeHint);
+				fg->AddText(ImVec2(fx + (frameW - hintTs.x) * 0.5f, fy + frameH + 6.0f),
+					IM_COL32(240, 170, 60, 255), rangeHint);
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderAdvancedCombatPanelImGui(float& dw)
+	{
+		if (m_advancedCombatVisible)
+		{
+			const engine::client::AdvancedCombatState& acs = m_advancedCombat.GetState();
+			ImGui::SetNextWindowPos(ImVec2(dw - 420.0f, 90.0f), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(380.0f, 420.0f), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Combat avance", &m_advancedCombatVisible))
+			{
+				ImGui::Text("Combat : %s  (%.1f s)", acs.inCombat ? "en cours" : "inactif", acs.fightElapsedSec);
+				ImGui::Separator();
+				ImGui::TextUnformatted("DPS");
+				for (const engine::client::DpsMeterEntry& row : acs.dpsMeter)
+				{
+					ImGui::Text("%u. %s", row.rank, row.displayName.c_str());
+					ImGui::SameLine(200.0f);
+					ImGui::Text("%.1f dps", row.dps);
+					ImGui::ProgressBar(row.barFraction, ImVec2(-1.0f, 6.0f), "");
+				}
+				// Combat SP4 — menace sur la cible courante (ThreatUpdate).
+				if (acs.threatMeterVisible && !acs.threatMeter.empty())
+				{
+					ImGui::Separator();
+					ImGui::TextUnformatted("Menace");
+					for (const engine::client::ThreatMeterEntry& threatRow : acs.threatMeter)
+					{
+						const ImVec4 rowColor = (threatRow.color == engine::client::ThreatColor::Red)
+							? ImVec4(0.9f, 0.3f, 0.25f, 1.0f)
+							: (threatRow.color == engine::client::ThreatColor::Yellow)
+								? ImVec4(0.9f, 0.8f, 0.3f, 1.0f)
+								: ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
+						ImGui::TextColored(rowColor, "%s", threatRow.displayName.c_str());
+						ImGui::SameLine(200.0f);
+						ImGui::TextColored(rowColor, "%.0f %%", threatRow.threatPercent);
+						ImGui::ProgressBar(threatRow.barFraction, ImVec2(-1.0f, 6.0f), "");
+					}
+				}
+				ImGui::Separator();
+				uint32_t filter = acs.activeFilter;
+				bool filterChanged = false;
+				auto toggleChip = [&filter, &filterChanged](const char* lbl, uint32_t mask)
+				{
+					bool on = (filter & mask) != 0u;
+					if (ImGui::Checkbox(lbl, &on))
+					{
+						filter = on ? (filter | mask) : (filter & ~mask);
+						filterChanged = true;
+					}
+					ImGui::SameLine();
+				};
+				toggleChip("Degats", engine::client::CombatLogFilterDamage);
+				toggleChip("Soins", engine::client::CombatLogFilterHealing);
+				toggleChip("Morts", engine::client::CombatLogFilterDeaths);
+				ImGui::NewLine();
+				if (filterChanged)
+					m_advancedCombat.SetLogFilter(filter);
+				ImGui::Separator();
+				ImGui::BeginChild("##ln_combat_log", ImVec2(0.0f, 0.0f), true);
+				for (const engine::client::CombatLogLine& logLine : acs.visibleLogLines)
+					ImGui::TextUnformatted(logLine.text.c_str());
+				ImGui::EndChild();
+			}
+			ImGui::End();
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderActionBarAndBeltImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel, const bool& keysAllowed, const std::vector<engine::client::SpellDisplay>& effectiveKit)
+	{
+		{
+			const float nowSec = EngineNowSec();
+			const float slotSize = 58.0f;
+			const float slotGap = 8.0f;
+			// Grimoire — layout effectif des 10 slots (slot i → spellId).
+			const std::array<std::string, 10> resolvedLayout =
+				engine::client::ResolveActionBarLayout(uiModel.playerStats.actionBarLayout, effectiveKit);
+			const size_t slotCount = resolvedLayout.size(); // 10
+			const float barWidth = slotSize * static_cast<float>(slotCount)
+				+ slotGap * static_cast<float>(slotCount - 1);
+			const float barX = (dw - barWidth) * 0.5f;
+			const float barY = dh - slotSize - 16.0f;
+			for (size_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
+			{
+				const std::string& slotSpellId = resolvedLayout[slotIndex];
+				const engine::client::SpellDisplay* spellPtr =
+					slotSpellId.empty() ? nullptr : engine::client::FindSpellInKit(effectiveKit, slotSpellId);
+				const float sx0 = barX + static_cast<float>(slotIndex) * (slotSize + slotGap);
+				// Touche du slot (remappable) : défaut Digit1..Digit9 puis Digit0.
+				const engine::platform::Key slotKey = KeyFromName(
+					m_cfg.GetString("controls.keybind.action_slot_" + std::to_string(slotIndex + 1),
+						(slotIndex < 9) ? std::string(1, static_cast<char>('1' + slotIndex)) : std::string("0")),
+					(slotIndex < 9)
+						? static_cast<engine::platform::Key>('1' + static_cast<int>(slotIndex))
+						: engine::platform::Key::Digit0);
+				// SP3 anniversaires (2026-07-18) — slot occupé par un
+				// GÂTEAU (jeton "item:<id>") : case dédiée, la touche
+				// envoie un CastRequest avec le jeton (activation
+				// serveur : buff groupe/guilde tant que slotté).
+				uint32_t cakeItemId = 0u;
+				if (engine::anniversary::ParseCakeToken(slotSpellId, cakeItemId))
+				{
+					fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+						IM_COL32(58, 34, 52, 220), 6.0f);
+					fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+						IM_COL32(220, 150, 190, 200), 6.0f, 0, 2.0f);
+					const engine::items::ItemDefinition* cakeDef = m_itemCatalog.Find(cakeItemId);
+					const char* cakeLabel = (cakeDef != nullptr && !cakeDef->name.empty())
+						? cakeDef->name.c_str() : "Gateau";
+					fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize * 0.5f - 8.0f),
+						IM_COL32(255, 230, 245, 255), cakeLabel);
+					const std::string cakeKeyLabel = KeyGlyph(slotKey);
+					fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f),
+						IM_COL32(255, 220, 240, 220), cakeKeyLabel.c_str());
+					if (keysAllowed && m_input.WasPressed(slotKey))
+					{
+						const uint32_t cakeClientId = m_gameplayUdp.ServerClientId();
+						if (cakeClientId != 0u)
+							(void)m_gameplayUdp.SendCastRequest(cakeClientId, 0ull, slotSpellId);
+					}
+					continue;
+				}
+				if (spellPtr == nullptr)
+				{
+					// Slot vide : case grisée + glyphe touche, pas d'action.
+					fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+						IM_COL32(14, 16, 22, 160), 6.0f);
+					fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+						IM_COL32(70, 70, 76, 160), 6.0f, 0, 2.0f);
+					const std::string emptyKeyLabel = KeyGlyph(slotKey);
+					fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(150, 140, 110, 200), emptyKeyLabel.c_str());
+					continue;
+				}
+				const engine::client::SpellDisplay& spell = *spellPtr;
+				// Coût payable + cooldown : visuel grisé si indisponible.
+				const uint32_t cost = spell.resourceCostPercent
+					* uiModel.playerStats.secondaryResourceMax / 100u;
+				const bool affordable = uiModel.playerStats.secondaryResourceCurrent >= cost;
+				const auto cooldownIt = m_spellCooldownUiUntilSec.find(spell.spellId);
+				const float cooldownRemaining = (cooldownIt != m_spellCooldownUiUntilSec.end())
+					? std::max(0.0f, cooldownIt->second - nowSec)
+					: 0.0f;
+				const bool ready = affordable && cooldownRemaining <= 0.0f;
+				fg->AddRectFilled(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+					IM_COL32(14, 16, 22, 215), 6.0f);
+				fg->AddRect(ImVec2(sx0, barY), ImVec2(sx0 + slotSize, barY + slotSize),
+					ready ? IM_COL32(200, 180, 90, 220) : IM_COL32(90, 90, 96, 200), 6.0f, 0, 2.0f);
+				// SP-E — icône du sort en fond du slot (compétences de classe).
+				// Repli sur le nom texte si pas d'icône (kit profil, fichier absent).
+				bool slotHasIcon = false;
+				if (!spell.iconPath.empty())
+				{
+					const uint64_t slotTexId = m_skillIconCache.GetOrLoad(spell.iconPath);
+					if (slotTexId != 0)
+					{
+						const float pad = 3.0f;
+						fg->AddImage(static_cast<ImTextureID>(slotTexId),
+							ImVec2(sx0 + pad, barY + pad),
+							ImVec2(sx0 + slotSize - pad, barY + slotSize - pad));
+						slotHasIcon = true;
+					}
+				}
+				// Numéro de touche (haut-gauche) + nom du sort (bas, tronqué) si pas d'icône.
+				const std::string keyLabel = KeyGlyph(slotKey);
+				fg->AddText(ImVec2(sx0 + 4.0f, barY + 2.0f), IM_COL32(255, 230, 150, 230), keyLabel.c_str());
+				if (!slotHasIcon)
+				{
+					std::string spellLabel = spell.name.substr(0, 9);
+					fg->AddText(ImVec2(sx0 + 4.0f, barY + slotSize - 18.0f),
+						ready ? IM_COL32(225, 225, 225, 255) : IM_COL32(140, 140, 140, 255),
+						spellLabel.c_str());
+				}
+				// Voile + décompte pendant le cooldown affiché.
+				if (cooldownRemaining > 0.0f)
+				{
+					const float fillFraction = (spell.cooldownMs > 0u)
+						? std::clamp(cooldownRemaining / (static_cast<float>(spell.cooldownMs) / 1000.0f), 0.0f, 1.0f)
+						: 0.0f;
+					fg->AddRectFilled(
+						ImVec2(sx0, barY + slotSize * (1.0f - fillFraction)),
+						ImVec2(sx0 + slotSize, barY + slotSize),
+						IM_COL32(0, 0, 0, 150), 6.0f);
+					char cooldownText[16];
+					std::snprintf(cooldownText, sizeof(cooldownText), "%.0f", cooldownRemaining);
+					const ImVec2 cdTs = ImGui::CalcTextSize(cooldownText);
+					fg->AddText(ImVec2(sx0 + (slotSize - cdTs.x) * 0.5f, barY + (slotSize - cdTs.y) * 0.5f),
+						IM_COL32(255, 255, 255, 255), cooldownText);
+				}
+				// Touche remappable du slot : envoi du CastRequest.
+				if (keysAllowed && m_input.WasPressed(slotKey))
+				{
+					const bool targetOk = !spell.needsEnemyTarget
+						|| (uiModel.targetStats.hasTarget
+							&& (uiModel.targetStats.stateFlags & 1u) == 0u);
+					const uint32_t gameplayClientId = m_gameplayUdp.ServerClientId();
+					if (targetOk && ready && gameplayClientId != 0u)
+					{
+						// Groupes SP1 — sorts d'allié : envoie l'allié sélectionné au
+						// cadre de groupe (0 = soi, défaut serveur).
+						uint64_t castTarget = 0ull;
+						if (spell.needsEnemyTarget)
+						{
+							castTarget = uiModel.targetStats.entityId;
+						}
+						else if (spell.targetsAlly)
+						{
+							castTarget = m_selectedAllyEntityId;
+						}
+						(void)m_gameplayUdp.SendCastRequest(gameplayClientId, castTarget, spell.spellId);
+						if (spell.cooldownMs > 0u)
+						{
+							m_spellCooldownUiUntilSec[spell.spellId] =
+								nowSec + static_cast<float>(spell.cooldownMs) / 1000.0f;
+						}
+					}
+				}
+			}
+
+			// Ceinture v2 (2026-07-20) — barre d'objets ACTIFS à taille
+			// DYNAMIQUE (4 par défaut, 12 max — capacité autoritaire
+			// = ceinture équipée en slot Waist, reçue via kind 100).
+			// Fenêtre ImGui invisible : chaque case est un vrai
+			// widget → drag & drop natif (sac → case, case → case),
+			// tooltips, clic droit pour vider. Activation : Maj+1..9
+			// ou clic complet (relâché sans drag) sur la case.
+			{
+				const std::vector<std::string>& beltLayout = uiModel.playerStats.beltLayout;
+				const size_t beltCount = beltLayout.size();
+				if (beltCount > 0u)
+				{
+					const float beltSlotSz = 48.0f;
+					const float beltGap = 6.0f;
+					// Retour de test 2026-07-20 — disposition : la
+					// rangée BASSE porte les slots 1..6 ; les slots
+					// 7..12 s'empilent sur une 2e rangée AU-DESSUS,
+					// alignés colonne par colonne (7 au-dessus du 1,
+					// 8 au-dessus du 2, etc.).
+					const size_t perRow = std::min<size_t>(beltCount, 6u);
+					const size_t rowCount = (beltCount + 5u) / 6u;
+					const float beltW = static_cast<float>(perRow) * beltSlotSz
+						+ static_cast<float>(perRow - 1u) * beltGap;
+					const float beltH = static_cast<float>(rowCount) * beltSlotSz
+						+ static_cast<float>(rowCount - 1u) * beltGap;
+					// Retour de test 2026-07-20 — séparation nette
+					// avec les icônes de pouvoir : écart élargi +
+					// trait séparateur vertical (dessiné plus bas).
+					const float beltX = barX + barWidth + 56.0f;
+					const float beltY = dh - beltH - 16.0f; // bord HAUT du bloc
+					const bool shiftHeld = m_input.IsDown(engine::platform::Key::Shift);
+					const uint32_t beltClientId = m_gameplayUdp.ServerClientId();
+
+					ImGui::SetNextWindowPos(ImVec2(beltX - 34.0f, beltY - 20.0f));
+					ImGui::SetNextWindowSize(ImVec2(beltW + 40.0f, beltH + 26.0f));
+					ImGui::Begin("##belt_bar", nullptr,
+						ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
+						| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar
+						| ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoFocusOnAppearing
+						| ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings);
+					ImDrawList* bdl = ImGui::GetWindowDrawList();
+					// Retour de test 2026-07-20 — pas de libellé « Ceinture x/y »
+					// au-dessus de la barre : les cases se suffisent.
+					// Trait séparateur vertical entre la barre
+					// d'action (icônes de pouvoir) et la ceinture.
+					bdl->AddLine(ImVec2(beltX - 26.0f, dh - beltSlotSz - 20.0f),
+						ImVec2(beltX - 26.0f, dh - 12.0f),
+						IM_COL32(150, 170, 155, 120), 2.0f);
+
+					// Copie de travail : mutée par drop/échange/vidage,
+					// envoyée en une fois si changement.
+					std::vector<std::string> newBelt(beltLayout.begin(), beltLayout.end());
+					bool beltChanged = false;
+
+					for (size_t bi = 0; bi < beltCount; ++bi)
+					{
+						// row 0 = rangée BASSE (slots 1..6) ; les rangées
+						// suivantes montent AU-DESSUS, mêmes colonnes.
+						const size_t row = bi / 6u;
+						const size_t colIdx = bi % 6u;
+						const float bx0 = beltX + static_cast<float>(colIdx) * (beltSlotSz + beltGap);
+						const float by0 = beltY
+							+ static_cast<float>(rowCount - 1u - row) * (beltSlotSz + beltGap);
+						const std::string& beltTok = beltLayout[bi];
+						uint32_t beltItemId = 0u;
+						const bool occupied = engine::anniversary::ParseItemToken(beltTok, beltItemId);
+						const engine::items::ItemDefinition* bdef =
+							occupied ? m_itemCatalog.Find(beltItemId) : nullptr;
+
+						ImGui::SetCursorScreenPos(ImVec2(bx0, by0));
+						char beltBtnId[16];
+						std::snprintf(beltBtnId, sizeof(beltBtnId), "##belt%d", static_cast<int>(bi));
+						ImGui::InvisibleButton(beltBtnId, ImVec2(beltSlotSz, beltSlotSz));
+						const bool hovered = ImGui::IsItemHovered();
+
+						// Quantité restante en sac (somme des piles).
+						uint32_t beltQty = 0u;
+						if (occupied)
+						{
+							for (const engine::client::InventorySlotState& is : m_invUi.GetState().slots)
+								if (is.occupied && is.itemId == beltItemId)
+									beltQty += is.quantity;
+						}
+
+						// Visuel : fond, bordure (survol = doré), raccourci,
+						// initiale de l'objet en grand + quantité en bas-droite.
+						const ImU32 fillCol = occupied
+							? IM_COL32(32, 46, 36, 235) : IM_COL32(14, 16, 22, 170);
+						const ImU32 borderCol = hovered
+							? IM_COL32(235, 205, 120, 255)
+							: IM_COL32(120, 170, 130, occupied ? 220 : 110);
+						bdl->AddRectFilled(ImVec2(bx0, by0),
+							ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), fillCol, 6.0f);
+						bdl->AddRect(ImVec2(bx0, by0),
+							ImVec2(bx0 + beltSlotSz, by0 + beltSlotSz), borderCol, 6.0f, 0,
+							hovered ? 2.5f : 2.0f);
+						if (bi < 9u)
+						{
+							char beltKeyLabel[12];
+							std::snprintf(beltKeyLabel, sizeof(beltKeyLabel), "M+%d",
+								static_cast<int>(bi) + 1);
+							bdl->AddText(ImVec2(bx0 + 3.0f, by0 + 2.0f),
+								IM_COL32(200, 230, 205, 190), beltKeyLabel);
+						}
+						if (occupied)
+						{
+							// Initiale (2 lettres) au centre — lisible sans atlas d'icônes.
+							const char* bname = (bdef != nullptr && !bdef->name.empty())
+								? bdef->name.c_str() : "?";
+							char initials[3] = { bname[0], bname[1] != '\0' ? bname[1] : ' ', '\0' };
+							const ImVec2 initSz = ImGui::CalcTextSize(initials);
+							bdl->AddText(ImVec2(bx0 + (beltSlotSz - initSz.x) * 0.5f,
+								by0 + (beltSlotSz - initSz.y) * 0.5f),
+								IM_COL32(240, 250, 240, 255), initials);
+							char beltQtyTxt[12];
+							std::snprintf(beltQtyTxt, sizeof(beltQtyTxt), "%u", beltQty);
+							const ImVec2 qtySz = ImGui::CalcTextSize(beltQtyTxt);
+							bdl->AddText(ImVec2(bx0 + beltSlotSz - qtySz.x - 3.0f,
+								by0 + beltSlotSz - qtySz.y - 2.0f),
+								beltQty > 0u ? IM_COL32(255, 240, 190, 255)
+								             : IM_COL32(255, 120, 110, 255),
+								beltQtyTxt);
+						}
+
+						// Source de drag (réorganisation case → case).
+						if (occupied && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+						{
+							int fromIndex = static_cast<int>(bi);
+							ImGui::SetDragDropPayload("LN_BELT_MOVE", &fromIndex, sizeof(int));
+							ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+								? bdef->name.c_str() : "Objet");
+							ImGui::EndDragDropSource();
+						}
+						// Cible de drop : échange interne OU objet du sac.
+						if (ImGui::BeginDragDropTarget())
+						{
+							if (const ImGuiPayload* mv = ImGui::AcceptDragDropPayload("LN_BELT_MOVE"))
+							{
+								if (mv->DataSize == static_cast<int>(sizeof(int)))
+								{
+									const int from = *static_cast<const int*>(mv->Data);
+									if (from >= 0 && from < static_cast<int>(newBelt.size())
+										&& from != static_cast<int>(bi))
+									{
+										std::swap(newBelt[static_cast<size_t>(from)], newBelt[bi]);
+										beltChanged = true;
+									}
+								}
+							}
+							if (const ImGuiPayload* it = ImGui::AcceptDragDropPayload("LN_EQUIP_ITEM"))
+							{
+								if (it->DataSize == static_cast<int>(sizeof(uint32_t)))
+								{
+									const uint32_t droppedId = *static_cast<const uint32_t*>(it->Data);
+									const std::string droppedTok =
+										engine::anniversary::MakeItemToken(droppedId);
+									bool already = false;
+									for (const std::string& s : newBelt)
+										if (s == droppedTok) { already = true; break; }
+									if (!already)
+									{
+										newBelt[bi] = droppedTok;
+										beltChanged = true;
+									}
+								}
+							}
+							ImGui::EndDragDropTarget();
+						}
+						// Clic droit : vider la case.
+						if (occupied && hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+						{
+							newBelt[bi].clear();
+							beltChanged = true;
+						}
+						// Tooltip riche.
+						if (hovered && occupied)
+						{
+							ImGui::BeginTooltip();
+							ImGui::TextUnformatted((bdef != nullptr && !bdef->name.empty())
+								? bdef->name.c_str() : "Objet");
+							if (bdef != nullptr && !bdef->description.empty())
+								ImGui::TextDisabled("%s", bdef->description.c_str());
+							ImGui::Separator();
+							if (bi < 9u)
+								ImGui::TextDisabled("Maj+%d ou clic : utiliser", static_cast<int>(bi) + 1);
+							else
+								ImGui::TextDisabled("Clic : utiliser");
+							ImGui::TextDisabled("Clic droit : retirer  |  Glisser : deplacer");
+							ImGui::TextDisabled("En sac : %u", beltQty);
+							ImGui::EndTooltip();
+						}
+
+						// Activation : Maj+1..9, ou clic COMPLET (press +
+						// release dans la case, sans drag en cours — permet
+						// de glisser sans consommer l'objet).
+						const bool beltKeyPressed = keysAllowed && shiftHeld && bi < 9u
+							&& m_input.WasPressed(static_cast<engine::platform::Key>('1' + static_cast<int>(bi)));
+						const bool beltClickCompleted = ImGui::IsItemDeactivated()
+							&& hovered && ImGui::GetDragDropPayload() == nullptr;
+						if (occupied && (beltKeyPressed || beltClickCompleted)
+							&& beltClientId != 0u)
+						{
+							(void)m_gameplayUdp.SendCastRequest(beltClientId, 0ull, beltTok);
+						}
+					}
+					ImGui::End();
+
+					if (beltChanged && beltClientId != 0u)
+					{
+						(void)m_gameplayUdp.SendSetBeltLayout(beltClientId, newBelt);
+					}
+				}
+			}
+
+			// --- Barre de cast (au-dessus de la barre d'action) pilotée
+			// par CastBarUpdate ; progression calculée localement.
+			if (uiModel.castBar.active && uiModel.castBar.durationMs > 0u)
+			{
+				const uint64_t nowNs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::nanoseconds>(
+						std::chrono::steady_clock::now().time_since_epoch()).count());
+				const float elapsedSec = static_cast<float>(nowNs - uiModel.castBar.startedAtNs) / 1.0e9f;
+				const float durationSec = static_cast<float>(uiModel.castBar.durationMs) / 1000.0f;
+				const float progress = std::clamp(elapsedSec / durationSec, 0.0f, 1.0f);
+				const float castBarWidth = 260.0f;
+				const float castBarHeight = 18.0f;
+				const float cbx = (dw - castBarWidth) * 0.5f;
+				const float cby = barY - castBarHeight - 10.0f;
+				fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth, cby + castBarHeight),
+					IM_COL32(20, 22, 28, 220), 4.0f);
+				fg->AddRectFilled(ImVec2(cbx, cby), ImVec2(cbx + castBarWidth * progress, cby + castBarHeight),
+					IM_COL32(120, 170, 230, 230), 4.0f);
+				const std::string castLabel = m_spellCatalog.ResolveSpellName(uiModel.castBar.spellId);
+				const ImVec2 castTs = ImGui::CalcTextSize(castLabel.c_str());
+				fg->AddText(ImVec2(cbx + (castBarWidth - castTs.x) * 0.5f, cby + 1.0f),
+					IM_COL32(255, 255, 255, 255), castLabel.c_str());
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderBuffBarsImGui(engine::RenderState& out, float& dw, float& dh, const int& ivw, const int& ivh, ImDrawList* fg, const engine::client::UIModel& uiModel)
+	{
+		{
+			const uint64_t nowNs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count());
+			// Construit la liste StatusEffect d'une entité depuis le modèle
+			// (les timers décrémentent localement entre deux AuraUpdate).
+			auto buildEffects = [&uiModel, nowNs](engine::server::EntityId entityId,
+				std::list<engine::gameplay::StatusEffect>& outEffects)
+			{
+				const auto auraIt = uiModel.entityAuras.find(entityId);
+				if (auraIt == uiModel.entityAuras.end())
+				{
+					return;
+				}
+				for (const engine::client::UIAuraEntry& aura : auraIt->second)
+				{
+					engine::gameplay::StatusEffect effect{};
+					effect.effectId = aura.spellId;
+					effect.targetId = entityId;
+					effect.stacks = aura.stacks;
+					// Mapping wire (SpellEffectType serveur) → type client.
+					switch (aura.effectType)
+					{
+					case 1u: effect.type = engine::gameplay::StatusEffectType::DoT; break;
+					case 3u: effect.type = engine::gameplay::StatusEffectType::HoT; break;
+					case 5u: effect.type = engine::gameplay::StatusEffectType::Debuff; break;
+					case 7u: effect.type = engine::gameplay::StatusEffectType::Slow; break;
+					default: effect.type = engine::gameplay::StatusEffectType::Buff; break;
+					}
+					effect.startTimeNs = aura.receivedAtNs;
+					effect.durationSeconds = static_cast<float>(aura.remainingMs) / 1000.0f;
+					effect.expireTimeNs = aura.receivedAtNs
+						+ static_cast<uint64_t>(aura.remainingMs) * 1000000ull;
+					outEffects.push_back(std::move(effect));
+				}
+			};
+			std::list<engine::gameplay::StatusEffect> playerEffects;
+			buildEffects(static_cast<engine::server::EntityId>(uiModel.playerStats.playerEntityId), playerEffects);
+			m_buffBar.UpdatePlayer(playerEffects.empty() ? nullptr : &playerEffects, nowNs);
+			std::list<engine::gameplay::StatusEffect> targetEffects;
+			if (uiModel.targetStats.hasTarget)
+			{
+				buildEffects(uiModel.targetStats.entityId, targetEffects);
+			}
+			m_buffBar.UpdateTarget(targetEffects.empty() ? nullptr : &targetEffects, nowNs);
+
+			// Rendu en pastilles texte (icônes graphiques = chantier atlas).
+			auto drawBar = [this, fg](const engine::client::BuffBarWidget& bar, float x, float y, bool harmful)
+			{
+				if (!bar.visible)
+				{
+					return;
+				}
+				float cursorX = x;
+				for (const engine::client::BuffIconWidget& icon : bar.icons)
+				{
+					if (!icon.visible)
+					{
+						continue;
+					}
+					std::string chip = m_spellCatalog.ResolveSpellName(icon.effectId);
+					if (!icon.isPermanent && icon.remainingSeconds > 0.0f)
+					{
+						char timerText[16];
+						std::snprintf(timerText, sizeof(timerText), " %.0fs", icon.remainingSeconds);
+						chip += timerText;
+					}
+					if (icon.stacks > 1u)
+					{
+						chip += " x" + std::to_string(icon.stacks);
+					}
+					const ImVec2 chipTs = ImGui::CalcTextSize(chip.c_str());
+					fg->AddRectFilled(ImVec2(cursorX, y), ImVec2(cursorX + chipTs.x + 10.0f, y + chipTs.y + 6.0f),
+						harmful ? IM_COL32(70, 20, 20, 210) : IM_COL32(20, 50, 25, 210), 4.0f);
+					fg->AddText(ImVec2(cursorX + 5.0f, y + 3.0f), IM_COL32(230, 230, 230, 255), chip.c_str());
+					cursorX += chipTs.x + 16.0f;
+				}
+			};
+			const engine::client::BuffBarState& playerBuffState = m_buffBar.GetPlayerState();
+			drawBar(playerBuffState.buffBar, 18.0f, dh - 120.0f, false);
+			drawBar(playerBuffState.debuffBar, 18.0f, dh - 92.0f, true);
+			if (uiModel.targetStats.hasTarget)
+			{
+				const engine::client::BuffBarState& targetBuffState = m_buffBar.GetTargetState();
+				// Sous le cadre cible (haut-centre, cf. bloc SP2 : fy 56 + 54).
+				drawBar(targetBuffState.buffBar, (dw - 260.0f) * 0.5f, 118.0f, false);
+				drawBar(targetBuffState.debuffBar, (dw - 260.0f) * 0.5f, 144.0f, true);
+			}
+
+			// --- Combat SP4 : threat meter — alimente le présentateur pour la
+			// cible courante (rebuild complet, ≤ 5 entrées : coût négligeable).
+			if (uiModel.targetStats.hasTarget)
+			{
+				m_advancedCombat.ClearThreat(uiModel.targetStats.entityId);
+				const auto threatIt = uiModel.threatByMob.find(uiModel.targetStats.entityId);
+				if (threatIt != uiModel.threatByMob.end())
+				{
+					for (const engine::client::UIThreatEntry& threatEntry : threatIt->second)
+					{
+						std::string threatName = "Joueur";
+						if (threatEntry.playerEntityId == uiModel.playerStats.playerEntityId)
+						{
+							threatName = "Vous";
+						}
+						else
+						{
+							for (const engine::client::UIRemoteEntity& re : uiModel.remoteEntities)
+							{
+								if (re.entityId == threatEntry.playerEntityId)
+								{
+									threatName = !re.displayName.empty()
+										? re.displayName
+										: ("P" + std::to_string(re.playerClientId));
+									break;
+								}
+							}
+						}
+						m_advancedCombat.UpdateThreat(uiModel.targetStats.entityId,
+							threatEntry.playerEntityId, threatName, threatEntry.threatValue);
+					}
+				}
+			}
+
+			// --- Combat SP4 : FX d'auras — sync de la couche données
+			// (AuraFXSystem, M39.4 enfin câblé) puis halo écran-espace coloré
+			// aux pieds de chaque entité sous aura (couleur ResolveAuraVisuals).
+			{
+				const engine::math::Vec3 localFxPos = m_characterController.GetPosition();
+				std::list<engine::gameplay::StatusEffect> fxEffects;
+				for (const auto& auraPair : uiModel.entityAuras)
+				{
+					const engine::server::EntityId fxEntityId = auraPair.first;
+					float fxX = localFxPos.x, fxY = localFxPos.y, fxZ = localFxPos.z;
+					if (fxEntityId != uiModel.playerStats.playerEntityId)
+					{
+						const auto smoothedIt = m_remoteSmoothed.find(fxEntityId);
+						if (smoothedIt == m_remoteSmoothed.end() || !smoothedIt->second.valid)
+						{
+							continue; // entité sans position connue : pas de FX ce frame.
+						}
+						fxX = smoothedIt->second.x;
+						fxY = smoothedIt->second.y;
+						fxZ = smoothedIt->second.z;
+						// Combat SP1 fix — un halo de mob doit suivre le snap visuel
+						// au sol (sinon l'anneau se projette sous le terrain). On
+						// retrouve l'entité pour distinguer joueur (Y fiable) / mob.
+						for (const engine::client::UIRemoteEntity& fxRe : uiModel.remoteEntities)
+						{
+							if (fxRe.entityId != fxEntityId)
+								continue;
+							fxY = ResolveRemoteDisplayCenterY(
+								fxRe.playerClientId != 0u, fxY, fxX, fxZ);
+							break;
+						}
+					}
+					fxEffects.clear();
+					buildEffects(fxEntityId, fxEffects);
+					m_auraFx.Sync(fxEntityId, fxEffects.empty() ? nullptr : &fxEffects, fxX, fxY, fxZ);
+				}
+				// Purge des FX d'entités qui n'ont plus aucune aura répliquée.
+				std::vector<uint64_t> staleFxEntities;
+				for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
+				{
+					if (uiModel.entityAuras.find(fxAura.entityId) == uiModel.entityAuras.end())
+					{
+						staleFxEntities.push_back(fxAura.entityId);
+					}
+				}
+				for (const uint64_t staleEntityId : staleFxEntities)
+				{
+					m_auraFx.RemoveEntity(staleEntityId);
+				}
+				// Rendu : un anneau par aura, aux pieds de l'entité.
+				for (const engine::client::ActiveAura& fxAura : m_auraFx.GetAuras())
+				{
+					if (!fxAura.alive)
+					{
+						continue;
+					}
+					float haloX = 0.0f, haloY = 0.0f;
+					if (!WorldToScreenPx(out.viewProjMatrix.m,
+						fxAura.positionX, fxAura.positionY - 0.85f, fxAura.positionZ,
+						ivw, ivh, haloX, haloY))
+					{
+						continue;
+					}
+					const ImU32 haloColor = IM_COL32(
+						static_cast<int>(fxAura.glowColor.r * 255.0f),
+						static_cast<int>(fxAura.glowColor.g * 255.0f),
+						static_cast<int>(fxAura.glowColor.b * 255.0f),
+						190);
+					fg->AddCircle(ImVec2(haloX, haloY), 20.0f, haloColor, 24, 2.5f);
+				}
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderCraftingWindowImGui(float& dw, const engine::client::UIModel& uiModel)
+	{
+		if (m_craftingVisible)
+		{
+			ImGui::SetNextWindowPos(ImVec2(dw * 0.5f - 230.0f, 120.0f), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(460.0f, 430.0f), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Artisanat", &m_craftingVisible))
+			{
+				const uint32_t craftClientId = m_gameplayUdp.ServerClientId();
+				if (uiModel.crafting.professions.empty())
+				{
+					ImGui::TextUnformatted("Aucun metier connu.");
+				}
+				// Onglets métiers → demande de liste de recettes.
+				for (size_t professionIndex = 0;
+					professionIndex < uiModel.crafting.professions.size(); ++professionIndex)
+				{
+					const engine::client::UIProfessionEntry& prof =
+						uiModel.crafting.professions[professionIndex];
+					if (professionIndex > 0)
+						ImGui::SameLine();
+					const std::string tabLabel = prof.professionKey
+						+ " (" + std::to_string(prof.skillLevel) + ")";
+					if (ImGui::SmallButton(tabLabel.c_str())
+						&& prof.professionKey != uiModel.crafting.activeProfessionKey
+						&& craftClientId != 0u)
+					{
+						(void)m_gameplayUdp.SendCraftRecipeListRequest(
+							craftClientId, prof.professionKey);
+					}
+				}
+				ImGui::Separator();
+				// Liste des recettes (clic = sélection).
+				ImGui::BeginChild("##ln_craft_recipes", ImVec2(0.0f, 220.0f), true);
+				for (size_t recipeIndex = 0;
+					recipeIndex < uiModel.crafting.recipes.size(); ++recipeIndex)
+				{
+					const engine::client::UICraftRecipeRow& recipe =
+						uiModel.crafting.recipes[recipeIndex];
+					const bool selected = (uiModel.crafting.selectedRecipeIndex
+						== static_cast<uint32_t>(recipeIndex));
+					const std::string rowLabel = recipe.recipeId
+						+ "  (comp. " + std::to_string(recipe.skillRequired)
+						+ ", x" + std::to_string(recipe.outputQuantity) + ")";
+					if (ImGui::Selectable(rowLabel.c_str(), selected))
+					{
+						(void)m_uiModelBinding.SelectCraftRecipe(
+							static_cast<uint32_t>(recipeIndex));
+					}
+				}
+				ImGui::EndChild();
+				// Fabrication : bouton + annulation + cast bar + qualité.
+				const bool craftInProgress = uiModel.crafting.craftFillFraction > 0.0f;
+				const bool canCraft = !craftInProgress
+					&& uiModel.crafting.selectedRecipeIndex < uiModel.crafting.recipes.size();
+				if (ImGui::Button("Fabriquer", ImVec2(150.0f, 32.0f))
+					&& canCraft && craftClientId != 0u)
+				{
+					(void)m_gameplayUdp.SendCraftRequest(craftClientId,
+						uiModel.crafting.recipes[uiModel.crafting.selectedRecipeIndex].recipeId);
+				}
+				if (craftInProgress)
+				{
+					ImGui::SameLine();
+					if (ImGui::Button("Annuler", ImVec2(110.0f, 32.0f)) && craftClientId != 0u)
+					{
+						(void)m_gameplayUdp.SendCraftCancelRequest(craftClientId);
+					}
+					ImGui::ProgressBar(uiModel.crafting.craftFillFraction, ImVec2(-1.0f, 10.0f), "");
+				}
+				else if (!canCraft)
+				{
+					ImGui::TextUnformatted("Selectionnez une recette.");
+				}
+				// Qualité du dernier craft (M36.3) via le présentateur câblé.
+				const engine::client::CraftingPanelState& craftState = m_craftingUi.GetState();
+				if (!craftState.lastQualityLabel.empty())
+				{
+					ImGui::TextColored(
+						ImVec4(craftState.lastQualityColor.r, craftState.lastQualityColor.g,
+							craftState.lastQualityColor.b, 1.0f),
+						"Derniere fabrication : %s", craftState.lastQualityLabel.c_str());
+				}
+				if (!craftState.statusText.empty())
+				{
+					ImGui::TextUnformatted(craftState.statusText.c_str());
+				}
+			}
+			ImGui::End();
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderPlayerGaugesImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel)
+	{
+		{
+			const uint32_t playerMaxHp = (uiModel.playerStats.maxHealth > 0u)
+				? uiModel.playerStats.maxHealth
+				: uiModel.playerStats.sheetMaxHealth;
+			if (playerMaxHp > 0u)
+			{
+				const uint32_t playerCurHp = (uiModel.playerStats.maxHealth > 0u)
+					? uiModel.playerStats.currentHealth
+					: playerMaxHp;
+				const float hpFracPlayer = std::clamp(
+					static_cast<float>(playerCurHp) / static_cast<float>(playerMaxHp), 0.0f, 1.0f);
+				const float gaugeW = 320.0f;
+				const float gaugeH = 18.0f;
+				const float gaugeX = (dw - gaugeW) * 0.5f;
+				const float gaugeY = dh - 152.0f;
+				const ImU32 hpColor = (hpFracPlayer > 0.5f)
+					? IM_COL32(80, 200, 80, 235)
+					: ((hpFracPlayer > 0.25f)
+						? IM_COL32(230, 160, 40, 235)
+						: IM_COL32(210, 60, 50, 235));
+				fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
+					ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
+				fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+					ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(35, 38, 44, 230), 3.0f);
+				fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+					ImVec2(gaugeX + gaugeW * hpFracPlayer, gaugeY + gaugeH), hpColor, 3.0f);
+				const std::string playerHpText =
+					std::to_string(playerCurHp) + " / " + std::to_string(playerMaxHp);
+				const ImVec2 playerHpTs = ImGui::CalcTextSize(playerHpText.c_str());
+				fg->AddText(ImVec2(gaugeX + (gaugeW - playerHpTs.x) * 0.5f, gaugeY + 1.0f),
+					IM_COL32(255, 255, 255, 255), playerHpText.c_str());
+				// Ressource de classe (mana/énergie…) : barre fine dessous,
+				// alimentée par les ResourceUpdate (SP3).
+				if (uiModel.playerStats.secondaryResourceMax > 0u)
+				{
+					const float resFrac = std::clamp(
+						static_cast<float>(uiModel.playerStats.secondaryResourceCurrent)
+							/ static_cast<float>(uiModel.playerStats.secondaryResourceMax),
+						0.0f, 1.0f);
+					const float resY = gaugeY + gaugeH + 4.0f;
+					fg->AddRectFilled(ImVec2(gaugeX, resY),
+						ImVec2(gaugeX + gaugeW, resY + 8.0f), IM_COL32(35, 38, 44, 230), 3.0f);
+					fg->AddRectFilled(ImVec2(gaugeX, resY),
+						ImVec2(gaugeX + gaugeW * resFrac, resY + 8.0f), IM_COL32(70, 130, 220, 235), 3.0f);
+				}
+				// --- Barre d'XP (PR-C) : fine barre dorée sous la vie/ressource,
+				// alimentée par PlayerXpUpdate (serveur, enter-world + chaque gain).
+				// Niveau à gauche, progression xp/prochain niveau centrée dessous.
+				// hasXp faux tant qu'aucun PlayerXpUpdate reçu -> pas de barre.
+				if (uiModel.playerStats.hasXp)
+				{
+					const bool atCap = (uiModel.playerStats.xpForNextLevel == 0u);
+					const float xpFrac = atCap ? 1.0f : std::clamp(
+						static_cast<float>(uiModel.playerStats.xpIntoLevel)
+							/ static_cast<float>(uiModel.playerStats.xpForNextLevel),
+						0.0f, 1.0f);
+					const float xpY = gaugeY + gaugeH + 16.0f;
+					const float xpH = 6.0f;
+					fg->AddRectFilled(ImVec2(gaugeX, xpY),
+						ImVec2(gaugeX + gaugeW, xpY + xpH), IM_COL32(30, 26, 12, 230), 2.0f);
+					fg->AddRectFilled(ImVec2(gaugeX, xpY),
+						ImVec2(gaugeX + gaugeW * xpFrac, xpY + xpH), IM_COL32(220, 180, 60, 235), 2.0f);
+					// Niveau, à gauche de la barre.
+					char lvlBuf[32];
+					std::snprintf(lvlBuf, sizeof(lvlBuf), "Nv. %u", uiModel.playerStats.level);
+					const ImVec2 lvlTs = ImGui::CalcTextSize(lvlBuf);
+					fg->AddText(ImVec2(gaugeX - lvlTs.x - 8.0f, xpY - 4.0f),
+						IM_COL32(230, 210, 150, 255), lvlBuf);
+					// Progression xp/prochain niveau (ou « Niveau max ») centrée dessous.
+					char xpBuf[48];
+					if (atCap)
+						std::snprintf(xpBuf, sizeof(xpBuf), "Niveau max");
+					else
+						std::snprintf(xpBuf, sizeof(xpBuf), "%u / %u XP",
+							uiModel.playerStats.xpIntoLevel, uiModel.playerStats.xpForNextLevel);
+					const ImVec2 xpTs = ImGui::CalcTextSize(xpBuf);
+					fg->AddText(ImVec2(gaugeX + (gaugeW - xpTs.x) * 0.5f, xpY + xpH + 1.0f),
+						IM_COL32(200, 190, 160, 220), xpBuf);
+				}
+			}
+			else
+			{
+				// FIX.1 — stats pas encore reçues du shard : jauge grisée au même
+				// emplacement plutôt que rien (le HUD garde sa forme, le bandeau
+				// ci-dessus explique l'attente).
+				const float gaugeW = 320.0f;
+				const float gaugeH = 18.0f;
+				const float gaugeX = (dw - gaugeW) * 0.5f;
+				const float gaugeY = dh - 152.0f;
+				fg->AddRectFilled(ImVec2(gaugeX - 2.0f, gaugeY - 2.0f),
+					ImVec2(gaugeX + gaugeW + 2.0f, gaugeY + gaugeH + 2.0f), IM_COL32(0, 0, 0, 160), 4.0f);
+				fg->AddRectFilled(ImVec2(gaugeX, gaugeY),
+					ImVec2(gaugeX + gaugeW, gaugeY + gaugeH), IM_COL32(55, 58, 64, 230), 3.0f);
+				const char* waitText = "PV : en attente du serveur";
+				const ImVec2 waitTs = ImGui::CalcTextSize(waitText);
+				fg->AddText(ImVec2(gaugeX + (gaugeW - waitTs.x) * 0.5f, gaugeY + 1.0f),
+					IM_COL32(200, 200, 205, 230), waitText);
+			}
+		}
+	}
+
+	// Sous-étape extraite de RenderInGameImGuiFrame — voir la documentation dans Engine.h.
+	void Engine::RenderPauseMenuImGui(float& dw, float& dh)
+	{
 		if (m_inGamePauseMenuVisible)
 		{
 			const LnTheme::Palette& th = LnTheme::Active();
@@ -3078,25 +3182,7 @@ namespace engine
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
 		}
-		// Menu Options en jeu : on réutilise EXACTEMENT l'écran d'options de l'auth
-		// (source unique, spec B2). Le menu Pause (ESC) reste inchangé ; seul son lien
-		// « Options » mène ici. RenderOptionsOverlay renvoie false à la fermeture.
-		// Garde m_authImGui : aligne sur la défensive des autres panneaux in-game
-		// du même bloc (m_mailImGui &&, m_gmTicketImGui &&, …). m_authImGui null
-		// (shutdown) -> on referme proprement l'overlay plutôt que de déréférencer.
-		if (m_inGameOptionsPanelVisible)
-		{
-			const bool stillOpen = m_authImGui && m_authImGui->RenderOptionsOverlay(dw, dh);
-			if (!stillOpen)
-			{
-				m_inGameOptionsPanelVisible = false;
-				m_authUi.CloseLanguageOptionsInGame();
-				m_inGamePauseMenuVisible = true; // retour au menu Pause
-				ReloadKeybindsFromDisk(); // prise d'effet live des rebinds
-			}
-		}
-		UpdateUiAudio(/*inGame*/ true); // SND.3 — clics et évènements de jeu
-		ImGui::Render();
 	}
+
 #endif
 } // namespace engine

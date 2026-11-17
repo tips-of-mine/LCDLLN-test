@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -133,7 +134,22 @@ namespace engine::core
 	private:
 		static std::string ToOwnedKey(std::string_view key);
 
-		std::unordered_map<std::string, Value> m_values;
+		/// Hachage « transparent » : permet de chercher une clé avec un
+		/// std::string_view SANS construire de std::string (ni allocation pour
+		/// les clés de plus de 15 caractères) à chaque Get*/Has. Les lectures de
+		/// config sont nombreuses à chaque frame / tick (client et serveurs).
+		/// std::hash<std::string_view> et std::hash<std::string> donnent le même
+		/// résultat pour le même texte (garanti par la norme).
+		struct KeyHash
+		{
+			using is_transparent = void;
+			size_t operator()(std::string_view key) const noexcept
+			{
+				return std::hash<std::string_view>{}(key);
+			}
+		};
+
+		std::unordered_map<std::string, Value, KeyHash, std::equal_to<>> m_values;
 	};
 }
 

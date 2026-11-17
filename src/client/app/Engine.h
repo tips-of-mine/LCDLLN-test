@@ -368,6 +368,42 @@ namespace engine
 		/// inventaire, guilde, hôtel des ventes, menus Pause / Options… puis ImGui::Render.
 		/// \param out état de rendu de la frame en cours d'écriture. Main thread.
 		void RenderInGameImGuiFrame(engine::RenderState& out);
+#if defined(_WIN32)
+		// --- Sous-étapes de RenderInGameImGuiFrame() (2) (définies dans EngineUpdateUi.cpp) ---
+		/// Touche Tab : cycle des mobs vivants par distance croissante au joueur (ciblage). Main thread, frame ImGui ouverte.
+		void HandleTabTargetingImGui(engine::RenderState& out, const engine::client::UIModel& uiModel, const bool& keysAllowed);
+		/// Cadres de groupe et ciblage allié au clic (désélection de l'allié hors groupe). Main thread, frame ImGui ouverte.
+		void RenderPartyFramesImGui(ImDrawList* fg, const engine::client::UIModel& uiModel, const bool& mouseAllowed);
+		/// Bourse du joueur (or / argent / bronze), coin bas-droit. Main thread, frame ImGui ouverte.
+		void RenderWalletImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel);
+		/// Barre de menu principale en jeu (menu Panneaux). Main thread, frame ImGui ouverte.
+		void RenderMainMenuBarImGui();
+		/// Fenêtre Personnage (onglets) quand elle est ouverte. Main thread, frame ImGui ouverte.
+		void RenderCharacterWindowImGui(float& dw, float& dh);
+		// --- fin : Sous-étapes de RenderInGameImGuiFrame() (2) (définies dans EngineUpdateUi.cpp) ---
+#endif
+#if defined(_WIN32)
+		// --- Sous-étapes de RenderInGameImGuiFrame() (définies dans EngineUpdateUi.cpp) ---
+		/// Marqueurs flottants des interactibles (nom, « [E] » à portée, liens PNJ), projetés sur l'écran. Main thread, frame ImGui ouverte.
+		void RenderInteractableMarkersImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden);
+		/// Plaques de nom au-dessus des avatars et mobs distants (masquées sous un menu modal). Main thread, frame ImGui ouverte.
+		void RenderNameplatesImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden, const engine::client::NameplateVisibilityParams& plateParams);
+		/// Cadre de la cible (PV, niveau, état) en combat. Main thread, frame ImGui ouverte.
+		void RenderTargetFrameImGui(float& dw, ImDrawList* fg, const engine::client::UIModel& uiModel);
+		/// Panneau combat avancé (touche J) : DPS et journal filtrable. Main thread, frame ImGui ouverte.
+		void RenderAdvancedCombatPanelImGui(float& dw);
+		/// Barre d'action (touches 1-0, sorts du profil, glisser-déposer) et ceinture de consommables ; envoie les sorts / objets utilisés au shard. Main thread, frame ImGui ouverte.
+		void RenderActionBarAndBeltImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel, const bool& keysAllowed, const std::vector<engine::client::SpellDisplay>& effectiveKit);
+		/// Barres d'auras du joueur et de la cible, cercles d'aura aux pieds des entités. Main thread, frame ImGui ouverte.
+		void RenderBuffBarsImGui(engine::RenderState& out, float& dw, float& dh, const int& ivw, const int& ivh, ImDrawList* fg, const engine::client::UIModel& uiModel);
+		/// Fenêtre Artisanat (recettes, fabrication). Main thread, frame ImGui ouverte.
+		void RenderCraftingWindowImGui(float& dw, const engine::client::UIModel& uiModel);
+		/// Jauges du joueur (PV et ressource), bas-centre de l'écran. Main thread, frame ImGui ouverte.
+		void RenderPlayerGaugesImGui(float& dw, float& dh, ImDrawList* fg, const engine::client::UIModel& uiModel);
+		/// Menu pause en jeu (Échap) : Reprendre, Options, Déconnecter, Quitter. Main thread, frame ImGui ouverte.
+		void RenderPauseMenuImGui(float& dw, float& dh);
+		// --- fin : Sous-étapes de RenderInGameImGuiFrame() (définies dans EngineUpdateUi.cpp) ---
+#endif
 #endif
 		/// Branche « en jeu » (écran d'authentification fermé) : entrée dans le monde
 		/// (EnterWorldCommand, connexion gameplay), événements et reconnexion de la session
@@ -381,6 +417,28 @@ namespace engine
 		/// \param authGateActive écran d'authentification affiché (gèle l'input). Main thread.
 		void UpdateGameplay(engine::RenderState& out, double dt, float mouseSensitivity, bool invertY, engine::render::MovementLayout movementLayout, bool authGateActive);
 		// --- fin des sous-étapes d'Update() ---
+		// --- Rappels du FrameGraph (anciens lambdas d'InitGraphicsAndScene, définis dans EngineInit.cpp) ---
+		/// Passe FrameGraph géométrie : remplit le GBuffer (terrain, décor, avatars, ciel).
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordGeometryFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph éclairage différé (GBuffer + ombres -> SceneColor HDR).
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordLightingFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph eau (surfaces d'eau sur SceneColor HDR).
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordWaterFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph brouillard volumétrique.
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordVolumetricFogFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph nuages (demi-résolution).
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordCloudsFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph TAA : anticrénelage temporel (historique A/B, réinitialisation si invalide).
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordTaaFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
+		/// Passe FrameGraph « Present » : copie SceneColor_LDR vers le backbuffer et overlays finaux.
+		/// \param cmd tampon de commandes de la frame ; \param reg registre du FrameGraph. Appelée par le FrameGraph à chaque frame, pendant Render() (main thread).
+		void RecordPresentFramePass(VkCommandBuffer cmd, engine::render::Registry& reg);
 		// --- Intégration éditeur ---
 		// Définies dans EngineEditor.cpp, compilé UNIQUEMENT dans lcdlln_world_editor.exe
 		// (avec la bibliothèque engine_editor). Le jeu (lcdlln.exe) lie à la place
@@ -470,8 +528,22 @@ namespace engine
 		/// Chaque échec est journalisé (LOG_WARN) et laisse le moteur sans rendu, comme avant.
 		/// Effet de bord : crée l'essentiel des ressources GPU membres. Main thread.
 		void InitGraphicsAndScene();
+		// --- Sous-étapes d'InitGraphicsAndScene() (définies dans EngineInit.cpp) ---
+		/// Démarrage : ressources de la passe d'eau (pool de commandes, WaterMeshGpu, textures) si le pipeline différé est prêt. Main thread, au boot.
+		void InitWaterPassResources(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv, bool& pipelineOk);
+		/// Démarrage : passes de rendu de l'écran de connexion (glyphes, logo) si le rendu dynamique est disponible. Main thread, au boot.
+		void InitAuthGlyphAndLogoPasses(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv);
+		/// Démarrage : avatar skinné (mesh, squelette, clips, pipeline) si le pipeline différé existe. Main thread, au boot.
+		void InitSkinnedAvatarRenderer(const std::function<std::vector<uint32_t>(const char*)>& loadSpirv);
+		/// Démarrage : position initiale du joueur posée sur le sol (échantillonnage terrain + demi-capsule). Main thread, au boot.
+		void InitPlayerSpawnPlacement();
+		// --- fin : Sous-étapes d'InitGraphicsAndScene() (définies dans EngineInit.cpp) ---
 		/// Traite un message poussé par le master (connexion maître post-auth) : chat,
 		void HandleMasterPush(uint16_t opcode, const uint8_t* payload, size_t payloadSize);
+		// --- Sous-étapes de HandleMasterPush() (définies dans EngineNetwork.cpp) ---
+		/// Réponse du master à une commande admin / MJ (kOpcodeAdminCommandResponse) : applique l'effet local (ex. /sky moon) ou journalise le refus. \param payload,payloadSize charge utile reçue. Main thread.
+		void HandleAdminCommandResponsePush(const uint8_t* payload, size_t payloadSize);
+		// --- fin : Sous-étapes de HandleMasterPush() (définies dans EngineNetwork.cpp) ---
 		void Render();
 		void EndFrame();
 

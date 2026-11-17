@@ -268,6 +268,8 @@ add_library(engine_core
   src/client/localization/LanguageSuggestionService.cpp
   src/client/localization/IpApiGeoProvider.cpp
   src/client/auth/AuthUiPresenterCore.cpp
+  src/client/auth/AuthUiPresenterWorkers.cpp
+  src/client/auth/AuthUiPresenterUpdate.cpp
   src/client/auth/AuthUiPresenterSettings.cpp
   src/client/auth/AuthUiPresenterNative.cpp
   src/client/auth/screens/AuthScreenLanguageSelect.cpp

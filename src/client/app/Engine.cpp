@@ -3503,7 +3503,14 @@ namespace engine
 		// Borne haute de la bande de fondu (au-delà : impostor seul, fadeAlpha=1).
 		const float impostorFadeEnd = impostorDist + impostorBand;
 		// Instances d'impostors accumulées, groupées par chemin de mesh (= clé atlas).
-		std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatches;
+		// Perf : conteneur réutilisé d'une frame à l'autre (clés et capacités
+		// conservées, comme les lots du décor) au lieu d'être réalloué à chaque frame ;
+		// les lots vidés sont ignorés au rendu.
+		static thread_local std::unordered_map<std::string, std::vector<engine::render::ImpostorInstance>> impostorBatchesStorage;
+		auto& impostorBatches = impostorBatchesStorage;
+		for (auto& kv : impostorBatches)
+			kv.second.clear();
+		bool anyImpostorInstance = false;
 
 		int drawn = 0, culled = 0, impostored = 0;
 		// Boucle indexée : propIndex sert de clé FadeFor (anti-occlusion caméra). Cet
@@ -3549,6 +3556,7 @@ namespace engine
 					inst.radius      = prop.impostorRadius;
 					inst.fadeAlpha   = fade;
 					impostorBatches[prop.meshPath].push_back(inst);
+					anyImpostorInstance = true;
 					++impostored;
 					// Hors de la bande de fondu : l'impostor REMPLACE le mesh (pas de mesh).
 					// Dans la bande : on dessine AUSSI le mesh par-dessous (drawImpostorOnly
@@ -3590,7 +3598,7 @@ namespace engine
 		// loadOp=LOAD de la GeometryPass (RecordTerrainChunkBatch ouvre exactement ce
 		// render pass + framebuffer + viewport/scissor). Un RecordInstances par atlas
 		// distinct (le descriptor de l'ImpostorPass est réécrit à chaque appel).
-		if (impostorActive && !impostorBatches.empty())
+		if (impostorActive && anyImpostorInstance)
 		{
 			auto& impostorPass = m_pipeline->GetImpostorPass();
 			geom.RecordTerrainChunkBatch(
@@ -3604,6 +3612,8 @@ namespace engine
 						m_cfg.GetDouble("world.impostor.parallax_scale", 0.08));
 					for (auto& kv : impostorBatches)
 					{
+						if (kv.second.empty())
+							continue;
 						auto atlasIt = m_impostorAtlases.find(kv.first);
 						if (atlasIt == m_impostorAtlases.end() || !atlasIt->second.IsValid())
 							continue;
@@ -3700,7 +3710,9 @@ namespace engine
 		// récolte, mobs morts, loot bags) sont écartées ICI pour ne pas consommer
 		// de slot du budget de draws.
 		struct RemoteDrawCandidate { size_t index; float dist2; };
-		std::vector<RemoteDrawCandidate> candidates;
+		// Perf : vecteur réutilisé d'une frame à l'autre (plus d'allocation par frame).
+		static thread_local std::vector<RemoteDrawCandidate> candidates;
+		candidates.clear();
 		candidates.reserve(remotes.size());
 		for (size_t ri = 0; ri < remotes.size(); ++ri)
 		{

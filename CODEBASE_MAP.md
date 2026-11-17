@@ -115,7 +115,10 @@ Chaque écran est découpé en **deux fichiers** :
 | Fichier | Rôle |
 |---|---|
 | `src/client/auth/AuthUi.h` | Déclaration complète d'`AuthUiPresenter` : toutes les phases, membres, méthodes. **Lire en premier pour comprendre la structure.** |
-| `src/client/auth/AuthUiPresenterCore.cpp` | Init, `Update()` global, dispatch des phases, `SubmitCurrentPhase()`, gestion async. |
+| `src/client/auth/AuthUiPresenterCore.cpp` | Init / arrêt, préférences mémorisées, titre de fenêtre, `SubmitCurrentPhase()`. |
+| `src/client/auth/AuthUiPresenterWorkers.cpp` | Threads réseau (connexion, inscription, flux master, vérification d'e-mail, sondage d'état) et `PollAsyncResult()` (Windows). |
+| `src/client/auth/AuthUiPresenterUpdate.cpp` | `Update()` par frame (saisie, navigation, clics), `BuildRenderModel()`, `BuildPanelText()`, `OnEscape()`, `RequestReturnToLogin()`. |
+| `src/client/auth/AuthUiPresenterInternal.h` | En-tête interne : inclusions et utilitaires communs (JSON des réglages, HTTP d'état, dates, pays) des trois fichiers ci-dessus. |
 | `src/client/auth/AuthUiPresenterSettings.cpp` | Persistance locale : remember-me, locale, settings JSON. |
 | `src/client/auth/AuthUiPresenterNative.cpp` | Auth native Windows (hors ImGui). |
 | `src/client/render/AuthUiRenderer.h` | Interface du renderer (méthode `Render(RenderModel)`). |
@@ -348,7 +351,7 @@ RenderModel
 | Fichier | Rôle |
 |---|---|
 | `src/shared/network/NetServer.h/.cpp` | Serveur TCP/UDP : accept, dispatch paquets entrants. |
-| `src/shardd/app/ServerApp.h/.cpp` | Application serveur principale (init, boucle, shutdown). |
+| `src/shardd/app/ServerApp.h/.cpp` | Application serveur principale (init, boucle, shutdown, aiguillage des paquets `DispatchGamePacket`, tick). Les méthodes sont réparties par domaine dans `ServerApp<Domaine>.cpp` : `Connection` (Hello, chargement/sauvegarde, mouvement, UDP), `MasterLink` (courrier, commandes MJ, métriques), `Content` (chargement des spawners, butin, quêtes…), `Persistence`, `Mobs` (IA, spawners, événements dynamiques), `World` (intérêt, zones, portails, lave, cellules), `Combat`, `Boats`, `Items`, `Chat` (chat, modération, commandes slash), `Spells`, `Quests`, `Replication` (instantanés, envois), `Social` (amis, groupe), `Economy` (boutiques, enchères, échanges), `Crafting` ; plus `ServerAppGm*.cpp` (commandes MJ). Constantes et utilitaires communs : `ServerAppInternal.h` (interne). |
 | `src/masterd/session/SessionManager.h/.cpp` | Gestion des sessions actives (session_id ↔ account). |
 | `src/shared/security/RateLimitAndBan.h/.cpp` | Rate limiting par IP + bannissements. |
 | `src/masterd/shards/ShardRegistry.h/.cpp` | Registre des shards connectés au master. |
@@ -1165,7 +1168,7 @@ Touche **Échap** post-EnterWorld toggle un menu ImGui centré au-dessus du mond
 |---|---|
 | `src/client/app/Engine.h` | Membre `m_inGamePauseMenuVisible` + méthodes `ToggleInGamePauseMenu()`, `RequestLogoutToLoginScreen()`. |
 | `src/client/app/Engine.cpp` (branche Échap in-game) | Toggle au lieu de `OnQuit()` ; rendu ImGui inline dans la branche du chat HUD (même `ImGui::Render` final). |
-| `src/client/auth/AuthUi.h` + `AuthUiPresenterCore.cpp` | Méthode publique `RequestReturnToLogin()` : reset `m_flowComplete=false`, repasse en `Phase::Login`. |
+| `src/client/auth/AuthUi.h` + `AuthUiPresenterUpdate.cpp` | Méthode publique `RequestReturnToLogin()` : reset `m_flowComplete=false`, repasse en `Phase::Login`. |
 
 ### Actions
 - **Reprendre** → ferme le menu.
@@ -2663,17 +2666,17 @@ Monde continu en **cellules de 10 km** (1 case du lore = 1 cellule) généré pa
 | `src/client/app/EngineEditorStubs.cpp` | Versions neutres des crochets « Intégration éditeur », compilées **uniquement dans `engine_app`** (`lcdlln.exe`) : le jeu n'embarque pas l'éditeur ; `--editor` / `--editor-world` / `--world-editor` et `editor.enabled` / `editor.world.enabled` y sont ignorés (avertissement au boot). |
 | `engine_editor` (cible CMake) | Bibliothèque statique de tout `src/world_editor/*` (hors `main.cpp`) + `EditorHubImGuiRenderer`, liée par `world_editor_app` et les tests de l'éditeur. Aucune source d'`engine_core` ne doit inclure `src/world_editor`. |
 | `src/client/app/EngineUpdateGameplay.cpp` | Sous-étapes d'`Engine::Update()` côté jeu : `UpdateInWorldSession` (entrée en jeu, session master, sauvegarde de position) et `UpdateGameplay` (entrées joueur, déplacement, caméra orbitale, locomotion). |
-| `src/client/app/EngineUpdateUi.cpp` | Sous-étapes d'`Engine::Update()` côté interfaces (`_WIN32`) : `InitImGuiOverlayIfNeeded`, `RenderAuthImGuiFrame`, `RenderInGameImGuiFrame` (fenêtres de jeu ImGui). |
+| `src/client/app/EngineUpdateUi.cpp` | Sous-étapes d'`Engine::Update()` côté interfaces (`_WIN32`) : `InitImGuiOverlayIfNeeded`, `RenderAuthImGuiFrame`, `RenderInGameImGuiFrame` (fenêtres de jeu ImGui), elle-même découpée en `Render*ImGui` (marqueurs d'interactibles, plaques de nom, cadre de cible, barre d'action + ceinture, auras, groupe, bourse, artisanat, jauges, menu principal, fenêtre Personnage, menu pause) et `HandleTabTargetingImGui`. |
 | `src/client/app/EngineHelpers.{h,cpp}` | Utilitaires internes partagés par les `Engine*.cpp` (`engine::helpers`) : `EngineNowSec`, touches remappables (`KeyName`/`KeyFromName`/`KeyGlyph`), `WorldToScreenPx`, `BuildMoveInput`, clips de locomotion. |
-| `src/client/app/EngineInit.cpp` | Démarrage graphique appelé par le constructeur d'`Engine` (`InitGraphicsAndScene`) : instance / device / swapchain Vulkan, pipeline différé, ressources de scène, passes du FrameGraph. |
-| `src/client/app/EngineNetwork.cpp` | Rappels réseau d'`Engine` (anciens lambdas du constructeur) : `HandleMasterPush` (messages poussés par le master) et `HandleChatSend` (envoi du chat, commandes slash locales). |
+| `src/client/app/EngineInit.cpp` | Démarrage graphique appelé par le constructeur d'`Engine` (`InitGraphicsAndScene`) : instance / device / swapchain Vulkan, pipeline différé, ressources de scène, passes du FrameGraph. Sous-étapes `InitWaterPassResources`, `InitAuthGlyphAndLogoPasses`, `InitSkinnedAvatarRenderer`, `InitPlayerSpawnPlacement` ; corps des passes FrameGraph exécutées à chaque frame : `Record{Geometry,Lighting,Water,VolumetricFog,Clouds,Taa,Present}FramePass`. |
+| `src/client/app/EngineNetwork.cpp` | Rappels réseau d'`Engine` (anciens lambdas du constructeur) : `HandleMasterPush` (messages poussés par le master ; réponse admin dans `HandleAdminCommandResponsePush`) et `HandleChatSend` (envoi du chat, commandes slash locales). |
 | `src/client/render/ImGuiOverlay.{h,cpp}` | Overlay ImGui commun (Windows : backends Win32 + Vulkan, polices, contexte) : fenêtres de jeu et éditeur. Extrait de `WorldEditorImGui`, qui ne garde que les panneaux de l'éditeur (`BuildUi`, branché via `SetOverlay`). |
 | `src/client/world/places/WorldPlaces.{h,cpp}` | `places.json` : villes, POI, régions ; bannière « Vous entrez à … » ; v1.0.118 : niveaux des régions par faction (`regions[].levels`, recopiés du lore par `tools/lore/sync_levels.py`) et couleur du nom de zone selon l'écart de niveau (`ZoneLevelToneFor`, seuil 5) (pur, `world_places_tests`). |
 | `src/client/render/DynamicLightSystem.{h,cpp}` | Lumières ponctuelles : fichier global `lights/dynamic_lights.json` + v1.0.118 lumières des cellules (zone.json `world.point_lights`, torches du gouffre ; `AddZoneLights` / `ClearZoneLights` / `TranslateZoneLights`) ; `SelectNearest` garde les 64 plus proches de la caméra pour l'UBO (`dynamic_light_system_tests`). Zones d'ambiance (`world.ambiance_zones`) : `Engine::AppendCellLightsAndAmbiance`, assombrissement lissé appliqué au soleil, à l'ambiant et au plafond d'exposition. |
 | `src/client/render/WorldMapImGuiRenderer.{h,cpp}` | Fenêtre Carte du monde (touche M) + bannière (ImGui, `_WIN32`). |
 | `src/client/gameplay/CompositeWorldCollider.{h,cpp}` | Index spatial 16 m des collisions (bâtiments, décor). |
 | `src/shardd/gameplay/ambient/AmbientRoutine.{h,cpp}` | Routines des PNJ d'ambiance : tour / patrol / post / wander, horaires jour/nuit (pur, `ambient_routine_tests`). |
-| `src/shardd/app/ServerApp.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
+| `src/shardd/app/ServerAppMobs.cpp` (`UpdateAmbientMob`) | Application serveur des routines (non attaquables, arrêt près d'un joueur, retour à la maison hors horaire). |
 | `src/shared/world/StartLocations.{h,cpp}` | Points de départ par faction (repli par race) + cellules générées (`world/<monde>/start_locations.json`), lus par `CharacterCreateHandler` (master) et le shard (pur, `start_locations_tests`). |
 | `src/client/world/cells/CellWorldFrame.{h,cpp}` | Client : repère de RENDU centré sur la cellule du joueur (rebase), cellules générées, sélection par rayon, mur invisible (pur, `cell_world_frame_tests`). |
 | `src/client/world/cells/CellHeightFields.{h,cpp}` | Client : heightmaps CPU des cellules proches (collision, pose au sol), interrogées en coordonnées de rendu. |

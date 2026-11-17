@@ -8,9 +8,7 @@
 #include "src/client/app/Engine.h"
 #include "src/client/app/EngineHelpers.h"
 #include "src/client/render/ImGuiOverlay.h"
-#include "src/world_editor/ui/EditorTheme.h"
 
-#include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/anniversary/CakeItemToken.h" // SP3 anniversaires (2026-07-18)
 #include "src/shared/world/BoatDeck.h"
@@ -36,7 +34,6 @@
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/render/CharacterWindowImGuiRenderer.h"
-#include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/gameplay/ActionBarLayout.h"
 #include "src/client/ui_common/CurrencyFormat.h"
 #include "src/client/render/LnTheme.h"
@@ -80,57 +77,9 @@ namespace engine
 			m_window.GetNativeHandle(),
 			&m_cfg,
 			m_worldEditorExe,
-			[] { engine::editor::world::ApplyWorldEditorTheme(); }))
+			[this] { ApplyWorldEditorImGuiTheme(); }))
 		{
-			if (m_worldEditorExe)
-			{
-				// Panneaux de l'éditeur monde, dessinés dans le contexte de l'overlay.
-				m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
-				m_worldEditorImGui->SetOverlay(m_imguiOverlay.get());
-				m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
-				// M100.46 incrément 3 — branche le Shell pour que le
-				// dialog Zone Presets puisse résoudre documents et
-				// catalogs au moment de l'exécution.
-				m_worldEditorImGui->SetWorldEditorShell(m_worldEditorShell.get());
-				// Réorganisation UI 2026-07-17 — « Fichier > Quitter » :
-				// demande de fermeture par le même chemin que la croix
-				// fenêtre (sortie propre de la boucle principale).
-				m_worldEditorImGui->SetQuitCallback([this] { OnQuit(); });
-
-				// Cache de vignettes pour les textures de splatting.
-				m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
-				const std::string contentDir = m_cfg.GetString("paths.content", "game/data");
-				const std::filesystem::path absContent = std::filesystem::absolute(contentDir);
-				if (!m_texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
-				                                 m_vkDeviceContext.GetPhysicalDevice(),
-				                                 m_vkDeviceContext.GetGraphicsQueue(),
-				                                 m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-				                                 absContent.string()))
-				{
-					LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
-					m_texturePreviewCache.reset();
-				}
-				if (m_worldEditorImGui && m_texturePreviewCache)
-				{
-					m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
-				}
-
-				// M100.34 incrément 1 — Cible offscreen viewport éditeur.
-				// Taille initiale alignée sur la swapchain ; la PR 2 ajoutera
-				// la passe FrameGraph qui y copie SceneColor_LDR + la
-				// logique de resize sur la taille du ScenePanel.
-				const uint32_t initW = m_vkSwapchain.GetExtent().width;
-				const uint32_t initH = m_vkSwapchain.GetExtent().height;
-				if (!m_editorViewportTarget.Init(
-					m_vkDeviceContext.GetDevice(),
-					m_vkDeviceContext.GetPhysicalDevice(),
-					m_vkDeviceContext.GetGraphicsQueue(),
-					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-					initW, initH))
-				{
-					LOG_WARN(Render, "[Engine] EditorViewportRenderTarget init failed -- ScenePanel restera en mode placeholder");
-				}
-			}
+			InitWorldEditorImGuiPanels();
 			// Sous-projet C MVP (Task 12) — Initialise le viewport
 			// offscreen 512x512 dedie a l'apercu race dans l'ecran
 			// ImGui AuthImGuiCharacterCreate. Doit etre fait apres
@@ -202,10 +151,7 @@ namespace engine
 			}
 			// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 			// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
-			if (m_worldEditorImGui)
-			{
-				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
-			}
+			BindWorldEditorDayNight();
 			m_imguiOverlay->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 			m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 			m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
@@ -382,9 +328,7 @@ namespace engine
 			m_lootRollImGui->SetPresenter(&m_lootRollUi);
 			// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 			// si --editor est actif (cf. condition Render branch plus bas).
-			m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
-			if (m_editorMode)
-				m_editorHubImGui->BindEditorMode(m_editorMode.get());
+			CreateEditorHubImGui();
 		}
 		else
 		{

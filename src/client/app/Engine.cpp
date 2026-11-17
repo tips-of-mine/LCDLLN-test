@@ -3,7 +3,6 @@
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/client/world/scatter/PropMaterialRules.h"
-#include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
@@ -230,18 +229,6 @@ namespace engine
 				cfg.GetInt("client.auth_ui.timeout_ms", 5000),
 				cfg.GetBool("render.auth_ui.background_blit.enabled", true),
 				cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
-		}
-
-		bool HasCliFlag(int argc, char** argv, std::string_view flag)
-		{
-			for (int i = 1; i < argc; ++i)
-			{
-				if (argv[i] && std::string_view(argv[i]) == flag)
-				{
-					return true;
-				}
-			}
-			return false;
 		}
 
 		/// Match \ref engine::server::VendorCatalog::ComputeSellPrice (client-side preview only).
@@ -490,122 +477,14 @@ namespace engine
 			|| m_cfg.GetBool("editor.world.enabled", false)
 			|| m_worldEditorExe;
 
-		if (m_worldEditorExe)
-		{
-			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
-#if defined(_WIN32)
-			m_worldEditorSession->SetTerrainSaveHook(
-				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
-					if (!m_worldEditorTerrainTools.IsValid())
-					{
-						return true;
-					}
-					if (!doc.heightmapContentRelativePath.empty())
-					{
-						if (!m_worldEditorTerrainTools.SaveHeightmap(cfg, doc.heightmapContentRelativePath))
-						{
-							return false;
-						}
-					}
-					if (!doc.splatmapContentRelativePath.empty())
-					{
-						if (!m_worldEditorTerrainTools.SaveSplatMap(cfg, doc.splatmapContentRelativePath))
-						{
-							return false;
-						}
-					}
-					if (!doc.grassMaskContentRelativePath.empty())
-					{
-						if (!m_worldEditorTerrainTools.SaveGrassMask(cfg, doc.grassMaskContentRelativePath))
-						{
-							return false;
-						}
-					}
-					return true;
-				});
-#else
-			// `TerrainEditingTools` / flush disque ne sont branchés que sous Windows pour le WE actuel.
-			m_worldEditorSession->SetTerrainSaveHook(
-				[](const engine::core::Config&, const engine::editor::WorldMapEditDocument&) -> bool { return true; });
-#endif
-		}
+		InitWorldEditorSession();
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
 			LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
 		}
 
-		if (m_editorEnabled)
-		{
-			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			if (!m_editorMode->Init(m_cfg, m_worldEditorExe))
-			{
-				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
-				m_editorMode.reset();
-				m_editorEnabled = false;
-			}
-			else
-			{
-				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
-				m_renderStates[0].camera = editorCamera;
-				m_renderStates[1].camera = editorCamera;
-				if (m_worldEditorExe)
-				{
-					LOG_INFO(Core,
-						"[Boot] World Editor exe — mode éditeur 3D (Vulkan), pas d’auth client ; flag interne --world-editor");
-				}
-				else
-				{
-					LOG_INFO(Core, "[Boot] Editor mode enabled (--editor ou editor.enabled=true)");
-				}
-			}
-		}
-
-		// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
-		// Indépendante de m_editorMode (qui sert le shell M43.x). Si
-		// `--editor-world` ou `editor.world.enabled = true`, on instancie le
-		// shell ; il vit en parallèle de WorldEditorImGui. Si les deux flags
-		// sont actifs ensemble, c'est le cas non-supporté (logué en warning
-		// ci-dessous). Le SetWorldEditorWorld sur m_editorMode sert d'accès
-		// public si un sous-système a besoin de le savoir.
-		if (worldEditorWorldFlag)
-		{
-			// `--world-editor` implique désormais `--editor-world` (M100.46
-			// incrément 3 — la dialog Zone Presets exige le Shell). On
-			// log seulement si l'utilisateur a explicitement combiné les
-			// deux flags ou réglé `editor.world.enabled = true` ET lancé
-			// l'exe éditeur — pour signaler la coexistence des deux shells
-			// (M43.x toolbar + M100.1 WorldEditorShell).
-			const bool worldEditorWorldExplicit =
-				HasCliFlag(argc, argv, "--editor-world")
-				|| m_cfg.GetBool("editor.world.enabled", false);
-			if (m_worldEditorExe && worldEditorWorldExplicit)
-			{
-				LOG_INFO(Core,
-					"[Boot] --world-editor + --editor-world (ou editor.world.enabled) — les deux shells coexistent");
-			}
-			if (m_editorMode)
-			{
-				m_editorMode->SetWorldEditorWorld(true);
-			}
-			m_worldEditorShell = std::make_unique<engine::editor::world::WorldEditorShell>();
-			if (!m_worldEditorShell->Init(m_cfg))
-			{
-				LOG_ERROR(EditorWorld, "[Boot] WorldEditorShell::Init a échoué — shell désactivé");
-				m_worldEditorShell.reset();
-			}
-			else
-			{
-				LOG_INFO(EditorWorld, "[Boot] WorldEditorShell M100.1 instancié (--editor-world)");
-				// M100.46/47 — Quand le binaire éditeur monde gère lui-même la
-				// barre de menu (français, plus complète), on supprime celle
-				// de M100.1 pour éviter la duplication File/Fichier visible.
-				if (m_worldEditorExe)
-				{
-					m_worldEditorShell->SetMenuBarSuppressed(true);
-				}
-			}
-		}
+		InitEditorModes(argc, argv, worldEditorWorldFlag);
 
 		m_chunkStats.Init(m_cfg);
 		m_lodConfig.Init(m_cfg);
@@ -1088,17 +967,9 @@ namespace engine
 			// M100.34 incrément 1 — détruit l'image offscreen viewport
 			// AVANT TexturePreviewCache (qui possède aussi des descriptors
 			// ImGui), pour respecter l'ordre LIFO de désallocation.
-			m_editorViewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
+			ShutdownEditorViewportTarget();
 #if defined(_WIN32)
-			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
-			m_texturePreviewCache.reset();
-			// M100.1 — Persiste le layout du shell (ImGui::SaveIniSettingsToDisk)
-			// AVANT WorldEditorImGui::Shutdown, qui detruit le contexte ImGui.
-			// Sinon le Shell::Shutdown appele plus bas (apres destruction du
-			// contexte + du device Vulkan) ecrirait via un contexte ImGui nul
-			// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
-			// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
-			if (m_worldEditorShell) m_worldEditorShell->Shutdown();
+			ShutdownEditorUiBeforeImGui();
 			// SP-E — Libère les descripteurs d'icônes (ImGui_ImplVulkan_RemoveTexture)
 			// AVANT la destruction du backend ImGui Vulkan ci-dessous.
 			m_skillIconCache.Shutdown();
@@ -1106,7 +977,7 @@ namespace engine
 			{
 				m_imguiOverlay->DetachPlatformWindow(m_window);
 				m_imguiOverlay->Shutdown(m_vkDeviceContext.GetDevice());
-				m_worldEditorImGui.reset();
+				ReleaseWorldEditorImGui();
 				m_imguiOverlay.reset();
 			}
 			m_authImGui.reset();
@@ -1219,18 +1090,7 @@ namespace engine
 		}
 		glfwTerminate();
 
-		if (m_editorMode)
-		{
-			m_editorMode->Shutdown(m_window);
-			m_editorMode.reset();
-		}
-		// M100.1 — Persiste le layout ImGui du nouvel éditeur monde puis
-		// libère ses panneaux. Idempotent si Init() n'a pas réussi.
-		if (m_worldEditorShell)
-		{
-			m_worldEditorShell->Shutdown();
-			m_worldEditorShell.reset();
-		}
+		ShutdownEditorComponents();
 		// Phase 3.6.6 — Sauvegarde finale de la position avant de fermer la connexion master.
 		// Fire-and-forget : on n'attend pas l'ack (ce serait risqué dans un chemin de shutdown
 		// avec timers et ordre de destruction) — le serveur logge en cas d'échec d'UPDATE.
@@ -1525,65 +1385,7 @@ namespace engine
 		// / Ctrl+Shift+Z / Ctrl+Y branchent la pile undo/redo ; F1..F12
 		// (déjà gérés en M100.1) restent supportés. On ne dispatche que si
 		// le shell est initialisé (CLI --editor-world ou editor.world.enabled).
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
-		{
-			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
-			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
-			// En « Mode édition bâtiment », Ctrl+Z/Ctrl+Y (et Ctrl+Shift+Z)
-			// pilotent l'undo/redo du BROUILLON de bâtiment plutôt que la pile
-			// undo globale (terrain/scène) — évite tout conflit : l'utilisateur
-			// active cette case quand il travaille la composition.
-			engine::editor::world::panels::BuildingEditorPanel* bp =
-				m_worldEditorShell->GetBuildingEditorPanel();
-			const bool buildMode = bp && bp->EditModeActive();
-			if (m_input.WasPressed(engine::platform::Key::Z))
-			{
-				if (ctrl && buildMode) { if (shift) bp->Redo(); else bp->Undo(); }
-				else m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
-			}
-			if (m_input.WasPressed(engine::platform::Key::Y))
-			{
-				if (ctrl && buildMode) bp->Redo();
-				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
-			}
-			// Lot 5 (2026-07-18) — Ctrl+D (dupliquer la sélection) et Suppr
-			// (supprimer la sélection). Ignorés quand ImGui édite du texte
-			// (champ de saisie actif) : Suppr/Ctrl+D y ont leur sens d'édition
-			// de texte et ne doivent pas toucher la scène. ImGui n'existe que
-			// côté Windows (comme partout dans Engine.cpp) — sur les autres
-			// plateformes l'éditeur n'a pas d'UI, pas de saisie à protéger.
-#if defined(_WIN32)
-			const bool imguiTextInput =
-				(ImGui::GetCurrentContext() != nullptr) && ImGui::GetIO().WantTextInput;
-#else
-			const bool imguiTextInput = false;
-#endif
-			if (!imguiTextInput)
-			{
-				if (ctrl && m_input.WasPressed(engine::platform::Key::D))
-				{
-					// shift transmis tel quel : Ctrl+Shift+D reste l'outil
-					// Dungeon Portal (géré par le shell).
-					m_worldEditorShell->HandleShortcut('D', true, shift);
-				}
-				if (!ctrl && !shift && m_input.WasPressed(engine::platform::Key::Delete))
-				{
-					m_worldEditorShell->HandleShortcut(0x2E, false, false);
-				}
-				// Roadmap-6 (2026-07-19) — E / T / C : mode du gizmo de scène
-				// (dÉplacer / Tourner / éChelle). Sans modifiers, hors saisie
-				// de texte (garde imguiTextInput ci-dessus).
-				if (!ctrl && !shift)
-				{
-					if (m_input.WasPressed(engine::platform::Key::E))
-						m_worldEditorShell->HandleShortcut('E', false, false);
-					if (m_input.WasPressed(engine::platform::Key::T))
-						m_worldEditorShell->HandleShortcut('T', false, false);
-					if (m_input.WasPressed(engine::platform::Key::C))
-						m_worldEditorShell->HandleShortcut('C', false, false);
-				}
-			}
-		}
+		HandleWorldEditorShortcuts();
 
 		m_shaderHotReload.Poll(m_cfg);
 		m_shaderHotReload.ApplyPending(m_shaderCache);
@@ -1689,33 +1491,7 @@ namespace engine
 		{
 			InitImGuiOverlayIfNeeded();
 		}
-		if (m_worldEditorExe && m_worldEditorSession)
-		{
-			UpdateWorldEditorSession();
-		}
-		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le
-		// flag set par le callback OnChunkChanged et déclenche la copie
-		// chunks → heightmap CPU + FlushHeightmap GPU. Coût ~10-30 ms par
-		// tick concerné (acceptable pour des ops one-shot ; pas atteint par
-		// les brushstrokes interactifs qui ont leur propre path direct).
-		if (m_worldEditorTerrainNeedsSync.exchange(false, std::memory_order_acq_rel))
-		{
-			SyncWorldEditorHeightmapFromDocument();
-		}
-		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
-		{
-			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
-			{
-				m_texturePreviewCache->Invalidate(rel);
-			}
-			m_worldEditorSession->ClearRecentlyImportedTextures();
-		}
-		ProcessSplatRefsDirty();
-		if (m_texturePreviewCache)
-		{
-			m_texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
-			                             kEditorTexCacheFramesInFlight);
-		}
+		TickWorldEditor();
 #endif
 
 	const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
@@ -1951,7 +1727,7 @@ namespace engine
 			&& postAuthMaster
 			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
-		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
+		const bool editorHubOverlayNewFrame = HasEditorHubImGui() && m_editorEnabled && !m_worldEditorExe;
 		if (m_imguiOverlay && m_imguiOverlay->IsReady()
 			&& (m_worldEditorExe || authImguiOverlayNewFrame || chatImguiOverlayNewFrame || editorHubOverlayNewFrame))
 		{
@@ -1979,25 +1755,14 @@ namespace engine
 		// soit idle (sinon destroy d'une image en cours d'utilisation) puis
 		// on recrée à la nouvelle taille. Pattern rare (resize panel = action
 		// utilisateur sporadique), donc waitIdle acceptable côté perf.
-		if (m_worldEditorExe && m_worldEditorShell
-			&& m_worldEditorShell->IsInitialized()
-			&& m_editorViewportTarget.IsValid()
-			&& !m_worldEditorShell->Panels().empty()
-			&& m_worldEditorShell->Panels()[0])
-		{
-			ResizeWorldEditorViewportTarget();
-		}
+		ResizeWorldEditorViewportTargetIfNeeded();
 
 		// M100.1 — Rendu de la coquille du nouvel éditeur monde. Doit être
 		// appelée après ImGui::NewFrame (fait par WorldEditorImGui::NewFrame
 		// ci-dessus, qui partage le même contexte ImGui) et avant
 		// ImGui::Render. RenderFrame est no-op si Init() n'a pas été appelé
 		// avec succès. Pas thread : main thread uniquement.
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
-			&& m_imguiOverlay && m_imguiOverlay->IsReady())
-		{
-			RenderWorldEditorShell(out);
-		}
+		RenderWorldEditorShellIfReady(out);
 #endif
 
 		if (!m_editorEnabled)
@@ -2090,9 +1855,9 @@ namespace engine
 		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
 		if (m_taaHistoryInvalid) m_taaHistoryInvalid = false;
 
-		if (m_editorMode)
+		if (HasEditorMode())
 		{
-			m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
+			UpdateEditorModeFrame(out, dt);
 			// Demande utilisateur : afficher un humanoide de reference au centre du
 			// terrain pour juger des reliefs. On override la matrice pour positionner
 			// l'avatar (1.8m) au centre XZ du terrain courant a la hauteur du sol
@@ -2204,7 +1969,7 @@ namespace engine
 		{
 			RenderInGameImGuiFrame(out);
 		}
-		else if (m_imguiOverlay && m_imguiOverlay->IsReady() && m_editorHubImGui
+		else if (m_imguiOverlay && m_imguiOverlay->IsReady() && HasEditorHubImGui()
 			&& m_editorEnabled && !m_worldEditorExe)
 		{
 			// M43.4 — Rendu du panneau Editor Hub overlay quand --editor (sans world-editor).
@@ -2219,7 +1984,7 @@ namespace engine
 					dh = static_cast<float>(extUi.height);
 				}
 			}
-			m_editorHubImGui->Render(dw, dh);
+			RenderEditorHubImGui(dw, dh);
 			ImGui::Render();
 		}
 #endif
@@ -2449,12 +2214,8 @@ namespace engine
 	    {
 	        const engine::world::water::WaterScene* scene = nullptr;
 	        bool dirty = false;
-	        if (m_worldEditorExe && m_worldEditorShell)
-	        {
-	            scene = &m_worldEditorShell->GetWaterDocument().Get();
-	            dirty = m_worldEditorShell->GetWaterDocument().IsDirty();
-	        }
-	        else if (m_clientWaterScene)
+	        // Éditeur : scène d'eau de son document (TryGetEditorWaterScene) ; sinon scène client.
+	        if (!(m_worldEditorExe && TryGetEditorWaterScene(scene, dirty)) && m_clientWaterScene)
 	        {
 	            scene = m_clientWaterScene.get();
 	            dirty = m_waterClientSceneDirty;
@@ -2472,9 +2233,7 @@ namespace engine
 	                vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
 	                if (m_waterMeshGpu.Rebuild(m_waterTransferPool, m_vkDeviceContext.GetGraphicsQueue(), *scene))
 	                {
-	                    if (m_worldEditorExe && m_worldEditorShell)
-	                        m_worldEditorShell->MutableWaterDocument().ClearDirty();
-	                    else
+	                    if (!(m_worldEditorExe && ClearEditorWaterDirty()))
 	                        m_waterClientSceneDirty = false;
 	                }
 	            }
@@ -2493,78 +2252,7 @@ namespace engine
 	        // ScenePanel n'affiche pas son propre overlay = pas de récursion) vers
 	        // l'image offscreen. Barriers à la main parce qu'on est hors FrameGraph
 	        // ici (juste après son execute()).
-	        if (m_worldEditorExe && m_editorViewportTarget.IsValid()
-	            && m_fgSceneColorLDRId != engine::render::kInvalidResourceId)
-	        {
-	            VkImage sceneLdr = m_fgRegistry.getImage(m_fgSceneColorLDRId);
-	            VkImage dst      = m_editorViewportTarget.GetImage();
-	            if (sceneLdr != VK_NULL_HANDLE && dst != VK_NULL_HANDLE)
-	            {
-	                // Step 1: transitions de layout.
-	                //   src (SceneColor_LDR) : `TRANSFER_SRC_OPTIMAL` post-CopyPresent
-	                //     (cf. ligne 4538 — le dernier consumer FrameGraph le lit
-	                //     en TransferSrc) → on garde tel quel, pas de barrier.
-	                //   dst (ma target) : `SHADER_READ_ONLY` (init PR 1) →
-	                //     `TRANSFER_DST_OPTIMAL` pour le blit.
-	                VkImageMemoryBarrier bDst{};
-	                bDst.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	                bDst.oldLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	                bDst.newLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	                bDst.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	                bDst.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	                bDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	                bDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	                bDst.image            = dst;
-	                bDst.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-	                vkCmdPipelineBarrier(fr.cmdBuffer,
-	                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                    0, 0, nullptr, 0, nullptr, 1, &bDst);
-
-	                // Step 2: vkCmdBlitImage (gère size + format mismatch via
-	                // LINEAR filter — utile parce que SceneColor_LDR est au
-	                // format swapchain (typiquement BGRA8) et ma target est RGBA8).
-	                VkImageBlit region{};
-	                region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-	                region.srcOffsets[0]  = { 0, 0, 0 };
-	                region.srcOffsets[1]  = {
-	                    static_cast<int32_t>(extent.width),
-	                    static_cast<int32_t>(extent.height),
-	                    1
-	                };
-	                region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-	                region.dstOffsets[0]  = { 0, 0, 0 };
-	                region.dstOffsets[1]  = {
-	                    static_cast<int32_t>(m_editorViewportTarget.GetWidth()),
-	                    static_cast<int32_t>(m_editorViewportTarget.GetHeight()),
-	                    1
-	                };
-	                vkCmdBlitImage(fr.cmdBuffer,
-	                    sceneLdr,  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-	                    dst,       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                    1, &region, VK_FILTER_LINEAR);
-
-	                // Step 3: transition retour de dst → SHADER_READ_ONLY pour
-	                // qu'ImGui::Image puisse sampler dans le ScenePanel cette
-	                // même frame. SceneColor_LDR reste en TRANSFER_SRC ; le
-	                // FrameGraph re-transitionnera au prochain frame selon
-	                // ses propres `read/write` declarations (auto-géré).
-	                VkImageMemoryBarrier bDst2{};
-	                bDst2.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	                bDst2.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	                bDst2.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	                bDst2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	                bDst2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	                bDst2.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	                bDst2.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	                bDst2.image            = dst;
-	                bDst2.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-	                vkCmdPipelineBarrier(fr.cmdBuffer,
-	                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-	                    0, 0, nullptr, 0, nullptr, 1, &bDst2);
-	            }
-	        }
+	        CopySceneToEditorViewport(fr, extent);
 	    }
 	    LOG_DEBUG(Render, "[DIAG] FrameGraph execute returned frame={}", m_currentFrame);
 

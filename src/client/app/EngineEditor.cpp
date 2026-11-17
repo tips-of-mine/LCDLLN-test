@@ -12,6 +12,10 @@
 // fonction est dans Engine.h.
 
 #include "src/client/app/Engine.h"
+#include "src/client/app/EngineHelpers.h"
+#include "src/world_editor/ui/EditorMode.h"
+#include "src/world_editor/ui/EditorTheme.h"
+#include "src/client/render/EditorHubImGuiRenderer.h"
 
 #include "src/world_editor/panels/BuildingEditorPanel.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
@@ -43,6 +47,8 @@
 
 namespace engine
 {
+	using namespace engine::helpers; // utilitaires internes partagés (EngineHelpers.h)
+
 	// Picking terrain du viewport éditeur (déplacé d'Engine.cpp avec les sous-étapes
 	// d'Update() qui l'utilisent ; seul l'éditeur s'en sert).
 	namespace
@@ -2187,4 +2193,501 @@ namespace engine
 		}
 	}
 #endif
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::InitWorldEditorSession()
+	{
+		if (m_worldEditorExe)
+		{
+			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+#if defined(_WIN32)
+			m_worldEditorSession->SetTerrainSaveHook(
+				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
+					if (!m_worldEditorTerrainTools.IsValid())
+					{
+						return true;
+					}
+					if (!doc.heightmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveHeightmap(cfg, doc.heightmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.splatmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveSplatMap(cfg, doc.splatmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.grassMaskContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveGrassMask(cfg, doc.grassMaskContentRelativePath))
+						{
+							return false;
+						}
+					}
+					return true;
+				});
+#else
+			// `TerrainEditingTools` / flush disque ne sont branchés que sous Windows pour le WE actuel.
+			m_worldEditorSession->SetTerrainSaveHook(
+				[](const engine::core::Config&, const engine::editor::WorldMapEditDocument&) -> bool { return true; });
+#endif
+		}
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::InitEditorModes(int argc, char** argv, bool worldEditorWorldFlag)
+	{
+		if (m_editorEnabled)
+		{
+			m_editorMode = std::make_unique<engine::editor::EditorMode>();
+			if (!m_editorMode->Init(m_cfg, m_worldEditorExe))
+			{
+				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
+				m_editorMode.reset();
+				m_editorEnabled = false;
+			}
+			else
+			{
+				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
+				m_renderStates[0].camera = editorCamera;
+				m_renderStates[1].camera = editorCamera;
+				if (m_worldEditorExe)
+				{
+					LOG_INFO(Core,
+						"[Boot] World Editor exe — mode éditeur 3D (Vulkan), pas d’auth client ; flag interne --world-editor");
+				}
+				else
+				{
+					LOG_INFO(Core, "[Boot] Editor mode enabled (--editor ou editor.enabled=true)");
+				}
+			}
+		}
+
+		// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
+		// Indépendante de m_editorMode (qui sert le shell M43.x). Si
+		// `--editor-world` ou `editor.world.enabled = true`, on instancie le
+		// shell ; il vit en parallèle de WorldEditorImGui. Si les deux flags
+		// sont actifs ensemble, c'est le cas non-supporté (logué en warning
+		// ci-dessous). Le SetWorldEditorWorld sur m_editorMode sert d'accès
+		// public si un sous-système a besoin de le savoir.
+		if (worldEditorWorldFlag)
+		{
+			// `--world-editor` implique désormais `--editor-world` (M100.46
+			// incrément 3 — la dialog Zone Presets exige le Shell). On
+			// log seulement si l'utilisateur a explicitement combiné les
+			// deux flags ou réglé `editor.world.enabled = true` ET lancé
+			// l'exe éditeur — pour signaler la coexistence des deux shells
+			// (M43.x toolbar + M100.1 WorldEditorShell).
+			const bool worldEditorWorldExplicit =
+				HasCliFlag(argc, argv, "--editor-world")
+				|| m_cfg.GetBool("editor.world.enabled", false);
+			if (m_worldEditorExe && worldEditorWorldExplicit)
+			{
+				LOG_INFO(Core,
+					"[Boot] --world-editor + --editor-world (ou editor.world.enabled) — les deux shells coexistent");
+			}
+			if (m_editorMode)
+			{
+				m_editorMode->SetWorldEditorWorld(true);
+			}
+			m_worldEditorShell = std::make_unique<engine::editor::world::WorldEditorShell>();
+			if (!m_worldEditorShell->Init(m_cfg))
+			{
+				LOG_ERROR(EditorWorld, "[Boot] WorldEditorShell::Init a échoué — shell désactivé");
+				m_worldEditorShell.reset();
+			}
+			else
+			{
+				LOG_INFO(EditorWorld, "[Boot] WorldEditorShell M100.1 instancié (--editor-world)");
+				// M100.46/47 — Quand le binaire éditeur monde gère lui-même la
+				// barre de menu (français, plus complète), on supprime celle
+				// de M100.1 pour éviter la duplication File/Fichier visible.
+				if (m_worldEditorExe)
+				{
+					m_worldEditorShell->SetMenuBarSuppressed(true);
+				}
+			}
+		}
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ShutdownEditorViewportTarget()
+	{
+		m_editorViewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
+	}
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ShutdownEditorUiBeforeImGui()
+	{
+		if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
+		m_texturePreviewCache.reset();
+		// M100.1 — Persiste le layout du shell (ImGui::SaveIniSettingsToDisk)
+		// AVANT WorldEditorImGui::Shutdown, qui detruit le contexte ImGui.
+		// Sinon le Shell::Shutdown appele plus bas (apres destruction du
+		// contexte + du device Vulkan) ecrirait via un contexte ImGui nul
+		// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
+		// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
+		if (m_worldEditorShell) m_worldEditorShell->Shutdown();
+	}
+#endif
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ReleaseWorldEditorImGui()
+	{
+		m_worldEditorImGui.reset();
+	}
+#endif
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ShutdownEditorComponents()
+	{
+		if (m_editorMode)
+		{
+			m_editorMode->Shutdown(m_window);
+			m_editorMode.reset();
+		}
+		// M100.1 — Persiste le layout ImGui du nouvel éditeur monde puis
+		// libère ses panneaux. Idempotent si Init() n'a pas réussi.
+		if (m_worldEditorShell)
+		{
+			m_worldEditorShell->Shutdown();
+			m_worldEditorShell.reset();
+		}
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::HandleWorldEditorShortcuts()
+	{
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
+			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
+			// En « Mode édition bâtiment », Ctrl+Z/Ctrl+Y (et Ctrl+Shift+Z)
+			// pilotent l'undo/redo du BROUILLON de bâtiment plutôt que la pile
+			// undo globale (terrain/scène) — évite tout conflit : l'utilisateur
+			// active cette case quand il travaille la composition.
+			engine::editor::world::panels::BuildingEditorPanel* bp =
+				m_worldEditorShell->GetBuildingEditorPanel();
+			const bool buildMode = bp && bp->EditModeActive();
+			if (m_input.WasPressed(engine::platform::Key::Z))
+			{
+				if (ctrl && buildMode) { if (shift) bp->Redo(); else bp->Undo(); }
+				else m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			}
+			if (m_input.WasPressed(engine::platform::Key::Y))
+			{
+				if (ctrl && buildMode) bp->Redo();
+				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+			}
+			// Lot 5 (2026-07-18) — Ctrl+D (dupliquer la sélection) et Suppr
+			// (supprimer la sélection). Ignorés quand ImGui édite du texte
+			// (champ de saisie actif) : Suppr/Ctrl+D y ont leur sens d'édition
+			// de texte et ne doivent pas toucher la scène. ImGui n'existe que
+			// côté Windows (comme partout dans Engine.cpp) — sur les autres
+			// plateformes l'éditeur n'a pas d'UI, pas de saisie à protéger.
+#if defined(_WIN32)
+			const bool imguiTextInput =
+				(ImGui::GetCurrentContext() != nullptr) && ImGui::GetIO().WantTextInput;
+#else
+			const bool imguiTextInput = false;
+#endif
+			if (!imguiTextInput)
+			{
+				if (ctrl && m_input.WasPressed(engine::platform::Key::D))
+				{
+					// shift transmis tel quel : Ctrl+Shift+D reste l'outil
+					// Dungeon Portal (géré par le shell).
+					m_worldEditorShell->HandleShortcut('D', true, shift);
+				}
+				if (!ctrl && !shift && m_input.WasPressed(engine::platform::Key::Delete))
+				{
+					m_worldEditorShell->HandleShortcut(0x2E, false, false);
+				}
+				// Roadmap-6 (2026-07-19) — E / T / C : mode du gizmo de scène
+				// (dÉplacer / Tourner / éChelle). Sans modifiers, hors saisie
+				// de texte (garde imguiTextInput ci-dessus).
+				if (!ctrl && !shift)
+				{
+					if (m_input.WasPressed(engine::platform::Key::E))
+						m_worldEditorShell->HandleShortcut('E', false, false);
+					if (m_input.WasPressed(engine::platform::Key::T))
+						m_worldEditorShell->HandleShortcut('T', false, false);
+					if (m_input.WasPressed(engine::platform::Key::C))
+						m_worldEditorShell->HandleShortcut('C', false, false);
+				}
+			}
+		}
+	}
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::TickWorldEditor()
+	{
+		if (m_worldEditorExe && m_worldEditorSession)
+		{
+			UpdateWorldEditorSession();
+		}
+		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le
+		// flag set par le callback OnChunkChanged et déclenche la copie
+		// chunks → heightmap CPU + FlushHeightmap GPU. Coût ~10-30 ms par
+		// tick concerné (acceptable pour des ops one-shot ; pas atteint par
+		// les brushstrokes interactifs qui ont leur propre path direct).
+		if (m_worldEditorTerrainNeedsSync.exchange(false, std::memory_order_acq_rel))
+		{
+			SyncWorldEditorHeightmapFromDocument();
+		}
+		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
+		{
+			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
+			{
+				m_texturePreviewCache->Invalidate(rel);
+			}
+			m_worldEditorSession->ClearRecentlyImportedTextures();
+		}
+		ProcessSplatRefsDirty();
+		if (m_texturePreviewCache)
+		{
+			m_texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
+			                             kEditorTexCacheFramesInFlight);
+		}
+	}
+#endif
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ResizeWorldEditorViewportTargetIfNeeded()
+	{
+		if (m_worldEditorExe && m_worldEditorShell
+			&& m_worldEditorShell->IsInitialized()
+			&& m_editorViewportTarget.IsValid()
+			&& !m_worldEditorShell->Panels().empty()
+			&& m_worldEditorShell->Panels()[0])
+		{
+			ResizeWorldEditorViewportTarget();
+		}
+	}
+#endif
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::RenderWorldEditorShellIfReady(engine::RenderState& out)
+	{
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
+			&& m_imguiOverlay && m_imguiOverlay->IsReady())
+		{
+			RenderWorldEditorShell(out);
+		}
+	}
+#endif
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::CopySceneToEditorViewport(engine::render::FrameResources& fr, VkExtent2D extent)
+	{
+		if (m_worldEditorExe && m_editorViewportTarget.IsValid()
+		    && m_fgSceneColorLDRId != engine::render::kInvalidResourceId)
+		{
+		    VkImage sceneLdr = m_fgRegistry.getImage(m_fgSceneColorLDRId);
+		    VkImage dst      = m_editorViewportTarget.GetImage();
+		    if (sceneLdr != VK_NULL_HANDLE && dst != VK_NULL_HANDLE)
+		    {
+		        // Step 1: transitions de layout.
+		        //   src (SceneColor_LDR) : `TRANSFER_SRC_OPTIMAL` post-CopyPresent
+		        //     (cf. ligne 4538 — le dernier consumer FrameGraph le lit
+		        //     en TransferSrc) → on garde tel quel, pas de barrier.
+		        //   dst (ma target) : `SHADER_READ_ONLY` (init PR 1) →
+		        //     `TRANSFER_DST_OPTIMAL` pour le blit.
+		        VkImageMemoryBarrier bDst{};
+		        bDst.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		        bDst.oldLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		        bDst.newLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		        bDst.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		        bDst.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		        bDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		        bDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		        bDst.image            = dst;
+		        bDst.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+		        vkCmdPipelineBarrier(fr.cmdBuffer,
+		            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		            VK_PIPELINE_STAGE_TRANSFER_BIT,
+		            0, 0, nullptr, 0, nullptr, 1, &bDst);
+
+		        // Step 2: vkCmdBlitImage (gère size + format mismatch via
+		        // LINEAR filter — utile parce que SceneColor_LDR est au
+		        // format swapchain (typiquement BGRA8) et ma target est RGBA8).
+		        VkImageBlit region{};
+		        region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+		        region.srcOffsets[0]  = { 0, 0, 0 };
+		        region.srcOffsets[1]  = {
+		            static_cast<int32_t>(extent.width),
+		            static_cast<int32_t>(extent.height),
+		            1
+		        };
+		        region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+		        region.dstOffsets[0]  = { 0, 0, 0 };
+		        region.dstOffsets[1]  = {
+		            static_cast<int32_t>(m_editorViewportTarget.GetWidth()),
+		            static_cast<int32_t>(m_editorViewportTarget.GetHeight()),
+		            1
+		        };
+		        vkCmdBlitImage(fr.cmdBuffer,
+		            sceneLdr,  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		            dst,       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		            1, &region, VK_FILTER_LINEAR);
+
+		        // Step 3: transition retour de dst → SHADER_READ_ONLY pour
+		        // qu'ImGui::Image puisse sampler dans le ScenePanel cette
+		        // même frame. SceneColor_LDR reste en TRANSFER_SRC ; le
+		        // FrameGraph re-transitionnera au prochain frame selon
+		        // ses propres `read/write` declarations (auto-géré).
+		        VkImageMemoryBarrier bDst2{};
+		        bDst2.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		        bDst2.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		        bDst2.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		        bDst2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		        bDst2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		        bDst2.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		        bDst2.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		        bDst2.image            = dst;
+		        bDst2.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+		        vkCmdPipelineBarrier(fr.cmdBuffer,
+		            VK_PIPELINE_STAGE_TRANSFER_BIT,
+		            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		            0, 0, nullptr, 0, nullptr, 1, &bDst2);
+		    }
+		}
+	}
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::InitWorldEditorImGuiPanels()
+	{
+		if (m_worldEditorExe)
+		{
+			// Panneaux de l'éditeur monde, dessinés dans le contexte de l'overlay.
+			m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
+			m_worldEditorImGui->SetOverlay(m_imguiOverlay.get());
+			m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+			// M100.46 incrément 3 — branche le Shell pour que le
+			// dialog Zone Presets puisse résoudre documents et
+			// catalogs au moment de l'exécution.
+			m_worldEditorImGui->SetWorldEditorShell(m_worldEditorShell.get());
+			// Réorganisation UI 2026-07-17 — « Fichier > Quitter » :
+			// demande de fermeture par le même chemin que la croix
+			// fenêtre (sortie propre de la boucle principale).
+			m_worldEditorImGui->SetQuitCallback([this] { OnQuit(); });
+
+			// Cache de vignettes pour les textures de splatting.
+			m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
+			const std::string contentDir = m_cfg.GetString("paths.content", "game/data");
+			const std::filesystem::path absContent = std::filesystem::absolute(contentDir);
+			if (!m_texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
+			                                 m_vkDeviceContext.GetPhysicalDevice(),
+			                                 m_vkDeviceContext.GetGraphicsQueue(),
+			                                 m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+			                                 absContent.string()))
+			{
+				LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
+				m_texturePreviewCache.reset();
+			}
+			if (m_worldEditorImGui && m_texturePreviewCache)
+			{
+				m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
+			}
+
+			// M100.34 incrément 1 — Cible offscreen viewport éditeur.
+			// Taille initiale alignée sur la swapchain ; la PR 2 ajoutera
+			// la passe FrameGraph qui y copie SceneColor_LDR + la
+			// logique de resize sur la taille du ScenePanel.
+			const uint32_t initW = m_vkSwapchain.GetExtent().width;
+			const uint32_t initH = m_vkSwapchain.GetExtent().height;
+			if (!m_editorViewportTarget.Init(
+				m_vkDeviceContext.GetDevice(),
+				m_vkDeviceContext.GetPhysicalDevice(),
+				m_vkDeviceContext.GetGraphicsQueue(),
+				m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+				initW, initH))
+			{
+				LOG_WARN(Render, "[Engine] EditorViewportRenderTarget init failed -- ScenePanel restera en mode placeholder");
+			}
+		}
+	}
+#endif
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	bool Engine::HasEditorMode() const
+	{
+		return m_editorMode != nullptr;
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::UpdateEditorModeFrame(engine::RenderState& out, double dt)
+	{
+		m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	bool Engine::HasEditorHubImGui() const
+	{
+		return m_editorHubImGui != nullptr;
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	bool Engine::TryGetEditorWaterScene(const engine::world::water::WaterScene*& scene, bool& dirty) const
+	{
+		if (!m_worldEditorShell)
+		{
+			return false;
+		}
+		scene = &m_worldEditorShell->GetWaterDocument().Get();
+		dirty = m_worldEditorShell->GetWaterDocument().IsDirty();
+		return true;
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	bool Engine::ClearEditorWaterDirty()
+	{
+		if (!m_worldEditorShell)
+		{
+			return false;
+		}
+		m_worldEditorShell->MutableWaterDocument().ClearDirty();
+		return true;
+	}
+
+#if defined(_WIN32)
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ApplyWorldEditorImGuiTheme()
+	{
+		engine::editor::world::ApplyWorldEditorTheme();
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::BindWorldEditorDayNight()
+	{
+		if (m_worldEditorImGui)
+		{
+			m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
+		}
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::CreateEditorHubImGui()
+	{
+		m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
+		if (m_editorMode)
+			m_editorHubImGui->BindEditorMode(m_editorMode.get());
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::RenderEditorHubImGui(float dw, float dh)
+	{
+		m_editorHubImGui->Render(dw, dh);
+	}
+#endif
+
 } // namespace engine

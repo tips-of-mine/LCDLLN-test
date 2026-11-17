@@ -8,7 +8,7 @@
 // ajoutera un mutex sur les 2 maps.
 
 #include "src/masterd/Groups/Group.h"
-#include "src/masterd/Groups/GroupTypes.h"
+#include "src/shared/groups/GroupTypes.h"
 
 #include <cstdint>
 #include <memory>

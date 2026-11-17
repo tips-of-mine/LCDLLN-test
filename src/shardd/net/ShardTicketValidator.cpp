@@ -1,5 +1,5 @@
-#include "src/masterd/handlers/shard/ShardTicketValidator.h"
-#include "src/masterd/handlers/shard/ShardTicketCrypto.h"
+#include "src/shardd/net/ShardTicketValidator.h"
+#include "src/shared/security/ShardTicketCrypto.h"
 #include "src/shared/network/ShardTicketPayloads.h"
 #include "src/shared/core/Log.h"
 

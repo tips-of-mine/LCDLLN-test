@@ -16,7 +16,13 @@
 # - Secret requis : GRAPHITY_TOKEN (fine-grained, LCDLLN-graphity seul,
 #   Contents: Read and write).
 #
-# Indépendant des builds : tourne sur Linux, ~2-3 min.
+# - Pages HTML (.github/scripts/graphify_pages.py) : index.html, tree.html,
+#   graph.html (vue globale) et modules/*.html (une vue détaillée par module,
+#   < 4500 nœuds chacune) ; communautés nommées d'après leur nœud central
+#   (GRAPHIFY_BACKEND=none, toujours sans LLM). À télécharger puis ouvrir dans
+#   un navigateur (GitHub n'affiche pas le HTML).
+#
+# Indépendant des builds : tourne sur Linux, ~4-5 min.
 name: Graphify — graphe de connaissances
 on:
   push:
@@ -69,10 +75,14 @@ jobs:
       - name: Extraction du code (AST, sans LLM)
         run: graphify extract . --code-only --out "$RUNNER_TEMP/LCDLLN-test"
 
-      # --no-viz : graph.html inutilisable au-delà de ~5000 nœuds ;
-      # --no-label : le nommage des communautés demanderait un LLM.
+      # --no-viz / --no-label : la vue globale et le nommage des communautés
+      # sont faits à l'étape suivante (sans LLM).
       - name: Regroupement et rapport
         run: graphify cluster-only "$RUNNER_TEMP/LCDLLN-test" --no-viz --no-label
+
+      # Nomme les communautés (réécrit GRAPH_REPORT.md) et génère les pages HTML.
+      - name: Pages HTML (index, arborescence, graphe global, modules)
+        run: python3 .github/scripts/graphify_pages.py "$RUNNER_TEMP/LCDLLN-test" "$RUNNER_TEMP/pages"
 
       - name: Publication vers LCDLLN-graphity
         env:
@@ -86,7 +96,8 @@ jobs:
           # .graphify_root, manifest.json et cache/ contiennent des chemins
           # du runner : seuls le graphe, son analyse et le rapport sont publiés.
           cp "$OUT/graph.json" "$OUT/.graphify_analysis.json" "$OUT/GRAPH_REPORT.md" \
-             "$PUB/graphify-out/"
+             "$OUT/.graphify_labels.json" "$PUB/graphify-out/"
+          cp -r "$RUNNER_TEMP/pages" "$PUB/pages"
           cat > "$PUB/README.md" <<EOF
           # LCDLLN-graphity
 
@@ -97,6 +108,20 @@ jobs:
           - Commit source : \`${SRC_SHA}\`
           - Graphify : ${GRAPHIFY_VERSION} (\`--code-only\`, sans LLM)
           - Généré le : $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          ## Visualiser
+
+          Télécharger le dossier \`pages/\` (ou le dépôt en ZIP), puis ouvrir
+          \`pages/index.html\` dans un navigateur :
+
+          - \`tree.html\` : arborescence dossiers → fichiers → symboles, avec liens ;
+          - \`graph.html\` : graphe global (agrégé par communauté) ;
+          - \`modules/*.html\` : une vue détaillée par module (nœuds cliquables,
+            recherche, filtres par communauté).
+
+          Les vues graphe chargent vis-network depuis unpkg.com (connexion requise).
+
+          ## Interroger
 
           Exemples : \`graphify query "..."\`, \`graphify explain "X"\`,
           \`graphify affected "X"\` (lancés à la racine de ce dépôt).

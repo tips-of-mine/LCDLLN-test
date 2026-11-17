@@ -4174,11 +4174,14 @@ namespace engine
 					// MODELE (~1.6 m = tete) puis placee par finalModelMat (la meme
 					// matrice qui positionne tout l'avatar), elle se pose sur la tete et
 					// suit position + orientation du perso. Suivi fin par os -> rig propre.
-					std::vector<engine::math::Mat4> identityFinals(
-						finals.size(), engine::math::Mat4::Identity());
+					// Perf : préparées seulement si une partie placeholder est active
+					// (cas courant : Body seul -> plus d'allocation à chaque frame).
+					std::vector<engine::math::Mat4> identityFinals;
 					for (const engine::render::skinned::SkinnedMesh* part : m_modularAvatar.ActiveParts())
 					{
 						const bool isBody = (part == m_currentSkinnedMesh);
+						if (!isBody && identityFinals.size() != finals.size())
+							identityFinals.assign(finals.size(), engine::math::Mat4::Identity());
 						m_skinnedRenderer.Record(
 							m_vkDeviceContext.GetDevice(), innerCmd,
 							m_vkSwapchain.GetExtent(),

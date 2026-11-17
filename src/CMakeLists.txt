@@ -804,11 +804,12 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntimeTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp)
   # SP4 (éditeur monde) : QuestEditIo — chargement authoring (quest_definitions + quest_texts fusionnés).
-  # QuestEditIo.cpp est désormais dans engine_core (CMakeLists racine, requis
-  # par QuestEditorPanel/WorldEditorShell) -> ne pas le re-lister ici (double
-  # définition de symboles), même pattern que quest_text_catalog_tests ci-dessous.
+  # QuestEditIo.cpp est dans la bibliothèque engine_editor (CMakeLists racine,
+  # requise par QuestEditorPanel/WorldEditorShell) -> ne pas le re-lister ici
+  # (double définition de symboles) ; on lie engine_editor.
   lcdlln_add_simple_test(quest_edit_io_tests
     ${CMAKE_SOURCE_DIR}/src/world_editor/quests/QuestEditIoTests.cpp)
+  target_link_libraries(quest_edit_io_tests PRIVATE engine_editor)
   # SP2 (client) : QuestTextCatalog — titres/descriptions/étapes lisibles par locale.
   # QuestTextCatalog.cpp est desormais dans engine_core (CMakeLists racine, requis
   # par QuestImGuiRenderer/Engine.cpp) -> ne pas le re-lister ici (double définition

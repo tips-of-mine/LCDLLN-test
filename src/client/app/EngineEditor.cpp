@@ -7,8 +7,11 @@
 //     UpdateEditorSceneGizmoDrag, SceneGizmoHandleSizes) ;
 //   - synchronisation terrain document -> GPU (RebuildWorldEditorTerrainGpu,
 //     SyncWorldEditorHeightmapFromDocument, ProcessSplatRefsDirty).
-// Code déplacé tel quel depuis Engine.cpp (aucun changement de comportement) :
-// première étape de la séparation éditeur / jeu. La documentation de chaque
+// Code déplacé tel quel depuis Engine.cpp (aucun changement de comportement).
+// Compilé UNIQUEMENT dans world_editor_app (lcdlln_world_editor.exe), avec la
+// bibliothèque engine_editor ; le jeu lie EngineEditorStubs.cpp à la place.
+// Les composants éditeur sont regroupés dans Engine::EditorState (défini
+// ci-dessous, opaque pour le reste de l'Engine). La documentation de chaque
 // fonction est dans Engine.h.
 
 #include "src/client/app/Engine.h"
@@ -27,6 +30,11 @@
 #include "src/world_editor/HazardCommand.h"                    // Roadmap-8 : pose de danger undoable
 #include "src/world_editor/scene/LayoutPlacementCommands.h"    // Roadmap-6 : placement undoable
 #include "src/world_editor/panels/ScenePanel.h"
+#include "src/world_editor/render/EditorViewportRenderTarget.h"
+#include "src/world_editor/scene/EditorSceneModel.h"
+#if defined(_WIN32)
+#include "src/world_editor/ui/TexturePreviewCache.h"
+#endif
 
 #include <vulkan/vulkan.h>
 
@@ -202,11 +210,83 @@ namespace engine
 		}
 	}
 
+	/// État propre à l'éditeur, opaque pour le reste de l'Engine (cf. Engine.h).
+	/// L'ordre des champs reprend l'ordre de déclaration des anciens membres
+	/// d'Engine : la destruction (ordre inverse) reste donc la même entre eux.
+	struct Engine::EditorState
+	{
+		/// --editor / --world-editor : caméra et barre d'outils du shell M43.x.
+		std::unique_ptr<engine::editor::EditorMode> editorMode;
+		/// Panneaux ImGui de l'éditeur monde (Windows uniquement, nul ailleurs).
+		std::unique_ptr<engine::editor::WorldEditorImGui> worldEditorImGui;
+		/// Panneau Editor Hub (--editor hors exe éditeur ; Windows uniquement).
+		std::unique_ptr<engine::render::EditorHubImGuiRenderer> editorHubImGui;
+		/// Données carte / import (uniquement si m_worldEditorExe).
+		std::unique_ptr<engine::editor::WorldEditorSession> worldEditorSession;
+		/// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus"
+		/// (--editor-world, editor.world.enabled, ou implicite avec --world-editor).
+		std::unique_ptr<engine::editor::world::WorldEditorShell> worldEditorShell;
+		/// M100.34 — Cible offscreen R8G8B8A8 du viewport éditeur (lue par le
+		/// ScenePanel via GetImguiTextureId), libérée avant l'arrêt de Vulkan.
+		engine::editor::world::EditorViewportRenderTarget viewportTarget;
+#if defined(_WIN32)
+		/// Cache des vignettes de textures (descripteurs ImGui).
+		std::unique_ptr<engine::editor::TexturePreviewCache> texturePreviewCache;
+		/// Nombre de frames en vol pour la purge différée du TexturePreviewCache.
+		/// Aligné sur HiZ/GpuDrivenCulling kDefaultFramesInFlight = 2.
+		static constexpr uint32_t kTexCacheFramesInFlight = 2u;
+#endif
+		/// Gizmo de scène (Roadmap-6) : transforms des entités éditables de la
+		/// sélection AU DÉBUT du drag (ancien état des SetEntityTransformCommand
+		/// poussées au relâchement).
+		std::vector<std::pair<engine::editor::scene::EntityId, engine::editor::scene::EntityTransform>> sceneGizmoDragStart;
+	};
+
+	/// Libère l'état éditeur (type complet uniquement dans cette unité).
+	/// \param state état à détruire (peut être nul).
+	void Engine::EditorStateDeleter::operator()(EditorState* state) const noexcept
+	{
+		delete state;
+	}
+
+	/// Accès à l'état éditeur, créé à la première utilisation (main thread).
+	Engine::EditorState& Engine::Ed()
+	{
+		if (!m_editorState)
+			m_editorState.reset(new EditorState());
+		return *m_editorState;
+	}
+
+	// Intégration éditeur — voir la documentation dans Engine.h.
+	void Engine::ResolveEditorLaunchFlags(int argc, char** argv, bool& worldEditorWorldFlag)
+	{
+		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");
+		m_editorEnabled = m_worldEditorExe || HasCliFlag(argc, argv, "--editor")
+			|| m_cfg.GetBool("editor.enabled", false);
+
+		// M100.1 — Branche éditeur monde "couche au-dessus" (distincte de
+		// --world-editor qui active le shell M43.x). Activée par le flag CLI
+		// --editor-world ou par editor.world.enabled = true dans config.json.
+		// Les deux shells peuvent cohabiter pendant la transition.
+		//
+		// **Auto-activation pour `lcdlln_world_editor.exe`** : depuis M100.46
+		// incrément 3 (dialog Zone Presets), l'éditeur monde a besoin du
+		// `WorldEditorShell` pour résoudre les 4 documents + 4 catalogs. Sans
+		// le Shell, l'entrée menu « Appliquer un preset de zone… » est grisée
+		// (m_shell nul). Le binaire `--world-editor` implique donc
+		// `--editor-world` par défaut. La warning « deux shells coexistent »
+		// reste loguée plus bas en info — c'est attendu.
+		worldEditorWorldFlag =
+			HasCliFlag(argc, argv, "--editor-world")
+			|| m_cfg.GetBool("editor.world.enabled", false)
+			|| m_worldEditorExe;
+	}
+
 	void Engine::SyncEditorBuildingPreview()
 	{
-		if (!m_worldEditorShell || !m_pipeline) return;
+		if (!Ed().worldEditorShell || !m_pipeline) return;
 		engine::editor::world::panels::BuildingEditorPanel* panel =
-			m_worldEditorShell->GetBuildingEditorPanel();
+			Ed().worldEditorShell->GetBuildingEditorPanel();
 		if (!panel) return;
 
 		// Demande de re-centrage (ex: « Charger dans l'éditeur ») : on invalide
@@ -445,7 +525,7 @@ namespace engine
 		// d'information sur la valeur » pendant le drag (les anneaux qui tournent
 		// ne montrent pas l'angle). L'axe en cours de manipulation est surligné.
 		if (engine::editor::world::panels::BuildingEditorPanel* bp =
-			m_worldEditorShell ? m_worldEditorShell->GetBuildingEditorPanel() : nullptr)
+			Ed().worldEditorShell ? Ed().worldEditorShell->GetBuildingEditorPanel() : nullptr)
 		{
 			float pos[3], rot[3], sc = 1.0f;
 			if (bp->ActivePartTransform(pos, rot, sc))
@@ -474,9 +554,9 @@ namespace engine
 	{
 #if defined(_WIN32)
 		if (!m_editorEnabled || !m_editorGizmoValid) return false;
-		if (!m_worldEditorShell) return false;
+		if (!Ed().worldEditorShell) return false;
 		engine::editor::world::panels::BuildingEditorPanel* panel =
-			m_worldEditorShell->GetBuildingEditorPanel();
+			Ed().worldEditorShell->GetBuildingEditorPanel();
 		// Le drag n'agit que sur une pièce SÉLECTIONNÉE du brouillon (la pièce en
 		// cours d'ajout reste pilotée par les champs du panneau).
 		if (!panel || panel->SelectedDraft() < 0) { m_gizmoDragAxis = -1; return false; }
@@ -677,14 +757,14 @@ namespace engine
 	void Engine::DrawEditorSceneGizmo()
 	{
 #if defined(_WIN32)
-		if (!m_editorEnabled || !m_worldEditorShell || !m_worldEditorShell->IsInitialized()) return;
+		if (!m_editorEnabled || !Ed().worldEditorShell || !Ed().worldEditorShell->IsInitialized()) return;
 		// Le gizmo bâtiment garde la main en mode édition bâtiment (deux gizmos
 		// superposés seraient illisibles et se disputeraient les clics).
 		if (engine::editor::world::panels::BuildingEditorPanel* bp =
-			m_worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive()) return;
-		const engine::editor::scene::EditorSelection& sel = m_worldEditorShell->GetSelection();
+			Ed().worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive()) return;
+		const engine::editor::scene::EditorSelection& sel = Ed().worldEditorShell->GetSelection();
 		if (!sel.HasSelection()) return;
-		const engine::editor::scene::EditorSceneModel& model = m_worldEditorShell->GetSceneModel();
+		const engine::editor::scene::EditorSceneModel& model = Ed().worldEditorShell->GetSceneModel();
 		const engine::editor::scene::SceneEntity* primary = model.Find(sel.Current());
 		if (primary == nullptr || !primary->hasTransform) return;
 
@@ -733,7 +813,7 @@ namespace engine
 		const ImU32 hot  = IM_COL32(255, 240, 130, 255);// survol/actif : jaune vif
 		const ImU32 cols[3] = { colX, colY, colZ };
 		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
-		const int mode = static_cast<int>(m_worldEditorShell->GetSceneGizmoMode());
+		const int mode = static_cast<int>(Ed().worldEditorShell->GetSceneGizmoMode());
 		const bool dragging = (m_sceneGizmoDragAxis >= 0);
 
 		if (mode == 0) // Translation : 3 axes monde
@@ -816,15 +896,15 @@ namespace engine
 	bool Engine::UpdateEditorSceneGizmoDrag(int mouseX, int mouseY)
 	{
 #if defined(_WIN32)
-		if (!m_editorEnabled || !m_worldEditorShell || !m_worldEditorShell->IsInitialized()) return false;
+		if (!m_editorEnabled || !Ed().worldEditorShell || !Ed().worldEditorShell->IsInitialized()) return false;
 		if (engine::editor::world::panels::BuildingEditorPanel* bp =
-			m_worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive())
+			Ed().worldEditorShell->GetBuildingEditorPanel(); bp && bp->EditModeActive())
 		{
 			m_sceneGizmoDragAxis = -1;
 			return false;
 		}
-		const engine::editor::scene::EditorSelection& sel = m_worldEditorShell->GetSelection();
-		const engine::editor::scene::EditorSceneModel& model = m_worldEditorShell->GetSceneModel();
+		const engine::editor::scene::EditorSelection& sel = Ed().worldEditorShell->GetSelection();
+		const engine::editor::scene::EditorSceneModel& model = Ed().worldEditorShell->GetSceneModel();
 		const engine::editor::scene::SceneEntity* primary =
 			sel.HasSelection() ? model.Find(sel.Current()) : nullptr;
 		if (primary == nullptr || !primary->hasTransform)
@@ -833,7 +913,7 @@ namespace engine
 			return false;
 		}
 		const engine::editor::world::WorldEditorShell::TransformWriter& writer =
-			m_worldEditorShell->GetTransformWriter();
+			Ed().worldEditorShell->GetTransformWriter();
 		if (!writer) return false;
 
 		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
@@ -858,7 +938,7 @@ namespace engine
 		if (!project(o, ox, oy)) { m_sceneGizmoDragAxis = -1; return false; }
 		float axisLen, ringR; SceneGizmoHandleSizes(o, axisLen, ringR);
 		const engine::math::Vec3 dirs[3] = { {1,0,0}, {0,1,0}, {0,0,1} };
-		const int mode = static_cast<int>(m_worldEditorShell->GetSceneGizmoMode());
+		const int mode = static_cast<int>(Ed().worldEditorShell->GetSceneGizmoMode());
 		const float mx = static_cast<float>(mouseX), my = static_cast<float>(mouseY);
 
 		const bool pressed  = m_input.WasMousePressed(engine::platform::MouseButton::Left);
@@ -911,14 +991,14 @@ namespace engine
 			{
 				// Capture des transforms de départ de TOUTES les entités
 				// éditables de la sélection (ancien état des commandes d'undo).
-				m_sceneGizmoDragStart.clear();
+				Ed().sceneGizmoDragStart.clear();
 				for (const engine::editor::scene::EntityId& id : sel.Items())
 				{
 					const engine::editor::scene::SceneEntity* e = model.Find(id);
 					if (e != nullptr && e->hasTransform)
-						m_sceneGizmoDragStart.emplace_back(id, e->transform);
+						Ed().sceneGizmoDragStart.emplace_back(id, e->transform);
 				}
-				if (m_sceneGizmoDragStart.empty()) return false;
+				if (Ed().sceneGizmoDragStart.empty()) return false;
 				m_sceneGizmoDragAxis = grabbedAxis;
 				m_sceneGizmoDragMode = mode;
 				m_sceneGizmoDragLastX = mx;
@@ -946,7 +1026,7 @@ namespace engine
 						const float worldPerPix = axisLen / segLen;
 						const float dScreen = (mx - m_sceneGizmoDragLastX)*axSx + (my - m_sceneGizmoDragLastY)*axSy;
 						const float d = dScreen * worldPerPix; // mètres monde le long de l'axe a
-						for (const auto& [id, startT] : m_sceneGizmoDragStart)
+						for (const auto& [id, startT] : Ed().sceneGizmoDragStart)
 						{
 							const engine::editor::scene::SceneEntity* e = model.Find(id);
 							if (e == nullptr) continue;
@@ -967,7 +1047,7 @@ namespace engine
 				while (dAng < -3.14159265f) dAng += 6.28318530f;
 				m_sceneGizmoDragLastAngle = angNow;
 				const float dDeg = dAng * (180.0f / 3.14159265f);
-				for (const auto& [id, startT] : m_sceneGizmoDragStart)
+				for (const auto& [id, startT] : Ed().sceneGizmoDragStart)
 				{
 					const engine::editor::scene::SceneEntity* e = model.Find(id);
 					if (e == nullptr) continue;
@@ -979,7 +1059,7 @@ namespace engine
 			else // échelle uniforme (drag vertical : haut = agrandir)
 			{
 				const float factor = 1.0f + (m_sceneGizmoDragLastY - my) * 0.01f;
-				for (const auto& [id, startT] : m_sceneGizmoDragStart)
+				for (const auto& [id, startT] : Ed().sceneGizmoDragStart)
 				{
 					const engine::editor::scene::SceneEntity* e = model.Find(id);
 					if (e == nullptr) continue;
@@ -1011,7 +1091,7 @@ namespace engine
 			// drags successifs de la même entité ne doivent PAS fusionner en une
 			// seule étape d'annulation (contrairement au slider de l'Inspector).
 			auto composite = std::make_unique<engine::editor::world::CompositeCommand>(label);
-			for (const auto& [id, startT] : m_sceneGizmoDragStart)
+			for (const auto& [id, startT] : Ed().sceneGizmoDragStart)
 			{
 				const engine::editor::scene::SceneEntity* e = model.Find(id);
 				if (e == nullptr || sameTransform(startT, e->transform)) continue;
@@ -1020,10 +1100,10 @@ namespace engine
 			}
 			if (!composite->Empty())
 			{
-				m_worldEditorShell->MutableCommandStack().Push(std::move(composite));
+				Ed().worldEditorShell->MutableCommandStack().Push(std::move(composite));
 			}
 			m_sceneGizmoDragAxis = -1;
-			m_sceneGizmoDragStart.clear();
+			Ed().sceneGizmoDragStart.clear();
 			return true;
 		}
 		return m_sceneGizmoDragAxis >= 0;
@@ -1035,7 +1115,7 @@ namespace engine
 #if defined(_WIN32)
 	void Engine::RebuildWorldEditorTerrainGpu()
 	{
-		if (!m_worldEditorExe || !m_vkDeviceContext.IsValid() || !m_worldEditorSession)
+		if (!m_worldEditorExe || !m_vkDeviceContext.IsValid() || !Ed().worldEditorSession)
 		{
 			return;
 		}
@@ -1048,7 +1128,7 @@ namespace engine
 			m_terrain.Destroy(device);
 		}
 
-		const std::string& hmRel = m_worldEditorSession->Doc().heightmapContentRelativePath;
+		const std::string& hmRel = Ed().worldEditorSession->Doc().heightmapContentRelativePath;
 		if (hmRel.empty())
 		{
 			return;
@@ -1056,7 +1136,7 @@ namespace engine
 
 		auto loadFn = [this](const char* p) { return LoadTerrainSpirvWords(p); };
 		std::optional<float> worldSizeOverride;
-		const engine::editor::WorldMapEditDocument& wed = m_worldEditorSession->Doc();
+		const engine::editor::WorldMapEditDocument& wed = Ed().worldEditorSession->Doc();
 		if (wed.hasTerrainWorldSizeM && wed.terrainWorldSizeM > 0.0)
 		{
 			worldSizeOverride = static_cast<float>(wed.terrainWorldSizeM);
@@ -1108,9 +1188,9 @@ namespace engine
 		// l'on a accès à VkDeviceContext sans race). Re-set à chaque
 		// Rebuild pour ne pas perdre l'observer si Shell ou Tools sont
 		// reset.
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
-			m_worldEditorShell->MutableTerrainDocument().SetOnChunkChanged(
+			Ed().worldEditorShell->MutableTerrainDocument().SetOnChunkChanged(
 				[this](engine::world::GlobalChunkCoord) {
 					m_worldEditorTerrainNeedsSync.store(true, std::memory_order_release);
 				});
@@ -1123,10 +1203,10 @@ namespace engine
 		// Garde stricte sur m_worldEditorExe : le client jeu ne doit jamais lever ce
 		// flag (regression visuelle).
 		bool noUserTextures = false;
-		if (m_worldEditorExe && m_worldEditorSession)
+		if (m_worldEditorExe && Ed().worldEditorSession)
 		{
 			noUserTextures = true;
-			const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+			const auto& refs = Ed().worldEditorSession->Doc().splatLayerTextureRefs;
 			for (const std::string& r : refs)
 			{
 				if (!r.empty()) { noUserTextures = false; break; }
@@ -1149,7 +1229,7 @@ namespace engine
 		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle
 		// carte" ou "Charger la carte selectionnee". Sans ce reset, la camera peut
 		// se retrouver hors champ ou sous le sol selon la heightmap chargee.
-		// On utilise m_worldEditorExe (et non m_editorMode qui peut etre null si
+		// On utilise m_worldEditorExe (et non EditorState::editorMode qui peut etre null si
 		// EditorMode::Init a echoue) comme garde du reset.
 		if (m_worldEditorExe)
 		{
@@ -1216,12 +1296,12 @@ namespace engine
 #if defined(_WIN32)
 		// Garde stricte : seul l'éditeur monde a un TerrainDocument actif
 		// (le Shell). Le client jeu ne passe jamais ici.
-		if (!m_worldEditorExe || !m_worldEditorShell || !m_worldEditorShell->IsInitialized())
+		if (!m_worldEditorExe || !Ed().worldEditorShell || !Ed().worldEditorShell->IsInitialized())
 			return;
 		if (!m_worldEditorTerrainTools.IsValid()) return;
 		if (!m_terrain.IsValid()) return;
 
-		auto& terrainDoc = m_worldEditorShell->MutableTerrainDocument();
+		auto& terrainDoc = Ed().worldEditorShell->MutableTerrainDocument();
 		auto& hm         = m_terrain.GetMutableHeightmapData();
 		if (hm.width == 0 || hm.height == 0 || hm.heights.empty()) return;
 
@@ -1300,15 +1380,15 @@ namespace engine
 
 	void Engine::ProcessSplatRefsDirty()
 	{
-		if (!m_worldEditorExe || !m_worldEditorSession) return;
-		if (!m_texturePreviewCache || !m_texturePreviewCache->IsReady()) return;
-		if (!m_worldEditorSession->ConsumeSplatRefsDirty()) return;
+		if (!m_worldEditorExe || !Ed().worldEditorSession) return;
+		if (!Ed().texturePreviewCache || !Ed().texturePreviewCache->IsReady()) return;
+		if (!Ed().worldEditorSession->ConsumeSplatRefsDirty()) return;
 		if (!m_terrain.IsValid()) return;
 
 		engine::render::terrain::TerrainSplatting& splatting = m_terrain.GetSplatting();
 
 		// Pour chaque layer : pousser le buffer CPU adequat dans TerrainSplatting.
-		const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+		const auto& refs = Ed().worldEditorSession->Doc().splatLayerTextureRefs;
 		for (uint32_t layer = 0; layer < engine::render::terrain::kSplatLayerCount; ++layer)
 		{
 			const std::vector<uint8_t>* rgba = nullptr;
@@ -1316,14 +1396,14 @@ namespace engine
 			{
 				// Force la decode/upload de la vignette si pas deja fait
 				// (cree l'entree dans le cache si absente).
-				m_texturePreviewCache->GetTexrThumb(refs[layer]);
-				rgba = m_texturePreviewCache->GetCpuRgba256(refs[layer]);
+				Ed().texturePreviewCache->GetTexrThumb(refs[layer]);
+				rgba = Ed().texturePreviewCache->GetCpuRgba256(refs[layer]);
 			}
 			if (rgba == nullptr)
 			{
 				// Fallback procedurale : assure que l'entree procedurale existe.
-				m_texturePreviewCache->GetProceduralThumb(layer);
-				rgba = m_texturePreviewCache->GetCpuRgba256(
+				Ed().texturePreviewCache->GetProceduralThumb(layer);
+				rgba = Ed().texturePreviewCache->GetCpuRgba256(
 					"procedural:" + std::to_string(layer));
 			}
 			if (rgba != nullptr)
@@ -1349,10 +1429,10 @@ namespace engine
 		// les chunks plats (source de verite) AVANT le rebuild GPU. L'empreinte
 		// N (chunks par axe) se deduit de la resolution r16h : apres l'alignement
 		// A2, 1 texel = 1 m, et un chunk fait 256 m, donc N = max(1, res/256).
-		if (m_worldEditorSession->ConsumeNewZoneChunkInitRequest()
-			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorSession->ConsumeNewZoneChunkInitRequest()
+			&& Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
-			const uint32_t hmRes = m_worldEditorSession->Doc().heightmapResolution;
+			const uint32_t hmRes = Ed().worldEditorSession->Doc().heightmapResolution;
 			const int chunksPerAxis = static_cast<int>(std::max<uint32_t>(1u, hmRes / 256u));
 			// Accord de hauteur chunk <-> heightmap (corrige le "terrain qui
 			// chute hors champ a la 1ere edition"). ActionNewMap ecrit la
@@ -1371,15 +1451,15 @@ namespace engine
 			// (namespacing disque chunks/zone_<id>/...) AVANT l'init des
 			// chunks plats. Pas de LoadZoneDocuments ici : une zone neuve
 			// demarre avec des documents vides.
-			m_worldEditorShell->ResetForZoneChange(
-				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
-			m_worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
+			Ed().worldEditorShell->ResetForZoneChange(
+				engine::editor::SanitizeZoneId(Ed().worldEditorSession->Doc().zoneId));
+			Ed().worldEditorShell->InitNewZoneTerrain(chunksPerAxis, flatHeightMeters);
 			// Réorganisation UI 2026-07-17 — une zone fraîchement créée
 			// (fichiers déjà écrits par ActionNewMap) repart d'un état
 			// « tout enregistré » : sans ce NoteSaved, le Clear de la
 			// pile undo (ResetForZoneChange) marquerait la carte neuve
 			// « non sauvegardée » dans la barre de statut.
-			m_worldEditorShell->NoteSaved();
+			Ed().worldEditorShell->NoteSaved();
 			// Nouvelle carte = la caméra est replacée sur la nouvelle zone :
 			// l'origine STABLE du brouillon (mémorisée pour le gizmo/picking)
 			// pointe encore sur l'ANCIENNE carte. On l'invalide pour que le
@@ -1387,7 +1467,7 @@ namespace engine
 			// nouvelle carte au prochain rebuild — sinon il reste hors-champ
 			// et « ne se charge plus ». On force aussi le rebuild.
 			m_editorPreviewValid = false;
-			if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+			if (auto* bp = Ed().worldEditorShell->GetBuildingEditorPanel())
 				bp->MarkPreviewDirty();
 		}
 		// Lot B3 (correctifs 1+3) — Chargement d'une carte EXISTANTE :
@@ -1398,48 +1478,48 @@ namespace engine
 		// chemins namespaces (fallback legacy plat en lecture). Place AVANT
 		// la consommation du reload GPU pour que le rebuild parte d'un
 		// etat document coherent.
-		if (m_worldEditorSession->ConsumeZoneDocumentsReloadRequest()
-			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorSession->ConsumeZoneDocumentsReloadRequest()
+			&& Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
-			m_worldEditorShell->ResetForZoneChange(
-				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
-			m_worldEditorShell->LoadZoneDocuments(m_cfg);
+			Ed().worldEditorShell->ResetForZoneChange(
+				engine::editor::SanitizeZoneId(Ed().worldEditorSession->Doc().zoneId));
+			Ed().worldEditorShell->LoadZoneDocuments(m_cfg);
 			// Réorganisation UI 2026-07-17 — une carte fraîchement
 			// chargée repart d'un état « tout enregistré » (cf. barre de
 			// statut / modale Quitter) : le Clear de la pile undo fait
 			// par ResetForZoneChange incrémente le sériel du CommandStack.
-			m_worldEditorShell->NoteSaved();
+			Ed().worldEditorShell->NoteSaved();
 			// Force la reconstruction de l'aperçu 3D des bâtiments de la
 			// nouvelle zone (placements chargés depuis buildings.bin).
-			if (auto* bp = m_worldEditorShell->GetBuildingEditorPanel())
+			if (auto* bp = Ed().worldEditorShell->GetBuildingEditorPanel())
 				bp->MarkPreviewDirty();
 			// Changement de zone : l'origine STABLE du brouillon (mémorisée pour
 			// le picking) n'est plus pertinente — la prochaine apparition se
 			// recentre sur la caméra de la nouvelle carte.
 			m_editorPreviewValid = false;
 		}
-		if (m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+		if (Ed().worldEditorSession->ConsumeTerrainGpuReloadRequest())
 		{
 			RebuildWorldEditorTerrainGpu();
 		}
 		// Sous-projet 1 — Sauvegarde des chunks (source de verite) demandee par
 		// ActionSaveCurrentMap / ActionSaveEditJson. Le r16h est ecrit par le
 		// terrainSaveHook ; ici on persiste en plus les chunks terrain/splat.
-		if (m_worldEditorSession->ConsumeTerrainChunksSaveRequest()
-			&& m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorSession->ConsumeTerrainChunksSaveRequest()
+			&& Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
 			// Lot B3 (correctif 4) — re-propage le zoneId courant avant la
 			// persistance : couvre le « save sous un autre nom de zone »
 			// (ActionSaveCurrentMap re-sanitize m_doc.zoneId depuis le
 			// buffer UI juste avant d'armer la requete de save).
-			m_worldEditorShell->PropagateZoneIdToDocuments(
-				engine::editor::SanitizeZoneId(m_worldEditorSession->Doc().zoneId));
-			const size_t nWritten = m_worldEditorShell->SaveTerrainChunks(m_cfg);
+			Ed().worldEditorShell->PropagateZoneIdToDocuments(
+				engine::editor::SanitizeZoneId(Ed().worldEditorSession->Doc().zoneId));
+			const size_t nWritten = Ed().worldEditorShell->SaveTerrainChunks(m_cfg);
 			// Lot B3 (correctif 3) — persiste aussi les documents annexes
 			// (eau, mesh inserts, portails de donjon) : avant ce fix, aucun
 			// SaveToDisk n'etait appele hors tests -> lacs/rivieres/grottes/
 			// arches/portails places etaient perdus a la fermeture.
-			const size_t nDocs = m_worldEditorShell->SaveZoneDocuments(m_cfg);
+			const size_t nDocs = Ed().worldEditorShell->SaveZoneDocuments(m_cfg);
 			LOG_INFO(EditorWorld,
 				"[Engine] Persisted {} terrain chunk file(s) + {} zone document(s)",
 				nWritten, nDocs);
@@ -1452,7 +1532,7 @@ namespace engine
 	void Engine::ResizeWorldEditorViewportTarget()
 	{
 		auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
-			m_worldEditorShell->MutablePanels()[0].get());
+			Ed().worldEditorShell->MutablePanels()[0].get());
 		if (scenePanel != nullptr)
 		{
 			const int wRaw = scenePanel->GetViewportWidth();
@@ -1460,11 +1540,11 @@ namespace engine
 			const uint32_t w = (wRaw > 0) ? static_cast<uint32_t>(wRaw) : 0u;
 			const uint32_t h = (hRaw > 0) ? static_cast<uint32_t>(hRaw) : 0u;
 			if (w > 0u && h > 0u
-				&& (w != m_editorViewportTarget.GetWidth()
-				 || h != m_editorViewportTarget.GetHeight()))
+				&& (w != Ed().viewportTarget.GetWidth()
+				 || h != Ed().viewportTarget.GetHeight()))
 			{
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-				if (!m_editorViewportTarget.Resize(
+				if (!Ed().viewportTarget.Resize(
 					m_vkDeviceContext.GetDevice(),
 					m_vkDeviceContext.GetPhysicalDevice(),
 					m_vkDeviceContext.GetGraphicsQueue(),
@@ -1489,16 +1569,16 @@ namespace engine
 		// garanti par WorldEditorShell::Init). PR 1 : image noire, pas
 		// encore branchée au FrameGraph. PR 2 : copie SceneColor_LDR
 		// dedans et la cible devient visible.
-		if (m_editorViewportTarget.IsValid()
-			&& !m_worldEditorShell->Panels().empty()
-			&& m_worldEditorShell->Panels()[0])
+		if (Ed().viewportTarget.IsValid()
+			&& !Ed().worldEditorShell->Panels().empty()
+			&& Ed().worldEditorShell->Panels()[0])
 		{
 			auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
-				m_worldEditorShell->MutablePanels()[0].get());
+				Ed().worldEditorShell->MutablePanels()[0].get());
 			if (scenePanel != nullptr)
 			{
 				scenePanel->SetEditorViewportTextureId(
-					m_editorViewportTarget.GetImguiTextureId());
+					Ed().viewportTarget.GetImguiTextureId());
 			}
 		}
 		// Sous-projet 1, bloc B/C — alimente l'Outliner / l'Inspector : lie le
@@ -1506,27 +1586,27 @@ namespace engine
 		// = shell) puis le reconstruit. Coût négligeable (quelques clears +
 		// push de vecteurs) ; fait chaque frame pour refléter les placements/
 		// suppressions immédiatement.
-		if (m_worldEditorSession)
+		if (Ed().worldEditorSession)
 		{
-			m_worldEditorShell->MutableSceneModel().Bind(
-				&m_worldEditorSession->Doc(),
-				&m_worldEditorShell->GetMeshInsertDocument(),
-				&m_worldEditorShell->GetDungeonPortalDocument());
-			m_worldEditorShell->MutableSceneModel().Rebuild();
+			Ed().worldEditorShell->MutableSceneModel().Bind(
+				&Ed().worldEditorSession->Doc(),
+				&Ed().worldEditorShell->GetMeshInsertDocument(),
+				&Ed().worldEditorShell->GetDungeonPortalDocument());
+			Ed().worldEditorShell->MutableSceneModel().Rebuild();
 
 			// Sous-projet 1, bloc D — foncteur d'écriture de transform consommé
 			// par l'Inspector (SetEntityTransformCommand). Écrit dans le
 			// document concret par EntityId.index (= position dans la liste
 			// source au moment du Rebuild de cette frame). Capture [this] :
 			// l'Engine survit aux commandes (undo/redo différé OK).
-			m_worldEditorShell->SetTransformWriter(
+			Ed().worldEditorShell->SetTransformWriter(
 				[this](engine::editor::scene::EntityId id,
 					const engine::editor::scene::EntityTransform& t)
 				{
 					using K = engine::editor::scene::EntityKind;
-					if (id.kind == K::LayoutInstance && m_worldEditorSession)
+					if (id.kind == K::LayoutInstance && Ed().worldEditorSession)
 					{
-						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						auto& insts = Ed().worldEditorSession->MutableDoc().layoutInstances;
 						if (id.index < insts.size())
 						{
 							auto& inst = insts[id.index];
@@ -1537,9 +1617,9 @@ namespace engine
 							inst.uniformScale = static_cast<double>(t.uniformScale);
 						}
 					}
-					else if (id.kind == K::MeshInsert && m_worldEditorShell)
+					else if (id.kind == K::MeshInsert && Ed().worldEditorShell)
 					{
-						auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+						auto& doc = Ed().worldEditorShell->MutableMeshInsertDocument();
 						const auto& all = doc.All();
 						if (id.index < all.size())
 						{
@@ -1550,9 +1630,9 @@ namespace engine
 							doc.Update(updated.guid, updated);
 						}
 					}
-					else if (id.kind == K::DungeonPortal && m_worldEditorShell)
+					else if (id.kind == K::DungeonPortal && Ed().worldEditorShell)
 					{
-						auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+						auto& doc = Ed().worldEditorShell->MutableDungeonPortalDocument();
 						const auto& all = doc.All();
 						if (id.index < all.size())
 						{
@@ -1581,26 +1661,26 @@ namespace engine
 				// kind non éditable.
 				ops.capture = [this](EntityId id, EntitySnapshot& out) -> bool
 				{
-					if (id.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					if (id.kind == EntityKind::LayoutInstance && Ed().worldEditorSession)
 					{
-						const auto& insts = m_worldEditorSession->Doc().layoutInstances;
+						const auto& insts = Ed().worldEditorSession->Doc().layoutInstances;
 						if (id.index >= insts.size()) return false;
 						out.kind = id.kind;
 						out.layout = insts[id.index];
 						out.layoutIndex = id.index;
 						return true;
 					}
-					if (id.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					if (id.kind == EntityKind::MeshInsert && Ed().worldEditorShell)
 					{
-						const auto& all = m_worldEditorShell->GetMeshInsertDocument().All();
+						const auto& all = Ed().worldEditorShell->GetMeshInsertDocument().All();
 						if (id.index >= all.size()) return false;
 						out.kind = id.kind;
 						out.meshInsert = all[id.index];
 						return true;
 					}
-					if (id.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					if (id.kind == EntityKind::DungeonPortal && Ed().worldEditorShell)
 					{
-						const auto& all = m_worldEditorShell->GetDungeonPortalDocument().All();
+						const auto& all = Ed().worldEditorShell->GetDungeonPortalDocument().All();
 						if (id.index >= all.size()) return false;
 						out.kind = id.kind;
 						out.portal = all[id.index];
@@ -1613,9 +1693,9 @@ namespace engine
 				// par index (instable après édition structurelle).
 				ops.remove = [this](const EntitySnapshot& s) -> bool
 				{
-					if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					if (s.kind == EntityKind::LayoutInstance && Ed().worldEditorSession)
 					{
-						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						auto& insts = Ed().worldEditorSession->MutableDoc().layoutInstances;
 						for (size_t i = 0; i < insts.size(); ++i)
 						{
 							if (insts[i].guid == s.layout.guid)
@@ -1626,10 +1706,10 @@ namespace engine
 						}
 						return false;
 					}
-					if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
-						return m_worldEditorShell->MutableMeshInsertDocument().Remove(s.meshInsert.guid);
-					if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
-						return m_worldEditorShell->MutableDungeonPortalDocument().Remove(s.portal.guid);
+					if (s.kind == EntityKind::MeshInsert && Ed().worldEditorShell)
+						return Ed().worldEditorShell->MutableMeshInsertDocument().Remove(s.meshInsert.guid);
+					if (s.kind == EntityKind::DungeonPortal && Ed().worldEditorShell)
+						return Ed().worldEditorShell->MutableDungeonPortalDocument().Remove(s.portal.guid);
 					return false;
 				};
 
@@ -1638,21 +1718,21 @@ namespace engine
 				// pour les volumes.
 				ops.restore = [this](const EntitySnapshot& s) -> bool
 				{
-					if (s.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					if (s.kind == EntityKind::LayoutInstance && Ed().worldEditorSession)
 					{
-						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						auto& insts = Ed().worldEditorSession->MutableDoc().layoutInstances;
 						const size_t at = std::min<size_t>(s.layoutIndex, insts.size());
 						insts.insert(insts.begin() + static_cast<ptrdiff_t>(at), s.layout);
 						return true;
 					}
-					if (s.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					if (s.kind == EntityKind::MeshInsert && Ed().worldEditorShell)
 					{
-						(void)m_worldEditorShell->MutableMeshInsertDocument().Add(s.meshInsert);
+						(void)Ed().worldEditorShell->MutableMeshInsertDocument().Add(s.meshInsert);
 						return true;
 					}
-					if (s.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					if (s.kind == EntityKind::DungeonPortal && Ed().worldEditorShell)
 					{
-						(void)m_worldEditorShell->MutableDungeonPortalDocument().Add(s.portal);
+						(void)Ed().worldEditorShell->MutableDungeonPortalDocument().Add(s.portal);
 						return true;
 					}
 					return false;
@@ -1665,9 +1745,9 @@ namespace engine
 				{
 					constexpr double kDupOffsetM = 1.5;
 					outCopy = src;
-					if (src.kind == EntityKind::LayoutInstance && m_worldEditorSession)
+					if (src.kind == EntityKind::LayoutInstance && Ed().worldEditorSession)
 					{
-						auto& insts = m_worldEditorSession->MutableDoc().layoutInstances;
+						auto& insts = Ed().worldEditorSession->MutableDoc().layoutInstances;
 						// Préfixe "we_dup_" distinct du "we_inst_" de la
 						// session : aucun risque de collision de guid.
 						static uint64_t s_dupSeq = 1u;
@@ -1680,17 +1760,17 @@ namespace engine
 						insts.push_back(outCopy.layout);
 						return true;
 					}
-					if (src.kind == EntityKind::MeshInsert && m_worldEditorShell)
+					if (src.kind == EntityKind::MeshInsert && Ed().worldEditorShell)
 					{
-						auto& doc = m_worldEditorShell->MutableMeshInsertDocument();
+						auto& doc = Ed().worldEditorShell->MutableMeshInsertDocument();
 						outCopy.meshInsert.guid = 0u; // Add() assigne un nouveau guid
 						outCopy.meshInsert.worldPosition.x += static_cast<float>(kDupOffsetM);
 						outCopy.meshInsert.guid = doc.Add(outCopy.meshInsert);
 						return true;
 					}
-					if (src.kind == EntityKind::DungeonPortal && m_worldEditorShell)
+					if (src.kind == EntityKind::DungeonPortal && Ed().worldEditorShell)
 					{
-						auto& doc = m_worldEditorShell->MutableDungeonPortalDocument();
+						auto& doc = Ed().worldEditorShell->MutableDungeonPortalDocument();
 						outCopy.portal.guid = 0u; // Add() assigne un nouveau guid
 						outCopy.portal.worldPosition.x += static_cast<float>(kDupOffsetM);
 						outCopy.portal.guid = doc.Add(outCopy.portal);
@@ -1699,13 +1779,13 @@ namespace engine
 					return false;
 				};
 
-				m_worldEditorShell->SetEntityEditOps(std::move(ops));
+				Ed().worldEditorShell->SetEntityEditOps(std::move(ops));
 			}
 		}
 		// Aperçu 3D live des bâtiments (brouillon + placements) dans la vue
 		// éditeur. Reconstruit m_props seulement si l'aperçu est « sale ».
 		SyncEditorBuildingPreview();
-		m_worldEditorShell->RenderFrame();
+		Ed().worldEditorShell->RenderFrame();
 		// Gizmo (axes/anneaux X=rouge/Y=vert/Z=bleu) sur la pièce active,
 		// en overlay sur la 3D (sous les panneaux). Visuel seul pour l'instant.
 		DrawEditorBuildingGizmo();
@@ -1775,7 +1855,7 @@ namespace engine
 		bool terrainPick = false;
 		float pickX = 0.f;
 		float pickZ = 0.f;
-		if (m_terrain.IsValid() && m_worldEditorSession)
+		if (m_terrain.IsValid() && Ed().worldEditorSession)
 		{
 			const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
 			if (hm.width > 0u && hm.height > 0u)
@@ -1785,32 +1865,32 @@ namespace engine
 				overlay.terrainOriginZ = m_terrain.GetTerrainOriginZ();
 				overlay.terrainWorldSize = m_terrain.GetTerrainWorldSize();
 				overlay.heightScale = m_terrain.GetHeightScale();
-				overlay.showGrid = m_worldEditorSession->ShowGrid();
-				overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
-				overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
+				overlay.showGrid = Ed().worldEditorSession->ShowGrid();
+				overlay.gridCellMeters = Ed().worldEditorSession->GridCellMeters();
+				overlay.brushRadiusMeters = Ed().worldEditorSession->BrushRadius();
 				const bool capBeforeUi = m_imguiOverlay->WantsCaptureMouse();
 				terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
 					overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 					pickX, pickZ);
 				overlay.showBrushPreview =
-					terrainPick && !capBeforeUi && m_worldEditorSession->TerrainEditMode() != 3
-					&& m_worldEditorSession->TerrainEditMode() != 4;
+					terrainPick && !capBeforeUi && Ed().worldEditorSession->TerrainEditMode() != 3
+					&& Ed().worldEditorSession->TerrainEditMode() != 4;
 				if (terrainPick)
 				{
 					overlay.brushWorldX = pickX;
 					overlay.brushWorldZ = pickZ;
 				}
 			}
-			overlay.layoutInstancesOverlay = &m_worldEditorSession->MutableDoc().layoutInstances;
-			overlay.selectedLayoutInstanceOverlay = m_worldEditorSession->SelectedLayoutInstanceIndex();
+			overlay.layoutInstancesOverlay = &Ed().worldEditorSession->MutableDoc().layoutInstances;
+			overlay.selectedLayoutInstanceOverlay = Ed().worldEditorSession->SelectedLayoutInstanceIndex();
 		}
 
-		m_worldEditorImGui->BuildUi(&overlay);
+		Ed().worldEditorImGui->BuildUi(&overlay);
 
-		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
-			&& m_worldEditorSession->ConsumeRouteApplyDraftRequest())
+		if (m_worldEditorExe && Ed().worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
+			&& Ed().worldEditorSession->ConsumeRouteApplyDraftRequest())
 		{
-			engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+			engine::editor::WorldEditorSession& ws = *Ed().worldEditorSession;
 			if (ws.RouteDraftPoints().size() < 2u)
 			{
 				ws.SetStatus("Routes: au moins 2 points dans le brouillon (clics gauche sur le sol).");
@@ -1856,14 +1936,14 @@ namespace engine
 		// sélection/édition des pièces de bâtiment. Évite de sculpter le
 		// terrain par réflexe en voulant choisir une pièce.
 		const bool buildingEditMode =
-			(m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel())
-				? m_worldEditorShell->GetBuildingEditorPanel()->EditModeActive()
+			(Ed().worldEditorShell && Ed().worldEditorShell->GetBuildingEditorPanel())
+				? Ed().worldEditorShell->GetBuildingEditorPanel()->EditModeActive()
 				: false;
 
 		bool modernEditActive = false;
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
-			const engine::editor::world::ActiveTool tool = m_worldEditorShell->GetActiveTool();
+			const engine::editor::world::ActiveTool tool = Ed().worldEditorShell->GetActiveTool();
 			const bool freeClick = !m_imguiOverlay->WantsCaptureMouse()
 				&& !m_input.IsDown(engine::platform::Key::Control)
 				&& !buildingEditMode;
@@ -1873,7 +1953,7 @@ namespace engine
 				if (freeClick)
 				{
 					engine::editor::world::TerrainSculptTool& sculpt =
-						m_worldEditorShell->MutableSculptTool();
+						Ed().worldEditorShell->MutableSculptTool();
 					const int mx = m_input.MouseX();
 					const int my = m_input.MouseY();
 					if (m_input.WasMousePressed(engine::platform::MouseButton::Left))
@@ -1894,7 +1974,7 @@ namespace engine
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
 					engine::editor::world::TerrainStampTool& stamp =
-						m_worldEditorShell->MutableStampTool();
+						Ed().worldEditorShell->MutableStampTool();
 					stamp.OnClickAt(m_cfg, pickX, pickZ);
 					stamp.Apply();
 				}
@@ -1908,7 +1988,7 @@ namespace engine
 				if (freeClick && terrainPick
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
-					m_worldEditorShell->MutableMountainRangeTool().AddVertex(pickX, pickZ);
+					Ed().worldEditorShell->MutableMountainRangeTool().AddVertex(pickX, pickZ);
 				}
 			}
 			else if (tool == engine::editor::world::ActiveTool::ValleyChain)
@@ -1919,7 +1999,7 @@ namespace engine
 				if (freeClick && terrainPick
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
-					m_worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
+					Ed().worldEditorShell->MutableValleyChainTool().AddVertex(pickX, pickZ);
 				}
 			}
 			else if (tool == engine::editor::world::ActiveTool::Spline)
@@ -1933,7 +2013,7 @@ namespace engine
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
 					engine::editor::world::SplineTool& spline =
-						m_worldEditorShell->MutableSplineTool();
+						Ed().worldEditorShell->MutableSplineTool();
 					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
 					spline.AddNode(engine::math::Vec3{ pickX, wy, pickZ },
 						spline.DefaultWidthMeters());
@@ -1949,7 +2029,7 @@ namespace engine
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
 					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
-					m_worldEditorShell->MutableZoneTool().AddPoint(
+					Ed().worldEditorShell->MutableZoneTool().AddPoint(
 						engine::math::Vec3{ pickX, wy, pickZ });
 				}
 			}
@@ -1963,10 +2043,10 @@ namespace engine
 					&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
 					const float wy = m_terrainCollider.GroundHeightAt(pickX, pickZ);
-					m_worldEditorShell->MutableCommandStack().Push(
+					Ed().worldEditorShell->MutableCommandStack().Push(
 						std::make_unique<engine::editor::world::AddHazardCommand>(
-							m_worldEditorShell->MutableHazardDocument(),
-							m_worldEditorShell->GetHazardTool().CreateAt(
+							Ed().worldEditorShell->MutableHazardDocument(),
+							Ed().worldEditorShell->GetHazardTool().CreateAt(
 								engine::math::Vec3{ pickX, wy, pickZ })));
 				}
 			}
@@ -1991,13 +2071,13 @@ namespace engine
 		// corresponde à ce qui est affiché. Remplace la saisie de valeurs « à
 		// l'aveugle » : on clique la pièce, le gizmo s'y replace.
 		if (!gizmoGrabbed && buildingEditMode && m_editorPreviewValid && terrainPick
-			&& m_worldEditorShell && m_worldEditorShell->GetBuildingEditorPanel()
+			&& Ed().worldEditorShell && Ed().worldEditorShell->GetBuildingEditorPanel()
 			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& !m_input.IsDown(engine::platform::Key::Control)
 			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 		{
 			engine::editor::world::panels::BuildingEditorPanel* bpanel =
-				m_worldEditorShell->GetBuildingEditorPanel();
+				Ed().worldEditorShell->GetBuildingEditorPanel();
 			const auto& parts = bpanel->DraftParts();
 			constexpr float kDeg2Rad = 3.14159265f / 180.f;
 			const float c = std::cos(m_editorPreviewYaw * kDeg2Rad);
@@ -2029,7 +2109,7 @@ namespace engine
 		// (Ctrl = picking d'entité ci-dessous). S'il capture la souris, le
 		// clic ne doit alimenter NI le picking NI les outils terrain.
 		bool sceneGizmoGrabbed = false;
-		if (!buildingEditMode && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+		if (!buildingEditMode && Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized()
 			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& !m_input.IsDown(engine::platform::Key::Control))
 		{
@@ -2043,13 +2123,13 @@ namespace engine
 		// (sculpt/placement) pour ne pas interferer avec les deux systemes.
 		// Roadmap-6 : Ctrl+Maj+clic BASCULE l'entité dans la multi-sélection ;
 		// Ctrl+clic dans le vide vide la sélection.
-		if (terrainPick && m_worldEditorShell && m_worldEditorShell->IsInitialized()
+		if (terrainPick && Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized()
 			&& !m_imguiOverlay->WantsCaptureMouse()
 			&& m_input.IsDown(engine::platform::Key::Control)
 			&& m_input.WasMousePressed(engine::platform::MouseButton::Left))
 		{
 			const std::vector<engine::editor::scene::SceneEntity>& entities =
-				m_worldEditorShell->GetSceneModel().Entities();
+				Ed().worldEditorShell->GetSceneModel().Entities();
 			const engine::editor::scene::SceneEntity* best = nullptr;
 			float bestDist2 = 9.0f; // (3 m)^2
 			for (const engine::editor::scene::SceneEntity& e : entities)
@@ -2064,23 +2144,23 @@ namespace engine
 			if (best != nullptr)
 			{
 				if (shiftHeld)
-					m_worldEditorShell->MutableSelection().Toggle(best->id);
+					Ed().worldEditorShell->MutableSelection().Toggle(best->id);
 				else
-					m_worldEditorShell->MutableSelection().Select(best->id);
+					Ed().worldEditorShell->MutableSelection().Select(best->id);
 				LOG_INFO(EditorWorld, "[WorldEditor] Entite selectionnee (Ctrl+clic{}): {} ({} au total)",
 					shiftHeld ? "+Maj" : "", best->label,
-					m_worldEditorShell->GetSelection().Count());
+					Ed().worldEditorShell->GetSelection().Count());
 			}
 			else if (!shiftHeld)
 			{
-				m_worldEditorShell->MutableSelection().Clear();
+				Ed().worldEditorShell->MutableSelection().Clear();
 			}
 		}
 
-		if (!modernEditActive && !buildingEditMode && !sceneGizmoGrabbed && m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
+		if (!modernEditActive && !buildingEditMode && !sceneGizmoGrabbed && m_terrain.IsValid() && Ed().worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 		{
 			const bool cap = m_imguiOverlay->WantsCaptureMouse();
-			engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+			engine::editor::WorldEditorSession& ws = *Ed().worldEditorSession;
 			if (!cap && ws.TerrainEditMode() == 4 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 			{
 				const float ox = m_terrain.GetTerrainOriginX();
@@ -2102,30 +2182,30 @@ namespace engine
 					// le clic passe par des commandes sur la pile du shell
 					// (adressage par guid stable). Fallback direct historique
 					// si le shell n'est pas initialisé (pas de pile undo).
-					if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+					if (Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 					{
 						// Foncteurs capturant [this] : l'Engine survit aux
 						// commandes dans la pile undo (même pattern Lot 5).
 						engine::editor::scene::LayoutPlacementOps ops;
 						ops.add = [this](const engine::editor::WorldMapEditLayoutInstance& inst) -> bool
 						{
-							return m_worldEditorSession ? m_worldEditorSession->AddLayoutInstance(inst) : false;
+							return Ed().worldEditorSession ? Ed().worldEditorSession->AddLayoutInstance(inst) : false;
 						};
 						ops.removeByGuid = [this](const std::string& guid) -> bool
 						{
-							return m_worldEditorSession ? m_worldEditorSession->RemoveLayoutInstanceByGuid(guid) : false;
+							return Ed().worldEditorSession ? Ed().worldEditorSession->RemoveLayoutInstanceByGuid(guid) : false;
 						};
 						ops.setPositionByGuid = [this](const std::string& guid, double x, double y, double z) -> bool
 						{
-							return m_worldEditorSession
-								? m_worldEditorSession->SetLayoutInstancePositionByGuid(guid, x, y, z) : false;
+							return Ed().worldEditorSession
+								? Ed().worldEditorSession->SetLayoutInstancePositionByGuid(guid, x, y, z) : false;
 						};
 						const int selIdx = ws.SelectedLayoutInstanceIndex();
 						if (selIdx >= 0 && selIdx < static_cast<int>(ws.Doc().layoutInstances.size()))
 						{
 							const engine::editor::WorldMapEditLayoutInstance& inst =
 								ws.Doc().layoutInstances[static_cast<size_t>(selIdx)];
-							m_worldEditorShell->MutableCommandStack().Push(
+							Ed().worldEditorShell->MutableCommandStack().Push(
 								std::make_unique<engine::editor::scene::MoveLayoutInstanceCommand>(
 									inst.guid, inst.worldX, inst.worldY, inst.worldZ,
 									static_cast<double>(pickX), static_cast<double>(wy), static_cast<double>(pickZ),
@@ -2138,7 +2218,7 @@ namespace engine
 							if (ws.BuildLayoutInstanceForPlacement(m_cfg, static_cast<double>(pickX),
 									static_cast<double>(wy), static_cast<double>(pickZ), inst))
 							{
-								m_worldEditorShell->MutableCommandStack().Push(
+								Ed().worldEditorShell->MutableCommandStack().Push(
 									std::make_unique<engine::editor::scene::PlaceLayoutInstanceCommand>(
 										std::move(inst), ops));
 							}
@@ -2198,9 +2278,9 @@ namespace engine
 	{
 		if (m_worldEditorExe)
 		{
-			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+			Ed().worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
 #if defined(_WIN32)
-			m_worldEditorSession->SetTerrainSaveHook(
+			Ed().worldEditorSession->SetTerrainSaveHook(
 				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
 					if (!m_worldEditorTerrainTools.IsValid())
 					{
@@ -2231,7 +2311,7 @@ namespace engine
 				});
 #else
 			// `TerrainEditingTools` / flush disque ne sont branchés que sous Windows pour le WE actuel.
-			m_worldEditorSession->SetTerrainSaveHook(
+			Ed().worldEditorSession->SetTerrainSaveHook(
 				[](const engine::core::Config&, const engine::editor::WorldMapEditDocument&) -> bool { return true; });
 #endif
 		}
@@ -2242,16 +2322,16 @@ namespace engine
 	{
 		if (m_editorEnabled)
 		{
-			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			if (!m_editorMode->Init(m_cfg, m_worldEditorExe))
+			Ed().editorMode = std::make_unique<engine::editor::EditorMode>();
+			if (!Ed().editorMode->Init(m_cfg, m_worldEditorExe))
 			{
 				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
-				m_editorMode.reset();
+				Ed().editorMode.reset();
 				m_editorEnabled = false;
 			}
 			else
 			{
-				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
+				const engine::render::Camera editorCamera = Ed().editorMode->BuildInitialCamera();
 				m_renderStates[0].camera = editorCamera;
 				m_renderStates[1].camera = editorCamera;
 				if (m_worldEditorExe)
@@ -2267,11 +2347,11 @@ namespace engine
 		}
 
 		// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
-		// Indépendante de m_editorMode (qui sert le shell M43.x). Si
+		// Indépendante de EditorState::editorMode (qui sert le shell M43.x). Si
 		// `--editor-world` ou `editor.world.enabled = true`, on instancie le
 		// shell ; il vit en parallèle de WorldEditorImGui. Si les deux flags
 		// sont actifs ensemble, c'est le cas non-supporté (logué en warning
-		// ci-dessous). Le SetWorldEditorWorld sur m_editorMode sert d'accès
+		// ci-dessous). Le SetWorldEditorWorld sur EditorState::editorMode sert d'accès
 		// public si un sous-système a besoin de le savoir.
 		if (worldEditorWorldFlag)
 		{
@@ -2289,15 +2369,15 @@ namespace engine
 				LOG_INFO(Core,
 					"[Boot] --world-editor + --editor-world (ou editor.world.enabled) — les deux shells coexistent");
 			}
-			if (m_editorMode)
+			if (Ed().editorMode)
 			{
-				m_editorMode->SetWorldEditorWorld(true);
+				Ed().editorMode->SetWorldEditorWorld(true);
 			}
-			m_worldEditorShell = std::make_unique<engine::editor::world::WorldEditorShell>();
-			if (!m_worldEditorShell->Init(m_cfg))
+			Ed().worldEditorShell = std::make_unique<engine::editor::world::WorldEditorShell>();
+			if (!Ed().worldEditorShell->Init(m_cfg))
 			{
 				LOG_ERROR(EditorWorld, "[Boot] WorldEditorShell::Init a échoué — shell désactivé");
-				m_worldEditorShell.reset();
+				Ed().worldEditorShell.reset();
 			}
 			else
 			{
@@ -2307,7 +2387,7 @@ namespace engine
 				// de M100.1 pour éviter la duplication File/Fichier visible.
 				if (m_worldEditorExe)
 				{
-					m_worldEditorShell->SetMenuBarSuppressed(true);
+					Ed().worldEditorShell->SetMenuBarSuppressed(true);
 				}
 			}
 		}
@@ -2316,22 +2396,22 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::ShutdownEditorViewportTarget()
 	{
-		m_editorViewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
+		Ed().viewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
 	}
 
 #if defined(_WIN32)
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::ShutdownEditorUiBeforeImGui()
 	{
-		if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
-		m_texturePreviewCache.reset();
+		if (Ed().texturePreviewCache) Ed().texturePreviewCache->Shutdown();
+		Ed().texturePreviewCache.reset();
 		// M100.1 — Persiste le layout du shell (ImGui::SaveIniSettingsToDisk)
 		// AVANT WorldEditorImGui::Shutdown, qui detruit le contexte ImGui.
 		// Sinon le Shell::Shutdown appele plus bas (apres destruction du
 		// contexte + du device Vulkan) ecrirait via un contexte ImGui nul
 		// -> access violation a la fermeture (SEH 0xC0000005). Idempotent :
 		// le 2e Shutdown plus bas est neutralise par la garde m_initialized.
-		if (m_worldEditorShell) m_worldEditorShell->Shutdown();
+		if (Ed().worldEditorShell) Ed().worldEditorShell->Shutdown();
 	}
 #endif
 
@@ -2339,31 +2419,31 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::ReleaseWorldEditorImGui()
 	{
-		m_worldEditorImGui.reset();
+		Ed().worldEditorImGui.reset();
 	}
 #endif
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::ShutdownEditorComponents()
 	{
-		if (m_editorMode)
+		if (Ed().editorMode)
 		{
-			m_editorMode->Shutdown(m_window);
-			m_editorMode.reset();
+			Ed().editorMode->Shutdown(m_window);
+			Ed().editorMode.reset();
 		}
 		// M100.1 — Persiste le layout ImGui du nouvel éditeur monde puis
 		// libère ses panneaux. Idempotent si Init() n'a pas réussi.
-		if (m_worldEditorShell)
+		if (Ed().worldEditorShell)
 		{
-			m_worldEditorShell->Shutdown();
-			m_worldEditorShell.reset();
+			Ed().worldEditorShell->Shutdown();
+			Ed().worldEditorShell.reset();
 		}
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::HandleWorldEditorShortcuts()
 	{
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		if (Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized())
 		{
 			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
 			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
@@ -2372,17 +2452,17 @@ namespace engine
 			// undo globale (terrain/scène) — évite tout conflit : l'utilisateur
 			// active cette case quand il travaille la composition.
 			engine::editor::world::panels::BuildingEditorPanel* bp =
-				m_worldEditorShell->GetBuildingEditorPanel();
+				Ed().worldEditorShell->GetBuildingEditorPanel();
 			const bool buildMode = bp && bp->EditModeActive();
 			if (m_input.WasPressed(engine::platform::Key::Z))
 			{
 				if (ctrl && buildMode) { if (shift) bp->Redo(); else bp->Undo(); }
-				else m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+				else Ed().worldEditorShell->HandleShortcut('Z', ctrl, shift);
 			}
 			if (m_input.WasPressed(engine::platform::Key::Y))
 			{
 				if (ctrl && buildMode) bp->Redo();
-				else m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+				else Ed().worldEditorShell->HandleShortcut('Y', ctrl, shift);
 			}
 			// Lot 5 (2026-07-18) — Ctrl+D (dupliquer la sélection) et Suppr
 			// (supprimer la sélection). Ignorés quand ImGui édite du texte
@@ -2402,11 +2482,11 @@ namespace engine
 				{
 					// shift transmis tel quel : Ctrl+Shift+D reste l'outil
 					// Dungeon Portal (géré par le shell).
-					m_worldEditorShell->HandleShortcut('D', true, shift);
+					Ed().worldEditorShell->HandleShortcut('D', true, shift);
 				}
 				if (!ctrl && !shift && m_input.WasPressed(engine::platform::Key::Delete))
 				{
-					m_worldEditorShell->HandleShortcut(0x2E, false, false);
+					Ed().worldEditorShell->HandleShortcut(0x2E, false, false);
 				}
 				// Roadmap-6 (2026-07-19) — E / T / C : mode du gizmo de scène
 				// (dÉplacer / Tourner / éChelle). Sans modifiers, hors saisie
@@ -2414,11 +2494,11 @@ namespace engine
 				if (!ctrl && !shift)
 				{
 					if (m_input.WasPressed(engine::platform::Key::E))
-						m_worldEditorShell->HandleShortcut('E', false, false);
+						Ed().worldEditorShell->HandleShortcut('E', false, false);
 					if (m_input.WasPressed(engine::platform::Key::T))
-						m_worldEditorShell->HandleShortcut('T', false, false);
+						Ed().worldEditorShell->HandleShortcut('T', false, false);
 					if (m_input.WasPressed(engine::platform::Key::C))
-						m_worldEditorShell->HandleShortcut('C', false, false);
+						Ed().worldEditorShell->HandleShortcut('C', false, false);
 				}
 			}
 		}
@@ -2428,7 +2508,7 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::TickWorldEditor()
 	{
-		if (m_worldEditorExe && m_worldEditorSession)
+		if (m_worldEditorExe && Ed().worldEditorSession)
 		{
 			UpdateWorldEditorSession();
 		}
@@ -2441,19 +2521,19 @@ namespace engine
 		{
 			SyncWorldEditorHeightmapFromDocument();
 		}
-		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
+		if (m_worldEditorExe && Ed().worldEditorSession && Ed().texturePreviewCache)
 		{
-			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
+			for (const std::string& rel : Ed().worldEditorSession->RecentlyImportedTextures())
 			{
-				m_texturePreviewCache->Invalidate(rel);
+				Ed().texturePreviewCache->Invalidate(rel);
 			}
-			m_worldEditorSession->ClearRecentlyImportedTextures();
+			Ed().worldEditorSession->ClearRecentlyImportedTextures();
 		}
 		ProcessSplatRefsDirty();
-		if (m_texturePreviewCache)
+		if (Ed().texturePreviewCache)
 		{
-			m_texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
-			                             kEditorTexCacheFramesInFlight);
+			Ed().texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
+			                             EditorState::kTexCacheFramesInFlight);
 		}
 	}
 #endif
@@ -2462,11 +2542,11 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::ResizeWorldEditorViewportTargetIfNeeded()
 	{
-		if (m_worldEditorExe && m_worldEditorShell
-			&& m_worldEditorShell->IsInitialized()
-			&& m_editorViewportTarget.IsValid()
-			&& !m_worldEditorShell->Panels().empty()
-			&& m_worldEditorShell->Panels()[0])
+		if (m_worldEditorExe && Ed().worldEditorShell
+			&& Ed().worldEditorShell->IsInitialized()
+			&& Ed().viewportTarget.IsValid()
+			&& !Ed().worldEditorShell->Panels().empty()
+			&& Ed().worldEditorShell->Panels()[0])
 		{
 			ResizeWorldEditorViewportTarget();
 		}
@@ -2477,7 +2557,7 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::RenderWorldEditorShellIfReady(engine::RenderState& out)
 	{
-		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
+		if (Ed().worldEditorShell && Ed().worldEditorShell->IsInitialized()
 			&& m_imguiOverlay && m_imguiOverlay->IsReady())
 		{
 			RenderWorldEditorShell(out);
@@ -2488,11 +2568,11 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::CopySceneToEditorViewport(engine::render::FrameResources& fr, VkExtent2D extent)
 	{
-		if (m_worldEditorExe && m_editorViewportTarget.IsValid()
+		if (m_worldEditorExe && Ed().viewportTarget.IsValid()
 		    && m_fgSceneColorLDRId != engine::render::kInvalidResourceId)
 		{
 		    VkImage sceneLdr = m_fgRegistry.getImage(m_fgSceneColorLDRId);
-		    VkImage dst      = m_editorViewportTarget.GetImage();
+		    VkImage dst      = Ed().viewportTarget.GetImage();
 		    if (sceneLdr != VK_NULL_HANDLE && dst != VK_NULL_HANDLE)
 		    {
 		        // Step 1: transitions de layout.
@@ -2530,8 +2610,8 @@ namespace engine
 		        region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 		        region.dstOffsets[0]  = { 0, 0, 0 };
 		        region.dstOffsets[1]  = {
-		            static_cast<int32_t>(m_editorViewportTarget.GetWidth()),
-		            static_cast<int32_t>(m_editorViewportTarget.GetHeight()),
+		            static_cast<int32_t>(Ed().viewportTarget.GetWidth()),
+		            static_cast<int32_t>(Ed().viewportTarget.GetHeight()),
 		            1
 		        };
 		        vkCmdBlitImage(fr.cmdBuffer,
@@ -2569,34 +2649,34 @@ namespace engine
 		if (m_worldEditorExe)
 		{
 			// Panneaux de l'éditeur monde, dessinés dans le contexte de l'overlay.
-			m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
-			m_worldEditorImGui->SetOverlay(m_imguiOverlay.get());
-			m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+			Ed().worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
+			Ed().worldEditorImGui->SetOverlay(m_imguiOverlay.get());
+			Ed().worldEditorImGui->SetEditorContext(Ed().worldEditorSession.get(), &m_cfg);
 			// M100.46 incrément 3 — branche le Shell pour que le
 			// dialog Zone Presets puisse résoudre documents et
 			// catalogs au moment de l'exécution.
-			m_worldEditorImGui->SetWorldEditorShell(m_worldEditorShell.get());
+			Ed().worldEditorImGui->SetWorldEditorShell(Ed().worldEditorShell.get());
 			// Réorganisation UI 2026-07-17 — « Fichier > Quitter » :
 			// demande de fermeture par le même chemin que la croix
 			// fenêtre (sortie propre de la boucle principale).
-			m_worldEditorImGui->SetQuitCallback([this] { OnQuit(); });
+			Ed().worldEditorImGui->SetQuitCallback([this] { OnQuit(); });
 
 			// Cache de vignettes pour les textures de splatting.
-			m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
+			Ed().texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
 			const std::string contentDir = m_cfg.GetString("paths.content", "game/data");
 			const std::filesystem::path absContent = std::filesystem::absolute(contentDir);
-			if (!m_texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
+			if (!Ed().texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
 			                                 m_vkDeviceContext.GetPhysicalDevice(),
 			                                 m_vkDeviceContext.GetGraphicsQueue(),
 			                                 m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 			                                 absContent.string()))
 			{
 				LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
-				m_texturePreviewCache.reset();
+				Ed().texturePreviewCache.reset();
 			}
-			if (m_worldEditorImGui && m_texturePreviewCache)
+			if (Ed().worldEditorImGui && Ed().texturePreviewCache)
 			{
-				m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
+				Ed().worldEditorImGui->SetTexturePreviewCache(Ed().texturePreviewCache.get());
 			}
 
 			// M100.34 incrément 1 — Cible offscreen viewport éditeur.
@@ -2605,7 +2685,7 @@ namespace engine
 			// logique de resize sur la taille du ScenePanel.
 			const uint32_t initW = m_vkSwapchain.GetExtent().width;
 			const uint32_t initH = m_vkSwapchain.GetExtent().height;
-			if (!m_editorViewportTarget.Init(
+			if (!Ed().viewportTarget.Init(
 				m_vkDeviceContext.GetDevice(),
 				m_vkDeviceContext.GetPhysicalDevice(),
 				m_vkDeviceContext.GetGraphicsQueue(),
@@ -2621,41 +2701,41 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	bool Engine::HasEditorMode() const
 	{
-		return m_editorMode != nullptr;
+		return m_editorState && m_editorState->editorMode != nullptr;
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::UpdateEditorModeFrame(engine::RenderState& out, double dt)
 	{
-		m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
+		Ed().editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	bool Engine::HasEditorHubImGui() const
 	{
-		return m_editorHubImGui != nullptr;
+		return m_editorState && m_editorState->editorHubImGui != nullptr;
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	bool Engine::TryGetEditorWaterScene(const engine::world::water::WaterScene*& scene, bool& dirty) const
 	{
-		if (!m_worldEditorShell)
+		if (!m_editorState || !m_editorState->worldEditorShell)
 		{
 			return false;
 		}
-		scene = &m_worldEditorShell->GetWaterDocument().Get();
-		dirty = m_worldEditorShell->GetWaterDocument().IsDirty();
+		scene = &m_editorState->worldEditorShell->GetWaterDocument().Get();
+		dirty = m_editorState->worldEditorShell->GetWaterDocument().IsDirty();
 		return true;
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	bool Engine::ClearEditorWaterDirty()
 	{
-		if (!m_worldEditorShell)
+		if (!Ed().worldEditorShell)
 		{
 			return false;
 		}
-		m_worldEditorShell->MutableWaterDocument().ClearDirty();
+		Ed().worldEditorShell->MutableWaterDocument().ClearDirty();
 		return true;
 	}
 
@@ -2669,24 +2749,24 @@ namespace engine
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::BindWorldEditorDayNight()
 	{
-		if (m_worldEditorImGui)
+		if (Ed().worldEditorImGui)
 		{
-			m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
+			Ed().worldEditorImGui->SetDayNightCycle(&m_dayNight);
 		}
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::CreateEditorHubImGui()
 	{
-		m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
-		if (m_editorMode)
-			m_editorHubImGui->BindEditorMode(m_editorMode.get());
+		Ed().editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
+		if (Ed().editorMode)
+			Ed().editorHubImGui->BindEditorMode(Ed().editorMode.get());
 	}
 
 	// Intégration éditeur — voir la documentation dans Engine.h.
 	void Engine::RenderEditorHubImGui(float dw, float dh)
 	{
-		m_editorHubImGui->Render(dw, dh);
+		Ed().editorHubImGui->Render(dw, dh);
 	}
 #endif
 

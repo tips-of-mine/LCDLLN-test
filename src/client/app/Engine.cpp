@@ -3,10 +3,6 @@
 
 #include "src/client/render/static_mesh/StaticMeshLoader.h"
 #include "src/client/world/scatter/PropMaterialRules.h"
-#include "src/world_editor/ui/EditorMode.h"
-#include "src/world_editor/ui/WorldEditorImGui.h"
-#include "src/world_editor/ui/WorldEditorSession.h"
-#include "src/world_editor/core/WorldEditorShell.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/world/BoatDeck.h"
 #include "src/client/render/AuthImGuiRenderer.h"
@@ -31,7 +27,6 @@
 #include "src/client/render/GrimoireImGuiRenderer.h"
 #include "src/client/render/ClassSkillTreeImGuiRenderer.h"
 #include "src/client/render/CharacterWindowImGuiRenderer.h"
-#include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/LnTheme.h"
 #include "src/client/render/DeferredPipeline.h"
 
@@ -456,26 +451,10 @@ namespace engine
 		}
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
-		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");
-		m_editorEnabled = m_worldEditorExe || HasCliFlag(argc, argv, "--editor")
-			|| m_cfg.GetBool("editor.enabled", false);
-
-		// M100.1 — Branche éditeur monde "couche au-dessus" (distincte de
-		// --world-editor qui active le shell M43.x). Activée par le flag CLI
-		// --editor-world ou par editor.world.enabled = true dans config.json.
-		// Les deux shells peuvent cohabiter pendant la transition.
-		//
-		// **Auto-activation pour `lcdlln_world_editor.exe`** : depuis M100.46
-		// incrément 3 (dialog Zone Presets), l'éditeur monde a besoin du
-		// `WorldEditorShell` pour résoudre les 4 documents + 4 catalogs. Sans
-		// le Shell, l'entrée menu « Appliquer un preset de zone… » est grisée
-		// (m_shell nul). Le binaire `--world-editor` implique donc
-		// `--editor-world` par défaut. La warning « deux shells coexistent »
-		// reste loguée plus bas en info — c'est attendu.
-		const bool worldEditorWorldFlag =
-			HasCliFlag(argc, argv, "--editor-world")
-			|| m_cfg.GetBool("editor.world.enabled", false)
-			|| m_worldEditorExe;
+		// Options de lancement de l'éditeur : résolues dans EngineEditor.cpp
+		// (éditeur) ou ignorées par EngineEditorStubs.cpp (jeu).
+		bool worldEditorWorldFlag = false;
+		ResolveEditorLaunchFlags(argc, argv, worldEditorWorldFlag);
 
 		InitWorldEditorSession();
 

@@ -242,6 +242,7 @@ namespace tools::world_gen
 		GlobalWorld g;
 		g.contentRoot = opt.contentRoot;
 		g.outputRoot = opt.outputRoot.empty() ? opt.contentRoot : opt.outputRoot;
+		g.portalOutDir = opt.portalOut; // PORTAL.1
 		if (!LoadWorldMaster(opt.contentRoot, opt.worldId, g.master, err)) return false;
 
 		// Mesure du temps par étape (secondes cumulées), affichée en fin de génération.

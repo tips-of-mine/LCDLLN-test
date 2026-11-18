@@ -25,6 +25,9 @@
 //   world/<w>/quest_poi.json           positions des cibles de quêtes (minimap)
 //   world/<w>/portals.json             portails reliés à une autre carte (shard)
 //   world/<w>/sea_lines.json           lignes maritimes : pontons, quais, trajets des bateaux (shard, v1.0.125)
+// Sorties du PORTAIL WEB (PORTAL.1, seulement avec --portal-out <dossier>, HORS de game/data) :
+//   <dossier>/portal_map.png           affiche 4096² de la zone jouable (sans secrets)
+//   <dossier>/portal_map.json          étiquettes : villes importantes, régions (u, v normalisés)
 
 #include "WorldGenContext.h"
 #include "HouseCatalog.h"
@@ -494,10 +497,26 @@ namespace tools::world_gen
 			r = Lerp(r, 128, ash); g = Lerp(g, 122, ash); b = Lerp(b, 118, ash);
 		}
 
+		/// Style de rendu de la carte du continent. Les valeurs par défaut donnent
+		/// EXACTEMENT la carte du jeu (world_map.png, inchangée) ; l'affiche du
+		/// portail (PORTAL.1) les ajuste.
+		struct ContinentMapStyle
+		{
+			bool cellOutlines = true;    ///< liseré des cellules générées (repère de mapping)
+			bool continuousLines = false;///< rivières et routes en traits continus (sinon : 1 point sur 10)
+			int riverRadius = 0;         ///< demi-épaisseur des rivières (px, traits continus)
+			int roadRadius = 0;          ///< demi-épaisseur des routes (px, traits continus)
+			int majorRoadRadius = 0;     ///< demi-épaisseur des grandes routes (px, traits continus)
+			int cityRadius = 2;          ///< demi-côté du repère de ville (px) ; < 0 = aucun repère
+		};
+
 		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
 		/// lacs, routes, villes, cellules générées. Rendu parallèle par rangée.
+		/// \param originX, originZ coin nord-ouest de l'emprise (m, repère global)
+		/// \param sizeM côté de l'emprise (m)
+		/// \param style options de rendu (défaut = carte du jeu)
 		std::vector<uint8_t> RenderContinentMap(const GlobalWorld& g, int N, double originX, double originZ, double sizeM,
-			const std::vector<World*>& cells)
+			const std::vector<World*>& cells, const ContinentMapStyle& style = {})
 		{
 			std::vector<uint8_t> rgb(static_cast<size_t>(N) * N * 3);
 			const double sea = g.master.scale.seaLevelM;
@@ -556,15 +575,38 @@ namespace tools::world_gen
 						o[0] = r; o[1] = gg; o[2] = b;
 					}
 			};
+			// PORTAL.1 — segment continu (pas d'un demi-pixel) pour l'affiche du portail.
+			auto line = [&](Vec2 a, Vec2 b, int rad, uint8_t r, uint8_t gg, uint8_t bl) {
+				const double len = std::hypot(b.x - a.x, b.z - a.z);
+				const int steps = std::max(1, static_cast<int>(len / (px * 0.5)));
+				for (int s = 0; s <= steps; ++s)
+				{
+					const double t = static_cast<double>(s) / steps;
+					plot({ a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t }, rad, r, gg, bl);
+				}
+			};
+			// Polyligne : traits continus (affiche) ou un point sur 10 (carte du jeu).
+			auto polyline = [&](const std::vector<Vec2>& pts, int rad, uint8_t r, uint8_t gg, uint8_t bl) {
+				if (!style.continuousLines)
+				{
+					for (size_t k = 0; k < pts.size(); k += 10) plot(pts[k], 0, r, gg, bl);
+					return;
+				}
+				// Points espacés d'environ 4 à 6 m : un point sur 4 suffit à l'échelle de l'affiche.
+				size_t prev = 0;
+				for (size_t k = 4; k < pts.size(); k += 4) { line(pts[prev], pts[k], rad, r, gg, bl); prev = k; }
+				if (!pts.empty() && prev + 1 < pts.size()) line(pts[prev], pts.back(), rad, r, gg, bl);
+			};
 			for (const Lake& l : g.lakes)
 				for (double a = 0.0; a < 6.2832; a += 0.3)
 					for (double rr = 0.0; rr < l.radiusM; rr += px * 0.5)
 						plot(l.center + Vec2{ std::cos(a), std::sin(a) } * rr, 0, 70, 132, 170);
 			for (const River& rv : g.rivers)
-				for (size_t k = 0; k < rv.points.size(); k += 10) plot(rv.points[k], 0, 70, 132, 170);
+				polyline(rv.points, style.riverRadius, 70, 132, 170);
 			for (const Road& rd : g.roads)
-				for (size_t k = 0; k < rd.points.size(); k += 10) plot(rd.points[k], 0, 150, 112, 72);
+				polyline(rd.points, rd.major ? style.majorRoadRadius : style.roadRadius, 150, 112, 72);
 			// Cellules générées : liseré clair (repère de l'avancement du mapping).
+			if (style.cellOutlines)
 			for (const World* w : cells)
 				for (double t = 0.0; t <= w->terrainSizeM; t += px)
 				{
@@ -573,7 +615,8 @@ namespace tools::world_gen
 					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
 					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
 				}
-			for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, 2, 92, 64, 52); // v1.0.107 : pas les villes secrètes
+			if (style.cityRadius >= 0)
+				for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, style.cityRadius, 92, 64, 52); // v1.0.107 : pas les villes secrètes
 			return rgb;
 		}
 
@@ -1331,6 +1374,106 @@ namespace tools::world_gen
 		return f;
 	}
 
+	namespace
+	{
+		/// PORTAL.1 — affiche du monde pour le portail web (vitrine du jeu).
+		///
+		/// Écrit dans \p dir (hors de game/data : jamais livrée au client ni au shard) :
+		///   - `portal_map.png` : carte N² px de l'emprise des cellules générées
+		///     (+ 4 % de marge), relief, eau, lave, rivières et routes en traits
+		///     continus, SANS liseré de cellules ni repère de ville ;
+		///   - `portal_map.json` : étiquettes posées par le portail par-dessus l'image
+		///     (villes importantes, régions, quelques lieux remarquables ; coordonnées
+		///     normalisées u, v ∈ [0, 1], u vers l'est, v vers le sud).
+		/// Les villes et lieux SECRETS (v1.0.107, v1.0.110) en sont exclus, comme de la
+		/// carte du jeu ; les cimetières n'y figurent pas.
+		/// \param dir dossier de sortie (absolu ou relatif au répertoire courant), créé au besoin
+		/// \param cells cellules générées (rendu du terrain)
+		/// \param N côté maximal de l'image en pixels (2048 au plus pour une carte de moins de 200 km)
+		/// Effet de bord : écrit deux fichiers ; ajoute leurs chemins au bilan.
+		bool WritePortalPoster(GlobalWorld& g, const std::vector<World*>& cells, const std::string& dir, int N, std::string& err)
+		{
+			// Emprise : cellules jouables du master (`generated_cells`, sans les couloirs
+			// ni les cellules de mer ajoutés à la génération), carrée, + 4 % de marge.
+			// Repli : toute la grille du lore.
+			double x0 = 1e300, z0 = 1e300, x1 = -1e300, z1 = -1e300;
+			for (const std::string& id : g.master.generatedCells)
+				if (const std::optional<engine::world::cells::CellCoord> c = engine::world::cells::ParseLoreCellId(id))
+				{
+					const engine::world::cells::CellPoint mn = engine::world::cells::CellMinCorner(*c);
+					x0 = std::min(x0, mn.x); z0 = std::min(z0, mn.z);
+					x1 = std::max(x1, mn.x + engine::world::cells::kCellSizeMeters);
+					z1 = std::max(z1, mn.z + engine::world::cells::kCellSizeMeters);
+				}
+			if (x0 > x1) { x0 = g.minX; z0 = g.minZ; x1 = g.maxX; z1 = g.maxZ; }
+			const double side = std::max(x1 - x0, z1 - z0) * 1.08;
+			const double originX = (x0 + x1) * 0.5 - side * 0.5, originZ = (z0 + z1) * 0.5 - side * 0.5;
+			// Petite carte (Enfers, ~30 km) : le relief vient d'une grille de 250 m ;
+			// au-delà de 2048 px on ne verrait que des pixels agrandis.
+			if (side < 200000.0) N = std::min(N, 2048);
+			// Épaisseurs : lisibles sur l'image entière (≈ 20 m/px pour 9 cellules,
+			// ≈ 80 m/px pour le continent).
+			ContinentMapStyle style;
+			style.cellOutlines = false;
+			style.continuousLines = true;
+			style.riverRadius = 1;
+			style.roadRadius = 1;
+			style.majorRoadRadius = 2;
+			style.cityRadius = -1; // repères posés par le portail avec les noms
+			const std::vector<uint8_t> rgb = RenderContinentMap(g, N, originX, originZ, side, cells, style);
+			if (!WriteBytes(dir, g.report, "portal_map.png", EncodePngRgb(rgb, static_cast<uint32_t>(N), static_cast<uint32_t>(N)), err)) return false;
+
+			auto inside = [](double u, double v) { return u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0; };
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen --portal-out (PORTAL.1) — etiquettes de l'affiche du portail. Sans secrets.\",\n";
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(g.master.worldId) + ",\n  \"display_name\": " + Q(g.master.displayName) + ",\n";
+			j += "  \"image\": \"portal_map.png\",\n  \"size_px\": " + std::to_string(N) + ",\n";
+			j += "  \"area\": { \"x_min\": " + Num(originX) + ", \"z_min\": " + Num(originZ) + ", \"size_m\": " + Num(side) + " },\n";
+			// Villes : seules les importantes (les hameaux et villages chargeraient l'affiche).
+			std::vector<std::string> cityLines;
+			for (const CityDef& c : g.cities)
+			{
+				if (c.secret) continue;
+				if (c.kind != "capitale" && c.kind != "grande_ville" && c.kind != "ville" && c.kind != "forteresse" && c.kind != "camp") continue;
+				const double u = (c.center.x - originX) / side, v = (c.center.z - originZ) / side;
+				if (!inside(u, v)) continue;
+				cityLines.push_back("    { \"name\": " + Q(c.name) + ", \"kind\": " + Q(c.kind) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");
+			}
+			j += "  \"cities\": [\n";
+			for (size_t k = 0; k < cityLines.size(); ++k) j += cityLines[k] + (k + 1 < cityLines.size() ? ",\n" : "\n");
+			j += "  ],\n";
+			// Régions : centre du rectangle de cases (nord = -Z, cf. places.json).
+			const double C = engine::world::cells::kCellSizeMeters;
+			std::vector<std::string> regionLines;
+			for (const RegionDef& r : g.master.regions)
+			{
+				const double cx = (r.eMin + r.eMax) * 0.5 * C, cz = -(r.nMin + r.nMax) * 0.5 * C;
+				const double u = (cx - originX) / side, v = (cz - originZ) / side;
+				if (!inside(u, v)) continue;
+				regionLines.push_back("    { \"name\": " + Q(r.name) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");
+			}
+			j += "  \"regions\": [\n";
+			for (size_t k = 0; k < regionLines.size(); ++k) j += regionLines[k] + (k + 1 < regionLines.size() ? ",\n" : "\n");
+			j += "  ],\n";
+			// Lieux remarquables : volcans et cités ; temples aussi dans les Enfers (Palais
+			// de Lucifer) mais pas dans les Royaumes (9 temples serrés sur l'île de la
+			// Trêve : illisibles). Jamais les lieux secrets.
+			const bool infernal = IsInfernalMap(g.master);
+			std::vector<std::string> poiLines;
+			for (const PoiDef& p : g.pois)
+			{
+				if (p.secret) continue;
+				if (p.kind != "volcan" && p.kind != "cite" && !(infernal && p.kind == "temple")) continue;
+				const double u = (p.center.x - originX) / side, v = (p.center.z - originZ) / side;
+				if (!inside(u, v)) continue;
+				poiLines.push_back("    { \"name\": " + Q(p.name) + ", \"kind\": " + Q(p.kind) + ", \"u\": " + Num(u) + ", \"v\": " + Num(v) + " }");
+			}
+			j += "  \"pois\": [\n";
+			for (size_t k = 0; k < poiLines.size(); ++k) j += poiLines[k] + (k + 1 < poiLines.size() ? ",\n" : "\n");
+			j += "  ]\n}\n";
+			return WriteFile(dir, g.report, "portal_map.json", j, err);
+		}
+	}
+
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err)
 	{
 		const std::string wid = g.master.worldId;
@@ -1609,6 +1752,9 @@ namespace tools::world_gen
 			j += "}\n";
 			if (!WriteFile(g.outputRoot, g.report, dir + "quest_poi.json", j, err)) return false;
 		}
+
+		// ---- PORTAL.1 — affiche du monde pour le portail web (option --portal-out).
+		if (!g.portalOutDir.empty() && !WritePortalPoster(g, cells, g.portalOutDir, 4096, err)) return false;
 		return true;
 	}
 }

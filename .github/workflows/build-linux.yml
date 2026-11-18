@@ -188,7 +188,9 @@ jobs:
           set -euo pipefail
           GEN=$(find "$GITHUB_WORKSPACE/build/linux-x64-release/pkg" -type f -name lcdlln_world_gen -print -quit)
           if [ -z "$GEN" ]; then echo "[FAIL] lcdlln_world_gen introuvable"; exit 1; fi
-          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world royaumes
+          # PORTAL.1 : --portal-out écrit l'affiche du portail web HORS de game/data
+          # (jamais livrée au client) ; publiée par scripts/publish-portal-maps.sh.
+          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world royaumes --portal-out "$GITHUB_WORKSPACE/build/portal-maps/royaumes"
           # v1.0.122 : 742 cellules jouables (≈ 30 Mo de sorties chacune) : place disque restante.
           df -h "$GITHUB_WORKSPACE" | tail -1
           STARTS="$GITHUB_WORKSPACE/game/data/world/royaumes/start_locations.json"
@@ -213,7 +215,14 @@ jobs:
           LV=$(grep -c '"levels": \[' "$GITHUB_WORKSPACE"/game/data/world/royaumes/places.json || true)
           test "$LV" -ge 17 || { echo "[FAIL] $LV region(s) avec niveaux dans places.json, 17 attendues (lore v1.0.118)"; exit 1; }
           echo "[OK] $LV regions avec niveaux dans places.json"
-          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers
+          "$GEN" --content "$GITHUB_WORKSPACE/game/data" --world enfers --portal-out "$GITHUB_WORKSPACE/build/portal-maps/enfers"
+          for W in royaumes enfers; do
+            test -s "$GITHUB_WORKSPACE/build/portal-maps/$W/portal_map.png" || { echo "[FAIL] affiche du portail absente ($W)"; exit 1; }
+            # Aucune ville ni aucun lieu secret (secret_places.json) sur l'affiche publique.
+            python3 "$GITHUB_WORKSPACE/scripts/check_portal_map_secrets.py" \
+              "$GITHUB_WORKSPACE/build/portal-maps/$W/portal_map.json" \
+              "$GITHUB_WORKSPACE/game/data/world/$W/secret_places.json"
+          done
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }
           grep -q '"legion"' "$HELL/start_locations.json" || { echo "[FAIL] depart de la Legion infernale absent de $HELL/start_locations.json"; exit 1; }
@@ -226,6 +235,13 @@ jobs:
 
       # Copie automatique sql/schema.sql + sql/migrations/ → deploy/docker/sql/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
+      # PORTAL.1 — conversion WebP des cartes du portail (scripts/publish-portal-maps.sh).
+      - name: Outils d'image (ImageMagick + WebP)
+        run: |
+          if ! command -v convert >/dev/null 2>&1 && ! command -v magick >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick webp
+          fi
+
       - name: Assembler deploy/docker (sync sql + binaires + lib MySQL + game/data)
         env:
           BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release

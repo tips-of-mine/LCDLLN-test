@@ -13,6 +13,8 @@ DOCKER_DIR="$ROOT/deploy/docker"
 
 bash "$ROOT/scripts/sync-db-to-docker-deploy.sh"
 bash "$ROOT/scripts/sync-web-portal-to-docker-deploy.sh"
+# PORTAL.1 — cartes du monde du portail (affiches générées par world_gen --portal-out).
+bash "$ROOT/scripts/publish-portal-maps.sh"
 
 for bin in lcdlln_server lcdlln_shard; do
   if [[ ! -f "$BUILD_DIR/pkg/server/$bin" ]]; then

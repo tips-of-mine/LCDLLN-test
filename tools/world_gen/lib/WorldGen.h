@@ -37,6 +37,11 @@ namespace tools::world_gen
 		/// donc aussi quand le total est faux : il sert à choisir les hameaux de
 		/// `without_graveyard`). Écrit même en --dry-run. Vide = pas de rapport.
 		std::string graveyardReport;
+		/// PORTAL.1 — option --portal-out <dossier> : écrit l'affiche du monde pour le
+		/// portail web (portal_map.png + portal_map.json, sans secrets) dans ce
+		/// dossier, HORS de game/data (jamais livrée au client). Seulement avec les
+		/// sorties globales (génération complète, sans --cells). Vide = pas d'affiche.
+		std::string portalOut;
 	};
 
 	/// Exécute le pipeline complet. \return false + \p err en cas d'échec

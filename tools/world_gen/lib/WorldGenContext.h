@@ -354,6 +354,9 @@ namespace tools::world_gen
 		WorldMaster master;
 		std::string contentRoot;
 		std::string outputRoot;
+		/// PORTAL.1 — dossier de l'affiche du portail web (option --portal-out) ;
+		/// vide = pas d'affiche. Hors de game/data : jamais livrée au client.
+		std::string portalOutDir;
 
 		/// Emprise de la grille du lore (m, repère global).
 		double minX = 0.0, minZ = 0.0, maxX = 0.0, maxZ = 0.0;

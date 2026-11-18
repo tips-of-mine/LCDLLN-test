@@ -32,6 +32,7 @@ export function HeaderActions({ session }: Props) {
       </button>
 
       <nav className={`wp-nav${open ? ' open' : ''}`} onClick={() => setOpen(false)}>
+        <Link href="/monde">Le monde</Link>
         <Link href="/roadmap">Roadmap</Link>
         <Link href="/support">Support</Link>
         <Link href="/bugs">Signaler un bug</Link>

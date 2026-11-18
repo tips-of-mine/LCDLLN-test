@@ -51,6 +51,32 @@ Si la PR change à la fois client ET serveur (cas fréquent), préciser
 A introduit opcodes 45/46 + ChatRelayHandler côté master → **redéploiement
 serveur master requis** pour que le chat fonctionne.
 
+## Roadmap publique du portail — à tenir à jour à CHAQUE livraison visible
+
+La page `/roadmap` du portail web lit la table `roadmap_items`. Elle n'est
+alimentée que par des migrations SQL (`sql/migrations/00xx_roadmap_items_vN.sql`)
+ou par l'administration du portail. Elle avait décroché de juillet à novembre
+2026 (rattrapage : migration `0087_roadmap_items_v6.sql`).
+
+**Règle** : toute PR qui livre, commence ou abandonne une fonctionnalité
+**visible par les joueurs** (gameplay, monde, interface, graphismes, audio,
+portail) met à jour la roadmap dans la même PR :
+
+- nouvelle migration `00xx_roadmap_items_vN.sql` (un numéro = un fichier), copiée
+  aussi dans `deploy/docker/sql/migrations/` (contrôle de parité de la CI) ;
+- insertion **idempotente par titre** (`INSERT … SELECT … WHERE NOT EXISTS`),
+  sans id imposé : l'admin du portail peut avoir créé des items ;
+- changement de statut gardé par l'ancien statut (`AND status = 'in_progress'`)
+  pour ne pas écraser une modification faite depuis `/admin/roadmap` ;
+- titre et description écrits **pour un joueur** (pas de nom de classe C++, pas
+  de numéro de ticket) ; `completed` = livré, `in_progress` = en cours,
+  `planned` = décidé ;
+- pas de mise à jour pour un refactoring, une optimisation interne ou des tests
+  sans effet visible (un item « Optimisation du moteur » les couvre déjà).
+
+Le résumé de PR mentionne alors la ligne **Déploiement** correspondante
+(migration DB → redéploiement master requis).
+
 ## Éditeur monde (`lcdlln_world_editor.exe`)
 
 L'éditeur monde est un binaire séparé (`--world-editor`) qui partage l'engine

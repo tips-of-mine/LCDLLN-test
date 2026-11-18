@@ -123,7 +123,7 @@ forêt des lutins → **village fantôme** (S003_E006) → **fief de Garundel** 
 | Village fantôme | **S003_E006** (au lieu de N010_W004) | [INFÉRÉ] Cellule de forêt passée en **marais** (grille `%`, terrain `swamp`) ; les villageois renouvellent leur sang, le piège est celui d'Urmarcht [DÉDUCTION]. |
 | Fief de Garundel | S001_E004 | `lieu_garundel_estate` (S002_E007) fusionné : les routes 000012, 000013, 000018 partent du fief. |
 | Routes | — | 000118 Camp de l'Oracle → Ghrunke Dash, 000119 Ghrunke Dash → fief de Garundel ; une écurie de plus à chaque bout (921 PNJ de service). |
-| Lhynn | N001_W010 | Inchangée ; voir les questions ouvertes. |
+| Lhynn | N001_W010 | Inchangée ; voir les questions ouvertes. **v1.0.127 : déplacée en N001_W011, au bord de la mer (§16.53).** |
 
 ### 4.3 Autres corrections
 
@@ -317,8 +317,8 @@ Placements des lieux des tomes 7 à 14 dans le lore (`cell`) et dans le monde jo
 
 | Lieu | Cellule | Monde jouable | Justification |
 |---|---|---|---|
-| Temple de Methraton (`lieu_temple_methraton_lhynn`) | N001_W010 | POI `poi_temple_methraton` (`temple`) | **Décision du propriétaire** : dans Lhynn. |
-| Seuil de Lhynn (`lieu_seuil_lhynn`) | N001_W010 | POI `poi_seuil_lhynn` (`portail`, sans liaison) | **Décision du propriétaire** : près du palais de Lhynn (T14 p.26). |
+| Temple de Methraton (`lieu_temple_methraton_lhynn`) | N001_W010 → **N001_W011** (v1.0.127, §16.53) | POI `poi_temple_methraton` (`temple`) | **Décision du propriétaire** : dans Lhynn. |
+| Seuil de Lhynn (`lieu_seuil_lhynn`) | N001_W010 → **N001_W011** (v1.0.127, §16.53) | POI `poi_seuil_lhynn` (`portail`, sans liaison) | **Décision du propriétaire** : près du palais de Lhynn (T14 p.26). |
 | Forteresse naine d'Heusgly (ex-« d'Heusgly », v1.0.94) (`ville_forteresse_naine_heureux_t11`) | S006_E004 | forteresse naine déplacée de S004_W004 | **Décision du propriétaire** : refuge des neuf mères (T9 p.26) et forteresse « d'Heusgly » (T11 p.36). |
 | Sanctuaire des Chevaliers Dragons (`lieu_sanctuaire_chevaliers_dragons`) | S003_W004 | POI `poi_sanctuaire_chevaliers_dragons` (`sanctuaire`) | **Décision du propriétaire** : case du palais du Maître des Dragons. |
 | Hoengardt (`ville_hoengardt_t11`) | N014_E016 | cellule inchangée, type `ville` → `forteresse` (comme le lore) | [INFÉRÉ] Plaine au pied de la chaîne, dans la région des Marches du Nord ; l'armée non humaine doit y « remonter » (T11 p.25). |
@@ -638,7 +638,7 @@ Script reproductible : `lore_v1062.py` (appliqué au fichier v1.0.61).
 | N002_W010 | plaine | **Haeldorf** (hameau de départ) ; routes 000121 (Lhynn), 000128, 000129 ; sentiers 000131 à 000134 vers les 4 POI | chien, poule ; molosse impérial (10-20, existant) |
 | N002_W009 | plaine (pâturages) | POI **Ruines de la villa tharque** (`lieu_ruines_villa_tharque`, `poi_ruines_villa_tharque`, `ruine`) : domaine de l'ancien Empire tharque `[GD]`, ancré sur la Via Magna « héritée du grand Empire tharque » `[BD-THS p.8]` | araignée (3-8), corbeau, renard |
 | N001_W011 | côte | POI **Grotte des contrebandiers** (`lieu_grotte_contrebandiers`, `poi_grotte_contrebandiers`, `salle`) : contrebande du port de guerre de Lhynn `[GD]` (`[BD-T7 p.5-6]`) | crabe, mouette (1), araignée |
-| N001_W010 | plaine | Lhynn (capitale, inchangée) | inchangée |
+| N001_W010 | plaine | Lhynn (capitale, inchangée) ; **v1.0.127 : Lhynn passe en N001_W011, au bord de la mer (§16.53)** | inchangée |
 | N001_W009 | plaine | Ferme **Gredhaim** (`hamlet_greyhedge`, `farm_hamlet` / `hameau`) : volailles, chèvres et ânes de bât `[GD]` ; route 000129 vers Haeldorf, route 000130 vers la Via Magna | chèvre (1-3), âne (2-4), chien, renard ; molosse impérial (existant) |
 
 - **Routes** (`routes`) : 000128 Ombhral → Haeldorf, 000129 Haeldorf → Gredhaim et 000130
@@ -677,7 +677,7 @@ fichier v1.0.62).
 | N006_W012 | plaine (Première Province) | POI **Calvaire des pèlerins** (`lieu_calvaire_des_pelerins`, `poi_calvaire_des_pelerins`, `sanctuaire`) : première station du pèlerinage d'Altenberg à Syzygie pour la Grande Messe de la Lumière `[GD]` (`fete_eglise_grande_messe_lumiere`) ; croix cerclée, bannières rouges à croix blanche `[BD-T8 p.28-33]` `[BD-T2 p.34]` | lapin (1-3), corbeau (1-4), renard (2-5) |
 | N006_W011 | plaine | Ferme **Ysselhaim** (`hamlet_whitesheaf`, `farm_hamlet` / `hameau`) : grain des novices et pain d'autel d'Altenberg `[GD]` ; route 000136 vers Orhendal | poule, coq (1), chien (2-6), lapin |
 | N006_W010 | forêt avec rivière | POI **Chapelle de l'ermite** (`lieu_chapelle_de_l_ermite`, `poi_chapelle_de_l_ermite`, `sanctuaire`) : chapelle et source d'eau bénite `[GD]` ; prêtres de chapelle `[BD-A3 pl.19-20]`, croix de pierre en forêt `[BD-A3 pl.33]` | biche (2-6), araignée (3-8), renard, lapin |
-| N005_W012 | plaine | Altenberg (grande ville, inchangée) | inchangée |
+| N005_W012 | plaine | Altenberg (grande ville, inchangée) ; **v1.0.127 : Altenberg passe en N005_W013, sur les falaises au bord de la mer (§16.53)** | inchangée |
 | N005_W011 | plaine | **Orhendal** (hameau de départ) ; routes 000122 (Altenberg), 000135 à 000137 ; sentiers 000138 à 000141 vers les 4 POI | chien, poule |
 | N005_W010 | plaine | Commanderie rurale **Lhumbrecht** (`hamlet_brightholm`, `farm_hamlet` / `hameau`) : domaine agricole et haras de l'Ordre tenu par des frères convers (`[BD-T8 p.33-35]`) `[GD]` — distincte de la Grande et de la Haute Commanderie, salles de la citadelle `[BD-T8]` ; route 000135 vers Orhendal | cheval (3-8), bœuf (3-6), chien, poule |
 | N004_W012 | plage | POI **Camp des naufrageurs** (`lieu_camp_des_naufrageurs`, `poi_camp_des_naufrageurs`, `camp`) : faux feux sur la longue plage au sud d'Altenberg `[GD]`, citadelle « sur un rocher battu par les vagues » `[BD-T2 p.32-33]` | crabe, mouette (1), corbeau |
@@ -1062,6 +1062,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.50](#1650-lignes-maritimes-jouées-passeur-au-ponton-et-îles-ouvertes-v10124) | v1.0.124 | Lignes maritimes jouées, îles ouvertes | Passeur au ponton (4 lignes, 11 escales, traversée payante téléportée), îles de Hishtarland et de Dyprokh générées. |
 | [16.51](#1651-bateaux-des-lignes-maritimes-à-bord-en-temps-réel-v10125) | v1.0.125 | Bateaux des lignes maritimes | Dromons visibles qui suivent les lignes (2 par ligne, 1 par navette, 8 m/s, 30 s à quai), embarquement au quai, marche libre sur le pont, étape payée au départ ; passeur retiré ; 46 cases de mer ouvertes. |
 | [16.52](#1652-cellules-restantes-ouvertes-au-jeu-v10126) | v1.0.126 | Cellules restantes ouvertes | Toute la terre des Royaumes jouable : 542 cases ouvertes (1 337 cellules jouables), 529 lieux `[GD]`, Forteresse naine d'Heusgly jouable ; 666 cimetières gardés. |
+| [16.53](#1653-lhynn-et-altenberg-au-bord-de-la-mer-v10127) | v1.0.127 | Ports de l'ouest au bord de la mer | Lhynn (N001_W011) et Altenberg (N005_W013) déplacées sur la côte, positions posées ; temple de Methraton et Seuil de Lhynn posés au nord de Lhynn. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4990,6 +4991,39 @@ routes v1.0.105, des lots v1.0.121 et des lignes maritimes ; tests devenus faux 
 plus aucune route du lore vers une zone fermée (v1.0.106 c)). Le lieu « Îlot du lac de Feyhin Lokcthat » ne s'appelle pas
 « Île » : les POI `poi_ile_*` sont réservés aux 11 temples de l'Île de la Trêve (test du relief v1.0.77) ; contrôles du lore (`validate_city_services`,
 `check_secrets`, `check_references`, `sync_*.py --check`) ; génération complète.
+
+### 16.53 Lhynn et Altenberg au bord de la mer (v1.0.127)
+
+**Constat du propriétaire (18/11/2026, test en jeu)** : arrivé à Lhynn (`/tp`), ni mer ni côte visibles. Cause : la
+ville était au centre de sa case N001_W010 (plaine) ; le rivage est dans la case voisine N001_W011, à environ 10 km,
+bien au-delà des rayons de rendu (800 m) et de déchargement (1,8 km). Altenberg (N005_W012) avait le même défaut : mer
+à environ 6 km, alors que les deux villes ont un port (`rule_ports_ouest`, ponton côté mer, à l'ouest) et que leur
+`footprint_tiles` du lore désignait déjà la case côtière.
+
+**Décision du propriétaire (18/11/2026)** : déplacer les deux villes dans la case côtière voisine à l'ouest, au bord de
+l'eau ; leurs lieux suivent ; le relief ne change pas.
+
+| Fiche | Avant | Après | Site `[GD]` (m depuis le centre de la case, X est, Z sud) |
+|---|---|---|---|
+| Lhynn (`ville_lhynn`) | N001_W010, site automatique (centre) | **N001_W011** | position −3700, −2600 : butte sèche plate (plateau à mer + 5 m) en tête des lagunes, pleine mer à environ 500 m à l'ouest |
+| Altenberg (`ville_altenberg`) | N005_W012, centre (plateau des falaises de craie, §16.47) | **N005_W013** | position −2300, 3050 : promontoire des falaises de craie (plateau ≈ +82 m), mer à quelques centaines de mètres à l'ouest et au nord |
+| Temple de Methraton (`lieu_temple_methraton_lhynn`) | N001_W010 | N001_W011 | position −3700, −3100 : 500 m au nord de Lhynn, terrain sec |
+| Seuil de Lhynn (`lieu_seuil_lhynn`) | N001_W010 | N001_W011 | position −3350, −3150 : 650 m au nord-est de Lhynn (posé : sans position, il était repoussé dans la mer par le temple) |
+
+Suivent aussi : `port.ponton_cell` et `anchor_tile` des deux villes ; le Comptoir de l'Ouest d'Azteca et des
+nations tahokhanes (N005_W013) ; les 8 routes du lore qui partent des deux villes (000022, 000064, 000084, 000120 Via
+Magna, 000121, 000122, 000138, 000200 : extrémité dans la nouvelle case ; les tracés de 000064 et 000120 commencent par
+N001_W011 puis repassent par N001_W010). Les sites ont été choisis sur le relief du générateur (terrain sec et plat
+dans un rayon de 240 m, eau reliée à la pleine mer à moins de 800 m). Les anciennes cases restent jouables, sans ville.
+
+**Inchangé** : la grille, le relief (falaises de craie comprises), les régions de départ de Haeldorf et d'Orhendal
+(3 × 3 cases), la Grotte des contrebandiers et la Borne milliaire impériale d'Altenberg (lieux déjà présents dans les
+nouvelles cases, gardés). Les schémas de ville (services, PNJ) ne dépendent pas de la case.
+
+**Tests** : `world_gen_tests` (`TestPlacementManuelV1095` mis à jour : villes posées, sites de Lhynn, d'Altenberg, du
+temple et du Seuil ; position `null` de Lhynn = site automatique de N001_W011) ; contrôles du lore
+(`sync_positions`, `sync_routes`, `sync_*.py --check`, `validate_city_services`, `check_secrets`,
+`check_references`) ; génération complète.
 
 ## 17. Questions ouvertes
 

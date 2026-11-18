@@ -583,7 +583,7 @@ sur le continent. Aucun n'est jouable ni présent en jeu (lore seulement).
 | Les émirats du Sheydhar (`faction_sheydhar`) | sud-sud-est | Comptoir du Sud, Hishtarland (S011_W006) |
 | Le royaume de Nebkhara (`faction_nebkhara`) | sud | Comptoir du Sud, Hishtarland |
 | Le royaume de Nkhaloa (`faction_nkhaloa`) | sud-sud-ouest | Comptoir du Sud, Hishtarland |
-| Azteca (`faction_azteca`) | ouest-sud-ouest | Comptoir de l'Ouest, Altenberg (N005_W012) |
+| Azteca (`faction_azteca`) | ouest-sud-ouest | Comptoir de l'Ouest, Altenberg (N005_W013 depuis v1.0.127) |
 | Les nations tahokhanes (`faction_tahokhan`) | ouest-nord-ouest | Comptoir de l'Ouest, Altenberg |
 
 ### 11.5 Ophidiens (v1.0.82)

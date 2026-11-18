@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.126",
+    "version": "1.0.127",
     "notes": [
+      "v1.0.127 : [DÉCISION] Lhynn (N001_W011) et Altenberg (N005_W013) déplacées au bord de la mer, positions posées ; lieux, comptoir et routes suivent.",
       "v1.0.126 : [DÉCISION] Cellules restantes : 542 cases de terre ouvertes au jeu, 529 lieux [GD] ; cases sans cimetière admises (666 gardés).",
       "v1.0.124 : [DÉCISION] Lignes maritimes jouées (passeur au ponton, 4 lignes, 11 escales) ; îles de Hishtarland et de Dyprokh ouvertes (7 cases, 5 lieux [GD]).",
       "v1.0.123 : [DÉCISION] Lave des Enfers lumineuse (shader du terrain) et mortelle en 3 s (serveur) ; chemins et lieux bâtis sans lave.",
@@ -2565,7 +2566,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "ville_altenberg",
-          "cell": "N005_W012",
+          "cell": "N005_W013",
           "nom": "Comptoir de l'Ouest"
         },
         "presence": [
@@ -2663,7 +2664,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "ville_altenberg",
-          "cell": "N005_W012",
+          "cell": "N005_W013",
           "nom": "Comptoir de l'Ouest"
         },
         "presence": [
@@ -6137,11 +6138,11 @@
       "alias": "La capitale",
       "type": "capital_city",
       "importance": "capitale impériale",
-      "cell": "N001_W010",
+      "cell": "N001_W011",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -3700,
+      "position_z_m": -2600,
       "faction_control": "empire_humain",
       "region_id": "terres_de_lempereur",
       "province": "",
@@ -6221,7 +6222,8 @@
         "[GD] (v1.0.58) Économie : frappe de la couronne [GD], Trésor impérial et Chancelier de l'Échiquier [BD-A1 p.54] ; reçoit les impôts des fiefs [BD-T7 p.18] ; port de la mer de l'ouest.",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Sigvhard Ulfrekk (Les Nordiques, ambassadeur) ; Ghaldaï Mönkhur (L'Empire Minghol, ambassadeur) ; Tshao Yunkhai (L'Empire de Tsin, ambassadeur) ; Ozhmeran Tchavhul (Le Kharzhad, marchand) ; Haremkhet Sobhaïr (Le royaume de Nebkhara, ambassadeur) ; Ixtlamhoc Tecuhal (Azteca, ambassadeur) (fiches persons, LORE_BD §16.11).",
-        "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les dragonnières de Lhynn sont une enceinte de la garde impériale, interdite et gardée ; gardes rouges et hérauts en refusent l'entrée (dragons d'or 50-65, dragon de l'Empereur 42-50, golems des mages 35-50)."
+        "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les dragonnières de Lhynn sont une enceinte de la garde impériale, interdite et gardée ; gardes rouges et hérauts en refusent l'entrée (dragons d'or 50-65, dragon de l'Empereur 42-50, golems des mages 35-50).",
+        "[DÉCISION] (v1.0.127) Ville déplacée de N001_W010 vers N001_W011, au bord de la mer (position -3700, -2600 m depuis le centre de la case ; site [GD] : terrain plat, pleine mer à moins de 800 m) : avant, le rivage était à 6-10 km et la mer ne se voyait pas depuis la ville ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "dimensions_estimees": {
         "hauteur": "colline centrale dominant la baie, élévation marquée",
@@ -6303,9 +6305,9 @@
       "footprint_tiles": [
         "N001_W011"
       ],
-      "anchor_tile": "N001_W010",
+      "anchor_tile": "N001_W011",
       "port": {
-        "ponton_cell": "N001_W010",
+        "ponton_cell": "N001_W011",
         "vers_cell": "N001_W011",
         "destinations": [],
         "stop_seconds": 30,
@@ -7087,11 +7089,11 @@
       "alias": "La Citadelle Invincible",
       "type": "major_city",
       "importance": "capitale religieuse",
-      "cell": "N005_W012",
+      "cell": "N005_W013",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -2300,
+      "position_z_m": 3050,
       "faction_control": "chevaliers_de_la_lumiere",
       "region_id": "terres_de_lempereur",
       "province": "region_premiere_province_empire",
@@ -7153,7 +7155,8 @@
         "[DÉCISION] (v1.0.54) Le jeu se situe avant les destructions des Tomes 11 et 14 : la ville est intacte dans le monde jouable.",
         "[GD] (v1.0.58) Économie : port et marché de l'Ordre de la Lumière [GD] ; destinations maritimes non arrêtées (rule_ports_ouest).",
         "[DÉCISION] (v1.0.82) Comptoir de l'Ouest : Port d'Altenberg, face à l'océan de l'ouest : seul port de l'Empire où accostent les rares navires venus d'outre-océan. Peuples : Azteca (ouest-sud-ouest), Les nations tahokhanes (ouest-nord-ouest) ; lore seulement, aucun PNJ placé dans le monde jouable (décision du propriétaire du 11/11/2026 ; LORE_BD §16.11).",
-        "[GD] (v1.0.82) PNJ des peuples lointains présents : Ohsakhe Tawendra (Les nations tahokhanes, mercenaire) ; Mahtenha Kwisoh (Les nations tahokhanes, marchand) ; Citlalhua Yaotzin (Azteca, marchand) (fiches persons, LORE_BD §16.11)."
+        "[GD] (v1.0.82) PNJ des peuples lointains présents : Ohsakhe Tawendra (Les nations tahokhanes, mercenaire) ; Mahtenha Kwisoh (Les nations tahokhanes, marchand) ; Citlalhua Yaotzin (Azteca, marchand) (fiches persons, LORE_BD §16.11).",
+        "[DÉCISION] (v1.0.127) Ville déplacée de N005_W012 vers N005_W013, au bord de la mer (position -2300, 3050 m depuis le centre de la case ; site [GD] : terrain plat, pleine mer à moins de 800 m) : avant, le rivage était à 6-10 km et la mer ne se voyait pas depuis la ville ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "dimensions_estimees": {
         "hauteur": "150m+ pour la tour centrale",
@@ -7242,9 +7245,9 @@
       "footprint_tiles": [
         "N005_W013"
       ],
-      "anchor_tile": "N005_W012",
+      "anchor_tile": "N005_W013",
       "port": {
-        "ponton_cell": "N005_W012",
+        "ponton_cell": "N005_W013",
         "vers_cell": "N005_W013",
         "destinations": [],
         "stop_seconds": 30,
@@ -214463,7 +214466,8 @@
       "visual_elements": [],
       "notes": [
         "[INFÉRÉ] (v1.0.90) Rattachée à la région « 1ère Province de l'Empire » (region_premiere_province_empire) ; la case n'avait aucune région (LORE_BD §16.19).",
-        "[DÉCISION] (v1.0.126) Case ouverte au jeu (lot des cellules restantes) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52."
+        "[DÉCISION] (v1.0.126) Case ouverte au jeu (lot des cellules restantes) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52.",
+        "[DÉCISION] (v1.0.127) Altenberg (ville_altenberg) est dans cette case, au bord de la mer ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "coord_x": null,
       "coord_y": null
@@ -214484,7 +214488,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47)."
+        "[DÉCISION] (v1.0.120) Côte en falaises de craie blanche, comme celles de Douvres : paroi presque verticale d'environ 90 m, plateau herbeux au-dessus, plage étroite au pied (décision du propriétaire du 14/11/2026 ; relief falaises_de_craie_ouest du master ; LORE_BD §16.47).",
+        "[DÉCISION] (v1.0.127) Altenberg n'est plus dans cette case : déplacée vers N005_W013, au bord de la mer ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -218609,7 +218614,8 @@
       ],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.62) Grotte des contrebandiers (lieu_grotte_contrebandiers) de la région de départ de Haeldorf (LORE_BD §15.1)."
+        "[GD] (v1.0.62) Grotte des contrebandiers (lieu_grotte_contrebandiers) de la région de départ de Haeldorf (LORE_BD §15.1).",
+        "[DÉCISION] (v1.0.127) Lhynn (ville_lhynn) est dans cette case, au bord de la mer ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -218631,7 +218637,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[DÉCISION] (v1.0.85) Balisage du danger (lot 13, correction validée par le propriétaire le 12/11/2026 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78 ; LORE_BD §16.14) : dragons d'or impériaux (50-65), dragon de guerre de l'Empereur (42-50) et golems de roche (35-50) dans la capitale de la région de départ des Légions Impériales (1-10). Ce sont des forces de l'Empire, pas de la faune : les dragonnières de Lhynn sont une enceinte de la garde impériale, interdite et gardée (gardes rouges et hérauts aux portes, défense d'entrer affichée) ; les golems n'apparaissent qu'auprès des mages de bataille. Le raid du Défilé de Mordrek (boss 55) n'est pas à Lhynn : il est rattaché au Défilé de Mordrek (N016_E013). [GD]"
+        "[DÉCISION] (v1.0.85) Balisage du danger (lot 13, correction validée par le propriétaire le 12/11/2026 ; contenu de plus haut niveau permis en zone plus basse si les chemins sont balisés, rule_niveaux_par_faction v1.0.78 ; LORE_BD §16.14) : dragons d'or impériaux (50-65), dragon de guerre de l'Empereur (42-50) et golems de roche (35-50) dans la capitale de la région de départ des Légions Impériales (1-10). Ce sont des forces de l'Empire, pas de la faune : les dragonnières de Lhynn sont une enceinte de la garde impériale, interdite et gardée (gardes rouges et hérauts aux portes, défense d'entrer affichée) ; les golems n'apparaissent qu'auprès des mages de bataille. Le raid du Défilé de Mordrek (boss 55) n'est pas à Lhynn : il est rattaché au Défilé de Mordrek (N016_E013). [GD]",
+        "[DÉCISION] (v1.0.127) Lhynn n'est plus dans cette case : déplacée vers N001_W011, au bord de la mer ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -238712,7 +238719,7 @@
       "from_place": "N007_W011",
       "from_ville_id": "town_0129",
       "from_lieu_id": "",
-      "to_place": "N005_W012",
+      "to_place": "N005_W013",
       "to_ville_id": "ville_altenberg",
       "to_lieu_id": "",
       "description": "",
@@ -238985,7 +238992,7 @@
     {
       "id": "000064",
       "type": "road",
-      "from_place": "N001_W010",
+      "from_place": "N001_W011",
       "from_ville_id": "ville_lhynn",
       "from_lieu_id": "",
       "to_place": "S002_W011",
@@ -238996,6 +239003,7 @@
         "[DÉCISION] (v1.0.76) Tracé réalisé à la demande du propriétaire (10/11/2026) : sort de Lhynn avec la Via Magna (000120) jusqu'à N000_W010, puis descend la plaine côtière vers Dhuzmar. Tracé : 3 case(s), N001_W010 → N000_W010 → S001_W010 → S002_W011 ; LORE_BD §16.5."
       ],
       "waypoints": [
+        "N001_W011",
         "N001_W010",
         "N000_W010",
         "S001_W010",
@@ -239244,7 +239252,7 @@
     {
       "id": "000084",
       "type": "road",
-      "from_place": "N005_W012",
+      "from_place": "N005_W013",
       "from_ville_id": "ville_altenberg",
       "from_lieu_id": "",
       "to_place": "N005_W009",
@@ -239603,7 +239611,7 @@
     {
       "id": "000120",
       "type": "imperial_road",
-      "from_place": "N001_W010",
+      "from_place": "N001_W011",
       "from_ville_id": "ville_lhynn",
       "from_lieu_id": "",
       "to_place": "S002_E015",
@@ -239624,6 +239632,7 @@
         "[DÉCISION] (v1.0.105) Tracée en jeu par le générateur (tools/world_gen) case par case, par les villes de son tracé (Kholvard, Magistrya, Camp de l'Oracle, fief de Garundel, Harrodh, Shezhold, Horkher, Nykhfeld) : voie de 7 m, coupée à chaque ville traversée ; de Shezhold à Moork entièrement dans des cases jouables ; LORE_BD §16.34."
       ],
       "waypoints": [
+        "N001_W011",
         "N001_W010",
         "N000_W010",
         "S001_W009",
@@ -239666,7 +239675,7 @@
       "from_place": "N002_W010",
       "from_ville_id": "hameau_eaglewatch",
       "from_lieu_id": "",
-      "to_place": "N001_W010",
+      "to_place": "N001_W011",
       "to_ville_id": "ville_lhynn",
       "to_lieu_id": "",
       "description": "Route de rattachement du hameau de départ Haeldorf à Lhynn.",
@@ -239681,7 +239690,7 @@
       "from_place": "N005_W011",
       "from_ville_id": "hameau_dawnmere",
       "from_lieu_id": "",
-      "to_place": "N005_W012",
+      "to_place": "N005_W013",
       "to_ville_id": "ville_altenberg",
       "to_lieu_id": "",
       "description": "Route de rattachement du hameau de départ Orhendal à Altenberg.",
@@ -239899,7 +239908,7 @@
     {
       "id": "000138",
       "type": "path",
-      "from_place": "N005_W012",
+      "from_place": "N005_W013",
       "from_ville_id": "ville_altenberg",
       "from_lieu_id": "",
       "to_place": "N006_W012",
@@ -240820,7 +240829,7 @@
       "from_place": "N004_W011",
       "from_ville_id": "hamlet_lambsfold",
       "from_lieu_id": "",
-      "to_place": "N005_W012",
+      "to_place": "N005_W013",
       "to_ville_id": "ville_altenberg",
       "to_lieu_id": "",
       "description": "",
@@ -246829,6 +246838,13 @@
           "nom": "Cellules restantes ouvertes au jeu",
           "decision": "Décision du propriétaire (18/11/2026) : ouvrir un maximum des cellules restantes, sans perte de fonctionnalité. Toutes les cases de terre encore fermées de la carte des Royaumes sont ouvertes (542 cases) ; un lieu [GD] par case vide (529 lieux, choisis selon le terrain et la région, nommés d'après la ville jouable la plus proche, à relire) ; cases « villages seulement » pour les cimetières (666 gardés). Restent fermées : la haute mer et la mer peu profonde (hors trajets des bateaux) et la couronne de montagnes des Enfers (mur du monde, décision du 09/11/2026). LORE_BD §16.52.",
           "version": "1.0.126"
+        },
+        {
+          "collection": "villes",
+          "id": "ports_ouest_cote_v1127",
+          "nom": "Lhynn et Altenberg au bord de la mer",
+          "decision": "Décision du propriétaire (18/11/2026), après un test en jeu (aucune mer visible depuis Lhynn) : Lhynn passe de N001_W010 à N001_W011 (position -3700, -2600 m) et Altenberg de N005_W012 à N005_W013 (position -2300, 3050 m, sur le plateau des falaises de craie), au bord de la mer ; le temple de Methraton et le Seuil de Lhynn suivent Lhynn ; le Comptoir de l'Ouest suit Altenberg ; les routes partent de la nouvelle case. Sites [GD]. LORE_BD §16.53.",
+          "version": "1.0.127"
         }
       ]
     },
@@ -256297,9 +256313,9 @@
       "alias": "",
       "type": "shrine_poi",
       "importance": "",
-      "cell": "N001_W010",
-      "position_x_m": null,
-      "position_z_m": null,
+      "cell": "N001_W011",
+      "position_x_m": -3700,
+      "position_z_m": -3100,
       "region_id": "terres_de_lempereur",
       "province": "",
       "zone_id": "",
@@ -256374,7 +256390,8 @@
         "[BD-T7] p.6-11 : Wismerhill crie « Methraton, ouvre !!! », la porte s'ouvre ; à l'intérieur, Methraton apparaît en figure de flammes.",
         "[BD-T13] p.9, 36 : bloc doré à ankh sur une place de Lhynn [DÉDUCTION]. Cellule : dans Lhynn [INFÉRÉ].",
         "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn) ; monde jouable : POI poi_temple_methraton, marqueur aux abords de la ville.",
-        "[DÉCISION] (v1.0.56) Seul accès au plan de Methraton (lieu_plan_methraton) à l'époque du jeu (Q4)."
+        "[DÉCISION] (v1.0.56) Seul accès au plan de Methraton (lieu_plan_methraton) à l'époque du jeu (Q4).",
+        "[DÉCISION] (v1.0.127) Suit Lhynn dans sa nouvelle case N001_W011, posé à la main au nord de la ville (position -3700, -3100 m, terrain sec, site [GD]) ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ]
     },
     {
@@ -256548,9 +256565,9 @@
       "alias": "",
       "type": "portal_tower",
       "importance": "",
-      "cell": "N001_W010",
-      "position_x_m": null,
-      "position_z_m": null,
+      "cell": "N001_W011",
+      "position_x_m": -3350,
+      "position_z_m": -3150,
       "region_id": "terres_de_lempereur",
       "province": "",
       "zone_id": "",
@@ -256622,7 +256639,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T14] p.18 : Methraton crée les Seuils (« Que les portes soient ! ») ; p.26 : le Seuil de Lhynn s'ouvre, les Gardes noires canalisent le flot ; p.27-35 : les Vents puis tous les dragons du monde le franchissent. Cellule : près du palais de Lhynn [INFÉRÉ].",
-        "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn), près du palais ; monde jouable : POI poi_seuil_lhynn (portail décoratif, sans liaison)."
+        "[DÉCISION] (v1.0.55) Cellule N001_W010, celle de Lhynn (ville_lhynn), près du palais ; monde jouable : POI poi_seuil_lhynn (portail décoratif, sans liaison).",
+        "[DÉCISION] (v1.0.127) Suit Lhynn dans sa nouvelle case N001_W011, posé à la main au nord de la ville (position -3350, -3150 m, terrain sec, site [GD]) ; décision du propriétaire du 18/11/2026 (en jeu, pas de mer visible depuis Lhynn) ; LORE_BD §16.53."
       ]
     },
     {

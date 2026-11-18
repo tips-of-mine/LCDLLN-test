@@ -2524,12 +2524,14 @@ namespace
 	}
 
 	/// v1.0.95 : placement manuel des villes et des lieux (« tu places, le jeu suit »).
-	///  1. Master du dépôt (aucune position) : sites identiques à ceux du générateur
-	///     v1.0.94, relevés avant la modification (ville cherchée, ville ancrée sur un
-	///     relief, hameau de départ, POI écartés, POI décalé).
-	///  2. Master temporaire où Altenberg et le temple de Methraton ont une `position` :
-	///     posés exactement là (tolérance 1 m), plateau aplani autour ; toutes les
-	///     autres villes et les POI des autres cases sont inchangés.
+	///  1. Master du dépôt : sites identiques à ceux du générateur v1.0.94, relevés avant
+	///     la modification (ville ancrée sur un relief, hameau de départ, POI) ; depuis
+	///     v1.0.127, Lhynn, Altenberg, le temple de Methraton et le Seuil de Lhynn sont
+	///     posés à la main au bord de la mer (LORE_BD §16.53).
+	///  2. Master temporaire où Altenberg et le temple de Methraton changent de `position`
+	///     et où celle de Lhynn est retirée (`null`) : posés exactement là (tolérance 1 m),
+	///     plateau aplani autour, Lhynn au site automatique de sa case ; toutes les autres
+	///     villes et les POI des autres cases sont inchangés.
 	///  3. Positions refusées : hors de la case (> 4300 m), ville ancrée sur un relief.
 	/// Effet de bord : écrit puis efface un dossier temporaire (master modifié).
 	void TestPlacementManuelV1095()
@@ -2549,11 +2551,13 @@ namespace
 		// v1.0.106 : premières positions manuelles du dépôt, les 4 balises de route replacées au
 		// bord des routes du lore (LORE_BD §16.35) ; aucune ville, aucun POI des sites ci-dessous.
 		// v1.0.107 : Thurvhal, au fond du gouffre de Deathtrap Canyon (relief qui suit la
-		// ville), est la seule ville à position manuelle.
+		// ville), a une position manuelle ; v1.0.127 : Lhynn et Altenberg aussi (au bord de la
+		// mer), ainsi que le temple de Methraton et le Seuil de Lhynn (au nord de Lhynn).
 		bool none = true;
-		for (const CityDef& c : g0.master.cities) none = none && (!c.hasPosition || c.id == "ville_thurvhal");
+		for (const CityDef& c : g0.master.cities)
+			none = none && (!c.hasPosition || c.id == "ville_thurvhal" || c.id == "ville_lhynn" || c.id == "ville_altenberg");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
-			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes" };
+			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn" };
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2561,28 +2565,31 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : aucune ville deplacee (sauf Thurvhal, v1.0.107) ; seules les 4 balises de route ont une position manuelle (v1.0.106)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
 		const CityDef* ver = g0.FindCity("town_0119");
 		const CityDef* orh = g0.FindCity("hameau_dawnmere");
-		Check(lhynn && near(lhynn->center, -99750.0, -10250.0, 1e-4) && std::fabs(lhynn->plateauY - 55.419153) < 1e-4,
-			"placement v1.0.95 : sans position, Lhynn au site choisi en v1.0.94");
-		// v1.0.120 : Altenberg (N005_W012) est sur le plateau des falaises de craie (≈ +87 m).
-		Check(alt0 && near(alt0->center, -120000.0, -50000.0, 1e-4) && std::fabs(alt0->plateauY - 150.155075) < 1e-4,
-			"placement v1.0.95 : sans position, Altenberg au site choisi en v1.0.94 (plateau des falaises, v1.0.120)");
+		// v1.0.127 : Lhynn (N001_W011) au bord de la mer, plateau au plancher (mer + 5 m).
+		Check(lhynn && lhynn->hasPosition && near(lhynn->center, -110000.0 - 3700.0, -10000.0 - 2600.0, 1e-4)
+				&& std::fabs(lhynn->plateauY - 45.0) < 1e-4,
+			"placement v1.0.127 : Lhynn posee au bord de la mer (N001_W011)");
+		// v1.0.127 : Altenberg (N005_W013) sur le plateau des falaises de craie, au-dessus de la mer.
+		Check(alt0 && alt0->hasPosition && near(alt0->center, -130000.0 - 2300.0, -50000.0 + 3050.0, 1e-4)
+				&& std::fabs(alt0->plateauY - 122.377462) < 1e-3,
+			"placement v1.0.127 : Altenberg posee sur les falaises au bord de la mer (N005_W013)");
 		Check(ver && near(ver->center, -150000.0, -100000.0, 1e-4), "placement v1.0.95 : Vaerdhun (colline) au centre de sa case");
 		Check(orh && near(orh->center, -110000.0, -50000.0, 1e-4), "placement v1.0.95 : Orhendal (depart) au centre de sa case");
 		const PoiDef* temple0 = nullptr;
 		bool poisRef = true;
 		for (const PoiDef& p : g0.pois)
 		{
-			if (p.id == "poi_temple_methraton") { temple0 = &p; poisRef = poisRef && near(p.center, -100099.310750, -9900.689250, 1e-4); }
-			if (p.id == "poi_seuil_lhynn") poisRef = poisRef && near(p.center, -100099.310750, -10599.310750, 1e-4);
+			if (p.id == "poi_temple_methraton") { temple0 = &p; poisRef = poisRef && near(p.center, -113700.0, -13100.0, 1e-4); }
+			if (p.id == "poi_seuil_lhynn") poisRef = poisRef && near(p.center, -113350.0, -13150.0, 1e-4);
 			if (p.id == "poi_sanctuaire_des_brisants") poisRef = poisRef && near(p.center, -163200.0, -100700.0, 1e-4);
 		}
-		Check(temple0 && poisRef, "placement v1.0.95 : sans position, POI ecartes ou decales comme en v1.0.94");
+		Check(temple0 && poisRef, "placement v1.0.95 : POI aux sites attendus (temple et Seuil poses au nord de Lhynn, v1.0.127)");
 
 		// 2. Master temporaire avec deux positions manuelles.
 		const std::string text = ReadText(fs::path(LCDLLN_CONTENT_DIR) / "world/royaumes/world_master.json");
@@ -2596,6 +2603,13 @@ namespace
 			{ std::ofstream f(dir / "world_master.json", std::ios::binary); f << content; }
 			return LoadWorldMaster((tmp / sub).string(), "royaumes", gw.master, e);
 		};
+		// Remplace le texte \p from (présent une fois) par \p to : positions déjà posées (v1.0.127).
+		auto swapText = [](std::string t, const std::string& from, const std::string& to) {
+			const size_t at = t.find(from);
+			if (at != std::string::npos) t.replace(at, from.size(), to);
+			return t;
+		};
+		const std::string altPos = "\"position\": { \"x_m\": -2300, \"z_m\": 3050 }";
 		// Insère `"position": {…}` juste après l'identifiant de l'entrée \p id.
 		auto withPosition = [](std::string t, const std::string& id, const std::string& pos) {
 			const std::string key = "\"id\": \"" + id + "\",";
@@ -2603,9 +2617,9 @@ namespace
 			if (at != std::string::npos) t.insert(at + key.size(), " \"position\": " + pos + ",");
 			return t;
 		};
-		std::string moved = withPosition(text, "ville_altenberg", "{ \"x_m\": 1234.5, \"z_m\": -2100 }");
-		moved = withPosition(moved, "poi_temple_methraton", "{ \"x_m\": -3000, \"z_m\": 2500 }");
-		moved = withPosition(moved, "ville_lhynn", "null");
+		std::string moved = swapText(text, altPos, "\"position\": { \"x_m\": 1234.5, \"z_m\": -2100 }");
+		moved = swapText(moved, "\"position\": { \"x_m\": -3700, \"z_m\": -3100 }", "\"position\": { \"x_m\": -3000, \"z_m\": 2500 }");
+		moved = swapText(moved, "\"position\": { \"x_m\": -3700, \"z_m\": -2600 }", "\"position\": null");
 		GlobalWorld g;
 		const bool ok = loadWith("a", moved, g, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
@@ -2614,21 +2628,21 @@ namespace
 		{
 			BuildMacroTerrain(g);
 			const CityDef* alt = g.FindCity("ville_altenberg");
-			Check(alt && alt->hasPosition && near(alt->center, -120000.0 + 1234.5, -50000.0 - 2100.0, 1.0),
+			Check(alt && alt->hasPosition && near(alt->center, -130000.0 + 1234.5, -50000.0 - 2100.0, 1.0),
 				"placement v1.0.95 : Altenberg posee a sa position manuelle (1 m)");
 			const CityDef* lh = g.FindCity("ville_lhynn");
-			Check(lh && !lh->hasPosition && near(lh->center, -99750.0, -10250.0, 1e-4), "placement v1.0.95 : position null = site automatique");
+			Check(lh && !lh->hasPosition && near(lh->center, -109750.0, -11000.0, 1e-4), "placement v1.0.95 : position null = site automatique");
 			const PoiDef* temple = nullptr;
 			for (const PoiDef& p : g.pois) if (p.id == "poi_temple_methraton") temple = &p;
-			Check(temple && near(temple->center, -100000.0 - 3000.0, -10000.0 + 2500.0, 1.0),
+			Check(temple && near(temple->center, -110000.0 - 3000.0, -10000.0 + 2500.0, 1.0),
 				"placement v1.0.95 : temple de Methraton pose a sa position manuelle (1 m)");
 			// Autres villes et POI des autres cases : exactement comme sans position.
 			bool same = g.cities.size() == g0.cities.size() && g.pois.size() == g0.pois.size();
 			for (size_t k = 0; same && k < g.cities.size(); ++k)
-				if (g.cities[k].id != "ville_altenberg")
+				if (g.cities[k].id != "ville_altenberg" && g.cities[k].id != "ville_lhynn")
 					same = near(g.cities[k].center, g0.cities[k].center.x, g0.cities[k].center.z, 0.0) && g.cities[k].plateauY == g0.cities[k].plateauY;
 			for (size_t k = 0; same && k < g.pois.size(); ++k)
-				if (g.pois[k].cell != "N005_W012" && g.pois[k].cell != "N001_W010")
+				if (g.pois[k].cell != "N005_W013" && g.pois[k].cell != "N001_W011")
 					same = near(g.pois[k].center, g0.pois[k].center.x, g0.pois[k].center.z, 0.0);
 			Check(same, "placement v1.0.95 : autres villes et POI des autres cases inchanges");
 			// Cellule d'Altenberg : plateau aplani autour de la position manuelle.
@@ -2649,7 +2663,7 @@ namespace
 		// 3. Positions refusées.
 		GlobalWorld gBad;
 		std::string e1, e2;
-		const bool out = loadWith("b", withPosition(text, "ville_altenberg", "{ \"x_m\": 4400, \"z_m\": 0 }"), gBad, e1);
+		const bool out = loadWith("b", swapText(text, altPos, "\"position\": { \"x_m\": 4400, \"z_m\": 0 }"), gBad, e1);
 		Check(!out && e1.find("hors de la case") != std::string::npos, "placement v1.0.95 : position hors de la case refusee (> 4300 m)");
 		const bool relief = loadWith("c", withPosition(text, "town_0119", "{ \"x_m\": 500, \"z_m\": 500 }"), gBad, e2);
 		Check(!relief && e2.find("relief") != std::string::npos, "placement v1.0.95 : ville ancree sur un relief non deplacable");

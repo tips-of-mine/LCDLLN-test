@@ -113,7 +113,9 @@ relient les villes de départ (arbre couvrant de plus courts chemins sur le rés
 routier calculé par le générateur — pas sur les routes du lore, v1.0.105 —, + la cellule voisine quand la route passe à moins de `corridor_margin_m`
 = 300 m de la frontière) : **180 cellules** depuis la v1.0.61 (117 avant), on va à pied d'un royaume à l'autre en
 suivant la route. **Depuis la v1.0.124 : 691 cellules listées dans `generated_cells`, 749 cellules
-jouables avec les corridors ; depuis la v1.0.125, 795 avec les 46 cases de mer sous les trajets des bateaux**
+jouables avec les corridors ; depuis la v1.0.125, 795 avec les 46 cases de mer sous les trajets des bateaux ;
+depuis la v1.0.126, toute la terre de la grille est jouable : 1 233 cellules listées, 1 291 avec les corridors,
+1 337 avec les cases de mer (LORE_BD §16.52)**
 (`AddSeaRouteCells`, « villages seulement », LORE_BD §16.51) (v1.0.124 : +7 cases des îles de Hishtarland et de Dyprokh, LORE_BD §16.50) (v1.0.106 : 412 et 481 ; v1.0.119 : 428 et 497, +16 cases des routes Farvhenn – Vestmhor
 et Shaddrek – Klehrwath, LORE_BD §16.46 ; v1.0.121-v1.0.122 : +245 cases, toutes les routes coupées ouvertes en deux
 lots, LORE_BD §16.48 ; détail : §11.7). Le bundle Docker ne garde des cellules que les `.json` / `.txt`
@@ -641,7 +643,8 @@ ordinaire du lore.
 | v1.0.119 (routes Farvhenn – Vestmhor, Shaddrek – Klehrwath) | 428 | 497 |
 | v1.0.122 (toutes les routes coupées, 2 lots) | 684 | 742 |
 | v1.0.124 (îles de Hishtarland et de Dyprokh) | 691 | 749 |
-| v1.0.125 (cases de mer des bateaux) | 691 | **795** |
+| v1.0.125 (cases de mer des bateaux) | 691 | 795 |
+| v1.0.126 (cellules restantes : toute la terre) | 1 233 | **1 337** |
 
 - Une cellule est jouable si elle est dans `generated_cells` **ou** dans un corridor des villes
   de départ (`AddStartCorridors`, calculé sur le réseau du générateur, inchangé par les routes du

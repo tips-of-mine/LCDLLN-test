@@ -1061,6 +1061,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.49](#1649-lave-des-enfers-lumineuse-et-mortelle-v10123) | v1.0.123 | Lave des Enfers lumineuse et mortelle | Canal A du splat = lave émissive (shader), masque serveur `lava_mask.lvmk`, mort en 3 s. |
 | [16.50](#1650-lignes-maritimes-jouées-passeur-au-ponton-et-îles-ouvertes-v10124) | v1.0.124 | Lignes maritimes jouées, îles ouvertes | Passeur au ponton (4 lignes, 11 escales, traversée payante téléportée), îles de Hishtarland et de Dyprokh générées. |
 | [16.51](#1651-bateaux-des-lignes-maritimes-à-bord-en-temps-réel-v10125) | v1.0.125 | Bateaux des lignes maritimes | Dromons visibles qui suivent les lignes (2 par ligne, 1 par navette, 8 m/s, 30 s à quai), embarquement au quai, marche libre sur le pont, étape payée au départ ; passeur retiré ; 46 cases de mer ouvertes. |
+| [16.52](#1652-cellules-restantes-ouvertes-au-jeu-v10126) | v1.0.126 | Cellules restantes ouvertes | Toute la terre des Royaumes jouable : 542 cases ouvertes (1 337 cellules jouables), 529 lieux `[GD]`, Forteresse naine d'Heusgly jouable ; 666 cimetières gardés. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -4432,7 +4433,7 @@ jouables sans cimetière ; jusqu'à une vingtaine de kilomètres du cimetière l
 | `target` | 666 | `tools/world_gen` **échoue** si une génération complète (sans `--cells`) ne donne pas exactement ce nombre ; la CI `build-linux` le recompte aussi |
 | `fill_empty_cells` | true | une cellule générée sans cimetière reçoit un **cimetière isolé** : au bord de la route la plus proche du centre de la case (côté sec et libre), sinon sur le premier point praticable autour du centre ; cercle de pierres et chandelier ; point de réapparition neutre |
 | `without_graveyard` | 71 hameaux (95 depuis v1.0.119, 16.46 ; 129 depuis v1.0.122, 16.48 ; 131 depuis v1.0.124, 16.50) | hameaux procéduraux privés de cimetière (l'auberge reste) pour compenser |
-| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) + 7 des îles (16.50) ; + 46 cases de mer sous les trajets des bateaux, ajoutées par le générateur (16.51) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
+| `village_only_cells` (v1.0.121) | 245 cases des lots de routes (16.48) + 7 des îles (16.50) + 542 cellules restantes (16.52) ; + 46 cases de mer sous les trajets des bateaux, ajoutées par le générateur (16.51) | seuls les villes et villages du lore y ont un cimetière : ni isolé, ni de hameau |
 
 **Choix des 71 hameaux** : un à un, celui dont le cimetière est le plus proche d'un autre cimetière (cimetières isolés
 comptés au centre de leur case), seulement dans une cellule qui garde au moins un cimetière. Calculé sur la génération
@@ -4922,6 +4923,69 @@ quai** ; un passager sans l'or est débarqué avant le départ.
 **Bilan** : 691 cases listées, 749 jouables par les corridors, **795** avec les cases de mer. **Reste** : vitesse et
 durée des traversées à juger en jeu ; collisions sur le pont (mât, rambardes) non modélisées (surface plate) ;
 caméra qui ne tourne pas avec le bateau.
+
+### 16.52 Cellules restantes ouvertes au jeu (v1.0.126)
+
+**Décision du propriétaire (18/11/2026)** : avancer au maximum sur les cellules non générées, **sans perte de
+fonctionnalité** (tout doit continuer de s'afficher), en une fois.
+
+**Avant / après** (grille des Royaumes, 2 100 cases) :
+
+| | Terre | Mer | Total jouable |
+|---|---|---|---|
+| v1.0.125 | 717 / 1 259 | 78 (corridors, trajets des bateaux) | 795 |
+| **v1.0.126** | **1 259 / 1 259** | 78 | **1 337** |
+
+**Ouvert** : les **542 cases de terre** encore fermées (plaines 123, montagnes 98 + chaînes 13 + neiges 4, côtes 87 + plages
+13, forêts 77 + lisières 31 + forêts à rivière 8 ou à lac 4, déserts 67 + terres arides 5, volcans 8, plaines à rivière 3
+ou à lac 1), dans 11 régions : Royaume des nains de l'est 112, Terres des Gigantomorphes 100, Royaumes des nains du sud
+77, Via Magna 73, Terres de l'empereur 43, Baronnie de Moorks 35, Territoires orcques 34, Syzygie 23, Royaume Drach 20,
+Forêt elfique 19, Royaume d'Hishtarland 6. `generated_cells` : 691 → **1 233** cases listées ; **1 291** avec les
+corridors des villes de départ, **1 337** avec les cases de mer des bateaux (16.51).
+
+**Restent fermées** : la haute mer et la mer peu profonde hors trajets des bateaux (763 cases : pas de terre où marcher ;
+les lignes maritimes y mènent déjà là où il faut) ; la **couronne de montagnes des Enfers** (16 cases) : c'est le mur du
+monde de la carte des Enfers (décision du 09/11/2026, région de départ 3 × 3), gardé tel quel.
+
+**Villes** : la **Forteresse naine d'Heusgly** (S006_E004, seule ville du master hors du monde jouable) devient jouable,
+reliée par sa route du lore 000155 (embranchement de Kholdvar – Frhozhol, S007_E006 → S006_E005 → S006_E004), désormais
+entière. Le **Krak de Jhenner** (S006_E012) est une fiche du lore sans entrée au master (pas encore de ville en jeu) : sa
+case est ouverte **sans lieu `[GD]`**, la place reste à la ville.
+
+**Lieux `[GD]`** (529, lore `lieux` + POI du master, même identifiant `lieu_x` / `poi_x`, **à relire**) : un par case vide
+(13 cases du lot ont déjà un lieu ou une ville : Heusgly, Krak de Jhenner, Mont des Neuf Pics, Arche, Volcan-cratère et
+Grand Hall des nains, Passe de Syzygie, 7 grottes des premiers-nés — toujours secrètes, `entree_cachee`). Choisis par un
+modèle selon le **terrain** (fermes, moulins, menhirs, relais en plaine ; gués et moulins à eau sur les rivières ;
+bûcherons, charbonniers, clairières, chênes, ermitages en forêt ; cols, grottes, mines, refuges, belvédères en montagne ;
+glaciers et grottes de glace sous la neige ; criques, phares, pêcheries, épaves, salines sur la côte ; oasis, ruines
+ensablées, nomades, tombeaux dans le désert ; fumerolles, coulées, soufre aux volcans) et selon la **région** une fois sur
+trois (bornes runiques, brasseries, tombeaux des rois nains chez les nains ; empreintes, trône, ossuaire, cercle des
+géants chez les Gigantomorphes ; camps de guerre, totems, fosses aux combats chez les orcs ; postes et gibets drach ;
+bornes milliaires, villas, camps de légion dans l'Empire ; péages et potences de la baronnie de Moorks ; relais et bornes
+de la Via Magna ; commanderies de Syzygie ; cercles et ruines elfiques ; monastères du Hishtarland), **nommés d'après la
+ville jouable la plus proche** (jamais une ville secrète). 114 modèles, 7 emplois au plus chacun. Répartition : camps 161,
+monolithes 84, élevages 65, salles 52, ruines 52, sanctuaires 40, étangs 35, défilés 31, champs de bataille 5, forêts 4.
+Niveaux : moyenne des lieux existants à 3 cases au plus, bornée par la région (repère `niveau_ref`) ; à défaut, bas de la
+région (règle de 16.48). Liste : `lieux` du lore (notes « v1.0.126 ») et `pois` du master (`[GD v1.0.126`). Un nom
+proposé reprenait un mot de PNJ existant (« cendre » : Nerra Cendre-Froide…, contrôle `validate_city_services`) :
+« Autel des braises ».
+
+**Cases sensibles** : comme en 16.48, les cases des 7 grottes des premiers-nés et de l'entrée ophidienne de la Faille des
+mues (S011_E015) sont ouvertes : les grottes restent secrètes (POI `secret`, jamais sur la carte du jeu ni livrés au client,
+`check_secrets.py`), sans route qui y mène, et leurs cases ne reçoivent pas de lieu `[GD]` en plus ; la Faille des mues
+reste au lore seul (aucun POI) et sa case reçoit un lieu banal (« Carrière de Kholbrakh »), comme la Bouche des Roseaux
+en 16.48.
+
+**Cimetières** : les 542 cases sont dans `graveyards.village_only_cells` (252 → **794**) : seuls les villes et villages
+du lore y ont un cimetière ; aucune case vide n'en reçoit, ni aucun hameau procédural. @@GY@@
+
+**Générateur** : aucune modification (le lot est entièrement porté par le master et le lore). **Rendu** : rien ne change
+côté client (mêmes formats, mêmes POI) : les nouvelles cellules s'affichent comme les autres une fois le monde régénéré.
+
+**Tests** : `world_gen_tests` (`TestCellulesRestantesV1126` : les 1 259 cases de terre jouables, 1 233 listées, 1 291
+avec les corridors, 529 lieux un par case, 794 cases villages seulement, Enfers à 9 cellules ; comptes mis à jour dans
+les tests des routes v1.0.105, des lots v1.0.121 et des lignes maritimes) ; contrôles du lore (`validate_city_services`,
+`check_secrets`, `check_references`, `sync_*.py --check`) ; génération complète.
 
 ## 17. Questions ouvertes
 

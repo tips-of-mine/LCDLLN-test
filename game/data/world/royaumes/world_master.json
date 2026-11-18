@@ -18,7 +18,7 @@
   "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
   "connect_start_cities": true,
   "corridor_margin_m": 300,
-  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus). v1.0.121-v1.0.122 : les 245 cases ouvertes par les lots de routes sont dans village_only_cells (seuls les villes et villages du lore y ont un cimetiere : ni cimetiere isole ni cimetiere de hameau) ; leurs 34 cimetieres de villages en plus compenses par 34 hameaux ajoutes (129 au total), meme choix glouton (recensement --graveyard-report). v1.0.124 : iles de Hishtarland et de Dyprokh (7 cases villages seulement), 2 cimetieres de villes compenses par 2 hameaux (131 au total, tools/world_gen/choose_graveyards.py).",
+  "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus). v1.0.121-v1.0.122 : les 245 cases ouvertes par les lots de routes sont dans village_only_cells (seuls les villes et villages du lore y ont un cimetiere : ni cimetiere isole ni cimetiere de hameau) ; leurs 34 cimetieres de villages en plus compenses par 34 hameaux ajoutes (129 au total), meme choix glouton (recensement --graveyard-report). v1.0.124 : iles de Hishtarland et de Dyprokh (7 cases villages seulement), 2 cimetieres de villes compenses par 2 hameaux (131 au total, tools/world_gen/choose_graveyards.py). v1.0.126 : cellules restantes (542 cases villages seulement) ; seul le cimetiere de la Forteresse naine d'Heusgly s'ajoute, compense par le hameau de S003_E006 (132 au total, meme choix glouton).",
   "graveyards": {
     "target": 666,
     "fill_empty_cells": true,
@@ -258,7 +258,8 @@
       "cell_s006_e008_hameau_0",
       "cell_s003_w010_hameau_0",
       "cell_s006_w007_hameau_0",
-      "cell_s006_w008_hameau_0"
+      "cell_s006_w008_hameau_0",
+      "cell_s003_e006_hameau_0"
     ]
   },
   "generated_cells": [

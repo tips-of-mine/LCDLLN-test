@@ -3471,9 +3471,9 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 131u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
+			&& g.master.graveyardExcluded.size() == 132u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0") && g.master.graveyardExcluded.count("cell_s003_e006_hameau_0")
 			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 129 hameaux sans cimetiere depuis v1.0.122)");
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 132 hameaux sans cimetiere depuis v1.0.126)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;

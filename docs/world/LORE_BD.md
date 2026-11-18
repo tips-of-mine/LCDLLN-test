@@ -4977,7 +4977,7 @@ reste au lore seul (aucun POI) et sa case reçoit un lieu banal (« Carrière de
 en 16.48.
 
 **Cimetières** : les 542 cases sont dans `graveyards.village_only_cells` (252 → **794**) : seuls les villes et villages
-du lore y ont un cimetière ; aucune case vide n'en reçoit, ni aucun hameau procédural. @@GY@@
+du lore y ont un cimetière ; aucune case vide n'en reçoit, ni aucun hameau procédural. Recensement (`--graveyard-report`) : **667** cimetières, le seul de plus étant celui de la Forteresse d'Heusgly ; **1 hameau** de plus passe dans `without_graveyard` (131 → **132** : `cell_s003_e006_hameau_0`, choix glouton de 16.39). **Total vérifié** : génération complète, 666 cimetières.
 
 **Générateur** : aucune modification (le lot est entièrement porté par le master et le lore). **Rendu** : rien ne change
 côté client (mêmes formats, mêmes POI) : les nouvelles cellules s'affichent comme les autres une fois le monde régénéré.

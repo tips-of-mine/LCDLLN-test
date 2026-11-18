@@ -2022,7 +2022,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 58, "lieux v1.0.89 : 58 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, trous de la route de Ghrunke Dash, v1.0.106, + 6 de la route de Klehrwath, v1.0.119)");
+		Check(inBox == 129, "lieux v1.0.89 : 129 cases jouables dans la boite du Royaume des nains de l'est (58 jusqu'en v1.0.125 : 14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, v1.0.106, + 6 de la route de Klehrwath, v1.0.119 ; puis toute la terre, v1.0.126)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -2047,7 +2047,8 @@ namespace
 	/// Grhavelt et Dhuzvelt sont jouables ; chaque point des routes du générateur entre ces villes et
 	/// Ysenkhal, Ebhrazul, Dhazkmer (et entre Ryvaldh, Grhavelt et Dhuzvelt) est dans une case jouable,
 	/// de même que chaque case des 5 tracés du lore ; un POI [GD] par case vide (52, au sec, seuls sur leur
-	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées.
+	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées
+	/// (jusqu'en v1.0.125 ; ouvertes par le lot des cellules restantes, v1.0.126).
 	void TestCellulesLieuxV1091()
 	{
 		using namespace tools::world_gen;
@@ -2092,7 +2093,8 @@ namespace
 			land += (code != ' ' && code != '-') ? 1 : 0;
 		}
 		Check(inList == 57 && land == 57, "cellules et lieux v1.0.91 : 57 cases generees, toutes terrestres");
-		Check(!listed.count("S008_E020") && !listed.count("S008_E021"), "cellules et lieux v1.0.91 : S008_E020 et S008_E021 restent fermees");
+		// Fermées jusqu'en v1.0.125, ouvertes par le lot des cellules restantes (v1.0.126).
+		Check(listed.count("S008_E020") && listed.count("S008_E021"), "cellules et lieux v1.0.91 : S008_E020 et S008_E021 ouvertes en v1.0.126 (fermees avant)");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
@@ -2292,10 +2294,11 @@ namespace
 			land += (code != ' ' && code != '-') ? 1 : 0;
 		}
 		Check(inList == 55 && land == 55, "cellules et lieux v1.0.104 : 55 cases generees, toutes terrestres");
-		// N013_E019 est ouverte en v1.0.119 (route Farvhenn – Vestmhor) ; S012_E016 reste fermée
-		// (le tracé de Shaddrek – Klehrwath passe par le col de S013_E016).
-		Check(!listed.count("S008_E022") && !listed.count("S012_E016") && listed.count("N013_E019"),
-			"cellules et lieux v1.0.104 : S008_E022 et S012_E016 restent fermees (N013_E019 ouverte en v1.0.119)");
+		// N013_E019 est ouverte en v1.0.119 (route Farvhenn – Vestmhor) ; S008_E022 et S012_E016,
+		// longtemps fermées (le tracé de Shaddrek – Klehrwath passe par le col de S013_E016), sont
+		// ouvertes par le lot des cellules restantes (v1.0.126).
+		Check(listed.count("S008_E022") && listed.count("S012_E016") && listed.count("N013_E019"),
+			"cellules et lieux v1.0.104 : S008_E022 et S012_E016 ouvertes en v1.0.126, N013_E019 en v1.0.119");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
@@ -2714,7 +2717,7 @@ namespace
 		std::vector<std::string> ids = g.master.generatedCells;
 		AddStartCorridors(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
-		Check(playable.size() == 749, "routes du lore v1.0.105 : 749 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122 + 7 des iles v1.0.124)");
+		Check(playable.size() == 1291, "routes du lore v1.0.105 : 1291 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122 + 7 des iles v1.0.124 + 542 cellules restantes v1.0.126)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
 		int viaOk = 0;
@@ -2939,7 +2942,10 @@ namespace
 				}
 				versFerme += any ? 1 : 0;
 			}
-		Check(passages == 0 && versFerme > 0, "routes v1.0.106 : (c) aucune route du lore ne traverse une case non generee entre deux zones jouables");
+		// Depuis v1.0.126 toute la terre est jouable : les routes vers une zone fermée (versFerme) ont
+		// disparu, seul compte qu'aucune ne sorte des cellules jouables pour y revenir.
+		std::fprintf(stderr, "  routes du lore sortant des cellules jouables : %d\n", versFerme);
+		Check(passages == 0, "routes v1.0.106 : (c) aucune route du lore ne traverse une case non generee entre deux zones jouables");
 
 		// Lieux [GD] : au sec, seuls sur leur case jouable.
 		struct Expected { const char* poi; const char* cell; };
@@ -3226,8 +3232,8 @@ namespace
 			ParseCellId(c, n, e);
 			vo += m.graveyardVillageOnlyCells.count({ n, e });
 		}
-		Check(m.graveyardVillageOnlyCells.size() == 252u && vo == 252u && gen.count("N015_E017") && gen.count("S013_E014"),
-			"routes lots v1.0.121 : 245 + 7 (iles v1.0.124) cases villages seulement, toutes generees (Mhorgad N015_E017 et S013_E014 ouvertes)");
+		Check(m.graveyardVillageOnlyCells.size() == 794u && vo == 794u && gen.count("N015_E017") && gen.count("S013_E014"),
+			"routes lots v1.0.121 : 245 + 7 (iles v1.0.124) + 542 (cellules restantes v1.0.126) cases villages seulement, toutes generees (Mhorgad N015_E017 et S013_E014 ouvertes)");
 		size_t lieux1 = 0, lieux2 = 0;
 		std::set<std::string> poiCells;
 		for (const PoiDef& p : m.pois)
@@ -3294,13 +3300,73 @@ namespace
 		fs::remove_all(tmp, ec);
 	}
 
+	/// v1.0.126 (décision du 18/11/2026 : ouvrir un maximum des cellules restantes, sans perte
+	/// de fonctionnalité) — toutes les cases de TERRE de la grille des Royaumes sont jouables
+	/// (542 cases ouvertes : 1233 listées, 1291 avec les corridors, 1337 avec les cases de mer
+	/// des bateaux) ; les 542 sont « villages seulement » ; 529 lieux [GD] (POI « [GD v1.0.126 »),
+	/// un par case vide, chacun dans une case du lot et jamais deux dans la même case ; la
+	/// Forteresse naine d'Heusgly (S006_E004) devient jouable ; la carte des Enfers garde ses
+	/// 9 cellules (couronne de montagnes = mur du monde).
+	void TestCellulesRestantesV1126()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "cellules restantes v1.0.126 : master charge");
+		if (!ok) return;
+		const WorldMaster& m = g.master;
+		g.contentRoot = LCDLLN_CONTENT_DIR;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g);
+		std::vector<std::string> ids = m.generatedCells;
+		AddStartCorridors(g, ids);
+		const size_t avecCorridors = ids.size();
+		const size_t villagesAvantMer = g.master.graveyardVillageOnlyCells.size();
+		// Les trajets des bateaux ajoutent leurs cases (46, dont 2 de côte comptées « terre »).
+		AddSeaRouteCells(g, ids);
+		const std::set<std::string> playable(ids.begin(), ids.end());
+		// Toutes les cases de terre (ni haute mer ' ' ni mer peu profonde '-') sont jouables.
+		size_t land = 0, closedLand = 0;
+		for (int r = 0; r < static_cast<int>(m.gridRows.size()); ++r)
+			for (int c = 0; c < static_cast<int>(m.gridRows[r].size()); ++c)
+			{
+				const char ch = m.gridRows[r][c];
+				if (ch == ' ' || ch == '-') continue;
+				++land;
+				const engine::world::cells::CellCoord cc{ m.scale.northN - r, m.scale.westE + c };
+				closedLand += playable.count(engine::world::cells::LoreCellId(cc)) == 0;
+			}
+		size_t lieux = 0, horsLot = 0, villagesSeulement = 0;
+		std::set<std::string> poiCells;
+		const std::set<std::string> listed(m.generatedCells.begin(), m.generatedCells.end());
+		for (const PoiDef& p : m.pois)
+		{
+			if (p.description.find("[GD v1.0.126") == std::string::npos) continue;
+			++lieux;
+			horsLot += listed.count(p.cell) == 0 || !poiCells.insert(p.cell).second;
+			int n = 0, e = 0;
+			ParseCellId(p.cell, n, e);
+			villagesSeulement += m.graveyardVillageOnlyCells.count({ n, e });
+		}
+		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1233u && avecCorridors == 1291u
+				&& playable.size() == 1337u && playable.count("S006_E004") && listed.count("S006_E004"),
+			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors, 1337 avec les trajets maritimes), Heusgly comprise");
+		Check(lieux == 529u && horsLot == 0u && villagesSeulement == 529u && villagesAvantMer == 794u,
+			"cellules restantes v1.0.126 : 529 lieux [GD], un par case vide du lot, cases villages seulement (794)");
+		WorldMaster enfers;
+		Check(LoadWorldMaster(LCDLLN_CONTENT_DIR, "enfers", enfers, err) && enfers.generatedCells.size() == 9u,
+			"cellules restantes v1.0.126 : les Enfers gardent leurs 9 cellules (couronne = mur du monde)");
+	}
+
 	/// v1.0.124 (décision du 15/11/2026 : les 4 lignes, îles générées) puis v1.0.125 (« à bord
 	/// en temps réel », bateaux visibles, passeur retiré) — master : 4 lignes maritimes,
 	/// 11 escales, boats (2 par ligne, 1 par navette) et 30 s d'arrêt, un dialogue de capitaine
 	/// du port par escale (game/data/dialogues/capitaine_port_<ligne>_<k>.json, sans action) et
 	/// plus aucun fichier passeur_* ; îles de Hishtarland (5 cases) et de Dyprokh (2) générées.
 	/// Macro : chaque étape a un trajet en mer ; les cellules de mer sous les trajets (46)
-	/// s'ajoutent aux 749 cellules jouables, « villages seulement », et couvrent les 11 escales
+	/// s'ajoutent aux cellules jouables (749 en v1.0.125, 1291 depuis v1.0.126), « villages
+	/// seulement », et couvrent les 11 escales
 	/// (dont les ports [GD] de Zaltheim S009_W010 et d'Ostrevan N012_W007). Génération : le
 	/// ponton de Hishtarland (S011_W006) est sur la terre au bord de la mer, son quai rejoint la
 	/// pleine mer, capitaine posé ; la case de Brenhaval (N017_W010) a les pontons de ses 2 lignes.
@@ -3352,9 +3418,9 @@ namespace
 		size_t inGen = 0;
 		for (const SeaLineDef& l : m.seaLines)
 			for (const SeaLineStopDef& st : l.stops) inGen += gen.count(st.cell);
-		Check(before == 749u && added == 46u && ids.size() == 795u && g.master.graveyardVillageOnlyCells.size() == vo + 46u
+		Check(before == 1291u && added == 46u && ids.size() == 1337u && g.master.graveyardVillageOnlyCells.size() == vo + 46u
 				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W007"),
-			"lignes maritimes v1.0.125 : 46 cellules de mer ajoutees (795 jouables, villages seulement), les 11 escales y sont");
+			"lignes maritimes v1.0.125 : 46 cellules de mer ajoutees (1337 jouables depuis v1.0.126, villages seulement), les 11 escales y sont");
 		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1125";
 		std::error_code ec;
 		fs::remove_all(tmp, ec);
@@ -3415,9 +3481,9 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 131u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0")
+			&& g.master.graveyardExcluded.size() == 132u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0") && g.master.graveyardExcluded.count("cell_s003_e006_hameau_0")
 			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 129 hameaux sans cimetiere depuis v1.0.122)");
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 132 hameaux sans cimetiere depuis v1.0.126)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;
@@ -3869,6 +3935,7 @@ int main()
 	TestCimetieresV1111();
 	TestRoutesCoupeesV1119();
 	TestRoutesLotsV1121();
+	TestCellulesRestantesV1126();
 	TestSeaLinesV1125();
 	TestFalaiseV1120();
 	TestIdentifiantsCimetieresV1114();

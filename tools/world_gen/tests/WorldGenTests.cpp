@@ -196,14 +196,15 @@ namespace
 				if (c.id == cityId) { found = tools::world_gen::ParseCellId(c.cell, refN, refE); }
 			for (const auto& p : m.pois)
 				if (!found && p.id == cityId) { found = tools::world_gen::ParseCellId(p.cell, refN, refE); }
-			// v1.0.72 : Syllaërin (elfe) déplacé par le propriétaire deux cases à l'est de Northind.
-			const int reach = faction == "elfe" ? 2 : 1;
+			// v1.0.72 : Syllaërin (elfe) déplacé par le propriétaire deux cases à l'est de Northind ;
+			// v1.0.127 : Altenberg passée sur la côte (N005_W013), Orhendal (N005_W011) à deux cases.
+			const int reach = (faction == "elfe" || faction == "lumiere") ? 2 : 1;
 			const bool near = start && found && start->kind == "hameau"
 				&& std::abs(start->n - refN) <= reach && std::abs(start->e - refE) <= reach && (start->n != refN || start->e != refE);
 			if (!near) std::fprintf(stderr, "  depart '%s' pas dans un hameau voisin de %s\n", faction.c_str(), cityId.c_str());
 			hamletsNear = hamletsNear && near;
 		}
-		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61 ; Syllaërin a 2 cases, v1.0.72)");
+		Check(hamletsNear, "master : departs = hameaux dedies voisins de leur ville (v1.0.61 ; Syllaërin a 2 cases, v1.0.72 ; Orhendal a 2 cases d'Altenberg, v1.0.127)");
 		bool oldStartsCleared = true;
 		for (const auto& c : m.cities)
 			if (c.id == "hameau_marn" || c.id == "ville_whispers_hill" || c.id == "leviathan_jungle" || c.id == "ville_ghrunke_dash")

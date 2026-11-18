@@ -5021,7 +5021,8 @@ dans un rayon de 240 m, eau reliée à la pleine mer à moins de 800 m). Les anc
 nouvelles cases, gardés). Les schémas de ville (services, PNJ) ne dépendent pas de la case.
 
 **Tests** : `world_gen_tests` (`TestPlacementManuelV1095` mis à jour : villes posées, sites de Lhynn, d'Altenberg, du
-temple et du Seuil ; position `null` de Lhynn = site automatique de N001_W011) ; contrôles du lore
+temple et du Seuil ; position `null` de Lhynn = site automatique de N001_W011 ; départs : Orhendal, hameau de départ
+des Chevaliers de la Lumière, est désormais à deux cases d'Altenberg, admis comme Syllaërin) ; contrôles du lore
 (`sync_positions`, `sync_routes`, `sync_*.py --check`, `validate_city_services`, `check_secrets`,
 `check_references`) ; génération complète.
 

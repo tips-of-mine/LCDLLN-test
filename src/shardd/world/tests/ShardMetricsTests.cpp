@@ -41,6 +41,8 @@ int main()
 		m.clients = 37;
 		m.mobs = 900;
 		m.mobsAsleep = 700;
+		m.mobsClassB = 850;
+		m.mobsClassC = 50;
 		m.regionsWarm = 6;
 		m.saveQueuePending = 3;
 		m.saveQueueExecuted = 1000;
@@ -57,7 +59,12 @@ int main()
 			++helps;
 			Check(t.compare(p + 7, 13, "lcdlln_shard_") == 0, "préfixe lcdlln_shard_");
 		}
-		Check(helps == 26u, "26 métriques");
+		Check(helps == 27u, "27 métriques");
+		// POP.1 — population par classe : une ligne par classe, étiquette `class`.
+		Check(Has(t, "# TYPE lcdlln_shard_population gauge\n"), "population : type jauge");
+		Check(Has(t, "lcdlln_shard_population{class=\"A\"} 0\n")
+			&& Has(t, "lcdlln_shard_population{class=\"B\"} 850\n")
+			&& Has(t, "lcdlln_shard_population{class=\"C\"} 50\n"), "population A/B/C");
 	}
 
 	// 2. Saturation : délestage ou file de sauvegarde débordée.

@@ -569,6 +569,7 @@ namespace engine::server
 		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
 		mob.owningSpawnerIndex = static_cast<uint32_t>(&spawner - m_spawners.data());
 		mob.owningSpawnerSlot = slotIndex;
+		mob.populationClass = spawner.populationClass; // POP.1 (résolue à l'init)
 		// Monde vivant — comportement d'archétype (PNJ d'ambiance, vitesse propre)
 		// et point d'apparition de la routine (sa porte = 1er point du chemin).
 		if (const CreatureArchetype* arch = m_archetypeLibrary.Find(mob.archetypeId); arch != nullptr)
@@ -664,6 +665,8 @@ namespace engine::server
 		mob.attackable = arch->attackable;
 		mob.raceHostile = !arch->hostileToRaces.empty(); // Enfers : gardes de la Légion
 		mob.gmSpawned = true;
+		// POP.1 — mob MJ : pas de déclaration, classe déduite de l'archétype.
+		mob.populationClass = engine::world::InferShardPopulationClass(mob.ambient, mob.attackable, mob.raceHostile);
 		CellCoord mappedCell{};
 		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
 			return 0;

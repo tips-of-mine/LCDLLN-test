@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <initializer_list>
+#include <utility>
 
 namespace engine::server
 {
@@ -22,6 +24,26 @@ namespace engine::server
 			out += " gauge\n";
 			std::snprintf(line, sizeof(line), "%s %.6g\n", name, std::isfinite(value) ? value : 0.0);
 			out += line;
+		}
+
+		/// POP.1 — jauge à étiquette `class` : une ligne HELP/TYPE puis une ligne par
+		/// valeur. \param values paires (lettre de classe, valeur).
+		void ClassGauge(std::string& out, const char* name, const char* help,
+			std::initializer_list<std::pair<char, uint32_t>> values)
+		{
+			char line[160];
+			out += "# HELP ";
+			out += name;
+			out += ' ';
+			out += help;
+			out += "\n# TYPE ";
+			out += name;
+			out += " gauge\n";
+			for (const auto& [letter, value] : values)
+			{
+				std::snprintf(line, sizeof(line), "%s{class=\"%c\"} %u\n", name, letter, static_cast<unsigned>(value));
+				out += line;
+			}
 		}
 
 		void Counter(std::string& out, const char* name, const char* help, uint64_t value)
@@ -54,7 +76,7 @@ namespace engine::server
 	std::string FormatShardMetricsPrometheus(const ShardGameplayMetrics& m, double ageSeconds)
 	{
 		std::string out;
-		out.reserve(3400);
+		out.reserve(3700);
 		Counter(out, "lcdlln_shard_tick_total", "Ticks de simulation executes.", m.tick);
 		Gauge(out, "lcdlln_shard_tick_hz", "Frequence nominale du tick.", m.tickHz);
 		Gauge(out, "lcdlln_shard_tick_last_seconds", "Duree du dernier tick.", m.tickLastSeconds);
@@ -63,6 +85,8 @@ namespace engine::server
 		Gauge(out, "lcdlln_shard_clients", "Joueurs connectes.", m.clients);
 		Gauge(out, "lcdlln_shard_mobs", "Mobs vivants.", m.mobs);
 		Gauge(out, "lcdlln_shard_mobs_asleep", "Mobs endormis (loin des joueurs).", m.mobsAsleep);
+		ClassGauge(out, "lcdlln_shard_population", "Mobs vivants par classe de population (A interactif, B combat, C figurant).",
+			{ { 'A', m.mobsClassA }, { 'B', m.mobsClassB }, { 'C', m.mobsClassC } });
 		Gauge(out, "lcdlln_shard_loot_bags", "Sacs de butin au sol.", m.lootBags);
 		Gauge(out, "lcdlln_shard_regions_warm", "Cellules chaudes (actives ou chargees).", m.regionsWarm);
 		Gauge(out, "lcdlln_shard_regions_tracked", "Cellules suivies (non dechargees).", m.regionsTracked);

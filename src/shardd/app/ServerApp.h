@@ -22,6 +22,7 @@
 #include "src/shardd/gameplay/gm/GmPlayerState.h"   // ADM.1
 #include "src/shardd/gameplay/ambient/AmbientRoutine.h"
 #include "src/shared/world/WorldClock.h"
+#include "src/shared/world/PopulationClass.h"
 #include "src/shardd/gameplay/creature/CreatureArchetypeLibrary.h"
 #include "src/shardd/gameplay/spell/SpellKitLibrary.h"
 #include "src/shardd/gameplay/anniversary/CakeBuffLibrary.h" // SP3 anniversaires (2026-07-18)
@@ -418,6 +419,11 @@ namespace engine::server
 		bool scheduleRetired = false;
 		/// ADM.6 — apparu par un maître de jeu (/npc add) : hors spawner, retiré à sa mort.
 		bool gmSpawned = false;
+		/// POP.1 — classe de population (A interactif, B combat, C figurant), fixée
+		/// au spawn. Classification seule : aucun comportement n'en dépend encore
+		/// (journaux, métriques lcdlln_shard_population). Défaut B : mobs
+		/// d'événements dynamiques.
+		engine::world::PopulationClass populationClass = engine::world::PopulationClass::Combat;
 		/// ETAPE4.1 (chantier 2.2) — sommeil : endormi = ni IA ni déplacement (aucun
 		/// joueur à moins de server.mob_ai.wake_radius_m depuis sleep_delay_s).
 		mob_activity::SleepState sleep;
@@ -455,6 +461,9 @@ namespace engine::server
 		/// joueur à portée) : ses mobs restent server.spawners.despawn_grace_s avant
 		/// d'être retirés (pas d'apparitions / disparitions en rafale en bordure).
 		uint32_t inactiveSinceTick = 0;
+		/// POP.1 — classe de population effective des mobs de ce spawner (déclarée
+		/// et validée, ou déduite de l'archétype), résolue une fois à l'init.
+		engine::world::PopulationClass populationClass = engine::world::PopulationClass::Combat;
 		std::vector<SpawnerSlotState> slots;
 	};
 
@@ -2107,7 +2116,8 @@ namespace engine::server
 		double m_lastTickSeconds = 0.0;
 		double m_tickMaxSinceMetrics = 0.0;
 		/// Construit et publie la photo des métriques (thread de tick, 1 Hz).
-		void PublishGameplayMetrics(size_t asleepMobs);
+		/// \param mobsByClass POP.1 — mobs vivants par classe de population.
+		void PublishGameplayMetrics(size_t asleepMobs, const engine::world::PopulationCounts& mobsByClass);
 		/// ETAPE4.5 — plafond d'entités par client hors délestage, et facteur appliqué
 		/// pendant (server.load_shedding.view_cap_factor, 0,5).
 		uint32_t m_viewCapNominal = 0;

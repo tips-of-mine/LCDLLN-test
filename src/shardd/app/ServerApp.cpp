@@ -1085,8 +1085,12 @@ namespace engine::server
 		{
 			// ETAPE4.1 — mobs vivants / endormis (le sommeil doit dominer loin des joueurs).
 			size_t asleepMobs = 0;
+			engine::world::PopulationCounts mobsByClass{}; // POP.1
 			for (const MobEntity& mob : m_mobs)
+			{
 				asleepMobs += mob.sleep.asleep ? 1u : 0u;
+				++mobsByClass[engine::world::PopulationClassIndex(mob.populationClass)];
+			}
 			// FIX.6 — journal toutes les server.tick_stats_log_interval_sec (60 s par défaut)
 			// au lieu de chaque seconde (368 lignes en 6 min), et aussi dès que le nombre de
 			// clients ou l'état de délestage change. Les métriques (/metrics) restent à 1 Hz.
@@ -1112,7 +1116,7 @@ namespace engine::server
 					m_transport.ReceivedPacketCount(),
 					m_transport.SentPacketCount());
 			}
-			PublishGameplayMetrics(asleepMobs);
+			PublishGameplayMetrics(asleepMobs, mobsByClass);
 		}
 	}
 

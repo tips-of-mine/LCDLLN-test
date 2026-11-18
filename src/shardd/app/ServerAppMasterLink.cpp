@@ -351,7 +351,7 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::PublishGameplayMetrics(size_t asleepMobs)
+	void ServerApp::PublishGameplayMetrics(size_t asleepMobs, const engine::world::PopulationCounts& mobsByClass)
 	{
 		ShardGameplayMetrics m;
 		m.tick = m_currentTick;
@@ -363,6 +363,9 @@ namespace engine::server
 		m.clients = static_cast<uint32_t>(m_clients.size());
 		m.mobs = static_cast<uint32_t>(m_mobs.size());
 		m.mobsAsleep = static_cast<uint32_t>(asleepMobs);
+		m.mobsClassA = mobsByClass[engine::world::PopulationClassIndex(engine::world::PopulationClass::Interactive)];
+		m.mobsClassB = mobsByClass[engine::world::PopulationClassIndex(engine::world::PopulationClass::Combat)];
+		m.mobsClassC = mobsByClass[engine::world::PopulationClassIndex(engine::world::PopulationClass::Extra)];
 		m.lootBags = static_cast<uint32_t>(m_lootBags.size());
 		m.regionsWarm = static_cast<uint32_t>(m_regionLifecycle.WarmCount());
 		m.regionsTracked = static_cast<uint32_t>(m_regionLifecycle.TrackedCount());

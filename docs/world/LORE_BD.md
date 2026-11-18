@@ -5024,7 +5024,9 @@ nouvelles cases, gardés). Les schémas de ville (services, PNJ) ne dépendent p
 temple et du Seuil ; position `null` de Lhynn = site automatique de N001_W011 ; départs : Orhendal, hameau de départ
 des Chevaliers de la Lumière, est désormais à deux cases d'Altenberg, admis comme Syllaërin) ; contrôles du lore
 (`sync_positions`, `sync_routes`, `sync_*.py --check`, `validate_city_services`, `check_secrets`,
-`check_references`) ; génération complète.
+`check_references`) ; génération complète : 666 cimetières ; avertissement attendu « position manuelle de ville_lhynn
+dans l'eau » (le générateur prévient sous mer + 6 m ; le site est sec, à mer + 4 m, et le plateau de la ville est
+relevé à mer + 5 m, comme un quai).
 
 ## 17. Questions ouvertes
 

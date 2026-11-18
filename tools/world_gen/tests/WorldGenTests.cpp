@@ -2022,7 +2022,7 @@ namespace
 				if (!used) std::fprintf(stderr, "  case jouable vide (v1.0.89) : %s\n", c.c_str());
 				occupied += used ? 1 : 0;
 			}
-		Check(inBox == 58, "lieux v1.0.89 : 58 cases jouables dans la boite du Royaume des nains de l'est (14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, trous de la route de Ghrunke Dash, v1.0.106, + 6 de la route de Klehrwath, v1.0.119)");
+		Check(inBox == 129, "lieux v1.0.89 : 129 cases jouables dans la boite du Royaume des nains de l'est (58 jusqu'en v1.0.125 : 14 + 7 de la route de Vozmarkh, v1.0.91, + 29 des routes de Vozmarkh, v1.0.104, + S004_E015 et S005_E015, v1.0.106, + 6 de la route de Klehrwath, v1.0.119 ; puis toute la terre, v1.0.126)");
 		Check(occupied == inBox, "lieux v1.0.89 : chaque case jouable du Royaume des nains de l'est porte une ville ou un POI");
 		struct Expected { const char* poi; const char* cell; };
 		static const Expected kLieux[] = {
@@ -2047,7 +2047,8 @@ namespace
 	/// Grhavelt et Dhuzvelt sont jouables ; chaque point des routes du générateur entre ces villes et
 	/// Ysenkhal, Ebhrazul, Dhazkmer (et entre Ryvaldh, Grhavelt et Dhuzvelt) est dans une case jouable,
 	/// de même que chaque case des 5 tracés du lore ; un POI [GD] par case vide (52, au sec, seuls sur leur
-	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées.
+	/// case) ; aucun POI sur les cases des villes d'arrivée ; S008_E020 et S008_E021 restent fermées
+	/// (jusqu'en v1.0.125 ; ouvertes par le lot des cellules restantes, v1.0.126).
 	void TestCellulesLieuxV1091()
 	{
 		using namespace tools::world_gen;
@@ -2092,7 +2093,8 @@ namespace
 			land += (code != ' ' && code != '-') ? 1 : 0;
 		}
 		Check(inList == 57 && land == 57, "cellules et lieux v1.0.91 : 57 cases generees, toutes terrestres");
-		Check(!listed.count("S008_E020") && !listed.count("S008_E021"), "cellules et lieux v1.0.91 : S008_E020 et S008_E021 restent fermees");
+		// Fermées jusqu'en v1.0.125, ouvertes par le lot des cellules restantes (v1.0.126).
+		Check(listed.count("S008_E020") && listed.count("S008_E021"), "cellules et lieux v1.0.91 : S008_E020 et S008_E021 ouvertes en v1.0.126 (fermees avant)");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
@@ -2292,10 +2294,11 @@ namespace
 			land += (code != ' ' && code != '-') ? 1 : 0;
 		}
 		Check(inList == 55 && land == 55, "cellules et lieux v1.0.104 : 55 cases generees, toutes terrestres");
-		// N013_E019 est ouverte en v1.0.119 (route Farvhenn – Vestmhor) ; S012_E016 reste fermée
-		// (le tracé de Shaddrek – Klehrwath passe par le col de S013_E016).
-		Check(!listed.count("S008_E022") && !listed.count("S012_E016") && listed.count("N013_E019"),
-			"cellules et lieux v1.0.104 : S008_E022 et S012_E016 restent fermees (N013_E019 ouverte en v1.0.119)");
+		// N013_E019 est ouverte en v1.0.119 (route Farvhenn – Vestmhor) ; S008_E022 et S012_E016,
+		// longtemps fermées (le tracé de Shaddrek – Klehrwath passe par le col de S013_E016), sont
+		// ouvertes par le lot des cellules restantes (v1.0.126).
+		Check(listed.count("S008_E022") && listed.count("S012_E016") && listed.count("N013_E019"),
+			"cellules et lieux v1.0.104 : S008_E022 et S012_E016 ouvertes en v1.0.126, N013_E019 en v1.0.119");
 		BuildMacroTerrain(g);
 		BuildMacroRivers(g);
 		BuildMacroRoads(g);
@@ -2939,7 +2942,10 @@ namespace
 				}
 				versFerme += any ? 1 : 0;
 			}
-		Check(passages == 0 && versFerme > 0, "routes v1.0.106 : (c) aucune route du lore ne traverse une case non generee entre deux zones jouables");
+		// Depuis v1.0.126 toute la terre est jouable : les routes vers une zone fermée (versFerme) ont
+		// disparu, seul compte qu'aucune ne sorte des cellules jouables pour y revenir.
+		std::fprintf(stderr, "  routes du lore sortant des cellules jouables : %d\n", versFerme);
+		Check(passages == 0, "routes v1.0.106 : (c) aucune route du lore ne traverse une case non generee entre deux zones jouables");
 
 		// Lieux [GD] : au sec, seuls sur leur case jouable.
 		struct Expected { const char* poi; const char* cell; };
@@ -3312,9 +3318,13 @@ namespace
 		if (!ok) return;
 		const WorldMaster& m = g.master;
 		g.contentRoot = LCDLLN_CONTENT_DIR;
-		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g); BuildMacroSeaRoutes(g);
 		std::vector<std::string> ids = m.generatedCells;
 		AddStartCorridors(g, ids);
+		const size_t avecCorridors = ids.size();
+		const size_t villagesAvantMer = g.master.graveyardVillageOnlyCells.size();
+		// Les trajets des bateaux ajoutent leurs cases (46, dont 2 de côte comptées « terre »).
+		AddSeaRouteCells(g, ids);
 		const std::set<std::string> playable(ids.begin(), ids.end());
 		// Toutes les cases de terre (ni haute mer ' ' ni mer peu profonde '-') sont jouables.
 		size_t land = 0, closedLand = 0;
@@ -3339,10 +3349,10 @@ namespace
 			ParseCellId(p.cell, n, e);
 			villagesSeulement += m.graveyardVillageOnlyCells.count({ n, e });
 		}
-		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1233u && playable.size() == 1291u
-				&& playable.count("S006_E004") && listed.count("S006_E004"),
-			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors), Heusgly comprise");
-		Check(lieux == 529u && horsLot == 0u && villagesSeulement == 529u && m.graveyardVillageOnlyCells.size() == 794u,
+		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1233u && avecCorridors == 1291u
+				&& playable.size() == 1337u && playable.count("S006_E004") && listed.count("S006_E004"),
+			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors, 1337 avec les trajets maritimes), Heusgly comprise");
+		Check(lieux == 529u && horsLot == 0u && villagesSeulement == 529u && villagesAvantMer == 794u,
 			"cellules restantes v1.0.126 : 529 lieux [GD], un par case vide du lot, cases villages seulement (794)");
 		WorldMaster enfers;
 		Check(LoadWorldMaster(LCDLLN_CONTENT_DIR, "enfers", enfers, err) && enfers.generatedCells.size() == 9u,

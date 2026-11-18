@@ -4983,8 +4983,12 @@ du lore y ont un cimetière ; aucune case vide n'en reçoit, ni aucun hameau pro
 côté client (mêmes formats, mêmes POI) : les nouvelles cellules s'affichent comme les autres une fois le monde régénéré.
 
 **Tests** : `world_gen_tests` (`TestCellulesRestantesV1126` : les 1 259 cases de terre jouables, 1 233 listées, 1 291
-avec les corridors, 529 lieux un par case, 794 cases villages seulement, Enfers à 9 cellules ; comptes mis à jour dans
-les tests des routes v1.0.105, des lots v1.0.121 et des lignes maritimes) ; contrôles du lore (`validate_city_services`,
+avec les corridors, 1 337 avec les cases de mer des bateaux — 2 cases de côte comptées « terre » ne sont jouables que par
+elles —, 529 lieux un par case, 794 cases villages seulement, Enfers à 9 cellules ; comptes mis à jour dans les tests des
+routes v1.0.105, des lots v1.0.121 et des lignes maritimes ; tests devenus faux mis à jour : boîte des nains de l'Est
+58 → 129 cases jouables (v1.0.89), S008_E020, S008_E021, S008_E022 et S012_E016 désormais ouvertes (v1.0.91, v1.0.104),
+plus aucune route du lore vers une zone fermée (v1.0.106 c)). Le lieu « Îlot du lac de Feyhin Lokcthat » ne s'appelle pas
+« Île » : les POI `poi_ile_*` sont réservés aux 11 temples de l'Île de la Trêve (test du relief v1.0.77) ; contrôles du lore (`validate_city_services`,
 `check_secrets`, `check_references`, `sync_*.py --check`) ; génération complète.
 
 ## 17. Questions ouvertes

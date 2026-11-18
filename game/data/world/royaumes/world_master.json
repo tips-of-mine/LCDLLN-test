@@ -7762,11 +7762,11 @@
       "description": "Rive d'un lac calme où viennent boire les cerfs ; une barque pourrit dans les joncs. Niveaux 27-30. [GD v1.0.126, lieu_rive_du_lac_de_feyhin_lokcthat]."
     },
     {
-      "id": "poi_ile_du_lac_de_feyhin_lokcthat",
-      "name": "Île du lac de Feyhin Lokcthat",
+      "id": "poi_ilot_du_lac_de_feyhin_lokcthat",
+      "name": "Îlot du lac de Feyhin Lokcthat",
       "cell": "N007_E007",
       "kind": "ruine",
-      "description": "Petite île au milieu du lac, portant les restes d'une chapelle ; on n'y accède qu'en barque. Niveaux 25-29. [GD v1.0.126, lieu_ile_du_lac_de_feyhin_lokcthat]."
+      "description": "Petite île au milieu du lac, portant les restes d'une chapelle ; on n'y accède qu'en barque. Niveaux 25-29. [GD v1.0.126, lieu_ilot_du_lac_de_feyhin_lokcthat]."
     },
     {
       "id": "poi_camp_des_caravaniers_de_feyhin_lokcthat",

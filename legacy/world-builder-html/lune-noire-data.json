@@ -321721,8 +321721,8 @@
       ]
     },
     {
-      "id": "lieu_ile_du_lac_de_feyhin_lokcthat",
-      "name": "Île du lac de Feyhin Lokcthat",
+      "id": "lieu_ilot_du_lac_de_feyhin_lokcthat",
+      "name": "Îlot du lac de Feyhin Lokcthat",
       "alias": "",
       "type": "ruins_settlement",
       "importance": "",
@@ -321803,7 +321803,7 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N007_E007 (L), nommé d'après la ville jouable la plus proche (Feyhin Lokcthat). Petite île au milieu du lac, portant les restes d'une chapelle ; on n'y accède qu'en barque. Niveaux 25-29.",
-        "Réel en jeu : POI poi_ile_du_lac_de_feyhin_lokcthat (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_ilot_du_lac_de_feyhin_lokcthat (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
     },
     {

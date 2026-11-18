@@ -2,6 +2,7 @@
 // telles qu'elles existent dans le jeu (sans aucun lieu secret).
 
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { loadWorldMap, WORLD_MAP_IDS } from '@/lib/world/worldMaps'
 import WorldMapView from './WorldMapView'
 
@@ -27,6 +28,9 @@ export default async function WorldPage() {
           et évoluent avec lui : certains lieux restent à découvrir en jouant.
         </p>
       </div>
+      <p className="wp-map-cta">
+        <Link href="/monde/lieux" className="btn btn-accent">Voir les villes et lieux vus du ciel</Link>
+      </p>
       {maps.map((m) => (
         <WorldMapView key={m.world} map={m} />
       ))}

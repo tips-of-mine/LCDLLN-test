@@ -222,6 +222,9 @@ jobs:
             python3 "$GITHUB_WORKSPACE/scripts/check_portal_map_secrets.py" \
               "$GITHUB_WORKSPACE/build/portal-maps/$W/portal_map.json" \
               "$GITHUB_WORKSPACE/game/data/world/$W/secret_places.json"
+            python3 "$GITHUB_WORKSPACE/scripts/check_portal_map_secrets.py" \
+              "$GITHUB_WORKSPACE/build/portal-maps/$W/places/index.json" \
+              "$GITHUB_WORKSPACE/game/data/world/$W/secret_places.json"
           done
           HELL="$GITHUB_WORKSPACE/game/data/world/enfers"
           test -s "$HELL/start_locations.json" || { echo "[FAIL] $HELL/start_locations.json absent"; exit 1; }

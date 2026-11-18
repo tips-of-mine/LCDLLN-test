@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PORTAL.1 — garde-fou CI : l'affiche publique du portail ne cite aucun secret.
 
-Usage : check_portal_map_secrets.py <portal_map.json> <secret_places.json>
+Usage : check_portal_map_secrets.py <portal_map.json | places/index.json> <secret_places.json>
 
 Échoue (code 1) si un nom de ville ou de lieu de secret_places.json apparaît dans
 les étiquettes de portal_map.json. secret_places.json absent = aucun secret dans
@@ -19,7 +19,8 @@ def main() -> int:
     portal_path, secret_path = sys.argv[1], sys.argv[2]
     with open(portal_path, encoding="utf-8") as f:
         portal = json.load(f)
-    labels = {e.get("name", "") for key in ("cities", "regions", "pois") for e in portal.get(key, [])}
+    # portal_map.json (cities, regions, pois) ou places/index.json (places, PORTAL.2).
+    labels = {e.get("name", "") for key in ("cities", "regions", "pois", "places") for e in portal.get(key, [])}
     if not os.path.exists(secret_path):
         print(f"[OK] {portal_path} : {len(labels)} étiquette(s), aucun secret dans ce monde")
         return 0

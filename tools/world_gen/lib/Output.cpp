@@ -28,6 +28,8 @@
 // Sorties du PORTAIL WEB (PORTAL.1, seulement avec --portal-out <dossier>, HORS de game/data) :
 //   <dossier>/portal_map.png           affiche 4096² de la zone jouable (sans secrets)
 //   <dossier>/portal_map.json          étiquettes : villes importantes, régions (u, v normalisés)
+//   <dossier>/places/<id>.png          PORTAL.2 : vue de dessus de chaque ville du lore / lieu remarquable
+//   <dossier>/places/index.json        PORTAL.2 : index de la galerie (nom, genre, région, description)
 
 #include "WorldGenContext.h"
 #include "HouseCatalog.h"
@@ -1472,6 +1474,315 @@ namespace tools::world_gen
 			j += "  ]\n}\n";
 			return WriteFile(dir, g.report, "portal_map.json", j, err);
 		}
+
+		/// PORTAL.2 — index de la galerie : `<dir>/index.json`, une entrée par vignette
+		/// écrite par WritePortalVignettes (nom, genre, région, description du lore,
+		/// fichier), triée par région, ville avant lieu, puis par nom.
+		bool WritePortalPlacesIndex(GlobalWorld& g, const std::vector<World*>& cells, const std::string& dir, std::string& err)
+		{
+			struct Entry { std::string region; const World::PortalVignette* v; };
+			std::vector<Entry> entries;
+			const double C = engine::world::cells::kCellSizeMeters;
+			for (const World* w : cells)
+				for (const World::PortalVignette& v : w->portalVignettes)
+				{
+					std::string region;
+					for (const RegionDef& r : g.master.regions)
+						if (v.center.x >= (r.eMin - 0.5) * C && v.center.x <= (r.eMax + 0.5) * C &&
+							v.center.z >= -(r.nMax + 0.5) * C && v.center.z <= -(r.nMin - 0.5) * C) { region = r.name; break; }
+					entries.push_back({ region, &v });
+				}
+			std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
+				if (a.region != b.region) return a.region < b.region;
+				if (a.v->city != b.v->city) return a.v->city;
+				return a.v->name < b.v->name;
+			});
+			std::string j = "{\n  \"_comment\": \"GENERE par tools/world_gen --portal-out (PORTAL.2) — galerie des villes et lieux du portail. Sans secrets.\",\n";
+			j += "  \"schema_version\": 1,\n  \"world\": " + Q(g.master.worldId) + ",\n  \"display_name\": " + Q(g.master.displayName) + ",\n";
+			j += "  \"places\": [\n";
+			for (size_t k = 0; k < entries.size(); ++k)
+			{
+				const World::PortalVignette& v = *entries[k].v;
+				j += "    { \"id\": " + Q(v.id) + ", \"name\": " + Q(v.name) + ", \"kind\": " + Q(v.kind) + ", \"city\": " + (v.city ? "true" : "false") +
+					", \"region\": " + Q(entries[k].region) + ", \"file\": " + Q(v.file) + ", \"description\": " + Q(v.description) + " }" +
+					(k + 1 < entries.size() ? ",\n" : "\n");
+			}
+			j += "  ]\n}\n";
+			return WriteFile(dir, g.report, "index.json", j, err);
+		}
+	}
+
+	namespace
+	{
+		/// PORTAL.2 — vrai pour un décor végétal (arbres, buissons, fleurs, herbes…).
+		bool IsVegetationMesh(const std::string& mesh)
+		{
+			for (const char* t : { "Tree", "Pine", "Bush", "Flower", "Clover", "Fern", "Grass", "Plant", "Mushroom", "Petal", "Reed" })
+				if (mesh.find(t) != std::string::npos) return true;
+			return false;
+		}
+
+		/// PORTAL.2 — vrai pour un minéral posé (rochers, galets, dalles de chemin).
+		bool IsRockMesh(const std::string& mesh)
+		{
+			return mesh.find("Rock") != std::string::npos || mesh.find("Pebble") != std::string::npos;
+		}
+
+		/// PORTAL.2 — genres de lieux remarquables illustrés dans la galerie du portail.
+		bool IsPortalPoiKind(const std::string& k)
+		{
+			return k == "temple" || k == "cite" || k == "volcan" || k == "champ_bataille" || k == "port" ||
+				k == "foret" || k == "faille" || k == "sanctuaire" || k == "ruine" || k == "defile";
+		}
+
+		/// PORTAL.2 — rend une vue de dessus détaillée N² px d'un carré de côté
+		/// \p sideM centré sur \p center, à partir des grilles fines de la cellule.
+		/// Couches, de bas en haut : relief ombré (soleil au nord-ouest), forêt
+		/// (densité du masque + canopée bruitée), eau (mer selon la profondeur,
+		/// rivières, lacs), routes et rues, arbres posés, bâtiments avec ombre portée.
+		/// \param sideM côté de la zone rendue (m) ; \param N côté de l'image (px)
+		/// Échantillon bilinéaire d'une grille quelconque (float, uint8_t…) ; \p f
+		/// convertit une valeur de la grille en double (ex. « rue » → 1.0). Hors de
+		/// la grille : \p outside.
+		template <typename T, typename F>
+		double SampleGridBilinear(const Grid<T>& g, double x, double z, double outside, F f)
+		{
+			if (g.data.empty()) return outside;
+			const double fx = (x - g.originX) / g.step, fz = (z - g.originZ) / g.step;
+			const int i = static_cast<int>(std::floor(fx)), j = static_cast<int>(std::floor(fz));
+			if (i < 0 || j < 0 || i + 1 >= g.width || j + 1 >= g.height) return outside;
+			const double tx = fx - i, tz = fz - j;
+			const double a = f(g.At(i, j)) + (f(g.At(i + 1, j)) - f(g.At(i, j))) * tx;
+			const double b = f(g.At(i, j + 1)) + (f(g.At(i + 1, j + 1)) - f(g.At(i, j + 1))) * tx;
+			return a + (b - a) * tz;
+		}
+
+		std::vector<uint8_t> RenderPlaceVignette(const World& w, Vec2 center, double sideM, int N)
+		{
+			std::vector<uint8_t> rgb(static_cast<size_t>(N) * N * 3);
+			const double sea = w.master.scale.seaLevelM;
+			const double px = sideM / N;
+			const double x0 = center.x - sideM * 0.5, z0 = center.z - sideM * 0.5;
+			const bool infernal = IsInfernalMap(w.master);
+			const double d = std::max(px, 3.0); // pas des dérivées (heightmap ≈ 4,9 m)
+			const int fN = w.forestMaskRes;
+			const double fpx = fN > 0 ? w.terrainSizeM / fN : 1.0;
+			ParallelRows(N, [&](int j) {
+				for (int i = 0; i < N; ++i)
+				{
+					const Vec2 p{ x0 + (i + 0.5) * px, z0 + (j + 0.5) * px };
+					const double h = w.HeightAt(p);
+					char code = 'P';
+					{
+						const int bi = std::clamp(w.biome.IndexX(p.x), 0, std::max(0, w.biome.width - 1));
+						const int bj = std::clamp(w.biome.IndexZ(p.z), 0, std::max(0, w.biome.height - 1));
+						if (!w.biome.data.empty()) code = w.biome.At(bi, bj);
+					}
+					double r, g, b;
+					if (!infernal) TerrainColor(code, h, sea, r, g, b);
+					else InfernalTerrainColor(code, h, p.x, p.z, w.master.seed, r, g, b);
+					// Grain fin du sol (évite les aplats).
+					const double grain = 1.0 + 0.06 * ValueNoise2(p.x / 3.0, p.z / 3.0, w.master.seed ^ 0x51ull);
+					r *= grain; g *= grain; b *= grain;
+					// Forêt : densité du masque, canopée bruitée (touffes de 6 à 12 m).
+					if (fN > 0)
+					{
+						const int fi = std::clamp(static_cast<int>((p.x - w.terrainOriginX) / fpx), 0, fN - 1);
+						const int fj = std::clamp(static_cast<int>((p.z - w.terrainOriginZ) / fpx), 0, fN - 1);
+						const double f = w.forestMask[static_cast<size_t>(fj) * fN + fi] / 255.0;
+						if (f > 0.0)
+						{
+							const double tuft = 0.5 + 0.5 * ValueNoise2(p.x / 7.0, p.z / 7.0, w.master.seed ^ 0xF0ull);
+							const double canopy = std::clamp(f * (0.55 + 0.6 * tuft), 0.0, 1.0);
+							const double cr = infernal ? 46 : 38, cg = infernal ? 30 : 70, cb = infernal ? 26 : 34;
+							r = Lerp(r, cr * (0.75 + 0.5 * tuft), canopy * 0.85);
+							g = Lerp(g, cg * (0.75 + 0.5 * tuft), canopy * 0.85);
+							b = Lerp(b, cb * (0.75 + 0.5 * tuft), canopy * 0.85);
+						}
+					}
+					// Relief ombré (soleil au nord-ouest), plus marqué que la carte du monde.
+					const double hx = w.HeightAt({ p.x + d, p.z }) - w.HeightAt({ p.x - d, p.z });
+					const double hz = w.HeightAt({ p.x, p.z + d }) - w.HeightAt({ p.x, p.z - d });
+					const double shade = Clamp(1.0 + (-hx - hz) / (2.0 * d) * 1.4, 0.5, 1.4);
+					// Routes et rues (sous l'eau : non).
+					bool water = w.IsWater(p);
+					if (!water)
+					{
+						// Grilles à ≈ 4,9 m : échantillonnées en bilinéaire puis seuillées en
+						// douceur, pour des bords de rue et de route sans escalier.
+						const double street = SampleGridBilinear(w.urban, p.x, p.z, 0.0, [](uint8_t u) { return u == 2 ? 1.0 : 0.0; });
+						const double town = SampleGridBilinear(w.urban, p.x, p.z, 0.0, [](uint8_t u) { return u >= 1 ? 1.0 : 0.0; });
+						const double rd = SampleGridBilinear(w.roadDist, p.x, p.z, 1e9, [](float v) { return static_cast<double>(v); });
+						const double road = 1.0 - SmoothStep(0.6, 2.2, rd);
+						const double paved = SmoothStep(0.35, 0.65, street);
+						r = Lerp(r, 128, 0.22 * town); g = Lerp(g, 118, 0.22 * town); b = Lerp(b, 96, 0.22 * town);
+						r = Lerp(r, 146, 0.8 * road); g = Lerp(g, 118, 0.8 * road); b = Lerp(b, 84, 0.8 * road);
+						r = Lerp(r, 152, 0.85 * paved); g = Lerp(g, 140, 0.85 * paved); b = Lerp(b, 120, 0.85 * paved);
+						if (!infernal)
+							if (const double wall = FalaiseWallAt(w.master, p.x, p.z, 1.5 * px); wall > 0.0)
+							{ r = Lerp(r, 236, wall); g = Lerp(g, 234, wall); b = Lerp(b, 222, wall); }
+						r *= shade; g *= shade; b *= shade;
+						if (infernal)
+							if (const double lava = InfernalLavaAt(w.master, p.x, p.z); lava > 0.0)
+							{
+								const double core = SmoothStep(0.35, 1.0, lava);
+								r = Lerp(r, Lerp(222, 255, core), lava); g = Lerp(g, Lerp(84, 186, core), lava); b = Lerp(b, Lerp(22, 48, core), lava);
+							}
+					}
+					else
+					{
+						// Mer : plus sombre avec la profondeur ; eau douce : bleu-vert clair.
+						const double depth = sea - h;
+						if (depth > 0.0)
+						{
+							const double t = Clamp(depth / 25.0, 0.0, 1.0);
+							r = Lerp(78, 22, t); g = Lerp(150, 62, t); b = Lerp(168, 112, t);
+						}
+						else { r = 64; g = 128; b = 150; }
+						const double ripple = 1.0 + 0.04 * ValueNoise2(p.x / 4.0, p.z / 9.0, w.master.seed ^ 0xA7ull);
+						r *= ripple; g *= ripple; b *= ripple;
+					}
+					uint8_t* o = &rgb[(static_cast<size_t>(j) * N + i) * 3];
+					o[0] = static_cast<uint8_t>(Clamp(r, 0, 255));
+					o[1] = static_cast<uint8_t>(Clamp(g, 0, 255));
+					o[2] = static_cast<uint8_t>(Clamp(b, 0, 255));
+				}
+			});
+			// Disque plein (arbres, ombres) ; alpha = opacité.
+			auto disc = [&](Vec2 c, double radM, double rr, double gg, double bb, double alpha) {
+				const double ci = (c.x - x0) / px, cj = (c.z - z0) / px, rp = radM / px;
+				const int i0 = std::max(0, static_cast<int>(ci - rp - 1)), i1 = std::min(N - 1, static_cast<int>(ci + rp + 1));
+				const int j0 = std::max(0, static_cast<int>(cj - rp - 1)), j1 = std::min(N - 1, static_cast<int>(cj + rp + 1));
+				for (int jj = j0; jj <= j1; ++jj)
+					for (int ii = i0; ii <= i1; ++ii)
+					{
+						const double dx = ii + 0.5 - ci, dz = jj + 0.5 - cj;
+						const double dist = std::sqrt(dx * dx + dz * dz);
+						if (dist > rp + 0.5) continue;
+						const double a = alpha * Clamp(rp + 0.5 - dist, 0.0, 1.0);
+						// Éclairage de la canopée : plus clair au nord-ouest.
+						const double light = rp > 1.5 ? 1.0 + 0.25 * Clamp((-dx - dz) / (2.0 * rp), -1.0, 1.0) : 1.0;
+						uint8_t* o = &rgb[(static_cast<size_t>(jj) * N + ii) * 3];
+						o[0] = static_cast<uint8_t>(Clamp(Lerp(o[0], rr * light, a), 0, 255));
+						o[1] = static_cast<uint8_t>(Clamp(Lerp(o[1], gg * light, a), 0, 255));
+						o[2] = static_cast<uint8_t>(Clamp(Lerp(o[2], bb * light, a), 0, 255));
+					}
+			};
+			// Rectangle orienté (bâtiments) : (hw, hd) demi-dimensions, yaw en degrés.
+			// roof : deux pans (ombre/lumière) séparés par le faîtage le long du grand axe.
+			auto rect = [&](Vec2 c, double hw, double hd, double yawDeg, double rr, double gg, double bb, double alpha, bool roof) {
+				const double a = yawDeg * 3.14159265358979323846 / 180.0;
+				const double ca = std::cos(a), sa = std::sin(a);
+				const double ext = std::sqrt(hw * hw + hd * hd);
+				const int i0 = std::max(0, static_cast<int>((c.x - ext - x0) / px) - 1), i1 = std::min(N - 1, static_cast<int>((c.x + ext - x0) / px) + 1);
+				const int j0 = std::max(0, static_cast<int>((c.z - ext - z0) / px) - 1), j1 = std::min(N - 1, static_cast<int>((c.z + ext - z0) / px) + 1);
+				for (int jj = j0; jj <= j1; ++jj)
+					for (int ii = i0; ii <= i1; ++ii)
+					{
+						const double wx = x0 + (ii + 0.5) * px - c.x, wz = z0 + (jj + 0.5) * px - c.z;
+						const double lx = wx * ca + wz * sa, lz = -wx * sa + wz * ca;
+						if (std::abs(lx) > hw || std::abs(lz) > hd) continue;
+						double k = 1.0;
+						if (roof)
+						{
+							const bool alongX = hw >= hd;
+							const double side = alongX ? lz : lx;
+							k = side < 0.0 ? 1.12 : 0.82;
+							const double edge = alongX ? hd - std::abs(lz) : hw - std::abs(lx);
+							if (edge < px * 0.8) k *= 0.7; // bord du toit
+						}
+						uint8_t* o = &rgb[(static_cast<size_t>(jj) * N + ii) * 3];
+						o[0] = static_cast<uint8_t>(Clamp(Lerp(o[0], rr * k, alpha), 0, 255));
+						o[1] = static_cast<uint8_t>(Clamp(Lerp(o[1], gg * k, alpha), 0, 255));
+						o[2] = static_cast<uint8_t>(Clamp(Lerp(o[2], bb * k, alpha), 0, 255));
+					}
+			};
+			auto inView = [&](Vec2 q, double margin) {
+				return q.x > x0 - margin && q.x < x0 + sideM + margin && q.z > z0 - margin && q.z < z0 + sideM + margin;
+			};
+			// Arbres et buissons posés (ombre portée au sud-est, puis canopée).
+			for (const ScatterDef& sc : w.scatter)
+			{
+				const bool tree = sc.mesh.find("Tree") != std::string::npos || sc.mesh.find("Pine") != std::string::npos;
+				const bool bush = sc.mesh.find("Bush") != std::string::npos;
+				if ((!tree && !bush) || !inView(sc.position, 10.0)) continue;
+				const bool dead = sc.mesh.find("Dead") != std::string::npos;
+				const double rad = (tree ? 2.6 : 1.1) * std::max(0.5, sc.scale);
+				disc({ sc.position.x + rad * 0.5, sc.position.z + rad * 0.5 }, rad, 10, 14, 8, 0.35);
+				if (dead) disc(sc.position, rad * 0.7, 92, 76, 58, 0.9);
+				else if (infernal) disc(sc.position, rad, 58, 34, 28, 0.95);
+				else disc(sc.position, rad, tree ? 46 : 70, tree ? 86 : 104, tree ? 40 : 48, 0.95);
+			}
+			// Décor construit (murs, ruines, étals, mobilier) : petits blocs gris ; rochers
+			// moyens en petits points, jamais sur l'eau ni la lave ; galets et dalles omis.
+			for (const ScatterDef& sc : w.scatter)
+			{
+				if (IsVegetationMesh(sc.mesh) || !inView(sc.position, 10.0)) continue;
+				const bool rock = IsRockMesh(sc.mesh);
+				if (rock && (sc.mesh.find("Rock_") == std::string::npos || w.IsWater(sc.position) ||
+					(infernal && InfernalLavaAt(w.master, sc.position.x, sc.position.z) > 0.0))) continue;
+				const double rad = rock ? 0.9 : std::clamp(sc.collisionRadius > 0.0 ? sc.collisionRadius : 0.8 * sc.scale, 0.5, 6.0);
+				disc({ sc.position.x + rad * 0.4, sc.position.z + rad * 0.4 }, rad, 10, 10, 12, 0.35);
+				disc(sc.position, rad, infernal ? 88 : 132, infernal ? 72 : 126, infernal ? 70 : 116, 0.95);
+			}
+			// Bâtiments : ombre portée, puis toit (teinte stable par bâtiment).
+			for (const BuildingPlacementDef& bd : w.buildings)
+			{
+				if (!inView(bd.position, 40.0)) continue;
+				const double fallback = bd.footprintRadius * 0.7071;
+				const double hw = bd.halfW > 0.0 ? bd.halfW : fallback, hd = bd.halfD > 0.0 ? bd.halfD : fallback;
+				const double sh = std::max(1.5, std::min(hw, hd) * 0.5);
+				rect({ bd.position.x + sh, bd.position.z + sh }, hw, hd, bd.yawDeg, 12, 12, 14, 0.45, false);
+				static const double kRoofs[][3] = { { 142, 70, 52 }, { 96, 98, 108 }, { 128, 98, 64 }, { 156, 88, 60 }, { 84, 78, 74 }, { 170, 140, 92 } };
+				const uint64_t hsh = Hash(w.master.seed, static_cast<uint64_t>(std::llround(bd.position.x)), static_cast<uint64_t>(std::llround(bd.position.z)));
+				const double* rc = kRoofs[hsh % (sizeof(kRoofs) / sizeof(kRoofs[0]))];
+				if (infernal) rect(bd.position, hw, hd, bd.yawDeg, 70, 46, 44, 1.0, true);
+				else rect(bd.position, hw, hd, bd.yawDeg, rc[0], rc[1], rc[2], 1.0, true);
+			}
+			return rgb;
+		}
+	}
+
+	bool WritePortalVignettes(World& w, const std::string& dir, std::string& err)
+	{
+		const int N = 768;
+		auto emit = [&](const std::string& id, const std::string& name, const std::string& kind, const std::string& description,
+			Vec2 center, double sideM, bool city) -> bool {
+			// Identifiant sûr pour un nom de fichier.
+			std::string file;
+			for (char ch : id) file += (std::isalnum(static_cast<unsigned char>(ch)) || ch == '_' || ch == '-') ? ch : '_';
+			file += ".png";
+			// Cadre gardé dans la cellule (les grilles fines s'arrêtent à son bord).
+			const double half = sideM * 0.5;
+			const Vec2 view{ std::clamp(center.x, w.terrainOriginX + half, w.terrainOriginX + w.terrainSizeM - half),
+				std::clamp(center.z, w.terrainOriginZ + half, w.terrainOriginZ + w.terrainSizeM - half) };
+			const std::vector<uint8_t> rgb = RenderPlaceVignette(w, view, sideM, N);
+			if (!WriteBytes(dir, w.report, file, EncodePngRgb(rgb, static_cast<uint32_t>(N), static_cast<uint32_t>(N)), err)) return false;
+			w.portalVignettes.push_back({ id, name, kind, description, file, center, city });
+			return true;
+		};
+		// Villes du lore (pas les agglomérations procédurales, jamais les secrètes) :
+		// cadre de 2,6 rayons urbains, entre 500 m et 3 km.
+		for (const CityDef& c : w.cities)
+		{
+			if (c.secret || !c.procedural.empty() || !w.OwnsPoint(c.center)) continue;
+			if (!emit(c.id, c.name, c.kind, c.description, c.center, std::clamp(c.radiusM * 2.6, 500.0, 3000.0), true)) return false;
+		}
+		// Lieux remarquables de la cellule (quelques genres, jamais les secrets) : 800 m,
+		// seulement s'il y a quelque chose à voir (au moins 3 bâtiments ou éléments de
+		// décor construit, hors rochers, à moins de 150 m) — sinon la vue ne montrerait
+		// qu'un relief nu.
+		for (const PoiDef& p : w.pois)
+		{
+			if (p.secret || !IsPortalPoiKind(p.kind) || !w.OwnsPoint(p.center)) continue;
+			int features = 0;
+			auto near = [&](Vec2 q) { return std::hypot(q.x - p.center.x, q.z - p.center.z) < 150.0; };
+			for (const BuildingPlacementDef& bd : w.buildings) features += near(bd.position) ? 1 : 0;
+			for (const ScatterDef& sc : w.scatter) features += (!IsVegetationMesh(sc.mesh) && !IsRockMesh(sc.mesh) && near(sc.position)) ? 1 : 0;
+			if (features < 3) continue;
+			if (!emit(p.id, p.name, p.kind, p.description, p.center, 800.0, false)) return false;
+		}
+		return true;
 	}
 
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err)
@@ -1755,6 +2066,8 @@ namespace tools::world_gen
 
 		// ---- PORTAL.1 — affiche du monde pour le portail web (option --portal-out).
 		if (!g.portalOutDir.empty() && !WritePortalPoster(g, cells, g.portalOutDir, 4096, err)) return false;
+		// ---- PORTAL.2 — index de la galerie des villes et lieux (vignettes écrites par cellule).
+		if (!g.portalOutDir.empty() && !WritePortalPlacesIndex(g, cells, g.portalOutDir + "/places", err)) return false;
 		return true;
 	}
 }

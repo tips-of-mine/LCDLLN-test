@@ -7,6 +7,8 @@
 #             portal_map.json        étiquettes (sans secrets)
 #             portal_map.webp        pleine définition
 #             portal_map_1600.webp   aperçu de la page /monde
+#             places/index.json      PORTAL.2 : galerie des villes et lieux (sans secrets)
+#             places/<id>.webp       PORTAL.2 : vue de dessus de chaque ville / lieu
 #           Repli sans ImageMagick : portal_map.png seul (le portail sait l'afficher).
 # Absence d'affiche (build local sans --portal-out) : rien n'est publié, la page
 # /monde affiche « carte bientôt disponible ». Ne fait jamais échouer le bundle.
@@ -47,5 +49,18 @@ for dir in "$SRC_DIR"/*/; do
     rm -f "$dst"/*.webp
     cp "$png" "$dst/portal_map.png"
     echo "[portal-maps] $world : ImageMagick/WebP indisponible, PNG publié tel quel."
+  fi
+  # PORTAL.2 — galerie des villes et lieux : <monde>/places/<id>.{webp|png} + index.json.
+  if [[ -s "$dir/places/index.json" ]]; then
+    mkdir -p "$dst/places"
+    cp "$dir/places/index.json" "$dst/places/index.json"
+    count=0
+    for vpng in "$dir"/places/*.png; do
+      [[ -e "$vpng" ]] || continue
+      name="$(basename "$vpng" .png)"
+      if [[ -n "$CONVERT" ]] && "$CONVERT" "$vpng" -quality 80 "$dst/places/$name.webp"; then :; else cp "$vpng" "$dst/places/$name.png"; fi
+      count=$((count + 1))
+    done
+    echo "[portal-maps] $world : $count vue(s) de villes et lieux publiées ($(du -sh "$dst/places" | cut -f1))."
   fi
 done

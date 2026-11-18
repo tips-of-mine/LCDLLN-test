@@ -212,3 +212,16 @@ input,textarea,select,button{font-family:inherit;}
 .wp-map-link{text-align:center;margin:.6rem 0 0;font-size:13px;}
 .wp-map-empty{text-align:center;padding:3rem 1rem;color:var(--ln-muted);font-style:italic;}
 @media (max-width:640px){.wp-map-poi,.wp-map-region{display:none;}.wp-map-city:not(.major):not(.capital){display:none;}}
+
+/* PORTAL.2 — galerie des villes et lieux (/monde/lieux). */
+.wp-places-world{margin-bottom:2.5rem;}
+.wp-places-region{margin:0 0 2rem;}
+.wp-places-region-title{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ln-muted);border-bottom:1px solid rgba(61,79,102,.4);padding-bottom:.4rem;margin-bottom:1rem;}
+.wp-places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.wp-place-card{margin:0;background:var(--ln-panel);border:1px solid var(--ln-border);border-radius:var(--radius-md,10px);overflow:hidden;display:flex;flex-direction:column;}
+.wp-place-img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
+.wp-place-card figcaption{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;}
+.wp-place-name{font-family:var(--font-display);font-size:14px;letter-spacing:.06em;color:var(--ln-text);}
+.wp-place-kind{font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ln-accent);}
+.wp-place-desc{font-size:12.5px;line-height:1.45;color:var(--ln-muted);font-style:italic;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.wp-map-cta{text-align:center;margin:-1rem 0 2.5rem;}

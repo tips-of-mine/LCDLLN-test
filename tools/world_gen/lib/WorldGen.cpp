@@ -333,6 +333,14 @@ namespace tools::world_gen
 			bool written = true;
 			if (!opt.dryRun) timed("cellule : ecriture", [&] { written = WriteCellOutputs(*w, cerr); });
 			if (!written) return cerr.empty() ? std::string("ecriture de la cellule impossible") : cerr;
+			// PORTAL.2 — vues de dessus des villes et lieux pour le portail web (option
+			// --portal-out), avant la libération des grilles.
+			if (!opt.dryRun && !g.portalOutDir.empty())
+			{
+				bool vignettes = true;
+				timed("cellule : vignettes portail", [&] { vignettes = WritePortalVignettes(*w, g.portalOutDir + "/places", cerr); });
+				if (!vignettes) return cerr.empty() ? std::string("vignettes du portail impossibles") : cerr;
+			}
 			// Altitude du sol au centre des lieux remarquables (portails : portals.json),
 			// relevée AVANT la libération de la heightmap.
 			for (PoiDef& p : w->pois)

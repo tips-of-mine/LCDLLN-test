@@ -31,6 +31,11 @@ namespace engine::server
 		uint32_t clients = 0;           ///< joueurs connectés (UDP)
 		uint32_t mobs = 0;
 		uint32_t mobsAsleep = 0;
+		/// POP.1 — mobs vivants par classe de population (A interactif, B combat,
+		/// C figurant). D et E n'existent que sur le client.
+		uint32_t mobsClassA = 0;
+		uint32_t mobsClassB = 0;
+		uint32_t mobsClassC = 0;
 		uint32_t lootBags = 0;
 		uint32_t regionsWarm = 0;       ///< cellules chaudes (actives ou encore chargées)
 		uint32_t regionsTracked = 0;    ///< cellules suivies (pas encore déchargées)

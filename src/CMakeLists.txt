@@ -630,6 +630,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/WorldCellsTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # POP.1 — classes de population A à E (en-tête pur, partagé client / shard).
+  lcdlln_add_simple_test(population_class_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/world/tests/PopulationClassTests.cpp)
+
   # FIX.12 — routes / bâtiments de la carte du monde (format map_features.bin, en-tête pur).
   lcdlln_add_simple_test(map_features_tests
     ${CMAKE_SOURCE_DIR}/src/shared/world/tests/MapFeaturesTests.cpp)

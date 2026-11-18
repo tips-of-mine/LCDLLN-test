@@ -730,6 +730,23 @@ namespace engine::server
 					}
 				}
 
+				// POP.1 — classe de population (optionnelle), même politique stricte :
+				// valeur inconnue ou classe client (D foule, E faune) = erreur de données.
+				if (const JsonValue* classValue = FindObjectMember(spawnerValue, "populationClass"); classValue != nullptr)
+				{
+					const std::optional<engine::world::PopulationClass> parsed = classValue->type == JsonType::String
+						? engine::world::ParsePopulationClass(classValue->stringValue)
+						: std::nullopt;
+					if (!parsed.has_value() || !engine::world::IsPopulationServerSide(*parsed))
+					{
+						LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: spawner '{}' populationClass invalide (attendu A, B ou C)",
+							definition.spawnerId);
+						m_definitions.clear();
+						return false;
+					}
+					definition.populationClass = parsed;
+				}
+
 				LOG_DEBUG(Net,
 					"[SpawnerRuntime] Loaded spawner definition (id={}, zone_id={}, archetype_id={}, count={}, respawn_sec={})",
 					definition.spawnerId,

@@ -165,6 +165,27 @@ namespace engine::server
 					runtimeState.definition.agenda.enabled = false;
 				}
 			}
+			// POP.1 — classe de population : déclarée (validée par la règle d'or) ou
+			// déduite de l'archétype. Une déclaration écartée est signalée une fois ici.
+			{
+				const CreatureArchetype* arch = m_archetypeLibrary.Find(runtimeState.definition.archetypeId);
+				const bool ambientArch = arch != nullptr && arch->ambient;
+				const bool attackableArch = arch == nullptr || arch->attackable;
+				const bool raceHostileArch = arch != nullptr && !arch->hostileToRaces.empty();
+				bool rejected = false;
+				runtimeState.populationClass = engine::world::ResolveShardPopulationClass(
+					runtimeState.definition.populationClass,
+					engine::world::InferShardPopulationClass(ambientArch, attackableArch, raceHostileArch),
+					attackableArch, raceHostileArch, rejected);
+				if (rejected)
+				{
+					LOG_WARN(Net, "[ServerApp] Spawner '{}' : populationClass {} refusée (archétype {} attaquable ou hostile : un figurant n'a aucun effet de jeu) → {}",
+						runtimeState.definition.spawnerId,
+						engine::world::PopulationClassLetter(*runtimeState.definition.populationClass),
+						runtimeState.definition.archetypeId,
+						engine::world::PopulationClassLetter(runtimeState.populationClass));
+				}
+			}
 			m_spawners.push_back(std::move(runtimeState));
 			// FIX.6 — DEBUG : une ligne par spawner = 56 716 lignes au démarrage du monde
 			// « royaumes » (7,8 Mo de log). Résumé unique en INFO après la boucle.
@@ -179,13 +200,17 @@ namespace engine::server
 			// FIX.6 — résumé du chargement (le détail par spawner est en DEBUG).
 			size_t totalSlots = 0;
 			size_t withAgenda = 0;
+			engine::world::PopulationCounts slotsByClass{}; // POP.1
 			for (const SpawnerRuntimeState& spawner : m_spawners)
 			{
 				totalSlots += spawner.slots.size();
 				withAgenda += spawner.definition.agenda.enabled ? 1u : 0u;
+				slotsByClass[engine::world::PopulationClassIndex(spawner.populationClass)] += static_cast<uint32_t>(spawner.slots.size());
 			}
 			LOG_INFO(Net, "[ServerApp] Spawners prets : {} spawner(s), {} emplacement(s) de mob, {} avec agenda (detail : log.level=debug)",
 				m_spawners.size(), totalSlots, withAgenda);
+			LOG_INFO(Net, "[ServerApp] POP.1 classes de population (emplacements) : A={} B={} C={}",
+				slotsByClass[0], slotsByClass[1], slotsByClass[2]);
 		}
 
 		// ETAPE4.3 (chantier 2.1) — index des spawners par région : seules les régions

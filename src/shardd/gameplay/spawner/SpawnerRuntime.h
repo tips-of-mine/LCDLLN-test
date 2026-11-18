@@ -3,8 +3,10 @@
 #include "src/shared/core/Config.h"
 #include "src/shardd/gameplay/ambient/AmbientRoutine.h"
 #include "src/shardd/gameplay/ambient/DailyAgenda.h"
+#include "src/shared/world/PopulationClass.h"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -29,6 +31,10 @@ namespace engine::server
 		/// ETAPE4.4 — agenda de métier optionnel (`agenda` du JSON) : s'il est présent,
 		/// il remplace la routine pour décider où se trouve le PNJ à chaque heure.
 		ambient::AgendaDefinition agenda;
+		/// POP.1 — classe de population déclarée (`populationClass` du JSON, optionnelle :
+		/// "A".."C" ou "interactive" / "combat" / "extra"). Absente = déduite de
+		/// l'archétype au chargement des spawners (cf. ResolveShardPopulationClass).
+		std::optional<engine::world::PopulationClass> populationClass;
 	};
 
 	/// Server-side spawner runtime: loads zone JSON definitions resolved from `paths.content`.

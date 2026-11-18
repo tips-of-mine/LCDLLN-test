@@ -278,6 +278,19 @@ RenderModel
 > nouvel état « occupé » (combat, fuite, retour) doit être compté dans
 > `mob_activity::IsBusy`, sinon le mob pourrait s'endormir au milieu de l'action.
 
+> **Règle (POP.1)** : chaque PNJ ou mob appartient à une **classe de population**
+> (`src/shared/world/PopulationClass.h`) : **A** interactif, **B** combat, **C** figurant
+> du shard, **D** foule client, **E** faune client. Règle d'or : tout ce qui peut être
+> ciblé, attaqué ou qui a un effet de jeu reste en A ou B. Priorité de rendu et de
+> délestage A > B > C > D > E. Côté shard, la classe d'un mob est déclarée par le
+> spawner (`populationClass` : "A", "B", "C" ou "interactive" / "combat" / "extra" ;
+> D et E refusées au chargement) ou déduite de l'archétype (`ambient` non attaquable et
+> non hostile → C, sinon B), résolue une fois à l'init (`SpawnerRuntimeState::populationClass`)
+> et copiée dans `MobEntity::populationClass`. Métrique `lcdlln_shard_population{class}`.
+> Ce lot ne fait que **classer** : aucun comportement ne dépend encore de la classe.
+> Les PNJ interactifs des `zone.json` (`interactables`, `npc: true`) sont de classe A
+> par nature.
+
 > **Règle (ETAPE4.2)** : un travail périodique sur N objets (spawners, joueurs,
 > annonces…) ne se fait pas pour tous au même tick : il passe par
 > `tick_slicing::IsSliceTurn(id, tick, période)` (`src/shardd/world/TickSlicing.h`).

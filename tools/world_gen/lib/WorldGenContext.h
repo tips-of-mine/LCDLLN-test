@@ -607,7 +607,7 @@ namespace tools::world_gen
 	/// FORET.1 — carte de densité des forêts et lisières (codes T, R, L, t de la
 	/// couverture effective), exclusions comprises : eau, routes, bâti et champs
 	/// (grille d'occupation), emprise urbaine, pentes, neige. Le client y pose les
-	/// arbres de remplissage (src/client/world/instances/ForestMask.h).
+	/// arbres de remplissage (src/shared/world/instances/ForestMask.h).
 	/// Effet de bord : remplit w.forestMask. À appeler après BuildSettlements et
 	/// avant BuildVegetation (les rochers posés ensuite n'y creusent pas de trous).
 	/// Aux Enfers (v1.0.83) : carte vide (aucune forêt de remplissage).

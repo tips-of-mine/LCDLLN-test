@@ -13,7 +13,7 @@
 #include "Parallel.h"
 #include "Random.h"
 
-#include "src/client/world/instances/ForestMask.h"
+#include "src/shared/world/instances/ForestMask.h"
 
 #include <algorithm>
 #include <cmath>

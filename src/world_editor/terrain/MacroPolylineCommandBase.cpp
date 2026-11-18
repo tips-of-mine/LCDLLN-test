@@ -1,6 +1,6 @@
 #include "src/world_editor/terrain/MacroPolylineCommandBase.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 
 #include <algorithm>

@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "src/client/world/foliage/FoliageInstances.h"
+#include "src/shared/world/foliage/FoliageInstances.h"
 #include "src/client/world/foliage/FoliageLibrary.h"
 #include "src/shared/math/Math.h"
 #include "src/world_editor/ForestRecipe.h"

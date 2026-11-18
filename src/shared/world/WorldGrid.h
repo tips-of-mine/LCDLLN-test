@@ -2,7 +2,7 @@
 
 // Grille du monde partagée par le client, les serveurs et les outils :
 // taille de zone, de chunk et de cellule spatiale (intérêt / réplication).
-// Extrait de src/client/world/WorldModel.h pour que le serveur n'inclue plus
+// Extrait de WorldModel.h (aujourd'hui src/shared/world/WorldModel.h) pour que le serveur n'inclue plus
 // de code client (valeurs inchangées).
 
 namespace engine::world

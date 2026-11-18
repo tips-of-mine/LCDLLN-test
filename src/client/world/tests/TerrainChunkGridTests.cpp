@@ -1,6 +1,6 @@
 // src/client/world/tests/TerrainChunkGridTests.cpp
-#include "src/client/world/WorldModel.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/WorldModel.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <cstdio>
 

@@ -25,7 +25,7 @@
 
 #include "src/client/world/terrain/ChunkHeightField.h"
 #include "src/client/world/terrain/HeightmapHeightField.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainChunkLoader.h"
 #include "src/client/world/StreamCache.h"
 

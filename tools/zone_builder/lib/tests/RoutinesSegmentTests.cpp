@@ -4,7 +4,7 @@
 
 #include <zone_builder/ChunkPackageWriter.h>
 
-#include "src/client/world/routine/RoutineSegmentReader.h"
+#include "src/shared/world/routine/RoutineSegmentReader.h"
 #include "src/shared/routine/RoutineGraph.h"
 #include "src/shared/routine/RoutineSerialization.h"
 

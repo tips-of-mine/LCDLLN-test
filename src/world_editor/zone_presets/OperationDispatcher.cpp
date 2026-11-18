@@ -1,8 +1,8 @@
 #include "src/world_editor/zone_presets/OperationDispatcher.h"
 
-#include "src/client/world/WorldModel.h"
-#include "src/client/world/terrain/TerrainChunk.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/WorldModel.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"

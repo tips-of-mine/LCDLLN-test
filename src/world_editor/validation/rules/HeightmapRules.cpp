@@ -2,7 +2,7 @@
 
 #include "src/world_editor/validation/rules/HeightmapRules.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <cmath>
 

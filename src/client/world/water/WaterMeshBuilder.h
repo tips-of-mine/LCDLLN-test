@@ -2,7 +2,7 @@
 #pragma once
 
 #include "src/shared/math/Math.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 #include <cstdint>
 #include <string>

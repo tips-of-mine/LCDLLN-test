@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/client/world/instances/Buildings.h"
+#include "src/shared/world/instances/Buildings.h"
 
 #include <cstdint>
 #include <functional>

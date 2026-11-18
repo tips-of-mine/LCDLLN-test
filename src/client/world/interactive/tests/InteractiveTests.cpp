@@ -5,9 +5,9 @@
 // Headless. Lié à engine_core (InteractiveSimulator + InteractivePayloads) ;
 // format binaire + InteractiveStateRelay header-only.
 
-#include "src/client/world/interactive/InteractiveInstances.h"
+#include "src/shared/world/interactive/InteractiveInstances.h"
 #include "src/client/world/interactive/InteractiveSimulator.h"
-#include "src/client/world/interactive/InteractiveTypes.h"
+#include "src/shared/world/interactive/InteractiveTypes.h"
 #include "src/masterd/InteractiveStateRelay.h"
 #include "src/shared/network/InteractivePayloads.h"
 

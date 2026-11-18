@@ -24,7 +24,7 @@
 //   width × height × [density u8]               ligne par ligne (Z puis X), 0 = rien, 255 = pleine forêt
 // Le texel (i, j) couvre [originX + i·sizeM/width, +sizeM/width[ (centre au milieu).
 
-#include "src/client/world/instances/ScatterInstances.h"
+#include "src/shared/world/instances/ScatterInstances.h"
 
 #include <algorithm>
 #include <cmath>

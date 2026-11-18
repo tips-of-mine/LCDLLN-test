@@ -3,7 +3,7 @@
 // M100.28 — Outil de zone de gameplay (polygone multi-types). Rendu ImGui guardé.
 // La sérialisation/requêtes vivent dans Zones/ZoneQuery.
 
-#include "src/client/world/zones/Zones.h"
+#include "src/shared/world/zones/Zones.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::editor::world

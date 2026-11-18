@@ -3,7 +3,7 @@
 // et du sous-bois autour d'un point (densité « un arbre tous les 4 à 5 m » en
 // pleine forêt, rien hors forêt, aucun saut quand le centre se déplace).
 
-#include "src/client/world/instances/ForestMask.h"
+#include "src/shared/world/instances/ForestMask.h"
 
 #include <cmath>
 #include <cstdio>

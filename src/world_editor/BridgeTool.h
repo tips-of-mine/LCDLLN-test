@@ -3,7 +3,7 @@
 // M100.30 — Outil Bridge : transforme une spline en pont (kit). Header-only,
 // rendu ImGui guardé Windows. La génération vit dans structures::* (pur).
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

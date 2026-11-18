@@ -1,6 +1,6 @@
 #include "src/world_editor/terrain/erosion/HydraulicSimulation.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/erosion/DropletInitDistribution.h"
 #include "src/world_editor/terrain/erosion/DropletKernel.h"

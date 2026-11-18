@@ -30,7 +30,7 @@
 #include "src/client/render/terrain_chunk/LayerArrayLoader.h"
 #include "src/client/render/terrain_chunk/SplatMapGpuCache.h"
 #include "src/client/render/terrain_chunk/TerrainMeshGpuCache.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <cstdint>
 #include <memory>

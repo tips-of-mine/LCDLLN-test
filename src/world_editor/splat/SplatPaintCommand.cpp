@@ -1,6 +1,6 @@
 #include "src/world_editor/splat/SplatPaintCommand.h"
 
-#include "src/client/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/SplatMap.h"
 
 #include <utility>
 

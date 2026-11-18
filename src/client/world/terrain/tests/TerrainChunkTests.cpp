@@ -11,7 +11,7 @@
 /// Style de test aligné sur src/world_editor/tests/CommandStackTests.cpp
 /// (REQUIRE macro maison + main() appelant chaque test function).
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 
 #include <cmath>
 #include <cstdio>

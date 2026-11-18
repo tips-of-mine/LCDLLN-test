@@ -1,8 +1,8 @@
 #pragma once
 
-#include "src/client/world/WorldModel.h"
-#include "src/client/world/terrain/SplatMap.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/WorldModel.h"
+#include "src/shared/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainLodWorker.h"
 
 #include <functional>

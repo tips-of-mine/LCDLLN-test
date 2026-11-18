@@ -6,7 +6,7 @@
 /// valley_macro / lake_polygon / river_manual). L'UI (incrément 3)
 /// vient avec ses propres tests.
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/shared/core/Config.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"

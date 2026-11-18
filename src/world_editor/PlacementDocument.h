@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "src/client/world/instances/PropInstances.h"
+#include "src/shared/world/instances/PropInstances.h"
 
 namespace engine::editor::world
 {

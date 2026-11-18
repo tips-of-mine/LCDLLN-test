@@ -1,4 +1,4 @@
-#include "src/client/world/OutputVersion.h"
+#include "src/shared/world/OutputVersion.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"

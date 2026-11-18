@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "src/client/world/thermal/ShadeMap.h"
+#include "src/shared/world/thermal/ShadeMap.h"
 
 namespace engine::world::thermal
 {

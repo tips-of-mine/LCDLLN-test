@@ -1,7 +1,7 @@
-// src/client/world/water/WaterSurfaces.cpp
-#include "src/client/world/water/WaterSurfaces.h"
+// src/shared/world/water/WaterSurfaces.cpp
+#include "src/shared/world/water/WaterSurfaces.h"
 
-#include "src/client/world/OutputVersion.h"
+#include "src/shared/world/OutputVersion.h"
 
 #include <cstring>
 

@@ -11,15 +11,15 @@
 #include "src/world_editor/WorldEditorExporter.h"
 #include "src/world_editor/panels/MinimapPanel.h"
 
-#include "src/client/world/foliage/FoliageInstances.h"
-#include "src/client/world/hazard/HazardVolumes.h"
-#include "src/client/world/instances/Buildings.h"
-#include "src/client/world/instances/PropInstances.h"
-#include "src/client/world/interactive/InteractiveInstances.h"
-#include "src/client/world/spline/SplineInstances.h"
-#include "src/client/world/thermal/ShadeMap.h"
-#include "src/client/world/wind/WindZones.h"
-#include "src/client/world/zones/Zones.h"
+#include "src/shared/world/foliage/FoliageInstances.h"
+#include "src/shared/world/hazard/HazardVolumes.h"
+#include "src/shared/world/instances/Buildings.h"
+#include "src/shared/world/instances/PropInstances.h"
+#include "src/shared/world/interactive/InteractiveInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
+#include "src/shared/world/thermal/ShadeMap.h"
+#include "src/shared/world/wind/WindZones.h"
+#include "src/shared/world/zones/Zones.h"
 
 #include <cstdint>
 #include <cstdio>

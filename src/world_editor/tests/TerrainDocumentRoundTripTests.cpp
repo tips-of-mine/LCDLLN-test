@@ -12,8 +12,8 @@
 
 #include "src/shared/core/Config.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
-#include "src/client/world/terrain/TerrainChunk.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <cstdio>
 #include <filesystem>

@@ -1,11 +1,11 @@
 #include "src/client/world/StreamCache.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
-#include "src/client/world/terrain/SplatMap.h"
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainChunkLoader.h"
-#include "src/client/world/terrain/TerrainLodChain.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/terrain/TerrainLodChain.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 #include <algorithm>
 #include <cstring>

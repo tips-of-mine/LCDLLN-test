@@ -21,12 +21,12 @@ add_library(zone_builder_lib STATIC
   GltfImporter.cpp
   JsonDocument.cpp
   LayoutImporter.cpp
-  ${CMAKE_SOURCE_DIR}/src/client/world/OutputVersion.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/world/OutputVersion.cpp
   ${CMAKE_SOURCE_DIR}/src/client/world/terrain/LayerPalette.cpp
-  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/SplatMap.cpp
-  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainChunk.cpp
-  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainLodChain.cpp
-  ${CMAKE_SOURCE_DIR}/src/client/world/water/WaterSurfaces.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/world/terrain/SplatMap.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/world/terrain/TerrainChunk.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/world/terrain/TerrainLodChain.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/world/water/WaterSurfaces.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/core/ServerEndpoints.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp

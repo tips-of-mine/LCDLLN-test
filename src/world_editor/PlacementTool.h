@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "src/client/world/instances/PropInstances.h"
+#include "src/shared/world/instances/PropInstances.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::editor::world

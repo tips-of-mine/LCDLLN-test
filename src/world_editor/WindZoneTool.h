@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "src/client/world/wind/WindZones.h"
+#include "src/shared/world/wind/WindZones.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::editor::world

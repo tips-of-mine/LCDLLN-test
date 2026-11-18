@@ -1,6 +1,6 @@
 // M100.29 — Tests spline : Catmull-Rom continuité, ground-fit, splat sum=255, round-trip.
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 #include "src/client/world/spline/SplineSampler.h"
 
 #include <array>

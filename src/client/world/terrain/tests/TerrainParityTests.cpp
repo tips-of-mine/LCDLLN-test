@@ -10,7 +10,7 @@
 /// Ces tests sont la garantie technique du contrat « éditeur écrit, client
 /// lit » de la spec M100.5. Ils n'utilisent ni Vulkan ni ImGui.
 
-#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainMeshBuilder.h"
 
 #include <cmath>

@@ -2,7 +2,7 @@
 // Headless. Lié à engine_core (HazardSimulator) ; format header-only.
 
 #include "src/client/world/hazard/HazardSimulator.h"
-#include "src/client/world/hazard/HazardVolumes.h"
+#include "src/shared/world/hazard/HazardVolumes.h"
 
 #include <cstdio>
 #include <vector>

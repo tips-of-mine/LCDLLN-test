@@ -4,7 +4,7 @@
 /// BuildingDocument CRUD, auto-guid, round-trip disque namespacé.
 /// (La bibliothèque de types est testée dans BuildingTemplateLibraryTests.cpp.)
 
-#include "src/client/world/instances/Buildings.h"
+#include "src/shared/world/instances/Buildings.h"
 #include "src/shared/core/Config.h"
 #include "src/world_editor/buildings/BuildingDocument.h"
 

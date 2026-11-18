@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 
 namespace engine::editor::world
 {

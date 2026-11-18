@@ -2,7 +2,7 @@
 
 #include "src/world_editor/validation/rules/SplatRules.h"
 
-#include "src/client/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/SplatMap.h"
 
 #include <string>
 

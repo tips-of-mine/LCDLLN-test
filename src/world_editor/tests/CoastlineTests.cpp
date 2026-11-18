@@ -7,8 +7,8 @@
 ///
 /// Framework : REQUIRE maison + main monolithique.
 
-#include "src/client/world/terrain/TerrainChunk.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/terrain/TerrainChunk.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/water/CoastlineCliffs.h"

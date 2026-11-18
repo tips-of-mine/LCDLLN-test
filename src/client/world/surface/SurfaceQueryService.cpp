@@ -2,9 +2,9 @@
 #include "src/client/world/surface/SurfaceQueryService.h"
 #include "src/client/world/surface/SurfaceTable.h"
 #include "src/client/world/StreamCache.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/WorldModel.h"
 #include "src/client/world/terrain/LayerPalette.h"
-#include "src/client/world/terrain/SplatMap.h"
+#include "src/shared/world/terrain/SplatMap.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 

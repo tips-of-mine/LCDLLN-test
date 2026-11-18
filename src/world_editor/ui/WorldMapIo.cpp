@@ -6,8 +6,8 @@
 #include "src/shared/platform/FileSystem.h"
 #include "src/client/render/terrain/HeightmapLoader.h"
 #include "src/client/render/terrain/TerrainSplatting.h"
-#include "src/client/world/OutputVersion.h"
-#include "src/client/world/WorldModel.h"
+#include "src/shared/world/OutputVersion.h"
+#include "src/shared/world/WorldModel.h"
 
 #include <algorithm>
 #include <cmath>

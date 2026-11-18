@@ -15,7 +15,7 @@
 
 #include <cstdint>
 
-#include "src/client/world/interactive/InteractiveTypes.h"
+#include "src/shared/world/interactive/InteractiveTypes.h"
 
 namespace engine::world::interactive
 {

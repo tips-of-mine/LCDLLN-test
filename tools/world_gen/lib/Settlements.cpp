@@ -32,7 +32,7 @@ namespace tools::world_gen
 	{
 		constexpr double kPi = 3.14159265358979323846;
 		constexpr double kStreetHalf = 2.5;
-		/// Bits ScatterInstance::flags (cf. src/client/world/instances/ScatterInstances.h).
+		/// Bits ScatterInstance::flags (cf. src/shared/world/instances/ScatterInstances.h).
 		constexpr uint8_t kSolid = 1u, kPiece = 2u, kOccluder = 4u;
 
 		/// v1.0.121 — la cellule est-elle dans `graveyards.village_only_cells` du master ?

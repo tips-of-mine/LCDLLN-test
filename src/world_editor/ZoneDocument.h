@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "src/client/world/zones/Zones.h"
+#include "src/shared/world/zones/Zones.h"
 
 namespace engine::editor::world
 {

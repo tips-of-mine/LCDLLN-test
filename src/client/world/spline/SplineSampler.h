@@ -8,7 +8,7 @@
 #include <functional>
 #include <vector>
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 #include "src/shared/math/Math.h"
 
 namespace engine::world::spline

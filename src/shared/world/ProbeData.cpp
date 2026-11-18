@@ -1,4 +1,4 @@
-#include "src/client/world/ProbeData.h"
+#include "src/shared/world/ProbeData.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"

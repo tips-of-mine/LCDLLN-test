@@ -1,6 +1,6 @@
 #include "src/client/gameplay/TerrainCollider.h"
 #include "src/client/world/terrain/IHeightField.h"
-#include "src/client/world/water/WaterSurfaces.h"
+#include "src/shared/world/water/WaterSurfaces.h"
 
 #include <algorithm>
 #include <cmath>

@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "src/client/world/hazard/HazardVolumes.h"
+#include "src/shared/world/hazard/HazardVolumes.h"
 
 namespace engine::editor::world
 {

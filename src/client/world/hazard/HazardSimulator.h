@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "src/client/world/hazard/HazardVolumes.h"
+#include "src/shared/world/hazard/HazardVolumes.h"
 
 namespace engine::world::hazard
 {

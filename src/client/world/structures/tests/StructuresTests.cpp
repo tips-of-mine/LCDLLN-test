@@ -1,7 +1,7 @@
 // M100.30 — Tests structures : pont/mur génération, coins, surface pont,
 // migration splines v1->v2. Headless.
 
-#include "src/client/world/spline/SplineInstances.h"
+#include "src/shared/world/spline/SplineInstances.h"
 #include "src/client/world/structures/Kits.h"
 #include "src/client/world/structures/Structures.h"
 

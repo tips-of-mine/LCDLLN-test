@@ -13,7 +13,7 @@
 #include "WorldGenContext.h"
 #include "Random.h"
 
-#include "src/client/world/instances/Buildings.h"
+#include "src/shared/world/instances/Buildings.h"
 
 #include <algorithm>
 #include <cmath>

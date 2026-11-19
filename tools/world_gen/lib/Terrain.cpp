@@ -787,6 +787,10 @@ namespace tools::world_gen
 		// Reliefs locaux posés à la main (v1.0.72) : colline de Vaerdhun, crevasse de Vharholdt ;
 		// massifs de l'Île de la Trêve (v1.0.77).
 		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z, h);
+		// v1.0.130 — abords calmes : le plafond historique (height_scale_m 1 200 m) y est
+		// rétabli, sans quoi les anciens massifs y dresseraient des parois infranchissables
+		// (route 000074 vers le gouffre de Thurvhal).
+		if (calm < 1.0) h = Lerp(std::min(h, 1198.0), h, calm);
 		return Clamp(h, 1.0, m.scale.heightScaleM - 2.0);
 	}
 

@@ -1785,6 +1785,29 @@ namespace tools::world_gen
 		return true;
 	}
 
+	// Aperçu du continent (--preview-map) : couche macro seule, traits continus, sans
+	// liseré de cellules ; même rendu que l'affiche du portail, villes marquées.
+	bool WriteMapPreview(const GlobalWorld& g, const std::string& path, int sizePx, std::string& err)
+	{
+		const int N = std::clamp(sizePx, 512, 8192);
+		const double sizeM = std::max(g.maxX - g.minX, g.maxZ - g.minZ);
+		ContinentMapStyle style;
+		style.cellOutlines = false;
+		style.continuousLines = true;
+		style.riverRadius = 1;
+		style.roadRadius = 0;
+		style.majorRoadRadius = 1;
+		style.cityRadius = 2;
+		const std::vector<uint8_t> rgb = RenderContinentMap(g, N, g.minX, g.minZ, sizeM, {}, style);
+		const std::vector<uint8_t> png = EncodePngRgb(rgb, static_cast<uint32_t>(N), static_cast<uint32_t>(N));
+		std::FILE* f = std::fopen(path.c_str(), "wb");
+		if (!f) { err = "apercu impossible a ecrire : " + path; return false; }
+		const bool ok = std::fwrite(png.data(), 1, png.size(), f) == png.size();
+		std::fclose(f);
+		if (!ok) err = "apercu incomplet : " + path;
+		return ok;
+	}
+
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err)
 	{
 		const std::string wid = g.master.worldId;

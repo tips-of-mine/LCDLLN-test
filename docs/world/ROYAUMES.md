@@ -131,6 +131,8 @@ données de rendu restent dans le paquet client. En local (Windows) :
 # --jobs N                    : cellules générées en même temps (défaut : nombre de cœurs, 4 au plus)
 # --graveyard-report <fich.>  : v1.0.121, recensement des cimetières par cellule (« cellule nombre id@x:z … »),
 #                               écrit avant le contrôle des 666 (sert à choisir les hameaux de without_graveyard)
+# --preview-map <fich.png>   : v1.0.128, aperçu du continent (couche macro seule : relief, biomes, rivières,
+#                               routes, villes) en ≈ 30 s, sans générer de cellule ; --preview-size N (défaut 4096 px)
 ```
 
 Total des cimetières à corriger (v1.0.122) : `lcdlln_world_gen … --dry-run --graveyard-report recensement.txt`, puis

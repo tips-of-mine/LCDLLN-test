@@ -662,7 +662,12 @@ namespace tools::world_gen
 		// le col passe par le centre (cases de passage imposées : Passe des Dragons…).
 		if (std::string(".Tt~:").find(code) == std::string::npos) return { ctr.x, ctr.z };
 		const uint64_t h = Hash(m.seed, static_cast<uint64_t>(n + 1000), static_cast<uint64_t>(e + 1000), 4811);
-		return { ctr.x + (ToUnit(h) * 2.0 - 1.0) * 3000.0, ctr.z + (ToUnit(Mix64(h)) * 2.0 - 1.0) * 3000.0 };
+		const Vec2 p{ ctr.x + (ToUnit(h) * 2.0 - 1.0) * 3000.0, ctr.z + (ToUnit(Mix64(h)) * 2.0 - 1.0) * 3000.0 };
+		// Près d'un relief posé (gouffre, crevasse, colline : abords calmes + 1 km), le centre :
+		// un point tiré au pied du relief laisserait la route dans une impasse.
+		for (const WorldMaster::CalmZone& c : m.calmZones)
+			if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 1000.0) return { ctr.x, ctr.z };
+		return p;
 	}
 
 	namespace

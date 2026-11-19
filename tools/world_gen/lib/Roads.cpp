@@ -1091,12 +1091,15 @@ namespace tools::world_gen
 
 		/// Ajoute une instance de décor (mesh de meshes/props/), hauteur ABSOLUE \p y (m) :
 		/// yOffset = y - sol à la position (le client pose l'instance sur sa heightmap).
+		/// \p solid : pièce de bâtiment solide (bits solide + pièce du catalogue de collision).
 		void AddBridgeProp(World& w, const char* mesh, Vec2 p, double y, double yaw, double scale, bool solid)
 		{
 			ScatterDef s;
 			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
 			s.position = p; s.yOffset = y - w.HeightAt(p); s.yawDeg = yaw; s.scale = scale;
-			s.flags = solid ? 1u : 0u; s.cullClass = 1;
+			// Pièce solide : collision par le catalogue de pièces (bit 1 : murs = barrières,
+			// dalles = dessus marchable, building_pieces.json), sinon cylindre englobant.
+			s.flags = solid ? 3u : 0u; s.cullClass = 1;
 			w.scatter.push_back(std::move(s));
 		}
 	}

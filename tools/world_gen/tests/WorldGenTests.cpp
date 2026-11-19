@@ -3938,6 +3938,39 @@ namespace
 
 // Point d'entrée : lance tous les tests ; code de sortie 0 si tout passe.
 
+	/// Lot carte v1.0.130 (décision du 19/11/2026 : une montagne fait au moins 1 400 m, sommets
+	/// enneigés vers 3 400 m comme les Pyrénées, plus de grandes collines) : échelle d'altitude
+	/// 3 600 m ; altitudes macro par code de case ; côte inchangée par les grandes collines ;
+	/// toutes les routes du lore tracées (cols).
+	void TestReliefV1130()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok && g.master.scale.heightScaleM == 3600.0, "relief v1.0.130 : echelle d'altitude 3600 m");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		std::map<char, std::vector<double>> v;
+		for (int j = 0; j < g.coarse.height; j += 2)
+			for (int i = 0; i < g.coarse.width; i += 2)
+			{
+				const int e = static_cast<int>(std::lround(g.coarse.WorldX(i) / 10000.0)), n = -static_cast<int>(std::lround(g.coarse.WorldZ(j) / 10000.0));
+				v[LoreCode(g.master, n, e)].push_back(g.coarse.At(i, j));
+			}
+		auto pct = [&](char c, double q) { auto a = v[c]; std::sort(a.begin(), a.end()); return a.empty() ? 0.0 : a[static_cast<size_t>(q * (a.size() - 1))]; };
+		Check(pct('^', 0.5) >= 1400.0, "relief v1.0.130 : montagnes, altitude mediane >= 1400 m");
+		Check(pct('M', 0.9) >= 2000.0, "relief v1.0.130 : chaines, crêtes au-dela de 2000 m");
+		Check(pct('*', 1.0) >= 3200.0 && pct('*', 1.0) <= 3550.0, "relief v1.0.130 : plus haut sommet entre 3200 et 3550 m (Aneto 3404 m)");
+		Check(pct('.', 0.95) >= 250.0, "relief v1.0.130 : grandes collines dans les plaines");
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		size_t cut = 0;
+		for (const std::string& wmsg : g.report.warnings) cut += wmsg.find("pas de chemin") != std::string::npos ? 1 : 0;
+		Check(cut == 0, "relief v1.0.130 : toutes les routes du lore tracees (cols)");
+	}
+
 	/// Lot carte v1.0.129 (décision du 19/11/2026 : les 8 rivières principales du lore tracées, des
 	/// rivières plus petites pour remplir le monde, ponts de pierre ou de bois) : les 8 cours du lore
 	/// sont au master et tracés ; les cours d'eau suivent le terrain (plus de segment rectiligne de
@@ -4048,6 +4081,7 @@ int main()
 	TestAccelerationV1112();
 	TestGenerationEnfers();
 	TestEauV1129();
+	TestReliefV1130();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

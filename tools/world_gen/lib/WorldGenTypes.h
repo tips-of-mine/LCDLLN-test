@@ -329,6 +329,17 @@ namespace tools::world_gen
 	};
 
 	/// Contenu complet du master après chargement + validation.
+	/// v1.0.130 — cols des routes du lore à travers les montagnes (Terrain.cpp, MacroHeight) :
+	/// grille de 250 m, valeur 0..1 = proximité (≤ 2,5 km) d'un tronçon de route du lore entre
+	/// deux cases successives. Calculée une fois, à la première demande (thread-safe).
+	struct PassField
+	{
+		std::once_flag once;
+		double originX = 0.0, originZ = 0.0, step = 250.0;
+		int width = 0, height = 0;
+		std::vector<float> value;
+	};
+
 	struct WorldMaster
 	{
 		std::string worldId;
@@ -339,6 +350,8 @@ namespace tools::world_gen
 		std::string displayName;
 		uint64_t    seed = 1;
 		WorldScale  scale;
+		/// v1.0.130 : cols des routes du lore (partagé entre copies du master ; nul = pas de cols).
+		std::shared_ptr<PassField> passes;
 		std::vector<std::string> gridRows;      ///< rangées N→S, `gridCols` caractères
 		std::vector<std::pair<char, std::string>> legend;
 		std::vector<RegionDef> regions;

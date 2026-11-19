@@ -699,6 +699,7 @@ namespace tools::world_gen
 		// --- cellules générées par défaut ---
 		out.generatedCells = GetStrArray(root, "generated_cells");
 		out.connectStartCities = GetBool(root, "connect_start_cities", false);
+		out.passes = std::make_shared<PassField>(); // v1.0.130 : cols des routes du lore (calcul paresseux)
 		out.corridorMarginM = std::clamp(GetNum(root, "corridor_margin_m", 300.0), 0.0, 4000.0);
 		// --- cimetières (v1.0.111) : nombre fixe, cellules sans cimetière remplies ---
 		if (const JsonValue* gv = FindObjectMember(root, "graveyards"); gv && gv->type == JsonType::Object)

@@ -1065,6 +1065,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.53](#1653-lhynn-et-altenberg-au-bord-de-la-mer-v10127) | v1.0.127 | Ports de l'ouest au bord de la mer | Lhynn (N001_W011) et Altenberg (N005_W013) déplacées sur la côte, positions posées ; temple de Methraton et Seuil de Lhynn posés au nord de Lhynn. |
 | [16.54](#1654-carte-du-monde-lot-1--données-villes-portuaires-au-bord-de-la-mer-v10128) | v1.0.128 | Carte du monde, lot 1 : données | Fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine ; Tour Carrée = Grande Arche ; palais fusionnés ; tailles du lore ; 10 villes portuaires au bord de la mer. |
 | [16.55](#1655-carte-du-monde-lot-2--rivières-principales-ruisseaux-et-ponts-v10129) | v1.0.129 | Carte du monde, lot 2 : eau | 8 rivières principales tracées, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois. |
+| [16.56](#1656-carte-du-monde-lot-3--montagnes-à-léchelle-des-pyrénées-grandes-collines-v10130) | v1.0.130 | Carte du monde, lot 3 : relief | Échelle 3 600 m, montagnes de 1 400 à 3 400 m (Pyrénées), neige vers 2 500 m, grandes collines, cols sur les routes du lore. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5172,6 +5173,39 @@ procéduraux franchissent un ruisseau (coût élevé, berges raides admises) au 
 
 **Contrôles** : `world_gen_tests` (`TestEauV1129` : 8 cours du lore au master, plus de 100 ruisseaux, aucun cours d'eau
 rectiligne sur 3 km, aucun dans une ville, ponts à Syzygie avec tablier marchable) ; contrôles du lore.
+
+### 16.56 Carte du monde, lot 3 : montagnes à l'échelle des Pyrénées, grandes collines (v1.0.130)
+
+**Constat du propriétaire (19/11/2026)** : les montagnes ne semblent pas hautes ; une montagne doit faire au moins
+1 400 m ; prendre exemple sur les Pyrénées (Aneto 3 404 m, Posets 3 375 m, Mont Perdu 3 355 m, Vignemale 3 298 m,
+Balaïtous 3 144 m, Pique d'Estats 3 143 m, Pic du Midi de Bigorre 2 877 m, Canigou 2 784 m). Cause : l'échelle d'altitude
+du master (`height_scale_m`) était de 1 200 m ; les chaînes culminaient vers 800-900 m.
+
+**Échelle** : `height_scale_m` des Royaumes **1 200 → 3 600 m** (heightmap 16 bits : ≈ 5 cm de précision). Le client lit
+l'échelle dans le `zone.json` de chaque cellule (`terrain.height_scale`) ; le serveur ne lit pas la heightmap. Les Enfers
+gardent leur échelle et leurs profils (1 200 m).
+
+**Profils d'altitude** (`Terrain.cpp`, `ProfileOf`, Royaumes seulement) et altitudes macro mesurées :
+
+| Code | Base | Crêtes | Médiane | 90 % | Maximum |
+|---|---|---|---|---|---|
+| `^` montagne | 1 300 m | 1 000 m | ≈ 1 450 m | ≈ 1 730 m | ≈ 3 250 m |
+| `M` chaîne | 1 750 m | 1 500 m | ≈ 1 510 m (cols compris) | ≈ 2 180 m | ≈ 2 850 m |
+| `*` sommets enneigés | 2 250 m | 1 600 m | ≈ 2 230 m | ≈ 2 750 m | **≈ 3 420 m** |
+| `V` volcanique | 520 m | 700 m | ≈ 670 m | ≈ 1 000 m | ≈ 1 730 m |
+
+- **Crêtes continues** : bruit « ridged » à grande échelle (≈ 9 km) sur des coordonnées déformées, plus des reliefs
+  secondaires (≈ 2,6 km) : des chaînes allongées au lieu de taches de bosses.
+- **Grandes collines** : buttes de 150 à 400 m (longueur d'onde ≈ 6 km) dans la moitié des pays de plaine et de forêt,
+  jamais près des côtes ni dans les marais (le rivage ne bouge pas).
+- **Cols** : près d'une route du lore (2,5 km de part et d'autre de la corde entre deux cases), la montagne s'abaisse
+  (base −30 %, crêtes −70 %) : cols de 1 000 à 1 800 m entre des crêtes de 2 000 à 3 000 m. Les 176 routes du lore restent
+  tracées ; la route 000114 (Dhunfal – Kendrhir) passe par la **Faille de Kashogs** (N016_E012), comme sur la carte du T1.
+- **Neige** au-dessus de ≈ 2 500 m (texture du sol et carte du monde), **forêts** jusqu'à ≈ 2 100 m, **conifères**
+  au-dessus de 900 m.
+
+**Contrôles** : `world_gen_tests` (`TestReliefV1130` : échelle 3 600 m, médiane des montagnes ≥ 1 400 m, crêtes des chaînes
+≥ 2 000 m, plus haut sommet entre 3 200 et 3 550 m, grandes collines, aucune route du lore coupée).
 
 ## 17. Questions ouvertes
 

@@ -83,7 +83,7 @@ namespace tools::world_gen
 				{ "CommonTree_4", 1, 0.9, 1.3, 0.55 }, { "CommonTree_5", 1, 0.9, 1.3, 0.55 }, { "Pine_2", 0.4, 0.9, 1.2, 0.45 } };
 			if (c == '%' || c == '&') return swamp;
 			if (c == '~' || c == ':' || c == 'V' || c == 'l') return dead;
-			if (c == '^' || c == 'M' || altitude > 300.0) return conifer;
+			if (c == '^' || c == 'M' || altitude > 900.0) return conifer; // v1.0.130 : conifères au-dessus de 900 m
 			if (c == '.' || c == 'r' || c == 'p' || c == 'o') return grove;
 			return broadleaf;
 		}
@@ -181,7 +181,7 @@ namespace tools::world_gen
 				// Exclusions (mêmes règles que les arbres stockés, élargies d'un
 				// demi-texel : le client échantillonne la carte en bilinéaire).
 				const double alt = w.HeightAt(p);
-				if (alt < sea + 0.6 || alt > 560.0 || w.IsWater(p)) continue;
+				if (alt < sea + 0.6 || alt > 2100.0 || w.IsWater(p)) continue; // v1.0.130 : limite des forêts ≈ 2 100 m
 				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 5.0 + px * 0.5) continue;
 				const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
@@ -277,8 +277,8 @@ namespace tools::world_gen
 					}
 					if (w.IsOccupied(p, cp.clearOccupy)) continue;
 					if (w.SlopeDegAt(p) > cp.maxSlope) continue;
-					// Pas d'arbre sur les sommets enneigés (limite des neiges ≈ 560 m).
-					if (cp.cls == VegClass::Tree && alt > 560.0) continue;
+					// Pas d'arbre au-dessus de la limite des forêts (v1.0.130 : ≈ 2 100 m, Pyrénées).
+					if (cp.cls == VegClass::Tree && alt > (infernal ? 560.0 : 2100.0)) continue; // Enfers : inchangé
 
 					const std::vector<Species>* pool = nullptr;
 					switch (cp.cls)

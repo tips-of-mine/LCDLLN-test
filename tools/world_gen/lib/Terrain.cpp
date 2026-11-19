@@ -39,8 +39,21 @@ namespace tools::world_gen
 			double dune;   ///< poids des dunes (désert)
 		};
 
-		CodeProfile ProfileOf(char c)
+		/// Profil d'altitude d'un code de case. \p infernal : carte des Enfers (profils historiques
+		/// de v1.0.71, inchangés) ; sinon Royaumes, montagnes à l'échelle des Pyrénées depuis la
+		/// v1.0.130 (décision du 19/11/2026 : une montagne fait au moins 1 400 m, les sommets
+		/// enneigés culminent vers 3 400 m comme l'Aneto).
+		CodeProfile ProfileOf(char c, bool infernal)
 		{
+			if (!infernal)
+				switch (c)
+				{
+				case '^': return { 1300.0, 120.0, 1000.0, 0 };  // montagne : 1 400 à 2 200 m
+				case 'M': return { 1750.0, 150.0, 1500.0, 0 };  // chaîne : crêtes de 2 000 à 2 900 m
+				case '*': return { 2250.0, 160.0, 1600.0, 0 };  // sommets enneigés : jusqu'à ≈ 3 400 m
+				case 'V': return { 520.0, 80.0, 700.0, 0 };     // volcanique : cônes de 1 000 à 1 500 m
+				default: break;
+				}
 			switch (c)
 			{
 			case ' ': return { 6.0, 3.0, 0.0, 0 };       // mer profonde
@@ -634,9 +647,55 @@ namespace tools::world_gen
 		return Clamp(lava, 0.0, 1.0);
 	}
 
+	namespace
+	{
+		/// v1.0.130 — proximité (0..1) d'une route du lore au point (x, z) : 1 sur le tracé
+		/// (corde entre centres de cases successifs), 0 au-delà de 2,5 km. Grille calculée une
+		/// fois (PassField) ; 0 si le master n'a pas de champ (tests) ou pas de route.
+		double PassAt(const WorldMaster& m, double x, double z)
+		{
+			PassField* f = m.passes.get();
+			if (!f || m.loreRoads.empty()) return 0.0;
+			std::call_once(f->once, [&]() {
+				const int rows = static_cast<int>(m.gridRows.size());
+				f->originX = (m.scale.westE - 0.5) * kC;
+				f->originZ = -(m.scale.northN + 0.5) * kC;
+				f->width = static_cast<int>(m.scale.gridCols * kC / f->step) + 1;
+				f->height = static_cast<int>(rows * kC / f->step) + 1;
+				f->value.assign(static_cast<size_t>(f->width) * f->height, 0.0f);
+				const double reach = 2500.0, core = 600.0;
+				for (const LoreRoadDef& r : m.loreRoads)
+					for (size_t k = 0; k + 1 < r.cellNE.size(); ++k)
+					{
+						const engine::world::cells::CellPoint a = engine::world::cells::CellCenter({ r.cellNE[k].first, r.cellNE[k].second });
+						const engine::world::cells::CellPoint b = engine::world::cells::CellCenter({ r.cellNE[k + 1].first, r.cellNE[k + 1].second });
+						const Vec2 A{ a.x, a.z }, B{ b.x, b.z };
+						const int i0 = std::max(0, static_cast<int>((std::min(A.x, B.x) - reach - f->originX) / f->step));
+						const int i1 = std::min(f->width - 1, static_cast<int>((std::max(A.x, B.x) + reach - f->originX) / f->step) + 1);
+						const int j0 = std::max(0, static_cast<int>((std::min(A.z, B.z) - reach - f->originZ) / f->step));
+						const int j1 = std::min(f->height - 1, static_cast<int>((std::max(A.z, B.z) + reach - f->originZ) / f->step) + 1);
+						for (int j = j0; j <= j1; ++j)
+							for (int i = i0; i <= i1; ++i)
+							{
+								const double d = DistPointSegment({ f->originX + i * f->step, f->originZ + j * f->step }, A, B, nullptr);
+								float& v = f->value[static_cast<size_t>(j) * f->width + i];
+								v = std::max(v, static_cast<float>(SmoothStep(reach, core, d)));
+							}
+					}
+			});
+			const double fx = (x - f->originX) / f->step, fz = (z - f->originZ) / f->step;
+			const int i = static_cast<int>(std::floor(fx)), j = static_cast<int>(std::floor(fz));
+			if (i < 0 || j < 0 || i + 1 >= f->width || j + 1 >= f->height) return 0.0;
+			const double tx = fx - i, tz = fz - j;
+			auto at = [&](int ii, int jj) { return static_cast<double>(f->value[static_cast<size_t>(jj) * f->width + ii]); };
+			return Lerp(Lerp(at(i, j), at(i + 1, j), tx), Lerp(at(i, j + 1), at(i + 1, j + 1), tx), tz);
+		}
+	}
+
 	double MacroHeight(const WorldMaster& m, double x, double z)
 	{
 		const uint64_t seed = m.seed;
+		const bool infernal = IsInfernalMap(m);
 		// Domain warp (~±0,3 case) : côtes et reliefs organiques.
 		const double wx = x + Fbm(x, z, 2.0 * kC, 3, seed + 11) * 0.9 * kC;
 		const double wz = z + Fbm(x, z, 2.0 * kC, 3, seed + 12) * 0.9 * kC;
@@ -650,7 +709,7 @@ namespace tools::world_gen
 		CodeProfile acc{ 0, 0, 0, 0 };
 		for (int k = 0; k < 4; ++k)
 		{
-			const CodeProfile p = ProfileOf(LoreCode(m, in + dn[k], ie + de[k]));
+			const CodeProfile p = ProfileOf(LoreCode(m, in + dn[k], ie + de[k]), infernal);
 			acc.base += p.base * wts[k];
 			acc.amp += p.amp * wts[k];
 			acc.ridge += p.ridge * wts[k];
@@ -681,9 +740,36 @@ namespace tools::world_gen
 			// (les étendues d'eau intérieures sont des lacs explicites).
 			const double floorY = m.scale.seaLevelM + 6.0;
 			if (h < floorY) h = Lerp(h, floorY - (floorY - h) * 0.2, lowland);
+			// v1.0.130 — GRANDES COLLINES (Royaumes) : buttes isolées de 150 à 400 m au-dessus de
+			// la plaine (longueur d'onde ≈ 6 km), dans la moitié des pays vallonnés ; jamais près
+			// des côtes ni dans les marais (`lowland` nul), donc le rivage ne bouge pas.
+			if (!infernal)
+			{
+				const double big = SmoothStep(0.06, 0.42, Fbm(x, z, 6200.0, 3, seed + 61));
+				const double where = SmoothStep(0.30, 0.60, Clamp(Fbm(x, z, 16000.0, 2, seed + 62) + 0.5, 0.0, 1.0));
+				h += 380.0 * big * where * lowland * SmoothStep(58.0, 66.0, acc.base);
+			}
 		}
 		if (acc.ridge > 0.5)
-			h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
+		{
+			if (infernal)
+				h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
+			else
+			{
+				// v1.0.130 — cols : près d'une route du lore, la montagne s'abaisse (col de
+				// 1 000 à 1 800 m entre des crêtes de 2 000 à 3 000 m) ; les routes passent.
+				const double pass = PassAt(m, x, z);
+				h -= 0.30 * std::max(0.0, acc.base - 300.0) * pass;
+				// v1.0.130 — montagnes des Royaumes : grandes crêtes continues (crête de ≈ 9 km,
+				// coordonnées déformées : les chaînes s'allongent au lieu de former des taches)
+				// et reliefs secondaires (≈ 2,6 km) ; sommets jusqu'à ≈ 3 400 m.
+				const double wx = x + Fbm(x, z, 14000.0, 2, seed + 63) * 9000.0;
+				const double wz = z + Fbm(x, z, 14000.0, 2, seed + 64) * 9000.0;
+				const double crest = Ridged(wx, wz * 0.55, 9000.0, 5, seed + 65);
+				const double detail = Ridged(x, z, 2600.0, 4, seed + 66);
+				h += (0.75 * (crest - 0.35) + 0.45 * (detail - 0.35)) * acc.ridge * (1.0 - 0.7 * pass);
+			}
+		}
 		if (acc.dune > 0.01)
 			h += std::sin((x * 0.8 + z * 0.6) / 60.0 + Fbm(x, z, 900.0, 2, seed + 41) * 3.0) * 4.0 * acc.dune;
 		// Reliefs locaux posés à la main (v1.0.72) : colline de Vaerdhun, crevasse de Vharholdt ;

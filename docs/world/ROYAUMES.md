@@ -697,6 +697,12 @@ ordinaire du lore.
 automatiques des cases « rivière » restantes, ≈ 190 ruisseaux ; tous suivent l'arbre d'écoulement (vallées) ; ponts de
 pierre sur les routes, passerelles de bois sur les sentiers, tablier marchable. Détail : [`LORE_BD.md`](LORE_BD.md) §16.55.
 
+### 11.12 Relief à l'échelle des Pyrénées (v1.0.130)
+
+Échelle d'altitude 3 600 m ; montagnes 1 400-2 200 m, chaînes jusqu'à 2 900 m, sommets enneigés jusqu'à ≈ 3 400 m ;
+grandes collines de 150 à 400 m en plaine ; cols de 1 000 à 1 800 m le long des routes du lore ; neige vers 2 500 m.
+Détail : [`LORE_BD.md`](LORE_BD.md) §16.56.
+
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
 
 | Relief | Type | Ancrage | Effet |

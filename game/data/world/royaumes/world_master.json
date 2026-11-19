@@ -10,7 +10,7 @@
     "grid_cols": 50,
     "west_e": -21,
     "north_n": 23,
-    "height_scale_m": 1200.0,
+    "height_scale_m": 3600.0,
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
@@ -10794,7 +10794,7 @@
     { "id": "000104", "type": "road", "from": "town_0132", "to": "town_0115", "waypoints": ["N008_E018", "N005_E020"] },
     { "id": "000105", "type": "road", "from": "farwatch", "to": "town_0132", "waypoints": ["N011_E020", "N008_E018"] },
     { "id": "000106", "type": "road", "from": "farwatch", "to": "town_0112", "waypoints": ["N011_E020", "N014_E018"] },
-    { "id": "000114", "type": "road", "from": "ville_dunfold", "to": "kendrhir_vale", "waypoints": ["N017_E013", "N015_E012"] },
+    { "id": "000114", "type": "road", "from": "ville_dunfold", "to": "kendrhir_vale", "waypoints": ["N017_E013", "N016_E012", "N015_E012"] },
     { "id": "000116", "type": "road", "from": "ville_moorgate", "to": "ville_dunfold", "waypoints": ["N015_E017", "N016_E016", "N016_E015", "N017_E014", "N017_E013"] },
     { "id": "000120", "type": "imperial_road", "from": "ville_lhynn", "to": "ville_moork", "waypoints": ["N001_W011", "N001_W010", "N000_W010", "S001_W009", "S001_W008", "S001_W007", "N000_W006", "N001_W005", "N002_W004", "N003_W003", "N002_W002", "N001_W001", "N000_E000", "N000_E001", "S001_E002", "S001_E003", "S001_E004", "N000_E005", "N001_E006", "N002_E007", "N003_E008", "N004_E009", "N004_E010", "N003_E011", "N004_E012", "N005_E013", "N006_E014", "N005_E014", "N004_E014", "N003_E014", "N002_E015", "N001_E015", "N000_E015", "S001_E015", "S002_E015"] },
     { "id": "000121", "type": "road", "from": "hameau_eaglewatch", "to": "ville_lhynn", "waypoints": ["N002_W010", "N001_W011"] },

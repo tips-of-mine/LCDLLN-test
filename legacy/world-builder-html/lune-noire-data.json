@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.129",
+    "version": "1.0.130",
     "notes": [
+      "v1.0.130 : [DÉCISION] Carte du monde, lot 3 (relief) : montagnes à l'échelle des Pyrénées (1 400 à 3 400 m), neige vers 2 500 m, grandes collines, cols sur les routes du lore.",
       "v1.0.129 : [DÉCISION] Carte du monde, lot 2 (eau) : 8 rivières principales tracées en jeu, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois.",
       "v1.0.128 : [DÉCISION] Carte du monde, lot 1 : fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine et relié ; Hazol et Askhrof reliés ; Tour Carrée = Grande Arche ; Palais des Maîtres des Dragons fusionné ; tailles du lore au master ; 10 villes portuaires au bord de la mer.",
       "v1.0.127 : [DÉCISION] Lhynn (N001_W011) et Altenberg (N005_W013) déplacées au bord de la mer, positions posées ; lieux, comptoir et routes suivent.",
@@ -196565,17 +196566,26 @@
     {
       "id": "mountain",
       "description": "Montagne",
-      "group": "mountain"
+      "group": "mountain",
+      "notes": [
+        "[DÉCISION] (v1.0.130) Altitude en jeu : 1 400 à 2 200 m (sommets isolés jusqu'à ≈ 3 200 m). LORE_BD §16.56."
+      ]
     },
     {
       "id": "mountain_range",
       "description": "Chaîne",
-      "group": "mountain"
+      "group": "mountain",
+      "notes": [
+        "[DÉCISION] (v1.0.130) Altitude en jeu : crêtes de 2 000 à 2 900 m, cols de 1 000 à 1 800 m sur les routes. LORE_BD §16.56."
+      ]
     },
     {
       "id": "snow_mountain",
       "description": "Sommet neigeux",
-      "group": "mountain"
+      "group": "mountain",
+      "notes": [
+        "[DÉCISION] (v1.0.130) Altitude en jeu : jusqu'à ≈ 3 400 m (Aneto), neige au-dessus de ≈ 2 500 m. LORE_BD §16.56."
+      ]
     },
     {
       "id": "cliff",
@@ -239993,7 +240003,14 @@
       "to_ville_id": "kendrhir_vale",
       "to_lieu_id": "",
       "description": "[BD-T1] Des Marches à Kendrhir par la Faille de Kashogs (carte p.25).",
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.130) Tracé par la Faille de Kashogs (N016_E012), comme la carte du T1 p.25 : avec les montagnes relevées (lot 3), la ligne droite Dhunfal – Kendrhir passait par la crête. LORE_BD §16.56."
+      ],
+      "waypoints": [
+        "N017_E013",
+        "N016_E012",
+        "N015_E012"
+      ]
     },
     {
       "id": "000116",
@@ -247561,6 +247578,13 @@
           "nom": "Rivières principales, ruisseaux et ponts",
           "decision": "Décision du propriétaire (19/11/2026) : les 8 rivières principales du lore sont tracées en jeu en suivant les vallées ; des rivières plus petites (ruisseaux) remplissent le monde ; ponts de pierre sur les routes et de bois sur les sentiers. LORE_BD §16.55.",
           "version": "1.0.129"
+        },
+        {
+          "collection": "terrain_types",
+          "id": "relief_pyrenees_v1130",
+          "nom": "Montagnes à l'échelle des Pyrénées",
+          "decision": "Décision du propriétaire (19/11/2026) : une montagne fait au moins 1 400 m ; les sommets enneigés culminent vers 3 400 m (modèle : Pyrénées, Aneto 3 404 m) ; neige au-dessus de ≈ 2 500 m ; plus de montagnes et de grandes collines ; les routes du lore franchissent les montagnes par des cols. LORE_BD §16.56.",
+          "version": "1.0.130"
         }
       ]
     },

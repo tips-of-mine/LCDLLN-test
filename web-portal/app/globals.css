@@ -193,3 +193,35 @@ input,textarea,select,button{font-family:inherit;}
 .card{background:rgba(20,28,40,.6);border:1px solid var(--ln-border);border-radius:var(--radius-md);padding:clamp(16px,2vw,24px);box-shadow:var(--shadow-1);}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+
+/* PORTAL.1 — cartes du monde (/monde) : affiche statique + noms posés par-dessus. */
+.wp-map-block{margin:0 0 2.5rem;}
+.wp-map-title{font-size:clamp(16px,2vw,22px);color:var(--ln-accent);margin-bottom:.75rem;}
+.wp-map-frame{position:relative;width:100%;max-width:1100px;margin:0 auto;aspect-ratio:1/1;border:1px solid var(--ln-border);border-radius:var(--radius-md,10px);overflow:hidden;background:#0b1a2e;box-shadow:0 10px 40px rgba(0,0,0,.45);}
+.wp-map-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.wp-map-banner{position:absolute;top:12px;right:12px;z-index:3;padding:4px 10px;font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ln-accent);background:rgba(10,13,18,.78);border:1px solid rgba(232,197,110,.35);border-radius:var(--radius-sm,6px);}
+.wp-map-city,.wp-map-region,.wp-map-poi{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;z-index:2;}
+.wp-map-city{font-family:var(--font-display);font-size:clamp(7px,.9vw,11px);color:#fff;text-shadow:0 0 3px #000,0 0 6px #000;}
+.wp-map-city::before{content:"";display:inline-block;width:5px;height:5px;margin-right:4px;vertical-align:middle;border-radius:50%;background:#2a1d16;border:1px solid #f2e6c8;}
+.wp-map-city.major{font-size:clamp(8px,1.05vw,13px);font-weight:700;}
+.wp-map-city.major::before{width:7px;height:7px;}
+.wp-map-city.capital{font-size:clamp(9px,1.25vw,15px);font-weight:700;color:var(--ln-accent);}
+.wp-map-city.capital::before{width:9px;height:9px;background:var(--ln-accent);border-color:#2a1d16;}
+.wp-map-region{font-family:var(--font-display);font-size:clamp(7px,.85vw,11px);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,248,230,.55);text-shadow:0 0 4px rgba(0,0,0,.8);z-index:1;}
+.wp-map-poi{font-family:var(--font-body);font-style:italic;font-size:clamp(7px,.8vw,10px);color:#ffe2b0;text-shadow:0 0 3px #000,0 0 6px #000,0 0 2px #000;}
+.wp-map-link{text-align:center;margin:.6rem 0 0;font-size:13px;}
+.wp-map-empty{text-align:center;padding:3rem 1rem;color:var(--ln-muted);font-style:italic;}
+@media (max-width:640px){.wp-map-poi,.wp-map-region{display:none;}.wp-map-city:not(.major):not(.capital){display:none;}}
+
+/* PORTAL.2 — galerie des villes et lieux (/monde/lieux). */
+.wp-places-world{margin-bottom:2.5rem;}
+.wp-places-region{margin:0 0 2rem;}
+.wp-places-region-title{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ln-muted);border-bottom:1px solid rgba(61,79,102,.4);padding-bottom:.4rem;margin-bottom:1rem;}
+.wp-places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.wp-place-card{margin:0;background:var(--ln-panel);border:1px solid var(--ln-border);border-radius:var(--radius-md,10px);overflow:hidden;display:flex;flex-direction:column;}
+.wp-place-img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
+.wp-place-card figcaption{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;}
+.wp-place-name{font-family:var(--font-display);font-size:14px;letter-spacing:.06em;color:var(--ln-text);}
+.wp-place-kind{font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ln-accent);}
+.wp-place-desc{font-size:12.5px;line-height:1.45;color:var(--ln-muted);font-style:italic;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.wp-map-cta{text-align:center;margin:-1rem 0 2.5rem;}

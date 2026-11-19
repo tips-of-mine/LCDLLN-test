@@ -354,6 +354,9 @@ namespace tools::world_gen
 		WorldMaster master;
 		std::string contentRoot;
 		std::string outputRoot;
+		/// PORTAL.1 — dossier de l'affiche du portail web (option --portal-out) ;
+		/// vide = pas d'affiche. Hors de game/data : jamais livrée au client.
+		std::string portalOutDir;
 
 		/// Emprise de la grille du lore (m, repère global).
 		double minX = 0.0, minZ = 0.0, maxX = 0.0, maxZ = 0.0;
@@ -469,6 +472,17 @@ namespace tools::world_gen
 		std::vector<PointLightDef> pointLights;     ///< lumières ponctuelles (v1.0.107, données)
 		std::vector<AmbianceZoneDef> ambianceZones; ///< zones d'ambiance locales (v1.0.107, données)
 		bool hasSea = false;          ///< une partie de la cellule est sous la mer
+		/// PORTAL.2 — vignette publiée pour le portail web (une par ville du lore ou
+		/// lieu remarquable de la cellule, sans secrets) ; lue par WriteGlobalOutputs
+		/// pour l'index de la galerie.
+		struct PortalVignette
+		{
+			std::string id, name, kind, description;
+			std::string file;   ///< nom du fichier dans <portal-out>/places/
+			Vec2 center;        ///< centre monde (m)
+			bool city = false;  ///< ville (sinon lieu)
+		};
+		std::vector<PortalVignette> portalVignettes;
 
 		/// Réglages `world.*` importés (brouillard, props, DOF…) recopiés dans zone.json.
 		tools::zone_builder::JsonValue importedWorldConfig;
@@ -690,6 +704,15 @@ namespace tools::world_gen
 	/// secret. Effet de bord : écrit world/<monde>/ (sauf dryRun).
 	/// \return false + \p err si une écriture échoue.
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
+	/// PORTAL.2 — vues de dessus détaillées (PNG) des villes du lore et des lieux
+	/// remarquables de la cellule, pour la galerie du portail web : relief ombré,
+	/// eau, routes et rues, forêts, arbres et bâtiments. Jamais de ville ni de lieu
+	/// secret. À appeler APRÈS WriteCellOutputs et AVANT la libération des grilles
+	/// (height, biome, roadDist, riverDist, urban, scatter). Output.cpp
+	/// \param dir dossier <portal-out>/places (hors de game/data)
+	/// Effet de bord : écrit les PNG ; remplit w.portalVignettes.
+	/// Thread : une cellule par appel ; plusieurs cellules peuvent tourner en parallèle.
+	bool WritePortalVignettes(World& w, const std::string& dir, std::string& err);
 	/// FIX.12 — tracés de la carte du monde (world/<w>/map_features.bin) : routes
 	/// inter-villes (g.roads), chemins locaux des cellules (Road::path), rues des
 	/// agglomérations (arêtes du graphe SettlementLayout) et emprises des

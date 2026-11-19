@@ -278,6 +278,26 @@ RenderModel
 > nouvel état « occupé » (combat, fuite, retour) doit être compté dans
 > `mob_activity::IsBusy`, sinon le mob pourrait s'endormir au milieu de l'action.
 
+> **PORTAL.1 — cartes du monde sur le portail** : `lcdlln_world_gen --portal-out <dossier>`
+> écrit, HORS de `game/data` (jamais livrée au client), l'affiche `portal_map.png`
+> (emprise des `generated_cells` + marge ; 4096 px, 2048 px pour une carte de moins de
+> 200 km ; sans liseré de cellules ni repère de ville ; routes et rivières en traits
+> continus, cf. `ContinentMapStyle` dans `tools/world_gen/lib/Output.cpp`) et
+> `portal_map.json` (villes importantes, régions, volcans, cités, temples des Enfers ;
+> u, v normalisés ; sans secrets). La CI Linux (`build-linux.yml`) la produit pour les
+> Royaumes et les Enfers, vérifie l'absence de secret (`scripts/check_portal_map_secrets.py`)
+> et `scripts/publish-portal-maps.sh` la convertit en WebP dans
+> `deploy/docker/web-portal/public/maps/<monde>/`. Page publique `/monde`
+> (`web-portal/app/monde/`, `web-portal/lib/world/worldMaps.ts`) : affiche + noms posés en HTML.
+> **PORTAL.2 — galerie des villes et lieux** : avec `--portal-out`, chaque cellule écrit
+> aussi `<dossier>/places/<id>.png` (768 px, `WritePortalVignettes`, Output.cpp) : vue de
+> dessus de chaque ville du lore (cadre 2,6 rayons urbains, 500 m à 3 km) et des lieux
+> remarquables construits (≥ 3 bâtiments ou décors construits à 150 m), jamais secrets ;
+> relief ombré, forêt, eau, routes et rues lissées, arbres, décor construit, bâtiments
+> ombrés. Rendu avant la libération des grilles de la cellule. `places/index.json`
+> (WriteGlobalOutputs) : nom, genre, région, description. Page `/monde/lieux`
+> (`web-portal/lib/world/worldPlaces.ts`), contrôle anti-secrets aussi sur l'index.
+
 > **Règle (POP.1)** : chaque PNJ ou mob appartient à une **classe de population**
 > (`src/shared/world/PopulationClass.h`) : **A** interactif, **B** combat, **C** figurant
 > du shard, **D** foule client, **E** faune client. Règle d'or : tout ce qui peut être
@@ -487,6 +507,7 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `sql/migrations/0073_roadmap_items_v5.sql` | Roadmap publique v5 : rattrapage des grands systèmes livrés (personnages, combat, compétences, quêtes, métiers, économie, social, fenêtre Personnage, météo, **équipement d'objets**). Repousse les items raciaux planifiés en fin de timeline. |
 | `sql/migrations/0076_character_map_discovery.sql` | Carte à découvrir : masque des cases explorées (125 m) par personnage et par cellule (`character_map_discovery`), opcodes 208–210 (`MapDiscoveryHandler`, `MysqlMapDiscoveryStore`). |
 | `sql/migrations/0087_roadmap_items_v6.sql` | Roadmap publique v6 : rattrapage juillet → novembre 2026 (monde des Royaumes, carte à découvrir, Enfers, PNJ d'ambiance, bateaux, cinématiques, eau, anniversaires, cimetières, sauvegarde fiable, HdV/courrier, commandes MJ ; en cours : monde plus peuplé, optimisation ; planifié : voir plus loin). Insertions idempotentes par titre, statuts gardés. Règle de mise à jour : `CLAUDE.md` § Roadmap publique. |
+| `sql/migrations/0088_roadmap_items_v7.sql` | Roadmap publique v7 : « Cartes du monde sur le portail » (PORTAL.1), « Villes et lieux vus du ciel » (PORTAL.2). |
 | `game/data/persistence/db/migrations/0002_characters_equipment.sql` | Schéma de l'équipement porté par personnage (`character_equipment`). Le store runtime shard est un fichier KV texte (clés `equipment.<slot>.item_id`) ; ce `.sql` versionne le schéma cible. |
 | `src/masterd/migrations/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur (découverte auto par numéro de version). |
 | `src/shared/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |

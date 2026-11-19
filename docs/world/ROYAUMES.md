@@ -703,6 +703,11 @@ pierre sur les routes, passerelles de bois sur les sentiers, tablier marchable. 
 grandes collines de 150 à 400 m en plaine ; cols de 1 000 à 1 800 m le long des routes du lore ; neige vers 2 500 m.
 Détail : [`LORE_BD.md`](LORE_BD.md) §16.56.
 
+### 11.13 Routes sinueuses (v1.0.131)
+
+Les routes du lore visent en pays ouvert un point de chaque case tiré à ±3 km du centre, suivent un terrain aux
+préférences bruitées et ondulent (≈ ±240 m) ; les cols serpentent. Détail : [`LORE_BD.md`](LORE_BD.md) §16.57.
+
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
 
 | Relief | Type | Ancrage | Effet |

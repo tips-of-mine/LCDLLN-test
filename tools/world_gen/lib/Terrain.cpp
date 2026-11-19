@@ -708,12 +708,13 @@ namespace tools::world_gen
 		const int de[4] = { 0, 1, 0, 1 }, dn[4] = { 0, 0, 1, 1 };
 		// v1.0.130 — reliefs posés à la main (gouffre, crevasse, colline) : leurs abords gardent
 		// le relief historique (profils d'avant les Pyrénées, sans grandes collines ni cols),
-		// sur lequel leurs formes et leurs profondeurs ont été réglées. `calm` = 0 au relief,
-		// 1 au-delà de 2,5 km de son emprise (zones relevées au chargement du master).
+		// sur lequel leurs formes et leurs profondeurs ont été réglées. `calm` = 0 jusqu'à 2 km
+		// de son emprise (accès des routes du lore), 1 au-delà de 3,5 km (zones relevées au
+		// chargement du master).
 		double calm = 1.0;
 		if (!infernal)
 			for (const WorldMaster::CalmZone& c : m.calmZones)
-				calm = std::min(calm, SmoothStep(c.radiusM, c.radiusM + 2500.0, std::hypot(x - c.center.x, z - c.center.z)));
+				calm = std::min(calm, SmoothStep(c.radiusM + 2000.0, c.radiusM + 3500.0, std::hypot(x - c.center.x, z - c.center.z)));
 		CodeProfile acc{ 0, 0, 0, 0 };
 		for (int k = 0; k < 4; ++k)
 		{

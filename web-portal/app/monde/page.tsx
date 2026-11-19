@@ -28,6 +28,17 @@ export default async function WorldPage() {
           et évoluent avec lui : certains lieux restent à découvrir en jouant.
         </p>
       </div>
+      {/* Lot carte v1.0.132 — ce qui attend le voyageur (texte vitrine, sans lieu secret). */}
+      <section className="wp-map-intro">
+        <h2>Ce qui attend le voyageur</h2>
+        <ul>
+          <li>Des montagnes à l&apos;échelle des Pyrénées, sommets enneigés vers 3 400 m, franchies par des cols.</li>
+          <li>Huit grandes rivières et près de deux cents ruisseaux, enjambés par des ponts de pierre et de bois.</li>
+          <li>Des routes qui serpentent entre les grandes collines, les forêts et les déserts.</li>
+          <li>La Tour Carrée de la Lune Noire, le château de Garundel et ses douves, le Palais des Maîtres des Dragons, des tours de guet, des phares et des cascades en gradins, intacts ou en ruine.</li>
+          <li>Des ports au bord de la mer, d&apos;où partent les bateaux vers les îles.</li>
+        </ul>
+      </section>
       <p className="wp-map-cta">
         <Link href="/monde/lieux" className="btn btn-accent">Voir les villes et lieux vus du ciel</Link>
       </p>

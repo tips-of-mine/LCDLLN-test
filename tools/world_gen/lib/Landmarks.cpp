@@ -1,0 +1,363 @@
+// tools/world_gen — lieux bâtis (lot carte v1.0.132) : formes GÉNÉRÉES des POI de genre
+// tour, chateau, phare, cascade et pont, à partir des pièces modulaires de meshes/props/
+// (murs, arches, sols, toits de tour), posées en décor (scatter.bin).
+//
+// Les murs (Wall_*) ont une boîte de collision « mur » et les sols (Floor_*) un dessus
+// marchable (game/data/collision/building_pieces.json) : on entre dans une tour par sa
+// porte, on marche sur un pont. Toutes les formes sont déterministes (graine + id du POI).
+// Un POI à l'état « ruine » (clé `state` du master) perd des pans de mur, ses étages hauts
+// et son toit. Appelé par la génération de cellule après les agglomérations (WorldGen.cpp).
+
+#include "WorldGenContext.h"
+#include "Random.h"
+
+#include <algorithm>
+#include <cmath>
+#include <string>
+
+namespace tools::world_gen
+{
+	namespace
+	{
+		constexpr double kPi = 3.141592653589793;
+		constexpr uint8_t kSolid = 1u, kPiece = 2u, kOccluder = 4u; ///< bits de ScatterInstance::flags
+		constexpr double kWallH = 3.12; ///< hauteur d'un mur modulaire (m, échelle 1)
+
+		/// Lacet (degrés) qui aligne l'axe X local d'un mesh sur la direction \p d (XZ).
+		double YawAlong(Vec2 d) { return std::atan2(-d.z, d.x) * 57.29577951308232; }
+
+		/// Pose une pièce de meshes/props/ à \p y mètres au-dessus du sol (heightmap finale).
+		/// Une pièce solide de bâtiment (Wall_*, Floor_*, clôture) passe par le catalogue de
+		/// collision (bit « pièce » : murs = barrières, sols = dessus marchable) ; les murs
+		/// occultent la caméra ; arbres et rochers gardent la collision cylindrique.
+		void Piece(World& w, const char* mesh, Vec2 p, double y, double yaw, double scale, bool solid)
+		{
+			ScatterDef s;
+			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
+			s.position = p; s.yOffset = y; s.yawDeg = yaw; s.scale = scale;
+			const std::string m(mesh);
+			const bool piece = m.rfind("Wall_", 0) == 0 || m.rfind("Floor_", 0) == 0 || m.rfind("Prop_WoodenFence", 0) == 0;
+			s.flags = solid ? static_cast<uint8_t>(kSolid | (piece ? kPiece : 0u) | (m.rfind("Wall_", 0) == 0 ? kOccluder : 0u)) : 0u;
+			s.cullClass = m.rfind("Wall_", 0) == 0 || m.rfind("Roof_", 0) == 0 ? 0 : 1; // bâti : grande distance de vue
+			w.scatter.push_back(std::move(s));
+		}
+
+		/// Générateur pseudo-aléatoire déterministe propre à un POI.
+		struct LandmarkRng
+		{
+			uint64_t s;
+			double Next() { s = Mix64(s + 0x9E3779B97F4A7C15ull); return ToUnit(s); }
+		};
+
+		/// Tour (ronde si \p round, sinon carrée de côté 2·r) de \p levels étages de murs de pierre,
+		/// porte au rez-de-chaussée vers \p doorDir, fenêtres aux étages, sol de dalles, toit conique
+		/// (tour ronde intacte) ou créneaux. \p ruin : pans manquants (plus haut, plus de manques),
+		/// pas de toit. \p baseY : altitude du pied au-dessus du sol (m).
+		/// Effet de bord : w.scatter. Renvoie la hauteur du sommet (m au-dessus du pied).
+		double BuildTower(World& w, Vec2 c, double r, int levels, bool round, Vec2 doorDir, bool ruin, LandmarkRng& rng, double baseY = 0.0, bool roof = true)
+		{
+			// Segments de 2 m (échelle s pour fermer exactement le pourtour).
+			const double perim = round ? 2.0 * kPi * r : 8.0 * r;
+			const int n = std::max(round ? 6 : 4, static_cast<int>(std::lround(perim / 2.0)) / (round ? 1 : 4) * (round ? 1 : 4));
+			const double s = perim / n / 2.0;
+			const double doorA = std::atan2(doorDir.z, doorDir.x);
+			int doorK = 0;
+			double best = 1e9;
+			std::vector<Vec2> pos(static_cast<size_t>(n)), tan(static_cast<size_t>(n));
+			for (int k = 0; k < n; ++k)
+			{
+				if (round)
+				{
+					const double a = (k + 0.5) * 2.0 * kPi / n;
+					pos[k] = c + Vec2{ std::cos(a), std::sin(a) } * r;
+					tan[k] = { -std::sin(a), std::cos(a) };
+					const double da = std::fabs(std::remainder(a - doorA, 2.0 * kPi));
+					if (da < best) { best = da; doorK = k; }
+				}
+				else
+				{
+					const int side = k / (n / 4), idx = k % (n / 4);
+					static const Vec2 corner[4] = { { -1, -1 }, { 1, -1 }, { 1, 1 }, { -1, 1 } };
+					static const Vec2 dir[4] = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+					pos[k] = c + corner[side] * r + dir[side] * ((idx + 0.5) * 2.0 * s);
+					tan[k] = dir[side];
+					const Vec2 out = pos[k] - c;
+					const double da = std::fabs(std::remainder(std::atan2(out.z, out.x) - doorA, 2.0 * kPi));
+					if (da < best) { best = da; doorK = k; }
+				}
+			}
+			const double h = kWallH * s;
+			int top = levels;
+			for (int lv = 0; lv < levels; ++lv)
+			{
+				const double ruinP = ruin ? Clamp(0.1 + 0.6 * lv / std::max(1, levels - 1), 0.0, 0.85) : 0.0;
+				for (int k = 0; k < n; ++k)
+				{
+					if (ruin && lv > 0 && rng.Next() < ruinP) continue;
+					const char* mesh = "Wall_UnevenBrick_Straight";
+					if (lv == 0 && k == doorK) mesh = "Wall_UnevenBrick_Door_Round";
+					else if (lv > 0 && k % 3 == 1) mesh = "Wall_UnevenBrick_Window_Thin_Round";
+					Piece(w, mesh, pos[k], baseY + lv * h, YawAlong(tan[k]), s, true);
+				}
+				if (ruin && lv >= std::max(1, levels / 2) && rng.Next() < 0.5) { top = lv + 1; break; }
+			}
+			// Sol de dalles au rez-de-chaussée (dessus marchable).
+			for (double x = -r + 1.0; x < r; x += 2.0)
+				for (double z = -r + 1.0; z < r; z += 2.0)
+					if (!round || x * x + z * z < (r - 0.6) * (r - 0.6))
+						Piece(w, "Floor_Brick", c + Vec2{ x, z }, baseY + 0.02, 0.0, 1.0, true);
+			const double topY = baseY + top * h;
+			if (!ruin && roof && round)
+				Piece(w, "Roof_Tower_RoundTiles", c, topY, 0.0, Clamp(r / 2.6, 0.6, 3.0), false);
+			else if (!ruin)
+				for (int k = 0; k < n; k += 2) // créneaux
+					Piece(w, "Wall_UnevenBrick_Straight", pos[k], topY, YawAlong(tan[k]), 0.4 * s, true);
+			// Éboulis au pied d'une ruine.
+			if (ruin)
+				for (int k = 0; k < 6; ++k)
+				{
+					const double a = rng.Next() * 2.0 * kPi, d = r + 1.0 + rng.Next() * 4.0;
+					Piece(w, (k % 2) ? "Prop_Brick2" : "Rock_Medium_3", c + Vec2{ std::cos(a), std::sin(a) } * d, baseY, rng.Next() * 360.0, (k % 2) ? 1.6 : 0.7, false);
+				}
+			return top * h;
+		}
+
+		/// Mur droit de \p a à \p b (segments de 2 m mis à l'échelle), \p levels étages, créneaux
+		/// au sommet ; \p gate : arche au milieu. Effet de bord : w.scatter.
+		void BuildWall(World& w, Vec2 a, Vec2 b, int levels, bool ruin, bool gate, LandmarkRng& rng)
+		{
+			const double len = std::hypot(b.x - a.x, b.z - a.z);
+			if (len < 1.0) return;
+			const int n = std::max(1, static_cast<int>(std::lround(len / 2.0)));
+			const double s = len / n / 2.0;
+			const Vec2 d = (b - a) * (1.0 / len);
+			for (int k = 0; k < n; ++k)
+			{
+				const Vec2 p = a + d * ((k + 0.5) * 2.0 * s);
+				const bool mid = gate && k == n / 2;
+				for (int lv = 0; lv < levels; ++lv)
+				{
+					if (ruin && rng.Next() < 0.25 + 0.3 * lv) continue;
+					const char* mesh = (mid && lv == 0) ? "Wall_Arch" : "Wall_UnevenBrick_Straight";
+					Piece(w, mesh, p, lv * kWallH * s, YawAlong(d), s, !(mid && lv == 0));
+				}
+				if (!ruin && k % 2 == 0) Piece(w, "Wall_UnevenBrick_Straight", p, levels * kWallH * s, YawAlong(d), 0.4 * s, true);
+			}
+		}
+
+		/// Château : enceinte circulaire (rayon 26 m × échelle) à créneaux et porte en arche vers
+		/// \p gateDir, 4 tours d'angle, donjon rond central, corps de logis accolé au donjon, arbres
+		/// dans la cour ; douves sèches creusées autour (château intact). Ruine : pans manquants,
+		/// sans toits ni arbres. Effet de bord : w.scatter, w.height (douves).
+		void BuildCastle(World& w, Vec2 c, double sc, Vec2 gateDir, bool ruin, LandmarkRng& rng)
+		{
+			const double R = 26.0 * sc;
+			const int segs = std::max(12, static_cast<int>(std::lround(2.0 * kPi * R / 8.0)));
+			const double gateA = std::atan2(gateDir.z, gateDir.x);
+			int gateK = 0; double best = 1e9;
+			for (int k = 0; k < segs; ++k)
+			{
+				const double a = (k + 0.5) * 2.0 * kPi / segs;
+				const double da = std::fabs(std::remainder(a - gateA, 2.0 * kPi));
+				if (da < best) { best = da; gateK = k; }
+			}
+			for (int k = 0; k < segs; ++k)
+			{
+				const double a0 = k * 2.0 * kPi / segs, a1 = (k + 1) * 2.0 * kPi / segs;
+				BuildWall(w, c + Vec2{ std::cos(a0), std::sin(a0) } * R, c + Vec2{ std::cos(a1), std::sin(a1) } * R, 2, ruin, k == gateK, rng);
+			}
+			// Tours d'angle.
+			for (int t = 0; t < 4; ++t)
+			{
+				const double a = gateA + kPi / 4.0 + t * kPi / 2.0;
+				BuildTower(w, c + Vec2{ std::cos(a), std::sin(a) } * R, 3.5 * sc, 3, true, Vec2{ -std::cos(a), -std::sin(a) }, ruin, rng);
+			}
+			// Donjon et corps de logis (rectangle accolé au donjon, côté opposé à la porte).
+			const Vec2 back{ -std::cos(gateA), -std::sin(gateA) };
+			const Vec2 keep = c + back * (6.0 * sc);
+			BuildTower(w, keep, 5.0 * sc, ruin ? 4 : 5, true, Vec2{ std::cos(gateA), std::sin(gateA) }, ruin, rng);
+			const Vec2 side{ -back.z, back.x };
+			const Vec2 lc = keep + side * (10.0 * sc);
+			const double hw = 6.0 * sc, hd = 3.5 * sc;
+			const Vec2 q0 = lc - side * hw - back * hd, q1 = lc + side * hw - back * hd, q2 = lc + side * hw + back * hd, q3 = lc - side * hw + back * hd;
+			BuildWall(w, q0, q1, 2, ruin, true, rng); BuildWall(w, q1, q2, 2, ruin, false, rng);
+			BuildWall(w, q2, q3, 2, ruin, false, rng); BuildWall(w, q3, q0, 2, ruin, false, rng);
+			if (!ruin)
+			{
+				Piece(w, "Roof_RoundTiles_8x12", lc, 2.0 * kWallH, YawAlong(back), sc, false);
+				for (int k = 0; k < 3; ++k) // arbres de la cour
+				{
+					const double a = gateA + (k - 1) * 0.7;
+					Piece(w, "CommonTree_2", c + Vec2{ std::cos(a), std::sin(a) } * (14.0 * sc), 0.0, rng.Next() * 360.0, 0.9 + 0.3 * rng.Next(), true);
+				}
+				// Douves sèches : anneau creusé de 3 m entre 1,2 R et 1,4 R (pont-levis = porte).
+				const double r0 = R * 1.15, r1 = R * 1.4;
+				for (int j = 0; j < w.height.height; ++j)
+				{
+					const double z = w.height.WorldZ(j);
+					if (std::fabs(z - c.z) > r1 + 4.0) continue;
+					for (int i = 0; i < w.height.width; ++i)
+					{
+						const double x = w.height.WorldX(i);
+						const double d = std::hypot(x - c.x, z - c.z);
+						if (d < r0 || d > r1) continue;
+						const double ang = std::fabs(std::remainder(std::atan2(z - c.z, x - c.x) - gateA, 2.0 * kPi));
+						if (ang * d < 4.0) continue; // passage devant la porte
+						const double t = std::sin((d - r0) / (r1 - r0) * kPi);
+						w.height.At(i, j) -= 3.0 * t;
+					}
+				}
+			}
+		}
+
+		/// Cascade : trois vasques en gradins (lacs à surface plate, 4 m plus bas chacune) le long
+		/// de \p dir, chaque terrasse aplanie à sa vasque, rochers aux chutes. Effet de bord :
+		/// w.lakes, w.height, w.scatter.
+		void BuildCascade(World& w, const PoiDef& p, Vec2 dir, LandmarkRng& rng)
+		{
+			const double y0 = w.HeightAt(p.center) + 6.0;
+			const double radii[3] = { 9.0, 7.5, 6.5 };
+			for (int k = 0; k < 3; ++k)
+			{
+				const Vec2 c = p.center + dir * (k * 17.0 - 17.0);
+				const double water = y0 - 4.0 * k;
+				const double r = radii[k];
+				// Terrasse : le sol suit la vasque (berge 0,4 m au-dessus de l'eau, fond 1,4 m dessous).
+				for (int j = std::max(0, w.height.IndexZ(c.z - r - 10)); j <= std::min(w.height.height - 1, w.height.IndexZ(c.z + r + 10)); ++j)
+					for (int i = std::max(0, w.height.IndexX(c.x - r - 10)); i <= std::min(w.height.width - 1, w.height.IndexX(c.x + r + 10)); ++i)
+					{
+						const double d = std::hypot(w.height.WorldX(i) - c.x, w.height.WorldZ(j) - c.z);
+						double& h = w.height.At(i, j);
+						if (d < r) h = water - 1.4 * (1.0 - d / r) - 0.2;
+						else if (d < r + 10.0) h = Lerp(water + 0.4, h, SmoothStep(r, r + 10.0, d));
+					}
+				Lake l;
+				l.name = p.id + "_vasque_" + std::to_string(k);
+				l.center = c; l.radiusM = r; l.waterY = water;
+				for (int q = 0; q < 16; ++q) // contour CCW (water.bin), bord légèrement irrégulier
+				{
+					const double a = q * 2.0 * kPi / 16.0, rr = r * (0.92 + 0.08 * rng.Next());
+					l.polygon.push_back(c + Vec2{ std::cos(a), std::sin(a) } * rr);
+				}
+				w.lakes.push_back(l);
+				// Rochers à la chute (entre deux vasques) et autour.
+				for (int q = 0; q < 5; ++q)
+				{
+					const Vec2 side{ -dir.z, dir.x };
+					const Vec2 rp = c + dir * (r + 1.5) + side * ((q - 2) * 2.4);
+					Piece(w, (q % 2) ? "Rock_Medium_1" : "Rock_Medium_2", rp, water - 0.5 - 1.5 * rng.Next(), rng.Next() * 360.0, 1.4 + rng.Next(), true);
+				}
+			}
+			w.Occupy(p.center, 40.0);
+		}
+
+		/// Pont isolé (lieu « Pont … ») : ravine creusée sous le pont (6 m de creux, 30 m de long)
+		/// et pont de pierre à arches, ou de bois (\p wood), le long de \p dir. Ruine : tablier
+		/// coupé au milieu. Effet de bord : w.height, w.scatter, occupation.
+		void BuildBridgeLandmark(World& w, const PoiDef& p, Vec2 dir, bool wood, bool ruin, LandmarkRng& rng)
+		{
+			const Vec2 nrm{ -dir.z, dir.x };
+			const double deck = w.HeightAt(p.center);
+			// Ravine perpendiculaire au pont.
+			for (int j = std::max(0, w.height.IndexZ(p.center.z - 22)); j <= std::min(w.height.height - 1, w.height.IndexZ(p.center.z + 22)); ++j)
+				for (int i = std::max(0, w.height.IndexX(p.center.x - 22)); i <= std::min(w.height.width - 1, w.height.IndexX(p.center.x + 22)); ++i)
+				{
+					const Vec2 q{ w.height.WorldX(i) - p.center.x, w.height.WorldZ(j) - p.center.z };
+					const double along = q.x * dir.x + q.z * dir.z, across = q.x * nrm.x + q.z * nrm.z;
+					if (std::fabs(across) > 16.0) continue;
+					const double t = SmoothStep(7.0, 2.0, std::fabs(along)) * SmoothStep(16.0, 10.0, std::fabs(across));
+					w.height.At(i, j) -= 6.0 * t;
+				}
+			const int along = 8; // 16 m de tablier
+			for (int u = 0; u < along; ++u)
+			{
+				if (ruin && (u == 3 || u == 4)) continue; // tablier effondré au milieu
+				const Vec2 c = p.center + dir * ((u + 0.5 - along * 0.5) * 2.0);
+				const double ground = w.HeightAt(c);
+				for (int v = 0; v < 2; ++v)
+					Piece(w, wood ? "Floor_WoodDark" : "Floor_Brick", c + nrm * ((v - 0.5) * 2.0), deck - ground, YawAlong(dir), 1.0, true);
+				for (int side = -1; side <= 1; side += 2)
+				{
+					if (ruin && rng.Next() < 0.4) continue;
+					const Vec2 e = c + nrm * (side * 2.15);
+					if (wood) Piece(w, "Prop_WoodenFence_Single", e, deck - w.HeightAt(e), YawAlong(dir), 1.0, true);
+					else Piece(w, "Wall_UnevenBrick_Straight", e, deck - w.HeightAt(e), YawAlong(dir), 0.33, true);
+				}
+			}
+			if (!wood)
+				for (int side = -1; side <= 1; side += 2)
+					for (int u = 0; u < 3; ++u)
+					{
+						if (ruin && u == 1) continue;
+						const Vec2 a = p.center + dir * ((u - 1) * 4.6) + nrm * (side * 2.05);
+						Piece(w, "Wall_Arch", a, deck - 6.6 - w.HeightAt(a), YawAlong(dir), 2.2, false);
+					}
+			w.Occupy(p.center, 18.0);
+		}
+	}
+
+	void BuildLandmarks(World& w)
+	{
+		for (const PoiDef& p : w.pois)
+		{
+			if (p.kind != "tour" && p.kind != "chateau" && p.kind != "phare" && p.kind != "cascade" && p.kind != "pont") continue;
+			if (!w.OwnsPoint(p.center)) continue;
+			LandmarkRng rng{ Hash(w.master.seed, HashString(p.id.c_str()), 7131) };
+			const bool ruin = p.state == "ruine";
+			// Orientation : vers la route la plus proche (porte, pont), sinon au hasard.
+			Vec2 toward{ std::cos(rng.Next() * 2.0 * kPi), 0.0 };
+			toward.z = std::sqrt(std::max(0.0, 1.0 - toward.x * toward.x));
+			Vec2 roadDir = toward;
+			double bd = 1e18;
+			for (const Road& r : w.roads)
+				for (size_t k = 0; k + 1 < r.points.size(); k += 3)
+				{
+					const double d = std::hypot(r.points[k].x - p.center.x, r.points[k].z - p.center.z);
+					if (d < bd && d > 1.0)
+					{
+						bd = d;
+						toward = (r.points[k] - p.center) * (1.0 / d);
+						const Vec2 t = r.points[k + 1] - r.points[k];
+						const double tl = std::hypot(t.x, t.z);
+						if (tl > 1e-6) roadDir = t * (1.0 / tl);
+					}
+				}
+			const std::string low = p.name;
+			if (p.kind == "tour")
+			{
+				// Tour Carrée de la Lune Noire : trente étages (BD) ; tours de guet : 3 à 5.
+				const bool carree = low.find("Carr") != std::string::npos;
+				const int levels = carree ? 24 : 3 + static_cast<int>(rng.Next() * 3.0);
+				BuildTower(w, p.center, (carree ? 5.0 : 3.0) * p.scale, levels, !carree, toward, ruin, rng);
+				w.Occupy(p.center, (carree ? 8.0 : 5.0) * p.scale);
+			}
+			else if (p.kind == "phare")
+			{
+				const double top = BuildTower(w, p.center, 3.0 * p.scale, 6, true, toward, ruin, rng, 0.0, true);
+				if (!ruin)
+				{
+					// Feu du phare : lanterne et lumière en tête de tour.
+					Piece(w, "Lantern_Wall", p.center + Vec2{ 3.0 * p.scale, 0.0 }, top - 1.0, 90.0, 1.4, false);
+					PointLightDef L;
+					L.id = p.id + "_feu"; L.position = p.center; L.y = w.HeightAt(p.center) + top + 1.0;
+					L.radiusM = 45.0; L.intensity = 3.0; L.r = 1.0; L.g = 0.75; L.b = 0.35;
+					w.pointLights.push_back(L);
+				}
+				w.Occupy(p.center, 5.0 * p.scale);
+			}
+			else if (p.kind == "chateau")
+			{
+				BuildCastle(w, p.center, p.scale, toward, ruin, rng);
+				w.Occupy(p.center, 40.0 * p.scale);
+			}
+			else if (p.kind == "cascade")
+				BuildCascade(w, p, roadDir, rng);
+			else if (p.kind == "pont")
+			{
+				const bool wood = p.name.find("bois") != std::string::npos || p.name.find("corde") != std::string::npos;
+				BuildBridgeLandmark(w, p, roadDir, wood, ruin, rng);
+			}
+			++w.report.landmarks;
+		}
+	}
+}

@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.131)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.132)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -98,6 +98,7 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.129 | (lot 2 de la mise à jour de la carte) | **carte du monde, lot 2 (eau)** : 8 rivières principales du lore tracées (`river_courses`), arbre d'écoulement et A* de vallée (fin des marches d'escalier), ≈ 190 ruisseaux, ponts de pierre (arches, parapets) et passerelles de bois sur chaque traversée ([LORE_BD §16.55](LORE_BD.md)) | R | rendu des ponts à vérifier en jeu |
 | v1.0.130 | (lot 3 de la mise à jour de la carte) | **carte du monde, lot 3 (relief)** : `height_scale_m` 3 600 m, montagnes de 1 400 à 3 400 m sur le modèle des Pyrénées, crêtes continues, grandes collines, cols sur les routes du lore, neige vers 2 500 m ([LORE_BD §16.56](LORE_BD.md)) | R | vue lointaine et brouillard à juger en jeu |
 | v1.0.131 | (lot 4 de la mise à jour de la carte) | **carte du monde, lot 4 (routes)** : points de passage décalés à ±3 km en pays ouvert, terrain aux préférences bruitées, méandres ±240 m, cols sinueux ; 5 balises reposées ([LORE_BD §16.57](LORE_BD.md)) | R | à juger en jeu |
+| v1.0.132 | (lot 5 de la mise à jour de la carte) | **carte du monde, lot 5 (lieux bâtis)** : genres `tour`, `chateau`, `phare`, `cascade`, `pont` avec formes générées (Landmarks.cpp), état `ruine` et échelle des POI, Château de Garundel, Palais des Maîtres des Dragons bâti ([LORE_BD §16.58](LORE_BD.md)) | C + R | rendu des formes à juger en jeu |
 
 ## 3. Impact sur le jeu et déploiement
 

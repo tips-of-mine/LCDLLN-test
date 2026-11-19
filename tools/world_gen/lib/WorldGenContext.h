@@ -618,6 +618,14 @@ namespace tools::world_gen
 	/// Effet de bord : w.scatter, occupation fine (w.Occupy), w.report.bridges.
 	/// À appeler après ApplyRoads et BuildSettlements (hauteurs définitives), avant la végétation.
 	void BuildBridges(World& w);
+
+	/// Lot carte v1.0.132 — LIEUX BÂTIS : forme générée des POI de genre tour (ronde ; Tour
+	/// Carrée de la Lune Noire : carrée, 24 étages), phare (tour + feu), chateau (enceinte,
+	/// tours d'angle, donjon, logis, cour, douves sèches), cascade (trois vasques en gradins) et
+	/// pont (ravine et pont de pierre ou de bois). État `ruine` du POI : pans manquants, sans
+	/// toit. Effet de bord : w.scatter, w.lakes (vasques), w.height (douves, terrasses, ravine),
+	/// w.pointLights (feu des phares), occupation, w.report.landmarks. Après les agglomérations.
+	void BuildLandmarks(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
 	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
 	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;

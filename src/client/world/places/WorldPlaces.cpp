@@ -310,6 +310,12 @@ namespace engine::client
 		if (kind == "salle") return "Salle souterraine";
 		// Lieux des albums hors série (lore v1.0.59).
 		if (kind == "elevage") return "\xC3\x89levage"; // « Élevage » en UTF-8
+		// Lieux bâtis (lot carte v1.0.132) : forme générée par tools/world_gen (Landmarks.cpp).
+		if (kind == "tour") return "Tour";
+		if (kind == "chateau") return "Ch\xC3\xA2teau"; // « Château » en UTF-8
+		if (kind == "phare") return "Phare";
+		if (kind == "cascade") return "Cascade";
+		if (kind == "pont") return "Pont";
 		return std::string(kind);
 	}
 }

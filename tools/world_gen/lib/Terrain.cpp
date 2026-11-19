@@ -706,14 +706,28 @@ namespace tools::world_gen
 		const int ie = static_cast<int>(e0), in = static_cast<int>(n0);
 		const double wts[4] = { (1 - te) * (1 - tn), te * (1 - tn), (1 - te) * tn, te * tn };
 		const int de[4] = { 0, 1, 0, 1 }, dn[4] = { 0, 0, 1, 1 };
+		// v1.0.130 — reliefs posés à la main (gouffre, crevasse, colline) : leurs abords gardent
+		// le relief historique (profils d'avant les Pyrénées, sans grandes collines ni cols),
+		// sur lequel leurs formes et leurs profondeurs ont été réglées. `calm` = 0 au relief,
+		// 1 au-delà de 2,5 km de son emprise.
+		double calm = 1.0;
+		if (!infernal)
+			for (const ReliefDef& r : m.reliefs)
+				if (r.type == "gouffre" || r.type == "crevasse" || r.type == "colline")
+				{
+					const double rad = std::max({ r.footRadiusM, r.floorRadiusM * 3.0, 1500.0 });
+					calm = std::min(calm, SmoothStep(rad, rad + 2500.0, std::hypot(x - r.center.x, z - r.center.z)));
+				}
 		CodeProfile acc{ 0, 0, 0, 0 };
 		for (int k = 0; k < 4; ++k)
 		{
-			const CodeProfile p = ProfileOf(LoreCode(m, in + dn[k], ie + de[k]), infernal);
-			acc.base += p.base * wts[k];
-			acc.amp += p.amp * wts[k];
-			acc.ridge += p.ridge * wts[k];
-			acc.dune += p.dune * wts[k];
+			const char code = LoreCode(m, in + dn[k], ie + de[k]);
+			const CodeProfile pn = ProfileOf(code, infernal);
+			const CodeProfile po = calm < 1.0 ? ProfileOf(code, true) : pn;
+			acc.base += Lerp(po.base, pn.base, calm) * wts[k];
+			acc.amp += Lerp(po.amp, pn.amp, calm) * wts[k];
+			acc.ridge += Lerp(po.ridge, pn.ridge, calm) * wts[k];
+			acc.dune += pn.dune * wts[k];
 		}
 		double h = acc.base;
 		// Caractère régional (≈ 7 km) : alternance de pays plats et vallonnés à
@@ -747,7 +761,7 @@ namespace tools::world_gen
 			{
 				const double big = SmoothStep(0.06, 0.42, Fbm(x, z, 6200.0, 3, seed + 61));
 				const double where = SmoothStep(0.30, 0.60, Clamp(Fbm(x, z, 16000.0, 2, seed + 62) + 0.5, 0.0, 1.0));
-				h += 380.0 * big * where * lowland * SmoothStep(58.0, 66.0, acc.base);
+				h += 380.0 * big * where * lowland * SmoothStep(58.0, 66.0, acc.base) * calm;
 			}
 		}
 		if (acc.ridge > 0.5)
@@ -758,7 +772,7 @@ namespace tools::world_gen
 			{
 				// v1.0.130 — cols : près d'une route du lore, la montagne s'abaisse (col de
 				// 1 000 à 1 800 m entre des crêtes de 2 000 à 3 000 m) ; les routes passent.
-				const double pass = PassAt(m, x, z);
+				const double pass = PassAt(m, x, z) * calm;
 				h -= 0.30 * std::max(0.0, acc.base - 300.0) * pass;
 				// v1.0.130 — montagnes des Royaumes : grandes crêtes continues (crête de ≈ 9 km,
 				// coordonnées déformées : les chaînes s'allongent au lieu de former des taches)
@@ -767,7 +781,9 @@ namespace tools::world_gen
 				const double wz = z + Fbm(x, z, 14000.0, 2, seed + 64) * 9000.0;
 				const double crest = Ridged(wx, wz * 0.55, 9000.0, 5, seed + 65);
 				const double detail = Ridged(x, z, 2600.0, 4, seed + 66);
-				h += (0.75 * (crest - 0.35) + 0.45 * (detail - 0.35)) * acc.ridge * (1.0 - 0.7 * pass);
+				const double ridgeNew = (0.75 * (crest - 0.35) + 0.45 * (detail - 0.35)) * acc.ridge * (1.0 - 0.7 * pass);
+				const double ridgeOld = calm < 1.0 ? (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge : ridgeNew;
+				h += Lerp(ridgeOld, ridgeNew, calm);
 			}
 		}
 		if (acc.dune > 0.01)

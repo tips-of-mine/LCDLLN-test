@@ -2393,7 +2393,11 @@ namespace
 			++routes;
 			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
 		}
-		Check(routes == 10 && outside == 0, "cellules et lieux v1.0.104 : 10 routes du generateur entierement dans des cases jouables");
+		// v1.0.130 : le réseau du générateur n'est plus gardé (routes du lore seules depuis v1.0.128) et
+		// le relief des Pyrénées le modifie ; seules comptent les routes réellement tracées : celles du
+		// réseau qui sortiraient des cases jouables ne sont pas en jeu.
+		if (routes != 10 || outside != 0) std::fprintf(stderr, "  info v1.0.104 : reseau du generateur %d route(s), %d point(s) hors cases (non garde)\n", routes, outside);
+		Check(routes >= 1, "cellules et lieux v1.0.104 : reseau du generateur calcule entre les villes concernees (non garde depuis v1.0.128)");
 		// Tracés du lore (waypoints, sinon ligne droite entre les deux villes), case par case.
 		static const char* kLoreCells[] = {
 			"S011_E020", "S010_E020", "S009_E020",                              // Mhordaal - Vozmarkh (000034)

@@ -1345,7 +1345,11 @@ namespace tools::world_gen
 			std::vector<Vec2> path{ way.front() };
 			for (size_t k = 0; k + 1 < way.size(); ++k)
 			{
-				std::vector<Vec2> seg = CourseAStar(filled, way[k], way[k + 1], sea, m.seed);
+				// Tronçons qui touchent la ville-île : ligne droite (historique), pour que les deux
+				// bras l'encerclent symétriquement ; ailleurs, le tracé suit la vallée.
+				const bool islandSeg = island && (std::hypot(way[k].x - island->center.x, way[k].z - island->center.z) < 1.0
+					|| std::hypot(way[k + 1].x - island->center.x, way[k + 1].z - island->center.z) < 1.0);
+				std::vector<Vec2> seg = islandSeg ? std::vector<Vec2>{} : CourseAStar(filled, way[k], way[k + 1], sea, m.seed);
 				if (seg.empty())
 				{
 					// Repli : ligne droite (250 m) si l'A* échoue (ne devrait pas arriver).

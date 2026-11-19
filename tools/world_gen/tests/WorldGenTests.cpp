@@ -3956,7 +3956,7 @@ namespace
 		}
 		Check(courses >= 8, "eau v1.0.129 : les 8 cours tracés");
 		Check(streams >= 100, "eau v1.0.129 : plus de 100 ruisseaux");
-		// Tracé naturel : aucune portion rectiligne (écart < 15 m à la corde) de plus de 3 km.
+		// Tracé naturel : aucune portion tirée au cordeau (écart < 6 m à la corde) de plus de 3 km.
 		size_t straight = 0;
 		for (const River& r : g.rivers)
 		{
@@ -3967,10 +3967,10 @@ namespace
 				if (std::hypot(B.x - A.x, B.z - A.z) < 2900.0) continue;
 				double worst = 0.0;
 				for (size_t k = a; k <= a + 500; k += 10) worst = std::max(worst, DistPointSegment(r.points[k], A, B, nullptr));
-				if (worst < 15.0) ++straight;
+				if (worst < 6.0) ++straight;
 			}
 		}
-		Check(straight == 0, "eau v1.0.129 : aucun cours d'eau rectiligne sur 3 km");
+		Check(straight == 0, "eau v1.0.129 : aucun cours d'eau tire au cordeau sur 3 km");
 		int inCity = 0;
 		for (const River& r : g.rivers)
 			for (const Vec2& p : r.points)

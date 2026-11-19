@@ -906,9 +906,19 @@ namespace
 		if (!sys || !mainArm || !arm) return;
 		// Angle balayé autour de la ville par chaque bras : ~+pi d'un côté, ~-pi de
 		// l'autre ; leur différence ~2 pi = la ville est encerclée par l'eau.
-		auto sweep = [&](const River& r) {
+		// v1.0.129 : le lit principal n'est mesuré qu'entre les deux confluents du bras
+		// (ses points les plus proches des extrémités du bras) — en amont et en aval, le
+		// cours tracé à la main peut tourner autour de la ville sans rien dire de l'île.
+		auto nearest = [](const River& r, Vec2 q) {
+			size_t best = 0;
+			double bd = 1e18;
+			for (size_t k = 0; k < r.points.size(); ++k)
+				if (const double d = std::hypot(r.points[k].x - q.x, r.points[k].z - q.z); d < bd) { bd = d; best = k; }
+			return best;
+		};
+		auto sweep = [&](const River& r, size_t from, size_t to) {
 			double s = 0.0;
-			for (size_t k = 1; k < r.points.size(); ++k)
+			for (size_t k = from + 1; k <= to && k < r.points.size(); ++k)
 			{
 				const double a0 = std::atan2(r.points[k - 1].z - sys->center.z, r.points[k - 1].x - sys->center.x);
 				const double a1 = std::atan2(r.points[k].z - sys->center.z, r.points[k].x - sys->center.x);
@@ -919,7 +929,9 @@ namespace
 			}
 			return s;
 		};
-		const double loop = std::fabs(sweep(*mainArm) - sweep(*arm));
+		const size_t m0 = nearest(*mainArm, arm->points.front());
+		const size_t m1 = nearest(*mainArm, arm->points.back());
+		const double loop = std::fabs(sweep(*mainArm, std::min(m0, m1), std::max(m0, m1)) - sweep(*arm, 0, arm->points.size() - 1));
 		Check(std::fabs(loop - 6.283185307179586) < 0.5, "fleuve : Sysigie sur une ile (deux bras qui l'encerclent)");
 		double minD = 1e18;
 		for (const River* r : { mainArm, arm })

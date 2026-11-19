@@ -1446,6 +1446,9 @@ namespace tools::world_gen
 		// d'écoulement jusqu'à la mer, un lac, ou une rivière qu'elle rejoint (confluent exact).
 		// Contourne les villes comme les grands cours ; abandonnée si elle traverse un gouffre
 		// ou si elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
+		// Aucun ruisseau aux Enfers : l'eau n'y coule pas, seuls les fleuves de lave du
+		// master y serpentent (palette v1.0.83 : pas de bleu ni de vert sur la carte).
+		if (!IsInfernalMap(g.master))
 		{
 			const int nx = filled.width, nz = filled.height;
 			// Nœuds occupés par un cours d'eau (index du point de rivière) et zone d'exclusion des sources.

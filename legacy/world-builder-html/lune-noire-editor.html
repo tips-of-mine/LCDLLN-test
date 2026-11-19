@@ -7139,7 +7139,11 @@ function carteOnHover(e) {
   }
   var hit=carteHitPlace(e);
   // v1.0.99 : sinon marqueur d'un calque (quêtes : tracé des étapes), sinon calques de fond de la case.
-  var lh=hit?null:carteHitLayer(e);
+  // v1.0.127 : les marqueurs de calque sont dessinés par-dessus les villes et les lieux ; une ville
+  // posée dans le coin de sa case (Lhynn) recouvre la pastille des quêtes : sous la souris, à
+  // l'intérieur exact du marqueur, c'est le marqueur qui l'emporte.
+  var lh=carteHitLayer(e);
+  if (hit && lh) { var lp=carteEventPoint(e); if (lp && (lp.x-lh.x)*(lp.x-lh.x)+(lp.y-lh.y)*(lp.y-lh.y)<=lh.r*lh.r) hit=null; else lh=null; }
   carteQuestOverlay(lh&&lh.quests?lh.quests:null);
   if (hit) carteShowTip(e, carteTipHTML(hit.kind, hit.rec));
   else if (lh) carteShowTip(e, lh.html);

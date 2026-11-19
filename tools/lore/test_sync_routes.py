@@ -90,7 +90,8 @@ def main():
                 "toutes les routes terrestres recopiees, aucune route maritime")
         vm = routes.get("000120", {})
         verifie(vm.get("type") == "imperial_road" and vm.get("from") == "ville_lhynn" and vm.get("to") == "ville_moork"
-                and len(vm.get("waypoints", [])) == 34, "Via Magna : voie imperiale Lhynn -> Moork, 34 cases")
+                and len(vm.get("waypoints", [])) == 35 and vm["waypoints"][0] == "N001_W011",
+                "Via Magna : voie imperiale Lhynn -> Moork, 35 cases (depart de N001_W011 depuis v1.0.127)")
         verifie(routes.get("000155", {}).get("from") == "" and routes["000155"]["waypoints"][0] == "S007_E006",
                 "embranchement 000155 : depart en jonction (vide) sur S007_E006")
         verifie(routes.get("000134", {}).get("to") == "poi_grotte_contrebandiers", "lieu du lore -> POI du master")

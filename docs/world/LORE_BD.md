@@ -5107,7 +5107,7 @@ suivants : relief, routes). Total inchangé : 1 291 avec les corridors, 1 337 av
 Skhaldrach, Vharholdt – Faernilh, Orhendal – Iustarn) ; elles changeaient dès qu'une ville changeait de taille (la Borne des
 Monts de Moork perdait sa route). Elles deviennent des **routes du lore** (**000242 à 000249**, tracé de cases inchangé) et
 **`connect_start_cities`** passe à **false** : les cellules jouables (1 291) et les routes ne dépendent plus du réseau du
-générateur (`AddStartCorridors` ne fait plus rien sans ce drapeau). La **Borne des Monts de Moork** est posée au bord de la
+générateur (`AddStartCorridors` ne fait plus rien sans ce drapeau). Les trajets des bateaux partent des nouveaux pontons : **49** cases de mer (46 avant), **1 340** cellules jouables. La **Borne des Monts de Moork** est posée au bord de la
 route 000242 (position −470, 4300 m). Haevrin (N011_W004, tout en marais) garde son site automatique (plateau relevé).
 
 **Outillage** : option **`--preview-map <fichier.png>`** du générateur (`--preview-size`, défaut 4096) : couche macro

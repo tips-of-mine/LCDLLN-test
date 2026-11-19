@@ -2770,8 +2770,10 @@ namespace
 		bool hadRoad = false, hasRoad = false;
 		for (const Road& r : g.generatorRoads) for (const Vec2& p : r.points) hadRoad = hadRoad || cellOf(p) == "N019_W012";
 		for (const Road& r : g.roads) for (const Vec2& p : r.points) hasRoad = hasRoad || cellOf(p) == "N019_W012";
-		Check(generator > 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
-			"routes du lore v1.0.105 : routes du generateur gardees = corridors de depart ; case sans route du lore sans route parasite");
+		// v1.0.128 : connect_start_cities faux, les routes des corridors sont devenues des routes
+		// du lore (000242-000249) : plus aucune route du générateur n'est gardée.
+		Check(generator == 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
+			"routes du lore v1.0.105 : plus de route du generateur depuis v1.0.128 (corridors au lore) ; case sans route du lore sans route parasite");
 		// 5) Sentiers et voies : types respectés.
 		bool types = true;
 		for (const LoreRoadDef& d : g.master.loreRoads)
@@ -3371,8 +3373,8 @@ namespace
 			villagesSeulement += m.graveyardVillageOnlyCells.count({ n, e });
 		}
 		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1291u && avecCorridors == 1291u
-				&& playable.size() == 1337u && playable.count("S006_E004") && listed.count("S006_E004"),
-			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors — toutes listees depuis v1.0.128 —, 1337 avec les trajets maritimes), Heusgly comprise");
+				&& playable.size() == 1340u && playable.count("S006_E004") && listed.count("S006_E004"),
+			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors — toutes listees depuis v1.0.128 —, 1340 avec les trajets maritimes depuis les ports de v1.0.128), Heusgly comprise");
 		Check(lieux == 529u && horsLot == 0u && villagesSeulement == 529u && villagesAvantMer == 794u,
 			"cellules restantes v1.0.126 : 529 lieux [GD], un par case vide du lot, cases villages seulement (794)");
 		WorldMaster enfers;
@@ -3439,9 +3441,10 @@ namespace
 		size_t inGen = 0;
 		for (const SeaLineDef& l : m.seaLines)
 			for (const SeaLineStopDef& st : l.stops) inGen += gen.count(st.cell);
-		Check(before == 1291u && added == 46u && ids.size() == 1337u && g.master.graveyardVillageOnlyCells.size() == vo + 46u
-				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W007"),
-			"lignes maritimes v1.0.125 : 46 cellules de mer ajoutees (1337 jouables depuis v1.0.126, villages seulement), les 11 escales y sont");
+		// v1.0.128 : ports au bord de la mer (Ostrevan en N012_W008, Ekvhitorn, Zaltheim…) : 49 cases.
+		Check(before == 1291u && added == 49u && ids.size() == 1340u && g.master.graveyardVillageOnlyCells.size() == vo + 49u
+				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W008"),
+			"lignes maritimes v1.0.125 : 49 cellules de mer ajoutees (1340 jouables depuis v1.0.128, villages seulement), les 11 escales y sont");
 		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1125";
 		std::error_code ec;
 		fs::remove_all(tmp, ec);

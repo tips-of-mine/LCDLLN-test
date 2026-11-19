@@ -44,6 +44,7 @@ namespace tools::world_gen
 			dst.scatterInstances += src.scatterInstances;
 			dst.scatterMeshes = std::max(dst.scatterMeshes, src.scatterMeshes);
 			dst.buildings += src.buildings;
+			dst.bridges += src.bridges; // v1.0.129
 			dst.spawners += src.spawners;
 			dst.ambientNpcs += src.ambientNpcs;
 			dst.creatures += src.creatures;
@@ -330,6 +331,7 @@ namespace tools::world_gen
 			timed("cellule : import", [&] { imported = ImportLegacyContent(*w, cerr); }); // occupe la place des objets historiques
 			if (!imported) return cerr.empty() ? std::string("import du contenu historique impossible") : cerr;
 			timed("cellule : agglomerations", [&] { BuildSettlements(*w); }); // rues, bâtiments, remparts, mobilier, graphe PNJ
+			timed("cellule : ponts", [&] { BuildBridges(*w); });             // v1.0.129 : ponts de pierre et de bois sur les cours d'eau
 			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
 			timed("cellule : vegetation", [&] { BuildVegetation(*w); });      // décor naturel (respecte l'occupation)

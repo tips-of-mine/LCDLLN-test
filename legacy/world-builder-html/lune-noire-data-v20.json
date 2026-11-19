@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.128",
+    "version": "1.0.129",
     "notes": [
+      "v1.0.129 : [DÉCISION] Carte du monde, lot 2 (eau) : 8 rivières principales tracées en jeu, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois.",
       "v1.0.128 : [DÉCISION] Carte du monde, lot 1 : fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine et relié ; Hazol et Askhrof reliés ; Tour Carrée = Grande Arche ; Palais des Maîtres des Dragons fusionné ; tailles du lore au master ; 10 villes portuaires au bord de la mer.",
       "v1.0.127 : [DÉCISION] Lhynn (N001_W011) et Altenberg (N005_W013) déplacées au bord de la mer, positions posées ; lieux, comptoir et routes suivent.",
       "v1.0.126 : [DÉCISION] Cellules restantes : 542 cases de terre ouvertes au jeu, 529 lieux [GD] ; cases sans cimetière admises (666 gardés).",
@@ -208733,7 +208734,7 @@
       "name": "cell_N011_W004",
       "region_id": "terres_des_gigantomorphes",
       "province": "marais_maudits_t11",
-      "terrain_type": "swamp",
+      "terrain_type": "swamp_with_river",
       "has_lake": false,
       "lake_count": 0,
       "has_river": true,
@@ -208751,7 +208752,8 @@
       "notes": [
         "[INFÉRÉ] (v1.0.59) Marais maudits de Thenhart (marais_maudits_t11), cellule du bestiaire v1.0.58 (Dvorak) ; ancienne région terres_des_gigantomorphes remplacée.",
         "[DÉCISION] (v1.0.74) Port de Haevrin (ponton), ligne maritime du Nord ; LORE_BD §16.3.",
-        "[DÉCISION] (v1.0.122) Case ouverte au jeu (lot 2 (routes longues, le reste), route 000077 Northind – Haevrin) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48."
+        "[DÉCISION] (v1.0.122) Case ouverte au jeu (lot 2 (routes longues, le reste), route 000077 Northind – Haevrin) ; cimetière seulement si un village du lore en a un ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48.",
+        "[DÉCISION] (v1.0.129) Marais avec rivière (embouchure de la Rivière de la cascade) : grille du jeu `&`. LORE_BD §16.55."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -212935,7 +212937,7 @@
       "name": "cell_N007_W005",
       "region_id": "terres_de_lempereur",
       "province": "region_northind",
-      "terrain_type": "forest",
+      "terrain_type": "forest_with_river",
       "has_lake": false,
       "lake_count": 0,
       "has_river": true,
@@ -212949,7 +212951,8 @@
       "creature_ids": [],
       "visual_elements": [],
       "notes": [
-        "[GD] (v1.0.70) Région de départ de Syllaërin : case de Northind, aucun lieu ni aucune faune ajoutés (LORE_BD §15.7)."
+        "[GD] (v1.0.70) Région de départ de Syllaërin : case de Northind, aucun lieu ni aucune faune ajoutés (LORE_BD §15.7).",
+        "[DÉCISION] (v1.0.129) Forêt avec rivière (la Rivière de la cascade la traverse, has_river) : grille du jeu `R`. LORE_BD §16.55."
       ],
       "coord_x": null,
       "coord_y": null,
@@ -247551,6 +247554,13 @@
           "nom": "Routes des corridors de départ au lore",
           "decision": "Décision du propriétaire (19/11/2026, mise à jour de la carte) : les 8 routes que le générateur gardait pour relier les villes de départ (Moork – Ghrunke Dash, Moork – Ghrimfeth, Syllaërin – Magistrya…) deviennent des routes du lore (000242 à 000249), tracé inchangé. LORE_BD §16.54. connect_start_cities passe à false.",
           "version": "1.0.128"
+        },
+        {
+          "collection": "hydrography",
+          "id": "eau_v1129",
+          "nom": "Rivières principales, ruisseaux et ponts",
+          "decision": "Décision du propriétaire (19/11/2026) : les 8 rivières principales du lore sont tracées en jeu en suivant les vallées ; des rivières plus petites (ruisseaux) remplissent le monde ; ponts de pierre sur les routes et de bois sur les sentiers. LORE_BD §16.55.",
+          "version": "1.0.129"
         }
       ]
     },
@@ -356519,7 +356529,8 @@
           "N007_E007"
         ],
         "notes": [
-          "Relie le grand lac de l'ouest au grand lac de l'est, en passant par N008_E007 (colline de Feyhin Lokcthat)."
+          "Relie le grand lac de l'ouest au grand lac de l'est, en passant par N008_E007 (colline de Feyhin Lokcthat).",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_liaison_lacs` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356532,7 +356543,9 @@
           "N006_E007",
           "N007_E007"
         ],
-        "notes": []
+        "notes": [
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_lac_sud` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
+        ]
       },
       {
         "id": "riv_ashwick",
@@ -356558,7 +356571,8 @@
           }
         ],
         "notes": [
-          "Se termine dans la mer (N011_E005)."
+          "Se termine dans la mer (N011_E005).",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_ashwick` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356579,7 +356593,8 @@
         "notes": [
           "Se jette dans la mer (N008_W015).",
           "[DÉCISION] (v1.0.72) Naît au pied de la colline de Vaerdhun ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
-          "Monde jouable : river_courses.riviere_verdansur_sud de world_master.json (tools/world_gen)."
+          "Monde jouable : river_courses.riviere_verdansur_sud de world_master.json (tools/world_gen).",
+          "[DÉCISION] (v1.0.129) Tracé en jeu revu : il suit les vallées entre les cases (plus de lignes droites ni d'angles droits). LORE_BD §16.55."
         ]
       },
       {
@@ -356602,7 +356617,8 @@
           "Passe par la cellule de Treuvhal (N011_W014).",
           "Se jette dans la mer (N012_W014).",
           "[DÉCISION] (v1.0.72) Naît au pied de la colline de Vaerdhun ; décision du propriétaire du 10/11/2026 (LORE_BD §16).",
-          "Monde jouable : river_courses.riviere_verdansur_nord de world_master.json (tools/world_gen)."
+          "Monde jouable : river_courses.riviere_verdansur_nord de world_master.json (tools/world_gen).",
+          "[DÉCISION] (v1.0.129) Tracé en jeu revu : il suit les vallées entre les cases (plus de lignes droites ni d'angles droits). LORE_BD §16.55."
         ]
       },
       {
@@ -356641,7 +356657,8 @@
         ],
         "notes": [
           "Se divise en N008_W004 : un bras continue par N009_W004, N010_W004 (marais) et Haevrin (N011_W004) jusqu'à la mer (N012_W004) ; l'autre bras part vers N009_W003 (riv_cascade_bras_est).",
-          "Passe par la cellule de Haevrin (N011_W004)."
+          "Passe par la cellule de Haevrin (N011_W004).",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_cascade_northind` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356655,7 +356672,8 @@
           "N010_W002"
         ],
         "notes": [
-          "Se sépare du cours principal en N008_W004 ; se jette dans la mer en N010_W002."
+          "Se sépare du cours principal en N008_W004 ; se jette dans la mer en N010_W002.",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_cascade_bras_est` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356673,7 +356691,8 @@
           "N010_W002"
         ],
         "notes": [
-          "Se jette dans la mer en N010_W002."
+          "Se jette dans la mer en N010_W002.",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_source_n008_w002` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356693,7 +356712,8 @@
           "N006_E023"
         ],
         "notes": [
-          "[INFÉRÉ] v1.0.52 : descend des collines de Hilvakh, traverse Rhivkhar et se jette dans la mer à Ryvaldh."
+          "[INFÉRÉ] v1.0.52 : descend des collines de Hilvakh, traverse Rhivkhar et se jette dans la mer à Ryvaldh.",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_rivercross` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356708,7 +356728,8 @@
           "S016_E006"
         ],
         "notes": [
-          "[INFÉRÉ] v1.0.52 : descend du pied de la chaîne du désert, traverse Suthvarn et se jette dans la mer au sud."
+          "[INFÉRÉ] v1.0.52 : descend du pied de la chaîne du désert, traverse Suthvarn et se jette dans la mer au sud.",
+          "[DÉCISION] (v1.0.129) Une des 8 rivières principales : tracée en jeu (river_courses `cours_southport` du master), en suivant les vallées entre les cases du lore ; nom provisoire. LORE_BD §16.55."
         ]
       },
       {
@@ -356745,7 +356766,8 @@
           "[INFÉRÉ] (v1.0.55) Tracé : source en N006_W010, vers le nord par N007_W010 (confluent de la rivière de N007_W011), N008_W011, l'île de Sysigie (N009_W011), N010_W011, N011_W011 ; se jette dans la mer en N012_W011. Large d'environ 50 m à la source et 80 m à l'embouchure ; bras de l'île d'environ 40 m.",
           "Monde jouable : river_courses.fleuve_sysigie de world_master.json (tools/world_gen).",
           "[DÉCISION] (v1.0.56) Le fleuve traverse le lac de Syzygie, au milieu duquel se trouve l'île de la cité (Q5) ; la grille reste celle de la v1.0.55.",
-          "[DÉCISION] (v1.0.78) Le nom « lac / fleuve de Syzygie » est conservé : le fleuve s'appelle « Fleuve de Syzygie » et le lac qu'il traverse « lac de Syzygie » (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7)."
+          "[DÉCISION] (v1.0.78) Le nom « lac / fleuve de Syzygie » est conservé : le fleuve s'appelle « Fleuve de Syzygie » et le lac qu'il traverse « lac de Syzygie » (décision du propriétaire du 11/11/2026 ; LORE_BD §16.7).",
+          "[DÉCISION] (v1.0.129) Tracé en jeu revu : il suit les vallées entre les cases (plus de lignes droites ni d'angles droits). LORE_BD §16.55."
         ]
       }
     ],
@@ -356765,7 +356787,9 @@
       "meandres": true,
       "rapides": true,
       "ponts_routes": "pierre_taillee",
-      "ponts_secondaires": "bois"
+      "ponts_secondaires": "bois",
+      "ruisseaux": "[GD] v1.0.129 : ruisseaux générés (≈ 190 sur le continent), nés dans les terres (collines, forêts, montagnes) et qui rejoignent une rivière, un lac ou la mer en suivant les vallées ; jamais dans une ville ni sur un lieu.",
+      "ponts_generes": "[GD] v1.0.129 : pont de pierre (tablier de dalles, parapets, arches jusqu'à l'eau) à chaque traversée d'un cours d'eau par une route ; passerelle de bois (tablier de planches, garde-corps) pour un sentier ou un chemin vers un lieu."
     }
   },
   "familiar_families": [

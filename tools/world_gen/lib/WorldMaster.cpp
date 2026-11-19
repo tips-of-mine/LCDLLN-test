@@ -335,6 +335,8 @@ namespace tools::world_gen
 				d.cells = GetStrArray(v, "cells");
 				d.widthM = GetNum(v, "width_m", 32.0);
 				d.islandCity = GetStr(v, "island_city");
+				d.toSea = GetBool(v, "to_sea", true); // v1.0.129
+				d.loreId = GetStr(v, "lore_id");
 				if (d.id.empty() || !courseIds.insert(d.id).second || d.cells.size() < 2 || d.widthM < 6.0 || d.widthM > 200.0)
 				{
 					err = "master: river_courses invalide '" + d.id + "'"; return false;
@@ -346,10 +348,15 @@ namespace tools::world_gen
 					const int r = s.northN - n, c = e - s.westE;
 					if (r < 0 || c < 0 || r >= static_cast<int>(out.gridRows.size()) || c >= s.gridCols) { err = "master: river_courses '" + d.id + "' : " + cell + " hors grille"; return false; }
 					const char code = out.gridRows[static_cast<size_t>(r)][static_cast<size_t>(c)];
-					// Toutes les cases ont un code « rivière », sauf la dernière qui peut être
-					// l'embouchure (côte, plage ou mer).
-					const bool mouth = &cell == &d.cells.back() && (code == ',' || code == '_' || code == '-' || code == ' ');
-					if (code != 'r' && code != 'R' && code != '&' && !mouth) { err = "master: river_courses '" + d.id + "' : " + cell + " sans code riviere dans la grille"; return false; }
+					// Toutes les cases ont un code « rivière » ou « lac » (v1.0.129 : un cours peut
+					// relier deux lacs), sauf la dernière qui peut être l'embouchure (côte, plage ou
+					// mer) et la première, source, qui peut être n'importe quelle terre (cascade en
+					// montagne, v1.0.129).
+					const bool last = &cell == &d.cells.back(), first = &cell == &d.cells.front();
+					const bool mouth = last && (code == ',' || code == '_' || code == '-' || code == ' ');
+					const bool water = code == 'r' || code == 'R' || code == '&' || code == 'L' || code == 'l' || code == 'p';
+					const bool source = first && code != ' ' && code != '-' && code != ',' && code != '_';
+					if (!water && !mouth && !source) { err = "master: river_courses '" + d.id + "' : " + cell + " sans code riviere dans la grille"; return false; }
 					if (!d.cellNE.empty() && (std::abs(n - d.cellNE.back().first) > 1 || std::abs(e - d.cellNE.back().second) > 1 || (n == d.cellNE.back().first && e == d.cellNE.back().second)))
 					{
 						err = "master: river_courses '" + d.id + "' : " + cell + " non voisine de la case precedente"; return false;

@@ -284,6 +284,10 @@ namespace tools::world_gen
 		std::vector<std::pair<int, int>> cellNE; ///< (n, e) résolus
 		double widthM = 32.0;             ///< largeur à l'embouchure (m), 40 % de moins à la source
 		std::string islandCity;           ///< ville entourée par deux bras (vide = aucune)
+		/// Lot carte v1.0.129 — `to_sea` (défaut true) : après la dernière case, le cours
+		/// descend jusqu'à la mer ; false = il s'arrête dans la dernière case (lac d'arrivée).
+		bool toSea = true;
+		std::string loreId;               ///< identifiant de la rivière du lore (hydrography.rivers), informatif
 	};
 
 	/// Route du lore (section `lore_roads`, v1.0.105), recopiée de la collection `routes`
@@ -408,6 +412,7 @@ namespace tools::world_gen
 		uint64_t proceduralPlaces = 0;
 		uint64_t seaPocketSamples = 0; ///< EAU.5 : échantillons de cuvettes sous la mer comblés
 		uint64_t portals = 0;          ///< portails reliés à une autre carte (portals.json)
+		uint64_t bridges = 0;          ///< lot carte v1.0.129 : ponts posés (routes × cours d'eau)
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

@@ -452,11 +452,11 @@
       "                           -,tTTT.TtM..tttTTTt,-  ",
       "     --------------       -,tTTTTTTTtM%...TTTt_-  ",
       "   ---,,,,,,,,--,,-   -oo--,tTTTTTTTTtM...tTt.,-  ",
-      "   -,,.r..r..t,R%%--------,,tTTTTTTTTt.M......,-  ",
+      "   -,,.r..r..t,R%&--------,,tTTTTTTTTt.M......,-  ",
       "   -,.rr..r.tTRR%&%,,,,___rtTTTTTTTTt.p.r.....,-  ",
       "   -,.r...r.tTTTTRRRt....tRTTTTTTTTt....r....._-  ",
       "   -,,,,..r.tTTTTRTRTt..tTTRRTTTTtt.tttrt....,-   ",
-      "   -----..rRTTTTTRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
+      "   -----..rRTTTTRRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
       "       -,..RTTTTRTTTTt..tTTTRTTt....tTTTt.rrr,-   ",
       "       -,...tTTTRTTtt....tTTTLTt....tTTTt.....,-  ",
       "       -__...tTTR~~~......tttttt....ttttt.....,-  ",
@@ -10487,7 +10487,7 @@
     "spawners": "zones/feyhin/spawners.json",
     "quest_poi": "quests/quest_poi_feyhin.json"
   },
-  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs.",
+  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs. v1.0.129 : les 8 rivieres principales du lore y sont (cours_*, lore_id), to_sea=false pour un cours qui finit dans un lac ; le trace suit le terrain entre les cases (A* de vallee), les ancres intermediaires sont decalees de 1,8 km au plus ; ruisseaux generes en plus (Terrain.cpp).",
   "river_courses": [
     {
       "id": "fleuve_sysigie",
@@ -10510,6 +10510,72 @@
       "cells": ["N010_W015", "N010_W014", "N011_W014", "N012_W014"],
       "width_m": 30,
       "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun, vers l'est puis le nord, contourne Treuvhal (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
+    },
+    {
+      "id": "cours_liaison_lacs",
+      "name": "Rivière des deux lacs",
+      "lore_id": "riv_liaison_lacs",
+      "cells": ["N007_E006", "N008_E007", "N007_E007"],
+      "width_m": 24,
+      "to_sea": false,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_lac_sud",
+      "name": "Rivière du lac du sud",
+      "lore_id": "riv_lac_sud",
+      "cells": ["N005_E008", "N006_E007", "N007_E007"],
+      "width_m": 22,
+      "to_sea": false,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_ashwick",
+      "name": "Rivière d'Askhvir",
+      "lore_id": "riv_ashwick",
+      "cells": ["N007_E005", "N008_E006", "N009_E005", "N010_E005", "N011_E005"],
+      "width_m": 40,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_cascade_northind",
+      "name": "Rivière de la cascade",
+      "lore_id": "riv_cascade_northind",
+      "cells": ["N003_W005", "N004_W005", "N005_W005", "N006_W005", "N007_W005", "N007_W004", "N008_W004", "N009_W004", "N010_W004", "N011_W004", "N012_W004"],
+      "width_m": 38,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_cascade_bras_est",
+      "name": "Rivière de la cascade (bras est)",
+      "lore_id": "riv_cascade_bras_est",
+      "cells": ["N008_W004", "N009_W003", "N010_W002"],
+      "width_m": 22,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_source_n008_w002",
+      "name": "Rivière de la source de N008_W002",
+      "lore_id": "riv_source_n008_w002",
+      "cells": ["N008_W002", "N009_W002", "N010_W002"],
+      "width_m": 20,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_rivercross",
+      "name": "Rivière de Rhivkhar",
+      "lore_id": "riv_rivercross",
+      "cells": ["N010_E019", "N009_E019", "N008_E018", "N007_E019", "N007_E020", "N007_E021", "N006_E021", "N006_E022", "N006_E023"],
+      "width_m": 40,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_southport",
+      "name": "Rivière de Suthvarn",
+      "lore_id": "riv_southport",
+      "cells": ["S013_E006", "S014_E006", "S015_E006", "S016_E006"],
+      "width_m": 34,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
     }
   ],
   "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36). falaise (v1.0.120) : cote en falaise de craie sur les cases 'cells' (sans ville) : a beach_m de la mer (mer reliee au large), la terre monte de height_m (+/- 15 %) sur wall_m, puis plateau ; plage au pied ; extinction sur fade_m hors des cases ; paroi blanche dans le splat et sur la carte du monde.",

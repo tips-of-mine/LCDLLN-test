@@ -78,6 +78,7 @@ int main(int argc, char** argv)
 	std::printf("  respawns        : %llu, PNJ statiques : %llu\n",
 		static_cast<unsigned long long>(rep.respawnPoints), static_cast<unsigned long long>(rep.interactables));
 	std::printf("  portails        : %llu (relies a une autre carte)\n", static_cast<unsigned long long>(rep.portals));
+	std::printf("  ponts           : %llu (routes x cours d'eau, v1.0.129)\n", static_cast<unsigned long long>(rep.bridges));
 	for (const std::string& f : rep.writtenFiles) std::printf("  ecrit : %s\n", f.c_str());
 	for (const std::string& wmsg : rep.warnings) std::printf("  [avertissement] %s\n", wmsg.c_str());
 	return 0;

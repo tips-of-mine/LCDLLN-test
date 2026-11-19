@@ -607,6 +607,17 @@ namespace tools::world_gen
 	void CarveWater(World& w);
 	/// Routes globales découpées + chemins locaux, aplanissement. Roads.cpp
 	void ApplyRoads(World& w);
+
+	/// Lot carte v1.0.129 — PONTS : à chaque traversée d'un cours d'eau par une route de la
+	/// cellule, pose un pont en décor (scatter.bin) au-dessus du lit laissé ouvert par
+	/// FlattenRoads : tablier de dalles 2 m (Floor_Brick pour une route, Floor_WoodDark pour un
+	/// sentier : dessus marchable via collision/building_pieces.json), parapets de pierre
+	/// (Wall_UnevenBrick_Straight réduit) ou garde-corps de bois (Prop_WoodenFence_Single), et
+	/// arches de pierre sous le tablier (Wall_Arch) jusqu'à l'eau pour un pont de route.
+	/// Le tablier suit le profil en long de la route (au-dessus de l'eau, ComputeProfile).
+	/// Effet de bord : w.scatter, occupation fine (w.Occupy), w.report.bridges.
+	/// À appeler après ApplyRoads et BuildSettlements (hauteurs définitives), avant la végétation.
+	void BuildBridges(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
 	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
 	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;

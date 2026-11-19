@@ -20,6 +20,7 @@
 #include "Random.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <cmath>
 #include <limits>
 #include <queue>
@@ -1056,6 +1057,112 @@ namespace tools::world_gen
 			}
 			return f;
 		}
+
+		/// Lot carte v1.0.129 — coût (m pondérés) pour qu'un cours d'eau passe du nœud \p a au
+		/// nœud voisin \p b de la grille grossière, dans le SENS DU COURANT (a amont, b aval) :
+		/// longueur × bruit de vallée (0,45 à 1,55 : les cours serpentent au lieu de suivre les
+		/// diagonales de la grille) × préférence pour les terres basses, plus une forte pénalité
+		/// si l'eau devrait remonter (b plus haut que a sur la grille remplie).
+		double FlowStepCost(const Grid<double>& f, int ai, int aj, int bi, int bj, double sea, uint64_t seed)
+		{
+			const double len = f.step * ((ai != bi && aj != bj) ? 1.41421356 : 1.0);
+			const double x = f.WorldX(bi), z = f.WorldZ(bj);
+			const double nz = Clamp(0.5 + 1.6 * Fbm(x, z, 2600.0, 3, seed + 931), 0.0, 1.0);
+			const double low = 1.0 + std::max(0.0, f.At(bi, bj) - sea) / 350.0;
+			return len * (0.45 + 1.1 * nz) * low + 300.0 * std::max(0.0, f.At(bi, bj) - f.At(ai, aj));
+		}
+
+		/// Lot carte v1.0.129 — arbre d'écoulement du continent : pour chaque nœud de la grille
+		/// remplie, le nœud voisin VERS LEQUEL l'eau s'écoule (-1 = mer ou bord). Dijkstra depuis
+		/// la mer et les bords avec FlowStepCost : les chemins vers la mer suivent les vallées et
+		/// serpentent sur les plats (l'ancienne descente de plus grande pente traçait des marches
+		/// d'escalier à 45° et 90° sur les cuvettes remplies). Déterministe.
+		std::vector<int32_t> FlowTree(const Grid<double>& f, double sea, uint64_t seed)
+		{
+			const int nx = f.width, nz = f.height;
+			std::vector<int32_t> down(static_cast<size_t>(nx) * nz, -2);
+			std::vector<double> cost(static_cast<size_t>(nx) * nz, 1e300);
+			using Item = std::pair<double, int32_t>;
+			std::priority_queue<Item, std::vector<Item>, std::greater<Item>> pq;
+			for (int j = 0; j < nz; ++j)
+				for (int i = 0; i < nx; ++i)
+					if (i == 0 || j == 0 || i == nx - 1 || j == nz - 1 || f.At(i, j) < sea - 0.5)
+					{
+						const int32_t q = j * nx + i;
+						cost[static_cast<size_t>(q)] = 0.0; down[static_cast<size_t>(q)] = -1; pq.push({ 0.0, q });
+					}
+			std::vector<uint8_t> done(static_cast<size_t>(nx) * nz, 0);
+			while (!pq.empty())
+			{
+				const auto [c, q] = pq.top(); pq.pop();
+				if (done[static_cast<size_t>(q)]) continue;
+				done[static_cast<size_t>(q)] = 1;
+				const int i = q % nx, j = q / nx;
+				for (int dj = -1; dj <= 1; ++dj)
+					for (int di = -1; di <= 1; ++di)
+					{
+						const int ni = i + di, nj = j + dj;
+						if ((!di && !dj) || !f.InBounds(ni, nj)) continue;
+						const int32_t nq = nj * nx + ni;
+						if (done[static_cast<size_t>(nq)]) continue;
+						// L'eau va de (ni, nj) vers (i, j) : amont = voisin, aval = nœud courant.
+						const double nc = c + FlowStepCost(f, ni, nj, i, j, sea, seed);
+						if (nc < cost[static_cast<size_t>(nq)])
+						{
+							cost[static_cast<size_t>(nq)] = nc; down[static_cast<size_t>(nq)] = q; pq.push({ nc, nq });
+						}
+					}
+			}
+			return down;
+		}
+
+		/// Lot carte v1.0.129 — chemin d'un cours d'eau entre deux points (sens du courant),
+		/// A* 8-connexe sur la grille remplie avec FlowStepCost, limité à la boîte des deux
+		/// points élargie de 6 km. Renvoie les centres de nœuds (sans le premier), ou vide.
+		std::vector<Vec2> CourseAStar(const Grid<double>& f, Vec2 a, Vec2 b, double sea, uint64_t seed)
+		{
+			const double margin = 6000.0;
+			const int i0 = std::max(0, f.IndexX(std::min(a.x, b.x) - margin)), i1 = std::min(f.width - 1, f.IndexX(std::max(a.x, b.x) + margin));
+			const int j0 = std::max(0, f.IndexZ(std::min(a.z, b.z) - margin)), j1 = std::min(f.height - 1, f.IndexZ(std::max(a.z, b.z) + margin));
+			const int w = i1 - i0 + 1, h = j1 - j0 + 1;
+			if (w <= 1 || h <= 1) return {};
+			const int si = Clamp(f.IndexX(a.x), i0, i1), sj = Clamp(f.IndexZ(a.z), j0, j1);
+			const int ti = Clamp(f.IndexX(b.x), i0, i1), tj = Clamp(f.IndexZ(b.z), j0, j1);
+			std::vector<double> gc(static_cast<size_t>(w) * h, 1e300);
+			std::vector<int32_t> from(static_cast<size_t>(w) * h, -1);
+			std::vector<uint8_t> done(static_cast<size_t>(w) * h, 0);
+			using Item = std::pair<double, int32_t>;
+			std::priority_queue<Item, std::vector<Item>, std::greater<Item>> pq;
+			auto L = [&](int i, int j) { return (j - j0) * w + (i - i0); };
+			auto heur = [&](int i, int j) { return std::hypot(i - ti, j - tj) * f.step * 0.45; };
+			gc[static_cast<size_t>(L(si, sj))] = 0.0;
+			pq.push({ heur(si, sj), L(si, sj) });
+			bool found = false;
+			while (!pq.empty())
+			{
+				const int32_t q = pq.top().second; pq.pop();
+				if (done[static_cast<size_t>(q)]) continue;
+				done[static_cast<size_t>(q)] = 1;
+				const int i = q % w + i0, j = q / w + j0;
+				if (i == ti && j == tj) { found = true; break; }
+				for (int dj = -1; dj <= 1; ++dj)
+					for (int di = -1; di <= 1; ++di)
+					{
+						const int ni = i + di, nj = j + dj;
+						if ((!di && !dj) || ni < i0 || nj < j0 || ni > i1 || nj > j1) continue;
+						const int32_t nq = L(ni, nj);
+						if (done[static_cast<size_t>(nq)]) continue;
+						const double nc = gc[static_cast<size_t>(q)] + FlowStepCost(f, i, j, ni, nj, sea, seed);
+						if (nc < gc[static_cast<size_t>(nq)]) { gc[static_cast<size_t>(nq)] = nc; from[static_cast<size_t>(nq)] = q; pq.push({ nc + heur(ni, nj), nq }); }
+					}
+			}
+			if (!found) return {};
+			std::vector<Vec2> out;
+			for (int32_t q = L(ti, tj); q >= 0 && q != L(si, sj); q = from[static_cast<size_t>(q)])
+				out.push_back({ f.WorldX(q % w + i0), f.WorldZ(q / w + j0) });
+			std::reverse(out.begin(), out.end());
+			return out;
+		}
 	}
 
 	void BuildMacroRivers(GlobalWorld& g)
@@ -1103,29 +1210,17 @@ namespace tools::world_gen
 
 		// Descente de plus grande pente sur la grille remplie, depuis le nœud (ci, cj),
 		// jusqu'à la mer (ou le bord) ; les points sont ajoutés à `path`.
+		// Lot carte v1.0.129 : l'eau suit l'arbre d'écoulement (FlowTree) depuis le nœud
+		// (ci, cj) jusqu'à la mer (ou le bord) ; les points sont ajoutés à `path`.
+		const std::vector<int32_t> flowDown = FlowTree(filled, sea, m.seed);
 		auto descend = [&](int ci, int cj, std::vector<Vec2>& path) {
-			std::vector<uint8_t> visited(filled.data.size(), 0);
-			for (int stepIdx = 0; stepIdx < 60000; ++stepIdx)
+			int32_t q = cj * filled.width + ci;
+			for (int stepIdx = 0; stepIdx < 60000 && q >= 0; ++stepIdx)
 			{
-				path.push_back({ filled.WorldX(ci), filled.WorldZ(cj) });
-				visited[static_cast<size_t>(cj) * filled.width + ci] = 1;
-				if (filled.At(ci, cj) < sea - 0.5) break;
-				int bi = -1, bj = -1;
-				double bh = 1e18;
-				for (int dj = -1; dj <= 1; ++dj)
-					for (int di = -1; di <= 1; ++di)
-					{
-						const int ni = ci + di, nj = cj + dj;
-						if ((!di && !dj) || !filled.InBounds(ni, nj) || visited[static_cast<size_t>(nj) * filled.width + ni]) continue;
-						const double diag = (di && dj) ? 1.41421356 : 1.0;
-						// Petit bruit pour méandrer sur le plat.
-						const double jitter = ToUnit(Hash(m.seed, static_cast<uint64_t>(ni), static_cast<uint64_t>(nj), 991)) * 0.02;
-						const double hv = (filled.At(ni, nj) - filled.At(ci, cj)) / diag + jitter;
-						if (hv < bh) { bh = hv; bi = ni; bj = nj; }
-					}
-				if (bi < 0) break;
-				ci = bi; cj = bj;
-				if (ci <= 0 || cj <= 0 || ci >= filled.width - 1 || cj >= filled.height - 1) break;
+				const int i = q % filled.width, j = q / filled.width;
+				path.push_back({ filled.WorldX(i), filled.WorldZ(j) });
+				if (filled.At(i, j) < sea - 0.5) break;
+				q = flowDown[static_cast<size_t>(q)];
 			}
 		};
 
@@ -1237,34 +1332,54 @@ namespace tools::world_gen
 				const engine::world::cells::CellPoint p = engine::world::cells::CellCenter({ n, e });
 				way.push_back((island && island->n == n && island->e == e) ? island->center : Vec2{ p.x, p.z });
 			}
-			std::vector<Vec2> path;
+			// Lot carte v1.0.129 : les ancres intermédiaires (centres de cases) sont décalées de
+			// ±1,8 km (bruit déterministe) et chaque tronçon suit le terrain (CourseAStar) : le
+			// cours ne relie plus les centres des cases en ligne droite.
+			for (size_t k = 1; k + 1 < way.size(); ++k)
+			{
+				if (island && std::hypot(way[k].x - island->center.x, way[k].z - island->center.z) < 1.0) continue;
+				const Vec2 o = way[k];
+				way[k].x = o.x + Clamp(Fbm(o.x, o.z, 9000.0, 2, m.seed + 941) * 4000.0, -1800.0, 1800.0);
+				way[k].z = o.z + Clamp(Fbm(o.x, o.z, 9000.0, 2, m.seed + 942) * 4000.0, -1800.0, 1800.0);
+			}
+			std::vector<Vec2> path{ way.front() };
 			for (size_t k = 0; k + 1 < way.size(); ++k)
 			{
-				const double len = std::hypot(way[k + 1].x - way[k].x, way[k + 1].z - way[k].z);
-				const int steps = std::max(1, static_cast<int>(std::ceil(len / 250.0)));
-				for (int i = 0; i < steps; ++i)
+				std::vector<Vec2> seg = CourseAStar(filled, way[k], way[k + 1], sea, m.seed);
+				if (seg.empty())
 				{
-					Vec2 p = way[k] + (way[k + 1] - way[k]) * (static_cast<double>(i) / steps);
-					for (const CityDef& c : g.cities)
+					// Repli : ligne droite (250 m) si l'A* échoue (ne devrait pas arriver).
+					const double len = std::hypot(way[k + 1].x - way[k].x, way[k + 1].z - way[k].z);
+					const int steps = std::max(1, static_cast<int>(std::ceil(len / 250.0)));
+					for (int i = 1; i <= steps; ++i) seg.push_back(way[k] + (way[k + 1] - way[k]) * (static_cast<double>(i) / steps));
+				}
+				if (!seg.empty()) seg.back() = way[k + 1];
+				path.insert(path.end(), seg.begin(), seg.end());
+			}
+			// Contournement des villes (sauf la ville-île) : chaque point trop proche est
+			// repoussé sur le cercle de dégagement.
+			for (size_t k = 0; k < path.size(); ++k)
+			{
+				Vec2& p = path[k];
+				for (const CityDef& c : g.cities)
+				{
+					if (island && c.id == island->id) continue;
+					const double need = riverClearance(c);
+					const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
+					if (d >= need) continue;
+					if (d > 1e-6) p = c.center + (p - c.center) * (need / d);
+					else
 					{
-						if (island && c.id == island->id) continue;
-						const double need = riverClearance(c);
-						const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
-						if (d >= need) continue;
-						if (d > 1e-6) p = c.center + (p - c.center) * (need / d);
-						else
-						{
-							// Source au centre même d'une ville (ville perchée) : vers l'aval du cours.
-							const Vec2 v = way[k + 1] - way[k];
-							const double l = std::hypot(v.x, v.z);
-							if (l > 1e-6) p = c.center + v * (need / l);
-						}
+						// Source au centre même d'une ville (ville perchée) : vers l'aval du cours.
+						const Vec2 v = path[std::min(k + 1, path.size() - 1)] - path[k > 0 ? k - 1 : 0];
+						const double l = std::hypot(v.x, v.z);
+						if (l > 1e-6) p = c.center + v * (need / l);
 					}
-					path.push_back(p);
 				}
 			}
-			descend(static_cast<int>(Clamp(filled.IndexX(way.back().x), 1, filled.width - 2)),
-				static_cast<int>(Clamp(filled.IndexZ(way.back().z), 1, filled.height - 2)), path);
+			if (rc.toSea)
+				descend(static_cast<int>(Clamp(filled.IndexX(way.back().x), 1, filled.width - 2)),
+					static_cast<int>(Clamp(filled.IndexZ(way.back().z), 1, filled.height - 2)), path);
 
 			// Rayon de l'île : plateau urbain + raccord + demi-lit + berge.
 			const double half = rc.widthM * 0.5;
@@ -1319,6 +1434,106 @@ namespace tools::world_gen
 			}
 			g.rivers.push_back(std::move(main));
 			g.rivers.push_back(std::move(arm));
+		}
+		// Lot carte v1.0.129 — RUISSEAUX : petites rivières qui remplissent le monde. Sources sur
+		// un treillis de 10 km décalé (bruit déterministe), en terre (≥ mer + 30 m) hors
+		// déserts, terres arides, marais, volcans, côtes et îlots, à plus de 3 km d'un cours
+		// d'eau, de 1,5 km d'une ville et de 600 m d'un lieu ; chacune suit l'arbre
+		// d'écoulement jusqu'à la mer, un lac, ou une rivière qu'elle rejoint (confluent exact).
+		// Contourne les villes comme les grands cours ; abandonnée si elle traverse un gouffre
+		// ou si elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
+		{
+			const int nx = filled.width, nz = filled.height;
+			// Nœuds occupés par un cours d'eau (index du point de rivière) et zone d'exclusion des sources.
+			std::vector<int32_t> riverAt(static_cast<size_t>(nx) * nz, -1);
+			std::vector<std::pair<int, int>> riverRef; // (rivière, point)
+			std::vector<uint8_t> nearRiver(static_cast<size_t>(nx) * nz, 0);
+			auto mark = [&](int ri) {
+				const River& r = g.rivers[static_cast<size_t>(ri)];
+				for (size_t k = 0; k < r.points.size(); k += 6)
+				{
+					const int i = filled.IndexX(r.points[k].x), j = filled.IndexZ(r.points[k].z);
+					if (!filled.InBounds(i, j)) continue;
+					const int32_t q = j * nx + i;
+					if (riverAt[static_cast<size_t>(q)] < 0)
+					{
+						riverAt[static_cast<size_t>(q)] = static_cast<int32_t>(riverRef.size());
+						riverRef.push_back({ ri, static_cast<int>(k) });
+					}
+					for (int dj = -12; dj <= 12; ++dj)
+						for (int di = -12; di <= 12; ++di)
+							if (filled.InBounds(i + di, j + dj) && di * di + dj * dj <= 144) nearRiver[static_cast<size_t>((j + dj) * nx + i + di)] = 1;
+				}
+			};
+			for (int ri = 0; ri < static_cast<int>(g.rivers.size()); ++ri) mark(ri);
+			auto lakeAt = [&](Vec2 p) {
+				for (const Lake& l : g.lakes)
+					if (std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM + 60.0) return true;
+				return false;
+			};
+			const double lattice = 10000.0;
+			int streamIndex = 0;
+			for (double z0 = g.minZ + lattice * 0.5; z0 < g.maxZ; z0 += lattice)
+				for (double x0 = g.minX + lattice * 0.5; x0 < g.maxX; x0 += lattice)
+				{
+					const Vec2 src{ x0 + Fbm(x0, z0, 5000.0, 2, m.seed + 951) * 12000.0, z0 + Fbm(x0, z0, 5000.0, 2, m.seed + 952) * 12000.0 };
+					const int si = filled.IndexX(src.x), sj = filled.IndexZ(src.z);
+					if (si < 2 || sj < 2 || si >= nx - 2 || sj >= nz - 2) continue;
+					if (g.coarse.At(si, sj) < sea + 30.0 || nearRiver[static_cast<size_t>(sj * nx + si)]) continue;
+					const char code = MacroBiome(m, src.x, src.z);
+					if (code == '~' || code == ':' || code == 'l' || code == '%' || code == '&' || code == 'V' || code == ',' || code == '_' || code == 'o' || code == '-' || code == ' ') continue;
+					bool blocked = false;
+					for (const CityDef& c : g.cities) blocked = blocked || std::hypot(src.x - c.center.x, src.z - c.center.z) < c.radiusM + 1500.0;
+					for (const PoiDef& pd : g.pois) blocked = blocked || std::hypot(src.x - pd.center.x, src.z - pd.center.z) < 600.0;
+					if (blocked || InAnyGouffre(m, src, 400.0)) continue;
+					// Descente le long de l'arbre jusqu'à la mer, un lac ou une rivière.
+					std::vector<Vec2> path;
+					int32_t q = sj * nx + si;
+					int joinRef = -1;
+					for (int stepIdx = 0; stepIdx < 4000 && q >= 0; ++stepIdx)
+					{
+						const int i = q % nx, j = q / nx;
+						const Vec2 p{ filled.WorldX(i), filled.WorldZ(j) };
+						if (stepIdx > 0)
+						{
+							int32_t hit = riverAt[static_cast<size_t>(q)];
+							for (int dj = -1; dj <= 1 && hit < 0; ++dj)
+								for (int di = -1; di <= 1 && hit < 0; ++di)
+									if (filled.InBounds(i + di, j + dj)) hit = riverAt[static_cast<size_t>((j + dj) * nx + i + di)];
+							if (hit >= 0) { joinRef = hit; break; }
+						}
+						path.push_back(p);
+						if (filled.At(i, j) < sea - 0.5 || lakeAt(p)) break;
+						if (InAnyGouffre(m, p, 300.0)) { path.clear(); break; }
+						q = flowDown[static_cast<size_t>(q)];
+					}
+					if (joinRef >= 0)
+					{
+						const auto [ri, k] = riverRef[static_cast<size_t>(joinRef)];
+						path.push_back(g.rivers[static_cast<size_t>(ri)].points[static_cast<size_t>(k)]);
+					}
+					if (path.size() < 20) continue; // < 5 km : pas un ruisseau
+					// Contournement des villes et des lieux (le confluent reste exact).
+					for (size_t k = 0; k + 1 < path.size(); ++k)
+					{
+						Vec2& p = path[k];
+						for (const CityDef& c : g.cities)
+						{
+							const double need = riverClearance(c);
+							const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
+							if (d < need && d > 1e-6) p = c.center + (p - c.center) * (need / d);
+						}
+						for (const PoiDef& pd : g.pois)
+						{
+							const double d = std::hypot(p.x - pd.center.x, p.z - pd.center.z);
+							if (d < 150.0 && d > 1e-6) p = pd.center + (p - pd.center) * (150.0 / d);
+						}
+					}
+					g.rivers.push_back(finish(std::move(path), "ruisseau_" + std::to_string(streamIndex++), 4.0, 7.0, 0.0,
+						[&](Vec2 p) { return 0.6 * hillCalm(p); }));
+					mark(static_cast<int>(g.rivers.size()) - 1);
+				}
+			std::printf("[world_gen] ruisseaux : %d (lot carte v1.0.129)\n", streamIndex);
 		}
 		g.report.rivers = g.rivers.size();
 		g.report.lakes = g.lakes.size();

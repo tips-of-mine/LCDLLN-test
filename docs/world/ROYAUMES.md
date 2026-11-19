@@ -691,6 +691,12 @@ ordinaire du lore.
 | Secret | ville absente de `places.json` `cities`, de la carte et de `map_features.bin` ; recopiée dans `secret_places.json` (v1.0.110 : réservé au serveur, retiré du paquet client) |
 | À faire côté client | lumière des 36 torches (`world.point_lights` du zone.json), fond sombre (`world.ambiance_zones`), mécanisme de « lieu découvert », bannière et radar de la ville secrète |
 
+### 11.11 Rivières, ruisseaux et ponts (v1.0.129)
+
+11 cours tracés (`river_courses` : fleuve de Syzygie, Vaerdhun ×2 et les 8 rivières principales du lore), rivières
+automatiques des cases « rivière » restantes, ≈ 190 ruisseaux ; tous suivent l'arbre d'écoulement (vallées) ; ponts de
+pierre sur les routes, passerelles de bois sur les sentiers, tablier marchable. Détail : [`LORE_BD.md`](LORE_BD.md) §16.55.
+
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
 
 | Relief | Type | Ancrage | Effet |

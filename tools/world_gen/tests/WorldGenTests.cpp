@@ -3300,7 +3300,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3457,7 +3457,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildSeaPontons(*w);
+			BuildSettlements(*w); BuildBridges(*w); BuildSeaPontons(*w);
 			return w;
 		};
 		const double sea = m.scale.seaLevelM;
@@ -3526,7 +3526,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3590,7 +3590,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			std::vector<std::string> out;
 			std::istringstream in(RespawnPointsText(*w));
 			for (std::string line; std::getline(in, line);)
@@ -3769,7 +3769,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
 			return w;
 		};
@@ -3925,6 +3925,76 @@ namespace
 }
 
 // Point d'entrée : lance tous les tests ; code de sortie 0 si tout passe.
+
+	/// Lot carte v1.0.129 (décision du 19/11/2026 : les 8 rivières principales du lore tracées, des
+	/// rivières plus petites pour remplir le monde, ponts de pierre ou de bois) : les 8 cours du lore
+	/// sont au master et tracés ; les cours d'eau suivent le terrain (plus de segment rectiligne de
+	/// plus de 3 km) ; plus de 100 ruisseaux ; aucun cours d'eau dans une ville ; ponts posés sur
+	/// les traversées de Syzygie (N009_W011), tablier marchable de dalles.
+	void TestEauV1129()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "eau v1.0.129 : master royaumes charge");
+		if (!ok) return;
+		static const char* kCours[] = { "riv_liaison_lacs", "riv_lac_sud", "riv_ashwick", "riv_cascade_northind",
+			"riv_cascade_bras_est", "riv_source_n008_w002", "riv_rivercross", "riv_southport" };
+		int found = 0;
+		for (const char* id : kCours)
+			for (const RiverCourseDef& rc : g.master.riverCourses) found += rc.loreId == id ? 1 : 0;
+		Check(found == 8 && g.master.riverCourses.size() == 11u, "eau v1.0.129 : 8 rivieres principales du lore au master (11 cours)");
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		int courses = 0, streams = 0;
+		for (const River& r : g.rivers)
+		{
+			courses += r.name.rfind("cours_", 0) == 0 ? 1 : 0;
+			streams += r.name.rfind("ruisseau_", 0) == 0 ? 1 : 0;
+		}
+		Check(courses >= 8, "eau v1.0.129 : les 8 cours tracés");
+		Check(streams >= 100, "eau v1.0.129 : plus de 100 ruisseaux");
+		// Tracé naturel : aucune portion rectiligne (écart < 15 m à la corde) de plus de 3 km.
+		size_t straight = 0;
+		for (const River& r : g.rivers)
+		{
+			const size_t n = r.points.size();
+			for (size_t a = 0; a + 500 < n; a += 50)
+			{
+				const Vec2 A = r.points[a], B = r.points[a + 500];
+				if (std::hypot(B.x - A.x, B.z - A.z) < 2900.0) continue;
+				double worst = 0.0;
+				for (size_t k = a; k <= a + 500; k += 10) worst = std::max(worst, DistPointSegment(r.points[k], A, B, nullptr));
+				if (worst < 15.0) ++straight;
+			}
+		}
+		Check(straight == 0, "eau v1.0.129 : aucun cours d'eau rectiligne sur 3 km");
+		int inCity = 0;
+		for (const River& r : g.rivers)
+			for (const Vec2& p : r.points)
+				for (const CityDef& c : g.cities)
+				{
+					if (c.id == "ville_sysigie") continue; // ville-île entre les deux bras du fleuve
+					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 50.0) { ++inCity; break; }
+				}
+		Check(inCity == 0, "eau v1.0.129 : aucun cours d'eau dans une ville");
+		// Ponts : cellule de Syzygie (le fleuve, ses deux bras et les routes de l'île).
+		BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		int n = 0, e = 0;
+		ParseCellId("N009_W011", n, e);
+		InitCell(*w, g, { n, e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildBridges(*w);
+		size_t deck = 0;
+		for (const ScatterDef& s : w->scatter) deck += (s.mesh.find("Floor_Brick") != std::string::npos || s.mesh.find("Floor_WoodDark") != std::string::npos) && (s.flags & 1u) ? 1 : 0;
+		Check(w->report.bridges >= 2 && deck >= 10, "eau v1.0.129 : ponts a Syzygie, tablier de dalles marchable");
+	}
+
 int main()
 {
 	TestScatterRoundTrip();
@@ -3965,6 +4035,7 @@ int main()
 	TestIdentifiantsCimetieresV1114();
 	TestAccelerationV1112();
 	TestGenerationEnfers();
+	TestEauV1129();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

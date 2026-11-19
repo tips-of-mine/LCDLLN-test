@@ -1064,6 +1064,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.52](#1652-cellules-restantes-ouvertes-au-jeu-v10126) | v1.0.126 | Cellules restantes ouvertes | Toute la terre des Royaumes jouable : 542 cases ouvertes (1 337 cellules jouables), 529 lieux `[GD]`, Forteresse naine d'Heusgly jouable ; 666 cimetières gardés. |
 | [16.53](#1653-lhynn-et-altenberg-au-bord-de-la-mer-v10127) | v1.0.127 | Ports de l'ouest au bord de la mer | Lhynn (N001_W011) et Altenberg (N005_W013) déplacées sur la côte, positions posées ; temple de Methraton et Seuil de Lhynn posés au nord de Lhynn. |
 | [16.54](#1654-carte-du-monde-lot-1--données-villes-portuaires-au-bord-de-la-mer-v10128) | v1.0.128 | Carte du monde, lot 1 : données | Fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine ; Tour Carrée = Grande Arche ; palais fusionnés ; tailles du lore ; 10 villes portuaires au bord de la mer. |
+| [16.55](#1655-carte-du-monde-lot-2--rivières-principales-ruisseaux-et-ponts-v10129) | v1.0.129 | Carte du monde, lot 2 : eau | 8 rivières principales tracées, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5119,6 +5120,58 @@ des Enfers (hors carte), Viaduc et Pentacle des Enfers (lore seul).
 
 **Contrôles** : `validate_city_services` (124 villes), `generate_city_services --check`, `sync_*.py --check`,
 `test_sync_routes`, `check_secrets`, `check_references --strict` ; `world_gen_tests` (Ryvaldh en N006_E024).
+
+### 16.55 Carte du monde, lot 2 : rivières principales, ruisseaux et ponts (v1.0.129)
+
+**Décision du propriétaire (19/11/2026)** : tracer en jeu les 8 rivières principales du lore, créer des rivières plus
+petites pour remplir le monde, avec des ponts en bois ou en pierre. Constat sur l'aperçu du continent (`--preview-map`) :
+seuls 3 cours étaient tracés à la main, en reliant les centres des cases en ligne droite ; les rivières automatiques
+descendaient la plus grande pente d'une grille remplie, d'où des marches d'escalier à 45° et 90° (« la nature n'est pas
+carrée ») ; les routes comblaient le lit des rivières (remblai sans pont).
+
+**Les 8 rivières principales** (`river_courses` du master, champ `lore_id`) :
+
+| Cours (master) | Rivière du lore | Cases | Largeur | Fin |
+|---|---|---|---|---|
+| `cours_liaison_lacs` | Rivière des deux lacs | N007_E006 → N008_E007 → N007_E007 | 24 m | lac de l'est (`to_sea: false`) |
+| `cours_lac_sud` | Rivière du lac du sud | N005_E008 → N006_E007 → N007_E007 | 22 m | lac de l'est (`to_sea: false`) |
+| `cours_ashwick` | Rivière d'Askhvir | N007_E005 → … → N011_E005 | 40 m | mer |
+| `cours_cascade_northind` | Rivière de la cascade | N003_W005 (cascade) → … → N012_W004 | 38 m | mer |
+| `cours_cascade_bras_est` | Rivière de la cascade (bras est) | N008_W004 → N009_W003 → N010_W002 | 22 m | mer |
+| `cours_source_n008_w002` | Rivière de la source de N008_W002 | N008_W002 → N010_W002 | 20 m | mer |
+| `cours_rivercross` | Rivière de Rhivkhar | N010_E019 → … → N006_E023 | 40 m | mer orientale |
+| `cours_southport` | Rivière de Suthvarn | S013_E006 → S016_E006 | 34 m | mer du sud |
+
+S'ajoutent les 3 cours déjà tracés (fleuve de Syzygie, deux bras de la rivière de Vaerdhun). Grille du jeu alignée sur le
+lore (`has_river`) : N007_W005 forêt → **forêt avec rivière** (`R`), N011_W004 marais → **marais avec rivière** (`&`).
+Le master accepte désormais un cours qui part d'une case quelconque (source : cascade en montagne) et traverse des cases
+de lac ; `to_sea` (défaut vrai) arrête un cours dans son dernier lac.
+
+**Tracés naturels** (`tools/world_gen/lib/Terrain.cpp`) :
+
+- **Arbre d'écoulement** (`FlowTree`) : Dijkstra depuis la mer sur la grille de 250 m remplie, coût = longueur × bruit
+  de vallée (0,45 à 1,55, longueur d'onde 2,6 km) × préférence pour les terres basses, + forte pénalité si l'eau remonte.
+  Toute rivière automatique et toute fin de cours descend vers la mer par cet arbre : elle serpente dans les vallées.
+- **Cours tracés à la main** : A* de vallée (`CourseAStar`, même coût) entre les cases du lore, dont les ancres
+  intermédiaires sont décalées de 1,8 km au plus ; contournement des villes inchangé (île de Syzygie comprise).
+- **Ruisseaux** (≈ 190) : sources sur un treillis décalé de 10 km, en terre (≥ mer + 30 m) hors déserts, terres arides,
+  marais, volcans, côtes et îlots, à plus de 3 km d'un cours d'eau, 1,5 km d'une ville, 600 m d'un lieu ; ils suivent
+  l'arbre d'écoulement jusqu'à la mer, un lac, ou une rivière qu'ils rejoignent (confluent exact) ; 5 km au moins ;
+  largeur 4 à 11 m ; ils contournent villes (comme les grands cours) et lieux (150 m), jamais dans un gouffre.
+
+**Ponts** (`BuildBridges`, `tools/world_gen/lib/Roads.cpp`) : la chaussée ne comble plus le lit d'une rivière (ni 1 m de
+berge) ; à chaque traversée, un pont en décor (`scatter.bin`) :
+
+| Route | Pont |
+|---|---|
+| route, voie impériale | **pierre** : tablier de dalles `Floor_Brick` (2 m, dessus marchable par `collision/building_pieces.json`), parapets de pierre (`Wall_UnevenBrick_Straight` réduit), **arches** `Wall_Arch` de l'eau au tablier sur les deux faces |
+| sentier, chemin vers un lieu | **bois** : tablier de planches `Floor_WoodDark`, garde-corps `Prop_WoodenFence_Single` |
+
+Le tablier suit le profil en long de la route, 1,6 m au-dessus de l'eau (0,9 m pour un sentier). Les chemins vers les lieux
+procéduraux franchissent un ruisseau (coût élevé, berges raides admises) au lieu de rester bloqués.
+
+**Contrôles** : `world_gen_tests` (`TestEauV1129` : 8 cours du lore au master, plus de 100 ruisseaux, aucun cours d'eau
+rectiligne sur 3 km, aucun dans une ville, ponts à Syzygie avec tablier marchable) ; contrôles du lore.
 
 ## 17. Questions ouvertes
 

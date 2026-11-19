@@ -5203,6 +5203,13 @@ gardent leur échelle et leurs profils (1 200 m).
   tracées ; la route 000114 (Dhunfal – Kendrhir) passe par la **Faille de Kashogs** (N016_E012), comme sur la carte du T1.
 - **Neige** au-dessus de ≈ 2 500 m (texture du sol et carte du monde), **forêts** jusqu'à ≈ 2 100 m, **conifères**
   au-dessus de 900 m.
+- **Abords des reliefs posés** (gouffre de Thurvhal, crevasse, colline) : jusqu'à 2 km de leur emprise, le relief garde
+  ses profils et son plafond historiques (1 200 m), raccordés au nouveau relief sur 1,5 km ; ces zones, et les abords
+  fermés aux routes autour du gouffre (fosse, galerie, 520 m autour de l'entrée cachée), sont relevées au chargement du
+  master : le monde est le même avec ou sans le relief hors de sa boîte. Aucun ruisseau n'y prend sa source ni ne les
+  traverse ; un ruisseau qui mordrait sur une ville est abandonné.
+- **Balises reposées** au bord des routes déplacées : Borne des Géants nord (3 330, −2 800 m, route 000143) et Borne des
+  Monts de Moork (430, 4 250 m, route 000242).
 
 **Contrôles** : `world_gen_tests` (`TestReliefV1130` : échelle 3 600 m, médiane des montagnes ≥ 1 400 m, crêtes des chaînes
 ≥ 2 000 m, plus haut sommet entre 3 200 et 3 550 m, grandes collines, aucune route du lore coupée).

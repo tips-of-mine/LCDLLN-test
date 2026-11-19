@@ -1647,8 +1647,16 @@ namespace tools::world_gen
 							if (d < 150.0 && d > 1e-6) p = pd.center + (p - pd.center) * (150.0 / d);
 						}
 					}
-					g.rivers.push_back(finish(std::move(path), "ruisseau_" + std::to_string(streamIndex++), 4.0, 7.0, 0.0,
-						[&](Vec2 p) { return 0.6 * hillCalm(p); }));
+					River stream = finish(std::move(path), "ruisseau_" + std::to_string(streamIndex), 4.0, 7.0, 0.0,
+						[&](Vec2 p) { return 0.6 * hillCalm(p); });
+					// Le lissage entre nœuds contournés peut mordre sur une ville : ruisseau abandonné.
+					bool intoCity = false;
+					for (size_t k = 0; k < stream.points.size() && !intoCity; k += 2)
+						for (const CityDef& c : g.cities)
+							if (std::hypot(stream.points[k].x - c.center.x, stream.points[k].z - c.center.z) < c.radiusM + 60.0) { intoCity = true; break; }
+					if (intoCity) continue;
+					++streamIndex;
+					g.rivers.push_back(std::move(stream));
 					mark(static_cast<int>(g.rivers.size()) - 1);
 				}
 			std::printf("[world_gen] ruisseaux : %d (lot carte v1.0.129)\n", streamIndex);

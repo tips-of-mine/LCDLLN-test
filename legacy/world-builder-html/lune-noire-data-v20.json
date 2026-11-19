@@ -268162,8 +268162,8 @@
       "type": "other",
       "importance": "",
       "cell": "N011_E008",
-      "position_x_m": 2787,
-      "position_z_m": -3862,
+      "position_x_m": 3330,
+      "position_z_m": -2800,
       "region_id": "terres_des_gigantomorphes",
       "province": "region_terres_nord_t00",
       "zone_id": "",
@@ -268239,7 +268239,8 @@
       "notes": [
         "[GD] (v1.0.85) Nom et lieu proposés, à valider par le propriétaire. Balise de sortie de la poche de bas niveau de Whispers Hill (Terres du Nord, 1-15), sur la route de Stohnvar (town_0139), au nord : au-delà, Terres des Gigantomorphes (30-56). Les gens de Whispers Hill ne la dépassent pas. LORE_BD §16.14.",
         "Réel en jeu : POI poi_balise_borne_geants_nord (monolithe) dans une cellule générée.",
-        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Kendrhir (000143), sortie nord-est de la poche : position manuelle x = 2787 m, z = -3862 m dans N011_E008 (avant : N012_E008) ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Kendrhir (000143), sortie nord-est de la poche : position manuelle x = 2787 m, z = -3862 m dans N011_E008 (avant : N012_E008) ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000143 (position 3330, -2800 m, au sec) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56."
       ]
     },
     {
@@ -269297,8 +269298,8 @@
       "type": "other",
       "importance": "",
       "cell": "S005_E016",
-      "position_x_m": -470,
-      "position_z_m": 4300,
+      "position_x_m": 430,
+      "position_z_m": 4250,
       "region_id": "baronnie_de_moorks",
       "province": "",
       "zone_id": "",
@@ -269376,7 +269377,8 @@
         "[GD] (v1.0.86) Niveau : balise (32-55 au-delà) (Baronnie de Moork). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
         "Réel en jeu : POI poi_borne_monts_de_moork (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
         "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]",
-        "[DÉCISION] (v1.0.128) Position posée -470, 4300 m : au bord de la route Moork – Ghrunke Dash (000242, désormais du lore), comme le veut la balise. LORE_BD §16.54."
+        "[DÉCISION] (v1.0.128) Position posée -470, 4300 m : au bord de la route Moork – Ghrunke Dash (000242, désormais du lore), comme le veut la balise. LORE_BD §16.54.",
+        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000242 (position 430, 4250 m) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56."
       ]
     },
     {

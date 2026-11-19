@@ -829,14 +829,15 @@ namespace tools::world_gen
 					if (ReliefContribution(r, cg.cost.WorldX(i), cg.cost.WorldZ(j)) > 0.35 * r.heightM) cg.cost.At(i, j) = 1e30f;
 		}
 		// Gouffre (v1.0.107) : fosse et galerie fermées aux routes (pas de route ni de
-		// sentier : on n'y entre que par la galerie dissimulée) ; marge d'un nœud.
-		for (const ReliefDef& r : m.reliefs)
+		// sentier : on n'y entre que par la galerie dissimulée). v1.0.130 : disques relevés au
+		// chargement du master (`roadBlocks` : fosse et abords de l'entrée cachée), pour que
+		// le réseau soit le même avec ou sans le relief.
+		for (const WorldMaster::CalmZone& b : m.roadBlocks)
 		{
-			if (r.type != "gouffre") continue;
-			const double R = r.footRadiusM + 250.0;
-			for (int j = std::max(0, cg.cost.IndexZ(r.center.z - R)); j <= std::min(cg.cost.height - 1, cg.cost.IndexZ(r.center.z + R)); ++j)
-				for (int i = std::max(0, cg.cost.IndexX(r.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(r.center.x + R)); ++i)
-					if (InGouffre(r, { cg.cost.WorldX(i), cg.cost.WorldZ(j) }, 125.0)) cg.cost.At(i, j) = 1e30f;
+			const double R = b.radiusM;
+			for (int j = std::max(0, cg.cost.IndexZ(b.center.z - R)); j <= std::min(cg.cost.height - 1, cg.cost.IndexZ(b.center.z + R)); ++j)
+				for (int i = std::max(0, cg.cost.IndexX(b.center.x - R)); i <= std::min(cg.cost.width - 1, cg.cost.IndexX(b.center.x + R)); ++i)
+					if (std::hypot(cg.cost.WorldX(i) - b.center.x, cg.cost.WorldZ(j) - b.center.z) < R) cg.cost.At(i, j) = 1e30f;
 		}
 		// Franchir une rivière coûte (gué) : on évite de la longer dedans.
 		for (const River& r : g.rivers)

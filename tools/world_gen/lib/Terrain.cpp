@@ -709,15 +709,11 @@ namespace tools::world_gen
 		// v1.0.130 — reliefs posés à la main (gouffre, crevasse, colline) : leurs abords gardent
 		// le relief historique (profils d'avant les Pyrénées, sans grandes collines ni cols),
 		// sur lequel leurs formes et leurs profondeurs ont été réglées. `calm` = 0 au relief,
-		// 1 au-delà de 2,5 km de son emprise.
+		// 1 au-delà de 2,5 km de son emprise (zones relevées au chargement du master).
 		double calm = 1.0;
 		if (!infernal)
-			for (const ReliefDef& r : m.reliefs)
-				if (r.type == "gouffre" || r.type == "crevasse" || r.type == "colline")
-				{
-					const double rad = std::max({ r.footRadiusM, r.floorRadiusM * 3.0, 1500.0 });
-					calm = std::min(calm, SmoothStep(rad, rad + 2500.0, std::hypot(x - r.center.x, z - r.center.z)));
-				}
+			for (const WorldMaster::CalmZone& c : m.calmZones)
+				calm = std::min(calm, SmoothStep(c.radiusM, c.radiusM + 2500.0, std::hypot(x - c.center.x, z - c.center.z)));
 		CodeProfile acc{ 0, 0, 0, 0 };
 		for (int k = 0; k < 4; ++k)
 		{
@@ -1546,8 +1542,10 @@ namespace tools::world_gen
 		// déserts, terres arides, marais, volcans, côtes et îlots, à plus de 3 km d'un cours
 		// d'eau, de 1,5 km d'une ville et de 600 m d'un lieu ; chacune suit l'arbre
 		// d'écoulement jusqu'à la mer, un lac, ou une rivière qu'elle rejoint (confluent exact).
-		// Contourne les villes comme les grands cours ; abandonnée si elle traverse un gouffre
-		// ou si elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
+		// Contourne les villes comme les grands cours ; abandonnée si elle entre dans les
+		// abords calmes d'un relief posé (gouffre, crevasse, colline : `calmZones`, relevés au
+		// chargement — le réseau ne dépend donc pas de la présence du relief lui-même) ou si
+		// elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
 		// Aucun ruisseau aux Enfers : l'eau n'y coule pas, seuls les fleuves de lave du
 		// master y serpentent (palette v1.0.83 : pas de bleu ni de vert sur la carte).
 		if (!IsInfernalMap(g.master))
@@ -1580,6 +1578,12 @@ namespace tools::world_gen
 					if (std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM + 60.0) return true;
 				return false;
 			};
+			// Vrai si p est à moins de margin des abords calmes d'un relief posé.
+			auto inCalm = [&](Vec2 p, double margin) {
+				for (const WorldMaster::CalmZone& c : m.calmZones)
+					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + margin) return true;
+				return false;
+			};
 			const double lattice = 10000.0;
 			int streamIndex = 0;
 			for (double z0 = g.minZ + lattice * 0.5; z0 < g.maxZ; z0 += lattice)
@@ -1594,7 +1598,7 @@ namespace tools::world_gen
 					bool blocked = false;
 					for (const CityDef& c : g.cities) blocked = blocked || std::hypot(src.x - c.center.x, src.z - c.center.z) < c.radiusM + 1500.0;
 					for (const PoiDef& pd : g.pois) blocked = blocked || std::hypot(src.x - pd.center.x, src.z - pd.center.z) < 600.0;
-					if (blocked || InAnyGouffre(m, src, 400.0)) continue;
+					if (blocked || inCalm(src, 400.0)) continue;
 					// Descente le long de l'arbre jusqu'à la mer, un lac ou une rivière.
 					std::vector<Vec2> path;
 					int32_t q = sj * nx + si;
@@ -1613,7 +1617,7 @@ namespace tools::world_gen
 						}
 						path.push_back(p);
 						if (filled.At(i, j) < sea - 0.5 || lakeAt(p)) break;
-						if (InAnyGouffre(m, p, 300.0)) { path.clear(); break; }
+						if (inCalm(p, 0.0)) { path.clear(); break; }
 						q = flowDown[static_cast<size_t>(q)];
 					}
 					if (joinRef >= 0)

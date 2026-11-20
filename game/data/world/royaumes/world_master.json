@@ -14,9 +14,9 @@
     "sea_level_m": 40.0,
     "heightmap_resolution": 2049
   },
-  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici. ; v1.0.119 : 16 cases des routes Farvhenn - Vestmhor (000106, N013-N015 x E017-E019 sauf N015_E017) et Shaddrek - Klehrwath (000071, S013-S015 x E014-E016 sauf S013_E014), villages de Vestmhor, Dhemorr et Klehrwath et une case de marge ; v1.0.121 : lot 1 (routes courtes), 103 cases dont 11 deja jouables par les corridors de depart (routes 000053 000080 000208 000021 000025 000038 000040 000041 000053 000055 000142 000154 000165 000198 000211 000028 000054 000157), un lieu [GD] par case vide ; v1.0.122 : lot 2 (routes longues, le reste), 146 cases (routes 000057 000073 000076 000077 000079 000116 000143 000145 000156 000158 000159 000048 000068 000078 000164 000062 000063), un lieu [GD] par case vide ; v1.0.124 : iles de Hishtarland (S010_W006-W007, S011_W005-W007) et de Dyprokh (N012_E002-E003), desservies par les lignes maritimes ; v1.0.126 : lot des cellules restantes, 542 cases (toute la terre encore fermee), un lieu [GD] par case vide",
-  "_comment_connect": "connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
-  "connect_start_cities": true,
+  "_comment_generated_cells": "Cellules generees (et donc jouables). v1.0.61 : les departs sont par FACTION (start_for = identifiants de game/data/races/factions.json ; legions_imperiales est reserve, absent de factions.json tant que la faction n'y est pas creee ; docs/world/LORE_BD.md section 14). Les 4 premieres lignes sont les anciennes villes de depart par race (Hameau de Marn, Whispers Hill, Ghulvathan, Ghrunke Dash, premiere de chaque ligne) et leurs 8 voisines, gardees jouables (redevenues villes normales). La 5e ligne (S009_E011, Terres desolees de Tsaroth) est l'ancien camp de depart des demons, desormais aux Enfers (world/enfers/world_master.json) : la cellule, ses voisines et les 7 cellules de la route qui y menait (S006_E008 ... S009_E009) sont gardees explicitement pour ne pas changer les corridors. Ligne suivante : les cellules des 5 Portes des enfers (poi_porte_1..5, sans leurs voisines), reliees aux portails des Enfers (docs/world/ENFERS.md). Dernieres lignes (v1.0.61) : les 7 hameaux de depart par faction (premiere cellule de la ligne, sauf s'il etait deja genere) et leurs voisines hors mer non encore listees. Derniere ligne (v1.0.66) : Dys (N005_W009) et les 2 cellules du corridor Ordhrann-Dys (N006_W009, N006_W008), gardees explicitement : les hameaux de la region de depart d'Ordhrann (Vharholdt) font passer le corridor des departs par N008_W008, ce qui les aurait retirees. Derniere ligne (v1.0.70) : N006_W004 (foret de la Province de Northind), gardee explicitement : les hameaux de la region de depart de Syllaërin (Ghwenaëth) font passer le corridor des departs ailleurs, ce qui l'aurait retiree. Derniere ligne (v1.0.72) : les cases ou le proprietaire a deplace Gredhaim (N001_W008) et Syllaërin, depart des Hauts Elfes (N007_W003, sa region de depart 3x3 restant autour de N007_W006), puis N003_W004, N004_W004, N005_W004 et N005_W005, gardees explicitement : avec Syllaërin en N007_W003, le corridor des departs passe plus a l'est (N004_W003 a N007_W004), ce qui les aurait retirees. Derniere ligne (v1.0.73) : les cases des trois villes moyennes decidees par le proprietaire (Hazhaëlin N007_E002, Fhelvakt N009_W001, Kholvard S001_W007, entree sud de la Mine de la Traverse) ; l'entree nord est dans N001_W008 (Gredhaim), deja generee. Dernieres lignes (v1.0.74) : l'Ile de la Treve (ile du Nord, region ile_de_la_treve) : d'abord ses 20 cases de foret, puis les 34 cases de haut-fond qui l'entourent (baie comprise), ou passe le rivage : sans elles l'ile serait coupee net au bord de ses cases terrestres, sans cote ni plage. Derniere ligne (v1.0.76) : les cases ou le proprietaire a deplace Bhridrak (S004_W006) et Krakhol (S004_W002), hameaux de la region de depart de Drakhenhal (la region 3x3 reste centree sur S004_W004) ; Der Hem Shelbem descend en S010_E010, deja generee ; puis S005_W008 et S006_W004 a S006_W008, gardees explicitement : avec Bhridrak en S004_W006, le corridor des departs passe par S004_W007, ce qui les aurait retirees. Derniere ligne (v1.0.78) : N010_W015 (Vaerdhun sur sa colline, source des deux rivieres) et N010_W016 (Sanctuaire des Brisants, contre les falaises de la cote ouest), dont le relief, les rivieres et le POI existaient depuis la v1.0.72 sans que les cases soient generees ; elles ne sont pas encore reliees a pied au reste des cellules generees (N010_W011 est la plus proche). Derniere ligne (v1.0.79) : N010_W012, N010_W013 et N010_W014 (plaines de la region de Syzygie, riviere nord de Vaerdhun en N010_W014), qui relient a pied Vaerdhun et les Brisants a N010_W011, rive ouest du fleuve de Syzygie. Derniere ligne (v1.0.80) : N009_W012 (plaine a la sortie ouest de Syzygie), N011_W013 (plaine) et N011_W014 (Treuvhal, riviere nord de Vaerdhun), traversees par la route Syzygie - Vaerdhun du generateur : la route est entierement dans des cellules generees et Treuvhal (route Vaerdhun - Treuvhal) devient accessible. Dernieres lignes (v1.0.88) : ouverture de la Marche de l'Est (docs/world/LORE_BD.md section 16.17), 45 cellules : les cases des 5 villes (Horkher N006_E014, Nykhfeld N002_E015, Vlakmorh N004_E018, Ebhrazul N005_E020, Dhazkmer N001_E020), celles des routes qui les relient entre elles et au monde deja jouable (traces du generateur et routes du lore, dont la Via Magna de Shezhold a Moork par Horkher et Nykhfeld), une case de marge autour de chaque ville et les trous interieurs ; toutes touchent des cellules deja generees. Dernieres lignes (v1.0.91) : ouverture de la route Ysenkhal - Vozmarkh (suite du depart nain) et des 4 routes de la Marche coupees au mur invisible (Ebhrazul - Rhivkhar, Ebhrazul - Ryvaldh, Ebhrazul - Grhavelt, Dhazkmer - Dhuzvelt) (docs/world/LORE_BD.md section 16.20), 57 cellules : traces du lore et du generateur, villes d'arrivee (Vozmarkh S009_E020, Rhivkhar N008_E018, Ryvaldh N006_E023, Grhavelt N003_E023, Dhuzvelt S001_E023), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.104) : ouverture des 5 routes restees coupees au mur invisible (Vozmarkh - Mhordaal, Vozmarkh - Shaddrek, Vozmarkh - Ghrondak, Rhivkhar - Hilvakh, Farvhenn - Rhivkhar) et, en cascade, des routes vers des villes proches (Mhordaal - Khrozrad, Shaddrek - Khrozrad, Mhordaal - Ghrondak, Shaddrek - Mhordaal, Hilvakh - Gharzuk) (docs/world/LORE_BD.md section 16.33), 55 cellules : traces du lore et du generateur, villes d'arrivee (Mhordaal S011_E020, Shaddrek S011_E018, Ghrondak S008_E024, Khrozrad S013_E020, Hilvakh N010_E016, Farvhenn N011_E020), une case de marge autour de chacune et les trous interieurs ; toutes reliees aux cellules deja generees. Dernieres lignes (v1.0.106) : passages des routes du lore entre deux zones jouables (docs/world/LORE_BD.md section 16.35), 48 cellules : Via Magna Lhynn - Kholvard - Magistrya et fief de Garundel - Harrodh, Passe des Dragons (Atmosphere S001_W003, S002_W003), routes Kholvard - Skhaldrach, Ghrunke Dash - Ghrimfeth, Village fantome - Garundel, Fhelvakt - Hazhaelin, Whispers Hill - Feyhin Lokcthat - Mhozrak, Shezhold - Nykhfeld, Magistrya - Arkhanyra - Hazhaelin (Arkhanyra N004_E001 jouable) ; puis 20 trous interieurs (au moins 3 cotes jouables). Les autres cellules sont bordees d'un mur invisible tant qu'elles ne sont pas ajoutees ici. ; v1.0.119 : 16 cases des routes Farvhenn - Vestmhor (000106, N013-N015 x E017-E019 sauf N015_E017) et Shaddrek - Klehrwath (000071, S013-S015 x E014-E016 sauf S013_E014), villages de Vestmhor, Dhemorr et Klehrwath et une case de marge ; v1.0.121 : lot 1 (routes courtes), 103 cases dont 11 deja jouables par les corridors de depart (routes 000053 000080 000208 000021 000025 000038 000040 000041 000053 000055 000142 000154 000165 000198 000211 000028 000054 000157), un lieu [GD] par case vide ; v1.0.122 : lot 2 (routes longues, le reste), 146 cases (routes 000057 000073 000076 000077 000079 000116 000143 000145 000156 000158 000159 000048 000068 000078 000164 000062 000063), un lieu [GD] par case vide ; v1.0.124 : iles de Hishtarland (S010_W006-W007, S011_W005-W007) et de Dyprokh (N012_E002-E003), desservies par les lignes maritimes ; v1.0.126 : lot des cellules restantes, 542 cases (toute la terre encore fermee), un lieu [GD] par case vide ; v1.0.128 : les 58 cases jouables seulement par les corridors de depart (Oracle, Moork, Garundel, Magistrya…) sont listees ici, pour que les cases jouables ne dependent plus du reseau routier du generateur (tailles de villes, reliefs et routes des lots suivants) : 1291 cases listees",
+  "_comment_connect": "v1.0.128 : false — les 58 cases des anciens corridors sont listees dans generated_cells et les 8 routes que le generateur gardait pour les departs sont des routes du lore (000242-000249) : les cellules jouables et les routes ne dependent plus du reseau du generateur. Avant : connect_start_cities : les cellules traversees par les routes qui relient les villes de depart (une par faction, v1.0.61) sont ajoutees aux cellules generees (on va a pied d'un royaume a l'autre). corridor_margin_m : la cellule voisine est ajoutee quand la route passe a moins de cette distance (m) de sa frontiere.",
+  "connect_start_cities": false,
   "corridor_margin_m": 300,
   "_comment_graveyards": "v1.0.111 (decision du proprietaire) : toujours exactement 666 cimetieres (exploit du Pelerin des 666 tombes). Une cellule generee sans cimetiere en recoit un isole (sans ville, au bord d une route) ; les hameaux proceduraux de without_graveyard n ont pas de cimetiere (auberge seule) pour garder le total. tools/world_gen echoue si une generation complete ne donne pas target cimetieres. v1.0.119 : 24 hameaux ajoutes (95 au total) pour compenser les 24 cimetieres des 16 cases des routes Farvhenn - Vestmhor et Shaddrek - Klehrwath (meme choix glouton, sur ces cases et les cases generees a 4 cases au plus). v1.0.121-v1.0.122 : les 245 cases ouvertes par les lots de routes sont dans village_only_cells (seuls les villes et villages du lore y ont un cimetiere : ni cimetiere isole ni cimetiere de hameau) ; leurs 34 cimetieres de villages en plus compenses par 34 hameaux ajoutes (129 au total), meme choix glouton (recensement --graveyard-report). v1.0.124 : iles de Hishtarland et de Dyprokh (7 cases villages seulement), 2 cimetieres de villes compenses par 2 hameaux (131 au total, tools/world_gen/choose_graveyards.py). v1.0.126 : cellules restantes (542 cases villages seulement) ; seul le cimetiere de la Forteresse naine d'Heusgly s'ajoute, compense par le hameau de S003_E006 (132 au total, meme choix glouton).",
   "graveyards": {
@@ -259,7 +259,8 @@
       "cell_s003_w010_hameau_0",
       "cell_s006_w007_hameau_0",
       "cell_s006_w008_hameau_0",
-      "cell_s003_e006_hameau_0"
+      "cell_s003_e006_hameau_0",
+      "city_krak_de_jhenner"
     ]
   },
   "generated_cells": [
@@ -405,7 +406,13 @@
     "S016_E009", "S016_E010", "S016_E014", "S016_E015", "S016_E016", "S016_E017", "S016_E018", "S016_E019", "S016_E020", "S016_E021",
     "S016_E022", "S016_E023", "S017_W001", "S017_E000", "S017_E001", "S017_E002", "S017_E003", "S017_E004", "S017_E005", "S017_E006",
     "S017_E007", "S017_E008", "S017_E009", "S017_E010", "S017_E014", "S017_E015", "S017_E016", "S017_E017", "S017_E018", "S017_E019",
-    "S017_E020", "S017_E021"
+    "S017_E020", "S017_E021",
+    "N000_E000", "N000_E001", "N000_E002", "N000_E011", "N000_W001", "N000_W010", "N000_W011", "N001_E011", "N001_W001", "N001_W002",
+    "N002_E011", "N002_W002", "N002_W003", "N003_E011", "N003_W003", "N004_E011", "N004_W003", "N005_W003", "N006_W003", "N007_W004",
+    "N007_W008", "N008_W008", "S001_E002", "S001_E003", "S001_E004", "S001_E011", "S001_W011", "S002_E003", "S002_E004", "S002_E010",
+    "S002_E011", "S002_E012", "S002_E013", "S002_E014", "S002_E015", "S002_W010", "S002_W011", "S003_E003", "S003_E004", "S003_E006",
+    "S003_E007", "S003_E009", "S003_E010", "S003_E011", "S003_E015", "S003_E016", "S003_W010", "S004_E004", "S004_E005", "S004_E006",
+    "S004_E007", "S004_E008", "S004_E009", "S004_E010", "S004_E016", "S005_E008", "S005_E009", "S005_E016"
   ],
   "grid": {
     "_comment": "Une ligne par rangee de N023 (haut) a S018 (bas), 50 caracteres de W021 a E028 (2 colonnes de mer ajoutees de chaque cote du lore W019..E026). Legende dans 'legend'.",
@@ -445,11 +452,11 @@
       "                           -,tTTT.TtM..tttTTTt,-  ",
       "     --------------       -,tTTTTTTTtM%...TTTt_-  ",
       "   ---,,,,,,,,--,,-   -oo--,tTTTTTTTTtM...tTt.,-  ",
-      "   -,,.r..r..t,R%%--------,,tTTTTTTTTt.M......,-  ",
+      "   -,,.r..r..t,R%&--------,,tTTTTTTTTt.M......,-  ",
       "   -,.rr..r.tTRR%&%,,,,___rtTTTTTTTTt.p.r.....,-  ",
       "   -,.r...r.tTTTTRRRt....tRTTTTTTTTt....r....._-  ",
       "   -,,,,..r.tTTTTRTRTt..tTTRRTTTTtt.tttrt....,-   ",
-      "   -----..rRTTTTTRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
+      "   -----..rRTTTTRRTTTTttTTLLLLTTt...tTTTrrr..,-   ",
       "       -,..RTTTTRTTTTt..tTTTRTTt....tTTTt.rrr,-   ",
       "       -,...tTTTRTTtt....tTTTLTt....tTTTt.....,-  ",
       "       -__...tTTR~~~......tttttt....ttttt.....,-  ",
@@ -957,7 +964,7 @@
       "id": "dys",
       "name": "Dys",
       "cell": "N005_W009",
-      "kind": "grande_ville",
+      "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
@@ -981,7 +988,7 @@
       "id": "sauken_glude_of_magistrya",
       "name": "Sauken Glude",
       "cell": "N003_W003",
-      "kind": "grande_ville",
+      "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1029,7 +1036,7 @@
       "id": "ville_feyhin_lokcthat",
       "name": "Feyhin Lokcthat",
       "cell": "N008_E007",
-      "kind": "grande_ville",
+      "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1041,7 +1048,8 @@
       "id": "hishtarland",
       "name": "Hishtarland",
       "cell": "S011_W006",
-      "kind": "ville",
+      "position": { "x_m": -2870, "z_m": 3690 },
+      "kind": "grande_ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1089,7 +1097,7 @@
       "id": "leviathan_jungle",
       "name": "Ghulvathan",
       "cell": "N009_E011",
-      "kind": "ville",
+      "kind": "village",
       "race": "orcs",
       "state": "intact",
       "faction": "dzorak",
@@ -1149,7 +1157,7 @@
       "id": "ville_tbarak",
       "name": "Tbarak",
       "cell": "N018_E010",
-      "kind": "village",
+      "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "empire_hynn",
@@ -1221,7 +1229,7 @@
       "id": "ville_hazol",
       "name": "Hazol",
       "cell": "N017_E011",
-      "kind": "village",
+      "kind": "ville",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1233,7 +1241,7 @@
       "id": "ville_garundel_fief",
       "name": "Fief de Garundel",
       "cell": "S001_E004",
-      "kind": "hameau",
+      "kind": "forteresse",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1243,7 +1251,7 @@
     },
     {
       "id": "ville_village_fantome",
-      "name": "Village fantome",
+      "name": "Village fantôme",
       "cell": "S003_E006",
       "kind": "hameau",
       "race": "humains",
@@ -1281,7 +1289,7 @@
       "id": "farwatch",
       "name": "Farvhenn",
       "cell": "N011_E020",
-      "kind": "hameau",
+      "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1293,7 +1301,7 @@
       "id": "shadowfen",
       "name": "Shaddrek",
       "cell": "S011_E018",
-      "kind": "hameau",
+      "kind": "village",
       "race": "humains",
       "state": "intact",
       "faction": "neutre",
@@ -1316,7 +1324,8 @@
     {
       "id": "ville_equiton",
       "name": "Ekvhitorn",
-      "cell": "S005_W004",
+      "cell": "S006_W004",
+      "position": { "x_m": 4000, "z_m": -2560 },
       "kind": "ville",
       "race": "humains",
       "state": "intact",
@@ -1449,6 +1458,7 @@
       "id": "town_0123",
       "name": "Askhvir",
       "cell": "N010_E005",
+      "position": { "x_m": 680, "z_m": -2910 },
       "kind": "ville",
       "race": "elfes",
       "state": "intact",
@@ -1581,6 +1591,7 @@
       "id": "town_0137",
       "name": "Brokhendt",
       "cell": "S008_W002",
+      "position": { "x_m": -2870, "z_m": -3110 },
       "kind": "ville",
       "race": "humains",
       "state": "intact",
@@ -1664,7 +1675,8 @@
     {
       "id": "hamlet_0172",
       "name": "Zaltheim",
-      "cell": "S008_W010",
+      "cell": "S009_W010",
+      "position": { "x_m": -80, "z_m": -2730 },
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
@@ -1700,7 +1712,8 @@
     {
       "id": "hamlet_0189",
       "name": "Ostrevan",
-      "cell": "N011_W008",
+      "cell": "N012_W008",
+      "position": { "x_m": 120, "z_m": 2420 },
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
@@ -1833,6 +1846,7 @@
       "id": "town_ile_ashwick",
       "name": "Dyprokh",
       "cell": "N012_E002",
+      "position": { "x_m": -3380, "z_m": -1460 },
       "kind": "ville",
       "race": "humains",
       "state": "intact",
@@ -1892,7 +1906,8 @@
     {
       "id": "town_riverfold",
       "name": "Ryvaldh",
-      "cell": "N006_E023",
+      "cell": "N006_E024",
+      "position": { "x_m": 1640, "z_m": 2300 },
       "kind": "ville",
       "race": "humains",
       "state": "intact",
@@ -2025,6 +2040,7 @@
       "id": "town_brinehaven",
       "name": "Brenhaval",
       "cell": "N017_W010",
+      "position": { "x_m": 2560, "z_m": -1430 },
       "kind": "ville",
       "race": "humains",
       "state": "intact",
@@ -2049,6 +2065,7 @@
       "id": "town_truceholm",
       "name": "Thrival",
       "cell": "N019_W010",
+      "position": { "x_m": 140, "z_m": 3300 },
       "kind": "hameau",
       "race": "humains",
       "state": "intact",
@@ -2082,6 +2099,18 @@
       "start_for": [],
       "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026 : ville au fond d'un gouffre caché de Deathtrap Canyon, point de résurrection) ; nom, peuple (Ghaurdes), taille et race [GD] à valider ; SECRÈTE : hors de la carte publique, sans route (relief gouffre_des_revenus)",
       "description": "Village des Ghaurdes, peuple oublié de mineurs nains et d'exilés humains coupés du monde, au fond du Gouffre des Revenus : maisons taillées au pied des parois, torches, cimetière neutre où se réveillent les « revenus » morts dans le canyon [GD v1.0.107, à valider]."
+    },
+    {
+      "id": "city_krak_de_jhenner",
+      "name": "Krak de Jhenner",
+      "cell": "S006_E012",
+      "kind": "forteresse",
+      "race": "humains",
+      "state": "ruine",
+      "faction": "empire_hynn",
+      "start_for": [],
+      "source": "[BD] BD-T5 ; case [GD] v1.0.117 ; [DÉCISION] v1.0.128 : en ruine, sans cimetière (666 gardés)",
+      "description": "Première place impériale tombée devant la Lune Noire (BD-T5 p.22) : remparts éventrés et tours effondrées au débouché des plaines vers les coulées."
     }
   ],
   "pois": [
@@ -2094,21 +2123,21 @@
     },
     {
       "id": "poi_foret_rencontre",
-      "name": "Foret de la Rencontre",
+      "name": "Forêt de la Rencontre",
       "cell": "N012_E008",
       "kind": "foret",
       "description": "Clairiere ou Pile-ou-Face donna son nom a Wismerhill, au coin du feu."
     },
     {
       "id": "poi_camp_etang",
-      "name": "Camp de l'Etang",
+      "name": "Camp de l'Étang",
       "cell": "N018_E012",
       "kind": "etang",
       "description": "Halte de la horde de Ghorghor Bey au bord d'un etang aux nenuphars."
     },
     {
       "id": "poi_premiere_bataille",
-      "name": "Champ de la Premiere Bataille",
+      "name": "Champ de la Première Bataille",
       "cell": "N018_E011",
       "kind": "champ_bataille",
       "description": "Plaine herissee de piques ou Ghorghor Bey ecrasa l'armee d'un seigneur local."
@@ -2122,7 +2151,7 @@
     },
     {
       "id": "poi_atmosphere",
-      "name": "L'Atmosphere",
+      "name": "L'Atmosphère",
       "cell": "S001_W003",
       "kind": "faille",
       "description": "Gorge entre deux parois en forme de visage : entree de la Passe des Dragons."
@@ -2136,10 +2165,10 @@
     },
     {
       "id": "poi_palais_passe",
-      "name": "Palais abandonne de la Passe",
+      "name": "Palais des Maîtres des Dragons",
       "cell": "S003_W004",
-      "kind": "ruine",
-      "description": "Palais oublie au coeur de la Passe des Dragons."
+      "kind": "cite",
+      "description": "Palais des Maîtres des Dragons au cœur de la Passe des Dragons, gardé par les Chevaliers-Dragons ([DÉCISION] v1.0.128 : fusion avec le palais abandonné de la Passe)."
     },
     {
       "id": "poi_deathtrap",
@@ -2150,10 +2179,10 @@
     },
     {
       "id": "poi_arche",
-      "name": "Grande Arche",
+      "name": "Tour Carrée de la Lune Noire",
       "cell": "S004_E020",
       "kind": "monolithe",
-      "description": "Portail entre la Lune et la Terre."
+      "description": "Tour carrée de trente étages, dite « Grande Arche » : portail entre la Lune et la Terre ([DÉCISION] v1.0.128 : un seul lieu)."
     },
     {
       "id": "poi_porte_1",
@@ -2204,14 +2233,14 @@
     },
     {
       "id": "poi_volcan_cratere",
-      "name": "Cratere du volcan",
+      "name": "Cratère du volcan",
       "cell": "S008_E014",
       "kind": "volcan",
       "description": "Cratere fumant du volcan actif ; entree du scenario Le Coeur du volcan."
     },
     {
       "id": "poi_abysses_baie",
-      "name": "Entree des Abysses",
+      "name": "Entrée des Abysses",
       "cell": "S008_W005",
       "kind": "gouffre",
       "description": "Entree sous-marine cachee des Abysses de la baie."
@@ -2248,7 +2277,7 @@
     },
     {
       "id": "poi_defile_mordrek",
-      "name": "Defile de Mordrek",
+      "name": "Défilé de Mordrek",
       "cell": "N016_E013",
       "kind": "defile",
       "description": "Defile a falaises rouges des Marches du Nord ou l'armee des Gigantomorphes est arretee (BD-T14) [INFERE]."
@@ -2283,7 +2312,7 @@
     },
     {
       "id": "poi_reriah",
-      "name": "Reriah",
+      "name": "Rériah",
       "cell": "N018_E015",
       "kind": "cite",
       "description": "Petite ville fortifiee des Marches du Nord sur l'itineraire du Cirque du Magnifique, avant Almuria (BD-A1) [INFERE]."
@@ -2297,7 +2326,7 @@
     },
     {
       "id": "poi_chateau_de_la_mort",
-      "name": "Chateau de la Mort",
+      "name": "Château de la Mort",
       "cell": "N013_E016",
       "kind": "ruine",
       "description": "Ruines de la forteresse-mine imperiale encastree dans une falaise ; prise par les orques descendus du plateau en nacelles (BD-A4) [INFERE]."
@@ -2318,10 +2347,10 @@
     },
     {
       "id": "poi_elevages_imperiaux",
-      "name": "Elevages imperiaux",
+      "name": "Élevages impériaux",
       "cell": "N002_W008",
       "kind": "elevage",
-      "description": "Enclos et paturages de l'armee imperiale : behemoths et leviathans de guerre (bestiaire v1.0.58, GD) [INFERE : plaines des Terres de l'Empereur]."
+      "description": "Enclos et pâturages de l'armée impériale : béhémoths et léviathans de guerre (bestiaire v1.0.58, GD) [INFÉRÉ : plaines des Terres de l'Empereur]."
     },
     {
       "id": "poi_camp_manoeuvres_legions",
@@ -2590,11 +2619,11 @@
     {
       "id": "poi_port_orderfen",
       "name": "Port d'Ostrevan",
-      "cell": "N011_W008",
+      "cell": "N012_W008",
       "kind": "port",
-      "offset_x_m": 2500,
-      "offset_z_m": -4300,
-      "description": "Ponton d'Ostrevan au bord nord de sa case, au bout d'une jetée vers la côte nord, terminus de la ligne maritime du Nord. [GD v1.0.74, à valider]"
+      "offset_x_m": 2315,
+      "offset_z_m": 3537,
+      "description": "Ponton d'Ostrevan au bord de la mer, au nord-est du hameau, terminus de la ligne maritime du Nord. [GD v1.0.128 : suit Ostrevan en N012_W008]"
     },
     {
       "id": "poi_camp_du_cap",
@@ -2995,6 +3024,7 @@
       "id": "poi_borne_monts_de_moork",
       "name": "Borne des Monts de Moork",
       "cell": "S005_E016",
+      "position": { "x_m": -470, "z_m": 4300 },
       "kind": "monolithe",
       "offset_x_m": -100,
       "offset_z_m": 4000,
@@ -10431,6 +10461,20 @@
       "cell": "S017_E021",
       "kind": "camp",
       "description": "Pêcherie de la côte où l'on sale le poisson ; les barques rentrent à la marée du soir. Niveaux 23-27. [GD v1.0.126, lieu_pecherie_de_khrozrad]."
+    },
+    {
+      "id": "poi_passe_heniak",
+      "name": "Passe de Heniak",
+      "cell": "S008_E009",
+      "kind": "defile",
+      "description": "Passe tenue par les impériaux sur la route de Tsaroth, évitée par Greldinard (BD-T5 p.11) [case GD v1.0.117, au master v1.0.128]."
+    },
+    {
+      "id": "poi_citadelle_imperiale_tsaroth",
+      "name": "Citadelle impériale (avant Tsaroth)",
+      "cell": "S008_E011",
+      "kind": "ruine",
+      "description": "Dernière place forte impériale avant la Faille de Tsaroth, prise par la Lune Noire après le Krak de Jhenner (BD-T5 p.22-23) [case GD v1.0.117, au master v1.0.128]."
     }
   ],
   "imports": {
@@ -10443,7 +10487,7 @@
     "spawners": "zones/feyhin/spawners.json",
     "quest_poi": "quests/quest_poi_feyhin.json"
   },
-  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs.",
+  "_comment_river_courses": "Cours d'eau traces a la main (tools/world_gen, Terrain.cpp BuildMacroRivers) : la riviere suit les centres des cases listees (codes riviere de la grille), puis descend vers la mer ; island_city = ville entouree par deux bras (ile fluviale). v1.0.72 : une source dans la case d'une ville perchee sur une colline (reliefs) nait au pied de la colline. Noms provisoires : le proprietaire nommera les fleuves, rivieres et lacs. v1.0.129 : les 8 rivieres principales du lore y sont (cours_*, lore_id), to_sea=false pour un cours qui finit dans un lac ; le trace suit le terrain entre les cases (A* de vallee), les ancres intermediaires sont decalees de 1,8 km au plus ; ruisseaux generes en plus (Terrain.cpp).",
   "river_courses": [
     {
       "id": "fleuve_sysigie",
@@ -10466,6 +10510,72 @@
       "cells": ["N010_W015", "N010_W014", "N011_W014", "N012_W014"],
       "width_m": 30,
       "source": "[DÉCISION] v1.0.72 : naît au pied de la colline de Vaerdhun, vers l'est puis le nord, contourne Treuvhal (N011_W014) ; embouchure sur la côte nord (N012_W014) ; lore riv_verdansur_nord."
+    },
+    {
+      "id": "cours_liaison_lacs",
+      "name": "Rivière des deux lacs",
+      "lore_id": "riv_liaison_lacs",
+      "cells": ["N007_E006", "N008_E007", "N007_E007"],
+      "width_m": 24,
+      "to_sea": false,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_lac_sud",
+      "name": "Rivière du lac du sud",
+      "lore_id": "riv_lac_sud",
+      "cells": ["N005_E008", "N006_E007", "N007_E007"],
+      "width_m": 22,
+      "to_sea": false,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_ashwick",
+      "name": "Rivière d'Askhvir",
+      "lore_id": "riv_ashwick",
+      "cells": ["N007_E005", "N008_E006", "N009_E005", "N010_E005", "N011_E005"],
+      "width_m": 40,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_cascade_northind",
+      "name": "Rivière de la cascade",
+      "lore_id": "riv_cascade_northind",
+      "cells": ["N003_W005", "N004_W005", "N005_W005", "N006_W005", "N007_W005", "N007_W004", "N008_W004", "N009_W004", "N010_W004", "N011_W004", "N012_W004"],
+      "width_m": 38,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_cascade_bras_est",
+      "name": "Rivière de la cascade (bras est)",
+      "lore_id": "riv_cascade_bras_est",
+      "cells": ["N008_W004", "N009_W003", "N010_W002"],
+      "width_m": 22,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_source_n008_w002",
+      "name": "Rivière de la source de N008_W002",
+      "lore_id": "riv_source_n008_w002",
+      "cells": ["N008_W002", "N009_W002", "N010_W002"],
+      "width_m": 20,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_rivercross",
+      "name": "Rivière de Rhivkhar",
+      "lore_id": "riv_rivercross",
+      "cells": ["N010_E019", "N009_E019", "N008_E018", "N007_E019", "N007_E020", "N007_E021", "N006_E021", "N006_E022", "N006_E023"],
+      "width_m": 40,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
+    },
+    {
+      "id": "cours_southport",
+      "name": "Rivière de Suthvarn",
+      "lore_id": "riv_southport",
+      "cells": ["S013_E006", "S014_E006", "S015_E006", "S016_E006"],
+      "width_m": 34,
+      "source": "[DÉCISION] v1.0.129 : une des 8 rivières principales du lore (hydrography.rivers), tracée en jeu ; nom provisoire du lore"
     }
   ],
   "_comment_reliefs": "Reliefs locaux poses a la main (v1.0.72, tools/world_gen Terrain.cpp ReliefContribution), ajoutes au relief macro et ancres sur le centre de la case de la ville 'city' (la ville y est posee). colline : plateau sommital (top_radius_m) a height_m au-dessus du relief, flanc jusqu'au pied (foot_radius_m) ; les cours d'eau qui partent de la case naissent au pied. crevasse : massif (foot_radius_m, contour ondule, bord exterieur en pente douce) releve de height_m, entaille d'une fente a fond plat (half_width_m, parois raides de wall_m) qui s'ouvre vers la case open_toward et se ferme back_m derriere la ville (cul-de-sac) ; les routes ne franchissent pas le massif ; mine = nom de la mine posee au fond. massif (v1.0.77) : relief de cretes et de pics SANS ville, ancre sur le centre de la case 'cell' decale de offset_x_m / offset_z_m (m, est / sud) : dome de rayon foot_radius_m (contour lobe) haut de height_m, decoupe par un bruit en cretes (cretes, pics, ravins) ; il ne s'applique qu'aux terres deja emergees : la cote ne bouge pas et le relief y monte en falaise. Le code de la case ne change pas (Ile de la Treve : foret T, pics boises ; le lore met ces cases en mountain). gouffre (v1.0.107) : fosse CREUSEE sous la ville 'city' posee au fond (position manuelle admise : le gouffre suit la ville) ; fond plat a l'altitude du point le plus bas du pourtour moins depth_m, rayon floor_radius_m (contour lobe), parois abruptes sur wall_m ; galerie de sortie 'gallery' (points en m depuis le centre du gouffre, du fond vers l'entree cachee), fente de gallery_half_width_m de demi-largeur et parois de gallery_wall_m dont le sol monte regulierement du fond a l'entree ; ni routes ni lieux proceduraux ni faune dedans ; torches au fond et dans la galerie (docs/world/LORE_BD.md section 16.36). falaise (v1.0.120) : cote en falaise de craie sur les cases 'cells' (sans ville) : a beach_m de la mer (mer reliee au large), la terre monte de height_m (+/- 15 %) sur wall_m, puis plateau ; plage au pied ; extinction sur fade_m hors des cases ; paroi blanche dans le splat et sur la carte du monde.",
@@ -10620,7 +10730,7 @@
   "sea_lines": [
     {"id": "ligne_maritime_sud", "name": "Ligne maritime du sud", "loop": true, "price_gold_per_leg": 10, "boats": 2, "stop_seconds": 30, "stops": [{"city": "ville_equiton", "cell": "S006_W004"}, {"city": "town_0137", "cell": "S008_W002"}, {"city": "hishtarland", "cell": "S011_W006"}, {"city": "hamlet_0172", "cell": "S009_W010"}]},
     {"id": "navette_ashwick_ile", "name": "Navette Askhvir – Dyprokh", "loop": false, "price_gold_per_leg": 5, "boats": 1, "stop_seconds": 30, "stops": [{"city": "town_0123", "cell": "N010_E005"}, {"city": "town_ile_ashwick", "cell": "N012_E002"}]},
-    {"id": "ligne_maritime_du_nord", "name": "Ligne maritime du Nord", "loop": false, "price_gold_per_leg": 10, "boats": 2, "stop_seconds": 30, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "hamlet_0153", "cell": "N011_W004"}, {"city": "hamlet_0189", "cell": "N012_W007"}]},
+    {"id": "ligne_maritime_du_nord", "name": "Ligne maritime du Nord", "loop": false, "price_gold_per_leg": 10, "boats": 2, "stop_seconds": 30, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "hamlet_0153", "cell": "N011_W004"}, {"city": "hamlet_0189", "cell": "N012_W008"}]},
     {"id": "navette_brinehaven_truceholm", "name": "Navette Brenhaval – Thrival", "loop": false, "price_gold_per_leg": 5, "boats": 1, "stop_seconds": 30, "stops": [{"city": "town_brinehaven", "cell": "N017_W010"}, {"city": "town_truceholm", "cell": "N019_W010"}]}
   ],
   "_comment_lore_roads": "Routes du lore (v1.0.105), recopiees de legacy/world-builder-html/lune-noire-data.json (collection routes) par tools/lore/sync_routes.py : NE PAS EDITER A LA MAIN, tracer dans l'editeur (mode Tracer) puis relancer le script. type : road | imperial_road | path (routes maritimes non recopiees) ; from / to : ville ou POI du master, vide = jonction (embranchement sur une autre route de la case) ou extremite sans entree au master ; waypoints : cases du trace, extremites comprises. tools/world_gen (Roads.cpp) trace chaque route en passant par chaque case (ville de la case, sinon point praticable le plus proche du centre) et cherche son chemin sur le terrain entre deux cases ; les routes de son propre reseau ne sont gardees que pour relier les villes de depart sans equivalent au lore (docs/world/LORE_BD.md section 16.34).",
@@ -10644,11 +10754,11 @@
     { "id": "000048", "type": "road", "from": "hamlet_0154", "to": "hamlet_0175", "waypoints": ["S008_W013", "S006_W014"] },
     { "id": "000049", "type": "road", "from": "hamlet_0175", "to": "hamlet_0214", "waypoints": ["S006_W014", "S004_W015"] },
     { "id": "000052", "type": "road", "from": "dys", "to": "town_0129", "waypoints": ["N005_W009", "N007_W011"] },
-    { "id": "000053", "type": "road", "from": "hamlet_0172", "to": "hamlet_0174", "waypoints": ["S008_W010", "S006_W008"] },
+    { "id": "000053", "type": "road", "from": "hamlet_0172", "to": "hamlet_0174", "waypoints": ["S009_W010", "S006_W008"] },
     { "id": "000054", "type": "road", "from": "horker", "to": "hamlet_0206", "waypoints": ["N004_E009", "N006_E011"] },
     { "id": "000055", "type": "road", "from": "ville_feyhin_lokcthat", "to": "town_0123", "waypoints": ["N008_E007", "N010_E005"] },
     { "id": "000056", "type": "road", "from": "city_horkher", "to": "hamlet_0206", "waypoints": ["N006_E014", "N006_E011"] },
-    { "id": "000057", "type": "road", "from": "hamlet_0154", "to": "hamlet_0172", "waypoints": ["S008_W013", "S008_W010"] },
+    { "id": "000057", "type": "road", "from": "hamlet_0154", "to": "hamlet_0172", "waypoints": ["S008_W013", "S009_W010"] },
     { "id": "000060", "type": "road", "from": "town_0127", "to": "hamlet_0196", "waypoints": ["N001_E011", "S002_E011"] },
     { "id": "000062", "type": "road", "from": "town_0137", "to": "hamlet_0218", "waypoints": ["S008_W002", "S011_W002"] },
     { "id": "000063", "type": "road", "from": "town_0114", "to": "hamlet_0217", "waypoints": ["S014_E006", "S013_E003"] },
@@ -10666,7 +10776,7 @@
     { "id": "000078", "type": "road", "from": "hamlet_0217", "to": "hamlet_0218", "waypoints": ["S013_E003", "S011_W002"] },
     { "id": "000079", "type": "road", "from": "town_0120", "to": "hamlet_0193", "waypoints": ["S009_E004", "S008_E005", "S007_E006", "S006_E007", "S005_E008"] },
     { "id": "000080", "type": "road", "from": "ville_der_hem_shelsem", "to": "town_0118", "waypoints": ["S010_E010", "S014_E013"] },
-    { "id": "000082", "type": "road", "from": "", "to": "ville_equiton", "waypoints": ["S003_W004", "S005_W004"] },
+    { "id": "000082", "type": "road", "from": "", "to": "ville_equiton", "waypoints": ["S003_W004", "S006_W004"] },
     { "id": "000083", "type": "road", "from": "ville_sysigie", "to": "town_0119", "waypoints": ["N009_W011", "N010_W015"] },
     { "id": "000084", "type": "road", "from": "ville_altenberg", "to": "dys", "waypoints": ["N005_W013", "N005_W009"] },
     { "id": "000086", "type": "road", "from": "sauken_glude_of_magistrya", "to": "hamlet_0205", "waypoints": ["N003_W003", "N004_E001"] },
@@ -10675,7 +10785,7 @@
     { "id": "000091", "type": "road", "from": "ville_oracle_camp", "to": "hamlet_0205", "waypoints": ["N000_E000", "N004_E001"] },
     { "id": "000092", "type": "road", "from": "hamlet_0146", "to": "hamlet_0193", "waypoints": ["S003_E003", "S005_E008"] },
     { "id": "000094", "type": "road", "from": "ville_feyhin_lokcthat", "to": "hamlet_0206", "waypoints": ["N008_E007", "N008_E008", "N008_E009", "N008_E010", "N007_E011", "N006_E011"] },
-    { "id": "000095", "type": "road", "from": "hamlet_0189", "to": "hamlet_0153", "waypoints": ["N011_W008", "N010_W007", "N010_W006", "N010_W005", "N011_W004"] },
+    { "id": "000095", "type": "road", "from": "hamlet_0189", "to": "hamlet_0153", "waypoints": ["N012_W008", "N011_W008", "N010_W007", "N010_W006", "N010_W005", "N011_W004"] },
     { "id": "000097", "type": "road", "from": "town_0127", "to": "hamlet_0201", "waypoints": ["N001_E011", "N002_E015"] },
     { "id": "000100", "type": "road", "from": "town_0126", "to": "town_0131", "waypoints": ["N001_E020", "N004_E018"] },
     { "id": "000101", "type": "road", "from": "town_0131", "to": "town_0115", "waypoints": ["N004_E018", "N005_E020"] },
@@ -10707,7 +10817,7 @@
     { "id": "000142", "type": "road", "from": "hamlet_0206", "to": "hameau_grakhul", "waypoints": ["N006_E011", "N007_E011", "N008_E012"] },
     { "id": "000143", "type": "road", "from": "kendrhir_vale", "to": "ville_whispers_hill", "waypoints": ["N015_E012", "N014_E011", "N013_E010", "N012_E009", "N011_E008"] },
     { "id": "000144", "type": "road", "from": "ville_whispers_hill", "to": "town_0123", "waypoints": ["N011_E008", "N010_E007", "N009_E006", "N010_E005"] },
-    { "id": "000145", "type": "road", "from": "ville_tbarak", "to": "ville_dunfold", "waypoints": ["N018_E010", "N017_E011", "N017_E012", "N017_E013"] },
+    { "id": "000145", "type": "road", "from": "ville_tbarak", "to": "ville_hazol", "waypoints": ["N018_E010", "N017_E011"] },
     { "id": "000146", "type": "road", "from": "", "to": "town_0113", "waypoints": ["N016_E016", "N017_E017", "N018_E018"] },
     { "id": "000147", "type": "road", "from": "town_0113", "to": "ville_klindor", "waypoints": ["N018_E018", "N017_E019"] },
     { "id": "000148", "type": "road", "from": "ville_ghrunke_dash", "to": "hamlet_0196", "waypoints": ["S007_E016", "S006_E015", "S005_E014", "S004_E013", "S003_E012", "S002_E011"] },
@@ -10721,7 +10831,7 @@
     { "id": "000157", "type": "road", "from": "hamlet_fernhill", "to": "highfall", "waypoints": ["N019_E022", "N018_E021", "N018_E020"] },
     { "id": "000158", "type": "road", "from": "hamlet_draketon", "to": "highfall", "waypoints": ["N021_E019", "N020_E020", "N019_E021", "N018_E020"] },
     { "id": "000159", "type": "road", "from": "town_stonebridge", "to": "highfall", "waypoints": ["N016_E023", "N016_E022", "N017_E021", "N018_E020"] },
-    { "id": "000160", "type": "road", "from": "town_riverfold", "to": "town_0115", "waypoints": ["N006_E023", "N005_E022", "N004_E021", "N005_E020"] },
+    { "id": "000160", "type": "road", "from": "town_riverfold", "to": "town_0115", "waypoints": ["N006_E024", "N006_E023", "N005_E022", "N004_E021", "N005_E020"] },
     { "id": "000161", "type": "road", "from": "town_greyfield", "to": "town_0115", "waypoints": ["N003_E023", "N003_E022", "N004_E021", "N005_E020"] },
     { "id": "000162", "type": "road", "from": "hamlet_dustfield", "to": "town_0126", "waypoints": ["S001_E023", "S001_E022", "N000_E021", "N001_E020"] },
     { "id": "000163", "type": "road", "from": "town_ironbrook", "to": "town_0108", "waypoints": ["S008_E024", "S009_E023", "S010_E022", "S011_E021", "S011_E020"] },
@@ -10754,7 +10864,7 @@
     { "id": "000194", "type": "path", "from": "hamlet_greenbough", "to": "poi_autel_des_vents", "waypoints": ["N006_W006", "N006_W006"] },
     { "id": "000195", "type": "path", "from": "hamlet_fernhollow", "to": "poi_bosquet_des_pavanes", "waypoints": ["N007_W007", "N006_W007"] },
     { "id": "000196", "type": "path", "from": "hamlet_fernhollow", "to": "poi_tour_des_fleches_blanches", "waypoints": ["N007_W007", "N007_W007"] },
-    { "id": "000198", "type": "road", "from": "hamlet_tithemead", "to": "hamlet_0189", "waypoints": ["N010_W010", "N010_W009", "N011_W008"] },
+    { "id": "000198", "type": "road", "from": "hamlet_tithemead", "to": "hamlet_0189", "waypoints": ["N010_W010", "N010_W009", "N011_W008", "N012_W008"] },
     { "id": "000199", "type": "road", "from": "hameau_eaglewatch", "to": "hamlet_lambsfold", "waypoints": ["N002_W010", "N003_W011", "N004_W011"] },
     { "id": "000200", "type": "road", "from": "hamlet_lambsfold", "to": "ville_altenberg", "waypoints": ["N004_W011", "N005_W013"] },
     { "id": "000201", "type": "path", "from": "hamlet_greyhedge", "to": "hamlet_ambermead", "waypoints": ["N001_W008", "N002_W008", "N003_W008"] },
@@ -10775,21 +10885,32 @@
     { "id": "000216", "type": "road", "from": "town_lanternhold", "to": "town_duskmoor", "waypoints": ["N021_W014", "N022_W013", "N022_W012", "N022_W011", "N022_W010"] },
     { "id": "000217", "type": "path", "from": "town_lanternhold", "to": "poi_tertre_rois_noyes", "waypoints": ["N021_W014", "N020_W013", "N019_W013"] },
     { "id": "000220", "type": "path", "from": "town_truceholm", "to": "poi_gouffre_de_la_baie", "waypoints": ["N019_W010", "N020_W011"] },
-    { "id": "000224", "type": "path", "from": "hamlet_0174", "to": "ville_equiton", "waypoints": ["S006_W008", "S006_W007", "S006_W006", "S006_W005", "S005_W004"] },
+    { "id": "000224", "type": "path", "from": "hamlet_0174", "to": "ville_equiton", "waypoints": ["S006_W008", "S006_W007", "S006_W006", "S006_W005", "S005_W004", "S006_W004"] },
     { "id": "000225", "type": "path", "from": "hamlet_brightholm", "to": "poi_ruines_du_prieure", "waypoints": ["N005_W010", "N004_W010"] },
     { "id": "000226", "type": "path", "from": "town_lanternhold", "to": "poi_ile_temple_des_cimes", "waypoints": ["N021_W014", "N021_W013"] },
     { "id": "000227", "type": "path", "from": "poi_camp_du_cap", "to": "poi_ile_temple_de_la_lune", "waypoints": ["N017_W013", "N018_W013"] },
     { "id": "000228", "type": "road", "from": "ville_northind", "to": "ville_orkh", "waypoints": ["N007_W005", "N008_W005", "N008_W006"] },
     { "id": "000229", "type": "road", "from": "hamlet_gharzuk", "to": "town_0133", "waypoints": ["N008_E013", "N008_E014", "N009_E014", "N009_E015", "N010_E016"] },
     { "id": "000230", "type": "road", "from": "ville_sysigie", "to": "hamlet_0148", "waypoints": ["N009_W011", "N010_W012", "N010_W013", "N011_W013", "N011_W014"] },
-    { "id": "000231", "type": "road", "from": "town_riverfold", "to": "town_greyfield", "waypoints": ["N006_E023", "N005_E023", "N004_E023", "N003_E023"] },
+    { "id": "000231", "type": "road", "from": "town_riverfold", "to": "town_greyfield", "waypoints": ["N006_E024", "N006_E023", "N005_E023", "N004_E023", "N003_E023"] },
     { "id": "000232", "type": "road", "from": "town_greyfield", "to": "town_0126", "waypoints": ["N003_E023", "N002_E023", "N002_E022", "N001_E022", "N001_E021", "N001_E020"] },
     { "id": "000233", "type": "path", "from": "hamlet_dustfield", "to": "poi_bergerie_des_chevriers", "waypoints": ["S001_E023", "N000_E022"] },
-    { "id": "000234", "type": "road", "from": "town_0115", "to": "town_riverfold", "waypoints": ["N005_E020", "N006_E021", "N006_E022", "N006_E023"] },
+    { "id": "000234", "type": "road", "from": "town_0115", "to": "town_riverfold", "waypoints": ["N005_E020", "N006_E021", "N006_E022", "N006_E023", "N006_E024"] },
     { "id": "000235", "type": "path", "from": "hamlet_eisenkehl", "to": "town_0125", "waypoints": ["S008_E018", "S008_E019", "S009_E019", "S009_E020"] },
     { "id": "000236", "type": "path", "from": "", "to": "ville_der_hem_shelsem", "waypoints": ["S006_E008", "S007_E008", "S008_E008", "S009_E009", "S010_E010"] },
     { "id": "000237", "type": "road", "from": "hameau_eaglewatch", "to": "hameau_marn", "waypoints": ["N002_W010", "N003_W009"] },
-    { "id": "000238", "type": "road", "from": "ville_whispers_hill", "to": "ville_feyhin_lokcthat", "waypoints": ["N011_E008", "N010_E008", "N009_E007", "N008_E007"] }
+    { "id": "000238", "type": "road", "from": "ville_whispers_hill", "to": "ville_feyhin_lokcthat", "waypoints": ["N011_E008", "N010_E008", "N009_E007", "N008_E007"] },
+    { "id": "000239", "type": "road", "from": "city_krak_de_jhenner", "to": "", "waypoints": ["S006_E012", "S005_E013", "S004_E013"] },
+    { "id": "000240", "type": "road", "from": "ville_hazol", "to": "ville_ashcroft", "waypoints": ["N017_E011", "N017_E012"] },
+    { "id": "000241", "type": "road", "from": "ville_ashcroft", "to": "ville_dunfold", "waypoints": ["N017_E012", "N017_E013"] },
+    { "id": "000242", "type": "road", "from": "ville_moork", "to": "ville_ghrunke_dash", "waypoints": ["S002_E015", "S003_E015", "S003_E016", "S004_E016", "S005_E016", "S006_E016", "S007_E016"] },
+    { "id": "000243", "type": "road", "from": "hameau_silverglade", "to": "sauken_glude_of_magistrya", "waypoints": ["N007_W003", "N006_W003", "N005_W003", "N004_W003", "N003_W003"] },
+    { "id": "000244", "type": "road", "from": "ville_northind", "to": "hamlet_greenbough", "waypoints": ["N007_W005", "N006_W005", "N006_W006"] },
+    { "id": "000245", "type": "road", "from": "ville_moork", "to": "hamlet_0196", "waypoints": ["S002_E015", "S002_E014", "S002_E013", "S002_E012", "S002_E011"] },
+    { "id": "000246", "type": "road", "from": "hamlet_greenbough", "to": "hamlet_fernhollow", "waypoints": ["N006_W006", "N007_W006", "N007_W007"] },
+    { "id": "000247", "type": "road", "from": "hamlet_bridlecrag", "to": "hamlet_0157", "waypoints": ["S004_W006", "S004_W007", "S004_W008", "S003_W008"] },
+    { "id": "000248", "type": "road", "from": "hamlet_wardholt", "to": "hamlet_fernhollow", "waypoints": ["N009_W009", "N008_W009", "N008_W008", "N007_W008", "N007_W007"] },
+    { "id": "000249", "type": "road", "from": "hameau_dawnmere", "to": "town_0129", "waypoints": ["N005_W011", "N006_W011", "N007_W011"] }
   ],
   "extra_lakes": [
     {

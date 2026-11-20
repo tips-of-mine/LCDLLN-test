@@ -100,7 +100,7 @@ autre mot.
 |---|---|
 | Rôle | Réécrit la clé `lore_roads` du master à partir de la collection `routes` du lore (v1.0.105) ; `tools/world_gen` trace ensuite chaque route **case par case**. |
 | Format écrit | une ligne par route, ordre du lore : `{ "id", "type": road \| imperial_road \| path, "from", "to", "waypoints" }`. Les `sea_route` **ne sont pas recopiées** (pas de ponton dans le générateur). |
-| Extrémités | id du master : ville (même id), POI (`lieu_x` → `poi_x`), table `EXTREMITES` (entrées nord / sud de la Mine de la Traverse, Hameau de Marn), table `LIEUX_VILLES` (lieu du lore qui est une ville du master) ; `""` = jonction (embranchement) ou extrémité sans entrée au master (avertissement). |
+| Extrémités | id du master : ville (même id), POI (`lieu_x` → `poi_x`), table `EXTREMITES` (vide depuis la v1.0.128 : les entrées de la Mine de la Traverse et le Hameau de Marn ont leur fiche au lore), table `LIEUX_VILLES` (lieu du lore qui est une ville du master) ; `""` = jonction (embranchement) ou extrémité sans entrée au master (avertissement). |
 | Waypoints | cases du tracé, extrémités comprises ; sans tracé : `[départ, arrivée]`. |
 | Refus (code 2) | route sans case de départ ou d'arrivée, case invalide. |
 | Options | `--check` (code 1 si pas à jour), `--lore <json>`, `--master <json>` (autres fichiers, pour les tests). |

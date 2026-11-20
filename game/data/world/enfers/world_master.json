@@ -47,7 +47,7 @@
   "cities": [
     {
       "id": "citadelle_legion",
-      "name": "Citadelle de la Legion",
+      "name": "Citadelle de la Légion",
       "cell": "N000_E000",
       "kind": "camp",
       "race": "demons",
@@ -147,7 +147,7 @@
     },
     {
       "id": "poi_enfers_nef_des_ames",
-      "name": "Nef des Ames",
+      "name": "Nef des Âmes",
       "cell": "N001_E000",
       "kind": "salle",
       "offset_x_m": -2000,
@@ -192,7 +192,7 @@
     },
     {
       "id": "poi_enfers_plateaux_des_legions",
-      "name": "Plateaux suspendus des Legions",
+      "name": "Plateaux suspendus des Légions",
       "cell": "N000_E001",
       "kind": "camp",
       "offset_x_m": 2500,

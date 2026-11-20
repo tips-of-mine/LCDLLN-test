@@ -44,6 +44,7 @@ namespace tools::world_gen
 			dst.scatterInstances += src.scatterInstances;
 			dst.scatterMeshes = std::max(dst.scatterMeshes, src.scatterMeshes);
 			dst.buildings += src.buildings;
+			dst.bridges += src.bridges; // v1.0.129
 			dst.spawners += src.spawners;
 			dst.ambientNpcs += src.ambientNpcs;
 			dst.creatures += src.creatures;
@@ -230,6 +231,9 @@ namespace tools::world_gen
 	/// Les cellules ajoutées suivent celles du master, dans l'ordre de parcours.
 	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids)
 	{
+		// v1.0.128 : sans `connect_start_cities` (toutes les cases des anciens corridors sont
+		// listées dans generated_cells), les corridors n'ajoutent plus aucune cellule.
+		if (!g.master.connectStartCities) return;
 		const std::vector<Road>& network = g.generatorRoads.empty() ? g.roads : g.generatorRoads;
 		const std::vector<size_t> chosenRoads = StartCorridorRoads(g, network, true);
 		const size_t added = AddCorridorCells(g, network, chosenRoads, ids);
@@ -266,6 +270,14 @@ namespace tools::world_gen
 		timed("macro : rivieres", [&] { BuildMacroRivers(g); });  // rivières (contournent les villes)
 		timed("macro : routes", [&] { BuildMacroRoads(g); });     // routes du lore + corridors du générateur, profils en long
 		timed("macro : lignes maritimes", [&] { BuildMacroSeaRoutes(g); }); // v1.0.125 : trajets des bateaux (cellules de mer)
+		// Lot carte v1.0.128 : aperçu du continent seul (aucune cellule, aucune sortie du monde).
+		if (!opt.previewMap.empty())
+		{
+			if (!WriteMapPreview(g, opt.previewMap, opt.previewSize, err)) return false;
+			std::printf("[world_gen] apercu du continent ecrit : %s\n", opt.previewMap.c_str());
+			outReport = g.report;
+			return true;
+		}
 
 		std::vector<std::string> ids = opt.cells.empty() ? g.master.generatedCells : opt.cells;
 		// Monde complet : cellules des routes reliant les villes de départ.
@@ -319,6 +331,7 @@ namespace tools::world_gen
 			timed("cellule : import", [&] { imported = ImportLegacyContent(*w, cerr); }); // occupe la place des objets historiques
 			if (!imported) return cerr.empty() ? std::string("import du contenu historique impossible") : cerr;
 			timed("cellule : agglomerations", [&] { BuildSettlements(*w); }); // rues, bâtiments, remparts, mobilier, graphe PNJ
+			timed("cellule : ponts", [&] { BuildBridges(*w); });             // v1.0.129 : ponts de pierre et de bois sur les cours d'eau
 			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
 			timed("cellule : vegetation", [&] { BuildVegetation(*w); });      // décor naturel (respecte l'occupation)

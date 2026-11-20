@@ -1063,6 +1063,8 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.51](#1651-bateaux-des-lignes-maritimes-à-bord-en-temps-réel-v10125) | v1.0.125 | Bateaux des lignes maritimes | Dromons visibles qui suivent les lignes (2 par ligne, 1 par navette, 8 m/s, 30 s à quai), embarquement au quai, marche libre sur le pont, étape payée au départ ; passeur retiré ; 46 cases de mer ouvertes. |
 | [16.52](#1652-cellules-restantes-ouvertes-au-jeu-v10126) | v1.0.126 | Cellules restantes ouvertes | Toute la terre des Royaumes jouable : 542 cases ouvertes (1 337 cellules jouables), 529 lieux `[GD]`, Forteresse naine d'Heusgly jouable ; 666 cimetières gardés. |
 | [16.53](#1653-lhynn-et-altenberg-au-bord-de-la-mer-v10127) | v1.0.127 | Ports de l'ouest au bord de la mer | Lhynn (N001_W011) et Altenberg (N005_W013) déplacées sur la côte, positions posées ; temple de Methraton et Seuil de Lhynn posés au nord de Lhynn. |
+| [16.54](#1654-carte-du-monde-lot-1--données-villes-portuaires-au-bord-de-la-mer-v10128) | v1.0.128 | Carte du monde, lot 1 : données | Fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine ; Tour Carrée = Grande Arche ; palais fusionnés ; tailles du lore ; 10 villes portuaires au bord de la mer. |
+| [16.55](#1655-carte-du-monde-lot-2--rivières-principales-ruisseaux-et-ponts-v10129) | v1.0.129 | Carte du monde, lot 2 : eau | 8 rivières principales tracées, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5027,6 +5029,149 @@ des Chevaliers de la Lumière, est désormais à deux cases d'Altenberg, admis c
 `check_references`) ; génération complète : 666 cimetières ; avertissement attendu « position manuelle de ville_lhynn
 dans l'eau » (le générateur prévient sous mer + 6 m ; le site est sec, à mer + 4 m, et le plateau de la ville est
 relevé à mer + 5 m, comme un quai).
+
+### 16.54 Carte du monde, lot 1 : données, villes portuaires au bord de la mer (v1.0.128)
+
+**Contexte (19/11/2026)** : audit complet du lore et des deux masters (villes, lieux emblématiques, décor, routes, cases,
+Enfers), puis décisions du propriétaire : le lore fait foi pour les tailles de villes, certaines villes sont mal placées
+(Lhynn l'était avant la v1.0.127), la Tour Carrée est la Grande Arche, les deux palais de la Passe sont fusionnés, le Krak de
+Jhenner est en ruine, Marn et la Citadelle reçoivent leur fiche, et la carte doit être mieux remplie (lots 2 à 5 : eau,
+relief, routes, nouveaux types de lieux). Ce lot 1 ne touche que les **données** (lore et masters) et l'outillage.
+
+**Fiches créées au lore** (le master avait l'entrée, pas le lore) :
+
+| Fiche | Case | Rôle |
+|---|---|---|
+| `hameau_marn` (Hameau de Marn) | N003_W009 | hameau, services générés ; la route 000237 y arrive par son identifiant |
+| `citadelle_legion` (Citadelle de la Légion) | Enfers N000_E000 (`carte`, `carte_cell`) | ville de départ des démons, taille forteresse |
+| `lieu_oracle` (L'Oracle) | N000_E000 | POI `poi_oracle` |
+| `lieu_mine_traverse_nord`, `lieu_mine_traverse_sud` | N001_W008, S001_W007 | les deux entrées de la Mine de la Traverse (routes 000212, 000213) |
+| `lieu_elevages_imperiaux` | N002_W008 | POI `poi_elevages_imperiaux` |
+| `lieu_port_brinehaven`, `lieu_port_truceholm`, `lieu_port_hayfen`, `lieu_port_orderfen` | Île de la Trêve, Haevrin, Ostrevan | ports du master ; type de lieu **`port_poi`** ajouté à `place_types` |
+
+La table `EXTREMITES` de `tools/lore/sync_routes.py` est désormais **vide** : toutes les extrémités de route ont une fiche.
+
+**Lieux et villes** :
+
+- **Krak de Jhenner** (`city_krak_de_jhenner`, S006_E012) : ville du master `forteresse`, état **`ruine`**, sans service
+  (taille `sans_service`) et **sans cimetière** (`graveyards.without_graveyard` : 666 gardés) ; route **000239** [GD]
+  S006_E012 → S005_E013 → S004_E013, jonction sur la route 000148.
+- **Hazol et Askhrof** reliés : 000145 (Tbarak → Dhunfal) s'arrête à Hazol ; **000240** Hazol → Askhrof et **000241**
+  Askhrof → Dhunfal reprennent le même tracé (itinéraire de la horde, BD-T1 p.25).
+- **Tour Carrée de la Lune Noire = Grande Arche** : le POI `poi_arche` (S004_E020) prend le nom de la Tour ; la fiche du lore
+  a l'alias « Grande Arche » ; correspondance ajoutée à la table `EXPLICITES` de `sync_positions.py`.
+- **Palais des Maîtres des Dragons** : le « Palais abandonné de la Passe » (`poi_palais_passe`, S003_W004) est ce palais
+  (fusion) : nom repris, genre `cite` (bâti en jeu au lot 5).
+- **Passe de Heniak** (S008_E009, `defile`) et **citadelle impériale** avant Tsaroth (S008_E011, `ruine`) placées au master.
+- Fiche-lieu de Ghulvathan (`lieu_leviathan_jungle`) : case alignée sur la ville (N009_E011).
+- Île de la Trêve : terrain des 7 cases du lore aligné sur la grille du jeu (forêt `T` + massifs, décision v1.0.77).
+
+**Tailles : le lore fait foi** (master modifié) : Dys, Sauken Glude, Feyhin Lokcthat → `ville` ; Hishtarland → `grande_ville` ;
+Ghulvathan, Farvhenn, Shaddrek → `village` ; Tbarak, Hazol → `ville` ; Fief de Garundel → `forteresse` (château bâti au lot 5).
+
+**Villes portuaires au bord de la mer** (même défaut que Lhynn : le site automatique est au centre de la case, loin de
+l'eau). Contrôle systématique des 13 villes à port ou escale maritime sur le relief généré (distance de l'auberge à la
+pleine mer) : 10 étaient à plus d'un kilomètre de l'eau, Ekvhitorn n'avait aucune mer dans sa case. Sites `[GD]` choisis
+comme en 16.53 : terrain sec (au moins mer + 6 m, pour que la ville ne soit pas « dans l'eau » pour le générateur) et plat dans un rayon de 240 m (120 à 200 m pour un hameau ou une petite île), pleine mer (eau reliée au bord de la
+case) à moins de 800 m, le plus près possible de l'eau puis de l'ancien site.
+
+| Ville | Avant | Après (position, m depuis le centre, X est, Z sud) | Mer |
+|---|---|---|---|
+| Hishtarland | S011_W006, centre (4,2 km de l'eau) | S011_W006, −2870, 3690 | ≈ 590 m |
+| Askhvir (`town_0123`) | N010_E005, centre (3,4 km) | N010_E005, 680, −2910 | ≈ 300 m |
+| Thrival (`town_truceholm`) | N019_W010, centre (3,5 km) | N019_W010, 140, 3300 | ≈ 190 m |
+| Brokhendt (`town_0137`) | S008_W002, centre (1,7 km) | S008_W002, −2870, −3110 | ≈ 600 m |
+| Dyprokh (`town_ile_ashwick`) | N012_E002, centre (1,8 km) | N012_E002, −3380, −1460 | ≈ 520 m |
+| Brenhaval (`town_brinehaven`) | N017_W010, centre (1 km) | N017_W010, 2560, −1430 | ≈ 250 m |
+| Zaltheim (`hamlet_0172`) | S008_W010 (3,2 km) | **S009_W010**, −80, −2730 | ≈ 590 m |
+| Ostrevan (`hamlet_0189`) | N011_W008 (5,2 km) | **N012_W008**, 120, 2420 | ≈ 560 m |
+| Ryvaldh (`town_riverfold`) | N006_E023 (4,6 km) | **N006_E024**, 1640, 2300 | ≈ 630 m |
+| Ekvhitorn (`ville_equiton`) | S005_W004 (aucune mer, +130 m) | **S006_W004**, 4000, −2560 | ≈ 490 m |
+
+Lhynn (290 m), Altenberg (330 m) et Haevrin (170 m) étaient déjà au bord de l'eau. Pour les 4 villes qui changent de case :
+`anchor_tile`, `footprint_tiles`, ponton (`port.ponton_cell`, escale d'Ostrevan dans `sea_lines`), Comptoir de l'Est
+(4 factions) et routes (extrémité dans la nouvelle case, ancienne case gardée en passage) suivent ; le port d'Ostrevan
+(`poi_port_orderfen`) est posé au bord de l'eau, à côté du hameau.
+
+**Noms** : accents rétablis au master (Cratère du volcan, Forêt de la Rencontre, Camp de l'Étang, Champ de la Première
+Bataille, Défilé de Mordrek, Rériah, L'Atmosphère, Entrée des Abysses, Château de la Mort, Élevages impériaux, Village
+fantôme ; aux Enfers : Citadelle de la Légion, Nef des Âmes, Plateaux suspendus des Légions).
+
+**Cases jouables figées** : 58 cases de terre n'étaient jouables que par les **corridors** des villes de départ (calculés
+sur le réseau routier du générateur) : l'Oracle, Moork, Garundel, Magistrya, la Via Magna orque… Le changement de taille
+de quelques villes (réseau du générateur modifié) en faisait perdre 19. Ces 58 cases sont désormais **listées** dans
+`generated_cells` (1 233 → **1 291**) : les cases jouables ne dépendent plus du réseau du générateur (ni des lots
+suivants : relief, routes). Total inchangé : 1 291 avec les corridors, 1 337 avec les cases de mer des bateaux.
+
+**Routes des départs au lore** : le générateur gardait 8 routes de son propre réseau pour relier les villes de départ
+(Moork – Ghrunke Dash, Moork – Ghrimfeth, Syllaërin – Magistrya, Northind – Ghwenaëth, Ghwenaëth – Faernilh, Bhridrak –
+Skhaldrach, Vharholdt – Faernilh, Orhendal – Iustarn) ; elles changeaient dès qu'une ville changeait de taille (la Borne des
+Monts de Moork perdait sa route). Elles deviennent des **routes du lore** (**000242 à 000249**, tracé de cases inchangé) et
+**`connect_start_cities`** passe à **false** : les cellules jouables (1 291) et les routes ne dépendent plus du réseau du
+générateur (`AddStartCorridors` ne fait plus rien sans ce drapeau). Les trajets des bateaux partent des nouveaux pontons : **49** cases de mer (46 avant), **1 340** cellules jouables. La **Borne des Monts de Moork** est posée au bord de la
+route 000242 (position −470, 4300 m). Haevrin (N011_W004, tout en marais) garde son site automatique (plateau relevé).
+
+**Outillage** : option **`--preview-map <fichier.png>`** du générateur (`--preview-size`, défaut 4096) : couche macro
+seule (relief, biomes, rivières, routes, villes), aperçu du continent en ≈ 30 s, sans générer de cellule (ROYAUMES §4).
+
+**Conformes et volontaires (inchangés)** : Tsaroth (16.15), Thurvhal et le Gouffre des Revenus (secrets), Entrée des Abysses
+en mer, Mine de Vharholdt (mine procédurale), Faille des mues et Bouche des Roseaux (lore seul), peuples lointains et plans
+des Enfers (hors carte), Viaduc et Pentacle des Enfers (lore seul).
+
+**Contrôles** : `validate_city_services` (124 villes), `generate_city_services --check`, `sync_*.py --check`,
+`test_sync_routes`, `check_secrets`, `check_references --strict` ; `world_gen_tests` (Ryvaldh en N006_E024).
+
+### 16.55 Carte du monde, lot 2 : rivières principales, ruisseaux et ponts (v1.0.129)
+
+**Décision du propriétaire (19/11/2026)** : tracer en jeu les 8 rivières principales du lore, créer des rivières plus
+petites pour remplir le monde, avec des ponts en bois ou en pierre. Constat sur l'aperçu du continent (`--preview-map`) :
+seuls 3 cours étaient tracés à la main, en reliant les centres des cases en ligne droite ; les rivières automatiques
+descendaient la plus grande pente d'une grille remplie, d'où des marches d'escalier à 45° et 90° (« la nature n'est pas
+carrée ») ; les routes comblaient le lit des rivières (remblai sans pont).
+
+**Les 8 rivières principales** (`river_courses` du master, champ `lore_id`) :
+
+| Cours (master) | Rivière du lore | Cases | Largeur | Fin |
+|---|---|---|---|---|
+| `cours_liaison_lacs` | Rivière des deux lacs | N007_E006 → N008_E007 → N007_E007 | 24 m | lac de l'est (`to_sea: false`) |
+| `cours_lac_sud` | Rivière du lac du sud | N005_E008 → N006_E007 → N007_E007 | 22 m | lac de l'est (`to_sea: false`) |
+| `cours_ashwick` | Rivière d'Askhvir | N007_E005 → … → N011_E005 | 40 m | mer |
+| `cours_cascade_northind` | Rivière de la cascade | N003_W005 (cascade) → … → N012_W004 | 38 m | mer |
+| `cours_cascade_bras_est` | Rivière de la cascade (bras est) | N008_W004 → N009_W003 → N010_W002 | 22 m | mer |
+| `cours_source_n008_w002` | Rivière de la source de N008_W002 | N008_W002 → N010_W002 | 20 m | mer |
+| `cours_rivercross` | Rivière de Rhivkhar | N010_E019 → … → N006_E023 | 40 m | mer orientale |
+| `cours_southport` | Rivière de Suthvarn | S013_E006 → S016_E006 | 34 m | mer du sud |
+
+S'ajoutent les 3 cours déjà tracés (fleuve de Syzygie, deux bras de la rivière de Vaerdhun). Grille du jeu alignée sur le
+lore (`has_river`) : N007_W005 forêt → **forêt avec rivière** (`R`), N011_W004 marais → **marais avec rivière** (`&`).
+Le master accepte désormais un cours qui part d'une case quelconque (source : cascade en montagne) et traverse des cases
+de lac ; `to_sea` (défaut vrai) arrête un cours dans son dernier lac.
+
+**Tracés naturels** (`tools/world_gen/lib/Terrain.cpp`) :
+
+- **Arbre d'écoulement** (`FlowTree`) : Dijkstra depuis la mer sur la grille de 250 m remplie, coût = longueur × bruit
+  de vallée (0,45 à 1,55, longueur d'onde 2,6 km) × préférence pour les terres basses, + forte pénalité si l'eau remonte.
+  Toute rivière automatique et toute fin de cours descend vers la mer par cet arbre : elle serpente dans les vallées.
+- **Cours tracés à la main** : A* de vallée (`CourseAStar`, même coût) entre les cases du lore, dont les ancres
+  intermédiaires sont décalées de 1,8 km au plus ; contournement des villes inchangé (île de Syzygie comprise).
+- **Ruisseaux** (≈ 190) : sources sur un treillis décalé de 10 km, en terre (≥ mer + 30 m) hors déserts, terres arides,
+  marais, volcans, côtes et îlots, à plus de 3 km d'un cours d'eau, 1,5 km d'une ville, 600 m d'un lieu ; ils suivent
+  l'arbre d'écoulement jusqu'à la mer, un lac, ou une rivière qu'ils rejoignent (confluent exact) ; 5 km au moins ;
+  largeur 4 à 11 m ; ils contournent villes (comme les grands cours) et lieux (150 m), jamais dans un gouffre.
+
+**Ponts** (`BuildBridges`, `tools/world_gen/lib/Roads.cpp`) : la chaussée ne comble plus le lit d'une rivière (ni 1 m de
+berge) ; à chaque traversée, un pont en décor (`scatter.bin`) :
+
+| Route | Pont |
+|---|---|
+| route, voie impériale | **pierre** : tablier de dalles `Floor_Brick` (2 m, dessus marchable par `collision/building_pieces.json`), parapets de pierre (`Wall_UnevenBrick_Straight` réduit), **arches** `Wall_Arch` de l'eau au tablier sur les deux faces |
+| sentier, chemin vers un lieu | **bois** : tablier de planches `Floor_WoodDark`, garde-corps `Prop_WoodenFence_Single` |
+
+Le tablier suit le profil en long de la route, 1,6 m au-dessus de l'eau (0,9 m pour un sentier). Les chemins vers les lieux
+procéduraux franchissent un ruisseau (coût élevé, berges raides admises) au lieu de rester bloqués.
+
+**Contrôles** : `world_gen_tests` (`TestEauV1129` : 8 cours du lore au master, plus de 100 ruisseaux, aucun cours d'eau
+rectiligne sur 3 km, aucun dans une ville, ponts à Syzygie avec tablier marchable) ; contrôles du lore.
 
 ## 17. Questions ouvertes
 

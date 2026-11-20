@@ -131,6 +131,8 @@ données de rendu restent dans le paquet client. En local (Windows) :
 # --jobs N                    : cellules générées en même temps (défaut : nombre de cœurs, 4 au plus)
 # --graveyard-report <fich.>  : v1.0.121, recensement des cimetières par cellule (« cellule nombre id@x:z … »),
 #                               écrit avant le contrôle des 666 (sert à choisir les hameaux de without_graveyard)
+# --preview-map <fich.png>   : v1.0.128, aperçu du continent (couche macro seule : relief, biomes, rivières,
+#                               routes, villes) en ≈ 30 s, sans générer de cellule ; --preview-size N (défaut 4096 px)
 ```
 
 Total des cimetières à corriger (v1.0.122) : `lcdlln_world_gen … --dry-run --graveyard-report recensement.txt`, puis
@@ -688,6 +690,12 @@ ordinaire du lore.
 | Réapparition | le cimetière neutre de Thurvhal (`respawn_points.txt` de `cell_s008_e010`) est le plus proche pour 85,6 % de S008_E010 et 54,7 % de S008_E011 : un joueur mort dans le canyon se réveille au fond. Aucune modification du shard (règle « cimetière le plus proche en X, Z »). |
 | Secret | ville absente de `places.json` `cities`, de la carte et de `map_features.bin` ; recopiée dans `secret_places.json` (v1.0.110 : réservé au serveur, retiré du paquet client) |
 | À faire côté client | lumière des 36 torches (`world.point_lights` du zone.json), fond sombre (`world.ambiance_zones`), mécanisme de « lieu découvert », bannière et radar de la ville secrète |
+
+### 11.11 Rivières, ruisseaux et ponts (v1.0.129)
+
+11 cours tracés (`river_courses` : fleuve de Syzygie, Vaerdhun ×2 et les 8 rivières principales du lore), rivières
+automatiques des cases « rivière » restantes, ≈ 190 ruisseaux ; tous suivent l'arbre d'écoulement (vallées) ; ponts de
+pierre sur les routes, passerelles de bois sur les sentiers, tablier marchable. Détail : [`LORE_BD.md`](LORE_BD.md) §16.55.
 
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
 

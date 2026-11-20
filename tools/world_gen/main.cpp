@@ -3,6 +3,7 @@
 //   lcdlln_world_gen [--content <dir>] [--world <id>] [--output <dir>]
 //   (--world royaumes : le continent ; --world enfers : la seconde carte)
 //                    [--cells N003_W009,N011_E008] [--dry-run]
+//                    [--preview-map apercu.png [--preview-size 4096]]  (v1.0.128 : couche macro seule)
 //
 // Code retour : 0 succès, 1 échec (message sur stderr). Les avertissements
 // (route impossible, ville sans lot…) sont listés mais n'échouent pas.
@@ -27,6 +28,8 @@ int main(int argc, char** argv)
 		else if (a == "--dry-run") opt.dryRun = true;
 		else if (a == "--graveyard-report" && i + 1 < argc) opt.graveyardReport = argv[++i];
 		else if (a == "--portal-out" && i + 1 < argc) opt.portalOut = argv[++i]; // PORTAL.1
+		else if (a == "--preview-map" && i + 1 < argc) opt.previewMap = argv[++i]; // v1.0.128 : apercu macro
+		else if (a == "--preview-size" && i + 1 < argc) opt.previewSize = std::atoi(argv[++i]);
 		else if (a == "--jobs" && i + 1 < argc) opt.jobs = std::max(0, std::atoi(argv[++i]));
 		else if (a == "--cells" && i + 1 < argc)
 		{
@@ -43,7 +46,7 @@ int main(int argc, char** argv)
 		}
 		else if (a == "-h" || a == "--help")
 		{
-			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--jobs N] [--dry-run] [--graveyard-report <fichier>] [--portal-out <dossier>]\n");
+			std::printf("Usage: lcdlln_world_gen [--content game/data] [--world royaumes] [--output <dir>] [--cells N003_W009,...] [--jobs N] [--dry-run] [--graveyard-report <fichier>] [--portal-out <dossier>] [--preview-map <fichier.png> [--preview-size N]]\n");
 			return 0;
 		}
 		else
@@ -75,6 +78,7 @@ int main(int argc, char** argv)
 	std::printf("  respawns        : %llu, PNJ statiques : %llu\n",
 		static_cast<unsigned long long>(rep.respawnPoints), static_cast<unsigned long long>(rep.interactables));
 	std::printf("  portails        : %llu (relies a une autre carte)\n", static_cast<unsigned long long>(rep.portals));
+	std::printf("  ponts           : %llu (routes x cours d'eau, v1.0.129)\n", static_cast<unsigned long long>(rep.bridges));
 	for (const std::string& f : rep.writtenFiles) std::printf("  ecrit : %s\n", f.c_str());
 	for (const std::string& wmsg : rep.warnings) std::printf("  [avertissement] %s\n", wmsg.c_str());
 	return 0;

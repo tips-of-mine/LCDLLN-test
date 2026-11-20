@@ -57,9 +57,9 @@ TYPES_TERRESTRES = ("road", "imperial_road", "path")
 # Le Hameau de Marn (ancienne ville de départ, N003_W009) n'existe qu'au master, sans fiche au
 # lore : la route Haeldorf → Marn (000237, v1.0.106) y arrive par une extrémité vide au lore.
 EXTREMITES = {
-    ("000212", "to"): "poi_mine_traverse_nord",
-    ("000213", "to"): "poi_mine_traverse_sud",
-    ("000237", "to"): "hameau_marn",
+    # v1.0.128 : vide — les entrées de la Mine de la Traverse et le Hameau de Marn ont leur fiche
+    # au lore (lieu_mine_traverse_nord / _sud, hameau_marn) : les routes 000212, 000213 et 000237
+    # y arrivent par leur identifiant. Table gardée pour un futur cas sans fiche.
 }
 # Lieux du lore qui sont une VILLE du master (même case).
 LIEUX_VILLES = {

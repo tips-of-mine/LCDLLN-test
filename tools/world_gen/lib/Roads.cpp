@@ -239,7 +239,7 @@ namespace tools::world_gen
 					r.profileY[k] = Clamp(r.profileY[k], r.profileY[k + 1] - maxDy, r.profileY[k + 1] + maxDy);
 			}
 			for (size_t k = 0; k < np; ++k)
-				r.profileY[k] = std::max({ r.profileY[k], sea + 0.8, rivers.WaterYNear(r.points[k], 14.0) + 0.5 });
+				r.profileY[k] = std::max({ r.profileY[k], sea + 0.8, rivers.WaterYNear(r.points[k], 14.0) + (r.path ? 0.9 : 1.6) }); // v1.0.129 : tablier de pont au-dessus de l'eau
 		}
 
 		/// Aplanit la chaussée (+ accotements de 9 m) des routes dans la heightmap
@@ -274,13 +274,17 @@ namespace tools::world_gen
 						}
 				}
 			}
+			const bool rivers = w.riverDist.data.size() == w.height.data.size();
 			for (size_t q = 0; q < w.height.data.size(); ++q)
 			{
 				const float rd = dist.data[q];
 				if (rd > 9.0f) continue;
+				w.roadDist.data[q] = std::min(w.roadDist.data[q], rd);
+				// Lot carte v1.0.129 : le lit d'une rivière (et 1 m de berge) n'est plus comblé
+				// par la chaussée : un pont le franchit (BuildBridges), l'eau passe dessous.
+				if (rivers && w.riverDist.data[q] < 1.0f) continue;
 				const double t = SmoothStep(0.0, 9.0, rd);
 				w.height.data[q] = Lerp(target.data[q] - 0.05, w.height.data[q], t);
-				w.roadDist.data[q] = std::min(w.roadDist.data[q], rd);
 			}
 		}
 		/// Longueur (m) d'une polyligne.
@@ -989,9 +993,25 @@ namespace tools::world_gen
 			for (int i = 0; i < n; ++i)
 			{
 				const Vec2 p{ cg.cost.WorldX(i), cg.cost.WorldZ(j) };
-				if (w.IsWater(p) || !w.InPlayableBounds(p, 20.0)) { cg.cost.At(i, j) = 1e30f; continue; }
+				if (!w.InPlayableBounds(p, 20.0)) { cg.cost.At(i, j) = 1e30f; continue; }
+				// Lot carte v1.0.129 : un cours d'eau (pas la mer ni un lac) se franchit, à coût
+				// élevé (passerelle de bois posée par BuildBridges) ; la mer et les lacs restent fermés.
+				if (w.IsWater(p))
+				{
+					const int ri = w.riverDist.IndexX(p.x), rj = w.riverDist.IndexZ(p.z);
+					const bool riverOnly = w.riverDist.InBounds(ri, rj) && w.riverDist.At(ri, rj) < 3.0f; // lit (même creusé sous la mer)
+					bool lake = false;
+					for (const Lake& l : w.lakes) lake = lake || std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM + 4.0;
+					if (!riverOnly || lake) { cg.cost.At(i, j) = 1e30f; continue; }
+					cg.cost.At(i, j) = 25.0f;
+					continue;
+				}
 				const double slope = w.SlopeDegAt(p);
-				if (slope > 40.0) { cg.cost.At(i, j) = 1e30f; continue; }
+				// v1.0.129 : les berges creusées d'un ruisseau sont raides sur quelques mètres ;
+				// elles ne ferment pas le passage (la passerelle les enjambe).
+				const int bi = w.riverDist.IndexX(p.x), bj = w.riverDist.IndexZ(p.z);
+				const bool bank = w.riverDist.InBounds(bi, bj) && w.riverDist.At(bi, bj) < 8.0f;
+				if (slope > 40.0 && !bank) { cg.cost.At(i, j) = 1e30f; continue; }
 				float c = 1.0f + static_cast<float>(std::pow(slope / 6.0, 2.0));
 				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
 				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 2.0f) c *= 0.3f; // rejoindre la route
@@ -1059,5 +1079,110 @@ namespace tools::world_gen
 		for (const Road& r : paths) local.push_back(&r);
 		FlattenRoads(w, local);
 		for (Road& r : paths) w.roads.push_back(std::move(r));
+	}
+
+	// ------------------------------------------------------------------- ponts
+
+	namespace
+	{
+		/// Lacet (degrés) qui aligne l'axe X local d'un mesh sur la direction \p d (XZ) :
+		/// même convention que YawFacing (rotation autour de Y, -Z local vers l'avant).
+		double YawAlong(Vec2 d) { return std::atan2(-d.z, d.x) * 57.29577951308232; }
+
+		/// Ajoute une instance de décor (mesh de meshes/props/), hauteur ABSOLUE \p y (m) :
+		/// yOffset = y - sol à la position (le client pose l'instance sur sa heightmap).
+		/// \p solid : pièce de bâtiment solide (bits solide + pièce du catalogue de collision).
+		void AddBridgeProp(World& w, const char* mesh, Vec2 p, double y, double yaw, double scale, bool solid)
+		{
+			ScatterDef s;
+			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
+			s.position = p; s.yOffset = y - w.HeightAt(p); s.yawDeg = yaw; s.scale = scale;
+			// Pièce solide : collision par le catalogue de pièces (bit 1 : murs = barrières,
+			// dalles = dessus marchable, building_pieces.json), sinon cylindre englobant.
+			s.flags = solid ? 3u : 0u; s.cullClass = 1;
+			w.scatter.push_back(std::move(s));
+		}
+	}
+
+	void BuildBridges(World& w)
+	{
+		if (w.riverDist.data.empty()) return;
+		RiverIndex rivers;
+		rivers.Build(w.rivers);
+		auto inBed = [&](Vec2 p) {
+			const int i = w.riverDist.IndexX(p.x), j = w.riverDist.IndexZ(p.z);
+			return w.riverDist.InBounds(i, j) && w.riverDist.At(i, j) < 0.5f;
+		};
+		int count = 0;
+		for (const Road& r : w.roads) // routes globales et chemins locaux (passerelles de bois)
+		{
+			const size_t n = r.points.size();
+			size_t k = 0;
+			while (k < n)
+			{
+				if (!inBed(r.points[k])) { ++k; continue; }
+				size_t a = k, b = k;
+				while (b + 1 < n && inBed(r.points[b + 1])) ++b;
+				k = b + 1;
+				// Culées : un point (≈ 4 m) de chaque côté, sur la berge aplanie.
+				a = a > 0 ? a - 1 : a;
+				b = std::min(n - 1, b + 1);
+				const Vec2 A = r.points[a], B = r.points[b];
+				const Vec2 mid = (A + B) * 0.5;
+				if (!w.OwnsPoint(mid)) continue; // le pont appartient à la cellule de son milieu
+				const double len = std::hypot(B.x - A.x, B.z - A.z);
+				if (len < 3.0) continue;
+				const Vec2 d = (B - A) * (1.0 / len);
+				const Vec2 nrm{ -d.z, d.x };
+				const double yaw = YawAlong(d);
+				const bool stone = !r.path;
+				const double half = std::max(1.6, r.widthM * 0.5);
+				const int across = std::max(1, static_cast<int>(std::ceil(2.0 * half / 2.0)));
+				const double water = rivers.WaterYNear(mid, 40.0);
+				// Tablier : dalles de 2 m le long de la corde A-B, à l'altitude du profil.
+				const int along = std::max(1, static_cast<int>(std::ceil(len / 2.0)));
+				for (int u = 0; u < along; ++u)
+				{
+					const double t = (u + 0.5) / along;
+					const double y = Lerp(r.profileY[a], r.profileY[b], t);
+					const Vec2 c = A + (B - A) * t;
+					for (int v = 0; v < across; ++v)
+					{
+						const double off = (v + 0.5 - across * 0.5) * 2.0;
+						AddBridgeProp(w, stone ? "Floor_Brick" : "Floor_WoodDark", c + nrm * off, y, yaw, 1.0, true);
+					}
+					// Garde-corps des deux côtés.
+					for (int side = -1; side <= 1; side += 2)
+					{
+						const Vec2 e = c + nrm * (side * (across * 1.0 + 0.15));
+						if (stone)
+							for (int q = 0; q < 3; ++q)
+								AddBridgeProp(w, "Wall_UnevenBrick_Straight", e + d * ((q - 1) * 0.66), y, yaw, 0.33, true);
+						else
+							AddBridgeProp(w, "Prop_WoodenFence_Single", e, y, yaw, 1.0, true);
+					}
+				}
+				// Arches de pierre sous le tablier (route) : du niveau de l'eau au tablier.
+				if (stone && water > -1e8)
+				{
+					const double deck = Lerp(r.profileY[a], r.profileY[b], 0.5);
+					const double h = deck - (water - 0.6);
+					if (h > 0.8)
+					{
+						const double sc = Clamp(h / 3.0, 0.5, 3.0);
+						const int arches = std::max(1, static_cast<int>(std::ceil(len / (2.0 * sc))));
+						for (int u = 0; u < arches; ++u)
+						{
+							const Vec2 c = A + d * ((u + 0.5) * len / arches);
+							for (int side = -1; side <= 1; side += 2)
+								AddBridgeProp(w, "Wall_Arch", c + nrm * (side * (across * 1.0 + 0.05)), deck - 3.0 * sc, yaw, sc, false);
+						}
+					}
+				}
+				w.Occupy(mid, len * 0.5 + 2.0);
+				++count;
+			}
+		}
+		w.report.bridges += static_cast<size_t>(count);
 	}
 }

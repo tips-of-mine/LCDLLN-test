@@ -42,6 +42,12 @@ namespace tools::world_gen
 		/// dossier, HORS de game/data (jamais livrée au client). Seulement avec les
 		/// sorties globales (génération complète, sans --cells). Vide = pas d'affiche.
 		std::string portalOut;
+		/// Lot carte v1.0.128 — option --preview-map <fichier.png> : n'exécute que la couche
+		/// macro (relief, rivières, routes, lignes maritimes) puis écrit un aperçu du continent
+		/// (WriteMapPreview) ; aucune cellule générée, aucune sortie du monde écrite. Vide = non.
+		std::string previewMap;
+		/// Côté de l'aperçu en pixels (option --preview-size, défaut 4096).
+		int previewSize = 4096;
 	};
 
 	/// Exécute le pipeline complet. \return false + \p err en cas d'échec

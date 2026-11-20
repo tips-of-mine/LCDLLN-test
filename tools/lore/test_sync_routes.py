@@ -9,7 +9,7 @@
 #      master du dépôt ; seules `lore_roads` / `_comment_lore_roads` diffèrent de l'entrée ;
 #   3. une route retracée dans le lore (waypoint ajouté) et une route maritime ajoutée :
 #      la route retracée suit, la route maritime n'est pas recopiée ;
-#   4. extrémités : ville du master, lieu -> POI, jonction vide, table EXTREMITES ;
+#   4. extrémités : ville du master, lieu -> POI, jonction vide (table EXTREMITES vide depuis v1.0.128) ;
 #   5. une route sans case de départ est refusée (code 2) et le master n'est pas écrit.
 #
 # Lancement : python3 tools/lore/test_sync_routes.py   (code 0 = vert)
@@ -96,7 +96,8 @@ def main():
                 "embranchement 000155 : depart en jonction (vide) sur S007_E006")
         verifie(routes.get("000134", {}).get("to") == "poi_grotte_contrebandiers", "lieu du lore -> POI du master")
         verifie(routes.get("000212", {}).get("to") == "poi_mine_traverse_nord"
-                and routes.get("000213", {}).get("to") == "poi_mine_traverse_sud", "table EXTREMITES (Mine de la Traverse)")
+                and routes.get("000213", {}).get("to") == "poi_mine_traverse_sud", "lieu du lore -> POI (entrees de la Mine de la Traverse, fiches depuis v1.0.128)")
+        verifie(routes.get("000237", {}).get("to") == "hameau_marn", "ville du lore -> ville du master (Hameau de Marn, fiche depuis v1.0.128)")
         sans_trace = next(r for r in d["routes"] if r["type"] == "road" and not r.get("waypoints"))
         verifie(routes[sans_trace["id"]]["waypoints"] == [sans_trace["from_place"], sans_trace["to_place"]],
                 "route sans trace au lore : [depart, arrivee]")

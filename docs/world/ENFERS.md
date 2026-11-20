@@ -189,7 +189,7 @@ sont postérieurs et ne s'appliquent pas. Pas de noms inventés : désignations 
 
 | Case | Biome | Lieux (POI, genre) | Niveaux (zone 1-10) |
 |---|---|---|---|
-| N000_E000 | `V` | **Citadelle de la Légion** (ville de départ, cimetière neutre), Portail V ; pentacle étoilé de seuil (lore, sans POI) | 1-10 |
+| N000_E000 | `V` | **Citadelle de la Légion** (ville de départ, cimetière neutre ; fiche du lore `citadelle_legion` depuis la v1.0.128), Portail V ; pentacle étoilé de seuil (lore, sans POI) | 1-10 |
 | N001_E000 | `V` | Portail II ; Palais de Lucifer (`temple`), Nef des Âmes (`salle`), Plateau du Rituel (`sanctuaire`) | POI de haut niveau (palais 66-70) |
 | N000_W001 | `V` | Portail III ; Mer de lave (`volcan`), Seuil des Plans (`faille`) | POI de haut niveau (55-70) |
 | N000_E001 | `V` | Portail IV ; Canyon des Falaises rouges et Viaduc des Gueules de lave (`defile`), Plateaux suspendus des Légions (`camp`) | POI de haut niveau (55-70) |

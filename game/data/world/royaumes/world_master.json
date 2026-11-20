@@ -2167,7 +2167,8 @@
       "id": "poi_palais_passe",
       "name": "Palais des Maîtres des Dragons",
       "cell": "S003_W004",
-      "kind": "cite",
+      "scale": 1.4,
+      "kind": "chateau",
       "description": "Palais des Maîtres des Dragons au cœur de la Passe des Dragons, gardé par les Chevaliers-Dragons ([DÉCISION] v1.0.128 : fusion avec le palais abandonné de la Passe)."
     },
     {
@@ -2181,7 +2182,7 @@
       "id": "poi_arche",
       "name": "Tour Carrée de la Lune Noire",
       "cell": "S004_E020",
-      "kind": "monolithe",
+      "kind": "tour",
       "description": "Tour carrée de trente étages, dite « Grande Arche » : portail entre la Lune et la Terre ([DÉCISION] v1.0.128 : un seul lieu)."
     },
     {
@@ -2328,7 +2329,8 @@
       "id": "poi_chateau_de_la_mort",
       "name": "Château de la Mort",
       "cell": "N013_E016",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "chateau",
       "description": "Ruines de la forteresse-mine imperiale encastree dans une falaise ; prise par les orques descendus du plateau en nacelles (BD-A4) [INFERE]."
     },
     {
@@ -2342,7 +2344,8 @@
       "id": "poi_ruines_thenhart",
       "name": "Ruines de Thenhart",
       "cell": "N009_W004",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "chateau",
       "description": "Ruines du chateau du seigneur Thenhart, sur un rocher au-dessus de la riviere qui file vers les Marais maudits ; incendie par Ghorghor Bey (BD-A1, BD-T11) [INFERE]."
     },
     {
@@ -2433,7 +2436,8 @@
       "id": "poi_ruines_tour_du_guet",
       "name": "Ruines de la tour du guet",
       "cell": "N008_W009",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet éventrée face à la forêt elfique, abandonnée depuis des générations ; cave envahie d'araignées [GD v1.0.66, région de départ d'Ordhrann]."
     },
     {
@@ -2489,7 +2493,8 @@
       "id": "poi_ruines_pont_des_gorges",
       "name": "Ruines du pont des Gorges",
       "cell": "S005_W003",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "pont",
       "description": "Ancien pont suspendu et corps de garde au-dessus d'une gorge, abandonnés depuis des générations ; araignées et vautours y nichent [GD v1.0.68, région de départ de Drakhenhal]."
     },
     {
@@ -2552,7 +2557,7 @@
       "id": "poi_tour_des_fleches_blanches",
       "name": "Tour des Flèches blanches",
       "cell": "N007_W007",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet de bois vivant à l'écart de Faernilh : les guetteurs elfes y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds [GD v1.0.70, région de départ de Syllaërin]."
     },
     {
@@ -2934,7 +2939,7 @@
       "id": "poi_tour_guet_route_shadehold",
       "name": "Tour de guet de la route de Shezhold",
       "cell": "N002_E011",
-      "kind": "camp",
+      "kind": "tour",
       "offset_x_m": 1100,
       "offset_z_m": 2900,
       "description": "Tour de guet orque au bord de la route Nakhtvar – Shezhold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24. [GD v1.0.86, lieu_tour_guet_route_shadehold]."
@@ -3034,7 +3039,8 @@
       "id": "poi_tour_guet_effondree",
       "name": "Tour de guet effondrée",
       "cell": "S006_E008",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 2500,
       "offset_z_m": -500,
       "description": "Tour de guet impériale effondrée sur une butte au sud de Frhozhol : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24. [GD v1.0.86, lieu_tour_guet_effondree]."
@@ -3233,7 +3239,8 @@
       "id": "poi_tour_effondree_des_mages",
       "name": "Tour effondrée des mages",
       "cell": "N003_W004",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 1500,
       "offset_z_m": 0,
       "description": "Tour d'observation des mages de Magistrya (Sauken Glude), fendue et désertée ; ses cercles gravés attirent encore des choses. Niveaux 16-22. [GD v1.0.86, lieu_tour_effondree_des_mages]."
@@ -3251,7 +3258,8 @@
       "id": "poi_tour_guet_garundel",
       "name": "Tour de guet de Garundel",
       "cell": "S001_E003",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 2500,
       "offset_z_m": 500,
       "description": "Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20. [GD v1.0.86, lieu_tour_guet_garundel]."
@@ -3512,7 +3520,8 @@
       "id": "poi_tour_a_signaux_de_la_baronnie",
       "name": "Tour à signaux de la baronnie",
       "cell": "N000_E015",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": -2000,
       "offset_z_m": 0,
       "description": "Tour à signaux de l'ancienne baronnie impériale de Moork, abandonnée au sable ; des pillards du désert y guettent les convois. Niveaux 22-26. [GD v1.0.88, lieu_tour_a_signaux_de_la_baronnie]."
@@ -3575,7 +3584,8 @@
       "id": "poi_tour_de_guet_de_la_lisiere",
       "name": "Tour de guet de la lisière",
       "cell": "N004_E017",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 0,
       "offset_z_m": 2000,
       "description": "Tour de guet impériale qui surveillait la forêt de la Marche, abandonnée depuis la conquête ; les bêtes de la forêt en ont fait leur territoire. Niveaux 24-28. [GD v1.0.88, lieu_tour_de_guet_de_la_lisiere]."
@@ -3701,7 +3711,8 @@
       "id": "poi_tour_ensablee",
       "name": "Tour ensablée",
       "cell": "N000_E019",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Tour impériale des confins du désert, à demi engloutie par le sable ; des pillards s'y abritent des tempêtes. Niveaux 26-28. [GD v1.0.88, lieu_tour_ensablee]."
@@ -3872,7 +3883,8 @@
       "id": "poi_pont_effondre",
       "name": "Pont effondré",
       "cell": "N007_E021",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "pont",
       "offset_x_m": 0,
       "offset_z_m": 1500,
       "description": "Pont impérial sur la rivière, effondré faute d'entretien ; on passe désormais à gué, au risque des crues et des brigands. Niveaux 24-28. [GD v1.0.91, lieu_pont_effondre]."
@@ -3890,7 +3902,8 @@
       "id": "poi_tour_de_guet_cotiere",
       "name": "Tour de guet côtière",
       "cell": "N007_E023",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Tour qui guettait les navires au nord de Ryvaldh, abandonnée ; des pillards l'utilisent pour repérer les jonques du levant. Niveaux 26-30. [GD v1.0.91, lieu_tour_de_guet_cotiere]."
@@ -4151,7 +4164,8 @@
       "id": "poi_tour_a_feu_de_la_cote",
       "name": "Tour à feu de la côte",
       "cell": "S001_E024",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": -1500,
       "offset_z_m": 0,
       "description": "Tour à feu qui guidait les navires vers la côte de Dhuzvelt, éteinte depuis des années ; on dit que les naufrageurs l'ont fait taire. Niveaux 26-30. [GD v1.0.91, lieu_tour_a_feu_de_la_cote]."
@@ -4502,7 +4516,7 @@
       "id": "poi_pont_de_corde_de_la_gorge",
       "name": "Pont de corde de la gorge",
       "cell": "S014_E020",
-      "kind": "camp",
+      "kind": "pont",
       "offset_x_m": 0,
       "offset_z_m": -3000,
       "description": "Pont de corde au-dessus d'une gorge au sud de Khrozrad, seul passage vers les vallées du sud. Niveaux 22-26. [GD v1.0.104, lieu_pont_de_corde_de_la_gorge]."
@@ -4592,7 +4606,8 @@
       "id": "poi_phare_nain_eteint",
       "name": "Phare nain éteint",
       "cell": "S007_E025",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Phare bâti par les nains pour guider les barques de Ghrondak, éteint depuis des années ; des naufrageurs y guettent les navires. Niveaux 22-26. [GD v1.0.104, lieu_phare_nain_eteint]."
@@ -4934,7 +4949,8 @@
       "id": "poi_tour_de_signaux_de_moork",
       "name": "Tour de signaux de Moork",
       "cell": "S004_E012",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Tour d'où les hommes du baron envoient des signaux vers Moork ; elle surveille la piste de Ghrimfeth. Niveaux 21-27. [GD v1.0.106, lieu_tour_de_signaux_de_moork]."
@@ -5096,7 +5112,8 @@
       "id": "poi_tour_de_guet_orque",
       "name": "Tour de guet orque",
       "cell": "N002_E012",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "offset_x_m": 0,
       "offset_z_m": 0,
       "description": "Tour de rondins d'où les orcs surveillent la route de Shezhold ; un cor y sonne à l'approche des étrangers. Niveaux 18-24. [GD v1.0.106, lieu_tour_de_guet_orque]."
@@ -5202,7 +5219,8 @@
       "id": "poi_tour_de_guet_effondree",
       "name": "Tour de guet effondrée",
       "cell": "N013_E019",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Ancienne tour de guet des Marches, effondrée sur sa colline ; des pillards y guettent les charrettes de la route de Vestmhor. Niveaux 13-15. [GD v1.0.119, lieu_tour_de_guet_effondree]."
     },
     {
@@ -5258,7 +5276,8 @@
       "id": "poi_tour_naine_effondree",
       "name": "Tour naine effondrée",
       "cell": "S015_E014",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Ancienne tour de guet naine sur un éperon, à moitié écroulée ; des trolls des montagnes s'y abritent. Niveaux 24-28. [GD v1.0.119, lieu_tour_naine_effondree]."
     },
     {
@@ -5377,7 +5396,8 @@
       "id": "poi_phare_nain",
       "name": "Phare nain",
       "cell": "S017_E013",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Tour de veille naine sur la côte, dont le feu est éteint depuis longtemps ; des contrebandiers y allument de faux signaux. Niveaux 24-27. [GD v1.0.121, lieu_phare_nain]."
     },
     {
@@ -5503,7 +5523,8 @@
       "id": "poi_tour_des_signaux_drach",
       "name": "Tour des signaux drach",
       "cell": "S009_W010",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de signaux sur la côte, d'où les Drach annonçaient les flottes ennemies ; des harpies y nichent. Niveaux 30-34. [GD v1.0.121, lieu_tour_des_signaux_drach]."
     },
     {
@@ -5629,14 +5650,14 @@
       "id": "poi_pont_de_mhorgad",
       "name": "Pont de Mhorgad",
       "cell": "N015_E016",
-      "kind": "defile",
+      "kind": "pont",
       "description": "Vieux pont de bois sur un torrent, entre Hoengardt et Mhorgad ; des bandits y prélèvent un péage. Niveaux 18-20. [GD v1.0.121, lieu_pont_de_mhorgad]."
     },
     {
       "id": "poi_cascade_des_ondines",
       "name": "Cascade des ondines",
       "cell": "N010_W007",
-      "kind": "sanctuaire",
+      "kind": "cascade",
       "description": "Cascade sous les arbres, où les gens d'Ostrevan disent entendre chanter des ondines. Niveaux 30-34. [GD v1.0.121, lieu_cascade_des_ondines]."
     },
     {
@@ -5671,7 +5692,8 @@
       "id": "poi_tour_du_naufrageur",
       "name": "Tour du naufrageur",
       "cell": "N012_W009",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour sur la côte où un naufrageur allumait de faux feux pour briser les navires sur les récifs. Niveaux 30-34. [GD v1.0.121, lieu_tour_du_naufrageur]."
     },
     {
@@ -5923,7 +5945,8 @@
       "id": "poi_phare_de_klaerhin",
       "name": "Phare de Klaerhin",
       "cell": "S004_W016",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Phare impérial sur un rocher, abandonné depuis qu'un gardien y a été retrouvé mort ; on dit sa lanterne hantée. Niveaux 10-14. [GD v1.0.122, lieu_phare_de_klaerhin]."
     },
     {
@@ -5944,7 +5967,7 @@
       "id": "poi_tour_des_garde_cotes",
       "name": "Tour des garde-côtes",
       "cell": "S005_W016",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où une poignée de garde-côtes impériaux guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 10-14. [GD v1.0.122, lieu_tour_des_garde_cotes]."
     },
     {
@@ -6322,7 +6345,8 @@
       "id": "poi_phare_des_geants",
       "name": "Phare des géants",
       "cell": "N022_E020",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Tour colossale au bord de la mer, construite par des géants ; nul ne sait pour quels navires. Niveaux 30-34. [GD v1.0.122, lieu_phare_des_geants]."
     },
     {
@@ -6357,7 +6381,7 @@
       "id": "poi_tour_de_guet_de_shtenbrak",
       "name": "Tour de guet de Shtenbrak",
       "cell": "N016_E024",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet de bois qui surveille la plaine contre les géants ; un cor y est toujours prêt. Niveaux 30-33. [GD v1.0.122, lieu_tour_de_guet_de_shtenbrak]."
     },
     {
@@ -6546,7 +6570,8 @@
       "id": "poi_tour_du_seigneur_errant",
       "name": "Tour du seigneur errant",
       "cell": "S014_E001",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour d'un seigneur parti en croisade et jamais revenu ; des pillards l'occupent. Niveaux 25-29. [GD v1.0.122, lieu_tour_du_seigneur_errant]."
     },
     {
@@ -6602,7 +6627,9 @@
       "id": "poi_forteresse_ruinee_de_brokhendt",
       "name": "Forteresse ruinée de Brokhendt",
       "cell": "S008_W001",
-      "kind": "ruine",
+      "scale": 0.8,
+      "state": "ruine",
+      "kind": "chateau",
       "description": "Forteresse drach détruite dans une guerre de seigneurs ; ses souterrains n'ont pas été fouillés. Niveaux 30-34. [GD v1.0.122, lieu_forteresse_ruinee_de_brokhendt]."
     },
     {
@@ -6637,7 +6664,9 @@
       "id": "poi_forteresse_naine_effondree",
       "name": "Forteresse naine effondrée",
       "cell": "S013_E007",
-      "kind": "ruine",
+      "scale": 0.8,
+      "state": "ruine",
+      "kind": "chateau",
       "description": "Forteresse naine dans la montagne, effondrée par un tremblement de terre ; on y entend encore des marteaux. Niveaux 18-22. [GD v1.0.122, lieu_forteresse_naine_effondree]."
     },
     {
@@ -6700,7 +6729,7 @@
       "id": "poi_pont_des_nains_du_sud",
       "name": "Pont des nains du sud",
       "cell": "S006_E006",
-      "kind": "defile",
+      "kind": "pont",
       "description": "Pont de pierre bâti par les nains sur la route de Frhozhol ; un péage nain y est tenu par deux frères bourrus. Niveaux 18-22. [GD v1.0.122, lieu_pont_des_nains_du_sud]."
     },
     {
@@ -6735,7 +6764,7 @@
       "id": "poi_phare_du_cap_hishtar",
       "name": "Phare du cap Hishtar",
       "cell": "S010_W007",
-      "kind": "camp",
+      "kind": "phare",
       "description": "Grand phare de pierre à la pointe nord de l'île ; ses gardiens guettent les flottes de l'Empire et les pirates. Niveaux 28-32. [GD v1.0.124, lieu_phare_du_cap_hishtar]."
     },
     {
@@ -6798,14 +6827,15 @@
       "id": "poi_tour_des_garde_cotes_de_dhraegtun",
       "name": "Tour des garde-côtes de Dhraegtun",
       "cell": "N022_E016",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-33. [GD v1.0.126, lieu_tour_des_garde_cotes_de_dhraegtun]."
     },
     {
       "id": "poi_phare_de_dhraegtun",
       "name": "Phare de Dhraegtun",
       "cell": "N022_E017",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-33. [GD v1.0.126, lieu_phare_de_dhraegtun]."
     },
     {
@@ -6840,7 +6870,8 @@
       "id": "poi_tour_en_ruine_de_hayvekh",
       "name": "Tour en ruine de Hayvekh",
       "cell": "N021_E015",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 30-32. [GD v1.0.126, lieu_tour_en_ruine_de_hayvekh]."
     },
     {
@@ -6945,7 +6976,8 @@
       "id": "poi_phare_de_shtenbrak",
       "name": "Phare de Shtenbrak",
       "cell": "N018_E024",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-33. [GD v1.0.126, lieu_phare_de_shtenbrak]."
     },
     {
@@ -6966,7 +6998,7 @@
       "id": "poi_cascade_de_hazol",
       "name": "Cascade de Hazol",
       "cell": "N016_E010",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 30-33. [GD v1.0.126, lieu_cascade_de_hazol]."
     },
     {
@@ -6980,7 +7012,7 @@
       "id": "poi_tour_de_guet_de_hagfhal",
       "name": "Tour de guet de Hagfhal",
       "cell": "N016_E021",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Hagfhal. Niveaux 30-32. [GD v1.0.126, lieu_tour_de_guet_de_hagfhal]."
     },
     {
@@ -7022,7 +7054,7 @@
       "id": "poi_tour_des_garde_cotes_de_shtenbrak",
       "name": "Tour des garde-côtes de Shtenbrak",
       "cell": "N015_E025",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-32. [GD v1.0.126, lieu_tour_des_garde_cotes_de_shtenbrak]."
     },
     {
@@ -7414,14 +7446,15 @@
       "id": "poi_phare_de_vaerdhun",
       "name": "Phare de Vaerdhun",
       "cell": "N010_W017",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 10-14. [GD v1.0.126, lieu_phare_de_vaerdhun]."
     },
     {
       "id": "poi_tour_des_garde_cotes_de_fhelvakt",
       "name": "Tour des garde-côtes de Fhelvakt",
       "cell": "N010_E000",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-33. [GD v1.0.126, lieu_tour_des_garde_cotes_de_fhelvakt]."
     },
     {
@@ -7547,7 +7580,7 @@
       "id": "poi_pont_de_bois_de_fhelvakt",
       "name": "Pont de bois de Fhelvakt",
       "cell": "N009_W003",
-      "kind": "defile",
+      "kind": "pont",
       "description": "Pont de bois sur la rivière, gardé par un péager qui note chaque passant. Niveaux 30-34. [GD v1.0.126, lieu_pont_de_bois_de_fhelvakt]."
     },
     {
@@ -7589,7 +7622,7 @@
       "id": "poi_tour_de_guet_de_farvhenn",
       "name": "Tour de guet de Farvhenn",
       "cell": "N009_E020",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Farvhenn. Niveaux 21-25. [GD v1.0.126, lieu_tour_de_guet_de_farvhenn]."
     },
     {
@@ -8023,7 +8056,7 @@
       "id": "poi_pont_de_bois_de_ghwenaeth",
       "name": "Pont de bois de Ghwenaëth",
       "cell": "N004_W005",
-      "kind": "defile",
+      "kind": "pont",
       "description": "Pont de bois sur la rivière, gardé par un péager qui note chaque passant. Niveaux 14-19. [GD v1.0.126, lieu_pont_de_bois_de_ghwenaeth]."
     },
     {
@@ -8072,7 +8105,7 @@
       "id": "poi_tour_de_guet_de_harrodh",
       "name": "Tour de guet de Harrodh",
       "cell": "N004_E006",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Harrodh. Niveaux 18-23. [GD v1.0.126, lieu_tour_de_guet_de_harrodh]."
     },
     {
@@ -8478,7 +8511,8 @@
       "id": "poi_phare_de_dhuzvelt",
       "name": "Phare de Dhuzvelt",
       "cell": "N000_E025",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-32. [GD v1.0.126, lieu_phare_de_dhuzvelt]."
     },
     {
@@ -8513,7 +8547,7 @@
       "id": "poi_tour_de_guet_de_drakhenhal",
       "name": "Tour de guet de Drakhenhal",
       "cell": "S001_W002",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Drakhenhal. Niveaux 13-18. [GD v1.0.126, lieu_tour_de_guet_de_drakhenhal]."
     },
     {
@@ -8807,7 +8841,8 @@
       "id": "poi_tour_en_ruine_de_krakhol",
       "name": "Tour en ruine de Krakhol",
       "cell": "S003_E000",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 13-18. [GD v1.0.126, lieu_tour_en_ruine_de_krakhol]."
     },
     {
@@ -8940,7 +8975,7 @@
       "id": "poi_cascade_de_mhillenz",
       "name": "Cascade de Mhillenz",
       "cell": "S004_E001",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 19-24. [GD v1.0.126, lieu_cascade_de_mhillenz]."
     },
     {
@@ -9010,7 +9045,7 @@
       "id": "poi_tour_des_garde_cotes_de_dhuzvelt",
       "name": "Tour des garde-côtes de Dhuzvelt",
       "cell": "S004_E025",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 25-28. [GD v1.0.126, lieu_tour_des_garde_cotes_de_dhuzvelt]."
     },
     {
@@ -9087,7 +9122,8 @@
       "id": "poi_tour_en_ruine_de_heusgly",
       "name": "Tour en ruine de Heusgly",
       "cell": "S005_E004",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 17-22. [GD v1.0.126, lieu_tour_en_ruine_de_heusgly]."
     },
     {
@@ -9115,7 +9151,7 @@
       "id": "poi_cascade_de_durnhalde",
       "name": "Cascade de Durnhalde",
       "cell": "S005_E017",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 19-24. [GD v1.0.126, lieu_cascade_de_durnhalde]."
     },
     {
@@ -9304,7 +9340,8 @@
       "id": "poi_tour_en_ruine_de_ghrondak",
       "name": "Tour en ruine de Ghrondak",
       "cell": "S006_E024",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 20-24. [GD v1.0.126, lieu_tour_en_ruine_de_ghrondak]."
     },
     {
@@ -9360,7 +9397,7 @@
       "id": "poi_tour_de_guet_de_heusgly",
       "name": "Tour de guet de Heusgly",
       "cell": "S007_E005",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Heusgly. Niveaux 18-22. [GD v1.0.126, lieu_tour_de_guet_de_heusgly]."
     },
     {
@@ -9409,7 +9446,7 @@
       "id": "poi_cascade_d_ysenkhal",
       "name": "Cascade d'Ysenkhal",
       "cell": "S007_E019",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 12-16. [GD v1.0.126, lieu_cascade_d_ysenkhal]."
     },
     {
@@ -9696,7 +9733,8 @@
       "id": "poi_tour_en_ruine_de_kholdvar",
       "name": "Tour en ruine de Kholdvar",
       "cell": "S011_E006",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 15-19. [GD v1.0.126, lieu_tour_en_ruine_de_kholdvar]."
     },
     {
@@ -9752,7 +9790,7 @@
       "id": "poi_cascade_de_shaddrek",
       "name": "Cascade de Shaddrek",
       "cell": "S011_E016",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 18-21. [GD v1.0.126, lieu_cascade_de_shaddrek]."
     },
     {
@@ -9878,7 +9916,8 @@
       "id": "poi_phare_de_ghrondak",
       "name": "Phare de Ghrondak",
       "cell": "S012_E025",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 19-23. [GD v1.0.126, lieu_phare_de_ghrondak]."
     },
     {
@@ -9948,7 +9987,7 @@
       "id": "poi_cascade_de_khrozrad",
       "name": "Cascade de Khrozrad",
       "cell": "S013_E018",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 20-24. [GD v1.0.126, lieu_cascade_de_khrozrad]."
     },
     {
@@ -10046,7 +10085,8 @@
       "id": "poi_tour_en_ruine_de_khrozrad",
       "name": "Tour en ruine de Khrozrad",
       "cell": "S014_E022",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 20-24. [GD v1.0.126, lieu_tour_en_ruine_de_khrozrad]."
     },
     {
@@ -10186,7 +10226,7 @@
       "id": "poi_tour_des_garde_cotes_de_faervosk",
       "name": "Tour des garde-côtes de Faervosk",
       "cell": "S016_W002",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-32. [GD v1.0.126, lieu_tour_des_garde_cotes_de_faervosk]."
     },
     {
@@ -10256,14 +10296,15 @@
       "id": "poi_tour_en_ruine_de_klehrwath",
       "name": "Tour en ruine de Klehrwath",
       "cell": "S016_E014",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "tour",
       "description": "Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 24-27. [GD v1.0.126, lieu_tour_en_ruine_de_klehrwath]."
     },
     {
       "id": "poi_cascade_de_klehrwath",
       "name": "Cascade de Klehrwath",
       "cell": "S016_E015",
-      "kind": "etang",
+      "kind": "cascade",
       "description": "Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 24-27. [GD v1.0.126, lieu_cascade_de_klehrwath]."
     },
     {
@@ -10298,7 +10339,7 @@
       "id": "poi_tour_de_guet_de_khrozrad",
       "name": "Tour de guet de Khrozrad",
       "cell": "S016_E020",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Khrozrad. Niveaux 22-26. [GD v1.0.126, lieu_tour_de_guet_de_khrozrad]."
     },
     {
@@ -10347,7 +10388,8 @@
       "id": "poi_phare_de_faervosk",
       "name": "Phare de Faervosk",
       "cell": "S017_E002",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-32. [GD v1.0.126, lieu_phare_de_faervosk]."
     },
     {
@@ -10382,7 +10424,7 @@
       "id": "poi_tour_des_garde_cotes_de_suthvarn",
       "name": "Tour des garde-côtes de Suthvarn",
       "cell": "S017_E007",
-      "kind": "camp",
+      "kind": "tour",
       "description": "Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 11-15. [GD v1.0.126, lieu_tour_des_garde_cotes_de_suthvarn]."
     },
     {
@@ -10403,7 +10445,8 @@
       "id": "poi_phare_de_thysskar",
       "name": "Phare de Thysskar",
       "cell": "S017_E010",
-      "kind": "ruine",
+      "state": "ruine",
+      "kind": "phare",
       "description": "Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 22-25. [GD v1.0.126, lieu_phare_de_thysskar]."
     },
     {
@@ -10473,8 +10516,17 @@
       "id": "poi_citadelle_imperiale_tsaroth",
       "name": "Citadelle impériale (avant Tsaroth)",
       "cell": "S008_E011",
-      "kind": "ruine",
+      "scale": 0.8,
+      "state": "ruine",
+      "kind": "chateau",
       "description": "Dernière place forte impériale avant la Faille de Tsaroth, prise par la Lune Noire après le Krak de Jhenner (BD-T5 p.22-23) [case GD v1.0.117, au master v1.0.128]."
+    },
+    {
+      "id": "poi_chateau_de_garundel",
+      "name": "Château de Garundel",
+      "cell": "S001_E004",
+      "kind": "chateau",
+      "description": "Château circulaire du fief de Garundel, base de Wismerhill : remparts, tour ronde et corps de logis, arbres dans la cour, douves (BD-T3) [lot carte v1.0.132]."
     }
   ],
   "imports": {

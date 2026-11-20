@@ -85,6 +85,9 @@ int main()
 		&& engine::client::PlaceKindLabel("defile") == "D\xC3\xA9" "fil\xC3\xA9" && engine::client::PlaceKindLabel("salle") == "Salle souterraine",
 		"PlaceKindLabel : genres de POI des tomes 7 a 14 (v1.0.55)");
 	Check(engine::client::PlaceKindLabel("elevage") == "\xC3\x89levage", "PlaceKindLabel : genre de POI des albums hors serie (v1.0.59)");
+	Check(engine::client::PlaceKindLabel("tour") == "Tour" && engine::client::PlaceKindLabel("chateau") == "Ch\xC3\xA2teau"
+		&& engine::client::PlaceKindLabel("phare") == "Phare" && engine::client::PlaceKindLabel("cascade") == "Cascade"
+		&& engine::client::PlaceKindLabel("pont") == "Pont", "PlaceKindLabel : lieux batis (v1.0.132)");
 	Check(engine::client::PlaceKindLabel("champ_bataille") == "Champ de bataille" && engine::client::PlaceKindLabel("etang") == "\xC3\x89tang"
 	      && engine::client::PlaceKindLabel("inconnu") == "inconnu", "libelles des genres de POI");
 

@@ -13,6 +13,7 @@ add_library(world_gen_lib STATIC
   lib/WorldMaster.cpp
   lib/Terrain.cpp
   lib/Places.cpp
+  lib/Landmarks.cpp
   lib/Roads.cpp
   lib/Settlements.cpp
   lib/Vegetation.cpp

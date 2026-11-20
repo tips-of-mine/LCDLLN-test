@@ -1912,9 +1912,11 @@ namespace tools::world_gen
 		}
 		for (const PoiDef& p : w.pois)
 		{
+			// v1.0.132 : un château (enceinte, douves) demande un plateau plus large.
+			const double R = p.kind == "chateau" ? 40.0 * p.scale + 8.0 : 40.0;
 			double sum = 0.0, cnt = 0.0;
-			ForDisc(w.height, p.center, 40.0, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
-			flatten(p.center, 40.0, 60.0, std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0), false);
+			ForDisc(w.height, p.center, R, [&](int i, int j, double) { sum += w.height.At(i, j); cnt += 1.0; });
+			flatten(p.center, R, 60.0, std::max(cnt > 0 ? sum / cnt : sea + 8.0, sea + 5.0), false);
 		}
 	}
 

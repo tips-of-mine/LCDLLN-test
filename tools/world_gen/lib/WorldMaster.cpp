@@ -260,6 +260,7 @@ namespace tools::world_gen
 				d.id = GetStr(p, "id"); d.name = GetStr(p, "name", d.id); d.cell = GetStr(p, "cell");
 				d.kind = GetStr(p, "kind", "monolithe"); d.description = GetStr(p, "description");
 				d.link = GetStr(p, "link");
+				d.state = GetStr(p, "state"); d.scale = std::clamp(GetNum(p, "scale", 1.0), 0.5, 2.0); // v1.0.132
 				// Décalage depuis le centre de la case (v1.0.72) : le lieu et son
 				// aplanissement (100 m) restent à plus de 700 m des bords de la case.
 				d.offsetX = GetNum(p, "offset_x_m", 0.0); d.offsetZ = GetNum(p, "offset_z_m", 0.0);

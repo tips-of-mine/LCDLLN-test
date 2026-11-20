@@ -1067,6 +1067,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.55](#1655-carte-du-monde-lot-2--rivières-principales-ruisseaux-et-ponts-v10129) | v1.0.129 | Carte du monde, lot 2 : eau | 8 rivières principales tracées, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois. |
 | [16.56](#1656-carte-du-monde-lot-3--montagnes-à-léchelle-des-pyrénées-grandes-collines-v10130) | v1.0.130 | Carte du monde, lot 3 : relief | Échelle 3 600 m, montagnes de 1 400 à 3 400 m (Pyrénées), neige vers 2 500 m, grandes collines, cols sur les routes du lore. |
 | [16.57](#1657-carte-du-monde-lot-4--routes-moins-droites-v10131) | v1.0.131 | Carte du monde, lot 4 : routes | Points de passage décalés, terrain bruité, méandres amples, cols sinueux ; balises reposées au bord des routes. |
+| [16.58](#1658-carte-du-monde-lot-5--tours-châteaux-phares-cascades-et-ponts-bâtis-v10132) | v1.0.132 | Carte du monde, lot 5 : lieux bâtis | Tours, châteaux, phares, cascades et ponts générés en jeu (73 lieux), Château de Garundel, Palais des Maîtres des Dragons bâti. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5237,6 +5238,40 @@ plus court chemin sur un terrain plat est la ligne droite ; les méandres (±110
 
 **Contrôles** : `world_gen_tests` (`TestRoutesV1131` : 176 routes du lore tracées, aucune portion tirée au cordeau — écart
 de moins de 8 m à la corde — sur 3 km, les 5 balises à moins de 100 m de leur route).
+
+### 16.58 Carte du monde, lot 5 : tours, châteaux, phares, cascades et ponts bâtis (v1.0.132)
+
+**Décision du propriétaire (19/11/2026)** : de nouveaux types de lieux tour, château, phare, cascade et pont, avec **une
+vraie forme générée** (pas un simple repère), « pas grave si plus gros chantier ».
+
+**Genres du master** (`pois[].kind`) et formes générées (`tools/world_gen/lib/Landmarks.cpp`, `BuildLandmarks`, décor
+`scatter.bin`, pièces modulaires de `meshes/props/` ; murs et sols par le catalogue de collision : murs = barrières,
+dalles = dessus marchable, portes franchissables) :
+
+| Genre | Forme | Lieux |
+|---|---|---|
+| `tour` | tour ronde de pierre, 3 à 5 étages (r 3 m), porte vers la route, fenêtres, dalles au sol, toit conique ; **Tour Carrée de la Lune Noire** : carrée (10 m), **24 étages (≈ 75 m)**, créneaux | 40 |
+| `phare` | tour ronde de 6 étages, lanterne et **feu** (lumière ponctuelle de 45 m, `point_lights`) | 12 |
+| `chateau` | enceinte circulaire (r 26 m × échelle) à créneaux et **porte en arche** vers la route, 4 tours d'angle, **donjon rond** couvert, **corps de logis** accolé au donjon, arbres dans la cour, **douves sèches** | 6 + Château de Garundel |
+| `cascade` | **trois vasques en gradins** (lacs de 9 à 6,5 m, 4 m de chute chacune, terrasses), rochers aux chutes | 8 |
+| `pont` | ravine creusée (6 m) et pont de pierre à arches (ou de bois : « Pont de bois », « Pont de corde »), dans l'axe de la route la plus proche | 7 |
+
+- Clés nouvelles des POI : **`state`** (`ruine` : pans manquants — d'autant plus haut qu'on monte —, étages hauts
+  effondrés, sans toit, éboulis ; pont au tablier coupé) et **`scale`** (0,5 à 2 ; Palais des Maîtres des Dragons 1,4,
+  forteresses en ruine 0,8). Un POI déjà « ruine » ou dont le nom dit « ruine, effondré, éteint, abandonné, ensablé » est
+  reclassé à l'état `ruine`.
+- **Château de Garundel** (`poi_chateau_de_garundel`, fiche `lieu_chateau_de_garundel`) : château circulaire, douves,
+  remparts, tour ronde, corps de logis collé à la tour, arbres dans la cour (décision du propriétaire), à côté du fief.
+- **Palais des Maîtres des Dragons** (`poi_palais_passe`) : château, échelle 1,4.
+- Plateau aplani plus large sous un château (40 m × échelle + 8 m).
+- Lore : 5 types de lieux (`tower_poi`, `castle_poi`, `lighthouse_poi`, `waterfall_poi`, `bridge_poi`), 73 fiches
+  suivies (type et note) ; client : libellés Tour, Château, Phare, Cascade, Pont ; affiche du portail : étiquettes des
+  châteaux.
+- Les ponts du lot 2 (`BuildBridges`) passent aussi par le catalogue de pièces (bit « pièce » du décor).
+
+**Contrôles** : `world_gen_tests` (`TestLieuxBatisV1132` : genres au master ; Château de Garundel avec enceinte, 5 toits de
+tour, logis, porte et dalles marchables ; Tour Carrée de plus de 60 m ; Cascade de Hazol à trois vasques) ;
+`world_places_tests` (libellés) ; contrôles du lore.
 
 ## 17. Questions ouvertes
 

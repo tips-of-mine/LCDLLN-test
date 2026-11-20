@@ -99,7 +99,11 @@ namespace tools::world_gen
 		std::string id;
 		std::string name;
 		std::string cell;
-		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle
+		std::string kind;        ///< monolithe|faille|ruine|portail|foret|etang|champ_bataille|volcan|gouffre|temple|sanctuaire|port|cite|defile|salle ; v1.0.132 : tour|chateau|phare|cascade|pont (forme bâtie, Landmarks.cpp)
+		/// v1.0.132 — état bâti (clé `state` : "" = intact, "ruine") et échelle (clé `scale`, défaut 1,
+		/// 0,5 à 2) des formes générées (tour, château, phare, pont).
+		std::string state;
+		double scale = 1.0;
 		std::string description;
 		/// Portail (kind "portail") : identifiant du portail APPARIÉ dans l'autre carte
 		/// (clé `link`, ex. "enfers:poi_enfers_porte_1"). Vide = portail décoratif.
@@ -436,6 +440,7 @@ namespace tools::world_gen
 		uint64_t seaPocketSamples = 0; ///< EAU.5 : échantillons de cuvettes sous la mer comblés
 		uint64_t portals = 0;          ///< portails reliés à une autre carte (portals.json)
 		uint64_t bridges = 0;          ///< lot carte v1.0.129 : ponts posés (routes × cours d'eau)
+		uint64_t landmarks = 0;        ///< lot carte v1.0.132 : lieux bâtis (tours, châteaux, phares, cascades, ponts)
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

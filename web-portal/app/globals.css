@@ -225,3 +225,7 @@ input,textarea,select,button{font-family:inherit;}
 .wp-place-kind{font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ln-accent);}
 .wp-place-desc{font-size:12.5px;line-height:1.45;color:var(--ln-muted);font-style:italic;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
 .wp-map-cta{text-align:center;margin:-1rem 0 2.5rem;}
+/* Lot carte v1.0.132 — encart « Ce qui attend le voyageur » de la page Le monde. */
+.wp-map-intro{max-width:52rem;margin:0 auto 2.5rem;padding:1.25rem 1.5rem;border:1px solid rgba(201,169,110,.35);border-radius:10px;background:rgba(0,0,0,.18);}
+.wp-map-intro h2{margin:0 0 .75rem;font-size:1.25rem;}
+.wp-map-intro ul{margin:0;padding-left:1.25rem;line-height:1.6;}

@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.131",
+    "version": "1.0.132",
     "notes": [
+      "v1.0.132 : [DÉCISION] Carte du monde, lot 5 (lieux bâtis) : tours, châteaux, phares, cascades et ponts générés en jeu ; 72 lieux reclassés ; Château de Garundel.",
       "v1.0.131 : [DÉCISION] Carte du monde, lot 4 (routes) : routes sinueuses (points de passage décalés, terrain bruité, méandres amples), cols sinueux, balises reposées au bord des routes.",
       "v1.0.130 : [DÉCISION] Carte du monde, lot 3 (relief) : montagnes à l'échelle des Pyrénées (1 400 à 3 400 m), neige vers 2 500 m, grandes collines, cols sur les routes du lore.",
       "v1.0.129 : [DÉCISION] Carte du monde, lot 2 (eau) : 8 rivières principales tracées en jeu, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois.",
@@ -11057,7 +11058,8 @@
         "[v1.0.51] Les références « p.45-46 » ci-dessus suivent la page du PDF (= planches 43-44).",
         "[GD] (v1.0.58) Économie : fief agricole sur la route du métal nain et la Via Magna [GD].",
         "[CARTE] (v1.0.60) Étape de la Via Magna (route 000120).",
-        "[v1.0.60] Route 000012 supprimée (remplacée par la Via Magna, route 000120) ; 000013 et 000018 repartent toujours du fief."
+        "[v1.0.60] Route 000012 supprimée (remplacée par la Via Magna, route 000120) ; 000013 et 000018 repartent toujours du fief.",
+        "[DÉCISION] (v1.0.132) Son château est bâti en jeu à côté du fief (lieu_chateau_de_garundel). LORE_BD §16.58."
       ],
       "taille": "forteresse",
       "service_npcs": [
@@ -13341,7 +13343,8 @@
         "[GD] (v1.0.58) Économie : aucun commerce de dragons ni d'œufs (interdit par les Chevaliers Dragons) ; un dragon vivant « vaut une fortune » [BD-A2 pl.11] [GD].",
         "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les sentinelles des Chevaliers-Dragons refusent l'accès aux étrangers à la faction ; dragons guetteurs (40-48) [BD-T2 p.29-30].",
         "[DÉCISION] (v1.0.106) La route 000017 depuis l'Atmosphère est tracée en jeu par la Passe des Dragons (S002_W003, case de passage imposée au tracé) ; le Palais reste sans entrée au master (la route finit au point praticable de la case) (LORE_BD §16.35).",
-        "[DÉCISION] (v1.0.128) Fusion (décision du propriétaire du 19/11/2026) : le « Palais abandonné de la Passe » du master (poi_palais_passe, S003_W004) est ce palais ; le POI prend son nom et le genre `cite`. LORE_BD §16.54."
+        "[DÉCISION] (v1.0.128) Fusion (décision du propriétaire du 19/11/2026) : le « Palais abandonné de la Passe » du master (poi_palais_passe, S003_W004) est ce palais ; le POI prend son nom et le genre `cite`. LORE_BD §16.54.",
+        "[DÉCISION] (v1.0.132) Bâti en jeu comme un château (POI poi_palais_passe, genre `chateau`, échelle 1,4 : enceinte, tours, donjon, logis). LORE_BD §16.58."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -247593,6 +247596,13 @@
           "nom": "Routes moins droites",
           "decision": "Décision du propriétaire (19/11/2026) : les routes ne doivent plus être droites (« la nature n'est pas carrée ») : en pays ouvert, une route vise un point de chaque case traversée tiré à ±3 km du centre, suit un terrain aux préférences bruitées et ondule davantage (≈ ±240 m) ; les cols de montagne serpentent ; les balises de route sont reposées au bord des nouveaux tracés. LORE_BD §16.57.",
           "version": "1.0.131"
+        },
+        {
+          "collection": "place_types",
+          "id": "lieux_batis_v1132",
+          "nom": "Tours, châteaux, phares, cascades et ponts bâtis",
+          "decision": "Décision du propriétaire (19/11/2026) : nouveaux types de lieux tour, château, phare, cascade et pont, avec une vraie forme générée en jeu (pas un simple repère) ; 72 lieux reclassés, Château de Garundel ajouté, Palais des Maîtres des Dragons bâti en château. LORE_BD §16.58.",
+          "version": "1.0.132"
         }
       ]
     },
@@ -255064,7 +255074,8 @@
         "Lieu fortement lié à la Lune Noire",
         "Architecture volontairement austère et intimidante",
         "Point focal mystique ou portail cosmique potentiel",
-        "[DÉCISION] (v1.0.128) La Tour Carrée et la « Grande Arche » du master (poi_arche, portail entre la Lune et la Terre) sont un seul et même lieu (décision du propriétaire du 19/11/2026) ; le POI prend le nom de la Tour. LORE_BD §16.54."
+        "[DÉCISION] (v1.0.128) La Tour Carrée et la « Grande Arche » du master (poi_arche, portail entre la Lune et la Terre) sont un seul et même lieu (décision du propriétaire du 19/11/2026) ; le POI prend le nom de la Tour. LORE_BD §16.54.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -256809,7 +256820,7 @@
       "id": "lieu_citadelle_imperiale_tsaroth",
       "name": "Citadelle impériale (avant Tsaroth)",
       "alias": "",
-      "type": "battlefield_poi",
+      "type": "castle_poi",
       "importance": "",
       "cell": "S008_E011",
       "position_x_m": null,
@@ -256887,7 +256898,8 @@
       "notes": [
         "[BD-T5] p.22-23 : prise par la Lune Noire après le Krak de Jhenner. Non nommée dans la BD.",
         "[GD] (v1.0.117) Case S008_E011 proposée sur la route de Moork à Tsaroth (dernière place forte avant la Faille [BD-T5 p.23], case de montagne au nord de S009_E011 ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master.",
-        "[DÉCISION] (v1.0.128) Placé au master (POI poi_citadelle_imperiale_tsaroth), décision du propriétaire du 19/11/2026 (mettre sur la carte tous les lieux emblématiques). LORE_BD §16.54."
+        "[DÉCISION] (v1.0.128) Placé au master (POI poi_citadelle_imperiale_tsaroth), décision du propriétaire du 19/11/2026 (mettre sur la carte tous les lieux emblématiques). LORE_BD §16.54.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `chateau` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -259014,7 +259026,7 @@
       "id": "lieu_chateau_de_la_mort",
       "name": "Le Château de la Mort (ruines)",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "castle_poi",
       "importance": "",
       "cell": "N013_E016",
       "position_x_m": null,
@@ -259096,7 +259108,8 @@
         "[DÉCISION] (v1.0.56) Ruine placée en bordure de l'Orkland (territoires_orcques, Q19) ; placement effectif dans la PR de carte à part.",
         "[GD] (v1.0.58) Économie : mines de minerai « si précieux pour l'Empire » [BD-A4 p.17], abandonnées depuis la révolte : filons de minerai à exploiter dans les ruines.",
         "[INFÉRÉ] (v1.0.59) Cellule N013_E016 : chaîne de montagnes (code M) au bord des Territoires orcques (N013_E015 et N012_E015 dans la région territoires_orcques du monde jouable, Q19), même chaîne que le défilé de Mordrek aux falaises rouges (N016_E013) : forteresse encastrée dans une falaise de canyon rouge sous un plateau [BD-A4 p.16-22]. Hoengardt (N014_E016) voisine, sans chevauchement. Monde jouable : POI poi_chateau_de_la_mort (ruine) ; mines abandonnées dans les ruines.",
-        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ].",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `chateau` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -259187,7 +259200,7 @@
       "id": "lieu_ruines_thenhart",
       "name": "Ruines du château de Thenhart",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "castle_poi",
       "importance": "",
       "cell": "N009_W004",
       "position_x_m": null,
@@ -259267,7 +259280,8 @@
         "[BD-T11] « … j'arrivai au-dessus des ruines de Thenhart » (marais_maudits_t11).",
         "[ÉPOQUE] avant T1 ; en ruine à l'époque du jeu.",
         "[INFÉRÉ] (v1.0.59) Cellule N009_W004 : forêt traversée par la rivière de la cascade (riv_cascade_northind), juste en amont des Marais maudits (N010_W004, marais avec rivière) : château sur un rocher au-dessus d'une rivière dont le courant emporte la troupe vers les marais [BD-A1 p.41-42] ; Wismerhill survole les ruines puis trouve les marais [BD-T11]. Monde jouable : POI poi_ruines_thenhart (ruine). En ruine à l'époque du jeu.",
-        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ]."
+        "[DÉCISION] (v1.0.59) Placement sur la carte jouable demandé par le propriétaire (PR de carte des albums hors série) ; la cellule retenue est [INFÉRÉ].",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `chateau` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -260298,7 +260312,7 @@
       "id": "lieu_ruines_tour_du_guet",
       "name": "Ruines de la tour du guet",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N008_W009",
       "position_x_m": null,
@@ -260376,7 +260390,8 @@
       "notes": [
         "[GD] (v1.0.66) Nom et lieu proposés, à valider par le propriétaire. Ancienne tour de guet face à la forêt elfique, abandonnée depuis des générations : araignées et corbeaux y nichent ; premiers pas des novices hors du hameau. Région de départ d'Ordhrann (Chevaliers de la Justice), niveaux 1 à 10 (LORE_BD §15.3).",
         "[GD] (v1.0.66) Ancrage : Abandonnée depuis des générations (aucune destruction de l'époque du jeu) ; la tour est [GD].",
-        "[INFÉRÉ] (v1.0.66) Cellule N008_W009 : Lisière de la Première Province au sud-est d'Ordhrann, en bordure de la forêt elfique (N008_W008) ; case libre."
+        "[INFÉRÉ] (v1.0.66) Cellule N008_W009 : Lisière de la Première Province au sud-est d'Ordhrann, en bordure de la forêt elfique (N008_W008) ; case libre.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -260981,7 +260996,7 @@
       "id": "lieu_ruines_pont_des_gorges",
       "name": "Ruines du pont des Gorges",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "S005_W003",
       "position_x_m": null,
@@ -261060,7 +261075,8 @@
         "[GD] (v1.0.68) Nom et lieu proposés, à valider par le propriétaire. Ancien pont suspendu et son corps de garde au-dessus d'une gorge, au sud-est de Drakhenhal, abandonnés depuis des générations au profit du chemin d'Ekvhitorn : araignées et vautours y nichent. Région de départ de Drakhenhal (Chevaliers-Dragons), niveaux 1 à 10 (LORE_BD §15.5).",
         "[GD] (v1.0.68) Ancrage : Gorges profondes et ponts suspendus du royaume des Chevaliers-Dragons [BD, faction_dragon_knights] ; pont de corde de la Passe des Dragons [BD-T2] (lieu distinct). Le pont et son abandon sont [GD] (aucune destruction de l'époque du jeu).",
         "[INFÉRÉ] (v1.0.68) Cellule S005_W003 : Montagne du Royaume Drach au sud-est de Drakhenhal et à l'est d'Ekvhitorn (S005_W004), hors de la case d'Ekvhitorn ; case libre.",
-        "[DÉCISION] (v1.0.92) Région HS : Royaumes des nains du sud (case S005_W003, carte du hors-série ; avant : Royaume Drach, `royaume_drach`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Royaumes des nains du sud (case S005_W003, carte du hors-série ; avant : Royaume Drach, `royaume_drach`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -261754,7 +261770,7 @@
       "id": "lieu_tour_des_fleches_blanches",
       "name": "Tour des Flèches blanches",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N007_W007",
       "position_x_m": null,
@@ -261833,7 +261849,8 @@
         "[GD] (v1.0.70) Nom et lieu proposés, à valider par le propriétaire. Tour de guet elfe de bois vivant, à l'écart de Faernilh : les guetteurs y surveillent la lisière et avertissent l'intrus d'une flèche à empennage blanc plantée à ses pieds. Région de départ de Syllaërin (Hauts Elfes), niveaux 1 à 10 (LORE_BD §15.7).",
         "[GD] (v1.0.70) Ancrage : Flèche à empennage blanc plantée aux pieds de l'intrus, « message clair » [HS] (foret_elfique) ; les non-elfes ne vont pas plus loin [HS]. La tour est [GD].",
         "[INFÉRÉ] (v1.0.70) Cellule N007_W007 : Forêt elfique à l'ouest de Syllaërin ; partage la case de Faernilh (4 cases libres pour 6 lieux), à l'écart du hameau.",
-        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (case N007_W007, carte du hors-série ; avant : Forêt elfique, `foret_elfique`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (case N007_W007, carte du hors-série ; avant : Forêt elfique, `foret_elfique`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -268432,7 +268449,7 @@
       "id": "lieu_tour_guet_route_shadehold",
       "name": "Tour de guet de la route de Shezhold",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N002_E011",
       "position_x_m": null,
@@ -268513,7 +268530,8 @@
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour de guet orque au bord de la route Nakhtvar – Shezhold : les guetteurs de la baronnie y surveillent la Via Magna et signalent les fumées des clans insoumis. Niveaux 18-24.",
         "[GD] (v1.0.86) Niveau : 18-24 (Baronnie de Moork).",
         "Réel en jeu : POI poi_tour_guet_route_shadehold (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
-        "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (case N002_E011, carte du hors-série ; avant : Baronnie de Moorks, `baronnie_de_moorks`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (case N002_E011, carte du hors-série ; avant : Baronnie de Moorks, `baronnie_de_moorks`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -269397,7 +269415,7 @@
       "id": "lieu_tour_guet_effondree",
       "name": "Tour de guet effondrée",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S006_E008",
       "position_x_m": null,
@@ -269477,7 +269495,8 @@
       "notes": [
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour de guet impériale effondrée sur une butte au sud de Frhozhol : de son étage, on voit la plaine filer vers Tsaroth. Niveaux 20-24.",
         "[GD] (v1.0.86) Niveau : 20-24 (Terres désolées de Tsaroth).",
-        "Réel en jeu : POI poi_tour_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -271323,7 +271342,7 @@
       "id": "lieu_tour_effondree_des_mages",
       "name": "Tour effondrée des mages",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N003_W004",
       "position_x_m": null,
@@ -271404,7 +271423,8 @@
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Tour d'observation des mages de Magistrya (Sauken Glude), fendue et désertée ; ses cercles gravés attirent encore des choses. Niveaux 16-22.",
         "[GD] (v1.0.86) Niveau : 16-22 (Désert de l'Oracle).",
         "Réel en jeu : POI poi_tour_effondree_des_mages (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
-        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (case N003_W004, carte du hors-série ; avant : Désert de l'Oracle, `desert_central`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Terres de l'empereur (case N003_W004, carte du hors-série ; avant : Désert de l'Oracle, `desert_central`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -271498,7 +271518,7 @@
       "id": "lieu_tour_guet_garundel",
       "name": "Tour de guet de Garundel",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S001_E003",
       "position_x_m": null,
@@ -271578,7 +271598,8 @@
       "notes": [
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Vieille tour de guet du fief de Garundel à la lisière du bois, abandonnée et squattée par des braconniers. Niveaux 14-20.",
         "[GD] (v1.0.86) Niveau : 14-20 (Désert de l'Oracle).",
-        "Réel en jeu : POI poi_tour_guet_garundel (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_guet_garundel (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -274032,7 +274053,7 @@
       "id": "lieu_tour_a_signaux_de_la_baronnie",
       "name": "Tour à signaux de la baronnie",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N000_E015",
       "position_x_m": null,
@@ -274112,7 +274133,8 @@
       "notes": [
         "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour à signaux de l'ancienne baronnie impériale de Moork, abandonnée au sable ; des pillards du désert y guettent les convois. Niveaux 22-26.",
         "[GD] (v1.0.88) Niveau : 22-26 (Marche de l'Est, repère 15-28).",
-        "Réel en jeu : POI poi_tour_a_signaux_de_la_baronnie (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_a_signaux_de_la_baronnie (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -274641,7 +274663,7 @@
       "id": "lieu_tour_de_guet_de_la_lisiere",
       "name": "Tour de guet de la lisière",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N004_E017",
       "position_x_m": null,
@@ -274721,7 +274743,8 @@
       "notes": [
         "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour de guet impériale qui surveillait la forêt de la Marche, abandonnée depuis la conquête ; les bêtes de la forêt en ont fait leur territoire. Niveaux 24-28.",
         "[GD] (v1.0.88) Niveau : 24-28 (Marche de l'Est, repère 15-28).",
-        "Réel en jeu : POI poi_tour_de_guet_de_la_lisiere (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_la_lisiere (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -275869,7 +275892,7 @@
       "id": "lieu_tour_ensablee",
       "name": "Tour ensablée",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N000_E019",
       "position_x_m": null,
@@ -275950,7 +275973,8 @@
         "[GD] (v1.0.88) Nom et lieu proposés, à valider par le propriétaire ; lot 16 du propriétaire (12/11/2026) ; LORE_BD §16.17. Tour impériale des confins du désert, à demi engloutie par le sable ; des pillards s'y abritent des tempêtes. Niveaux 26-28.",
         "[GD] (v1.0.88) Niveau : 26-28 (Marche de l'Est, repère 15-28).",
         "Réel en jeu : POI poi_tour_ensablee (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
-        "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (case N000_E019, carte du hors-série ; avant : Marche de l'Est, `region_marche_est`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Royaume des nains de l'est (case N000_E019, carte du hors-série ; avant : Marche de l'Est, `region_marche_est`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -277532,7 +277556,7 @@
       "id": "lieu_pont_effondre",
       "name": "Pont effondré",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "N007_E021",
       "position_x_m": null,
@@ -277613,7 +277637,8 @@
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Pont impérial sur la rivière, effondré faute d'entretien ; on passe désormais à gué, au risque des crues et des brigands. Niveaux 24-28.",
         "[GD] (v1.0.91) Niveau : 24-28 (côte orientale, repère 24-30).",
         "Réel en jeu : POI poi_pont_effondre (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
-        "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (case N007_E021, carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`) (LORE_BD §16.21)."
+        "[DÉCISION] (v1.0.92) Région HS : Territoires orcques (case N007_E021, carte du hors-série ; avant : Terres des Gigantomorphes, `terres_des_gigantomorphes`) (LORE_BD §16.21).",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -277707,7 +277732,7 @@
       "id": "lieu_tour_de_guet_cotiere",
       "name": "Tour de guet côtière",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N007_E023",
       "position_x_m": null,
@@ -277787,7 +277812,8 @@
       "notes": [
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Tour qui guettait les navires au nord de Ryvaldh, abandonnée ; des pillards l'utilisent pour repérer les jonques du levant. Niveaux 26-30.",
         "[GD] (v1.0.91) Niveau : 26-30 (côte orientale, repère 24-30).",
-        "Réel en jeu : POI poi_tour_de_guet_cotiere (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_cotiere (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -280244,7 +280270,7 @@
       "id": "lieu_tour_a_feu_de_la_cote",
       "name": "Tour à feu de la côte",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S001_E024",
       "position_x_m": null,
@@ -280324,7 +280350,8 @@
       "notes": [
         "[GD] (v1.0.91) Nom et lieu proposés, à valider par le propriétaire ; lot 19 du propriétaire (12/11/2026) ; LORE_BD §16.20. Tour à feu qui guidait les navires vers la côte de Dhuzvelt, éteinte depuis des années ; on dit que les naufrageurs l'ont fait taire. Niveaux 26-30.",
         "[GD] (v1.0.91) Niveau : 26-30 (côte orientale, repère 24-30).",
-        "Réel en jeu : POI poi_tour_a_feu_de_la_cote (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_a_feu_de_la_cote (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -283638,7 +283665,7 @@
       "id": "lieu_pont_de_corde_de_la_gorge",
       "name": "Pont de corde de la gorge",
       "alias": "",
-      "type": "camp_poi",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "S014_E020",
       "position_x_m": null,
@@ -283718,7 +283745,8 @@
       "notes": [
         "[GD] (v1.0.104) Nom et lieu proposés, à valider par le propriétaire ; lot 29 du propriétaire (12/11/2026) ; LORE_BD §16.33. Pont de corde au-dessus d'une gorge au sud de Khrozrad, seul passage vers les vallées du sud. Niveaux 22-26.",
         "[GD] (v1.0.104) Niveau : 22-26 (routes de Vozmarkh, Royaume des nains de l'est (10-30), repère 12-28).",
-        "Réel en jeu : POI poi_pont_de_corde_de_la_gorge (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_pont_de_corde_de_la_gorge (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -284508,7 +284536,7 @@
       "id": "lieu_phare_nain_eteint",
       "name": "Phare nain éteint",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S007_E025",
       "position_x_m": null,
@@ -284588,7 +284616,8 @@
       "notes": [
         "[GD] (v1.0.104) Nom et lieu proposés, à valider par le propriétaire ; lot 29 du propriétaire (12/11/2026) ; LORE_BD §16.33. Phare bâti par les nains pour guider les barques de Ghrondak, éteint depuis des années ; des naufrageurs y guettent les navires. Niveaux 22-26.",
         "[GD] (v1.0.104) Niveau : 22-26 (routes de Vozmarkh, Royaume des nains de l'est (10-30), repère 12-28).",
-        "Réel en jeu : POI poi_phare_nain_eteint (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_nain_eteint (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -287814,7 +287843,7 @@
       "id": "lieu_tour_de_signaux_de_moork",
       "name": "Tour de signaux de Moork",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S004_E012",
       "position_x_m": null,
@@ -287894,7 +287923,8 @@
       "notes": [
         "[GD] (v1.0.106) Nom et lieu proposés, à valider par le propriétaire ; lot 30b du propriétaire (12/11/2026) ; LORE_BD §16.35. Tour d'où les hommes du baron envoient des signaux vers Moork ; elle surveille la piste de Ghrimfeth. Niveaux 21-27.",
         "[GD] (v1.0.106) Niveau : 21-27 (région baronnie_de_moorks, repère 18-45 ; lieux voisins).",
-        "Réel en jeu : POI poi_tour_de_signaux_de_moork (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_signaux_de_moork (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -289380,7 +289410,7 @@
       "id": "lieu_tour_de_guet_orque",
       "name": "Tour de guet orque",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N002_E012",
       "position_x_m": null,
@@ -289460,7 +289490,8 @@
       "notes": [
         "[GD] (v1.0.106) Nom et lieu proposés, à valider par le propriétaire ; lot 30b du propriétaire (12/11/2026) ; LORE_BD §16.35. Tour de rondins d'où les orcs surveillent la route de Shezhold ; un cor y sonne à l'approche des étrangers. Niveaux 18-24.",
         "[GD] (v1.0.106) Niveau : 18-24 (région territoires_orcques, repère 18-45 ; lieux voisins).",
-        "Réel en jeu : POI poi_tour_de_guet_orque (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_orque (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -290598,7 +290629,7 @@
       "id": "lieu_tour_de_guet_effondree",
       "name": "Tour de guet effondrée",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N013_E019",
       "position_x_m": null,
@@ -290677,7 +290708,8 @@
       ],
       "notes": [
         "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Ancienne tour de guet des Marches, effondrée sur sa colline ; des pillards y guettent les charrettes de la route de Vestmhor. Niveaux 13-15.",
-        "Réel en jeu : POI poi_tour_de_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -291286,7 +291318,7 @@
       "id": "lieu_tour_naine_effondree",
       "name": "Tour naine effondrée",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S015_E014",
       "position_x_m": null,
@@ -291365,7 +291397,8 @@
       ],
       "notes": [
         "[GD] (v1.0.119) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir les 2 routes coupées) ; LORE_BD §16.46. Ancienne tour de guet naine sur un éperon, à moitié écroulée ; des trolls des montagnes s'y abritent. Niveaux 24-28.",
-        "Réel en jeu : POI poi_tour_naine_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_naine_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -292748,7 +292781,7 @@
       "id": "lieu_phare_nain",
       "name": "Phare nain",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S017_E013",
       "position_x_m": null,
@@ -292827,7 +292860,8 @@
       ],
       "notes": [
         "[GD] (v1.0.121) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 1 (routes courtes), route 000165 Thysskar – Saelvik. Tour de veille naine sur la côte, dont le feu est éteint depuis longtemps ; des contrebandiers y allument de faux signaux. Niveaux 24-27.",
-        "Réel en jeu : POI poi_phare_nain (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_nain (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -294296,7 +294330,7 @@
       "id": "lieu_tour_des_signaux_drach",
       "name": "Tour des signaux drach",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S009_W010",
       "position_x_m": null,
@@ -294375,7 +294409,8 @@
       ],
       "notes": [
         "[GD] (v1.0.121) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 1 (routes courtes), route 000053 Zaltheim – Harndrecht. Tour de signaux sur la côte, d'où les Drach annonçaient les flottes ennemies ; des harpies y nichent. Niveaux 30-34.",
-        "Réel en jeu : POI poi_tour_des_signaux_drach (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_signaux_drach (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -295844,7 +295879,7 @@
       "id": "lieu_pont_de_mhorgad",
       "name": "Pont de Mhorgad",
       "alias": "",
-      "type": "passage_poi",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "N015_E016",
       "position_x_m": null,
@@ -295923,14 +295958,15 @@
       ],
       "notes": [
         "[GD] (v1.0.121) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 1 (routes courtes), route 000154 Hoengardt – Mhorgad. Vieux pont de bois sur un torrent, entre Hoengardt et Mhorgad ; des bandits y prélèvent un péage. Niveaux 18-20.",
-        "Réel en jeu : POI poi_pont_de_mhorgad (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_pont_de_mhorgad (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
       "id": "lieu_cascade_des_ondines",
       "name": "Cascade des ondines",
       "alias": "",
-      "type": "shrine_poi",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "N010_W007",
       "position_x_m": null,
@@ -296009,7 +296045,8 @@
       ],
       "notes": [
         "[GD] (v1.0.121) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 1 (routes courtes), route 000198 Thydmar – Ostrevan. Cascade sous les arbres, où les gens d'Ostrevan disent entendre chanter des ondines. Niveaux 30-34.",
-        "Réel en jeu : POI poi_cascade_des_ondines (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_des_ondines (sanctuaire) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -296360,7 +296397,7 @@
       "id": "lieu_tour_du_naufrageur",
       "name": "Tour du naufrageur",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N012_W009",
       "position_x_m": null,
@@ -296439,7 +296476,8 @@
       ],
       "notes": [
         "[GD] (v1.0.121) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 1 (routes courtes), route 000198 Thydmar – Ostrevan. Tour sur la côte où un naufrageur allumait de faux feux pour briser les navires sur les récifs. Niveaux 30-34.",
-        "Réel en jeu : POI poi_tour_du_naufrageur (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_du_naufrageur (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -299456,7 +299494,7 @@
       "id": "lieu_phare_de_klaerhin",
       "name": "Phare de Klaerhin",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S004_W016",
       "position_x_m": null,
@@ -299535,7 +299573,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000073 Dhuzmar – Klaerhin. Phare impérial sur un rocher, abandonné depuis qu'un gardien y a été retrouvé mort ; on dit sa lanterne hantée. Niveaux 10-14.",
-        "Réel en jeu : POI poi_phare_de_klaerhin (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_klaerhin (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -299714,7 +299753,7 @@
       "id": "lieu_tour_des_garde_cotes",
       "name": "Tour des garde-côtes",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S005_W016",
       "position_x_m": null,
@@ -299793,7 +299832,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000073 Dhuzmar – Klaerhin. Tour où une poignée de garde-côtes impériaux guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 10-14.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -304358,7 +304398,7 @@
       "id": "lieu_phare_des_geants",
       "name": "Phare des géants",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "N022_E020",
       "position_x_m": null,
@@ -304437,7 +304477,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000158 Dhraegtun – Hagfhal. Tour colossale au bord de la mer, construite par des géants ; nul ne sait pour quels navires. Niveaux 30-34.",
-        "Réel en jeu : POI poi_phare_des_geants (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_des_geants (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -304788,7 +304829,7 @@
       "id": "lieu_tour_de_guet_de_shtenbrak",
       "name": "Tour de guet de Shtenbrak",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N016_E024",
       "position_x_m": null,
@@ -304867,7 +304908,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000159 Shtenbrak – Hagfhal. Tour de guet de bois qui surveille la plaine contre les géants ; un cor y est toujours prêt. Niveaux 30-33.",
-        "Réel en jeu : POI poi_tour_de_guet_de_shtenbrak (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_shtenbrak (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -307110,7 +307152,7 @@
       "id": "lieu_tour_du_seigneur_errant",
       "name": "Tour du seigneur errant",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S014_E001",
       "position_x_m": null,
@@ -307189,7 +307231,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000164 Faervosk – Khlaybur. Tour d'un seigneur parti en croisade et jamais revenu ; des pillards l'occupent. Niveaux 25-29.",
-        "Réel en jeu : POI poi_tour_du_seigneur_errant (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_du_seigneur_errant (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -307798,7 +307841,7 @@
       "id": "lieu_forteresse_ruinee_de_brokhendt",
       "name": "Forteresse ruinée de Brokhendt",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "castle_poi",
       "importance": "",
       "cell": "S008_W001",
       "position_x_m": null,
@@ -307877,7 +307920,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000062 Brokhendt – Melvhord. Forteresse drach détruite dans une guerre de seigneurs ; ses souterrains n'ont pas été fouillés. Niveaux 30-34.",
-        "Réel en jeu : POI poi_forteresse_ruinee_de_brokhendt (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_forteresse_ruinee_de_brokhendt (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `chateau` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -308228,7 +308272,7 @@
       "id": "lieu_forteresse_naine_effondree",
       "name": "Forteresse naine effondrée",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "castle_poi",
       "importance": "",
       "cell": "S013_E007",
       "position_x_m": null,
@@ -308307,7 +308351,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000063 Suthvarn – Khlaybur. Forteresse naine dans la montagne, effondrée par un tremblement de terre ; on y entend encore des marteaux. Niveaux 18-22.",
-        "Réel en jeu : POI poi_forteresse_naine_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_forteresse_naine_effondree (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `chateau` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -309002,7 +309047,7 @@
       "id": "lieu_pont_des_nains_du_sud",
       "name": "Pont des nains du sud",
       "alias": "",
-      "type": "passage_poi",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "S006_E006",
       "position_x_m": null,
@@ -309081,7 +309126,8 @@
       ],
       "notes": [
         "[GD] (v1.0.122) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 14/11/2026 (ouvrir toutes les routes coupées par lots ; cases sans cimetière admises) ; LORE_BD §16.48 ; lot 2 (routes longues, le reste), route 000079 Kholdvar – Frhozhol. Pont de pierre bâti par les nains sur la route de Frhozhol ; un péage nain y est tenu par deux frères bourrus. Niveaux 18-22.",
-        "Réel en jeu : POI poi_pont_des_nains_du_sud (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_pont_des_nains_du_sud (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -309432,7 +309478,7 @@
       "id": "lieu_phare_du_cap_hishtar",
       "name": "Phare du cap Hishtar",
       "alias": "",
-      "type": "camp_poi",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S010_W007",
       "position_x_m": null,
@@ -309511,7 +309557,8 @@
       ],
       "notes": [
         "[GD] (v1.0.124) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 15/11/2026 (lignes maritimes : passeur au ponton, les 4 lignes, îles générées) ; LORE_BD §16.50. Grand phare de pierre à la pointe nord de l'île ; ses gardiens guettent les flottes de l'Empire et les pirates. Niveaux 28-32.",
-        "Réel en jeu : POI poi_phare_du_cap_hishtar (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_du_cap_hishtar (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -310206,7 +310253,7 @@
       "id": "lieu_tour_des_garde_cotes_de_dhraegtun",
       "name": "Tour des garde-côtes de Dhraegtun",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N022_E016",
       "position_x_m": null,
@@ -310285,14 +310332,15 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N022_E016 (,), nommé d'après la ville jouable la plus proche (Dhraegtun). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-33.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_dhraegtun (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_dhraegtun (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
       "id": "lieu_phare_de_dhraegtun",
       "name": "Phare de Dhraegtun",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "N022_E017",
       "position_x_m": null,
@@ -310371,7 +310419,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N022_E017 (,), nommé d'après la ville jouable la plus proche (Dhraegtun). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-33.",
-        "Réel en jeu : POI poi_phare_de_dhraegtun (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_dhraegtun (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -310722,7 +310771,7 @@
       "id": "lieu_tour_en_ruine_de_hayvekh",
       "name": "Tour en ruine de Hayvekh",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N021_E015",
       "position_x_m": null,
@@ -310801,7 +310850,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N021_E015 (*), nommé d'après la ville jouable la plus proche (Hayvekh). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 30-32.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_hayvekh (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_hayvekh (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -312012,7 +312062,7 @@
       "id": "lieu_phare_de_shtenbrak",
       "name": "Phare de Shtenbrak",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "N018_E024",
       "position_x_m": null,
@@ -312091,7 +312141,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N018_E024 (,), nommé d'après la ville jouable la plus proche (Shtenbrak). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-33.",
-        "Réel en jeu : POI poi_phare_de_shtenbrak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_shtenbrak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -312270,7 +312321,7 @@
       "id": "lieu_cascade_de_hazol",
       "name": "Cascade de Hazol",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "N016_E010",
       "position_x_m": null,
@@ -312349,7 +312400,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N016_E010 (M), nommé d'après la ville jouable la plus proche (Hazol). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 30-33.",
-        "Réel en jeu : POI poi_cascade_de_hazol (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_hazol (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -312442,7 +312494,7 @@
       "id": "lieu_tour_de_guet_de_hagfhal",
       "name": "Tour de guet de Hagfhal",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N016_E021",
       "position_x_m": null,
@@ -312521,7 +312573,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N016_E021 (t), nommé d'après la ville jouable la plus proche (Hagfhal). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Hagfhal. Niveaux 30-32.",
-        "Réel en jeu : POI poi_tour_de_guet_de_hagfhal (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_hagfhal (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -312958,7 +313011,7 @@
       "id": "lieu_tour_des_garde_cotes_de_shtenbrak",
       "name": "Tour des garde-côtes de Shtenbrak",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N015_E025",
       "position_x_m": null,
@@ -313037,7 +313090,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N015_E025 (,), nommé d'après la ville jouable la plus proche (Shtenbrak). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-32.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_shtenbrak (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_shtenbrak (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -317774,7 +317828,7 @@
       "id": "lieu_phare_de_vaerdhun",
       "name": "Phare de Vaerdhun",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "N010_W017",
       "position_x_m": null,
@@ -317853,14 +317907,15 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N010_W017 (,), nommé d'après la ville jouable la plus proche (Vaerdhun). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 10-14.",
-        "Réel en jeu : POI poi_phare_de_vaerdhun (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_vaerdhun (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
       "id": "lieu_tour_des_garde_cotes_de_fhelvakt",
       "name": "Tour des garde-côtes de Fhelvakt",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N010_E000",
       "position_x_m": null,
@@ -317939,7 +317994,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N010_E000 (,), nommé d'après la ville jouable la plus proche (Fhelvakt). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-33.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_fhelvakt (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_fhelvakt (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -319408,7 +319464,7 @@
       "id": "lieu_pont_de_bois_de_fhelvakt",
       "name": "Pont de bois de Fhelvakt",
       "alias": "",
-      "type": "passage_poi",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "N009_W003",
       "position_x_m": null,
@@ -319487,7 +319543,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N009_W003 (R), nommé d'après la ville jouable la plus proche (Fhelvakt). Pont de bois sur la rivière, gardé par un péager qui note chaque passant. Niveaux 30-34.",
-        "Réel en jeu : POI poi_pont_de_bois_de_fhelvakt (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_pont_de_bois_de_fhelvakt (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -319924,7 +319981,7 @@
       "id": "lieu_tour_de_guet_de_farvhenn",
       "name": "Tour de guet de Farvhenn",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N009_E020",
       "position_x_m": null,
@@ -320003,7 +320060,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N009_E020 (.), nommé d'après la ville jouable la plus proche (Farvhenn). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Farvhenn. Niveaux 21-25.",
-        "Réel en jeu : POI poi_tour_de_guet_de_farvhenn (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_farvhenn (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -325256,7 +325314,7 @@
       "id": "lieu_pont_de_bois_de_ghwenaeth",
       "name": "Pont de bois de Ghwenaëth",
       "alias": "",
-      "type": "passage_poi",
+      "type": "bridge_poi",
       "importance": "",
       "cell": "N004_W005",
       "position_x_m": null,
@@ -325335,7 +325393,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N004_W005 (R), nommé d'après la ville jouable la plus proche (Ghwenaëth). Pont de bois sur la rivière, gardé par un péager qui note chaque passant. Niveaux 14-19.",
-        "Réel en jeu : POI poi_pont_de_bois_de_ghwenaeth (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_pont_de_bois_de_ghwenaeth (defile) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `pont` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -325858,7 +325917,7 @@
       "id": "lieu_tour_de_guet_de_harrodh",
       "name": "Tour de guet de Harrodh",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "N004_E006",
       "position_x_m": null,
@@ -325937,7 +325996,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N004_E006 (t), nommé d'après la ville jouable la plus proche (Harrodh). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Harrodh. Niveaux 18-23.",
-        "Réel en jeu : POI poi_tour_de_guet_de_harrodh (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_harrodh (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -330846,7 +330906,7 @@
       "id": "lieu_phare_de_dhuzvelt",
       "name": "Phare de Dhuzvelt",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "N000_E025",
       "position_x_m": null,
@@ -330925,7 +330985,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case N000_E025 (,), nommé d'après la ville jouable la plus proche (Dhuzvelt). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-32.",
-        "Réel en jeu : POI poi_phare_de_dhuzvelt (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_dhuzvelt (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -331276,7 +331337,7 @@
       "id": "lieu_tour_de_guet_de_drakhenhal",
       "name": "Tour de guet de Drakhenhal",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S001_W002",
       "position_x_m": null,
@@ -331355,7 +331416,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S001_W002 (.), nommé d'après la ville jouable la plus proche (Drakhenhal). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Drakhenhal. Niveaux 13-18.",
-        "Réel en jeu : POI poi_tour_de_guet_de_drakhenhal (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_drakhenhal (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -334888,7 +334950,7 @@
       "id": "lieu_tour_en_ruine_de_krakhol",
       "name": "Tour en ruine de Krakhol",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S003_E000",
       "position_x_m": null,
@@ -334967,7 +335029,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S003_E000 (^), nommé d'après la ville jouable la plus proche (Krakhol). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 13-18.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_krakhol (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_krakhol (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -336522,7 +336585,7 @@
       "id": "lieu_cascade_de_mhillenz",
       "name": "Cascade de Mhillenz",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S004_E001",
       "position_x_m": null,
@@ -336601,7 +336664,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S004_E001 (^), nommé d'après la ville jouable la plus proche (Mhillenz). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 19-24.",
-        "Réel en jeu : POI poi_cascade_de_mhillenz (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_mhillenz (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -337382,7 +337446,7 @@
       "id": "lieu_tour_des_garde_cotes_de_dhuzvelt",
       "name": "Tour des garde-côtes de Dhuzvelt",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S004_E025",
       "position_x_m": null,
@@ -337461,7 +337525,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S004_E025 (,), nommé d'après la ville jouable la plus proche (Dhuzvelt). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 25-28.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_dhuzvelt (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_dhuzvelt (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -338328,7 +338393,7 @@
       "id": "lieu_tour_en_ruine_de_heusgly",
       "name": "Tour en ruine de Heusgly",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S005_E004",
       "position_x_m": null,
@@ -338407,7 +338472,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S005_E004 (^), nommé d'après la ville jouable la plus proche (Heusgly). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 17-22.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_heusgly (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_heusgly (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -338672,7 +338738,7 @@
       "id": "lieu_cascade_de_durnhalde",
       "name": "Cascade de Durnhalde",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S005_E017",
       "position_x_m": null,
@@ -338751,7 +338817,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S005_E017 (^), nommé d'après la ville jouable la plus proche (Durnhalde). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 19-24.",
-        "Réel en jeu : POI poi_cascade_de_durnhalde (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_durnhalde (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -340994,7 +341061,7 @@
       "id": "lieu_tour_en_ruine_de_ghrondak",
       "name": "Tour en ruine de Ghrondak",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S006_E024",
       "position_x_m": null,
@@ -341073,7 +341140,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S006_E024 (^), nommé d'après la ville jouable la plus proche (Ghrondak). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 20-24.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_ghrondak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_ghrondak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -341682,7 +341750,7 @@
       "id": "lieu_tour_de_guet_de_heusgly",
       "name": "Tour de guet de Heusgly",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S007_E005",
       "position_x_m": null,
@@ -341761,7 +341829,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S007_E005 (.), nommé d'après la ville jouable la plus proche (Heusgly). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Heusgly. Niveaux 18-22.",
-        "Réel en jeu : POI poi_tour_de_guet_de_heusgly (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_heusgly (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -342284,7 +342353,7 @@
       "id": "lieu_cascade_d_ysenkhal",
       "name": "Cascade d'Ysenkhal",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S007_E019",
       "position_x_m": null,
@@ -342363,7 +342432,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S007_E019 (^), nommé d'après la ville jouable la plus proche (Ysenkhal). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 12-16.",
-        "Réel en jeu : POI poi_cascade_d_ysenkhal (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_d_ysenkhal (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -345810,7 +345880,7 @@
       "id": "lieu_tour_en_ruine_de_kholdvar",
       "name": "Tour en ruine de Kholdvar",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S011_E006",
       "position_x_m": null,
@@ -345889,7 +345959,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S011_E006 (M), nommé d'après la ville jouable la plus proche (Kholdvar). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 15-19.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_kholdvar (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_kholdvar (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -346498,7 +346569,7 @@
       "id": "lieu_cascade_de_shaddrek",
       "name": "Cascade de Shaddrek",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S011_E016",
       "position_x_m": null,
@@ -346577,7 +346648,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S011_E016 (^), nommé d'après la ville jouable la plus proche (Shaddrek). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 18-21.",
-        "Réel en jeu : POI poi_cascade_de_shaddrek (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_shaddrek (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -348046,7 +348118,7 @@
       "id": "lieu_phare_de_ghrondak",
       "name": "Phare de Ghrondak",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S012_E025",
       "position_x_m": null,
@@ -348125,7 +348197,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S012_E025 (,), nommé d'après la ville jouable la plus proche (Ghrondak). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 19-23.",
-        "Réel en jeu : POI poi_phare_de_ghrondak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_ghrondak (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -348906,7 +348979,7 @@
       "id": "lieu_cascade_de_khrozrad",
       "name": "Cascade de Khrozrad",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S013_E018",
       "position_x_m": null,
@@ -348985,7 +349058,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S013_E018 (^), nommé d'après la ville jouable la plus proche (Khrozrad). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 20-24.",
-        "Réel en jeu : POI poi_cascade_de_khrozrad (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_khrozrad (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -350110,7 +350184,7 @@
       "id": "lieu_tour_en_ruine_de_khrozrad",
       "name": "Tour en ruine de Khrozrad",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S014_E022",
       "position_x_m": null,
@@ -350189,7 +350263,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S014_E022 (^), nommé d'après la ville jouable la plus proche (Khrozrad). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 20-24.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_khrozrad (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_khrozrad (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -351830,7 +351905,7 @@
       "id": "lieu_tour_des_garde_cotes_de_faervosk",
       "name": "Tour des garde-côtes de Faervosk",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S016_W002",
       "position_x_m": null,
@@ -351909,7 +351984,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S016_W002 (,), nommé d'après la ville jouable la plus proche (Faervosk). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 30-32.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_faervosk (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_faervosk (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -352690,7 +352766,7 @@
       "id": "lieu_tour_en_ruine_de_klehrwath",
       "name": "Tour en ruine de Klehrwath",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S016_E014",
       "position_x_m": null,
@@ -352769,14 +352845,15 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S016_E014 (^), nommé d'après la ville jouable la plus proche (Klehrwath). Tour de guet perchée sur un rocher, abandonnée depuis longtemps ; des harpies y ont fait leur nid. Niveaux 24-27.",
-        "Réel en jeu : POI poi_tour_en_ruine_de_klehrwath (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_en_ruine_de_klehrwath (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
       "id": "lieu_cascade_de_klehrwath",
       "name": "Cascade de Klehrwath",
       "alias": "",
-      "type": "other",
+      "type": "waterfall_poi",
       "importance": "",
       "cell": "S016_E015",
       "position_x_m": null,
@@ -352855,7 +352932,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S016_E015 (^), nommé d'après la ville jouable la plus proche (Klehrwath). Cascade qui tombe d'une falaise dans un bassin glacé ; derrière le rideau d'eau s'ouvre une petite grotte. Niveaux 24-27.",
-        "Réel en jeu : POI poi_cascade_de_klehrwath (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_cascade_de_klehrwath (etang) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `cascade` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -353206,7 +353284,7 @@
       "id": "lieu_tour_de_guet_de_khrozrad",
       "name": "Tour de guet de Khrozrad",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S016_E020",
       "position_x_m": null,
@@ -353285,7 +353363,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S016_E020 (.), nommé d'après la ville jouable la plus proche (Khrozrad). Tour de guet en bois qui surveille la plaine ; un feu y est prêt à être allumé pour prévenir Khrozrad. Niveaux 22-26.",
-        "Réel en jeu : POI poi_tour_de_guet_de_khrozrad (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_de_guet_de_khrozrad (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -353808,7 +353887,7 @@
       "id": "lieu_phare_de_faervosk",
       "name": "Phare de Faervosk",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S017_E002",
       "position_x_m": null,
@@ -353887,7 +353966,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S017_E002 (_), nommé d'après la ville jouable la plus proche (Faervosk). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 30-32.",
-        "Réel en jeu : POI poi_phare_de_faervosk (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_faervosk (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -354238,7 +354318,7 @@
       "id": "lieu_tour_des_garde_cotes_de_suthvarn",
       "name": "Tour des garde-côtes de Suthvarn",
       "alias": "",
-      "type": "camp_poi",
+      "type": "tower_poi",
       "importance": "",
       "cell": "S017_E007",
       "position_x_m": null,
@@ -354317,7 +354397,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S017_E007 (,), nommé d'après la ville jouable la plus proche (Suthvarn). Tour où des garde-côtes guettent les pirates ; ils allument un brasier en cas d'alerte. Niveaux 11-15.",
-        "Réel en jeu : POI poi_tour_des_garde_cotes_de_suthvarn (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_tour_des_garde_cotes_de_suthvarn (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `tour` du master, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -354496,7 +354577,7 @@
       "id": "lieu_phare_de_thysskar",
       "name": "Phare de Thysskar",
       "alias": "",
-      "type": "ruins_settlement",
+      "type": "lighthouse_poi",
       "importance": "",
       "cell": "S017_E010",
       "position_x_m": null,
@@ -354575,7 +354656,8 @@
       ],
       "notes": [
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S017_E010 (,), nommé d'après la ville jouable la plus proche (Thysskar). Vieux phare sur un rocher, éteint depuis la mort de son gardien ; on dit sa lanterne hantée. Niveaux 22-25.",
-        "Réel en jeu : POI poi_phare_de_thysskar (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
+        "Réel en jeu : POI poi_phare_de_thysskar (ruine) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
+        "[DÉCISION] (v1.0.132) Lieu bâti en jeu : genre `phare` du master, en ruine, forme générée (Landmarks.cpp). LORE_BD §16.58."
       ]
     },
     {
@@ -355915,6 +355997,93 @@
       "notes": [
         "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_port_orderfen du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
       ]
+    },
+    {
+      "id": "lieu_chateau_de_garundel",
+      "name": "Château de Garundel",
+      "alias": "",
+      "type": "castle_poi",
+      "importance": "majeure",
+      "cell": "S001_E004",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "via_magna",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Château circulaire entouré de douves",
+        "Remparts",
+        "Tour ronde (pas carrée)",
+        "Corps de logis collé à la tour",
+        "Quelques arbres dans la cour"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T3] Fief et château de Garundel, base de Wismerhill.",
+        "[DÉCISION] Château circulaire entouré de douves, remparts, tour ronde (pas carrée) avec le corps de logis collé à la tour, quelques arbres dans la cour (décision du propriétaire).",
+        "[DÉCISION] (v1.0.132) Bâti en jeu (POI poi_chateau_de_garundel, genre `chateau`) à côté du fief. LORE_BD §16.58."
+      ]
     }
   ],
   "route_types": [
@@ -356255,6 +356424,46 @@
       "id": "port_poi",
       "label": "Port",
       "color": "#4a90c2",
+      "shape": "diamond",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "tower_poi",
+      "label": "Tour",
+      "color": "#8a7f72",
+      "shape": "triangle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "castle_poi",
+      "label": "Château",
+      "color": "#9c6b4e",
+      "shape": "square",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "lighthouse_poi",
+      "label": "Phare",
+      "color": "#e0c060",
+      "shape": "triangle",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "waterfall_poi",
+      "label": "Cascade",
+      "color": "#5aa0d0",
+      "shape": "diamond",
+      "tier": "poi",
+      "categorie": "lieu"
+    },
+    {
+      "id": "bridge_poi",
+      "label": "Pont",
+      "color": "#a08a6a",
       "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"

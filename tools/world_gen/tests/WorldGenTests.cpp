@@ -3316,7 +3316,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3473,7 +3473,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildBridges(*w); BuildSeaPontons(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildSeaPontons(*w);
 			return w;
 		};
 		const double sea = m.scale.seaLevelM;
@@ -3542,7 +3542,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3606,7 +3606,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			std::vector<std::string> out;
 			std::istringstream in(RespawnPointsText(*w));
 			for (std::string line; std::getline(in, line);)
@@ -3785,7 +3785,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
 			return w;
 		};
@@ -3975,6 +3975,59 @@ namespace
 		Check(cut == 0, "relief v1.0.130 : toutes les routes du lore tracees (cols)");
 	}
 
+	/// Lot carte v1.0.132 (décision du 19/11/2026 : tours, châteaux, phares, cascades et ponts
+	/// avec une vraie forme générée) : genres au master, Château de Garundel bâti (enceinte,
+	/// donjon couvert, logis, porte en arche, dalles marchables), Tour Carrée de la Lune Noire
+	/// haute (≥ 60 m) ; cascades : trois vasques ; murs et sols par le catalogue de pièces.
+	void TestLieuxBatisV1132()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "lieux batis v1.0.132 : master royaumes charge");
+		if (!ok) return;
+		std::map<std::string, int> kinds;
+		for (const PoiDef& p : g.master.pois) ++kinds[p.kind];
+		Check(kinds["tour"] >= 30 && kinds["chateau"] >= 6 && kinds["phare"] >= 10 && kinds["cascade"] >= 8 && kinds["pont"] >= 6,
+			"lieux batis v1.0.132 : tours, chateaux, phares, cascades et ponts au master");
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto gen = [&](const char* id) {
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId(id, n, e);
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w);
+			return w;
+		};
+		auto count = [](const World& w, const char* mesh, uint8_t mask) {
+			int c = 0;
+			for (const ScatterDef& s : w.scatter) c += (s.mesh.find(mesh) != std::string::npos && (s.flags & mask) == mask) ? 1 : 0;
+			return c;
+		};
+		{
+			auto w = gen("S001_E004");
+			Check(w->report.landmarks >= 1 && count(*w, "Wall_UnevenBrick_Straight", 3u) >= 200 && count(*w, "Roof_Tower_RoundTiles", 0u) >= 5
+					&& count(*w, "Roof_RoundTiles_8x12", 0u) == 1 && count(*w, "Wall_Arch", 0u) >= 1 && count(*w, "Floor_Brick", 3u) >= 20,
+				"lieux batis v1.0.132 : Chateau de Garundel (enceinte, 4 tours et donjon couverts, logis, porte, dalles marchables)");
+		}
+		{
+			auto w = gen("S004_E020");
+			double top = 0.0;
+			for (const ScatterDef& s : w->scatter) if (s.mesh.find("Wall_UnevenBrick") != std::string::npos) top = std::max(top, s.yOffset);
+			Check(w->report.landmarks >= 1 && top >= 60.0, "lieux batis v1.0.132 : Tour Carree de la Lune Noire haute de plus de 60 m");
+		}
+		{
+			auto w = gen("N016_E010");
+			int vasques = 0;
+			for (const Lake& l : w->lakes) vasques += l.name.find("_vasque_") != std::string::npos ? 1 : 0;
+			Check(vasques == 3, "lieux batis v1.0.132 : Cascade de Hazol, trois vasques en gradins");
+		}
+	}
+
 	/// Lot carte v1.0.131 (décision du 19/11/2026 : routes moins droites, « la nature n'est pas
 	/// carrée ») : toutes les routes du lore tracées ; aucune route tirée au cordeau (écart < 8 m à la
 	/// corde) sur 3 km ; les 5 balises de route à moins de 100 m de leur route.
@@ -4133,6 +4186,7 @@ int main()
 	TestEauV1129();
 	TestReliefV1130();
 	TestRoutesV1131();
+	TestLieuxBatisV1132();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

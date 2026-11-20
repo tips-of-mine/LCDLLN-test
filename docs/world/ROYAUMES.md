@@ -708,6 +708,11 @@ Détail : [`LORE_BD.md`](LORE_BD.md) §16.56.
 Les routes du lore visent en pays ouvert un point de chaque case tiré à ±3 km du centre, suivent un terrain aux
 préférences bruitées et ondulent (≈ ±240 m) ; les cols serpentent. Détail : [`LORE_BD.md`](LORE_BD.md) §16.57.
 
+### 11.14 Lieux bâtis (v1.0.132)
+
+POI de genre `tour`, `phare`, `chateau`, `cascade` et `pont` : forme générée par `Landmarks.cpp` (murs, sols marchables,
+toits, arches, vasques, ravine), état `ruine` et échelle `scale` du master. Détail : [`LORE_BD.md`](LORE_BD.md) §16.58.
+
 ### 11.10 Autres reliefs locaux du master (v1.0.72, v1.0.77)
 
 | Relief | Type | Ancrage | Effet |

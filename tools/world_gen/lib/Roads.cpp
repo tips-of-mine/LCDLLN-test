@@ -298,8 +298,8 @@ namespace tools::world_gen
 		/// Tracé naturel (v1.0.105) d'une route du lore à partir des chemins bruts de
 		/// l'A* entre ses ANCRES successives (cases du lore) : chaque segment est
 		/// simplifié séparément (RDP, l'ancre reste un sommet), subdivisé tous les
-		/// 150 m, écarté en méandres bruités (±110 m, longueur d'onde ≈ 2,5 km, comme le
-		/// réseau du générateur) nuls à moins de 600 m d'une ancre et sur l'eau, puis
+		/// 150 m, écarté en méandres bruités (v1.0.131 : ≈ ±240 m sur ≈ 3,4 km plus ±50 m sur
+		/// ≈ 900 m) nuls à moins de 900 m d'une ancre et sur l'eau, puis
 		/// lissé (Chaikin) et rééchantillonné tous les 4 m. Les deux extrémités sont
 		/// exactes ; une ancre intermédiaire bouge de quelques dizaines de mètres au
 		/// plus (coin arrondi) : elle reste dans sa case.
@@ -345,8 +345,11 @@ namespace tools::world_gen
 				if (l < 1e-6) continue;
 				double nearest = 1e18;
 				for (size_t ai : denseAnchor) nearest = std::min(nearest, std::fabs(along[k] - along[ai]));
-				const double taper = Clamp(nearest / 600.0, 0.0, 1.0);
-				const double off = Fbm(dense[k].x, dense[k].z, 2500.0, 2, m.seed + 4747) * 110.0 * taper;
+				const double taper = Clamp(nearest / 900.0, 0.0, 1.0);
+				// v1.0.131 : méandres plus amples (≈ ±240 m, longueur d'onde ≈ 3,4 km) et ondulation
+				// fine (≈ ±50 m, ≈ 900 m) : la route épouse le pays au lieu de filer droit.
+				const double off = (Fbm(dense[k].x, dense[k].z, 3400.0, 2, m.seed + 4747) * 240.0
+					+ Fbm(dense[k].x, dense[k].z, 900.0, 2, m.seed + 4749) * 50.0) * taper;
 				const Vec2 q = dense[k] + Vec2{ -d.z / l, d.x / l } * off;
 				bool wet = SampleBilinear(g.coarse, q.x, q.z) < sea + 1.5;
 				for (const Lake& lk : g.lakes)
@@ -487,7 +490,7 @@ namespace tools::world_gen
 						if (d < bd) { bd = d; best = &c; }
 					}
 				if (best) { a.p = best->center; a.id = best->id; a.city = true; a.ok = true; return true; }
-				a.ok = PracticablePointInCell(cg, n, e, { ctr.x, ctr.z }, a.p);
+				a.ok = PracticablePointInCell(cg, n, e, JitteredCellPoint(m, n, e), a.p); // v1.0.131 : pas le centre
 				return a.ok;
 			};
 			// Extrémité sans ville ni POI : jonction sur une route du lore déjà tracée
@@ -505,8 +508,7 @@ namespace tools::world_gen
 						if (d < bd) { bd = d; a.p = q; a.snapPiece = static_cast<int>(pi); a.snapK = k; }
 					}
 				if (a.snapPiece >= 0) { a.ok = true; return true; }
-				const wc::CellPoint ctr = wc::CellCenter({ n, e });
-				a.ok = PracticablePointInCell(cg, n, e, { ctr.x, ctr.z }, a.p);
+				a.ok = PracticablePointInCell(cg, n, e, JitteredCellPoint(m, n, e), a.p); // v1.0.131 : pas le centre
 				return a.ok;
 			};
 
@@ -807,6 +809,9 @@ namespace tools::world_gen
 				const char b = MacroBiome(m, g.coarse.WorldX(i), g.coarse.WorldZ(j));
 				if (b == '%' || b == '&') c += 1.5f;
 				if (b == 'T' || b == 'R' || b == 'L') c += 0.4f;
+				// v1.0.131 — préférences de terrain bruitées (± 35 %, longueur d'onde ≈ 3,5 km) :
+				// en plaine, le plus court chemin n'est plus la ligne droite ; les routes ondulent.
+				c *= static_cast<float>(0.65 + 0.7 * Clamp(0.5 + 1.6 * Fbm(g.coarse.WorldX(i), g.coarse.WorldZ(j), 3500.0, 3, m.seed + 4801), 0.0, 1.0));
 				cg.cost.At(i, j) = c;
 			}
 		});

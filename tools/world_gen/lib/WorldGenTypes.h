@@ -338,6 +338,7 @@ namespace tools::world_gen
 		double originX = 0.0, originZ = 0.0, step = 250.0;
 		int width = 0, height = 0;
 		std::vector<float> value;
+		std::vector<float> anchorDist; ///< v1.0.131 : distance (m, ≤ 6 km) à l'ancre de route la plus proche
 	};
 
 	struct WorldMaster

@@ -3975,6 +3975,52 @@ namespace
 		Check(cut == 0, "relief v1.0.130 : toutes les routes du lore tracees (cols)");
 	}
 
+	/// Lot carte v1.0.131 (décision du 19/11/2026 : routes moins droites, « la nature n'est pas
+	/// carrée ») : toutes les routes du lore tracées ; aucune route tirée au cordeau (écart < 8 m à la
+	/// corde) sur 3 km ; les 5 balises de route à moins de 100 m de leur route.
+	void TestRoutesV1131()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "routes v1.0.131 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		size_t cut = 0;
+		for (const std::string& wmsg : g.report.warnings) cut += wmsg.find("pas de chemin") != std::string::npos ? 1 : 0;
+		Check(cut == 0, "routes v1.0.131 : toutes les routes du lore tracees");
+		size_t straight = 0;
+		for (const Road& r : g.roads)
+		{
+			if (r.loreId.empty()) continue;
+			const size_t n = r.points.size();
+			for (size_t a = 0; a + 750 < n; a += 75)
+			{
+				const Vec2 A = r.points[a], B = r.points[a + 750];
+				if (std::hypot(B.x - A.x, B.z - A.z) < 2900.0) continue;
+				double worst = 0.0;
+				for (size_t k = a; k <= a + 750; k += 10) worst = std::max(worst, DistPointSegment(r.points[k], A, B, nullptr));
+				if (worst < 8.0) ++straight;
+			}
+		}
+		if (straight) std::fprintf(stderr, "  %zu portion(s) rectiligne(s)\n", straight);
+		Check(straight == 0, "routes v1.0.131 : aucune route rectiligne sur 3 km");
+		int near = 0;
+		for (const char* id : { "poi_borne_monts_de_moork", "poi_stele_des_deux_fois_nes", "poi_balise_borne_geants_nord",
+			"poi_balise_borne_geants_ouest", "poi_balise_borne_geants_sud" })
+			for (const PoiDef& p : g.pois)
+				if (p.id == id)
+				{
+					double best = 1e18;
+					for (const Road& r : g.roads) for (const Vec2& q : r.points) best = std::min(best, std::hypot(q.x - p.center.x, q.z - p.center.z));
+					near += best < 100.0 ? 1 : 0;
+				}
+		Check(near == 5, "routes v1.0.131 : les 5 balises au bord de leur route");
+	}
+
 	/// Lot carte v1.0.129 (décision du 19/11/2026 : les 8 rivières principales du lore tracées, des
 	/// rivières plus petites pour remplir le monde, ponts de pierre ou de bois) : les 8 cours du lore
 	/// sont au master et tracés ; les cours d'eau suivent le terrain (plus de segment rectiligne de
@@ -4086,6 +4132,7 @@ int main()
 	TestGenerationEnfers();
 	TestEauV1129();
 	TestReliefV1130();
+	TestRoutesV1131();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

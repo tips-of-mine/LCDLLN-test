@@ -765,6 +765,11 @@ namespace tools::world_gen
 
 	/// Distance d'un point à un segment (plan XZ).
 	double DistPointSegment(Vec2 p, Vec2 a, Vec2 b, double* outT = nullptr);
+
+	/// v1.0.131 — point visé (m, global) dans la case (n, e) d'un tracé de route du lore : à ±3 km
+	/// du centre (tirage déterministe : graine, case), le centre pour une case d'eau. Partagé
+	/// par le tracé des routes (Roads.cpp) et les cols de montagne (Terrain.cpp, PassAt).
+	Vec2 JitteredCellPoint(const WorldMaster& m, int n, int e);
 	/// Lissage de Chaikin / rééchantillonnage d'une polyligne. Terrain.cpp
 	std::vector<Vec2> SmoothPolyline(const std::vector<Vec2>& in, int iterations);
 	std::vector<Vec2> ResamplePolyline(const std::vector<Vec2>& in, double stepM);

@@ -647,10 +647,34 @@ namespace tools::world_gen
 		return Clamp(lava, 0.0, 1.0);
 	}
 
+	/// v1.0.131 — point visé dans une case de passage d'une route du lore : un point de la
+	/// case tiré au hasard (déterministe : graine, case) à ±3 km du centre, au lieu du centre
+	/// lui-même ; les routes ne relient plus les centres des cases en ligne droite.
+	/// PracticablePointInCell le ramène ensuite sur un nœud franchissable à 600 m des bords.
+	/// Cases d'eau et de montagne : le centre (historique).
+	Vec2 JitteredCellPoint(const WorldMaster& m, int n, int e)
+	{
+		const engine::world::cells::CellPoint ctr = engine::world::cells::CellCenter({ n, e });
+		// Cases d'eau (côte, plage, îlot, rivière, lac, marais) : le centre, car un point au
+		// hasard tomberait souvent de l'autre côté d'un estuaire ou d'un lac.
+		const char code = LoreCode(m, n, e);
+		// v1.0.131 : seulement en pays ouvert (plaine, forêt, lisière, désert, terres arides) ; en montagne,
+		// le col passe par le centre (cases de passage imposées : Passe des Dragons…).
+		if (std::string(".Tt~:").find(code) == std::string::npos) return { ctr.x, ctr.z };
+		const uint64_t h = Hash(m.seed, static_cast<uint64_t>(n + 1000), static_cast<uint64_t>(e + 1000), 4811);
+		const Vec2 p{ ctr.x + (ToUnit(h) * 2.0 - 1.0) * 3000.0, ctr.z + (ToUnit(Mix64(h)) * 2.0 - 1.0) * 3000.0 };
+		// Près d'un relief posé (gouffre, crevasse, colline : abords calmes + 1 km), le centre :
+		// un point tiré au pied du relief laisserait la route dans une impasse.
+		for (const WorldMaster::CalmZone& c : m.calmZones)
+			if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + 1000.0) return { ctr.x, ctr.z };
+		return p;
+	}
+
 	namespace
 	{
 		/// v1.0.130 — proximité (0..1) d'une route du lore au point (x, z) : 1 sur le tracé
-		/// (corde entre centres de cases successifs), 0 au-delà de 2,5 km. Grille calculée une
+		/// (corde entre centres de cases successifs, lue en un point déformé : couloir sinueux),
+		/// 0 au-delà de 2 km. Grille calculée une
 		/// fois (PassField) ; 0 si le master n'a pas de champ (tests) ou pas de route.
 		double PassAt(const WorldMaster& m, double x, double z)
 		{
@@ -663,13 +687,24 @@ namespace tools::world_gen
 				f->width = static_cast<int>(m.scale.gridCols * kC / f->step) + 1;
 				f->height = static_cast<int>(rows * kC / f->step) + 1;
 				f->value.assign(static_cast<size_t>(f->width) * f->height, 0.0f);
-				const double reach = 2500.0, core = 600.0;
+				const double reach = 2000.0, core = 500.0;
+				std::vector<Vec2> anchors;
 				for (const LoreRoadDef& r : m.loreRoads)
 					for (size_t k = 0; k + 1 < r.cellNE.size(); ++k)
 					{
-						const engine::world::cells::CellPoint a = engine::world::cells::CellCenter({ r.cellNE[k].first, r.cellNE[k].second });
-						const engine::world::cells::CellPoint b = engine::world::cells::CellCenter({ r.cellNE[k + 1].first, r.cellNE[k + 1].second });
-						const Vec2 A{ a.x, a.z }, B{ b.x, b.z };
+						// Ancres : centre des cases d'extrémité, point visé des cases de passage (comme
+						// le tracé des routes, JitteredCellPoint).
+						auto anchorOf = [&](size_t q) {
+							const auto [cn, ce] = r.cellNE[q];
+							if (q == 0 || q + 1 == r.cellNE.size())
+							{
+								const engine::world::cells::CellPoint c = engine::world::cells::CellCenter({ cn, ce });
+								return Vec2{ c.x, c.z };
+							}
+							return JitteredCellPoint(m, cn, ce);
+						};
+						const Vec2 A = anchorOf(k), B = anchorOf(k + 1);
+						anchors.push_back(A); anchors.push_back(B);
 						const int i0 = std::max(0, static_cast<int>((std::min(A.x, B.x) - reach - f->originX) / f->step));
 						const int i1 = std::min(f->width - 1, static_cast<int>((std::max(A.x, B.x) + reach - f->originX) / f->step) + 1);
 						const int j0 = std::max(0, static_cast<int>((std::min(A.z, B.z) - reach - f->originZ) / f->step));
@@ -682,7 +717,31 @@ namespace tools::world_gen
 								v = std::max(v, static_cast<float>(SmoothStep(reach, core, d)));
 							}
 					}
+				// Distance (m, plafonnée à 6 km) à l'ancre la plus proche : la déformation du
+				// couloir s'annule près des ancres (la route y entre et en sort).
+				f->anchorDist.assign(f->value.size(), 6000.0f);
+				for (const Vec2& A : anchors)
+				{
+					const int i0 = std::max(0, static_cast<int>((A.x - 6000.0 - f->originX) / f->step)), i1 = std::min(f->width - 1, static_cast<int>((A.x + 6000.0 - f->originX) / f->step) + 1);
+					const int j0 = std::max(0, static_cast<int>((A.z - 6000.0 - f->originZ) / f->step)), j1 = std::min(f->height - 1, static_cast<int>((A.z + 6000.0 - f->originZ) / f->step) + 1);
+					for (int j = j0; j <= j1; ++j)
+						for (int i = i0; i <= i1; ++i)
+						{
+							float& ad = f->anchorDist[static_cast<size_t>(j) * f->width + i];
+							ad = std::min(ad, static_cast<float>(std::hypot(f->originX + i * f->step - A.x, f->originZ + j * f->step - A.z)));
+						}
+				}
 			});
+			// Couloir sinueux : la grille est lue en un point déformé (±1,4 km, ≈ 4 km), le col
+			// serpente au lieu de tracer une saignée droite entre deux centres de cases.
+			{
+				const int ai = Clamp(static_cast<int>(std::lround((x - f->originX) / f->step)), 0, f->width - 1);
+				const int aj = Clamp(static_cast<int>(std::lround((z - f->originZ) / f->step)), 0, f->height - 1);
+				const double taper = SmoothStep(1500.0, 5000.0, f->anchorDist[static_cast<size_t>(aj) * f->width + ai]);
+				const double ox = x, oz = z;
+				x += Fbm(ox, oz, 4200.0, 2, m.seed + 71) * 4500.0 * taper;
+				z += Fbm(ox, oz, 4200.0, 2, m.seed + 72) * 4500.0 * taper;
+			}
 			const double fx = (x - f->originX) / f->step, fz = (z - f->originZ) / f->step;
 			const int i = static_cast<int>(std::floor(fx)), j = static_cast<int>(std::floor(fz));
 			if (i < 0 || j < 0 || i + 1 >= f->width || j + 1 >= f->height) return 0.0;

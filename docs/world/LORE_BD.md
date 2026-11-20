@@ -1066,6 +1066,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.54](#1654-carte-du-monde-lot-1--données-villes-portuaires-au-bord-de-la-mer-v10128) | v1.0.128 | Carte du monde, lot 1 : données | Fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine ; Tour Carrée = Grande Arche ; palais fusionnés ; tailles du lore ; 10 villes portuaires au bord de la mer. |
 | [16.55](#1655-carte-du-monde-lot-2--rivières-principales-ruisseaux-et-ponts-v10129) | v1.0.129 | Carte du monde, lot 2 : eau | 8 rivières principales tracées, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois. |
 | [16.56](#1656-carte-du-monde-lot-3--montagnes-à-léchelle-des-pyrénées-grandes-collines-v10130) | v1.0.130 | Carte du monde, lot 3 : relief | Échelle 3 600 m, montagnes de 1 400 à 3 400 m (Pyrénées), neige vers 2 500 m, grandes collines, cols sur les routes du lore. |
+| [16.57](#1657-carte-du-monde-lot-4--routes-moins-droites-v10131) | v1.0.131 | Carte du monde, lot 4 : routes | Points de passage décalés, terrain bruité, méandres amples, cols sinueux ; balises reposées au bord des routes. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5213,6 +5214,29 @@ gardent leur échelle et leurs profils (1 200 m).
 
 **Contrôles** : `world_gen_tests` (`TestReliefV1130` : échelle 3 600 m, médiane des montagnes ≥ 1 400 m, crêtes des chaînes
 ≥ 2 000 m, plus haut sommet entre 3 200 et 3 550 m, grandes collines, aucune route du lore coupée).
+
+### 16.57 Carte du monde, lot 4 : routes moins droites (v1.0.131)
+
+**Demande du propriétaire (19/11/2026)** : « des routes moins droites (car oui, il y a beaucoup de choses beaucoup trop
+droites) ; la nature n'est pas carrée ». Cause : chaque route du lore visait le centre de chaque case traversée et le
+plus court chemin sur un terrain plat est la ligne droite ; les méandres (±110 m) restaient faibles à l'échelle de 10 km.
+
+**Tracé** (`tools/world_gen/lib/Roads.cpp`, `Terrain.cpp`) :
+
+- **Points de passage décalés** (`JitteredCellPoint`) : en pays ouvert (plaine, forêt, lisière, désert, terres arides), la
+  route vise dans chaque case de passage un point tiré à ±3 km du centre (déterministe : graine, case) au lieu du centre ;
+  cases d'eau et de montagne : le centre (estuaires, lacs, cases de passage imposées comme la Passe des Dragons).
+- **Terrain aux préférences bruitées** : coût du terrain × 0,65 à 1,35 (longueur d'onde ≈ 3,5 km) : en plaine, le plus
+  court chemin ondule.
+- **Méandres plus amples** : ≈ ±240 m sur ≈ 3,4 km et ±50 m sur ≈ 900 m, nuls à moins de 900 m d'une ancre.
+- **Cols sinueux** : le couloir des cols (lot 3) suit les mêmes points de passage et serpente (déformation de ±1,4 km,
+  nulle à moins de 1,5 km d'une ancre) : plus de saignée droite dans les montagnes.
+
+**Balises reposées** au bord des nouveaux tracés (point de route le plus proche + 25 m) : Borne des Monts de Moork
+(000242), Stèle des Deux Fois Nés (000019), bornes des Géants nord (000143), ouest (000144) et sud (000238).
+
+**Contrôles** : `world_gen_tests` (`TestRoutesV1131` : 176 routes du lore tracées, aucune portion tirée au cordeau — écart
+de moins de 8 m à la corde — sur 3 km, les 5 balises à moins de 100 m de leur route).
 
 ## 17. Questions ouvertes
 

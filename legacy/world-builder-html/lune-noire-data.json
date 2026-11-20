@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.130",
+    "version": "1.0.131",
     "notes": [
+      "v1.0.131 : [DÉCISION] Carte du monde, lot 4 (routes) : routes sinueuses (points de passage décalés, terrain bruité, méandres amples), cols sinueux, balises reposées au bord des routes.",
       "v1.0.130 : [DÉCISION] Carte du monde, lot 3 (relief) : montagnes à l'échelle des Pyrénées (1 400 à 3 400 m), neige vers 2 500 m, grandes collines, cols sur les routes du lore.",
       "v1.0.129 : [DÉCISION] Carte du monde, lot 2 (eau) : 8 rivières principales tracées en jeu, cours d'eau qui suivent les vallées, ≈ 190 ruisseaux, ponts de pierre et passerelles de bois.",
       "v1.0.128 : [DÉCISION] Carte du monde, lot 1 : fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine et relié ; Hazol et Askhrof reliés ; Tour Carrée = Grande Arche ; Palais des Maîtres des Dragons fusionné ; tailles du lore au master ; 10 villes portuaires au bord de la mer.",
@@ -247585,6 +247586,13 @@
           "nom": "Montagnes à l'échelle des Pyrénées",
           "decision": "Décision du propriétaire (19/11/2026) : une montagne fait au moins 1 400 m ; les sommets enneigés culminent vers 3 400 m (modèle : Pyrénées, Aneto 3 404 m) ; neige au-dessus de ≈ 2 500 m ; plus de montagnes et de grandes collines ; les routes du lore franchissent les montagnes par des cols. LORE_BD §16.56.",
           "version": "1.0.130"
+        },
+        {
+          "collection": "routes",
+          "id": "routes_sinueuses_v1131",
+          "nom": "Routes moins droites",
+          "decision": "Décision du propriétaire (19/11/2026) : les routes ne doivent plus être droites (« la nature n'est pas carrée ») : en pays ouvert, une route vise un point de chaque case traversée tiré à ±3 km du centre, suit un terrain aux préférences bruitées et ondule davantage (≈ ±240 m) ; les cols de montagne serpentent ; les balises de route sont reposées au bord des nouveaux tracés. LORE_BD §16.57.",
+          "version": "1.0.131"
         }
       ]
     },
@@ -268162,8 +268170,8 @@
       "type": "other",
       "importance": "",
       "cell": "N011_E008",
-      "position_x_m": 3330,
-      "position_z_m": -2800,
+      "position_x_m": 3370,
+      "position_z_m": -2730,
       "region_id": "terres_des_gigantomorphes",
       "province": "region_terres_nord_t00",
       "zone_id": "",
@@ -268240,7 +268248,8 @@
         "[GD] (v1.0.85) Nom et lieu proposés, à valider par le propriétaire. Balise de sortie de la poche de bas niveau de Whispers Hill (Terres du Nord, 1-15), sur la route de Stohnvar (town_0139), au nord : au-delà, Terres des Gigantomorphes (30-56). Les gens de Whispers Hill ne la dépassent pas. LORE_BD §16.14.",
         "Réel en jeu : POI poi_balise_borne_geants_nord (monolithe) dans une cellule générée.",
         "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Kendrhir (000143), sortie nord-est de la poche : position manuelle x = 2787 m, z = -3862 m dans N011_E008 (avant : N012_E008) ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35).",
-        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000143 (position 3330, -2800 m, au sec) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56."
+        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000143 (position 3330, -2800 m, au sec) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56.",
+        "[DÉCISION] (v1.0.131) Reposée au bord de la route 000143 (position 3370, -2730 m) : le tracé des routes a changé (lot 4 de la carte, routes moins droites). LORE_BD §16.57."
       ]
     },
     {
@@ -268250,8 +268259,8 @@
       "type": "other",
       "importance": "",
       "cell": "N011_E008",
-      "position_x_m": -3443,
-      "position_z_m": 4105,
+      "position_x_m": -3550,
+      "position_z_m": 2540,
       "region_id": "terres_des_gigantomorphes",
       "province": "region_terres_nord_t00",
       "zone_id": "",
@@ -268327,7 +268336,8 @@
       "notes": [
         "[GD] (v1.0.85) Nom et lieu proposés, à valider par le propriétaire. Balise de sortie de la poche de bas niveau de Whispers Hill (Terres du Nord, 1-15), sur la route d'Askhvir (town_0123), à l'ouest : au-delà, Terres des Gigantomorphes (30-56). Les gens de Whispers Hill ne la dépassent pas. LORE_BD §16.14.",
         "Réel en jeu : POI poi_balise_borne_geants_ouest (monolithe) dans une cellule générée.",
-        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route d'Askhvir (000144), sortie sud-ouest de la poche : position manuelle x = -3443 m, z = 4105 m dans N011_E008 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route d'Askhvir (000144), sortie sud-ouest de la poche : position manuelle x = -3443 m, z = 4105 m dans N011_E008 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.131) Reposée au bord de la route 000144 (position -3550, 2540 m) : le tracé des routes a changé (lot 4 de la carte, routes moins droites). LORE_BD §16.57."
       ]
     },
     {
@@ -268337,8 +268347,8 @@
       "type": "other",
       "importance": "",
       "cell": "N011_E008",
-      "position_x_m": -2015,
-      "position_z_m": 4199,
+      "position_x_m": -1000,
+      "position_z_m": 3770,
       "region_id": "terres_des_gigantomorphes",
       "province": "region_terres_nord_t00",
       "zone_id": "",
@@ -268414,7 +268424,8 @@
       "notes": [
         "[GD] (v1.0.85) Nom et lieu proposés, à valider par le propriétaire. Balise de sortie de la poche de bas niveau de Whispers Hill (Terres du Nord, 1-15), sur la route de Feyhin Lokcthat et de Ghulvathan, au sud : au-delà, Terres des Gigantomorphes (30-56). Les gens de Whispers Hill ne la dépassent pas. LORE_BD §16.14.",
         "Réel en jeu : POI poi_balise_borne_geants_sud (monolithe) dans une cellule générée.",
-        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Feyhin Lokcthat (000238), sortie sud de la poche : position manuelle x = -2015 m, z = 4199 m dans N011_E008 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Feyhin Lokcthat (000238), sortie sud de la poche : position manuelle x = -2015 m, z = 4199 m dans N011_E008 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.131) Reposée au bord de la route 000238 (position -1000, 3770 m) : le tracé des routes a changé (lot 4 de la carte, routes moins droites). LORE_BD §16.57."
       ]
     },
     {
@@ -269298,8 +269309,8 @@
       "type": "other",
       "importance": "",
       "cell": "S005_E016",
-      "position_x_m": 430,
-      "position_z_m": 4250,
+      "position_x_m": 700,
+      "position_z_m": 3540,
       "region_id": "baronnie_de_moorks",
       "province": "",
       "zone_id": "",
@@ -269378,7 +269389,8 @@
         "Réel en jeu : POI poi_borne_monts_de_moork (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
         "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]",
         "[DÉCISION] (v1.0.128) Position posée -470, 4300 m : au bord de la route Moork – Ghrunke Dash (000242, désormais du lore), comme le veut la balise. LORE_BD §16.54.",
-        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000242 (position 430, 4250 m) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56."
+        "[DÉCISION] (v1.0.130) Reposée au bord de la route 000242 (position 430, 4250 m) : le tracé des routes a changé (lot 3 de la carte, montagnes à l'échelle des Pyrénées et cols). LORE_BD §16.56.",
+        "[DÉCISION] (v1.0.131) Reposée au bord de la route 000242 (position 700, 3540 m) : le tracé des routes a changé (lot 4 de la carte, routes moins droites). LORE_BD §16.57."
       ]
     },
     {
@@ -270085,8 +270097,8 @@
       "type": "other",
       "importance": "",
       "cell": "S009_E010",
-      "position_x_m": 553,
-      "position_z_m": 3234,
+      "position_x_m": 1900,
+      "position_z_m": 3240,
       "region_id": "royaumes_des_nains_du_sud",
       "province": "",
       "zone_id": "",
@@ -270164,7 +270176,8 @@
         "[GD] (v1.0.86) Niveau : balise (40-56 au-delà) (Terres désolées de Tsaroth). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
         "Réel en jeu : POI poi_stele_des_deux_fois_nes (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
         "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : nécropole de Der Hem Shelbem (S010_E010) : spectres (40-52), shedu (48-56), rois-momies (46-54), Prince Hors-Vivant (48-55), dragon mort-vivant (35-45) dans le ciel, dans une région proposée à 20-40. Sur la route de Frhozhol, la Stèle des Deux Fois Nés (lieu_stele_des_deux_fois_nes, POI réel) ; au sud, la route de Saelvik n'a qu'un avertisseur. [GD]",
-        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Der Hem Shelbem (000074), avant la nécropole : position manuelle x = 553 m, z = 3234 m dans S009_E010 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) Balise replacée au bord de la route de Der Hem Shelbem (000074), avant la nécropole : position manuelle x = 553 m, z = 3234 m dans S009_E010 ; les routes du générateur le long desquelles elle était posée (v1.0.85-86) ne sont plus tracées depuis la v1.0.105 (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.131) Reposée au bord de la route 000019 (position 1900, 3240 m) : le tracé des routes a changé (lot 4 de la carte, routes moins droites). LORE_BD §16.57."
       ]
     },
     {

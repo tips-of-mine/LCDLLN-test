@@ -552,6 +552,16 @@ namespace tools::world_gen
 			// toutes les cellules, raccord exact). Fond = point le plus bas du pourtour
 			// (64 directions, à floor_radius_m × 1,13 + wall_m + 100 m) − depth_m : les
 			// parois ont au moins depth_m partout.
+			// v1.0.130 — abords calmes (voir WorldMaster::calmZones), avant tout relevé d'altitude.
+			for (const ReliefDef& r : out.reliefs)
+				if (r.type == "gouffre" || r.type == "crevasse" || r.type == "colline")
+					out.calmZones.push_back({ r.center, std::max({ r.footRadiusM, r.floorRadiusM * 3.0, 1500.0 }) });
+			for (const ReliefDef& r : out.reliefs)
+				if (r.type == "gouffre")
+				{
+					out.roadBlocks.push_back({ r.center, r.footRadiusM + 125.0 });
+					if (!r.gallery.empty()) out.roadBlocks.push_back({ r.gallery.back(), 550.0 });
+				}
 			WorldMaster plain;
 			bool plainReady = false;
 			for (ReliefDef& d : out.reliefs)
@@ -560,7 +570,7 @@ namespace tools::world_gen
 				if (!plainReady)
 				{
 					plain.worldId = out.worldId; plain.cellMap = out.cellMap; plain.seed = out.seed;
-					plain.scale = out.scale; plain.gridRows = out.gridRows; plain.legend = out.legend;
+					plain.scale = out.scale; plain.gridRows = out.gridRows; plain.legend = out.legend; plain.calmZones = out.calmZones; plain.roadBlocks = out.roadBlocks;
 					for (const ReliefDef& r : out.reliefs)
 						if (r.type != "gouffre") plain.reliefs.push_back(r);
 					plainReady = true;
@@ -699,6 +709,7 @@ namespace tools::world_gen
 		// --- cellules générées par défaut ---
 		out.generatedCells = GetStrArray(root, "generated_cells");
 		out.connectStartCities = GetBool(root, "connect_start_cities", false);
+		out.passes = std::make_shared<PassField>(); // v1.0.130 : cols des routes du lore (calcul paresseux)
 		out.corridorMarginM = std::clamp(GetNum(root, "corridor_margin_m", 300.0), 0.0, 4000.0);
 		// --- cimetières (v1.0.111) : nombre fixe, cellules sans cimetière remplies ---
 		if (const JsonValue* gv = FindObjectMember(root, "graveyards"); gv && gv->type == JsonType::Object)

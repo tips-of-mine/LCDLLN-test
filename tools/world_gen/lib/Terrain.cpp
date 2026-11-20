@@ -39,8 +39,21 @@ namespace tools::world_gen
 			double dune;   ///< poids des dunes (désert)
 		};
 
-		CodeProfile ProfileOf(char c)
+		/// Profil d'altitude d'un code de case. \p infernal : carte des Enfers (profils historiques
+		/// de v1.0.71, inchangés) ; sinon Royaumes, montagnes à l'échelle des Pyrénées depuis la
+		/// v1.0.130 (décision du 19/11/2026 : une montagne fait au moins 1 400 m, les sommets
+		/// enneigés culminent vers 3 400 m comme l'Aneto).
+		CodeProfile ProfileOf(char c, bool infernal)
 		{
+			if (!infernal)
+				switch (c)
+				{
+				case '^': return { 1300.0, 120.0, 1000.0, 0 };  // montagne : 1 400 à 2 200 m
+				case 'M': return { 1750.0, 150.0, 1500.0, 0 };  // chaîne : crêtes de 2 000 à 2 900 m
+				case '*': return { 2250.0, 160.0, 1600.0, 0 };  // sommets enneigés : jusqu'à ≈ 3 400 m
+				case 'V': return { 520.0, 80.0, 700.0, 0 };     // volcanique : cônes de 1 000 à 1 500 m
+				default: break;
+				}
 			switch (c)
 			{
 			case ' ': return { 6.0, 3.0, 0.0, 0 };       // mer profonde
@@ -634,9 +647,55 @@ namespace tools::world_gen
 		return Clamp(lava, 0.0, 1.0);
 	}
 
+	namespace
+	{
+		/// v1.0.130 — proximité (0..1) d'une route du lore au point (x, z) : 1 sur le tracé
+		/// (corde entre centres de cases successifs), 0 au-delà de 2,5 km. Grille calculée une
+		/// fois (PassField) ; 0 si le master n'a pas de champ (tests) ou pas de route.
+		double PassAt(const WorldMaster& m, double x, double z)
+		{
+			PassField* f = m.passes.get();
+			if (!f || m.loreRoads.empty()) return 0.0;
+			std::call_once(f->once, [&]() {
+				const int rows = static_cast<int>(m.gridRows.size());
+				f->originX = (m.scale.westE - 0.5) * kC;
+				f->originZ = -(m.scale.northN + 0.5) * kC;
+				f->width = static_cast<int>(m.scale.gridCols * kC / f->step) + 1;
+				f->height = static_cast<int>(rows * kC / f->step) + 1;
+				f->value.assign(static_cast<size_t>(f->width) * f->height, 0.0f);
+				const double reach = 2500.0, core = 600.0;
+				for (const LoreRoadDef& r : m.loreRoads)
+					for (size_t k = 0; k + 1 < r.cellNE.size(); ++k)
+					{
+						const engine::world::cells::CellPoint a = engine::world::cells::CellCenter({ r.cellNE[k].first, r.cellNE[k].second });
+						const engine::world::cells::CellPoint b = engine::world::cells::CellCenter({ r.cellNE[k + 1].first, r.cellNE[k + 1].second });
+						const Vec2 A{ a.x, a.z }, B{ b.x, b.z };
+						const int i0 = std::max(0, static_cast<int>((std::min(A.x, B.x) - reach - f->originX) / f->step));
+						const int i1 = std::min(f->width - 1, static_cast<int>((std::max(A.x, B.x) + reach - f->originX) / f->step) + 1);
+						const int j0 = std::max(0, static_cast<int>((std::min(A.z, B.z) - reach - f->originZ) / f->step));
+						const int j1 = std::min(f->height - 1, static_cast<int>((std::max(A.z, B.z) + reach - f->originZ) / f->step) + 1);
+						for (int j = j0; j <= j1; ++j)
+							for (int i = i0; i <= i1; ++i)
+							{
+								const double d = DistPointSegment({ f->originX + i * f->step, f->originZ + j * f->step }, A, B, nullptr);
+								float& v = f->value[static_cast<size_t>(j) * f->width + i];
+								v = std::max(v, static_cast<float>(SmoothStep(reach, core, d)));
+							}
+					}
+			});
+			const double fx = (x - f->originX) / f->step, fz = (z - f->originZ) / f->step;
+			const int i = static_cast<int>(std::floor(fx)), j = static_cast<int>(std::floor(fz));
+			if (i < 0 || j < 0 || i + 1 >= f->width || j + 1 >= f->height) return 0.0;
+			const double tx = fx - i, tz = fz - j;
+			auto at = [&](int ii, int jj) { return static_cast<double>(f->value[static_cast<size_t>(jj) * f->width + ii]); };
+			return Lerp(Lerp(at(i, j), at(i + 1, j), tx), Lerp(at(i, j + 1), at(i + 1, j + 1), tx), tz);
+		}
+	}
+
 	double MacroHeight(const WorldMaster& m, double x, double z)
 	{
 		const uint64_t seed = m.seed;
+		const bool infernal = IsInfernalMap(m);
 		// Domain warp (~±0,3 case) : côtes et reliefs organiques.
 		const double wx = x + Fbm(x, z, 2.0 * kC, 3, seed + 11) * 0.9 * kC;
 		const double wz = z + Fbm(x, z, 2.0 * kC, 3, seed + 12) * 0.9 * kC;
@@ -647,14 +706,25 @@ namespace tools::world_gen
 		const int ie = static_cast<int>(e0), in = static_cast<int>(n0);
 		const double wts[4] = { (1 - te) * (1 - tn), te * (1 - tn), (1 - te) * tn, te * tn };
 		const int de[4] = { 0, 1, 0, 1 }, dn[4] = { 0, 0, 1, 1 };
+		// v1.0.130 — reliefs posés à la main (gouffre, crevasse, colline) : leurs abords gardent
+		// le relief historique (profils d'avant les Pyrénées, sans grandes collines ni cols),
+		// sur lequel leurs formes et leurs profondeurs ont été réglées. `calm` = 0 jusqu'à 2 km
+		// de son emprise (accès des routes du lore), 1 au-delà de 3,5 km (zones relevées au
+		// chargement du master).
+		double calm = 1.0;
+		if (!infernal)
+			for (const WorldMaster::CalmZone& c : m.calmZones)
+				calm = std::min(calm, SmoothStep(c.radiusM + 2000.0, c.radiusM + 3500.0, std::hypot(x - c.center.x, z - c.center.z)));
 		CodeProfile acc{ 0, 0, 0, 0 };
 		for (int k = 0; k < 4; ++k)
 		{
-			const CodeProfile p = ProfileOf(LoreCode(m, in + dn[k], ie + de[k]));
-			acc.base += p.base * wts[k];
-			acc.amp += p.amp * wts[k];
-			acc.ridge += p.ridge * wts[k];
-			acc.dune += p.dune * wts[k];
+			const char code = LoreCode(m, in + dn[k], ie + de[k]);
+			const CodeProfile pn = ProfileOf(code, infernal);
+			const CodeProfile po = calm < 1.0 ? ProfileOf(code, true) : pn;
+			acc.base += Lerp(po.base, pn.base, calm) * wts[k];
+			acc.amp += Lerp(po.amp, pn.amp, calm) * wts[k];
+			acc.ridge += Lerp(po.ridge, pn.ridge, calm) * wts[k];
+			acc.dune += pn.dune * wts[k];
 		}
 		double h = acc.base;
 		// Caractère régional (≈ 7 km) : alternance de pays plats et vallonnés à
@@ -681,14 +751,47 @@ namespace tools::world_gen
 			// (les étendues d'eau intérieures sont des lacs explicites).
 			const double floorY = m.scale.seaLevelM + 6.0;
 			if (h < floorY) h = Lerp(h, floorY - (floorY - h) * 0.2, lowland);
+			// v1.0.130 — GRANDES COLLINES (Royaumes) : buttes isolées de 150 à 400 m au-dessus de
+			// la plaine (longueur d'onde ≈ 6 km), dans la moitié des pays vallonnés ; jamais près
+			// des côtes ni dans les marais (`lowland` nul), donc le rivage ne bouge pas.
+			if (!infernal)
+			{
+				const double big = SmoothStep(0.06, 0.42, Fbm(x, z, 6200.0, 3, seed + 61));
+				const double where = SmoothStep(0.30, 0.60, Clamp(Fbm(x, z, 16000.0, 2, seed + 62) + 0.5, 0.0, 1.0));
+				h += 380.0 * big * where * lowland * SmoothStep(58.0, 66.0, acc.base) * calm;
+			}
 		}
 		if (acc.ridge > 0.5)
-			h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
+		{
+			if (infernal)
+				h += (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge;
+			else
+			{
+				// v1.0.130 — cols : près d'une route du lore, la montagne s'abaisse (col de
+				// 1 000 à 1 800 m entre des crêtes de 2 000 à 3 000 m) ; les routes passent.
+				const double pass = PassAt(m, x, z) * calm;
+				h -= 0.30 * std::max(0.0, acc.base - 300.0) * pass;
+				// v1.0.130 — montagnes des Royaumes : grandes crêtes continues (crête de ≈ 9 km,
+				// coordonnées déformées : les chaînes s'allongent au lieu de former des taches)
+				// et reliefs secondaires (≈ 2,6 km) ; sommets jusqu'à ≈ 3 400 m.
+				const double wx = x + Fbm(x, z, 14000.0, 2, seed + 63) * 9000.0;
+				const double wz = z + Fbm(x, z, 14000.0, 2, seed + 64) * 9000.0;
+				const double crest = Ridged(wx, wz * 0.55, 9000.0, 5, seed + 65);
+				const double detail = Ridged(x, z, 2600.0, 4, seed + 66);
+				const double ridgeNew = (0.75 * (crest - 0.35) + 0.45 * (detail - 0.35)) * acc.ridge * (1.0 - 0.7 * pass);
+				const double ridgeOld = calm < 1.0 ? (Ridged(x, z, 4500.0, 6, seed + 31) - 0.35) * acc.ridge : ridgeNew;
+				h += Lerp(ridgeOld, ridgeNew, calm);
+			}
+		}
 		if (acc.dune > 0.01)
 			h += std::sin((x * 0.8 + z * 0.6) / 60.0 + Fbm(x, z, 900.0, 2, seed + 41) * 3.0) * 4.0 * acc.dune;
 		// Reliefs locaux posés à la main (v1.0.72) : colline de Vaerdhun, crevasse de Vharholdt ;
 		// massifs de l'Île de la Trêve (v1.0.77).
 		if (!m.reliefs.empty()) h += ReliefOffset(m, x, z, h);
+		// v1.0.130 — abords calmes : le plafond historique (height_scale_m 1 200 m) y est
+		// rétabli, sans quoi les anciens massifs y dresseraient des parois infranchissables
+		// (route 000074 vers le gouffre de Thurvhal).
+		if (calm < 1.0) h = Lerp(std::min(h, 1198.0), h, calm);
 		return Clamp(h, 1.0, m.scale.heightScaleM - 2.0);
 	}
 
@@ -1444,8 +1547,10 @@ namespace tools::world_gen
 		// déserts, terres arides, marais, volcans, côtes et îlots, à plus de 3 km d'un cours
 		// d'eau, de 1,5 km d'une ville et de 600 m d'un lieu ; chacune suit l'arbre
 		// d'écoulement jusqu'à la mer, un lac, ou une rivière qu'elle rejoint (confluent exact).
-		// Contourne les villes comme les grands cours ; abandonnée si elle traverse un gouffre
-		// ou si elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
+		// Contourne les villes comme les grands cours ; abandonnée si elle entre dans les
+		// abords calmes d'un relief posé (gouffre, crevasse, colline : `calmZones`, relevés au
+		// chargement — le réseau ne dépend donc pas de la présence du relief lui-même) ou si
+		// elle fait moins de 5 km. Largeur 4 m à la source, 11 m à l'aval.
 		// Aucun ruisseau aux Enfers : l'eau n'y coule pas, seuls les fleuves de lave du
 		// master y serpentent (palette v1.0.83 : pas de bleu ni de vert sur la carte).
 		if (!IsInfernalMap(g.master))
@@ -1478,6 +1583,12 @@ namespace tools::world_gen
 					if (std::hypot(p.x - l.center.x, p.z - l.center.z) < l.radiusM + 60.0) return true;
 				return false;
 			};
+			// Vrai si p est à moins de margin des abords calmes d'un relief posé.
+			auto inCalm = [&](Vec2 p, double margin) {
+				for (const WorldMaster::CalmZone& c : m.calmZones)
+					if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + margin) return true;
+				return false;
+			};
 			const double lattice = 10000.0;
 			int streamIndex = 0;
 			for (double z0 = g.minZ + lattice * 0.5; z0 < g.maxZ; z0 += lattice)
@@ -1492,7 +1603,7 @@ namespace tools::world_gen
 					bool blocked = false;
 					for (const CityDef& c : g.cities) blocked = blocked || std::hypot(src.x - c.center.x, src.z - c.center.z) < c.radiusM + 1500.0;
 					for (const PoiDef& pd : g.pois) blocked = blocked || std::hypot(src.x - pd.center.x, src.z - pd.center.z) < 600.0;
-					if (blocked || InAnyGouffre(m, src, 400.0)) continue;
+					if (blocked || inCalm(src, 400.0)) continue;
 					// Descente le long de l'arbre jusqu'à la mer, un lac ou une rivière.
 					std::vector<Vec2> path;
 					int32_t q = sj * nx + si;
@@ -1511,7 +1622,7 @@ namespace tools::world_gen
 						}
 						path.push_back(p);
 						if (filled.At(i, j) < sea - 0.5 || lakeAt(p)) break;
-						if (InAnyGouffre(m, p, 300.0)) { path.clear(); break; }
+						if (inCalm(p, 0.0)) { path.clear(); break; }
 						q = flowDown[static_cast<size_t>(q)];
 					}
 					if (joinRef >= 0)
@@ -1536,8 +1647,16 @@ namespace tools::world_gen
 							if (d < 150.0 && d > 1e-6) p = pd.center + (p - pd.center) * (150.0 / d);
 						}
 					}
-					g.rivers.push_back(finish(std::move(path), "ruisseau_" + std::to_string(streamIndex++), 4.0, 7.0, 0.0,
-						[&](Vec2 p) { return 0.6 * hillCalm(p); }));
+					River stream = finish(std::move(path), "ruisseau_" + std::to_string(streamIndex), 4.0, 7.0, 0.0,
+						[&](Vec2 p) { return 0.6 * hillCalm(p); });
+					// Le lissage entre nœuds contournés peut mordre sur une ville : ruisseau abandonné.
+					bool intoCity = false;
+					for (size_t k = 0; k < stream.points.size() && !intoCity; k += 2)
+						for (const CityDef& c : g.cities)
+							if (std::hypot(stream.points[k].x - c.center.x, stream.points[k].z - c.center.z) < c.radiusM + 60.0) { intoCity = true; break; }
+					if (intoCity) continue;
+					++streamIndex;
+					g.rivers.push_back(std::move(stream));
 					mark(static_cast<int>(g.rivers.size()) - 1);
 				}
 			std::printf("[world_gen] ruisseaux : %d (lot carte v1.0.129)\n", streamIndex);

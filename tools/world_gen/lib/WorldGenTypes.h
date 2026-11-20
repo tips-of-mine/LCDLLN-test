@@ -329,6 +329,17 @@ namespace tools::world_gen
 	};
 
 	/// Contenu complet du master après chargement + validation.
+	/// v1.0.130 — cols des routes du lore à travers les montagnes (Terrain.cpp, MacroHeight) :
+	/// grille de 250 m, valeur 0..1 = proximité (≤ 2,5 km) d'un tronçon de route du lore entre
+	/// deux cases successives. Calculée une fois, à la première demande (thread-safe).
+	struct PassField
+	{
+		std::once_flag once;
+		double originX = 0.0, originZ = 0.0, step = 250.0;
+		int width = 0, height = 0;
+		std::vector<float> value;
+	};
+
 	struct WorldMaster
 	{
 		std::string worldId;
@@ -339,6 +350,8 @@ namespace tools::world_gen
 		std::string displayName;
 		uint64_t    seed = 1;
 		WorldScale  scale;
+		/// v1.0.130 : cols des routes du lore (partagé entre copies du master ; nul = pas de cols).
+		std::shared_ptr<PassField> passes;
 		std::vector<std::string> gridRows;      ///< rangées N→S, `gridCols` caractères
 		std::vector<std::pair<char, std::string>> legend;
 		std::vector<RegionDef> regions;
@@ -348,6 +361,15 @@ namespace tools::world_gen
 		std::vector<ExtraLakeDef> extraLakes;
 		std::vector<RiverCourseDef> riverCourses;
 		std::vector<ReliefDef> reliefs;         ///< reliefs locaux (v1.0.72)
+		/// v1.0.130 — abords calmes des reliefs posés (gouffre, crevasse, colline) : centre et
+		/// rayon où le relief garde ses profils historiques. Relevés UNE fois au chargement :
+		/// retirer un relief de `reliefs` (monde de référence) ne change pas le terrain alentour.
+		struct CalmZone { Vec2 center; double radiusM = 0.0; };
+		std::vector<CalmZone> calmZones;
+		/// v1.0.130 — disques fermés aux routes autour d'un gouffre (fosse : pied + 125 m ;
+		/// entrée cachée de la galerie : 550 m, pour qu'elle reste à l'écart). Relevés au
+		/// chargement, comme `calmZones` : le réseau routier ne dépend pas du relief lui-même.
+		std::vector<CalmZone> roadBlocks;
 		/// Routes du lore (v1.0.105, `lore_roads`). Vide (ex. Enfers) : le générateur
 		/// garde son seul réseau calculé (comportement historique).
 		std::vector<LoreRoadDef> loreRoads;

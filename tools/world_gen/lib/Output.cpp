@@ -404,7 +404,8 @@ namespace tools::world_gen
 			// Rivage et fonds : sable/terre mouillée.
 			if (h < sea + 1.2) { const double k = SmoothStep(sea + 1.2, sea - 0.5, h); t.grass *= 1 - k; t.dirt += k; t.grassMask *= 1 - k; }
 			// Neige en altitude (moins sur les pentes raides).
-			const double snowK = SmoothStep(520.0, 600.0, h + n * 25.0) * (1.0 - SmoothStep(38.0, 55.0, slope));
+			// v1.0.130 : limite des neiges des Royaumes vers 2 500 m (Pyrénées), avec ±60 m de bruit.
+			const double snowK = SmoothStep(2450.0, 2650.0, h + n * 60.0) * (1.0 - SmoothStep(38.0, 55.0, slope));
 			t.snow = std::max(t.snow, snowK);
 			// Roche sur les pentes fortes.
 			const double rockK = SmoothStep(26.0, 40.0, slope + n * 4.0);
@@ -472,9 +473,10 @@ namespace tools::world_gen
 				break;
 			default: r = 132; g = 160; b = 92; break;
 			}
-			const double alt = Clamp((h - 90.0) / 450.0, 0.0, 1.0);
-			r = Lerp(r, 128, alt * 0.7); g = Lerp(g, 116, alt * 0.7); b = Lerp(b, 104, alt * 0.7);
-			const double snow = SmoothStep(520.0, 600.0, h);
+			// v1.0.130 : teinte de roche jusqu'à 1 800 m, neige au-dessus de ≈ 2 500 m (Pyrénées).
+			const double alt = Clamp((h - 120.0) / 1700.0, 0.0, 1.0);
+			r = Lerp(r, 128, alt * 0.75); g = Lerp(g, 116, alt * 0.75); b = Lerp(b, 104, alt * 0.75);
+			const double snow = SmoothStep(2450.0, 2650.0, h);
 			r = Lerp(r, 238, snow); g = Lerp(g, 240, snow); b = Lerp(b, 245, snow);
 		}
 

@@ -704,6 +704,15 @@ namespace tools::world_gen
 	/// secret. Effet de bord : écrit world/<monde>/ (sauf dryRun).
 	/// \return false + \p err si une écriture échoue.
 	bool WriteGlobalOutputs(GlobalWorld& g, const std::vector<World*>& cells, std::string& err);
+
+	/// Aperçu rapide du continent (option --preview-map, lot carte v1.0.128) : rend la couche
+	/// MACRO seule (relief ombré, biomes, rivières, lacs, routes, villes) dans un PNG \p sizePx²,
+	/// sans générer aucune cellule (≈ 30 s au lieu d'une heure et de ~50 Go). Sert à juger le
+	/// monde d'un coup d'œil (relief, tracé des routes et des rivières) avant une génération complète.
+	/// \param path   fichier PNG écrit (chemin libre, hors de game/data de préférence)
+	/// \param sizePx côté de l'image en pixels (borné à [512, 8192])
+	/// Effet de bord : écrit le fichier ; ne touche pas aux sorties du monde.
+	bool WriteMapPreview(const GlobalWorld& g, const std::string& path, int sizePx, std::string& err);
 	/// PORTAL.2 — vues de dessus détaillées (PNG) des villes du lore et des lieux
 	/// remarquables de la cellule, pour la galerie du portail web : relief ombré,
 	/// eau, routes et rues, forêts, arbres et bâtiments. Jamais de ville ni de lieu
@@ -725,6 +734,8 @@ namespace tools::world_gen
 	/// (`connect_start_cities`, cf. WorldMaster). Nécessite g.cities (sites) et
 	/// le réseau du générateur g.generatorRoads (BuildMacroRoads ; g.roads s'il est
 	/// vide, ex. tests qui posent leurs routes à la main). WorldGen.cpp
+	/// v1.0.128 : sans effet si `connect_start_cities` est faux (cas des Royaumes : les cases
+	/// des anciens corridors sont listées dans generated_cells).
 	void AddStartCorridors(GlobalWorld& g, std::vector<std::string>& ids);
 	/// Routes de \p roads qui relient les villes de départ (arbre couvrant « au plus
 	/// près » par la route, chemins locaux exclus), dans l'ordre de parcours.

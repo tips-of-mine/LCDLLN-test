@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.127",
+    "version": "1.0.128",
     "notes": [
+      "v1.0.128 : [DÉCISION] Carte du monde, lot 1 : fiches Marn, Citadelle, Oracle et lieux du master ; Krak de Jhenner en ruine et relié ; Hazol et Askhrof reliés ; Tour Carrée = Grande Arche ; Palais des Maîtres des Dragons fusionné ; tailles du lore au master ; 10 villes portuaires au bord de la mer.",
       "v1.0.127 : [DÉCISION] Lhynn (N001_W011) et Altenberg (N005_W013) déplacées au bord de la mer, positions posées ; lieux, comptoir et routes suivent.",
       "v1.0.126 : [DÉCISION] Cellules restantes : 542 cases de terre ouvertes au jeu, 529 lieux [GD] ; cases sans cimetière admises (666 gardés).",
       "v1.0.124 : [DÉCISION] Lignes maritimes jouées (passeur au ponton, 4 lignes, 11 escales) ; îles de Hishtarland et de Dyprokh ouvertes (7 cases, 5 lieux [GD]).",
@@ -1846,7 +1847,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "town_riverfold",
-          "cell": "N006_E023",
+          "cell": "N006_E024",
           "nom": "Comptoir de l'Est"
         },
         "presence": [
@@ -1954,7 +1955,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "town_riverfold",
-          "cell": "N006_E023",
+          "cell": "N006_E024",
           "nom": "Comptoir de l'Est"
         },
         "presence": [
@@ -2052,7 +2053,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "town_riverfold",
-          "cell": "N006_E023",
+          "cell": "N006_E024",
           "nom": "Comptoir de l'Est"
         },
         "presence": [
@@ -2154,7 +2155,7 @@
         "statut": "hors carte, non généré (ouverture plus tard)",
         "comptoir": {
           "ville_id": "town_riverfold",
-          "cell": "N006_E023",
+          "cell": "N006_E024",
           "nom": "Comptoir de l'Est"
         },
         "presence": [
@@ -6748,6 +6749,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_ghrunke_dash_ecurie_03",
+          "name": "Korhild Torche-d'Acier",
+          "gender": "female",
+          "race_id": "race_dwarf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_ghrunke_dash_temple_01",
           "name": "Ostga Hache-de-Bronze",
           "gender": "female",
@@ -8140,8 +8149,8 @@
       "cell": "S011_W006",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -2870,
+      "position_z_m": 3690,
       "faction_control": "",
       "region_id": "region_hishtarland",
       "province": "",
@@ -8178,7 +8187,8 @@
         "[GD] (v1.0.58) Économie : puissance navale : construction navale, fret, sel ; escale de la ligne maritime du sud [GD].",
         "[DÉCISION] (v1.0.72) Plus de route terrestre vers Zaltheim (000151 supprimée) : Hishtarland est desservie par les lignes maritimes 000108 (Brokhendt) et 000109 (Zaltheim) ; LORE_BD §16.",
         "[DÉCISION] (v1.0.82) Comptoir du Sud : Port d'Hishtarland, royaume indépendant du sud : les boutres des peuples du Grand Sud y déchargent avant de remonter vers l'Empire. Peuples : Les émirats du Sheydhar (sud-sud-est), Le royaume de Nebkhara (sud), Le royaume de Nkhaloa (sud-sud-ouest) ; lore seulement, aucun PNJ placé dans le monde jouable (décision du propriétaire du 11/11/2026 ; LORE_BD §16.11).",
-        "[GD] (v1.0.82) PNJ des peuples lointains présents : Leïmara Sabhaït (Les émirats du Sheydhar, marchand) ; Peribhes Khaïmut (Le royaume de Nebkhara, marchand) ; Obhangu Ndheri (Le royaume de Nkhaloa, marchand) (fiches persons, LORE_BD §16.11)."
+        "[GD] (v1.0.82) PNJ des peuples lointains présents : Leïmara Sabhaït (Les émirats du Sheydhar, marchand) ; Peribhes Khaïmut (Le royaume de Nebkhara, marchand) ; Obhangu Ndheri (Le royaume de Nkhaloa, marchand) (fiches persons, LORE_BD §16.11).",
+        "[DÉCISION] (v1.0.128) Position posée -2870, 3690 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "grande_ville",
       "service_npcs": [
@@ -9205,6 +9215,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_ville_moork_ecurie_03",
+          "name": "Laelith Moross",
+          "gender": "male",
+          "race_id": "race_dark_elf",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_moork_ecurie_04",
+          "name": "Keshthor Plaie-Froide",
+          "gender": "male",
+          "race_id": "race_demon",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_ville_moork_temple_01",
           "name": "Vexys Fournaise-Froide",
           "gender": "female",
@@ -9596,11 +9622,11 @@
       "alias": "Equiton",
       "type": "port_town",
       "importance": "",
-      "cell": "S005_W004",
+      "cell": "S006_W004",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 4000,
+      "position_z_m": -2560,
       "faction_control": "",
       "region_id": "royaumes_des_nains_du_sud",
       "province": "",
@@ -9630,9 +9656,10 @@
         "[LORE_ETENDU] Port de la baie et tête de la ligne maritime du sud. Reprend en v1.0.45 le rôle portuaire attribué auparavant à Tbarak, replacée dans les Territoires des Marches d'après la BD (T1). Nom repris de la liste des lieux non utilisés de carte_export.json.",
         "[GD] (v1.0.58) Économie : port : fret et cabotage ; produit blé et orge, élevage, minerai, pierre de taille ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[DÉCISION] (v1.0.92) Région HS : Royaumes des nains du sud (case S005_W004, carte du hors-série ; avant : Royaume Drach, `royaume_drach`) (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Ekvhitorn » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Equiton » est gardé en alias. Identifiant inchangé (ville_equiton) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Ekvhitorn » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Equiton » est gardé en alias. Identifiant inchangé (ville_equiton) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Déplacée de S005_W004 à S006_W004, position 4000, -2560 m : au bord de la mer (aucune mer dans sa case, ou trop loin) ; routes et ponton suivent. LORE_BD §16.54."
       ],
-      "anchor_tile": "S005_W004",
+      "anchor_tile": "S006_W004",
       "taille": "ville",
       "service_npcs": [
         {
@@ -9787,6 +9814,9 @@
           "service": "cimetiere",
           "metier": "fossoyeur"
         }
+      ],
+      "footprint_tiles": [
+        "S006_W004"
       ]
     },
     {
@@ -10011,6 +10041,14 @@
         {
           "id": "pnj_ville_hazol_ecurie_01",
           "name": "Ulald Sombrepré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_hazol_ecurie_02",
+          "name": "Lanbert Mormont",
           "gender": "male",
           "race_id": "race_human",
           "service": "ecurie",
@@ -10908,6 +10946,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_sauken_glude_of_magistrya_ecurie_04",
+          "name": "Serora Fontrive",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_sauken_glude_of_magistrya_temple_01",
           "name": "Darius Rosslande",
           "gender": "male",
@@ -11553,6 +11599,14 @@
           "id": "pnj_ville_northind_ecurie_04",
           "name": "Marbert Fontpré",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_ville_northind_ecurie_05",
+          "name": "Yva Chenval",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -13084,16 +13138,7 @@
       "province": "",
       "housing_count": null,
       "population": null,
-      "services": [
-        "auberge",
-        "forgeron",
-        "marche",
-        "ecurie",
-        "guilde",
-        "infirmerie",
-        "prison",
-        "cimetiere"
-      ],
+      "services": [],
       "features": [
         "forteresse sur la route de la Lune Noire vers Tsaroth"
       ],
@@ -13161,75 +13206,11 @@
       "notes": [
         "[BD-T5] p.18 : Fratus souhaite qu'il tienne en perdant « le moins d'hommes possible ».",
         "[BD-T5] p.22 : « au grand désespoir de Fratus, le Krak de Jhenner était tombé ».",
-        "[GD] (v1.0.117) Case S006_E012 proposée sur la route de Moork à Tsaroth (première place impériale tombée [BD-T5 p.22], au débouché des plaines vers les coulées ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
+        "[GD] (v1.0.117) Case S006_E012 proposée sur la route de Moork à Tsaroth (première place impériale tombée [BD-T5 p.22], au débouché des plaines vers les coulées ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master.",
+        "[DÉCISION] (v1.0.128) En ruine (tombé au T5) : ville du master `forteresse`, état `ruine`, sans service ni cimetière (graveyards.without_graveyard, 666 gardés) ; route 000239 vers la route 000148 (S004_E013). Décision du propriétaire du 19/11/2026, LORE_BD §16.54."
       ],
-      "taille": "forteresse",
-      "service_npcs": [
-        {
-          "id": "pnj_city_krak_de_jhenner_auberge_01",
-          "name": "Varric Ferchêne",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "auberge",
-          "metier": "aubergiste"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_forgeron_01",
-          "name": "Torard Rosscombe",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "forgeron",
-          "metier": "forgeron"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_marche_01",
-          "name": "Renin Saulgarde",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "marche",
-          "metier": "marchand"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_ecurie_01",
-          "name": "Edran Hautmont",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "ecurie",
-          "metier": "palefrenier"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_guilde_01",
-          "name": "Torine Grisombre",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "guilde",
-          "metier": "maitre_de_guilde"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_infirmerie_01",
-          "name": "Rola Valvigne",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "infirmerie",
-          "metier": "guerisseur"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_prison_01",
-          "name": "Ulelle Chenmare",
-          "gender": "female",
-          "race_id": "race_human",
-          "service": "prison",
-          "metier": "geolier"
-        },
-        {
-          "id": "pnj_city_krak_de_jhenner_cimetiere_01",
-          "name": "Darran Grisrive",
-          "gender": "male",
-          "race_id": "race_human",
-          "service": "cimetiere",
-          "metier": "fossoyeur"
-        }
-      ]
+      "taille": "sans_service",
+      "service_npcs": []
     },
     {
       "id": "city_dragon_palace",
@@ -13356,7 +13337,8 @@
         "point stratégique naturel difficilement prenable",
         "[GD] (v1.0.58) Économie : aucun commerce de dragons ni d'œufs (interdit par les Chevaliers Dragons) ; un dragon vivant « vaut une fortune » [BD-A2 pl.11] [GD].",
         "[GD] (v1.0.85) Balisage (LORE_BD §16.14) — avertisseur : les sentinelles des Chevaliers-Dragons refusent l'accès aux étrangers à la faction ; dragons guetteurs (40-48) [BD-T2 p.29-30].",
-        "[DÉCISION] (v1.0.106) La route 000017 depuis l'Atmosphère est tracée en jeu par la Passe des Dragons (S002_W003, case de passage imposée au tracé) ; le Palais reste sans entrée au master (la route finit au point praticable de la case) (LORE_BD §16.35)."
+        "[DÉCISION] (v1.0.106) La route 000017 depuis l'Atmosphère est tracée en jeu par la Passe des Dragons (S002_W003, case de passage imposée au tracé) ; le Palais reste sans entrée au master (la route finit au point praticable de la case) (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.128) Fusion (décision du propriétaire du 19/11/2026) : le « Palais abandonné de la Passe » du master (poi_palais_passe, S003_W004) est ce palais ; le POI prend son nom et le genre `cite`. LORE_BD §16.54."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -15168,8 +15150,8 @@
       "anchor_tile": "N010_E005",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 680,
+      "position_z_m": -2910,
       "faction_control": "",
       "region_id": "terres_des_gigantomorphes",
       "province": "",
@@ -15262,7 +15244,8 @@
       "footprint_tiles": [],
       "notes": [
         "[GD] (v1.0.58) Économie : ville marché : foire régionale ; port ; produit moulins et maraîchage, lin, bois de chauffe, petit gibier ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Askhvir » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Ashwick » est gardé en alias. Identifiant inchangé (town_0123) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Askhvir » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Ashwick » est gardé en alias. Identifiant inchangé (town_0123) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Position posée 680, -2910 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -16177,6 +16160,14 @@
           "id": "pnj_town_0129_ecurie_03",
           "name": "Corbert Rochombre",
           "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_town_0129_ecurie_04",
+          "name": "Osora Hautbrume",
+          "gender": "female",
           "race_id": "race_human",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -17220,8 +17211,8 @@
       "anchor_tile": "S008_W002",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -2870,
+      "position_z_m": -3110,
       "faction_control": "",
       "region_id": "royaume_drach",
       "province": "",
@@ -17312,7 +17303,8 @@
       "footprint_tiles": [],
       "notes": [
         "[GD] (v1.0.58) Économie : port : fret et cabotage ; produit poisson, sel marin, minerai, pierre de taille ; récolte : filons, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Brokhendt » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Brookend » est gardé en alias. Identifiant inchangé (town_0137) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Brokhendt » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Brookend » est gardé en alias. Identifiant inchangé (town_0137) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Position posée -2870, -3110 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -18487,12 +18479,12 @@
       "alias": "Saltfen",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "S008_W010",
-      "anchor_tile": "S008_W010",
+      "cell": "S009_W010",
+      "anchor_tile": "S009_W010",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -80,
+      "position_z_m": -2730,
       "faction_control": "empire_humain",
       "region_id": "royaume_drach",
       "province": "",
@@ -18573,10 +18565,13 @@
       },
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
+      "footprint_tiles": [
+        "S009_W010"
+      ],
       "notes": [
         "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; port ; produit blé et orge, élevage, poisson, sel marin ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Zaltheim » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Saltfen » est gardé en alias. Identifiant inchangé (hamlet_0172) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Zaltheim » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Saltfen » est gardé en alias. Identifiant inchangé (hamlet_0172) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Déplacée de S008_W010 à S009_W010, position -80, -2730 m : au bord de la mer (aucune mer dans sa case, ou trop loin) ; routes et ponton suivent. LORE_BD §16.54."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -18951,12 +18946,12 @@
       "alias": "Orderfen",
       "type": "farm_hamlet",
       "importance": "local",
-      "cell": "N011_W008",
-      "anchor_tile": "N011_W008",
+      "cell": "N012_W008",
+      "anchor_tile": "N012_W008",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 120,
+      "position_z_m": 2420,
       "faction_control": "chevaliers_de_la_justice",
       "region_id": "terres_des_gigantomorphes",
       "province": "",
@@ -19034,12 +19029,15 @@
       },
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
+      "footprint_tiles": [
+        "N012_W008"
+      ],
       "notes": [
         "[GD] (v1.0.58) Économie : ferme : grain, foin et bétail pour les villes voisines ; produit bois de chauffe, petit gibier, miel, poisson ; récolte : herbes, arbres, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
         "[DÉCISION] (v1.0.74) Port avec ponton (POI poi_port_orderfen du monde jouable, côté mer), escale de la ligne maritime du Nord entre Brenhaval (Île de la Trêve) et Haevrin ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.92) Région HS : Terres des Gigantomorphes (case N011_W008, carte du hors-série ; avant : Syzygie, `syzygie`) (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Ostrevan » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Orderfen » est gardé en alias. Identifiant inchangé (hamlet_0189) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Ostrevan » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Orderfen » est gardé en alias. Identifiant inchangé (hamlet_0189) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Déplacée de N011_W008 à N012_W008, position 120, 2420 m : au bord de la mer (aucune mer dans sa case, ou trop loin) ; routes et ponton suivent. LORE_BD §16.54."
       ],
       "taille": "hameau",
       "service_npcs": [
@@ -19093,7 +19091,7 @@
         }
       ],
       "port": {
-        "ponton_cell": "N011_W008",
+        "ponton_cell": "N012_W008",
         "vers_cell": "N012_W008",
         "destinations": [
           "town_brinehaven"
@@ -19413,6 +19411,14 @@
           "name": "Gilelle Noirmont",
           "gender": "female",
           "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_0196_ecurie_05",
+          "name": "Gorzha Groin-Sanglant",
+          "gender": "female",
+          "race_id": "race_dzorak",
           "service": "ecurie",
           "metier": "palefrenier"
         },
@@ -20676,6 +20682,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_0157_ecurie_04",
+          "name": "Perric Morval",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_0157_cimetiere_01",
           "name": "Rolard Fergarde",
           "gender": "male",
@@ -20695,8 +20709,8 @@
       "anchor_tile": "N012_E002",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -3380,
+      "position_z_m": -1460,
       "faction_control": "",
       "region_id": "terres_des_gigantomorphes",
       "province": "",
@@ -20788,7 +20802,8 @@
         "[GD] (v1.0.58) Économie : port : fret et cabotage ; produit poisson, sel marin (déduit du terrain, voir regle_eco_productions_regions).",
         "[INFÉRÉ] (v1.0.90) region_id = foret_elfique (région de sa case, LORE_BD §16.19) ; ville inchangée (case, nom, services).",
         "[DÉCISION] (v1.0.92) Région HS : Terres des Gigantomorphes (case N012_E002, carte du hors-série ; avant : Forêt elfique, `foret_elfique`) (LORE_BD §16.21).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Dyprokh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Deepbrook » est gardé en alias. Identifiant inchangé (town_ile_ashwick) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Dyprokh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Deepbrook » est gardé en alias. Identifiant inchangé (town_ile_ashwick) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Position posée -3380, -1460 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -21598,12 +21613,12 @@
       "alias": "Riverfold",
       "type": "port_town",
       "importance": "local",
-      "cell": "N006_E023",
-      "anchor_tile": "N006_E023",
+      "cell": "N006_E024",
+      "anchor_tile": "N006_E024",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 1640,
+      "position_z_m": 2300,
       "faction_control": "",
       "region_id": "terres_des_gigantomorphes",
       "province": "",
@@ -21690,7 +21705,9 @@
       },
       "remarques_visuelles": [],
       "prompt_image_ultra_detaille": "",
-      "footprint_tiles": [],
+      "footprint_tiles": [
+        "N006_E024"
+      ],
       "notes": [
         "[INFÉRÉ] v1.0.52 : ville créée sur les terres ajoutées par l'agrandissement de la carte. Ville portuaire à l'embouchure de la rivière de Rhivkhar, sur la côte orientale.",
         "[GD] (v1.0.58) Économie : port : fret et cabotage ; produit moulins et maraîchage, pêche de rivière, lin, blé et orge ; récolte : herbes, gibier à dépecer (déduit du terrain, voir regle_eco_productions_regions).",
@@ -21700,7 +21717,8 @@
         "[DÉCISION] (v1.0.91) Ville désormais jouable : sa case (N006_E023) est générée (ouverture des routes Ysenkhal - Vozmarkh et de la Marche de l'Est, LORE_BD §16.20).",
         "[DÉCISION] (v1.0.93) Nom affiché « Ryvaldh » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Riverfold » est gardé en alias. Identifiant inchangé (town_riverfold) (LORE_BD §16.22).",
         "[GD] (v1.0.106) Extrémité de la route 000231 « Route côtière Ryvaldh → Grhavelt » (LORE_BD §16.35).",
-        "[GD] (v1.0.106) Extrémité de la route 000234 « Route du relais Ebhrazul → Ryvaldh » (LORE_BD §16.35)."
+        "[GD] (v1.0.106) Extrémité de la route 000234 « Route du relais Ebhrazul → Ryvaldh » (LORE_BD §16.35).",
+        "[DÉCISION] (v1.0.128) Déplacée de N006_E023 à N006_E024, position 1640, 2300 m : au bord de la mer (aucune mer dans sa case, ou trop loin) ; routes et ponton suivent. LORE_BD §16.54."
       ],
       "taille": "ville",
       "service_npcs": [
@@ -21882,7 +21900,7 @@
         }
       ],
       "port": {
-        "ponton_cell": "N006_E023",
+        "ponton_cell": "N006_E024",
         "vers_cell": "N006_E024",
         "destinations": [],
         "stop_seconds": 30,
@@ -23053,6 +23071,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hameau_dawnmere_ecurie_05",
+          "name": "Hugric Pierrepré",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hameau_dawnmere_cimetiere_01",
           "name": "Welran Mormont",
           "gender": "male",
@@ -23787,6 +23813,14 @@
           "id": "pnj_hameau_silverglade_ecurie_03",
           "name": "Thalnya Fenethil",
           "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_silverglade_ecurie_04",
+          "name": "Aernor Celorin",
+          "gender": "male",
           "race_id": "race_haut_elfe",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -24807,6 +24841,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_wardholt_ecurie_02",
+          "name": "Marilde Chenfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_wardholt_cimetiere_01",
           "name": "Garan Grisrive",
           "gender": "male",
@@ -25391,6 +25433,14 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_bridlecrag_ecurie_02",
+          "name": "Noraude Valombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_bridlecrag_cimetiere_01",
           "name": "Perais Marlfort",
           "gender": "male",
@@ -25851,6 +25901,22 @@
           "metier": "palefrenier"
         },
         {
+          "id": "pnj_hamlet_greenbough_ecurie_05",
+          "name": "Faeviel Aelethil",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_greenbough_ecurie_06",
+          "name": "Naewyn Fenandel",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
           "id": "pnj_hamlet_greenbough_cimetiere_01",
           "name": "Caelith Selorin",
           "gender": "female",
@@ -25999,6 +26065,22 @@
           "id": "pnj_hamlet_fernhollow_ecurie_01",
           "name": "Faethas Silvessa",
           "gender": "male",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_ecurie_02",
+          "name": "Aerviel Lorion",
+          "gender": "female",
+          "race_id": "race_haut_elfe",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hamlet_fernhollow_ecurie_03",
+          "name": "Ilanwyn Loranor",
+          "gender": "female",
           "race_id": "race_haut_elfe",
           "service": "ecurie",
           "metier": "palefrenier"
@@ -26791,8 +26873,8 @@
       "anchor_tile": "N017_W010",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 2560,
+      "position_z_m": -1430,
       "faction_control": "faction_neutral",
       "region_id": "region_ile_de_la_treve",
       "province": "",
@@ -26872,7 +26954,8 @@
         "[GD] (v1.0.74) Description courte : Port franc de l'Île de la Trêve, à la pointe sud-est du fer à cheval : comptoir des armateurs neutres, quais et quartiers séparés pour l'Empire, la Lune Noire et les indépendants ; la Trêve y interdit le combat dans l'enceinte [GD v1.0.74, à valider].",
         "[DÉCISION] (v1.0.82) Comptoir du Nord : Port franc de l'Île de la Trêve : les navires du grand nord y relâchent au quai des indépendants, sous la trêve des comptoirs. Peuples : Les Nordiques (nord), Les Vharnoctes (nord-nord-est), Le Saelvhyr (nord-ouest) ; lore seulement, aucun PNJ placé dans le monde jouable (décision du propriétaire du 11/11/2026 ; LORE_BD §16.11).",
         "[GD] (v1.0.82) PNJ des peuples lointains présents : Rhagnvild Skaeldar (Les Nordiques, marchand) ; Thaelor Vhyssenn (Le Saelvhyr, marchand) (fiches persons, LORE_BD §16.11).",
-        "[DÉCISION] (v1.0.93) Nom affiché « Brenhaval » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Brinehaven » est gardé en alias. Identifiant inchangé (town_brinehaven) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Brenhaval » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Brinehaven » est gardé en alias. Identifiant inchangé (town_brinehaven) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Position posée 2560, -1430 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "ville",
       "port": {
@@ -27259,8 +27342,8 @@
       "anchor_tile": "N019_W010",
       "coord_x": null,
       "coord_y": null,
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": 140,
+      "position_z_m": 3300,
       "faction_control": "faction_neutral",
       "region_id": "region_ile_de_la_treve",
       "province": "",
@@ -27337,7 +27420,8 @@
         "[DÉCISION] (v1.0.74) Ville sur l'îlot central (N019_W010), décidée par le propriétaire (10/11/2026) ; Île de la Trêve, zone commune à toutes les factions, niveaux 45 à 60 (LORE_BD §16.3).",
         "[GD] (v1.0.74) Nom, race (humains), taille (hameau) et contrôle (neutre) proposés, à valider. Les gardiens de la Pierre de la Trêve reçoivent les serments des envoyés de toutes les factions ; c'est aussi là que se forment les équipes mêlées du raid du Dévoreur des Brumes.",
         "[GD] (v1.0.74) Description courte : Hameau de l'îlot central de la baie, autour de la Pierre de la Trêve où les envoyés de toutes les factions jurent la paix des comptoirs ; ponton de la navette de Brenhaval [GD v1.0.74, à valider].",
-        "[DÉCISION] (v1.0.93) Nom affiché « Thrival » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Truceholm » est gardé en alias. Identifiant inchangé (town_truceholm) (LORE_BD §16.22)."
+        "[DÉCISION] (v1.0.93) Nom affiché « Thrival » (décision du propriétaire du 12/11/2026, lot 21 : noms propres ni français ni anglais, style BD) ; l'ancien nom « Truceholm » est gardé en alias. Identifiant inchangé (town_truceholm) (LORE_BD §16.22).",
+        "[DÉCISION] (v1.0.128) Position posée 140, 3300 m dans sa case : au bord de la mer (le site automatique en était loin). LORE_BD §16.54."
       ],
       "taille": "hameau",
       "port": {
@@ -27774,6 +27858,319 @@
         }
       ],
       "secret": true
+    },
+    {
+      "id": "hameau_marn",
+      "name": "Hameau de Marn",
+      "alias": "",
+      "type": "farm_hamlet",
+      "importance": "local",
+      "cell": "N003_W009",
+      "anchor_tile": "N003_W009",
+      "coord_x": null,
+      "coord_y": null,
+      "position_x_m": null,
+      "position_z_m": null,
+      "faction_control": "empire_humain",
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "potions",
+        "armures",
+        "forgeron",
+        "ecurie",
+        "cimetiere"
+      ],
+      "features": [
+        "Hameau agricole aux portes de Lhynn",
+        "Étang de Marn (petit étang du hameau)"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[INFÉRÉ] (v1.0.43) Hameau agricole aux portes de Lhynn, ancienne ville de départ humaine (ex-zone de test « feyhin ») ; l'ancien Marn et le capitaine Rendal y accueillent les nouveaux venus (master).",
+        "[DÉCISION] (v1.0.128) Fiche créée au lore (décision du propriétaire du 19/11/2026) : le hameau n'existait qu'au master ; la route 000237 y arrive désormais par son identifiant (plus de table EXTREMITES). LORE_BD §16.54."
+      ],
+      "taille": "hameau",
+      "service_npcs": [
+        {
+          "id": "pnj_hameau_marn_auberge_01",
+          "name": "Norine Corbgarde",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_hameau_marn_potions_01",
+          "name": "Pervin Fontmont",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "potions",
+          "metier": "herboriste"
+        },
+        {
+          "id": "pnj_hameau_marn_armures_01",
+          "name": "Norilde Grispré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "armures",
+          "metier": "armurier"
+        },
+        {
+          "id": "pnj_hameau_marn_forgeron_01",
+          "name": "Lorette Rochpré",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_hameau_marn_ecurie_01",
+          "name": "Corisse Boisombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_hameau_marn_cimetiere_01",
+          "name": "Tiba Sombrechêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
+    },
+    {
+      "id": "citadelle_legion",
+      "name": "Citadelle de la Légion",
+      "alias": "",
+      "type": "fortress_city",
+      "importance": "ville de départ des démons",
+      "cell": "",
+      "anchor_tile": "",
+      "coord_x": null,
+      "coord_y": null,
+      "position_x_m": null,
+      "position_z_m": null,
+      "faction_control": "faction_legion_infernale",
+      "region_id": "region_enfers_t00",
+      "province": "",
+      "housing_count": null,
+      "population": null,
+      "services": [
+        "auberge",
+        "forgeron",
+        "marche",
+        "ecurie",
+        "guilde",
+        "infirmerie",
+        "prison",
+        "cimetiere"
+      ],
+      "features": [
+        "Seule ville des Enfers",
+        "Cimetière neutre",
+        "Portail V au cœur de la ville"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[GD] (v1.0.68) Ville de départ de la Légion infernale, au centre de la carte des Enfers (ENFERS.md §2).",
+        "[DÉCISION] (v1.0.128) Fiche créée au lore (décision du propriétaire du 19/11/2026) : la Citadelle n'existait qu'au master des Enfers. Taille forteresse. LORE_BD §16.54."
+      ],
+      "carte": "enfers",
+      "carte_cell": "N000_E000",
+      "taille": "forteresse",
+      "service_npcs": [
+        {
+          "id": "pnj_citadelle_legion_auberge_01",
+          "name": "Gilisse Brunlande",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "auberge",
+          "metier": "aubergiste"
+        },
+        {
+          "id": "pnj_citadelle_legion_forgeron_01",
+          "name": "Osia Morbrume",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "forgeron",
+          "metier": "forgeron"
+        },
+        {
+          "id": "pnj_citadelle_legion_marche_01",
+          "name": "Renisse Morcastel",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "marche",
+          "metier": "marchand"
+        },
+        {
+          "id": "pnj_citadelle_legion_ecurie_01",
+          "name": "Gilisse Valfort",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "ecurie",
+          "metier": "palefrenier"
+        },
+        {
+          "id": "pnj_citadelle_legion_guilde_01",
+          "name": "Perus Bruncastel",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "guilde",
+          "metier": "maitre_de_guilde"
+        },
+        {
+          "id": "pnj_citadelle_legion_infirmerie_01",
+          "name": "Falisse Marlchêne",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "infirmerie",
+          "metier": "guerisseur"
+        },
+        {
+          "id": "pnj_citadelle_legion_prison_01",
+          "name": "Beria Fontombre",
+          "gender": "female",
+          "race_id": "race_human",
+          "service": "prison",
+          "metier": "geolier"
+        },
+        {
+          "id": "pnj_citadelle_legion_cimetiere_01",
+          "name": "Norot Noirbrume",
+          "gender": "male",
+          "race_id": "race_human",
+          "service": "cimetiere",
+          "metier": "fossoyeur"
+        }
+      ]
     }
   ],
   "exploits": [
@@ -197337,7 +197734,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -197360,7 +197757,8 @@
         "[DÉCISION] (v1.0.74) Tanière du Jarl de Givre (lieu_taniere_du_jarl) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n022_w012 (section reliefs, 500 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple du Givre (lieu_ile_gd_temple_du_givre), temple moyen habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple du Givre (lieu_ile_gd_temple_du_givre), temple moyen habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -198334,7 +198732,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -198355,7 +198753,8 @@
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n021_w013 (section reliefs, 480 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple des Cimes (lieu_ile_gd_temple_des_cimes), temple moyen habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple des Cimes (lieu_ile_gd_temple_des_cimes), temple moyen habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -199317,7 +199716,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -199337,7 +199736,8 @@
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n020_w014 (section reliefs, 550 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Grand Sanctuaire du Soleil (lieu_ile_gd_grand_sanctuaire_soleil), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Grand Sanctuaire du Soleil (lieu_ile_gd_grand_sanctuaire_soleil), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -199397,7 +199797,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -199419,7 +199819,8 @@
         "[DÉCISION] (v1.0.74) Gouffre de la Baie (lieu_gouffre_de_la_baie) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n020_w011 (section reliefs, 380 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple de la Brume (lieu_ile_gd_temple_de_la_brume), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple de la Brume (lieu_ile_gd_temple_de_la_brume), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -200373,7 +200774,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -200396,7 +200797,8 @@
         "[DÉCISION] (v1.0.74) Tertre des Rois Noyés (lieu_tertre_des_rois_noyes) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n019_w013 (section reliefs, 520 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple des Ancêtres Noyés (lieu_ile_gd_temple_des_ancetres), grand sanctuaire à degrés habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -201392,7 +201794,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -201411,7 +201813,8 @@
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n018_w013 (section reliefs, 480 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple de la Lune d'Argent (lieu_ile_gd_temple_de_la_lune), temple moyen habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple de la Lune d'Argent (lieu_ile_gd_temple_de_la_lune), temple moyen habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -202387,7 +202790,7 @@
       "name": "Île de la Trêve",
       "region_id": "region_ile_de_la_treve",
       "province": "",
-      "terrain_type": "mountain",
+      "terrain_type": "forest",
       "has_lake": false,
       "lake_count": 0,
       "has_river": false,
@@ -202406,7 +202809,8 @@
         "[DÉCISION] (v1.0.74) Forêt de l'île du Nord (Île de la Trêve, region_ile_de_la_treve), ancienne mer profonde ; liste des cases du propriétaire (10/11/2026) ; LORE_BD §16.3.",
         "[DÉCISION] (v1.0.77) Relief : pic ou crête boisée au cœur d'une branche de l'île (dénivelé important demandé par le propriétaire le 10/11/2026) ; terrain « mountain » dans le lore. Monde jouable : la grille du master reste en forêt (T) pour garder la côte et la forêt ; le relief vient du massif massif_n017_w012 (section reliefs, 480 m) ; LORE_BD §16.6.",
         "[DÉCISION] (v1.0.77) Nom de la cellule : « Île de la Trêve » (nom visible dans l'éditeur, demande du propriétaire du 10/11/2026) ; LORE_BD §16.6.",
-        "[DÉCISION] (v1.0.77) Temple des Terrasses (lieu_ile_gd_temple_des_terrasses), temple moyen habité par les Hwakhari ; LORE_BD §16.6."
+        "[DÉCISION] (v1.0.77) Temple des Terrasses (lieu_ile_gd_temple_des_terrasses), temple moyen habité par les Hwakhari ; LORE_BD §16.6.",
+        "[DÉCISION] (v1.0.128) Terrain aligné sur la grille du jeu (forêt `T` et massifs du master, décision v1.0.77). LORE_BD §16.54."
       ],
       "coord_x": null,
       "coord_y": null
@@ -238896,7 +239300,7 @@
     {
       "id": "000053",
       "type": "road",
-      "from_place": "S008_W010",
+      "from_place": "S009_W010",
       "from_ville_id": "hamlet_0172",
       "from_lieu_id": "",
       "to_place": "S006_W008",
@@ -238947,7 +239351,7 @@
       "from_place": "S008_W013",
       "from_ville_id": "hamlet_0154",
       "from_lieu_id": "",
-      "to_place": "S008_W010",
+      "to_place": "S009_W010",
       "to_ville_id": "hamlet_0172",
       "to_lieu_id": "",
       "description": "",
@@ -239231,7 +239635,7 @@
       "from_place": "S003_W004",
       "from_ville_id": "city_dragon_palace",
       "from_lieu_id": "",
-      "to_place": "S005_W004",
+      "to_place": "S006_W004",
       "to_ville_id": "ville_equiton",
       "to_lieu_id": "",
       "description": "",
@@ -239346,7 +239750,7 @@
     {
       "id": "000095",
       "type": "road",
-      "from_place": "N011_W008",
+      "from_place": "N012_W008",
       "from_ville_id": "hamlet_0189",
       "from_lieu_id": "",
       "to_place": "N011_W004",
@@ -239357,6 +239761,7 @@
         "[DÉCISION] (v1.0.76) La ligne droite passait par la côte et la mer (N011_W007) : route retracée par la terre, par la forêt et le marais au sud de la côte (propriétaire, 10/11/2026). Tracé : 4 case(s), N011_W008 → N010_W007 → N010_W006 → N010_W005 → N011_W004 ; LORE_BD §16.5."
       ],
       "waypoints": [
+        "N012_W008",
         "N011_W008",
         "N010_W007",
         "N010_W006",
@@ -239463,7 +239868,7 @@
     {
       "id": "000107",
       "type": "sea_route",
-      "from_place": "S005_W004",
+      "from_place": "S006_W004",
       "from_ville_id": "ville_equiton",
       "from_lieu_id": "",
       "to_place": "S008_W002",
@@ -239473,7 +239878,6 @@
       "notes": [],
       "sea_line_id": "ligne_maritime_sud",
       "waypoints": [
-        "S005_W004",
         "S006_W004",
         "S007_W004",
         "S008_W003",
@@ -239510,7 +239914,7 @@
       "from_place": "S011_W006",
       "from_ville_id": "hishtarland",
       "from_lieu_id": "",
-      "to_place": "S008_W010",
+      "to_place": "S009_W010",
       "to_ville_id": "hamlet_0172",
       "to_lieu_id": "",
       "description": "Étape 3 de la ligne maritime du sud",
@@ -239526,22 +239930,24 @@
         "S011_W008",
         "S010_W008",
         "S009_W009",
-        "S008_W010"
+        "S008_W010",
+        "S009_W010"
       ]
     },
     {
       "id": "000110",
       "type": "sea_route",
-      "from_place": "S008_W010",
+      "from_place": "S009_W010",
       "from_ville_id": "hamlet_0172",
       "from_lieu_id": "",
-      "to_place": "S005_W004",
+      "to_place": "S006_W004",
       "to_ville_id": "ville_equiton",
       "to_lieu_id": "",
       "description": "Étape 4 de la ligne maritime du sud",
       "notes": [],
       "sea_line_id": "ligne_maritime_sud",
       "waypoints": [
+        "S009_W010",
         "S008_W010",
         "S008_W009",
         "S008_W008",
@@ -239550,8 +239956,7 @@
         "S008_W005",
         "S008_W004",
         "S007_W003",
-        "S006_W004",
-        "S005_W004"
+        "S006_W004"
       ]
     },
     {
@@ -240001,18 +240406,17 @@
       "from_place": "N018_E010",
       "from_ville_id": "ville_tbarak",
       "from_lieu_id": "",
-      "to_place": "N017_E013",
-      "to_ville_id": "ville_dunfold",
+      "to_place": "N017_E011",
+      "to_ville_id": "ville_hazol",
       "to_lieu_id": "",
       "description": "",
       "notes": [
-        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor)."
+        "[GD] (v1.0.65) Tronçon remplaçant la route 000112 (Tbarak → Klindor).",
+        "[GD] (v1.0.128) S'arrête à Hazol (la suite vers Dhunfal passe par Askhrof : routes 000240 et 000241) : Hazol et Askhrof n'avaient aucune route. LORE_BD §16.54."
       ],
       "waypoints": [
         "N018_E010",
-        "N017_E011",
-        "N017_E012",
-        "N017_E013"
+        "N017_E011"
       ]
     },
     {
@@ -240258,7 +240662,7 @@
     {
       "id": "000160",
       "type": "road",
-      "from_place": "N006_E023",
+      "from_place": "N006_E024",
       "from_ville_id": "town_riverfold",
       "from_lieu_id": "",
       "to_place": "N005_E020",
@@ -240269,6 +240673,7 @@
         "[GD] (v1.0.65) Ville isolée reliée à la ville voisine la plus proche (Ebhrazul)."
       ],
       "waypoints": [
+        "N006_E024",
         "N006_E023",
         "N005_E022",
         "N004_E021",
@@ -240789,7 +241194,7 @@
       "from_place": "N010_W010",
       "from_ville_id": "hamlet_tithemead",
       "from_lieu_id": "",
-      "to_place": "N011_W008",
+      "to_place": "N012_W008",
       "to_ville_id": "hamlet_0189",
       "to_lieu_id": "",
       "description": "",
@@ -240800,7 +241205,8 @@
       "waypoints": [
         "N010_W010",
         "N010_W009",
-        "N011_W008"
+        "N011_W008",
+        "N012_W008"
       ]
     },
     {
@@ -241064,7 +241470,7 @@
       "from_lieu_id": "",
       "to_place": "N000_W008",
       "to_ville_id": "",
-      "to_lieu_id": "lieu_mine_de_la_traverse",
+      "to_lieu_id": "lieu_mine_traverse_nord",
       "description": "",
       "notes": [
         "[DÉCISION] (v1.0.73) Sentier de Gredhaim à l'entrée nord de la Mine de la Traverse.",
@@ -241079,7 +241485,7 @@
       "from_lieu_id": "",
       "to_place": "N000_W008",
       "to_ville_id": "",
-      "to_lieu_id": "lieu_mine_de_la_traverse",
+      "to_lieu_id": "lieu_mine_traverse_sud",
       "description": "",
       "notes": [
         "[DÉCISION] (v1.0.73) Sentier de Kholvard à l'entrée sud de la Mine de la Traverse.",
@@ -241217,7 +241623,7 @@
       "from_place": "N011_W004",
       "from_ville_id": "hamlet_0153",
       "from_lieu_id": "",
-      "to_place": "N011_W008",
+      "to_place": "N012_W008",
       "to_ville_id": "hamlet_0189",
       "to_lieu_id": "",
       "description": "Étape 2 de la ligne maritime du Nord",
@@ -241231,7 +241637,8 @@
         "N012_W005",
         "N012_W006",
         "N012_W007",
-        "N011_W008"
+        "N011_W008",
+        "N012_W008"
       ]
     },
     {
@@ -241262,7 +241669,7 @@
       "from_place": "S006_W008",
       "from_ville_id": "hamlet_0174",
       "from_lieu_id": "",
-      "to_place": "S005_W004",
+      "to_place": "S006_W004",
       "to_ville_id": "ville_equiton",
       "to_lieu_id": "",
       "description": "Sentier de Harndrecht à Ekvhitorn, dans le sable de la plage.",
@@ -241275,7 +241682,8 @@
         "S006_W007",
         "S006_W006",
         "S006_W005",
-        "S005_W004"
+        "S005_W004",
+        "S006_W004"
       ]
     },
     {
@@ -241388,7 +241796,7 @@
     {
       "id": "000231",
       "type": "road",
-      "from_place": "N006_E023",
+      "from_place": "N006_E024",
       "from_ville_id": "town_riverfold",
       "from_lieu_id": "",
       "to_place": "N003_E023",
@@ -241400,6 +241808,7 @@
         "[GD] (v1.0.106) Tracé : N006_E023 → N005_E023 → N004_E023 → N003_E023 (cases jouables, loin des grottes et entrées cachées)."
       ],
       "waypoints": [
+        "N006_E024",
         "N006_E023",
         "N005_E023",
         "N004_E023",
@@ -241454,7 +241863,7 @@
       "from_place": "N005_E020",
       "from_ville_id": "town_0115",
       "from_lieu_id": "",
-      "to_place": "N006_E023",
+      "to_place": "N006_E024",
       "to_ville_id": "town_riverfold",
       "to_lieu_id": "",
       "description": "Route du relais Ebhrazul → Ryvaldh [GD]",
@@ -241466,7 +241875,8 @@
         "N005_E020",
         "N006_E021",
         "N006_E022",
-        "N006_E023"
+        "N006_E023",
+        "N006_E024"
       ]
     },
     {
@@ -241519,12 +241929,13 @@
       "from_ville_id": "hameau_eaglewatch",
       "from_lieu_id": "",
       "to_place": "N003_W009",
-      "to_ville_id": "",
+      "to_ville_id": "hameau_marn",
       "to_lieu_id": "",
       "description": "Route Haeldorf → Marn [GD]",
       "notes": [
         "[GD] (v1.0.106) Route proposée, tracé à valider par le propriétaire (lot 30b du propriétaire (12/11/2026) ; LORE_BD §16.35) : Marn n'avait aucune route au lore (en jeu : route Marn - Haeldorf du générateur, gardée au v1.0.105 comme corridor de départ) ; le Hameau de Marn n'existe qu'au master (ancienne ville de départ, sans fiche au lore) : extrémité vide au lore, rattachée à hameau_marn par la table EXTREMITES de tools/lore/sync_routes.py.",
-        "[GD] (v1.0.106) Tracé : N002_W010 → N003_W009 (cases jouables, loin des grottes et entrées cachées)."
+        "[GD] (v1.0.106) Tracé : N002_W010 → N003_W009 (cases jouables, loin des grottes et entrées cachées).",
+        "[DÉCISION] (v1.0.128) Arrivée rattachée à la fiche hameau_marn (créée en v1.0.128)."
       ],
       "waypoints": [
         "N002_W010",
@@ -241550,6 +241961,224 @@
         "N010_E008",
         "N009_E007",
         "N008_E007"
+      ]
+    },
+    {
+      "id": "000239",
+      "type": "road",
+      "from_place": "S006_E012",
+      "from_ville_id": "city_krak_de_jhenner",
+      "from_lieu_id": "",
+      "to_place": "S004_E013",
+      "to_ville_id": "",
+      "to_lieu_id": "",
+      "description": "Route du Krak de Jhenner [GD]",
+      "notes": [
+        "[GD] (v1.0.128) Route des ruines du Krak de Jhenner vers la route 000148 (Ghrunke Dash – Sadhvakt), jonction en S004_E013 ; choix laissé à Claude par le propriétaire (19/11/2026). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "S006_E012",
+        "S005_E013",
+        "S004_E013"
+      ]
+    },
+    {
+      "id": "000240",
+      "type": "road",
+      "from_place": "N017_E011",
+      "from_ville_id": "ville_hazol",
+      "from_lieu_id": "",
+      "to_place": "N017_E012",
+      "to_ville_id": "ville_ashcroft",
+      "to_lieu_id": "",
+      "description": "Route Hazol → Askhrof [GD]",
+      "notes": [
+        "[GD] (v1.0.128) Ancien tronçon de 000145 (Tbarak → Dhunfal), découpé pour relier Hazol et Askhrof (itinéraire de la horde, BD-T1 p.25). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N017_E011",
+        "N017_E012"
+      ]
+    },
+    {
+      "id": "000241",
+      "type": "road",
+      "from_place": "N017_E012",
+      "from_ville_id": "ville_ashcroft",
+      "from_lieu_id": "",
+      "to_place": "N017_E013",
+      "to_ville_id": "ville_dunfold",
+      "to_lieu_id": "",
+      "description": "Route Askhrof → Dhunfal [GD]",
+      "notes": [
+        "[GD] (v1.0.128) Ancien tronçon de 000145 (Tbarak → Dhunfal), découpé pour relier Hazol et Askhrof (itinéraire de la horde, BD-T1 p.25). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N017_E012",
+        "N017_E013"
+      ]
+    },
+    {
+      "id": "000242",
+      "type": "road",
+      "from_place": "S002_E015",
+      "from_ville_id": "ville_moork",
+      "from_lieu_id": "",
+      "to_place": "S007_E016",
+      "to_ville_id": "ville_ghrunke_dash",
+      "to_lieu_id": "",
+      "description": "Route Moork → Ghrunke Dash [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "S002_E015",
+        "S003_E015",
+        "S003_E016",
+        "S004_E016",
+        "S005_E016",
+        "S006_E016",
+        "S007_E016"
+      ]
+    },
+    {
+      "id": "000243",
+      "type": "road",
+      "from_place": "N007_W003",
+      "from_ville_id": "hameau_silverglade",
+      "from_lieu_id": "",
+      "to_place": "N003_W003",
+      "to_ville_id": "sauken_glude_of_magistrya",
+      "to_lieu_id": "",
+      "description": "Route Syllaërin → Sauken Glude of Magistrya [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N007_W003",
+        "N006_W003",
+        "N005_W003",
+        "N004_W003",
+        "N003_W003"
+      ]
+    },
+    {
+      "id": "000244",
+      "type": "road",
+      "from_place": "N007_W005",
+      "from_ville_id": "ville_northind",
+      "from_lieu_id": "",
+      "to_place": "N006_W006",
+      "to_ville_id": "hamlet_greenbough",
+      "to_lieu_id": "",
+      "description": "Route Northind → Ghwenaëth [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N007_W005",
+        "N006_W005",
+        "N006_W006"
+      ]
+    },
+    {
+      "id": "000245",
+      "type": "road",
+      "from_place": "S002_E015",
+      "from_ville_id": "ville_moork",
+      "from_lieu_id": "",
+      "to_place": "S002_E011",
+      "to_ville_id": "hamlet_0196",
+      "to_lieu_id": "",
+      "description": "Route Moork → Ghrimfeth [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "S002_E015",
+        "S002_E014",
+        "S002_E013",
+        "S002_E012",
+        "S002_E011"
+      ]
+    },
+    {
+      "id": "000246",
+      "type": "road",
+      "from_place": "N006_W006",
+      "from_ville_id": "hamlet_greenbough",
+      "from_lieu_id": "",
+      "to_place": "N007_W007",
+      "to_ville_id": "hamlet_fernhollow",
+      "to_lieu_id": "",
+      "description": "Route Ghwenaëth → Faernilh [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N006_W006",
+        "N007_W006",
+        "N007_W007"
+      ]
+    },
+    {
+      "id": "000247",
+      "type": "road",
+      "from_place": "S004_W006",
+      "from_ville_id": "hamlet_bridlecrag",
+      "from_lieu_id": "",
+      "to_place": "S003_W008",
+      "to_ville_id": "hamlet_0157",
+      "to_lieu_id": "",
+      "description": "Route Bhridrak → Skhaldrach [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "S004_W006",
+        "S004_W007",
+        "S004_W008",
+        "S003_W008"
+      ]
+    },
+    {
+      "id": "000248",
+      "type": "road",
+      "from_place": "N009_W009",
+      "from_ville_id": "hamlet_wardholt",
+      "from_lieu_id": "",
+      "to_place": "N007_W007",
+      "to_ville_id": "hamlet_fernhollow",
+      "to_lieu_id": "",
+      "description": "Route Vharholdt → Faernilh [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N009_W009",
+        "N008_W009",
+        "N008_W008",
+        "N007_W008",
+        "N007_W007"
+      ]
+    },
+    {
+      "id": "000249",
+      "type": "road",
+      "from_place": "N005_W011",
+      "from_ville_id": "hameau_dawnmere",
+      "from_lieu_id": "",
+      "to_place": "N007_W011",
+      "to_ville_id": "town_0129",
+      "to_lieu_id": "",
+      "description": "Route Orhendal → Iustarn [GD]",
+      "notes": [
+        "[DÉCISION] (v1.0.128) Route du générateur gardée jusqu'ici pour les corridors de départ, sans équivalent au lore : recopiée au lore avec son tracé de cases, pour qu'elle ne disparaisse plus quand le réseau du générateur change (tailles de villes, relief). LORE_BD §16.54."
+      ],
+      "waypoints": [
+        "N005_W011",
+        "N006_W011",
+        "N007_W011"
       ]
     }
   ],
@@ -246845,6 +247474,83 @@
           "nom": "Lhynn et Altenberg au bord de la mer",
           "decision": "Décision du propriétaire (18/11/2026), après un test en jeu (aucune mer visible depuis Lhynn) : Lhynn passe de N001_W010 à N001_W011 (position -3700, -2600 m) et Altenberg de N005_W012 à N005_W013 (position -2300, 3050 m, sur le plateau des falaises de craie), au bord de la mer ; le temple de Methraton et le Seuil de Lhynn suivent Lhynn ; le Comptoir de l'Ouest suit Altenberg ; les routes partent de la nouvelle case. Sites [GD]. LORE_BD §16.53.",
           "version": "1.0.127"
+        },
+        {
+          "collection": "villes",
+          "id": "hameau_marn",
+          "nom": "Hameau de Marn",
+          "decision": "Décision du propriétaire (19/11/2026) : fiche du lore créée pour le Hameau de Marn (N003_W009), seule ville du master qui n'en avait pas ; services d'un hameau. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "villes",
+          "id": "citadelle_legion",
+          "nom": "Citadelle de la Légion",
+          "decision": "Décision du propriétaire (19/11/2026) : fiche du lore créée pour la Citadelle de la Légion (Enfers, N000_E000), ville de départ des démons ; taille forteresse. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "villes",
+          "id": "city_krak_de_jhenner",
+          "nom": "Krak de Jhenner",
+          "decision": "Décision du propriétaire (19/11/2026) : le Krak de Jhenner (S006_E012) est en ruine en jeu ; route 000239 vers la route 000148 (tracé [GD]). LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "routes",
+          "id": "000145",
+          "nom": "Tbarak → Hazol → Askhrof → Dhunfal",
+          "decision": "Décision du propriétaire (19/11/2026) : Hazol et Askhrof reliés au réseau ; 000145 s'arrête à Hazol, 000240 et 000241 continuent par Askhrof vers Dhunfal (même tracé). LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_black_moon_square_tower",
+          "nom": "Tour Carrée de la Lune Noire",
+          "decision": "Décision du propriétaire (19/11/2026) : la Tour Carrée de la Lune Noire (S004_E020) et la Grande Arche du master sont le même lieu ; POI poi_arche renommé. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_passe_heniak",
+          "nom": "Passe de Heniak et citadelle impériale",
+          "decision": "Décision du propriétaire (19/11/2026) : Passe de Heniak (S008_E009, défilé) et citadelle impériale (S008_E011, en ruine) placées au master. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "villes",
+          "id": "city_dragon_palace",
+          "nom": "Palais des Maîtres des Dragons",
+          "decision": "Décision du propriétaire (19/11/2026) : fusion avec le « Palais abandonné de la Passe » du master (poi_palais_passe, S003_W004), qui prend le nom du palais. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "lieux",
+          "id": "lieu_mine_traverse_nord",
+          "nom": "Fiches des lieux du master",
+          "decision": "Décision du propriétaire (19/11/2026) : fiches créées au lore pour l'Oracle, les deux entrées de la Mine de la Traverse, les Élevages impériaux et les ports de Brenhaval, Thrival, Haevrin et Ostrevan (type de lieu port_poi ajouté). LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "villes",
+          "id": "tailles_lore_v1128",
+          "nom": "Tailles des villes",
+          "decision": "Décision du propriétaire (19/11/2026) : pour la taille des villes, le lore fait foi ; le master suit (Dys, Sauken Glude, Feyhin Lokcthat → ville ; Hishtarland → grande ville ; Ghulvathan, Farvhenn, Shaddrek → village ; Tbarak, Hazol → ville ; Fief de Garundel → forteresse). LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "villes",
+          "id": "ports_bord_de_mer_v1128",
+          "nom": "Villes portuaires au bord de la mer",
+          "decision": "Décision du propriétaire (19/11/2026) : comme Lhynn (v1.0.127), chaque ville à port ou escale maritime est posée au bord de la mer, sites [GD] choisis sur le relief (terrain sec à mer + 6 m au moins, plat sur 120 à 240 m, pleine mer à moins de 800 m) : Hishtarland, Askhvir, Thrival, Brokhendt, Dyprokh, Brenhaval dans leur case ; Zaltheim (S009_W010), Ostrevan (N012_W008), Ryvaldh (N006_E024) et Ekvhitorn (S006_W004) dans la case côtière voisine, routes et pontons suivent. LORE_BD §16.54.",
+          "version": "1.0.128"
+        },
+        {
+          "collection": "routes",
+          "id": "000242",
+          "nom": "Routes des corridors de départ au lore",
+          "decision": "Décision du propriétaire (19/11/2026, mise à jour de la carte) : les 8 routes que le générateur gardait pour relier les villes de départ (Moork – Ghrunke Dash, Moork – Ghrimfeth, Syllaërin – Magistrya…) deviennent des routes du lore (000242 à 000249), tracé inchangé. LORE_BD §16.54. connect_start_cities passe à false.",
+          "version": "1.0.128"
         }
       ]
     },
@@ -254215,7 +254921,7 @@
     {
       "id": "lieu_black_moon_square_tower",
       "name": "Tour Carrée de la Lune Noire",
-      "alias": "Tour du Messager",
+      "alias": "Grande Arche",
       "type": "portal_tower",
       "importance": "majeure",
       "cell": "S004_E020",
@@ -254315,7 +255021,8 @@
       "notes": [
         "Lieu fortement lié à la Lune Noire",
         "Architecture volontairement austère et intimidante",
-        "Point focal mystique ou portail cosmique potentiel"
+        "Point focal mystique ou portail cosmique potentiel",
+        "[DÉCISION] (v1.0.128) La Tour Carrée et la « Grande Arche » du master (poi_arche, portail entre la Lune et la Terre) sont un seul et même lieu (décision du propriétaire du 19/11/2026) ; le POI prend le nom de la Tour. LORE_BD §16.54."
       ]
     },
     {
@@ -254708,7 +255415,7 @@
       "alias": "",
       "type": "",
       "importance": "",
-      "cell": "N012_E012",
+      "cell": "N009_E011",
       "position_x_m": null,
       "position_z_m": null,
       "region_id": "territoires_orcques",
@@ -254779,7 +255486,9 @@
       "footprint_tiles": [
         "N009_E011"
       ],
-      "notes": []
+      "notes": [
+        "[DÉCISION] (v1.0.128) Case alignée sur la ville leviathan_jungle (N009_E011 depuis la v1.0.113). LORE_BD §16.54."
+      ]
     },
     {
       "id": "lieu_portail_enfer_5",
@@ -256050,7 +256759,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T5] p.11 : « Tu éviteras la passe de Heniak, elle est tenue par les impériaux » (Haazheel à Greldinard), sur la route de Tsaroth.",
-        "[GD] (v1.0.117) Case S008_E009 proposée sur la route de Moork à Tsaroth (passe tenue par les impériaux, évitée par Greldinard [BD-T5 p.11], à l'ouest de la route directe ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
+        "[GD] (v1.0.117) Case S008_E009 proposée sur la route de Moork à Tsaroth (passe tenue par les impériaux, évitée par Greldinard [BD-T5 p.11], à l'ouest de la route directe ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master.",
+        "[DÉCISION] (v1.0.128) Placé au master (POI poi_passe_heniak), décision du propriétaire du 19/11/2026 (mettre sur la carte tous les lieux emblématiques). LORE_BD §16.54."
       ]
     },
     {
@@ -256134,7 +256844,8 @@
       "footprint_tiles": [],
       "notes": [
         "[BD-T5] p.22-23 : prise par la Lune Noire après le Krak de Jhenner. Non nommée dans la BD.",
-        "[GD] (v1.0.117) Case S008_E011 proposée sur la route de Moork à Tsaroth (dernière place forte avant la Faille [BD-T5 p.23], case de montagne au nord de S009_E011 ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master."
+        "[GD] (v1.0.117) Case S008_E011 proposée sur la route de Moork à Tsaroth (dernière place forte avant la Faille [BD-T5 p.23], case de montagne au nord de S009_E011 ; LORE_BD §16.44) ; lore seulement, pas d'entrée au master.",
+        "[DÉCISION] (v1.0.128) Placé au master (POI poi_citadelle_imperiale_tsaroth), décision du propriétaire du 19/11/2026 (mettre sur la carte tous les lieux emblématiques). LORE_BD §16.54."
       ]
     },
     {
@@ -261865,7 +262576,8 @@
         "[DÉCISION] (v1.0.73) Raid dans une mine entre Gredhaim (N001_W008) et la nouvelle ville de S001_W007 (Kholvard), décision du propriétaire du 10/11/2026 (LORE_BD §16.2).",
         "[INFÉRÉ] (v1.0.73) Lecture retenue de la demande, à confirmer par le propriétaire : une mine-galerie creusée sous N000_W008 (chaîne de montagnes), avec une entrée côté Gredhaim et une côté Kholvard, que le raid traverse de part en part. Les deux villes ne sont pas voisines (N000_W008 entre elles) : la galerie fait environ 14 km.",
         "[GD] (v1.0.73) Nom proposé, à valider. Ancienne mine de fer impériale qui perçait la chaîne pour raccourcir le chemin de Gredhaim à la Via Magna ; abandonnée quand une couvée d'araignées géantes s'y est installée. Les mineurs de Kholvard n'exploitent plus que les premières galeries du sud. Raid raid_mine_de_la_traverse.",
-        "[INFÉRÉ] (v1.0.73) Monde jouable : POI poi_mine_traverse_nord (N001_W008, décalé de 1,5 km à l'ouest et 3,6 km au sud) et poi_mine_traverse_sud (S001_W007, décalé de 4 km à l'ouest et 4 km au nord), genre « salle » (comme le Puits des Apprentis) ; la galerie elle-même n'est pas modélisée."
+        "[INFÉRÉ] (v1.0.73) Monde jouable : POI poi_mine_traverse_nord (N001_W008, décalé de 1,5 km à l'ouest et 3,6 km au sud) et poi_mine_traverse_sud (S001_W007, décalé de 4 km à l'ouest et 4 km au nord), genre « salle » (comme le Puits des Apprentis) ; la galerie elle-même n'est pas modélisée.",
+        "[DÉCISION] (v1.0.128) Ses deux entrées ont leur fiche : lieu_mine_traverse_nord (N001_W008) et lieu_mine_traverse_sud (S001_W007) ; routes 000212 et 000213 rattachées. LORE_BD §16.54."
       ]
     },
     {
@@ -268551,8 +269263,8 @@
       "type": "other",
       "importance": "",
       "cell": "S005_E016",
-      "position_x_m": null,
-      "position_z_m": null,
+      "position_x_m": -470,
+      "position_z_m": 4300,
       "region_id": "baronnie_de_moorks",
       "province": "",
       "zone_id": "",
@@ -268629,7 +269341,8 @@
         "[GD] (v1.0.86) Nom et lieu proposés, à valider par le propriétaire ; lot 14, priorité 2 validée par le propriétaire le 12/11/2026 ; LORE_BD §16.15. Borne de pierre noire au bord de la route de Ghrunke Dash, au pied des Monts de Moork : géants bruns (32-44) et dragon noir (45-55) au-delà. Balise de danger pour qui vient de Durnhalde (1-10).",
         "[GD] (v1.0.86) Niveau : balise (32-55 au-delà) (Baronnie de Moork). Balise de danger (mécanisme v1.0.85), non comptée comme contenu de niveau.",
         "Réel en jeu : POI poi_borne_monts_de_moork (monolithe) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés.",
-        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]"
+        "[GD] (v1.0.86) Balisage du danger (LORE_BD §16.15) : géants bruns (32-44) et dragon noir (45-55) des Monts de Moork, au nord de la région de départ de Durnhalde (1-10). Sur la route de Ghrunke Dash à Moork, au sud de la case, la Borne des Monts de Moork (lieu_borne_monts_de_moork, POI réel). [GD]",
+        "[DÉCISION] (v1.0.128) Position posée -470, 4300 m : au bord de la route Moork – Ghrunke Dash (000242, désormais du lore), comme le veut la balise. LORE_BD §16.54."
       ]
     },
     {
@@ -354503,6 +355216,656 @@
         "[GD] (v1.0.126) Nom et lieu proposés, à valider par le propriétaire ; décision du propriétaire du 18/11/2026 (ouvrir un maximum des cellules restantes, sans perte de fonctionnalité) ; LORE_BD §16.52 ; lot des cellules restantes, case S017_E021 (,), nommé d'après la ville jouable la plus proche (Khrozrad). Pêcherie de la côte où l'on sale le poisson ; les barques rentrent à la marée du soir. Niveaux 23-27.",
         "Réel en jeu : POI poi_pecherie_de_khrozrad (camp) dans une cellule générée ; l'intérieur et les PNJ ne sont pas modélisés."
       ]
+    },
+    {
+      "id": "lieu_oracle",
+      "name": "L'Oracle",
+      "alias": "",
+      "type": "other",
+      "importance": "majeure",
+      "cell": "N000_E000",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "via_magna",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Structure cristalline colossale",
+        "Nul ne combat à l'ombre de l'Oracle"
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[BD-T3] Structure cristalline colossale au centre de l'Empire ; on ne combat pas à son ombre.",
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_oracle du master (N000_E000), qui n'en avait pas. LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_mine_traverse_nord",
+      "name": "Mine de la Traverse (entrée nord)",
+      "alias": "",
+      "type": "mine_poi",
+      "importance": "",
+      "cell": "N001_W008",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Entrée nord de la Mine de la Traverse (lieu_mine_de_la_traverse), au sud de Gredhaim."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_mine_traverse_nord du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_mine_traverse_sud",
+      "name": "Mine de la Traverse (entrée sud)",
+      "alias": "",
+      "type": "mine_poi",
+      "importance": "",
+      "cell": "S001_W007",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Entrée sud de la Mine de la Traverse (lieu_mine_de_la_traverse), au nord-ouest de Kholvard."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_mine_traverse_sud du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_elevages_imperiaux",
+      "name": "Élevages impériaux",
+      "alias": "",
+      "type": "other",
+      "importance": "",
+      "cell": "N002_W008",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_de_lempereur",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Enclos et pâturages de l'armée impériale : béhémoths et léviathans de guerre."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_elevages_imperiaux du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_port_brinehaven",
+      "name": "Port de Brenhaval",
+      "alias": "",
+      "type": "port_poi",
+      "importance": "",
+      "cell": "N017_W010",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_ile_de_la_treve",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Quais et ponton de Brenhaval : ligne maritime du Nord et navette de Thrival."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_port_brinehaven du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_port_truceholm",
+      "name": "Ponton de Thrival",
+      "alias": "",
+      "type": "port_poi",
+      "importance": "",
+      "cell": "N019_W010",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "region_ile_de_la_treve",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Ponton de la navette de Brenhaval."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_port_truceholm du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_port_hayfen",
+      "name": "Port de Haevrin",
+      "alias": "",
+      "type": "port_poi",
+      "importance": "",
+      "cell": "N011_W004",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_des_gigantomorphes",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Ponton de Haevrin, escale de la ligne maritime du Nord."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_port_hayfen du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
+    },
+    {
+      "id": "lieu_port_orderfen",
+      "name": "Port d'Ostrevan",
+      "alias": "",
+      "type": "port_poi",
+      "importance": "",
+      "cell": "N012_W008",
+      "position_x_m": null,
+      "position_z_m": null,
+      "region_id": "terres_des_gigantomorphes",
+      "province": "",
+      "zone_id": "",
+      "faction_control": "",
+      "features": [
+        "Ponton d'Ostrevan, terminus de la ligne maritime du Nord."
+      ],
+      "dimensions_estimees": {
+        "hauteur": "",
+        "largeur": "",
+        "diametre": "",
+        "zone_visible": ""
+      },
+      "topographie": {
+        "forme_generale": "",
+        "relief": "",
+        "implantation": "",
+        "pentes": "",
+        "gorge": ""
+      },
+      "elements_principaux": [],
+      "architecture": {
+        "presence": "",
+        "style": "",
+        "etat": ""
+      },
+      "hydrographie": {
+        "type": "",
+        "eau": "",
+        "couleur": "",
+        "elements": ""
+      },
+      "vegetation": {
+        "densite": "",
+        "type": "",
+        "repartition": "",
+        "couleur": "",
+        "champs": "",
+        "arbres": "",
+        "herbe": ""
+      },
+      "couleurs_dominantes": [],
+      "ambiance": {
+        "atmosphere": "",
+        "sentiment": "",
+        "niveau_menace": ""
+      },
+      "ciel_climat": {
+        "ciel": "",
+        "nuages": "",
+        "luminosite": "",
+        "meteo": ""
+      },
+      "style_artistique": {
+        "medium": "",
+        "traits": "",
+        "texture": "",
+        "inspiration": ""
+      },
+      "niveau_occupation": "",
+      "acces": {
+        "route_principale": "",
+        "distance_visuelle": "",
+        "dominance_paysage": ""
+      },
+      "remarques_visuelles": [],
+      "prompt_image_ultra_detaille": "",
+      "footprint_tiles": [],
+      "notes": [
+        "[DÉCISION] (v1.0.128) Fiche créée au lore pour le POI poi_port_orderfen du master, qui n'en avait pas (décision du propriétaire du 19/11/2026). LORE_BD §16.54."
+      ]
     }
   ],
   "route_types": [
@@ -354838,6 +356201,14 @@
       "shape": "diamond",
       "tier": "poi",
       "categorie": "lieu"
+    },
+    {
+      "id": "port_poi",
+      "label": "Port",
+      "color": "#4a90c2",
+      "shape": "diamond",
+      "tier": "poi",
+      "categorie": "lieu"
     }
   ],
   "sea_lines": [
@@ -354930,7 +356301,7 @@
         },
         {
           "ville_id": "hamlet_0189",
-          "ponton_cell": "N012_W007",
+          "ponton_cell": "N012_W008",
           "stop_seconds": 30
         }
       ],

@@ -518,6 +518,7 @@ namespace
 		using namespace tools::world_gen;
 		GlobalWorld g;
 		g.master.corridorMarginM = 0.0;
+		g.master.connectStartCities = true; // v1.0.128 : AddStartCorridors ne fait rien sans ce drapeau
 		auto city = [&](const char* id, bool start) {
 			CityDef c; c.id = id; if (start) c.startFor = { std::string("faction_") + id }; g.cities.push_back(c);
 		};
@@ -2143,7 +2144,7 @@ namespace
 		Check(touching == 57 && reached == 57, "cellules et lieux v1.0.91 : aucune case isolee, Vozmarkh relie a Durnhalde et la Marche a Grakhul");
 		// Villes d'arrivée jouables.
 		struct Ville { const char* id; const char* cell; };
-		static const Ville kVilles[] = { { "town_0125", "S009_E020" }, { "town_0132", "N008_E018" }, { "town_riverfold", "N006_E023" },
+		static const Ville kVilles[] = { { "town_0125", "S009_E020" }, { "town_0132", "N008_E018" }, { "town_riverfold", "N006_E024" }, // v1.0.128 : Ryvaldh au bord de la mer (case cotiere voisine)
 			{ "town_greyfield", "N003_E023" }, { "hamlet_dustfield", "S001_E023" } };
 		int villes = 0;
 		for (const Ville& v : kVilles)
@@ -2223,7 +2224,7 @@ namespace
 				if (q.id == x.poi) p = &q;
 			bool alone = true;
 			for (const CityDef& c : g.cities)
-				if (p && c.n == p->n && c.e == p->e) alone = false;
+				if (p && c.n == p->n && c.e == p->e && !(c.id == "town_riverfold" && p->id == "poi_marais_salants")) alone = false; // v1.0.128 : Ryvaldh au bord de la mer, case des Marais salants
 			for (const PoiDef& q : g.pois)
 				if (p && &q != p && q.cell == p->cell) alone = false;
 			const bool good = p && p->cell == x.cell && playable.count(p->cell) && alone
@@ -2235,7 +2236,8 @@ namespace
 		int poiVilles = 0;
 		for (const Ville& v : kVilles)
 			for (const PoiDef& q : g.pois) poiVilles += q.cell == v.cell ? 1 : 0;
-		Check(poiVilles == 0, "cellules et lieux v1.0.91 : aucun POI sur les cases des villes d'arrivee");
+		// v1.0.128 : Ryvaldh déplacée au bord de la mer (N006_E024), dans la case des Marais salants.
+		Check(poiVilles == 1, "cellules et lieux v1.0.91 : aucun POI sur les cases des villes d'arrivee (sauf les Marais salants, case de Ryvaldh depuis v1.0.128)");
 	}
 
 	/// v1.0.104 (lot 29) : ouverture des 5 routes restées coupées au mur invisible en v1.0.91 (Vozmarkh -
@@ -2556,9 +2558,13 @@ namespace
 		// mer), ainsi que le temple de Methraton et le Seuil de Lhynn (au nord de Lhynn).
 		bool none = true;
 		for (const CityDef& c : g0.master.cities)
-			none = none && (!c.hasPosition || c.id == "ville_thurvhal" || c.id == "ville_lhynn" || c.id == "ville_altenberg");
+			none = none && (!c.hasPosition || c.id == "ville_thurvhal" || c.id == "ville_lhynn" || c.id == "ville_altenberg"
+				// v1.0.128 : 10 villes portuaires posées au bord de la mer (LORE_BD §16.54).
+				|| c.id == "hishtarland" || c.id == "town_0123" || c.id == "town_truceholm" || c.id == "town_0137" || c.id == "town_ile_ashwick"
+				|| c.id == "town_brinehaven" || c.id == "hamlet_0172" || c.id == "hamlet_0189" || c.id == "town_riverfold" || c.id == "ville_equiton");
 		const std::set<std::string> balises = { "poi_balise_borne_geants_nord", "poi_balise_borne_geants_ouest",
-			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn" };
+			"poi_balise_borne_geants_sud", "poi_stele_des_deux_fois_nes", "poi_temple_methraton", "poi_seuil_lhynn",
+			"poi_borne_monts_de_moork" }; // v1.0.128 : au bord de la route Moork - Ghrunke Dash (000242)
 		size_t posees = 0;
 		for (const PoiDef& p : g0.master.pois)
 		{
@@ -2566,7 +2572,7 @@ namespace
 			none = none && balises.count(p.id);
 			++posees;
 		}
-		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127)");
+		Check(none && posees == balises.size(), "placement v1.0.95 : villes posees = Thurvhal (v1.0.107), Lhynn et Altenberg (v1.0.127), 10 ports (v1.0.128) ; POI poses = 4 balises de route (v1.0.106), temple de Methraton et Seuil de Lhynn (v1.0.127), Borne des Monts de Moork (v1.0.128)");
 		BuildMacroTerrain(g0);
 		const CityDef* lhynn = g0.FindCity("ville_lhynn");
 		const CityDef* alt0 = g0.FindCity("ville_altenberg");
@@ -2764,8 +2770,10 @@ namespace
 		bool hadRoad = false, hasRoad = false;
 		for (const Road& r : g.generatorRoads) for (const Vec2& p : r.points) hadRoad = hadRoad || cellOf(p) == "N019_W012";
 		for (const Road& r : g.roads) for (const Vec2& p : r.points) hasRoad = hasRoad || cellOf(p) == "N019_W012";
-		Check(generator > 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
-			"routes du lore v1.0.105 : routes du generateur gardees = corridors de depart ; case sans route du lore sans route parasite");
+		// v1.0.128 : connect_start_cities faux, les routes des corridors sont devenues des routes
+		// du lore (000242-000249) : plus aucune route du générateur n'est gardée.
+		Check(generator == 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
+			"routes du lore v1.0.105 : plus de route du generateur depuis v1.0.128 (corridors au lore) ; case sans route du lore sans route parasite");
 		// 5) Sentiers et voies : types respectés.
 		bool types = true;
 		for (const LoreRoadDef& d : g.master.loreRoads)
@@ -3364,9 +3372,9 @@ namespace
 			ParseCellId(p.cell, n, e);
 			villagesSeulement += m.graveyardVillageOnlyCells.count({ n, e });
 		}
-		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1233u && avecCorridors == 1291u
-				&& playable.size() == 1337u && playable.count("S006_E004") && listed.count("S006_E004"),
-			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors, 1337 avec les trajets maritimes), Heusgly comprise");
+		Check(land == 1259u && closedLand == 0u && m.generatedCells.size() == 1291u && avecCorridors == 1291u
+				&& playable.size() == 1340u && playable.count("S006_E004") && listed.count("S006_E004"),
+			"cellules restantes v1.0.126 : les 1259 cases de terre jouables (1233 listees, 1291 avec les corridors — toutes listees depuis v1.0.128 —, 1340 avec les trajets maritimes depuis les ports de v1.0.128), Heusgly comprise");
 		Check(lieux == 529u && horsLot == 0u && villagesSeulement == 529u && villagesAvantMer == 794u,
 			"cellules restantes v1.0.126 : 529 lieux [GD], un par case vide du lot, cases villages seulement (794)");
 		WorldMaster enfers;
@@ -3433,9 +3441,10 @@ namespace
 		size_t inGen = 0;
 		for (const SeaLineDef& l : m.seaLines)
 			for (const SeaLineStopDef& st : l.stops) inGen += gen.count(st.cell);
-		Check(before == 1291u && added == 46u && ids.size() == 1337u && g.master.graveyardVillageOnlyCells.size() == vo + 46u
-				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W007"),
-			"lignes maritimes v1.0.125 : 46 cellules de mer ajoutees (1337 jouables depuis v1.0.126, villages seulement), les 11 escales y sont");
+		// v1.0.128 : ports au bord de la mer (Ostrevan en N012_W008, Ekvhitorn, Zaltheim…) : 49 cases.
+		Check(before == 1291u && added == 49u && ids.size() == 1340u && g.master.graveyardVillageOnlyCells.size() == vo + 49u
+				&& inGen == 11u && gen.count("S009_W010") && gen.count("N012_W008"),
+			"lignes maritimes v1.0.125 : 49 cellules de mer ajoutees (1340 jouables depuis v1.0.128, villages seulement), les 11 escales y sont");
 		const fs::path tmp = fs::temp_directory_path() / "lcdlln_world_gen_sea_v1125";
 		std::error_code ec;
 		fs::remove_all(tmp, ec);
@@ -3496,9 +3505,9 @@ namespace
 			&& LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g0.master, err);
 		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
 		Check(ok && g.master.graveyardTarget == 666 && g.master.graveyardFillEmptyCells
-			&& g.master.graveyardExcluded.size() == 132u && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0") && g.master.graveyardExcluded.count("cell_s003_e006_hameau_0")
+			&& g.master.graveyardExcluded.size() == 133u && g.master.graveyardExcluded.count("city_krak_de_jhenner") && g.master.graveyardExcluded.count("cell_n001_e011_hameau_0") && g.master.graveyardExcluded.count("cell_s003_e006_hameau_0")
 			&& g.master.graveyardExcluded.count("cell_n014_e017_hameau_0"),
-			"cimetieres v1.0.111 : master (666, cellules vides remplies, 132 hameaux sans cimetiere depuis v1.0.126)");
+			"cimetieres v1.0.111 : master (666, cellules vides remplies, 132 hameaux sans cimetiere depuis v1.0.126, + le Krak de Jhenner en ruine depuis v1.0.128)");
 		if (!ok) return;
 		g0.master.graveyardFillEmptyCells = false;
 		g.contentRoot = g0.contentRoot = LCDLLN_CONTENT_DIR;

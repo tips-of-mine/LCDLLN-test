@@ -1,4 +1,4 @@
-# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.127)
+# Synthèse de la branche `carte/corrections-v1.0.72` (lore v1.0.72 → v1.0.128)
 
 > Base : `main` au commit `8a565ba` (« Carte : région de départ des Enfers (v1.0.71) (#1126) »).
 > 39 commits (v1.0.72 à v1.0.107, puis v1.0.108 : documentation, v1.0.109 : vérification finale, v1.0.110 : lieux secrets). Détail de chaque lot :
@@ -94,6 +94,7 @@ monde prouvé identique ; **—** = lore, éditeur ou documentation seulement (a
 | v1.0.125 | `ccb18d0` | **bateaux des lignes maritimes** : dromons visibles qui suivent les lignes (2 par ligne, 1 par navette, 8 m/s, 30 s à quai), embarquement au quai, marche libre sur le pont, étape payée au départ, passeur retiré ; 46 cases de mer ouvertes (795 jouables) ; ports [GD] de Zaltheim et d'Ostrevan sur la côte ; messages BoatBoardRequest 108 / BoatAboard 109 ([LORE_BD §16.51](LORE_BD.md)) | R | durée des traversées à juger en jeu (`boats.speed_mps`) |
 | v1.0.126 | `9d6c35b` (#1152) | **cellules restantes ouvertes** : les 542 cases de terre encore fermées des Royaumes deviennent jouables (1 233 listées, 1 337 jouables), 529 lieux [GD] (un par case vide, selon terrain et région), Forteresse naine d'Heusgly jouable, 666 cimetières gardés ([LORE_BD §16.52](LORE_BD.md)) | R | noms et descriptions des 529 lieux à relire |
 | v1.0.127 | (ce commit) | **ports de l'ouest au bord de la mer** : Lhynn (N001_W011) et Altenberg (N005_W013) déplacées sur la côte (test en jeu : aucune mer visible depuis Lhynn), positions posées ; temple de Methraton et Seuil de Lhynn posés au nord de Lhynn ; comptoir, ponton et 8 routes suivent ([LORE_BD §16.53](LORE_BD.md)) | R | vérifier la vue en jeu après régénération |
+| v1.0.128 | (lot 1 de la mise à jour de la carte) | **carte du monde, lot 1 (données)** : fiches Marn, Citadelle de la Légion, Oracle, entrées de la Mine de la Traverse, Élevages impériaux et 4 ports ; Krak de Jhenner en ruine et relié ; Hazol et Askhrof reliés ; Tour Carrée = Grande Arche ; Palais des Maîtres des Dragons fusionné avec le palais de la Passe ; Passe de Heniak et citadelle impériale au master ; tailles du lore au master ; **10 villes portuaires au bord de la mer** (4 changent de case) ; aperçu `--preview-map` ([LORE_BD §16.54](LORE_BD.md)) | R | sites des ports à vérifier en jeu |
 
 ## 3. Impact sur le jeu et déploiement
 

@@ -632,6 +632,11 @@ namespace tools::world_gen
 	/// toit. Effet de bord : w.scatter, w.lakes (vasques), w.height (douves, terrasses, ravine),
 	/// w.pointLights (feu des phares), occupation, w.report.landmarks. Après les agglomérations.
 	void BuildLandmarks(World& w);
+	/// v1.0.135 — PETITS LIEUX DE DÉCOR sur les terres ouvertes (~1 par 1,5 km²) : cercles
+	/// de pierres levées, ruines, campements abandonnés, champs clôturés. Treillis global
+	/// déterministe, loin des routes, villes, eaux et reliefs posés. Effet de bord :
+	/// w.scatter, occupation, w.report.microLandmarks. Après les ponts, avant la forêt.
+	void BuildMicroLandmarks(World& w);
 	/// Rues, lots, bâtiments, remparts, mobilier, graphe PNJ. Settlements.cpp
 	/// Champs clôturés hors les murs, état `reconstruction` ; v1.0.107 : torches,
 	/// éboulis, lumières (w.pointLights) et zone sombre (w.ambianceZones) des gouffres ;

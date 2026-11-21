@@ -441,6 +441,7 @@ namespace tools::world_gen
 		uint64_t portals = 0;          ///< portails reliés à une autre carte (portals.json)
 		uint64_t bridges = 0;          ///< lot carte v1.0.129 : ponts posés (routes × cours d'eau)
 		uint64_t landmarks = 0;        ///< lot carte v1.0.132 : lieux bâtis (tours, châteaux, phares, cascades, ponts)
+		uint64_t microLandmarks = 0;   ///< v1.0.135 : petits lieux de décor (pierres levées, ruines, camps, champs)
 		std::vector<std::string> warnings;
 		std::vector<std::string> writtenFiles;
 	};

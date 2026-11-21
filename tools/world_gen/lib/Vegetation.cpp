@@ -46,7 +46,7 @@ namespace tools::world_gen
 			// chunks de 500 m proches du joueur.
 			case 'T': case 'R': case 'L': return { 0.32, 0.20, 0.08, 0.04 };
 			case 't':                     return { 0.14, 0.13, 0.07, 0.03 };
-			case '.': case 'r': case 'p': return { 0.017, 0.03, 0.04, 0.02 };
+			case '.': case 'r': case 'p': return { 0.017, 0.03, 0.04, 0.04 }; // v1.0.133 : rochers ×2
 			case '_': case ',':           return { 0.0, 0.007, 0.014, 0.025 };
 			case '~':                     return { 0.006, 0.004, 0.0, 0.06 };
 			case ':': case 'l':           return { 0.012, 0.012, 0.006, 0.06 };
@@ -177,13 +177,28 @@ namespace tools::world_gen
 				double cover = 0.0;
 				if (code == 'T' || code == 'R' || code == 'L') cover = 1.0;
 				else if (code == 't') cover = 0.38;
-				if (cover <= 0.0) continue;
+				// v1.0.133 — terres ouvertes (plaines, collines, landes, prairies humides) :
+				// bosquets organiques (≈ 250 m, bord fondu) et haies le long des routes ;
+				// partout ailleurs, PRAIRIE (couvre-sol posé par le client, sans arbre).
+				const bool open = code == '.' || code == 'r' || code == 'p' || code == '^' || code == ':' || code == 'l'
+					|| code == 'o' || code == '%' || code == '&';
+				bool meadow = false;
+				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+				const double roadD = w.roadDist.InBounds(ri, rj) ? w.roadDist.At(ri, rj) : 1e9;
+				if (cover <= 0.0 && open)
+				{
+					const double grove = Fbm(p.x, p.z, 260.0, 3, seed + 1020) + 0.35 * Fbm(p.x, p.z, 1900.0, 2, seed + 1021);
+					const double hedge = (roadD > 7.0 && roadD < 10.5 && Fbm(p.x, p.z, 55.0, 2, seed + 1022) > -0.05) ? 0.55 : 0.0;
+					cover = std::max(0.9 * SmoothStep(0.17, 0.33, grove), hedge);
+					meadow = cover < 0.12;
+				}
+				if (cover <= 0.0 && !meadow) continue;
 				// Exclusions (mêmes règles que les arbres stockés, élargies d'un
 				// demi-texel : le client échantillonne la carte en bilinéaire).
 				const double alt = w.HeightAt(p);
-				if (alt < sea + 0.6 || alt > 2100.0 || w.IsWater(p)) continue; // v1.0.130 : limite des forêts ≈ 2 100 m
-				const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
-				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 5.0 + px * 0.5) continue;
+				if (alt < sea + 0.6 || w.IsWater(p)) continue;
+				if (alt > 2100.0) continue; // v1.0.130 : limite des forêts ≈ 2 100 m (prairie alpine : rochers seuls)
+				if (roadD < 5.0 + px * 0.5) continue;
 				const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
 				if (w.urban.InBounds(ui, uj) && w.urban.At(ui, uj) != 0)
 				{
@@ -195,11 +210,18 @@ namespace tools::world_gen
 					if (!elfGrove) continue;
 				}
 				if (w.IsOccupied(p, 1.8 + px * 0.5) || w.SlopeDegAt(p) > 34.0) continue;
+				if (meadow)
+				{
+					w.forestMask[static_cast<size_t>(j) * N + i] = engine::world::instances::kForestMaskMeadowValue;
+					continue;
+				}
 				// Massifs et landes (≈ 1,5 km) puis fourrés et trouées (≈ 110 m).
 				const double big = 0.75 + 0.25 * Clamp(Fbm(p.x, p.z, 1500.0, 2, seed + 1010) + 0.5, 0.0, 1.0);
 				const double local = Clamp(1.0 + 1.1 * Fbm(p.x, p.z, 110.0, 3, seed + 1001), 0.35, 1.0);
 				const double d = Clamp(cover * big * local, 0.0, 1.0);
-				w.forestMask[static_cast<size_t>(j) * N + i] = static_cast<uint8_t>(std::lround(d * 255.0));
+				// v1.0.133 : jamais sous le seuil forestier (sinon le client y verrait une prairie).
+				w.forestMask[static_cast<size_t>(j) * N + i] = std::max(engine::world::instances::kForestMaskMinForestValue,
+					static_cast<uint8_t>(std::lround(d * 255.0)));
 			}
 		});
 	}
@@ -254,7 +276,10 @@ namespace tools::world_gen
 					// Bosquets et clairières (bruit ~100 m) + massifs et landes (≈ 1,5 km).
 					const double cluster = Fbm(p.x, p.z, cp.cls == VegClass::Tree ? 110.0 : 70.0, 3, seed + cp.salt);
 					double mod = 1.0 + 1.1 * cluster;
-					if (code == '.' || code == 'r' || code == 'p') mod = std::max(0.0, cluster - 0.05) * 3.2; // copses isolés
+					// Copses isolés pour les arbres ; v1.0.133 : buissons, herbes et rochers ne
+					// tombent plus à zéro sur la moitié de la plaine (fond continu + touffes).
+					if (code == '.' || code == 'r' || code == 'p')
+						mod = cp.cls == VegClass::Tree ? std::max(0.0, cluster - 0.05) * 3.2 : 0.3 + std::max(0.0, cluster - 0.05) * 3.2;
 					mod *= 0.55 + 1.5 * Clamp(Fbm(p.x, p.z, 1500.0, 2, seed + cp.salt + 9) + 0.5, 0.0, 1.0);
 					const double accept = dens * cellArea100 * std::max(0.0, mod);
 					if (u >= accept) continue;

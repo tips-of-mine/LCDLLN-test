@@ -3385,7 +3385,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3611,7 +3611,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3675,7 +3675,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			std::vector<std::string> out;
 			std::istringstream in(RespawnPointsText(*w));
 			for (std::string line; std::getline(in, line);)
@@ -3854,7 +3854,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
 			return w;
 		};
@@ -4108,11 +4108,25 @@ namespace
 		std::string err;
 		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
 		Check(ok, "remparts v1.0.133 : master royaumes charge");
+	/// v1.0.135 (remarque du 21/11/2026 : « encore beaucoup de zones vides ») : dans une cellule de
+	/// plaine (N005_W011, Terres de l'Empereur), la carte de forêt couvre les terres ouvertes en
+	/// PRAIRIE (couvre-sol du client, sans arbre) avec des bosquets ; les valeurs forestières restent
+	/// au-dessus du seuil de prairie ; des petits lieux (pierres levées, ruines, camps, champs) sont
+	/// posés loin des routes et des villes.
+	void TestRemplissageV1135()
+	{
+		using namespace tools::world_gen;
+		namespace inst = engine::world::instances;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "remplissage v1.0.135 : master royaumes charge");
 		if (!ok) return;
 		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
 		auto w = std::make_unique<World>();
 		int n = 0, e = 0;
 		ParseCellId("S006_E004", n, e);
+		ParseCellId("N005_W011", n, e);
 		InitCell(*w, g, { n, e });
 		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 		std::string e2;
@@ -4155,6 +4169,24 @@ namespace
 		}
 		std::printf("  Heusgly : %zu colonnes de rempart, %d a etages, %d hors regle\n", cols.size(), stacked, bad);
 		Check(cols.size() >= 100 && bad == 0, "remparts v1.0.133 : rempart d'Heusgly sans jour dessous et jamais enjambable");
+		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w);
+		size_t meadow = 0, forest = 0, between = 0;
+		for (uint8_t v : w->forestMask)
+		{
+			if (v == inst::kForestMaskMeadowValue) ++meadow;
+			else if (v >= inst::kForestMaskMinForestValue) ++forest;
+			else if (v != 0) ++between;
+		}
+		const double N = static_cast<double>(w->forestMask.size());
+		std::printf("  N005_W011 : prairie %.1f %%, foret et bosquets %.1f %%, petits lieux %llu\n", 100.0 * meadow / N, 100.0 * forest / N,
+			static_cast<unsigned long long>(w->report.microLandmarks));
+		Check(meadow / N > 0.4, "remplissage v1.0.135 : terres ouvertes en prairie (couvre-sol du client)");
+		Check(forest / N > 0.15, "remplissage v1.0.135 : forets, bosquets et haies");
+		Check(between == 0, "remplissage v1.0.135 : aucune valeur forestiere sous le seuil de prairie");
+		Check(w->report.microLandmarks >= 20, "remplissage v1.0.135 : petits lieux de decor (>= 20 par cellule de plaine)");
+		int stones = 0;
+		for (const ScatterDef& sd : w->scatter) stones += sd.mesh.find("Rock_Medium") != std::string::npos && sd.scale > 1.8 ? 1 : 0;
+		Check(stones >= 7, "remplissage v1.0.135 : au moins un cercle de pierres levees");
 	}
 
 	/// Lot carte v1.0.131 (décision du 19/11/2026 : routes moins droites, « la nature n'est pas
@@ -4418,6 +4450,7 @@ int main()
 	TestLieuxBatisV1132();
 	TestRempartsV1133();
 	TestRoutesSansDoublonV1134();
+	TestRemplissageV1135();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

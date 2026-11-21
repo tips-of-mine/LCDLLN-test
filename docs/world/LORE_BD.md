@@ -1070,6 +1070,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.58](#1658-carte-du-monde-lot-5--tours-châteaux-phares-cascades-et-ponts-bâtis-v10132) | v1.0.132 | Carte du monde, lot 5 : lieux bâtis | Tours, châteaux, phares, cascades et ponts générés en jeu (73 lieux), Château de Garundel, Palais des Maîtres des Dragons bâti. |
 | [16.59](#1659-carte-du-monde-lot-a--lacs-carte-remparts-et-bord-du-monde-v10133) | v1.0.133 | Carte du monde, lot A : lacs, carte, remparts | Tous les lacs visibles en jeu, carte sans carrés ni trait, fenêtre de carte redimensionnable qui suit le joueur, remparts posés sur le relief, mer au-delà des côtes. |
 | [16.60](#1660-carte-du-monde--routes-soudées-plus-de-doublon-v10134) | v1.0.134 | Carte du monde : routes soudées | Plus de routes en double : corridors communs empruntés (jonctions exactes), portions déjà reliées non retracées, méandres gardés, chemins locaux arrêtés à la chaussée. |
+| [16.61](#1661-carte-du-monde-remplissage-des-terres-ouvertes-v10135) | v1.0.135 | Carte du monde : remplissage | Prairies (couvre-sol du client : herbes hautes, fleurs, trèfle), bosquets et haies, petits lieux de décor (pierres levées, ruines, campements, champs clôturés), décor visible plus loin. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5336,6 +5337,34 @@ Inchangés : données du lore, blocages du gouffre, ville secrète, cimetières.
 **Contrôles** : `world_gen_tests` (`TestRoutesSansDoublonV1134` : aucune paire de tronçons à 0-250 m l'un de l'autre sur
 500 m ou plus, hors villes et abords des jonctions ; toutes les routes du lore présentes ; `TestRoutesLoreV1105` et
 `TestRoutesManquantesV1106` comptent les tronçons empruntés).
+
+### 16.61 Carte du monde, remplissage des terres ouvertes (v1.0.135)
+
+**Remarque du propriétaire (21/11/2026)** : « il y a encore beaucoup de zones vides » — plaines et collines nues jusqu'à
+l'horizon, un arbre isolé çà et là. À traiter partout dans le monde, pas seulement aux Terres de l'Empereur.
+
+**Constat** (cellules N005_W011 et N006_W011) : ≈ 30 arbres stockés au km² en plaine contre ≈ 16 000 en forêt ; la
+modulation des plaines mettait buissons, herbes et rochers à zéro sur la moitié de la surface ; aucun couvre-sol 3D ;
+décor coupé à 120 m.
+
+**Corrections** (aucun octet de plus pour la prairie ; ≈ +0,5 Mo par cellule pour les rochers et les petits lieux) :
+
+| Élément | Où | Effet |
+|---|---|---|
+| **Prairie** | `BuildForestMask` (`tools/world_gen/lib/Vegetation.cpp`) : valeur basse `kForestMaskMeadowValue` (10/255) de la carte `terrain_forest.frms` sur les terres ouvertes (plaines, collines, landes, prairies humides) ; les valeurs forestières restent ≥ 25/255 | le client y pose un **couvre-sol** dense (herbes hautes, herbes folles, trèfle, cailloux ; **taches de fleurs** d'≈ 30 m) dans 38 m autour du joueur, des buissons épars, **aucun arbre** |
+| **Bosquets et haies** | même carte : bosquets organiques (bruit ≈ 260 m, bord fondu) et haies trouées à 7–10 m des routes | arbres du remplissage forestier dans les plaines |
+| **Fond de plaine** | `BuildVegetation` : buissons, herbes et rochers ne tombent plus à zéro (fond 0,3 + touffes) ; rochers ×2 | moins de prairie « rasée » |
+| **Petits lieux** | `BuildMicroLandmarks` (`Landmarks.cpp`), treillis global de 1,1 km, ≈ 4 cases sur 5 | **cercles de pierres levées**, **ruines** de ferme ou de chapelle, **campements abandonnés** (chariot, chaudron, caisses), **champs clôturés** ; à plus de 35 m des routes, 250 m des villes, hors de l'eau et des abords des reliefs posés ; décor seul (ni PNJ, ni cimetière : les 666 cimetières sont inchangés) |
+| **Distance de vue** | `client_settings.scatter` du master : arbres et bâti 150 → 190 m, buissons et rochers 80 → 100 m | moins de vide à l'horizon ; la forêt de remplissage suit (rayon ≈ 182 m) |
+
+- Client : `GenerateForestFiller` (`src/shared/world/instances/ForestMask.h`) gagne une troisième couche (couvre-sol, classe
+  de décor « petit ») et les réglages `groundStepM`, `groundRadiusM`, `groundAccept`, `meadowUnderAccept`. Format de la
+  carte inchangé (version 1) : une cellule non régénérée garde son ancien rendu.
+- Aux Enfers : rien ne change (ni prairie, ni petits lieux).
+
+**Contrôles** : `world_gen_tests` (`TestRemplissageV1135` : N005_W011 à plus de 40 % en prairie, plus de 15 % de forêts
+et bosquets, aucune valeur forestière sous le seuil, au moins 20 petits lieux et un cercle de pierres levées) ;
+`forest_mask_tests` (prairie : aucun arbre, couvre-sol dans son rayon, buissons épars ; déterminisme).
 
 ## 17. Questions ouvertes
 

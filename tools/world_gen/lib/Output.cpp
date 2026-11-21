@@ -502,16 +502,19 @@ namespace tools::world_gen
 		}
 
 		/// Style de rendu de la carte du continent. Les valeurs par défaut donnent
-		/// EXACTEMENT la carte du jeu (world_map.png, inchangée) ; l'affiche du
-		/// portail (PORTAL.1) les ajuste.
+		/// EXACTEMENT la carte du jeu (world_map.png) ; l'affiche du portail
+		/// (PORTAL.1) et l'aperçu (--preview-map) les ajustent.
+		/// v1.0.133 : la carte du jeu n'a plus ni liseré des cellules générées (il
+		/// dessinait des traits droits sans rien de visible en jeu) ni carré brun
+		/// sous les villes (le client pose déjà leurs noms et leurs bâtiments).
 		struct ContinentMapStyle
 		{
-			bool cellOutlines = true;    ///< liseré des cellules générées (repère de mapping)
+			bool cellOutlines = false;   ///< liseré des cellules générées (repère de mapping, outils seulement)
 			bool continuousLines = false;///< rivières et routes en traits continus (sinon : 1 point sur 10)
 			int riverRadius = 0;         ///< demi-épaisseur des rivières (px, traits continus)
 			int roadRadius = 0;          ///< demi-épaisseur des routes (px, traits continus)
 			int majorRoadRadius = 0;     ///< demi-épaisseur des grandes routes (px, traits continus)
-			int cityRadius = 2;          ///< demi-côté du repère de ville (px) ; < 0 = aucun repère
+			int cityRadius = -1;         ///< rayon du repère rond de ville (px) ; < 0 = aucun repère
 		};
 
 		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
@@ -619,8 +622,23 @@ namespace tools::world_gen
 					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
 					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
 				}
+			// Repère de ville : disque (v1.0.133, plus de carré), jamais les villes secrètes (v1.0.107).
 			if (style.cityRadius >= 0)
-				for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, style.cityRadius, 92, 64, 52); // v1.0.107 : pas les villes secrètes
+				for (const CityDef& c : g.cities)
+				{
+					if (c.secret) continue;
+					const int ci = static_cast<int>((c.center.x - originX) / px), cj = static_cast<int>((c.center.z - originZ) / px);
+					const int rad = style.cityRadius;
+					for (int dj = -rad; dj <= rad; ++dj)
+						for (int di = -rad; di <= rad; ++di)
+						{
+							if (di * di + dj * dj > rad * rad + rad) continue;
+							const int ii = ci + di, jj = cj + dj;
+							if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
+							uint8_t* o = &rgb[(static_cast<size_t>(jj) * N + ii) * 3];
+							o[0] = 92; o[1] = 64; o[2] = 52;
+						}
+				}
 			return rgb;
 		}
 

@@ -837,7 +837,27 @@ namespace tools::world_gen
 					const Vec2 tan{ -std::sin(a), std::cos(a) };
 					const double yaw = std::atan2(tan.z, tan.x) * -180.0 / kPi; // X local -> tangente
 					if (walls)
-						AddProp(w, "Wall_UnevenBrick_Straight", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece | kOccluder), 0);
+					{
+						// v1.0.133 — rempart continu sur terrain en pente (Heusgly, Ghrunke Dash, Garundel) :
+						// le segment est posé au point le plus BAS du sol sous lui (plus de jour sous le mur)
+						// et monté en étages jusqu'à dépasser de 3 m le point le plus HAUT (on ne l'enjambe
+						// plus depuis l'amont). Au-delà de 6 m de dénivelé sur 2 m, pas de mur (falaise).
+						double lo = 1e18, hi = -1e18;
+						for (int q = 0; q < 9; ++q)
+						{
+							const Vec2 sp = p + tan * ((q % 3 - 1) * 1.05) + Dir(a) * ((q / 3 - 1) * 0.3);
+							const double h = w.HeightAt(sp);
+							lo = std::min(lo, h);
+							hi = std::max(hi, h);
+						}
+						if (hi - lo > 6.0) continue;
+						const double here = w.HeightAt(p);
+						const double kWallHm = 3.12;
+						const int levels = std::clamp(static_cast<int>(std::ceil((hi - lo + 3.0) / kWallHm - 1e-6)), 1, 3);
+						for (int lv = 0; lv < levels; ++lv)
+							AddProp(w, "Wall_UnevenBrick_Straight", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece | kOccluder), 0, 0.0,
+								(lo - here) + lv * kWallHm);
+					}
 					else
 						AddProp(w, "Prop_WoodenFence_Single", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece), 1);
 					w.Occupy(p, 1.2);

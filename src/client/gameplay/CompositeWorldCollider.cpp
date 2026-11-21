@@ -335,12 +335,19 @@ namespace engine::gameplay
 			slab(v0, dv, ez, 1);
 
 			if (separated || tEnter > tExit || tEnter > 1.0f) continue;
+			// v1.0.133 — arête interne entre deux segments de mur jointifs (rempart, mur long) :
+			// entrer par l'extrémité d'un segment alors qu'on longe la face de son voisin bloquait
+			// le glissement (joueur figé contre le rempart de Lhynn). Ignorée à 2 cm près.
+			if (enterAxis == 0 && std::fabs(v0) >= ez - 0.02f) continue;
 			// Déjà en chevauchement au départ : comme pour les cylindres, on ne
 			// bloque que si le déplacement S'ENFONCE (vers l'intérieur par la face de
 			// sortie la plus proche). Sinon le perso peut ressortir ou glisser : sans
 			// cette règle, une capsule entrée dans une boîte (pas, téléportation,
 			// rebase) y restait figée — seule la rotation répondait.
-			const bool startInside = std::fabs(u0) < ex && std::fabs(v0) < ez;
+			// v1.0.133 : au contact exact (tEnter ≈ 0, aucun axe d'entrée trouvé), traité comme un
+			// départ « dedans » : la normale devient celle de la face la plus proche, au lieu de la
+			// tangente du mur qui annulait tout glissement.
+			const bool startInside = (std::fabs(u0) < ex && std::fabs(v0) < ez) || enterAxis < 0;
 			if (startInside)
 			{
 				const float penU = ex - std::fabs(u0), penV = ez - std::fabs(v0);

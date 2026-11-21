@@ -1068,6 +1068,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.56](#1656-carte-du-monde-lot-3--montagnes-à-léchelle-des-pyrénées-grandes-collines-v10130) | v1.0.130 | Carte du monde, lot 3 : relief | Échelle 3 600 m, montagnes de 1 400 à 3 400 m (Pyrénées), neige vers 2 500 m, grandes collines, cols sur les routes du lore. |
 | [16.57](#1657-carte-du-monde-lot-4--routes-moins-droites-v10131) | v1.0.131 | Carte du monde, lot 4 : routes | Points de passage décalés, terrain bruité, méandres amples, cols sinueux ; balises reposées au bord des routes. |
 | [16.58](#1658-carte-du-monde-lot-5--tours-châteaux-phares-cascades-et-ponts-bâtis-v10132) | v1.0.132 | Carte du monde, lot 5 : lieux bâtis | Tours, châteaux, phares, cascades et ponts générés en jeu (73 lieux), Château de Garundel, Palais des Maîtres des Dragons bâti. |
+| [16.59](#1659-carte-du-monde-lot-a--lacs-carte-remparts-et-bord-du-monde-v10133) | v1.0.133 | Carte du monde, lot A : lacs, carte, remparts | Tous les lacs visibles en jeu, carte sans carrés ni trait, fenêtre de carte redimensionnable qui suit le joueur, remparts posés sur le relief, mer au-delà des côtes. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5272,6 +5273,37 @@ dalles = dessus marchable, portes franchissables) :
 **Contrôles** : `world_gen_tests` (`TestLieuxBatisV1132` : genres au master ; Château de Garundel avec enceinte, 5 toits de
 tour, logis, porte et dalles marchables ; Tour Carrée de plus de 60 m ; Cascade de Hazol à trois vasques) ;
 `world_places_tests` (libellés) ; contrôles du lore.
+
+### 16.59 Carte du monde, lot A : lacs, carte, remparts et bord du monde (v1.0.133)
+
+**Retours du propriétaire (21/11/2026)** après le lot 5 : seuls les lacs ronds visibles en jeu, carrés bruns et trait
+horizontal sur la carte, carte qui ne suit ni la fenêtre ni le joueur, blocage contre le rempart de Lhynn, morceau de
+monde manquant (vide gris) à l'ouest de Lhynn.
+
+- **Lacs** : les contours de lac loin de l'origine de rendu échouaient à la triangulation (aire calculée en `float`,
+  ≈ 650 échecs par session dans les journaux). Triangulation en double, en coordonnées locales, points doublons et
+  alignés retirés, sens forcé ; repli en éventail si l'oreille échoue. Tous les lacs de la carte sont dessinés en jeu
+  (`WaterMeshBuilder.cpp`, tests `water_mesh_builder_tests`).
+- **Carte (image du générateur)** : plus de contour de cellule (le « trait horizontal » était le bord d'une rangée de
+  cellules) ; les villes sont des disques et non plus des carrés bruns (`Output.cpp`, `ContinentMapStyle`).
+- **Fenêtre de carte (M)** : la zone de dessin suit la taille de la fenêtre ; la carte suit le joueur (la molette zoome
+  sans couper le suivi, seul le glisser le coupe ; retour par « Centrer » ou dès que le joueur sort de la vue) ; voile de
+  découverte au contour continu.
+- **Remparts** : chaque pan est posé au point le plus bas du terrain sous lui et empilé sur 1 à 3 niveaux selon la pente
+  (plus de mur flottant ni de jour sous le mur) ; pan sauté au-delà de 6 m de dénivelé.
+- **Collisions** : arête interne entre deux pans de mur ignorée et sonde de sol symétrique quand le personnage est au
+  sol (fin du blocage-oscillation contre le rempart de Lhynn) ; boîte de collision de la barrière de bois.
+- **Bord du monde** : contrôle des 1 291 cellules du master : toutes générées ; les 245 cellules voisines non générées
+  sont toutes en mer. Le client y pose une nappe de mer identique à celle des cellules générées (plus de vide gris) et le
+  mur invisible couvre aussi une cellule dont le chargement a échoué (`CellSeaFallback`). Les chunks hérités ne sont
+  plus demandés dans le monde en cellules (fin des centaines de « terrain.bin absent » dans le journal).
+
+**Contrôles** : `world_gen_tests` (`TestRempartsV1133` : Heusgly, 259 colonnes de rempart, 21 empilées, aucune hors
+règle) ; `water_mesh_builder_tests` (lac loin de l'origine dans les deux sens, points alignés) ; tests de collision du
+gameplay ; `cell_sea_fallback_tests`.
+
+**Restes** : le modèle `nains.glb` est absent du dépôt (avertissement au chargement de la race) ; fond marin non modélisé
+sous la mer de repli.
 
 ## 17. Questions ouvertes
 

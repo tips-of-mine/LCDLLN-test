@@ -148,9 +148,25 @@ namespace engine::render
 		}
 
 		/// Voile des zones non découvertes. \param worldToScreen projette un point
-		/// GLOBAL (x, z) à l'écran. Les cellules jamais visitées sont voilées en
-		/// entier (séries fusionnées par rangée) ; dans une cellule visitée, les
-		/// cases non découvertes sont voilées par séries horizontales.
+		/// GLOBAL (x, z) à l'écran (projection affine : même échelle partout) ;
+		/// \param u0,v0,u1,v1 emprise de la vue en coordonnées normalisées carte.
+		///
+		/// Lot D (bug 4) — trois régimes selon la taille d'une case à l'écran :
+		///  - case ≥ 1,5 px : le contour lissé (dsc::IsPointRevealedSmooth) est
+		///    calculé dans une grille locale qui inclut les cases des cellules
+		///    voisines ; une cellule JAMAIS visitée qui touche une cellule visitée
+		///    est traitée comme des cases cachées de cette même grille (le contour
+		///    arrondi traverse donc la frontière de cellule au lieu d'être coupé
+		///    net). Sous-cases de bord : 2 à 12 par côté dès 6 px, 1 à 2 en dessous
+		///    (avant : carrés bruts sous 6 px) ;
+		///  - case < 1,5 px : le contour est sous le pixel ; les cases sont
+		///    regroupées en blocs d'au moins 1,5 px, voilés si moins de la moitié de
+		///    leurs cases est découverte (sous-échantillonnage moyenné, coût ≤ une
+		///    lecture par case comme avant) ;
+		///  - cellules jamais visitées sans voisine visitée : voilées en entier
+		///    (séries fusionnées par rangée).
+		/// Coût : voisinage 5 × 5 par table de sommes (O(1) par case). Main thread
+		/// (ImGui), entre NewFrame et Render ; n'écrit que dans \p dl.
 		template <typename WorldToScreen>
 		void DrawDiscoveryFog(ImDrawList* dl, const engine::client::MapDiscoveryClient& disc,
 			const engine::client::WorldPlaces& places, float u0, float v0, float u1, float v1, WorldToScreen&& worldToScreen)
@@ -167,11 +183,191 @@ namespace engine::render
 			const cells::CellCoord nw = cells::CellFromPosition(std::min(wx0, wx1), std::min(wz0, wz1));
 			const cells::CellCoord se = cells::CellFromPosition(std::max(wx0, wx1), std::max(wz0, wz1));
 			const double C = cells::kCellSizeMeters;
+			const double T = dsc::kTileM;
+			const int R = dsc::kDisplaySmoothRadiusTiles;
+			const int N = dsc::kTilesPerSide;
+			const double vx0 = std::min(wx0, wx1), vx1 = std::max(wx0, wx1);
+			const double vz0 = std::min(wz0, wz1), vz1 = std::max(wz0, wz1);
 			auto rect = [&](double xa, double za, double xb, double zb) {
 				const ImVec2 a = worldToScreen(static_cast<float>(xa), static_cast<float>(za));
 				const ImVec2 b = worldToScreen(static_cast<float>(xb), static_cast<float>(zb));
 				dl->AddRectFilled(ImVec2(std::min(a.x, b.x), std::min(a.y, b.y)), ImVec2(std::max(a.x, b.x), std::max(a.y, b.y)), fog);
 			};
+			// Taille d'une case à l'écran (px), mesurée près de la vue.
+			const float pxPerTile = std::fabs(worldToScreen(static_cast<float>(vx0 + T), static_cast<float>(vz0)).x
+				- worldToScreen(static_cast<float>(vx0), static_cast<float>(vz0)).x);
+			const bool fine = pxPerTile >= 1.5f;
+			// Sous-cases par côté pour une case de bord (régime fin).
+			const int sub = pxPerTile >= 6.0f ? std::clamp(static_cast<int>(pxPerTile / 4.0f), 2, 12)
+				: std::clamp(static_cast<int>(pxPerTile / 2.5f), 1, 2);
+			const double subM = T / sub;
+			// Poids gaussiens SÉPARABLES de dsc::IsPointRevealedSmooth (même σ =
+			// kDisplaySmoothSigmaM, même voisinage (2R + 1)², même seuil 0,5), précalculés
+			// pour les \ref sub positions d'un échantillon dans sa case : un point de la
+			// sous-case s est à (s + 0,5) / sub case du bord, sa case voisine d à
+			// (d + 0,5 − (s + 0,5) / sub) cases. exp(−(dx² + dz²) / 2σ²) =
+			// exp(−dx² / 2σ²) · exp(−dz² / 2σ²) : 2 × 5 poids au lieu de 25 exp et 25
+			// appels indirects par échantillon (≈ 25 fois plus rapide, même contour).
+			const int K = 2 * R + 1;
+			std::vector<double> wSub(static_cast<size_t>(sub) * static_cast<size_t>(K));
+			std::vector<double> wSum(static_cast<size_t>(sub), 0.0);
+			{
+				const double inv2s2 = 1.0 / (2.0 * dsc::kDisplaySmoothSigmaM * dsc::kDisplaySmoothSigmaM);
+				for (int s = 0; s < sub; ++s)
+					for (int d = -R; d <= R; ++d)
+					{
+						const double off = ((d + 0.5) - (s + 0.5) / sub) * T;
+						const double w = std::exp(-off * off * inv2s2);
+						wSub[static_cast<size_t>(s) * static_cast<size_t>(K) + static_cast<size_t>(d + R)] = w;
+						wSum[static_cast<size_t>(s)] += w;
+					}
+			}
+
+			// Une des 8 voisines de \p c a-t-elle été visitée ? (son contour lissé
+			// peut alors déborder dans \p c).
+			auto touchesVisited = [&](cells::CellCoord c) -> bool {
+				for (int dn = -1; dn <= 1; ++dn)
+					for (int de = -1; de <= 1; ++de)
+						if ((dn != 0 || de != 0) && disc.Find(cells::CellCoord{ c.n + dn, c.e + de }) != nullptr)
+							return true;
+				return false;
+			};
+
+			// Grilles réutilisées d'une cellule à l'autre (évite une allocation par cellule).
+			std::vector<uint8_t> grid;
+			std::vector<int> sat;
+
+			// Régime fin : cellule \p c (\p bm nul = jamais visitée, cases toutes cachées).
+			auto drawCellSmooth = [&](cells::CellCoord c, const dsc::CellBitmap* bm) {
+				const cells::CellPoint mn = cells::CellMinCorner(c);
+				// Cases de la cellule recoupant la vue (le reste est hors écran).
+				const int tx0 = std::clamp(static_cast<int>(std::floor((vx0 - mn.x) / T)), 0, N - 1);
+				const int tx1 = std::clamp(static_cast<int>(std::floor((vx1 - mn.x) / T)), 0, N - 1);
+				const int tz0 = std::clamp(static_cast<int>(std::floor((vz0 - mn.z) / T)), 0, N - 1);
+				const int tz1 = std::clamp(static_cast<int>(std::floor((vz1 - mn.z) / T)), 0, N - 1);
+				// Grille locale des cases découvertes (vue + marge R), lue une seule
+				// fois : les cases hors cellule viennent des cellules voisines.
+				const int gw = tx1 - tx0 + 1 + 2 * R, gh = tz1 - tz0 + 1 + 2 * R;
+				grid.assign(static_cast<size_t>(gw) * static_cast<size_t>(gh), 0u);
+				const dsc::CellBitmap* lastNb = nullptr;
+				cells::CellCoord lastCell{ c.n + 1000, c.e };
+				for (int lz = 0; lz < gh; ++lz)
+					for (int lx = 0; lx < gw; ++lx)
+					{
+						const int tx = tx0 - R + lx, tz = tz0 - R + lz;
+						bool f = false;
+						if (tx >= 0 && tz >= 0 && tx < N && tz < N)
+							f = bm != nullptr && bm->Get(tx, tz);
+						else
+						{
+							const dsc::TileRef t = dsc::TileAt(mn.x + (tx + 0.5) * T, mn.z + (tz + 0.5) * T);
+							if (t.cell != lastCell) { lastCell = t.cell; lastNb = disc.Find(t.cell); }
+							f = lastNb != nullptr && lastNb->Get(t.tx, t.tz);
+						}
+						grid[static_cast<size_t>(lz) * static_cast<size_t>(gw) + static_cast<size_t>(lx)] = f ? 1u : 0u;
+					}
+				// Table de sommes (gw + 1) × (gh + 1) : voisinage 5 × 5 en O(1).
+				const size_t sw = static_cast<size_t>(gw) + 1u;
+				sat.assign(sw * (static_cast<size_t>(gh) + 1u), 0);
+				for (int lz = 0; lz < gh; ++lz)
+					for (int lx = 0; lx < gw; ++lx)
+						sat[(static_cast<size_t>(lz) + 1u) * sw + static_cast<size_t>(lx) + 1u] =
+							grid[static_cast<size_t>(lz) * static_cast<size_t>(gw) + static_cast<size_t>(lx)]
+							+ sat[static_cast<size_t>(lz) * sw + static_cast<size_t>(lx) + 1u]
+							+ sat[(static_cast<size_t>(lz) + 1u) * sw + static_cast<size_t>(lx)]
+							- sat[static_cast<size_t>(lz) * sw + static_cast<size_t>(lx)];
+				// Sous-case (sx, sz) de la case (tx, tz) affichée « découverte » : moyenne
+				// gaussienne séparable du voisinage (2R + 1)² lu dans la grille locale
+				// (équivalent de dsc::IsPointRevealedSmooth, cf. wSub).
+				auto revealed = [&](int tx, int tz, int sx, int sz) -> bool {
+					const double* wx = &wSub[static_cast<size_t>(sx) * static_cast<size_t>(K)];
+					const double* wz = &wSub[static_cast<size_t>(sz) * static_cast<size_t>(K)];
+					const size_t lx0 = static_cast<size_t>(tx - tx0), lz0 = static_cast<size_t>(tz - tz0);
+					double f = 0.0;
+					for (int dj = 0; dj < K; ++dj)
+					{
+						const uint8_t* row = &grid[(lz0 + static_cast<size_t>(dj)) * static_cast<size_t>(gw) + lx0];
+						double rowSum = 0.0;
+						for (int di = 0; di < K; ++di)
+							if (row[di] != 0u)
+								rowSum += wx[di];
+						f += wz[dj] * rowSum;
+					}
+					return f >= 0.5 * wSum[static_cast<size_t>(sx)] * wSum[static_cast<size_t>(sz)];
+				};
+				// État du voisinage 5 × 5 d'une case : 0 rien, 1 mélange, 2 tout découvert.
+				const int all = (2 * R + 1) * (2 * R + 1);
+				auto neighbourhood = [&](int tx, int tz) -> int {
+					const size_t xa = static_cast<size_t>(tx - tx0), xb = xa + static_cast<size_t>(2 * R + 1);
+					const size_t za = static_cast<size_t>(tz - tz0), zb = za + static_cast<size_t>(2 * R + 1);
+					const int n = sat[zb * sw + xb] - sat[za * sw + xb] - sat[zb * sw + xa] + sat[za * sw + xa];
+					return n == 0 ? 0 : (n == all ? 2 : 1);
+				};
+				for (int tz = tz0; tz <= tz1; ++tz)
+				{
+					int tx = tx0;
+					while (tx <= tx1)
+					{
+						const int state = neighbourhood(tx, tz);
+						if (state == 2) { ++tx; continue; }
+						if (state == 1)
+						{
+							// Bord de zone : sous-cases voilées par séries horizontales.
+							for (int sz = 0; sz < sub; ++sz)
+							{
+								int sx = 0;
+								while (sx < sub)
+								{
+									if (revealed(tx, tz, sx, sz)) { ++sx; continue; }
+									const int s0 = sx;
+									while (sx < sub && !revealed(tx, tz, sx, sz)) ++sx;
+									rect(mn.x + tx * T + s0 * subM, mn.z + tz * T + sz * subM,
+										mn.x + tx * T + sx * subM, mn.z + tz * T + (sz + 1) * subM);
+								}
+							}
+							++tx;
+							continue;
+						}
+						// Série de cases entièrement voilées (aucune découverte autour).
+						const int start = tx;
+						while (tx <= tx1 && neighbourhood(tx, tz) == 0) ++tx;
+						rect(mn.x + start * T, mn.z + tz * T, mn.x + tx * T, mn.z + (tz + 1) * T);
+					}
+				}
+			};
+
+			// Vue large : blocs de B × B cases (≥ 1,5 px), voilés si moins de la
+			// moitié de leurs cases est découverte. \p bm non nul (cellule visitée).
+			auto drawCellCoarse = [&](cells::CellCoord c, const dsc::CellBitmap& bm) {
+				const cells::CellPoint mn = cells::CellMinCorner(c);
+				const int B = std::clamp(static_cast<int>(std::ceil(1.5f / std::max(pxPerTile, 1.0e-4f))), 1, N);
+				const int tx0 = std::clamp(static_cast<int>(std::floor((vx0 - mn.x) / T)), 0, N - 1);
+				const int tx1 = std::clamp(static_cast<int>(std::floor((vx1 - mn.x) / T)), 0, N - 1);
+				const int tz0 = std::clamp(static_cast<int>(std::floor((vz0 - mn.z) / T)), 0, N - 1);
+				const int tz1 = std::clamp(static_cast<int>(std::floor((vz1 - mn.z) / T)), 0, N - 1);
+				auto blockHidden = [&](int bx, int bz) -> bool {
+					const int xa = bx * B, xb = std::min(N, xa + B);
+					const int za = bz * B, zb = std::min(N, za + B);
+					int n = 0;
+					for (int tz = za; tz < zb; ++tz)
+						for (int tx = xa; tx < xb; ++tx)
+							n += bm.Get(tx, tz) ? 1 : 0;
+					return 2 * n < (xb - xa) * (zb - za);
+				};
+				for (int bz = tz0 / B; bz <= tz1 / B; ++bz)
+				{
+					int bx = tx0 / B;
+					while (bx <= tx1 / B)
+					{
+						if (!blockHidden(bx, bz)) { ++bx; continue; }
+						const int start = bx;
+						while (bx <= tx1 / B && blockHidden(bx, bz)) ++bx;
+						rect(mn.x + start * B * T, mn.z + bz * B * T,
+							mn.x + std::min(N, bx * B) * T, mn.z + std::min(N, (bz + 1) * B) * T);
+					}
+				}
+			};
+
 			// Nord = n le plus grand = z le plus petit.
 			for (int n = nw.n; n >= se.n; --n)
 			{
@@ -182,7 +378,10 @@ namespace engine::render
 					const bool atEnd = e > se.e;
 					const cells::CellCoord c{ n, e };
 					const dsc::CellBitmap* bm = atEnd ? nullptr : disc.Find(c);
-					const bool hidden = !atEnd && bm == nullptr;
+					// Cellule dessinée case par case : visitée, ou (régime fin) voisine
+					// d'une visitée ; sinon voilée en entier, par séries fusionnées.
+					const bool detail = !atEnd && (bm != nullptr || (fine && touchesVisited(c)));
+					const bool hidden = !atEnd && !detail;
 					if (hidden && !inRun) { inRun = true; runStart = e; }
 					if ((!hidden || atEnd) && inRun)
 					{
@@ -191,116 +390,12 @@ namespace engine::render
 						rect(a.x, a.z, b.x + C, b.z + C);
 						inRun = false;
 					}
-					if (bm == nullptr)
+					if (!detail)
 						continue;
-					// Cellule visitée. FIX.16 / FIX.17 — le contour de la zone explorée
-					// est lissé (dsc::IsPointRevealedSmooth : courbe de niveau d'une
-					// moyenne gaussienne des cases 5 × 5) : bord rond, sans marches.
-					// Par case, selon son voisinage 5 × 5 :
-					//  - tout découvert : visible, rien à dessiner ;
-					//  - rien de découvert : voilée en entier (séries horizontales) ;
-					//  - mélange (bord de zone) : subdivisée, sous-cases voilées une à une.
-					// En vue très large (case < 6 px), le contour est invisible : voile
-					// case par case, moins coûteux.
-					const cells::CellPoint mn = cells::CellMinCorner(c);
-					const double T = dsc::kTileM;
-					const int R = dsc::kDisplaySmoothRadiusTiles;
-					const long long gi0 = static_cast<long long>(std::llround(mn.x / T));
-					const long long gj0 = static_cast<long long>(std::llround(mn.z / T));
-					const float pxPerTile = std::fabs(worldToScreen(static_cast<float>(mn.x + T), static_cast<float>(mn.z)).x
-						- worldToScreen(static_cast<float>(mn.x), static_cast<float>(mn.z)).x);
-					const bool smooth = pxPerTile >= 6.0f;
-					const int sub = std::clamp(static_cast<int>(pxPerTile / 4.0f), 2, 12);
-					const double subM = T / sub;
-					// Cases de la cellule recoupant la vue (le reste est hors écran).
-					const double vx0 = std::min(wx0, wx1), vx1 = std::max(wx0, wx1);
-					const double vz0 = std::min(wz0, wz1), vz1 = std::max(wz0, wz1);
-					const int tx0 = std::clamp(static_cast<int>(std::floor((vx0 - mn.x) / T)), 0, dsc::kTilesPerSide - 1);
-					const int tx1 = std::clamp(static_cast<int>(std::floor((vx1 - mn.x) / T)), 0, dsc::kTilesPerSide - 1);
-					const int tz0 = std::clamp(static_cast<int>(std::floor((vz0 - mn.z) / T)), 0, dsc::kTilesPerSide - 1);
-					const int tz1 = std::clamp(static_cast<int>(std::floor((vz1 - mn.z) / T)), 0, dsc::kTilesPerSide - 1);
-					if (!smooth)
-					{
-						for (int tz = tz0; tz <= tz1; ++tz)
-						{
-							int tx = tx0;
-							while (tx <= tx1)
-							{
-								if (bm->Get(tx, tz)) { ++tx; continue; }
-								const int start = tx;
-								while (tx <= tx1 && !bm->Get(tx, tz)) ++tx;
-								rect(mn.x + start * T, mn.z + tz * T, mn.x + tx * T, mn.z + (tz + 1) * T);
-							}
-						}
-						continue;
-					}
-					// Grille locale des cases découvertes (vue + marge R), lue une
-					// seule fois : les voisines hors cellule viennent des cellules voisines.
-					const int gw = tx1 - tx0 + 1 + 2 * R, gh = tz1 - tz0 + 1 + 2 * R;
-					std::vector<uint8_t> grid(static_cast<size_t>(gw) * static_cast<size_t>(gh), 0u);
-					for (int lz = 0; lz < gh; ++lz)
-						for (int lx = 0; lx < gw; ++lx)
-						{
-							const int tx = tx0 - R + lx, tz = tz0 - R + lz;
-							bool f = false;
-							if (tx >= 0 && tz >= 0 && tx < dsc::kTilesPerSide && tz < dsc::kTilesPerSide)
-								f = bm->Get(tx, tz);
-							else
-							{
-								const dsc::TileRef t = dsc::TileAt(mn.x + (tx + 0.5) * T, mn.z + (tz + 0.5) * T);
-								const dsc::CellBitmap* nb = disc.Find(t.cell);
-								f = nb != nullptr && nb->Get(t.tx, t.tz);
-							}
-							grid[static_cast<size_t>(lz) * static_cast<size_t>(gw) + static_cast<size_t>(lx)] = f ? 1u : 0u;
-						}
-					// Case GLOBALE (i, j) découverte, lue dans la grille locale.
-					const std::function<bool(long long, long long)> found = [&](long long i, long long j) -> bool {
-						const long long lx = i - gi0 - (tx0 - R), lz = j - gj0 - (tz0 - R);
-						if (lx < 0 || lz < 0 || lx >= gw || lz >= gh)
-							return false;
-						return grid[static_cast<size_t>(lz) * static_cast<size_t>(gw) + static_cast<size_t>(lx)] != 0u;
-					};
-					// État du voisinage 5 × 5 d'une case : 0 rien, 1 mélange, 2 tout découvert.
-					auto neighbourhood = [&](int tx, int tz) -> int {
-						int n = 0;
-						for (int dz = -R; dz <= R; ++dz)
-							for (int dx = -R; dx <= R; ++dx)
-								n += grid[static_cast<size_t>(tz - tz0 + R + dz) * static_cast<size_t>(gw) + static_cast<size_t>(tx - tx0 + R + dx)];
-						const int all = (2 * R + 1) * (2 * R + 1);
-						return n == 0 ? 0 : (n == all ? 2 : 1);
-					};
-					for (int tz = tz0; tz <= tz1; ++tz)
-					{
-						int tx = tx0;
-						while (tx <= tx1)
-						{
-							const int state = neighbourhood(tx, tz);
-							if (state == 2) { ++tx; continue; }
-							if (state == 1)
-							{
-								// Bord de zone : sous-cases voilées par séries horizontales.
-								for (int sz = 0; sz < sub; ++sz)
-								{
-									const double z = mn.z + tz * T + (sz + 0.5) * subM;
-									int sx = 0;
-									while (sx < sub)
-									{
-										if (dsc::IsPointRevealedSmooth(mn.x + tx * T + (sx + 0.5) * subM, z, found)) { ++sx; continue; }
-										const int s0 = sx;
-										while (sx < sub && !dsc::IsPointRevealedSmooth(mn.x + tx * T + (sx + 0.5) * subM, z, found)) ++sx;
-										rect(mn.x + tx * T + s0 * subM, mn.z + tz * T + sz * subM,
-											mn.x + tx * T + sx * subM, mn.z + tz * T + (sz + 1) * subM);
-									}
-								}
-								++tx;
-								continue;
-							}
-							// Série de cases entièrement voilées (aucune découverte autour).
-							const int start = tx;
-							while (tx <= tx1 && neighbourhood(tx, tz) == 0) ++tx;
-							rect(mn.x + start * T, mn.z + tz * T, mn.x + tx * T, mn.z + (tz + 1) * T);
-						}
-					}
+					if (fine)
+						drawCellSmooth(c, bm);
+					else
+						drawCellCoarse(c, *bm);
 				}
 			}
 		}
@@ -334,59 +429,124 @@ namespace engine::render
 		{
 			view.zoom = engine::client::WorldMapZoomForView(places.SizeM(), in.defaultViewM, maxZoom);
 			view.followPlayer = true;
+			view.anchorValid = false;
 			view.initPending = false;
 		}
 		view.zoom = std::clamp(view.zoom, 1.0f, maxZoom);
 		// Taille des marqueurs / libellés : réglée pour z <= 8, figée au-delà.
 		const float markerZoom = engine::client::WorldMapMarkerZoom(view.zoom);
-		if (view.followPlayer && playerOnMap) { view.centerU = pu; view.centerV = pv; }
 
+		// Lot D (bug 1) — la zone de dessin suit la région de contenu de la fenêtre à
+		// chaque frame (avant : carré min(largeur, hauteur), figé quand on n'élargissait
+		// que dans une direction). Pas d'étirement : une seule échelle px / unité carte
+		// pour les deux axes ; le zoom fixe ce que montre le PLUS PETIT côté (≈ sizeM /
+		// zoom mètres, cf. « ~x km visibles »), le grand côté en montre davantage.
 		const ImVec2 avail = ImGui::GetContentRegionAvail();
 		const float footerH = ImGui::GetTextLineHeightWithSpacing() * 1.6f;
-		const float side = std::max(64.0f, std::min(avail.x, avail.y - footerH));
+		const float canvasW = std::max(64.0f, avail.x);
+		const float canvasH = std::max(64.0f, avail.y - footerH);
+		const float pxPerUv = std::min(canvasW, canvasH) * view.zoom;
 		const ImVec2 p0 = ImGui::GetCursorScreenPos();
-		const ImVec2 p1(p0.x + side, p0.y + side);
+		const ImVec2 p1(p0.x + canvasW, p0.y + canvasH);
+		float halfU = 0.5f * canvasW / pxPerUv;
+		float halfV = 0.5f * canvasH / pxPerUv;
 
-		// Interaction : molette = zoom autour du curseur, glisser = déplacer.
-		ImGui::InvisibleButton("##carte_zone", ImVec2(side, side));
+		// Interaction : molette = zoom, glisser = déplacer.
+		ImGui::InvisibleButton("##carte_zone", ImVec2(canvasW, canvasH));
 		const bool hovered = ImGui::IsItemHovered();
 		const ImGuiIO& io = ImGui::GetIO();
-		float half = 0.5f / view.zoom;
+		// Centre borné : la vue reste sur la carte ; un axe plus grand que la carte
+		// entière (fenêtre très allongée, zoom 1) reste centré sur la carte.
 		auto clampCenter = [&]()
 		{
-			half = 0.5f / view.zoom;
-			view.centerU = std::clamp(view.centerU, half, 1.0f - half);
-			view.centerV = std::clamp(view.centerV, half, 1.0f - half);
+			const float ref = std::min(canvasW, canvasH) * view.zoom;
+			halfU = 0.5f * canvasW / ref;
+			halfV = 0.5f * canvasH / ref;
+			view.centerU = halfU >= 0.5f ? 0.5f : std::clamp(view.centerU, halfU, 1.0f - halfU);
+			view.centerV = halfV >= 0.5f ? 0.5f : std::clamp(view.centerV, halfV, 1.0f - halfV);
 		};
+
+		// Lot D (bug 2) — suivi du joueur (comportement choisi) :
+		//  - par défaut (ouverture, « Centrer ») la carte suit le joueur : recentrée à
+		//    chaque frame ; la molette zoome alors AUTOUR DU JOUEUR sans couper le suivi
+		//    (avant : la molette et le moindre glisser coupaient le suivi pour de bon,
+		//    il fallait « Centrer » à chaque fois) ;
+		//  - glisser la carte coupe le suivi (exploration libre ; la molette zoome alors
+		//    autour du curseur) ;
+		//  - le suivi revient seul quand, bouton relâché, le joueur s'est déplacé d'au
+		//    moins kRefollowMoveM depuis la fin du glisser ET sort de la vue (marge de
+		//    10 % de chaque bord) : regarder la carte à l'arrêt ne la fait pas sauter,
+		//    marcher hors du cadre la ramène sur le personnage. « Vue d'ensemble »
+		//    (carte entière) garde toujours le joueur en vue : pas de retour forcé.
+		constexpr float kRefollowMoveM = 12.0f;
+		const bool dragging = ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+		if (dragging)
+		{
+			view.followPlayer = false;
+			// Ancre = position du joueur à la fin du glisser (mise à jour tant qu'il dure).
+			view.anchorX = in.playerX;
+			view.anchorZ = in.playerZ;
+			view.anchorValid = true;
+		}
+		else if (!view.followPlayer && playerOnMap)
+		{
+			if (!view.anchorValid)
+			{
+				view.anchorX = in.playerX;
+				view.anchorZ = in.playerZ;
+				view.anchorValid = true;
+			}
+			const float dx = in.playerX - view.anchorX, dz = in.playerZ - view.anchorZ;
+			const bool moved = dx * dx + dz * dz >= kRefollowMoveM * kRefollowMoveM;
+			const bool inView = std::fabs(pu - view.centerU) <= halfU * 0.8f && std::fabs(pv - view.centerV) <= halfV * 0.8f;
+			if (moved && !inView)
+				view.followPlayer = true;
+		}
+		if (view.followPlayer && playerOnMap) { view.centerU = pu; view.centerV = pv; }
 		clampCenter();
+
 		if (hovered && io.MouseWheel != 0.0f)
 		{
-			const float mu = view.centerU - half + (io.MousePos.x - p0.x) / side * 2.0f * half;
-			const float mv = view.centerV - half + (io.MousePos.y - p0.y) / side * 2.0f * half;
 			const float newZoom = std::clamp(view.zoom * (io.MouseWheel > 0.0f ? 1.25f : 0.8f), 1.0f, maxZoom);
-			// Le point sous le curseur reste fixe à l'écran.
-			const float k = view.zoom / newZoom;
-			view.centerU = mu + (view.centerU - mu) * k;
-			view.centerV = mv + (view.centerV - mv) * k;
+			if (!(view.followPlayer && playerOnMap))
+			{
+				// Exploration libre : le point sous le curseur reste fixe à l'écran.
+				const float mu = view.centerU - halfU + (io.MousePos.x - p0.x) / pxPerUv;
+				const float mv = view.centerV - halfV + (io.MousePos.y - p0.y) / pxPerUv;
+				const float k = view.zoom / newZoom;
+				view.centerU = mu + (view.centerU - mu) * k;
+				view.centerV = mv + (view.centerV - mv) * k;
+			}
 			view.zoom = newZoom;
-			view.followPlayer = false;
+			if (view.followPlayer && playerOnMap) { view.centerU = pu; view.centerV = pv; }
 			clampCenter();
 		}
-		if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2.0f))
+		if (dragging)
 		{
-			view.centerU -= io.MouseDelta.x / side * 2.0f * half;
-			view.centerV -= io.MouseDelta.y / side * 2.0f * half;
-			view.followPlayer = false;
+			const float ref = std::min(canvasW, canvasH) * view.zoom;
+			view.centerU -= io.MouseDelta.x / ref;
+			view.centerV -= io.MouseDelta.y / ref;
 			clampCenter();
 		}
 
-		const float u0 = view.centerU - half, v0 = view.centerV - half;
-		auto toScreen = [&](float u, float v) { return ImVec2(p0.x + (u - u0) / (2.0f * half) * side, p0.y + (v - v0) / (2.0f * half) * side); };
+		// Échelle et emprise finales de la frame (après zoom / glisser).
+		const float scale = std::min(canvasW, canvasH) * view.zoom; // px par unité carte
+		const float u0 = view.centerU - halfU, v0 = view.centerV - halfV;
+		const float u1 = view.centerU + halfU, v1 = view.centerV + halfV;
+		auto toScreen = [&](float u, float v) { return ImVec2(p0.x + (u - u0) * scale, p0.y + (v - v0) * scale); };
 
 		ImDrawList* dl = ImGui::GetWindowDrawList();
 		dl->PushClipRect(p0, p1, true);
+		// Fond (hors carte quand la fenêtre est plus large que la carte entière).
+		dl->AddRectFilled(p0, p1, IM_COL32(14, 18, 22, 255));
 		if (in.mapTexture != 0)
-			dl->AddImage(static_cast<ImTextureID>(in.mapTexture), p0, p1, ImVec2(u0, v0), ImVec2(u0 + 2.0f * half, v0 + 2.0f * half));
+		{
+			// Image limitée à la carte [0, 1] (pas de répétition de texture au-delà).
+			const float iu0 = std::max(0.0f, u0), iv0 = std::max(0.0f, v0);
+			const float iu1 = std::min(1.0f, u1), iv1 = std::min(1.0f, v1);
+			if (iu1 > iu0 && iv1 > iv0)
+				dl->AddImage(static_cast<ImTextureID>(in.mapTexture), toScreen(iu0, iv0), toScreen(iu1, iv1), ImVec2(iu0, iv0), ImVec2(iu1, iv1));
+		}
 		else
 		{
 			dl->AddRectFilled(p0, p1, IM_COL32(40, 58, 46, 255));
@@ -403,14 +563,14 @@ namespace engine::render
 		{
 			float wx0 = 0, wz0 = 0, wx1 = 0, wz1 = 0;
 			places.MapUvToWorld(u0, v0, wx0, wz0);
-			places.MapUvToWorld(u0 + 2.0f * half, v0 + 2.0f * half, wx1, wz1);
-			const float pxPerM = side / std::max(1.0f, wx1 - wx0);
+			places.MapUvToWorld(u1, v1, wx1, wz1);
+			const float pxPerM = scale / std::max(1.0f, places.SizeM());
 			DrawMapFeatures(dl, *in.features, wx0, wz0, wx1, wz1, pxPerM, worldToScreen);
 		}
 
 		// Carte à découvrir : voile sur ce qui n'a pas été exploré.
 		if (in.discovery != nullptr)
-			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u0 + 2.0f * half, v0 + 2.0f * half, worldToScreen);
+			DrawDiscoveryFog(dl, *in.discovery, places, u0, v0, u1, v1, worldToScreen);
 		auto discovered = [&](float x, float z) { return in.discovery == nullptr || in.discovery->IsDiscovered(x, z); };
 
 		// Régions : nom en filigrane au centre (vue d'ensemble seulement).
@@ -584,7 +744,15 @@ namespace engine::render
 		ImGui::SameLine();
 		if (ImGui::SmallButton("Centrer")) { view.followPlayer = true; }
 		ImGui::SameLine();
-		if (ImGui::SmallButton("Vue d'ensemble")) { view.zoom = 1.0f; view.followPlayer = false; view.centerU = view.centerV = 0.5f; }
+		if (ImGui::SmallButton("Vue d'ensemble"))
+		{
+			view.zoom = 1.0f;
+			view.followPlayer = false;
+			view.centerU = view.centerV = 0.5f;
+			view.anchorX = in.playerX;
+			view.anchorZ = in.playerZ;
+			view.anchorValid = true;
+		}
 		ImGui::SameLine();
 		// FIX.11 — échelle courante (côté visible).
 		{

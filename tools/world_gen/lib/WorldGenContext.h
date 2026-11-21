@@ -662,6 +662,9 @@ namespace tools::world_gen
 	/// entrées des tentes). Effet de bord : w.height, w.paint, w.urban, w.roads, w.roadDist,
 	/// w.scatter, w.pointLights, occupation. Oracle.cpp
 	void BuildOracleCamp(World& w, CityDef& c, SettlementLayout& L);
+	/// Rayon (m) du chemin de ronde du Camp de l'Oracle : les routes s'y arrêtent, sur le
+	/// terrain (BuildOracleCamp) comme sur la carte (BuildMapFeatures). v1.0.136.
+	inline constexpr double kOracleRoadStopM = 215.0;
 	/// Arbres, sous-bois, rochers, herbes. Vegetation.cpp
 	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
 	/// ni broussaille). Effet de bord : remplit w.scatter.

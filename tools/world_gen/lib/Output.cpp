@@ -1297,9 +1297,29 @@ namespace tools::world_gen
 			mf::ComputeBounds(r);
 			f.roads.push_back(std::move(r));
 		};
-		// Réseau inter-villes (polylignes globales complètes).
+		// v1.0.136 — centres des camps de l'Oracle : les routes s'arrêtent au chemin de ronde
+		// (comme sur le terrain, cf. BuildOracleCamp), pas de tracé sur le rocher.
+		std::vector<Vec2> oracleCenters;
+		for (const CityDef& c : g.cities)
+			if (c.layout == "oracle") oracleCenters.push_back(c.center);
+		auto insideOracle = [&](Vec2 p) {
+			for (const Vec2& o : oracleCenters)
+				if (std::hypot(p.x - o.x, p.z - o.z) < kOracleRoadStopM) return true;
+			return false;
+		};
+		// Réseau inter-villes (polylignes globales complètes, coupées aux camps de l'Oracle).
 		for (const Road& rd : g.roads)
-			addRoad(rd.points, rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road), rd.widthM);
+		{
+			const mf::MapRoadKind kind = rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road);
+			if (oracleCenters.empty()) { addRoad(rd.points, kind, rd.widthM); continue; }
+			std::vector<Vec2> piece;
+			for (const Vec2& p : rd.points)
+			{
+				if (insideOracle(p)) { addRoad(piece, kind, rd.widthM); piece.clear(); continue; }
+				piece.push_back(p);
+			}
+			addRoad(piece, kind, rd.widthM);
+		}
 		for (const World* w : cells)
 		{
 			// Chemins locaux de la cellule (les tronçons de routes globales y sont

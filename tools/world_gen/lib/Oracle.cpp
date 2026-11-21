@@ -47,7 +47,7 @@ namespace tools::world_gen
 		constexpr double kStairRun = 44.0;   ///< longueur de l'escalier (pente 1/2 : 2 m par pièce de 4 m)
 		constexpr double kStairHalfW = 6.0;  ///< demi-largeur de l'escalier (3 pièces de 4 m)
 		constexpr double kFacadeS = -8.5;    ///< plan de la façade de la porte (s, m)
-		constexpr double kRingR = 215.0;     ///< chemin de ronde au pied du rocher (rayon, m)
+		constexpr double kRingR = kOracleRoadStopM; ///< chemin de ronde au pied du rocher (rayon, m)
 		constexpr double kAlleyR = 295.0;    ///< allée entre les deux anneaux de tentes
 		constexpr double kPlainR = 650.0;    ///< plaine aplanie (rayon, m)
 		constexpr double kBlendR = 1100.0;   ///< raccord avec le relief naturel

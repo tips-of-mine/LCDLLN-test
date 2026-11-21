@@ -4313,6 +4313,14 @@ namespace
 	/// les routes signalées (Orhendal - Ysselhaim 000136 / 000249, Altenberg 000022 / 000084 /
 	/// 000122, Via Magna 000120 / 000072 / 000064) sont présentes, une partie par alias.
 	void TestRoutesSansDoublonV1134()
+	/// Lot carte v1.0.136 (plan « Plan de l'Oracle, extérieur ») : le Camp de l'Oracle (N000_E000,
+	/// `layout: "oracle"`) n'est plus un village générique : aucun bâtiment (maison européenne)
+	/// dans le camp, au moins 40 tentes de pèlerins (océan de tentes, 240-350 m), 8 escaliers et
+	/// 8 portes, au moins 18 menhirs sur le grand cercle (420-560 m) dont des lueurs bleues, rocher
+	/// d'au moins 50 m au-dessus de la plaine (parois au-delà de 45°), aucune route sur le rocher,
+	/// échoppes le long du chemin du sud-ouest, services gardés (auberge et aubergiste, étals et
+	/// marchands, un seul cimetière du camp), ni faune ni monstre dans le camp.
+	void TestOracleV1136()
 	{
 		using namespace tools::world_gen;
 		GlobalWorld g;
@@ -4402,6 +4410,81 @@ namespace
 			for (const std::string& a : r.alsoLoreIds) shared249 = shared249 || (a == "000249" && r.loreId == "000136");
 		Check(all == g.master.loreRoads.size() && shared249,
 			"routes sans doublon v1.0.134 : toutes les routes du lore presentes ; Orhendal - Ysselhaim (000249) emprunte 000136");
+		Check(ok, "oracle v1.0.136 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* mc = nullptr;
+		for (const CityDef& c : g.master.cities) if (c.id == "ville_oracle_camp") mc = &c;
+		Check(mc && mc->layout == "oracle" && mc->cell == "N000_E000", "oracle v1.0.136 : camp de l'Oracle en mise en page oracle");
+		if (!mc) return;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { 0, 0 });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildPopulation(*w);
+		const CityDef* c = w->FindCity("ville_oracle_camp");
+		const SettlementLayout* L = nullptr;
+		for (const SettlementLayout& l : w->layouts) if (l.cityId == "ville_oracle_camp") L = &l;
+		Check(c && L, "oracle v1.0.136 : camp genere dans N000_E000");
+		if (!c || !L) return;
+		const Vec2 o = c->center;
+		auto dist = [&](Vec2 p) { return std::hypot(p.x - o.x, p.z - o.z); };
+		int houses = 0;
+		for (const BuildingPlacementDef& b : w->buildings) houses += (b.cityId == c->id || dist(b.position) < 700.0) ? 1 : 0;
+		int tents = 0, stairs = 0, doors = 0, stones = 0, stallsSw = 0, blueStones = 0;
+		const double aSw = 3.0 * 3.141592653589793 / 4.0;
+		const Vec2 sw{ std::cos(aSw), std::sin(aSw) };
+		for (const ScatterDef& s : w->scatter)
+		{
+			const double d = dist(s.position);
+			if (s.mesh.find("Overhang_Roof_Plaster") != std::string::npos && (s.flags & 1u) && d > 235.0 && d < 355.0) ++tents;
+			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
+			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
+			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
+			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
+			{
+				const Vec2 q{ s.position.x - o.x, s.position.z - o.z };
+				const double along = q.x * sw.x + q.z * sw.z, across = std::fabs(q.x * -sw.z + q.z * sw.x);
+				stallsSw += (along > 0.0 && across < 15.0) ? 1 : 0;
+			}
+		}
+		for (const PointLightDef& l : w->pointLights)
+			blueStones += (l.id.find("_menhir_") != std::string::npos && l.b > l.r) ? 1 : 0;
+		std::fprintf(stderr, "  oracle : maisons %d, tentes %d, marches %d, portes %d, menhirs %d (%d lueurs), echoppes SO %d\n",
+			houses, tents, stairs, doors, stones, blueStones, stallsSw);
+		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
+		Check(tents >= 40, "oracle v1.0.136 : ocean de tentes (40 tentes au moins)");
+		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
+		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
+		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
+		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
+		const double plain = w->HeightAt(o + Vec2{ 0.0, 400.0 });
+		double steep = 0.0;
+		for (int k = 0; k < 8; ++k)
+		{
+			const double a = (k + 0.5) * 3.141592653589793 / 4.0;
+			steep = std::max(steep, w->SlopeDegAt(o + Vec2{ std::cos(a), std::sin(a) } * 150.0));
+		}
+		Check(w->HeightAt(o) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
+			"oracle v1.0.136 : rocher dominant la plaine, parois infranchissables");
+		int roadOnRock = 0;
+		for (const Road& r : w->roads) for (const Vec2& p : r.points) roadOnRock += dist(p) < 205.0 ? 1 : 0;
+		Check(roadOnRock == 0, "oracle v1.0.136 : aucune route sur le rocher (arret au chemin de ronde)");
+		// Services : auberge, étals (3 services + 8 échoppes), cimetière unique, PNJ associés.
+		int inn = 0, merchants = 0, villagers = 0, fauna = 0, graveyards = 0;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			if (s.id == "amb_" + c->id + "_aubergiste") ++inn;
+			if (s.id.find("amb_" + c->id + "_marchand_") == 0) ++merchants;
+			if (s.id.find("amb_" + c->id + "_villageois_") == 0) ++villagers;
+			if (s.routineKind.empty() && dist(s.position) < 700.0) ++fauna;
+		}
+		for (const RespawnDef& r : w->respawns) graveyards += (r.type == "graveyard" && r.graveyardId == c->id) ? 1 : 0;
+		Check(inn == 1 && merchants >= 11 && L->stallFronts.size() >= 11 && villagers >= 10 && !L->homeDoors.empty(),
+			"oracle v1.0.136 : services gardes (auberge, etals et marchands, pelerins)");
+		Check(graveyards == 1 && L->hasGraveyard && dist(L->graveyard) > 360.0, "oracle v1.0.136 : un seul cimetiere, hors des tentes");
+		Check(fauna == 0, "oracle v1.0.136 : ni faune ni monstre dans le camp (lieu neutre)");
 	}
 
 int main()
@@ -4451,6 +4534,7 @@ int main()
 	TestRempartsV1133();
 	TestRoutesSansDoublonV1134();
 	TestRemplissageV1135();
+	TestOracleV1136();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

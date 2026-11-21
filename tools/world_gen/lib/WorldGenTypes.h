@@ -91,6 +91,10 @@ namespace tools::world_gen
 		/// cellule (peuple des lieux procéduraux voisins). Cimetière et auberge générés
 		/// comme ailleurs (respawn_points.txt). Ex. : la ville du Gouffre des Revenus.
 		bool   secret = false;
+		/// Mise en page dédiée (v1.0.136, clé `layout` du master, défaut vide = agglomération
+		/// générique de BuildSettlements) : « oracle » = Camp de l'Oracle bâti selon le plan
+		/// (rocher, escaliers, océan de tentes, menhirs ; Oracle.cpp, LORE_BD §16.62).
+		std::string layout;
 	};
 
 	/// Point d'intérêt (section `pois`).

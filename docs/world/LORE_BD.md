@@ -1071,6 +1071,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.59](#1659-carte-du-monde-lot-a--lacs-carte-remparts-et-bord-du-monde-v10133) | v1.0.133 | Carte du monde, lot A : lacs, carte, remparts | Tous les lacs visibles en jeu, carte sans carrés ni trait, fenêtre de carte redimensionnable qui suit le joueur, remparts posés sur le relief, mer au-delà des côtes. |
 | [16.60](#1660-carte-du-monde--routes-soudées-plus-de-doublon-v10134) | v1.0.134 | Carte du monde : routes soudées | Plus de routes en double : corridors communs empruntés (jonctions exactes), portions déjà reliées non retracées, méandres gardés, chemins locaux arrêtés à la chaussée. |
 | [16.61](#1661-carte-du-monde-remplissage-des-terres-ouvertes-v10135) | v1.0.135 | Carte du monde : remplissage | Prairies (couvre-sol du client : herbes hautes, fleurs, trèfle), bosquets et haies, petits lieux de décor (pierres levées, ruines, campements, champs clôturés), décor visible plus loin. |
+| [16.62](#1662-camp-de-loracle-bâti-selon-le-plan-v10136) | v1.0.136 | Camp de l'Oracle bâti selon le plan | Rocher bleu octogonal (≈ 300 m, ≈ 90 m), 8 escaliers blancs et 8 portes, océan de tentes, 5 tentes pyramidales, menhirs bleus, chemin des échoppes au sud-ouest ; plus de maisons ni de palissade. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5365,6 +5366,44 @@ décor coupé à 120 m.
 **Contrôles** : `world_gen_tests` (`TestRemplissageV1135` : N005_W011 à plus de 40 % en prairie, plus de 15 % de forêts
 et bosquets, aucune valeur forestière sous le seuil, au moins 20 petits lieux et un cercle de pierres levées) ;
 `forest_mask_tests` (prairie : aucun arbre, couvre-sol dans son rayon, buissons épars ; déterminisme).
+### 16.62 Camp de l'Oracle bâti selon le plan (v1.0.136)
+
+**Constat du propriétaire** : en jeu, le Camp de l'Oracle était un village générique (une douzaine de maisons
+européennes à toits de tuiles rouges, palissade ronde) sur une plaine de sable, loin de la BD et du « Plan de l'Oracle,
+extérieur ». **Décision** : bâtir le camp selon ce plan.
+
+**Master** : clé nouvelle `layout` des villes (vide = mise en page générique ; `"oracle"` pour `ville_oracle_camp`).
+Le générateur (`tools/world_gen/lib/Oracle.cpp`, `BuildOracleCamp`, appelé par `BuildSettlements`) remplace alors le
+village par :
+
+| Repère du plan | Forme générée |
+|---|---|
+| 1 Rocher (tumulus, aérolithe) | Masse **octogonale à facettes** sculptée dans le terrain : ≈ 300 m de large (apothème 150 m ± 7 m par facette), parois de 62 m à ≈ 74° (infranchissables), couronne à huit facettes jusqu'à **≈ 90 m** ; blocs géants sur les arêtes, éboulis au pied. Plaine aride aplanie sur 650 m, raccord au relief jusqu'à 1 100 m. |
+| 7 Huit escaliers, huit portes | Un par facette (N, NE, E, SE, S, SO, O, NO) : rampe de terrain (pente 1/2) sous 33 pièces `Stairs_Exterior_Straight` (échelle 2, 12 m de large), palier blanc à 22 m entaillé dans la paroi, façade de pierre 18 × 28 m (porte ronde, rosace, fenêtres), porte **fermée** (la roche est derrière : pas d'intérieur). La porte du SO, au bout du chemin des échoppes, est « la » porte de la BD (T2 p.48). |
+| 5 Tentes pyramidales | Cinq au pied du rocher, entre les escaliers ; celle de la grande porte est le **temple** (autel, cierges). |
+| 4 Océan de tentes | Six rangs en deux anneaux (≈ 245-345 m du centre), ≈ 600 tentes à deux pans (entrée tournée vers le rocher), fanions, feux et bagages ; allée entre les anneaux. |
+| 6 Menhirs bleus | 22 dalles dressées de 6 à 10 m sur un cercle de 440-540 m, lueur bleue d'un menhir sur deux. |
+| 3 Chemin du sud-ouest | Arrivée de la Passe des Dragons jusqu'à la grande porte, bordée de 8 **échoppes de faux devins** (étals, tables, cierges, grimoires) et de 2 petites tentes. |
+| 9 Services | Auberge de Tormar Belrade (grand pavillon, aubergiste), étals de potions, d'armes et d'armures (marchands), temple, **cimetière** de Ralilde Sombremorne (hors des tentes), **5 écuries** (enclos aux sorties du camp). |
+
+- **Routes** : les routes du lore (N, E, chemin du sud) s'arrêtent au **chemin de ronde** du pied du rocher (215 m) ;
+  aucune chaussée sur le rocher.
+- **Lieu neutre** : ni faune ni monstre dans le camp (rayon 650 m + 120 m) ; deux gardes font la ronde ; 20 pèlerins
+  (domiciles : entrées des tentes), 11 marchands, l'aubergiste.
+- **Aucun bâtiment** (`buildings.bin`) dans le camp ; toujours **un** cimetière pour le camp (666 gardés), même
+  identifiant (`gy=ville_oracle_camp`) ; pas d'auberge de réapparition (règle des camps inchangée).
+- **Tentes** : pas de mesh de tente ; panneaux `Overhang_Roof_Plaster` inclinés (deux pans à 52-58°, quatre pans à 60°
+  pour les pyramides).
+- **Couleur bleue — limite** : pas de matériau bleu ni de teinte par instance. Le rocher est peint en roche + « neige »
+  (couche claire) du splat, les escaliers et paliers en blanc ; le bleu vient de **31 lumières ponctuelles** (portes,
+  flancs, couronne, menhirs ; bleu froid, allumées jour et nuit). Un vrai cristal bleu demandera une couche de splat ou
+  une teinte côté client (shader du terrain).
+- Non fait : puits intérieur (8, invisible de l'extérieur), visage blanc, phases de lune et brume de la porte (pas de
+  mesh ni de particules).
+
+**Contrôles** : `world_gen_tests` (`TestOracleV1136` : aucune maison dans le camp, ≥ 40 tentes, 8 escaliers et 8 portes,
+≥ 18 menhirs et leurs lueurs bleues, rocher ≥ 50 m au-dessus de la plaine à parois > 45°, aucune route sur le rocher,
+8 échoppes le long du chemin du sud-ouest, aubergiste et marchands, un seul cimetière du camp, pas de faune).
 
 ## 17. Questions ouvertes
 

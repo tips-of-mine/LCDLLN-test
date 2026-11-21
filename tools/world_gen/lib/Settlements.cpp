@@ -487,6 +487,13 @@ namespace tools::world_gen
 		{
 			SettlementLayout L;
 			L.cityId = c.id;
+			// v1.0.136 : Camp de l'Oracle bâti selon le plan (Oracle.cpp), pas de village générique.
+			if (c.layout == "oracle")
+			{
+				BuildOracleCamp(w, c, L);
+				w.layouts.push_back(std::move(L));
+				continue;
+			}
 			const double R = c.radiusM;
 			const double Rp = Clamp(R * 0.3, 7.0, 16.0);
 			Rng rng(Hash(w.master.seed, HashString(c.id.c_str()), 4242));

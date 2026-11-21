@@ -1069,6 +1069,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.57](#1657-carte-du-monde-lot-4--routes-moins-droites-v10131) | v1.0.131 | Carte du monde, lot 4 : routes | Points de passage décalés, terrain bruité, méandres amples, cols sinueux ; balises reposées au bord des routes. |
 | [16.58](#1658-carte-du-monde-lot-5--tours-châteaux-phares-cascades-et-ponts-bâtis-v10132) | v1.0.132 | Carte du monde, lot 5 : lieux bâtis | Tours, châteaux, phares, cascades et ponts générés en jeu (73 lieux), Château de Garundel, Palais des Maîtres des Dragons bâti. |
 | [16.59](#1659-carte-du-monde-lot-a--lacs-carte-remparts-et-bord-du-monde-v10133) | v1.0.133 | Carte du monde, lot A : lacs, carte, remparts | Tous les lacs visibles en jeu, carte sans carrés ni trait, fenêtre de carte redimensionnable qui suit le joueur, remparts posés sur le relief, mer au-delà des côtes. |
+| [16.60](#1660-carte-du-monde--routes-soudées-plus-de-doublon-v10134) | v1.0.134 | Carte du monde : routes soudées | Plus de routes en double : corridors communs empruntés (jonctions exactes), portions déjà reliées non retracées, méandres gardés, chemins locaux arrêtés à la chaussée. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5304,6 +5305,37 @@ gameplay ; `cell_sea_fallback_tests`.
 
 **Restes** : le modèle `nains.glb` est absent du dépôt (avertissement au chargement de la race) ; fond marin non modélisé
 sous la mer de repli.
+
+### 16.60 Carte du monde : routes soudées, plus de doublon (v1.0.134)
+
+**Signalement du propriétaire (21/11/2026)** : des routes en **double** — deux routes qui partent du même endroit et
+arrivent au même endroit en parallèle, à 30-250 m l'une de l'autre (Orhendal – Ysselhaim, abords d'Altenberg, etc.) ;
+aucune ne doit rester. Cause : chaque route du lore était tracée seule (A* puis méandres) ; deux routes qui partagent un
+corridor (même paire de villes retracée après une coupe à une ville, tronc commun près d'une ville, sentier le long d'une
+route) suivaient le même couloir mais leurs méandres divergeaient. Diagnostic : 197 paires de tronçons parallèles.
+
+**Tracé** (`tools/world_gen/lib/Roads.cpp`) :
+
+- **Ordre par importance** : voie impériale, grandes routes (deux grandes villes), routes, sentiers ; embranchements en
+  dernier. Les routes importantes deviennent les routes hôtes.
+- **Portion déjà reliée** (même paire de villes, détour ≤ 1,5 ×, cases du tracé desservies) : pas de second tracé.
+- **Soudure** : quand le chemin d'une route longe une route déjà tracée (à moins de 300 m sur au moins 600 m), la route
+  **emprunte** la chaussée existante : son tronçon s'arrête sur une **jonction exacte** de l'hôte et repart de la jonction
+  de sortie, abordée franchement (départ du dernier point à 450 m des routes) ; profil en long raccordé à l'hôte.
+- La route reste **présente** : son identifiant est ajouté aux tronçons empruntés (`Road::alsoLoreIds`) ; un sentier
+  emprunté par une route est élargi en route (000212, 000224).
+- **Méandres gardés** : un écart qui rapprocherait la route à moins de 400 m d'une autre route n'est pas appliqué.
+- Même soudure pour les routes du générateur gardées et le réseau des Enfers.
+- **Chemins locaux** des cellules : un point de route proche (≤ 1,3 × la distance) est préféré au centre d'une ville, et le
+  chemin s'arrête dès qu'il atteint une chaussée.
+
+Inchangés : données du lore, blocages du gouffre, ville secrète, cimetières. Résultat : 176 routes présentes en
+188 tronçons, 138 corridors communs empruntés, 5 routes entièrement sur des tronçons existants (000067, 000124, 000200,
+000244 et 000249 — Orhendal – Ysselhaim sur 000136) ; **0 paire parallèle** (contre 197).
+
+**Contrôles** : `world_gen_tests` (`TestRoutesSansDoublonV1134` : aucune paire de tronçons à 0-250 m l'un de l'autre sur
+500 m ou plus, hors villes et abords des jonctions ; toutes les routes du lore présentes ; `TestRoutesLoreV1105` et
+`TestRoutesManquantesV1106` comptent les tronçons empruntés).
 
 ## 17. Questions ouvertes
 

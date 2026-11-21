@@ -85,6 +85,11 @@ namespace tools::world_gen
 		/// du master) dont ce tronçon est issu ; vide = route du générateur ou chemin local.
 		/// fromId / toId : ville ou POI du master, vide pour une jonction ou une case seule.
 		std::string loreId;
+		/// Routes soudées (v1.0.134) : autres routes du lore qui EMPRUNTENT ce tronçon sans
+		/// le retracer (corridor commun ou même paire de villes : la chaussée n'existe qu'une
+		/// fois). Une route du lore est « présente » sur un tronçon si elle est son loreId ou
+		/// figure ici. Vide pour les routes du générateur et les chemins locaux.
+		std::vector<std::string> alsoLoreIds;
 	};
 
 	/// Rivière (polyligne descendante jusqu'à la mer).
@@ -374,7 +379,8 @@ namespace tools::world_gen
 		/// Réseau calculé par le générateur seul (Kruskal + voisines, comportement
 		/// historique), avant le tri v1.0.105. Sert aux corridors des villes de départ
 		/// (AddStartCorridors) : les cellules jouables ne dépendent pas des routes du lore.
-		/// Vide quand le master n'a pas de `lore_roads` (g.roads est alors ce réseau).
+		/// v1.0.134 : aussi rempli sans `lore_roads` (g.roads en est alors la version soudée :
+		/// un corridor commun n'y est tracé qu'une fois).
 		std::vector<Road> generatorRoads;
 		std::vector<Vec2> startCenters; ///< centres des villes de départ
 

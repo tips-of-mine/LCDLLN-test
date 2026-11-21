@@ -571,8 +571,12 @@ namespace tools::world_gen
 					o[2] = static_cast<uint8_t>(Clamp(b, 0, 255));
 				}
 			});
+			// v1.0.134 : bornes vérifiées AVANT la conversion en entier (un point non fini ou très
+			// loin de l'image rendait la conversion indéfinie).
 			auto plot = [&](Vec2 p, int rad, uint8_t r, uint8_t gg, uint8_t b) {
-				const int ci = static_cast<int>((p.x - originX) / px), cj = static_cast<int>((p.z - originZ) / px);
+				const double fi = (p.x - originX) / px, fj = (p.z - originZ) / px;
+				if (!(fi > -rad - 1.0 && fi < N + rad + 1.0 && fj > -rad - 1.0 && fj < N + rad + 1.0)) return;
+				const int ci = static_cast<int>(fi), cj = static_cast<int>(fj);
 				for (int dj = -rad; dj <= rad; ++dj)
 					for (int di = -rad; di <= rad; ++di)
 					{
@@ -585,6 +589,7 @@ namespace tools::world_gen
 			// PORTAL.1 — segment continu (pas d'un demi-pixel) pour l'affiche du portail.
 			auto line = [&](Vec2 a, Vec2 b, int rad, uint8_t r, uint8_t gg, uint8_t bl) {
 				const double len = std::hypot(b.x - a.x, b.z - a.z);
+				if (!std::isfinite(len) || len > 1e7) return; // v1.0.134 : segment aberrant ignoré
 				const int steps = std::max(1, static_cast<int>(len / (px * 0.5)));
 				for (int s = 0; s <= steps; ++s)
 				{

@@ -16,6 +16,7 @@ Usage:
 
 import argparse
 import json
+import re
 import os
 import sys
 
@@ -46,6 +47,14 @@ PREFIX_RULES = [
     ("Torch", "Light"),
     ("Lantern", "Light"),
     ("Banner", "Decor"),
+    # Atelier décors (BD) : végétation, cultures, minéral.
+    ("Tree_", "Nature"),
+    ("Crop_", "Nature"),
+    ("Reed_", "Nature"),
+    ("WaterLily_", "Nature"),
+    ("Plant_Mullein", "Nature"),
+    ("Rock_Spire", "Nature"),
+    ("Standing_Stone", "Nature"),
 ]
 
 
@@ -73,7 +82,10 @@ def main():
         print("ERREUR: dossier introuvable: %s" % props_dir, file=sys.stderr)
         return 1
 
-    gltfs = sorted(f for f in os.listdir(props_dir) if f.lower().endswith(".gltf"))
+    # Les niveaux de détail et billboards de l'atelier décors (<id>_LOD1/_LOD2/_BB)
+    # accompagnent leur asset : ils ne sont pas des entrées du catalogue.
+    gltfs = sorted(f for f in os.listdir(props_dir) if f.lower().endswith(".gltf")
+                   and not re.search(r"_(LOD[12]|BB)\.gltf$", f))
 
     assets = {"count": len(gltfs)}
     for i, fname in enumerate(gltfs):
@@ -86,17 +98,21 @@ def main():
             "thumbnail": "",
         }
 
-    doc = {
-        "_comment": ("Catalogue d'assets du kit props, généré par "
-                     "tools/asset_pipeline/generate_props_catalog.py. "
-                     "Ne pas éditer à la main : régénérer."),
-        "assets": assets,
-    }
+    # Format compact du fichier versionné : une entrée par ligne (diff lisible).
+    comment = ("Catalogue d'assets du kit props, genere par "
+               "tools/asset_pipeline/generate_props_catalog.py. "
+               "Ne pas editer a la main : regenerer.")
+    lines = ["{", '  "_comment": %s,' % json.dumps(comment, ensure_ascii=False), '  "assets": {',
+             '    "count": %d%s' % (len(gltfs), "," if gltfs else "")]
+    for i in range(len(gltfs)):
+        e = assets[str(i)]
+        body = ", ".join("%s: %s" % (json.dumps(k), json.dumps(v, ensure_ascii=False)) for k, v in e.items())
+        lines.append('    "%d": { %s }%s' % (i, body, "," if i < len(gltfs) - 1 else ""))
+    lines += ["  }", "}"]
 
     out_path = os.path.join(props_dir, "catalog.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
 
     # Récapitulatif par catégorie.
     by_cat = {}

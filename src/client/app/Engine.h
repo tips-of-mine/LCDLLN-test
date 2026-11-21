@@ -1197,12 +1197,18 @@ namespace engine
 		struct ScatterMeshGpu
 		{
 			std::vector<PropPart> parts;
+			/// Niveaux de détail optionnels (atelier décors) : [0] = <mesh>_LOD1.gltf,
+			/// [1] = <mesh>_LOD2.gltf, [2] = <mesh>_BB.gltf (billboard). Vide = niveau
+			/// absent : le rendu retombe sur le niveau plus détaillé disponible.
+			std::vector<PropPart> lodParts[3];
 			engine::math::Vec3 localMin{ 0.0f, 0.0f, 0.0f };
 			engine::math::Vec3 localMax{ 0.0f, 0.0f, 0.0f };
 			bool attempted = false; ///< chargement déjà tenté (succès ou échec mémorisé)
 			bool valid = false;
 		};
 		std::vector<ScatterMeshGpu> m_scatterMeshes;
+		/// Seuils (m) LOD1 / LOD2 / billboard du décor instancié (world.scatter.*).
+		float m_scatterLodM[3] = { 30.0f, 70.0f, 110.0f };
 		/// Cache de matériaux du rendu instancié (nom de matériau glTF -> index bindless).
 		std::unordered_map<std::string, uint32_t> m_scatterMatCache;
 		/// Anneau de buffers d'instances (mat4) HOST_VISIBLE, un par frame en vol.
@@ -1472,6 +1478,12 @@ namespace engine
 		/// matériau, AABB locale. \return false si le mesh est introuvable/vide.
 		/// Effet de bord : crée meshes GPU et matériaux (AssetRegistry, MaterialDescriptorCache).
 		bool EnsureScatterMesh(uint32_t meshId);
+		/// Charge un glTF de décor en parties GPU (une par matériau) ; renvoie false si
+		/// absent ou vide. `outMin/outMax` reçoivent l'AABB locale si non nuls.
+		bool LoadScatterParts(const std::string& meshPath, std::vector<PropPart>& out,
+			engine::math::Vec3* outMin, engine::math::Vec3* outMax);
+		/// Partie(s) à dessiner pour un mesh du décor selon la distance caméra (m).
+		const std::vector<PropPart>& ScatterPartsForDistance(const ScatterMeshGpu& mesh, float distM) const;
 		/// Destination d'un chargement de décor instancié / bâtiments : champ de
 		/// rendu, collisionneur, origine GLOBALE retranchée aux positions du fichier
 		/// (0 en zone historique, centre de la cellule dans le monde « Royaumes »)

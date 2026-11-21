@@ -88,61 +88,61 @@
   {
    "bufferView": 0,
    "componentType": 5126,
-   "count": 16,
+   "count": 12,
    "max": [
-    0.8797632455825806,
-    0.9165463447570801,
-    0.9563153386116028
+    1.9999998807907104,
+    1.0552400350570679,
+    1.339518427848816
    ],
    "min": [
-    -1.012088418006897,
+    -1.9999998807907104,
     0,
-    -0.9272285103797913
+    -1.3302700519561768
    ],
    "type": "VEC3"
   },
   {
    "bufferView": 1,
    "componentType": 5126,
-   "count": 16,
+   "count": 12,
    "type": "VEC3"
   },
   {
    "bufferView": 2,
    "componentType": 5126,
-   "count": 16,
+   "count": 12,
    "type": "VEC2"
   },
   {
    "bufferView": 3,
    "componentType": 5123,
-   "count": 24,
+   "count": 18,
    "type": "SCALAR"
   }
  ],
  "bufferViews": [
   {
    "buffer": 0,
-   "byteLength": 192,
+   "byteLength": 144,
    "byteOffset": 0,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 192,
-   "byteOffset": 192,
+   "byteLength": 144,
+   "byteOffset": 144,
    "target": 34962
   },
   {
    "buffer": 0,
-   "byteLength": 128,
+   "byteLength": 96,
+   "byteOffset": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 36,
    "byteOffset": 384,
-   "target": 34962
-  },
-  {
-   "buffer": 0,
-   "byteLength": 48,
-   "byteOffset": 512,
    "target": 34963
   }
  ],
@@ -154,7 +154,7 @@
  ],
  "buffers": [
   {
-   "byteLength": 560,
+   "byteLength": 420,
    "uri": "Crop_Wheat_1_LOD1.bin"
   }
  ]

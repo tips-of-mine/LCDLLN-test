@@ -278,6 +278,80 @@ def plant_card(name, seed, kind, size=512):
                 for sgn in (-1, 1):
                     gx, gy = ex + sgn * S * 0.006, ey + k * S * 0.009
                     d.ellipse([gx - S * 0.005, gy - S * 0.008, gx + S * 0.005, gy + S * 0.008], fill=g(c, 8))
+    elif kind == "barley":    # orge : épis barbus inclinés, blond pâle
+        for _ in range(120):
+            x0 = rng.uniform(0.04, 0.96) * S
+            hgt = rng.uniform(0.7, 0.95) * S
+            lean = rng.normal(0, 0.05) * S
+            c = (rng.choice([206, 214, 196]), rng.choice([190, 198, 176]), 120)
+            ex, ey = x0 + lean, S - hgt
+            d.line([(x0, S), (ex, ey)], fill=g(c, 8), width=S // 320)
+            for k in range(10):
+                gx, gy = ex + k * S * 0.004, ey + k * S * 0.008
+                d.line([(gx, gy), (gx + S * 0.03, gy - S * 0.05)], fill=g(c, 8), width=max(1, S // 700))
+                d.ellipse([gx - S * 0.004, gy - S * 0.006, gx + S * 0.004, gy + S * 0.006], fill=g(c, 8))
+    elif kind == "corn":      # maïs : tiges, larges feuilles arquées, panicules
+        for _ in range(7):
+            x0 = rng.uniform(0.08, 0.92) * S
+            d.line([(x0, S), (x0, S * 0.06)], fill=g((112, 140, 60)), width=S // 110)
+            for k in range(7):
+                y = S * (0.88 - k * 0.11)
+                sgn = 1 if k % 2 else -1
+                pl = []
+                pr = []
+                for q in range(12):
+                    t = q / 11
+                    x = x0 + sgn * t * S * 0.22
+                    yy = y - math.sin(t * math.pi * 0.8) * S * 0.08 + t * t * S * 0.06
+                    w = S * 0.018 * math.sin(math.pi * min(1, t * 1.05 + 0.05))
+                    pl.append((x, yy - w)); pr.append((x, yy + w))
+                d.polygon(pl + pr[::-1], fill=g((92, 132, 52)))
+            d.polygon([(x0, S * 0.02), (x0 - S * 0.03, S * 0.1), (x0 + S * 0.03, S * 0.1)], fill=g((206, 184, 110), 8))
+            if rng.random() < 0.8:
+                d.ellipse([x0 + S * 0.005, S * 0.45, x0 + S * 0.035, S * 0.58], fill=g((196, 170, 92), 8))
+    elif kind == "sunflower":
+        for _ in range(6):
+            x0 = rng.uniform(0.1, 0.9) * S
+            top = S * rng.uniform(0.08, 0.2)
+            d.line([(x0, S), (x0, top)], fill=g((100, 128, 56)), width=S // 120)
+            for k in range(4):
+                y = S * (0.85 - k * 0.15)
+                for sgn in (-1, 1):
+                    d.polygon(_leaf_poly(x0, y, S * 0.12, S * 0.05, math.pi / 2 + sgn * 1.2 + math.pi), fill=g((86, 120, 50)))
+            R = S * 0.07
+            for k in range(20):
+                a = k * 2 * math.pi / 20
+                d.polygon(_leaf_poly(x0, top, R * 1.7, R * 0.35, a), fill=g((232, 184, 40), 10))
+            d.ellipse([x0 - R, top - R, x0 + R, top + R], fill=g((96, 66, 34), 8))
+    elif kind == "rapeseed":  # colza : tiges ramifiées, grappes jaune vif
+        for _ in range(70):
+            x0 = rng.uniform(0.04, 0.96) * S
+            hgt = rng.uniform(0.6, 0.95) * S
+            lean = rng.normal(0, 0.05) * S
+            d.line([(x0, S), (x0 + lean, S - hgt)], fill=g((112, 140, 72)), width=S // 300)
+            for _ in range(10):
+                fx = x0 + lean + rng.normal(0, S * 0.03)
+                fy = S - hgt + rng.normal(0, S * 0.04)
+                r = S * 0.012
+                d.ellipse([fx - r, fy - r, fx + r, fy + r], fill=g((234, 206, 52), 10))
+        for _ in range(40):
+            x0 = rng.uniform(0.04, 0.96) * S
+            d.polygon(_leaf_poly(x0, S, S * 0.25, S * 0.05, -math.pi / 2 + rng.normal(0, 0.4)), fill=g((96, 128, 70)))
+    elif kind == "vine":      # vigne palissée : feuillage lobé + grappes
+        for _ in range(420):
+            x = rng.uniform(0.0, 1.0) * S
+            y = rng.uniform(0.05, 0.75) * S
+            r = S * rng.uniform(0.018, 0.03)
+            c = (rng.choice([84, 96, 108]), rng.choice([118, 130, 138]), 56)
+            for k in range(5):
+                a = -math.pi / 2 + (k - 2) * 0.6
+                d.ellipse([x + math.cos(a) * r * 0.6 - r * 0.6, y + math.sin(a) * r * 0.6 - r * 0.6,
+                           x + math.cos(a) * r * 0.6 + r * 0.6, y + math.sin(a) * r * 0.6 + r * 0.6], fill=g(c))
+        for _ in range(26):
+            x, y = rng.uniform(0.05, 0.95) * S, rng.uniform(0.45, 0.7) * S
+            for k in range(14):
+                gx, gy = x + rng.normal(0, S * 0.008), y + k * S * 0.004 + rng.normal(0, S * 0.005)
+                d.ellipse([gx - S * 0.006, gy - S * 0.006, gx + S * 0.006, gy + S * 0.006], fill=g((88, 52, 82), 8))
     elif kind == "lily":      # feuille ronde échancrée + fleur rouge (vue de dessus)
         cx = cy = S / 2
         R = S * 0.46
@@ -354,6 +428,11 @@ TEXTURES = {
     "Plant_Fern": lambda: plant_card("Plant_Fern", 34, "fern"),
     "Plant_Mullein": lambda: plant_card("Plant_Mullein", 35, "mullein"),
     "Plant_Wheat": lambda: plant_card("Plant_Wheat", 36, "wheat"),
+    "Plant_Barley": lambda: plant_card("Plant_Barley", 39, "barley"),
+    "Plant_Corn": lambda: plant_card("Plant_Corn", 40, "corn"),
+    "Plant_Sunflower": lambda: plant_card("Plant_Sunflower", 45, "sunflower"),
+    "Plant_Rapeseed": lambda: plant_card("Plant_Rapeseed", 46, "rapeseed"),
+    "Plant_Vine": lambda: plant_card("Plant_Vine", 47, "vine"),
     "Plant_LilyPad": lambda: plant_card("Plant_LilyPad", 37, "lily"),
     "Plant_LilyFlower": lambda: plant_card("Plant_LilyFlower", 38, "lily_flower"),
     "Rock_Grey": lambda: rock("Rock_Grey", 41, [(0, (82, 80, 76)), (0.5, (130, 126, 118)), (1, (172, 166, 156))]),

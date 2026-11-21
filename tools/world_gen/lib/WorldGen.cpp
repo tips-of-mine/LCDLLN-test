@@ -336,7 +336,8 @@ namespace tools::world_gen
 			timed("cellule : ponts", [&] { BuildBridges(*w); });             // v1.0.129 : ponts de pierre et de bois sur les cours d'eau
 			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
-			timed("cellule : vegetation", [&] { BuildVegetation(*w); });      // décor naturel (respecte l'occupation)
+			timed("cellule : vegetation", [&] { BuildVegetation(*w); });
+			timed("cellule : rives", [&] { BuildShoreVegetation(*w); });           // roseaux, nénuphars      // décor naturel (respecte l'occupation)
 			timed("cellule : population", [&] { BuildPopulation(*w); });      // spawners, respawns, départs
 			w->report.scatterInstances = w->scatter.size();
 			w->report.buildings = w->buildings.size();

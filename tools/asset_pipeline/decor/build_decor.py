@@ -514,6 +514,44 @@ def b_wheat(spec, lod): return _plant(spec, lod, "Plant_Wheat", {0: 8, 1: 4, 2: 
 def b_mullein(spec, lod): return _plant(spec, lod, "Plant_Mullein", {0: 3, 1: 2, 2: 1}, spread=0.03)
 
 
+CROPS = {  # texture, nb de rangs par parcelle de 4 m, cartes transverses par rang, hauteur relative des cartes
+    "wheat": ("Plant_Wheat", 6, 0, 1.0), "barley": ("Plant_Barley", 6, 0, 1.0),
+    "corn": ("Plant_Corn", 5, 3, 1.0), "sunflower": ("Plant_Sunflower", 5, 3, 1.0),
+    "rapeseed": ("Plant_Rapeseed", 6, 0, 1.0), "vine": ("Plant_Vine", 2, 0, 0.78),
+}
+
+
+def b_crop(spec, lod):
+    """Parcelle de culture modulaire (carré de ~4 m, rangs parallèles à X) : posée en
+    pavage par le générateur sur toute la surface d'un champ."""
+    H, W, r = P(spec)
+    tex, rows, cross, hfac = CROPS[spec["crop"]]
+    rng = random.Random(spec["seed"])
+    part = Part(material(tex, True))
+    posts = Part(material("Bark_Dark", False))
+    n_rows = {0: rows, 1: max(2, rows // 2), 2: max(1, rows // 3)}[lod]
+    L = W
+    for k in range(n_rows):
+        y = -W / 2 + W * (k + 0.5) / n_rows
+        seg = {0: 2, 1: 1, 2: 1}[lod]
+        for q in range(seg):
+            x0 = -L / 2 + L * q / seg
+            card(part, Vector((x0 + L / seg / 2, y + rng.uniform(-0.06, 0.06), H * hfac * 0.5)), L / seg, H * hfac,
+                 Vector((0, 1, 0)), Vector((0, 0, 1)), Vector((0, 0, 1)) + Vector((0, 1, 0)) * 0.3)
+        if lod == 0:
+            for c in range(cross):
+                x = -L / 2 + L * (c + 0.5) / cross + rng.uniform(-0.3, 0.3)
+                card(part, Vector((x, y, H * 0.5)), W / n_rows * 0.9, H, Vector((1, 0, 0)), Vector((0, 0, 1)),
+                     Vector((0, 0, 1)))
+        if spec["crop"] == "vine" and lod < 2:  # piquets de palissage
+            for q in range(3):
+                x = -L / 2 + 0.2 + q * (L - 0.4) / 2
+                tube(posts, [Vector((x, y, -0.1)), Vector((x, y, H))], [0.04, 0.035], 4)
+    if spec["crop"] == "vine":
+        return [posts, part]
+    return [part]
+
+
 def b_fern(spec, lod):
     H, W, r = P(spec)
     rng = random.Random(spec["seed"])

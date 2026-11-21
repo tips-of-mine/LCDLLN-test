@@ -37,29 +37,70 @@ namespace engine
 		if (entry.attempted) return entry.valid;
 		entry.attempted = true;
 		if (!m_pipeline) return false;
-		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-		if (!materialCache.IsValid()) return false;
+		if (!m_pipeline->GetMaterialDescriptorCache().IsValid()) return false;
 
 		const std::string& meshPath = m_scatterField.MeshPaths()[meshId];
-		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 		// Monde « Royaumes » : un mesh nouveau peut arriver en cours de partie ; ses
 		// matériaux réécrivent le set bindless partagé, que la frame précédente ne doit
 		// plus lire. Rare (une fois par modèle) : attente du GPU.
 		if (m_cellWorld && m_vkDeviceContext.IsValid())
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-		auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(contentRoot + "/" + meshPath);
-		if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
+		if (!LoadScatterParts(meshPath, entry.parts, &entry.localMin, &entry.localMax))
 		{
 			LOG_WARN(Render, "[Scatter] mesh introuvable ou vide '{}' (instances ignorees)", meshPath);
 			return false;
 		}
-		// AABB locale (bornes de culling + empreinte de collision).
-		entry.localMin = { 1e30f, 1e30f, 1e30f };
-		entry.localMax = { -1e30f, -1e30f, -1e30f };
-		for (const auto& v : cpu->vertices)
+		// Niveaux de détail optionnels (atelier décors) : <base>_LOD1/_LOD2/_BB.gltf à
+		// côté du mesh. Absents pour les meshes historiques -> comportement inchangé.
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		const auto dot = meshPath.find_last_of('.');
+		const std::string stem = dot == std::string::npos ? meshPath : meshPath.substr(0, dot);
+		const char* kSuffix[3] = { "_LOD1.gltf", "_LOD2.gltf", "_BB.gltf" };
+		for (int l = 0; l < 3; ++l)
 		{
-			entry.localMin = { std::min(entry.localMin.x, v.pos[0]), std::min(entry.localMin.y, v.pos[1]), std::min(entry.localMin.z, v.pos[2]) };
-			entry.localMax = { std::max(entry.localMax.x, v.pos[0]), std::max(entry.localMax.y, v.pos[1]), std::max(entry.localMax.z, v.pos[2]) };
+			const std::string lodPath = stem + kSuffix[l];
+			if (engine::platform::FileSystem::Exists(contentRoot + "/" + lodPath))
+				LoadScatterParts(lodPath, entry.lodParts[l], nullptr, nullptr);
+		}
+		entry.valid = !entry.parts.empty();
+		return entry.valid;
+	}
+
+	const std::vector<Engine::PropPart>& Engine::ScatterPartsForDistance(const ScatterMeshGpu& mesh, float distM) const
+	{
+		// Seuils propres au décor instancié (config world.scatter.lod1_m / lod2_m /
+		// billboard_m, défauts 30 / 70 / 110 m) : le billboard doit apparaître avant
+		// la distance de culling des grands objets (cull_large_m, 150 m). Niveau
+		// absent -> niveau plus détaillé disponible (meshes historiques : LOD0 seul).
+		const float d1 = m_scatterLodM[0], d2 = m_scatterLodM[1], d3 = m_scatterLodM[2];
+		int level = 0;
+		if (distM > d3) level = 3;
+		else if (distM > d2) level = 2;
+		else if (distM > d1) level = 1;
+		for (int l = level; l >= 1; --l)
+			if (!mesh.lodParts[l - 1].empty())
+				return mesh.lodParts[l - 1];
+		return mesh.parts;
+	}
+
+	bool Engine::LoadScatterParts(const std::string& meshPath, std::vector<PropPart>& out,
+		engine::math::Vec3* outMin, engine::math::Vec3* outMax)
+	{
+		const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+		auto cpu = engine::render::staticmesh::StaticMeshLoader::LoadCpuOnlyForTests(contentRoot + "/" + meshPath);
+		if (!cpu || cpu->vertices.empty() || cpu->submeshes.empty())
+			return false;
+		// AABB locale (bornes de culling + empreinte de collision).
+		if (outMin != nullptr && outMax != nullptr)
+		{
+			*outMin = { 1e30f, 1e30f, 1e30f };
+			*outMax = { -1e30f, -1e30f, -1e30f };
+			for (const auto& v : cpu->vertices)
+			{
+				*outMin = { std::min(outMin->x, v.pos[0]), std::min(outMin->y, v.pos[1]), std::min(outMin->z, v.pos[2]) };
+				*outMax = { std::max(outMax->x, v.pos[0]), std::max(outMax->y, v.pos[1]), std::max(outMax->z, v.pos[2]) };
+			}
 		}
 		std::string meshDir;
 		{
@@ -144,10 +185,9 @@ namespace engine
 			part.mesh = mh;
 			part.materialIndex = resolveMaterial(matName, repByMat[matName]);
 			part.highlightMaterialIndex = part.materialIndex;
-			entry.parts.push_back(part);
+			out.push_back(part);
 		}
-		entry.valid = !entry.parts.empty();
-		return entry.valid;
+		return !out.empty();
 	}
 
 	void Engine::AddScatterInstance(uint32_t meshId, const engine::math::Mat4& model, uint8_t cullClass,
@@ -438,6 +478,10 @@ namespace engine
 		if (!geom.HasLoadPass()) return;
 		auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 
+		// Seuils de LOD du décor (atelier décors), relus chaque frame comme les distances.
+		m_scatterLodM[0] = static_cast<float>(m_cfg.GetDouble("world.scatter.lod1_m", 30.0));
+		m_scatterLodM[1] = std::max(m_scatterLodM[0], static_cast<float>(m_cfg.GetDouble("world.scatter.lod2_m", 70.0)));
+		m_scatterLodM[2] = std::max(m_scatterLodM[1], static_cast<float>(m_cfg.GetDouble("world.scatter.billboard_m", 110.0)));
 		// Distances relues chaque frame (réglage à chaud dans zone.json / config.json).
 		engine::world::scatter::CullDistances dist;
 		dist.largeM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0));
@@ -480,7 +524,9 @@ namespace engine
 					const float f = m_cameraOcclusionFade.FadeFor(ScatterOccluderId(layer.id, layer.itemBase + idx));
 					if (f < 0.999f) fadeQ = static_cast<uint32_t>(std::lround(std::clamp(f, 0.0f, 1.0f) * 15.0f));
 				}
-				for (const PropPart& part : m_scatterMeshes[it.meshId].parts)
+				const float ddx = it.center.x - eyeL.x, ddy = it.center.y - eyeL.y, ddz = it.center.z - eyeL.z;
+				const float distM = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
+				for (const PropPart& part : ScatterPartsForDistance(m_scatterMeshes[it.meshId], distM))
 				{
 					engine::render::MeshAsset* mesh = part.mesh.Get();
 					if (mesh == nullptr) continue;

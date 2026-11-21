@@ -363,7 +363,8 @@ namespace
 			const bool okS = engine::world::instances::LoadScatterBin(ReadBytes(out / "instances" / ("zone_" + cell) / "scatter.bin"), sf, e);
 			noGreenProps = noGreenProps && okS;
 			for (const std::string& m : sf.meshPaths)
-				for (const char* green : { "Bush_", "Fern_", "Flower_", "Grass_", "Clover_", "Mushroom_", "Plant_1", "Pine_", "CommonTree_", "TwistedTree_" })
+				for (const char* green : { "Bush_", "Fern_", "Flower_", "Grass_", "Clover_", "Mushroom_", "Plant_1", "Pine_", "CommonTree_", "TwistedTree_",
+					"Tree_", "Crop_", "Reed_", "WaterLily_" })
 					if (m.find(green) != std::string::npos) noGreenProps = false;
 		}
 		Check(noGrassSnow && rockAndDirt, "palette v1.0.83 : splat des Enfers sans herbe (terre et roche)");
@@ -784,7 +785,7 @@ namespace
 		// v1.0.52 : champs cultives aussi autour des villes (Kendrhir est une ville).
 		bool crops = false;
 		for (const std::string& m : sf.meshPaths)
-			if (m == "meshes/props/Carrot.gltf" || m == "meshes/props/Plant_7.gltf") crops = true;
+			if (m.rfind("meshes/props/Crop_", 0) == 0) crops = true; // parcelles de cultures (atelier décors)
 		Check(okScatter && crops, "champs : cultures autour d'une ville");
 		// FORET.1 — densité forestière écrite (Kendrhir est en forêt) et
 		// cadrée sur la cellule ; plus aucun arbre de forêt dans scatter.bin.

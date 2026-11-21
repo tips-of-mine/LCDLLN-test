@@ -181,8 +181,12 @@ namespace engine::world::instances
 				{ "CommonTree_5", 1, 0.85, 1.25, 0.55 }, { "Pine_1", 0.5, 0.85, 1.2, 0.45 },
 				{ "Pine_3", 0.5, 0.85, 1.2, 0.45 }, { "TwistedTree_2", 0.12, 0.55, 0.75, 0.7 },
 				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 },
-				// Vieux feuillus géants (~4 %), comme les chênes massifs de la BD-T3 pl.24.
-				{ "CommonTree_1", 0.12, 1.6, 1.8, 0.8 }, { "CommonTree_3", 0.12, 1.6, 1.8, 0.8 } };
+				// Atelier décors : chênes et hêtres de futaie (meshes à taille réelle).
+				{ "Tree_Oak_1", 0.6, 0.9, 1.1, 0.7 }, { "Tree_Oak_2", 0.6, 0.9, 1.1, 0.7 },
+				{ "Tree_Beech_1", 0.6, 0.9, 1.1, 0.5 }, { "Tree_Beech_2", 0.6, 0.9, 1.1, 0.5 },
+				{ "Tree_Beech_3", 0.6, 0.9, 1.1, 0.5 },
+				// Vieux chênes géants (~4 %), comme les chênes massifs de la BD-T3 pl.24.
+				{ "Tree_Oak_3", 0.24, 1.15, 1.3, 0.9 } };
 			return v;
 		}
 		inline const std::vector<ForestFillerSpecies>& Conifer()
@@ -195,7 +199,7 @@ namespace engine::world::instances
 		inline const std::vector<ForestFillerSpecies>& Undergrowth()
 		{
 			static const std::vector<ForestFillerSpecies> v = {
-				{ "Fern_1", 3.0, 0.32, 0.55, 0 }, { "Bush_Common", 1.5, 0.8, 1.4, 0 },
+				{ "Fern_1", 3.0, 0.85, 1.2, 0 }, { "Bush_Common", 1.5, 0.8, 1.4, 0 },
 				{ "Plant_1_Big", 0.6, 0.55, 0.85, 0 }, { "Plant_7_Big", 0.6, 0.7, 1.1, 0 } };
 			return v;
 		}

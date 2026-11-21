@@ -166,23 +166,61 @@ namespace tools::world_gen
 			int attempts = 0;     ///< tirages d'emplacement (les grands champs exigent un sol plus plat)
 			double halfW = 8.0;   ///< demi-largeur (m), le long de la clôture d'entrée
 			double halfD = 5.0;   ///< demi-profondeur (m), dans l'axe de la ville
-			double rowU = 1.4;    ///< pas des rangs de cultures en largeur (m)
-			double rowV = 1.1;    ///< pas des plants dans un rang (m)
 		};
 
 		/// Plan des champs selon le type d'agglomération : rien pour les camps, les
 		/// ruines et les villes démoniaques ; plus de champs, et plus grands, pour
-		/// les villes (pas des rangs élargi pour borner le nombre d'instances).
+		/// les villes.
 		FieldPlan FieldsFor(const CityDef& c)
 		{
 			FieldPlan p;
 			if (c.state == "ruine" || c.race == "demons" || c.kind == "camp") return p;
-			if (c.kind == "hameau") { p.count = c.procedural == "ferme" ? 4 : 2; p.attempts = 30; }
-			else if (c.kind == "village") { p.count = c.procedural == "ferme" ? 4 : 3; p.attempts = 30; }
-			else if (c.kind == "ville") { p = { 4, 50, 12.0, 7.0, 1.6, 1.3 }; }
-			else if (c.kind == "grande_ville" || c.kind == "forteresse") { p = { 5, 60, 14.0, 8.0, 1.8, 1.5 }; }
-			else if (c.kind == "capitale") { p = { 6, 70, 16.0, 9.0, 2.0, 1.6 }; }
+			if (c.kind == "hameau") { p.count = c.procedural == "ferme" ? 4 : 2; p.attempts = 60; }
+			else if (c.kind == "village") { p.count = c.procedural == "ferme" ? 4 : 3; p.attempts = 60; }
+			else if (c.kind == "ville") { p = { 4, 100, 12.0, 7.0 }; }
+			else if (c.kind == "grande_ville" || c.kind == "forteresse") { p = { 5, 120, 14.0, 8.0 }; }
+			else if (c.kind == "capitale") { p = { 6, 140, 16.0, 9.0 }; }
+			// Atelier décors (décision du propriétaire, 21/11/2026) : très grands champs
+			// pour remplir les abords des villes et hameaux — largeur ×5, longueur ×10.
+			// Les cultures sont des parcelles modulaires de 4 m posées en pavage.
+			p.halfW *= 5.0;
+			p.halfD *= 10.0;
 			return p;
+		}
+
+		/// Champ (atelier décors) : pas d'eau ni de rivière sur l'emprise, pas de route
+		/// qui la traverse, pente moyenne ≤ ~5 % (les cultures suivent le relief, à la
+		/// différence d'un bâtiment). 16 points de contrôle sur le rectangle.
+		bool FieldGroundOk(const World& w, Vec2 c, Vec2 ax, Vec2 az, double hw, double hd)
+		{
+			if (!w.InPlayableBounds(c, 48.0)) return false;
+			double lo = 1e9, hi = -1e9;
+			for (int a = -2; a <= 2; ++a)
+				for (int b = -2; b <= 2; ++b)
+				{
+					const Vec2 p = c + ax * (hw * a / 2.0) + az * (hd * b / 2.0);
+					if (w.IsWater(p)) return false;
+					const int ri = w.riverDist.IndexX(p.x), rj = w.riverDist.IndexZ(p.z);
+					if (w.riverDist.InBounds(ri, rj) && w.riverDist.At(ri, rj) < 6.0f) return false;
+					const int qi = w.roadDist.IndexX(p.x), qj = w.roadDist.IndexZ(p.z);
+					if (w.roadDist.InBounds(qi, qj) && w.roadDist.At(qi, qj) < 4.0) return false;
+					const double h = w.HeightAt(p);
+					lo = std::min(lo, h); hi = std::max(hi, h);
+				}
+			return hi - lo < 1.6 + 0.05 * std::hypot(hw, hd);
+		}
+
+		/// Culture d'un champ (parcelle modulaire du registre des décors), tirée au sort.
+		const char* PickCrop(double u)
+		{
+			struct C { const char* mesh; double w; };
+			static const C crops[] = { { "Crop_Wheat_1", 3.0 }, { "Crop_Barley_1", 2.0 }, { "Crop_Corn_1", 2.0 },
+				{ "Crop_Sunflower_1", 1.5 }, { "Crop_Rapeseed_1", 1.5 }, { "Crop_Vine_1", 1.0 } };
+			double total = 0.0;
+			for (const C& c : crops) total += c.w;
+			double acc = 0.0;
+			for (const C& c : crops) { acc += c.w / total; if (u <= acc) return c.mesh; }
+			return crops[0].mesh;
 		}
 
 		double YawFacing(Vec2 f) { return std::atan2(-f.x, -f.z) * 180.0 / kPi; }
@@ -868,23 +906,32 @@ namespace tools::world_gen
 			//     comprises, avec des parcelles plus grandes) ; pas de camps, ruines
 			//     ni villes démoniaques.
 			const FieldPlan fp = FieldsFor(c);
-			if (fp.count > 0)
+			// Aucune culture aux Enfers (palette v1.0.83 : pas de végétation vivante).
+			if (fp.count > 0 && !IsInfernalMap(w.master))
 			{
 				int made = 0;
 				for (int attempt = 0; attempt < fp.attempts && made < fp.count; ++attempt)
 				{
 					const double a = rng.Range(0.0, 2.0 * kPi);
 					const Vec2 dir = Dir(a);
-					const double hw = fp.halfW, hd = fp.halfD;
-					// Au-delà du rempart ou de la palissade (posés à R + 3 m).
-					const Vec2 fc = c.center + dir * (R + hd + 9.0 + rng.Range(0.0, 20.0));
+					const double jitter = rng.Range(0.0, 20.0);
+					const Vec2 ax = Dir(a + kPi / 2.0), az = dir;
+					// Le plus grand champ possible : taille pleine, sinon 70 %, 50 %, 35 %
+					// (routes, rivières et relief découpent souvent les abords).
+					double hw = 0.0, hd = 0.0;
+					Vec2 fc{};
+					bool placed = false;
+					for (double k : { 1.0, 0.7, 0.5, 0.35 })
+					{
+						hw = fp.halfW * k; hd = fp.halfD * k;
+						// Au-delà du rempart ou de la palissade (posés à R + 3 m).
+						fc = c.center + dir * (R + hd + 9.0 + jitter);
+						if (!w.IsOccupied(fc, std::min(hw, hd)) && FieldGroundOk(w, fc, ax, az, hw, hd)) { placed = true; break; }
+					}
+					if (!placed) continue;
 					const double fr = std::hypot(hw, hd) + 1.0;
-					const int ri = w.roadDist.IndexX(fc.x), rj = w.roadDist.IndexZ(fc.z);
-					if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < fr) continue;
-					if (w.IsOccupied(fc, fr) || !GroundOk(w, fc, fr)) continue;
 					w.Occupy(fc, fr);
 					++made;
-					const Vec2 ax = Dir(a + kPi / 2.0), az = dir;
 					const double yawAx = std::atan2(ax.z, ax.x) * -180.0 / kPi;
 					const double yawAz = std::atan2(az.z, az.x) * -180.0 / kPi;
 					// Clôture (segments de ~2 m) sur les quatre côtés, avec une entrée.
@@ -899,11 +946,12 @@ namespace tools::world_gen
 						AddProp(w, "Prop_WoodenFence_Single", fc + az * v + ax * hw, yawAz, 1.0, static_cast<uint8_t>(kSolid | kPiece), 1);
 						AddProp(w, "Prop_WoodenFence_Single", fc + az * v - ax * hw, yawAz, 1.0, static_cast<uint8_t>(kSolid | kPiece), 1);
 					}
-					// Rangs de cultures.
-					const char* crop = (attempt % 2) ? "Plant_7" : "Carrot";
-					for (double u = -hw + 1.5; u < hw - 1.0; u += fp.rowU)
-						for (double v = -hd + 1.2; v < hd - 1.0; v += fp.rowV)
-							AddProp(w, crop, fc + ax * u + az * v, rng.Range(0, 360), rng.Range(0.9, 1.4), 0, 2);
+					// Cultures : pavage de parcelles de 4 m alignées sur la clôture (rangs
+					// parallèles à ax), visibles de loin (classe de culling « grand »).
+					const char* crop = PickCrop(rng.Range(0.0, 1.0));
+					for (double u = -hw + 3.0; u <= hw - 3.0; u += 4.0)
+						for (double v = -hd + 3.0; v <= hd - 3.0; v += 4.0)
+							AddProp(w, crop, fc + ax * u + az * v, yawAx, rng.Range(0.95, 1.05), 0, 0);
 					AddProp(w, "FarmCrate_Carrot", fc - az * (hd + 1.2) + ax * 2.0, rng.Range(0, 360), 1.0, kSolid, 1, 0.4);
 				}
 			}

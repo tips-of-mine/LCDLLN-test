@@ -806,12 +806,13 @@
       "id": "Crop_Wheat_1",
       "num": 14,
       "family": "vegetation",
-      "builder": "wheat",
-      "seed": 1401,
+      "builder": "crop",
+      "crop": "wheat",
+      "seed": 2000,
       "budget": "prop",
       "width_m": [
-        1.6,
-        2.2
+        3.8,
+        4.2
       ],
       "height_m": [
         0.9,
@@ -819,7 +820,107 @@
       ],
       "billboard": false,
       "replaces": null,
-      "ref": "T1-P024-C1 (remplace Plant_7 dans les champs)"
+      "ref": "T1-P024-C1 (champ de blé doré) ; parcelle modulaire de 4 m posée en pavage dans les champs"
+    },
+    {
+      "id": "Crop_Barley_1",
+      "num": 188,
+      "family": "vegetation",
+      "builder": "crop",
+      "crop": "barley",
+      "seed": 2001,
+      "budget": "prop",
+      "width_m": [
+        3.8,
+        4.2
+      ],
+      "height_m": [
+        0.7,
+        0.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "demande du propriétaire 21/11/2026 ; parcelle modulaire de 4 m posée en pavage dans les champs"
+    },
+    {
+      "id": "Crop_Corn_1",
+      "num": 189,
+      "family": "vegetation",
+      "builder": "crop",
+      "crop": "corn",
+      "seed": 2002,
+      "budget": "prop",
+      "width_m": [
+        3.8,
+        4.2
+      ],
+      "height_m": [
+        2.0,
+        2.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "demande du propriétaire 21/11/2026 ; parcelle modulaire de 4 m posée en pavage dans les champs"
+    },
+    {
+      "id": "Crop_Sunflower_1",
+      "num": 190,
+      "family": "vegetation",
+      "builder": "crop",
+      "crop": "sunflower",
+      "seed": 2003,
+      "budget": "prop",
+      "width_m": [
+        3.8,
+        4.2
+      ],
+      "height_m": [
+        1.5,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "demande du propriétaire 21/11/2026 ; parcelle modulaire de 4 m posée en pavage dans les champs"
+    },
+    {
+      "id": "Crop_Rapeseed_1",
+      "num": 191,
+      "family": "vegetation",
+      "builder": "crop",
+      "crop": "rapeseed",
+      "seed": 2004,
+      "budget": "prop",
+      "width_m": [
+        3.8,
+        4.2
+      ],
+      "height_m": [
+        1.1,
+        1.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "demande du propriétaire 21/11/2026 ; parcelle modulaire de 4 m posée en pavage dans les champs"
+    },
+    {
+      "id": "Crop_Vine_1",
+      "num": 192,
+      "family": "vegetation",
+      "builder": "crop",
+      "crop": "vine",
+      "seed": 2005,
+      "budget": "prop",
+      "width_m": [
+        3.8,
+        4.2
+      ],
+      "height_m": [
+        1.4,
+        1.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "demande du propriétaire 21/11/2026 ; parcelle modulaire de 4 m posée en pavage dans les champs"
     },
     {
       "id": "Rock_Medium_1",

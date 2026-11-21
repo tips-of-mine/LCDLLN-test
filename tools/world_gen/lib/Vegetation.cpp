@@ -67,20 +67,28 @@ namespace tools::world_gen
 				{ "CommonTree_3", 1, 0.85, 1.2, 0.55 }, { "CommonTree_4", 1, 0.85, 1.25, 0.55 },
 				{ "CommonTree_5", 1, 0.85, 1.25, 0.55 }, { "Pine_1", 0.5, 0.85, 1.2, 0.45 },
 				{ "Pine_3", 0.5, 0.85, 1.2, 0.45 }, { "TwistedTree_2", 0.12, 0.55, 0.75, 0.7 },
-				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 } };
+				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 },
+				// Atelier décors (BD T1-T3) : chênes et hêtres de futaie, mesh à taille réelle.
+				{ "Tree_Oak_1", 0.6, 0.9, 1.1, 0.7 }, { "Tree_Oak_2", 0.6, 0.9, 1.1, 0.7 },
+				{ "Tree_Oak_3", 0.6, 0.9, 1.1, 0.7 }, { "Tree_Beech_1", 0.6, 0.9, 1.1, 0.5 },
+				{ "Tree_Beech_2", 0.6, 0.9, 1.1, 0.5 }, { "Tree_Beech_3", 0.6, 0.9, 1.1, 0.5 } };
 			static const std::vector<Species> conifer = {
 				{ "Pine_1", 1, 0.85, 1.3, 0.45 }, { "Pine_2", 1, 0.85, 1.3, 0.45 }, { "Pine_3", 1, 0.85, 1.3, 0.45 },
 				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 } };
 			static const std::vector<Species> swamp = {
 				{ "TwistedTree_1", 1, 0.45, 0.7, 0.7 }, { "TwistedTree_3", 1, 0.5, 0.75, 0.7 },
 				{ "TwistedTree_4", 1, 0.5, 0.75, 0.7 }, { "DeadTree_2", 1.2, 0.8, 1.2, 0.45 },
-				{ "DeadTree_4", 1.0, 0.8, 1.2, 0.45 } };
+				{ "DeadTree_4", 1.0, 0.8, 1.2, 0.45 }, { "Tree_Willow_1", 0.8, 0.9, 1.1, 0.5 },
+				{ "Tree_Willow_2", 0.8, 0.9, 1.1, 0.5 } };
 			static const std::vector<Species> dead = {
 				{ "DeadTree_1", 1, 0.8, 1.2, 0.45 }, { "DeadTree_2", 1, 0.8, 1.2, 0.45 },
 				{ "DeadTree_3", 1, 0.8, 1.2, 0.45 }, { "DeadTree_4", 1, 0.8, 1.2, 0.45 }, { "DeadTree_5", 1, 0.8, 1.2, 0.45 } };
 			static const std::vector<Species> grove = {
 				{ "CommonTree_1", 1, 0.9, 1.3, 0.55 }, { "CommonTree_2", 1, 0.9, 1.3, 0.55 },
-				{ "CommonTree_4", 1, 0.9, 1.3, 0.55 }, { "CommonTree_5", 1, 0.9, 1.3, 0.55 }, { "Pine_2", 0.4, 0.9, 1.2, 0.45 } };
+				{ "CommonTree_4", 1, 0.9, 1.3, 0.55 }, { "CommonTree_5", 1, 0.9, 1.3, 0.55 }, { "Pine_2", 0.4, 0.9, 1.2, 0.45 },
+				{ "Tree_Oak_Lone_1", 0.7, 0.9, 1.1, 0.8 }, { "Tree_Oak_Lone_2", 0.7, 0.9, 1.1, 0.8 },
+				{ "Tree_Poplar_1", 0.5, 0.9, 1.1, 0.45 }, { "Tree_Poplar_2", 0.5, 0.9, 1.1, 0.45 },
+				{ "Tree_Cypress_1", 0.35, 0.9, 1.1, 0.35 }, { "Tree_Cypress_2", 0.35, 0.9, 1.1, 0.35 } };
 			if (c == '%' || c == '&') return swamp;
 			if (c == '~' || c == ':' || c == 'V' || c == 'l') return dead;
 			if (c == '^' || c == 'M' || altitude > 900.0) return conifer; // v1.0.130 : conifères au-dessus de 900 m
@@ -92,7 +100,7 @@ namespace tools::world_gen
 		{
 			static const std::vector<Species> forest = {
 				{ "Bush_Common", 2, 0.8, 1.4, 0 }, { "Bush_Common_Flowers", 1, 0.8, 1.3, 0 },
-				{ "Fern_1", 2.5, 0.32, 0.55, 0 }, { "Plant_1", 1, 0.8, 1.3, 0 }, { "Plant_1_Big", 0.6, 0.55, 0.85, 0 },
+				{ "Fern_1", 2.5, 0.85, 1.2, 0 }, { "Plant_1", 1, 0.8, 1.3, 0 }, { "Plant_1_Big", 0.6, 0.55, 0.85, 0 },
 				{ "Plant_7_Big", 0.6, 0.7, 1.1, 0 } };
 			static const std::vector<Species> open = {
 				{ "Bush_Common", 2, 0.7, 1.2, 0 }, { "Bush_Common_Flowers", 1.5, 0.7, 1.2, 0 }, { "Plant_1", 0.5, 0.7, 1.1, 0 } };
@@ -110,6 +118,7 @@ namespace tools::world_gen
 				{ "Grass_Wispy_Short", 1, 0.8, 1.3, 0 } };
 			static const std::vector<Species> meadow = {
 				{ "Flower_3_Group", 1, 0.8, 1.3, 0 }, { "Flower_4_Group", 1, 0.8, 1.3, 0 },
+				{ "Plant_Mullein_1", 0.25, 0.85, 1.15, 0 },
 				{ "Grass_Common_Tall", 2, 0.8, 1.3, 0 }, { "Grass_Common_Short", 2, 0.8, 1.4, 0 },
 				{ "Grass_Wispy_Tall", 1, 0.8, 1.3, 0 }, { "Clover_1", 0.7, 0.8, 1.3, 0 }, { "Flower_3_Single", 0.5, 0.9, 1.4, 0 } };
 			static const std::vector<Species> marsh = {
@@ -123,10 +132,15 @@ namespace tools::world_gen
 		{
 			static const std::vector<Species> rocks = {
 				{ "Rock_Medium_1", 1, 0.7, 1.8, 0.9 }, { "Rock_Medium_2", 1, 0.7, 1.8, 0.9 }, { "Rock_Medium_3", 1, 0.7, 1.8, 0.9 },
-				{ "Pebble_Round_1", 0.6, 2.0, 4.0, 0 }, { "Pebble_Square_2", 0.6, 2.0, 4.0, 0 } };
+				{ "Pebble_Round_1", 0.6, 2.0, 4.0, 0 }, { "Pebble_Square_2", 0.6, 2.0, 4.0, 0 },
+				{ "Standing_Stone_1", 0.04, 0.9, 1.1, 0.5 }, { "Standing_Stone_2", 0.04, 0.9, 1.1, 0.5 } };
+			static const std::vector<Species> spires = {
+				{ "Rock_Spire_1", 1, 0.8, 1.2, 4.0 }, { "Rock_Spire_2", 1, 0.8, 1.2, 5.0 }, { "Rock_Spire_3", 0.6, 0.8, 1.1, 6.0 },
+				{ "Rock_Medium_1", 2, 1.4, 3.2, 1.0 }, { "Rock_Medium_2", 2, 1.4, 3.2, 1.0 } };
 			static const std::vector<Species> big = {
 				{ "Rock_Medium_1", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_2", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_3", 1, 1.4, 3.2, 1.0 } };
-			if (c == '^' || c == 'M' || c == '*' || c == 'V') return big;
+			if (c == '*') return spires; // falaises et à-pics (Faille de Kashogs, T1 pl.18-19)
+			if (c == '^' || c == 'M' || c == 'V') return big;
 			return rocks;
 		}
 
@@ -309,5 +323,88 @@ namespace tools::world_gen
 				}
 		}
 		(void)before;
+	}
+
+	void BuildShoreVegetation(World& w)
+	{
+		// Atelier décors (BD T1 pl.13-14) : roseaux et massettes sur les rives des lacs et
+		// des rivières, nénuphars à la surface des lacs calme (posés à waterY : Y = sol
+		// + yOffset). Royaumes seulement. Déterministe (Hash de la graine du monde).
+		if (IsInfernalMap(w.master)) return;
+		const uint64_t seed = w.master.seed;
+		auto blocked = [&](Vec2 p, double occupy) {
+			if (!w.OwnsPoint(p)) return true;
+			const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+			if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 2.5) return true;
+			const int ui = w.urban.IndexX(p.x), uj = w.urban.IndexZ(p.z);
+			if (w.urban.InBounds(ui, uj) && w.urban.At(ui, uj) != 0) return true;
+			return w.IsOccupied(p, occupy);
+		};
+		auto reed = [&](Vec2 p, uint64_t h) {
+			ScatterDef s;
+			s.mesh = (h & 1u) ? "meshes/props/Reed_1.gltf" : "meshes/props/Reed_2.gltf";
+			s.position = p;
+			s.scale = Lerp(0.85, 1.2, ToUnit(Mix64(h + 3)));
+			s.yawDeg = ToUnit(Mix64(h + 5)) * 360.0;
+			s.cullClass = 2;
+			w.scatter.push_back(std::move(s));
+		};
+		// Lacs : roseaux en couronne sur la berge, nénuphars dans la bande intérieure.
+		for (size_t li = 0; li < w.lakes.size(); ++li)
+		{
+			const Lake& l = w.lakes[li];
+			const double perim = 2.0 * 3.14159265358979 * std::max(5.0, l.radiusM);
+			const int steps = static_cast<int>(perim / 2.5);
+			for (int k = 0; k < steps; ++k)
+			{
+				const uint64_t h = Hash(seed, 5101, li, static_cast<uint64_t>(k));
+				if (ToUnit(h) > 0.55) continue;
+				const double a = (k + ToUnit(Mix64(h))) * 2.0 * 3.14159265358979 / steps;
+				const double r = LakeRadiusAt(l, a) + 0.5 + 2.0 * ToUnit(Mix64(h + 1));
+				const Vec2 p{ l.center.x + std::cos(a) * r, l.center.z + std::sin(a) * r };
+				if (blocked(p, 0.4) || w.SlopeDegAt(p) > 30.0) continue;
+				reed(p, h);
+			}
+			const int pads = std::min(600, static_cast<int>(perim / 5.0));
+			for (int k = 0; k < pads; ++k)
+			{
+				const uint64_t h = Hash(seed, 5202, li, static_cast<uint64_t>(k));
+				const double a = ToUnit(h) * 2.0 * 3.14159265358979;
+				const double rr = LakeRadiusAt(l, a) * (0.55 + 0.35 * ToUnit(Mix64(h + 1)));
+				const Vec2 p{ l.center.x + std::cos(a) * rr, l.center.z + std::sin(a) * rr };
+				if (!w.OwnsPoint(p)) continue;
+				const double ground = w.HeightAt(p);
+				if (ground > l.waterY - 0.3) continue; // pas de nénuphar sur une berge émergée
+				ScatterDef s;
+				s.mesh = (h & 2u) ? "meshes/props/WaterLily_1.gltf" : "meshes/props/WaterLily_2.gltf";
+				s.position = p;
+				s.yOffset = l.waterY - ground + 0.01;
+				s.scale = Lerp(0.8, 1.3, ToUnit(Mix64(h + 3)));
+				s.yawDeg = ToUnit(Mix64(h + 5)) * 360.0;
+				s.cullClass = 2;
+				w.scatter.push_back(std::move(s));
+			}
+		}
+		// Rivières : roseaux sur la bande de berge (3,5 à 6 m de l'axe du lit).
+		if (w.riverDist.data.empty()) return;
+		const double cellM = 5.0;
+		const int gi0 = static_cast<int>(std::floor(w.terrainOriginX / cellM)) - 1;
+		const int gj0 = static_cast<int>(std::floor(w.terrainOriginZ / cellM)) - 1;
+		const int n = static_cast<int>(w.terrainSizeM / cellM) + 3;
+		for (int jj = 0; jj < n; ++jj)
+			for (int ii = 0; ii < n; ++ii)
+			{
+				const int i = gi0 + ii, j = gj0 + jj;
+				const uint64_t h = Hash(seed, 5303, static_cast<uint64_t>(static_cast<int64_t>(i)), static_cast<uint64_t>(static_cast<int64_t>(j)));
+				if (ToUnit(h) > 0.45) continue;
+				const Vec2 p{ (i + ToUnit(Mix64(h))) * cellM, (j + ToUnit(Mix64(h + 1))) * cellM };
+				const int ri = w.riverDist.IndexX(p.x), rj = w.riverDist.IndexZ(p.z);
+				if (!w.riverDist.InBounds(ri, rj)) continue;
+				const float d = w.riverDist.At(ri, rj);
+				if (d < 3.5f || d > 6.0f) continue;
+				if (w.HeightAt(p) < w.master.scale.seaLevelM + 0.6) continue; // pas en mer
+				if (blocked(p, 0.4) || w.SlopeDegAt(p) > 30.0) continue;
+				reed(p, h);
+			}
 	}
 }

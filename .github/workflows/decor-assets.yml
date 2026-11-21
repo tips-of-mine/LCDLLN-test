@@ -1,0 +1,46 @@
+# Atelier décors — contrôle des assets de décor issus de la BD.
+#
+# Vérifie, sans Blender : présence des LOD et billboards, budgets de triangles,
+# cotes (hauteur/largeur ±10 %), origine au sol, textures référencées présentes,
+# découpe alpha des feuillages (tools/asset_pipeline/decor/validate_decor.py), et
+# que le catalogue des props est à jour (generate_props_catalog.py régénéré = fichier
+# versionné). Rapide : déclenché uniquement quand les décors ou les props changent.
+name: decor-assets
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'tools/asset_pipeline/decor/**'
+      - 'tools/asset_pipeline/generate_props_catalog.py'
+      - 'game/data/meshes/props/**'
+      - '.github/workflows/decor-assets.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'tools/asset_pipeline/decor/**'
+      - 'tools/asset_pipeline/generate_props_catalog.py'
+      - 'game/data/meshes/props/**'
+      - '.github/workflows/decor-assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Contrôle des assets de décor (cotes, budgets, LOD, billboards)
+        run: python tools/asset_pipeline/decor/validate_decor.py
+
+      - name: Catalogue des props à jour
+        run: |
+          python tools/asset_pipeline/generate_props_catalog.py
+          git diff --exit-code -- game/data/meshes/props/catalog.json

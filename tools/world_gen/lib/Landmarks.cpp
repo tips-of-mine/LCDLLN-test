@@ -477,6 +477,11 @@ namespace tools::world_gen
 				if (ToUnit(h) > 0.8) continue; // ~4 cases sur 5 ont un petit lieu
 				const Vec2 c{ (i + 0.15 + 0.7 * ToUnit(Mix64(h + 1))) * step, (j + 0.15 + 0.7 * ToUnit(Mix64(h + 2))) * step };
 				if (!w.OwnsPoint(c)) continue;
+				// Tout le petit lieu (≤ 30 m de rayon) reste dans la cellule : pas d'instance hors emprise.
+				bool inside = true;
+				for (const Vec2& d : { Vec2{ 40.0, 0.0 }, Vec2{ -40.0, 0.0 }, Vec2{ 0.0, 40.0 }, Vec2{ 0.0, -40.0 } })
+					inside = inside && w.OwnsPoint(c + d);
+				if (!inside) continue;
 				const int bi = w.biome.IndexX(c.x), bj = w.biome.IndexZ(c.z);
 				if (!w.biome.InBounds(bi, bj)) continue;
 				const char code = EffectiveCover(w.biome.At(bi, bj), c.x, c.z, w.master.seed);

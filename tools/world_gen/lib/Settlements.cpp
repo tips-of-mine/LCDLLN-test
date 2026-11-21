@@ -189,7 +189,7 @@ namespace tools::world_gen
 		}
 
 		/// Champ (atelier décors) : pas d'eau ni de rivière sur l'emprise, pas de route
-		/// qui la traverse, pente moyenne ≤ ~5 % (les cultures suivent le relief, à la
+		/// qui la traverse, pente moyenne ≤ ~8 % (les cultures suivent le relief, à la
 		/// différence d'un bâtiment). 16 points de contrôle sur le rectangle.
 		bool FieldGroundOk(const World& w, Vec2 c, Vec2 ax, Vec2 az, double hw, double hd)
 		{
@@ -207,7 +207,7 @@ namespace tools::world_gen
 					const double h = w.HeightAt(p);
 					lo = std::min(lo, h); hi = std::max(hi, h);
 				}
-			return hi - lo < 1.6 + 0.05 * std::hypot(hw, hd);
+			return hi - lo < 1.6 + 0.08 * std::hypot(hw, hd);
 		}
 
 		/// Culture d'un champ (parcelle modulaire du registre des décors), tirée au sort.
@@ -916,12 +916,13 @@ namespace tools::world_gen
 					const Vec2 dir = Dir(a);
 					const double jitter = rng.Range(0.0, 20.0);
 					const Vec2 ax = Dir(a + kPi / 2.0), az = dir;
-					// Le plus grand champ possible : taille pleine, sinon 70 %, 50 %, 35 %
-					// (routes, rivières et relief découpent souvent les abords).
+					// Le plus grand champ possible : taille pleine en plaine, sinon 70, 50, 35
+					// puis 20 % (≈ ancienne taille) quand routes, rivières ou relief découpent
+					// les abords (Kendrhir, sur sa colline, n'a que des petits champs).
 					double hw = 0.0, hd = 0.0;
 					Vec2 fc{};
 					bool placed = false;
-					for (double k : { 1.0, 0.7, 0.5, 0.35 })
+					for (double k : { 1.0, 0.7, 0.5, 0.35, 0.2 })
 					{
 						hw = fp.halfW * k; hd = fp.halfD * k;
 						// Au-delà du rempart ou de la palissade (posés à R + 3 m).

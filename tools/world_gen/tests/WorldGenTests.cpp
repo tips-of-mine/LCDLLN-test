@@ -364,7 +364,7 @@ namespace
 			noGreenProps = noGreenProps && okS;
 			for (const std::string& m : sf.meshPaths)
 				for (const char* green : { "Bush_", "Fern_", "Flower_", "Grass_", "Clover_", "Mushroom_", "Plant_1", "Pine_", "CommonTree_", "TwistedTree_",
-					"Tree_", "Crop_", "Reed_", "WaterLily_" })
+					"props/Tree_", "props/Crop_", "props/Reed_", "props/WaterLily_" })
 					if (m.find(green) != std::string::npos) noGreenProps = false;
 		}
 		Check(noGrassSnow && rockAndDirt, "palette v1.0.83 : splat des Enfers sans herbe (terre et roche)");

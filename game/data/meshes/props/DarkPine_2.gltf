@@ -1,0 +1,237 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "DarkPine_2"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Bark_DarkPine",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9200000166893005
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "Leaves_DarkPine",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.75
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "DarkPine_2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        },
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkPine_Normal",
+      "uri": "Bark_DarkPine_Normal.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkPine",
+      "uri": "Bark_DarkPine.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Leaves_DarkPine",
+      "uri": "Leaves_DarkPine.png"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 7002,
+      "max": [
+        6.666076183319092,
+        16.562116622924805,
+        6.785688400268555
+      ],
+      "min": [
+        -7.827669620513916,
+        -0.6005167365074158,
+        -6.00536584854126
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 7002,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 7002,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 31584,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 6376,
+      "max": [
+        7.161008834838867,
+        16.239151000976562,
+        7.406515598297119
+      ],
+      "min": [
+        -7.988572120666504,
+        -0.03431427478790283,
+        -6.846211910247803
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 6376,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 6376,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 9564,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 84024,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 84024,
+      "byteOffset": 84024,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 56016,
+      "byteOffset": 168048,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 63168,
+      "byteOffset": 224064,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 76512,
+      "byteOffset": 287232,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 76512,
+      "byteOffset": 363744,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 51008,
+      "byteOffset": 440256,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 19128,
+      "byteOffset": 491264,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 510392,
+      "uri": "DarkPine_2.bin"
+    }
+  ]
+}

@@ -4028,6 +4028,66 @@ namespace
 		}
 	}
 
+	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
+	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
+	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
+	/// naine d'Heusgly (S006_E004), la plus pentue des villes à remparts.
+	void TestRempartsV1133()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "remparts v1.0.133 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		int n = 0, e = 0;
+		ParseCellId("S006_E004", n, e);
+		InitCell(*w, g, { n, e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w);
+		const CityDef* city = nullptr;
+		for (const CityDef& c : w->cities) if (c.id == "ville_forteresse_naine_heureux_t11") city = &c;
+		Check(city != nullptr, "remparts v1.0.133 : Forteresse naine d'Heusgly dans la cellule");
+		if (city == nullptr) return;
+		// Colonnes du rempart (anneau R + 3 m) : pièces empilées au même point.
+		std::map<std::pair<long long, long long>, std::pair<Vec2, std::vector<double>>> cols;
+		for (const ScatterDef& sd : w->scatter)
+		{
+			if (sd.mesh.find("Wall_UnevenBrick_Straight") == std::string::npos || sd.scale < 0.99) continue;
+			const double d = std::hypot(sd.position.x - city->center.x, sd.position.z - city->center.z);
+			if (std::fabs(d - (city->radiusM + 3.0)) > 0.5) continue;
+			auto& col = cols[{ std::llround(sd.position.x * 100.0), std::llround(sd.position.z * 100.0) }];
+			col.first = sd.position;
+			col.second.push_back(sd.yOffset);
+		}
+		int bad = 0, stacked = 0;
+		for (const auto& [key, col] : cols)
+		{
+			(void)key;
+			const Vec2 p = col.first;
+			const double here = w->HeightAt(p);
+			// Emprise du segment : ±1 m le long du mur, ±0,3 m en travers.
+			const double dd = std::max(1e-6, std::hypot(p.x - city->center.x, p.z - city->center.z));
+			const Vec2 rad{ (p.x - city->center.x) / dd, (p.z - city->center.z) / dd }, tan{ -rad.z, rad.x };
+			double lo = 1e18, hi = -1e18;
+			for (int q = 0; q < 15; ++q)
+			{
+				const double h = w->HeightAt(p + tan * ((q % 5 - 2) * 0.5) + rad * ((q / 5 - 1) * 0.3));
+				lo = std::min(lo, h); hi = std::max(hi, h);
+			}
+			const double bottom = here + *std::min_element(col.second.begin(), col.second.end());
+			const double top = here + *std::max_element(col.second.begin(), col.second.end()) + 3.12;
+			stacked += col.second.size() > 1 ? 1 : 0;
+			if (bottom > lo + 0.25 || top < hi + 2.5) ++bad;
+		}
+		std::printf("  Heusgly : %zu colonnes de rempart, %d a etages, %d hors regle\n", cols.size(), stacked, bad);
+		Check(cols.size() >= 100 && bad == 0, "remparts v1.0.133 : rempart d'Heusgly sans jour dessous et jamais enjambable");
+	}
+
 	/// Lot carte v1.0.131 (décision du 19/11/2026 : routes moins droites, « la nature n'est pas
 	/// carrée ») : toutes les routes du lore tracées ; aucune route tirée au cordeau (écart < 8 m à la
 	/// corde) sur 3 km ; les 5 balises de route à moins de 100 m de leur route.
@@ -4187,6 +4247,7 @@ int main()
 	TestReliefV1130();
 	TestRoutesV1131();
 	TestLieuxBatisV1132();
+	TestRempartsV1133();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

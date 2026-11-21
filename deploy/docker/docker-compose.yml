@@ -292,3 +292,32 @@ services:
       - "traefik.http.routers.lcdlln-pma-https.tls=true"
       #- "traefik.http.routers.lcdlln-pma-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
       - "traefik.http.services.lcdlln-pma-service.loadbalancer.server.port=80"
+  # -----------------------------------------------------------------
+  # mysqld-exporter — métriques MySQL pour Prometheus (MON.1)
+  # -----------------------------------------------------------------
+  # Lit lcdlln-mysql avec un compte dédié en lecture seule (`exporter`), créé une
+  # fois par scripts/create-mysql-exporter-user.sh (mot de passe dans .env :
+  # MYSQL_EXPORTER_PASSWORD). Aucun port publié : Prometheus le lit sur
+  # traefik_front_network (cible lcdlln-mysql-exporter:9104).
+  # Tableau Grafana : grafana/lcdlln-mysql-dashboard.json.
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.16.0
+    container_name: lcdlln-mysql-exporter
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - back_lcdlln_network
+      - traefik_front_network
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD:-}
+    command:
+      - "--mysqld.address=mysql:3306"
+      - "--mysqld.username=exporter"
+      - "--collect.info_schema.tables"
+      - "--collect.info_schema.processlist"
+      - "--collect.global_status"
+      - "--collect.global_variables"
+    expose:
+      - "9104"

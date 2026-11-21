@@ -116,3 +116,25 @@ Après `cmake --build --preset linux-x64-release` :
 BUILD_DIR=build/linux-x64-release ./scripts/pack-linux-docker-bundle.sh
 cd deploy/docker && docker compose up --build -d
 ```
+
+## Supervision Prometheus / Grafana (MON.1)
+
+Le master (`:3842`), le shard (`:3844`) et `lcdlln-mysql-exporter` (`:9104`) exposent
+`/metrics`. Prometheus les lit par nom de conteneur s'il est sur `traefik_front_network`.
+
+1. **Compte MySQL de l'exporter** (une fois, depuis `deploy/docker`) :
+   `bash scripts/create-mysql-exporter-user.sh` — génère `MYSQL_EXPORTER_PASSWORD` dans `.env`
+   s'il manque, crée le compte `exporter` (lecture seule), n'affiche aucun secret.
+2. **Démarrer l'exporter** : `docker compose up -d mysqld-exporter`.
+3. **Jobs Prometheus** (`prometheus.yml`) :
+   ```yaml
+   - job_name: lcdlln-master
+     static_configs: [{ targets: ['lcdlln-master:3842'] }]
+   - job_name: lcdlln-shard
+     static_configs: [{ targets: ['lcdlln-shard:3844'] }]
+   - job_name: lcdlln-mysql
+     static_configs: [{ targets: ['lcdlln-mysql-exporter:9104'] }]
+   ```
+4. **Tableaux Grafana** (Dashboards → New → Import) : `grafana/lcdlln-servers-dashboard.json`
+   (master + shard) et `grafana/lcdlln-mysql-dashboard.json` (MySQL ; CPU et mémoire du
+   conteneur via cAdvisor).

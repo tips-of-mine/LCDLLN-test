@@ -388,6 +388,7 @@ add_library(engine_core
   src/client/world/cells/CellHeightFields.cpp
   src/client/world/cells/CellAssetLoader.cpp
   src/client/world/cells/CellSurfaceMap.cpp
+  src/client/world/cells/CellSeaFallback.cpp   # lot D : mer de repli des cellules non générées
   src/client/render/WorldMapImGuiRenderer.cpp
   src/shared/platform/FileSystem.cpp
   src/shared/platform/FileWatcher.cpp

@@ -6,6 +6,7 @@
 // nommées. La documentation de chaque fonction est dans Engine.h.
 
 #include "src/client/app/Engine.h"
+#include "src/client/world/cells/CellSeaFallback.h"
 #include "src/client/app/EngineHelpers.h"
 
 #include "src/shared/network/LunarPayloads.h"
@@ -675,11 +676,19 @@ namespace engine
 			if (m_cellWorld)
 			{
 				// Mur invisible : on ne sort pas des cellules générées (le shard
-				// refuse aussi la position et recale le client).
+				// refuse aussi la position et recale le client). Lot D (bug 3) : ni
+				// vers une cellule générée dont le chargement a échoué (sans
+				// heightmap, le sol y serait un plan à Y = 0 sous un vide).
 				const engine::math::Vec3 moved = m_characterController.GetPosition();
-				if (!aboard && !engine::world::cells::IsMoveAllowed(m_generatedCells,
-						m_renderFrame.ToGlobalX(ccPrevPos.x), m_renderFrame.ToGlobalZ(ccPrevPos.z),
-						m_renderFrame.ToGlobalX(moved.x), m_renderFrame.ToGlobalZ(moved.z)))
+				const double fromGx = m_renderFrame.ToGlobalX(ccPrevPos.x), fromGz = m_renderFrame.ToGlobalZ(ccPrevPos.z);
+				const double toGx = m_renderFrame.ToGlobalX(moved.x), toGz = m_renderFrame.ToGlobalZ(moved.z);
+				if (!aboard && (!engine::world::cells::IsMoveAllowed(m_generatedCells, fromGx, fromGz, toGx, toGz)
+						|| !engine::world::cells::IsMoveAllowedAvoiding(
+							[this](engine::world::cells::CellCoord c) {
+								return m_generatedCells.Contains(c)
+									&& m_failedCells.count(engine::world::cells::CellZoneId(c, m_activeCellMap)) != 0;
+							},
+							fromGx, fromGz, toGx, toGz)))
 					m_characterController.BlockHorizontalAt(ccPrevPos.x, ccPrevPos.z);
 				// Streaming des cellules autour du joueur (rebase éventuel inclus).
 				{

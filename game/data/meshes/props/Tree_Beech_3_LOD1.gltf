@@ -1,0 +1,270 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Tree_Beech_3_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Pale",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Leaves_Beech",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Tree_Beech_3_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_Normal.png",
+   "uri": "T_Decor_Bark_Pale_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_BaseColor.png",
+   "uri": "T_Decor_Bark_Pale_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_ORM.png",
+   "uri": "T_Decor_Bark_Pale_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Beech_Normal.png",
+   "uri": "T_Decor_Leaves_Beech_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Beech_BaseColor.png",
+   "uri": "T_Decor_Leaves_Beech_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Beech_ORM.png",
+   "uri": "T_Decor_Leaves_Beech_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 1258,
+   "max": [
+    4.977345943450928,
+    19.120149612426758,
+    3.5035765171051025
+   ],
+   "min": [
+    -5.714939594268799,
+    -0.2033151239156723,
+    -4.775201797485352
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 1258,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 1258,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 1962,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 872,
+   "max": [
+    6.334948539733887,
+    20.247238159179688,
+    5.548758506774902
+   ],
+   "min": [
+    -7.477240562438965,
+    7.0702643394470215,
+    -7.692057132720947
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 872,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 872,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 1308,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 15096,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 15096,
+   "byteOffset": 15096,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 10064,
+   "byteOffset": 30192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3924,
+   "byteOffset": 40256,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 10464,
+   "byteOffset": 44180,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 10464,
+   "byteOffset": 54644,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 6976,
+   "byteOffset": 65108,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2616,
+   "byteOffset": 72084,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 74700,
+   "uri": "Tree_Beech_3_LOD1.bin"
+  }
+ ]
+}

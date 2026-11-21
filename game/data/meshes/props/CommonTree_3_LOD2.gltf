@@ -1,0 +1,270 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "CommonTree_3_LOD2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Broad",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Leaves_Broad",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "CommonTree_3_LOD2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_Normal.png",
+   "uri": "T_Decor_Bark_Broad_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_BaseColor.png",
+   "uri": "T_Decor_Bark_Broad_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_ORM.png",
+   "uri": "T_Decor_Bark_Broad_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_Normal.png",
+   "uri": "T_Decor_Leaves_Broad_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_BaseColor.png",
+   "uri": "T_Decor_Leaves_Broad_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_ORM.png",
+   "uri": "T_Decor_Leaves_Broad_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 352,
+   "max": [
+    3.6793012619018555,
+    14.965960502624512,
+    4.008228778839111
+   ],
+   "min": [
+    -5.085923671722412,
+    -0.18760551512241364,
+    -3.14467191696167
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 352,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 352,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 552,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 280,
+   "max": [
+    7.7417826652526855,
+    16.54277229309082,
+    9.652078628540039
+   ],
+   "min": [
+    -8.531672477722168,
+    3.1653895378112793,
+    -7.11467170715332
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 280,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 280,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 420,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 4224,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 4224,
+   "byteOffset": 4224,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2816,
+   "byteOffset": 8448,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1104,
+   "byteOffset": 11264,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3360,
+   "byteOffset": 12368,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3360,
+   "byteOffset": 15728,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2240,
+   "byteOffset": 19088,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 840,
+   "byteOffset": 21328,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 22168,
+   "uri": "CommonTree_3_LOD2.bin"
+  }
+ ]
+}

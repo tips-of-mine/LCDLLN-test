@@ -1,0 +1,1186 @@
+{
+  "_comment": "Atelier décors — registre des assets produits depuis la BD. Une entrée par asset livré. dims_m = [largeur X min,max] / [hauteur min,max] (cote prévue d'après la case étalon citée dans ref ; tolérance de contrôle ±10 %). budget = classe de budget (budgets). lods = niveaux livrés en plus du LOD0 (<id>_LOD1.gltf, <id>_LOD2.gltf). billboard = <id>_BB.gltf (2 plans croisés + texture T_Decor_BB_<id>.png). replaces = id existant conservé (§9 bis) ou null pour un nouvel asset. Lu par build_decor.py (production) et validate_decor.py (CI).",
+  "budgets": {
+    "tree": [
+      6000,
+      2000,
+      600
+    ],
+    "prop": [
+      1500,
+      500,
+      150
+    ],
+    "building": [
+      3000,
+      1000,
+      300
+    ],
+    "rock_big": [
+      3000,
+      1000,
+      300
+    ]
+  },
+  "assets": [
+    {
+      "id": "CommonTree_1",
+      "num": 1,
+      "family": "vegetation",
+      "builder": "broadleaf",
+      "seed": 101,
+      "budget": "tree",
+      "width_m": [
+        7,
+        14
+      ],
+      "height_m": [
+        16,
+        22
+      ],
+      "billboard": true,
+      "replaces": "CommonTree_1",
+      "ref": "T1-P012-C1 (cavalier 2,6 m)"
+    },
+    {
+      "id": "CommonTree_2",
+      "num": 1,
+      "family": "vegetation",
+      "builder": "broadleaf",
+      "seed": 102,
+      "budget": "tree",
+      "width_m": [
+        7,
+        14
+      ],
+      "height_m": [
+        16,
+        22
+      ],
+      "billboard": true,
+      "replaces": "CommonTree_2",
+      "ref": "T1-P012-C6"
+    },
+    {
+      "id": "CommonTree_3",
+      "num": 1,
+      "family": "vegetation",
+      "builder": "broadleaf",
+      "seed": 103,
+      "budget": "tree",
+      "width_m": [
+        7,
+        14
+      ],
+      "height_m": [
+        16,
+        22
+      ],
+      "billboard": true,
+      "replaces": "CommonTree_3",
+      "ref": "T1-P015-C1"
+    },
+    {
+      "id": "CommonTree_4",
+      "num": 1,
+      "family": "vegetation",
+      "builder": "broadleaf",
+      "seed": 104,
+      "budget": "tree",
+      "width_m": [
+        7,
+        14
+      ],
+      "height_m": [
+        16,
+        22
+      ],
+      "billboard": true,
+      "replaces": "CommonTree_4",
+      "ref": "T1-P021-C1"
+    },
+    {
+      "id": "CommonTree_5",
+      "num": 1,
+      "family": "vegetation",
+      "builder": "broadleaf",
+      "seed": 105,
+      "budget": "tree",
+      "width_m": [
+        7,
+        14
+      ],
+      "height_m": [
+        16,
+        22
+      ],
+      "billboard": true,
+      "replaces": "CommonTree_5",
+      "ref": "T3-P026-C2"
+    },
+    {
+      "id": "Tree_Oak_Lone_1",
+      "num": 2,
+      "family": "vegetation",
+      "builder": "oak",
+      "seed": 201,
+      "budget": "tree",
+      "width_m": [
+        12,
+        16
+      ],
+      "height_m": [
+        11,
+        15
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P022-C9 (personnage allongé)"
+    },
+    {
+      "id": "Tree_Oak_Lone_2",
+      "num": 2,
+      "family": "vegetation",
+      "builder": "oak",
+      "seed": 202,
+      "budget": "tree",
+      "width_m": [
+        12,
+        16
+      ],
+      "height_m": [
+        11,
+        15
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P015-C1"
+    },
+    {
+      "id": "TwistedTree_1",
+      "num": 3,
+      "family": "vegetation",
+      "builder": "twisted",
+      "seed": 301,
+      "budget": "tree",
+      "width_m": [
+        9,
+        16
+      ],
+      "height_m": [
+        12,
+        17
+      ],
+      "billboard": true,
+      "replaces": "TwistedTree_1",
+      "ref": "T1-P013-C7 (personnages assis) ; échelle générateur 0,45-0,75 -> 6-11 m"
+    },
+    {
+      "id": "TwistedTree_2",
+      "num": 3,
+      "family": "vegetation",
+      "builder": "twisted",
+      "seed": 302,
+      "budget": "tree",
+      "width_m": [
+        9,
+        16
+      ],
+      "height_m": [
+        12,
+        17
+      ],
+      "billboard": true,
+      "replaces": "TwistedTree_2",
+      "ref": "T1-P014-C1"
+    },
+    {
+      "id": "TwistedTree_3",
+      "num": 3,
+      "family": "vegetation",
+      "builder": "twisted",
+      "seed": 303,
+      "budget": "tree",
+      "width_m": [
+        9,
+        16
+      ],
+      "height_m": [
+        12,
+        17
+      ],
+      "billboard": true,
+      "replaces": "TwistedTree_3",
+      "ref": "T5-P003-C1"
+    },
+    {
+      "id": "TwistedTree_4",
+      "num": 3,
+      "family": "vegetation",
+      "builder": "twisted",
+      "seed": 304,
+      "budget": "tree",
+      "width_m": [
+        9,
+        16
+      ],
+      "height_m": [
+        12,
+        17
+      ],
+      "billboard": true,
+      "replaces": "TwistedTree_4",
+      "ref": "T1-P013-C6"
+    },
+    {
+      "id": "TwistedTree_5",
+      "num": 3,
+      "family": "vegetation",
+      "builder": "twisted",
+      "seed": 305,
+      "budget": "tree",
+      "width_m": [
+        9,
+        16
+      ],
+      "height_m": [
+        12,
+        17
+      ],
+      "billboard": true,
+      "replaces": "TwistedTree_5",
+      "ref": "T5-P007-C1"
+    },
+    {
+      "id": "Pine_1",
+      "num": 4,
+      "family": "vegetation",
+      "builder": "conifer",
+      "seed": 401,
+      "budget": "tree",
+      "width_m": [
+        5,
+        9
+      ],
+      "height_m": [
+        16,
+        23
+      ],
+      "billboard": true,
+      "replaces": "Pine_1",
+      "ref": "T1-P016-C9 (maisons)"
+    },
+    {
+      "id": "Pine_2",
+      "num": 4,
+      "family": "vegetation",
+      "builder": "conifer",
+      "seed": 402,
+      "budget": "tree",
+      "width_m": [
+        5,
+        9
+      ],
+      "height_m": [
+        16,
+        23
+      ],
+      "billboard": true,
+      "replaces": "Pine_2",
+      "ref": "T1-P041-C2"
+    },
+    {
+      "id": "Pine_3",
+      "num": 4,
+      "family": "vegetation",
+      "builder": "conifer",
+      "seed": 403,
+      "budget": "tree",
+      "width_m": [
+        5,
+        9
+      ],
+      "height_m": [
+        16,
+        23
+      ],
+      "billboard": true,
+      "replaces": "Pine_3",
+      "ref": "T3-P027-C1"
+    },
+    {
+      "id": "Pine_4",
+      "num": 4,
+      "family": "vegetation",
+      "builder": "conifer",
+      "seed": 404,
+      "budget": "tree",
+      "width_m": [
+        5,
+        9
+      ],
+      "height_m": [
+        16,
+        23
+      ],
+      "billboard": true,
+      "replaces": "Pine_4",
+      "ref": "T3-P027-C4"
+    },
+    {
+      "id": "Pine_5",
+      "num": 4,
+      "family": "vegetation",
+      "builder": "conifer",
+      "seed": 405,
+      "budget": "tree",
+      "width_m": [
+        5,
+        9
+      ],
+      "height_m": [
+        16,
+        23
+      ],
+      "billboard": true,
+      "replaces": "Pine_5",
+      "ref": "T5-P004-C1"
+    },
+    {
+      "id": "Tree_Cypress_1",
+      "num": 5,
+      "family": "vegetation",
+      "builder": "cypress",
+      "seed": 501,
+      "budget": "tree",
+      "width_m": [
+        2.5,
+        4
+      ],
+      "height_m": [
+        14,
+        20
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P021-C5 ; T3-P028-C1"
+    },
+    {
+      "id": "Tree_Cypress_2",
+      "num": 5,
+      "family": "vegetation",
+      "builder": "cypress",
+      "seed": 502,
+      "budget": "tree",
+      "width_m": [
+        2.5,
+        4
+      ],
+      "height_m": [
+        14,
+        20
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P022-C7"
+    },
+    {
+      "id": "Tree_Willow_1",
+      "num": 6,
+      "family": "vegetation",
+      "builder": "willow",
+      "seed": 601,
+      "budget": "tree",
+      "width_m": [
+        9,
+        13
+      ],
+      "height_m": [
+        9,
+        12
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P021-C4 (baigneuse)"
+    },
+    {
+      "id": "Tree_Oak_1",
+      "num": 2,
+      "family": "vegetation",
+      "builder": "oak_forest",
+      "seed": 211,
+      "budget": "tree",
+      "width_m": [
+        10,
+        16
+      ],
+      "height_m": [
+        18,
+        25
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026-C2 (chênes énormes, forêt des Lutins) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Oak_2",
+      "num": 2,
+      "family": "vegetation",
+      "builder": "oak_forest",
+      "seed": 212,
+      "budget": "tree",
+      "width_m": [
+        10,
+        16
+      ],
+      "height_m": [
+        18,
+        25
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026-C2 (chênes énormes, forêt des Lutins) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Oak_3",
+      "num": 2,
+      "family": "vegetation",
+      "builder": "oak_forest",
+      "seed": 213,
+      "budget": "tree",
+      "width_m": [
+        10,
+        16
+      ],
+      "height_m": [
+        18,
+        25
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T3-P026-C2 (chênes énormes, forêt des Lutins) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Beech_1",
+      "num": 186,
+      "family": "vegetation",
+      "builder": "beech",
+      "seed": 1861,
+      "budget": "tree",
+      "width_m": [
+        8,
+        14
+      ],
+      "height_m": [
+        20,
+        28
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P012-C1 (futaie, troncs droits clairs) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Beech_2",
+      "num": 186,
+      "family": "vegetation",
+      "builder": "beech",
+      "seed": 1862,
+      "budget": "tree",
+      "width_m": [
+        8,
+        14
+      ],
+      "height_m": [
+        20,
+        28
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P012-C1 (futaie, troncs droits clairs) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Beech_3",
+      "num": 186,
+      "family": "vegetation",
+      "builder": "beech",
+      "seed": 1863,
+      "budget": "tree",
+      "width_m": [
+        8,
+        14
+      ],
+      "height_m": [
+        20,
+        28
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P012-C1 (futaie, troncs droits clairs) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Poplar_1",
+      "num": 187,
+      "family": "vegetation",
+      "builder": "poplar",
+      "seed": 1871,
+      "budget": "tree",
+      "width_m": [
+        3.5,
+        6.5
+      ],
+      "height_m": [
+        20,
+        28
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P021-C5,C6 ; T1-P022-C7 (rives) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Poplar_2",
+      "num": 187,
+      "family": "vegetation",
+      "builder": "poplar",
+      "seed": 1872,
+      "budget": "tree",
+      "width_m": [
+        3.5,
+        6.5
+      ],
+      "height_m": [
+        20,
+        28
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P021-C5,C6 ; T1-P022-C7 (rives) ; demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Tree_Willow_2",
+      "num": 6,
+      "family": "vegetation",
+      "builder": "willow",
+      "seed": 602,
+      "budget": "tree",
+      "width_m": [
+        9,
+        13
+      ],
+      "height_m": [
+        9,
+        12
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P021-C4 ; saule pleureur, demande du propriétaire 21/11/2026"
+    },
+    {
+      "id": "Bush_Common",
+      "num": 8,
+      "family": "vegetation",
+      "builder": "bush",
+      "seed": 801,
+      "budget": "prop",
+      "width_m": [
+        1.4,
+        2.2
+      ],
+      "height_m": [
+        1.0,
+        1.8
+      ],
+      "billboard": false,
+      "replaces": "Bush_Common",
+      "ref": "T1-P012-C2"
+    },
+    {
+      "id": "Bush_Common_Flowers",
+      "num": 8,
+      "family": "vegetation",
+      "builder": "bush_flowers",
+      "seed": 802,
+      "budget": "prop",
+      "width_m": [
+        1.4,
+        2.2
+      ],
+      "height_m": [
+        1.0,
+        1.8
+      ],
+      "billboard": false,
+      "replaces": "Bush_Common_Flowers",
+      "ref": "T1-P021-C2"
+    },
+    {
+      "id": "Fern_1",
+      "num": 9,
+      "family": "vegetation",
+      "builder": "fern",
+      "seed": 901,
+      "budget": "prop",
+      "width_m": [
+        0.9,
+        1.6
+      ],
+      "height_m": [
+        0.6,
+        1.0
+      ],
+      "billboard": false,
+      "replaces": "Fern_1",
+      "ref": "T1-P021-C2"
+    },
+    {
+      "id": "Plant_Mullein_1",
+      "num": 10,
+      "family": "vegetation",
+      "builder": "mullein",
+      "seed": 1001,
+      "budget": "prop",
+      "width_m": [
+        0.5,
+        0.9
+      ],
+      "height_m": [
+        1.2,
+        1.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P021-C2 (personnage)"
+    },
+    {
+      "id": "Reed_1",
+      "num": 11,
+      "family": "vegetation",
+      "builder": "reed",
+      "seed": 1101,
+      "budget": "prop",
+      "width_m": [
+        1.0,
+        1.8
+      ],
+      "height_m": [
+        1.5,
+        2.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P021-C4 (baigneuse)"
+    },
+    {
+      "id": "Reed_2",
+      "num": 11,
+      "family": "vegetation",
+      "builder": "reed",
+      "seed": 1102,
+      "budget": "prop",
+      "width_m": [
+        1.0,
+        1.8
+      ],
+      "height_m": [
+        1.5,
+        2.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P022-C7"
+    },
+    {
+      "id": "WaterLily_1",
+      "num": 12,
+      "family": "vegetation",
+      "builder": "lily",
+      "seed": 1201,
+      "budget": "prop",
+      "width_m": [
+        1.0,
+        2.0
+      ],
+      "height_m": [
+        0.02,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P021-C4 (feuille Ø 0,3 m)"
+    },
+    {
+      "id": "WaterLily_2",
+      "num": 12,
+      "family": "vegetation",
+      "builder": "lily",
+      "seed": 1202,
+      "budget": "prop",
+      "width_m": [
+        1.0,
+        2.0
+      ],
+      "height_m": [
+        0.02,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P022-C7"
+    },
+    {
+      "id": "Grass_Common_Short",
+      "num": 13,
+      "family": "vegetation",
+      "builder": "grass_short",
+      "seed": 1301,
+      "budget": "prop",
+      "width_m": [
+        0.5,
+        0.9
+      ],
+      "height_m": [
+        0.3,
+        0.5
+      ],
+      "billboard": false,
+      "replaces": "Grass_Common_Short",
+      "ref": "T1-P024-C1"
+    },
+    {
+      "id": "Grass_Common_Tall",
+      "num": 13,
+      "family": "vegetation",
+      "builder": "grass_tall",
+      "seed": 1302,
+      "budget": "prop",
+      "width_m": [
+        0.6,
+        1.0
+      ],
+      "height_m": [
+        0.6,
+        1.0
+      ],
+      "billboard": false,
+      "replaces": "Grass_Common_Tall",
+      "ref": "T1-P024-C1"
+    },
+    {
+      "id": "Grass_Wispy_Short",
+      "num": 13,
+      "family": "vegetation",
+      "builder": "grass_wispy_short",
+      "seed": 1303,
+      "budget": "prop",
+      "width_m": [
+        0.5,
+        0.9
+      ],
+      "height_m": [
+        0.3,
+        0.55
+      ],
+      "billboard": false,
+      "replaces": "Grass_Wispy_Short",
+      "ref": "T1-P016-C7"
+    },
+    {
+      "id": "Grass_Wispy_Tall",
+      "num": 13,
+      "family": "vegetation",
+      "builder": "grass_wispy_tall",
+      "seed": 1304,
+      "budget": "prop",
+      "width_m": [
+        0.6,
+        1.1
+      ],
+      "height_m": [
+        0.7,
+        1.1
+      ],
+      "billboard": false,
+      "replaces": "Grass_Wispy_Tall",
+      "ref": "T1-P016-C7"
+    },
+    {
+      "id": "Crop_Wheat_1",
+      "num": 14,
+      "family": "vegetation",
+      "builder": "wheat",
+      "seed": 1401,
+      "budget": "prop",
+      "width_m": [
+        1.6,
+        2.2
+      ],
+      "height_m": [
+        0.9,
+        1.15
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P024-C1 (remplace Plant_7 dans les champs)"
+    },
+    {
+      "id": "Rock_Medium_1",
+      "num": 15,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 1501,
+      "budget": "prop",
+      "width_m": [
+        1.3,
+        2.0
+      ],
+      "height_m": [
+        0.7,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": "Rock_Medium_1",
+      "ref": "T1-P030-C3 ; échelle générateur 0,7-3,2"
+    },
+    {
+      "id": "Rock_Medium_2",
+      "num": 15,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 1502,
+      "budget": "prop",
+      "width_m": [
+        1.3,
+        2.0
+      ],
+      "height_m": [
+        0.7,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": "Rock_Medium_2",
+      "ref": "T2-P007-C2"
+    },
+    {
+      "id": "Rock_Medium_3",
+      "num": 15,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 1503,
+      "budget": "prop",
+      "width_m": [
+        1.3,
+        2.0
+      ],
+      "height_m": [
+        0.7,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": "Rock_Medium_3",
+      "ref": "T3-P012-C1"
+    },
+    {
+      "id": "Pebble_Round_1",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_round",
+      "seed": 1601,
+      "budget": "prop",
+      "width_m": [
+        0.3,
+        0.55
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Round_1",
+      "ref": "T1-P019-C10 ; échelle générateur 2-4"
+    },
+    {
+      "id": "Pebble_Round_2",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_round",
+      "seed": 1602,
+      "budget": "prop",
+      "width_m": [
+        0.3,
+        0.55
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Round_2",
+      "ref": "T1-P019-C11"
+    },
+    {
+      "id": "Pebble_Round_3",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_round",
+      "seed": 1603,
+      "budget": "prop",
+      "width_m": [
+        0.3,
+        0.55
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Round_3",
+      "ref": "T1-P026-C9"
+    },
+    {
+      "id": "Pebble_Round_4",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_round",
+      "seed": 1604,
+      "budget": "prop",
+      "width_m": [
+        0.3,
+        0.55
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Round_4",
+      "ref": "T1-P027-C1"
+    },
+    {
+      "id": "Pebble_Round_5",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_round",
+      "seed": 1605,
+      "budget": "prop",
+      "width_m": [
+        0.3,
+        0.55
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Round_5",
+      "ref": "T1-P027-C1"
+    },
+    {
+      "id": "Pebble_Square_1",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1611,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_1",
+      "ref": "T1-P019-C10"
+    },
+    {
+      "id": "Pebble_Square_2",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1612,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_2",
+      "ref": "T1-P019-C11"
+    },
+    {
+      "id": "Pebble_Square_3",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1613,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_3",
+      "ref": "T1-P026-C9"
+    },
+    {
+      "id": "Pebble_Square_4",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1614,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_4",
+      "ref": "T1-P026-C9"
+    },
+    {
+      "id": "Pebble_Square_5",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1615,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_5",
+      "ref": "T1-P027-C1"
+    },
+    {
+      "id": "Pebble_Square_6",
+      "num": 16,
+      "family": "mineral",
+      "builder": "pebble_square",
+      "seed": 1616,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.5
+      ],
+      "height_m": [
+        0.08,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": "Pebble_Square_6",
+      "ref": "T1-P027-C1"
+    },
+    {
+      "id": "Rock_Spire_1",
+      "num": 17,
+      "family": "mineral",
+      "builder": "spire",
+      "seed": 1701,
+      "budget": "rock_big",
+      "width_m": [
+        6,
+        14
+      ],
+      "height_m": [
+        20,
+        32
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P026-C1 (cavaliers)"
+    },
+    {
+      "id": "Rock_Spire_2",
+      "num": 17,
+      "family": "mineral",
+      "builder": "spire",
+      "seed": 1702,
+      "budget": "rock_big",
+      "width_m": [
+        6,
+        14
+      ],
+      "height_m": [
+        30,
+        45
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T1-P027-C1"
+    },
+    {
+      "id": "Rock_Spire_3",
+      "num": 17,
+      "family": "mineral",
+      "builder": "spire",
+      "seed": 1703,
+      "budget": "rock_big",
+      "width_m": [
+        8,
+        18
+      ],
+      "height_m": [
+        40,
+        60
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T2-P016-C1"
+    },
+    {
+      "id": "Standing_Stone_1",
+      "num": 18,
+      "family": "mineral",
+      "builder": "standing_stone",
+      "seed": 1801,
+      "budget": "prop",
+      "width_m": [
+        0.9,
+        1.6
+      ],
+      "height_m": [
+        3,
+        4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P023-C6 (Ghorghor ≈ 3 m)"
+    },
+    {
+      "id": "Standing_Stone_2",
+      "num": 18,
+      "family": "mineral",
+      "builder": "standing_stone",
+      "seed": 1802,
+      "budget": "prop",
+      "width_m": [
+        0.9,
+        1.6
+      ],
+      "height_m": [
+        3,
+        4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P013-C6"
+    }
+  ]
+}

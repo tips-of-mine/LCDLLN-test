@@ -1,0 +1,270 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Tree_Poplar_1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Pale",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Leaves_Poplar",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Tree_Poplar_1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_Normal.png",
+   "uri": "T_Decor_Bark_Pale_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_BaseColor.png",
+   "uri": "T_Decor_Bark_Pale_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_ORM.png",
+   "uri": "T_Decor_Bark_Pale_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Poplar_Normal.png",
+   "uri": "T_Decor_Leaves_Poplar_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Poplar_BaseColor.png",
+   "uri": "T_Decor_Leaves_Poplar_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Poplar_ORM.png",
+   "uri": "T_Decor_Leaves_Poplar_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 4982,
+   "max": [
+    1.549113154411316,
+    23.589031219482422,
+    2.0225601196289062
+   ],
+   "min": [
+    -2.2904603481292725,
+    -0.16665609180927277,
+    -1.6059448719024658
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 4982,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 4982,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 8370,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 3040,
+   "max": [
+    2.7320761680603027,
+    24.248409271240234,
+    3.2625532150268555
+   ],
+   "min": [
+    -3.7679238319396973,
+    3.3831021785736084,
+    -3.0333516597747803
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 3040,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 3040,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 4560,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 59784,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 59784,
+   "byteOffset": 59784,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 39856,
+   "byteOffset": 119568,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 16740,
+   "byteOffset": 159424,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 36480,
+   "byteOffset": 176164,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 36480,
+   "byteOffset": 212644,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 24320,
+   "byteOffset": 249124,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 9120,
+   "byteOffset": 273444,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 282564,
+   "uri": "Tree_Poplar_1.bin"
+  }
+ ]
+}

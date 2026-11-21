@@ -373,11 +373,18 @@ namespace engine::gameplay
 			fh.hit = false;
 			fh.fraction = 1.0f;
 			fh.normal = engine::math::Vec3(0.0f, 1.0f, 0.0f);
-			if (world.SweepCapsule(m_capsule, pos, pos - engine::math::Vec3(0.0f, kFinalGroundProbe, 0.0f), fh)
+			// v1.0.133 — si on était au sol, la sonde part de +maxStep et descend jusqu'à
+			// -maxStep : en montée douce, la capsule légèrement enfoncée n'était plus vue par
+			// la sonde de 5 cm (état « en l'air » une image sur deux, Air/Ground en boucle).
+			const float reach = m_isGrounded ? m_cfg.maxStep : kFinalGroundProbe;
+			const engine::math::Vec3 from = pos + engine::math::Vec3(0.0f, m_isGrounded ? reach : 0.0f, 0.0f);
+			const engine::math::Vec3 to = pos - engine::math::Vec3(0.0f, reach, 0.0f);
+			if (world.SweepCapsule(m_capsule, from, to, fh)
 				&& fh.hit && fh.fraction < 1.0f && IsWalkable(fh.normal, maxSlopeCos))
 			{
 				grounded = true;
 				vel.y = 0.0f;
+				pos.y = from.y + (to.y - from.y) * fh.fraction; // recalé sur le sol trouvé
 			}
 		}
 

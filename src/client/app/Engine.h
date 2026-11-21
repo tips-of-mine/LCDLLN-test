@@ -1748,8 +1748,23 @@ namespace engine
 		/// primitives de m_worldCollider de (\p dx, \p dz) m — rebase de l'origine,
 		/// sans recharger de mesh ni recréer de matériau.
 		void TranslateStaticProps(float dx, float dz);
-		/// Reconstruit m_clientWaterScene (rendu) à partir de l'eau GLOBALE des cellules.
+		/// Reconstruit m_clientWaterScene (rendu) à partir de l'eau GLOBALE des cellules,
+		/// plus (lot D, bug 3) la mer de repli des cellules manquantes autour de
+		/// \ref m_cellFallbackSeaCenter (CellSeaFallback.h). Remet
+		/// \ref m_cellWaterFallbackDirty à false et marque le mesh d'eau à renvoyer au
+		/// GPU (m_waterClientSceneDirty). Main thread.
 		void RebuildCellWater();
+		/// Lot D (bug 3) — vrai si la cellule \p cell de la carte active n'a pas de
+		/// contenu affichable : non générée, ou chargement en échec (m_failedCells)
+		/// sans mer propre dans son water.bin. Pur lecture d'état, main thread.
+		bool IsCellMissingForSea(engine::world::cells::CellCoord cell) const;
+		/// Lot D (bug 3) — cellules manquantes à couvrir de mer de repli autour de
+		/// \p center (rayon selon la distance de vue courante). \p out vidé puis rempli.
+		void SelectCellFallbackSea(engine::world::cells::CellCoord center,
+			std::vector<engine::world::cells::CellCoord>& out) const;
+		/// Lot D (bug 3) — mémorise l'échec de chargement de \p cell (m_failedCells) et
+		/// demande la reconstruction de l'eau (mer de repli) à la prochaine frame.
+		void MarkCellFailed(engine::world::cells::CellCoord cell);
 		/// Recalcule les décalages des terrains et des collisionneurs de cellules.
 		void RefreshCellOffsets();
 		/// Dessine les terrains des cellules résidentes (le premier efface le GBuffer).
@@ -1783,6 +1798,15 @@ namespace engine
 		/// Cellules dont le chargement a échoué (zone.json / heightmap / terrain absents
 		/// ou illisibles) : jamais retentées dans la session (pas de relecture par frame).
 		std::unordered_set<uint32_t> m_failedCells;
+		/// Lot D (bug 3) — cellule autour de laquelle la mer de repli a été posée
+		/// (cellule du joueur à la dernière reconstruction de l'eau).
+		engine::world::cells::CellCoord m_cellFallbackSeaCenter{};
+		/// Lot D (bug 3) — cellules couvertes par la mer de repli (ordre de
+		/// SelectFallbackSeaCells) : comparées chaque frame pour ne reconstruire
+		/// l'eau que si l'ensemble change.
+		std::vector<engine::world::cells::CellCoord> m_cellFallbackSeaCells;
+		/// Lot D (bug 3) — vrai si une cellule vient d'échouer : eau à reconstruire.
+		bool m_cellWaterFallbackDirty = false;
 		/// Eau de chaque cellule chargée, en coordonnées GLOBALES (float, telles que lues).
 		std::unordered_map<uint32_t, engine::world::water::WaterScene> m_cellWaterGlobal;
 		/// Rayons (m, distance au bord de la cellule) : terrain/décor chargés, déchargés
@@ -1971,6 +1995,9 @@ namespace engine
 		// Lu par le gating terrain legacy (rendu exclusif anti z-fighting).
 		// Remis à jour chaque frame à la fin du bloc de dessin des chunks.
 		std::uint32_t m_lastFrameChunkDrawCount = 0u;
+		/// Lot D (bug 5) — vrai une fois journalisé que les chunks hérités ne sont pas
+		/// demandés dans le monde en cellules (une seule ligne par session). Main thread.
+		bool m_cellChunkTerrainSkipLogged = false;
 		/// M100 — Task 12 : descriptor set layout pour le set 0 caméra
 		/// (UBO `CameraUBO { mat4 viewProj; }`) du `TerrainChunkPipeline`.
 		VkDescriptorSetLayout m_terrainChunkCameraSetLayout = VK_NULL_HANDLE;

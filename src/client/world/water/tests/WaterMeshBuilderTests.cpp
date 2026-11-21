@@ -97,6 +97,45 @@ namespace
 		REQUIRE(err.find(">= 3") != std::string::npos);
 	}
 
+	/// v1.0.133 — vasque de 16 sommets loin de l'origine de rendu (300 km) : l'aire
+	/// calculée en float y changeait de signe et le lac n'était pas maillé.
+	LakeInstance FarStarLake(bool clockwise, bool closingDuplicate)
+	{
+		LakeInstance lake;
+		const float cx = 300000.0f, cz = -150000.0f;
+		for (int k = 0; k < 16; ++k)
+		{
+			const int i = clockwise ? 15 - k : k;
+			const double a = 6.283185307179586 * i / 16.0;
+			const double r = 6.5 + 1.2 * std::sin(3.0 * a);
+			lake.polygon.push_back(Vec3{ cx + static_cast<float>(r * std::cos(a)), 0.0f, cz + static_cast<float>(r * std::sin(a)) });
+		}
+		if (closingDuplicate) lake.polygon.push_back(lake.polygon.front());
+		lake.waterLevelY = 12.0f;
+		return lake;
+	}
+
+	void Test_BuildLakeMesh_FarFromOrigin_BothWindings()
+	{
+		for (int cw = 0; cw < 2; ++cw)
+			for (int dup = 0; dup < 2; ++dup)
+			{
+				WaterMeshCpu mesh; std::string err;
+				REQUIRE(BuildLakeMesh(FarStarLake(cw != 0, dup != 0), mesh, err));
+				REQUIRE(err.empty());
+				REQUIRE(mesh.indices.size() == 14 * 3); // 16 sommets -> 14 triangles
+			}
+	}
+
+	void Test_BuildLakeMesh_CollinearPoints_Removed()
+	{
+		LakeInstance lake;
+		lake.polygon = { {0,0,0}, {1,0,0}, {2,0,0}, {2,0,2}, {0,0,2} }; // (1,0,0) aligné
+		WaterMeshCpu mesh; std::string err;
+		REQUIRE(BuildLakeMesh(lake, mesh, err));
+		REQUIRE(mesh.indices.size() == 2 * 3);
+	}
+
 	void Test_BuildRiverMesh_TooFewNodes_Fails()
 	{
 		RiverInstance river;
@@ -115,5 +154,7 @@ int main()
 	Test_BuildRiverMesh_4Nodes_Produces6Quads();
 	Test_BuildLakeMesh_TooFewVertices_Fails();
 	Test_BuildRiverMesh_TooFewNodes_Fails();
+	Test_BuildLakeMesh_FarFromOrigin_BothWindings();
+	Test_BuildLakeMesh_CollinearPoints_Removed();
 	return g_failed;
 }

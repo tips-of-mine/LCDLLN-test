@@ -1592,7 +1592,9 @@ namespace tools::world_gen
 		/// PORTAL.2 — vrai pour un décor végétal (arbres, buissons, fleurs, herbes…).
 		bool IsVegetationMesh(const std::string& mesh)
 		{
-			for (const char* t : { "Tree", "Pine", "Bush", "Flower", "Clover", "Fern", "Grass", "Plant", "Mushroom", "Petal", "Reed" })
+			// Atelier décors : parcelles de cultures, plantes d'eau, haies, troncs et souches.
+			for (const char* t : { "Tree", "Pine", "Bush", "Flower", "Clover", "Fern", "Grass", "Plant", "Mushroom", "Petal", "Reed",
+				"Crop_", "WaterLily", "Duckweed", "Hedge", "Log_Fallen", "Stump" })
 				if (mesh.find(t) != std::string::npos) return true;
 			return false;
 		}

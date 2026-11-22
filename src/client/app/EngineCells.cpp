@@ -727,19 +727,28 @@ namespace engine
 	void Engine::ApplyForestFillerSettings()
 	{
 		m_forestFillerEnabled = m_cfg.GetBool("world.forest.filler", true);
-		// Par défaut : au-delà de la distance d'affichage des arbres (classe « grand »)
-		// du préréglage, plus une marge pour que la lisière lointaine soit déjà là.
-		const double cullLarge = m_cfg.GetDouble("world.scatter.cull_large_m", 150.0) * m_viewDistance.scatterScale;
+		// Par défaut : au-delà de la distance d'affichage des arbres du préréglage, plus
+		// une marge pour que la lisière lointaine soit déjà là. Les arbres à billboard
+		// restent visibles jusqu'à world.scatter.cull_billboard_m (horizon boisé) : la
+		// forêt de remplissage est posée jusque-là.
+		const double scale = m_viewDistance.scatterScale;
+		const double cullLarge = m_cfg.GetDouble("world.scatter.cull_large_m", 150.0) * scale;
+		const double cullTrees = std::max(cullLarge, m_cfg.GetDouble("world.scatter.cull_billboard_m", 0.0) * scale);
 		const double radius = m_cfg.Has("world.forest.filler_radius_m")
-			? m_cfg.GetDouble("world.forest.filler_radius_m", cullLarge + 30.0)
-			: cullLarge + 30.0;
+			? m_cfg.GetDouble("world.forest.filler_radius_m", cullTrees + 30.0)
+			: cullTrees + 30.0;
 		m_forestFillerRadiusM = static_cast<float>(std::clamp(radius, 40.0, 1500.0));
+		// Sous-bois (classe moyenne) : coupé à cull_medium_m, posé un peu au-delà seulement
+		// (pas jusqu'à l'horizon des arbres : ~4 fois moins d'instances).
+		const double cullMedium = m_cfg.GetDouble("world.scatter.cull_medium_m", 80.0) * scale;
+		m_forestFillerUnderRadiusM = static_cast<float>(std::clamp(
+			m_cfg.GetDouble("world.forest.under_radius_m", cullMedium + 30.0), 20.0, static_cast<double>(m_forestFillerRadiusM)));
 		m_forestFillerStepM = static_cast<float>(std::clamp(m_cfg.GetDouble("world.forest.rebuild_step_m", 24.0), 4.0, 200.0));
 		// Rayon ou activation changés : tout est reconstruit au prochain passage.
 		for (CellRenderTile& tile : m_cellTiles)
 			tile.fillerCenterX = tile.fillerCenterZ = std::numeric_limits<double>::quiet_NaN();
-		LOG_INFO(Core, "[Forest] remplissage {} : rayon {:.0f} m, reconstruction tous les {:.0f} m",
-			m_forestFillerEnabled ? "actif" : "desactive", m_forestFillerRadiusM, m_forestFillerStepM);
+		LOG_INFO(Core, "[Forest] remplissage {} : rayon {:.0f} m (sous-bois {:.0f} m), reconstruction tous les {:.0f} m",
+			m_forestFillerEnabled ? "actif" : "desactive", m_forestFillerRadiusM, m_forestFillerUnderRadiusM, m_forestFillerStepM);
 	}
 
 	void Engine::UpdateForestFiller(double globalX, double globalZ)
@@ -768,6 +777,7 @@ namespace engine
 				continue;
 			engine::world::instances::ForestFillerParams params;
 			params.radiusM = m_forestFillerRadiusM;
+			params.underRadiusM = m_forestFillerUnderRadiusM;
 			engine::world::instances::ScatterFile file;
 			const std::function<double(double, double)> altitude = [this](double x, double z) {
 				float h = 0.0f;

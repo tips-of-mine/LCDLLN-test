@@ -61,3 +61,42 @@ les rend via le flag matériau `VertexColorAlbedo` (cf. `gbuffer_geometry.frag`)
 ## Versions pinned
 
 - FBX2glTF : v0.13.0 (Godot fork). Pour mettre à jour : modifier `$Version` dans `download_fbx2gltf.ps1` + recalculer SHA256.
+
+## Arbres « dark fantasy » procéduraux (Blender headless)
+
+`generate_trees_blender.py` génère 8 arbres dans le style sombre des BD, sans add-on
+ni image externe (textures d'écorce et cartes de feuillage calculées par le script) :
+`DarkOak_1/2` (chênes), `DarkPine_1/2` (pins), `GnarledDeadTree_1/2` (arbres morts),
+`MarshWillow_1/2` (saules de marais). Graine fixe par arbre : la sortie est identique
+d'une exécution à l'autre.
+
+```powershell
+# Régénère tous les arbres dans game/data/meshes/props :
+& "C:/Program Files/Blender Foundation/Blender 5.1/blender.exe" --background `
+    --python tools/asset_pipeline/generate_trees_blender.py
+# Un seul arbre : -- --only DarkOak_1     |   Autre dossier : -- --out <dossier>
+```
+
+Aperçu dans un Blender ouvert (les 3 LOD côte à côte, sans export), console Python :
+`exec(open(r"<dépôt>/tools/asset_pipeline/generate_trees_blender.py").read(), {"__name__": "__main__", "LCDLLN_TREES_PREVIEW": True})`
+
+Sorties :
+
+| Fichier | Rôle | Triangles (budget) |
+|---|---|---|
+| `meshes/props/<Nom>.gltf` | LOD0, détail complet (utilisé par le jeu et le catalogue) | ≤ 26 000 (≈ 4 000 à 14 000) |
+| `meshes/props/lod/<Nom>_LOD1.gltf` | LOD1 : moins de côtés, brindilles retirées, cartes plus grandes | ≤ 9 000 |
+| `meshes/props/lod/<Nom>_LOD2.gltf` | LOD2 : tronc, charpentières, quelques grandes cartes | ≤ 2 500 |
+| `meshes/props/Bark_*.png`, `Leaves_*.png` | textures partagées (écorce + normal map, feuillage RGBA) | — |
+
+Le feuillage est en `alphaMode: BLEND` (le moteur active la découpe alpha), normales des
+cartes orientées vers l'extérieur de la couronne. Les arbres sont à taille réelle
+(chêne ≈ 10 m, pin ≈ 17 m) et ajoutés aux tables de `tools/world_gen/lib/Vegetation.cpp`
+(feuillus, conifères, marais, terres mortes). **Limites actuelles du moteur** : le client
+ne bascule pas encore entre LOD0/1/2 pour les props de décor (seul le LOD0 est affiché) ;
+le billboard (impostor `.mipo`) se cuit à la demande, il n'est pas versionné (≈ 3 Mo par
+arbre) et ne s'affiche que si `world.impostor.enabled` est vrai :
+
+```powershell
+impostor_builder.exe --input game/data/meshes/props/DarkOak_1.gltf --output game/data/meshes/props/DarkOak_1.mipo
+```

@@ -67,20 +67,30 @@ namespace tools::world_gen
 				{ "CommonTree_3", 1, 0.85, 1.2, 0.55 }, { "CommonTree_4", 1, 0.85, 1.25, 0.55 },
 				{ "CommonTree_5", 1, 0.85, 1.25, 0.55 }, { "Pine_1", 0.5, 0.85, 1.2, 0.45 },
 				{ "Pine_3", 0.5, 0.85, 1.2, 0.45 }, { "TwistedTree_2", 0.12, 0.55, 0.75, 0.7 },
-				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 } };
+				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 },
+				// Arbres « dark fantasy » (tools/asset_pipeline/generate_trees_blender.py),
+				// à taille réelle : échelle proche de 1.
+				{ "DarkOak_1", 1.2, 0.85, 1.15, 0.7 }, { "DarkOak_2", 1.2, 0.85, 1.15, 0.7 },
+				{ "GnarledDeadTree_1", 0.05, 0.85, 1.1, 0.5 } };
 			static const std::vector<Species> conifer = {
 				{ "Pine_1", 1, 0.85, 1.3, 0.45 }, { "Pine_2", 1, 0.85, 1.3, 0.45 }, { "Pine_3", 1, 0.85, 1.3, 0.45 },
-				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 } };
+				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 },
+				{ "DarkPine_1", 1.5, 0.8, 1.15, 0.4 }, { "DarkPine_2", 1.5, 0.8, 1.15, 0.4 },
+				{ "GnarledDeadTree_2", 0.1, 0.85, 1.1, 0.5 } };
 			static const std::vector<Species> swamp = {
 				{ "TwistedTree_1", 1, 0.45, 0.7, 0.7 }, { "TwistedTree_3", 1, 0.5, 0.75, 0.7 },
 				{ "TwistedTree_4", 1, 0.5, 0.75, 0.7 }, { "DeadTree_2", 1.2, 0.8, 1.2, 0.45 },
-				{ "DeadTree_4", 1.0, 0.8, 1.2, 0.45 } };
+				{ "DeadTree_4", 1.0, 0.8, 1.2, 0.45 },
+				{ "MarshWillow_1", 1.4, 0.85, 1.15, 0.55 }, { "MarshWillow_2", 1.4, 0.85, 1.15, 0.55 },
+				{ "GnarledDeadTree_1", 0.8, 0.85, 1.15, 0.5 } };
 			static const std::vector<Species> dead = {
 				{ "DeadTree_1", 1, 0.8, 1.2, 0.45 }, { "DeadTree_2", 1, 0.8, 1.2, 0.45 },
-				{ "DeadTree_3", 1, 0.8, 1.2, 0.45 }, { "DeadTree_4", 1, 0.8, 1.2, 0.45 }, { "DeadTree_5", 1, 0.8, 1.2, 0.45 } };
+				{ "DeadTree_3", 1, 0.8, 1.2, 0.45 }, { "DeadTree_4", 1, 0.8, 1.2, 0.45 }, { "DeadTree_5", 1, 0.8, 1.2, 0.45 },
+				{ "GnarledDeadTree_1", 1.5, 0.8, 1.15, 0.5 }, { "GnarledDeadTree_2", 1.5, 0.8, 1.15, 0.5 } };
 			static const std::vector<Species> grove = {
 				{ "CommonTree_1", 1, 0.9, 1.3, 0.55 }, { "CommonTree_2", 1, 0.9, 1.3, 0.55 },
-				{ "CommonTree_4", 1, 0.9, 1.3, 0.55 }, { "CommonTree_5", 1, 0.9, 1.3, 0.55 }, { "Pine_2", 0.4, 0.9, 1.2, 0.45 } };
+				{ "CommonTree_4", 1, 0.9, 1.3, 0.55 }, { "CommonTree_5", 1, 0.9, 1.3, 0.55 }, { "Pine_2", 0.4, 0.9, 1.2, 0.45 },
+				{ "DarkOak_1", 1, 0.9, 1.15, 0.7 }, { "DarkOak_2", 1, 0.9, 1.15, 0.7 } };
 			if (c == '%' || c == '&') return swamp;
 			if (c == '~' || c == ':' || c == 'V' || c == 'l') return dead;
 			if (c == '^' || c == 'M' || altitude > 900.0) return conifer; // v1.0.130 : conifères au-dessus de 900 m

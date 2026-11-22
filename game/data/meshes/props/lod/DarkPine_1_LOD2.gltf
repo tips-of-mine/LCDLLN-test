@@ -1,0 +1,237 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "DarkPine_1_LOD2"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Bark_DarkPine",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9200000166893005
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "Leaves_DarkPine",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.75
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "DarkPine_1_LOD2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        },
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkPine_Normal",
+      "uri": "../Bark_DarkPine_Normal.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkPine",
+      "uri": "../Bark_DarkPine.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Leaves_DarkPine",
+      "uri": "../Leaves_DarkPine.png"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1257,
+      "max": [
+        5.548752784729004,
+        16.24419593811035,
+        5.1845879554748535
+      ],
+      "min": [
+        -5.911670207977295,
+        -0.2766226828098297,
+        -4.662191390991211
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1257,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 1257,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 5403,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 184,
+      "max": [
+        6.933695316314697,
+        16.63416290283203,
+        6.266087532043457
+      ],
+      "min": [
+        -5.251853942871094,
+        -0.5276167392730713,
+        -6.241790771484375
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 184,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 184,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 276,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 15084,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 15084,
+      "byteOffset": 15084,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 10056,
+      "byteOffset": 30168,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 10806,
+      "byteOffset": 40224,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2208,
+      "byteOffset": 51032,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2208,
+      "byteOffset": 53240,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1472,
+      "byteOffset": 55448,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 552,
+      "byteOffset": 56920,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 57472,
+      "uri": "DarkPine_1_LOD2.bin"
+    }
+  ]
+}

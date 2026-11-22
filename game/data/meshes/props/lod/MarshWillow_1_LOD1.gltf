@@ -1,0 +1,237 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "MarshWillow_1_LOD1"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Bark_MarshWillow",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9200000166893005
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "Leaves_MarshWillow",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.75
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "MarshWillow_1_LOD1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        },
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "name": "Bark_MarshWillow_Normal",
+      "uri": "../Bark_MarshWillow_Normal.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Bark_MarshWillow",
+      "uri": "../Bark_MarshWillow.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Leaves_MarshWillow",
+      "uri": "../Leaves_MarshWillow.png"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1514,
+      "max": [
+        4.1813578605651855,
+        9.957626342773438,
+        3.179898262023926
+      ],
+      "min": [
+        -5.6084208488464355,
+        -0.3340461254119873,
+        -6.2885589599609375
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 1514,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 1514,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 6678,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 1344,
+      "max": [
+        4.551939010620117,
+        10.639300346374512,
+        4.040514945983887
+      ],
+      "min": [
+        -6.009405612945557,
+        0.3999999761581421,
+        -6.847575664520264
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 1344,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 1344,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 2016,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 18168,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 18168,
+      "byteOffset": 18168,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 12112,
+      "byteOffset": 36336,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 13356,
+      "byteOffset": 48448,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 16128,
+      "byteOffset": 61804,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 16128,
+      "byteOffset": 77932,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 10752,
+      "byteOffset": 94060,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4032,
+      "byteOffset": 104812,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 108844,
+      "uri": "MarshWillow_1_LOD1.bin"
+    }
+  ]
+}

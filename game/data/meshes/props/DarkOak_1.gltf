@@ -1,0 +1,237 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "DarkOak_1"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Bark_DarkOak",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.9200000166893005
+      }
+    },
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "Leaves_DarkOak",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
+        },
+        "metallicFactor": 0,
+        "roughnessFactor": 0.75
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "DarkOak_1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        },
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkOak_Normal",
+      "uri": "Bark_DarkOak_Normal.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Bark_DarkOak",
+      "uri": "Bark_DarkOak.png"
+    },
+    {
+      "mimeType": "image/png",
+      "name": "Leaves_DarkOak",
+      "uri": "Leaves_DarkOak.png"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 6794,
+      "max": [
+        7.69191312789917,
+        15.900138854980469,
+        6.697482585906982
+      ],
+      "min": [
+        -8.18712043762207,
+        -0.30322495102882385,
+        -8.210474014282227
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 6794,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 6794,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 30498,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 7560,
+      "max": [
+        8.56473445892334,
+        16.972373962402344,
+        7.503973007202148
+      ],
+      "min": [
+        -8.883731842041016,
+        0.5465226173400879,
+        -9.022186279296875
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 7560,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 7560,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 11340,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 81528,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 81528,
+      "byteOffset": 81528,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 54352,
+      "byteOffset": 163056,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 60996,
+      "byteOffset": 217408,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 90720,
+      "byteOffset": 278404,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 90720,
+      "byteOffset": 369124,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 60480,
+      "byteOffset": 459844,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 22680,
+      "byteOffset": 520324,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 543004,
+      "uri": "DarkOak_1.bin"
+    }
+  ]
+}

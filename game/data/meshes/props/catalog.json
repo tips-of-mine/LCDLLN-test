@@ -1,7 +1,7 @@
 {
   "_comment": "Catalogue d'assets du kit props, genere par tools/asset_pipeline/generate_props_catalog.py. Ne pas editer a la main : regenerer.",
   "assets": {
-    "count": 338,
+    "count": 346,
     "0": { "id": "Anvil", "category": "Misc", "gltf": "meshes/props/Anvil.gltf", "displayName": "Anvil", "thumbnail": "" },
     "1": { "id": "Anvil_Log", "category": "Misc", "gltf": "meshes/props/Anvil_Log.gltf", "displayName": "Anvil Log", "thumbnail": "" },
     "2": { "id": "Axe_Bronze", "category": "Misc", "gltf": "meshes/props/Axe_Bronze.gltf", "displayName": "Axe Bronze", "thumbnail": "" },
@@ -339,6 +339,14 @@
     "334": { "id": "Window_Wide_Flat1", "category": "Window", "gltf": "meshes/props/Window_Wide_Flat1.gltf", "displayName": "Window Wide Flat1", "thumbnail": "" },
     "335": { "id": "Window_Wide_Round1", "category": "Window", "gltf": "meshes/props/Window_Wide_Round1.gltf", "displayName": "Window Wide Round1", "thumbnail": "" },
     "336": { "id": "Workbench", "category": "Misc", "gltf": "meshes/props/Workbench.gltf", "displayName": "Workbench", "thumbnail": "" },
-    "337": { "id": "Workbench_Drawers", "category": "Misc", "gltf": "meshes/props/Workbench_Drawers.gltf", "displayName": "Workbench Drawers", "thumbnail": "" }
+    "337": { "id": "Workbench_Drawers", "category": "Misc", "gltf": "meshes/props/Workbench_Drawers.gltf", "displayName": "Workbench Drawers", "thumbnail": "" },
+    "338": { "id": "DarkOak_1", "category": "Misc", "gltf": "meshes/props/DarkOak_1.gltf", "displayName": "Chêne sombre 1", "thumbnail": "" },
+    "339": { "id": "DarkOak_2", "category": "Misc", "gltf": "meshes/props/DarkOak_2.gltf", "displayName": "Chêne sombre 2", "thumbnail": "" },
+    "340": { "id": "DarkPine_1", "category": "Misc", "gltf": "meshes/props/DarkPine_1.gltf", "displayName": "Pin sombre 1", "thumbnail": "" },
+    "341": { "id": "DarkPine_2", "category": "Misc", "gltf": "meshes/props/DarkPine_2.gltf", "displayName": "Pin sombre 2", "thumbnail": "" },
+    "342": { "id": "GnarledDeadTree_1", "category": "Misc", "gltf": "meshes/props/GnarledDeadTree_1.gltf", "displayName": "Arbre mort noueux 1", "thumbnail": "" },
+    "343": { "id": "GnarledDeadTree_2", "category": "Misc", "gltf": "meshes/props/GnarledDeadTree_2.gltf", "displayName": "Arbre mort noueux 2", "thumbnail": "" },
+    "344": { "id": "MarshWillow_1", "category": "Misc", "gltf": "meshes/props/MarshWillow_1.gltf", "displayName": "Saule de marais 1", "thumbnail": "" },
+    "345": { "id": "MarshWillow_2", "category": "Misc", "gltf": "meshes/props/MarshWillow_2.gltf", "displayName": "Saule de marais 2", "thumbnail": "" }
   }
 }

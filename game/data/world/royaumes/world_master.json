@@ -10977,8 +10977,9 @@
     "_comment": "Fusionne PAR-DESSUS les reglages importes (zone_config) dans chaque zone.json de cellule. Distances adaptees au monde ouvert.",
     "world": {
       "fog": {
-        "start_m": 60.0,
-        "end_m": 185.0
+        "_comment": "Horizon boise (22/11/2026) : fondu total repousse de 185 a 420 m pour laisser voir les arbres a billboard jusqu'a scatter.cull_billboard_m.",
+        "start_m": 140.0,
+        "end_m": 420.0
       },
       "props": {
         "cull_distance_m": 140.0
@@ -10987,10 +10988,12 @@
         "_comment": "Distances de culling du decor instancie (scatter.bin) par classe : large = arbres/bati, medium = buissons/rochers/mobilier, small = fleurs/herbes. Reglage a chaud (relu chaque frame).",
         "cull_large_m": 150.0,
         "cull_medium_m": 80.0,
-        "cull_small_m": 42.0
+        "cull_small_m": 42.0,
+        "_comment_billboard": "Horizon boise (22/11/2026) : les grands objets dotes d'un billboard (<mesh>_BB.gltf, arbres de l'atelier decors) restent affiches jusqu'a cull_billboard_m (m, x facteur du preset) ; bati et arbres sans billboard s'arretent a cull_large_m. La foret de remplissage est posee jusqu'a cette distance + 30 m (sous-bois : cull_medium_m + 30 m).",
+        "cull_billboard_m": 350.0
       },
       "forest": {
-        "_comment": "FORET.1 - foret de remplissage posee par le client autour du joueur (densite zones/<c>/terrain_forest.frms). filler : active ; rebuild_step_m : deplacement (m) avant reconstruction ; filler_radius_m (optionnel) : rayon (m), par defaut scatter.cull_large_m x facteur du preset + 30 m.",
+        "_comment": "FORET.1 - foret de remplissage posee par le client autour du joueur (densite zones/<c>/terrain_forest.frms). filler : active ; rebuild_step_m : deplacement (m) avant reconstruction ; filler_radius_m (optionnel) : rayon (m) des arbres, par defaut max(scatter.cull_large_m, scatter.cull_billboard_m) x facteur du preset + 30 m ; under_radius_m (optionnel) : rayon du sous-bois, par defaut scatter.cull_medium_m x facteur + 30 m.",
         "filler": true,
         "rebuild_step_m": 24.0
       }

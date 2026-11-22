@@ -487,13 +487,23 @@ namespace engine
 		dist.largeM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0));
 		dist.mediumM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_medium_m", 80.0));
 		dist.smallM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_small_m", 42.0));
+		// Horizon boisé : les grands objets dotés d'un billboard (<mesh>_BB.gltf) restent
+		// visibles jusqu'à world.scatter.cull_billboard_m (0 / absent = pas d'extension) ;
+		// les autres (bâti, arbres sans billboard) s'arrêtent toujours à cull_large_m.
+		float billboardM = static_cast<float>(m_cfg.GetDouble("world.scatter.cull_billboard_m", 0.0));
 		// Monde en cellules : facteur du préréglage « Qualité graphique ».
 		if (m_cellWorld)
 		{
 			dist.largeM *= m_viewDistance.scatterScale;
 			dist.mediumM *= m_viewDistance.scatterScale;
 			dist.smallM *= m_viewDistance.scatterScale;
+			billboardM *= m_viewDistance.scatterScale;
 		}
+		// Recherche élargie à la portée des billboards ; le tri par mesh se fait ci-dessous.
+		engine::world::scatter::CullDistances gatherDist = dist;
+		const bool billboardHorizon = billboardM > dist.largeM;
+		if (billboardHorizon)
+			gatherDist.largeM = billboardM;
 
 		// Une entrée par (instance × partie) : clé de lot = (mesh GPU, matériau, fondu).
 		struct DrawRef { const engine::render::MeshAsset* mesh; uint32_t material; uint32_t fadeQ; uint32_t layer; uint32_t item; };
@@ -512,12 +522,21 @@ namespace engine
 				* engine::math::Mat4::Translate(engine::math::Vec3{ layer.offsetX, 0.0f, layer.offsetZ });
 			const engine::world::scatter::Frustum frustum =
 				engine::world::scatter::Frustum::FromViewProj(vpLocal.m);
-			layer.field->Gather(eyeL, frustum, dist, m_scatterVisible);
-			visibleTotal += m_scatterVisible.size();
+			layer.field->Gather(eyeL, frustum, gatherDist, m_scatterVisible);
 			for (uint32_t idx : m_scatterVisible)
 			{
 				const auto& it = layer.field->Item(idx);
 				if (it.meshId >= m_scatterMeshes.size()) continue;
+				const ScatterMeshGpu& meshGpu = m_scatterMeshes[it.meshId];
+				// Au-delà de cull_large_m (même mesure que ScatterField::Gather : distance
+				// horizontale au bord de la sphère), seuls les meshes à billboard restent.
+				if (billboardHorizon && it.cullClass == 0 && meshGpu.lodParts[2].empty())
+				{
+					const float hx = it.center.x - eyeL.x, hz = it.center.z - eyeL.z;
+					const float lim = dist.largeM + it.radius;
+					if (hx * hx + hz * hz > lim * lim) continue;
+				}
+				++visibleTotal;
 				uint32_t fadeQ = 16u; // 16 = opaque
 				if ((it.flags & engine::world::instances::kScatterFlagOccluder) != 0u)
 				{
@@ -526,7 +545,7 @@ namespace engine
 				}
 				const float ddx = it.center.x - eyeL.x, ddy = it.center.y - eyeL.y, ddz = it.center.z - eyeL.z;
 				const float distM = std::sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
-				for (const PropPart& part : ScatterPartsForDistance(m_scatterMeshes[it.meshId], distM))
+				for (const PropPart& part : ScatterPartsForDistance(meshGpu, distM))
 				{
 					engine::render::MeshAsset* mesh = part.mesh.Get();
 					if (mesh == nullptr) continue;

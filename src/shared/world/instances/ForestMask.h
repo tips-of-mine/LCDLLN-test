@@ -155,6 +155,9 @@ namespace engine::world::instances
 	struct ForestFillerParams
 	{
 		double radiusM = 180.0;         ///< rayon autour du centre (m)
+		/// Rayon (m) du sous-bois (≤ radiusM). Le sous-bois (classe moyenne) est coupé bien avant
+		/// les arbres : inutile de le poser jusqu'à l'horizon des billboards.
+		double underRadiusM = 1.0e9;
 		double treeStepM = 4.2;         ///< pas du treillis des arbres : ~1 arbre tous les 4-5 m en pleine forêt
 		double underStepM = 3.2;        ///< pas du treillis du sous-bois
 		double treeAccept = 0.92;       ///< probabilité d'un arbre par case à densité 1
@@ -224,7 +227,7 @@ namespace engine::world::instances
 
 	/// Génère dans \p out (remplacé) les arbres et le sous-bois de remplissage de la
 	/// carte \p mask dans le disque de centre (\p cx, \p cz) (global, m) et de rayon
-	/// params.radiusM. Déterministe : une même case du treillis global donne
+	/// params.radiusM (sous-bois : params.underRadiusM). Déterministe : une même case du treillis global donne
 	/// toujours la même instance, quels que soient le centre et le rayon (pas de
 	/// saut quand le joueur avance). Seuls les points DE la carte sont produits.
 	/// \param groundAltitude altitude du sol au point global (choix feuillus /
@@ -236,17 +239,17 @@ namespace engine::world::instances
 		using namespace forest_detail;
 		out = ScatterFile{};
 		if (mask.Empty() || !(params.radiusM > 0.0)) return;
-		const double r2 = params.radiusM * params.radiusM;
-		struct Layer { double step, accept; uint64_t salt; bool trees; };
-		const Layer layers[] = { { params.treeStepM, params.treeAccept, 0xF0E57A11ull, true },
-			{ params.underStepM, params.underAccept, 0x5B5B0B05ull, false } };
+		struct Layer { double step, accept, radius; uint64_t salt; bool trees; };
+		const Layer layers[] = { { params.treeStepM, params.treeAccept, params.radiusM, 0xF0E57A11ull, true },
+			{ params.underStepM, params.underAccept, std::min(params.underRadiusM, params.radiusM), 0x5B5B0B05ull, false } };
 		for (const Layer& L : layers)
 		{
-			if (!(L.step > 0.5)) continue;
-			const int64_t i0 = static_cast<int64_t>(std::floor((cx - params.radiusM) / L.step));
-			const int64_t i1 = static_cast<int64_t>(std::floor((cx + params.radiusM) / L.step));
-			const int64_t j0 = static_cast<int64_t>(std::floor((cz - params.radiusM) / L.step));
-			const int64_t j1 = static_cast<int64_t>(std::floor((cz + params.radiusM) / L.step));
+			if (!(L.step > 0.5) || !(L.radius > 0.0)) continue;
+			const double r2 = L.radius * L.radius;
+			const int64_t i0 = static_cast<int64_t>(std::floor((cx - L.radius) / L.step));
+			const int64_t i1 = static_cast<int64_t>(std::floor((cx + L.radius) / L.step));
+			const int64_t j0 = static_cast<int64_t>(std::floor((cz - L.radius) / L.step));
+			const int64_t j1 = static_cast<int64_t>(std::floor((cz + L.radius) / L.step));
 			for (int64_t j = j0; j <= j1; ++j)
 				for (int64_t i = i0; i <= i1; ++i)
 				{

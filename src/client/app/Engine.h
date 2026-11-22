@@ -1807,6 +1807,8 @@ namespace engine
 		/// reconstruction (m de déplacement) ; cf. ApplyForestFillerSettings.
 		bool m_forestFillerEnabled = true;
 		float m_forestFillerRadiusM = 180.0f;
+		/// Rayon (m) du sous-bois de remplissage (≤ m_forestFillerRadiusM ; cf. ApplyForestFillerSettings).
+		float m_forestFillerUnderRadiusM = 110.0f;
 		float m_forestFillerStepM = 24.0f;
 		/// Distances de vue du préréglage courant (cf. ApplyViewDistancePreset).
 		engine::client::ViewDistanceSettings m_viewDistance{};

@@ -1073,6 +1073,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.61](#1661-carte-du-monde-remplissage-des-terres-ouvertes-v10135) | v1.0.135 | Carte du monde : remplissage | Prairies (couvre-sol du client : herbes hautes, fleurs, trèfle), bosquets et haies, petits lieux de décor (pierres levées, ruines, campements, champs clôturés), décor visible plus loin. |
 | [16.62](#1662-camp-de-loracle-bâti-selon-le-plan-v10136) | v1.0.136 | Camp de l'Oracle bâti selon le plan | Rocher bleu octogonal (≈ 300 m, ≈ 90 m), 8 escaliers blancs et 8 portes, océan de tentes, 5 tentes pyramidales, menhirs bleus, chemin des échoppes au sud-ouest ; plus de maisons ni de palissade. |
 | [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
+| [16.64](#1664-atelier-décors--tomes-6-à-14-v10138) | v1.0.138 | Atelier décors : tomes 6 à 14 | 19 objets génériques (n° 195 à 213) modélisés et placés ; tomes 11 à 14 sans objet générique nouveau ; signatures retirées, Empire du Jade réservé à l'extension. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5456,6 +5457,42 @@ les modules de pont, le pont en dos d'âne et le pont-levis (dessus marchable), 
 
 **Contrôles** : `validate_decor.py`, `world_gen_tests` (enseignes et tombes de Kendrhir, ponts de Syzygie),
 `service_signs_tests` (client), `sync_services.py --check`, `sync_decors.py --check`.
+
+### 16.64 Atelier décors : tomes 6 à 14 (v1.0.138)
+
+**Demande du propriétaire** (22/11/2026) : poursuivre l'atelier décors (§16.63) sur les tomes 6 à 14, avec les mêmes
+règles (décors génériques seulement, éléments signature retirés, aucune image de BD dans le dépôt, textures générées).
+Les éléments de l'Empire du Jade (tome 7) sont réservés à l'extension.
+
+**Nouveaux objets** (collection `decors`, `decor_195` à `decor_213`) :
+
+| N° | Objet | Tome | Placement |
+|---|---|---|---|
+| 195 | Guirlande de fanions sur mâts | 6 | places de marché des villes |
+| 196 | Grande bibliothèque murale | 6 | catalogue (bibliothèques, écoles de magie) |
+| 197 | Pupitre de scribe incliné | 6 | catalogue |
+| 198 | Piles de documents | 6 | champs de bataille (tente de commandement) ; catalogue |
+| 199 | Tenture de velours drapée | 6 | catalogue |
+| 200 | Bûcher à poteau | 6 | champs de bataille |
+| 201 | Table de campagne à carte (carte imaginaire générée) | 6 | champs de bataille |
+| 202 | Armoire peinte | 6 | catalogue |
+| 203 | Obélisques de grès brisés | 7 | désert, très rares |
+| 204 | Pieds d'un colosse brisé sur socle (sans visage) | 7 | désert, très rares |
+| 205 | Petit mausolée de pierre | 7 | cimetières des capitales et grandes villes |
+| 206 | Escalier de pierre en colimaçon | 7 | catalogue |
+| 207 | Rosace de vitrail (motif géométrique, sans symbole) | 8 | catalogue |
+| 208 | Paillasse de dortoir | 8 | camps ; catalogue |
+| 209 | Levée de terre étayée de planches | 8 | champs de bataille |
+| 210 | Grand engrenage sur chevalet | 9 | forges des villes naines |
+| 211 | Grue de chantier en bois | 9 | chantiers de reconstruction |
+| 212 | Sphère armillaire | 10 | catalogue |
+| 213 | Bélier de siège couvert | 10 | champs de bataille |
+
+Les tomes 11 à 14 ne montrent que des lieux signature (Altenberg, la Syzygie, palais de Lhynn et de Moork, enfers,
+Négation, dragons) : ils complètent seulement les références d'objets déjà inventoriés. Textures ajoutées :
+`Cloth_Green`, `Wood_Painted`, `Parchment_Map`, `Glass_Rose`, `Earth`.
+
+**Contrôles** : `validate_decor.py` (416 assets), `world_gen_tests`, `sync_decors.py --check`.
 
 ## 17. Questions ouvertes
 

@@ -1,1 +1,270 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v5.1.20","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"CommonTree_5"}],"materials":[{"doubleSided":true,"name":"Bark_NormalTree","pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":0}},"normalTexture":{"index":1}},{"alphaMode":"BLEND","doubleSided":true,"name":"Leaves_NormalTree","pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":2}}}],"meshes":[{"name":"tree.027","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2,"COLOR_0":3,"COLOR_1":4},"indices":5,"material":0},{"attributes":{"POSITION":6,"NORMAL":7,"TEXCOORD_0":8,"COLOR_0":9,"COLOR_1":10},"indices":11,"material":1}]}],"accessors":[{"bufferView":0,"componentType":5126,"count":1190,"max":[0.9063012599945068,5.4537034034729,0.8049076795578003],"min":[-0.8957228064537048,-0.24277201294898987,-0.920511782169342],"type":"VEC3"},{"bufferView":1,"componentType":5126,"count":1190,"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":1190,"type":"VEC2"},{"bufferView":3,"componentType":5121,"count":1190,"normalized":true,"type":"VEC4"},{"bufferView":4,"componentType":5123,"count":1190,"normalized":true,"type":"VEC4"},{"bufferView":5,"componentType":5123,"count":5646,"type":"SCALAR"},{"bufferView":6,"componentType":5126,"count":2600,"max":[1.7588107585906982,6.763467788696289,2.057202100753784],"min":[-1.912354588508606,2.356473684310913,-2.162447929382324],"type":"VEC3"},{"bufferView":7,"componentType":5126,"count":2600,"type":"VEC3"},{"bufferView":8,"componentType":5126,"count":2600,"type":"VEC2"},{"bufferView":9,"componentType":5121,"count":2600,"normalized":true,"type":"VEC4"},{"bufferView":10,"componentType":5123,"count":2600,"normalized":true,"type":"VEC4"},{"bufferView":11,"componentType":5123,"count":3900,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":14280,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":14280,"byteOffset":14280,"target":34962},{"buffer":0,"byteLength":9520,"byteOffset":28560,"target":34962},{"buffer":0,"byteLength":4760,"byteOffset":38080,"target":34962},{"buffer":0,"byteLength":9520,"byteOffset":42840,"target":34962},{"buffer":0,"byteLength":11292,"byteOffset":52360,"target":34963},{"buffer":0,"byteLength":31200,"byteOffset":63652,"target":34962},{"buffer":0,"byteLength":31200,"byteOffset":94852,"target":34962},{"buffer":0,"byteLength":20800,"byteOffset":126052,"target":34962},{"buffer":0,"byteLength":10400,"byteOffset":146852,"target":34962},{"buffer":0,"byteLength":20800,"byteOffset":157252,"target":34962},{"buffer":0,"byteLength":7800,"byteOffset":178052,"target":34963}],"buffers":[{"byteLength":185852,"uri":"CommonTree_5.bin"}],"images":[{"uri":"Bark_NormalTree.png"},{"uri":"Bark_NormalTree_Normal.png"},{"uri":"Leaves_NormalTree.png"}],"textures":[{"sampler":0,"source":0},{"sampler":0,"source":1},{"sampler":0,"source":2}],"samplers":[{"magFilter":9729,"minFilter":9987}]}
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "CommonTree_5"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Broad",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Leaves_Broad",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "CommonTree_5",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_Normal.png",
+   "uri": "T_Decor_Bark_Broad_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_BaseColor.png",
+   "uri": "T_Decor_Bark_Broad_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_ORM.png",
+   "uri": "T_Decor_Bark_Broad_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_Normal.png",
+   "uri": "T_Decor_Leaves_Broad_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_BaseColor.png",
+   "uri": "T_Decor_Leaves_Broad_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Broad_ORM.png",
+   "uri": "T_Decor_Leaves_Broad_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 6506,
+   "max": [
+    5.970012187957764,
+    16.279508590698242,
+    5.469425201416016
+   ],
+   "min": [
+    -4.326987266540527,
+    -0.21066828072071075,
+    -6.441129684448242
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 6506,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 6506,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 10080,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 2880,
+   "max": [
+    7.793773174285889,
+    16.995193481445312,
+    7.43506383895874
+   ],
+   "min": [
+    -6.206226825714111,
+    5.554059028625488,
+    -8.627079010009766
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 2880,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 2880,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 4320,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 78072,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 78072,
+   "byteOffset": 78072,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 52048,
+   "byteOffset": 156144,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 20160,
+   "byteOffset": 208192,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 34560,
+   "byteOffset": 228352,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 34560,
+   "byteOffset": 262912,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 23040,
+   "byteOffset": 297472,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 8640,
+   "byteOffset": 320512,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 329152,
+   "uri": "CommonTree_5.bin"
+  }
+ ]
+}

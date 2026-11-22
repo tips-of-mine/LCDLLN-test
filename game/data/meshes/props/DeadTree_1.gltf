@@ -1,1 +1,159 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v5.1.20","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"DeadTree_1"}],"materials":[{"doubleSided":true,"name":"Bark_DeadTree","pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":0}},"normalTexture":{"index":1}}],"meshes":[{"name":"tree","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2,"COLOR_0":3,"COLOR_1":4},"indices":5,"material":0}]}],"accessors":[{"bufferView":0,"componentType":5126,"count":4086,"max":[3.556612253189087,9.15992259979248,2.845168113708496],"min":[-2.5923237800598145,-0.3355545997619629,-2.9034998416900635],"type":"VEC3"},{"bufferView":1,"componentType":5126,"count":4086,"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":4086,"type":"VEC2"},{"bufferView":3,"componentType":5121,"count":4086,"normalized":true,"type":"VEC4"},{"bufferView":4,"componentType":5123,"count":4086,"normalized":true,"type":"VEC4"},{"bufferView":5,"componentType":5123,"count":18507,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":49032,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":49032,"byteOffset":49032,"target":34962},{"buffer":0,"byteLength":32688,"byteOffset":98064,"target":34962},{"buffer":0,"byteLength":16344,"byteOffset":130752,"target":34962},{"buffer":0,"byteLength":32688,"byteOffset":147096,"target":34962},{"buffer":0,"byteLength":37014,"byteOffset":179784,"target":34963}],"buffers":[{"byteLength":216800,"uri":"DeadTree_1.bin"}],"images":[{"uri":"Bark_DeadTree.png"},{"uri":"Bark_DeadTree_Normal.png"}],"textures":[{"sampler":0,"source":0},{"sampler":0,"source":1}],"samplers":[{"magFilter":9729,"minFilter":9987}]}
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "DeadTree_1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Pale",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "DeadTree_1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_Normal.png",
+   "uri": "T_Decor_Bark_Pale_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_BaseColor.png",
+   "uri": "T_Decor_Bark_Pale_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pale_ORM.png",
+   "uri": "T_Decor_Bark_Pale_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 1224,
+   "max": [
+    3.688746929168701,
+    9.027562141418457,
+    1.9690407514572144
+   ],
+   "min": [
+    -3.111253023147583,
+    -0.30000001192092896,
+    -2.1842360496520996
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 1224,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 1224,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 4812,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 14688,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 14688,
+   "byteOffset": 14688,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 9792,
+   "byteOffset": 29376,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 9624,
+   "byteOffset": 39168,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 48792,
+   "uri": "DeadTree_1.bin"
+  }
+ ]
+}

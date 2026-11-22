@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Torna alla schermata di login per cambiare la tua password.",
   "options.account.email_hint": "La modifica dell'email sara disponibile in una versione futura.",
   "options.account.signed_out": "Sessione locale eliminata (password cancellata).",
-  "common.close": "Chiudi"
+  "common.close": "Chiudi",
+  "service.auberge": "Locanda",
+  "service.ecurie": "Scuderia",
+  "service.cimetiere": "Cimitero",
+  "service.forgeron": "Fabbro",
+  "service.potions": "Pozioni",
+  "service.armes": "Armi",
+  "service.armures": "Armature",
+  "service.temple": "Tempio",
+  "service.guilde": "Gilda",
+  "service.infirmerie": "Infermeria",
+  "service.marche": "Mercato",
+  "service.banque": "Banca",
+  "service.prison": "Prigione",
+  "service.ecole_magie": "Scuola di magia",
+  "service.bibliotheque": "Biblioteca",
+  "service.port": "Porto",
+  "service.arene": "Arena"
 }

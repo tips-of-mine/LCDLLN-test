@@ -1072,6 +1072,7 @@ scripts : [`OUTILS_LORE.md`](OUTILS_LORE.md) ; index : [`README.md`](README.md).
 | [16.60](#1660-carte-du-monde--routes-soudées-plus-de-doublon-v10134) | v1.0.134 | Carte du monde : routes soudées | Plus de routes en double : corridors communs empruntés (jonctions exactes), portions déjà reliées non retracées, méandres gardés, chemins locaux arrêtés à la chaussée. |
 | [16.61](#1661-carte-du-monde-remplissage-des-terres-ouvertes-v10135) | v1.0.135 | Carte du monde : remplissage | Prairies (couvre-sol du client : herbes hautes, fleurs, trèfle), bosquets et haies, petits lieux de décor (pierres levées, ruines, campements, champs clôturés), décor visible plus loin. |
 | [16.62](#1662-camp-de-loracle-bâti-selon-le-plan-v10136) | v1.0.136 | Camp de l'Oracle bâti selon le plan | Rocher bleu octogonal (≈ 300 m, ≈ 90 m), 8 escaliers blancs et 8 portes, océan de tentes, 5 tentes pyramidales, menhirs bleus, chemin des échoppes au sud-ouest ; plus de maisons ni de palissade. |
+| [16.63](#1663-atelier-décors--de-la-bd-au-jeu-v10137) | v1.0.137 | Atelier décors : de la BD au jeu | 182 objets génériques des tomes 1 à 5 modélisés (3 LOD, billboard), placés par le générateur ou au catalogue ; collection `decors` du lore ; signatures retirées ; enseignes à pictogramme ; tombes anciennes ; grands champs. |
 
 ### 16.1 Corrections v1.0.72
 
@@ -5404,6 +5405,57 @@ village par :
 **Contrôles** : `world_gen_tests` (`TestOracleV1136` : aucune maison dans le camp, ≥ 40 tentes, 8 escaliers et 8 portes,
 ≥ 18 menhirs et leurs lueurs bleues, rocher ≥ 50 m au-dessus de la plaine à parois > 45°, aucune route sur le rocher,
 8 échoppes le long du chemin du sud-ouest, aubergiste et marchands, un seul cimetière du camp, pas de faune).
+
+### 16.63 Atelier décors : de la BD au jeu (v1.0.137)
+
+**Demande du propriétaire** (21-22/11/2026) : lire les tomes page par page, en extraire les décors **génériques**
+(arbres, végétation, habitat, mobilier, objets, extérieurs), les modéliser et les intégrer au jeu. Les éléments
+**signature** (lieux, trônes, bannières, sceaux et symboles propres aux BD) sont **retirés** en attendant le retour
+d'autorisation. Aucune image ni planche de BD n'entre dans le dépôt ; textures générées par script
+(`tools/asset_pipeline/decor/decor_textures.py`).
+
+**Production** (`tools/asset_pipeline/decor/`) : 182 objets inventoriés (tomes 1 à 5, plus les demandes du
+propriétaire), ≈ 400 assets glTF à 3 niveaux de détail (`_LOD1`, `_LOD2`) et billboard (`_BB`) pour la végétation,
+budgets arbre 6 000 / 2 000 / 600, prop 1 500 / 500 / 150, bâtiment 3 000 / 1 000 / 300 triangles. Un asset existant
+remplacé garde son identifiant et sa boîte (pivot compris). Contrôle CI : `validate_decor.py` (fichiers, budgets,
+cotes, alpha des feuillages).
+
+**Lore** : collection **`decors`**, une fiche par objet (`decor_<n°>` : nom, tome, meshes, assets remplacés,
+références des cases, placement prévu, `generated` = posé par le générateur, sinon catalogue de l'éditeur), recopiée
+depuis `decor_objects.json` et `decor_specs.json` par `tools/lore/sync_decors.py` (contrôlé en CI). Règle
+`regle_atelier_decors` (notes [DÉCISION]) et 11 entrées au registre.
+
+**Décisions** :
+
+| Sujet | Décision |
+|---|---|
+| Étalon | Un nain mesure 1,30 m. |
+| Portes | Seules les portes des bâtiments à service du lore sont franchissables (2,30 m) ; ailleurs, portes décoratives (2,20 m). Règle inscrite ; le gabarit des portes du kit n'est pas encore modifié. |
+| Saisons | Une seule saison partout (ni automne ni hiver locaux) ; cycle des saisons souhaité plus tard. |
+| Champs | ×5 en largeur, ×10 en longueur ; blé, orge, maïs, tournesol, colza, vigne ; meules de foin. |
+| Essences | Chênes, hêtres, peupliers, saules pleureurs ; séquoias rares ; roseaux des rives, nénuphars, lentilles d'eau des marais. |
+| Statues | Sujets neutres (figures drapées, sans visage identifiable). |
+| Enseignes | Pictogramme seul sur le panneau ; nom du service traduit (7 langues) au survol ou au clic. |
+| Cimetières | Tombes anciennes : tas de cailloux moussus, croix de bois plus ou moins bien faites, vieilles stèles. |
+| Arbitrages | Théière de l'Empire du Jade reportée à l'extension ; gibet gardé, sans pendu ; ponts refaits en modules ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor. |
+
+**Générateur** (`tools/world_gen`) : maisons de planches, de pierre sèche, à ardoise et tourelle (villes de l'Empire),
+de brique (grandes villes) ; marchés (étals, auvents, tentes frangées, marchandises), fontaine à vasque et braseros
+des grandes places, statues et buis des capitales, kiosque de jardin ; enseignes devant les bâtiments de service
+(`services` des villes recopiés du lore au master par `tools/lore/sync_services.py`) ; poteaux indicateurs aux
+sorties des villes et aux carrefours ; gibet des capitales et forteresses ; portes de ville ferrées ; tombes et urnes
+des cimetières ; huttes coniques, tambour et poupée des villages orques ; tour carrée des villages ; chariot blindé et
+creuset des villes naines ; ruines (pans de brique, arc brisé, cheminée de pierre sèche) ; ponts de pierre à parapets,
+en dos d'âne sur les ruisseaux, passerelles sur pilotis, ponts de cordes en montagne ; camps (tentes, feu à broche,
+baquet, guérite, mâts-torches) et champs de bataille (engin de siège, chevaux de frise, baliste, ossements) ;
+rochers moussus, rochers dans l'eau, galets des ruisseaux, troncs abattus, polypores, sol craquelé, crânes et
+termitières du désert. Le reste (intérieurs de palais, cachots, kit gothique) est au catalogue de l'éditeur.
+
+**Collisions** : `game/data/collision/building_pieces.json` reçoit les murs dérivés (planches, pierre sèche, brique),
+les modules de pont, le pont en dos d'âne et le pont-levis (dessus marchable), la porte de grange (franchissable).
+
+**Contrôles** : `validate_decor.py`, `world_gen_tests` (enseignes et tombes de Kendrhir, ponts de Syzygie),
+`service_signs_tests` (client), `sync_services.py --check`, `sync_decors.py --check`.
 
 ## 17. Questions ouvertes
 

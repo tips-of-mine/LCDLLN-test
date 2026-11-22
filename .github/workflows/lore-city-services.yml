@@ -15,6 +15,11 @@
 #   dans l'éditeur) sont recopiées dans world_master.json (clé lore_roads), que
 #   tools/world_gen suit case par case ; test_sync_routes.py vérifie le script
 #   (--check, idempotence, routes maritimes ignorées) sur des copies ;
+# - sync_services.py --check (atelier décors) : la liste des services de chaque ville
+#   du lore est recopiée au master (clé services des cities) ; tools/world_gen y pose
+#   les panneaux à pictogramme (Sign_Service_<id>) ;
+# - sync_decors.py --check (atelier décors) : registre des décors tirés des BD recopié
+#   dans le lore (clé decors, une fiche par objet), d'après tools/asset_pipeline/decor ;
 # - check_secrets.py (v1.0.110) : les villes et lieux `secret: true` du lore le sont
 #   aussi au master (cachés de places.json, écrits dans secret_places.json réservé
 #   au serveur), aucune route du lore ne mène à un lieu secret ;
@@ -30,6 +35,9 @@ on:
     paths:
       - 'legacy/world-builder-html/lune-noire-data*.json'
       - 'tools/lore/**'
+      - 'tools/asset_pipeline/decor/decor_objects.json'
+      - 'tools/asset_pipeline/decor/decor_specs.json'
+      - 'tools/world_gen/lib/**'
       - 'game/data/world/royaumes/world_master.json'
       - 'game/data/world/enfers/world_master.json'
       - 'game/data/races/factions.json'
@@ -39,6 +47,9 @@ on:
     paths:
       - 'legacy/world-builder-html/lune-noire-data*.json'
       - 'tools/lore/**'
+      - 'tools/asset_pipeline/decor/decor_objects.json'
+      - 'tools/asset_pipeline/decor/decor_specs.json'
+      - 'tools/world_gen/lib/**'
       - 'game/data/world/royaumes/world_master.json'
       - 'game/data/world/enfers/world_master.json'
       - 'game/data/races/factions.json'
@@ -80,6 +91,12 @@ jobs:
 
       - name: Lignes maritimes du lore recopiées au master (v1.0.124)
         run: python tools/lore/sync_sea_lines.py --check
+
+      - name: Services des villes recopiés au master (atelier décors)
+        run: python tools/lore/sync_services.py --check
+
+      - name: Registre des décors recopié dans le lore (atelier décors)
+        run: python tools/lore/sync_decors.py --check
 
       - name: Lieux secrets concordants (lore ↔ master)
         run: python tools/lore/check_secrets.py

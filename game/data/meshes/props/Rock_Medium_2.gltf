@@ -1,1 +1,159 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v5.1.20","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"Rock_Medium_2"}],"materials":[{"doubleSided":true,"name":"Rocks","pbrMetallicRoughness":{"metallicFactor":0,"baseColorTexture":{"index":0}}}],"meshes":[{"name":"Cube.004_Retopology.001","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2},"indices":3,"material":0}]}],"accessors":[{"bufferView":0,"componentType":5126,"count":249,"max":[1.3351185321807861,1.8481333255767822,1.3199462890625],"min":[-1.713641881942749,-0.05084158852696419,-1.1591253280639648],"type":"VEC3"},{"bufferView":1,"componentType":5126,"count":249,"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":249,"type":"VEC2"},{"bufferView":3,"componentType":5123,"count":732,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":2988,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":2988,"byteOffset":2988,"target":34962},{"buffer":0,"byteLength":1992,"byteOffset":5976,"target":34962},{"buffer":0,"byteLength":1464,"byteOffset":7968,"target":34963}],"buffers":[{"byteLength":9432,"uri":"Rock_Medium_2.bin"}],"images":[{"uri":"Rocks_Diffuse.png"}],"textures":[{"sampler":0,"source":0}],"samplers":[{"magFilter":9729,"minFilter":9987}]}
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Rock_Medium_2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Rock_Grey",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Rock_Medium_2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rock_Grey_Normal.png",
+   "uri": "T_Decor_Rock_Grey_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rock_Grey_BaseColor.png",
+   "uri": "T_Decor_Rock_Grey_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rock_Grey_ORM.png",
+   "uri": "T_Decor_Rock_Grey_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 1101,
+   "max": [
+    1.0360093116760254,
+    1.0023409128189087,
+    0.8950173258781433
+   ],
+   "min": [
+    -0.9639906883239746,
+    -0.0285089910030365,
+    -0.802704930305481
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 1101,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 1101,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 3840,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 13212,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 13212,
+   "byteOffset": 13212,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 8808,
+   "byteOffset": 26424,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 7680,
+   "byteOffset": 35232,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 42912,
+   "uri": "Rock_Medium_2.bin"
+  }
+ ]
+}

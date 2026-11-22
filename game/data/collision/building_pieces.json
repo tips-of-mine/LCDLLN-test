@@ -154,6 +154,120 @@
       "walkable": true,
       "box_count": 1,
       "box_0": { "cx": 0.0, "cy": 0.885, "cz": 0.0, "hx": 0.813, "hy": 0.103, "hz": 1.0 }
+    },
+    "wall_plank_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plank_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plank_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_plank_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "wall_drystone_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_drystone_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_drystone_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_drystone_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
+    },
+    "_comment_bridges": "Atelier decors T2 (n. 81-83) — modules de pont de tools/world_gen BuildBridges : tablier de pierre et passerelle a dessus marchable, garde-corps de pierre, pont de cordes (tablier marchable + mains courantes pleines pour ne pas tomber).",
+    "bridge_stone_deck_1": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": -0.17, "cz": 0.0, "hx": 1.0, "hy": 0.18, "hz": 1.0 }
+    },
+    "bridge_stone_parapet_1": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.475, "cz": 0.0, "hx": 1.0, "hy": 0.475, "hz": 0.2 }
+    },
+    "boardwalk_deck_1": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": -0.02, "cz": 0.0, "hx": 1.0, "hy": 0.03, "hz": 1.0 }
+    },
+    "bridge_rope_deck_1": {
+      "walkable": true,
+      "box_count": 3,
+      "box_0": { "cx": 0.0, "cy": -0.015, "cz": 0.0, "hx": 1.0, "hy": 0.025, "hz": 0.75 },
+      "box_1": { "cx": 0.0, "cy": 0.6, "cz": -0.8, "hx": 1.0, "hy": 0.6, "hz": 0.04 },
+      "box_2": { "cx": 0.0, "cy": 0.6, "cz": 0.8, "hx": 1.0, "hy": 0.6, "hz": 0.04 }
+    },
+    "_comment_t3": "Atelier decors T3 — pont en dos d'ane (tablier en 9 marches de 1 m suivant la courbe, parapets), pont-levis abaisse (dessus marchable), porte de grange franchissable.",
+    "bridge_stone_hump_1": {
+      "walkable": true,
+      "box_count": 27,
+      "box_0": { "cx": -4.00, "cy": 0.034, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_1": { "cx": -3.00, "cy": 0.360, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_2": { "cx": -2.00, "cy": 0.626, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_3": { "cx": -1.00, "cy": 0.800, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_4": { "cx": 0.00, "cy": 0.860, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_5": { "cx": 1.00, "cy": 0.800, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_6": { "cx": 2.00, "cy": 0.626, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_7": { "cx": 3.00, "cy": 0.360, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_8": { "cx": 4.00, "cy": 0.034, "cz": 0.00, "hx": 0.50, "hy": 0.150, "hz": 1.75 },
+      "box_9": { "cx": -4.00, "cy": 0.584, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_10": { "cx": -3.00, "cy": 0.910, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_11": { "cx": -2.00, "cy": 1.176, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_12": { "cx": -1.00, "cy": 1.350, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_13": { "cx": 0.00, "cy": 1.410, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_14": { "cx": 1.00, "cy": 1.350, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_15": { "cx": 2.00, "cy": 1.176, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_16": { "cx": 3.00, "cy": 0.910, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_17": { "cx": 4.00, "cy": 0.584, "cz": -1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_18": { "cx": -4.00, "cy": 0.584, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_19": { "cx": -3.00, "cy": 0.910, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_20": { "cx": -2.00, "cy": 1.176, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_21": { "cx": -1.00, "cy": 1.350, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_22": { "cx": 0.00, "cy": 1.410, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_23": { "cx": 1.00, "cy": 1.350, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_24": { "cx": 2.00, "cy": 1.176, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_25": { "cx": 3.00, "cy": 0.910, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 },
+      "box_26": { "cx": 4.00, "cy": 0.584, "cz": 1.60, "hx": 0.50, "hy": 0.400, "hz": 0.15 }
+    },
+    "drawbridge_1": {
+      "walkable": true,
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": -0.045, "cz": 3.0, "hx": 2.0, "hy": 0.055, "hz": 3.0 }
+    },
+    "door_barn_1": { "passable": true },
+    "wall_redbrick_straight": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_redbrick_window_wide_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_redbrick_window_thin_round": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }
+    },
+    "wall_redbrick_door_round": {
+      "box_count": 3,
+      "box_0": { "cx": -0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_1": { "cx":  0.75, "cy": 1.55, "cz": -0.10, "hx": 0.25, "hy": 1.57, "hz": 0.18 },
+      "box_2": { "cx":  0.0,  "cy": 2.70, "cz": -0.10, "hx": 1.0,  "hy": 0.42, "hz": 0.18 }
     }
   }
 }

@@ -164,6 +164,9 @@ namespace engine::world::instances
 	struct ForestFillerParams
 	{
 		double radiusM = 180.0;         ///< rayon autour du centre (m)
+		/// Rayon (m) du sous-bois (≤ radiusM). Le sous-bois (classe moyenne) est coupé bien avant
+		/// les arbres : inutile de le poser jusqu'à l'horizon des billboards.
+		double underRadiusM = 1.0e9;
 		double treeStepM = 4.2;         ///< pas du treillis des arbres : ~1 arbre tous les 4-5 m en pleine forêt
 		double underStepM = 3.2;        ///< pas du treillis du sous-bois
 		double treeAccept = 0.92;       ///< probabilité d'un arbre par case à densité 1
@@ -196,8 +199,12 @@ namespace engine::world::instances
 				{ "CommonTree_5", 1, 0.85, 1.25, 0.55 }, { "Pine_1", 0.5, 0.85, 1.2, 0.45 },
 				{ "Pine_3", 0.5, 0.85, 1.2, 0.45 }, { "TwistedTree_2", 0.12, 0.55, 0.75, 0.7 },
 				{ "DeadTree_3", 0.08, 0.8, 1.1, 0.45 },
-				// Vieux feuillus géants (~4 %), comme les chênes massifs de la BD-T3 pl.24.
-				{ "CommonTree_1", 0.12, 1.6, 1.8, 0.8 }, { "CommonTree_3", 0.12, 1.6, 1.8, 0.8 } };
+				// Atelier décors : chênes et hêtres de futaie (meshes à taille réelle).
+				{ "Tree_Oak_1", 0.6, 0.9, 1.1, 0.7 }, { "Tree_Oak_2", 0.6, 0.9, 1.1, 0.7 },
+				{ "Tree_Beech_1", 0.6, 0.9, 1.1, 0.5 }, { "Tree_Beech_2", 0.6, 0.9, 1.1, 0.5 },
+				{ "Tree_Beech_3", 0.6, 0.9, 1.1, 0.5 },
+				// Vieux chênes géants (~4 %), comme les chênes massifs de la BD-T3 pl.24.
+				{ "Tree_Oak_3", 0.24, 1.15, 1.3, 0.9 } };
 			return v;
 		}
 		inline const std::vector<ForestFillerSpecies>& Conifer()
@@ -241,7 +248,7 @@ namespace engine::world::instances
 		inline const std::vector<ForestFillerSpecies>& Undergrowth()
 		{
 			static const std::vector<ForestFillerSpecies> v = {
-				{ "Fern_1", 3.0, 0.32, 0.55, 0 }, { "Bush_Common", 1.5, 0.8, 1.4, 0 },
+				{ "Fern_1", 3.0, 0.85, 1.2, 0 }, { "Bush_Common", 1.5, 0.8, 1.4, 0 },
 				{ "Plant_1_Big", 0.6, 0.55, 0.85, 0 }, { "Plant_7_Big", 0.6, 0.7, 1.1, 0 } };
 			return v;
 		}
@@ -266,7 +273,7 @@ namespace engine::world::instances
 
 	/// Génère dans \p out (remplacé) les arbres et le sous-bois de remplissage de la
 	/// carte \p mask dans le disque de centre (\p cx, \p cz) (global, m) et de rayon
-	/// params.radiusM. Déterministe : une même case du treillis global donne
+	/// params.radiusM (sous-bois : params.underRadiusM). Déterministe : une même case du treillis global donne
 	/// toujours la même instance, quels que soient le centre et le rayon (pas de
 	/// saut quand le joueur avance). Seuls les points DE la carte sont produits.
 	/// \param groundAltitude altitude du sol au point global (choix feuillus /
@@ -283,7 +290,7 @@ namespace engine::world::instances
 		enum class Kind { Trees, Under, Ground };
 		struct Layer { double step, accept, radius; uint64_t salt; Kind kind; };
 		const Layer layers[] = { { params.treeStepM, params.treeAccept, params.radiusM, 0xF0E57A11ull, Kind::Trees },
-			{ params.underStepM, params.underAccept, params.radiusM, 0x5B5B0B05ull, Kind::Under },
+			{ params.underStepM, params.underAccept, std::min(params.underRadiusM, params.radiusM), 0x5B5B0B05ull, Kind::Under },
 			{ params.groundStepM, params.groundAccept, std::min(params.groundRadiusM, params.radiusM), 0x6A0D5C0Bull, Kind::Ground } };
 		const float meadowCeil = kForestMaskMeadowCeil;
 		for (const Layer& L : layers)

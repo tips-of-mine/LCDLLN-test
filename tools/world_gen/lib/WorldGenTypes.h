@@ -64,6 +64,11 @@ namespace tools::world_gen
 		/// game/data/races/factions.json, ex. "lumiere", "legion" ; avant : races).
 		/// Une faction n'a qu'une ville de départ par carte.
 		std::vector<std::string> startFor;
+		/// Services de la ville (atelier décors, clé `services` du master, recopiée du
+		/// lore par tools/lore/sync_services.py) : identifiants du lore (auberge, forgeron,
+		/// marche…). Le générateur pose un panneau à pictogramme Sign_Service_<id> devant
+		/// le bâtiment de chaque service ; vide = aucun panneau.
+		std::vector<std::string> services;
 		std::string source;      ///< [BD] … / [INFÉRÉ] …
 		std::string description;
 		// --- résolu par le générateur ---

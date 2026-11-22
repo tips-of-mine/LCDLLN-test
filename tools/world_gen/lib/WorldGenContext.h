@@ -631,6 +631,8 @@ namespace tools::world_gen
 	/// Effet de bord : w.scatter, occupation fine (w.Occupy), w.report.bridges.
 	/// À appeler après ApplyRoads et BuildSettlements (hauteurs définitives), avant la végétation.
 	void BuildBridges(World& w);
+	/// Poteaux indicateurs aux carrefours (atelier décors T2). Cf. Roads.cpp.
+	void PlaceSignposts(World& w);
 
 	/// Lot carte v1.0.132 — LIEUX BÂTIS : forme générée des POI de genre tour (ronde ; Tour
 	/// Carrée de la Lune Noire : carrée, 24 étages), phare (tour + feu), chateau (enceinte,
@@ -669,6 +671,9 @@ namespace tools::world_gen
 	/// Aux Enfers (v1.0.83) : seulement arbres morts et rochers (ni herbe, ni fleur,
 	/// ni broussaille). Effet de bord : remplit w.scatter.
 	void BuildVegetation(World& w);
+	/// Roseaux des rives (lacs, rivières) et nénuphars des lacs (atelier décors, BD T1).
+	/// Effet de bord : w.scatter. Royaumes seulement.
+	void BuildShoreVegetation(World& w);
 	/// FORET.1 — carte de densité des forêts et lisières (codes T, R, L, t de la
 	/// couverture effective), exclusions comprises : eau, routes, bâti et champs
 	/// (grille d'occupation), emprise urbaine, pentes, neige. Le client y pose les

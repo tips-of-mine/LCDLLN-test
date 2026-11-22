@@ -3796,9 +3796,27 @@ namespace engine
 		// fondent dans le ciel juste avant d'etre cull. Desactive si end<=start.
 		// Slots .w libres -> pas de redimensionnement de LightParams. Lu chaque
 		// frame (reglage a chaud via config.json).
-		lp.cameraPos[3] = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
+		float fogStart = static_cast<float>(m_cfg.GetDouble("world.fog.start_m", 35.0));
+		float fogEnd = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0));
+		if (m_cellWorld && fogEnd > fogStart)
+		{
+			// Horizon boisé (22/11/2026) : le préréglage graphique réduit la portée du
+			// décor (scatterScale) et du terrain ; le fondu total ne doit pas dépasser
+			// la plus lointaine des deux, sinon arbres et bord du terrain « sautent »
+			// au lieu de se fondre dans l'horizon (Basse : 210 m, Moyenne : 280 m...).
+			const float scale = m_viewDistance.scatterScale;
+			const float trees = std::max(static_cast<float>(m_cfg.GetDouble("world.scatter.cull_large_m", 150.0)),
+				static_cast<float>(m_cfg.GetDouble("world.scatter.cull_billboard_m", 0.0))) * scale;
+			const float limit = std::min(trees, m_viewDistance.terrainDrawM);
+			if (limit > 0.0f && fogEnd > limit)
+			{
+				fogEnd = limit;
+				fogStart = std::min(fogStart, fogEnd * 0.35f); // garde un rayon clair autour du joueur
+			}
+		}
+		lp.cameraPos[3] = fogStart;
 		lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2];
-		lp.lightDir[3] = static_cast<float>(m_cfg.GetDouble("world.fog.end_m", 85.0)); // brouillard : distance de fondu total (cf. cameraPos.w = start)
+		lp.lightDir[3] = fogEnd; // brouillard : distance de fondu total (cf. cameraPos.w = start)
 		lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2];
 		// M45.1 — densité d'extinction de la perspective aérienne (slot lightColor.w).
 		// Override config.json (world.fog.density) sinon valeur per-zone (atmosphere.json).

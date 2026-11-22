@@ -1,0 +1,595 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Shelf_Apothecary_1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Amber",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Clear",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Green",
+   "normalTexture": {
+    "index": 9
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 10
+    },
+    "metallicRoughnessTexture": {
+     "index": 11
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Ceramic",
+   "normalTexture": {
+    "index": 12
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 13
+    },
+    "metallicRoughnessTexture": {
+     "index": 14
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Shelf_Apothecary_1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
+    },
+    {
+     "attributes": {
+      "POSITION": 12,
+      "NORMAL": 13,
+      "TEXCOORD_0": 14
+     },
+     "indices": 15,
+     "material": 3
+    },
+    {
+     "attributes": {
+      "POSITION": 16,
+      "NORMAL": 17,
+      "TEXCOORD_0": 18
+     },
+     "indices": 19,
+     "material": 4
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  },
+  {
+   "sampler": 0,
+   "source": 9
+  },
+  {
+   "sampler": 0,
+   "source": 10
+  },
+  {
+   "sampler": 0,
+   "source": 11
+  },
+  {
+   "sampler": 0,
+   "source": 12
+  },
+  {
+   "sampler": 0,
+   "source": 13
+  },
+  {
+   "sampler": 0,
+   "source": 14
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_Normal.png",
+   "uri": "T_Decor_Glass_Amber_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_BaseColor.png",
+   "uri": "T_Decor_Glass_Amber_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_ORM.png",
+   "uri": "T_Decor_Glass_Amber_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_Normal.png",
+   "uri": "T_Decor_Glass_Clear_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_BaseColor.png",
+   "uri": "T_Decor_Glass_Clear_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_ORM.png",
+   "uri": "T_Decor_Glass_Clear_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_Normal.png",
+   "uri": "T_Decor_Glass_Green_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_BaseColor.png",
+   "uri": "T_Decor_Glass_Green_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_ORM.png",
+   "uri": "T_Decor_Glass_Green_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ceramic_Normal.png",
+   "uri": "T_Decor_Ceramic_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ceramic_BaseColor.png",
+   "uri": "T_Decor_Ceramic_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ceramic_ORM.png",
+   "uri": "T_Decor_Ceramic_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 216,
+   "max": [
+    1.0299999713897705,
+    2.200000047683716,
+    0.20000000298023224
+   ],
+   "min": [
+    -1.0299999713897705,
+    0,
+    -0.20000000298023224
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 216,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 216,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 324,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 308,
+   "max": [
+    0.9210805296897888,
+    1.5972340106964111,
+    0.10740149021148682
+   ],
+   "min": [
+    -0.8990850448608398,
+    0.04400140047073364,
+    -0.10250144451856613
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 308,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 308,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 1104,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 266,
+   "max": [
+    0.9128311276435852,
+    1.7117106914520264,
+    0.10764877498149872
+   ],
+   "min": [
+    -0.864529013633728,
+    0.04793166369199753,
+    -0.10900396853685379
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 266,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 266,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 963,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 12,
+   "componentType": 5126,
+   "count": 287,
+   "max": [
+    0.9048057794570923,
+    1.6968075037002563,
+    0.10754167288541794
+   ],
+   "min": [
+    -0.7981086373329163,
+    0.04666832834482193,
+    -0.10625140368938446
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 13,
+   "componentType": 5126,
+   "count": 287,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 14,
+   "componentType": 5126,
+   "count": 287,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 15,
+   "componentType": 5123,
+   "count": 1029,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 16,
+   "componentType": 5126,
+   "count": 213,
+   "max": [
+    0.9629514217376709,
+    1.641474962234497,
+    0.10976919531822205
+   ],
+   "min": [
+    -0.9150252342224121,
+    0.04975307360291481,
+    -0.11888476461172104
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 17,
+   "componentType": 5126,
+   "count": 213,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 18,
+   "componentType": 5126,
+   "count": 213,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 19,
+   "componentType": 5123,
+   "count": 717,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 2592,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2592,
+   "byteOffset": 2592,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1728,
+   "byteOffset": 5184,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 648,
+   "byteOffset": 6912,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3696,
+   "byteOffset": 7560,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3696,
+   "byteOffset": 11256,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2464,
+   "byteOffset": 14952,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2208,
+   "byteOffset": 17416,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3192,
+   "byteOffset": 19624,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3192,
+   "byteOffset": 22816,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2128,
+   "byteOffset": 26008,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1926,
+   "byteOffset": 28136,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3444,
+   "byteOffset": 30064,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3444,
+   "byteOffset": 33508,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2296,
+   "byteOffset": 36952,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2058,
+   "byteOffset": 39248,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2556,
+   "byteOffset": 41308,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2556,
+   "byteOffset": 43864,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1704,
+   "byteOffset": 46420,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1434,
+   "byteOffset": 48124,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 49560,
+   "uri": "Shelf_Apothecary_1.bin"
+  }
+ ]
+}

@@ -384,6 +384,10 @@ namespace engine
 #endif
 #if defined(_WIN32)
 		// --- Sous-étapes de RenderInGameImGuiFrame() (définies dans EngineUpdateUi.cpp) ---
+		/// Enseignes de service (atelier décors) : nom du service, traduit dans la langue
+		/// du joueur, en info-bulle au survol du panneau ; un clic l'épingle au-dessus du
+		/// panneau quelques secondes. Main thread, frame ImGui ouverte.
+		void RenderServiceSignTooltipImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden);
 		/// Marqueurs flottants des interactibles (nom, « [E] » à portée, liens PNJ), projetés sur l'écran. Main thread, frame ImGui ouverte.
 		void RenderInteractableMarkersImGui(engine::RenderState& out, const int& ivw, const int& ivh, ImDrawList* fg, const bool& worldOverlaysHidden);
 		/// Plaques de nom au-dessus des avatars et mobs distants (masquées sous un menu modal). Main thread, frame ImGui ouverte.
@@ -1197,12 +1201,36 @@ namespace engine
 		struct ScatterMeshGpu
 		{
 			std::vector<PropPart> parts;
+			/// Niveaux de détail optionnels (atelier décors) : [0] = <mesh>_LOD1.gltf,
+			/// [1] = <mesh>_LOD2.gltf, [2] = <mesh>_BB.gltf (billboard). Vide = niveau
+			/// absent : le rendu retombe sur le niveau plus détaillé disponible.
+			std::vector<PropPart> lodParts[3];
+			/// Enseigne de service (atelier décors) : identifiant du service tiré du nom
+			/// du mesh (Sign_Service_<id>), vide pour tout autre décor.
+			std::string serviceKey;
 			engine::math::Vec3 localMin{ 0.0f, 0.0f, 0.0f };
 			engine::math::Vec3 localMax{ 0.0f, 0.0f, 0.0f };
 			bool attempted = false; ///< chargement déjà tenté (succès ou échec mémorisé)
 			bool valid = false;
 		};
 		std::vector<ScatterMeshGpu> m_scatterMeshes;
+		/// Enseigne de service visible à la frame précédente (atelier décors) : centre du
+		/// panneau dans le repère de rendu et identifiant du service.
+		struct VisibleServiceSign
+		{
+			engine::math::Vec3 pos{ 0.0f, 0.0f, 0.0f };
+			float distM = 0.0f;
+			std::string key;
+		};
+		/// Remplie par RecordScatterGeometry (panneaux à moins de
+		/// client.service_sign.max_distance_m, 40 m), lue par RenderServiceSignTooltipImGui.
+		std::vector<VisibleServiceSign> m_visibleServiceSigns;
+		/// Panneau cliqué : son nom reste affiché au-dessus du panneau quelques secondes.
+		std::string m_pinnedServiceSign;
+		engine::math::Vec3 m_pinnedServiceSignPos{ 0.0f, 0.0f, 0.0f };
+		double m_pinnedServiceSignUntil = 0.0;
+		/// Seuils (m) LOD1 / LOD2 / billboard du décor instancié (world.scatter.*).
+		float m_scatterLodM[3] = { 30.0f, 70.0f, 110.0f };
 		/// Cache de matériaux du rendu instancié (nom de matériau glTF -> index bindless).
 		std::unordered_map<std::string, uint32_t> m_scatterMatCache;
 		/// Anneau de buffers d'instances (mat4) HOST_VISIBLE, un par frame en vol.
@@ -1472,6 +1500,12 @@ namespace engine
 		/// matériau, AABB locale. \return false si le mesh est introuvable/vide.
 		/// Effet de bord : crée meshes GPU et matériaux (AssetRegistry, MaterialDescriptorCache).
 		bool EnsureScatterMesh(uint32_t meshId);
+		/// Charge un glTF de décor en parties GPU (une par matériau) ; renvoie false si
+		/// absent ou vide. `outMin/outMax` reçoivent l'AABB locale si non nuls.
+		bool LoadScatterParts(const std::string& meshPath, std::vector<PropPart>& out,
+			engine::math::Vec3* outMin, engine::math::Vec3* outMax);
+		/// Partie(s) à dessiner pour un mesh du décor selon la distance caméra (m).
+		const std::vector<PropPart>& ScatterPartsForDistance(const ScatterMeshGpu& mesh, float distM) const;
 		/// Destination d'un chargement de décor instancié / bâtiments : champ de
 		/// rendu, collisionneur, origine GLOBALE retranchée aux positions du fichier
 		/// (0 en zone historique, centre de la cellule dans le monde « Royaumes »)
@@ -1819,6 +1853,8 @@ namespace engine
 		/// reconstruction (m de déplacement) ; cf. ApplyForestFillerSettings.
 		bool m_forestFillerEnabled = true;
 		float m_forestFillerRadiusM = 180.0f;
+		/// Rayon (m) du sous-bois de remplissage (≤ m_forestFillerRadiusM ; cf. ApplyForestFillerSettings).
+		float m_forestFillerUnderRadiusM = 110.0f;
 		float m_forestFillerStepM = 24.0f;
 		/// Distances de vue du préréglage courant (cf. ApplyViewDistancePreset).
 		engine::client::ViewDistanceSettings m_viewDistance{};

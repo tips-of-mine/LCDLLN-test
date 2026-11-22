@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Injecte les references de textures dans les .gltf des props NATURE de sous-bois
 # (buissons, fougeres, fleurs, champignons, rochers, plantes, trefles) du pack
-# Stylized Nature MegaKit. Meme principe que texture_trees.py : ajoute images/
+# Stylized Nature MegaKit. Meme principe que l ancien texture_trees.py (retire) : ajoute images/
 # textures/samplers et cable chaque materiau vers sa texture (presente dans
 # game/data/meshes/props/). alphaMode laisse tel quel -> le moteur active la
 # decoupe alpha (flag AlphaCutout) pour les materiaux BLEND.
@@ -21,20 +21,14 @@ MAT_TEX = {
     "Mushrooms":          {"base": "Mushrooms.png"},
     "Rocks":              {"base": "Rocks_Diffuse.png"},
     "PathRocks":          {"base": "PathRocks_Diffuse.png"},
-    "Leaves_NormalTree":  {"base": "Leaves_NormalTree.png"},
-    "Leaves_TwistedTree": {"base": "Leaves_TwistedTree.png"},
-    "Leaves_Pine":        {"base": "Leaf_Pine.png"},
-    "Bark_NormalTree":    {"base": "Bark_NormalTree.png",  "normal": "Bark_NormalTree_Normal.png"},
-    "Bark_DeadTree":      {"base": "Bark_DeadTree.png",    "normal": "Bark_DeadTree_Normal.png"},
-    "Bark_TwistedTree":   {"base": "Bark_TwistedTree.png", "normal": "Bark_TwistedTree_Normal.png"},
 }
 
 # Props decor de sous-bois a texturer.
+# Atelier décors : buissons, fougère, marguerites et rochers moyens sont remplacés par
+# tools/asset_pipeline/decor (textures T_Decor_*), retirés de cette liste.
 DECOR = [
-    "Bush_Common", "Bush_Common_Flowers", "Fern_1",
-    "Flower_3_Group", "Flower_4_Group",
+    "Flower_4_Group",
     "Mushroom_Common", "Mushroom_Laetiporus",
-    "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3",
     "Plant_1", "Plant_1_Big", "Plant_7",
     "Clover_1", "Clover_2",
 ]

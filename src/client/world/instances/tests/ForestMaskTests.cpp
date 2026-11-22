@@ -176,6 +176,22 @@ namespace
 				pines = pines && (high.meshPaths[in.meshIndex].find("Pine_") != std::string::npos
 					|| high.meshPaths[in.meshIndex].find("DeadTree_") != std::string::npos);
 		Check(!high.instances.empty() && pines, "remplissage : resineux en altitude");
+
+		// Horizon boisé (22/11/2026) : arbres jusqu'à radiusM, sous-bois limité à underRadiusM.
+		ForestFillerParams far = p;
+		far.radiusM = 380.0;
+		far.underRadiusM = 110.0;
+		ScatterFile horizon;
+		GenerateForestFiller(full, 1000.0, 1000.0, far, {}, horizon);
+		double treeMax = 0.0, underMax = 0.0;
+		for (const ScatterInstance& in : horizon.instances)
+		{
+			const double d = std::hypot(in.x - 1000.0, in.z - 1000.0);
+			if (in.cullClass == static_cast<uint8_t>(ScatterCullClass::Large)) treeMax = std::max(treeMax, d);
+			else underMax = std::max(underMax, d);
+		}
+		Check(treeMax > 360.0 && treeMax <= 380.0, "remplissage : arbres jusqu'a l'horizon des billboards");
+		Check(underMax > 90.0 && underMax <= 110.0, "remplissage : sous-bois limite a son rayon");
 	}
 }
 

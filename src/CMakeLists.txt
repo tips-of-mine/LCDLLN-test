@@ -793,6 +793,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(world_map_zoom_tests
     ${CMAKE_SOURCE_DIR}/src/client/world/places/WorldMapZoomTests.cpp)
 
+  # Atelier décors — enseignes de service : clé du service, prise au curseur (en-tête pur).
+  lcdlln_add_simple_test(service_signs_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/ServiceSignsTests.cpp)
+
   # FIX.10 — Perception du personnage (valeurs du classeur). PerceptionModel.cpp est
   # déjà dans engine_core.
   lcdlln_add_simple_test(perception_model_tests

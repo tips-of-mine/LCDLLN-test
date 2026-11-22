@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Wroc do ekranu logowania, aby zmienic haslo.",
   "options.account.email_hint": "Zmiana e-maila bedzie dostepna w przyszlej wersji.",
   "options.account.signed_out": "Lokalna sesja wyczyszczona (haslo usuniete).",
-  "common.close": "Zamknij"
+  "common.close": "Zamknij",
+  "service.auberge": "Gospoda",
+  "service.ecurie": "Stajnia",
+  "service.cimetiere": "Cmentarz",
+  "service.forgeron": "Kowal",
+  "service.potions": "Mikstury",
+  "service.armes": "Bron",
+  "service.armures": "Zbroje",
+  "service.temple": "Swiatynia",
+  "service.guilde": "Gildia",
+  "service.infirmerie": "Lecznica",
+  "service.marche": "Targ",
+  "service.banque": "Bank",
+  "service.prison": "Wiezienie",
+  "service.ecole_magie": "Szkola magii",
+  "service.bibliotheque": "Biblioteka",
+  "service.port": "Port",
+  "service.arene": "Arena"
 }

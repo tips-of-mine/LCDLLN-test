@@ -541,5 +541,22 @@
   "options.account.password_need_login": "Kehren Sie zum Anmeldebildschirm zurueck, um Ihr Passwort zu aendern.",
   "options.account.email_hint": "Die E-Mail-Aenderung wird in einer zukuenftigen Version angeboten.",
   "options.account.signed_out": "Lokale Sitzung geloescht (Passwort geloescht).",
-  "common.close": "Schliessen"
+  "common.close": "Schliessen",
+  "service.auberge": "Gasthaus",
+  "service.ecurie": "Stall",
+  "service.cimetiere": "Friedhof",
+  "service.forgeron": "Schmied",
+  "service.potions": "Traenke",
+  "service.armes": "Waffen",
+  "service.armures": "Ruestungen",
+  "service.temple": "Tempel",
+  "service.guilde": "Gilde",
+  "service.infirmerie": "Lazarett",
+  "service.marche": "Markt",
+  "service.banque": "Bank",
+  "service.prison": "Gefaengnis",
+  "service.ecole_magie": "Magierschule",
+  "service.bibliotheque": "Bibliothek",
+  "service.port": "Hafen",
+  "service.arene": "Arena"
 }

@@ -361328,6 +361328,41 @@
       "placement": "chantiers de reconstruction",
       "generated": true,
       "source": "[BD] T9"
+    },
+    {
+      "id": "decor_212",
+      "num": 212,
+      "name": "Sphère armillaire d'astrologue",
+      "tome": 10,
+      "family": "objets",
+      "meshes": [
+        "Armillary_Sphere_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T10-P007"
+      ],
+      "placement": "intérieurs (catalogue) : écoles de magie, bibliothèques, observatoires",
+      "generated": false,
+      "source": "[BD] T10"
+    },
+    {
+      "id": "decor_213",
+      "num": 213,
+      "name": "Bélier de siège couvert sur roues",
+      "tome": 10,
+      "family": "objets",
+      "meshes": [
+        "Battering_Ram_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T10-P023",
+        "T10-P038"
+      ],
+      "placement": "champs de bataille",
+      "generated": true,
+      "source": "[BD] T10"
     }
   ]
 }

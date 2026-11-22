@@ -9571,6 +9571,46 @@
       "billboard": false,
       "replaces": null,
       "ref": "T9-P009 ; T9-P015"
+    },
+    {
+      "id": "Armillary_Sphere_1",
+      "num": 212,
+      "family": "objets",
+      "builder": "armillary_sphere",
+      "seed": 21201,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.2
+      ],
+      "height_m": [
+        2.2,
+        2.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T10-P007"
+    },
+    {
+      "id": "Battering_Ram_1",
+      "num": 213,
+      "family": "objets",
+      "builder": "battering_ram",
+      "seed": 21202,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        6.7,
+        6.8
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T10-P023 ; T10-P038"
     }
   ]
 }

@@ -489,6 +489,8 @@ namespace tools::world_gen
 			Piece(w, "Map_Table_1", c - u * 9.5 - v * 4.0, 0.0, a + 90.0, 1.0, true);
 			Piece(w, "Paper_Stack_1", c - u * 9.5 - v * 5.6, 0.0, a, 1.0, false);
 			Piece(w, "Pyre_Stake_1", c + u * 15.0 - v * 3.0, 0.0, a, 1.0, true);
+			// Atelier décors T10 (pl.23, 38) : bélier couvert abandonné.
+			Piece(w, "Battering_Ram_1", c + u * 14.0 + v * 10.5, 0.0, a, 1.0, true);
 			for (int k = 0; k < 4; ++k)
 			{
 				const double b = rng.Next() * 2.0 * kPi;

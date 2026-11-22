@@ -4010,6 +4010,58 @@ def p_crane_wood(spec, lod):
     return m.out()
 
 
+# ====================================================================== Tome 10
+def p_armillary_sphere(spec, lod):
+    """Sphère armillaire d'astrologue sur pied (n° 212), H 2,2 m : trépied, colonne,
+    anneaux de laiton (méridien, équateur, écliptique), globe central."""
+    m = M()
+    b, d = m.p("Brass"), m.p("Wood_Dark")
+    for k in range(3):
+        a = 2 * math.pi * k / 3
+        cyl(d, (0.55 * math.cos(a), 0.55 * math.sin(a), 0), (0, 0, 0.6), 0.04, 0.035, S(lod, 6))
+    cyl(d, (0, 0, 0.55), (0, 0, 1.2), 0.06, 0.05, S(lod, 8))
+    zc, R = 1.65, 0.5
+    n = {0: 24, 1: 14, 2: 6}[lod]
+    for ax, tilt in (("X", math.pi / 2), ("Y", math.pi / 2), ("X", math.radians(23))):
+        if lod == 2 and tilt != math.pi / 2:
+            continue
+        pts = [Vector((R * math.cos(2 * math.pi * k / n), R * math.sin(2 * math.pi * k / n), 0)) for k in range(n + 1)]
+        xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(tilt, 4, ax)
+        API["tube"](b, [xf @ p for p in pts], [0.02] * (n + 1), 4 if lod < 2 else 3, 0.5)
+    pts = [Vector((R * math.cos(2 * math.pi * k / n), R * math.sin(2 * math.pi * k / n), zc)) for k in range(n + 1)]
+    API["tube"](b, pts, [0.025] * (n + 1), 4 if lod < 2 else 3, 0.5)
+    if lod < 2:
+        lathe_at(m.p("Wood_Painted"), 0, 0, [(0.001, zc - 0.16), (0.12, zc - 0.11), (0.16, zc), (0.12, zc + 0.11), (0.001, zc + 0.16)], S(lod, 12))
+        cyl(b, (0, 0, zc - R - 0.05), (0, 0, zc + R + 0.06), 0.012, 0.012, 4)
+    cyl(b, (0, 0, 1.15), (0, 0, zc - R), 0.03, 0.03, 6)
+    return m.out()
+
+
+def p_battering_ram(spec, lod):
+    """Bélier de siège couvert sur roues (n° 213), 6 x 2,6 x 3 m : châssis, quatre roues,
+    toit de planches à deux pans tendu de peaux, tronc ferré suspendu à des chaînes."""
+    m = M()
+    d = m.p("Wood_Dark")
+    for y in (-1.0, 1.0):
+        box(d, (-2.8, y - 0.12, 0.6), (2.8, y + 0.12, 0.85))
+        for x in (-2.7, -0.9, 0.9, 2.7):
+            box(d, (x - 0.1, y - 0.1, 0.85), (x + 0.1, y + 0.1, 2.3))
+        box(d, (-2.8, y - 0.1, 2.2), (2.8, y + 0.1, 2.4))
+    for x in (-2.0, 2.0):
+        for y in (-1.25, 1.25):
+            wheel(m, (x, y, 0.55), 0.55, 0.18, lod, 6, axis="y")
+    hide = m.p("Leather")
+    for sg in (-1, 1):
+        q = [(-3.0, sg * 1.3, 2.3), (3.0, sg * 1.3, 2.3), (3.0, 0, 3.0), (-3.0, 0, 3.0)]
+        _quad(hide, *(q if sg < 0 else q[::-1]))
+    cyl(m.p("Bark_Broad"), (-3.0, 0, 1.5), (3.3, 0, 1.5), 0.25, 0.22, S(lod, 10))
+    cyl(m.p("Iron"), (3.3, 0, 1.5), (3.7, 0, 1.5), 0.26, 0.05, S(lod, 8))
+    if lod < 2:
+        for x in (-1.5, 1.5):
+            cyl(m.p("Iron"), (x, 0, 1.75), (x, 0, 2.3), 0.025, 0.025, 4)
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}

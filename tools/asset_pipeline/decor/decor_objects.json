@@ -1194,6 +1194,18 @@
       "nom": "Grue de chantier en bois",
       "tome": 9,
       "placement_prevu": "chantiers de reconstruction"
+    },
+    {
+      "num": 212,
+      "nom": "Sphère armillaire d'astrologue",
+      "tome": 10,
+      "placement_prevu": "intérieurs (catalogue) : écoles de magie, bibliothèques, observatoires"
+    },
+    {
+      "num": 213,
+      "nom": "Bélier de siège couvert sur roues",
+      "tome": 10,
+      "placement_prevu": "champs de bataille"
     }
   ]
 }

@@ -1,0 +1,45 @@
+# Contrôle des arbres « dark fantasy » (tools/asset_pipeline/generate_trees_blender.py).
+#
+# check_trees.py (Python standard, quelques secondes) : pour chaque arbre et ses 3 LOD,
+# fichiers .gltf/.bin/.png présents et cohérents, budgets de triangles, matériaux
+# (écorce + normal map, feuillage en alphaMode BLEND), hauteur plausible, présence au
+# catalogue des props et dans les tables de végétation du générateur de monde.
+# La génération elle-même (Blender) n'est pas rejouée ici.
+name: Assets — arbres
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'game/data/meshes/props/**'
+      - 'tools/asset_pipeline/**'
+      - 'tools/world_gen/lib/Vegetation.cpp'
+      - '.github/workflows/assets-trees.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'game/data/meshes/props/**'
+      - 'tools/asset_pipeline/**'
+      - 'tools/world_gen/lib/Vegetation.cpp'
+      - '.github/workflows/assets-trees.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  trees:
+    name: Arbres (glTF, LOD, catalogue)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Contrôle des arbres
+        run: python tools/asset_pipeline/check_trees.py
+
+      - name: Syntaxe du générateur Blender
+        run: python -m py_compile tools/asset_pipeline/generate_trees_blender.py

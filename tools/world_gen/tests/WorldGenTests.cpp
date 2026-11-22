@@ -3731,6 +3731,29 @@ namespace
 		Check(std::find(a.begin(), a.end(), "hameau_marn") != a.end(),
 			"cimetieres v1.0.114 : cimetiere importe = id de la ville d'ancrage (hameau_marn)");
 		Check(iso.size() == 1u && iso[0] == "isole_cell_n011_e018", "cimetieres v1.0.114 : cimetiere isole isole_<cellule>");
+		// Atelier décors (revue Codex, PR #1168) : la taverne importée de Marn (ville
+		// d'ancrage) porte l'enseigne de l'auberge, du côté du centre du hameau.
+		{
+			auto w = std::make_unique<World>();
+			int n = 0, e = 0;
+			ParseCellId("N003_W009", n, e);
+			InitCell(*w, g, { n, e });
+			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+			std::string e2;
+			ImportLegacyContent(*w, e2);
+			BuildSettlements(*w);
+			const BuildingPlacementDef* inn = nullptr;
+			for (const BuildingPlacementDef& b : w->buildings)
+				if (b.cityId == "hameau_marn" && b.templateType == "tavern") inn = &b;
+			int signs = 0, near = 0;
+			for (const ScatterDef& s : w->scatter)
+				if (s.mesh == "meshes/props/Sign_Service_auberge.gltf")
+				{
+					++signs;
+					if (inn && std::hypot(s.position.x - inn->position.x, s.position.z - inn->position.z) < inn->footprintRadius + 2.5) ++near;
+				}
+			Check(inn != nullptr && signs == 1 && near == 1, "enseignes : auberge importee de Marn signalee");
+		}
 		fs::remove_all(tmp, ec);
 	}
 

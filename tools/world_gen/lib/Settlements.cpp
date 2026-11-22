@@ -295,6 +295,10 @@ namespace tools::world_gen
 		/// pictogramme, sans texte, devant le bâtiment de chaque service de la ville ; le
 		/// client affiche le nom du service dans la langue du joueur au survol ou au clic.
 		/// Le panneau est sur potence, perpendiculaire à la façade, à côté de la porte.
+		/// Les bâtiments importés de la ville d'ancrage (ImportLegacyContent, posés avant
+		/// la génération) sont aussi candidats : leur façade est inconnue (doorPoint =
+		/// position), le panneau est alors posé du côté du centre de la ville, au bord de
+		/// leur emprise (footprintRadius).
 		/// \param firstBuilding indice du premier bâtiment posé pour cette ville.
 		void PlaceServiceSigns(World& w, const CityDef& c, size_t firstBuilding)
 		{
@@ -303,7 +307,8 @@ namespace tools::world_gen
 				if (HasFacadeSign(s) && std::find(todo.begin(), todo.end(), s) == todo.end()) todo.push_back(s);
 			if (todo.empty()) return;
 			std::vector<size_t> cand;
-			for (size_t i = firstBuilding; i < w.buildings.size(); ++i)
+			const size_t first = (c.id == w.master.importAnchorCity) ? 0 : firstBuilding;
+			for (size_t i = first; i < w.buildings.size(); ++i)
 				if (w.buildings[i].cityId == c.id && w.buildings[i].templateType != "ruine") cand.push_back(i);
 			auto dist = [&](size_t i) {
 				const Vec2 p = w.buildings[i].position;
@@ -329,13 +334,17 @@ namespace tools::world_gen
 				used[best] = true;
 				const BuildingPlacementDef& b = w.buildings[cand[best]];
 				Vec2 f{ b.doorPoint.x - b.position.x, b.doorPoint.z - b.position.z };
+				const bool imported = std::hypot(f.x, f.z) < 1e-6;
+				// Bâtiment importé : façade inconnue, panneau tourné vers le centre de la ville.
+				if (imported) f = Vec2{ c.center.x - b.position.x, c.center.z - b.position.z };
 				const double l = std::hypot(f.x, f.z);
 				if (l < 1e-6) continue;
 				f = f * (1.0 / l);
 				const Vec2 side{ -f.z, f.x };
 				const double off = std::min(std::max(b.halfW * 0.55, 1.2), std::max(0.6, b.halfW - 0.2));
 				// Origine du mesh au milieu de la potence : poteau à 0,15 m de la façade.
-				const Vec2 p = b.position + f * (b.halfD + 0.6) + side * off;
+				const double depth = imported ? b.footprintRadius : b.halfD;
+				const Vec2 p = b.position + f * (depth + 0.6) + side * off;
 				if (w.IsWater(p)) continue;
 				AddProp(w, "Sign_Service_" + svc, p, YawAlong(f), 1.0, kSolid, 1, 0.5);
 				w.Occupy(p, 0.7);

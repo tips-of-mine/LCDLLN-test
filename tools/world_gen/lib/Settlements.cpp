@@ -117,18 +117,34 @@ namespace tools::world_gen
 				return { House("chaumiere_4x4", 2), House("maison_4x6", 2), House("longere_6x10", 1) };
 			if (c.race == "demons" || c.kind == "camp")
 				return { House("chaumiere_4x4", 2), House("ruine_6x6", 1), House("forge_6x6", 0.5) };
+			// Atelier décors T2 (n° 92) : toits d'ardoise et tourelles dans les villes de l'Empire.
+			const bool empire = c.faction == "empire_hynn";
 			if (c.kind == "capitale")
-				return { House("maison_haute_6x8", 3), House("grande_maison_8x10", 2), House("manoir_8x12", 1.5),
+			{
+				std::vector<TemplateRef> pal = { House("maison_haute_6x8", 3), House("grande_maison_8x10", 2), House("manoir_8x12", 1.5),
 					Hand("house", "house_001", 4.0, 7.4, 1.2), House("echoppe_4x8", 1.2), House("maison_6x6", 1) };
+				if (empire) { pal.push_back(House("maison_haute_ardoise_6x8", 2)); pal.push_back(House("grande_maison_ardoise_8x10", 1.5)); }
+				else { pal.push_back(House("maison_brique_6x8", 1.5)); pal.push_back(House("maison_brique_4x6", 1.2)); }   // T4 (n° 156)
+				return pal;
+			}
 			if (c.kind == "grande_ville")
-				return { House("maison_6x6", 2.5), House("maison_haute_6x8", 2), House("grande_maison_8x10", 1.5),
+			{
+				std::vector<TemplateRef> pal = { House("maison_6x6", 2.5), House("maison_haute_6x8", 2), House("grande_maison_8x10", 1.5),
 					House("echoppe_4x8", 1.5), House("manoir_8x12", 0.6), Hand("house", "house_001", 4.0, 7.4, 0.8) };
+				if (empire) { pal.push_back(House("maison_ardoise_6x6", 2)); pal.push_back(House("maison_haute_ardoise_6x8", 1.5)); }
+				else { pal.push_back(House("maison_brique_6x8", 1.2)); pal.push_back(House("maison_brique_4x6", 1.2)); }   // T4 (n° 156)
+				return pal;
+			}
 			if (c.kind == "forteresse")
 				return { House("caserne_8x14", 1.5), House("maison_6x6", 2), House("manoir_8x12", 0.8), House("forge_6x6", 0.6) };
 			if (c.kind == "ville")
-				return { House("maison_4x6", 1.5), House("maison_6x6", 2), House("echoppe_4x8", 1), House("maison_haute_6x8", 1),
+			{
+				std::vector<TemplateRef> pal = { House("maison_4x6", 1.5), House("maison_6x6", 2), House("echoppe_4x8", 1), House("maison_haute_6x8", 1),
 					House("grande_maison_8x10", 0.8), House("maison_planches_4x6", 1.5), House("maison_planches_6x8", 1.5),
 					House("echoppe_planches_4x8", 0.8) };
+				if (empire) { pal.push_back(House("maison_ardoise_6x6", 1.5)); pal.push_back(House("maison_haute_ardoise_6x8", 0.8)); }
+				return pal;
+			}
 			if (c.kind == "village")
 				return { House("chaumiere_4x4", 1.2), House("maison_4x6", 1.5), House("longere_6x10", 1), House("maison_6x6", 1),
 					House("echoppe_4x8", 0.7), House("chaumiere_pierre_4x4", 1.2), House("longere_pierre_6x10", 0.8),
@@ -323,6 +339,12 @@ namespace tools::world_gen
 				if (w.IsWater(p)) continue;
 				AddProp(w, "Sign_Service_" + svc, p, YawAlong(f), 1.0, kSolid, 1, 0.5);
 				w.Occupy(p, 0.7);
+				// Armurier (atelier décors T3, pl.17) : présentoir d'armure de l'autre côté de la porte.
+				if (svc == "armures")
+				{
+					const Vec2 q = b.position + f * (b.halfD + 1.3) - side * off;
+					if (!w.IsWater(q) && !w.IsOccupied(q, 0.5)) { AddProp(w, "ArmorStand_1", q, YawFacing(f * -1.0), 1.0, kSolid, 1, 0.4); w.Occupy(q, 0.5); }
+				}
 			}
 		}
 
@@ -357,6 +379,63 @@ namespace tools::world_gen
 		/// écrites dans zone.json ; le client ne les lit pas encore). Déterministe.
 		/// Effet de bord : w.scatter, w.pointLights, w.ambianceZones, occupation fine.
 		/// À appeler après les agglomérations (les torches évitent le bâti).
+		/// Tombes ANCIENNES d'un cimetière (demande du propriétaire, 22/11/2026) : rangées
+		/// lâches de tas de cailloux moussus (Grave_Cairn_1-3), chacun avec à la tête une
+		/// croix de bois plus ou moins bien faite (Cross_Wood_1 équarrie, _2 branches liées,
+		/// _3 penchée au bras cassé), parfois une vieille stèle, parfois rien. Le centre
+		/// (point de résurrection, chandelier) reste dégagé sur 2,5 m.
+		/// \param toward direction des têtes de tombe (vers la ville) ; \param count tombes visées.
+		/// Effet de bord : w.scatter, occupation fine (1 m par tombe). Déterministe (rng).
+		void PlaceOldGraves(World& w, Vec2 center, Vec2 toward, int count, Rng& rng)
+		{
+			const double l = std::hypot(toward.x, toward.z);
+			const Vec2 ax = l > 1e-6 ? toward * (1.0 / l) : Vec2{ 1.0, 0.0 };
+			const Vec2 side{ -ax.z, ax.x };
+			const int cols = std::max(2, static_cast<int>(std::ceil(std::sqrt(count * 1.4))));
+			const int rows = (count + cols - 1) / cols + 1;
+			int placed = 0;
+			for (int r = 0; r < rows && placed < count; ++r)
+				for (int c = 0; c < cols && placed < count; ++c)
+				{
+					// Grille : tombes de 2 m alignées selon `ax`, rangées espacées de 3,2 m.
+					const double u = (r - (rows - 1) * 0.5) * 3.2 + rng.Range(-0.3, 0.3);
+					const double v = (c - (cols - 1) * 0.5) * 1.9 + rng.Range(-0.25, 0.25);
+					const Vec2 p = center + ax * u + side * v;
+					if (std::hypot(p.x - center.x, p.z - center.z) < 2.5) continue;
+					if (w.IsWater(p) || w.IsOccupied(p, 1.0) || !w.InPlayableBounds(p, 40.0)) continue;
+					const int ri = w.roadDist.IndexX(p.x), rj = w.roadDist.IndexZ(p.z);
+					if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 2.5) continue;   // jamais sur la route
+					const double yaw = YawAlong(ax) + rng.Range(-8.0, 8.0);
+					static const char* kCairns[] = { "Grave_Cairn_1", "Grave_Cairn_2", "Grave_Cairn_3" };
+					AddProp(w, kCairns[rng.Below(3)], p, yaw, rng.Range(0.85, 1.1), 0, 2, 0.0, -0.03);
+					// Tête de tombe : croix (bonne, rustique, abîmée), vieille stèle ou rien.
+					const Vec2 head = p + ax * 1.15;
+					const double pick = rng.Next();
+					const double hyaw = YawAlong(side) + rng.Range(-10.0, 10.0);
+					if (pick < 0.30) AddProp(w, "Cross_Wood_1", head, hyaw, rng.Range(0.9, 1.05), 0, 1, 0.0, -0.25);
+					else if (pick < 0.58) AddProp(w, "Cross_Wood_2", head, hyaw, rng.Range(0.9, 1.1), 0, 1, 0.0, -0.25);
+					else if (pick < 0.78) AddProp(w, "Cross_Wood_3", head, hyaw, rng.Range(0.9, 1.05), 0, 1, 0.0, -0.25);
+					else if (pick < 0.86)   // stèles brutes (atelier décors T4, pl.11, 30)
+					{
+						static const char* kStones[] = { "Gravestone_1", "Gravestone_2", "Gravestone_3" };
+						AddProp(w, kStones[rng.Below(3)], head, hyaw + 90.0, rng.Range(0.85, 1.05), kSolid, 1, 0.35, -0.3);
+					}
+					else if (pick < 0.92) AddProp(w, "Grave_Stone_Old_1", head, hyaw + 90.0, rng.Range(0.85, 1.05), kSolid, 1, 0.35, -0.3);
+					w.Occupy(p, 1.0);
+					++placed;
+				}
+		}
+
+		/// Nombre de tombes d'un cimetière selon la taille de l'agglomération.
+		int GraveCountFor(const CityDef& c)
+		{
+			if (c.kind == "capitale") return 30;
+			if (c.kind == "grande_ville") return 24;
+			if (c.kind == "ville" || c.kind == "forteresse") return 18;
+			if (c.kind == "village") return 12;
+			return c.procedural.empty() ? 8 : 6;
+		}
+
 		/// Cimetière ISOLÉ (v1.0.111) : si `graveyards.fill_empty_cells` est vrai et que la
 		/// cellule n'a aucun cimetière (ni agglomération qui en a un, ni cimetière importé),
 		/// en pose un sans ville : au bord de la route la plus proche du centre de la case
@@ -413,14 +492,10 @@ namespace tools::world_gen
 			if (!found) { w.Warn("aucun site a terre pour le cimetiere isole (cellule de mer)"); return; }
 			w.hasIsolatedGraveyard = true;
 			w.isolatedGraveyard = site;
-			w.Occupy(site, 6.0);
 			Rng rng(Hash(w.master.seed, HashString(w.cellName.c_str()), 6666));
-			for (int k = 0; k < 8; ++k)
-			{
-				const Vec2 p = site + Dir(k * kPi / 4.0 + 0.2) * 4.0;
-				AddProp(w, (k % 2) ? "Pebble_Square_3" : "Rock_Medium_2", p, rng.Range(0, 360), (k % 2) ? 2.2 : 0.45, 0, 1);
-			}
 			AddProp(w, "CandleStick_Stand", site, 0.0, 1.0, 0, 1);
+			PlaceOldGraves(w, site, ctr - site, 10, rng);
+			w.Occupy(site, 6.0);
 		}
 
 		void BuildGouffreProps(World& w)
@@ -855,6 +930,12 @@ namespace tools::world_gen
 						const BuildingPlacementDef& bp = w.buildings[static_cast<size_t>(b)];
 						const Vec2 side{ -dir.z, dir.x };
 						AddProp(w, "Anvil", bp.doorPoint + side * 2.2, YawFacing(dir), 1.0, kSolid, 1, 0.6);
+						// Forges naines (atelier décors T3, pl.17) : creuset suspendu à sa potence.
+						if (c.race == "nains")
+						{
+							const Vec2 cp = bp.doorPoint + side * 5.0 - dir * 0.5;
+							if (!w.IsOccupied(cp, 1.8)) { AddProp(w, "Crucible_Hanging_1", cp, YawFacing(side), 1.0, kSolid, 1, 1.2); w.Occupy(cp, 1.8); }
+						}
 						AddProp(w, "Workbench", bp.doorPoint - side * 2.4, YawFacing(side), 1.0, kSolid, 1, 0.9);
 						AddProp(w, "Whetstone", bp.doorPoint + side * 3.6 - dir * 0.8, rng.Range(0, 360), 1.0, 0, 2);
 						break;
@@ -873,15 +954,49 @@ namespace tools::world_gen
 					const Vec2 dir = Dir(a);
 					const Vec2 p = c.center + dir * (Rp - 1.8);
 					const bool cart = (k % 3) == 2;
-					AddProp(w, cart ? "Stall_Cart_Empty" : "Stall_Empty", p, YawFacing(dir * -1.0) + 180.0, 1.0, kSolid, 0, 1.0);
+					// Atelier décors T2 (pl.4) : un étal sur trois est un auvent rayé dans les villes.
+					const bool townMarket = c.kind != "hameau" && c.kind != "village";
+					const bool awning = (k % 3) == 1 && townMarket;
+					// Atelier décors T4 (pl.24-25) : tentes de marché frangées sur mâts rayés.
+					const bool tent = (k % 3) == 0 && townMarket && k > 0;
+					static const char* kTents[] = { "Stall_Tent_Market_1", "Stall_Tent_Market_2", "Stall_Tent_Market_3" };
+					AddProp(w, cart ? "Stall_Cart_Empty" : (awning ? "Awning_Striped_1" : (tent ? kTents[k % 3 == 0 ? (k / 3) % 3 : 0] : "Stall_Empty")), p,
+						YawFacing(dir * -1.0) + 180.0, 1.0, kSolid, 0, 1.0);
 					L.stallFronts.push_back(c.center + dir * (Rp - 3.4));
 					// Marchandises au pied de l'étal.
-					const char* goods[] = { "Barrel_Apples", "FarmCrate_Apple", "FarmCrate_Carrot", "Crate_Wooden", "Bag", "Barrel" };
+					const char* goods[] = { "Barrel_Apples", "FarmCrate_Apple", "FarmCrate_Carrot", "Crate_Wooden", "Bag", "Barrel", "Basket_1",
+						"FoodPlatter_1", "Cage_Poultry_1", "Cloth_Rolls_1" };
 					const Vec2 side{ -dir.z, dir.x };
-					AddProp(w, goods[rng.Below(6)], p + side * 1.4, rng.Range(0, 360), 1.0, kSolid, 1, 0.4);
+					AddProp(w, goods[rng.Below(10)], p + side * 1.4, rng.Range(0, 360), 1.0, kSolid, 1, 0.4);
 				}
-				// Bancs et fontaine symbolique (chaudron + seaux) au centre.
-				AddProp(w, "Cauldron", c.center, 0.0, 1.6, kSolid, 0, 0.9);
+				// Centre de la place : fontaine à vasque dans les villes (atelier décors T2,
+				// pl.7-8), chaudron dans les hameaux et villages.
+				const bool town = c.kind == "ville" || c.kind == "grande_ville" || c.kind == "capitale" || c.kind == "forteresse";
+				if (town) AddProp(w, "Fountain_Basin_1", c.center, rng.Range(0, 45), 1.0, kSolid, 0, 1.35);
+				else AddProp(w, "Cauldron", c.center, 0.0, 1.6, kSolid, 0, 0.9);
+				// Jardins de capitale (atelier décors T4, pl.3-4) : statues drapées sur la place,
+				// buis taillés autour de la fontaine.
+				if (c.kind == "capitale" || c.kind == "grande_ville")
+				{
+					for (int k = 0; k < 2; ++k)
+					{
+						const Vec2 sp = c.center + Dir(k * kPi + 0.2) * (Rp * 0.85);
+						if (!w.IsOccupied(sp, 0.6)) AddProp(w, k ? "Statue_Garden_2" : "Statue_Garden_1", sp, YawFacing(c.center - sp), 1.0, kSolid, 0, 0.5);
+					}
+					if (c.kind == "capitale")
+						for (int k = 0; k < 4; ++k)
+						{
+							const Vec2 hp = c.center + Dir(k * kPi / 2.0) * 2.6;
+							if (!w.IsOccupied(hp, 0.5)) AddProp(w, "Hedge_Trimmed_1", hp, 0.0, 1.0, kSolid, 1, 0.7);
+						}
+				}
+				// Braseros-vasques sur fût (atelier décors T3, pl.28) aux grandes places.
+				if (c.kind == "capitale" || c.kind == "grande_ville")
+					for (int k = 0; k < 4; ++k)
+					{
+						const Vec2 bp = c.center + Dir(k * kPi / 2.0 + kPi / 4.0) * (Rp * 0.7);
+						if (!w.IsOccupied(bp, 0.6)) AddProp(w, "Brazier_Column_1", bp, 0.0, 1.0, kSolid, 1, 0.35);
+					}
 				for (int k = 0; k < 3; ++k)
 				{
 					const Vec2 dir = Dir(k * 2.0 * kPi / 3.0 + 1.0);
@@ -918,11 +1033,16 @@ namespace tools::world_gen
 					if (!w.IsOccupied(p, 0.4)) AddProp(w, "Prop_Support", p, b.yawDeg, 1.0, kSolid, 1, 0.4);
 				}
 				const char* bricks[] = { "Prop_Brick1", "Prop_Brick2", "Prop_Brick3", "Prop_Brick4" };
-				const char* kit[] = { "Pickaxe_Bronze", "Axe_Bronze", "Rope_1", "Crate_Wooden", "Bucket_Wooden_1", "Anvil_Log" };
+				const char* kit[] = { "Pickaxe_Bronze", "Axe_Bronze", "Rope_1", "Crate_Wooden", "Bucket_Wooden_1", "Anvil_Log", "Ladder_Wood_1" };
+				// Bâti d'échafaudage (atelier décors T3, pl.17) contre un mur latéral.
+				{
+					const Vec2 sp = b.position + side * (b.halfW + 1.6) + front * (b.halfD * 0.3);
+					if (!w.IsOccupied(sp, 1.0) && rng.Chance(0.6)) { AddProp(w, "Frame_Scaffold_1", sp, b.yawDeg + 90.0, 1.0, kSolid, 1, 1.0); w.Occupy(sp, 1.0); }
+				}
 				const Vec2 pile = b.doorPoint + side * (rng.Chance(0.5) ? 2.6 : -2.6);
 				if (!w.IsOccupied(pile, 0.6)) AddProp(w, bricks[rng.Below(4)], pile, rng.Range(0, 360), 1.0, kSolid, 1, 0.5);
 				const Vec2 tool = b.doorPoint - front * 0.8 + side * (rng.Range(-1.2, 1.2));
-				if (!w.IsOccupied(tool, 0.4)) AddProp(w, kit[rng.Below(6)], tool, rng.Range(0, 360), 1.0, 0, 2);
+				if (!w.IsOccupied(tool, 0.4)) AddProp(w, kit[rng.Below(7)], tool, rng.Range(0, 360), 1.0, 0, 2);
 			}
 
 			// --- Remparts / palissade, percés aux portes. Une ville en
@@ -1010,6 +1130,8 @@ namespace tools::world_gen
 					{
 						AddProp(w, "Wall_Arch", g + tan * 3.2, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece), 0);
 						AddProp(w, "Wall_Arch", g - tan * 3.2, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece), 0);
+						// Vantaux de chêne ferrés, ouverts vers l'intérieur (atelier décors T4, pl.20).
+						AddProp(w, "Gate_City_Iron_1", g, std::atan2(-dir.x, -dir.z) * 180.0 / kPi, 1.0, 0, 0);
 						AddProp(w, "Banner_1", g + tan * 3.2 + dir * 0.35, YawFacing(dir * -1.0), 1.0, 0, 0, 0.0, 2.6);
 						AddProp(w, "Banner_2", g - tan * 3.2 + dir * 0.35, YawFacing(dir * -1.0), 1.0, 0, 0, 0.0, 2.6);
 						// Torches fixées sur la face extérieure des arches.
@@ -1072,6 +1194,21 @@ namespace tools::world_gen
 						for (double v = -hd + 3.0; v <= hd - 3.0; v += 4.0)
 							AddProp(w, crop, fc + ax * u + az * v, yawAx, rng.Range(0.95, 1.05), 0, 0);
 					AddProp(w, "FarmCrate_Carrot", fc - az * (hd + 1.2) + ax * 2.0, rng.Range(0, 360), 1.0, kSolid, 1, 0.4);
+					// Meules de foin coniques (atelier décors T3, pl.26) au bord des champs de
+					// céréales (pas des vignes ni du maïs), hameaux, villages et fermes.
+					const std::string cs(crop);
+					if ((c.kind == "hameau" || c.kind == "village") && cs.find("Vine") == std::string::npos
+						&& cs.find("Corn") == std::string::npos)
+					{
+						const int stacks = 1 + static_cast<int>(rng.Below(3));
+						for (int k = 0; k < stacks; ++k)
+						{
+							const Vec2 hp = fc - az * (hd + 3.5 + 3.4 * (k % 2)) - ax * (hw * 0.3 + 3.6 * k);
+							if (w.IsWater(hp) || w.IsOccupied(hp, 1.8)) continue;
+							AddProp(w, "Haystack_1", hp, rng.Range(0, 360), rng.Range(0.85, 1.1), kSolid, 0, 1.4);
+							w.Occupy(hp, 1.8);
+						}
+					}
 				}
 			}
 
@@ -1091,15 +1228,132 @@ namespace tools::world_gen
 					gy = c.center + Dir(a + attempt * 0.4) * (R + 12.0 + attempt);
 				}
 				L.graveyard = gy;
-				w.Occupy(gy, 4.0);
-				for (int k = 0; k < 6; ++k)
-				{
-					const Vec2 p = gy + Dir(k * kPi / 3.0 + 0.3) * 3.0;
-					AddProp(w, (k % 2) ? "Pebble_Square_3" : "Rock_Medium_2", p, rng.Range(0, 360), (k % 2) ? 2.2 : 0.45, 0, 1);
-				}
 				AddProp(w, "CandleStick_Stand", gy, 0.0, 1.0, 0, 1);
+				// Urnes de pierre sur socle (atelier décors T4, pl.40) aux cimetières des grandes villes.
+				if (c.kind == "capitale" || c.kind == "grande_ville")
+				{
+					const Vec2 tv{ c.center.x - gy.x, c.center.z - gy.z };
+					const double tl = std::max(1e-6, std::hypot(tv.x, tv.z));
+					const Vec2 sd{ -tv.z / tl, tv.x / tl };
+					for (const double sg : { -1.0, 1.0 })
+						AddProp(w, "Urn_Stone_1", gy + sd * (1.6 * sg), 0.0, 1.0, kSolid, 1, 0.35);
+				}
+				PlaceOldGraves(w, gy, c.center - gy, GraveCountFor(c), rng);
+				w.Occupy(gy, 2.5);
 			}
 			else L.graveyard = c.center;
+
+			// --- Jardin de capitale (atelier décors T4, pl.3-4) : kiosque à coupole entouré de
+			//     massifs d'iris et de lis, cyprès en bac de part et d'autre de l'entrée.
+			if (c.kind == "capitale" && c.state != "ruine" && c.procedural.empty())
+				for (int attempt = 0; attempt < 16; ++attempt)
+				{
+					const Vec2 gp = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * (R * rng.Range(0.55, 0.85));
+					if (w.IsWater(gp) || w.IsOccupied(gp, 7.5) || !GroundOk(w, gp, 7.0)) continue;
+					const Vec2 to = c.center - gp;
+					AddProp(w, "Gazebo_Rotunda_1", gp, YawFacing(to), 1.0, 0, 0);   // traversable (colonnes fines)
+					for (int k = 0; k < 8; ++k)
+						AddProp(w, k % 2 ? "Flower_Garden_2" : "Flower_Garden_1", gp + Dir(k * kPi / 4.0 + 0.4) * 5.2, rng.Range(0, 360), 1.0, 0, 2);
+					const double tl = std::max(1e-6, std::hypot(to.x, to.z));
+					const Vec2 td{ to.x / tl, to.z / tl }, sd{ -td.z, td.x };
+					for (const double sg : { -1.0, 1.0 })
+						AddProp(w, "Tree_Cypress_Potted_1", gp + td * 4.2 + sd * (1.6 * sg), 0.0, 1.0, kSolid, 1, 0.4);
+					w.Occupy(gp, 7.5);
+					break;
+				}
+
+			// --- Ruines (atelier décors T4, pl.40-41 ; T5, pl.2-3) : pans de brique effondrés,
+			//     arc brisé, frise tombée, cheminée de pierre sèche d'une hutte brûlée.
+			if (c.state == "ruine")
+				for (int k = 0; k < 4; ++k)
+				{
+					static const char* kRuins[] = { "Ruin_Wall_1", "Ruin_Wall_2", c.race == "orcs" ? "Chimney_DryStone_1" : "Ruin_Wall_3" };
+					for (int attempt = 0; attempt < 10; ++attempt)
+					{
+						const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * (R * rng.Range(0.2, 0.85));
+						if (w.IsWater(p) || w.IsOccupied(p, 3.0)) continue;
+						const int v = (k + attempt) % 3;
+						AddProp(w, kRuins[v], p, rng.Range(0, 360), rng.Range(0.85, 1.15), kSolid, 0, v == 2 ? 1.2 : 2.4);
+						w.Occupy(p, 3.0);
+						break;
+					}
+				}
+
+			// --- Orques et orkhs (atelier décors T5, pl.1-3, 31) : huttes coniques de perches et
+			//     de chaume en couronne, tambour de guerre sur la place, poupée de chiffon.
+			if (c.race == "orcs" && c.state != "ruine")
+			{
+				const int huts = c.kind == "hameau" ? 4 : (c.kind == "village" ? 7 : 10);
+				for (int k = 0; k < huts; ++k)
+					for (int attempt = 0; attempt < 8; ++attempt)
+					{
+						const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * (R * rng.Range(0.35, 0.95));
+						if (w.IsWater(p) || w.IsOccupied(p, 2.4) || !GroundOk(w, p, 2.2)) continue;
+						AddProp(w, "Hut_Cone_Thatch_1", p, YawFacing(c.center - p), 1.0, kSolid, 0, 2.0);
+						w.Occupy(p, 2.4);
+						if (rng.Chance(0.15)) AddProp(w, "Doll_Rag_1", p + Dir(rng.Range(0.0, 2.0 * kPi)) * 2.6, rng.Range(0, 360), 1.0, 0, 2);
+						break;
+					}
+				const Vec2 dp = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * 4.0;
+				if (!w.IsOccupied(dp, 0.9)) AddProp(w, "WarDrum_1", dp, 0.0, 1.0, kSolid, 1, 0.8);
+			}
+
+			// --- Tour carrée de village (atelier décors T3, pl.26-29) : un village du lore sur
+			//     deux, en bordure ; chariot blindé dans les villes naines (pl.17-18, 25, 40).
+			if (c.state != "ruine" && c.procedural.empty())
+			{
+				const bool tower = c.kind == "village" && (HashString(c.id.c_str()) % 2u) == 0u;
+				const bool wagon = c.race == "nains" && c.kind != "camp";
+				for (int item = 0; item < 2; ++item)
+				{
+					if ((item == 0 && !tower) || (item == 1 && !wagon)) continue;
+					const double rad = item == 0 ? 3.6 : 3.8;
+					for (int attempt = 0; attempt < 16; ++attempt)
+					{
+						const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * (R * rng.Range(0.55, 0.9));
+						if (w.IsWater(p) || w.IsOccupied(p, rad) || !GroundOk(w, p, rad)) continue;
+						const double yaw = rng.Range(0, 360);
+						AddProp(w, item == 0 ? "Tower_Square_Village_1" : "Wagon_Armored_1", p, yaw, 1.0, kSolid, 0, item == 0 ? 3.0 : 2.2);
+						w.Occupy(p, rad);
+						if (item == 1)   // marchepied de roulotte à l'arrière (T5, pl.5)
+						{
+							const double yr = yaw * kPi / 180.0;
+							const Vec2 back{ -std::cos(yr), std::sin(yr) };
+							AddProp(w, "Wagon_Steps_1", p + back * 3.4, yaw + 90.0, 1.0, 0, 2);
+						}
+						break;
+					}
+				}
+			}
+
+			// --- Poteaux indicateurs (atelier décors T2, pl.15) : à la sortie de la ville sur
+			//     chaque route (les carrefours en rase campagne : PlaceSignposts, Roads.cpp).
+			if (c.state != "ruine" && c.procedural.empty() && c.kind != "camp")
+				for (size_t k = 0; k < roadSpokes; ++k)
+				{
+					const Vec2 out = Dir(angles[k]);
+					const Vec2 side{ -out.z, out.x };
+					const Vec2 p = c.center + out * (R + 10.0) + side * 4.5;
+					if (w.IsWater(p) || w.IsOccupied(p, 0.8)) continue;
+					AddProp(w, "Signpost_1", p, YawAlong(out), 1.0, kSolid, 1, 0.15);
+					w.Occupy(p, 0.6);
+				}
+
+			// --- Gibet (atelier décors T2, pl.15, sans pendu) : hors les murs des capitales et
+			//     des forteresses, à l'écart de la première route (8 m de l'axe).
+			if ((c.kind == "capitale" || c.kind == "forteresse") && c.state != "ruine" && c.procedural.empty() && !angles.empty())
+			{
+				const Vec2 out = Dir(angles[0]);
+				const Vec2 side{ -out.z, out.x };
+				for (int attempt = 0; attempt < 6; ++attempt)
+				{
+					const Vec2 p = c.center + out * (R + 16.0 + attempt * 4.0) + side * ((attempt % 2) ? -9.0 : 9.0);
+					if (w.IsWater(p) || w.IsOccupied(p, 3.0)) continue;
+					AddProp(w, "Gallows_1", p, YawFacing(out), 1.0, kSolid, 0, 1.6);
+					w.Occupy(p, 3.0);
+					break;
+				}
+			}
 
 			// --- Accessoires de métier des lieux procéduraux.
 			if (c.procedural == "bucherons" || c.procedural == "mine" || c.procedural == "bandits")
@@ -1126,6 +1380,8 @@ namespace tools::world_gen
 				}
 				// Feu de camp (chaudron sur la place).
 				AddProp(w, "Cauldron", c.center, 0.0, 1.2, kSolid, 0, 0.8);
+				// Butin des bandits (atelier décors T5, pl.8).
+				if (isBandit) AddProp(w, "Treasure_Pile_1", c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * 3.2, rng.Range(0, 360), 1.0, kSolid, 1, 0.9);
 			}
 			// Basse-cour des hameaux et villages (BD T1 pl.8-9) : poulailler et abreuvoir.
 			if ((c.kind == "hameau" || c.kind == "village") && c.procedural.empty())
@@ -1178,7 +1434,8 @@ namespace tools::world_gen
 								const double d = std::hypot(p.x - c.center.x, p.z - c.center.z);
 								if (d > R + 2.0 && d < R + 90.0) seg.push_back(p);
 							}
-							if (seg.size() > 2) PaveAlong(w, seg, 3, tile, 0.0, c.center);
+							// Pavage irrégulier hors les murs (atelier décors T3, pl.41).
+							if (seg.size() > 2) PaveAlong(w, seg, 3, "RockPath_Irregular_Wide", 0.0, c.center);
 						}
 			}
 

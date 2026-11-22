@@ -1,0 +1,377 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Bridge_Rope_Deck_1_LOD2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Weathered",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Rope",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Bridge_Rope_Deck_1_LOD2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Weathered_Normal.png",
+   "uri": "T_Decor_Wood_Weathered_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Weathered_BaseColor.png",
+   "uri": "T_Decor_Wood_Weathered_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Weathered_ORM.png",
+   "uri": "T_Decor_Wood_Weathered_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_Normal.png",
+   "uri": "T_Decor_Rope_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_BaseColor.png",
+   "uri": "T_Decor_Rope_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_ORM.png",
+   "uri": "T_Decor_Rope_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 48,
+   "max": [
+    1.0208910703659058,
+    0.009999996982514858,
+    0.75
+   ],
+   "min": [
+    -0.9799191355705261,
+    -0.03999999910593033,
+    -0.75
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 48,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 48,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 72,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 56,
+   "max": [
+    1.049690842628479,
+    1.117046594619751,
+    0.8100000023841858
+   ],
+   "min": [
+    -1.008718729019165,
+    0.9626794457435608,
+    -0.8199999928474426
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 216,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 38,
+   "max": [
+    -0.9611409306526184,
+    1.2000000476837158,
+    0.8500000238418579
+   ],
+   "min": [
+    -1.0499999523162842,
+    -0.10000000149011612,
+    -0.824999988079071
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 38,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 38,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 72,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 576,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 576,
+   "byteOffset": 576,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 384,
+   "byteOffset": 1152,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1536,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 1680,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 2352,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 448,
+   "byteOffset": 3024,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 3472,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 456,
+   "byteOffset": 3904,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 456,
+   "byteOffset": 4360,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 304,
+   "byteOffset": 4816,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 5120,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 5264,
+   "uri": "Bridge_Rope_Deck_1_LOD2.bin"
+  }
+ ]
+}

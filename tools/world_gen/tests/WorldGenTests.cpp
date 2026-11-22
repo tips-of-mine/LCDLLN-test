@@ -806,6 +806,18 @@ namespace
 			Check(okScatter && found == 5, "enseignes : panneaux des services de Kendrhir");
 			Check(signs >= 10 && nearOk == signs, "enseignes : chaque panneau devant un batiment de la ville");
 		}
+		// Demande du propriétaire (22/11/2026) : tombes anciennes au cimetière (tas de
+		// cailloux, croix de bois de qualité variable), autour du point de résurrection.
+		{
+			int cairns = 0, crosses = 0;
+			for (const auto& in : sf.instances)
+			{
+				const std::string& m = sf.meshPaths[in.meshIndex];
+				cairns += m.find("/Grave_Cairn_") != std::string::npos ? 1 : 0;
+				crosses += m.find("/Cross_Wood_") != std::string::npos ? 1 : 0;
+			}
+			Check(cairns >= 10 && crosses >= 5, "cimetiere : tombes anciennes (cailloux et croix de bois)");
+		}
 		// FORET.1 — densité forestière écrite (Kendrhir est en forêt) et
 		// cadrée sur la cellule ; plus aucun arbre de forêt dans scatter.bin.
 		engine::world::instances::ForestMask fm;
@@ -4330,8 +4342,19 @@ namespace
 		ImportLegacyContent(*w, e2);
 		BuildSettlements(*w); BuildBridges(*w);
 		size_t deck = 0;
-		for (const ScatterDef& s : w->scatter) deck += (s.mesh.find("Floor_Brick") != std::string::npos || s.mesh.find("Floor_WoodDark") != std::string::npos) && (s.flags & 1u) ? 1 : 0;
+		// Atelier décors T2 (n° 81-83) : modules de pont (tablier de pierre, passerelle, cordes).
+		size_t parapets = 0;
+		for (const ScatterDef& s : w->scatter)
+		{
+			deck += (s.mesh.find("Bridge_Stone_Deck_1") != std::string::npos || s.mesh.find("Boardwalk_Deck_1") != std::string::npos
+				|| s.mesh.find("Bridge_Rope_Deck_1") != std::string::npos) && (s.flags & 1u) ? 1 : 0;
+			deck += s.mesh.find("Bridge_Stone_Hump_1") != std::string::npos && (s.flags & 1u) ? 4 : 0;   // une arche = 4 dalles
+			parapets += s.mesh.find("Bridge_Stone_Parapet_1") != std::string::npos && (s.flags & 1u) ? 1 : 0;
+		}
 		Check(w->report.bridges >= 2 && deck >= 10, "eau v1.0.129 : ponts a Syzygie, tablier de dalles marchable");
+		size_t humps = 0;
+		for (const ScatterDef& s : w->scatter) humps += s.mesh.find("Bridge_Stone_Hump_1") != std::string::npos ? 1 : 0;
+		Check(parapets >= 4 || humps >= 1, "atelier decors T2-T3 : garde-corps de pierre ou pont en dos d'ane");
 	}
 
 	/// Lot carte v1.0.136 (plan « Plan de l'Oracle, extérieur ») : le Camp de l'Oracle (N000_E000,

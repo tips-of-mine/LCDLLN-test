@@ -1,0 +1,159 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Beam_Truss_1_LOD2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Beam_Truss_1_LOD2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 108,
+   "max": [
+    4.007406711578369,
+    3.3444433212280273,
+    0.20000000298023224
+   ],
+   "min": [
+    -4.007406711578369,
+    0,
+    -0.20000000298023224
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 108,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 108,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 168,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 1296,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1296,
+   "byteOffset": 1296,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 864,
+   "byteOffset": 2592,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 3456,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 3792,
+   "uri": "Beam_Truss_1_LOD2.bin"
+  }
+ ]
+}

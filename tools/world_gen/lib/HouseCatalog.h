@@ -29,6 +29,7 @@ namespace tools::world_gen
 		Mixed,    ///< rez-de-chaussée brique, étages enduits (villes)
 		Plank,    ///< planches et toit de bardeaux (Marches, Kendrhir — BD T1, atelier décors)
 		DryStone, ///< pierre sèche et toit de chaume (hameaux — BD T1/T3, atelier décors)
+		RedBrick, ///< brique rouge, toit de tuiles (villes de Dis — BD T4, atelier décors)
 	};
 
 	struct HouseSpec
@@ -40,6 +41,9 @@ namespace tools::world_gen
 		int floors;    ///< étages (3 m chacun)
 		WallStyle style;
 		bool ruin;     ///< ruine : pas de toit, pans de murs manquants, 1 niveau
+		/// Toit d'ardoise bleue (Roof_Slate_*) et tourelle d'angle si 3 niveaux (villes de
+		/// l'Empire — BD T2 pl.4-6, atelier décors). Défaut : toit du style des murs.
+		bool slateRoof = false;
 	};
 
 	/// Catalogue complet (ordre stable = ordre des variantes dans maison.json).
@@ -65,6 +69,13 @@ namespace tools::world_gen
 			{ "maison_planches_4x6",  "Maison de planches (4x6 m, 2 niveaux)", 4, 6, 2, WallStyle::Plank,  false },
 			{ "maison_planches_6x8",  "Maison de planches (6x8 m, 2 niveaux)", 6, 8, 2, WallStyle::Plank,  false },
 			{ "echoppe_planches_4x8", "Echoppe de planches (4x8 m)",         4,  8, 1, WallStyle::Plank,    false },
+			// Atelier décors T2 (n° 92) : ardoise bleue et tourelle d'angle (villes de l'Empire).
+			{ "maison_ardoise_6x6",   "Maison a toit d'ardoise (6x6 m, 2 niveaux)", 6, 6, 2, WallStyle::Mixed, false, true },
+			{ "maison_haute_ardoise_6x8", "Maison haute a tourelle (6x8 m, 3 niveaux)", 6, 8, 3, WallStyle::Mixed, false, true },
+			{ "grande_maison_ardoise_8x10", "Grande maison a toit d'ardoise (8x10 m, 2 niveaux)", 8, 10, 2, WallStyle::Mixed, false, true },
+			// Atelier décors T4 (n° 156) : maisons de brique rouge à pignons.
+			{ "maison_brique_4x6",    "Maison de brique (4x6 m, 2 niveaux)",   4,  6, 2, WallStyle::RedBrick, false },
+			{ "maison_brique_6x8",    "Maison de brique (6x8 m, 3 niveaux)",   6,  8, 3, WallStyle::RedBrick, false },
 		};
 		return k;
 	}

@@ -1,0 +1,268 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Stairs_Gallery_1_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Plank",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Stairs_Gallery_1_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Plank_Normal.png",
+   "uri": "T_Decor_Wood_Plank_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Plank_BaseColor.png",
+   "uri": "T_Decor_Wood_Plank_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Plank_ORM.png",
+   "uri": "T_Decor_Wood_Plank_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 70,
+   "max": [
+    0.5774999856948853,
+    3.9732043743133545,
+    1.8323209285736084
+   ],
+   "min": [
+    -0.5774999856948853,
+    0.011850789189338684,
+    -1.8323209285736084
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 70,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 70,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 168,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 288,
+   "max": [
+    0.4975000023841858,
+    3,
+    1.7999999523162842
+   ],
+   "min": [
+    -0.5024999976158142,
+    0.20000000298023224,
+    -1.8199999332427979
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 288,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 288,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 432,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 840,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 840,
+   "byteOffset": 840,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 560,
+   "byteOffset": 1680,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 2240,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3456,
+   "byteOffset": 2576,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3456,
+   "byteOffset": 6032,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2304,
+   "byteOffset": 9488,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 864,
+   "byteOffset": 11792,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 12656,
+   "uri": "Stairs_Gallery_1_LOD1.bin"
+  }
+ ]
+}

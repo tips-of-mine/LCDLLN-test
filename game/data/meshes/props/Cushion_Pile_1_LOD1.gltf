@@ -1,0 +1,571 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Cushion_Pile_1_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Fur",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Red",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Ochre",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_White",
+   "normalTexture": {
+    "index": 9
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 10
+    },
+    "metallicRoughnessTexture": {
+     "index": 11
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Striped",
+   "normalTexture": {
+    "index": 12
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 13
+    },
+    "metallicRoughnessTexture": {
+     "index": 14
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Cushion_Pile_1_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
+    },
+    {
+     "attributes": {
+      "POSITION": 12,
+      "NORMAL": 13,
+      "TEXCOORD_0": 14
+     },
+     "indices": 11,
+     "material": 3
+    },
+    {
+     "attributes": {
+      "POSITION": 15,
+      "NORMAL": 16,
+      "TEXCOORD_0": 17
+     },
+     "indices": 11,
+     "material": 4
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  },
+  {
+   "sampler": 0,
+   "source": 9
+  },
+  {
+   "sampler": 0,
+   "source": 10
+  },
+  {
+   "sampler": 0,
+   "source": 11
+  },
+  {
+   "sampler": 0,
+   "source": 12
+  },
+  {
+   "sampler": 0,
+   "source": 13
+  },
+  {
+   "sampler": 0,
+   "source": 14
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Fur_Normal.png",
+   "uri": "T_Decor_Fur_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Fur_BaseColor.png",
+   "uri": "T_Decor_Fur_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Fur_ORM.png",
+   "uri": "T_Decor_Fur_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_Normal.png",
+   "uri": "T_Decor_Cloth_Red_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_BaseColor.png",
+   "uri": "T_Decor_Cloth_Red_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_ORM.png",
+   "uri": "T_Decor_Cloth_Red_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_Normal.png",
+   "uri": "T_Decor_Cloth_Ochre_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_BaseColor.png",
+   "uri": "T_Decor_Cloth_Ochre_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_ORM.png",
+   "uri": "T_Decor_Cloth_Ochre_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_White_Normal.png",
+   "uri": "T_Decor_Cloth_White_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_White_BaseColor.png",
+   "uri": "T_Decor_Cloth_White_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_White_ORM.png",
+   "uri": "T_Decor_Cloth_White_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_Normal.png",
+   "uri": "T_Decor_Cloth_Striped_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_BaseColor.png",
+   "uri": "T_Decor_Cloth_Striped_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_ORM.png",
+   "uri": "T_Decor_Cloth_Striped_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 32,
+   "max": [
+    0.9749279022216797,
+    0.10000000149011612,
+    0.8500000238418579
+   ],
+   "min": [
+    -0.9749279022216797,
+    0,
+    -0.7658235430717468
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 32,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 32,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 126,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 56,
+   "max": [
+    0.7328967452049255,
+    0.42072588205337524,
+    0.6950460076332092
+   ],
+   "min": [
+    -0.16499318182468414,
+    0.06386105716228485,
+    -0.20472018420696259
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 216,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 28,
+   "max": [
+    0.19573013484477997,
+    0.23977866768836975,
+    0.2801162898540497
+   ],
+   "min": [
+    -0.5770272612571716,
+    0.07278162240982056,
+    -0.2785088121891022
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 108,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 12,
+   "componentType": 5126,
+   "count": 28,
+   "max": [
+    0.6962889432907104,
+    0.24498078227043152,
+    0.2609476149082184
+   ],
+   "min": [
+    0.03655331954360008,
+    0.06578758358955383,
+    -0.2653750777244568
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 13,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 14,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 15,
+   "componentType": 5126,
+   "count": 28,
+   "max": [
+    -0.1495065987110138,
+    0.2802066504955292,
+    0.7610220909118652
+   ],
+   "min": [
+    -0.7553008198738098,
+    0.030145112425088882,
+    0.022203756496310234
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 16,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 17,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 384,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 384,
+   "byteOffset": 384,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 256,
+   "byteOffset": 768,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 252,
+   "byteOffset": 1024,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 1276,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 1948,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 448,
+   "byteOffset": 2620,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 3068,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 3500,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 3836,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 224,
+   "byteOffset": 4172,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 4396,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 4612,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 4948,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 224,
+   "byteOffset": 5284,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 5508,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 5844,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 224,
+   "byteOffset": 6180,
+   "target": 34962
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 6404,
+   "uri": "Cushion_Pile_1_LOD1.bin"
+  }
+ ]
+}

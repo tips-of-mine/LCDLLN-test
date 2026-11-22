@@ -367,6 +367,68 @@ def plant_card(name, seed, kind, size=512):
                 a = k * 2 * math.pi / n + ring * 0.3
                 d.polygon(_leaf_poly(cx, cy, S * L, S * L * 0.3, a), fill=g(c, 8))
         d.ellipse([cx - S * 0.06, cy - S * 0.06, cx + S * 0.06, cy + S * 0.06], fill=(222, 186, 70, 255))
+    elif kind == "ivy":       # lierre : tiges pendantes, feuilles trilobées sombres
+        for _ in range(26):
+            x = rng.uniform(0.05, 0.95) * S
+            y = 0.0
+            for k in range(40):
+                nx = x + rng.normal(0, 0.012) * S
+                ny = y + S / 40
+                d.line([(x, y), (nx, ny)], fill=(70, 58, 40, 255), width=max(1, S // 400))
+                if rng.random() < 0.7:
+                    c = (rng.choice([54, 62, 70]), rng.choice([84, 96, 104]), 44)
+                    for lobe in (-0.6, 0.0, 0.6):
+                        d.polygon(_leaf_poly(nx, ny, S * 0.045, S * 0.02, rng.uniform(0, 6.28) + lobe), fill=g(c, 10))
+                x, y = nx, ny
+                if y > S * rng.uniform(0.6, 1.0):
+                    break
+    elif kind == "daisy":     # marguerites : tiges, feuilles, capitules blancs à cœur jaune
+        for _ in range(26):
+            x0 = rng.uniform(0.08, 0.92) * S
+            hgt = rng.uniform(0.5, 0.92) * S
+            x1 = x0 + rng.normal(0, 0.04) * S
+            d.line([(x0, S), (x1, S - hgt)], fill=(84, 118, 56, 255), width=max(2, S // 220))
+            for k in range(3):
+                yy = S - hgt * rng.uniform(0.1, 0.5)
+                d.polygon(_leaf_poly(x0 + (x1 - x0) * (S - yy) / hgt, yy, S * 0.05, S * 0.012, rng.choice([-0.6, 3.7])), fill=g((92, 128, 60), 10))
+            R = S * rng.uniform(0.028, 0.04)
+            for k in range(14):
+                a = k * 2 * math.pi / 14
+                d.polygon(_leaf_poly(x1, S - hgt, R * 1.6, R * 0.32, a), fill=g((236, 234, 222), 6))
+            d.ellipse([x1 - R * 0.45, S - hgt - R * 0.45, x1 + R * 0.45, S - hgt + R * 0.45], fill=(226, 184, 52, 255))
+        for _ in range(60):          # herbe du pied
+            x0 = rng.uniform(0.05, 0.95) * S
+            hh = rng.uniform(0.1, 0.35) * S
+            d.line([(x0, S), (x0 + rng.normal(0, 0.02) * S, S - hh)], fill=g((98, 128, 60), 12), width=max(1, S // 300))
+    elif kind in ("iris", "garden_lily"):   # massifs de jardin : iris violets / lis blancs
+        petal = (112, 82, 168) if kind == "iris" else (238, 232, 214)
+        heart = (226, 196, 80) if kind == "iris" else (214, 120, 58)
+        for _ in range(60):          # feuillage en lames
+            x0 = rng.uniform(0.05, 0.95) * S
+            hh = rng.uniform(0.3, 0.7) * S
+            bend = rng.normal(0, 0.06) * S
+            w0 = S * 0.012
+            d.polygon([(x0 - w0, S), (x0 + w0, S), (x0 + bend, S - hh)], fill=g((78, 116, 58), 12))
+        for _ in range(14):
+            x0 = rng.uniform(0.1, 0.9) * S
+            hh = rng.uniform(0.6, 0.95) * S
+            x1 = x0 + rng.normal(0, 0.03) * S
+            d.line([(x0, S), (x1, S - hh)], fill=(84, 116, 56, 255), width=max(2, S // 260))
+            R = S * rng.uniform(0.035, 0.05)
+            for k in range(6 if kind == "iris" else 6):
+                a = k * 2 * math.pi / 6 + (0.0 if kind == "iris" else 0.5)
+                d.polygon(_leaf_poly(x1, S - hh, R * (1.8 if k % 2 else 1.4), R * 0.5, a), fill=g(petal, 10))
+            d.ellipse([x1 - R * 0.3, S - hh - R * 0.3, x1 + R * 0.3, S - hh + R * 0.3], fill=heart + (255,))
+    elif kind == "duckweed":  # lentilles d'eau : nappe de petites frondes, bord découpé
+        cx = cy = S / 2
+        for _ in range(5200):
+            r = S * 0.48 * math.sqrt(rng.random())
+            a = rng.uniform(0, 6.28)
+            x, y = cx + r * math.cos(a), cy + r * math.sin(a)
+            if rng.random() > 0.35 + 0.65 * (1 - r / (S * 0.48)) ** 0.5:
+                continue
+            q = S * rng.uniform(0.006, 0.011)
+            d.ellipse([x - q, y - q * 0.8, x + q, y + q * 0.8], fill=g((96, 136, 52), 14))
     img = img.resize((size, size), Image.LANCZOS)
     a = np.asarray(img).copy()
     a[..., 3] = np.where(a[..., 3] > 110, 255, 0).astype(np.uint8)
@@ -788,6 +850,119 @@ def sign_pictos(name="Sign_Pictos", seed=81, cols=8, rows=4, tile=256, ss=4):
 
 TEXTURES["Sign_Pictos"] = sign_pictos
 
+
+# ------------------------------------------------------------------ atelier T2
+def cracked_ground(name="Ground_Cracked", seed=91, size=1024):
+    """Sol craquelé (désert, Oracle) : plaques de Voronoï séparées de fissures, bord
+    déchiqueté en alpha (posé à plat sur le terrain, mode MASK)."""
+    h = w = size
+    rng = np.random.default_rng(seed)
+    pts = rng.random((90, 2)) * size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    d1 = np.full((h, w), 1e9, np.float32)
+    d2 = np.full((h, w), 1e9, np.float32)
+    for px, py in pts:
+        for ox in (-size, 0, size):
+            for oy in (-size, 0, size):
+                d = np.hypot(xx - px - ox, yy - py - oy)
+                d2 = np.where(d < d1, d1, np.minimum(d2, d))
+                d1 = np.minimum(d1, d)
+    edge = d2 - d1
+    crack = np.clip(1.0 - edge / 5.0, 0, 1)
+    n = fbm(h, w, seed + 1, 5, 12)
+    plate = np.clip(edge / 40.0, 0, 1) ** 0.5
+    hgt = 0.55 * plate + 0.25 * n - 0.5 * crack
+    hgt = (hgt - hgt.min()) / (hgt.max() - hgt.min())
+    col = colorize(n, [(0, (150, 118, 82)), (0.5, (184, 150, 108)), (1, (210, 182, 140))])
+    col = col * (1 - 0.7 * crack[..., None]) * (0.85 + 0.15 * plate[..., None])
+    r = np.hypot(xx - w / 2, yy - h / 2) / (w / 2)
+    edge_n = fbm(h, w, seed + 2, 4, 6, tile=False)
+    alpha = ((r + (edge_n - 0.5) * 0.35) < 0.92).astype(np.float32) * 255
+    rgba = np.concatenate([col.clip(0, 255), alpha[..., None]], -1).astype(np.uint8)
+    save(f"T_Decor_{name}_BaseColor.png", rgba, "RGBA")
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt, 5.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt, 0.95, 0.0, 0.5))
+
+
+def checked(name, seed, c1, c2, n=8, size=512):
+    """Tissu à carreaux (nappe) : deux couleurs, trame bruitée."""
+    h = w = size
+    t = fbm(h, w, seed, 5, 24, aspect=(1.0, 1.0))
+    ix = (np.arange(w)[None, :] * n // w) % 2
+    iy = (np.arange(h)[:, None] * n // h) % 2
+    a = np.array(c1, np.float32)
+    b = np.array(c2, np.float32)
+    mix = ((ix + iy) % 2 == 1).astype(np.float32)[..., None]
+    half = ((ix ^ iy) == 0).astype(np.float32)[..., None] * 0.0
+    col = (a * (1 - mix) + b * mix + half) * (0.9 + 0.2 * t)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(t, 1.0))
+    save(f"T_Decor_{name}_ORM.png", orm(t, 0.9, 0.0, 0.2))
+
+
+TEXTURES.update({
+    "Leaves_Ivy": lambda: plant_card("Leaves_Ivy", 95, "ivy"),
+    "Plant_Daisy": lambda: plant_card("Plant_Daisy", 96, "daisy"),
+    "Plant_Duckweed": lambda: plant_card("Plant_Duckweed", 97, "duckweed", 1024),
+    "Floor_Checker": lambda: checked("Floor_Checker", 98, (176, 168, 150), (70, 66, 62), 4),
+    "Ground_Cracked": cracked_ground,
+    "Cloth_Checked": lambda: checked("Cloth_Checked", 92, (206, 196, 172), (150, 52, 42)),
+    "Water_Still": lambda: flat("Water_Still", 93, (58, 82, 88), 0.08, 0.12),
+    "Stone_Carved": lambda: flat("Stone_Carved", 94, (164, 156, 140), 0.85, 0.16),
+})
+
+
+
+def bricks(name, seed, base, mortar=(150, 140, 124), rows=16, cols=6, size=1024):
+    """Briques rouges en appareil alterné (mur de maison de Dis, T4 pl.23)."""
+    h = w = size
+    rng = np.random.default_rng(seed)
+    y = np.arange(h)[:, None] / h * rows
+    row = np.floor(y).astype(np.int32)
+    x = np.arange(w)[None, :] / w * cols + (row % 2) * 0.5
+    bx = np.floor(x).astype(np.int32)
+    fy, fx = y - row, x - bx
+    joint = ((fy < 0.1) | (fx < 0.05)).astype(np.float32)
+    ids = (row * 97 + bx * 13) % 997
+    tone = rng.uniform(0.78, 1.15, 1000)[ids]
+    n = fbm(h, w, seed + 1, 5, 24)
+    col = np.array(base, np.float32) * (tone * (0.85 + 0.3 * n))[..., None]
+    col = col * (1 - joint[..., None]) + np.array(mortar, np.float32) * (0.9 + 0.2 * n)[..., None] * joint[..., None]
+    hgt = (1 - joint) * (0.8 + 0.2 * n)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 4.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.88, 0.0, 0.5))
+
+
+def carpet_diamond(name="Carpet_Diamond", seed=104, size=1024):
+    """Tapis à losanges (T4 pl.19) : champ rouge sombre, losanges ocre, bordure."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size
+    u = (xx * 6) % 1.0 - 0.5
+    v = (yy * 12) % 1.0 - 0.5
+    lz = (np.abs(u) + np.abs(v) * 1.0) < 0.42
+    inner = (np.abs(u) + np.abs(v)) < 0.22
+    edge = np.minimum(np.minimum(xx, 1 - xx), np.minimum(yy, 1 - yy)) < 0.04
+    n = fbm(h, w, seed, 5, 32)
+    col = np.zeros((h, w, 3), np.float32) + np.array([118, 36, 34], np.float32)
+    col[lz] = [188, 140, 66]
+    col[inner] = [70, 46, 60]
+    col[edge] = [52, 40, 46]
+    col *= (0.88 + 0.2 * n)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(n, 0.8))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.95, 0.0, 0.2))
+
+
+TEXTURES.update({
+    "Plant_Iris": lambda: plant_card("Plant_Iris", 99, "iris"),
+    "Plant_GardenLily": lambda: plant_card("Plant_GardenLily", 100, "garden_lily"),
+    "Hedge": lambda: flat("Hedge", 101, (68, 94, 46), 0.92, 0.38, (1.0, 1.0)),
+    "Brick_Red": lambda: bricks("Brick_Red", 102, (150, 70, 52)),
+    "Cloth_Blue": lambda: flat("Cloth_Blue", 103, (58, 76, 120), 0.9, 0.16, (1.0, 8.0)),
+    "Carpet_Diamond": carpet_diamond,
+    "Mirror": lambda: flat("Mirror", 105, (190, 196, 200), 0.05, 0.05, metallic=0.9),
+})
 
 def main():
     ap = argparse.ArgumentParser()

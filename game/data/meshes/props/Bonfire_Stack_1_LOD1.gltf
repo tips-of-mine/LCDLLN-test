@@ -1,0 +1,268 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Bonfire_Stack_1_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Broad",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Straw",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Bonfire_Stack_1_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_Normal.png",
+   "uri": "T_Decor_Bark_Broad_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_BaseColor.png",
+   "uri": "T_Decor_Bark_Broad_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Broad_ORM.png",
+   "uri": "T_Decor_Bark_Broad_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_Normal.png",
+   "uri": "T_Decor_Straw_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_BaseColor.png",
+   "uri": "T_Decor_Straw_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_ORM.png",
+   "uri": "T_Decor_Straw_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 576,
+   "max": [
+    1.1511948108673096,
+    3.65236496925354,
+    1.1356475353240967
+   ],
+   "min": [
+    -1.1510944366455078,
+    -0.015521638095378876,
+    -1.1353871822357178
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 576,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 576,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 1152,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 24,
+   "max": [
+    0.665789783000946,
+    1.399999976158142,
+    0.7001307010650635
+   ],
+   "min": [
+    -0.6656894087791443,
+    0,
+    -0.5661811828613281
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 90,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 6912,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 6912,
+   "byteOffset": 6912,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 4608,
+   "byteOffset": 13824,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2304,
+   "byteOffset": 18432,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 20736,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 21024,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 192,
+   "byteOffset": 21312,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 180,
+   "byteOffset": 21504,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 21684,
+   "uri": "Bonfire_Stack_1_LOD1.bin"
+  }
+ ]
+}

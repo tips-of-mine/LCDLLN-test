@@ -1,0 +1,159 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "DeadTree_4_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "DeadTree_4_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_Normal.png",
+   "uri": "T_Decor_Bark_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_BaseColor.png",
+   "uri": "T_Decor_Bark_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_ORM.png",
+   "uri": "T_Decor_Bark_Dark_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 258,
+   "max": [
+    4.521184921264648,
+    13.250584602355957,
+    3.2323105335235596
+   ],
+   "min": [
+    -2.9284205436706543,
+    -0.30000001192092896,
+    -6.259426593780518
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 258,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 258,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 846,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 3096,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 3096,
+   "byteOffset": 3096,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2064,
+   "byteOffset": 6192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1692,
+   "byteOffset": 8256,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 9948,
+   "uri": "DeadTree_4_LOD1.bin"
+  }
+ ]
+}

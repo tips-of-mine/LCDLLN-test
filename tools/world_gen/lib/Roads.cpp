@@ -1795,9 +1795,23 @@ namespace tools::world_gen
 				const Vec2 nrm{ -d.z, d.x };
 				const double yaw = YawAlong(d);
 				const bool stone = !r.path;
-				const double half = std::max(1.6, r.widthM * 0.5);
-				const int across = std::max(1, static_cast<int>(std::ceil(2.0 * half / 2.0)));
+				// Atelier décors T2 (n° 82) : chemin de montagne = pont suspendu de cordes,
+				// une seule travée de 1,5 m ; ailleurs passerelle de planches sur pilotis (n° 83).
+				const char biome = MacroBiome(w.master, mid.x, mid.z);
+				const bool rope = !stone && (biome == '^' || biome == 'M' || biome == '*');
+				const double half = rope ? 0.75 : std::max(1.6, r.widthM * 0.5);
+				const int across = rope ? 1 : std::max(1, static_cast<int>(std::ceil(2.0 * half / 2.0)));
 				const double water = rivers.WaterYNear(mid, 40.0);
+				// Atelier décors T3 (n° 125) : ruisseau étroit franchi par une route = pont de
+				// pierre en dos d'âne d'une seule arche (portée 8 m, tablier 3,5 m).
+				if (stone && len <= 9.0 && r.widthM <= 6.0)
+				{
+					const double deckY = Lerp(r.profileY[a], r.profileY[b], 0.5);
+					AddBridgeProp(w, "Bridge_Stone_Hump_1", mid, deckY, yaw, std::max(1.0, len / 8.5), true);
+					w.Occupy(mid, len * 0.5 + 2.0);
+					++count;
+					continue;
+				}
 				// Tablier : dalles de 2 m le long de la corde A-B, à l'altitude du profil.
 				const int along = std::max(1, static_cast<int>(std::ceil(len / 2.0)));
 				for (int u = 0; u < along; ++u)
@@ -1805,20 +1819,22 @@ namespace tools::world_gen
 					const double t = (u + 0.5) / along;
 					const double y = Lerp(r.profileY[a], r.profileY[b], t);
 					const Vec2 c = A + (B - A) * t;
+					if (rope)
+					{
+						// Module de 2 m (planches et mains courantes de corde), dans l'axe.
+						AddBridgeProp(w, "Bridge_Rope_Deck_1", c, y, yaw, 1.0, true);
+						continue;
+					}
 					for (int v = 0; v < across; ++v)
 					{
 						const double off = (v + 0.5 - across * 0.5) * 2.0;
-						AddBridgeProp(w, stone ? "Floor_Brick" : "Floor_WoodDark", c + nrm * off, y, yaw, 1.0, true);
+						AddBridgeProp(w, stone ? "Bridge_Stone_Deck_1" : "Boardwalk_Deck_1", c + nrm * off, y, yaw, 1.0, true);
 					}
-					// Garde-corps des deux côtés.
+					// Garde-corps des deux côtés : parapet de pierre (n° 81) ou barrière de bois.
 					for (int side = -1; side <= 1; side += 2)
 					{
-						const Vec2 e = c + nrm * (side * (across * 1.0 + 0.15));
-						if (stone)
-							for (int q = 0; q < 3; ++q)
-								AddBridgeProp(w, "Wall_UnevenBrick_Straight", e + d * ((q - 1) * 0.66), y, yaw, 0.33, true);
-						else
-							AddBridgeProp(w, "Prop_WoodenFence_Single", e, y, yaw, 1.0, true);
+						const Vec2 e = c + nrm * (side * (across * 1.0 + 0.2));
+						AddBridgeProp(w, stone ? "Bridge_Stone_Parapet_1" : "Prop_WoodenFence_Single", e, y, yaw, 1.0, true);
 					}
 				}
 				// Arches de pierre sous le tablier (route) : du niveau de l'eau au tablier.
@@ -1834,7 +1850,7 @@ namespace tools::world_gen
 						{
 							const Vec2 c = A + d * ((u + 0.5) * len / arches);
 							for (int side = -1; side <= 1; side += 2)
-								AddBridgeProp(w, "Wall_Arch", c + nrm * (side * (across * 1.0 + 0.05)), deck - 3.0 * sc, yaw, sc, false);
+								AddBridgeProp(w, "Bridge_Stone_Arch_1", c + nrm * (side * (across * 1.0 + 0.05)), deck - 3.0 * sc - 0.35, yaw, sc, false);
 						}
 					}
 				}
@@ -1843,5 +1859,49 @@ namespace tools::world_gen
 			}
 		}
 		w.report.bridges += static_cast<size_t>(count);
+	}
+
+	/// Poteaux indicateurs (atelier décors T2, pl.15 ; flèches sans inscription) : un par
+	/// carrefour, c.-à-d. bout de route sans ville ni lieu (fromId / toId vide) situé dans
+	/// la zone jouable de la cellule, sur le bas-côté (largeur/2 + 2 m), côté sec et libre.
+	/// Les chemins locaux (path) n'en ont pas. Déterministe. Effet de bord : w.scatter,
+	/// occupation fine (0,6 m).
+	void PlaceSignposts(World& w)
+	{
+		std::vector<Vec2> done;
+		for (const Road& r : w.roads)
+		{
+			if (r.path || r.points.size() < 3) continue;
+			for (int end = 0; end < 2; ++end)
+			{
+				if (!(end == 0 ? r.fromId : r.toId).empty()) continue;
+				const Vec2 p = end == 0 ? r.points.front() : r.points.back();
+				const Vec2 q = end == 0 ? r.points[2] : r.points[r.points.size() - 3];
+				if (!w.InPlayableBounds(p, 64.0)) continue;
+				bool near = false;
+				for (const Vec2& d : done)
+					if (std::hypot(d.x - p.x, d.z - p.z) < 25.0) near = true;
+				if (near) continue;
+				Vec2 dir{ q.x - p.x, q.z - p.z };
+				const double l = std::hypot(dir.x, dir.z);
+				if (l < 1e-6) continue;
+				dir = dir * (1.0 / l);
+				const Vec2 nrm{ -dir.z, dir.x };
+				for (const double side : { 1.0, -1.0 })
+				{
+					const Vec2 s = p + nrm * (side * (r.widthM * 0.5 + 2.0)) + dir * 3.0;
+					if (w.IsWater(s) || w.IsOccupied(s, 0.6)) continue;
+					ScatterDef sd;
+					sd.mesh = "meshes/props/Signpost_1.gltf";
+					sd.position = s;
+					sd.yawDeg = std::atan2(-dir.z, dir.x) * 180.0 / 3.14159265358979;   // flèche principale le long de la route
+					sd.flags = 1u; sd.cullClass = 1; sd.collisionRadius = 0.15;
+					w.scatter.push_back(std::move(sd));
+					w.Occupy(s, 0.6);
+					done.push_back(p);
+					break;
+				}
+			}
+		}
 	}
 }

@@ -1,0 +1,268 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Cross_Wood_2_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Rope",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Cross_Wood_2_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_Normal.png",
+   "uri": "T_Decor_Bark_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_BaseColor.png",
+   "uri": "T_Decor_Bark_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Dark_ORM.png",
+   "uri": "T_Decor_Bark_Dark_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_Normal.png",
+   "uri": "T_Decor_Rope_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_BaseColor.png",
+   "uri": "T_Decor_Rope_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_ORM.png",
+   "uri": "T_Decor_Rope_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 56,
+   "max": [
+    0.3132183253765106,
+    1.1020671129226685,
+    0.055290866643190384
+   ],
+   "min": [
+    -0.3130219876766205,
+    -0.2564942538738251,
+    -0.057959750294685364
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 168,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 60,
+   "max": [
+    0.06780581176280975,
+    0.8509594798088074,
+    0.057959750294685364
+   ],
+   "min": [
+    -0.048249345272779465,
+    0.7690404653549194,
+    -0.04987931251525879
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 60,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 60,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 144,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 672,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 448,
+   "byteOffset": 1344,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 336,
+   "byteOffset": 1792,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 720,
+   "byteOffset": 2128,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 720,
+   "byteOffset": 2848,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 480,
+   "byteOffset": 3568,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 4048,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 4336,
+   "uri": "Cross_Wood_2_LOD1.bin"
+  }
+ ]
+}

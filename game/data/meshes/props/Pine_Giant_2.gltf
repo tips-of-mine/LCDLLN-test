@@ -1,0 +1,270 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Pine_Giant_2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Bark_Pine",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Leaves_Needle",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Pine_Giant_2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pine_Normal.png",
+   "uri": "T_Decor_Bark_Pine_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pine_BaseColor.png",
+   "uri": "T_Decor_Bark_Pine_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Bark_Pine_ORM.png",
+   "uri": "T_Decor_Bark_Pine_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Needle_Normal.png",
+   "uri": "T_Decor_Leaves_Needle_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Needle_BaseColor.png",
+   "uri": "T_Decor_Leaves_Needle_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leaves_Needle_ORM.png",
+   "uri": "T_Decor_Leaves_Needle_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 4464,
+   "max": [
+    6.438617706298828,
+    42.98377990722656,
+    6.28272008895874
+   ],
+   "min": [
+    -6.5520710945129395,
+    -0.30000001192092896,
+    -6.319332599639893
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 4464,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 4464,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 7056,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 2116,
+   "max": [
+    7.9301066398620605,
+    43.175926208496094,
+    8.26174259185791
+   ],
+   "min": [
+    -8.069893836975098,
+    16.784873962402344,
+    -8.037671089172363
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 2116,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 2116,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 3174,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 53568,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 53568,
+   "byteOffset": 53568,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 35712,
+   "byteOffset": 107136,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 14112,
+   "byteOffset": 142848,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 25392,
+   "byteOffset": 156960,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 25392,
+   "byteOffset": 182352,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 16928,
+   "byteOffset": 207744,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 6348,
+   "byteOffset": 224672,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 231020,
+   "uri": "Pine_Giant_2.bin"
+  }
+ ]
+}

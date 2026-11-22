@@ -74,7 +74,9 @@ namespace tools::world_gen
 				{ "Tree_Beech_2", 0.6, 0.9, 1.1, 0.5 }, { "Tree_Beech_3", 0.6, 0.9, 1.1, 0.5 } };
 			static const std::vector<Species> conifer = {
 				{ "Pine_1", 1, 0.85, 1.3, 0.45 }, { "Pine_2", 1, 0.85, 1.3, 0.45 }, { "Pine_3", 1, 0.85, 1.3, 0.45 },
-				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 } };
+				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 },
+				// Atelier décors T5 (n° 171) : conifères géants type séquoia, rares (décision Q20).
+				{ "Pine_Giant_1", 0.05, 0.9, 1.1, 1.3 }, { "Pine_Giant_2", 0.05, 0.9, 1.1, 1.4 } };
 			static const std::vector<Species> swamp = {
 				{ "TwistedTree_1", 1, 0.45, 0.7, 0.7 }, { "TwistedTree_3", 1, 0.5, 0.75, 0.7 },
 				{ "TwistedTree_4", 1, 0.5, 0.75, 0.7 }, { "DeadTree_2", 1.2, 0.8, 1.2, 0.45 },
@@ -100,12 +102,17 @@ namespace tools::world_gen
 		{
 			static const std::vector<Species> forest = {
 				{ "Bush_Common", 2, 0.8, 1.4, 0 }, { "Bush_Common_Flowers", 1, 0.8, 1.3, 0 },
-				{ "Fern_1", 2.5, 0.85, 1.2, 0 }, { "Plant_1", 1, 0.8, 1.3, 0 }, { "Plant_1_Big", 0.6, 0.55, 0.85, 0 },
+				{ "Fern_1", 2.5, 0.85, 1.2, 0 }, { "Fern_2", 1.2, 0.85, 1.15, 0 }, { "Plant_1", 1, 0.8, 1.3, 0 }, { "Plant_1_Big", 0.6, 0.55, 0.85, 0 },
 				{ "Plant_7_Big", 0.6, 0.7, 1.1, 0 } };
 			static const std::vector<Species> open = {
 				{ "Bush_Common", 2, 0.7, 1.2, 0 }, { "Bush_Common_Flowers", 1.5, 0.7, 1.2, 0 }, { "Plant_1", 0.5, 0.7, 1.1, 0 } };
+			// Atelier décors T2 (n° 80, 90) : sol craquelé et crâne de grande bête (désert, aride).
 			static const std::vector<Species> dry = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 } };
-			if (c == '~' || c == ':' || c == 'V' || c == 'l' || c == '^' || c == 'M') return dry;
+			static const std::vector<Species> desert = { { "Bush_Common", 1, 0.5, 0.8, 0 }, { "Plant_7", 1, 0.8, 1.3, 0 },
+				{ "Ground_Cracked_1", 0.5, 0.8, 1.3, 0 }, { "Skull_Beast_1", 0.03, 0.8, 1.15, 1.0 },
+				{ "Termite_Mound_1", 0.04, 0.8, 1.2, 0.8 } };   // T5 (n° 183, hypothèse)
+			if (c == '~' || c == ':' || c == 'l') return desert;   // désert, terres arides
+			if (c == 'V' || c == '^' || c == 'M') return dry;
 			if (c == 'T' || c == 'R' || c == 'L' || c == 't' || c == '%' || c == '&') return forest;
 			return open;
 		}
@@ -137,10 +144,20 @@ namespace tools::world_gen
 			static const std::vector<Species> spires = {
 				{ "Rock_Spire_1", 1, 0.8, 1.2, 4.0 }, { "Rock_Spire_2", 1, 0.8, 1.2, 5.0 }, { "Rock_Spire_3", 0.6, 0.8, 1.1, 6.0 },
 				{ "Rock_Medium_1", 2, 1.4, 3.2, 1.0 }, { "Rock_Medium_2", 2, 1.4, 3.2, 1.0 } };
+			// Atelier décors T2 (n° 78) : arche rocheuse naturelle, rare (passage libre dessous).
 			static const std::vector<Species> big = {
-				{ "Rock_Medium_1", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_2", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_3", 1, 1.4, 3.2, 1.0 } };
+				{ "Rock_Medium_1", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_2", 1, 1.4, 3.2, 1.0 }, { "Rock_Medium_3", 1, 1.4, 3.2, 1.0 },
+				{ "Rock_Arch_1", 0.02, 0.9, 1.15, 0 } };
+			// Atelier décors T3 (n° 117) : gros rochers moussus en forêt et dans les marais.
+			static const std::vector<Species> forestRocks = {
+				{ "Rock_Medium_1", 1, 0.7, 1.8, 0.9 }, { "Rock_Medium_2", 1, 0.7, 1.8, 0.9 }, { "Rock_Medium_3", 1, 0.7, 1.8, 0.9 },
+				{ "Pebble_Round_1", 0.6, 2.0, 4.0, 0 }, { "Rock_Mossy_1", 0.6, 0.85, 1.15, 0.9 },
+				{ "Rock_Mossy_2", 0.35, 0.85, 1.15, 1.4 }, { "Rock_Mossy_3", 0.15, 0.85, 1.15, 1.8 },
+				// Atelier décors T5 (n° 172) : troncs abattus et souches.
+				{ "Log_Fallen_1", 0.3, 0.9, 1.1, 0 }, { "Log_Fallen_2", 0.15, 0.9, 1.1, 0 }, { "Stump_1", 0.4, 0.85, 1.2, 0.4 } };
 			if (c == '*') return spires; // falaises et à-pics (Faille de Kashogs, T1 pl.18-19)
 			if (c == '^' || c == 'M' || c == 'V') return big;
+			if (c == 'T' || c == 'R' || c == 'L' || c == 't' || c == '%' || c == '&') return forestRocks;
 			return rocks;
 		}
 
@@ -342,6 +359,23 @@ namespace tools::world_gen
 						s.flags |= kSolid;
 						s.collisionRadius = sp.trunkRadius * (cp.cls == VegClass::Rock ? s.scale : std::sqrt(s.scale));
 					}
+					// Atelier décors T3 (n° 112) : polypores en étagère sur les troncs des forêts
+					// denses et des marais (un arbre sur douze), à 0,6-1,5 m du sol.
+					if (cp.cls == VegClass::Tree && sp.trunkRadius > 0.0 && !infernal
+						&& (code == 'T' || code == 'R' || code == 'L' || code == 't' || code == '%' || code == '&')
+						&& ToUnit(Mix64(h + 23)) < 0.085)
+					{
+						const double a = ToUnit(Mix64(h + 29)) * 2.0 * 3.14159265358979;
+						const Vec2 o{ std::cos(a), std::sin(a) };
+						ScatterDef b;
+						b.mesh = "meshes/props/Mushroom_Bracket_1.gltf";
+						b.position = p + o * (s.collisionRadius * 0.85 + 0.1);
+						b.yOffset = Lerp(0.6, 1.5, ToUnit(Mix64(h + 31)));
+						b.yawDeg = std::atan2(o.x, o.z) * 180.0 / 3.14159265358979;   // dos contre l'écorce
+						b.scale = Lerp(0.8, 1.3, ToUnit(Mix64(h + 37)));
+						b.cullClass = 2;
+						w.scatter.push_back(std::move(b));
+					}
 					if (cp.cls == VegClass::Tree) w.Occupy(p, 1.6);
 					else if (cp.cls == VegClass::Rock) w.Occupy(p, 1.0 * s.scale);
 					w.scatter.push_back(std::move(s));
@@ -409,6 +443,60 @@ namespace tools::world_gen
 				s.cullClass = 2;
 				w.scatter.push_back(std::move(s));
 			}
+			// Atelier décors T3 (n° 113) : nappes de lentilles d'eau sur les eaux dormantes des
+			// marais (biome du centre du lac), à la surface.
+			const char lakeCode = MacroBiome(w.master, l.center.x, l.center.z);
+			if (lakeCode == '%' || lakeCode == '&')
+			{
+				const int mats = std::min(120, static_cast<int>(perim / 12.0));
+				for (int k = 0; k < mats; ++k)
+				{
+					const uint64_t h = Hash(seed, 5206, li, static_cast<uint64_t>(k));
+					const double a = ToUnit(h) * 2.0 * 3.14159265358979;
+					const double rr = LakeRadiusAt(l, a) * (0.3 + 0.6 * ToUnit(Mix64(h + 1)));
+					const Vec2 p{ l.center.x + std::cos(a) * rr, l.center.z + std::sin(a) * rr };
+					if (!w.OwnsPoint(p)) continue;
+					const double ground = w.HeightAt(p);
+					if (ground > l.waterY - 0.2) continue;
+					ScatterDef s;
+					s.mesh = "meshes/props/Duckweed_1.gltf";
+					s.position = p;
+					s.yOffset = l.waterY - ground + 0.015;
+					s.scale = Lerp(0.8, 1.6, ToUnit(Mix64(h + 3)));
+					s.yawDeg = ToUnit(Mix64(h + 5)) * 360.0;
+					s.cullClass = 1;
+					w.scatter.push_back(std::move(s));
+				}
+			}
+			// Atelier décors T2 (n° 79) : rochers émergeant de l'eau près des berges. La base
+			// du rocher (posée par le client au sol + yOffset) est réglée pour que le sommet
+			// dépasse de 0,3 à 0,8 m ; jamais en flottement (eau trop profonde : ignoré).
+			const int stones = std::min(80, static_cast<int>(perim / 40.0));
+			for (int k = 0; k < stones; ++k)
+			{
+				const uint64_t h = Hash(seed, 5204, li, static_cast<uint64_t>(k));
+				const double a = ToUnit(h) * 2.0 * 3.14159265358979;
+				const double rr = LakeRadiusAt(l, a) * (0.75 + 0.2 * ToUnit(Mix64(h + 1)));
+				const Vec2 p{ l.center.x + std::cos(a) * rr, l.center.z + std::sin(a) * rr };
+				if (!w.OwnsPoint(p)) continue;
+				const double ground = w.HeightAt(p);
+				const int v = static_cast<int>(Mix64(h + 2) % 3u);
+				const double scale = Lerp(0.8, 1.2, ToUnit(Mix64(h + 3)));
+				const double rockH = (v == 0 ? 1.0 : (v == 1 ? 1.7 : 2.4)) * scale;
+				const double emerge = Lerp(0.3, 0.8, ToUnit(Mix64(h + 4)));
+				const double yOff = l.waterY + emerge - rockH - ground;
+				if (ground > l.waterY - 0.2 || yOff > 0.0) continue;
+				ScatterDef s;
+				s.mesh = std::string("meshes/props/Rock_Water_") + char('1' + v) + ".gltf";
+				s.position = p;
+				s.yOffset = yOff;
+				s.scale = scale;
+				s.yawDeg = ToUnit(Mix64(h + 5)) * 360.0;
+				s.flags = 1u;
+				s.collisionRadius = 0.5 * (v + 1) * scale;
+				s.cullClass = 1;
+				w.scatter.push_back(std::move(s));
+			}
 		}
 		// Rivières : roseaux sur la bande de berge (3,5 à 6 m de l'axe du lit).
 		if (w.riverDist.data.empty()) return;
@@ -426,8 +514,43 @@ namespace tools::world_gen
 				const int ri = w.riverDist.IndexX(p.x), rj = w.riverDist.IndexZ(p.z);
 				if (!w.riverDist.InBounds(ri, rj)) continue;
 				const float d = w.riverDist.At(ri, rj);
-				if (d < 3.5f || d > 6.0f) continue;
+				if (d < 1.2f || d > 6.0f) continue;
 				if (w.HeightAt(p) < w.master.scale.seaLevelM + 0.6) continue; // pas en mer
+				if (d < 3.0f)
+				{
+					// Atelier décors T5 (n° 173) : galets moussus dans le lit des ruisseaux.
+					if (ToUnit(Mix64(h + 7)) > 0.06)
+					{
+						if (ToUnit(Mix64(h + 11)) < 0.14 && !blocked(p, 0.6))
+						{
+							ScatterDef g;
+							g.mesh = std::string("meshes/props/Pebble_River_") + char('1' + static_cast<int>(Mix64(h + 12) % 3u)) + ".gltf";
+							g.position = p;
+							g.yOffset = -0.12;
+							g.yawDeg = ToUnit(Mix64(h + 13)) * 360.0;
+							g.scale = Lerp(0.8, 1.2, ToUnit(Mix64(h + 14)));
+							g.cullClass = 2;
+							w.scatter.push_back(std::move(g));
+						}
+						continue;
+					}
+					// Atelier décors T2 (n° 79) : rocher à demi immergé dans le lit, rare.
+					if (blocked(p, 1.0)) continue;
+					const int v = static_cast<int>(Mix64(h + 8) % 2u);
+					const double scale = Lerp(0.7, 1.1, ToUnit(Mix64(h + 9)));
+					ScatterDef s;
+					s.mesh = std::string("meshes/props/Rock_Water_") + char('1' + v) + ".gltf";
+					s.position = p;
+					s.yOffset = -0.45 * (v == 0 ? 1.0 : 1.7) * scale;
+					s.scale = scale;
+					s.yawDeg = ToUnit(Mix64(h + 10)) * 360.0;
+					s.flags = 1u;
+					s.collisionRadius = 0.5 * (v + 1) * scale;
+					s.cullClass = 1;
+					w.scatter.push_back(std::move(s));
+					continue;
+				}
+				if (d > 6.0f || d < 3.5f) continue;
 				if (blocked(p, 0.4) || w.SlopeDegAt(p) > 30.0) continue;
 				reed(p, h);
 			}

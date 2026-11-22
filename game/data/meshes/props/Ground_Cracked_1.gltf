@@ -1,0 +1,161 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Ground_Cracked_1"
+  }
+ ],
+ "materials": [
+  {
+   "alphaMode": "MASK",
+   "doubleSided": true,
+   "name": "MI_Decor_Ground_Cracked",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   },
+   "alphaCutoff": 0.5
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Ground_Cracked_1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ground_Cracked_Normal.png",
+   "uri": "T_Decor_Ground_Cracked_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ground_Cracked_BaseColor.png",
+   "uri": "T_Decor_Ground_Cracked_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Ground_Cracked_ORM.png",
+   "uri": "T_Decor_Ground_Cracked_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 49,
+   "max": [
+    2,
+    0.05467049777507782,
+    2
+   ],
+   "min": [
+    -2,
+    0.005329502280801535,
+    -2
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 49,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 49,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 216,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 588,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 588,
+   "byteOffset": 588,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 392,
+   "byteOffset": 1176,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 1568,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 2000,
+   "uri": "Ground_Cracked_1.bin"
+  }
+ ]
+}

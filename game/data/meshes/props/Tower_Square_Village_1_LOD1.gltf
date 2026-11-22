@@ -1,0 +1,583 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Tower_Square_Village_1_LOD1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Stone_Wall",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Stone_Carved",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Shingle",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 9
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 10
+    },
+    "metallicRoughnessTexture": {
+     "index": 11
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Iron",
+   "normalTexture": {
+    "index": 12
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 13
+    },
+    "metallicRoughnessTexture": {
+     "index": 14
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Tower_Square_Village_1_LOD1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 3,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 7,
+      "NORMAL": 8,
+      "TEXCOORD_0": 9
+     },
+     "indices": 10,
+     "material": 2
+    },
+    {
+     "attributes": {
+      "POSITION": 11,
+      "NORMAL": 12,
+      "TEXCOORD_0": 13
+     },
+     "indices": 14,
+     "material": 3
+    },
+    {
+     "attributes": {
+      "POSITION": 15,
+      "NORMAL": 16,
+      "TEXCOORD_0": 17
+     },
+     "indices": 18,
+     "material": 4
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  },
+  {
+   "sampler": 0,
+   "source": 9
+  },
+  {
+   "sampler": 0,
+   "source": 10
+  },
+  {
+   "sampler": 0,
+   "source": 11
+  },
+  {
+   "sampler": 0,
+   "source": 12
+  },
+  {
+   "sampler": 0,
+   "source": 13
+  },
+  {
+   "sampler": 0,
+   "source": 14
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Wall_Normal.png",
+   "uri": "T_Decor_Stone_Wall_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Wall_BaseColor.png",
+   "uri": "T_Decor_Stone_Wall_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Wall_ORM.png",
+   "uri": "T_Decor_Stone_Wall_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Carved_Normal.png",
+   "uri": "T_Decor_Stone_Carved_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Carved_BaseColor.png",
+   "uri": "T_Decor_Stone_Carved_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Stone_Carved_ORM.png",
+   "uri": "T_Decor_Stone_Carved_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Shingle_Normal.png",
+   "uri": "T_Decor_Shingle_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Shingle_BaseColor.png",
+   "uri": "T_Decor_Shingle_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Shingle_ORM.png",
+   "uri": "T_Decor_Shingle_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Iron_Normal.png",
+   "uri": "T_Decor_Iron_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Iron_BaseColor.png",
+   "uri": "T_Decor_Iron_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Iron_ORM.png",
+   "uri": "T_Decor_Iron_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 24,
+   "max": [
+    2.5,
+    10.5,
+    2.5
+   ],
+   "min": [
+    -2.5,
+    0,
+    -2.5
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 36,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 24,
+   "max": [
+    2.700000047683716,
+    10.800000190734863,
+    2.700000047683716
+   ],
+   "min": [
+    -2.700000047683716,
+    10.5,
+    -2.700000047683716
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5126,
+   "count": 12,
+   "max": [
+    2.9000000953674316,
+    14,
+    2.9000000953674316
+   ],
+   "min": [
+    -2.9000000953674316,
+    10.800000190734863,
+    -2.9000000953674316
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5123,
+   "count": 12,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5126,
+   "count": 56,
+   "max": [
+    2.5199999809265137,
+    8.399999618530273,
+    2.5299999713897705
+   ],
+   "min": [
+    -2.5199999809265137,
+    0,
+    -2.5199999809265137
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 12,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 13,
+   "componentType": 5126,
+   "count": 56,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 14,
+   "componentType": 5123,
+   "count": 84,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 15,
+   "componentType": 5126,
+   "count": 29,
+   "max": [
+    0.028531694784760475,
+    14.600000381469727,
+    0.029999999329447746
+   ],
+   "min": [
+    -0.028531694784760475,
+    13.899999618530273,
+    -0.02427051030099392
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 16,
+   "componentType": 5126,
+   "count": 29,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 17,
+   "componentType": 5126,
+   "count": 29,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 18,
+   "componentType": 5123,
+   "count": 60,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 192,
+   "byteOffset": 576,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 72,
+   "byteOffset": 768,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 840,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 1128,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 192,
+   "byteOffset": 1416,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1608,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1752,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 96,
+   "byteOffset": 1896,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 24,
+   "byteOffset": 1992,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 2016,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 672,
+   "byteOffset": 2688,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 448,
+   "byteOffset": 3360,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 168,
+   "byteOffset": 3808,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 348,
+   "byteOffset": 3976,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 348,
+   "byteOffset": 4324,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 232,
+   "byteOffset": 4672,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 120,
+   "byteOffset": 4904,
+   "target": 34963
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 5024,
+   "uri": "Tower_Square_Village_1_LOD1.bin"
+  }
+ ]
+}

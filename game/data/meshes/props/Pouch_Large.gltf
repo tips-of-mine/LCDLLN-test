@@ -1,296 +1,571 @@
 {
-	"asset":{
-		"generator":"Khronos glTF Blender I/O v4.0.44",
-		"version":"2.0"
-	},
-	"scene":0,
-	"scenes":[
-		{
-			"name":"Scene",
-			"nodes":[
-				0
-			]
-		}
-	],
-	"nodes":[
-		{
-			"mesh":0,
-			"name":"Pouch_Large"
-		}
-	],
-	"materials":[
-		{
-			"doubleSided":true,
-			"name":"MI_Trim_Props_Vertex",
-			"normalTexture":{
-				"index":0
-			},
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":1
-				},
-				"metallicRoughnessTexture":{
-					"index":2
-				}
-			}
-		},
-		{
-			"doubleSided":true,
-			"name":"MI_Trim_Metal",
-			"normalTexture":{
-				"index":3
-			},
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":4
-				},
-				"metallicRoughnessTexture":{
-					"index":5
-				}
-			}
-		}
-	],
-	"meshes":[
-		{
-			"name":"Cube.144",
-			"primitives":[
-				{
-					"attributes":{
-						"COLOR_0":0,
-						"POSITION":1,
-						"NORMAL":2,
-						"TEXCOORD_0":3
-					},
-					"indices":4,
-					"material":0
-				},
-				{
-					"attributes":{
-						"COLOR_0":5,
-						"POSITION":6,
-						"NORMAL":7,
-						"TEXCOORD_0":8
-					},
-					"indices":9,
-					"material":1
-				}
-			]
-		}
-	],
-	"textures":[
-		{
-			"sampler":0,
-			"source":0
-		},
-		{
-			"sampler":0,
-			"source":1
-		},
-		{
-			"sampler":0,
-			"source":2
-		},
-		{
-			"sampler":0,
-			"source":3
-		},
-		{
-			"sampler":0,
-			"source":4
-		},
-		{
-			"sampler":0,
-			"source":5
-		}
-	],
-	"images":[
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Props_Normal",
-			"uri":"T_Trim_Props_Normal.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Props_BaseColor",
-			"uri":"T_Trim_Props_BaseColor.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Props_ORM",
-			"uri":"T_Trim_Props_ORM.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Metal_Normal",
-			"uri":"T_Trim_Metal_Normal.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Metal_BaseColor",
-			"uri":"T_Trim_Metal_BaseColor.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"T_Trim_Metal_ORM",
-			"uri":"T_Trim_Metal_ORM.png"
-		}
-	],
-	"accessors":[
-		{
-			"bufferView":0,
-			"componentType":5123,
-			"count":454,
-			"normalized":true,
-			"type":"VEC4"
-		},
-		{
-			"bufferView":1,
-			"componentType":5126,
-			"count":454,
-			"max":[
-				0.1117013618350029,
-				0.15981073677539825,
-				0.06788310408592224
-			],
-			"min":[
-				-0.11379196494817734,
-				0.0007084211683832109,
-				-0.04801042750477791
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":2,
-			"componentType":5126,
-			"count":454,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":3,
-			"componentType":5126,
-			"count":454,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":4,
-			"componentType":5123,
-			"count":1542,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":5,
-			"componentType":5123,
-			"count":226,
-			"normalized":true,
-			"type":"VEC4"
-		},
-		{
-			"bufferView":6,
-			"componentType":5126,
-			"count":226,
-			"max":[
-				0.0754198506474495,
-				0.11255805194377899,
-				0.07180917263031006
-			],
-			"min":[
-				-0.07589969784021378,
-				0.06666167080402374,
-				0.04826852306723595
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":7,
-			"componentType":5126,
-			"count":226,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":8,
-			"componentType":5126,
-			"count":226,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":9,
-			"componentType":5123,
-			"count":648,
-			"type":"SCALAR"
-		}
-	],
-	"bufferViews":[
-		{
-			"buffer":0,
-			"byteLength":3632,
-			"byteOffset":0,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":5448,
-			"byteOffset":3632,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":5448,
-			"byteOffset":9080,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":3632,
-			"byteOffset":14528,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":3084,
-			"byteOffset":18160,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":1808,
-			"byteOffset":21244,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2712,
-			"byteOffset":23052,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2712,
-			"byteOffset":25764,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1808,
-			"byteOffset":28476,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1296,
-			"byteOffset":30284,
-			"target":34963
-		}
-	],
-	"samplers":[
-		{
-			"magFilter":9729,
-			"minFilter":9987
-		}
-	],
-	"buffers":[
-		{
-			"byteLength":31580,
-			"uri":"Pouch_Large.bin"
-		}
-	]
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Pouch_Large"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Leather",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Rope",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Green",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Amber",
+   "normalTexture": {
+    "index": 9
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 10
+    },
+    "metallicRoughnessTexture": {
+     "index": 11
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Glass_Clear",
+   "normalTexture": {
+    "index": 12
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 13
+    },
+    "metallicRoughnessTexture": {
+     "index": 14
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Pouch_Large",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
+    },
+    {
+     "attributes": {
+      "POSITION": 12,
+      "NORMAL": 13,
+      "TEXCOORD_0": 14
+     },
+     "indices": 11,
+     "material": 3
+    },
+    {
+     "attributes": {
+      "POSITION": 15,
+      "NORMAL": 16,
+      "TEXCOORD_0": 17
+     },
+     "indices": 11,
+     "material": 4
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  },
+  {
+   "sampler": 0,
+   "source": 9
+  },
+  {
+   "sampler": 0,
+   "source": 10
+  },
+  {
+   "sampler": 0,
+   "source": 11
+  },
+  {
+   "sampler": 0,
+   "source": 12
+  },
+  {
+   "sampler": 0,
+   "source": 13
+  },
+  {
+   "sampler": 0,
+   "source": 14
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leather_Normal.png",
+   "uri": "T_Decor_Leather_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leather_BaseColor.png",
+   "uri": "T_Decor_Leather_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Leather_ORM.png",
+   "uri": "T_Decor_Leather_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_Normal.png",
+   "uri": "T_Decor_Rope_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_BaseColor.png",
+   "uri": "T_Decor_Rope_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Rope_ORM.png",
+   "uri": "T_Decor_Rope_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_Normal.png",
+   "uri": "T_Decor_Glass_Green_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_BaseColor.png",
+   "uri": "T_Decor_Glass_Green_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Green_ORM.png",
+   "uri": "T_Decor_Glass_Green_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_Normal.png",
+   "uri": "T_Decor_Glass_Amber_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_BaseColor.png",
+   "uri": "T_Decor_Glass_Amber_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Amber_ORM.png",
+   "uri": "T_Decor_Glass_Amber_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_Normal.png",
+   "uri": "T_Decor_Glass_Clear_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_BaseColor.png",
+   "uri": "T_Decor_Glass_Clear_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Glass_Clear_ORM.png",
+   "uri": "T_Decor_Glass_Clear_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 55,
+   "max": [
+    0.09415467083454132,
+    0.1599999964237213,
+    0.09200000017881393
+   ],
+   "min": [
+    -0.11400000005960464,
+    0.0010000000474974513,
+    -0.06800000369548798
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 55,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 55,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 240,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 18,
+   "max": [
+    0.03932235762476921,
+    0.1301874965429306,
+    0.04800000041723251
+   ],
+   "min": [
+    -0.05916769057512283,
+    0.12025000154972076,
+    -0.024000002071261406
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 48,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 18,
+   "max": [
+    0.10105666518211365,
+    0.020874999463558197,
+    0.04560000076889992
+   ],
+   "min": [
+    0.07607810199260712,
+    0.0010000000474974513,
+    0.02823343500494957
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 60,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 12,
+   "componentType": 5126,
+   "count": 18,
+   "max": [
+    0.1120000034570694,
+    0.020874999463558197,
+    -0.002399999415501952
+   ],
+   "min": [
+    0.08702143281698227,
+    0.0010000000474974513,
+    -0.019766563549637794
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 13,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 14,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 15,
+   "componentType": 5126,
+   "count": 18,
+   "max": [
+    0.07916998118162155,
+    0.020874999463558197,
+    -0.018400002270936966
+   ],
+   "min": [
+    0.05419142171740532,
+    0.0010000000474974513,
+    -0.035766564309597015
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 16,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 17,
+   "componentType": 5126,
+   "count": 18,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 660,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 660,
+   "byteOffset": 660,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 440,
+   "byteOffset": 1320,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 480,
+   "byteOffset": 1760,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 2240,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 2456,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 2672,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 96,
+   "byteOffset": 2816,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 2912,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 3128,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 3344,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 120,
+   "byteOffset": 3488,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 3608,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 3824,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 4040,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 4184,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 216,
+   "byteOffset": 4400,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 4616,
+   "target": 34962
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 4760,
+   "uri": "Pouch_Large.bin"
+  }
+ ]
 }

@@ -5407,6 +5407,3790 @@
       "billboard": false,
       "replaces": null,
       "ref": "T1-T5 enseignes suspendues (pictogramme seul ; nom localisé au survol)"
+    },
+    {
+      "id": "DeadTree_1",
+      "num": 76,
+      "family": "vegetation",
+      "builder": "dead",
+      "seed": 7601,
+      "budget": "tree",
+      "width_m": [
+        5.5,
+        6.8
+      ],
+      "height_m": [
+        8.6,
+        10.4
+      ],
+      "billboard": true,
+      "replaces": "DeadTree_1",
+      "ref": "T2-P016-C1 (cavalier, T2-P016-C3) ; échelle générateur conservée"
+    },
+    {
+      "id": "DeadTree_2",
+      "num": 76,
+      "family": "vegetation",
+      "builder": "dead",
+      "seed": 7602,
+      "budget": "tree",
+      "width_m": [
+        6.0,
+        7.4
+      ],
+      "height_m": [
+        10.4,
+        12.6
+      ],
+      "billboard": true,
+      "replaces": "DeadTree_2",
+      "ref": "T2-P016-C1 (cavalier, T2-P016-C3) ; échelle générateur conservée"
+    },
+    {
+      "id": "DeadTree_3",
+      "num": 76,
+      "family": "vegetation",
+      "builder": "dead",
+      "seed": 7603,
+      "budget": "tree",
+      "width_m": [
+        5.8,
+        7.0
+      ],
+      "height_m": [
+        12.0,
+        14.6
+      ],
+      "billboard": true,
+      "replaces": "DeadTree_3",
+      "ref": "T2-P016-C1 (cavalier, T2-P016-C3) ; échelle générateur conservée"
+    },
+    {
+      "id": "DeadTree_4",
+      "num": 76,
+      "family": "vegetation",
+      "builder": "dead",
+      "seed": 7604,
+      "budget": "tree",
+      "width_m": [
+        7.2,
+        8.8
+      ],
+      "height_m": [
+        11.5,
+        14.1
+      ],
+      "billboard": true,
+      "replaces": "DeadTree_4",
+      "ref": "T2-P016-C1 (cavalier, T2-P016-C3) ; échelle générateur conservée"
+    },
+    {
+      "id": "DeadTree_5",
+      "num": 76,
+      "family": "vegetation",
+      "builder": "dead",
+      "seed": 7605,
+      "budget": "tree",
+      "width_m": [
+        7.6,
+        9.2
+      ],
+      "height_m": [
+        14.8,
+        18.0
+      ],
+      "billboard": true,
+      "replaces": "DeadTree_5",
+      "ref": "T2-P016-C1 (cavalier, T2-P016-C3) ; échelle générateur conservée"
+    },
+    {
+      "id": "Fern_2",
+      "num": 77,
+      "family": "vegetation",
+      "builder": "fern",
+      "seed": 7701,
+      "budget": "prop",
+      "width_m": [
+        1.0,
+        1.6
+      ],
+      "height_m": [
+        1.0,
+        1.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 (fougère de talus)"
+    },
+    {
+      "id": "Rock_Arch_1",
+      "num": 78,
+      "family": "mineral",
+      "builder": "rock_arch",
+      "seed": 7801,
+      "budget": "rock_big",
+      "exact": true,
+      "width_m": [
+        12,
+        14.5
+      ],
+      "height_m": [
+        8.5,
+        10
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P018-C8 (cavalier)"
+    },
+    {
+      "id": "Rock_Water_1",
+      "num": 79,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 7901,
+      "budget": "prop",
+      "width_m": [
+        1.2,
+        1.8
+      ],
+      "height_m": [
+        0.8,
+        1.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (rochers dans l'eau)"
+    },
+    {
+      "id": "Rock_Water_2",
+      "num": 79,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 7902,
+      "budget": "rock_big",
+      "width_m": [
+        2.2,
+        3.0
+      ],
+      "height_m": [
+        1.4,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (rochers dans l'eau)"
+    },
+    {
+      "id": "Rock_Water_3",
+      "num": 79,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 7903,
+      "budget": "rock_big",
+      "width_m": [
+        3.2,
+        4.2
+      ],
+      "height_m": [
+        2.0,
+        2.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (rochers dans l'eau)"
+    },
+    {
+      "id": "Ground_Cracked_1",
+      "num": 80,
+      "family": "mineral",
+      "builder": "ground_cracked",
+      "seed": 8001,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.9,
+        4.1
+      ],
+      "height_m": [
+        0.045,
+        0.06
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P027-C2 ; T2-P046-C1"
+    },
+    {
+      "id": "Signpost_1",
+      "num": 84,
+      "family": "objets",
+      "builder": "signpost",
+      "seed": 8401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.45,
+        1.6
+      ],
+      "height_m": [
+        2.5,
+        2.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1 (sans inscription)"
+    },
+    {
+      "id": "Gallows_1",
+      "num": 85,
+      "family": "objets",
+      "builder": "gallows",
+      "seed": 8501,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.6,
+        3.8
+      ],
+      "height_m": [
+        4.2,
+        4.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1 (sans pendu)"
+    },
+    {
+      "id": "Fountain_Basin_1",
+      "num": 86,
+      "family": "objets",
+      "builder": "fountain",
+      "seed": 8601,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.5
+      ],
+      "height_m": [
+        1.8,
+        1.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P011-C1 ; T2-P012-C1 (mascaron réinterprété)"
+    },
+    {
+      "id": "Awning_Striped_1",
+      "num": 88,
+      "family": "objets",
+      "builder": "awning_striped",
+      "seed": 8801,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3,
+        3.2
+      ],
+      "height_m": [
+        2.5,
+        2.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1"
+    },
+    {
+      "id": "Bonfire_Stack_1",
+      "num": 89,
+      "family": "objets",
+      "builder": "bonfire_stack",
+      "seed": 8901,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2,
+        2.4
+      ],
+      "height_m": [
+        3.8,
+        4.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P027-C2"
+    },
+    {
+      "id": "Skull_Beast_1",
+      "num": 90,
+      "family": "objets",
+      "builder": "skull_beast",
+      "seed": 9001,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.6,
+        3.2
+      ],
+      "height_m": [
+        1.3,
+        1.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P027-C4"
+    },
+    {
+      "id": "PackSaddle_1",
+      "num": 91,
+      "family": "objets",
+      "builder": "pack_saddle",
+      "seed": 9101,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1,
+        1
+      ],
+      "height_m": [
+        0.6,
+        0.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C4 (bât seul)"
+    },
+    {
+      "id": "Trebuchet_1",
+      "num": 98,
+      "family": "objets",
+      "builder": "trebuchet",
+      "seed": 9801,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        7.5,
+        8.0
+      ],
+      "height_m": [
+        8.5,
+        9.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P037-C2 (nains de Thorn)"
+    },
+    {
+      "id": "Chandelier",
+      "num": 99,
+      "family": "objets",
+      "builder": "chandelier_wheel",
+      "seed": 9901,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.651,
+        0.651,
+        -1.422,
+        0.036,
+        -0.651,
+        0.651
+      ],
+      "width_m": [
+        1.3,
+        1.3
+      ],
+      "height_m": [
+        1.4,
+        1.5
+      ],
+      "billboard": false,
+      "replaces": "Chandelier",
+      "ref": "T2-P021-C1 ; T2-P022-C1"
+    },
+    {
+      "id": "Beam_Truss_1",
+      "num": 100,
+      "family": "objets",
+      "builder": "beam_truss",
+      "seed": 10001,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        8,
+        8
+      ],
+      "height_m": [
+        3.3,
+        3.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P022-C1 ; T2-P023-C6"
+    },
+    {
+      "id": "Armchair_Carved_1",
+      "num": 101,
+      "family": "objets",
+      "builder": "armchair_carved",
+      "seed": 10101,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.7,
+        0.8
+      ],
+      "height_m": [
+        1.4,
+        1.45
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P020-C7"
+    },
+    {
+      "id": "Shelf_Apothecary_1",
+      "num": 102,
+      "family": "objets",
+      "builder": "shelf_apothecary",
+      "seed": 10201,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2,
+        2.1
+      ],
+      "height_m": [
+        2.2,
+        2.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P023-C6 ; T2-P025-C3,C5"
+    },
+    {
+      "id": "Chain_Hook_1",
+      "num": 103,
+      "family": "objets",
+      "builder": "chain_hook",
+      "seed": 10301,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.4,
+        0.5
+      ],
+      "height_m": [
+        3.2,
+        3.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P023-C6 ; T2-P025-C5"
+    },
+    {
+      "id": "DoorKnocker_1",
+      "num": 104,
+      "family": "objets",
+      "builder": "door_knocker",
+      "seed": 10401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.22,
+        0.25
+      ],
+      "height_m": [
+        0.26,
+        0.28
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P024-C5 ; T2-P025-C5"
+    },
+    {
+      "id": "Table_Stone_1",
+      "num": 105,
+      "family": "objets",
+      "builder": "table_stone",
+      "seed": 10501,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2,
+        2
+      ],
+      "height_m": [
+        0.9,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P023-C6 (sans runes)"
+    },
+    {
+      "id": "Basket_1",
+      "num": 107,
+      "family": "objets",
+      "builder": "basket",
+      "seed": 10701,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.5,
+        0.55
+      ],
+      "height_m": [
+        0.5,
+        0.55
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C4"
+    },
+    {
+      "id": "Cushion_Pile_1",
+      "num": 108,
+      "family": "objets",
+      "builder": "cushion_pile",
+      "seed": 10801,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.1
+      ],
+      "height_m": [
+        0.3,
+        0.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P043-C5,C7 ; T2-P045-C3"
+    },
+    {
+      "id": "Table_Large_Cloth",
+      "num": 109,
+      "family": "objets",
+      "builder": "table_cloth",
+      "seed": 10901,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.84,
+        2.84
+      ],
+      "height_m": [
+        0.81,
+        0.83
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C1 (variante de Table_Large)"
+    },
+    {
+      "id": "Ladder_Wood_1",
+      "num": 110,
+      "family": "objets",
+      "builder": "stepladder",
+      "seed": 11001,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.55,
+        0.6
+      ],
+      "height_m": [
+        2.0,
+        2.05
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P045-C3"
+    },
+    {
+      "id": "Grave_Cairn_1",
+      "num": 194,
+      "family": "objets",
+      "builder": "grave_cairn",
+      "seed": 19401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.2
+      ],
+      "height_m": [
+        0.2,
+        0.36
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : tombes anciennes (tas de cailloux)"
+    },
+    {
+      "id": "Grave_Cairn_2",
+      "num": 194,
+      "family": "objets",
+      "builder": "grave_cairn",
+      "seed": 19402,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.2
+      ],
+      "height_m": [
+        0.2,
+        0.36
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : tombes anciennes (tas de cailloux)"
+    },
+    {
+      "id": "Grave_Cairn_3",
+      "num": 194,
+      "family": "objets",
+      "builder": "grave_cairn",
+      "seed": 19403,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.2
+      ],
+      "height_m": [
+        0.2,
+        0.36
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : tombes anciennes (tas de cailloux)"
+    },
+    {
+      "id": "Cross_Wood_1",
+      "num": 194,
+      "family": "objets",
+      "builder": "cross_wood",
+      "seed": 19411,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.72,
+        0.74
+      ],
+      "height_m": [
+        1.3,
+        1.31
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : croix de bois de qualité variable"
+    },
+    {
+      "id": "Cross_Wood_2",
+      "num": 194,
+      "family": "objets",
+      "builder": "cross_wood",
+      "seed": 19412,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.66
+      ],
+      "height_m": [
+        1.1,
+        1.15
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : croix de bois de qualité variable"
+    },
+    {
+      "id": "Cross_Wood_3",
+      "num": 194,
+      "family": "objets",
+      "builder": "cross_wood",
+      "seed": 19413,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.7
+      ],
+      "height_m": [
+        0.9,
+        1.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : croix de bois de qualité variable"
+    },
+    {
+      "id": "Grave_Stone_Old_1",
+      "num": 194,
+      "family": "objets",
+      "builder": "grave_stone_old",
+      "seed": 19421,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        1.1
+      ],
+      "height_m": [
+        0.75,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "Demande du propriétaire 22/11/2026 : vieille stèle moussue"
+    },
+    {
+      "id": "Roof_Slate_4x4",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x4",
+      "style": "slate",
+      "seed": 4905,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.734,
+        -2.74,
+        2.822
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.73,
+        3.73
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_4x6",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x6",
+      "style": "slate",
+      "seed": 4906,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.718,
+        -3.786,
+        3.786
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.72,
+        3.72
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_4x8",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x8",
+      "style": "slate",
+      "seed": 4907,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.713,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.71,
+        3.71
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x4",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x4",
+      "style": "slate",
+      "seed": 4908,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -0.138,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x6",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x6",
+      "style": "slate",
+      "seed": 4909,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -3.938,
+        4.094
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x8",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x8",
+      "style": "slate",
+      "seed": 4910,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x10",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x10",
+      "style": "slate",
+      "seed": 4911,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -5.898,
+        5.955
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x12",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x12",
+      "style": "slate",
+      "seed": 4912,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -6.829,
+        6.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_6x14",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x14",
+      "style": "slate",
+      "seed": 4913,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_8x8",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x8",
+      "style": "slate",
+      "seed": 4914,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.085,
+        5.247
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_8x10",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x10",
+      "style": "slate",
+      "seed": 4915,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.852,
+        6.007
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_8x12",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x12",
+      "style": "slate",
+      "seed": 4916,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.117,
+        7.015
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Slate_8x14",
+      "num": 92,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x14",
+      "style": "slate",
+      "seed": 4917,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (ardoise bleue, villes de l'Empire) ; géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Turret_Corner_1",
+      "num": 92,
+      "family": "kit",
+      "builder": "turret_corner",
+      "seed": 9201,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        3.2,
+        3.6
+      ],
+      "height_m": [
+        14.2,
+        14.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P008-C1 ; T2-P010-C2..C6 (tourelle d'angle à toit conique)"
+    },
+    {
+      "id": "Column_Stone_1",
+      "num": 93,
+      "family": "kit",
+      "builder": "column_stone",
+      "seed": 9301,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.9,
+        0.9
+      ],
+      "height_m": [
+        5,
+        5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P011-C1 ; T2-P012-C1 ; T2-P020-C1"
+    },
+    {
+      "id": "Arch_Stone_1",
+      "num": 93,
+      "family": "kit",
+      "builder": "arch_stone",
+      "seed": 9302,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        4.9,
+        4.9
+      ],
+      "height_m": [
+        7.45,
+        7.45
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P011-C1 ; T2-P020-C1 (arcade en plein cintre)"
+    },
+    {
+      "id": "Stairs_Street_1",
+      "num": 94,
+      "family": "kit",
+      "builder": "stairs_street",
+      "seed": 9401,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.5
+      ],
+      "height_m": [
+        2.55,
+        2.55
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P020-C3..C5 (marche 0,18 x 0,30 m)"
+    },
+    {
+      "id": "Flyingbuttress_1",
+      "num": 94,
+      "family": "kit",
+      "builder": "flying_buttress",
+      "seed": 9402,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        6.6,
+        6.6
+      ],
+      "height_m": [
+        7.4,
+        7.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P020-C3..C5 ; T2-P044-C3"
+    },
+    {
+      "id": "Portal_Gothic_1",
+      "num": 95,
+      "family": "kit",
+      "builder": "portal_gothic",
+      "seed": 9501,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        6.4,
+        6.4
+      ],
+      "height_m": [
+        9.6,
+        9.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P020-C6 ; T2-P044-C3 (personnage)"
+    },
+    {
+      "id": "Pillar_Gothic_1",
+      "num": 96,
+      "family": "kit",
+      "builder": "pillar_gothic",
+      "seed": 9601,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        1.5,
+        3.6
+      ],
+      "height_m": [
+        11.9,
+        12.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P044-C3,C5 ; T2-P045-C1"
+    },
+    {
+      "id": "Dungeon_Vault_1",
+      "num": 97,
+      "family": "kit",
+      "builder": "dungeon_vault",
+      "seed": 9701,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        4.8,
+        4.8
+      ],
+      "height_m": [
+        4.3,
+        4.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012-C6,C7 ; T2-P022-C5"
+    },
+    {
+      "id": "Dungeon_Pillar_1",
+      "num": 97,
+      "family": "kit",
+      "builder": "dungeon_pillar",
+      "seed": 9702,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.2,
+        1.2
+      ],
+      "height_m": [
+        4,
+        4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012-C6"
+    },
+    {
+      "id": "Dungeon_Grate_1",
+      "num": 97,
+      "family": "kit",
+      "builder": "dungeon_grate",
+      "seed": 9703,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.2,
+        1.25
+      ],
+      "height_m": [
+        2.2,
+        2.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P013-C1 (grille en treillis)"
+    },
+    {
+      "id": "Dungeon_Window_1",
+      "num": 97,
+      "family": "kit",
+      "builder": "dungeon_window",
+      "seed": 9704,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.0
+      ],
+      "height_m": [
+        0.74,
+        0.74
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P012-C7 (soupirail à barreaux)"
+    },
+    {
+      "id": "Bridge_Stone_Deck_1",
+      "num": 81,
+      "family": "kit",
+      "builder": "bridge_stone_deck",
+      "seed": 8101,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1,
+        1,
+        -0.35,
+        0.01,
+        -1,
+        1
+      ],
+      "width_m": [
+        2,
+        2
+      ],
+      "height_m": [
+        0.36,
+        0.36
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (tablier de pont de pierre)"
+    },
+    {
+      "id": "Bridge_Stone_Parapet_1",
+      "num": 81,
+      "family": "kit",
+      "builder": "bridge_stone_parapet",
+      "seed": 8102,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1,
+        1,
+        0,
+        0.95,
+        -0.22,
+        0.22
+      ],
+      "width_m": [
+        2,
+        2
+      ],
+      "height_m": [
+        0.95,
+        0.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (garde-corps)"
+    },
+    {
+      "id": "Bridge_Stone_Arch_1",
+      "num": 81,
+      "family": "kit",
+      "builder": "bridge_stone_arch",
+      "seed": 8103,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1,
+        1,
+        0,
+        3,
+        -0.34,
+        0.04
+      ],
+      "width_m": [
+        2,
+        2
+      ],
+      "height_m": [
+        3,
+        3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P007-C2 ; T2-P016-C1 (arches multiples)"
+    },
+    {
+      "id": "Bridge_Rope_Deck_1",
+      "num": 82,
+      "family": "kit",
+      "builder": "bridge_rope_deck",
+      "seed": 8201,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.05,
+        1.05,
+        -0.1,
+        1.2,
+        -0.85,
+        0.85
+      ],
+      "width_m": [
+        2.1,
+        2.1
+      ],
+      "height_m": [
+        1.3,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P030 ; T2-P031-C1 (pont de cordes de la Passe)"
+    },
+    {
+      "id": "Boardwalk_Deck_1",
+      "num": 83,
+      "family": "kit",
+      "builder": "boardwalk_deck",
+      "seed": 8301,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1,
+        1,
+        -1.6,
+        0.01,
+        -1,
+        1
+      ],
+      "width_m": [
+        2,
+        2
+      ],
+      "height_m": [
+        1.61,
+        1.61
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T2-P019-C1 (passerelle sur pilotis)"
+    },
+    {
+      "id": "Mushroom_Bracket_1",
+      "num": 112,
+      "family": "vegetation",
+      "builder": "mushroom_bracket",
+      "seed": 11201,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.35,
+        0.6
+      ],
+      "height_m": [
+        0.4,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P026-C2 (Forêt des Lutins)"
+    },
+    {
+      "id": "Duckweed_1",
+      "num": 113,
+      "family": "vegetation",
+      "builder": "duckweed",
+      "seed": 11202,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4,
+        4
+      ],
+      "height_m": [
+        0.0,
+        0.01
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P032-C1 (marais)"
+    },
+    {
+      "id": "Prop_Vine1",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11203,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.783,
+        0.753,
+        -2.121,
+        0.482,
+        -0.045,
+        0.174
+      ],
+      "width_m": [
+        1.536,
+        1.536
+      ],
+      "height_m": [
+        0.482,
+        0.482
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine1",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Prop_Vine2",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11204,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.494,
+        0.892,
+        -2.121,
+        0.482,
+        -0.045,
+        0.169
+      ],
+      "width_m": [
+        1.386,
+        1.386
+      ],
+      "height_m": [
+        0.482,
+        0.482
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine2",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Prop_Vine4",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11205,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.718,
+        0.298,
+        -1.014,
+        0.574,
+        -0.027,
+        0.123
+      ],
+      "width_m": [
+        1.016,
+        1.016
+      ],
+      "height_m": [
+        0.574,
+        0.574
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine4",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Prop_Vine5",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11206,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.318,
+        0.983,
+        -1.955,
+        1.031,
+        -1.024,
+        0.102
+      ],
+      "width_m": [
+        2.301,
+        2.301
+      ],
+      "height_m": [
+        1.031,
+        1.031
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine5",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Prop_Vine6",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11207,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -2.035,
+        2.102,
+        -1.072,
+        1.396,
+        -1.369,
+        0.102
+      ],
+      "width_m": [
+        4.137,
+        4.137
+      ],
+      "height_m": [
+        1.396,
+        1.396
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine6",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Prop_Vine9",
+      "num": 114,
+      "family": "vegetation",
+      "builder": "vine",
+      "seed": 11208,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -2.035,
+        2.102,
+        -0.633,
+        0.834,
+        -0.752,
+        0.718
+      ],
+      "width_m": [
+        4.137,
+        4.137
+      ],
+      "height_m": [
+        0.834,
+        0.834
+      ],
+      "billboard": false,
+      "replaces": "Prop_Vine9",
+      "ref": "T3-P045-C3 (lierre sur façade)"
+    },
+    {
+      "id": "Flower_3_Group",
+      "num": 115,
+      "family": "vegetation",
+      "builder": "daisies",
+      "seed": 11209,
+      "budget": "prop",
+      "width_m": [
+        0.6,
+        0.9
+      ],
+      "height_m": [
+        0.38,
+        0.5
+      ],
+      "billboard": false,
+      "replaces": "Flower_3_Group",
+      "ref": "T3-P028-C5 (champ de marguerites)"
+    },
+    {
+      "id": "Flower_3_Single",
+      "num": 115,
+      "family": "vegetation",
+      "builder": "daisies",
+      "seed": 11210,
+      "budget": "prop",
+      "width_m": [
+        0.25,
+        0.42
+      ],
+      "height_m": [
+        0.38,
+        0.5
+      ],
+      "billboard": false,
+      "replaces": "Flower_3_Single",
+      "ref": "T3-P028-C5 (marguerites)"
+    },
+    {
+      "id": "Haystack_1",
+      "num": 116,
+      "family": "objets",
+      "builder": "haystack",
+      "seed": 11211,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.9,
+        3.1
+      ],
+      "height_m": [
+        3.2,
+        3.35
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P028-C5 (personnages assis)"
+    },
+    {
+      "id": "Rock_Mossy_1",
+      "num": 117,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 11701,
+      "budget": "rock_big",
+      "width_m": [
+        2.0,
+        2.8
+      ],
+      "height_m": [
+        1.4,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P012-C1 (cascade en gorge, rochers moussus)"
+    },
+    {
+      "id": "Rock_Mossy_2",
+      "num": 117,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 11703,
+      "budget": "rock_big",
+      "width_m": [
+        3.0,
+        4.0
+      ],
+      "height_m": [
+        2.0,
+        2.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P012-C1 (cascade en gorge, rochers moussus)"
+    },
+    {
+      "id": "Rock_Mossy_3",
+      "num": 117,
+      "family": "mineral",
+      "builder": "rock",
+      "seed": 11705,
+      "budget": "rock_big",
+      "width_m": [
+        4.0,
+        5.0
+      ],
+      "height_m": [
+        2.6,
+        3.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P012-C1 (cascade en gorge, rochers moussus)"
+    },
+    {
+      "id": "RockPath_Irregular_Wide",
+      "num": 119,
+      "family": "objets",
+      "builder": "rock_path_irregular",
+      "seed": 11215,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.05
+      ],
+      "height_m": [
+        0.16,
+        0.17
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P043-C9 (pavage irrégulier, dalles 0,4-0,8 m)"
+    },
+    {
+      "id": "Tub_Wood_1",
+      "num": 120,
+      "family": "objets",
+      "builder": "tub_wood",
+      "seed": 11216,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.4,
+        1.45
+      ],
+      "height_m": [
+        0.7,
+        0.72
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P007-C2,C3"
+    },
+    {
+      "id": "Brazier_Column_1",
+      "num": 121,
+      "family": "objets",
+      "builder": "brazier_column",
+      "seed": 11217,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.66
+      ],
+      "height_m": [
+        2.0,
+        2.02
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P030-C1"
+    },
+    {
+      "id": "Drawbridge_1",
+      "num": 122,
+      "family": "kit",
+      "builder": "drawbridge",
+      "seed": 11218,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.0
+      ],
+      "height_m": [
+        4.2,
+        4.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P044-C8",
+      "bbox_ref": [
+        -2.0,
+        2.0,
+        -0.3,
+        4.2,
+        -0.2,
+        6.0
+      ]
+    },
+    {
+      "id": "Prop_Chimney",
+      "num": 123,
+      "family": "kit",
+      "builder": "chimney",
+      "seed": 11219,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.5,
+        0.446,
+        0.0,
+        3.178,
+        -0.5,
+        0.5
+      ],
+      "width_m": [
+        0.95,
+        0.95
+      ],
+      "height_m": [
+        3.18,
+        3.18
+      ],
+      "billboard": false,
+      "replaces": "Prop_Chimney",
+      "ref": "T3-P028-C1"
+    },
+    {
+      "id": "Prop_Chimney2",
+      "num": 123,
+      "family": "kit",
+      "builder": "chimney",
+      "seed": 11220,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.5,
+        0.446,
+        0.0,
+        3.0,
+        -0.494,
+        0.494
+      ],
+      "width_m": [
+        0.95,
+        0.95
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": "Prop_Chimney2",
+      "ref": "T3-P028-C1"
+    },
+    {
+      "id": "Tower_Square_Village_1",
+      "num": 124,
+      "family": "kit",
+      "builder": "tower_square_village",
+      "seed": 11221,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        5.8,
+        5.8
+      ],
+      "height_m": [
+        14.5,
+        14.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P028-C1 ; T3-P031-C9"
+    },
+    {
+      "id": "Bridge_Stone_Hump_1",
+      "num": 125,
+      "family": "kit",
+      "builder": "bridge_hump",
+      "seed": 11222,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        9.0,
+        9.0
+      ],
+      "height_m": [
+        3.81,
+        3.81
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P044-C2 (cavaliers)",
+      "bbox_ref": [
+        -4.5,
+        4.5,
+        -2.0,
+        1.81,
+        -1.75,
+        1.75
+      ]
+    },
+    {
+      "id": "Door_Barn_1",
+      "num": 126,
+      "family": "kit",
+      "builder": "door_barn",
+      "seed": 11223,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.4,
+        3.4
+      ],
+      "height_m": [
+        3.5,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P045-C3"
+    },
+    {
+      "id": "Facade_Dwarf_Balcony_1",
+      "num": 127,
+      "family": "kit",
+      "builder": "facade_dwarf_balcony",
+      "seed": 11224,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.0,
+        3.0
+      ],
+      "height_m": [
+        3.35,
+        3.35
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P018-C3 (Ghrunke Dash)",
+      "bbox_ref": [
+        -1.5,
+        1.5,
+        1.7,
+        3.35,
+        0.0,
+        1.2
+      ]
+    },
+    {
+      "id": "Facade_Dwarf_Window_1",
+      "num": 127,
+      "family": "kit",
+      "builder": "facade_dwarf_window",
+      "seed": 11225,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.6,
+        1.6
+      ],
+      "height_m": [
+        1.62,
+        1.62
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P018-C3 (Ghrunke Dash)"
+    },
+    {
+      "id": "Vault_Dwarf_1",
+      "num": 128,
+      "family": "kit",
+      "builder": "vault_dwarf",
+      "seed": 11226,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        5.8,
+        5.8
+      ],
+      "height_m": [
+        4.6,
+        4.75
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C5,C6 ; T3-P020-C2"
+    },
+    {
+      "id": "Crucible_Hanging_1",
+      "num": 129,
+      "family": "objets",
+      "builder": "crucible_hanging",
+      "seed": 11227,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.4,
+        3.6
+      ],
+      "height_m": [
+        4.5,
+        4.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C1 (forges naines)"
+    },
+    {
+      "id": "Dummy",
+      "num": 130,
+      "family": "objets",
+      "builder": "dummy",
+      "seed": 11228,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.404,
+        0.404,
+        -0.003,
+        1.86,
+        -0.292,
+        0.293
+      ],
+      "width_m": [
+        0.81,
+        0.81
+      ],
+      "height_m": [
+        1.86,
+        1.86
+      ],
+      "billboard": false,
+      "replaces": "Dummy",
+      "ref": "T3-P019-C4"
+    },
+    {
+      "id": "ArmorStand_1",
+      "num": 130,
+      "family": "objets",
+      "builder": "armor_stand",
+      "seed": 11229,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.85,
+        0.9
+      ],
+      "height_m": [
+        1.9,
+        1.92
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C4"
+    },
+    {
+      "id": "Desk_Counter_1",
+      "num": 131,
+      "family": "objets",
+      "builder": "desk_counter",
+      "seed": 11230,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.5
+      ],
+      "height_m": [
+        1.0,
+        1.08
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C6"
+    },
+    {
+      "id": "Frame_Scaffold_1",
+      "num": 132,
+      "family": "objets",
+      "builder": "frame_scaffold",
+      "seed": 11231,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.1,
+        2.1
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C6"
+    },
+    {
+      "id": "Wagon_Armored_1",
+      "num": 133,
+      "family": "objets",
+      "builder": "wagon_armored",
+      "seed": 11232,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        7.0,
+        7.0
+      ],
+      "height_m": [
+        3.5,
+        3.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P019-C5 ; T3-P020-C4 ; T3-P027-C7 ; T3-P042-C7"
+    },
+    {
+      "id": "Stool_Low_1",
+      "num": 134,
+      "family": "objets",
+      "builder": "stool_low",
+      "seed": 11233,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.38,
+        0.42
+      ],
+      "height_m": [
+        0.35,
+        0.35
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P020-C2 (auberges naines)"
+    },
+    {
+      "id": "Daybed_1",
+      "num": 135,
+      "family": "objets",
+      "builder": "daybed",
+      "seed": 11234,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        0.8,
+        0.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P041-C5"
+    },
+    {
+      "id": "Carafe_1",
+      "num": 136,
+      "family": "objets",
+      "builder": "carafe",
+      "seed": 11235,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.2,
+        0.2
+      ],
+      "height_m": [
+        0.35,
+        0.35
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P041-C5"
+    },
+    {
+      "id": "Glass_Flute_1",
+      "num": 136,
+      "family": "objets",
+      "builder": "glass_flute",
+      "seed": 11236,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.06,
+        0.07
+      ],
+      "height_m": [
+        0.22,
+        0.22
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P041-C5"
+    },
+    {
+      "id": "Bed_Canopy_1",
+      "num": 137,
+      "family": "objets",
+      "builder": "bed_canopy",
+      "seed": 11237,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.84,
+        1.9
+      ],
+      "height_m": [
+        2.4,
+        2.4
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P045-C5"
+    },
+    {
+      "id": "Goblet_Metal_1",
+      "num": 138,
+      "family": "objets",
+      "builder": "goblet_metal",
+      "seed": 11238,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.1,
+        0.1
+      ],
+      "height_m": [
+        0.15,
+        0.15
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P043-C1"
+    },
+    {
+      "id": "Bowl_Wood_1",
+      "num": 138,
+      "family": "objets",
+      "builder": "bowl_wood",
+      "seed": 11239,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.19,
+        0.19
+      ],
+      "height_m": [
+        0.07,
+        0.07
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P043-C1"
+    },
+    {
+      "id": "FoodPlatter_1",
+      "num": 139,
+      "family": "objets",
+      "builder": "food_platter",
+      "seed": 11240,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.42,
+        0.42
+      ],
+      "height_m": [
+        0.12,
+        0.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T3-P030-C1"
+    },
+    {
+      "id": "Pouch_Large",
+      "num": 142,
+      "family": "objets",
+      "builder": "pouch_large",
+      "seed": 11241,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.114,
+        0.112,
+        0.001,
+        0.16,
+        -0.048,
+        0.072
+      ],
+      "width_m": [
+        0.23,
+        0.23
+      ],
+      "height_m": [
+        0.16,
+        0.16
+      ],
+      "billboard": false,
+      "replaces": "Pouch_Large",
+      "ref": "T3-P019-C3"
+    },
+    {
+      "id": "Flower_Garden_1",
+      "num": 143,
+      "family": "vegetation",
+      "builder": "flower_garden",
+      "seed": 14301,
+      "budget": "prop",
+      "width_m": [
+        0.8,
+        1.2
+      ],
+      "height_m": [
+        0.7,
+        0.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C2 (iris des jardins impériaux)"
+    },
+    {
+      "id": "Flower_Garden_2",
+      "num": 143,
+      "family": "vegetation",
+      "builder": "flower_garden",
+      "seed": 14302,
+      "budget": "prop",
+      "width_m": [
+        0.8,
+        1.2
+      ],
+      "height_m": [
+        0.7,
+        0.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C2 (lis)"
+    },
+    {
+      "id": "Tree_Cypress_Potted_1",
+      "num": 144,
+      "family": "vegetation",
+      "builder": "cypress_potted",
+      "seed": 14303,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.85,
+        0.9
+      ],
+      "height_m": [
+        2.5,
+        2.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P006-C1"
+    },
+    {
+      "id": "Hedge_Trimmed_1",
+      "num": 145,
+      "family": "vegetation",
+      "builder": "hedge",
+      "seed": 14304,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.5,
+        1.55
+      ],
+      "height_m": [
+        1.5,
+        1.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C1,C3 (boule)"
+    },
+    {
+      "id": "Hedge_Trimmed_2",
+      "num": 145,
+      "family": "vegetation",
+      "builder": "hedge",
+      "seed": 14305,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.05
+      ],
+      "height_m": [
+        1.2,
+        1.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C1,C3 (haie)"
+    },
+    {
+      "id": "Gazebo_Rotunda_1",
+      "num": 146,
+      "family": "objets",
+      "builder": "gazebo",
+      "seed": 14306,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        6.4,
+        6.8
+      ],
+      "height_m": [
+        7.0,
+        7.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C3 (dame)"
+    },
+    {
+      "id": "Statue_Garden_1",
+      "num": 147,
+      "family": "objets",
+      "builder": "statue_garden",
+      "seed": 14307,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.8,
+        0.8
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C1,C3 ; T4-P006-C1 (sujet neutre)"
+    },
+    {
+      "id": "Statue_Garden_2",
+      "num": 147,
+      "family": "objets",
+      "builder": "statue_garden",
+      "seed": 14308,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.9,
+        0.9
+      ],
+      "height_m": [
+        2.6,
+        2.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P005-C3 (sujet neutre)"
+    },
+    {
+      "id": "Urn_Stone_1",
+      "num": 148,
+      "family": "objets",
+      "builder": "urn_stone",
+      "seed": 14309,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.68,
+        0.75
+      ],
+      "height_m": [
+        1.55,
+        1.56
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P042-C3"
+    },
+    {
+      "id": "Gravestone_1",
+      "num": 149,
+      "family": "objets",
+      "builder": "gravestone",
+      "seed": 14310,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.64,
+        0.7
+      ],
+      "height_m": [
+        1.0,
+        1.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P013-C5 ; T4-P032-C3 (stèle brute, ancienne)"
+    },
+    {
+      "id": "Gravestone_2",
+      "num": 149,
+      "family": "objets",
+      "builder": "gravestone",
+      "seed": 14311,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.7,
+        0.75
+      ],
+      "height_m": [
+        0.55,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P013-C5 ; T4-P032-C3 (stèle brute, ancienne)"
+    },
+    {
+      "id": "Gravestone_3",
+      "num": 149,
+      "family": "objets",
+      "builder": "gravestone",
+      "seed": 14312,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.5,
+        0.56
+      ],
+      "height_m": [
+        1.4,
+        1.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P013-C5 ; T4-P032-C3 (stèle brute, ancienne)"
+    },
+    {
+      "id": "Fence_Iron_Spear_1",
+      "num": 150,
+      "family": "kit",
+      "builder": "fence_iron",
+      "seed": 14313,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.04,
+        2.04
+      ],
+      "height_m": [
+        2.0,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P022-C1 ; T4-P025-C1"
+    },
+    {
+      "id": "Prop_MetalFence_Simple",
+      "num": 150,
+      "family": "kit",
+      "builder": "fence_iron",
+      "seed": 14314,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.97,
+        0.979,
+        0.0,
+        2.868,
+        -0.078,
+        0.078
+      ],
+      "width_m": [
+        1.95,
+        1.95
+      ],
+      "height_m": [
+        2.87,
+        2.87
+      ],
+      "billboard": false,
+      "replaces": "Prop_MetalFence_Simple",
+      "ref": "T4-P022-C1"
+    },
+    {
+      "id": "Prop_MetalFence_Ornament",
+      "num": 150,
+      "family": "kit",
+      "builder": "fence_iron",
+      "seed": 14315,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.973,
+        0.979,
+        0.0,
+        2.852,
+        -0.078,
+        0.078
+      ],
+      "width_m": [
+        1.95,
+        1.95
+      ],
+      "height_m": [
+        2.85,
+        2.85
+      ],
+      "billboard": false,
+      "replaces": "Prop_MetalFence_Ornament",
+      "ref": "T4-P025-C1 (volutes)"
+    },
+    {
+      "id": "Stall_Tent_Market_1",
+      "num": 151,
+      "family": "objets",
+      "builder": "stall_tent_market",
+      "seed": 14316,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.3,
+        3.3
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P026-C1 ; T4-P027-C3 (marché de Dis)"
+    },
+    {
+      "id": "Stall_Tent_Market_2",
+      "num": 151,
+      "family": "objets",
+      "builder": "stall_tent_market",
+      "seed": 14317,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.3,
+        3.3
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P026-C1 ; T4-P027-C3 (marché de Dis)"
+    },
+    {
+      "id": "Stall_Tent_Market_3",
+      "num": 151,
+      "family": "objets",
+      "builder": "stall_tent_market",
+      "seed": 14318,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.3,
+        3.3
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P026-C1 ; T4-P027-C3 (marché de Dis)"
+    },
+    {
+      "id": "Cage_Poultry_1",
+      "num": 152,
+      "family": "objets",
+      "builder": "cage_poultry",
+      "seed": 14319,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.8,
+        0.82
+      ],
+      "height_m": [
+        0.45,
+        0.45
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P027-C3"
+    },
+    {
+      "id": "Cloth_Rolls_1",
+      "num": 153,
+      "family": "objets",
+      "builder": "cloth_rolls",
+      "seed": 14320,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.2,
+        1.25
+      ],
+      "height_m": [
+        1.21,
+        1.22
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P026-C4"
+    },
+    {
+      "id": "Gate_City_Iron_1",
+      "num": 154,
+      "family": "kit",
+      "builder": "gate_city_iron",
+      "seed": 14321,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.45,
+        2.45,
+        0.0,
+        4.2,
+        0.0,
+        2.25
+      ],
+      "width_m": [
+        4.9,
+        4.9
+      ],
+      "height_m": [
+        4.2,
+        4.2
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P022-C4 (vantaux ouverts)"
+    },
+    {
+      "id": "Gallery_Wood_1",
+      "num": 155,
+      "family": "kit",
+      "builder": "gallery_wood",
+      "seed": 14322,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1.0,
+        1.9,
+        4.05,
+        0.0,
+        1.2
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        4.05,
+        4.05
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P018-C4 ; T4-P026-C1"
+    },
+    {
+      "id": "Stairs_Gallery_1",
+      "num": 155,
+      "family": "kit",
+      "builder": "stairs_gallery",
+      "seed": 14323,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.13,
+        1.13
+      ],
+      "height_m": [
+        3.95,
+        3.95
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P018-C4 ; T4-P026-C1"
+    },
+    {
+      "id": "Window_Leaded_1",
+      "num": 157,
+      "family": "kit",
+      "builder": "window_leaded",
+      "seed": 14324,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.0
+      ],
+      "height_m": [
+        1.62,
+        1.62
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P014-C9 ; T4-P020-C4 (losanges)"
+    },
+    {
+      "id": "Window_Leaded_2",
+      "num": 157,
+      "family": "kit",
+      "builder": "window_leaded",
+      "seed": 14325,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.0
+      ],
+      "height_m": [
+        1.62,
+        1.62
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P025-C4 (petits carreaux)"
+    },
+    {
+      "id": "Stalls_Gothic_1",
+      "num": 158,
+      "family": "kit",
+      "builder": "stalls_gothic",
+      "seed": 14326,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        1.0
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P024-C1,C3 ; T4-P040"
+    },
+    {
+      "id": "Ruin_Wall_1",
+      "num": 159,
+      "family": "kit",
+      "builder": "ruin_wall",
+      "seed": 14327,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.6
+      ],
+      "height_m": [
+        5.5,
+        7.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P042-C5 ; T4-P043-C2 (pan de brique effondré)"
+    },
+    {
+      "id": "Ruin_Wall_2",
+      "num": 159,
+      "family": "kit",
+      "builder": "ruin_wall",
+      "seed": 14328,
+      "budget": "building",
+      "exact": true,
+      "width_m": [
+        5.2,
+        5.2
+      ],
+      "height_m": [
+        6.6,
+        6.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P042-C5 (arc brisé)"
+    },
+    {
+      "id": "Ruin_Wall_3",
+      "num": 159,
+      "family": "kit",
+      "builder": "ruin_wall",
+      "seed": 14329,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.8,
+        2.8
+      ],
+      "height_m": [
+        0.6,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P043-C2 (frise sculptée, visages réinterprétés en rosettes)"
+    },
+    {
+      "id": "TeaSet_1",
+      "num": 160,
+      "family": "objets",
+      "builder": "tea_set",
+      "seed": 14330,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.6
+      ],
+      "height_m": [
+        0.25,
+        0.25
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P044-C1"
+    },
+    {
+      "id": "Chair_Gothic_1",
+      "num": 161,
+      "family": "objets",
+      "builder": "chair_gothic",
+      "seed": 14331,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.64,
+        0.64
+      ],
+      "height_m": [
+        1.82,
+        1.82
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P007 ; T4-P008-C4 ; T4-P015-C7"
+    },
+    {
+      "id": "Table_Carved_Long_1",
+      "num": 162,
+      "family": "objets",
+      "builder": "table_carved_long",
+      "seed": 14332,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.0
+      ],
+      "height_m": [
+        0.78,
+        0.78
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P008-C4"
+    },
+    {
+      "id": "Sconce_Candle_5",
+      "num": 163,
+      "family": "objets",
+      "builder": "sconce_candle",
+      "seed": 14333,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.6,
+        0.6
+      ],
+      "height_m": [
+        0.42,
+        0.44
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P007"
+    },
+    {
+      "id": "Quill_Inkwell_1",
+      "num": 164,
+      "family": "objets",
+      "builder": "quill_inkwell",
+      "seed": 14334,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.1,
+        0.11
+      ],
+      "height_m": [
+        0.32,
+        0.32
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P006-C5 ; T4-P007"
+    },
+    {
+      "id": "Mirror_Standing_1",
+      "num": 165,
+      "family": "objets",
+      "builder": "mirror_standing",
+      "seed": 14335,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.88,
+        0.88
+      ],
+      "height_m": [
+        2.0,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P014-C9"
+    },
+    {
+      "id": "Sign_Tavern_Skull_1",
+      "num": 166,
+      "family": "objets",
+      "builder": "sign_tavern_skull",
+      "seed": 14336,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.1,
+        1.2
+      ],
+      "height_m": [
+        0.95,
+        0.97
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P019-C4 (nom non repris)"
+    },
+    {
+      "id": "Carpet_Pattern_1",
+      "num": 167,
+      "family": "objets",
+      "builder": "carpet_pattern",
+      "seed": 14337,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.0
+      ],
+      "height_m": [
+        0.02,
+        0.02
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P021-C6"
+    },
+    {
+      "id": "Fireplace_Mantel_1",
+      "num": 168,
+      "family": "kit",
+      "builder": "fireplace_mantel",
+      "seed": 14338,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.2,
+        2.2
+      ],
+      "height_m": [
+        1.6,
+        1.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P020-C4 ; T4-P021-C6"
+    },
+    {
+      "id": "Watchpost_Wood_1",
+      "num": 169,
+      "family": "objets",
+      "builder": "watchpost_wood",
+      "seed": 14339,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.5,
+        2.5
+      ],
+      "height_m": [
+        4.0,
+        4.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P041-C2,C3 (sans croix)"
+    },
+    {
+      "id": "Wall_RedBrick_Straight",
+      "num": 156,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Straight",
+      "style": "redbrick",
+      "seed": 5561,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        -0.002,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P025-C1 (maison de brique de Dis) ; géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_RedBrick_Window_Wide_Round",
+      "num": 156,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Wide_Round",
+      "style": "redbrick",
+      "seed": 5562,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P025-C1 (maison de brique de Dis) ; géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_RedBrick_Window_Thin_Round",
+      "num": 156,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Thin_Round",
+      "style": "redbrick",
+      "seed": 5563,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P025-C1 (maison de brique de Dis) ; géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_RedBrick_Door_Round",
+      "num": 156,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Door_Round",
+      "style": "redbrick",
+      "seed": 5564,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T4-P025-C1 (maison de brique de Dis) ; géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Pine_Giant_1",
+      "num": 171,
+      "family": "vegetation",
+      "builder": "pine_giant",
+      "seed": 17101,
+      "budget": "tree",
+      "width_m": [
+        11,
+        15
+      ],
+      "height_m": [
+        36,
+        42
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P004-C1 (orkhs)"
+    },
+    {
+      "id": "Pine_Giant_2",
+      "num": 171,
+      "family": "vegetation",
+      "builder": "pine_giant",
+      "seed": 17102,
+      "budget": "tree",
+      "width_m": [
+        12,
+        16
+      ],
+      "height_m": [
+        40,
+        46
+      ],
+      "billboard": true,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P004-C1 (orkhs)"
+    },
+    {
+      "id": "Log_Fallen_1",
+      "num": 172,
+      "family": "vegetation",
+      "builder": "log_fallen",
+      "seed": 17103,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        8.0,
+        8.6
+      ],
+      "height_m": [
+        0.6,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T3-P026-C2"
+    },
+    {
+      "id": "Log_Fallen_2",
+      "num": 172,
+      "family": "vegetation",
+      "builder": "log_fallen",
+      "seed": 17104,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        11.0,
+        11.6
+      ],
+      "height_m": [
+        0.6,
+        1.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T3-P027-C1"
+    },
+    {
+      "id": "Stump_1",
+      "num": 172,
+      "family": "vegetation",
+      "builder": "stump",
+      "seed": 17105,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.9,
+        2.2
+      ],
+      "height_m": [
+        0.6,
+        0.62
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1"
+    },
+    {
+      "id": "Pebble_River_1",
+      "num": 173,
+      "family": "mineral",
+      "builder": "pebble_river",
+      "seed": 17106,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        3.0
+      ],
+      "height_m": [
+        0.15,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P004-C1"
+    },
+    {
+      "id": "Pebble_River_2",
+      "num": 173,
+      "family": "mineral",
+      "builder": "pebble_river",
+      "seed": 17107,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        3.0
+      ],
+      "height_m": [
+        0.15,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P004-C1"
+    },
+    {
+      "id": "Pebble_River_3",
+      "num": 173,
+      "family": "mineral",
+      "builder": "pebble_river",
+      "seed": 17108,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        3.0
+      ],
+      "height_m": [
+        0.15,
+        0.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P004-C1"
+    },
+    {
+      "id": "Hut_Cone_Thatch_1",
+      "num": 174,
+      "family": "objets",
+      "builder": "hut_cone",
+      "seed": 17109,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.1,
+        4.2
+      ],
+      "height_m": [
+        5.0,
+        5.1
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C1 ; T5-P005-C1 (orkhs)"
+    },
+    {
+      "id": "Chimney_DryStone_1",
+      "num": 175,
+      "family": "objets",
+      "builder": "chimney_drystone",
+      "seed": 17110,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.2,
+        3.2
+      ],
+      "height_m": [
+        4.4,
+        4.6
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P004-C4 ; T5-P005-C1"
+    },
+    {
+      "id": "Stakes_Chevaux_1",
+      "num": 176,
+      "family": "objets",
+      "builder": "stakes_chevaux",
+      "seed": 17111,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.3
+      ],
+      "height_m": [
+        2.3,
+        2.5
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P024-C1 ; T5-P043-C2"
+    },
+    {
+      "id": "Ballista_1",
+      "num": 177,
+      "family": "objets",
+      "builder": "ballista",
+      "seed": 17112,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        4.0,
+        4.2
+      ],
+      "height_m": [
+        1.7,
+        1.8
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P008-C3 ; T5-P043-C3,C5"
+    },
+    {
+      "id": "WarDrum_1",
+      "num": 178,
+      "family": "objets",
+      "builder": "war_drum",
+      "seed": 17113,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.5,
+        1.52
+      ],
+      "height_m": [
+        1.15,
+        1.16
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P033-C1 (orques)"
+    },
+    {
+      "id": "Treasure_Pile_1",
+      "num": 179,
+      "family": "objets",
+      "builder": "treasure_pile",
+      "seed": 17114,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.1,
+        2.4
+      ],
+      "height_m": [
+        1.0,
+        1.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P010-C1"
+    },
+    {
+      "id": "Lantern_Globe_1",
+      "num": 180,
+      "family": "objets",
+      "builder": "lantern_globe",
+      "seed": 17115,
+      "budget": "prop",
+      "exact": true,
+      "bbox_ref": [
+        -0.25,
+        0.25,
+        -0.9,
+        0.0,
+        -0.25,
+        0.25
+      ],
+      "width_m": [
+        0.5,
+        0.5
+      ],
+      "height_m": [
+        0.9,
+        0.9
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P025-C5"
+    },
+    {
+      "id": "Torch_Pole_1",
+      "num": 181,
+      "family": "objets",
+      "builder": "torch_pole",
+      "seed": 17116,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.34,
+        0.36
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P043-C4"
+    },
+    {
+      "id": "Bones_Scatter_1",
+      "num": 182,
+      "family": "objets",
+      "builder": "bones_scatter",
+      "seed": 17117,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.0,
+        2.1
+      ],
+      "height_m": [
+        0.2,
+        0.22
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P031-C3"
+    },
+    {
+      "id": "Bones_Scatter_2",
+      "num": 182,
+      "family": "objets",
+      "builder": "bones_scatter",
+      "seed": 17118,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.85,
+        1.95
+      ],
+      "height_m": [
+        0.55,
+        0.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P031-C3 (cage thoracique)"
+    },
+    {
+      "id": "Bones_Scatter_3",
+      "num": 182,
+      "family": "objets",
+      "builder": "bones_scatter",
+      "seed": 17119,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.5,
+        2.3
+      ],
+      "height_m": [
+        0.2,
+        0.22
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P031-C3"
+    },
+    {
+      "id": "Termite_Mound_1",
+      "num": 183,
+      "family": "objets",
+      "builder": "termite_mound",
+      "seed": 17120,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        1.8,
+        2.0
+      ],
+      "height_m": [
+        2.5,
+        2.7
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P025-C2 (hypothèse)"
+    },
+    {
+      "id": "Wagon_Steps_1",
+      "num": 184,
+      "family": "objets",
+      "builder": "wagon_steps",
+      "seed": 17121,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.7,
+        0.72
+      ],
+      "height_m": [
+        1.0,
+        1.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P007-C1"
+    },
+    {
+      "id": "Doll_Rag_1",
+      "num": 185,
+      "family": "objets",
+      "builder": "doll_rag",
+      "seed": 17122,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        0.2,
+        0.25
+      ],
+      "height_m": [
+        0.3,
+        0.3
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T5-P003-C2 (décor)"
     }
   ]
 }

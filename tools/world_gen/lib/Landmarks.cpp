@@ -36,7 +36,10 @@ namespace tools::world_gen
 			s.mesh = std::string("meshes/props/") + mesh + ".gltf";
 			s.position = p; s.yOffset = y; s.yawDeg = yaw; s.scale = scale;
 			const std::string m(mesh);
-			const bool piece = m.rfind("Wall_", 0) == 0 || m.rfind("Floor_", 0) == 0 || m.rfind("Prop_WoodenFence", 0) == 0;
+			// Pièce du catalogue de collision (building_pieces.json) : murs, sols, barrières et,
+			// atelier décors T2-T3, modules de pont et pont-levis (dessus marchable).
+			const bool piece = m.rfind("Wall_", 0) == 0 || m.rfind("Floor_", 0) == 0 || m.rfind("Prop_WoodenFence", 0) == 0
+				|| m.rfind("Bridge_", 0) == 0 || m.rfind("Boardwalk_", 0) == 0 || m.rfind("Drawbridge_", 0) == 0;
 			s.flags = solid ? static_cast<uint8_t>(kSolid | (piece ? kPiece : 0u) | (m.rfind("Wall_", 0) == 0 ? kOccluder : 0u)) : 0u;
 			s.cullClass = m.rfind("Wall_", 0) == 0 || m.rfind("Roof_", 0) == 0 ? 0 : 1; // bâti : grande distance de vue
 			w.scatter.push_back(std::move(s));
@@ -190,6 +193,9 @@ namespace tools::world_gen
 					const double a = gateA + (k - 1) * 0.7;
 					Piece(w, "CommonTree_2", c + Vec2{ std::cos(a), std::sin(a) } * (14.0 * sc), 0.0, rng.Next() * 360.0, 0.9 + 0.3 * rng.Next(), true);
 				}
+				// Pont-levis abaissé devant la porte (atelier décors T3, pl.42), charnière au pied
+				// de l'arche, tablier vers l'extérieur (+Z local).
+				Piece(w, "Drawbridge_1", c + gateDir * (R + 0.4), 0.05, std::atan2(gateDir.x, gateDir.z) * 180.0 / kPi, 1.0, true);
 				// Douves sèches : anneau creusé de 3 m entre 1,2 R et 1,4 R (pont-levis = porte).
 				const double r0 = R * 1.15, r1 = R * 1.4;
 				for (int j = 0; j < w.height.height; ++j)
@@ -245,7 +251,8 @@ namespace tools::world_gen
 				{
 					const Vec2 side{ -dir.z, dir.x };
 					const Vec2 rp = c + dir * (r + 1.5) + side * ((q - 2) * 2.4);
-					Piece(w, (q % 2) ? "Rock_Medium_1" : "Rock_Medium_2", rp, water - 0.5 - 1.5 * rng.Next(), rng.Next() * 360.0, 1.4 + rng.Next(), true);
+					// Gros rochers moussus au pied des chutes (atelier décors T3, pl.10).
+					Piece(w, (q % 2) ? "Rock_Mossy_2" : "Rock_Mossy_3", rp, water - 0.5 - 1.5 * rng.Next(), rng.Next() * 360.0, 0.8 + 0.4 * rng.Next(), true);
 				}
 			}
 			w.Occupy(p.center, 40.0);
@@ -256,6 +263,7 @@ namespace tools::world_gen
 		/// coupé au milieu. Effet de bord : w.height, w.scatter, occupation.
 		void BuildBridgeLandmark(World& w, const PoiDef& p, Vec2 dir, bool wood, bool ruin, LandmarkRng& rng)
 		{
+			const bool rope = wood && p.name.find("corde") != std::string::npos;
 			const Vec2 nrm{ -dir.z, dir.x };
 			const double deck = w.HeightAt(p.center);
 			// Ravine perpendiculaire au pont.
@@ -274,14 +282,21 @@ namespace tools::world_gen
 				if (ruin && (u == 3 || u == 4)) continue; // tablier effondré au milieu
 				const Vec2 c = p.center + dir * ((u + 0.5 - along * 0.5) * 2.0);
 				const double ground = w.HeightAt(c);
+				// Atelier décors T2 (n° 81-83) : modules de pont — cordes et planches (n° 82),
+				// passerelle de bois (n° 83) ou tablier et parapets de pierre (n° 81).
+				if (rope)
+				{
+					Piece(w, "Bridge_Rope_Deck_1", c, deck - ground, YawAlong(dir), 1.0, true);
+					continue;
+				}
 				for (int v = 0; v < 2; ++v)
-					Piece(w, wood ? "Floor_WoodDark" : "Floor_Brick", c + nrm * ((v - 0.5) * 2.0), deck - ground, YawAlong(dir), 1.0, true);
+					Piece(w, wood ? "Boardwalk_Deck_1" : "Bridge_Stone_Deck_1", c + nrm * ((v - 0.5) * 2.0), deck - ground, YawAlong(dir), 1.0, true);
 				for (int side = -1; side <= 1; side += 2)
 				{
 					if (ruin && rng.Next() < 0.4) continue;
-					const Vec2 e = c + nrm * (side * 2.15);
+					const Vec2 e = c + nrm * (side * 2.2);
 					if (wood) Piece(w, "Prop_WoodenFence_Single", e, deck - w.HeightAt(e), YawAlong(dir), 1.0, true);
-					else Piece(w, "Wall_UnevenBrick_Straight", e, deck - w.HeightAt(e), YawAlong(dir), 0.33, true);
+					else Piece(w, "Bridge_Stone_Parapet_1", e, deck - w.HeightAt(e), YawAlong(dir), 1.0, true);
 				}
 			}
 			if (!wood)
@@ -290,7 +305,7 @@ namespace tools::world_gen
 					{
 						if (ruin && u == 1) continue;
 						const Vec2 a = p.center + dir * ((u - 1) * 4.6) + nrm * (side * 2.05);
-						Piece(w, "Wall_Arch", a, deck - 6.6 - w.HeightAt(a), YawAlong(dir), 2.2, false);
+						Piece(w, "Bridge_Stone_Arch_1", a, deck - 6.6 - 0.35 - w.HeightAt(a), YawAlong(dir), 2.2, false);
 					}
 			w.Occupy(p.center, 18.0);
 		}
@@ -437,6 +452,17 @@ namespace tools::world_gen
 			const Vec2 side{ -d.z, d.x };
 			Piece(w, rng.Next() < 0.5 ? "Tent_Awning_1" : "Tent_Pavilion_1", c + side * 7.0, 0.0, a + 90.0, 1.0, true);
 			Piece(w, "Campfire_Spit_1", c - side * 3.2, 0.0, rng.Next() * 360.0, 1.0, false);
+			// Atelier décors T5 (pl.41) : mâts-torches aux abords du camp.
+			Piece(w, "Torch_Pole_1", c + side * 5.0 - d * 1.0, 0.0, 0.0, 1.0, false);
+			Piece(w, "Torch_Pole_1", c - side * 5.0 + d * 1.0, 0.0, 0.0, 1.0, false);
+			// Atelier décors T4 (pl.39) : guérite de bois carrée, un camp sur trois.
+			if (rng.Next() < 0.35) Piece(w, "Watchpost_Wood_1", c + d * 9.0 + side * 4.0, 0.0, a, 1.0, true);
+			// Atelier décors T3 : baquet de bain (pl.5) ; chariot blindé de mercenaires (pl.25).
+			Piece(w, "Tub_Wood_1", c + side * 3.5 + d * 2.5, 0.0, rng.Next() * 360.0, 1.0, true);
+			if (rng.Next() < 0.15) Piece(w, "Wagon_Armored_1", c - d * 7.0, 0.0, a + 90.0, 1.0, true);
+			// Atelier décors T2 : bûcher de fête (pl.23) dans un camp sur trois, bât de mulet.
+			if (rng.Next() < 0.33) Piece(w, "Bonfire_Stack_1", c - side * 9.0 + d * 3.0, 0.0, rng.Next() * 360.0, 1.0, true);
+			Piece(w, "PackSaddle_1", c + d * 2.4 - side * 1.5, 0.0, rng.Next() * 360.0, 1.0, false);
 		}
 
 		/// Champ de bataille abandonné (BD T1 pl.36-44) : débris de chariot, piques,
@@ -446,7 +472,22 @@ namespace tools::world_gen
 		{
 			const double a = rng.Next() * 360.0;
 			const Vec2 u{ std::cos(a * kPi / 180.0), std::sin(a * kPi / 180.0) }, v{ -u.z, u.x };
-			Piece(w, rng.Next() < 0.6 ? "Catapult_1" : "SiegeTower_1", c, 0.0, a, 1.0, true);
+			// Engin de siège : catapulte, tour de siège ou trébuchet à contrepoids (BD T2 pl.33).
+			const double eng = rng.Next();
+			Piece(w, eng < 0.45 ? "Catapult_1" : (eng < 0.75 ? "SiegeTower_1" : "Trebuchet_1"), c, 0.0, a, 1.0, true);
+			Piece(w, "Watchpost_Wood_1", c - v * 16.0 + u * 6.0, 0.0, a, 1.0, true);   // guérite (T4, pl.39)
+			// Atelier décors T5 (pl.22, 31, 41) : chevaux de frise, baliste, ossements, mâts-torches.
+			for (int k = -1; k <= 1; ++k)
+				Piece(w, "Stakes_Chevaux_1", c - v * 12.0 + u * (k * 4.2), 0.0, a, 1.0, true);
+			Piece(w, "Ballista_1", c + u * 9.0 + v * 6.0, 0.0, a + 90.0, 1.0, true);
+			Piece(w, "Tent_Striped_1", c - u * 14.0 - v * 4.0, 0.0, a, 1.0, true);   // tente de commandement (T4, pl.39)
+			for (int k = 0; k < 4; ++k)
+			{
+				const double b = rng.Next() * 2.0 * kPi;
+				static const char* bones[] = { "Bones_Scatter_1", "Bones_Scatter_2", "Bones_Scatter_3" };
+				Piece(w, bones[k % 3], c + Vec2{ std::cos(b), std::sin(b) } * (5.0 + rng.Next() * 14.0), 0.0, rng.Next() * 360.0, 1.0, false);
+			}
+			Piece(w, "Torch_Pole_1", c - v * 16.0 + u * 8.5, 0.0, 0.0, 1.0, false);
 			for (int k = -2; k <= 2; ++k)   // ligne de palissade de campagne
 				Piece(w, "Palisade_Stake_1", c + v * 14.0 + u * (k * 2.0), 0.0, a, 1.0, true);
 			for (int k = 0; k < 4; ++k)

@@ -90,7 +90,9 @@ def main():
                 if not (-0.4 <= mn[1] <= 0.05):
                     errors.append(f"{sid} : base à y={mn[1]:.2f} m (origine attendue au sol)")
                 cx, cz = (mn[0] + mx[0]) / 2, (mn[2] + mx[2]) / 2
-                if max(abs(cx), abs(cz)) > 0.15 * max(w, 0.2) + 0.05:
+                # Végétation : houppier naturellement dissymétrique, le tronc reste à l'origine.
+                k_off = 0.3 if s.get("family") == "vegetation" else 0.15
+                if max(abs(cx), abs(cz)) > k_off * max(w, 0.2) + 0.05:
                     errors.append(f"{sid} : origine décentrée ({cx:.2f}, {cz:.2f})")
         if s.get("billboard"):
             g, err = load(sid + "_BB")

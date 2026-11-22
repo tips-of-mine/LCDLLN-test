@@ -1,0 +1,474 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "Daybed_1"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Wood_Dark",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Red",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Striped",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Ochre",
+   "normalTexture": {
+    "index": 9
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 10
+    },
+    "metallicRoughnessTexture": {
+     "index": 11
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "Daybed_1",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 11,
+     "material": 2
+    },
+    {
+     "attributes": {
+      "POSITION": 12,
+      "NORMAL": 13,
+      "TEXCOORD_0": 14
+     },
+     "indices": 11,
+     "material": 3
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  },
+  {
+   "sampler": 0,
+   "source": 9
+  },
+  {
+   "sampler": 0,
+   "source": 10
+  },
+  {
+   "sampler": 0,
+   "source": 11
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_Normal.png",
+   "uri": "T_Decor_Wood_Dark_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_BaseColor.png",
+   "uri": "T_Decor_Wood_Dark_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Wood_Dark_ORM.png",
+   "uri": "T_Decor_Wood_Dark_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_Normal.png",
+   "uri": "T_Decor_Cloth_Red_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_BaseColor.png",
+   "uri": "T_Decor_Cloth_Red_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_ORM.png",
+   "uri": "T_Decor_Cloth_Red_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_Normal.png",
+   "uri": "T_Decor_Cloth_Striped_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_BaseColor.png",
+   "uri": "T_Decor_Cloth_Striped_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Striped_ORM.png",
+   "uri": "T_Decor_Cloth_Striped_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_Normal.png",
+   "uri": "T_Decor_Cloth_Ochre_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_BaseColor.png",
+   "uri": "T_Decor_Cloth_Ochre_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_ORM.png",
+   "uri": "T_Decor_Cloth_Ochre_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 240,
+   "max": [
+    1,
+    0.800000011920929,
+    0.44999998807907104
+   ],
+   "min": [
+    -1,
+    0,
+    -0.44999998807907104
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 240,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 240,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 360,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 24,
+   "max": [
+    1,
+    0.44999998807907104,
+    0.41999998688697815
+   ],
+   "min": [
+    -0.8999999761581421,
+    0.3199999928474426,
+    -0.41999998688697815
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 36,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 36,
+   "max": [
+    -0.429999977350235,
+    0.6600000262260437,
+    0.2199999988079071
+   ],
+   "min": [
+    -0.8700000047683716,
+    0.44999998807907104,
+    -0.2199999988079071
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 36,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 36,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 11,
+   "componentType": 5123,
+   "count": 144,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 12,
+   "componentType": 5126,
+   "count": 36,
+   "max": [
+    -0.08000001311302185,
+    0.6600000262260437,
+    0.2199999988079071
+   ],
+   "min": [
+    -0.5199999809265137,
+    0.44999998807907104,
+    -0.2199999988079071
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 13,
+   "componentType": 5126,
+   "count": 36,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 14,
+   "componentType": 5126,
+   "count": 36,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 2880,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 2880,
+   "byteOffset": 2880,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 1920,
+   "byteOffset": 5760,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 720,
+   "byteOffset": 7680,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 8400,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 8688,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 192,
+   "byteOffset": 8976,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 72,
+   "byteOffset": 9168,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 9240,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 9672,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 10104,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 10392,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 10680,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 432,
+   "byteOffset": 11112,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 288,
+   "byteOffset": 11544,
+   "target": 34962
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 11832,
+   "uri": "Daybed_1.bin"
+  }
+ ]
+}

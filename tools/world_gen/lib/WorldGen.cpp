@@ -335,6 +335,7 @@ namespace tools::world_gen
 			timed("cellule : agglomerations", [&] { BuildSettlements(*w); }); // rues, bâtiments, remparts, mobilier, graphe PNJ
 			timed("cellule : lieux batis", [&] { BuildLandmarks(*w); });     // v1.0.132 : tours, châteaux, phares, cascades, ponts
 			timed("cellule : ponts", [&] { BuildBridges(*w); });             // v1.0.129 : ponts de pierre et de bois sur les cours d'eau
+			timed("cellule : poteaux", [&] { PlaceSignposts(*w); });         // atelier décors T2 : carrefours
 			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
 			timed("cellule : petits lieux", [&] { BuildMicroLandmarks(*w); }); // v1.0.135 : pierres levées, ruines, camps, champs
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)

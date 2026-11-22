@@ -1,8 +1,9 @@
 {
   "meta": {
     "source": "Chroniques de la Lune Noire -- Tomes 0-14 (Ledroit/Pontet/Froideval, Dargaud)",
-    "version": "1.0.132",
+    "version": "1.0.137",
     "notes": [
+      "v1.0.137 : [DÉCISION] Atelier décors (BD tomes 1 à 5) : 182 objets génériques modélisés et placés (clé decors), éléments signature retirés en attente d'autorisation, enseignes à pictogramme, tombes anciennes, grands champs.",
       "v1.0.132 : [DÉCISION] Carte du monde, lot 5 (lieux bâtis) : tours, châteaux, phares, cascades et ponts générés en jeu ; 72 lieux reclassés ; Château de Garundel.",
       "v1.0.131 : [DÉCISION] Carte du monde, lot 4 (routes) : routes sinueuses (points de passage décalés, terrain bruité, méandres amples), cols sinueux, balises reposées au bord des routes.",
       "v1.0.130 : [DÉCISION] Carte du monde, lot 3 (relief) : montagnes à l'échelle des Pyrénées (1 400 à 3 400 m), neige vers 2 500 m, grandes collines, cols sur les routes du lore.",
@@ -244424,7 +244425,7 @@
       "id": "regle_canon_registre_decisions",
       "name": "Registre des décisions du propriétaire",
       "category": "canon",
-      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41).",
+      "description": "Index de toutes les décisions du propriétaire (champ registre, trié par version, collection, identifiant) : 198 décisions, dont 173 notes [DÉCISION] des fiches, 16 fiches dictées par le propriétaire (source « Hubert, … »), 7 décisions de docs/world/LORE_BD.md inscrites en v1.0.57 (collection LORE_BD ; la note [DÉCISION] est ajoutée sur la fiche concernée) et 2 décisions de corpus et de priorité des sources (v1.0.57). Par thème : époque du jeu et présence des PNJ et des lieux 58, identités, ascendances et races 44, graphies et noms 16, Methraton, Erypt et plans hors carte 21, lieux, régions et carte 41, règles de jeu dictées par le propriétaire 16, corpus et priorité des sources 2. Par version : v1.0.29 4, v1.0.31 1, v1.0.32 2, v1.0.33 1, v1.0.34 1, v1.0.38 2, v1.0.39 2, v1.0.41 3, v1.0.54 19, v1.0.55 17, v1.0.56 144, v1.0.57 2. Les notes d'origine restent en place : le registre n'est qu'un index. Ajout v1.0.59 : 9 entrées (placement demandé des lieux hors série, cellules [INFÉRÉ], docs/world/LORE_BD.md §12). Ajout v1.0.60 : 2 entrées (tracé de la Via Magna, région et route, docs/world/LORE_BD.md §13). Ajout v1.0.61 : 26 entrées (départs par faction, 7 hameaux de départ, faction démon jouable, départs hors carte, docs/world/LORE_BD.md §14). Ajout v1.0.62 : 1 entrée (régions de départ de 3×3 cases, docs/world/LORE_BD.md §15). Ajout v1.0.81 : 13 entrées (Enfers et dragons de Xygga d'après les tomes 15-22, docs/world/LORE_BD.md §16.10). Ajout v1.0.82 : 12 entrées (peuples lointains et Ophidiens d'après les tomes 15-22, docs/world/LORE_BD.md §16.11). Ajout v1.0.83 : 1 entrée (palette des Enfers d'après les tomes 15-22, docs/world/LORE_BD.md §16.12). Ajout v1.0.85 : 5 entrées (balisage des zones dangereuses, poche des Terres du Nord, Abysses, raids et quêtes ancrés, docs/world/LORE_BD.md §16.14). Ajout v1.0.86 : 3 entrées (lieux et quêtes de la Baronnie de Moork, des Terres désolées de Tsaroth et du Désert de l'Oracle, docs/world/LORE_BD.md §16.15). Ajout v1.0.87 : 3 entrées (lieux et quêtes des Terres des Gigantomorphes, de la Via Magna et de la Marche de l'Est, docs/world/LORE_BD.md §16.16). Ajout v1.0.88 : 1 entrée (ouverture de la Marche de l'Est, docs/world/LORE_BD.md §16.17). Ajout v1.0.89 : 1 entrée (quêtes et gradient du Royaume des nains de l'est, docs/world/LORE_BD.md §16.18). Ajout v1.0.90 : 4 entrées (régions Forêt des Lutins, Val de Suthvarn, Désert des Sels et Confins du Midi, docs/world/LORE_BD.md §16.19). Ajout v1.0.91 : 2 entrées (ouverture de la route Ysenkhal - Vozmarkh et des routes de la Marche de l'Est, docs/world/LORE_BD.md §16.20). Ajout v1.0.104 : 1 entrée (ouverture des routes de Vozmarkh et de Rhivkhar, docs/world/LORE_BD.md §16.33). Ajout v1.0.106 : 4 entrées (routes manquantes, route de la Passe des Dragons, balises replacées, passages ouverts ; docs/world/LORE_BD.md §16.35). Ajout v1.0.114 : 1 entrée (affichage de l'exploit des 666 cimetières et des lieux secrets découverts, docs/world/LORE_BD.md §16.41). Ajout v1.0.137 : 11 entrées (atelier décors : décors des BD, signatures retirées, étalon nain, portes, saison unique, cultures, essences, statues, enseignes, tombes anciennes, arbitrages ; docs/world/LORE_BD.md §16.63).",
       "applies_to": [
         "regle_canon_priorite_sources"
       ],
@@ -247603,6 +247604,83 @@
           "nom": "Tours, châteaux, phares, cascades et ponts bâtis",
           "decision": "Décision du propriétaire (19/11/2026) : nouveaux types de lieux tour, château, phare, cascade et pont, avec une vraie forme générée en jeu (pas un simple repère) ; 72 lieux reclassés, Château de Garundel ajouté, Palais des Maîtres des Dragons bâti en château. LORE_BD §16.58.",
           "version": "1.0.132"
+        },
+        {
+          "collection": "decors",
+          "id": "atelier_decors_v1137",
+          "nom": "Atelier décors : décors génériques tirés des BD",
+          "decision": "Décision du propriétaire (21/11/2026) : les décors génériques des tomes 1 à 5 (arbres, végétation, habitat, mobilier, objets, extérieurs) sont modélisés pour le jeu (3 niveaux de détail, billboard pour la végétation), placés par le générateur et inscrits au lore (clé decors, une fiche par objet). Textures générées ou libres ; aucune image ni planche de BD dans le dépôt ; style entre réaliste et peint. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_signatures_v1137",
+          "nom": "Éléments signature des BD retirés",
+          "decision": "Décision du propriétaire (21/11/2026) : les éléments signature (lieux, trônes, bannières, sceaux et symboles propres aux BD) sont retirés de l'atelier en attendant le retour d'autorisation. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_echelle_nain_v1137",
+          "nom": "Étalon de taille des nains",
+          "decision": "Décision du propriétaire (21/11/2026) : un nain mesure 1,30 m (étalon des cases de BD pour les décors nains). LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_portes_v1137",
+          "nom": "Portes franchissables des seuls bâtiments de service",
+          "decision": "Décision du propriétaire (21/11/2026) : seules les portes des bâtiments ayant un service inscrit au lore sont franchissables (2,30 m) ; les autres maisons gardent des portes décoratives à la taille de la BD (2,20 m). LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_saison_unique_v1137",
+          "nom": "Une seule saison partout",
+          "decision": "Décision du propriétaire (21/11/2026) : tant qu'il n'existe pas de cycle des saisons, le monde garde la même saison partout (pas d'arbres d'automne ni d'arbres d'hiver locaux) ; un cycle des saisons est souhaité plus tard. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_cultures_v1137",
+          "nom": "Très grands champs et cultures variées",
+          "decision": "Décision du propriétaire (21/11/2026) : les champs des villes et des hameaux sont agrandis (×5 en largeur, ×10 en longueur) et plantés de blé, orge, maïs, tournesol, colza et vigne, pour remplir les abords. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_essences_v1137",
+          "nom": "Essences d'arbres et bords des eaux",
+          "decision": "Décision du propriétaire (21/11/2026) : chênes, hêtres, peupliers et saules pleureurs s'ajoutent aux essences ; roseaux le long des rivières et des lacs, nénuphars sur les lacs ; séquoias rares. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_statues_v1137",
+          "nom": "Statues neutres",
+          "decision": "Décision du propriétaire (21/11/2026) : les statues ont des sujets neutres (figures drapées, sans visage identifiable). LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_enseignes_v1137",
+          "nom": "Enseignes de service à pictogramme",
+          "decision": "Décision du propriétaire (22/11/2026) : chaque bâtiment de service porte un panneau à pictogramme sans texte ; le nom du service s'affiche dans la langue du joueur quand le curseur passe sur le panneau ou au clic. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_tombes_v1137",
+          "nom": "Tombes anciennes des cimetières",
+          "decision": "Décision du propriétaire (22/11/2026) : les cimetières reçoivent des tombes anciennes (pas récentes) : tas de cailloux moussus, croix de bois plus ou moins bien faites, vieilles stèles. LORE_BD §16.63.",
+          "version": "1.0.137"
+        },
+        {
+          "collection": "decors",
+          "id": "decors_arbitrages_v1137",
+          "nom": "Arbitrages divers de l'atelier",
+          "decision": "Décision du propriétaire (21/11/2026) : théière de l'Empire du Jade reportée à l'extension ; gibet gardé (sans pendu) aux capitales et forteresses ; ponts remplacés par les modules de l'atelier ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor seulement. LORE_BD §16.63.",
+          "version": "1.0.137"
         }
       ]
     },
@@ -252214,6 +252292,28 @@
       "source": "[DÉCISION] v1.0.107 (lot 32 du propriétaire, 12/11/2026)",
       "notes": [
         "[DÉCISION] (v1.0.107) Règle de la découverte du gouffre par la mort (LORE_BD §16.36)."
+      ]
+    },
+    {
+      "id": "regle_atelier_decors",
+      "name": "Atelier décors — de la BD au jeu",
+      "category": "rendu_monde",
+      "description": "Les décors génériques des tomes 1 à 5 sont reproduits dans le jeu : une fiche par objet dans la collection decors (meshes livrés, assets historiques remplacés, références des cases, placement). Les éléments signature des BD restent retirés en attendant l'autorisation.",
+      "applies_to": [],
+      "mechanique_jeu": "Le générateur du monde pose les décors (villes, champs, cimetières, bords des eaux, camps, champs de bataille) ; les autres sont au catalogue de l'éditeur. Panneaux de service : nom du service traduit au survol ou au clic.",
+      "source": "Hubert, décisions du 21 et du 22/11/2026 (atelier décors)",
+      "notes": [
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : les décors génériques des tomes 1 à 5 (arbres, végétation, habitat, mobilier, objets, extérieurs) sont modélisés pour le jeu (3 niveaux de détail, billboard pour la végétation), placés par le générateur et inscrits au lore (clé decors, une fiche par objet). Textures générées ou libres ; aucune image ni planche de BD dans le dépôt ; style entre réaliste et peint. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : les éléments signature (lieux, trônes, bannières, sceaux et symboles propres aux BD) sont retirés de l'atelier en attendant le retour d'autorisation. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : un nain mesure 1,30 m (étalon des cases de BD pour les décors nains). LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : seules les portes des bâtiments ayant un service inscrit au lore sont franchissables (2,30 m) ; les autres maisons gardent des portes décoratives à la taille de la BD (2,20 m). LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : tant qu'il n'existe pas de cycle des saisons, le monde garde la même saison partout (pas d'arbres d'automne ni d'arbres d'hiver locaux) ; un cycle des saisons est souhaité plus tard. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : les champs des villes et des hameaux sont agrandis (×5 en largeur, ×10 en longueur) et plantés de blé, orge, maïs, tournesol, colza et vigne, pour remplir les abords. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : chênes, hêtres, peupliers et saules pleureurs s'ajoutent aux essences ; roseaux le long des rivières et des lacs, nénuphars sur les lacs ; séquoias rares. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : les statues ont des sujets neutres (figures drapées, sans visage identifiable). LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (22/11/2026) : chaque bâtiment de service porte un panneau à pictogramme sans texte ; le nom du service s'affiche dans la langue du joueur quand le curseur passe sur le panneau ou au clic. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (22/11/2026) : les cimetières reçoivent des tombes anciennes (pas récentes) : tas de cailloux moussus, croix de bois plus ou moins bien faites, vieilles stèles. LORE_BD §16.63.",
+        "[DÉCISION] Décision du propriétaire (21/11/2026) : théière de l'Empire du Jade reportée à l'extension ; gibet gardé (sans pendu) aux capitales et forteresses ; ponts remplacés par les modules de l'atelier ; chapeau de paille renvoyé aux tenues des PNJ ; poupée de chiffon en décor seulement. LORE_BD §16.63."
       ]
     }
   ],
@@ -357239,6 +357339,3686 @@
         "animal_ver_de_terre"
       ],
       "notes": []
+    }
+  ],
+  "decors": [
+    {
+      "id": "decor_001",
+      "num": 1,
+      "name": "Feuillu de haute futaie",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "CommonTree_1",
+        "CommonTree_2",
+        "CommonTree_3",
+        "CommonTree_4",
+        "CommonTree_5"
+      ],
+      "replaces": [
+        "CommonTree_1",
+        "CommonTree_2",
+        "CommonTree_3",
+        "CommonTree_4",
+        "CommonTree_5"
+      ],
+      "references_bd": [
+        "T1-P012-C1 (cavalier 2,6 m)",
+        "T1-P012-C6",
+        "T1-P015-C1",
+        "T1-P021-C1",
+        "T3-P026-C2"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_002",
+      "num": 2,
+      "name": "Chêne isolé",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Oak_Lone_1",
+        "Tree_Oak_Lone_2",
+        "Tree_Oak_1",
+        "Tree_Oak_2",
+        "Tree_Oak_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P022-C9 (personnage allongé)",
+        "T1-P015-C1",
+        "T3-P026-C2 (chênes énormes, forêt des Lutins)",
+        "demande du propriétaire 21/11/2026"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_003",
+      "num": 3,
+      "name": "Arbre noueux à racines",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "TwistedTree_1",
+        "TwistedTree_2",
+        "TwistedTree_3",
+        "TwistedTree_4",
+        "TwistedTree_5"
+      ],
+      "replaces": [
+        "TwistedTree_1",
+        "TwistedTree_2",
+        "TwistedTree_3",
+        "TwistedTree_4",
+        "TwistedTree_5"
+      ],
+      "references_bd": [
+        "T1-P013-C7 (personnages assis)",
+        "échelle générateur 0,45-0,75 -> 6-11 m",
+        "T1-P014-C1",
+        "T5-P003-C1",
+        "T1-P013-C6",
+        "T5-P007-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_004",
+      "num": 4,
+      "name": "Conifère",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Pine_1",
+        "Pine_2",
+        "Pine_3",
+        "Pine_4",
+        "Pine_5"
+      ],
+      "replaces": [
+        "Pine_1",
+        "Pine_2",
+        "Pine_3",
+        "Pine_4",
+        "Pine_5"
+      ],
+      "references_bd": [
+        "T1-P016-C9 (maisons)",
+        "T1-P041-C2",
+        "T3-P027-C1",
+        "T3-P027-C4",
+        "T5-P004-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_005",
+      "num": 5,
+      "name": "Cyprès",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Cypress_1",
+        "Tree_Cypress_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C5",
+        "T3-P028-C1",
+        "T1-P022-C7"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_006",
+      "num": 6,
+      "name": "Saule pleureur",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Willow_1",
+        "Tree_Willow_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C4 (baigneuse)",
+        "T1-P021-C4",
+        "saule pleureur, demande du propriétaire 21/11/2026"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_008",
+      "num": 8,
+      "name": "Buisson",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Bush_Common",
+        "Bush_Common_Flowers"
+      ],
+      "replaces": [
+        "Bush_Common",
+        "Bush_Common_Flowers"
+      ],
+      "references_bd": [
+        "T1-P012-C2",
+        "T1-P021-C2"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_009",
+      "num": 9,
+      "name": "Fougère",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Fern_1"
+      ],
+      "replaces": [
+        "Fern_1"
+      ],
+      "references_bd": [
+        "T1-P021-C2"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_010",
+      "num": 10,
+      "name": "Molène (bouillon-blanc)",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Plant_Mullein_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C2 (personnage)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_011",
+      "num": 11,
+      "name": "Roseaux / massettes",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Reed_1",
+        "Reed_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C4 (baigneuse)",
+        "T1-P022-C7"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_012",
+      "num": 12,
+      "name": "Nénuphar",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "WaterLily_1",
+        "WaterLily_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C4 (feuille Ø 0,3 m)",
+        "T1-P022-C7"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_013",
+      "num": 13,
+      "name": "Herbes hautes",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Grass_Common_Short",
+        "Grass_Common_Tall",
+        "Grass_Wispy_Short",
+        "Grass_Wispy_Tall"
+      ],
+      "replaces": [
+        "Grass_Common_Short",
+        "Grass_Common_Tall",
+        "Grass_Wispy_Short",
+        "Grass_Wispy_Tall"
+      ],
+      "references_bd": [
+        "T1-P024-C1",
+        "T1-P016-C7"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_014",
+      "num": 14,
+      "name": "Champ de blé",
+      "tome": 1,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Wheat_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P024-C1 (champ de blé doré)",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_015",
+      "num": 15,
+      "name": "Rocher arrondi",
+      "tome": 1,
+      "family": "mineral",
+      "meshes": [
+        "Rock_Medium_1",
+        "Rock_Medium_2",
+        "Rock_Medium_3"
+      ],
+      "replaces": [
+        "Rock_Medium_1",
+        "Rock_Medium_2",
+        "Rock_Medium_3"
+      ],
+      "references_bd": [
+        "T1-P030-C3",
+        "échelle générateur 0,7-3,2",
+        "T2-P007-C2",
+        "T3-P012-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_016",
+      "num": 16,
+      "name": "Galets ronds",
+      "tome": 1,
+      "family": "mineral",
+      "meshes": [
+        "Pebble_Round_1",
+        "Pebble_Round_2",
+        "Pebble_Round_3",
+        "Pebble_Round_4",
+        "Pebble_Round_5",
+        "Pebble_Square_1",
+        "Pebble_Square_2",
+        "Pebble_Square_3",
+        "Pebble_Square_4",
+        "Pebble_Square_5",
+        "Pebble_Square_6"
+      ],
+      "replaces": [
+        "Pebble_Round_1",
+        "Pebble_Round_2",
+        "Pebble_Round_3",
+        "Pebble_Round_4",
+        "Pebble_Round_5",
+        "Pebble_Square_1",
+        "Pebble_Square_2",
+        "Pebble_Square_3",
+        "Pebble_Square_4",
+        "Pebble_Square_5",
+        "Pebble_Square_6"
+      ],
+      "references_bd": [
+        "T1-P019-C10",
+        "échelle générateur 2-4",
+        "T1-P019-C11",
+        "T1-P026-C9",
+        "T1-P027-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_017",
+      "num": 17,
+      "name": "Aiguille rocheuse",
+      "tome": 1,
+      "family": "mineral",
+      "meshes": [
+        "Rock_Spire_1",
+        "Rock_Spire_2",
+        "Rock_Spire_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P026-C1 (cavaliers)",
+        "T1-P027-C1",
+        "T2-P016-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_018",
+      "num": 18,
+      "name": "Pierre dressée",
+      "tome": 1,
+      "family": "mineral",
+      "meshes": [
+        "Standing_Stone_1",
+        "Standing_Stone_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P023-C6 (Ghorghor ≈ 3 m)",
+        "T2-P013-C6"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_019",
+      "num": 19,
+      "name": "Maison de planches à pignon",
+      "tome": 1,
+      "family": "kit",
+      "meshes": [
+        "Wall_Plank_Straight",
+        "Wall_Plank_Window_Wide_Round",
+        "Wall_Plank_Window_Thin_Round",
+        "Wall_Plank_Door_Round",
+        "Roof_Front_Plank4",
+        "Roof_Front_Plank6",
+        "Roof_Front_Plank8"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P029-C1",
+        "T1-P032-C4,C6",
+        "T1-P051-C3 (maisons de planches, bardeaux)",
+        "géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick8 (emboîtement du kit), matériaux de l'atelier"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_020",
+      "num": 20,
+      "name": "Mur à colombage",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Wall_Plaster_WoodGrid"
+      ],
+      "replaces": [
+        "Wall_Plaster_WoodGrid"
+      ],
+      "references_bd": [
+        "T1-P032-C6"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_021",
+      "num": 21,
+      "name": "Toits de bardeaux et pignons de planches (kit)",
+      "tome": 1,
+      "family": "kit",
+      "meshes": [
+        "Roof_Shingle_4x4",
+        "Roof_Shingle_4x6",
+        "Roof_Shingle_4x8",
+        "Roof_Shingle_6x4",
+        "Roof_Shingle_6x6",
+        "Roof_Shingle_6x8",
+        "Roof_Shingle_6x10",
+        "Roof_Shingle_6x12",
+        "Roof_Shingle_6x14",
+        "Roof_Shingle_8x8",
+        "Roof_Shingle_8x10",
+        "Roof_Shingle_8x12",
+        "Roof_Shingle_8x14"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P029-C1",
+        "T1-P032-C4,C6",
+        "T1-P051-C3 (maisons de planches, bardeaux)",
+        "géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_022",
+      "num": 22,
+      "name": "Chaumière de pierre à toit de chaume",
+      "tome": 1,
+      "family": "kit",
+      "meshes": [
+        "Wall_DryStone_Straight",
+        "Wall_DryStone_Window_Wide_Round",
+        "Wall_DryStone_Window_Thin_Round",
+        "Wall_DryStone_Door_Round",
+        "Roof_Thatch_4x4",
+        "Roof_Thatch_4x6",
+        "Roof_Thatch_4x8",
+        "Roof_Thatch_6x4",
+        "Roof_Thatch_6x6",
+        "Roof_Thatch_6x8",
+        "Roof_Thatch_6x10",
+        "Roof_Thatch_6x12",
+        "Roof_Thatch_6x14",
+        "Roof_Thatch_8x8",
+        "Roof_Thatch_8x10",
+        "Roof_Thatch_8x12",
+        "Roof_Thatch_8x14",
+        "Roof_Front_DryStone4",
+        "Roof_Front_DryStone6",
+        "Roof_Front_DryStone8"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P016-C1,C3",
+        "T3-P028-C1 (pierre sèche, chaume)",
+        "géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_Front_Brick8 (emboîtement du kit), matériaux de l'atelier"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_023",
+      "num": 23,
+      "name": "Étai de chantier",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Prop_Support"
+      ],
+      "replaces": [
+        "Prop_Support"
+      ],
+      "references_bd": [
+        "T1-P032-C6 (étai de chantier)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_024",
+      "num": 24,
+      "name": "Gravats",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Prop_Brick1",
+        "Prop_Brick2",
+        "Prop_Brick3",
+        "Prop_Brick4"
+      ],
+      "replaces": [
+        "Prop_Brick1",
+        "Prop_Brick2",
+        "Prop_Brick3",
+        "Prop_Brick4"
+      ],
+      "references_bd": [
+        "T1-P015-C1",
+        "T1-P052-C3"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_025",
+      "num": 25,
+      "name": "Mur de pierres sèches",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Prop_ExteriorBorder_Corner",
+        "Prop_ExteriorBorder_Straight1",
+        "Prop_ExteriorBorder_Straight2"
+      ],
+      "replaces": [
+        "Prop_ExteriorBorder_Corner",
+        "Prop_ExteriorBorder_Straight1",
+        "Prop_ExteriorBorder_Straight2"
+      ],
+      "references_bd": [
+        "T1-P016-C1",
+        "T1-P019-C1",
+        "T1-P020-C7"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_026",
+      "num": 26,
+      "name": "Palissade de pieux",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Palisade_Stake_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P030-C5",
+        "T1-P042-C2"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_027",
+      "num": 27,
+      "name": "Rempart de rondins",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Palisade_Rampart_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P043-C1 (échelles)"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_028",
+      "num": 28,
+      "name": "Balcons de bois",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Balcony_Cross_Straight",
+        "Balcony_Simple_Corner",
+        "Balcony_Simple_Straight"
+      ],
+      "replaces": [
+        "Balcony_Cross_Straight",
+        "Balcony_Simple_Corner",
+        "Balcony_Simple_Straight"
+      ],
+      "references_bd": [
+        "T1-P034-C5",
+        "T1-P041-C2"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_029",
+      "num": 29,
+      "name": "Porte de bois en arc",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Door_1_Flat",
+        "Door_1_Round",
+        "Door_2_Flat",
+        "Door_2_Round",
+        "Door_4_Flat",
+        "Door_4_Round",
+        "Door_8_Flat",
+        "Door_8_Round",
+        "DoorFrame_Flat_Brick",
+        "DoorFrame_Flat_WoodDark",
+        "DoorFrame_Round_Brick",
+        "DoorFrame_Round_WoodDark"
+      ],
+      "replaces": [
+        "DoorFrame_Flat_Brick",
+        "DoorFrame_Flat_WoodDark",
+        "DoorFrame_Round_Brick",
+        "DoorFrame_Round_WoodDark",
+        "Door_1_Flat",
+        "Door_1_Round",
+        "Door_2_Flat",
+        "Door_2_Round",
+        "Door_4_Flat",
+        "Door_4_Round",
+        "Door_8_Flat",
+        "Door_8_Round"
+      ],
+      "references_bd": [
+        "T1-P034-C2",
+        "T1-P035-C5,C7",
+        "T1-P051-C3",
+        "T1-P035-C5"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_030",
+      "num": 30,
+      "name": "Porte monumentale double",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Door_Palace_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P028-C1 (gardes)"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_031",
+      "num": 31,
+      "name": "Poulailler",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Coop_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P017-C1..C4"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_032",
+      "num": 32,
+      "name": "Hutte de branchages",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Hut_Branch_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_033",
+      "num": 33,
+      "name": "Tente-auvent de toile",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Tent_Awning_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C1",
+        "T1-P023-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_034",
+      "num": 34,
+      "name": "Tente blanche à mât",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Tent_Pavilion_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P030-C5 (sans blason)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_035",
+      "num": 35,
+      "name": "Abreuvoir de pierre",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Trough_Stone_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P016-C5"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_036",
+      "num": 36,
+      "name": "Feu de camp",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Campfire_Spit_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P012-C8",
+        "T1-P013-C6"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_037",
+      "num": 37,
+      "name": "Étal de marchand",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Stall_Cart_Empty",
+        "Stall_Empty"
+      ],
+      "replaces": [
+        "Stall_Cart_Empty",
+        "Stall_Empty"
+      ],
+      "references_bd": [
+        "T1-P016-C6",
+        "T2-P008-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_038",
+      "num": 38,
+      "name": "Chariot bâché",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Prop_Wagon",
+        "Prop_Wagon_Loaded"
+      ],
+      "replaces": [
+        "Prop_Wagon"
+      ],
+      "references_bd": [
+        "T1-P023-C1,C2",
+        "T1-P030-C4",
+        "T1-P023-C1,C2 (chariot chargé)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_039",
+      "num": 39,
+      "name": "Cage de fer",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Cage_Small",
+        "Cage_Large"
+      ],
+      "replaces": [
+        "Cage_Small"
+      ],
+      "references_bd": [
+        "T1-P019-C5,C9",
+        "T1-P020-C3 (prisonnier debout)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_040",
+      "num": 40,
+      "name": "Brasero sur perche",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Brazier_Pole_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P019-C1",
+        "T1-P020-C7"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_041",
+      "num": 41,
+      "name": "Pique, forêt de lances",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Pike_Stake_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P024-C6 (sans tête)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_042",
+      "num": 42,
+      "name": "Débris de roue",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Debris_Wheel_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P050-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_043",
+      "num": 43,
+      "name": "Grande table",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Table_Large"
+      ],
+      "replaces": [
+        "Table_Large"
+      ],
+      "references_bd": [
+        "T1-P029-C3",
+        "T1-P036-C5",
+        "T1-P037-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_044",
+      "num": 44,
+      "name": "Banc",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Bench"
+      ],
+      "replaces": [
+        "Bench"
+      ],
+      "references_bd": [
+        "T1-P037-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_045",
+      "num": 45,
+      "name": "Tabouret",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Chair_1",
+        "Stool"
+      ],
+      "replaces": [
+        "Chair_1",
+        "Stool"
+      ],
+      "references_bd": [
+        "T1-P038-C2"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_046",
+      "num": 46,
+      "name": "Trône de bois à dossier haut",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Throne_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P029-C3",
+        "T1-P020-C5"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_047",
+      "num": 47,
+      "name": "Lit",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Bed_Twin1",
+        "Bed_Twin2"
+      ],
+      "replaces": [
+        "Bed_Twin1",
+        "Bed_Twin2"
+      ],
+      "references_bd": [
+        "T1-P036-C1",
+        "T1-P037-C8"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_048",
+      "num": 48,
+      "name": "Coffre",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Chest_Wood"
+      ],
+      "replaces": [
+        "Chest_Wood"
+      ],
+      "references_bd": [
+        "T1-P036-C1",
+        "T1-P023-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_049",
+      "num": 49,
+      "name": "Tonneau",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Barrel",
+        "Barrel_Holder"
+      ],
+      "replaces": [
+        "Barrel",
+        "Barrel_Holder"
+      ],
+      "references_bd": [
+        "T1-P016-C6",
+        "T1-P036-C3",
+        "T1-P037-C1",
+        "T1-P039-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_050",
+      "num": 50,
+      "name": "Chandelier sur pied",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "CandleStick_Stand",
+        "CandleStick_Triple"
+      ],
+      "replaces": [
+        "CandleStick_Stand",
+        "CandleStick_Triple"
+      ],
+      "references_bd": [
+        "T1-P037-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_051",
+      "num": 51,
+      "name": "Bougies",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Candle_1",
+        "Candle_2",
+        "CandleStick"
+      ],
+      "replaces": [
+        "CandleStick",
+        "Candle_1",
+        "Candle_2"
+      ],
+      "references_bd": [
+        "T1-P037-C7",
+        "T1-P039-C3"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_052",
+      "num": 52,
+      "name": "Tenture",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Banner_1",
+        "Banner_2",
+        "Banner_1_Cloth",
+        "Banner_2_Cloth"
+      ],
+      "replaces": [
+        "Banner_1",
+        "Banner_1_Cloth",
+        "Banner_2",
+        "Banner_2_Cloth"
+      ],
+      "references_bd": [
+        "T1-P033-C7 (motifs neutres)",
+        "T1-P035-C5 (motifs neutres)",
+        "T1-P033-C7",
+        "T1-P035-C5"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_053",
+      "num": 53,
+      "name": "Trophée de crâne à cornes",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Trophy_Skull_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P036-C1"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_054",
+      "num": 54,
+      "name": "Bouclier rond",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Shield_Wooden"
+      ],
+      "replaces": [
+        "Shield_Wooden"
+      ],
+      "references_bd": [
+        "T1-P036-C1",
+        "T1-P046-C3 (sans blason)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_055",
+      "num": 55,
+      "name": "Râtelier d'armes",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "WeaponStand"
+      ],
+      "replaces": [
+        "WeaponStand"
+      ],
+      "references_bd": [
+        "T1-P036-C2"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_056",
+      "num": 56,
+      "name": "Torche murale",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Torch_Metal"
+      ],
+      "replaces": [
+        "Torch_Metal"
+      ],
+      "references_bd": [
+        "T1-P033-C1"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_057",
+      "num": 57,
+      "name": "Âtre voûté",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Fireplace_Arch_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P035-C1"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_058",
+      "num": 58,
+      "name": "Tapis rouge",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Carpet_Runner_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P028-C5,C6"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_059",
+      "num": 59,
+      "name": "Matériel d'alchimiste",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Potion_1",
+        "Potion_2",
+        "Potion_4",
+        "Bottle_1",
+        "SmallBottle",
+        "SmallBottles_1",
+        "Shelf_Small_Bottles",
+        "Alembic_1"
+      ],
+      "replaces": [
+        "Bottle_1",
+        "Potion_1",
+        "Potion_2",
+        "Potion_4",
+        "Shelf_Small_Bottles",
+        "SmallBottle",
+        "SmallBottles_1"
+      ],
+      "references_bd": [
+        "T1-P039-C2",
+        "T2-P023-C6"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_060",
+      "num": 60,
+      "name": "Livres empilés et pots",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Book_5",
+        "Book_7",
+        "Book_Simplified_Single",
+        "Book_Stack_1",
+        "Book_Stack_2",
+        "BookGroup_Medium_1",
+        "BookGroup_Medium_2",
+        "BookGroup_Medium_3",
+        "BookGroup_Small_1",
+        "BookGroup_Small_2",
+        "BookGroup_Small_3",
+        "Pot_1",
+        "Pot_1_Lid"
+      ],
+      "replaces": [
+        "BookGroup_Medium_1",
+        "BookGroup_Medium_2",
+        "BookGroup_Medium_3",
+        "BookGroup_Small_1",
+        "BookGroup_Small_2",
+        "BookGroup_Small_3",
+        "Book_5",
+        "Book_7",
+        "Book_Simplified_Single",
+        "Book_Stack_1",
+        "Book_Stack_2",
+        "Pot_1",
+        "Pot_1_Lid"
+      ],
+      "references_bd": [
+        "T1-P039-C3",
+        "T2-P025-C5"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_061",
+      "num": 61,
+      "name": "Boule de cristal sur pied",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "CrystalBall_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P031-C1",
+        "T1-P039-C2"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_062",
+      "num": 62,
+      "name": "Chope, plateau",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Mug",
+        "Table_Plate"
+      ],
+      "replaces": [
+        "Mug",
+        "Table_Plate"
+      ],
+      "references_bd": [
+        "T1-P036-C3,C5",
+        "T1-P036-C5"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_063",
+      "num": 63,
+      "name": "Corne à boire",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "DrinkingHorn_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P020-C7"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_064",
+      "num": 64,
+      "name": "Tour de siège",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "SiegeTower_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P042-C1 (fantassins)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_065",
+      "num": 65,
+      "name": "Catapulte",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Catapult_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P030-C5",
+        "T1-P042-C3"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_066",
+      "num": 66,
+      "name": "Mantelet",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Mantlet_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P030-C4",
+        "T1-P042-C2"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_067",
+      "num": 67,
+      "name": "Échelle d'assaut",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "SiegeLadder_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P043-C1,C2 (10 m, posée au sol)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_068",
+      "num": 68,
+      "name": "Herse",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Portcullis_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P010-C2"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_069",
+      "num": 69,
+      "name": "Grande verrière",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Window_Great_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P028-C2",
+        "T1-P032-C1"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_070",
+      "num": 70,
+      "name": "Statue en niche",
+      "tome": 1,
+      "family": "objets",
+      "meshes": [
+        "Statue_Niche_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P028-C2 (figure neutre)"
+      ],
+      "placement": "",
+      "generated": false,
+      "source": "[BD] T1"
+    },
+    {
+      "id": "decor_076",
+      "num": 76,
+      "name": "Arbre mort tordu isolé",
+      "tome": 2,
+      "family": "vegetation",
+      "meshes": [
+        "DeadTree_1",
+        "DeadTree_2",
+        "DeadTree_3",
+        "DeadTree_4",
+        "DeadTree_5"
+      ],
+      "replaces": [
+        "DeadTree_1",
+        "DeadTree_2",
+        "DeadTree_3",
+        "DeadTree_4",
+        "DeadTree_5"
+      ],
+      "references_bd": [
+        "T2-P016-C1 (cavalier, T2-P016-C3)",
+        "échelle générateur conservée"
+      ],
+      "placement": "listes dead, swamp ; N007_E005",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_077",
+      "num": 77,
+      "name": "Fougère arborescente et herbes de talus",
+      "tome": 2,
+      "family": "vegetation",
+      "meshes": [
+        "Fern_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2 (fougère de talus)"
+      ],
+      "placement": "BushesFor forest et open",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_078",
+      "num": 78,
+      "name": "Arche rocheuse naturelle",
+      "tome": 2,
+      "family": "mineral",
+      "meshes": [
+        "Rock_Arch_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P018-C8 (cavalier)"
+      ],
+      "placement": "montagne, falaise ; lieux de passage",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_079",
+      "num": 79,
+      "name": "Rocher émergeant de l'eau",
+      "tome": 2,
+      "family": "mineral",
+      "meshes": [
+        "Rock_Water_1",
+        "Rock_Water_2",
+        "Rock_Water_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2",
+        "T2-P016-C1 (rochers dans l'eau)"
+      ],
+      "placement": "lits de rivières, rives des lacs",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_080",
+      "num": 80,
+      "name": "Plaque de sol craquelé / dalle fendue",
+      "tome": 2,
+      "family": "mineral",
+      "meshes": [
+        "Ground_Cracked_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P027-C2",
+        "T2-P046-C1"
+      ],
+      "placement": "biomes désert et aride",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_081",
+      "num": 81,
+      "name": "Pont de pierre à arches multiples",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Bridge_Stone_Deck_1",
+        "Bridge_Stone_Parapet_1",
+        "Bridge_Stone_Arch_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P007-C2",
+        "T2-P016-C1 (tablier de pont de pierre)",
+        "T2-P016-C1 (garde-corps)",
+        "T2-P016-C1 (arches multiples)"
+      ],
+      "placement": "genre `pont` (pierre)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_082",
+      "num": 82,
+      "name": "Pont suspendu de cordes et planches",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Bridge_Rope_Deck_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P030",
+        "T2-P031-C1 (pont de cordes de la Passe)"
+      ],
+      "placement": "genre `pont` (corde), ravins de montagne",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_083",
+      "num": 83,
+      "name": "Passerelle de planches sur pilotis",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Boardwalk_Deck_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1 (passerelle sur pilotis)"
+      ],
+      "placement": "marais, routes inondables",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_084",
+      "num": 84,
+      "name": "Poteau indicateur à flèches de bois",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Signpost_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1 (sans inscription)"
+      ],
+      "placement": "carrefours des routes du lore (Roads.cpp)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_085",
+      "num": 85,
+      "name": "Gibet / potence de bois",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Gallows_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P019-C1 (sans pendu)"
+      ],
+      "placement": "sorties des villes de type capitale et forteresse",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_086",
+      "num": 86,
+      "name": "Fontaine à vasque sculptée",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Fountain_Basin_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P011-C1",
+        "T2-P012-C1 (mascaron réinterprété)"
+      ],
+      "placement": "places de ville (`Cauldron` reste pour les hameaux)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_088",
+      "num": 88,
+      "name": "Auvent rayé de marché",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Awning_Striped_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P008-C1"
+      ],
+      "placement": "marchés (avec le n° 37)",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_089",
+      "num": 89,
+      "name": "Bûcher de rondins empilés en tour",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Bonfire_Stack_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P027-C2"
+      ],
+      "placement": "places de rassemblement, camps",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_090",
+      "num": 90,
+      "name": "Crâne de grande bête à corne",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Skull_Beast_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P027-C4"
+      ],
+      "placement": "biomes désert et aride, abords de la Passe",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_091",
+      "num": 91,
+      "name": "Mulet bâté (accessoires de bât seuls : )",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "PackSaddle_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P045-C4 (bât seul)"
+      ],
+      "placement": "écuries, caravanes",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_092",
+      "num": 92,
+      "name": "Toit pointu d'ardoise bleue et tourelle d'angle à toit conique",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Roof_Slate_4x4",
+        "Roof_Slate_4x6",
+        "Roof_Slate_4x8",
+        "Roof_Slate_6x4",
+        "Roof_Slate_6x6",
+        "Roof_Slate_6x8",
+        "Roof_Slate_6x10",
+        "Roof_Slate_6x12",
+        "Roof_Slate_6x14",
+        "Roof_Slate_8x8",
+        "Roof_Slate_8x10",
+        "Roof_Slate_8x12",
+        "Roof_Slate_8x14",
+        "Turret_Corner_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P008-C1",
+        "T2-P010-C2..C6 (ardoise bleue, villes de l'Empire)",
+        "géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier",
+        "T2-P010-C2..C6 (tourelle d'angle à toit conique)"
+      ],
+      "placement": "villes de l'Empire",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_093",
+      "num": 93,
+      "name": "Colonnade et arc en plein cintre de pierre",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Column_Stone_1",
+        "Arch_Stone_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P011-C1",
+        "T2-P012-C1",
+        "T2-P020-C1",
+        "T2-P020-C1 (arcade en plein cintre)"
+      ],
+      "placement": "places, halles",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_094",
+      "num": 94,
+      "name": "Escalier de rue en pierre et rampe à arcs-boutants",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Stairs_Street_1",
+        "Flyingbuttress_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P020-C3..C5 (marche 0,18 x 0,30 m)",
+        "T2-P020-C3..C5",
+        "T2-P044-C3"
+      ],
+      "placement": "Magistrya (ville en hauteur, décision du propriétaire)",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_095",
+      "num": 95,
+      "name": "Portail gothique en ogive à rosace",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Portal_Gothic_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P020-C6",
+        "T2-P044-C3 (personnage)"
+      ],
+      "placement": "palais, temples, châteaux",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_096",
+      "num": 96,
+      "name": "Pilier gothique en faisceau et voûte d'ogives",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Pillar_Gothic_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P044-C3,C5",
+        "T2-P045-C1"
+      ],
+      "placement": "intérieurs de palais et de temples",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_097",
+      "num": 97,
+      "name": "Cachot : voûte en plein cintre, pilier massif, anneau scellé, soupirail à barreaux, grille en treillis",
+      "tome": 2,
+      "family": "kit",
+      "meshes": [
+        "Dungeon_Vault_1",
+        "Dungeon_Pillar_1",
+        "Dungeon_Grate_1",
+        "Dungeon_Window_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P012-C6,C7",
+        "T2-P022-C5",
+        "T2-P012-C6",
+        "T2-P013-C1 (grille en treillis)",
+        "T2-P012-C7 (soupirail à barreaux)"
+      ],
+      "placement": "sous-sols des villes, donjons",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_098",
+      "num": 98,
+      "name": "Trébuchet nain à contrepoids sur roues",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Trebuchet_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P037-C2 (nains de Thorn)"
+      ],
+      "placement": "battlefield_poi, forteresses naines",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_099",
+      "num": 99,
+      "name": "Lustre-roue suspendu à bougies",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Chandelier"
+      ],
+      "replaces": [
+        "Chandelier"
+      ],
+      "references_bd": [
+        "T2-P021-C1",
+        "T2-P022-C1"
+      ],
+      "placement": "auberges, halles",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_100",
+      "num": 100,
+      "name": "Grosse charpente apparente",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Beam_Truss_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P022-C1",
+        "T2-P023-C6"
+      ],
+      "placement": "intérieurs de grands bâtiments",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_101",
+      "num": 101,
+      "name": "Fauteuil sculpté à volutes",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Armchair_Carved_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P020-C7"
+      ],
+      "placement": "palais, demeures",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_102",
+      "num": 102,
+      "name": "Étagère d'apothicaire chargée de bocaux",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Shelf_Apothecary_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P023-C6",
+        "T2-P025-C3,C5"
+      ],
+      "placement": "alchimistes, tours d'arcanes",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_103",
+      "num": 103,
+      "name": "Chaînes pendantes à crochets",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Chain_Hook_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P023-C6",
+        "T2-P025-C5"
+      ],
+      "placement": "cachots, forges",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_104",
+      "num": 104,
+      "name": "Heurtoir et anneau à tête de lion",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "DoorKnocker_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P024-C5",
+        "T2-P025-C5"
+      ],
+      "placement": "portes des bâtiments nobles",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_105",
+      "num": 105,
+      "name": "Table de pierre / table de dissection",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Table_Stone_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P023-C6 (sans runes)"
+      ],
+      "placement": "laboratoires, cryptes",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_107",
+      "num": 107,
+      "name": "Corbeille / panier tressé",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Basket_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P008-C4"
+      ],
+      "placement": "marchés, fermes",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_108",
+      "num": 108,
+      "name": "Tas de coussins et fourrures",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Cushion_Pile_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P043-C5,C7",
+        "T2-P045-C3"
+      ],
+      "placement": "auberges, tentes",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_109",
+      "num": 109,
+      "name": "Nappe à carreaux sur table",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Table_Large_Cloth"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P045-C1 (variante de Table_Large)"
+      ],
+      "placement": "auberges",
+      "generated": false,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_110",
+      "num": 110,
+      "name": "Escabeau / échelle de bois",
+      "tome": 2,
+      "family": "objets",
+      "meshes": [
+        "Ladder_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T2-P045-C3"
+      ],
+      "placement": "granges, greniers, chantiers",
+      "generated": true,
+      "source": "[BD] T2"
+    },
+    {
+      "id": "decor_112",
+      "num": 112,
+      "name": "Polypore / champignon-étagère sur tronc",
+      "tome": 3,
+      "family": "vegetation",
+      "meshes": [
+        "Mushroom_Bracket_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P026-C2 (Forêt des Lutins)"
+      ],
+      "placement": "posé sur les troncs des forêts denses",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_113",
+      "num": 113,
+      "name": "Lentilles d'eau, nappe de marais",
+      "tome": 3,
+      "family": "vegetation",
+      "meshes": [
+        "Duckweed_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P032-C1 (marais)"
+      ],
+      "placement": "eau stagnante des marais (règle n° 12)",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_114",
+      "num": 114,
+      "name": "Lierre / vigne vierge sur mur",
+      "tome": 3,
+      "family": "vegetation",
+      "meshes": [
+        "Prop_Vine1",
+        "Prop_Vine2",
+        "Prop_Vine4",
+        "Prop_Vine5",
+        "Prop_Vine6",
+        "Prop_Vine9"
+      ],
+      "replaces": [
+        "Prop_Vine1",
+        "Prop_Vine2",
+        "Prop_Vine4",
+        "Prop_Vine5",
+        "Prop_Vine6",
+        "Prop_Vine9"
+      ],
+      "references_bd": [
+        "T3-P045-C3 (lierre sur façade)"
+      ],
+      "placement": "façades des maisons et ruines",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_115",
+      "num": 115,
+      "name": "Champ de fleurs blanches, marguerites",
+      "tome": 3,
+      "family": "vegetation",
+      "meshes": [
+        "Flower_3_Group",
+        "Flower_3_Single"
+      ],
+      "replaces": [
+        "Flower_3_Group",
+        "Flower_3_Single"
+      ],
+      "references_bd": [
+        "T3-P028-C5 (champ de marguerites)",
+        "T3-P028-C5 (marguerites)"
+      ],
+      "placement": "SmallFor meadow",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_116",
+      "num": 116,
+      "name": "Meule de foin conique",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Haystack_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P028-C5 (personnages assis)"
+      ],
+      "placement": "champs des fermes et hameaux",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_117",
+      "num": 117,
+      "name": "Cascade en gorge rocheuse avec gros rochers moussus",
+      "tome": 3,
+      "family": "mineral",
+      "meshes": [
+        "Rock_Mossy_1",
+        "Rock_Mossy_2",
+        "Rock_Mossy_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P012-C1 (cascade en gorge, rochers moussus)"
+      ],
+      "placement": "pied des cascades (genre `cascade`), rives",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_119",
+      "num": 119,
+      "name": "Route pavée irrégulière",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "RockPath_Irregular_Wide"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P043-C9 (pavage irrégulier, dalles 0,4-0,8 m)"
+      ],
+      "placement": "abords des châteaux et des villes",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_120",
+      "num": 120,
+      "name": "Baquet / cuveau de bain en bois",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Tub_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P007-C2,C3"
+      ],
+      "placement": "camps militaires, bains, lavoirs",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_121",
+      "num": 121,
+      "name": "Brasero-vasque sur fût de pierre",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Brazier_Column_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P030-C1"
+      ],
+      "placement": "places, banquets, temples",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_122",
+      "num": 122,
+      "name": "Pont-levis de bois",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Drawbridge_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P044-C8"
+      ],
+      "placement": "porte du genre `chateau` (Landmarks) avec douves",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_123",
+      "num": 123,
+      "name": "Cheminée de pierre en saillie",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Prop_Chimney",
+        "Prop_Chimney2"
+      ],
+      "replaces": [
+        "Prop_Chimney",
+        "Prop_Chimney2"
+      ],
+      "references_bd": [
+        "T3-P028-C1"
+      ],
+      "placement": "maisons",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_124",
+      "num": 124,
+      "name": "Tour carrée de village en pierre",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Tower_Square_Village_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P028-C1",
+        "T3-P031-C9"
+      ],
+      "placement": "hameaux, villages (`tour` carré de petite taille)",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_125",
+      "num": 125,
+      "name": "Pont de pierre en dos d'âne à une arche",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Bridge_Stone_Hump_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P044-C2 (cavaliers)"
+      ],
+      "placement": "ruisseaux (BuildBridges, lot 2)",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_126",
+      "num": 126,
+      "name": "Porte de grange à deux vantaux",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Door_Barn_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P045-C3"
+      ],
+      "placement": "granges, écuries (service « écurie » du lore : porte franchissable)",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_127",
+      "num": 127,
+      "name": "Balcon et façade nains : balustres, poutres, fenêtres à petits carreaux",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Facade_Dwarf_Balcony_1",
+        "Facade_Dwarf_Window_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P018-C3 (Ghrunke Dash)"
+      ],
+      "placement": "villes naines",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_128",
+      "num": 128,
+      "name": "Voûte surbaissée sur piliers et sol en damier, halle naine",
+      "tome": 3,
+      "family": "kit",
+      "meshes": [
+        "Vault_Dwarf_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P019-C5,C6",
+        "T3-P020-C2"
+      ],
+      "placement": "intérieurs nains, entrepôts",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_129",
+      "num": 129,
+      "name": "Creuset suspendu à chaîne de coulée",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Crucible_Hanging_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P019-C1 (forges naines)"
+      ],
+      "placement": "forges (service du lore), villes naines",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_130",
+      "num": 130,
+      "name": "Mannequin et présentoir d'armure",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Dummy",
+        "ArmorStand_1"
+      ],
+      "replaces": [
+        "Dummy"
+      ],
+      "references_bd": [
+        "T3-P019-C4"
+      ],
+      "placement": "armuriers, forges, garnisons",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_131",
+      "num": 131,
+      "name": "Bureau-comptoir à parchemins",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Desk_Counter_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P019-C6"
+      ],
+      "placement": "banques, guildes, bureaux (services)",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_132",
+      "num": 132,
+      "name": "Échafaudage de mesure / bâti de bois à échelle",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Frame_Scaffold_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P019-C6"
+      ],
+      "placement": "ateliers, chantiers",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_133",
+      "num": 133,
+      "name": "Chariot blindé nain / roulotte blindée",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Wagon_Armored_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P019-C5",
+        "T3-P020-C4",
+        "T3-P027-C7",
+        "T3-P042-C7"
+      ],
+      "placement": "villes naines, routes commerciales, camps de mercenaires",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_134",
+      "num": 134,
+      "name": "Tabouret bas nain",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Stool_Low_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P020-C2 (auberges naines)"
+      ],
+      "placement": "auberges naines",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_135",
+      "num": 135,
+      "name": "Divan / lit de repos à coussins",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Daybed_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P041-C5"
+      ],
+      "placement": "demeures, palais",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_136",
+      "num": 136,
+      "name": "Carafe et flûtes de verre",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Carafe_1",
+        "Glass_Flute_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P041-C5"
+      ],
+      "placement": "auberges, palais",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_137",
+      "num": 137,
+      "name": "Lit à baldaquin à colonnes torses",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Bed_Canopy_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P045-C5"
+      ],
+      "placement": "châteaux, auberges riches",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_138",
+      "num": 138,
+      "name": "Gobelets de métal et écuelles",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Goblet_Metal_1",
+        "Bowl_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P043-C1"
+      ],
+      "placement": "tables d'auberge et de banquet",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_139",
+      "num": 139,
+      "name": "Corbeille de fruits et pains",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "FoodPlatter_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T3-P030-C1"
+      ],
+      "placement": "tables de banquet, marchés",
+      "generated": true,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_142",
+      "num": 142,
+      "name": "Bourse de cuir à gemmes",
+      "tome": 3,
+      "family": "objets",
+      "meshes": [
+        "Pouch_Large"
+      ],
+      "replaces": [
+        "Pouch_Large"
+      ],
+      "references_bd": [
+        "T3-P019-C3"
+      ],
+      "placement": "comptoirs, coffres",
+      "generated": false,
+      "source": "[BD] T3"
+    },
+    {
+      "id": "decor_143",
+      "num": 143,
+      "name": "Massif de fleurs de jardin : iris, lis",
+      "tome": 4,
+      "family": "vegetation",
+      "meshes": [
+        "Flower_Garden_1",
+        "Flower_Garden_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P005-C2 (iris des jardins impériaux)",
+        "T4-P005-C2 (lis)"
+      ],
+      "placement": "jardins de palais, demeures nobles",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_144",
+      "num": 144,
+      "name": "Cyprès en pot ou taillé",
+      "tome": 4,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Cypress_Potted_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P006-C1"
+      ],
+      "placement": "escaliers et terrasses de palais",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_145",
+      "num": 145,
+      "name": "Buisson taillé en boule et haie",
+      "tome": 4,
+      "family": "vegetation",
+      "meshes": [
+        "Hedge_Trimmed_1",
+        "Hedge_Trimmed_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P005-C1,C3 (boule)",
+        "T4-P005-C1,C3 (haie)"
+      ],
+      "placement": "jardins de palais, abords de châteaux",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_146",
+      "num": 146,
+      "name": "Kiosque / rotonde à colonnes et coupole",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Gazebo_Rotunda_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P005-C3 (dame)"
+      ],
+      "placement": "jardins de palais, capitales",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_147",
+      "num": 147,
+      "name": "Statue sur colonne et statue de jardin",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Statue_Garden_1",
+        "Statue_Garden_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P005-C1,C3",
+        "T4-P006-C1 (sujet neutre)",
+        "T4-P005-C3 (sujet neutre)"
+      ],
+      "placement": "jardins, places de capitale",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_148",
+      "num": 148,
+      "name": "Urne / vase de pierre sur socle",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Urn_Stone_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P042-C3"
+      ],
+      "placement": "escaliers monumentaux, jardins, cimetières",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_149",
+      "num": 149,
+      "name": "Pierre tombale brute / stèle",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Gravestone_1",
+        "Gravestone_2",
+        "Gravestone_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P013-C5",
+        "T4-P032-C3 (stèle brute, ancienne)"
+      ],
+      "placement": "666 cimetières (avec le n° 118)",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_150",
+      "num": 150,
+      "name": "Grille de fer forgé à piques et volutes",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Fence_Iron_Spear_1",
+        "Prop_MetalFence_Simple",
+        "Prop_MetalFence_Ornament"
+      ],
+      "replaces": [
+        "Prop_MetalFence_Ornament",
+        "Prop_MetalFence_Simple"
+      ],
+      "references_bd": [
+        "T4-P022-C1",
+        "T4-P025-C1",
+        "T4-P025-C1 (volutes)"
+      ],
+      "placement": "jardins, cimetières de ville, demeures",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_151",
+      "num": 151,
+      "name": "Tente de marché à auvent frangé sur mâts rayés",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Stall_Tent_Market_1",
+        "Stall_Tent_Market_2",
+        "Stall_Tent_Market_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P026-C1",
+        "T4-P027-C3 (marché de Dis)"
+      ],
+      "placement": "marchés des villes (Settlements.cpp), avec les n° 37 et 88",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_152",
+      "num": 152,
+      "name": "Cage à volailles d'osier",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Cage_Poultry_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P027-C3"
+      ],
+      "placement": "marchés, fermes",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_153",
+      "num": 153,
+      "name": "Rouleaux d'étoffe de drapier",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Cloth_Rolls_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P026-C4"
+      ],
+      "placement": "étals de drapier, tailleurs",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_154",
+      "num": 154,
+      "name": "Porte de ville monumentale à pentures en croix et tirants rivetés",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Gate_City_Iron_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P022-C4 (vantaux ouverts)"
+      ],
+      "placement": "portes de villes et forteresses",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_155",
+      "num": 155,
+      "name": "Maison à étages et galeries de bois, escaliers extérieurs",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Gallery_Wood_1",
+        "Stairs_Gallery_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P018-C4",
+        "T4-P026-C1"
+      ],
+      "placement": "villes (HouseCatalog)",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_156",
+      "num": 156,
+      "name": "Maison de brique à cheminées et pignons",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Wall_RedBrick_Straight",
+        "Wall_RedBrick_Window_Wide_Round",
+        "Wall_RedBrick_Window_Thin_Round",
+        "Wall_RedBrick_Door_Round"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P025-C1 (maison de brique de Dis)",
+        "géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier",
+        "géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier"
+      ],
+      "placement": "villes (HouseCatalog)",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_157",
+      "num": 157,
+      "name": "Fenêtre à vitraux losangés / petits carreaux plombés",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Window_Leaded_1",
+        "Window_Leaded_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P014-C9",
+        "T4-P020-C4 (losanges)",
+        "T4-P025-C4 (petits carreaux)"
+      ],
+      "placement": "façades des maisons",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_158",
+      "num": 158,
+      "name": "Stalles gothiques en bois sculpté à pinacles",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Stalls_Gothic_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P024-C1,C3",
+        "T4-P040"
+      ],
+      "placement": "temples, chapelles",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_159",
+      "num": 159,
+      "name": "Ruine : pan de mur de brique effondré, arc brisé, frise sculptée",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Ruin_Wall_1",
+        "Ruin_Wall_2",
+        "Ruin_Wall_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P042-C5",
+        "T4-P043-C2 (pan de brique effondré)",
+        "T4-P042-C5 (arc brisé)",
+        "T4-P043-C2 (frise sculptée, visages réinterprétés en rosettes)"
+      ],
+      "placement": "genre `ruine` et lieux en ruine (Askhrof, Hayvekh, ruines de Wismerhill)",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_160",
+      "num": 160,
+      "name": "Service de table : théière, tasses, assiettes de gâteaux",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "TeaSet_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P044-C1"
+      ],
+      "placement": "demeures, auberges riches (le n° 106 s'y rattache)",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_161",
+      "num": 161,
+      "name": "Fauteuil gothique à haut dossier",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Chair_Gothic_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P007",
+        "T4-P008-C4",
+        "T4-P015-C7"
+      ],
+      "placement": "salles de banquet, conseils",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_162",
+      "num": 162,
+      "name": "Longue table sculptée à piètement",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Table_Carved_Long_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P008-C4"
+      ],
+      "placement": "palais, châteaux",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_163",
+      "num": 163,
+      "name": "Applique murale à cinq bougies",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Sconce_Candle_5"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P007"
+      ],
+      "placement": "intérieurs de palais",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_164",
+      "num": 164,
+      "name": "Plume et encrier",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Quill_Inkwell_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P006-C5",
+        "T4-P007"
+      ],
+      "placement": "bureaux, bibliothèques, banques",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_165",
+      "num": 165,
+      "name": "Grand miroir sur pied à cadre sculpté",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Mirror_Standing_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P014-C9"
+      ],
+      "placement": "chambres d'auberge riches, palais",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_166",
+      "num": 166,
+      "name": "Enseigne d'auberge à crâne d'aurochs et potence à volutes",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Sign_Tavern_Skull_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P019-C4 (nom non repris)"
+      ],
+      "placement": "auberges (service du lore) ; variante du n° 87",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_167",
+      "num": 167,
+      "name": "Tapis à motifs losangés",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Carpet_Pattern_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P021-C6"
+      ],
+      "placement": "grandes salles (avec le n° 58)",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_168",
+      "num": 168,
+      "name": "Cheminée à manteau",
+      "tome": 4,
+      "family": "kit",
+      "meshes": [
+        "Fireplace_Mantel_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P020-C4",
+        "T4-P021-C6"
+      ],
+      "placement": "intérieurs",
+      "generated": false,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_169",
+      "num": 169,
+      "name": "Guérite de bois carrée de camp",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Watchpost_Wood_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P041-C2,C3 (sans croix)"
+      ],
+      "placement": "camps militaires, postes de route",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_170",
+      "num": 170,
+      "name": "Tente rayée de commandement",
+      "tome": 4,
+      "family": "objets",
+      "meshes": [
+        "Tent_Striped_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T4-P041-C1,C3 (rayures neutres)"
+      ],
+      "placement": "camps militaires (avec le n° 34)",
+      "generated": true,
+      "source": "[BD] T4"
+    },
+    {
+      "id": "decor_171",
+      "num": 171,
+      "name": "Conifère géant à tronc roux, type séquoia",
+      "tome": 5,
+      "family": "vegetation",
+      "meshes": [
+        "Pine_Giant_1",
+        "Pine_Giant_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P003-C1",
+        "T5-P004-C1 (orkhs)"
+      ],
+      "placement": "forêts de montagne ; rare (poids 0,1), vieilles forêts",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_172",
+      "num": 172,
+      "name": "Tronc abattu en travers et souche",
+      "tome": 5,
+      "family": "vegetation",
+      "meshes": [
+        "Log_Fallen_1",
+        "Log_Fallen_2",
+        "Stump_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P003-C1",
+        "T3-P026-C2",
+        "T3-P027-C1"
+      ],
+      "placement": "forêts denses, rives de ruisseaux",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_173",
+      "num": 173,
+      "name": "Galets moussus de lit de ruisseau",
+      "tome": 5,
+      "family": "mineral",
+      "meshes": [
+        "Pebble_River_1",
+        "Pebble_River_2",
+        "Pebble_River_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P003-C1",
+        "T5-P004-C1"
+      ],
+      "placement": "lits des ruisseaux (lot 2, rivières)",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_174",
+      "num": 174,
+      "name": "Hutte conique orkh de perches et de chaume",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Hut_Cone_Thatch_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P003-C1",
+        "T5-P005-C1 (orkhs)"
+      ],
+      "placement": "hameaux non humains, camps forestiers",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_175",
+      "num": 175,
+      "name": "Cheminée de pierres sèches isolée, ruine de hutte",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Chimney_DryStone_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P004-C4",
+        "T5-P005-C1"
+      ],
+      "placement": "hameaux détruits, ruines (état `ruine`)",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_176",
+      "num": 176,
+      "name": "Chevaux de frise : pieux géants inclinés liés de cordes",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Stakes_Chevaux_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P024-C1",
+        "T5-P043-C2"
+      ],
+      "placement": "champs de bataille, camps fortifiés",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_177",
+      "num": 177,
+      "name": "Baliste / arbalète de siège sur chevalet ou affût à roues",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Ballista_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P008-C3",
+        "T5-P043-C3,C5"
+      ],
+      "placement": "camps militaires, remparts, battlefield_poi",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_178",
+      "num": 178,
+      "name": "Grand tambour de guerre sur fût",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "WarDrum_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P033-C1 (orques)"
+      ],
+      "placement": "camps orques, arènes",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_179",
+      "num": 179,
+      "name": "Trésor : coffre débordant d'or, sacs, pièces, bijoux",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Treasure_Pile_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P010-C1"
+      ],
+      "placement": "banques (service du lore), salles de trésor, raids",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_180",
+      "num": 180,
+      "name": "Lanterne-globe de verre suspendue",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Lantern_Globe_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P025-C5"
+      ],
+      "placement": "grandes tentes, halles",
+      "generated": false,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_181",
+      "num": 181,
+      "name": "Mât-torche de camp",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Torch_Pole_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P043-C4"
+      ],
+      "placement": "camps militaires (variante du n° 40)",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_182",
+      "num": 182,
+      "name": "Ossements épars : crânes, cages thoraciques",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Bones_Scatter_1",
+        "Bones_Scatter_2",
+        "Bones_Scatter_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P031-C3",
+        "T5-P031-C3 (cage thoracique)"
+      ],
+      "placement": "battlefield_poi, cimetières, abords du gouffre et des repaires",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_183",
+      "num": 183,
+      "name": "Termitière / cône de terre",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Termite_Mound_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P025-C2 (hypothèse)"
+      ],
+      "placement": "biomes désert et aride",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_184",
+      "num": 184,
+      "name": "Marchepied / échelle de roulotte",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Wagon_Steps_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P007-C1"
+      ],
+      "placement": "accessoire du n° 133",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_185",
+      "num": 185,
+      "name": "Poupée de chiffon",
+      "tome": 5,
+      "family": "objets",
+      "meshes": [
+        "Doll_Rag_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T5-P003-C2 (décor)"
+      ],
+      "placement": "hameaux, maisons ; objet de quête possible",
+      "generated": true,
+      "source": "[BD] T5"
+    },
+    {
+      "id": "decor_186",
+      "num": 186,
+      "name": "Hêtre",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Beech_1",
+        "Tree_Beech_2",
+        "Tree_Beech_3"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P012-C1 (futaie, troncs droits clairs)",
+        "demande du propriétaire 21/11/2026"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_187",
+      "num": 187,
+      "name": "Peuplier",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Tree_Poplar_1",
+        "Tree_Poplar_2"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-P021-C5,C6",
+        "T1-P022-C7 (rives)",
+        "demande du propriétaire 21/11/2026"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_188",
+      "num": 188,
+      "name": "Champ d'orge",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Barley_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "demande du propriétaire 21/11/2026",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_189",
+      "num": 189,
+      "name": "Champ de maïs",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Corn_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "demande du propriétaire 21/11/2026",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_190",
+      "num": 190,
+      "name": "Champ de tournesols",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Sunflower_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "demande du propriétaire 21/11/2026",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_191",
+      "num": 191,
+      "name": "Champ de colza",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Rapeseed_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "demande du propriétaire 21/11/2026",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_192",
+      "num": 192,
+      "name": "Vigne palissée",
+      "tome": 0,
+      "family": "vegetation",
+      "meshes": [
+        "Crop_Vine_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "demande du propriétaire 21/11/2026",
+        "parcelle modulaire de 4 m posée en pavage dans les champs"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_193",
+      "num": 193,
+      "name": "Enseignes de service à pictogramme",
+      "tome": 0,
+      "family": "objets",
+      "meshes": [
+        "Sign_Service_auberge",
+        "Sign_Service_ecurie",
+        "Sign_Service_cimetiere",
+        "Sign_Service_forgeron",
+        "Sign_Service_potions",
+        "Sign_Service_armes",
+        "Sign_Service_armures",
+        "Sign_Service_temple",
+        "Sign_Service_guilde",
+        "Sign_Service_infirmerie",
+        "Sign_Service_marche",
+        "Sign_Service_banque",
+        "Sign_Service_prison",
+        "Sign_Service_ecole_magie",
+        "Sign_Service_bibliotheque",
+        "Sign_Service_port",
+        "Sign_Service_arene"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T1-T5 enseignes suspendues (pictogramme seul",
+        "nom localisé au survol)"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
+    },
+    {
+      "id": "decor_194",
+      "num": 194,
+      "name": "Tombes anciennes (cailloux, croix de bois, stèles)",
+      "tome": 0,
+      "family": "objets",
+      "meshes": [
+        "Grave_Cairn_1",
+        "Grave_Cairn_2",
+        "Grave_Cairn_3",
+        "Cross_Wood_1",
+        "Cross_Wood_2",
+        "Cross_Wood_3",
+        "Grave_Stone_Old_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "Demande du propriétaire 22/11/2026 : tombes anciennes (tas de cailloux)",
+        "Demande du propriétaire 22/11/2026 : croix de bois de qualité variable",
+        "Demande du propriétaire 22/11/2026 : vieille stèle moussue"
+      ],
+      "placement": "",
+      "generated": true,
+      "source": "Hubert, demande du propriétaire (atelier décors)"
     }
   ]
 }

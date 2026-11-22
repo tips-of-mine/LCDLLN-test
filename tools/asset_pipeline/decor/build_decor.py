@@ -91,6 +91,14 @@ def tube(part, pts, radii, sides, v_scale=0.5, cap=False):
             part.f.append((i0, i1, i2, i3))
             part.uv.append([(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
             part.cn.append(None)
+    if cap:  # bouchons plats (polygones) aux deux bouts
+        last = len(rings) - 1
+        for k, rev in ((0, True), (last, False)):
+            idx = [base + k * sides + s for s in range(sides)]
+            part.f.append(tuple(reversed(idx)) if rev else tuple(idx))
+            part.uv.append([(0.5 + 0.5 * math.cos(2 * math.pi * s / sides), 0.5 + 0.5 * math.sin(2 * math.pi * s / sides))
+                            for s in (reversed(range(sides)) if rev else range(sides))])
+            part.cn.append(None)
 
 
 def card(part, center, size_w, size_h, normal, up_hint, outward, anchor="center"):
@@ -404,6 +412,58 @@ def b_twisted(spec, lod):
                crown_center_z=H * 0.62, trunk_wobble=0.12, roots=r.randint(5, 7), root_len=H * 0.16, min_draw_r={0: 0.022, 1: 0.045, 2: 0.1})
     leaf = dict(min_level=2, every=3, count={0: 520, 1: 190, 2: 50}, size=1.9, lod_size={0: 1, 1: 1.6, 2: 2.8}, jitter=0.6)
     return build_branchy(spec, lod, spec["seed"], cfg, "Leaves_Oak", "Bark_Dark", leaf)
+
+
+def b_dead(spec, lod):
+    """Arbre mort tordu (n° 76, remplace DeadTree_1-5) : charpentières noueuses, sans feuilles."""
+    H, W, r = P(spec)
+    cfg = dict(trunk_h=H * 0.32, trunk_r=H * 0.04, limbs=r.randint(3, 5), limb_elev=(20, 55),
+               limb_len=W * 0.55, limb_spread=H * 0.08, levels=3, children=[0, 2, 2, 2], child_t=(0.3, 0.95),
+               angle=[(0, 0), (30, 65), (35, 70), (30, 60)], ratio=[0, 0.55, 0.5, 0.45], r_ratio=0.55,
+               min_r=0.015, taper=0.45, seg_len=0.9, wobble=0.5, tropism=[0.3, 0.06, 0.0, -0.04],
+               crown_center_z=H * 0.6, trunk_wobble=0.14, roots=r.randint(4, 6), root_len=H * 0.14,
+               min_draw_r={0: 0.018, 1: 0.04, 2: 0.09})
+    leaf = dict(min_level=9, every=99, count={0: 0, 1: 0, 2: 0}, size=1.0, lod_size={0: 1, 1: 1, 2: 1}, jitter=0.0)
+    parts = build_branchy(spec, lod, spec["seed"], cfg, "Leaves_Oak", "Bark_Pale" if spec["seed"] % 2 else "Bark_Dark", leaf)
+    return parts[:1]
+
+
+def b_pine_giant(spec, lod):
+    """Conifère géant à tronc roux type séquoia (n° 171) : fût nu sur 45 % de la hauteur,
+    tronc Ø ~2,5 m à la base, houppier conique étroit en étages espacés."""
+    H, W, r = P(spec)
+    rng = random.Random(spec["seed"])
+    bark = Part(material("Bark_Pine", False))
+    leaves = Part(material("Leaves_Needle", True))
+    trunk = [Vector((rng.gauss(0, 0.08) * k / 12, rng.gauss(0, 0.08) * k / 12, -0.3 + (H + 0.3) * k / 12)) for k in range(13)]
+    tr = H * 0.03
+    tube(bark, trunk, [tr * (1.35 if k == 0 else 1.0) * (1 - 0.88 * k / 12) for k in range(13)], LOD_SIDES[lod] + 2)
+    base = H * rng.uniform(0.42, 0.5)
+    R = W * 0.5
+    whorls = {0: 22, 1: 13, 2: 7}[lod]
+    for wi in range(whorls):
+        z = base + (H - 1.0 - base) * wi / whorls
+        rel = (z - base) / (H - base)
+        rad = R * (1 - rel) ** 0.85 + 0.6
+        n_br = {0: 6, 1: 4, 2: 3}[lod]
+        for b in range(n_br):
+            a = b * 2 * math.pi / n_br + wi * 0.9 + rng.uniform(-0.3, 0.3)
+            d = Vector((math.cos(a), math.sin(a), 0))
+            L = rad * rng.uniform(0.85, 1.05)
+            p0 = Vector((0, 0, z))
+            p2 = p0 + d * L - Vector((0, 0, 0.25 * L))
+            if lod == 0:
+                tube(bark, [p0, p0.lerp(p2, 0.5), p2], [tr * (1 - rel) * 0.25 + 0.05, 0.06, 0.02], 4)
+            for c in range({0: 2, 1: 2, 2: 1}[lod]):
+                t = (c + 0.7) / 2
+                p = p0.lerp(p2, t) + Vector((0, 0, 0.1))
+                sz = max(2.0, L * 0.85) * {0: 1, 1: 1.3, 2: 1.8}[lod]
+                n = (Vector((0, 0, 1)) * 0.7 + d * 0.4).normalized()
+                card(leaves, p, sz, sz * 0.75, n, d, d + Vector((0, 0, 0.6)))
+                if lod < 2:
+                    card(leaves, p, sz * 0.9, sz * 0.55, d.cross(Vector((0, 0, 1))), Vector((0, 0, 1)), d + Vector((0, 0, 0.6)))
+    card(leaves, Vector((0, 0, H - 1.2)), 2.4, 2.8, Vector((1, 0, 0)), Vector((0, 0, 1)), Vector((0, 0, 1)))
+    return [bark, leaves]
 
 
 def b_willow(spec, lod):
@@ -749,6 +809,12 @@ KIT_STYLES = {
               "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Shingle"},
     "drystone": {"MI_Plaster": "Stone_Wall", "MI_UnevenBrick": "Stone_Wall", "MI_WoodTrim": "Wood_Dark",
                  "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Thatch"},
+    # Atelier décors T4 (n° 156) : maisons de brique rouge de Dis.
+    "redbrick": {"MI_Plaster": "Brick_Red", "MI_UnevenBrick": "Brick_Red", "MI_WoodTrim": "Wood_Dark",
+                 "MI_Brick": "Brick_Red", "MI_RockTrim": "Stone_Carved", "MI_RoundTiles": "Shingle"},
+    # Atelier décors T2 (n° 92) : ardoise bleue des villes de l'Empire.
+    "slate": {"MI_Plaster": "Plaster", "MI_UnevenBrick": "Stone_Wall", "MI_WoodTrim": "Wood_Dark",
+              "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Shingle_Slate"},
 }
 
 

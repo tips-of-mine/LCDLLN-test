@@ -1,0 +1,365 @@
+{
+ "asset": {
+  "generator": "LCDLLN atelier décors (build_decor.py)",
+  "version": "2.0"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "Scene",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "FoodPlatter_1_LOD2"
+  }
+ ],
+ "materials": [
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Straw",
+   "normalTexture": {
+    "index": 0
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 1
+    },
+    "metallicRoughnessTexture": {
+     "index": 2
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Red",
+   "normalTexture": {
+    "index": 3
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 4
+    },
+    "metallicRoughnessTexture": {
+     "index": 5
+    }
+   }
+  },
+  {
+   "doubleSided": true,
+   "name": "MI_Decor_Cloth_Ochre",
+   "normalTexture": {
+    "index": 6
+   },
+   "pbrMetallicRoughness": {
+    "baseColorTexture": {
+     "index": 7
+    },
+    "metallicRoughnessTexture": {
+     "index": 8
+    }
+   }
+  }
+ ],
+ "meshes": [
+  {
+   "name": "FoodPlatter_1_LOD2",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    },
+    {
+     "attributes": {
+      "POSITION": 4,
+      "NORMAL": 5,
+      "TEXCOORD_0": 6
+     },
+     "indices": 7,
+     "material": 1
+    },
+    {
+     "attributes": {
+      "POSITION": 8,
+      "NORMAL": 9,
+      "TEXCOORD_0": 10
+     },
+     "indices": 7,
+     "material": 2
+    }
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "sampler": 0,
+   "source": 0
+  },
+  {
+   "sampler": 0,
+   "source": 1
+  },
+  {
+   "sampler": 0,
+   "source": 2
+  },
+  {
+   "sampler": 0,
+   "source": 3
+  },
+  {
+   "sampler": 0,
+   "source": 4
+  },
+  {
+   "sampler": 0,
+   "source": 5
+  },
+  {
+   "sampler": 0,
+   "source": 6
+  },
+  {
+   "sampler": 0,
+   "source": 7
+  },
+  {
+   "sampler": 0,
+   "source": 8
+  }
+ ],
+ "images": [
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_Normal.png",
+   "uri": "T_Decor_Straw_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_BaseColor.png",
+   "uri": "T_Decor_Straw_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Straw_ORM.png",
+   "uri": "T_Decor_Straw_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_Normal.png",
+   "uri": "T_Decor_Cloth_Red_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_BaseColor.png",
+   "uri": "T_Decor_Cloth_Red_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Red_ORM.png",
+   "uri": "T_Decor_Cloth_Red_ORM.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_Normal.png",
+   "uri": "T_Decor_Cloth_Ochre_Normal.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_BaseColor.png",
+   "uri": "T_Decor_Cloth_Ochre_BaseColor.png"
+  },
+  {
+   "mimeType": "image/png",
+   "name": "T_Decor_Cloth_Ochre_ORM.png",
+   "uri": "T_Decor_Cloth_Ochre_ORM.png"
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 30,
+   "max": [
+    0.20999999344348907,
+    0.10000000149011612,
+    0.20999999344348907
+   ],
+   "min": [
+    -0.20999999344348907,
+    0,
+    -0.20999999344348907
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 30,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 30,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 120,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 4,
+   "componentType": 5126,
+   "count": 12,
+   "max": [
+    0.0350024476647377,
+    0.13568828999996185,
+    0.10933250188827515
+   ],
+   "min": [
+    -0.03920578956604004,
+    0.05000000074505806,
+    0.04506628215312958
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 5,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 6,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 7,
+   "componentType": 5123,
+   "count": 36,
+   "type": "SCALAR"
+  },
+  {
+   "bufferView": 8,
+   "componentType": 5126,
+   "count": 12,
+   "max": [
+    -0.06392526626586914,
+    0.1266021430492401,
+    0.005896877497434616
+   ],
+   "min": [
+    -0.13026466965675354,
+    0.05000000074505806,
+    -0.05155472457408905
+   ],
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 9,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 10,
+   "componentType": 5126,
+   "count": 12,
+   "type": "VEC2"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteLength": 360,
+   "byteOffset": 0,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 360,
+   "byteOffset": 360,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 240,
+   "byteOffset": 720,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 240,
+   "byteOffset": 960,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1200,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1344,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 96,
+   "byteOffset": 1488,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 72,
+   "byteOffset": 1584,
+   "target": 34963
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1656,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 144,
+   "byteOffset": 1800,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteLength": 96,
+   "byteOffset": 1944,
+   "target": 34962
+  }
+ ],
+ "samplers": [
+  {
+   "magFilter": 9729,
+   "minFilter": 9987
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 2040,
+   "uri": "FoodPlatter_1_LOD2.bin"
+  }
+ ]
+}

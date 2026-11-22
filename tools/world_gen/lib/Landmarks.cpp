@@ -360,4 +360,156 @@ namespace tools::world_gen
 			++w.report.landmarks;
 		}
 	}
+
+	// ---------------------------------------------------------------------------------
+	// v1.0.135 — PETITS LIEUX DE DÉCOR : de quoi donner envie de quitter la route.
+	// Treillis GLOBAL de ~1,1 km : au plus un petit lieu par case, tiré au hasard
+	// (graine + case), sur les terres ouvertes, loin des routes, des villes, de l'eau et
+	// des reliefs posés. Décor seul (aucune incidence sur le jeu : ni PNJ, ni cimetière).
+	// ---------------------------------------------------------------------------------
+	namespace
+	{
+		/// Cercle de pierres levées : 7 à 11 blocs dressés autour d'une pierre centrale.
+		/// Effet de bord : w.scatter.
+		void BuildStandingStones(World& w, Vec2 c, LandmarkRng& rng)
+		{
+			const int n = 7 + static_cast<int>(rng.Next() * 5.0);
+			const double r = 6.5 + rng.Next() * 4.0;
+			static const char* rocks[] = { "Rock_Medium_1", "Rock_Medium_2", "Rock_Medium_3" };
+			for (int k = 0; k < n; ++k)
+			{
+				const double a = (k + 0.15 * rng.Next()) * 2.0 * kPi / n;
+				if (rng.Next() < 0.12) continue; // une pierre tombée de-ci de-là
+				ScatterDef s;
+				s.mesh = std::string("meshes/props/") + rocks[k % 3] + ".gltf";
+				s.position = c + Vec2{ std::cos(a), std::sin(a) } * r;
+				s.scale = 1.9 + rng.Next() * 0.9;
+				s.yawDeg = rng.Next() * 360.0;
+				s.tiltDeg = rng.Next() * 8.0;
+				s.yOffset = -0.2 * s.scale;
+				s.flags = kSolid;
+				s.cullClass = 0;
+				w.scatter.push_back(std::move(s));
+			}
+			Piece(w, "Rock_Medium_2", c, -0.4, rng.Next() * 360.0, 2.6, true);
+		}
+
+		/// Ruine de ferme ou de chapelle : deux pans de mur en équerre, éboulis, poterie brisée.
+		/// Effet de bord : w.scatter.
+		void BuildSmallRuin(World& w, Vec2 c, LandmarkRng& rng)
+		{
+			const double a = rng.Next() * 2.0 * kPi;
+			const Vec2 u{ std::cos(a), std::sin(a) }, v{ -std::sin(a), std::cos(a) };
+			const double lu = 6.0 + rng.Next() * 5.0, lv = 4.0 + rng.Next() * 4.0;
+			const Vec2 corner = c - u * (lu * 0.5) - v * (lv * 0.5);
+			BuildWall(w, corner, corner + u * lu, 1 + (rng.Next() < 0.4 ? 1 : 0), true, false, rng);
+			BuildWall(w, corner, corner + v * lv, 1, true, rng.Next() < 0.5, rng);
+			for (int k = 0; k < 5; ++k)
+			{
+				const Vec2 p = c + u * ((rng.Next() - 0.3) * lu) + v * ((rng.Next() - 0.3) * lv);
+				Piece(w, k % 2 ? "Prop_Brick3" : "Prop_Brick1", p, 0.0, rng.Next() * 360.0, 1.2 + rng.Next() * 0.6, false);
+			}
+			Piece(w, "Vase_Rubble_Medium", c + v * (lv * 0.2), 0.0, rng.Next() * 360.0, 1.0, false);
+		}
+
+		/// Campement abandonné : chariot, caisses, tonneaux, sac, chaudron sur un feu éteint.
+		/// Effet de bord : w.scatter.
+		void BuildCamp(World& w, Vec2 c, LandmarkRng& rng)
+		{
+			const double a = rng.Next() * 360.0;
+			const Vec2 d{ std::cos(a * kPi / 180.0), std::sin(a * kPi / 180.0) };
+			Piece(w, "Prop_Wagon", c + d * 4.5, 0.0, a, 1.0, true);
+			Piece(w, "Cauldron", c, 0.0, rng.Next() * 360.0, 1.0, false);
+			for (int k = 0; k < 6; ++k)
+			{
+				const double b = (k / 6.0) * 2.0 * kPi + rng.Next() * 0.3;
+				Piece(w, "Rock_Medium_3", c + Vec2{ std::cos(b), std::sin(b) } * 1.1, -0.15, rng.Next() * 360.0, 0.25, false);
+			}
+			static const char* stuff[] = { "Crate_Wooden", "Barrel", "Bag", "FarmCrate_Empty", "Barrel_Apples", "Bucket_Wooden_1" };
+			for (int k = 0; k < 5; ++k)
+			{
+				const double b = rng.Next() * 2.0 * kPi;
+				Piece(w, stuff[static_cast<int>(rng.Next() * 6.0) % 6], c + Vec2{ std::cos(b), std::sin(b) } * (2.6 + rng.Next() * 2.0),
+					0.0, rng.Next() * 360.0, 1.0, k < 2);
+			}
+			Piece(w, "Torch_Metal", c - d * 3.0, 0.0, 0.0, 1.0, false);
+		}
+
+		/// Champ clôturé (rectangle de clôtures, une entrée) avec caisses de récolte.
+		/// Effet de bord : w.scatter.
+		void BuildFencedField(World& w, Vec2 c, LandmarkRng& rng)
+		{
+			const double a = rng.Next() * 2.0 * kPi;
+			const Vec2 u{ std::cos(a), std::sin(a) }, v{ -std::sin(a), std::cos(a) };
+			const double hu = 12.0 + rng.Next() * 8.0, hv = 8.0 + rng.Next() * 6.0;
+			const Vec2 cs[4] = { c - u * hu - v * hv, c + u * hu - v * hv, c + u * hu + v * hv, c - u * hu + v * hv };
+			for (int e = 0; e < 4; ++e)
+			{
+				const Vec2 A = cs[e], B = cs[(e + 1) % 4];
+				const double len = std::hypot(B.x - A.x, B.z - A.z);
+				const int n = std::max(1, static_cast<int>(std::lround(len / 2.0)));
+				const Vec2 dir = (B - A) * (1.0 / len);
+				for (int k = 0; k < n; ++k)
+				{
+					if (e == 0 && k == n / 2) continue; // l'entrée
+					Piece(w, "Prop_WoodenFence_Single", A + dir * ((k + 0.5) * len / n), 0.0, YawAlong(dir), len / n / 2.0, true);
+				}
+			}
+			for (int k = 0; k < 3; ++k)
+				Piece(w, k == 2 ? "FarmCrate_Carrot" : "FarmCrate_Apple", c + u * ((rng.Next() - 0.5) * hu) + v * ((rng.Next() - 0.5) * hv),
+					0.0, rng.Next() * 360.0, 1.0, false);
+		}
+	}
+
+	void BuildMicroLandmarks(World& w)
+	{
+		if (IsInfernalMap(w.master)) return; // aux Enfers : rien (carte nue, explicite)
+		const double step = 1100.0;
+		const double sea = w.master.scale.seaLevelM;
+		const int gi0 = static_cast<int>(std::floor(w.terrainOriginX / step)) - 1;
+		const int gj0 = static_cast<int>(std::floor(w.terrainOriginZ / step)) - 1;
+		const int n = static_cast<int>(w.terrainSizeM / step) + 3;
+		for (int jj = 0; jj < n; ++jj)
+			for (int ii = 0; ii < n; ++ii)
+			{
+				const int i = gi0 + ii, j = gj0 + jj;
+				const uint64_t h = Hash(w.master.seed, 0xB0B1E5ull, static_cast<uint64_t>(static_cast<int64_t>(i)), static_cast<uint64_t>(static_cast<int64_t>(j)));
+				if (ToUnit(h) > 0.8) continue; // ~4 cases sur 5 ont un petit lieu
+				const Vec2 c{ (i + 0.15 + 0.7 * ToUnit(Mix64(h + 1))) * step, (j + 0.15 + 0.7 * ToUnit(Mix64(h + 2))) * step };
+				if (!w.OwnsPoint(c)) continue;
+				// Tout le petit lieu (≤ 30 m de rayon) reste dans la cellule : pas d'instance hors emprise.
+				bool inside = true;
+				for (const Vec2& d : { Vec2{ 40.0, 0.0 }, Vec2{ -40.0, 0.0 }, Vec2{ 0.0, 40.0 }, Vec2{ 0.0, -40.0 } })
+					inside = inside && w.OwnsPoint(c + d);
+				if (!inside) continue;
+				const int bi = w.biome.IndexX(c.x), bj = w.biome.IndexZ(c.z);
+				if (!w.biome.InBounds(bi, bj)) continue;
+				const char code = EffectiveCover(w.biome.At(bi, bj), c.x, c.z, w.master.seed);
+				const bool open = code == '.' || code == 'r' || code == 'p' || code == '^' || code == ':' || code == 'l' || code == 't' || code == 'o';
+				if (!open) continue;
+				const double alt = w.HeightAt(c);
+				if (alt < sea + 3.0 || alt > 1900.0 || w.IsWater(c) || w.SlopeDegAt(c) > 12.0) continue;
+				const int ri = w.roadDist.IndexX(c.x), rj = w.roadDist.IndexZ(c.z);
+				if (w.roadDist.InBounds(ri, rj) && w.roadDist.At(ri, rj) < 35.0) continue;
+				const int ui = w.urban.IndexX(c.x), uj = w.urban.IndexZ(c.z);
+				if (w.urban.InBounds(ui, uj) && w.urban.At(ui, uj) != 0) continue;
+				bool nearCity = false;
+				for (const CityDef& ct : w.cities)
+					if (std::hypot(c.x - ct.center.x, c.z - ct.center.z) < ct.radiusM + 250.0) { nearCity = true; break; }
+				if (nearCity || w.IsOccupied(c, 30.0)) continue;
+				bool calm = false; // abords des reliefs posés (gouffre, crevasse, colline) : intacts
+				for (const WorldMaster::CalmZone& z : w.master.calmZones)
+					if (std::hypot(c.x - z.center.x, c.z - z.center.z) < z.radiusM + 500.0) { calm = true; break; }
+				if (calm) continue;
+				LandmarkRng rng{ Mix64(h + 3) };
+				const double t = rng.Next();
+				if (t < 0.28) BuildStandingStones(w, c, rng);
+				else if (t < 0.55) BuildSmallRuin(w, c, rng);
+				else if (t < 0.75) BuildCamp(w, c, rng);
+				else BuildFencedField(w, c, rng);
+				w.Occupy(c, 24.0);
+				++w.report.microLandmarks;
+			}
+	}
 }
+

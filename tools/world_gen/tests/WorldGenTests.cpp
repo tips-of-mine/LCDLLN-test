@@ -1267,10 +1267,19 @@ namespace
 			}
 			return n >= 16 && n <= 23 && e >= -15 && e <= -9;
 		};
+		// v1.0.134 (routes soudées) : une extrémité de jonction (id vide, sur la route hôte) est
+		// sur l'île si son point y est.
+		auto endOnIsland = [&](const Road& r, bool atStart) {
+			const std::string& id = atStart ? r.fromId : r.toId;
+			if (!id.empty()) return onIsland(id);
+			const Vec2 p = atStart ? r.points.front() : r.points.back();
+			const int e = static_cast<int>(std::lround(p.x / 10000.0)), n = -static_cast<int>(std::lround(p.z / 10000.0));
+			return n >= 16 && n <= 23 && e >= -15 && e <= -9;
+		};
 		int bad = 0, island = 0;
 		for (const Road& r : g.roads)
 		{
-			if (onIsland(r.fromId) != onIsland(r.toId)) ++bad;
+			if (endOnIsland(r, true) != endOnIsland(r, false)) ++bad;
 			const bool truce = r.fromId == "town_truceholm" || r.toId == "town_truceholm";
 			if (truce && (g.FindCity(r.fromId) && g.FindCity(r.toId))) ++bad; // îlot relié à une ville
 			if (onIsland(r.fromId) && onIsland(r.toId) && !truce) ++island;
@@ -1413,16 +1422,23 @@ namespace
 			std::snprintf(b, sizeof(b), "%c%03d_%c%03d", n >= 0 ? 'N' : 'S', std::abs(n), e >= 0 ? 'E' : 'W', std::abs(e));
 			return std::string(b);
 		};
-		int routes = 0, outside = 0;
+		// v1.0.134 (routes soudées) : les deux routes (lore 000083 et 000024) sont présentes,
+		// sur leurs tronçons ou sur ceux qu'elles empruntent (Syzygie → Vaerdhun rejoint la route
+		// Vaerdhun → Treuvhal avant Vaerdhun) ; tous ces tronçons sont dans des cellules générées.
+		int outside = 0;
+		std::set<std::string> present;
 		for (const Road& r : g.roads)
 		{
-			const bool syzVer = (r.fromId == "ville_sysigie" && r.toId == "town_0119") || (r.fromId == "town_0119" && r.toId == "ville_sysigie");
-			const bool verTru = (r.fromId == "town_0119" && r.toId == "hamlet_0148") || (r.fromId == "hamlet_0148" && r.toId == "town_0119");
-			if (!syzVer && !verTru) continue;
-			++routes;
+			std::vector<std::string> ids = r.alsoLoreIds;
+			ids.push_back(r.loreId);
+			bool mine = false;
+			for (const std::string& id : ids)
+				if (id == "000083" || id == "000024") { present.insert(id); mine = true; }
+			if (!mine) continue;
 			for (const Vec2& p : r.points)
 				outside += !generated(cellOf(p));
 		}
+		const int routes = static_cast<int>(present.size());
 		Check(routes == 2 && outside == 0, "cellules v1.0.80 : routes Syzygie - Vaerdhun et Vaerdhun - Treuvhal dans les cellules generees");
 		// Lieu décalé : présent dans les lieux de sa cellule (N010_W016).
 		World w;
@@ -1930,10 +1946,29 @@ namespace
 		auto cellOf = [&](const Vec2& p) {
 			return name(-static_cast<int>(std::lround(p.z / 10000.0)), static_cast<int>(std::lround(p.x / 10000.0)));
 		};
+		// v1.0.134 (routes soudées) : une route du lore de la Marche (extrémités du master) compte
+		// une fois, sur ses tronçons et ceux qu'elle emprunte (Road::alsoLoreIds) ; la Via Magna
+		// (000120, coupée aux villes) compte par tronçon, comme avant.
+		auto marcheEnds = [&](const std::string& a, const std::string& b) {
+			return (marche.count(a) || marche.count(b)) && ends.count(a) && ends.count(b);
+		};
 		int routes = 0, outside = 0;
+		for (const LoreRoadDef& d : g.master.loreRoads)
+		{
+			if (d.id == "000120" || !marcheEnds(d.fromId, d.toId)) continue;
+			bool present = false;
+			for (const Road& r : g.roads)
+			{
+				const bool mine = r.loreId == d.id || std::find(r.alsoLoreIds.begin(), r.alsoLoreIds.end(), d.id) != r.alsoLoreIds.end();
+				if (!mine) continue;
+				present = true;
+				for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
+			}
+			routes += present ? 1 : 0;
+		}
 		for (const Road& r : g.roads)
 		{
-			if (!(marche.count(r.fromId) || marche.count(r.toId)) || !ends.count(r.fromId) || !ends.count(r.toId)) continue;
+			if (r.loreId != "000120" || !marcheEnds(r.fromId, r.toId)) continue;
 			++routes;
 			for (const Vec2& p : r.points) outside += playable.count(cellOf(p)) ? 0 : 1;
 		}
@@ -2700,6 +2735,8 @@ namespace
 	/// à Moork par Horkher et Nykhfeld dans des cellules jouables ; seules les routes du
 	/// générateur des corridors de départ restent (pas de route parasite) ; cellules
 	/// jouables inchangées ; deux constructions identiques.
+	/// v1.0.134 (routes soudées) : une route est présente sur ses tronçons propres ET sur ceux
+	/// qu'elle emprunte (Road::alsoLoreIds) ; les types se vérifient sur ses tronçons propres.
 	void TestRoutesLoreV1105()
 	{
 		using namespace tools::world_gen;
@@ -2715,9 +2752,14 @@ namespace
 		BuildMacroRoads(g);
 		// Case du lore qui contient le point global p.
 		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
-		std::map<std::string, std::vector<const Road*>> byLore;
+		// v1.0.134 (routes soudées) : byLore = tronçons où la route est présente (les siens et
+		// ceux qu'elle emprunte, Road::alsoLoreIds) ; ownByLore = ses tronçons propres.
+		std::map<std::string, std::vector<const Road*>> byLore, ownByLore;
 		for (const Road& r : g.roads)
-			if (!r.loreId.empty()) byLore[r.loreId].push_back(&r);
+		{
+			if (!r.loreId.empty()) { byLore[r.loreId].push_back(&r); ownByLore[r.loreId].push_back(&r); }
+			for (const std::string& a : r.alsoLoreIds) byLore[a].push_back(&r);
+		}
 		// 1) Chaque route du lore est tracée et passe DANS chaque case de son tracé. Jusqu'à la
 		//    v1.0.105, 000017 (Atmosphère → case enclavée du Palais des Maîtres des Dragons)
 		//    ne l'était pas ; v1.0.106 : tracé imposé par la Passe des Dragons (S002_W003).
@@ -2739,8 +2781,8 @@ namespace
 		// 2) Embranchements : 000155 part d'un point de 000079 (en S007_E006), 000130 arrive
 		//    sur un point de la Via Magna 000120 (en S001_W009).
 		auto startsOn = [&](const char* branch, const char* host, bool atStart, const char* cell) {
-			const auto b = byLore.find(branch), h = byLore.find(host);
-			if (b == byLore.end() || h == byLore.end()) return false;
+			const auto b = ownByLore.find(branch), h = byLore.find(host);
+			if (b == ownByLore.end() || h == byLore.end()) return false;
 			const Vec2 e = atStart ? b->second.front()->points.front() : b->second.back()->points.back();
 			if (cellOf(e) != cell) return false;
 			for (const Road* r : h->second)
@@ -2758,10 +2800,24 @@ namespace
 		Check(playable.size() == 1291, "routes du lore v1.0.105 : 1291 cellules jouables (413 + 68 cases de passage ouvertes en v1.0.106 + 16 cases des routes coupees en v1.0.119 + 245 des lots de routes v1.0.121-v1.0.122 + 7 des iles v1.0.124 + 542 cellules restantes v1.0.126)");
 		const std::pair<const char*, const char*> via[] = {
 			{ "town_0136", "city_horkher" }, { "city_horkher", "hamlet_0201" }, { "hamlet_0201", "ville_moork" } };
+		// v1.0.134 : la Via Magna repart de Shezhold par sa propre chaussée (aller-retour vers la
+		// ville soudé) : un tronçon « depuis a » commence en a, ou sur un point exact d'un tronçon
+		// de la Via Magna qui dessert a.
+		auto fromCity = [&](const Road* r, const std::string& a) {
+			if (r->fromId == a) return true;
+			if (!r->fromId.empty()) return false;
+			for (const Road* h : ownByLore["000120"])
+			{
+				if (h == r || (h->fromId != a && h->toId != a)) continue;
+				for (const Vec2& p : h->points)
+					if (p.x == r->points.front().x && p.z == r->points.front().z) return true;
+			}
+			return false;
+		};
 		int viaOk = 0;
 		for (const auto& [a, b] : via)
-			for (const Road* r : byLore["000120"])
-				if (r->fromId == a && r->toId == b && r->major && r->widthM >= 7.0)
+			for (const Road* r : ownByLore["000120"])
+				if (fromCity(r, a) && r->toId == b && r->major && r->widthM >= 7.0)
 				{
 					bool in = true;
 					for (const Vec2& p : r->points) in = in && playable.count(cellOf(p));
@@ -2791,11 +2847,19 @@ namespace
 		// du lore (000242-000249) : plus aucune route du générateur n'est gardée.
 		Check(generator == 0 && parasite == 0 && playable.count("N019_W012") && hadRoad && !hasRoad,
 			"routes du lore v1.0.105 : plus de route du generateur depuis v1.0.128 (corridors au lore) ; case sans route du lore sans route parasite");
-		// 5) Sentiers et voies : types respectés.
+		// 5) Sentiers et voies : types respectés sur les tronçons propres de chaque route ; v1.0.134 :
+		//    un sentier emprunté par une route (alias) est élargi en route.
 		bool types = true;
+		std::map<std::string, std::string> typeOf;
+		for (const LoreRoadDef& d : g.master.loreRoads) typeOf[d.id] = d.type;
 		for (const LoreRoadDef& d : g.master.loreRoads)
-			for (const Road* r : byLore[d.id])
-				types = types && (r->path == (d.type == "path")) && (d.type != "imperial_road" || r->major);
+			for (const Road* r : ownByLore[d.id])
+			{
+				bool sharedWithRoad = false;
+				for (const std::string& a : r->alsoLoreIds) sharedWithRoad = sharedWithRoad || typeOf[a] != "path";
+				const bool pathOk = r->path == (d.type == "path") || (d.type == "path" && !r->path && sharedWithRoad);
+				types = types && pathOk && (d.type != "imperial_road" || r->major);
+			}
 		Check(types, "routes du lore v1.0.105 : sentiers (3,2 m) et voie imperiale (7 m) selon le type du lore");
 		// 6) Déterminisme : une seconde construction donne exactement le même réseau.
 		GlobalWorld h;
@@ -2809,7 +2873,7 @@ namespace
 			const Road& a = g.roads[i];
 			const Road& b = h.roads[i];
 			same = a.loreId == b.loreId && a.fromId == b.fromId && a.toId == b.toId && a.points.size() == b.points.size()
-				&& a.profileY == b.profileY;
+				&& a.profileY == b.profileY && a.alsoLoreIds == b.alsoLoreIds && a.path == b.path && a.widthM == b.widthM;
 			for (size_t k = 0; same && k < a.points.size(); ++k) same = a.points[k].x == b.points[k].x && a.points[k].z == b.points[k].z;
 		}
 		Check(same, "routes du lore v1.0.105 : deux constructions identiques (deterministe)");
@@ -2871,9 +2935,14 @@ namespace
 		const std::set<std::string> playable(ids.begin(), ids.end());
 		// Case du lore qui contient le point global p.
 		auto cellOf = [](Vec2 p) { return wc::LoreCellId(wc::CellFromPosition(p.x, p.z)); };
+		// v1.0.134 (routes soudées) : une route est présente sur ses tronçons et sur ceux qu'elle
+		// emprunte (Road::alsoLoreIds).
 		std::map<std::string, std::vector<const Road*>> byLore;
 		for (const Road& r : g.roads)
+		{
 			if (!r.loreId.empty()) byLore[r.loreId].push_back(&r);
+			for (const std::string& a : r.alsoLoreIds) byLore[a].push_back(&r);
+		}
 
 		// Routes créées et 000017.
 		int created = 0;
@@ -3317,7 +3386,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3543,7 +3612,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			return w;
 		};
 		auto graves = [](const World& w) {
@@ -3607,7 +3676,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			std::vector<std::string> out;
 			std::istringstream in(RespawnPointsText(*w));
 			for (std::string line; std::getline(in, line);)
@@ -3786,7 +3855,7 @@ namespace
 			BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
 			std::string e2;
 			ImportLegacyContent(*w, e2);
-			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
+			BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w); BuildVegetation(*w); BuildPopulation(*w);
 			if (!WriteCellOutputs(*w, e2)) std::fprintf(stderr, "  %s\n", e2.c_str());
 			return w;
 		};
@@ -4029,6 +4098,108 @@ namespace
 		}
 	}
 
+	/// v1.0.133 (remarque du 21/11/2026 : « je me suis collé à la muraille de Lhynn ») : sur terrain en
+	/// pente, chaque colonne du rempart part du point le plus bas du sol sous elle (pas de jour dessous) et
+	/// dépasse d'au moins 2,5 m le point le plus haut (on ne l'enjambe pas depuis l'amont). Forteresse
+	/// naine d'Heusgly (S006_E004), la plus pentue des villes à remparts.
+	void TestRempartsV1133()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "remparts v1.0.133 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		int n = 0, e = 0;
+		ParseCellId("S006_E004", n, e);
+		InitCell(*w, g, { n, e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w);
+		const CityDef* city = nullptr;
+		for (const CityDef& c : w->cities) if (c.id == "ville_forteresse_naine_heureux_t11") city = &c;
+		Check(city != nullptr, "remparts v1.0.133 : Forteresse naine d'Heusgly dans la cellule");
+		if (city == nullptr) return;
+		// Colonnes du rempart (anneau R + 3 m) : pièces empilées au même point.
+		std::map<std::pair<long long, long long>, std::pair<Vec2, std::vector<double>>> cols;
+		for (const ScatterDef& sd : w->scatter)
+		{
+			if (sd.mesh.find("Wall_UnevenBrick_Straight") == std::string::npos || sd.scale < 0.99) continue;
+			const double d = std::hypot(sd.position.x - city->center.x, sd.position.z - city->center.z);
+			if (std::fabs(d - (city->radiusM + 3.0)) > 0.5) continue;
+			auto& col = cols[{ std::llround(sd.position.x * 100.0), std::llround(sd.position.z * 100.0) }];
+			col.first = sd.position;
+			col.second.push_back(sd.yOffset);
+		}
+		int bad = 0, stacked = 0;
+		for (const auto& [key, col] : cols)
+		{
+			(void)key;
+			const Vec2 p = col.first;
+			const double here = w->HeightAt(p);
+			// Emprise du segment : ±1 m le long du mur, ±0,3 m en travers.
+			const double dd = std::max(1e-6, std::hypot(p.x - city->center.x, p.z - city->center.z));
+			const Vec2 rad{ (p.x - city->center.x) / dd, (p.z - city->center.z) / dd }, tan{ -rad.z, rad.x };
+			double lo = 1e18, hi = -1e18;
+			for (int q = 0; q < 15; ++q)
+			{
+				const double h = w->HeightAt(p + tan * ((q % 5 - 2) * 0.5) + rad * ((q / 5 - 1) * 0.3));
+				lo = std::min(lo, h); hi = std::max(hi, h);
+			}
+			const double bottom = here + *std::min_element(col.second.begin(), col.second.end());
+			const double top = here + *std::max_element(col.second.begin(), col.second.end()) + 3.12;
+			stacked += col.second.size() > 1 ? 1 : 0;
+			if (bottom > lo + 0.25 || top < hi + 2.5) ++bad;
+		}
+		std::printf("  Heusgly : %zu colonnes de rempart, %d a etages, %d hors regle\n", cols.size(), stacked, bad);
+		Check(cols.size() >= 100 && bad == 0, "remparts v1.0.133 : rempart d'Heusgly sans jour dessous et jamais enjambable");
+	}
+
+	/// v1.0.135 (remarque du 21/11/2026 : « encore beaucoup de zones vides ») : dans une cellule de
+	/// plaine (N005_W011, Terres de l'Empereur), la carte de forêt couvre les terres ouvertes en
+	/// PRAIRIE (couvre-sol du client, sans arbre) avec des bosquets ; les valeurs forestières restent
+	/// au-dessus du seuil de prairie ; des petits lieux (pierres levées, ruines, camps, champs) sont
+	/// posés loin des routes et des villes.
+	void TestRemplissageV1135()
+	{
+		using namespace tools::world_gen;
+		namespace inst = engine::world::instances;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "remplissage v1.0.135 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		int n = 0, e = 0;
+		ParseCellId("N005_W011", n, e);
+		InitCell(*w, g, { n, e });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildMicroLandmarks(*w); BuildForestMask(*w);
+		size_t meadow = 0, forest = 0, between = 0;
+		for (uint8_t v : w->forestMask)
+		{
+			if (v == inst::kForestMaskMeadowValue) ++meadow;
+			else if (v >= inst::kForestMaskMinForestValue) ++forest;
+			else if (v != 0) ++between;
+		}
+		const double N = static_cast<double>(w->forestMask.size());
+		std::printf("  N005_W011 : prairie %.1f %%, foret et bosquets %.1f %%, petits lieux %llu\n", 100.0 * meadow / N, 100.0 * forest / N,
+			static_cast<unsigned long long>(w->report.microLandmarks));
+		Check(meadow / N > 0.4, "remplissage v1.0.135 : terres ouvertes en prairie (couvre-sol du client)");
+		Check(forest / N > 0.15, "remplissage v1.0.135 : forets, bosquets et haies");
+		Check(between == 0, "remplissage v1.0.135 : aucune valeur forestiere sous le seuil de prairie");
+		Check(w->report.microLandmarks >= 20, "remplissage v1.0.135 : petits lieux de decor (>= 20 par cellule de plaine)");
+		int stones = 0;
+		for (const ScatterDef& sd : w->scatter) stones += sd.mesh.find("Rock_Medium") != std::string::npos && sd.scale > 1.8 ? 1 : 0;
+		Check(stones >= 7, "remplissage v1.0.135 : au moins un cercle de pierres levees");
+	}
+
 	/// Lot carte v1.0.131 (décision du 19/11/2026 : routes moins droites, « la nature n'est pas
 	/// carrée ») : toutes les routes du lore tracées ; aucune route tirée au cordeau (écart < 8 m à la
 	/// corde) sur 3 km ; les 5 balises de route à moins de 100 m de leur route.
@@ -4144,6 +4315,208 @@ namespace
 		Check(w->report.bridges >= 2 && deck >= 10, "eau v1.0.129 : ponts a Syzygie, tablier de dalles marchable");
 	}
 
+	/// Lot carte v1.0.136 (plan « Plan de l'Oracle, extérieur ») : le Camp de l'Oracle (N000_E000,
+	/// `layout: "oracle"`) n'est plus un village générique : aucun bâtiment (maison européenne)
+	/// dans le camp, au moins 40 tentes de pèlerins (océan de tentes, 240-350 m), 8 escaliers et
+	/// 8 portes, au moins 18 menhirs sur le grand cercle (420-560 m) dont des lueurs bleues, rocher
+	/// d'au moins 50 m au-dessus de la plaine (parois au-delà de 45°), aucune route sur le rocher,
+	/// échoppes le long du chemin du sud-ouest, services gardés (auberge et aubergiste, étals et
+	/// marchands, un seul cimetière du camp), ni faune ni monstre dans le camp.
+	void TestOracleV1136()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		Check(ok, "oracle v1.0.136 : master royaumes charge");
+		if (!ok) return;
+		const CityDef* mc = nullptr;
+		for (const CityDef& c : g.master.cities) if (c.id == "ville_oracle_camp") mc = &c;
+		Check(mc && mc->layout == "oracle" && mc->cell == "N000_E000", "oracle v1.0.136 : camp de l'Oracle en mise en page oracle");
+		if (!mc) return;
+		BuildMacroTerrain(g); BuildMacroRivers(g); BuildMacroRoads(g);
+		auto w = std::make_unique<World>();
+		InitCell(*w, g, { 0, 0 });
+		BuildPlaces(*w); BuildCellTerrain(*w); FlattenSettlements(*w); CarveWater(*w); ApplyRoads(*w); FillSeaPockets(*w);
+		std::string e2;
+		ImportLegacyContent(*w, e2);
+		BuildSettlements(*w); BuildLandmarks(*w); BuildBridges(*w); BuildPopulation(*w);
+		const CityDef* c = w->FindCity("ville_oracle_camp");
+		const SettlementLayout* L = nullptr;
+		for (const SettlementLayout& l : w->layouts) if (l.cityId == "ville_oracle_camp") L = &l;
+		Check(c && L, "oracle v1.0.136 : camp genere dans N000_E000");
+		if (!c || !L) return;
+		const Vec2 o = c->center;
+		auto dist = [&](Vec2 p) { return std::hypot(p.x - o.x, p.z - o.z); };
+		int houses = 0;
+		for (const BuildingPlacementDef& b : w->buildings) houses += (b.cityId == c->id || dist(b.position) < 700.0) ? 1 : 0;
+		int tents = 0, stairs = 0, doors = 0, stones = 0, stallsSw = 0, blueStones = 0;
+		const double aSw = 3.0 * 3.141592653589793 / 4.0;
+		const Vec2 sw{ std::cos(aSw), std::sin(aSw) };
+		for (const ScatterDef& s : w->scatter)
+		{
+			const double d = dist(s.position);
+			if (s.mesh.find("Overhang_Roof_Plaster") != std::string::npos && (s.flags & 1u) && d > 235.0 && d < 355.0) ++tents;
+			if (s.mesh.find("Stairs_Exterior_Straight") != std::string::npos && d < 210.0) ++stairs;
+			if (s.mesh.find("Door_2_Round") != std::string::npos && d < 170.0) ++doors;
+			if (s.mesh.find("Pebble_Square_5") != std::string::npos && s.scale >= 12.0 && d > 420.0 && d < 560.0) ++stones;
+			if (s.mesh.find("Stall_") != std::string::npos && d > 340.0 && d < 760.0)
+			{
+				const Vec2 q{ s.position.x - o.x, s.position.z - o.z };
+				const double along = q.x * sw.x + q.z * sw.z, across = std::fabs(q.x * -sw.z + q.z * sw.x);
+				stallsSw += (along > 0.0 && across < 15.0) ? 1 : 0;
+			}
+		}
+		for (const PointLightDef& l : w->pointLights)
+			blueStones += (l.id.find("_menhir_") != std::string::npos && l.b > l.r) ? 1 : 0;
+		std::fprintf(stderr, "  oracle : maisons %d, tentes %d, marches %d, portes %d, menhirs %d (%d lueurs), echoppes SO %d\n",
+			houses, tents, stairs, doors, stones, blueStones, stallsSw);
+		Check(houses == 0, "oracle v1.0.136 : aucune maison europeenne dans le camp");
+		Check(tents >= 40, "oracle v1.0.136 : ocean de tentes (40 tentes au moins)");
+		Check(stairs == 8 * 33 && doors == 8, "oracle v1.0.136 : 8 escaliers et 8 portes");
+		Check(stones >= 18 && blueStones >= 9, "oracle v1.0.136 : menhirs bleus sur le grand cercle");
+		Check(stallsSw >= 8, "oracle v1.0.136 : echoppes des faux devins le long du chemin du sud-ouest");
+		// Rocher : sommet ≥ 50 m au-dessus de la plaine, paroi raide, plaine plate.
+		const double plain = w->HeightAt(o + Vec2{ 0.0, 400.0 });
+		double steep = 0.0;
+		for (int k = 0; k < 8; ++k)
+		{
+			const double a = (k + 0.5) * 3.141592653589793 / 4.0;
+			steep = std::max(steep, w->SlopeDegAt(o + Vec2{ std::cos(a), std::sin(a) } * 150.0));
+		}
+		Check(w->HeightAt(o) - plain >= 50.0 && steep > 45.0 && std::fabs(plain - c->plateauY) < 0.5,
+			"oracle v1.0.136 : rocher dominant la plaine, parois infranchissables");
+		int roadOnRock = 0;
+		for (const Road& r : w->roads) for (const Vec2& p : r.points) roadOnRock += dist(p) < 205.0 ? 1 : 0;
+		Check(roadOnRock == 0, "oracle v1.0.136 : aucune route sur le rocher (arret au chemin de ronde)");
+		// Carte du monde (map_features) : les routes globales s'arrêtent aussi au chemin de ronde.
+		{
+			namespace mf = engine::world::mapfeatures;
+			const std::vector<World*> cells{ w.get() };
+			const mf::MapFeatures f = BuildMapFeatures(g, cells);
+			int mapOnRock = 0;
+			for (const mf::MapRoad& r : f.roads)
+				if (r.kind != mf::MapRoadKind::Street)
+					for (size_t k = 0; k + 1 < r.xz.size(); k += 2)
+						mapOnRock += dist(Vec2{ r.xz[k], r.xz[k + 1] }) < 205.0 ? 1 : 0;
+			Check(mapOnRock == 0, "oracle v1.0.136 : carte sans route sur le rocher");
+		}
+		// Services : auberge, étals (3 services + 8 échoppes), cimetière unique, PNJ associés.
+		int inn = 0, merchants = 0, villagers = 0, fauna = 0, graveyards = 0;
+		for (const SpawnerDef& s : w->spawners)
+		{
+			if (s.id == "amb_" + c->id + "_aubergiste") ++inn;
+			if (s.id.find("amb_" + c->id + "_marchand_") == 0) ++merchants;
+			if (s.id.find("amb_" + c->id + "_villageois_") == 0) ++villagers;
+			if (s.routineKind.empty() && dist(s.position) < 700.0) ++fauna;
+		}
+		for (const RespawnDef& r : w->respawns) graveyards += (r.type == "graveyard" && r.graveyardId == c->id) ? 1 : 0;
+		Check(inn == 1 && merchants >= 11 && L->stallFronts.size() >= 11 && villagers >= 10 && !L->homeDoors.empty(),
+			"oracle v1.0.136 : services gardes (auberge, etals et marchands, pelerins)");
+		Check(graveyards == 1 && L->hasGraveyard && dist(L->graveyard) > 360.0, "oracle v1.0.136 : un seul cimetiere, hors des tentes");
+		Check(fauna == 0, "oracle v1.0.136 : ni faune ni monstre dans le camp (lieu neutre)");
+	}
+
+	/// v1.0.134 — routes soudées, plus de doublon (LORE_BD §16.60). Sur le réseau macro des
+	/// Royaumes (routes du lore et du générateur gardées), aucune paire de tronçons ne court en
+	/// parallèle : rééchantillonnés tous les 20 m, deux tronçons distincts ne restent pas à
+	/// moins de 250 m l'un de l'autre (écart 0 compris : chaussée recouverte) sur 500 m ou plus,
+	/// hors des villes (rayon + 300 m) et des abords des extrémités des deux tronçons (250 m :
+	/// jonction ou fourche, où deux routes se touchent par construction). Contrôles associés :
+	/// les routes signalées (Orhendal - Ysselhaim 000136 / 000249, Altenberg 000022 / 000084 /
+	/// 000122, Via Magna 000120 / 000072 / 000064) sont présentes, une partie par alias.
+	void TestRoutesSansDoublonV1134()
+	{
+		using namespace tools::world_gen;
+		GlobalWorld g;
+		std::string err;
+		const bool ok = LoadWorldMaster(LCDLLN_CONTENT_DIR, "royaumes", g.master, err);
+		if (!ok) std::fprintf(stderr, "  %s\n", err.c_str());
+		Check(ok, "routes sans doublon v1.0.134 : master royaumes charge");
+		if (!ok) return;
+		BuildMacroTerrain(g);
+		BuildMacroRivers(g);
+		BuildMacroRoads(g);
+		const double kGap = 250.0, kRun = 500.0, kStep = 20.0, kEnd = 250.0, kCity = 300.0, kCell = 250.0;
+		// Points rééchantillonnés de chaque tronçon et grille spatiale (cases de 250 m).
+		const size_t nr = g.roads.size();
+		std::vector<std::vector<Vec2>> s(nr);
+		for (size_t i = 0; i < nr; ++i) s[i] = ResamplePolyline(g.roads[i].points, kStep);
+		auto key = [](double x, double z) { return (static_cast<int64_t>(std::floor(z / 250.0)) << 32) ^ static_cast<uint32_t>(static_cast<int>(std::floor(x / 250.0))); };
+		std::map<int64_t, std::vector<std::pair<size_t, size_t>>> grid;
+		for (size_t i = 0; i < nr; ++i)
+			for (size_t k = 0; k < s[i].size(); ++k) grid[key(s[i][k].x, s[i][k].z)].push_back({ i, k });
+		// Vrai si p est dans une ville (rayon + 300 m) ou à moins de 250 m d'une extrémité du tronçon i.
+		auto excluded = [&](Vec2 p, size_t i) {
+			for (const Vec2& e : { g.roads[i].points.front(), g.roads[i].points.back() })
+				if (std::hypot(p.x - e.x, p.z - e.z) < kEnd) return true;
+			for (const CityDef& c : g.cities)
+				if (std::hypot(p.x - c.center.x, p.z - c.center.z) < c.radiusM + kCity) return true;
+			return false;
+		};
+		std::set<std::pair<size_t, size_t>> pairs;
+		size_t shown = 0;
+		for (size_t i = 0; i < nr; ++i)
+		{
+			std::vector<double> cur(nr, 0.0);
+			std::vector<char> hit(nr, 0);
+			for (size_t k = 0; k < s[i].size(); ++k)
+			{
+				const Vec2 p = s[i][k];
+				std::fill(hit.begin(), hit.end(), 0);
+				if (!excluded(p, i))
+				{
+					const int cx = static_cast<int>(std::floor(p.x / kCell)), cz = static_cast<int>(std::floor(p.z / kCell));
+					for (int dz = -1; dz <= 1; ++dz)
+						for (int dx = -1; dx <= 1; ++dx)
+						{
+							const auto it = grid.find((static_cast<int64_t>(cz + dz) << 32) ^ static_cast<uint32_t>(cx + dx));
+							if (it == grid.end()) continue;
+							for (const auto& [j, q] : it->second)
+							{
+								if (j == i || hit[j]) continue;
+								const Vec2 o = s[j][q];
+								if (std::hypot(o.x - p.x, o.z - p.z) > kGap) continue;
+								bool nearEnd = false;
+								for (const Vec2& e : { g.roads[j].points.front(), g.roads[j].points.back() })
+									nearEnd = nearEnd || std::hypot(p.x - e.x, p.z - e.z) < kEnd;
+								if (!nearEnd) hit[j] = 1;
+							}
+						}
+				}
+				for (size_t j = 0; j < nr; ++j)
+				{
+					cur[j] = hit[j] ? cur[j] + kStep : 0.0;
+					if (cur[j] >= kRun && !pairs.count({ std::min(i, j), std::max(i, j) }))
+					{
+						pairs.insert({ std::min(i, j), std::max(i, j) });
+						if (shown++ < 12)
+							std::fprintf(stderr, "  doublon : %s (%s > %s) || %s (%s > %s) vers (%.0f, %.0f)\n",
+								g.roads[i].loreId.c_str(), g.roads[i].fromId.c_str(), g.roads[i].toId.c_str(),
+								g.roads[j].loreId.c_str(), g.roads[j].fromId.c_str(), g.roads[j].toId.c_str(), p.x, p.z);
+					}
+				}
+			}
+		}
+		std::fprintf(stderr, "  paires de troncons paralleles (0-250 m sur >= 500 m) : %zu\n", pairs.size());
+		Check(pairs.empty(), "routes sans doublon v1.0.134 : aucune paire de routes paralleles (0-250 m sur 500 m ou plus) hors villes et jonctions");
+		// Les routes signalées sont présentes (tronçon propre ou emprunté) ; Orhendal - Ysselhaim
+		// n'a plus qu'une chaussée (000249 emprunte 000136).
+		std::set<std::string> present;
+		for (const Road& r : g.roads)
+		{
+			if (!r.loreId.empty()) present.insert(r.loreId);
+			present.insert(r.alsoLoreIds.begin(), r.alsoLoreIds.end());
+		}
+		size_t all = 0;
+		for (const LoreRoadDef& d : g.master.loreRoads) all += present.count(d.id) ? 1 : 0;
+		bool shared249 = false;
+		for (const Road& r : g.roads)
+			for (const std::string& a : r.alsoLoreIds) shared249 = shared249 || (a == "000249" && r.loreId == "000136");
+		Check(all == g.master.loreRoads.size() && shared249,
+			"routes sans doublon v1.0.134 : toutes les routes du lore presentes ; Orhendal - Ysselhaim (000249) emprunte 000136");
+	}
+
 int main()
 {
 	TestScatterRoundTrip();
@@ -4188,6 +4561,10 @@ int main()
 	TestReliefV1130();
 	TestRoutesV1131();
 	TestLieuxBatisV1132();
+	TestRempartsV1133();
+	TestRoutesSansDoublonV1134();
+	TestRemplissageV1135();
+	TestOracleV1136();
 	if (g_failures)
 	{
 		std::fprintf(stderr, "world_gen_tests : %d echec(s)\n", g_failures);

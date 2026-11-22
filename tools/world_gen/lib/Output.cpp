@@ -437,6 +437,13 @@ namespace tools::world_gen
 				if (u == 2) { t = { 0.05, 0.95, 0.0, 0.0, 0.0 }; }
 				else if (u == 1) { t.grass *= 0.6; t.dirt += 0.35; t.grassMask *= 0.6; }
 			}
+			// v1.0.136 — peinture (Camp de l'Oracle) : roche pâle du rocher, pierre blanche des escaliers.
+			const int pi = w.paint.IndexX(p.x), pj = w.paint.IndexZ(p.z);
+			if (w.paint.InBounds(pi, pj) && w.paint.At(pi, pj) != 0)
+			{
+				const uint8_t pv = w.paint.At(pi, pj);
+				return pv == 2 ? SplatTexel{ 0.0, 0.0, 0.05, 0.95, 0.0 } : SplatTexel{ 0.0, 0.0, 0.45, 0.55, 0.0 };
+			}
 			// Berges de rivière.
 			const int vi = w.riverDist.IndexX(p.x), vj = w.riverDist.IndexZ(p.z);
 			if (w.riverDist.InBounds(vi, vj) && w.riverDist.At(vi, vj) < 4.0f)
@@ -502,16 +509,19 @@ namespace tools::world_gen
 		}
 
 		/// Style de rendu de la carte du continent. Les valeurs par défaut donnent
-		/// EXACTEMENT la carte du jeu (world_map.png, inchangée) ; l'affiche du
-		/// portail (PORTAL.1) les ajuste.
+		/// EXACTEMENT la carte du jeu (world_map.png) ; l'affiche du portail
+		/// (PORTAL.1) et l'aperçu (--preview-map) les ajustent.
+		/// v1.0.133 : la carte du jeu n'a plus ni liseré des cellules générées (il
+		/// dessinait des traits droits sans rien de visible en jeu) ni carré brun
+		/// sous les villes (le client pose déjà leurs noms et leurs bâtiments).
 		struct ContinentMapStyle
 		{
-			bool cellOutlines = true;    ///< liseré des cellules générées (repère de mapping)
+			bool cellOutlines = false;   ///< liseré des cellules générées (repère de mapping, outils seulement)
 			bool continuousLines = false;///< rivières et routes en traits continus (sinon : 1 point sur 10)
 			int riverRadius = 0;         ///< demi-épaisseur des rivières (px, traits continus)
 			int roadRadius = 0;          ///< demi-épaisseur des routes (px, traits continus)
 			int majorRoadRadius = 0;     ///< demi-épaisseur des grandes routes (px, traits continus)
-			int cityRadius = 2;          ///< demi-côté du repère de ville (px) ; < 0 = aucun repère
+			int cityRadius = -1;         ///< rayon du repère rond de ville (px) ; < 0 = aucun repère
 		};
 
 		/// Carte du CONTINENT (carrée, N² px) : relief macro ombré, rivières,
@@ -568,8 +578,12 @@ namespace tools::world_gen
 					o[2] = static_cast<uint8_t>(Clamp(b, 0, 255));
 				}
 			});
+			// v1.0.134 : bornes vérifiées AVANT la conversion en entier (un point non fini ou très
+			// loin de l'image rendait la conversion indéfinie).
 			auto plot = [&](Vec2 p, int rad, uint8_t r, uint8_t gg, uint8_t b) {
-				const int ci = static_cast<int>((p.x - originX) / px), cj = static_cast<int>((p.z - originZ) / px);
+				const double fi = (p.x - originX) / px, fj = (p.z - originZ) / px;
+				if (!(fi > -rad - 1.0 && fi < N + rad + 1.0 && fj > -rad - 1.0 && fj < N + rad + 1.0)) return;
+				const int ci = static_cast<int>(fi), cj = static_cast<int>(fj);
 				for (int dj = -rad; dj <= rad; ++dj)
 					for (int di = -rad; di <= rad; ++di)
 					{
@@ -582,6 +596,7 @@ namespace tools::world_gen
 			// PORTAL.1 — segment continu (pas d'un demi-pixel) pour l'affiche du portail.
 			auto line = [&](Vec2 a, Vec2 b, int rad, uint8_t r, uint8_t gg, uint8_t bl) {
 				const double len = std::hypot(b.x - a.x, b.z - a.z);
+				if (!std::isfinite(len) || len > 1e7) return; // v1.0.134 : segment aberrant ignoré
 				const int steps = std::max(1, static_cast<int>(len / (px * 0.5)));
 				for (int s = 0; s <= steps; ++s)
 				{
@@ -619,8 +634,23 @@ namespace tools::world_gen
 					plot({ w->terrainOriginX, w->terrainOriginZ + t }, 0, 235, 225, 190);
 					plot({ w->terrainOriginX + w->terrainSizeM, w->terrainOriginZ + t }, 0, 235, 225, 190);
 				}
+			// Repère de ville : disque (v1.0.133, plus de carré), jamais les villes secrètes (v1.0.107).
 			if (style.cityRadius >= 0)
-				for (const CityDef& c : g.cities) if (!c.secret) plot(c.center, style.cityRadius, 92, 64, 52); // v1.0.107 : pas les villes secrètes
+				for (const CityDef& c : g.cities)
+				{
+					if (c.secret) continue;
+					const int ci = static_cast<int>((c.center.x - originX) / px), cj = static_cast<int>((c.center.z - originZ) / px);
+					const int rad = style.cityRadius;
+					for (int dj = -rad; dj <= rad; ++dj)
+						for (int di = -rad; di <= rad; ++di)
+						{
+							if (di * di + dj * dj > rad * rad + rad) continue;
+							const int ii = ci + di, jj = cj + dj;
+							if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
+							uint8_t* o = &rgb[(static_cast<size_t>(jj) * N + ii) * 3];
+							o[0] = 92; o[1] = 64; o[2] = 52;
+						}
+				}
 			return rgb;
 		}
 
@@ -1267,9 +1297,29 @@ namespace tools::world_gen
 			mf::ComputeBounds(r);
 			f.roads.push_back(std::move(r));
 		};
-		// Réseau inter-villes (polylignes globales complètes).
+		// v1.0.136 — centres des camps de l'Oracle : les routes s'arrêtent au chemin de ronde
+		// (comme sur le terrain, cf. BuildOracleCamp), pas de tracé sur le rocher.
+		std::vector<Vec2> oracleCenters;
+		for (const CityDef& c : g.cities)
+			if (c.layout == "oracle") oracleCenters.push_back(c.center);
+		auto insideOracle = [&](Vec2 p) {
+			for (const Vec2& o : oracleCenters)
+				if (std::hypot(p.x - o.x, p.z - o.z) < kOracleRoadStopM) return true;
+			return false;
+		};
+		// Réseau inter-villes (polylignes globales complètes, coupées aux camps de l'Oracle).
 		for (const Road& rd : g.roads)
-			addRoad(rd.points, rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road), rd.widthM);
+		{
+			const mf::MapRoadKind kind = rd.major ? mf::MapRoadKind::Major : (rd.path ? mf::MapRoadKind::Path : mf::MapRoadKind::Road);
+			if (oracleCenters.empty()) { addRoad(rd.points, kind, rd.widthM); continue; }
+			std::vector<Vec2> piece;
+			for (const Vec2& p : rd.points)
+			{
+				if (insideOracle(p)) { addRoad(piece, kind, rd.widthM); piece.clear(); continue; }
+				piece.push_back(p);
+			}
+			addRoad(piece, kind, rd.widthM);
+		}
 		for (const World* w : cells)
 		{
 			// Chemins locaux de la cellule (les tronçons de routes globales y sont

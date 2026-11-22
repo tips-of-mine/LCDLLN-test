@@ -41,6 +41,15 @@ namespace engine::world::instances
 	inline constexpr uint32_t kForestMaskVersion = 1u;
 	/// Résolution écrite par tools/world_gen (≈ 9,8 m par texel pour 10 km).
 	inline constexpr uint32_t kForestMaskResolution = 1024u;
+	/// v1.0.133 — PRAIRIE : valeur écrite par tools/world_gen sur les terres ouvertes
+	/// (plaines, collines, landes) hors forêt. Le client n'y pose AUCUN arbre, seulement
+	/// le couvre-sol (herbes hautes, fleurs, trèfle, cailloux) et de rares buissons.
+	/// Les valeurs forestières commencent au-dessus de kForestMaskMeadowCeil (25/255).
+	inline constexpr uint8_t kForestMaskMeadowValue = 10u;
+	/// Densité (0..1) en dessous de laquelle un texel est une prairie (pas d'arbre).
+	inline constexpr float kForestMaskMeadowCeil = 14.0f / 255.0f;
+	/// Plus petite valeur forestière écrite par le générateur (au-dessus de la prairie).
+	inline constexpr uint8_t kForestMaskMinForestValue = 25u;
 
 	/// Carte de densité forestière d'une cellule (coordonnées GLOBALES).
 	struct ForestMask
@@ -160,6 +169,12 @@ namespace engine::world::instances
 		double treeAccept = 0.92;       ///< probabilité d'un arbre par case à densité 1
 		double underAccept = 0.55;      ///< probabilité d'une plante de sous-bois par case à densité 1
 		double coniferAltitudeM = 300.0;///< au-dessus : résineux (comme tools/world_gen)
+		/// v1.0.133 — couvre-sol (herbes hautes, fleurs, trèfle, cailloux) partout où la
+		/// carte est non nulle, prairies comprises, dans un rayon réduit autour du joueur.
+		double groundStepM = 1.9;       ///< pas du treillis du couvre-sol
+		double groundRadiusM = 38.0;    ///< rayon du couvre-sol (≤ radiusM ; au-delà la classe Small est coupée)
+		double groundAccept = 0.62;     ///< probabilité d'une touffe par case en prairie
+		double meadowUnderAccept = 0.07;///< buissons épars en prairie (par case du sous-bois)
 	};
 
 	/// Espèce de remplissage (chemin sous meshes/props/, poids, échelle, tronc).
@@ -195,6 +210,37 @@ namespace engine::world::instances
 				{ "Pine_1", 1, 0.85, 1.3, 0.45 }, { "Pine_2", 1, 0.85, 1.3, 0.45 }, { "Pine_3", 1, 0.85, 1.3, 0.45 },
 				{ "Pine_4", 1, 0.8, 1.2, 0.45 }, { "Pine_5", 1, 0.85, 1.3, 0.45 }, { "DeadTree_1", 0.15, 0.8, 1.1, 0.45 } };
 			return v;
+		}
+		/// v1.0.133 — couvre-sol des prairies : herbes hautes surtout, cailloux rares.
+		inline const std::vector<ForestFillerSpecies>& GroundGrass()
+		{
+			static const std::vector<ForestFillerSpecies> v = {
+				{ "Grass_Common_Tall", 3.0, 0.8, 1.3, 0 }, { "Grass_Common_Short", 2.5, 0.9, 1.4, 0 },
+				{ "Grass_Wispy_Tall", 2.0, 0.8, 1.25, 0 }, { "Grass_Wispy_Short", 1.5, 0.9, 1.3, 0 },
+				{ "Clover_1", 0.6, 0.8, 1.2, 0 }, { "Clover_2", 0.6, 0.8, 1.2, 0 },
+				{ "Pebble_Round_2", 0.15, 0.7, 1.3, 0 }, { "Pebble_Square_3", 0.12, 0.7, 1.3, 0 } };
+			return v;
+		}
+		/// v1.0.133 — taches de fleurs (bruit ≈ 30 m) dans les prairies.
+		inline const std::vector<ForestFillerSpecies>& GroundFlowers()
+		{
+			static const std::vector<ForestFillerSpecies> v = {
+				{ "Flower_3_Group", 1.0, 0.8, 1.2, 0 }, { "Flower_4_Group", 1.0, 0.8, 1.2, 0 },
+				{ "Flower_3_Single", 0.6, 0.9, 1.3, 0 }, { "Flower_4_Single", 0.6, 0.9, 1.3, 0 },
+				{ "Bush_Common_Flowers", 0.25, 0.6, 1.0, 0 } };
+			return v;
+		}
+		/// Bruit de valeur lissé déterministe dans [0, 1] (taches de fleurs, ~\p cellM).
+		inline double PatchNoise(double x, double z, double cellM, uint64_t salt)
+		{
+			const double fx = x / cellM, fz = z / cellM;
+			const int64_t i = static_cast<int64_t>(std::floor(fx)), j = static_cast<int64_t>(std::floor(fz));
+			const double tx = fx - static_cast<double>(i), tz = fz - static_cast<double>(j);
+			const auto v = [salt](int64_t a, int64_t b) { return static_cast<double>(Mix(Hash3(salt, a, b)) >> 11) * (1.0 / 9007199254740992.0); };
+			const double sx = tx * tx * (3.0 - 2.0 * tx), sz = tz * tz * (3.0 - 2.0 * tz);
+			const double a = v(i, j) + (v(i + 1, j) - v(i, j)) * sx;
+			const double b = v(i, j + 1) + (v(i + 1, j + 1) - v(i, j + 1)) * sx;
+			return a + (b - a) * sz;
 		}
 		inline const std::vector<ForestFillerSpecies>& Undergrowth()
 		{
@@ -237,16 +283,21 @@ namespace engine::world::instances
 		out = ScatterFile{};
 		if (mask.Empty() || !(params.radiusM > 0.0)) return;
 		const double r2 = params.radiusM * params.radiusM;
-		struct Layer { double step, accept; uint64_t salt; bool trees; };
-		const Layer layers[] = { { params.treeStepM, params.treeAccept, 0xF0E57A11ull, true },
-			{ params.underStepM, params.underAccept, 0x5B5B0B05ull, false } };
+		// Couches : arbres, sous-bois, couvre-sol (v1.0.133).
+		enum class Kind { Trees, Under, Ground };
+		struct Layer { double step, accept, radius; uint64_t salt; Kind kind; };
+		const Layer layers[] = { { params.treeStepM, params.treeAccept, params.radiusM, 0xF0E57A11ull, Kind::Trees },
+			{ params.underStepM, params.underAccept, params.radiusM, 0x5B5B0B05ull, Kind::Under },
+			{ params.groundStepM, params.groundAccept, std::min(params.groundRadiusM, params.radiusM), 0x6A0D5C0Bull, Kind::Ground } };
+		const float meadowCeil = kForestMaskMeadowCeil;
 		for (const Layer& L : layers)
 		{
-			if (!(L.step > 0.5)) continue;
-			const int64_t i0 = static_cast<int64_t>(std::floor((cx - params.radiusM) / L.step));
-			const int64_t i1 = static_cast<int64_t>(std::floor((cx + params.radiusM) / L.step));
-			const int64_t j0 = static_cast<int64_t>(std::floor((cz - params.radiusM) / L.step));
-			const int64_t j1 = static_cast<int64_t>(std::floor((cz + params.radiusM) / L.step));
+			if (!(L.step > 0.5) || !(L.radius > 0.0)) continue;
+			const double lr2 = std::min(r2, L.radius * L.radius);
+			const int64_t i0 = static_cast<int64_t>(std::floor((cx - L.radius) / L.step));
+			const int64_t i1 = static_cast<int64_t>(std::floor((cx + L.radius) / L.step));
+			const int64_t j0 = static_cast<int64_t>(std::floor((cz - L.radius) / L.step));
+			const int64_t j1 = static_cast<int64_t>(std::floor((cz + L.radius) / L.step));
 			for (int64_t j = j0; j <= j1; ++j)
 				for (int64_t i = i0; i <= i1; ++i)
 				{
@@ -255,11 +306,25 @@ namespace engine::world::instances
 					const double x = (static_cast<double>(i) + 0.15 + 0.7 * Unit(h)) * L.step;
 					const double z = (static_cast<double>(j) + 0.15 + 0.7 * Unit(Mix(h + 1))) * L.step;
 					const double dx = x - cx, dz = z - cz;
-					if (dx * dx + dz * dz > r2 || !mask.Contains(x, z)) continue;
+					if (dx * dx + dz * dz > lr2 || !mask.Contains(x, z)) continue;
 					const double d = mask.DensityAt(x, z);
-					if (Unit(Mix(h + 2)) >= d * L.accept) continue;
-					const bool conifer = L.trees && groundAltitude && groundAltitude(x, z) > params.coniferAltitudeM;
-					const auto& pool = L.trees ? (conifer ? Conifer() : Broadleaf()) : Undergrowth();
+					if (!(d > 0.0)) continue;
+					// v1.0.133 — prairie (valeur basse) : aucun arbre, buissons épars, couvre-sol plein ;
+					// en forêt : couvre-sol clairsemé sous les arbres.
+					const bool meadow = d <= meadowCeil;
+					double accept = 0.0;
+					switch (L.kind)
+					{
+					case Kind::Trees: accept = meadow ? 0.0 : d * L.accept; break;
+					case Kind::Under: accept = meadow ? params.meadowUnderAccept : d * L.accept; break;
+					case Kind::Ground: accept = meadow ? L.accept : L.accept * 0.35; break;
+					}
+					if (Unit(Mix(h + 2)) >= accept) continue;
+					const bool trees = L.kind == Kind::Trees;
+					const bool conifer = trees && groundAltitude && groundAltitude(x, z) > params.coniferAltitudeM;
+					const bool flowers = L.kind == Kind::Ground && meadow && PatchNoise(x, z, 28.0, 0xF10A3E5ull) > 0.62;
+					const auto& pool = trees ? (conifer ? Conifer() : Broadleaf())
+						: (L.kind == Kind::Under ? Undergrowth() : (flowers ? GroundFlowers() : GroundGrass()));
 					const ForestFillerSpecies& sp = Pick(pool, Unit(Mix(h + 3)));
 					ScatterInstance in;
 					in.meshIndex = MeshIndex(out, sp.mesh);
@@ -267,7 +332,7 @@ namespace engine::world::instances
 					in.z = static_cast<float>(z);
 					in.scale = static_cast<float>(sp.scaleMin + (sp.scaleMax - sp.scaleMin) * Unit(Mix(h + 4)));
 					in.yawDeg = static_cast<float>(Unit(Mix(h + 5)) * 360.0);
-					if (L.trees)
+					if (trees)
 					{
 						in.cullClass = static_cast<uint8_t>(ScatterCullClass::Large);
 						in.tiltDeg = static_cast<float>(Unit(Mix(h + 6)) * 3.5);
@@ -277,7 +342,7 @@ namespace engine::world::instances
 					}
 					else
 					{
-						in.cullClass = static_cast<uint8_t>(ScatterCullClass::Medium);
+						in.cullClass = static_cast<uint8_t>(L.kind == Kind::Ground ? ScatterCullClass::Small : ScatterCullClass::Medium);
 					}
 					out.instances.push_back(in);
 				}

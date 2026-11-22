@@ -69,7 +69,17 @@ def main():
                 if m.get("name", "").startswith(("MI_Decor_Leaves", "MI_Decor_Plant", "MI_Decor_BB")) \
                         and m.get("alphaMode") != "MASK":
                     errors.append(f"{n} : matériau {m.get('name')} sans alphaMode MASK")
-            if lod == 0:
+            if lod == 0 and s.get("bbox_ref"):
+                # Remplaçant d'un asset existant : même boîte (pivot compris), borne par
+                # borne, tolérance max(10 % de l'étendue de l'axe, 3 cm).
+                ref = s["bbox_ref"]
+                for ax in range(3):
+                    ext = ref[2 * ax + 1] - ref[2 * ax]
+                    tol = max(TOL * ext, 0.03)
+                    for got, want, lab in ((mn[ax], ref[2 * ax], "min"), (mx[ax], ref[2 * ax + 1], "max")):
+                        if abs(got - want) > tol:
+                            errors.append(f"{sid} : {lab} {'XYZ'[ax]} = {got:.2f} au lieu de {want:.2f} (asset remplacé)")
+            elif lod == 0:
                 h, w = mx[1], mx[0] - mn[0]
                 lo, hi = s["height_m"]
                 if not (lo * (1 - TOL) <= h <= hi * (1 + TOL)):

@@ -4239,7 +4239,20 @@ namespace engine
 		// m_editorEnabled — parité jeu/éditeur garantie par le format
 		// binaire identique (cf. critère M100.5/.9).
 		std::uint32_t chunksDrawnThisFrame = 0u;
-		if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
+		// Lot D (bug 5) — monde en cellules (zones/cell_*) : le terrain vient des
+		// TerrainRenderer de cellule (RecordCellTerrains) et AUCUNE cellule ne livre
+		// de chunks/chunk_X_Z/terrain.bin. Interroger la grille de chunks autour de
+		// la caméra (repère de rendu) ne faisait que produire des centaines de
+		// « [StreamCache] terrain.bin absent » par session : rendu des chunks hérités
+		// coupé dans le jeu en cellules (une seule ligne d'info, première frame).
+		// L'éditeur monde (m_worldEditorExe) et les zones historiques sont inchangés.
+		const bool chunkTerrainWanted = !(m_cellWorld && !m_worldEditorExe);
+		if (!chunkTerrainWanted && !m_cellChunkTerrainSkipLogged)
+		{
+			m_cellChunkTerrainSkipLogged = true;
+			LOG_INFO(Render, "[TerrainChunk] Monde en cellules : chunks herites (chunks/*/terrain.bin) non demandes");
+		}
+		if (chunkTerrainWanted && m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
 		{
 			UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
 			// Phase 1 (chantier C) : les chunks terrain sont sur la grille 256 m,

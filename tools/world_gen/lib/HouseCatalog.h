@@ -27,6 +27,8 @@ namespace tools::world_gen
 		Plaster,  ///< enduit + colombages (village humain)
 		Brick,    ///< briques irrégulières (forteresses, nains)
 		Mixed,    ///< rez-de-chaussée brique, étages enduits (villes)
+		Plank,    ///< planches et toit de bardeaux (Marches, Kendrhir — BD T1, atelier décors)
+		DryStone, ///< pierre sèche et toit de chaume (hameaux — BD T1/T3, atelier décors)
 	};
 
 	struct HouseSpec
@@ -57,6 +59,12 @@ namespace tools::world_gen
 			{ "ruine_6x6",         "Ruine (6x6 m)",                          6,  6, 1, WallStyle::Brick,   true  },
 			{ "ruine_6x10",        "Ruine (6x10 m)",                         6, 10, 1, WallStyle::Plaster, true  },
 			{ "ruine_8x10",        "Ruine (8x10 m)",                         8, 10, 1, WallStyle::Mixed,   true  },
+			// Atelier décors (ajoutées en fin : l'ordre des variantes existantes ne bouge pas).
+			{ "chaumiere_pierre_4x4", "Chaumiere de pierre seche (4x4 m)",   4,  4, 1, WallStyle::DryStone, false },
+			{ "longere_pierre_6x10",  "Longere de pierre seche (6x10 m)",    6, 10, 1, WallStyle::DryStone, false },
+			{ "maison_planches_4x6",  "Maison de planches (4x6 m, 2 niveaux)", 4, 6, 2, WallStyle::Plank,  false },
+			{ "maison_planches_6x8",  "Maison de planches (6x8 m, 2 niveaux)", 6, 8, 2, WallStyle::Plank,  false },
+			{ "echoppe_planches_4x8", "Echoppe de planches (4x8 m)",         4,  8, 1, WallStyle::Plank,    false },
 		};
 		return k;
 	}

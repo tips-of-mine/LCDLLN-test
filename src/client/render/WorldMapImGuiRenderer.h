@@ -30,7 +30,15 @@ namespace engine::render
 		float zoom = 1.0f;       ///< 1 = carte entière ; max = taille du monde / minViewM (FIX.11)
 		float centerU = 0.5f;    ///< centre de vue (coordonnées normalisées carte)
 		float centerV = 0.5f;
-		bool followPlayer = true;///< recentre sur le joueur à chaque frame (désactivé au glisser)
+		/// Recentre sur le joueur à chaque frame. Lot D (bug 2) : coupé seulement en
+		/// glissant la carte ; rétabli par « Centrer », ou de lui-même quand le joueur
+		/// s'est déplacé depuis la fin du glisser et sort de la vue (cf. DrawWorldMapWindow).
+		bool followPlayer = true;
+		/// Lot D (bug 2) — position du joueur (m, repère global) quand le suivi a été
+		/// coupé (fin du glisser / « Vue d'ensemble ») : sert à détecter qu'il a bougé.
+		float anchorX = 0.0f;
+		float anchorZ = 0.0f;
+		bool anchorValid = false;
 		/// FIX.11 — vrai à chaque ouverture (Engine remet l'état à zéro) : la frame
 		/// suivante fixe le zoom initial (≈ defaultViewM visibles) et recentre.
 		bool initPending = true;
@@ -69,8 +77,12 @@ namespace engine::render
 	};
 
 	/// Dessine la fenêtre « Carte du monde ». \param open mis à false si le
-	/// joueur ferme la fenêtre (✕). \param view zoom / pan, modifié par la molette
-	/// et le glisser. Sans effet si `in.places` est nul ou non chargé.
+	/// joueur ferme la fenêtre (✕). \param view zoom / pan / suivi du joueur, modifié
+	/// par la molette, le glisser et les boutons du pied. Lot D : la zone de dessin
+	/// occupe toute la région de contenu (redimensionnement suivi à chaque frame,
+	/// échelle identique sur les deux axes) et la carte suit le joueur par défaut.
+	/// Sans effet si `in.places` est nul ou non chargé. Main thread, entre
+	/// ImGui::NewFrame() et ImGui::Render().
 	void DrawWorldMapWindow(bool* open, const WorldMapHudInput& in, WorldMapViewState& view);
 
 	/// Dessine la bannière « Vous entrez à … » (haut-centre, fondu) sur la draw

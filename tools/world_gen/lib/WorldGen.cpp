@@ -46,6 +46,7 @@ namespace tools::world_gen
 			dst.buildings += src.buildings;
 			dst.bridges += src.bridges; // v1.0.129
 			dst.landmarks += src.landmarks; // v1.0.132
+			dst.microLandmarks += src.microLandmarks; // v1.0.135
 			dst.spawners += src.spawners;
 			dst.ambientNpcs += src.ambientNpcs;
 			dst.creatures += src.creatures;
@@ -335,6 +336,7 @@ namespace tools::world_gen
 			timed("cellule : lieux batis", [&] { BuildLandmarks(*w); });     // v1.0.132 : tours, châteaux, phares, cascades, ponts
 			timed("cellule : ponts", [&] { BuildBridges(*w); });             // v1.0.129 : ponts de pierre et de bois sur les cours d'eau
 			timed("cellule : pontons", [&] { BuildSeaPontons(*w); });       // v1.0.124 : lignes maritimes (capitaines)
+			timed("cellule : petits lieux", [&] { BuildMicroLandmarks(*w); }); // v1.0.135 : pierres levées, ruines, camps, champs
 			timed("cellule : foret", [&] { BuildForestMask(*w); });           // FORET.1 : densité des forêts (arbres posés par le client)
 			timed("cellule : vegetation", [&] { BuildVegetation(*w); });
 			timed("cellule : rives", [&] { BuildShoreVegetation(*w); });           // roseaux, nénuphars      // décor naturel (respecte l'occupation)

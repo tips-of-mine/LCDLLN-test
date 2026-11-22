@@ -701,6 +701,13 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
 
+  # Lot D (bug 3) : mer de repli des cellules non générées, mur invisible généralisé.
+  lcdlln_add_simple_test(cell_sea_fallback_tests
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/tests/CellSeaFallbackTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellSeaFallback.cpp
+    ${CMAKE_SOURCE_DIR}/src/client/world/cells/CellWorldFrame.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/world/WorldCells.cpp)
+
   # SND.2 — lecture réelle des sons (miniaudio sans périphérique), variantes,
   # cadence et surface des pas. SoundDevice/Footsteps/AudioEngine sont dans engine_core.
   lcdlln_add_simple_test(sound_tests

@@ -21,6 +21,7 @@
 
 #include "src/client/dialogue/DialogueConfigLoader.h"
 #include "src/client/render/terrain/HeightmapLoader.h"
+#include "src/client/world/cells/CellSeaFallback.h"
 #include "src/client/world/places/WorldPlaces.h"
 #include "src/shared/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
@@ -376,12 +377,24 @@ namespace engine
 		if ((m_cellFrameCounter % 600u) == 0u)
 			LOG_DEBUG(Core, "[Cells] joueur rendu=({:.1f},{:.1f}) global=({:.1f},{:.1f}) cellule={} origine={} tuiles={}",
 				p.x, p.z, gx, gz, cells::LoreCellId(here), cells::LoreCellId(m_renderFrame.OriginCell()), m_cellTiles.size());
+		// Lot D (bug 3) — mer de repli : centrée sur la cellule du JOUEUR (pas sur
+		// l'origine, qui ne suit que les cellules générées : un trajet en bateau peut
+		// longer des cellules manquantes). Le rebase reconstruit l'eau de lui-même.
+		m_cellFallbackSeaCenter = here;
 		if (here != m_renderFrame.OriginCell() && m_generatedCells.Contains(here)
 			&& cells::DistanceToCellBorder(gx, gz) >= 50.0)
 		{
 			RebaseRenderOrigin(here);
 		}
 		UpdateCellStreamingAround(gx, gz, synchronous);
+		// Eau reconstruite seulement si l'ensemble des cellules de mer de repli change
+		// (passage de cellule près d'une côte) ou si une cellule vient d'échouer.
+		{
+			static thread_local std::vector<cells::CellCoord> fallback;
+			SelectCellFallbackSea(m_cellFallbackSeaCenter, fallback);
+			if (m_cellWaterFallbackDirty || fallback != m_cellFallbackSeaCells)
+				RebuildCellWater();
+		}
 		ContinueCellPlacement(synchronous);
 		UpdateForestFiller(gx, gz);
 		DestroyRetiredCellTiles(false);
@@ -415,7 +428,7 @@ namespace engine
 				if (!a.heightsOk)
 				{
 					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(a.cell, m_activeCellMap), a.error);
-					m_failedCells.insert(cells::CellZoneId(a.cell, m_activeCellMap));
+					MarkCellFailed(a.cell);
 					m_cellReady.erase(m_cellReady.begin() + static_cast<std::ptrdiff_t>(i));
 					continue;
 				}
@@ -470,7 +483,7 @@ namespace engine
 				if (!a.heightsOk)
 				{
 					LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell, m_activeCellMap), a.error);
-					m_failedCells.insert(cells::CellZoneId(cell, m_activeCellMap));
+					MarkCellFailed(cell);
 					continue;
 				}
 				if (!m_cellHeights->Has(cell))
@@ -527,7 +540,7 @@ namespace engine
 		if (!cells::LoadCellAssets(MakeCellJob(cell, /*wantRender*/ false), a))
 		{
 			LOG_WARN(Render, "[Cells] {} : {} (cellule ignoree)", cells::CellDirName(cell, m_activeCellMap), a.error);
-			m_failedCells.insert(cells::CellZoneId(cell, m_activeCellMap));
+			MarkCellFailed(cell);
 			return false;
 		}
 		IntegrateCellHeights(a);
@@ -1056,9 +1069,13 @@ namespace engine
 			p.z = static_cast<float>(static_cast<double>(p.z) - oz);
 			return p;
 		};
+		bool haveSeaLevel = false;
+		float seaLevelY = 0.0f;
 		for (const auto& [id, global] : m_cellWaterGlobal)
 		{
 			(void)id;
+			if (!haveSeaLevel)
+				haveSeaLevel = cells::FindSeaLevel(global.lakes, seaLevelY);
 			for (engine::world::water::LakeInstance lake : global.lakes)
 			{
 				for (engine::math::Vec3& v : lake.polygon)
@@ -1072,7 +1089,56 @@ namespace engine
 				scene.rivers.push_back(std::move(river));
 			}
 		}
+
+		// Lot D (bug 3) — mer de repli des cellules manquantes proches du joueur (non
+		// générées : toutes maritimes ; ou en échec de chargement) : même nappe que la
+		// mer d'une cellule générée, au niveau de la mer lu dans les water.bin. Carte
+		// sans mer (Enfers : l'au-delà est un abîme) ou option coupée : rien.
+		// Choix et limites : cf. src/client/world/cells/CellSeaFallback.h.
+		m_cellWaterFallbackDirty = false;
+		SelectCellFallbackSea(m_cellFallbackSeaCenter, m_cellFallbackSeaCells);
+		const bool fallbackEnabled = haveSeaLevel && m_cfg.GetBool("world.cells.fallback_sea", true);
+		size_t fallbackCount = 0;
+		if (fallbackEnabled)
+			for (const cells::CellCoord& cell : m_cellFallbackSeaCells)
+			{
+				scene.lakes.push_back(cells::MakeFallbackSeaLake(cell, seaLevelY, ox, oz));
+				++fallbackCount;
+			}
+		if (fallbackCount > 0)
+			LOG_DEBUG(Render, "[Cells] Mer de repli : {} cellule(s) manquante(s) autour de {} (niveau {:.1f} m)",
+				fallbackCount, cells::LoreCellId(m_cellFallbackSeaCenter), seaLevelY);
 		m_waterClientSceneDirty = true;
+	}
+
+	bool Engine::IsCellMissingForSea(cells::CellCoord cell) const
+	{
+		if (!m_generatedCells.Contains(cell))
+			return true;
+		const uint32_t id = cells::CellZoneId(cell, m_activeCellMap);
+		if (m_failedCells.count(id) == 0)
+			return false;
+		// Cellule en échec : sa propre mer (water.bin lu à part) suffit si elle existe.
+		const auto it = m_cellWaterGlobal.find(id);
+		if (it == m_cellWaterGlobal.end())
+			return true;
+		float ignored = 0.0f;
+		return !cells::FindSeaLevel(it->second.lakes, ignored);
+	}
+
+	void Engine::SelectCellFallbackSea(cells::CellCoord center, std::vector<cells::CellCoord>& out) const
+	{
+		// Distance de vue : la plus grande entre le plan lointain et le terrain affiché.
+		const double viewM = std::max(static_cast<double>(m_viewDistance.cameraFarM),
+			static_cast<double>(m_cellTerrainDrawDistanceM));
+		cells::SelectFallbackSeaCells(center, cells::FallbackSeaRadiusCells(viewM),
+			[this](cells::CellCoord c) { return IsCellMissingForSea(c); }, out);
+	}
+
+	void Engine::MarkCellFailed(cells::CellCoord cell)
+	{
+		if (m_failedCells.insert(cells::CellZoneId(cell, m_activeCellMap)).second)
+			m_cellWaterFallbackDirty = true;
 	}
 
 	bool Engine::RecordCellTerrains(VkCommandBuffer cmd, engine::render::Registry& reg, const engine::RenderState& rs)

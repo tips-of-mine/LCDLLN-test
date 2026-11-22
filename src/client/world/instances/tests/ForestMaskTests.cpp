@@ -115,7 +115,9 @@ namespace
 		for (const ScatterInstance& in : a.instances)
 		{
 			const double dA = std::hypot(in.x - 1000.0, in.z - 1000.0), dB = std::hypot(in.x - 1030.0, in.z - 1000.0);
-			if (dA > 99.0 || dB > 99.0) continue;
+			// v1.0.133 : couvre-sol (classe Small) comparé dans son propre rayon.
+			const double lim = in.cullClass == static_cast<uint8_t>(ScatterCullClass::Small) ? p.groundRadiusM - 1.0 : 99.0;
+			if (dA > lim || dB > lim) continue;
 			++common;
 			const auto it = inB.find({ in.x, in.z });
 			same = same && it != inB.end() && it->second == a.meshPaths[in.meshIndex];
@@ -132,6 +134,29 @@ namespace
 		for (const ScatterInstance& in : edge.instances)
 			if (in.cullClass == static_cast<uint8_t>(ScatterCullClass::Large)) ++edgeTrees;
 		Check(edgeTrees > trees.size() / 4 && edgeTrees < trees.size() / 2, "remplissage : lisiere moins dense (la vue passe)");
+
+		// v1.0.133 — prairie : aucun arbre, couvre-sol fourni (herbes, fleurs), buissons rares,
+		// rien au-delà du rayon du couvre-sol hormis les buissons.
+		ScatterFile meadow;
+		GenerateForestFiller(Uniform(0.0, 0.0, 2000.0, 64, kForestMaskMeadowValue), 1000.0, 1000.0, p, {}, meadow);
+		size_t meadowTrees = 0, meadowGround = 0, meadowBush = 0;
+		bool groundInRadius = true;
+		for (const ScatterInstance& in : meadow.instances)
+		{
+			if (in.cullClass == static_cast<uint8_t>(ScatterCullClass::Large)) ++meadowTrees;
+			else if (in.cullClass == static_cast<uint8_t>(ScatterCullClass::Small))
+			{
+				++meadowGround;
+				groundInRadius = groundInRadius && std::hypot(in.x - 1000.0, in.z - 1000.0) <= p.groundRadiusM + 1e-3;
+			}
+			else ++meadowBush;
+		}
+		std::printf("  prairie : %zu arbres, %zu touffes, %zu buissons\n", meadowTrees, meadowGround, meadowBush);
+		Check(meadowTrees == 0, "prairie : aucun arbre");
+		Check(meadowGround > 500 && groundInRadius, "prairie : couvre-sol fourni dans son rayon");
+		const double groundDensity = meadowGround / (3.14159265 * p.groundRadiusM * p.groundRadiusM);
+		const double bushDensity = meadowBush / (3.14159265 * p.radiusM * p.radiusM);
+		Check(meadowBush > 0 && bushDensity < groundDensity / 10.0, "prairie : buissons epars");
 
 		// Seuls les points DE la carte : une carte voisine ne produit pas de doublon.
 		ScatterFile left, right;

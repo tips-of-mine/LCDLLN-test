@@ -18,6 +18,12 @@
 //    des corridors des villes de départ ET que les routes du lore ne relient pas
 //    déjà ses deux villes à pied (cases jouables, détour ≤ 1,5 ×). Les autres
 //    sont abandonnées : hors corridors, une case sans route du lore n'a pas de route.
+// 3 bis. Routes SOUDÉES (v1.0.134) : plus aucune route en double. Tracé par importance
+//    (voie impériale, grandes routes, routes, sentiers ; embranchements en dernier) ; une
+//    portion déjà reliée par le réseau tracé n'est pas retracée ; un corridor commun est
+//    emprunté (jonctions exactes sur la route hôte, qui reçoit l'identifiant de la route
+//    dans Road::alsoLoreIds) ; les méandres ne rapprochent jamais une route d'une autre.
+//    Même soudure pour les routes du générateur gardées (et le réseau des Enfers).
 // 4. Lissage (RDP, méandres, Chaikin) + profil en long GLOBAL (pente ≤ 16 %)
 //    calculé sur le relief macro : chaque cellule aplanit sa portion de route au
 //    même profil, les chaussées se raccordent donc exactement aux frontières.
@@ -25,7 +31,8 @@
 // CELLULE :
 // 5. Découpe des routes globales sur l'emprise de la cellule, aplanissement
 //    de la chaussée et des accotements.
-// 6. Chemins locaux (A* sur ≈ 10 m) reliant chaque lieu procédural au réseau.
+// 6. Chemins locaux (A* sur ≈ 10 m) reliant chaque lieu procédural au réseau
+//    (v1.0.134 : arrêtés à la première chaussée atteinte).
 
 #include "WorldGenContext.h"
 #include "Parallel.h"
@@ -295,6 +302,159 @@ namespace tools::world_gen
 			return len;
 		}
 
+		/// Index spatial (v1.0.134, routes soudées) des points des tronçons déjà tracés
+		/// (cases de 250 m) : détection des corridors communs, points de raccord exacts sur
+		/// la route hôte et garde des méandres (pas de nouvelle parallèle le long d'une route).
+		struct RoadIndex
+		{
+			struct Ref { int piece = -1; size_t k = 0; };
+			static constexpr double kCell = 250.0;
+			const std::vector<Road>* roads = nullptr; ///< tronçons indexés (référencés par indice)
+			std::unordered_map<int64_t, std::vector<Ref>> cells;
+			static int64_t Key(int x, int z) { return (static_cast<int64_t>(z) << 32) ^ static_cast<uint32_t>(x); }
+			/// Indexe le tronçon \p pi de *roads (un point sur deux, ≈ 8 m, et le dernier).
+			void Add(int pi)
+			{
+				const std::vector<Vec2>& pts = (*roads)[static_cast<size_t>(pi)].points;
+				for (size_t k = 0; k < pts.size(); k += (k + 2 < pts.size() ? 2 : 1))
+					cells[Key(static_cast<int>(std::floor(pts[k].x / kCell)), static_cast<int>(std::floor(pts[k].z / kCell)))].push_back({ pi, k });
+			}
+			/// Point indexé le plus proche de \p p à moins de \p radius (m) ; faux si aucun.
+			/// \param out  tronçon et indice du point trouvé ; \param dist distance (m), optionnelle.
+			/// Déterministe : à distance égale, le premier indexé l'emporte.
+			bool Nearest(Vec2 p, double radius, Ref& out, double* dist = nullptr) const
+			{
+				const int cx = static_cast<int>(std::floor(p.x / kCell)), cz = static_cast<int>(std::floor(p.z / kCell));
+				const int r = static_cast<int>(std::ceil(radius / kCell));
+				double best = radius;
+				bool found = false;
+				for (int dz = -r; dz <= r; ++dz)
+					for (int dx = -r; dx <= r; ++dx)
+					{
+						const auto it = cells.find(Key(cx + dx, cz + dz));
+						if (it == cells.end()) continue;
+						for (const Ref& ref : it->second)
+						{
+							const Vec2 q = (*roads)[static_cast<size_t>(ref.piece)].points[ref.k];
+							const double d = std::hypot(q.x - p.x, q.z - p.z);
+							if (d < best || (!found && d <= best)) { best = d; out = ref; found = true; }
+						}
+					}
+				if (found && dist) *dist = best;
+				return found;
+			}
+			/// Distance (m) de \p p au tronçon indexé le plus proche, plafonnée à \p radius.
+			double Distance(Vec2 p, double radius) const
+			{
+				Ref r;
+				double d = radius;
+				return Nearest(p, radius, r, &d) ? d : radius;
+			}
+		};
+
+		/// Soudure des routes (v1.0.134) : un nœud du chemin brut A* est « sur » une route
+		/// déjà tracée à moins de kWeldRadiusM ; une portion qui la longe sur au moins
+		/// kWeldMinRunM n'est pas retracée (la route emprunte la chaussée existante, raccordée
+		/// à l'entrée et à la sortie par une jonction exacte sur l'hôte).
+		constexpr double kWeldRadiusM = 300.0;
+		constexpr double kWeldMinRunM = 600.0;
+		/// Garde des méandres : un écart latéral n'est pas appliqué s'il rapproche la route à
+		/// moins de kMeanderClearM d'une autre route (il en ferait une parallèle).
+		constexpr double kMeanderClearM = 400.0;
+		/// Approche d'une jonction : le tronçon quitte (ou rejoint) le chemin brut au dernier
+		/// nœud situé à au moins kApproachM de toute route, puis va droit sur le point de l'hôte
+		/// le plus proche : il aborde l'hôte franchement, sans longer la route en biais.
+		constexpr double kApproachM = 450.0;
+
+		/// Indice du point du tronçon \p r le plus proche de \p p (recherche exhaustive). Pur.
+		size_t NearestOnPiece(const Road& r, Vec2 p)
+		{
+			size_t best = 0;
+			double bd = 1e300;
+			for (size_t k = 0; k < r.points.size(); ++k)
+			{
+				const double d = std::hypot(r.points[k].x - p.x, r.points[k].z - p.z);
+				if (d < bd) { bd = d; best = k; }
+			}
+			return best;
+		}
+
+		/// Nœud d'approche (v1.0.134) d'une jonction sur le chemin brut \p raw : en partant de
+		/// \p start et en avançant de \p step (−1 vers l'amont, +1 vers l'aval) jusqu'à \p limit
+		/// compris, premier nœud à au moins kApproachM de toute route de \p idx ; \p limit si
+		/// aucun. Pur.
+		size_t ApproachNode(const std::vector<Vec2>& raw, const RoadIndex& idx, size_t start, size_t limit, int step)
+		{
+			size_t k = start;
+			while (k != limit)
+			{
+				if (idx.Distance(raw[k], kApproachM + 1.0) >= kApproachM) return k;
+				k = static_cast<size_t>(static_cast<long>(k) + step);
+			}
+			return limit;
+		}
+
+		/// Portion [s, e] (indices de nœuds) d'un chemin brut qui longe une route déjà tracée.
+		struct WeldRun { size_t s = 0, e = 0; };
+
+		/// Portions (v1.0.134) du chemin brut \p raw qui longent un tronçon de \p idx : nœuds à
+		/// moins de kWeldRadiusM d'un point indexé, trous de un ou deux nœuds comblés (croisement
+		/// en biais, méandre de l'hôte), longueur ≥ kWeldMinRunM ; deux portions séparées de moins
+		/// de kWeldMinRunM sont fusionnées (pas de court tronçon collé à l'hôte entre deux
+		/// jonctions). Triées, disjointes. Pur.
+		std::vector<WeldRun> FindWeldRuns(const std::vector<Vec2>& raw, const RoadIndex& idx)
+		{
+			std::vector<WeldRun> runs;
+			if (raw.size() < 2 || idx.cells.empty()) return runs;
+			std::vector<uint8_t> near(raw.size(), 0);
+			for (size_t k = 0; k < raw.size(); ++k) near[k] = idx.Distance(raw[k], kWeldRadiusM + 1.0) <= kWeldRadiusM;
+			std::vector<double> along(raw.size(), 0.0);
+			for (size_t k = 1; k < raw.size(); ++k) along[k] = along[k - 1] + std::hypot(raw[k].x - raw[k - 1].x, raw[k].z - raw[k - 1].z);
+			std::vector<WeldRun> all;
+			for (size_t k = 0; k < raw.size();)
+			{
+				if (!near[k]) { ++k; continue; }
+				size_t e = k;
+				while (e + 1 < raw.size() && near[e + 1]) ++e;
+				// Trou d'un ou deux nœuds : la portion continue.
+				if (!all.empty() && k - all.back().e <= 3) all.back().e = e;
+				else all.push_back({ k, e });
+				k = e + 1;
+			}
+			for (const WeldRun& r : all)
+			{
+				if (along[r.e] - along[r.s] < kWeldMinRunM) continue;
+				if (!runs.empty() && along[r.s] - along[runs.back().e] < kWeldMinRunM) runs.back().e = r.e;
+				else runs.push_back(r);
+			}
+			return runs;
+		}
+
+		/// Garde des méandres (v1.0.134) : annule l'écart latéral \p offs[k] (m, le long de la
+		/// normale \p nrm[k]) des points de \p dense qu'il rapprocherait à moins de kMeanderClearM
+		/// d'une route de \p avoid, avec une rampe de 4 points de part et d'autre (pas de cran) :
+		/// l'ondulation ne fabrique pas de parallèle le long d'une route existante.
+		/// Effet de bord : modifie \p offs.
+		void GateMeanders(const std::vector<Vec2>& dense, const std::vector<Vec2>& nrm, std::vector<double>& offs, const RoadIndex& avoid)
+		{
+			std::vector<double> gate(dense.size(), 1.0);
+			for (size_t k = 1; k + 1 < dense.size(); ++k)
+			{
+				if (offs[k] == 0.0) continue;
+				const double dq = avoid.Distance(dense[k] + nrm[k] * offs[k], kMeanderClearM);
+				if (dq < std::min(kMeanderClearM, avoid.Distance(dense[k], kMeanderClearM))) gate[k] = 0.0;
+			}
+			std::vector<double> ramp = gate;
+			for (size_t k = 0; k < dense.size(); ++k)
+				if (gate[k] == 0.0)
+					for (long o = -4; o <= 4; ++o)
+					{
+						const long q = static_cast<long>(k) + o;
+						if (q >= 0 && q < static_cast<long>(dense.size())) ramp[static_cast<size_t>(q)] = std::min(ramp[static_cast<size_t>(q)], std::abs(o) * 0.25);
+					}
+			for (size_t k = 0; k < dense.size(); ++k) offs[k] *= ramp[k];
+		}
+
 		/// Tracé naturel (v1.0.105) d'une route du lore à partir des chemins bruts de
 		/// l'A* entre ses ANCRES successives (cases du lore) : chaque segment est
 		/// simplifié séparément (RDP, l'ancre reste un sommet), subdivisé tous les
@@ -307,9 +467,12 @@ namespace tools::world_gen
 		///        segments.back().back() la dernière ancre.
 		/// \param allowed  masque des nœuds du tracé (voir AStar) : un méandre ne fait pas
 		///        sortir la route du masque.
-		/// Pur (lit le relief macro, les lacs et la graine).
+		/// \param avoid    (v1.0.134) routes déjà tracées : un méandre qui rapprocherait la route
+		///        à moins de kMeanderClearM de l'une d'elles n'est pas appliqué (pas de parallèle
+		///        créée par l'ondulation, en particulier à l'approche d'une jonction). nullptr : aucune.
+		/// Pur (lit le relief macro, les lacs, la graine et l'index).
 		std::vector<Vec2> NaturalizeThroughAnchors(const GlobalWorld& g, const std::vector<std::vector<Vec2>>& segments,
-			const Grid<uint8_t>& allowed)
+			const Grid<uint8_t>& allowed, const RoadIndex* avoid = nullptr)
 		{
 			const WorldMaster& m = g.master;
 			const double sea = m.scale.seaLevelM;
@@ -338,6 +501,9 @@ namespace tools::world_gen
 			std::vector<double> along(dense.size(), 0.0);
 			for (size_t k = 1; k < dense.size(); ++k) along[k] = along[k - 1] + std::hypot(dense[k].x - dense[k - 1].x, dense[k].z - dense[k - 1].z);
 			std::vector<Vec2> meander = dense;
+			// Écart latéral brut de chaque point (nul aux extrémités) et normale du tracé.
+			std::vector<double> offs(dense.size(), 0.0);
+			std::vector<Vec2> nrm(dense.size(), Vec2{ 0.0, 0.0 });
 			for (size_t k = 1; k + 1 < dense.size(); ++k)
 			{
 				const Vec2 d = dense[k + 1] - dense[k - 1];
@@ -348,9 +514,15 @@ namespace tools::world_gen
 				const double taper = Clamp(nearest / 900.0, 0.0, 1.0);
 				// v1.0.131 : méandres plus amples (≈ ±240 m, longueur d'onde ≈ 3,4 km) et ondulation
 				// fine (≈ ±50 m, ≈ 900 m) : la route épouse le pays au lieu de filer droit.
-				const double off = (Fbm(dense[k].x, dense[k].z, 3400.0, 2, m.seed + 4747) * 240.0
+				offs[k] = (Fbm(dense[k].x, dense[k].z, 3400.0, 2, m.seed + 4747) * 240.0
 					+ Fbm(dense[k].x, dense[k].z, 900.0, 2, m.seed + 4749) * 50.0) * taper;
-				const Vec2 q = dense[k] + Vec2{ -d.z / l, d.x / l } * off;
+				nrm[k] = Vec2{ -d.z / l, d.x / l };
+			}
+			if (avoid) GateMeanders(dense, nrm, offs, *avoid);
+			for (size_t k = 1; k + 1 < dense.size(); ++k)
+			{
+				if (offs[k] == 0.0) continue;
+				const Vec2 q = dense[k] + nrm[k] * offs[k];
 				bool wet = SampleBilinear(g.coarse, q.x, q.z) < sea + 1.5;
 				for (const Lake& lk : g.lakes)
 					if (std::hypot(q.x - lk.center.x, q.z - lk.center.z) < lk.radiusM + 30.0) wet = true;
@@ -363,6 +535,75 @@ namespace tools::world_gen
 			out.front() = segments.front().front();
 			out.back() = segments.back().back();
 			return out;
+		}
+
+		/// Tracé naturel d'une route du GÉNÉRATEUR (historique, extrait en v1.0.134) à partir
+		/// de son chemin brut A* : (1) suppression de l'escalier du treillis (RDP 180 m),
+		/// (2) subdivision tous les 150 m, (3) méandres latéraux bruités (longueur d'onde
+		/// ≈ 2,5 km, ±110 m, nuls à moins de 600 m des extrémités et sur l'eau), (4) lissage
+		/// de Chaikin, rééchantillonnage tous les 4 m. Extrémités exactes (raw.front/back).
+		/// \param avoid (v1.0.134) routes déjà tracées : garde des méandres (GateMeanders) pour
+		///        les tronçons soudés ; nullptr pour le réseau historique (tracé inchangé).
+		/// Pur (lit le relief macro, les lacs, la graine et l'index).
+		std::vector<Vec2> NaturalizeGeneratorRoad(const GlobalWorld& g, const std::vector<Vec2>& raw, const RoadIndex* avoid)
+		{
+			const WorldMaster& m = g.master;
+			const double sea = m.scale.seaLevelM;
+			const std::vector<Vec2> simple = SimplifyRdp(raw, 180.0);
+			std::vector<Vec2> dense;
+			for (size_t k = 0; k + 1 < simple.size(); ++k)
+			{
+				const Vec2 a = simple[k], b = simple[k + 1];
+				const int parts = std::max(1, static_cast<int>(std::ceil(std::hypot(b.x - a.x, b.z - a.z) / 150.0)));
+				for (int q = 0; q < parts; ++q) dense.push_back(a + (b - a) * (static_cast<double>(q) / parts));
+			}
+			dense.push_back(simple.back());
+			double total = 0.0;
+			std::vector<double> along(dense.size(), 0.0);
+			for (size_t k = 1; k < dense.size(); ++k) { total += std::hypot(dense[k].x - dense[k - 1].x, dense[k].z - dense[k - 1].z); along[k] = total; }
+			std::vector<double> offs(dense.size(), 0.0);
+			std::vector<Vec2> nrm(dense.size(), Vec2{ 0.0, 0.0 });
+			for (size_t k = 1; k + 1 < dense.size(); ++k)
+			{
+				const Vec2 d = dense[k + 1] - dense[k - 1];
+				const double l = std::hypot(d.x, d.z);
+				if (l < 1e-6) continue;
+				const double taper = Clamp(std::min(along[k], total - along[k]) / 600.0, 0.0, 1.0);
+				offs[k] = Fbm(dense[k].x, dense[k].z, 2500.0, 2, m.seed + 4747) * 110.0 * taper;
+				nrm[k] = Vec2{ -d.z / l, d.x / l };
+			}
+			if (avoid) GateMeanders(dense, nrm, offs, *avoid);
+			std::vector<Vec2> meander = dense;
+			for (size_t k = 1; k + 1 < dense.size(); ++k)
+			{
+				if (nrm[k].x == 0.0 && nrm[k].z == 0.0) continue;
+				const Vec2 q = dense[k] + nrm[k] * offs[k];
+				bool wet = SampleBilinear(g.coarse, q.x, q.z) < sea + 1.5;
+				for (const Lake& lk : g.lakes)
+					if (std::hypot(q.x - lk.center.x, q.z - lk.center.z) < lk.radiusM + 30.0) wet = true;
+				if (!wet) meander[k] = q;
+			}
+			std::vector<Vec2> out = ResamplePolyline(SmoothPolyline(meander, 4), 4.0);
+			out.front() = raw.front();
+			out.back() = raw.back();
+			return out;
+		}
+
+		/// Raccord du profil en long à une jonction (v1.0.134) : décale l'altitude des 30
+		/// premiers (\p atStart) ou derniers points (≈ 120 m) de \p r, en rampe linéaire, pour
+		/// que la chaussée arrive exactement à l'altitude \p hostY de la route hôte.
+		/// Effet de bord : modifie r.profileY.
+		void BlendJunctionProfile(Road& r, bool atStart, double hostY)
+		{
+			const size_t n = r.profileY.size();
+			if (n == 0) return;
+			const size_t span = std::min<size_t>(30, n);
+			const double delta = hostY - (atStart ? r.profileY.front() : r.profileY.back());
+			for (size_t q = 0; q < span; ++q)
+			{
+				const double w = 1.0 - static_cast<double>(q) / static_cast<double>(span);
+				r.profileY[atStart ? q : n - 1 - q] += delta * w;
+			}
 		}
 
 		/// A* entre deux ancres d'une route du lore (v1.0.105). Si l'une d'elles est
@@ -437,14 +678,144 @@ namespace tools::world_gen
 			return c && IsMajor(c->kind);
 		}
 
+		/// Soudure du réseau du GÉNÉRATEUR (v1.0.134) : chaque route \p which (indices dans
+		/// \p network, dans l'ordre) est ajoutée à \p out ; la portion de son chemin brut qui longe
+		/// un tronçon déjà présent dans \p out (FindWeldRuns) n'est pas retracée : la route
+		/// s'arrête sur une jonction exacte de l'hôte et repart de la jonction de sortie. Une
+		/// extrémité (ville) déjà desservie par l'hôte n'a pas de raccord. Une route sans portion
+		/// commune est recopiée telle quelle (tracé historique). Les tronçons soudés ont un
+		/// fromId / toId vide côté jonction.
+		/// \param raws  chemins bruts A* des routes de \p network (même indice).
+		/// \param idx   index de \p out (idx.roads == &out), mis à jour.
+		/// Effet de bord : \p out, \p idx, cg.onRoad. Renvoie le nombre de routes soudées.
+		size_t WeldGeneratorRoads(const GlobalWorld& g, CostGrid& cg, const RiverIndex& rivers, const std::vector<Road>& network,
+			const std::vector<std::vector<Vec2>>& raws, const std::vector<size_t>& which, std::vector<Road>& out, RoadIndex& idx)
+		{
+			const WorldMaster& m = g.master;
+			const double sea = m.scale.seaLevelM;
+			size_t weldedRoads = 0;
+			/// Extrémité d'une portion : ville (id) ou jonction sur un tronçon (snap ≥ 0).
+			struct End { Vec2 p; std::string id; int snap = -1; size_t k = 0; };
+			for (size_t r : which)
+			{
+				const Road& src = network[r];
+				const std::vector<Vec2>& raw = raws[r];
+				const std::vector<WeldRun> runs = FindWeldRuns(raw, idx);
+				if (runs.empty())
+				{
+					out.push_back(src);
+					idx.Add(static_cast<int>(out.size() - 1));
+					continue;
+				}
+				++weldedRoads;
+				// Tronçon le plus proche de p (−1 si aucun à portée de soudure).
+				auto hostOf = [&](Vec2 p) {
+					RoadIndex::Ref ref;
+					return idx.Nearest(p, kWeldRadiusM * 1.5, ref) ? ref.piece : -1;
+				};
+				// Jonction : point exact de l'hôte le plus proche de p.
+				auto junctionAt = [&](Vec2 p, End& e) {
+					RoadIndex::Ref ref;
+					if (!idx.Nearest(p, kWeldRadiusM * 1.5, ref)) return false;
+					e = End{ out[static_cast<size_t>(ref.piece)].points[ref.k], std::string(), ref.piece, ref.k };
+					return true;
+				};
+				// Jonction sur le point du tronçon host le plus proche de p (faux si host < 0).
+				auto pieceEnd = [&](int host, Vec2 p, End& e) {
+					if (host < 0) return false;
+					const size_t k = NearestOnPiece(out[static_cast<size_t>(host)], p);
+					e = End{ out[static_cast<size_t>(host)].points[k], std::string(), host, k };
+					return true;
+				};
+				// Vrai si la ville id est une extrémité du tronçon host.
+				auto attached = [&](const std::string& id, int host) {
+					return host >= 0 && !id.empty() && (out[static_cast<size_t>(host)].fromId == id || out[static_cast<size_t>(host)].toId == id);
+				};
+				struct Portion { std::vector<Vec2> raw; End a, b; };
+				std::vector<Portion> portions;
+				End start{ raw.front(), src.fromId };
+				size_t from = 0;
+				bool welded = false;
+				// Portion ouverte : start, nœuds bruts from+1 .. upto-1, puis endP.
+				auto open = [&](size_t upto, Vec2 endP) {
+					std::vector<Vec2> p{ start.p };
+					for (size_t k = from + 1; k < upto; ++k) p.push_back(raw[k]);
+					p.push_back(endP);
+					return p;
+				};
+				for (size_t ri = 0; ri < runs.size(); ++ri)
+				{
+					const WeldRun& run = runs[ri];
+					const int host = hostOf(raw[std::min(run.s + 1, run.e)]);
+					if (!(run.s == 0 && attached(src.fromId, host)))
+					{
+						// Entrée par le dernier nœud d'approche (voir kApproachM).
+						const size_t t = run.s > from ? ApproachNode(raw, idx, run.s - 1, from, -1) : from;
+						End j;
+						if (pieceEnd(hostOf(raw[run.s]), t == from ? start.p : raw[t], j) && std::hypot(j.p.x - start.p.x, j.p.z - start.p.z) >= 1.0)
+							portions.push_back({ open(t + 1, j.p), start, j });
+					}
+					welded = true;
+					if (run.e + 1 < raw.size())
+					{
+						// Sortie au droit du premier nœud d'approche.
+						const size_t lim = ri + 1 < runs.size() ? runs[ri + 1].s - 1 : raw.size() - 1;
+						const size_t t = ApproachNode(raw, idx, run.e + 1, lim, +1);
+						if (pieceEnd(hostOf(raw[run.e]), raw[t], start)) { from = t - 1; welded = false; }
+					}
+				}
+				const End B{ raw.back(), src.toId };
+				if (!welded)
+					portions.push_back({ open(raw.size() - 1, B.p), start, B });
+				else if (!attached(src.toId, hostOf(raw[raw.size() - 2])))
+				{
+					End j;
+					if (junctionAt(raw.back(), j)) portions.push_back({ { j.p, B.p }, j, B });
+				}
+				for (Portion& pr : portions)
+				{
+					if (PolylineLength(pr.raw) < 1.0) continue;
+					Road road;
+					road.fromId = pr.a.id; road.toId = pr.b.id;
+					road.major = src.major;
+					road.widthM = src.widthM;
+					road.points = NaturalizeGeneratorRoad(g, pr.raw, &idx);
+					for (const Vec2& p : road.points)
+					{
+						const int i = cg.onRoad.IndexX(p.x), j = cg.onRoad.IndexZ(p.z);
+						if (cg.onRoad.InBounds(i, j)) cg.onRoad.At(i, j) = 1;
+					}
+					std::vector<double> ground(road.points.size());
+					ParallelRows(static_cast<int>(road.points.size()), [&](int k) {
+						ground[static_cast<size_t>(k)] = MacroHeight(m, road.points[static_cast<size_t>(k)].x, road.points[static_cast<size_t>(k)].z);
+					});
+					ComputeProfile(road, ground, g.cities, rivers, sea, 0.16);
+					if (pr.a.snap >= 0) BlendJunctionProfile(road, true, out[static_cast<size_t>(pr.a.snap)].profileY[pr.a.k]);
+					if (pr.b.snap >= 0) BlendJunctionProfile(road, false, out[static_cast<size_t>(pr.b.snap)].profileY[pr.b.k]);
+					out.push_back(std::move(road));
+					idx.Add(static_cast<int>(out.size() - 1));
+				}
+			}
+			return weldedRoads;
+		}
+
 		/// Routes du lore (v1.0.105) : tracé case par case, puis tri du réseau du
 		/// générateur (voir l'en-tête du fichier, étapes 2 et 3).
-		/// \param cg       grille de coûts du continent (250 m) ; son marquage des routes
-		///                 (onRoad) est remis à zéro puis rempli par les routes du lore.
-		/// \param network  réseau du générateur déjà tracé (devient g.generatorRoads).
+		/// v1.0.134 (routes soudées) : ordre de tracé par importance (voie impériale, grandes
+		/// routes, routes, sentiers ; embranchements en dernier) ; une portion déjà reliée par
+		/// le réseau tracé (même paire de villes, détour ≤ 1,5 ×) n'est pas retracée (alias) ;
+		/// un corridor commun (FindWeldRuns) est emprunté, pas doublé : le tronçon s'arrête sur
+		/// une jonction exacte de la route hôte et repart de la jonction de sortie ; l'hôte
+		/// reçoit l'identifiant de la route (Road::alsoLoreIds).
+		/// \param cg         grille de coûts du continent (250 m) ; son marquage des routes
+		///                   (onRoad) est remis à zéro puis rempli par les routes du lore.
+		/// \param network    réseau du générateur déjà tracé (devient g.generatorRoads).
+		/// \param networkRaw chemins bruts A* de \p network (même indice) : soudure des routes
+		///                   du générateur gardées sur les routes du lore.
 		/// Effet de bord : remplit g.roads (routes du lore, puis routes du générateur
-		/// gardées) et g.generatorRoads ; avertissements dans g.report.
-		void BuildLoreRoads(GlobalWorld& g, CostGrid& cg, const RiverIndex& rivers, std::vector<Road> network)
+		/// gardées, soudées) et g.generatorRoads ; avertissements dans g.report.
+		void BuildLoreRoads(GlobalWorld& g, CostGrid& cg, const RiverIndex& rivers, std::vector<Road> network,
+			const std::vector<std::vector<Vec2>>& networkRaw)
 		{
 			namespace wc = engine::world::cells;
 			const WorldMaster& m = g.master;
@@ -468,6 +839,14 @@ namespace tools::world_gen
 			std::vector<Road> pieces;
 			std::vector<Snap> snaps;
 			std::vector<std::string> pieceFrom, pieceTo; // nœuds du graphe (ids ou jonctions)
+			// v1.0.134 : index des tronçons tracés (soudure, jonctions, garde des méandres).
+			RoadIndex index;
+			index.roads = &pieces;
+			/// Arête du graphe des tronçons tracés : nœud d'arrivée, longueur (m), tronçon porteur.
+			struct GEdge { std::string to; double len; size_t piece; };
+			std::map<std::string, std::vector<GEdge>> graph;
+			// Grille de coûts sans attrait des routes (créée au premier détour absurde, v1.0.134).
+			CostGrid bareCg;
 
 			// Position d'une extrémité nommée (ville, sinon POI) ; faux si inconnue.
 			auto entityAnchor = [&](const std::string& id, Anchor& a) {
@@ -511,10 +890,35 @@ namespace tools::world_gen
 				a.ok = PracticablePointInCell(cg, n, e, JitteredCellPoint(m, n, e), a.p); // v1.0.131 : pas le centre
 				return a.ok;
 			};
+			// Plus court chemin (m) entre deux nœuds du graphe des tronçons tracés (∞ si aucun) ;
+			// \p via reçoit les tronçons empruntés (pour les alias).
+			auto shortest = [&](const std::string& a, const std::string& b, std::vector<size_t>& via) {
+				via.clear();
+				std::map<std::string, double> dist;
+				std::map<std::string, std::pair<std::string, size_t>> prev;
+				using QE = std::pair<double, std::string>;
+				std::priority_queue<QE, std::vector<QE>, std::greater<QE>> pq;
+				dist[a] = 0.0; pq.push({ 0.0, a });
+				while (!pq.empty())
+				{
+					const auto [du, u] = pq.top(); pq.pop();
+					if (du > dist[u]) continue;
+					if (u == b)
+					{
+						for (std::string v = b; v != a;) { const auto& pv = prev[v]; via.push_back(pv.second); v = pv.first; }
+						return du;
+					}
+					const auto it = graph.find(u);
+					if (it == graph.end()) continue;
+					for (const GEdge& ed : it->second)
+					{
+						const auto dv = dist.find(ed.to);
+						if (dv == dist.end() || du + ed.len < dv->second) { dist[ed.to] = du + ed.len; prev[ed.to] = { u, ed.piece }; pq.push({ du + ed.len, ed.to }); }
+					}
+				}
+				return std::numeric_limits<double>::infinity();
+			};
 
-			// Ordre : routes aux deux extrémités nommées d'abord, embranchements ensuite
-			// (ils se raccordent aux routes déjà tracées) ; ordre du master sinon.
-			std::vector<size_t> order;
 			// Cellules jouables : generated_cells + corridors du réseau du GÉNÉRATEUR
 			// (mêmes cellules qu'avant v1.0.105, cf. AddStartCorridors).
 			std::set<std::string> playable(m.generatedCells.begin(), m.generatedCells.end());
@@ -544,19 +948,33 @@ namespace tools::world_gen
 						if (c.n == n && c.e == e) mask.At(i, j) = 1;
 					}
 			};
-			for (int pass = 0; pass < 2; ++pass)
-				for (size_t li = 0; li < m.loreRoads.size(); ++li)
-				{
-					const LoreRoadDef& d = m.loreRoads[li];
-					const bool named = !d.fromId.empty() && !d.toId.empty();
-					if (named == (pass == 0)) order.push_back(li);
-				}
+			// Ordre (v1.0.134) : routes aux deux extrémités nommées d'abord, embranchements
+			// ensuite (ils se raccordent aux routes déjà tracées) ; dans chaque groupe, voie
+			// impériale, grandes routes (deux grandes villes), routes, puis sentiers : les routes
+			// importantes sont tracées d'abord et deviennent les hôtes des soudures. Ordre du
+			// master à rang égal (tri stable).
+			auto rankOf = [&](const LoreRoadDef& d) {
+				if (d.type == "imperial_road") return 0;
+				if (d.type == "path") return 3;
+				return IsMajorId(g, d.fromId) && IsMajorId(g, d.toId) ? 1 : 2;
+			};
+			std::vector<size_t> order(m.loreRoads.size());
+			for (size_t li = 0; li < order.size(); ++li) order[li] = li;
+			std::stable_sort(order.begin(), order.end(), [&](size_t x, size_t y) {
+				const LoreRoadDef& a = m.loreRoads[x];
+				const LoreRoadDef& b = m.loreRoads[y];
+				const int na = (!a.fromId.empty() && !a.toId.empty()) ? 0 : 1, nb = (!b.fromId.empty() && !b.toId.empty()) ? 0 : 1;
+				if (na != nb) return na < nb;
+				return rankOf(a) < rankOf(b);
+			});
 
 			size_t tracedRoads = 0, failedSegments = 0, skippedCells = 0;
+			size_t weldRuns = 0, aliasSpans = 0, aliasOnly = 0, upgradedHosts = 0;
 			for (size_t li : order)
 			{
 				const LoreRoadDef& d = m.loreRoads[li];
 				const size_t n = d.waypoints.size();
+				const bool isPath = d.type == "path";
 				// Masque du tracé : cellules jouables + cases de la route.
 				Grid<uint8_t> allowed = playableMask;
 				for (const auto& [cn, ce] : d.cellNE) markCell(allowed, cn, ce);
@@ -621,34 +1039,93 @@ namespace tools::world_gen
 					pts.swap(withCorners);
 				}
 
-				// Tronçons : coupés aux villes traversées et aux segments sans chemin.
-				bool any = false;
-				size_t pieceStart = 0;
+				// Tronçons : coupés aux villes traversées, aux segments sans chemin et (v1.0.134)
+				// aux corridors communs soudés. pa : ancres du tronçon ouvert (pa[0] = départ,
+				// éventuellement une jonction) ; segs[i] : chemin brut de pa[i] à pa[i + 1].
+				bool any = false, present = false;
+				std::vector<Anchor> pa;
 				std::vector<std::vector<Vec2>> segs;
-				// Ferme le tronçon en cours (ancres pieceStart → \p endIdx, index dans pts) :
-				// assemble les segments A* en une Road (id du lore, extrémités, type, largeur),
-				// la naturalise par ses ancres (coins diagonaux ramenés dans les cases reliées),
-				// calcule son profil en long (pente ≤ 16 %, sentier ≤ 18 %) et la marque sur la
-				// grille des routes déjà tracées. Sans segment : ne fait rien.
-				// Effet de bord : pieces, pieceFrom / pieceTo, snaps, cg.onRoad, any ; segs vidé.
-				auto finish = [&](size_t endIdx) {
-					if (segs.empty()) return;
-					const Anchor& A = pts[pieceStart];
-					const Anchor& B = pts[endIdx];
+				bool welded = false; // la route emprunte en ce moment un tronçon existant
+				// Ajoute la route à la liste des routes qui empruntent le tronçon \p pi (alias) ;
+				// une route (non sentier) qui emprunte un sentier ou une grande route qui emprunte
+				// une route plus étroite l'élargit (la chaussée commune prend la classe la plus haute).
+				// Effet de bord : pieces[pi], present, upgradedHosts.
+				auto alias = [&](int pi) {
+					if (pi < 0) return;
+					Road& h = pieces[static_cast<size_t>(pi)];
+					present = true;
+					if (h.loreId == d.id) return;
+					if (std::find(h.alsoLoreIds.begin(), h.alsoLoreIds.end(), d.id) == h.alsoLoreIds.end()) h.alsoLoreIds.push_back(d.id);
+					const bool major = d.type == "imperial_road";
+					if ((h.path && !isPath) || (major && !h.major))
+					{
+						++upgradedHosts;
+						h.path = h.path && isPath;
+						h.major = h.major || major;
+						h.widthM = std::max(h.widthM, h.path ? 3.2 : (h.major ? 7.0 : 5.0));
+					}
+				};
+				// Tronçon le plus proche de p, à portée de soudure (−1 si aucun).
+				auto hostOf = [&](Vec2 p) {
+					RoadIndex::Ref ref;
+					return index.Nearest(p, kWeldRadiusM * 1.5, ref) ? ref.piece : -1;
+				};
+				// Jonction (ancre sans id) sur le point exact du tronçon le plus proche de p.
+				auto junctionAt = [&](Vec2 p, Anchor& j) {
+					RoadIndex::Ref ref;
+					if (!index.Nearest(p, kWeldRadiusM * 1.5, ref)) return false;
+					j = Anchor{};
+					j.p = pieces[static_cast<size_t>(ref.piece)].points[ref.k];
+					j.ok = true;
+					j.snapPiece = ref.piece;
+					j.snapK = ref.k;
+					return true;
+				};
+				// Jonction sur le point du tronçon \p host le plus proche de p (faux si host < 0).
+				auto pieceJunction = [&](int host, Vec2 p, Anchor& j) {
+					if (host < 0) return false;
+					j = Anchor{};
+					j.snapPiece = host;
+					j.snapK = NearestOnPiece(pieces[static_cast<size_t>(host)], p);
+					j.p = pieces[static_cast<size_t>(host)].points[j.snapK];
+					j.ok = true;
+					return true;
+				};
+				// Vrai si l'ancre \p a est déjà sur le tronçon \p host : jonction sur un tronçon,
+				// ville / POI extrémité de l'hôte, ou point confondu avec l'une de ses extrémités.
+				auto attached = [&](const Anchor& a, int host) {
+					if (a.snapPiece >= 0) return true;
+					if (host < 0) return false;
+					const Road& h = pieces[static_cast<size_t>(host)];
+					if (!a.id.empty() && (pieceFrom[static_cast<size_t>(host)] == a.id || pieceTo[static_cast<size_t>(host)] == a.id)) return true;
+					for (const Vec2& e : { h.points.front(), h.points.back() })
+						if (std::hypot(e.x - a.p.x, e.z - a.p.z) < 1.0) return true;
+					return false;
+				};
+				// Ferme le tronçon ouvert (ancres pa, segments segs) : assemble les segments A*
+				// en une Road (id du lore, extrémités, type, largeur), la naturalise par ses ancres
+				// (garde des méandres près des routes existantes ; coins diagonaux ramenés dans les
+				// cases reliées), calcule son profil en long (pente ≤ 16 %, sentier ≤ 18 % ; raccord
+				// exact à l'altitude de l'hôte aux jonctions) et l'indexe. Sans segment : vide pa.
+				// Effet de bord : pieces, pieceFrom / pieceTo, snaps, graph, index, cg.onRoad, any ;
+				// pa et segs vidés.
+				auto finish = [&]() {
+					if (segs.empty() || pa.size() != segs.size() + 1) { pa.clear(); segs.clear(); return; }
+					const Anchor A = pa.front();
+					const Anchor B = pa.back();
 					Road road;
 					road.loreId = d.id;
 					road.fromId = A.id; road.toId = B.id;
-					road.path = d.type == "path";
+					road.path = isPath;
 					road.major = d.type == "imperial_road" || (d.type == "road" && IsMajorId(g, A.id) && IsMajorId(g, B.id));
 					road.widthM = road.path ? 3.2 : (road.major ? 7.0 : 5.0);
-					road.points = NaturalizeThroughAnchors(g, segs, allowed);
+					road.points = NaturalizeThroughAnchors(g, segs, allowed, &index);
 					// Le lissage arrondit le coin d'un pas en diagonale : les points à moins de
 					// 50 m du coin qui tombent dans une autre case sont ramenés (au mètre près)
 					// dans la plus proche des deux cases reliées.
-					for (size_t ai = pieceStart; ai <= endIdx; ++ai)
+					for (const Anchor& C : pa)
 					{
-						if (!pts[ai].corner) continue;
-						const Anchor& C = pts[ai];
+						if (!C.corner) continue;
 						for (Vec2& q : road.points)
 						{
 							if (std::hypot(q.x - C.p.x, q.z - C.p.z) > 50.0) continue;
@@ -676,39 +1153,194 @@ namespace tools::world_gen
 						ground[static_cast<size_t>(k)] = MacroHeight(m, road.points[static_cast<size_t>(k)].x, road.points[static_cast<size_t>(k)].z);
 					});
 					ComputeProfile(road, ground, g.cities, rivers, sea, road.path ? 0.18 : 0.16);
+					if (A.snapPiece >= 0) BlendJunctionProfile(road, true, pieces[static_cast<size_t>(A.snapPiece)].profileY[A.snapK]);
+					if (B.snapPiece >= 0) BlendJunctionProfile(road, false, pieces[static_cast<size_t>(B.snapPiece)].profileY[B.snapK]);
 					const size_t pi = pieces.size();
 					const std::string nodeA = A.id.empty() ? "#" + d.id + ":" + std::to_string(pi) + ":a" : A.id;
 					const std::string nodeB = B.id.empty() ? "#" + d.id + ":" + std::to_string(pi) + ":b" : B.id;
-					if (A.snapPiece >= 0) snaps.push_back({ nodeA, static_cast<size_t>(A.snapPiece), A.snapK });
-					if (B.snapPiece >= 0) snaps.push_back({ nodeB, static_cast<size_t>(B.snapPiece), B.snapK });
+					// Graphe des tronçons tracés : arête du tronçon, raccords aux hôtes.
+					const double len = PolylineLength(road.points);
+					graph[nodeA].push_back({ nodeB, len, pi });
+					graph[nodeB].push_back({ nodeA, len, pi });
+					for (const auto& [J, node] : { std::pair<const Anchor*, const std::string*>{ &A, &nodeA }, { &B, &nodeB } })
+					{
+						if (J->snapPiece < 0) continue;
+						const size_t host = static_cast<size_t>(J->snapPiece);
+						snaps.push_back({ *node, host, J->snapK });
+						const std::vector<Vec2>& hp = pieces[host].points;
+						const double toA = PolylineLength(std::vector<Vec2>(hp.begin(), hp.begin() + static_cast<long>(J->snapK) + 1));
+						const double toB = PolylineLength(hp) - toA;
+						graph[*node].push_back({ pieceFrom[host], toA, host }); graph[pieceFrom[host]].push_back({ *node, toA, host });
+						graph[*node].push_back({ pieceTo[host], toB, host }); graph[pieceTo[host]].push_back({ *node, toB, host });
+					}
 					pieceFrom.push_back(nodeA); pieceTo.push_back(nodeB);
 					pieces.push_back(std::move(road));
+					index.Add(static_cast<int>(pi));
+					pa.clear();
 					segs.clear();
 					any = true;
+					present = true;
+				};
+				// Ajoute au tronçon ouvert le segment pa.back() → nœuds bruts raw[from+1 .. upto-1]
+				// → \p end (nouvelle ancre). Ancre confondue avec pa.back() (< 1 m) : pa.back() en
+				// prend la jonction, sans segment.
+				auto extend = [&](const std::vector<Vec2>& raw, size_t from, size_t upto, const Anchor& end) {
+					if (pa.empty()) { pa.push_back(end); return; }
+					if (std::hypot(end.p.x - pa.back().p.x, end.p.z - pa.back().p.z) < 1.0)
+					{
+						if (end.snapPiece >= 0 && pa.back().snapPiece < 0)
+						{
+							pa.back().snapPiece = end.snapPiece; pa.back().snapK = end.snapK; pa.back().p = end.p;
+							if (!segs.empty()) segs.back().back() = end.p;
+						}
+						return;
+					}
+					std::vector<Vec2> seg{ pa.back().p };
+					for (size_t k = from + 1; k < upto; ++k) seg.push_back(raw[k]);
+					seg.push_back(end.p);
+					segs.push_back(std::move(seg));
+					pa.push_back(end);
 				};
 				for (size_t i = 0; i + 1 < pts.size(); ++i)
 				{
+					// v1.0.134 — portion entre deux extrémités nommées déjà reliée par le réseau
+					// tracé (détour ≤ 1,5 × la ligne brisée de ses ancres, cases intermédiaires
+					// desservies) : pas de second tracé, la route emprunte ces tronçons (alias).
+					if (!welded && segs.empty() && !pts[i].id.empty())
+					{
+						size_t j = i + 1;
+						while (j < pts.size() && pts[j].id.empty()) ++j;
+						if (j < pts.size())
+						{
+							double chain = 0.0;
+							for (size_t k = i; k < j; ++k) chain += std::hypot(pts[k + 1].p.x - pts[k].p.x, pts[k + 1].p.z - pts[k].p.z);
+							std::vector<size_t> via;
+							const double dist = shortest(pts[i].id, pts[j].id, via);
+							bool ok = pts[i].id != pts[j].id && !via.empty() && dist <= 1.5 * chain;
+							std::set<std::string> cells;
+							for (size_t pi : via)
+							{
+								ok = ok && (isPath || !pieces[pi].path);
+								for (const Vec2& q : pieces[pi].points) cells.insert(wc::LoreCellId(wc::CellFromPosition(q.x, q.z)));
+							}
+							for (size_t k = i + 1; ok && k < j; ++k)
+								ok = pts[k].corner || cells.count(wc::LoreCellId(wc::CellFromPosition(pts[k].p.x, pts[k].p.z))) > 0;
+							if (ok)
+							{
+								for (size_t pi : via) alias(static_cast<int>(pi));
+								++aliasSpans;
+								pa.clear();
+								i = j - 1;
+								continue;
+							}
+						}
+					}
 					std::vector<Vec2> raw = AStarLoose(cg, pts[i].p, pts[i + 1].p, &allowed);
 					// Détour absurde (case enclavée dans un massif : le chemin ferait le tour
 					// du continent) : traité comme une absence de chemin.
 					const double straight = std::hypot(pts[i + 1].p.x - pts[i].p.x, pts[i + 1].p.z - pts[i].p.z);
-					if (raw.size() >= 2 && PolylineLength(raw) > 3.0 * straight + 3000.0) raw.clear();
+					if (raw.size() >= 2 && PolylineLength(raw) > 3.0 * straight + 3000.0)
+					{
+						// v1.0.134 : le détour peut venir de l'attrait des routes déjà tracées (A* qui
+						// fait le tour par le réseau plutôt que de couper hors de son tracé) : nouvel
+						// essai sans cet attrait avant de conclure à une absence de chemin.
+						if (bareCg.cost.data.empty())
+						{
+							bareCg.cost = cg.cost;
+							bareCg.onRoad.Init(cg.onRoad.width, cg.onRoad.height, cg.onRoad.originX, cg.onRoad.originZ, cg.onRoad.step, 0);
+						}
+						raw = AStarLoose(bareCg, pts[i].p, pts[i + 1].p, &allowed);
+						if (raw.size() >= 2 && PolylineLength(raw) > 3.0 * straight + 3000.0) raw.clear();
+					}
 					if (raw.size() < 2)
 					{
 						++failedSegments;
 						const wc::CellCoord ca = wc::CellFromPosition(pts[i].p.x, pts[i].p.z), cb = wc::CellFromPosition(pts[i + 1].p.x, pts[i + 1].p.z);
 						g.Warn("route du lore " + d.id + " : pas de chemin " + wc::LoreCellId(ca) + " -> " + wc::LoreCellId(cb) + " (relief/eau ou detour > 3x, troncon coupe)");
-						finish(i);
-						pieceStart = i + 1;
+						finish();
+						welded = false;
 						continue;
 					}
 					raw.front() = pts[i].p;
 					raw.back() = pts[i + 1].p;
-					segs.push_back(std::move(raw));
-					if (pts[i + 1].city && i + 2 < pts.size()) { finish(i + 1); pieceStart = i + 1; }
+					if (!welded && pa.empty()) pa.push_back(pts[i]);
+					const std::vector<WeldRun> runs = FindWeldRuns(raw, index);
+					size_t from = 0; // nœud brut représenté par pa.back() (portion ouverte)
+					// Soudure héritée du segment précédent qui ne se prolonge pas : sortie au départ,
+					// par le premier nœud d'approche (à kApproachM des routes).
+					if (welded && (runs.empty() || runs.front().s > 0))
+					{
+						const size_t lim = runs.empty() ? raw.size() - 1 : runs.front().s - 1;
+						const size_t t = ApproachNode(raw, index, 0, lim, +1);
+						Anchor J;
+						pa.clear();
+						if (pieceJunction(hostOf(raw.front()), raw[t], J)) { pa.push_back(J); from = t == 0 ? 0 : t - 1; }
+						else pa.push_back(pts[i]);
+						welded = false;
+					}
+					for (size_t ri = 0; ri < runs.size(); ++ri)
+					{
+						const WeldRun& run = runs[ri];
+						if (!welded)
+						{
+							// Entrée : le tronçon ouvert quitte le chemin brut au dernier nœud d'approche
+							// et s'arrête sur l'hôte (jonction exacte), sauf si le départ même du segment
+							// est déjà sur l'hôte (rien à tracer).
+							const int host = hostOf(raw[std::min(run.s + 1, run.e)]);
+							const bool onHost = run.s == 0 && segs.empty() && pa.size() == 1 && attached(pa.front(), host);
+							if (!onHost)
+							{
+								const size_t t = run.s > from ? ApproachNode(raw, index, run.s - 1, from, -1) : from;
+								Anchor J;
+								if (pieceJunction(hostOf(raw[run.s]), t == from ? pa.back().p : raw[t], J)) extend(raw, from, t + 1, J);
+							}
+							finish();
+							pa.clear();
+							welded = true;
+							++weldRuns;
+						}
+						for (size_t k = run.s; k <= run.e; ++k) alias(hostOf(raw[k]));
+						// Sortie au milieu du segment : nouveau tronçon depuis la jonction de sortie,
+						// au droit du premier nœud d'approche.
+						if (run.e + 1 < raw.size())
+						{
+							const size_t lim = ri + 1 < runs.size() ? runs[ri + 1].s - 1 : raw.size() - 1;
+							const size_t t = ApproachNode(raw, index, run.e + 1, lim, +1);
+							Anchor J;
+							if (pieceJunction(hostOf(raw[run.e]), raw[t], J))
+							{
+								pa.clear();
+								pa.push_back(J);
+								from = t - 1;
+								welded = false;
+							}
+						}
+					}
+					const Anchor& T = pts[i + 1];
+					const bool last = i + 2 == pts.size();
+					if (!welded)
+						extend(raw, from, raw.size() - 1, T);
+					else if (!attached(T, hostOf(raw[raw.size() - 2])) && (last || !T.id.empty()))
+					{
+						// Soudé jusqu'à une extrémité nommée (ou la fin) que l'hôte ne dessert pas :
+						// court raccord depuis la jonction la plus proche.
+						Anchor J;
+						if (junctionAt(raw.back(), J))
+						{
+							pa.clear();
+							pa.push_back(J);
+							extend(raw, raw.size() - 1, raw.size() - 1, T);
+							welded = false;
+						}
+					}
+					else if (T.city || last)
+						welded = false; // extrémité déjà desservie par l'hôte : rien à tracer
+					// (sinon : ancre de case intermédiaire, la soudure continue au segment suivant)
+					if (T.city && !last) { finish(); welded = false; }
 				}
-				finish(pts.size() - 1);
+				finish();
 				if (any) ++tracedRoads;
+				else if (present) { ++tracedRoads; ++aliasOnly; }
 			}
 
 			// Graphe des routes du lore praticables à pied (tronçons entièrement dans des
@@ -768,14 +1400,21 @@ namespace tools::world_gen
 				if (loreDistance(gr.fromId, gr.toId) <= 1.5 * PolylineLength(gr.points)) { ++replaced; continue; }
 				keep[r] = 1;
 			}
-			g.roads = std::move(pieces);
+			const size_t lorePieces = pieces.size();
 			size_t kept = 0;
+			std::vector<size_t> keptIdx;
 			for (size_t r = 0; r < network.size(); ++r)
-				if (keep[r]) { g.roads.push_back(network[r]); ++kept; }
+				if (keep[r]) { keptIdx.push_back(r); ++kept; }
+			// v1.0.134 : les routes du générateur gardées sont soudées sur les routes du lore.
+			const size_t weldedGen = WeldGeneratorRoads(g, cg, rivers, network, networkRaw, keptIdx, pieces, index);
+			g.roads = std::move(pieces);
 			std::printf("[world_gen] routes du lore : %zu/%zu tracee(s) en %zu troncon(s) (%zu case(s) sans point praticable, %zu segment(s) sans chemin) ; "
 				"reseau du generateur : %zu route(s) gardee(s) pour les departs, %zu remplacee(s) par le lore, %zu abandonnee(s)\n",
-				tracedRoads, m.loreRoads.size(), g.roads.size() - kept, skippedCells, failedSegments,
+				tracedRoads, m.loreRoads.size(), lorePieces, skippedCells, failedSegments,
 				kept, replaced, network.size() - kept - replaced);
+			std::printf("[world_gen] routes soudees (v1.0.134) : %zu corridor(s) commun(s) emprunte(s), %zu portion(s) deja reliee(s) (alias), "
+				"%zu route(s) sans troncon propre, %zu troncon(s) hote(s) elargi(s), %zu route(s) du generateur soudee(s)\n",
+				weldRuns, aliasSpans, aliasOnly, upgradedHosts, weldedGen);
 			g.generatorRoads = std::move(network);
 		}
 	}
@@ -896,6 +1535,7 @@ namespace tools::world_gen
 		rivers.Build(g.rivers);
 		// 1) Réseau du générateur (historique, inchangé) : corridors des départs.
 		std::vector<Road> network;
+		std::vector<std::vector<Vec2>> networkRaw; // v1.0.134 : chemins bruts (soudure)
 		for (const auto& [ia, ib] : chosen)
 		{
 			const CityDef& A = cities[static_cast<size_t>(ia)];
@@ -912,37 +1552,8 @@ namespace tools::world_gen
 			road.widthM = road.major ? 7.0 : 5.0;
 			raw.front() = A.center;
 			raw.back() = B.center;
-			// Tracé naturel : (1) suppression de l'escalier du treillis (RDP),
-			// (2) subdivision tous les 150 m, (3) méandres latéraux bruités
-			// (longueur d'onde ≈ 2,5 km, ±110 m, nuls aux extrémités et sur l'eau),
-			// (4) lissage de Chaikin.
-			const std::vector<Vec2> simple = SimplifyRdp(raw, 180.0);
-			std::vector<Vec2> dense;
-			for (size_t k = 0; k + 1 < simple.size(); ++k)
-			{
-				const Vec2 a = simple[k], b = simple[k + 1];
-				const int parts = std::max(1, static_cast<int>(std::ceil(std::hypot(b.x - a.x, b.z - a.z) / 150.0)));
-				for (int q = 0; q < parts; ++q) dense.push_back(a + (b - a) * (static_cast<double>(q) / parts));
-			}
-			dense.push_back(simple.back());
-			double total = 0.0;
-			std::vector<double> along(dense.size(), 0.0);
-			for (size_t k = 1; k < dense.size(); ++k) { total += std::hypot(dense[k].x - dense[k - 1].x, dense[k].z - dense[k - 1].z); along[k] = total; }
-			std::vector<Vec2> meander = dense;
-			for (size_t k = 1; k + 1 < dense.size(); ++k)
-			{
-				const Vec2 d = dense[k + 1] - dense[k - 1];
-				const double l = std::hypot(d.x, d.z);
-				if (l < 1e-6) continue;
-				const double taper = Clamp(std::min(along[k], total - along[k]) / 600.0, 0.0, 1.0);
-				const double off = Fbm(dense[k].x, dense[k].z, 2500.0, 2, m.seed + 4747) * 110.0 * taper;
-				const Vec2 q = dense[k] + Vec2{ -d.z / l, d.x / l } * off;
-				bool wet = SampleBilinear(g.coarse, q.x, q.z) < sea + 1.5;
-				for (const Lake& lk : g.lakes)
-					if (std::hypot(q.x - lk.center.x, q.z - lk.center.z) < lk.radiusM + 30.0) wet = true;
-				if (!wet) meander[k] = q;
-			}
-			road.points = ResamplePolyline(SmoothPolyline(meander, 4), 4.0);
+			// Tracé naturel (RDP, méandres ±110 m, Chaikin) : NaturalizeGeneratorRoad.
+			road.points = NaturalizeGeneratorRoad(g, raw, nullptr);
 			road.points.front() = A.center;
 			road.points.back() = B.center;
 			for (const Vec2& p : road.points)
@@ -955,16 +1566,26 @@ namespace tools::world_gen
 				ground[static_cast<size_t>(k)] = MacroHeight(m, road.points[static_cast<size_t>(k)].x, road.points[static_cast<size_t>(k)].z);
 			});
 			ComputeProfile(road, ground, g.cities, rivers, sea, 0.16);
+			networkRaw.push_back(std::move(raw));
 			network.push_back(std::move(road));
 		}
 		if (m.loreRoads.empty())
 		{
 			// Pas de routes du lore (ex. Enfers) : le réseau du générateur est le réseau.
-			g.roads = std::move(network);
-			g.generatorRoads.clear();
+			// v1.0.134 : g.roads en est la version SOUDÉE (corridors communs tracés une seule
+			// fois) ; le réseau historique reste dans g.generatorRoads (corridors des départs).
+			std::vector<Road> welded;
+			RoadIndex idx;
+			idx.roads = &welded;
+			std::vector<size_t> all(network.size());
+			for (size_t r = 0; r < all.size(); ++r) all[r] = r;
+			const size_t n = WeldGeneratorRoads(g, cg, rivers, network, networkRaw, all, welded, idx);
+			std::printf("[world_gen] routes soudees (v1.0.134) : %zu route(s) du generateur soudee(s), %zu troncon(s)\n", n, welded.size());
+			g.roads = std::move(welded);
+			g.generatorRoads = std::move(network);
 		}
 		else
-			BuildLoreRoads(g, cg, rivers, std::move(network));
+			BuildLoreRoads(g, cg, rivers, std::move(network), networkRaw);
 		g.report.roadLengthM = 0.0;
 		for (const Road& r : g.roads) g.report.roadLengthM += PolylineLength(r.points);
 		g.report.roads = g.roads.size();
@@ -985,7 +1606,9 @@ namespace tools::world_gen
 		}
 
 		// 2) Chemins locaux : chaque lieu procédural rejoint le réseau (point de
-		//    route ou agglomération déjà reliée), A* sur ≈ 10 m.
+		//    route ou agglomération déjà reliée), A* sur ≈ 10 m. v1.0.134 : un point de route
+		//    à moins de 1,3 × la distance du centre est préféré au centre d'une agglomération, et
+		//    le chemin s'arrête dès qu'il atteint une chaussée (il ne la longe pas).
 		std::vector<const CityDef*> places;
 		for (const CityDef& c : w.cities) if (!c.procedural.empty()) places.push_back(&c);
 		if (places.empty()) return;
@@ -1043,33 +1666,63 @@ namespace tools::world_gen
 				targets.push_back({ pl->center, pl->id, pl->plateauY });
 				continue;
 			}
+			// v1.0.134 : un point de route l'emporte sur un centre d'agglomération s'il est à moins
+			// de 1,3 × sa distance (le chemin rejoint la route, il ne la longe pas jusqu'au centre).
 			const Target* best = nullptr;
-			double bd = 1e18;
+			const Target* bestRoad = nullptr;
+			double bd = 1e18, bdRoad = 1e18;
 			for (const Target& t : targets)
 			{
 				const double d = std::hypot(t.p.x - pl->center.x, t.p.z - pl->center.z);
-				if (d < bd && d > 1.0) { bd = d; best = &t; }
+				if (d <= 1.0) continue;
+				if (d < bd) { bd = d; best = &t; }
+				if (t.id.empty() && d < bdRoad) { bdRoad = d; bestRoad = &t; }
 			}
+			if (best && !best->id.empty() && bestRoad && bdRoad <= 1.3 * bd) best = bestRoad;
 			if (!best) continue;
 			std::vector<Vec2> raw = AStar(cg, pl->center, best->p);
 			if (raw.size() < 2) { w.Warn("chemin impossible vers " + pl->id); continue; }
 			raw.front() = pl->center;
 			raw.back() = best->p;
+			// v1.0.134 : le chemin s'arrête dès qu'il atteint la chaussée d'une route globale
+			// (bord à moins de 1 m) : raccord au point de l'axe le plus proche, à son altitude.
+			Vec2 endP = best->p;
+			double endY = best->y;
+			std::string endId = best->id;
+			for (size_t k = 1; k < raw.size(); ++k)
+			{
+				const int ri = w.roadDist.IndexX(raw[k].x), rj = w.roadDist.IndexZ(raw[k].z);
+				if (!w.roadDist.InBounds(ri, rj) || w.roadDist.At(ri, rj) >= 1.0f) continue;
+				double dmin = 1e18;
+				for (const Road& r : w.roads)
+					for (size_t q = 0; q < r.points.size(); ++q)
+					{
+						const double d = std::hypot(r.points[q].x - raw[k].x, r.points[q].z - raw[k].z);
+						if (d < dmin) { dmin = d; endP = r.points[q]; endY = r.profileY[q]; }
+					}
+				if (dmin > 30.0) { endP = best->p; endY = best->y; continue; } // chaussée d'une route hors emprise
+				raw.resize(k + 1);
+				raw.back() = endP;
+				endId.clear();
+				break;
+			}
+			// Lieu posé sur la chaussée : déjà relié, pas de chemin (il reste une cible).
+			if (std::hypot(endP.x - pl->center.x, endP.z - pl->center.z) < 1.0) { targets.push_back({ pl->center, pl->id, pl->plateauY }); continue; }
 			Road road;
-			road.fromId = pl->id; road.toId = best->id;
+			road.fromId = pl->id; road.toId = endId;
 			road.path = true;
 			road.widthM = 3.2;
 			road.points = ResamplePolyline(SmoothPolyline(raw, 3), 4.0);
 			road.points.front() = pl->center;
-			road.points.back() = best->p;
+			road.points.back() = endP;
 			std::vector<double> ground(road.points.size());
 			for (size_t k = 0; k < road.points.size(); ++k) ground[k] = w.HeightAt(road.points[k]);
 			RiverIndex rivers;
 			rivers.Build(w.rivers);
 			std::vector<CityDef> ends;
-			for (const CityDef& c : w.cities) if (c.id == pl->id || c.id == best->id) ends.push_back(c);
+			for (const CityDef& c : w.cities) if (c.id == pl->id || (!endId.empty() && c.id == endId)) ends.push_back(c);
 			ComputeProfile(road, ground, ends, rivers, sea, 0.18);
-			road.profileY.back() = best->y;
+			road.profileY.back() = endY;
 			for (const Vec2& p : road.points)
 			{
 				const int i = cg.onRoad.IndexX(p.x), j = cg.onRoad.IndexZ(p.z);

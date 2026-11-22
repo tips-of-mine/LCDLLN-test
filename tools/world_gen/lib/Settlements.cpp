@@ -79,10 +79,13 @@ namespace tools::world_gen
 		/// Palette d'habitations selon la taille, la race et l'état.
 		std::vector<TemplateRef> Palette(const CityDef& c)
 		{
+			// Atelier décors (BD T1/T3) : pierre sèche et chaume dans les campagnes,
+			// planches et bardeaux dans les villes des Marches (Kendrhir).
 			if (c.procedural == "ferme")
-				return { House("longere_6x10", 2), House("chaumiere_4x4", 2), House("maison_4x6", 1) };
+				return { House("longere_6x10", 1.2), House("chaumiere_4x4", 1.2), House("maison_4x6", 1),
+					House("longere_pierre_6x10", 1.2), House("chaumiere_pierre_4x4", 1.2) };
 			if (c.procedural == "bucherons")
-				return { House("chaumiere_4x4", 3), House("longere_6x10", 1) };
+				return { House("chaumiere_4x4", 1.5), House("longere_6x10", 1), House("chaumiere_pierre_4x4", 1.5) };
 			if (c.procedural == "mine")
 				return { House("chaumiere_4x4", 2), House("forge_6x6", 1) };
 			if (c.procedural == "bandits")
@@ -123,12 +126,15 @@ namespace tools::world_gen
 			if (c.kind == "forteresse")
 				return { House("caserne_8x14", 1.5), House("maison_6x6", 2), House("manoir_8x12", 0.8), House("forge_6x6", 0.6) };
 			if (c.kind == "ville")
-				return { House("maison_4x6", 2), House("maison_6x6", 2), House("echoppe_4x8", 1.5), House("maison_haute_6x8", 1),
-					House("grande_maison_8x10", 0.8) };
+				return { House("maison_4x6", 1.5), House("maison_6x6", 2), House("echoppe_4x8", 1), House("maison_haute_6x8", 1),
+					House("grande_maison_8x10", 0.8), House("maison_planches_4x6", 1.5), House("maison_planches_6x8", 1.5),
+					House("echoppe_planches_4x8", 0.8) };
 			if (c.kind == "village")
-				return { House("chaumiere_4x4", 2), House("maison_4x6", 2), House("longere_6x10", 1.5), House("maison_6x6", 1),
-					House("echoppe_4x8", 0.7) };
-			return { House("chaumiere_4x4", 3), House("longere_6x10", 2), House("maison_4x6", 1.5) }; // hameau
+				return { House("chaumiere_4x4", 1.2), House("maison_4x6", 1.5), House("longere_6x10", 1), House("maison_6x6", 1),
+					House("echoppe_4x8", 0.7), House("chaumiere_pierre_4x4", 1.2), House("longere_pierre_6x10", 0.8),
+					House("maison_planches_4x6", 1) };
+			return { House("chaumiere_4x4", 1.5), House("longere_6x10", 1), House("maison_4x6", 1.5),
+				House("chaumiere_pierre_4x4", 1.5), House("longere_pierre_6x10", 1) }; // hameau
 		}
 
 		TemplateRef InnFor(const CityDef& c)
@@ -525,6 +531,13 @@ namespace tools::world_gen
 		{
 			SettlementLayout L;
 			L.cityId = c.id;
+			// v1.0.136 : Camp de l'Oracle bâti selon le plan (Oracle.cpp), pas de village générique.
+			if (c.layout == "oracle")
+			{
+				BuildOracleCamp(w, c, L);
+				w.layouts.push_back(std::move(L));
+				continue;
+			}
 			const double R = c.radiusM;
 			const double Rp = Clamp(R * 0.3, 7.0, 16.0);
 			Rng rng(Hash(w.master.seed, HashString(c.id.c_str()), 4242));
@@ -875,7 +888,27 @@ namespace tools::world_gen
 					const Vec2 tan{ -std::sin(a), std::cos(a) };
 					const double yaw = std::atan2(tan.z, tan.x) * -180.0 / kPi; // X local -> tangente
 					if (walls)
-						AddProp(w, "Wall_UnevenBrick_Straight", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece | kOccluder), 0);
+					{
+						// v1.0.133 — rempart continu sur terrain en pente (Heusgly, Ghrunke Dash, Garundel) :
+						// le segment est posé au point le plus BAS du sol sous lui (plus de jour sous le mur)
+						// et monté en étages jusqu'à dépasser de 3 m le point le plus HAUT (on ne l'enjambe
+						// plus depuis l'amont). Au-delà de 6 m de dénivelé sur 2 m, pas de mur (falaise).
+						double lo = 1e18, hi = -1e18;
+						for (int q = 0; q < 9; ++q)
+						{
+							const Vec2 sp = p + tan * ((q % 3 - 1) * 1.05) + Dir(a) * ((q / 3 - 1) * 0.3);
+							const double h = w.HeightAt(sp);
+							lo = std::min(lo, h);
+							hi = std::max(hi, h);
+						}
+						if (hi - lo > 6.0) continue;
+						const double here = w.HeightAt(p);
+						const double kWallHm = 3.12;
+						const int levels = std::clamp(static_cast<int>(std::ceil((hi - lo + 3.0) / kWallHm - 1e-6)), 1, 3);
+						for (int lv = 0; lv < levels; ++lv)
+							AddProp(w, "Wall_UnevenBrick_Straight", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece | kOccluder), 0, 0.0,
+								(lo - here) + lv * kWallHm);
+					}
 					else
 						AddProp(w, "Prop_WoodenFence_Single", p, yaw, 1.0, static_cast<uint8_t>(kSolid | kPiece), 1);
 					w.Occupy(p, 1.2);
@@ -988,20 +1021,38 @@ namespace tools::world_gen
 			{
 				const char* bucheron[] = { "Anvil_Log", "Axe_Bronze", "Prop_Wagon", "Barrel", "Crate_Wooden" };
 				const char* mine[] = { "Pickaxe_Bronze", "Prop_Wagon", "Crate_Wooden", "Bucket_Metal", "Barrel" };
-				const char* bandit[] = { "Prop_Wagon", "Chest_Wood", "Cage_Small", "Barrel", "Crate_Wooden" };
-				const char** set = c.procedural == "mine" ? mine : (c.procedural == "bandits" ? bandit : bucheron);
-				for (int k = 0; k < 10; ++k)
+				// Bandits (BD T1 pl.11-15, horde) : huttes de branchages, braseros sur perche,
+				// grande cage, chariot chargé, auvent de toile (atelier décors).
+				const char* bandit[] = { "Prop_Wagon", "Chest_Wood", "Cage_Small", "Barrel", "Crate_Wooden",
+					"Hut_Branch_1", "Brazier_Pole_1", "Cage_Large", "Prop_Wagon_Loaded", "Tent_Awning_1" };
+				const bool isBandit = c.procedural == "bandits";
+				const char** set = c.procedural == "mine" ? mine : (isBandit ? bandit : bucheron);
+				const uint32_t setN = isBandit ? 10u : 5u;
+				for (int k = 0; k < (isBandit ? 14 : 10); ++k)
 				{
 					const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * rng.Range(R * 0.25, R * 0.8);
 					if (w.IsOccupied(p, 1.4) || w.IsWater(p)) continue;
-					const char* mesh = set[rng.Below(5)];
-					const bool big = std::string(mesh) == "Prop_Wagon";
+					const char* mesh = set[rng.Below(setN)];
+					const std::string ms(mesh);
+					const bool big = ms == "Prop_Wagon" || ms == "Prop_Wagon_Loaded" || ms == "Hut_Branch_1"
+						|| ms == "Tent_Awning_1" || ms == "Cage_Large";
 					AddProp(w, mesh, p, rng.Range(0, 360), 1.0, kSolid, 1, big ? 1.4 : 0.5);
 					w.Occupy(p, big ? 2.0 : 0.8);
 				}
 				// Feu de camp (chaudron sur la place).
 				AddProp(w, "Cauldron", c.center, 0.0, 1.2, kSolid, 0, 0.8);
 			}
+			// Basse-cour des hameaux et villages (BD T1 pl.8-9) : poulailler et abreuvoir.
+			if ((c.kind == "hameau" || c.kind == "village") && c.procedural.empty())
+				for (const char* mesh : { "Coop_1", "Trough_Stone_1" })
+					for (int t = 0; t < 12; ++t)
+					{
+						const Vec2 p = c.center + Dir(rng.Range(0.0, 2.0 * kPi)) * rng.Range(R * 0.45, R * 0.85);
+						if (w.IsOccupied(p, 1.6) || w.IsWater(p)) continue;
+						AddProp(w, mesh, p, rng.Range(0, 360), 1.0, kSolid, 1, 1.1);
+						w.Occupy(p, 1.6);
+						break;
+					}
 
 			// --- Point de départ (villes de départ) : sur la place, face à l'auberge.
 			{

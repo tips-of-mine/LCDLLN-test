@@ -743,7 +743,55 @@ def b_spire(spec, lod):
     return [part]
 
 
+KIT_STYLES = {
+    # Correspondance matériau du kit -> texture de l'atelier (style « Marches » et « hameau »).
+    "plank": {"MI_Plaster": "Wood_Plank", "MI_UnevenBrick": "Wood_Plank", "MI_WoodTrim": "Wood_Dark",
+              "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Shingle"},
+    "drystone": {"MI_Plaster": "Stone_Wall", "MI_UnevenBrick": "Stone_Wall", "MI_WoodTrim": "Wood_Dark",
+                 "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Thatch"},
+}
+
+
+def b_derive(spec, lod):
+    """Pièce de kit dérivée : géométrie exacte de la pièce source (emboîtement garanti),
+    matériaux de l'atelier selon le style, UV refaites par projection en mètres."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(PROPS, spec["source"] + ".gltf"))
+    new = [o for o in bpy.data.objects if o not in before]
+    mapping = KIT_STYLES[spec["style"]]
+    parts = {}
+    for o in new:
+        if o.type != "MESH":
+            continue
+        me = o.data
+        mw = o.matrix_world
+        uvl = me.uv_layers.active
+        for poly in me.polygons:
+            src = me.materials[poly.material_index].name.split(".")[0] if me.materials else "MI_Plaster"
+            tex = mapping.get(src, "Wood_Dark")
+            if tex not in parts:
+                parts[tex] = Part(material(tex, False))
+                parts[tex].smooth = False
+            pt = parts[tex]
+            co = [mw @ me.vertices[me.loops[l].vertex_index].co for l in poly.loop_indices]
+            n = (mw.to_3x3() @ poly.normal)
+            ax = max(range(3), key=lambda i: abs(n[i]))
+            i0 = len(pt.v)
+            pt.v += co
+            pt.f.append(tuple(range(i0, i0 + len(co))))
+            sc = 0.5 if tex in ("Shingle", "Thatch") else 1.0
+            pt.uv.append([((c.y, c.z) if ax == 0 else (c.x, c.z) if ax == 1 else (c.x, c.y)) for c in co])
+            pt.uv[-1] = [(u * sc, v * sc) for u, v in pt.uv[-1]]
+            pt.cn.append(None)
+    for o in new:
+        bpy.data.objects.remove(o, do_unlink=True)
+    return list(parts.values())
+
+
 BUILDERS = {k[2:]: v for k, v in dict(globals()).items() if k.startswith("b_") and callable(v)}
+sys.path.insert(0, HERE)
+import decor_props  # noqa: E402  (props : mobilier, objets, extérieurs, militaire)
+BUILDERS.update(decor_props.register({"Part": Part, "material": material, "tube": tube, "card": card}))
 
 
 # ======================================================================= export
@@ -790,6 +838,56 @@ def normalize_dims(objs, target_h, width_range):
             v.co = Vector((v.co.x * f * fx, v.co.y * f * fx, max(v.co.z * f, -0.3)))
         ob.data.update()
     return f
+
+
+def _bounds(ob):
+    xs = [v.co.x for v in ob.data.vertices]
+    ys = [v.co.y for v in ob.data.vertices]
+    zs = [v.co.z for v in ob.data.vertices]
+    return (min(xs), max(xs)), (min(ys), max(ys)), (min(zs), max(zs))
+
+
+def fit_bbox(objs, ref):
+    """Remplaçant d'un asset existant : recale le LOD0 sur la boîte glTF de référence
+    (pivot compris) par une mise à l'échelle et une translation par axe ; facteurs
+    bornés à [0,8 ; 1,25] (au-delà, l'écart reste signalé par validate_decor.py).
+    glTF -> Blender : X = X, Y_blender = -Z_gltf, Z_blender = Y_gltf."""
+    (x0, x1), (y0, y1), (z0, z1) = _bounds(objs[0])
+    want = ((ref[0], ref[1]), (-ref[5], -ref[4]), (ref[2], ref[3]))
+    have = ((x0, x1), (y0, y1), (z0, z1))
+    sc, off = [], []
+    for (h0, h1), (w0, w1) in zip(have, want):
+        k = (w1 - w0) / (h1 - h0) if h1 - h0 > 1e-6 else 1.0
+        k = min(1.25, max(0.8, k))
+        sc.append(k)
+        off.append(((w0 + w1) - k * (h0 + h1)) / 2)
+    for ob in objs:
+        for v in ob.data.vertices:
+            v.co = Vector((v.co.x * sc[0] + off[0], v.co.y * sc[1] + off[1], v.co.z * sc[2] + off[2]))
+        ob.data.update()
+
+
+def center_xy(objs):
+    """Nouveau prop : origine au centre de la base (X, Y) du LOD0."""
+    (x0, x1), (y0, y1), _ = _bounds(objs[0])
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    for ob in objs:
+        for v in ob.data.vertices:
+            v.co = Vector((v.co.x - cx, v.co.y - cy, v.co.z))
+        ob.data.update()
+
+
+def decimate_to(ob, budget):
+    """Ramène un LOD sous son budget de triangles (Decimate « collapse », UV gardées)."""
+    tris = sum(len(p.vertices) - 2 for p in ob.data.polygons)
+    if tris <= budget:
+        return
+    mod = ob.modifiers.new("dec", "DECIMATE")
+    mod.ratio = budget / tris * 0.92
+    for o in bpy.context.scene.objects:
+        o.select_set(o == ob)
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.modifier_apply(modifier=mod.name)
 
 
 def render_billboard(ob, spec_id):
@@ -881,11 +979,19 @@ def build(spec, do_bb=True):
     for attempt in range(6):  # budget adaptatif : moins de cartes si dépassement
         objs = [to_object(spec["id"] + ("" if lod == 0 else f"_LOD{lod}"), fn(spec, lod)) for lod in range(3)]
         tris = [sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs]
-        if all(t <= b for t, b in zip(tris, budget)):
+        # Props (cote exacte, sans cartes) : pas de réessai, le contrôle signale l'écart.
+        if all(t <= b for t, b in zip(tris, budget)) or spec.get("exact") or attempt == 5:
             break
         spec["_leaf_mult"] = spec.get("_leaf_mult", 1.0) * 0.9
         reset()
-    normalize_dims(objs, h_target, spec["width_m"])
+    if not spec.get("exact"):  # les props sont modélisés à la cote exacte
+        normalize_dims(objs, h_target, spec["width_m"])
+    elif spec.get("bbox_ref"):
+        fit_bbox(objs, spec["bbox_ref"])
+    else:
+        center_xy(objs)
+    for lod, ob in enumerate(objs):
+        decimate_to(ob, budget[lod])
     alpha = {m.name for m in bpy.data.materials if any(l.to_socket.name == "Alpha" for l in m.node_tree.links)}
     report = {"id": spec["id"], "lods": []}
     for lod, ob in enumerate(objs):

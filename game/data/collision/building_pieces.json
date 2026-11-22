@@ -17,6 +17,12 @@
     "doorframe_round_brick":    { "passable": true },
     "doorframe_round_wooddark": { "passable": true },
 
+    "_comment_fence": "v1.0.133 : cloture de bois (champs, palissades, petits lieux) : boite fine au lieu du cylindre de repli de 2 m de diametre.",
+    "prop_woodenfence_single": {
+      "box_count": 1,
+      "box_0": { "cx": 0.0, "cy": 0.41, "cz": 0.0, "hx": 1.03, "hy": 0.41, "hz": 0.06 }
+    },
+
     "wall_plaster_woodgrid": {
       "box_count": 1,
       "box_0": { "cx": 0.0, "cy": 1.55, "cz": -0.10, "hx": 1.0, "hy": 1.57, "hz": 0.18 }

@@ -442,6 +442,142 @@ TEXTURES = {
 }
 
 
+# --------------------------------------------------------------- matériaux (props)
+def planks(name, seed, stops, plank_w=0.18, size=1024, dark_seam=0.45):
+    """Planches verticales (texture 1 m x 1 m) : fil du bois, joints, nœuds."""
+    h = w = size
+    grain = fbm(h, w, seed, 6, 4, aspect=(8.0, 0.25))
+    fine = fbm(h, w, seed + 1, 4, 32)
+    n = max(1, int(round(1.0 / plank_w)))
+    xs = np.arange(w)[None, :] / w * n
+    plank_id = np.floor(xs).astype(np.int32)
+    seam = np.abs(xs - np.round(xs))
+    rng = np.random.default_rng(seed)
+    tone = rng.uniform(0.85, 1.12, n + 1)[plank_id]
+    hgt = 0.6 * grain + 0.25 * fine + 0.15
+    hgt = np.where(seam < 0.03, hgt * dark_seam, hgt)
+    col = colorize(np.clip(grain * 0.8 + fine * 0.2, 0, 1), stops) * tone[..., None]
+    col = np.where((seam < 0.03)[..., None], col * dark_seam, col)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 4.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.78))
+
+
+def metal(name, seed, base, rough=0.55, metallic=0.85, size=512):
+    h = w = size
+    n = fbm(h, w, seed, 5, 8)
+    rust = np.clip((fbm(h, w, seed + 1, 4, 5) - 0.74) * 2.5, 0, 1)
+    col = np.array(base, np.float32) * (0.82 + 0.3 * n)[..., None]
+    col = col * (1 - rust[..., None]) + np.array([110, 62, 38], np.float32) * rust[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(n, 1.5))
+    o = orm(n, rough, metallic, 0.2)
+    o[..., 1] = np.clip(o[..., 1].astype(np.float32) + rust * 90, 0, 255).astype(np.uint8)
+    o[..., 2] = np.clip(o[..., 2].astype(np.float32) * (1 - rust), 0, 255).astype(np.uint8)
+    save(f"T_Decor_{name}_ORM.png", o)
+
+
+def flat(name, seed, base, rough=0.85, var=0.18, aspect=(1.0, 1.0), stripes=None, size=512, metallic=0.0):
+    """Matériau uni bruité (tissu, enduit, cire, céramique, cuir...), rayures option."""
+    h = w = size
+    n = fbm(h, w, seed, 5, 6, aspect=aspect)
+    col = np.array(base, np.float32) * (1 - var / 2 + var * n)[..., None]
+    if stripes:
+        c2, nb = stripes
+        band = (np.floor(np.arange(w)[None, :] / w * nb) % 2 == 1)
+        col = np.where(band[..., None], np.array(c2, np.float32) * (1 - var / 2 + var * n)[..., None], col)
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(n, 1.0))
+    save(f"T_Decor_{name}_ORM.png", orm(n, rough, metallic, 0.25))
+
+
+def thatch(name, seed, size=1024):
+    h = w = size
+    straw = fbm(h, w, seed, 6, 6, aspect=(6.0, 0.2))   # fibres dans le sens de la pente (v)
+    rows = 0.5 + 0.5 * np.sin(np.arange(h)[:, None] / h * 2 * np.pi * 6 + straw * 2)  # bottes en rangs
+    hgt = 0.65 * straw + 0.35 * rows
+    col = colorize(hgt, [(0, (92, 74, 44)), (0.5, (150, 122, 74)), (1, (196, 170, 112))])
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt, 5.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt, 0.95))
+
+
+def shingles(name, seed, stops, rows=8, cols=6, size=1024):
+    h = w = size
+    y = np.arange(h)[:, None] / h * rows
+    x = np.arange(w)[None, :] / w * cols + (np.floor(y) % 2) * 0.5
+    fy, fx = y - np.floor(y), x - np.floor(x)
+    rng = np.random.default_rng(seed)
+    tone = rng.uniform(0.8, 1.15, (rows + 1, cols + 2))[np.floor(y).astype(int) % (rows + 1), np.floor(x).astype(int) % (cols + 2)]
+    grain = fbm(h, w, seed, 4, 10, aspect=(4.0, 0.5))
+    hgt = fy * 0.8 + 0.2 * grain
+    hgt = np.where((fx < 0.04) | (fx > 0.96), hgt * 0.3, hgt)
+    col = colorize(np.clip(grain, 0, 1), stops) * tone[..., None] * (0.7 + 0.3 * fy)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt.astype(np.float32), 5.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt.astype(np.float32), 0.86))
+
+
+def stonewall(name, seed, stops, size=1024, rows=7):
+    """Moellons / pierre sèche : pierres irrégulières en assises, joints sombres."""
+    h = w = size
+    rng = np.random.default_rng(seed)
+    img = np.zeros((h, w), np.float32)
+    ids = np.zeros((h, w), np.int32)
+    y0, k = 0, 0
+    while y0 < h:
+        rh = int(h / rows * rng.uniform(0.7, 1.3))
+        x0 = -int(rng.uniform(0, 0.5) * w / 4)
+        while x0 < w:
+            sw = int(w / 4 * rng.uniform(0.6, 1.5))
+            yy, xx = np.ogrid[y0:min(h, y0 + rh), max(0, x0):min(w, x0 + sw)]
+            cy, cx = y0 + rh / 2, x0 + sw / 2
+            d = ((yy - cy) / (rh / 2)) ** 4 + ((xx - cx) / (sw / 2)) ** 4
+            img[y0:min(h, y0 + rh), max(0, x0):min(w, x0 + sw)] = np.clip(1.1 - d, 0, 1) ** 0.4
+            ids[y0:min(h, y0 + rh), max(0, x0):min(w, x0 + sw)] = k
+            k += 1
+            x0 += sw
+        y0 += rh
+    tone = rng.uniform(0.8, 1.15, k + 1)[ids]
+    n = fbm(h, w, seed + 1, 5, 12)
+    hgt = img * (0.8 + 0.2 * n)
+    col = colorize(n, stops) * tone[..., None] * (0.35 + 0.65 * img)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(hgt, 6.0))
+    save(f"T_Decor_{name}_ORM.png", orm(hgt, 0.9, 0.0, 0.6))
+
+
+TEXTURES.update({
+    "Wood_Plank": lambda: planks("Wood_Plank", 51, [(0, (96, 70, 46)), (0.5, (138, 104, 70)), (1, (176, 140, 98))]),
+    "Wood_Dark": lambda: planks("Wood_Dark", 52, [(0, (54, 40, 28)), (0.5, (82, 62, 44)), (1, (112, 88, 64))], 0.22),
+    "Wood_Weathered": lambda: planks("Wood_Weathered", 53, [(0, (88, 82, 72)), (0.5, (124, 116, 100)), (1, (160, 150, 130))], 0.2),
+    "Iron": lambda: metal("Iron", 54, (74, 72, 70)),
+    "Brass": lambda: metal("Brass", 55, (176, 140, 74), 0.4, 0.95),
+    "Thatch": lambda: thatch("Thatch", 56),
+    "Shingle": lambda: shingles("Shingle", 57, [(0, (64, 52, 42)), (0.5, (98, 82, 64)), (1, (130, 112, 88))]),
+    "Shingle_Slate": lambda: shingles("Shingle_Slate", 58, [(0, (52, 60, 72)), (0.5, (76, 88, 104)), (1, (104, 116, 132))], 9, 7),
+    "Stone_Wall": lambda: stonewall("Stone_Wall", 59, [(0, (90, 86, 78)), (0.5, (134, 128, 116)), (1, (170, 164, 150))]),
+    "Plaster": lambda: flat("Plaster", 60, (206, 194, 168), 0.9, 0.12),
+    "Cloth_White": lambda: flat("Cloth_White", 61, (214, 206, 186), 0.9, 0.14, (1.0, 8.0)),
+    "Cloth_Red": lambda: flat("Cloth_Red", 62, (142, 46, 38), 0.9, 0.18, (1.0, 8.0)),
+    "Cloth_Ochre": lambda: flat("Cloth_Ochre", 63, (196, 150, 72), 0.9, 0.16, (1.0, 8.0)),
+    "Cloth_Striped": lambda: flat("Cloth_Striped", 64, (196, 178, 140), 0.9, 0.14, (1.0, 8.0), stripes=((150, 52, 42), 8)),
+    "Canvas": lambda: flat("Canvas", 65, (182, 168, 136), 0.92, 0.2, (1.0, 6.0)),
+    "Leather": lambda: flat("Leather", 66, (98, 64, 40), 0.7, 0.25),
+    "Fur": lambda: flat("Fur", 67, (122, 98, 72), 0.98, 0.4, (3.0, 1.0)),
+    "Wax": lambda: flat("Wax", 68, (226, 214, 180), 0.55, 0.08),
+    "Ceramic": lambda: flat("Ceramic", 69, (160, 92, 58), 0.7, 0.18),
+    "Glass_Green": lambda: flat("Glass_Green", 70, (88, 120, 96), 0.15, 0.1),
+    "Glass_Amber": lambda: flat("Glass_Amber", 71, (150, 96, 40), 0.15, 0.1),
+    "Glass_Clear": lambda: flat("Glass_Clear", 72, (176, 190, 196), 0.1, 0.06),
+    "Bone": lambda: flat("Bone", 73, (214, 200, 168), 0.7, 0.2),
+    "Straw": lambda: thatch("Straw", 74),
+    "Paper": lambda: flat("Paper", 75, (214, 196, 156), 0.85, 0.12),
+    "Book_Covers": lambda: flat("Book_Covers", 76, (110, 52, 42), 0.75, 0.2, stripes=((60, 76, 96), 6)),
+    "Rope": lambda: flat("Rope", 77, (150, 124, 84), 0.95, 0.3, (6.0, 0.5)),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

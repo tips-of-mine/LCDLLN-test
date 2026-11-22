@@ -79,10 +79,13 @@ namespace tools::world_gen
 		/// Palette d'habitations selon la taille, la race et l'état.
 		std::vector<TemplateRef> Palette(const CityDef& c)
 		{
+			// Atelier décors (BD T1/T3) : pierre sèche et chaume dans les campagnes,
+			// planches et bardeaux dans les villes des Marches (Kendrhir).
 			if (c.procedural == "ferme")
-				return { House("longere_6x10", 2), House("chaumiere_4x4", 2), House("maison_4x6", 1) };
+				return { House("longere_6x10", 1.2), House("chaumiere_4x4", 1.2), House("maison_4x6", 1),
+					House("longere_pierre_6x10", 1.2), House("chaumiere_pierre_4x4", 1.2) };
 			if (c.procedural == "bucherons")
-				return { House("chaumiere_4x4", 3), House("longere_6x10", 1) };
+				return { House("chaumiere_4x4", 1.5), House("longere_6x10", 1), House("chaumiere_pierre_4x4", 1.5) };
 			if (c.procedural == "mine")
 				return { House("chaumiere_4x4", 2), House("forge_6x6", 1) };
 			if (c.procedural == "bandits")
@@ -123,12 +126,15 @@ namespace tools::world_gen
 			if (c.kind == "forteresse")
 				return { House("caserne_8x14", 1.5), House("maison_6x6", 2), House("manoir_8x12", 0.8), House("forge_6x6", 0.6) };
 			if (c.kind == "ville")
-				return { House("maison_4x6", 2), House("maison_6x6", 2), House("echoppe_4x8", 1.5), House("maison_haute_6x8", 1),
-					House("grande_maison_8x10", 0.8) };
+				return { House("maison_4x6", 1.5), House("maison_6x6", 2), House("echoppe_4x8", 1), House("maison_haute_6x8", 1),
+					House("grande_maison_8x10", 0.8), House("maison_planches_4x6", 1.5), House("maison_planches_6x8", 1.5),
+					House("echoppe_planches_4x8", 0.8) };
 			if (c.kind == "village")
-				return { House("chaumiere_4x4", 2), House("maison_4x6", 2), House("longere_6x10", 1.5), House("maison_6x6", 1),
-					House("echoppe_4x8", 0.7) };
-			return { House("chaumiere_4x4", 3), House("longere_6x10", 2), House("maison_4x6", 1.5) }; // hameau
+				return { House("chaumiere_4x4", 1.2), House("maison_4x6", 1.5), House("longere_6x10", 1), House("maison_6x6", 1),
+					House("echoppe_4x8", 0.7), House("chaumiere_pierre_4x4", 1.2), House("longere_pierre_6x10", 0.8),
+					House("maison_planches_4x6", 1) };
+			return { House("chaumiere_4x4", 1.5), House("longere_6x10", 1), House("maison_4x6", 1.5),
+				House("chaumiere_pierre_4x4", 1.5), House("longere_pierre_6x10", 1) }; // hameau
 		}
 
 		TemplateRef InnFor(const CityDef& c)

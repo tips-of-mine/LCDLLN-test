@@ -3850,6 +3850,1206 @@
       "billboard": false,
       "replaces": null,
       "ref": "T1-P028-C2 (figure neutre)"
+    },
+    {
+      "id": "Wall_Plank_Straight",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Straight",
+      "style": "plank",
+      "seed": 4001,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        -0.002,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_Plank_Window_Wide_Round",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Wide_Round",
+      "style": "plank",
+      "seed": 4002,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_Plank_Window_Thin_Round",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Thin_Round",
+      "style": "plank",
+      "seed": 4003,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_Plank_Door_Round",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Door_Round",
+      "style": "plank",
+      "seed": 4004,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_4x4",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x4",
+      "style": "plank",
+      "seed": 4005,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.734,
+        -2.74,
+        2.822
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.73,
+        3.73
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_4x6",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x6",
+      "style": "plank",
+      "seed": 4006,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.718,
+        -3.786,
+        3.786
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.72,
+        3.72
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_4x8",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x8",
+      "style": "plank",
+      "seed": 4007,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.713,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.71,
+        3.71
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x4",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x4",
+      "style": "plank",
+      "seed": 4008,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -0.138,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x6",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x6",
+      "style": "plank",
+      "seed": 4009,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -3.938,
+        4.094
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x8",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x8",
+      "style": "plank",
+      "seed": 4010,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x10",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x10",
+      "style": "plank",
+      "seed": 4011,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -5.898,
+        5.955
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x12",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x12",
+      "style": "plank",
+      "seed": 4012,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -6.829,
+        6.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_6x14",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x14",
+      "style": "plank",
+      "seed": 4013,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_8x8",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x8",
+      "style": "plank",
+      "seed": 4014,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.085,
+        5.247
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_8x10",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x10",
+      "style": "plank",
+      "seed": 4015,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.852,
+        6.007
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_8x12",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x12",
+      "style": "plank",
+      "seed": 4016,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.117,
+        7.015
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Shingle_8x14",
+      "num": 21,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x14",
+      "style": "plank",
+      "seed": 4017,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_Plank4",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick4",
+      "style": "plank",
+      "seed": 4018,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.184,
+        2.216,
+        -0.132,
+        2.937,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        4.4,
+        4.4
+      ],
+      "height_m": [
+        2.94,
+        2.94
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_Front_Brick4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_Plank6",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick6",
+      "style": "plank",
+      "seed": 4019,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -3.347,
+        3.348,
+        -0.132,
+        4.384,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        6.7,
+        6.7
+      ],
+      "height_m": [
+        4.38,
+        4.38
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_Front_Brick6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_Plank8",
+      "num": 19,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick8",
+      "style": "plank",
+      "seed": 4020,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.255,
+        4.256,
+        -0.132,
+        5.314,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        8.51,
+        8.51
+      ],
+      "height_m": [
+        5.31,
+        5.31
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P029-C1 ; T1-P032-C4,C6 ; T1-P051-C3 (maisons de planches, bardeaux) ; géométrie de Roof_Front_Brick8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_DryStone_Straight",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Straight",
+      "style": "drystone",
+      "seed": 4021,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        -0.002,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Wall_Plaster_Straight (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_DryStone_Window_Wide_Round",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Wide_Round",
+      "style": "drystone",
+      "seed": 4022,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Wall_Plaster_Window_Wide_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_DryStone_Window_Thin_Round",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Window_Thin_Round",
+      "style": "drystone",
+      "seed": 4023,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Wall_Plaster_Window_Thin_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Wall_DryStone_Door_Round",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Wall_Plaster_Door_Round",
+      "style": "drystone",
+      "seed": 4024,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -1.0,
+        1,
+        0,
+        3.123,
+        -0.314,
+        0.092
+      ],
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        3.12,
+        3.12
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Wall_Plaster_Door_Round (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_4x4",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x4",
+      "style": "drystone",
+      "seed": 4025,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.734,
+        -2.74,
+        2.822
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.73,
+        3.73
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_4x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_4x6",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x6",
+      "style": "drystone",
+      "seed": 4026,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.718,
+        -3.786,
+        3.786
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.72,
+        3.72
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_4x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_4x8",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_4x8",
+      "style": "drystone",
+      "seed": 4027,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.757,
+        2.757,
+        -0.516,
+        3.713,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        5.51,
+        5.51
+      ],
+      "height_m": [
+        3.71,
+        3.71
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_4x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x4",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x4",
+      "style": "drystone",
+      "seed": 4028,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -0.138,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x6",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x6",
+      "style": "drystone",
+      "seed": 4029,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -3.938,
+        4.094
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x8",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x8",
+      "style": "drystone",
+      "seed": 4030,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -4.829,
+        4.854
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x10",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x10",
+      "style": "drystone",
+      "seed": 4031,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -5.898,
+        5.955
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x12",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x12",
+      "style": "drystone",
+      "seed": 4032,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -6.829,
+        6.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_6x14",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_6x14",
+      "style": "drystone",
+      "seed": 4033,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.125,
+        4.125,
+        -0.782,
+        4.89,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        8.25,
+        8.25
+      ],
+      "height_m": [
+        4.89,
+        4.89
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_6x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_8x8",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x8",
+      "style": "drystone",
+      "seed": 4034,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.085,
+        5.247
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_8x8 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_8x10",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x10",
+      "style": "drystone",
+      "seed": 4035,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -5.852,
+        6.007
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_8x10 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_8x12",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x12",
+      "style": "drystone",
+      "seed": 4036,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.117,
+        7.015
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_8x12 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Thatch_8x14",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_RoundTiles_8x14",
+      "style": "drystone",
+      "seed": 4037,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.976,
+        4.976,
+        -0.78,
+        6.001,
+        -7.877,
+        7.829
+      ],
+      "width_m": [
+        9.95,
+        9.95
+      ],
+      "height_m": [
+        6.0,
+        6.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_RoundTiles_8x14 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_DryStone4",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick4",
+      "style": "drystone",
+      "seed": 4038,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -2.184,
+        2.216,
+        -0.132,
+        2.937,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        4.4,
+        4.4
+      ],
+      "height_m": [
+        2.94,
+        2.94
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_Front_Brick4 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_DryStone6",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick6",
+      "style": "drystone",
+      "seed": 4039,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -3.347,
+        3.348,
+        -0.132,
+        4.384,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        6.7,
+        6.7
+      ],
+      "height_m": [
+        4.38,
+        4.38
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_Front_Brick6 (emboîtement du kit), matériaux de l'atelier"
+    },
+    {
+      "id": "Roof_Front_DryStone8",
+      "num": 22,
+      "family": "kit",
+      "builder": "derive",
+      "source": "Roof_Front_Brick8",
+      "style": "drystone",
+      "seed": 4040,
+      "budget": "building",
+      "exact": true,
+      "bbox_ref": [
+        -4.255,
+        4.256,
+        -0.132,
+        5.314,
+        -0.335,
+        0.794
+      ],
+      "width_m": [
+        8.51,
+        8.51
+      ],
+      "height_m": [
+        5.31,
+        5.31
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T1-P016-C1,C3 ; T3-P028-C1 (pierre sèche, chaume) ; géométrie de Roof_Front_Brick8 (emboîtement du kit), matériaux de l'atelier"
     }
   ]
 }

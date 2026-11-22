@@ -743,6 +743,51 @@ def b_spire(spec, lod):
     return [part]
 
 
+KIT_STYLES = {
+    # Correspondance matériau du kit -> texture de l'atelier (style « Marches » et « hameau »).
+    "plank": {"MI_Plaster": "Wood_Plank", "MI_UnevenBrick": "Wood_Plank", "MI_WoodTrim": "Wood_Dark",
+              "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Shingle"},
+    "drystone": {"MI_Plaster": "Stone_Wall", "MI_UnevenBrick": "Stone_Wall", "MI_WoodTrim": "Wood_Dark",
+                 "MI_Brick": "Stone_Wall", "MI_RockTrim": "Stone_Wall", "MI_RoundTiles": "Thatch"},
+}
+
+
+def b_derive(spec, lod):
+    """Pièce de kit dérivée : géométrie exacte de la pièce source (emboîtement garanti),
+    matériaux de l'atelier selon le style, UV refaites par projection en mètres."""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(PROPS, spec["source"] + ".gltf"))
+    new = [o for o in bpy.data.objects if o not in before]
+    mapping = KIT_STYLES[spec["style"]]
+    parts = {}
+    for o in new:
+        if o.type != "MESH":
+            continue
+        me = o.data
+        mw = o.matrix_world
+        uvl = me.uv_layers.active
+        for poly in me.polygons:
+            src = me.materials[poly.material_index].name.split(".")[0] if me.materials else "MI_Plaster"
+            tex = mapping.get(src, "Wood_Dark")
+            if tex not in parts:
+                parts[tex] = Part(material(tex, False))
+                parts[tex].smooth = False
+            pt = parts[tex]
+            co = [mw @ me.vertices[me.loops[l].vertex_index].co for l in poly.loop_indices]
+            n = (mw.to_3x3() @ poly.normal)
+            ax = max(range(3), key=lambda i: abs(n[i]))
+            i0 = len(pt.v)
+            pt.v += co
+            pt.f.append(tuple(range(i0, i0 + len(co))))
+            sc = 0.5 if tex in ("Shingle", "Thatch") else 1.0
+            pt.uv.append([((c.y, c.z) if ax == 0 else (c.x, c.z) if ax == 1 else (c.x, c.y)) for c in co])
+            pt.uv[-1] = [(u * sc, v * sc) for u, v in pt.uv[-1]]
+            pt.cn.append(None)
+    for o in new:
+        bpy.data.objects.remove(o, do_unlink=True)
+    return list(parts.values())
+
+
 BUILDERS = {k[2:]: v for k, v in dict(globals()).items() if k.startswith("b_") and callable(v)}
 sys.path.insert(0, HERE)
 import decor_props  # noqa: E402  (props : mobilier, objets, extérieurs, militaire)

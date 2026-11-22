@@ -679,6 +679,16 @@ namespace tools::world_gen
 				const char* windowA = brickLevel ? "Wall_UnevenBrick_Window_Wide_Round" : "Wall_Plaster_Window_Wide_Round";
 				const char* windowB = brickLevel ? "Wall_UnevenBrick_Window_Thin_Round" : "Wall_Plaster_Window_Thin_Round";
 				const char* door = brickLevel ? "Wall_UnevenBrick_Door_Round" : "Wall_Plaster_Door_Round";
+				// Atelier décors : styles « planches » et « pierre sèche » (pièces dérivées du kit,
+				// même géométrie, voir tools/asset_pipeline/decor/decor_specs.json).
+				if (s.style == WallStyle::Plank || s.style == WallStyle::DryStone)
+				{
+					const bool pl = s.style == WallStyle::Plank;
+					straight = pl ? "Wall_Plank_Straight" : "Wall_DryStone_Straight";
+					windowA = pl ? "Wall_Plank_Window_Wide_Round" : "Wall_DryStone_Window_Wide_Round";
+					windowB = pl ? "Wall_Plank_Window_Thin_Round" : "Wall_DryStone_Window_Thin_Round";
+					door = pl ? "Wall_Plank_Door_Round" : "Wall_DryStone_Door_Round";
+				}
 				const char* floorMesh = (f == 0) ? (brickLevel ? "Floor_Brick" : "Floor_WoodDark") : "Floor_WoodDark";
 				for (int a = 0; a < nx; ++a)
 					for (int b = 0; b < nz; ++b)
@@ -714,9 +724,11 @@ namespace tools::world_gen
 			if (!s.ruin)
 			{
 				const double ry = 3.0 * floors;
-				parts.push_back(PartJson("Roof_RoundTiles_" + std::to_string(s.widthM) + "x" + std::to_string(s.depthM), 0, ry, 0, 0, false));
-				parts.push_back(PartJson("Roof_Front_Brick" + std::to_string(s.widthM), 0, ry, -hd, 180, false));
-				parts.push_back(PartJson("Roof_Front_Brick" + std::to_string(s.widthM), 0, ry, hd, 0, false));
+				const std::string roof = s.style == WallStyle::Plank ? "Roof_Shingle_" : (s.style == WallStyle::DryStone ? "Roof_Thatch_" : "Roof_RoundTiles_");
+				const std::string gable = s.style == WallStyle::Plank ? "Roof_Front_Plank" : (s.style == WallStyle::DryStone ? "Roof_Front_DryStone" : "Roof_Front_Brick");
+				parts.push_back(PartJson(roof + std::to_string(s.widthM) + "x" + std::to_string(s.depthM), 0, ry, 0, 0, false));
+				parts.push_back(PartJson(gable + std::to_string(s.widthM), 0, ry, -hd, 180, false));
+				parts.push_back(PartJson(gable + std::to_string(s.widthM), 0, ry, hd, 0, false));
 				// Mobilier du rez-de-chaussée (vie intérieure).
 				parts.push_back(PartJson("Table_Large", hw - 1.2, 0, hd - 1.3, 0, true));
 				parts.push_back(PartJson("Barrel", -hw + 0.6, 0, hd - 0.6, 0, true));

@@ -1164,6 +1164,24 @@
       "nom": "Escalier de pierre en colimaçon",
       "tome": 7,
       "placement_prevu": "intérieurs (catalogue) : tours, donjons"
+    },
+    {
+      "num": 207,
+      "nom": "Rosace de vitrail dans son cadre de pierre",
+      "tome": 8,
+      "placement_prevu": "intérieurs et façades (catalogue) : temples, chapelles"
+    },
+    {
+      "num": 208,
+      "nom": "Paillasse de dortoir",
+      "tome": 8,
+      "placement_prevu": "camps (près de l'abri de toile) ; intérieurs : casernes, infirmeries"
+    },
+    {
+      "num": 209,
+      "nom": "Levée de terre étayée de planches",
+      "tome": 8,
+      "placement_prevu": "champs de bataille"
     }
   ]
 }

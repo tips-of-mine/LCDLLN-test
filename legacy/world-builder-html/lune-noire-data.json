@@ -361240,6 +361240,57 @@
       "placement": "intérieurs (catalogue) : tours, donjons",
       "generated": false,
       "source": "[BD] T7"
+    },
+    {
+      "id": "decor_207",
+      "num": 207,
+      "name": "Rosace de vitrail dans son cadre de pierre",
+      "tome": 8,
+      "family": "objets",
+      "meshes": [
+        "Window_Rose_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T8-P033"
+      ],
+      "placement": "intérieurs et façades (catalogue) : temples, chapelles",
+      "generated": false,
+      "source": "[BD] T8"
+    },
+    {
+      "id": "decor_208",
+      "num": 208,
+      "name": "Paillasse de dortoir",
+      "tome": 8,
+      "family": "objets",
+      "meshes": [
+        "Bed_Pallet_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T8-P037"
+      ],
+      "placement": "camps (près de l'abri de toile) ; intérieurs : casernes, infirmeries",
+      "generated": true,
+      "source": "[BD] T8"
+    },
+    {
+      "id": "decor_209",
+      "num": 209,
+      "name": "Levée de terre étayée de planches",
+      "tome": 8,
+      "family": "objets",
+      "meshes": [
+        "Earthwork_Plank_1"
+      ],
+      "replaces": [],
+      "references_bd": [
+        "T8-P021"
+      ],
+      "placement": "champs de bataille",
+      "generated": true,
+      "source": "[BD] T8"
     }
   ]
 }

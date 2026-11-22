@@ -1008,6 +1008,43 @@ TEXTURES.update({
 })
 
 
+def stained_rose(name="Glass_Rose", seed=109, size=1024):
+    """Rosace de vitrail (T8 pl.33) : secteurs rayonnants de verres colorés, plombs
+    sombres, médaillon central à pétales ; motif géométrique, sans figure ni symbole."""
+    h = w = size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32) / size - 0.5
+    r = np.hypot(xx, yy) * 2
+    a = (np.arctan2(yy, xx) + np.pi) / (2 * np.pi)
+    pal = np.array([[120, 28, 34], [30, 50, 112], [176, 136, 44], [34, 86, 58], [36, 40, 90], [96, 30, 60]], np.float32)
+    sec = np.floor(a * 16).astype(int)
+    ring = np.digitize(r, [0.18, 0.42, 0.7, 0.95])
+    idx = (sec + ring * 3) % 6
+    col = pal[idx]
+    lead = (np.abs((a * 16) % 1 - 0.5) > 0.47) & (r > 0.18)
+    for rr in (0.18, 0.42, 0.7, 0.95):
+        lead |= np.abs(r - rr) < 0.012
+    for k in range(12):   # médaillons circulaires de l'anneau médian
+        ca = 2 * np.pi * (k + 0.5) / 12
+        d = np.hypot(xx - 0.28 * np.cos(ca), yy - 0.28 * np.sin(ca))
+        lead |= np.abs(d - 0.055) < 0.006
+        col[d < 0.05] = [190, 160, 90] if k % 2 else [70, 110, 160]
+    petal = (r < 0.18) & (np.cos(a * 2 * np.pi * 8) * 0.06 + 0.12 > r)
+    col[petal] = [230, 200, 120]
+    col[lead] = [30, 28, 30]
+    col[r > 1.0] = [70, 66, 60]
+    n = fbm(h, w, seed, 4, 32)
+    col *= (0.85 + 0.25 * n)[..., None]
+    save(f"T_Decor_{name}_BaseColor.png", col.clip(0, 255).astype(np.uint8))
+    save(f"T_Decor_{name}_Normal.png", normal_from_height(lead.astype(np.float32) * 0.5 + 0.1 * n, 2.0))
+    save(f"T_Decor_{name}_ORM.png", orm(n, 0.2, 0.0, 0.2))
+
+
+TEXTURES.update({
+    "Glass_Rose": stained_rose,
+    "Earth": lambda: flat("Earth", 110, (104, 84, 62), 0.95, 0.3),
+})
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only")

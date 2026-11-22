@@ -9471,6 +9471,66 @@
       "billboard": false,
       "replaces": null,
       "ref": "T7-P019"
+    },
+    {
+      "id": "Window_Rose_1",
+      "num": 207,
+      "family": "objets",
+      "builder": "window_rose",
+      "seed": 20701,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        3.0,
+        3.0
+      ],
+      "height_m": [
+        3.0,
+        3.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T8-P033"
+    },
+    {
+      "id": "Bed_Pallet_1",
+      "num": 208,
+      "family": "objets",
+      "builder": "bed_pallet",
+      "seed": 20702,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        2.0,
+        2.0
+      ],
+      "height_m": [
+        0.42,
+        0.42
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T8-P037"
+    },
+    {
+      "id": "Earthwork_Plank_1",
+      "num": 209,
+      "family": "objets",
+      "builder": "earthwork_plank",
+      "seed": 20703,
+      "budget": "prop",
+      "exact": true,
+      "width_m": [
+        6.0,
+        6.0
+      ],
+      "height_m": [
+        2.0,
+        2.0
+      ],
+      "billboard": false,
+      "replaces": null,
+      "ref": "T8-P021"
     }
   ]
 }

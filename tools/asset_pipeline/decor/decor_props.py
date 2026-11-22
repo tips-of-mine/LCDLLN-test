@@ -3874,6 +3874,92 @@ def p_stair_spiral(spec, lod):
     return m.out()
 
 
+# ======================================================================= Tome 8
+def p_window_rose(spec, lod):
+    """Rosace de vitrail dans son cadre de pierre (n° 207), Ø 3 m, base à 0 (pièce de
+    façade posée sur un mur ou un pignon) : disque de verre, anneau mouluré, rayons."""
+    m = M()
+    g = m.p("Glass_Rose")
+    n = S(lod, 32)
+    R, zc = 1.3, 1.5
+    i = len(g.v)
+    g.v.append(Vector((0, 0, zc)))
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        g.v.append(Vector((R * math.cos(a), 0, zc + R * math.sin(a))))
+    for k in range(n):
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+        g.f.append((i, i + 1 + (k + 1) % n, i + 1 + k))
+        g.uv.append([(0.5, 0.5), (0.5 + 0.48 * math.cos(a1), 0.5 + 0.48 * math.sin(a1)), (0.5 + 0.48 * math.cos(a0), 0.5 + 0.48 * math.sin(a0))])
+        g.cn.append(None)
+    c = m.p("Stone_Carved")
+    xf = Matrix.Translation((0, 0, zc)) @ Matrix.Rotation(math.pi / 2, 4, "X")
+    i0 = len(c.v)
+    API["tube"](c, [Vector((0, 0, -0.12)), Vector((0, 0, 0.12))], [R + 0.2, R + 0.2], n, 1.0)
+    API["tube"](c, [Vector((0, 0, 0.12)), Vector((0, 0, -0.12))], [R, R], n, 1.0)
+    for k in range(n):   # faces avant et arrière de l'anneau
+        a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+        for y, sg in ((-0.12, 1), (0.12, -1)):
+            q = [Vector((R * math.cos(a0), R * math.sin(a0), y)), Vector((R * math.cos(a1), R * math.sin(a1), y)),
+                 Vector(((R + 0.2) * math.cos(a1), (R + 0.2) * math.sin(a1), y)), Vector(((R + 0.2) * math.cos(a0), (R + 0.2) * math.sin(a0), y))]
+            _quad(c, *(q if sg > 0 else q[::-1]))
+    c.v[i0:] = [xf @ v for v in c.v[i0:]]
+    if lod < 2:
+        for k in range(8):
+            a = 2 * math.pi * k / 8
+            cyl(c, (0.25 * math.cos(a), 0, zc + 0.25 * math.sin(a)), (R * math.cos(a), 0, zc + R * math.sin(a)), 0.035, 0.035, 4, False)
+        cyl(c, (0, -0.04, zc), (0, 0.04, zc), 0.26, 0.26, S(lod, 16), False)
+    return m.out()
+
+
+def p_bed_pallet(spec, lod):
+    """Paillasse de dortoir (n° 208), 2 x 0,9 m : cadre bas de planches, matelas de toile
+    bourré de paille, couverture repliée."""
+    m = M()
+    d = m.p("Wood_Plank")
+    box(d, (-1.0, -0.45, 0.1), (1.0, 0.45, 0.2))
+    for x in (-0.95, 0.95):
+        for y in (-0.4, 0.4):
+            box(d, (x - 0.04, y - 0.04, 0), (x + 0.04, y + 0.04, 0.1))
+    box(m.p("Canvas"), (-0.96, -0.41, 0.2), (0.96, 0.41, 0.32))
+    if lod < 2:
+        box(m.p("Cloth_Ochre"), (0.2, -0.43, 0.32), (0.9, 0.43, 0.38))
+        box(m.p("Canvas"), (-0.92, -0.3, 0.32), (-0.6, 0.3, 0.42))   # traversin
+    return m.out()
+
+
+def p_earthwork_plank(spec, lod):
+    """Levée de terre étayée de planches (n° 209), module 6 m : talus de terre, parement
+    de planches verticales tenu par des pieux, côté défenseur en pente douce."""
+    m = M()
+    e = m.p("Earth")
+    i0 = len(e.v)
+    prof = [(-0.35, 0.0), (-0.35, 1.6), (0.3, 1.7), (2.2, 0.0)]
+    for y0, y1 in ((-3.0, 3.0),):
+        for k in range(len(prof) - 1):
+            (a, za), (b, zb) = prof[k], prof[k + 1]
+            _quad(e, (y0, a, za), (y1, a, za), (y1, b, zb), (y0, b, zb))
+        for x, sg in ((-3.0, 1), (3.0, -1)):
+            pts = [Vector((x, a, z)) for a, z in prof]
+            i = len(e.v)
+            e.v += pts
+            e.f.append(tuple(i + j for j in (range(4) if sg < 0 else reversed(range(4)))))
+            e.uv.append([(0, 0), (0, 1), (1, 1), (1, 0)])
+            e.cn.append(None)
+    _jitter(e, i0, 0.04, spec["seed"] % 7)
+    for k in range(i0, len(e.v)):
+        e.v[k] = Vector((e.v[k].x, e.v[k].y, max(e.v[k].z, 0.0)))
+    w = m.p("Wood_Weathered")
+    nb = {0: 24, 1: 12, 2: 4}[lod]
+    rng = random.Random(spec["seed"])
+    for k in range(nb):
+        x0 = -3.0 + 6.0 * k / nb
+        box(w, (x0 + 0.01, -0.45, 0), (x0 + 6.0 / nb - 0.01, -0.36, 1.7 + rng.uniform(-0.1, 0.1)))
+    for x in (-2.8, -1.4, 0.0, 1.4, 2.8):
+        cyl(m.p("Wood_Dark"), (x, -0.52, 0), (x, -0.52, 2.0), 0.07, 0.06, S(lod, 6))
+    return m.out()
+
+
 def register(api):
     API.update(api)
     out = {}
